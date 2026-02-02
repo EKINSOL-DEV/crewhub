@@ -10,7 +10,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 262 83% 58%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -22,8 +22,18 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 262 83% 58%;
     --radius: 0.5rem;
+    --accent-hue: 262;
+    
+    /* Playground gradients for light mode */
+    --playground-from: 226 71% 96%;
+    --playground-to: 262 77% 95%;
+    --playground-dots: 215 28% 17%;
+    
+    /* Panel backgrounds for light mode */
+    --panel-bg: 0 0% 98%;
+    --panel-border: 214.3 31.8% 85%;
   }
 
   .dark {
@@ -33,7 +43,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
+    --primary: 262 83% 58%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -45,7 +55,16 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 262 83% 58%;
+    
+    /* Playground gradients for dark mode */
+    --playground-from: 248 47% 12%;
+    --playground-to: 249 46% 22%;
+    --playground-dots: 0 0% 100%;
+    
+    /* Panel backgrounds for dark mode */
+    --panel-bg: 222.2 47% 6%;
+    --panel-border: 217.2 32.6% 20%;
   }
 }
 
@@ -56,6 +75,67 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Theme-aware playground styles */
+.playground-bg {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--playground-from)) 0%,
+    hsl(var(--playground-to)) 100%
+  );
+}
+
+.playground-overlay {
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--playground-from)) 0%,
+    hsl(var(--playground-to)) 100%
+  ),
+  repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    hsl(var(--foreground) / 0.03) 10px,
+    hsl(var(--foreground) / 0.03) 20px
+  );
+}
+
+.playground-dots {
+  fill: hsl(var(--playground-dots));
+}
+
+/* Theme-aware view backgrounds */
+.view-gradient {
+  background: linear-gradient(to bottom right, hsl(var(--panel-bg)), hsl(var(--background)));
+}
+
+/* Light mode specific adjustments */
+.light .playground-bg,
+.light .playground-overlay {
+  background: linear-gradient(
+    135deg,
+    hsl(226 71% 96%) 0%,
+    hsl(262 77% 95%) 100%
+  );
+}
+
+.light .view-gradient {
+  background: linear-gradient(to bottom right, hsl(220 14% 96%), hsl(0 0% 100%));
+}
+
+/* Dark mode specific adjustments */
+.dark .playground-bg,
+.dark .playground-overlay {
+  background: linear-gradient(
+    135deg,
+    hsl(248 47% 12%) 0%,
+    hsl(249 46% 22%) 100%
+  );
+}
+
+.dark .view-gradient {
+  background: linear-gradient(to bottom right, hsl(222 47% 8%), hsl(222 84% 5%));
 }
 
 /* Minion animations */
@@ -168,4 +248,19 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* Theme transition */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* Exclude elements that shouldn't animate */
+.no-theme-transition,
+.no-theme-transition *,
+svg,
+svg * {
+  transition-property: none !important;
 }

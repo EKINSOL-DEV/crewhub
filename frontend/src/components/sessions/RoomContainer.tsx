@@ -1,11 +1,12 @@
 import { useRef, useEffect, useState, useCallback } from "react"
 import { useDroppable } from "@dnd-kit/core"
-import { PlaygroundMinion } from "./PlaygroundMinion"
+import { PlaygroundSession } from "./PlaygroundSession"
 import { AgentAnchor } from "./AgentAnchor"
 import type { MinionSession } from "@/lib/api"
 import type { Room } from "@/hooks/useRooms"
 import type { AgentRuntime } from "@/hooks/useAgentsRegistry"
 import type { MinionsSettings } from "./SettingsPanel"
+import { useTheme } from "@/contexts/ThemeContext"
 
 interface Position { x: number; y: number }
 
@@ -26,11 +27,22 @@ interface RoomContainerProps {
 export function RoomContainer({
   room, agents, orphanSessions, settings, showLabel, showBorder, onMinionClick, onAliasChanged, minionRefs, roomIndex = 0, isDragOver = false
 }: RoomContainerProps) {
+  const { resolvedMode } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const positionsRef = useRef<Record<string, Position>>({})
   const totalItems = agents.length + orphanSessions.length
-  const { setNodeRef, isOver } = useDroppable({ id: room.id })
+  const { setNodeRef, isOver, active } = useDroppable({ id: room.id })
+  
+  // Don't show scale effect if dragging FROM this room (prevents "room dragging" visual bug)
+  const isDraggingFromThisRoom = active && (() => {
+    const dragId = active.id as string
+    // Check if the dragged item belongs to this room
+    const isAgentFromHere = agents.some(a => `agent:${a.agent.id}` === dragId)
+    const isSessionFromHere = orphanSessions.some(s => s.key === dragId) || 
+      agents.some(a => a.childSessions.some(cs => cs.key === dragId))
+    return isAgentFromHere || isSessionFromHere
+  })()
   
   useEffect(() => {
     if (!containerRef.current) return
@@ -54,14 +66,15 @@ export function RoomContainer({
     setNodeRef(node)
   }, [setNodeRef])
 
-  const showDropHighlight = isOver || (isDragOver && !isOver)
+  // Only show drop highlight when hovering over a DIFFERENT room (not the source room)
+  const showDropHighlight = (isOver && !isDraggingFromThisRoom) || (isDragOver && !isOver)
 
   return (
     <div ref={combinedRef} role="region" aria-label={`${room.name} - ${totalItems} item${totalItems !== 1 ? 's' : ''}`}
       className="relative overflow-hidden rounded-lg transition-all duration-200" style={{
-        backgroundColor: isOver ? `${room.color || "#4f46e5"}30` : showBorder ? `${room.color || "#4f46e5"}10` : "transparent",
-        border: isOver ? `3px dashed ${room.color || "#4f46e5"}` : showDropHighlight && showBorder ? `2px dashed ${room.color || "#4f46e5"}60` : showBorder ? `2px solid ${room.color || "#4f46e5"}40` : "none",
-        minHeight: "300px", transform: isOver ? "scale(1.02)" : "scale(1)", boxShadow: isOver ? `0 0 20px ${room.color || "#4f46e5"}40` : "none"
+        backgroundColor: (isOver && !isDraggingFromThisRoom) ? `${room.color || "#4f46e5"}30` : showBorder ? `${room.color || "#4f46e5"}10` : "transparent",
+        border: (isOver && !isDraggingFromThisRoom) ? `3px dashed ${room.color || "#4f46e5"}` : showDropHighlight && showBorder ? `2px dashed ${room.color || "#4f46e5"}60` : showBorder ? `2px solid ${room.color || "#4f46e5"}40` : "none",
+        minHeight: "300px", transform: (isOver && !isDraggingFromThisRoom) ? "scale(1.02)" : "scale(1)", boxShadow: (isOver && !isDraggingFromThisRoom) ? `0 0 20px ${room.color || "#4f46e5"}40` : "none"
       }}>
       {showLabel && (
         <div className="absolute top-3 left-3 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg" style={{ backgroundColor: `${room.color || "#4f46e5"}20`, color: room.color || "#4f46e5", border: `1px solid ${room.color || "#4f46e5"}60`, backdropFilter: "blur(8px)" }}>
@@ -84,7 +97,7 @@ export function RoomContainer({
                 const childGlobalIndex = globalIndex + 1000 + childIndex
                 const parentPosition = positionsRef.current[agentPosKey]
                 return (
-                  <PlaygroundMinion key={childSession.key} ref={(el) => { if (el && minionRefs) minionRefs.current[childGlobalIndex] = el }}
+                  <PlaygroundSession key={childSession.key} ref={(el) => { if (el && minionRefs) minionRefs.current[childGlobalIndex] = el }}
                     session={childSession} containerWidth={containerSize.width} containerHeight={containerSize.height}
                     onMinionClick={() => onMinionClick?.(childSession)} onAliasChanged={onAliasChanged} index={index + childIndex}
                     allSessions={[...orphanSessions, ...agents.flatMap(a => a.childSessions)]} parentPosition={parentPosition}
@@ -98,7 +111,7 @@ export function RoomContainer({
         {orphanSessions.map((session, index) => {
           const globalIndex = roomIndex * 100 + agents.length * 1000 + index
           return (
-            <PlaygroundMinion key={session.key} ref={(el) => { if (el && minionRefs) minionRefs.current[globalIndex] = el }}
+            <PlaygroundSession key={session.key} ref={(el) => { if (el && minionRefs) minionRefs.current[globalIndex] = el }}
               session={session} containerWidth={containerSize.width} containerHeight={containerSize.height}
               onMinionClick={() => onMinionClick?.(session)} onAliasChanged={onAliasChanged} index={agents.length + index}
               allSessions={orphanSessions} onPositionUpdate={updatePosition} speedMultiplier={settings.playgroundSpeed}
@@ -109,7 +122,7 @@ export function RoomContainer({
       
       {totalItems === 0 && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white/30">
+          <div className={`text-center ${resolvedMode === 'dark' ? 'text-white/30' : 'text-foreground/40'}`}>
             <div className="text-4xl mb-2">{room.icon || "📭"}</div>
             <div className="text-sm">No agents or sessions in {room.name}</div>
           </div>

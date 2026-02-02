@@ -1,17 +1,37 @@
 import { useState, useCallback } from 'react'
-import { PlaygroundView } from './components/minions/PlaygroundView'
-import { StatsHeader } from './components/minions/StatsHeader'
-import { SettingsPanel, DEFAULT_SETTINGS, type MinionsSettings } from './components/minions/SettingsPanel'
-import { useMinionsStream } from './hooks/useMinionsStream'
+import { PlaygroundView } from './components/sessions/PlaygroundView'
+import { AllSessionsView } from './components/sessions/AllSessionsView'
+import { CronView } from './components/sessions/CronView'
+import { HistoryView } from './components/sessions/HistoryView'
+import { StatsHeader } from './components/sessions/StatsHeader'
+import { SettingsPanel, DEFAULT_SETTINGS, type SessionsSettings } from './components/sessions/SettingsPanel'
+import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { Settings, RefreshCw, Wifi, WifiOff } from 'lucide-react'
+import { ThemeProvider } from './contexts/ThemeContext'
+import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, List, Clock, History } from 'lucide-react'
 import { Button } from './components/ui/button'
 
-function App() {
-  const { sessions, loading, error, connected, connectionMethod, refresh } = useMinionsStream(true)
+type TabId = 'active' | 'all' | 'cron' | 'history'
+
+interface Tab {
+  id: TabId
+  label: string
+  icon: React.ReactNode
+}
+
+const tabs: Tab[] = [
+  { id: 'active', label: 'Active', icon: <LayoutGrid className="h-4 w-4" /> },
+  { id: 'all', label: 'All', icon: <List className="h-4 w-4" /> },
+  { id: 'cron', label: 'Cron', icon: <Clock className="h-4 w-4" /> },
+  { id: 'history', label: 'History', icon: <History className="h-4 w-4" /> },
+]
+
+function AppContent() {
+  const { sessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [settings, setSettings] = useState<MinionsSettings>(() => {
-    const stored = localStorage.getItem('clawcrew-settings')
+  const [activeTab, setActiveTab] = useState<TabId>('active')
+  const [settings, setSettings] = useState<SessionsSettings>(() => {
+    const stored = localStorage.getItem('crewhub-settings')
     if (stored) {
       try {
         return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) }
@@ -22,9 +42,9 @@ function App() {
     return DEFAULT_SETTINGS
   })
 
-  const handleSettingsChange = useCallback((newSettings: MinionsSettings) => {
+  const handleSettingsChange = useCallback((newSettings: SessionsSettings) => {
     setSettings(newSettings)
-    localStorage.setItem('clawcrew-settings', JSON.stringify(newSettings))
+    localStorage.setItem('crewhub-settings', JSON.stringify(newSettings))
   }, [])
 
   const handleAliasChanged = useCallback(() => {
@@ -32,14 +52,14 @@ function App() {
   }, [refresh])
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
       <header className="border-b bg-card shrink-0">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🦀</span>
+            <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">ClawCrew</h1>
+              <h1 className="text-xl font-bold">CrewHub</h1>
               <p className="text-xs text-muted-foreground">Multi-agent orchestration</p>
             </div>
           </div>
@@ -76,6 +96,28 @@ function App() {
         <div className="px-4 pb-3">
           <StatsHeader sessions={sessions} />
         </div>
+        
+        {/* Tab Navigation */}
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
+                  ${activeTab === tab.id 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                  }
+                `}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -92,11 +134,22 @@ function App() {
         ) : (
           <ErrorBoundary>
             <div className="flex-1 overflow-hidden">
-              <PlaygroundView
-                sessions={sessions}
-                settings={settings}
-                onAliasChanged={handleAliasChanged}
-              />
+              {activeTab === 'active' && (
+                <PlaygroundView
+                  sessions={sessions}
+                  settings={settings}
+                  onAliasChanged={handleAliasChanged}
+                />
+              )}
+              {activeTab === 'all' && (
+                <AllSessionsView sessions={sessions} />
+              )}
+              {activeTab === 'cron' && (
+                <CronView />
+              )}
+              {activeTab === 'history' && (
+                <HistoryView />
+              )}
             </div>
           </ErrorBoundary>
         )}
@@ -110,6 +163,14 @@ function App() {
         onSettingsChange={handleSettingsChange}
       />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   )
 }
 

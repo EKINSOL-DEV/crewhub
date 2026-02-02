@@ -10,7 +10,7 @@ import asyncio
 import json
 import time
 
-router = APIRouter(tags=["SSE"])
+router = APIRouter()
 
 # Shared SSE client pool
 _sse_clients: list[asyncio.Queue] = []

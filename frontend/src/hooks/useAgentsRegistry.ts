@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { useMinionsStream } from "./useMinionsStream"
-import { API_BASE, type MinionSession } from "@/lib/api"
+import { useSessionsStream } from "./useSessionsStream"
+import { API_BASE, type CrewSession } from "@/lib/api"
 
 export interface Agent {
   id: string
@@ -22,9 +22,9 @@ export type AgentStatus = "offline" | "idle" | "thinking" | "working"
 
 export interface AgentRuntime {
   agent: Agent
-  session?: MinionSession
+  session?: CrewSession
   status: AgentStatus
-  childSessions: MinionSession[]
+  childSessions: CrewSession[]
 }
 
 interface AgentsResponse {
@@ -36,7 +36,7 @@ export function useAgentsRegistry(enableStream: boolean = true) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  const { sessions, connected: streamConnected } = useMinionsStream(enableStream)
+  const { sessions, connected: streamConnected } = useSessionsStream(enableStream)
   
   const fetchAgents = useCallback(async () => {
     try {
@@ -64,7 +64,7 @@ export function useAgentsRegistry(enableStream: boolean = true) {
     }
   }, [fetchAgents])
   
-  const calculateStatus = useCallback((session: MinionSession | undefined): AgentStatus => {
+  const calculateStatus = useCallback((session: CrewSession | undefined): AgentStatus => {
     if (!session) return "offline"
     const now = Date.now()
     const lastActivity = session.updatedAt || 0

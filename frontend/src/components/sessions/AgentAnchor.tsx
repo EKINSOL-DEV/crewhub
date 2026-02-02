@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef, useState, useCallback } from "react"
 import { useDraggable } from "@dnd-kit/core"
-import { MinionSVGWithIcon } from "./MinionSVGWithIcon"
+import { SessionSVGWithIcon } from "./SessionSVGWithIcon"
 import type { AgentRuntime } from "@/hooks/useAgentsRegistry"
 import { cn } from "@/lib/utils"
 
@@ -69,7 +69,10 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
       }, 1000)
     }, [runtime.status])
 
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `agent:${runtime.agent.id}` })
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ 
+      id: `agent:${runtime.agent.id}`,
+      data: { type: 'agent', agentId: runtime.agent.id, agentName: runtime.agent.name }
+    })
 
     const combinedRef = (node: HTMLDivElement | null) => {
       if (internalRef.current !== node) (internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
@@ -136,7 +139,7 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
 
     return (
       <div ref={combinedRef} className={cn("absolute cursor-grab transition-opacity duration-200", isDragging && "opacity-50", isOffline && "opacity-60")}
-        style={{ left: position.x, top: position.y, transform: "translate(-50%, -50%)", zIndex: isDragging ? 1000 : (isHovered ? 150 : 100) }}
+        style={{ left: position.x, top: position.y, transform: "translate(-50%, -50%)", zIndex: isDragging ? 1000 : (isHovered ? 150 : 100), touchAction: "none" }}
         onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} {...listeners} {...attributes}>
         {showBubble && (
           <div style={{ position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%) translateY(-10px)", animation: "bubblePop 0.3s ease-out", zIndex: 200, pointerEvents: "none" }}>
@@ -147,7 +150,7 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
           </div>
         )}
         <div className="relative">
-          <MinionSVGWithIcon variant={isOffline ? "blue" : "orange"} agentIcon={getAgentIcon(runtime)} size={120} flipped={false} animDelay={index * 0.1} />
+          <SessionSVGWithIcon variant={isOffline ? "blue" : "orange"} agentIcon={getAgentIcon(runtime)} size={120} flipped={false} animDelay={index * 0.1} />
           <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "white", border: `1px solid ${statusColor}` }}>
             {runtime.agent.name}
           </div>

@@ -49,7 +49,7 @@ export const DEFAULT_ROOMS_CONFIG: RoomsConfig = {
   unassignedRoomId: "headquarters",
 }
 
-const STORAGE_KEY = "clawcrew-rooms-config"
+const STORAGE_KEY = "crewhub-rooms-config"
 const CONFIG_VERSION = 1
 
 export function loadRoomsConfig(): RoomsConfig {
@@ -85,15 +85,39 @@ const PERSONA_ROOM_DEFAULTS: Record<string, string> = {
   "agent:discord:main": "comms-room",
 }
 
+/**
+ * Simple static defaults for session routing.
+ * This is a fallback when no API rules match.
+ * Returns undefined if no default applies (should go to first room).
+ */
+export function getDefaultRoomForSession(sessionKey: string): string | undefined {
+  // Cron sessions always go to automation
+  if (sessionKey.includes(":cron:")) return "automation-room"
+  
+  // Subagents/spawn go to dev room
+  if (sessionKey.includes(":subagent:") || sessionKey.includes(":spawn:")) return "dev-room"
+  
+  // Check persona defaults (main sessions for various channels)
+  const personaDefault = PERSONA_ROOM_DEFAULTS[sessionKey]
+  if (personaDefault) return personaDefault
+  
+  return undefined // Let caller decide fallback
+}
+
+/**
+ * Full room routing with config (legacy, kept for compatibility).
+ * Prefer using useRooms().getRoomForSession() which uses API rules.
+ */
 export function getRoomForSession(
   sessionKey: string,
   config: RoomsConfig,
   sessionData?: { label?: string; model?: string }
 ): string {
-  if (sessionKey.includes(":cron:")) return "automation-room"
-  const personaDefault = PERSONA_ROOM_DEFAULTS[sessionKey]
-  if (personaDefault) return personaDefault
+  // Check static defaults first
+  const staticDefault = getDefaultRoomForSession(sessionKey)
+  if (staticDefault) return staticDefault
   
+  // Check localStorage assignments
   const isSubagent = sessionKey.includes(":subagent:")
   if (isSubagent) {
     const parentKey = sessionKey.split(":subagent:")[0]

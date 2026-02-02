@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react"
-import { api, type MinionSession } from "@/lib/api"
+import { api, type CrewSession } from "@/lib/api"
 
-export interface MinionsStreamState {
-  sessions: MinionSession[]
+export interface SessionsStreamState {
+  sessions: CrewSession[]
   loading: boolean
   error: string | null
   connected: boolean
@@ -11,8 +11,8 @@ export interface MinionsStreamState {
 
 const getAuthToken = (): string => localStorage.getItem("openclaw_token") || ""
 
-export function useMinionsStream(enabled: boolean = true) {
-  const [state, setState] = useState<MinionsStreamState>({
+export function useSessionsStream(enabled: boolean = true) {
+  const [state, setState] = useState<SessionsStreamState>({
     sessions: [],
     loading: true,
     error: null,
@@ -27,7 +27,7 @@ export function useMinionsStream(enabled: boolean = true) {
   
   const fetchSessions = useCallback(async () => {
     try {
-      const data = await api.getMinions()
+      const data = await api.getSessions()
       setState(prev => ({ ...prev, sessions: data.sessions || [], loading: false, error: null }))
       return true
     } catch (err) {
@@ -53,13 +53,15 @@ export function useMinionsStream(enabled: boolean = true) {
     
     try {
       const token = getAuthToken()
-      const sseUrl = token ? `/api/minions/stream?token=${encodeURIComponent(token)}` : "/api/minions/stream"
+      const sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : "/api/events"
       const eventSource = new EventSource(sseUrl)
       eventSourceRef.current = eventSource
       
       eventSource.onopen = () => {
         reconnectAttemptsRef.current = 0
         setState(prev => ({ ...prev, connected: true, connectionMethod: "sse", error: null }))
+        // Fetch initial data since SSE doesn't send it on connect
+        fetchSessions()
       }
       
       eventSource.addEventListener("sessions-refresh", (event) => {
@@ -73,7 +75,7 @@ export function useMinionsStream(enabled: boolean = true) {
       
       eventSource.addEventListener("session-created", (event) => {
         try {
-          const session: MinionSession = JSON.parse(event.data)
+          const session: CrewSession = JSON.parse(event.data)
           setState(prev => ({ ...prev, sessions: [...prev.sessions, session] }))
         } catch (error) {
           console.error("Failed to parse session-created event:", error)
@@ -82,7 +84,7 @@ export function useMinionsStream(enabled: boolean = true) {
       
       eventSource.addEventListener("session-updated", (event) => {
         try {
-          const updatedSession: MinionSession = JSON.parse(event.data)
+          const updatedSession: CrewSession = JSON.parse(event.data)
           setState(prev => ({
             ...prev,
             sessions: prev.sessions.map(s => s.key === updatedSession.key ? updatedSession : s)
@@ -139,3 +141,7 @@ export function useMinionsStream(enabled: boolean = true) {
   
   return { ...state, refresh }
 }
+
+// Backwards compatibility alias
+export { useSessionsStream as useMinionsStream }
+export type { SessionsStreamState as MinionsStreamState }

@@ -121,3 +121,6 @@ export function MinionSVGWithIcon({
     </div>
   )
 }
+
+// New export name + backwards compatibility alias
+export { MinionSVGWithIcon as SessionSVGWithIcon }

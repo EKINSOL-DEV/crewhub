@@ -24,7 +24,7 @@ class MockEventSource {
 const mockEventSource = vi.fn(() => new MockEventSource())
 ;(globalThis as unknown as { EventSource: typeof EventSource }).EventSource = mockEventSource as unknown as typeof EventSource
 
-describe('useMinionsStream', () => {
+describe('useSessionsStream', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
@@ -36,17 +36,17 @@ describe('useMinionsStream', () => {
 
   it('starts with loading state', async () => {
     // Dynamic import to get fresh module
-    const { useMinionsStream } = await import('../hooks/useMinionsStream')
+    const { useSessionsStream } = await import('../hooks/useSessionsStream')
     
-    const { result } = renderHook(() => useMinionsStream(false))
+    const { result } = renderHook(() => useSessionsStream(false))
     expect(result.current.loading).toBe(false)
     expect(result.current.sessions).toEqual([])
   })
 
   it('returns disconnected state when disabled', async () => {
-    const { useMinionsStream } = await import('../hooks/useMinionsStream')
+    const { useSessionsStream } = await import('../hooks/useSessionsStream')
     
-    const { result } = renderHook(() => useMinionsStream(false))
+    const { result } = renderHook(() => useSessionsStream(false))
     expect(result.current.connected).toBe(false)
     expect(result.current.connectionMethod).toBe('disconnected')
   })
@@ -101,7 +101,7 @@ describe('useRooms', () => {
   })
 })
 
-describe('minionUtils', () => {
+describe('sessionUtils', () => {
   it('formats model names correctly', async () => {
     const { formatModel } = await import('../lib/minionUtils')
     

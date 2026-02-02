@@ -1,4 +1,8 @@
-import type { MinionSession, MinionContentBlock } from "./api"
+import type { CrewSession, SessionContentBlock } from "./api"
+
+// Type aliases for backwards compatibility
+type MinionSession = CrewSession
+type MinionContentBlock = SessionContentBlock
 import { getDisplayName, getTaskEmoji, generateFriendlyName } from "./friendlyNames"
 
 export type SessionStatus = "active" | "idle" | "sleeping"
@@ -224,3 +228,6 @@ export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?
   if (isActivelyRunning) return false
   return idleSeconds > 30
 }
+
+// Backwards compatibility alias
+export const getSessionType = getMinionType

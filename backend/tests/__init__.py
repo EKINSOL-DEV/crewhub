@@ -1,1 +1,1 @@
-"""ClawCrew Backend Tests."""
+"""CrewHub Backend Tests."""

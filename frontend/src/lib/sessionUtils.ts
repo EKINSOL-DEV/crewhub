@@ -1,4 +1,7 @@
-import type { MinionSession } from "./api"
+import type { CrewSession } from "./api"
+
+// Backwards compatibility alias
+type MinionSession = CrewSession
 
 export function isSubagent(sessionKey: string): boolean {
   return sessionKey.includes(":subagent:") || sessionKey.includes(":spawn:")

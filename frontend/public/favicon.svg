@@ -1,3 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <text y=".9em" font-size="90">🦀</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Green robot head (top) - simplified -->
+  <rect x="12" y="2" width="8" height="7" rx="2" fill="#82B30E"/>
+  <circle cx="14" cy="5" r="1" fill="white"/>
+  <circle cx="18" cy="5" r="1" fill="white"/>
+  <line x1="16" y1="0" x2="16" y2="2" stroke="#82B30E" stroke-width="1.5"/>
+  <circle cx="16" cy="0" r="1" fill="#82B30E"/>
+  
+  <!-- Colored hub ring -->
+  <path d="M16 10 A8 8 0 0 1 24 18" fill="none" stroke="#82B30E" stroke-width="3"/>
+  <path d="M24 18 A8 8 0 0 1 16 26" fill="none" stroke="#FE9600" stroke-width="3"/>
+  <path d="M16 26 A8 8 0 0 1 8 18" fill="none" stroke="#F32A1C" stroke-width="3"/>
+  <path d="M8 18 A8 8 0 0 1 16 10" fill="none" stroke="#1277C3" stroke-width="3"/>
 </svg>

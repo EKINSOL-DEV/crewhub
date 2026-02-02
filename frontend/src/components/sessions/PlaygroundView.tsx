@@ -8,10 +8,10 @@ import type { MinionsSettings } from "./SettingsPanel"
 import { getMinionType, shouldBeInParkingLane } from "@/lib/minionUtils"
 import { checkKonamiCode, triggerDance, playSound } from "@/lib/easterEggs"
 import { useToast } from "@/hooks/use-toast"
-import { MinionSVGWithIcon } from "./MinionSVGWithIcon"
+import { SessionSVGWithIcon } from "./SessionSVGWithIcon"
 import { useAgentsRegistry, type AgentRuntime } from "@/hooks/useAgentsRegistry"
 import { useRooms } from "@/hooks/useRooms"
-import { getRoomForSession as getRoomForSessionFromConfig, loadRoomsConfig } from "@/lib/roomsConfig"
+import { getDefaultRoomForSession } from "@/lib/roomsConfig"
 
 interface PlaygroundViewProps {
   sessions: MinionSession[]
@@ -53,7 +53,6 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
 
   const { agents: agentRuntimes, refresh: refreshAgents } = useAgentsRegistry(true)
   const { rooms, getRoomForSession, isLoading: roomsLoading, refresh: refreshRooms } = useRooms()
-  const roomsConfig = useMemo(() => loadRoomsConfig(), [])
   const tokenTrackingRef = useRef<Map<string, { previousTokens: number; lastChangeTime: number }>>(new Map())
   
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
@@ -129,8 +128,14 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
       return !isAgentMain && !isAgentChild
     })
     orphanSessions.forEach(session => {
-      const assignedRoomId = getRoomForSession(session.key)
-      const targetRoomId = assignedRoomId || getRoomForSessionFromConfig(session.key, roomsConfig, { label: session.label, model: session.model })
+      // getRoomForSession now checks: 1) explicit assignment, 2) rules from API
+      const assignedRoomId = getRoomForSession(session.key, { 
+        label: session.label, 
+        model: session.model,
+        channel: session.lastChannel 
+      })
+      // Fall back to static config defaults if no rule matches
+      const targetRoomId = assignedRoomId || getDefaultRoomForSession(session.key) || rooms[0]?.id || "headquarters"
       const existing = grouped.get(targetRoomId)
       if (existing) existing.orphanSessions.push(session)
       else {
@@ -140,7 +145,7 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
       }
     })
     return grouped
-  }, [agentRuntimes, visibleSessions, rooms, getRoomForSession, roomsConfig])
+  }, [agentRuntimes, visibleSessions, rooms, getRoomForSession])
 
   const handleMinionClick = (session: MinionSession) => { setSelectedSession(session); setLogViewerOpen(true) }
 
@@ -191,24 +196,24 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
   }, [agentRuntimes, rooms, updateAgentRoom, assignSessionToRoom, toast, refreshAgents, refreshRooms])
 
   if (roomsLoading || rooms.length === 0) {
-    return (<div className="flex items-center justify-center w-full h-full min-h-[600px]" style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)" }}><div className="text-white/60 text-sm">Loading rooms...</div></div>)
+    return (<div className="flex items-center justify-center w-full h-full min-h-[600px] playground-bg"><div className="text-muted-foreground text-sm">Loading rooms...</div></div>)
   }
 
   return (
     <>
       <div className="flex w-full h-full" style={{ minHeight: "600px" }}>
-        <div ref={containerRef} className="relative flex-1 overflow-auto" style={{ width: "85%", background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)", backgroundImage: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%), repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.03) 10px, rgba(255,255,255,.03) 20px)" }}>
+        <div ref={containerRef} className="relative flex-1 overflow-auto playground-overlay" style={{ width: "85%" }}>
           <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <svg width="100%" height="100%"><defs><pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="2" fill="white" /></pattern></defs><rect width="100%" height="100%" fill="url(#dots)" /></svg>
+            <svg width="100%" height="100%"><defs><pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="2" className="playground-dots" /></pattern></defs><rect width="100%" height="100%" fill="url(#dots)" /></svg>
           </div>
           <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-50">
-            <div className="text-sm text-white text-center px-4 py-2 rounded-full" style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(10px)" }}>
+            <div className="text-sm text-center px-4 py-2 rounded-full backdrop-blur-md text-foreground dark:text-white bg-white/60 dark:bg-black/30 shadow-sm dark:shadow-none">
               {agentRuntimes.length} agents · {visibleSessions.length} active{sortedParkingSessions.length > 0 && ` · ${sortedParkingSessions.length} parked`} · Click for details
             </div>
           </div>
           {agentRuntimes.length === 0 && visibleSessions.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center z-[100]">
-              <div className="text-center"><div className="text-6xl mb-4">💤</div><p className="text-white text-xl font-semibold" style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }}>No agents or sessions</p><p className="text-white/80 text-sm mt-2">Agents will appear when they're defined!</p></div>
+              <div className="text-center"><div className="text-6xl mb-4">💤</div><p className="text-xl font-semibold text-foreground dark:text-white dark:[text-shadow:2px_2px_4px_rgba(0,0,0,0.3)]">No agents or sessions</p><p className="text-muted-foreground text-sm mt-2">Agents will appear when they're defined!</p></div>
             </div>
           )}
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -222,15 +227,16 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
               {activeId && (isDraggingAgent ? activeAgent : activeSession) && (
                 <div style={{ cursor: "grabbing", opacity: 0.9, transform: "scale(1.1)" }}>
                   {isDraggingAgent && activeAgent ? (
-                    <div className="text-center"><MinionSVGWithIcon variant="blue" agentIcon="crab" size={120} flipped={false} animDelay={0} /><div className="text-white text-sm font-semibold mt-2">{activeAgent.agent.name}</div></div>
+                    <div className="text-center"><SessionSVGWithIcon variant="blue" agentIcon="crab" size={120} flipped={false} animDelay={0} /><div className="text-sm font-semibold mt-2 text-foreground dark:text-white">{activeAgent.agent.name}</div></div>
                   ) : activeSession ? (
-                    <MinionSVGWithIcon variant={getVariantFromColor(getMinionType(activeSession).color)} agentIcon={getAgentIcon(activeSession)} size={activeSession.key.includes(":subagent:") ? 72 : 120} flipped={false} animDelay={0} />
+                    <SessionSVGWithIcon variant={getVariantFromColor(getMinionType(activeSession).color)} agentIcon={getAgentIcon(activeSession)} size={activeSession.key.includes(":subagent:") ? 72 : 120} flipped={false} animDelay={0} />
                   ) : null}
                 </div>
               )}
             </DragOverlay>
           </DndContext>
-          <div className="absolute bottom-16 right-4 z-40"><div className="text-xs text-white/60 italic px-3 py-1 rounded" style={{ background: "rgba(0,0,0,0.2)", fontFamily: "Comic Sans MS, cursive, sans-serif" }}>🍌 Banana-powered workforce</div></div>
+          {/* Easter egg moved to less intrusive position */}
+          <div className="absolute bottom-2 left-4 z-40 opacity-40 hover:opacity-70 transition-opacity"><div className="text-[10px] text-muted-foreground/50 italic">🍌 Banana-powered workforce</div></div>
         </div>
         <div className="h-full" style={{ width: "15%" }}><ParkingLane sessions={sortedParkingSessions} onMinionClick={handleMinionClick} /></div>
       </div>

@@ -240,6 +240,30 @@ async def seed_default_data():
                 VALUES (?, ?, ?)
             """, default_settings)
             
+            # Create default room assignment rules
+            import uuid
+            default_rules = [
+                # Session type based rules (highest priority)
+                (str(uuid.uuid4()), 'automation-room', 'session_key_contains', ':cron:', 100, now),
+                (str(uuid.uuid4()), 'dev-room', 'session_key_contains', ':subagent:', 90, now),
+                (str(uuid.uuid4()), 'dev-room', 'session_key_contains', ':spawn:', 90, now),
+                (str(uuid.uuid4()), 'headquarters', 'session_type', 'main', 80, now),
+                # Channel based rules
+                (str(uuid.uuid4()), 'comms-room', 'session_key_contains', 'slack', 70, now),
+                (str(uuid.uuid4()), 'comms-room', 'session_key_contains', 'whatsapp', 70, now),
+                (str(uuid.uuid4()), 'comms-room', 'session_key_contains', 'telegram', 70, now),
+                (str(uuid.uuid4()), 'comms-room', 'session_key_contains', 'discord', 70, now),
+                # Model based rules
+                (str(uuid.uuid4()), 'dev-room', 'model', 'opus', 50, now),
+                (str(uuid.uuid4()), 'thinking-room', 'model', 'gpt5', 50, now),
+                (str(uuid.uuid4()), 'thinking-room', 'model', 'gpt-5', 50, now),
+            ]
+            
+            await db.executemany("""
+                INSERT OR IGNORE INTO room_assignment_rules (id, room_id, rule_type, rule_value, priority, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, default_rules)
+            
             await db.commit()
             logger.info("Default seed data inserted successfully")
             return True

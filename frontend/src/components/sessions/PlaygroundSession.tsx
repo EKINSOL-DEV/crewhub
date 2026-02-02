@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, forwardRef } from "react"
 import { useDraggable } from "@dnd-kit/core"
-import { MinionSVGWithIcon } from "./MinionSVGWithIcon"
+import { SessionSVGWithIcon } from "./SessionSVGWithIcon"
 import type { MinionSession } from "@/lib/api"
 import { getSessionStatus, getMinionType, getSessionDisplayName, formatModel, getTaskEmoji } from "@/lib/minionUtils"
 import { getPersonalityStatus } from "@/lib/personality"
 import { isSubagent, findParentSession } from "@/lib/sessionUtils"
 import { playSound, getClickMessage } from "@/lib/easterEggs"
 import { useToast } from "@/hooks/use-toast"
-import { getMinionName } from "@/lib/friendlyNames"
-import { getRoomForSession, loadRoomsConfig } from "@/lib/roomsConfig"
+import { useSessionDisplayName } from "@/hooks/useSessionDisplayNames"
 
 type MinionVariant = "orange" | "blue" | "green" | "purple" | "amber" | "pink" | "cyan"
 type AgentIcon = "crab" | "clock" | "camera" | "wave" | "gear" | "default"
@@ -59,9 +58,14 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
   const minionType = getMinionType(session)
   const variant = getVariantFromColor(minionType.color)
   const agentIcon = getAgentIcon(session)
-  const displayName = getSessionDisplayName(session)
+  const fallbackName = getSessionDisplayName(session)
+  const { displayName: customDisplayName } = useSessionDisplayName(session.key)
+  const displayName = customDisplayName || fallbackName
 
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: session.key })
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ 
+    id: session.key,
+    data: { type: 'session', sessionKey: session.key, label: session.label }
+  })
   const isSub = isSubagent(session.key)
   const _parentSession = isSub ? findParentSession(session.key, allSessions) : null
   const hasParent = isSub && parentPosition !== undefined
@@ -168,23 +172,22 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
 
   const getBubbleContent = () => {
     const personality = getPersonalityStatus(minionType.type, status)
-    const roomsConfig = loadRoomsConfig()
-    const roomId = getRoomForSession(session.key, roomsConfig, { label: session.label, model: session.model })
-    const minionName = getMinionName(session.key, roomId)
+    // Use the custom displayName (already includes fallback from top of component)
+    const bubbleName = displayName
     if (status === "active") {
       if (session.label) {
         const emoji = getTaskEmoji(session.label)
-        return (<div className="space-y-1"><div className="font-bold text-base">{minionName} {emoji}</div><div className="text-xs opacity-80">{session.label.replace(/-/g, ' ')}</div></div>)
+        return (<div className="space-y-1"><div className="font-bold text-base">{bubbleName} {emoji}</div><div className="text-xs opacity-80">{session.label.replace(/-/g, ' ')}</div></div>)
       }
       const emoji = getTaskEmoji(session.label)
       let taskLabel = "Working..."
       if (session.key?.includes(":cron:")) taskLabel = "Scheduled task"
       if (session.key?.includes(":subagent:")) taskLabel = "Processing"
-      return (<div className="space-y-1"><div className="font-bold text-base">{minionName} {emoji}</div><div className="text-xs opacity-80">{taskLabel}</div></div>)
+      return (<div className="space-y-1"><div className="font-bold text-base">{bubbleName} {emoji}</div><div className="text-xs opacity-80">{taskLabel}</div></div>)
     }
-    if (personality) return (<div className="space-y-1"><div className="font-bold text-base">{minionName}</div><div className="text-xs opacity-80">{personality}</div></div>)
+    if (personality) return (<div className="space-y-1"><div className="font-bold text-base">{bubbleName}</div><div className="text-xs opacity-80">{personality}</div></div>)
     const fallbackInfo = session.model ? `Ready (${formatModel(session.model)})` : minionType.type
-    return (<div className="space-y-1"><div className="font-bold text-base">{minionName}</div><div className="text-xs opacity-80">{fallbackInfo}</div></div>)
+    return (<div className="space-y-1"><div className="font-bold text-base">{bubbleName}</div><div className="text-xs opacity-80">{fallbackInfo}</div></div>)
   }
 
   const handleMouseEnter = () => { setIsHovered(true); setShowBubble(true); if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current) }
@@ -225,7 +228,7 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
           </div>
         )}
         <div onClick={handleAvatarClick} style={{ transition: "transform 0.3s ease", transform: isHovered ? "scale(1.1)" : "scale(1)", cursor: easterEggsEnabled ? "pointer" : "default" }}>
-          <MinionSVGWithIcon variant={variant} agentIcon={agentIcon} size={minionSize} flipped={shouldFlip} animDelay={index * 0.5} />
+          <SessionSVGWithIcon variant={variant} agentIcon={agentIcon} size={minionSize} flipped={shouldFlip} animDelay={index * 0.5} />
         </div>
         {status === "sleeping" && <div style={{ position: "absolute", top: "-10px", right: "10px", fontSize: "24px", animation: "float 2s ease-in-out infinite" }}>💤</div>}
         <div role="status" aria-label={`Status: ${status}`} style={{ position: "absolute", top: "10px", left: "10px", width: "12px", height: "12px", borderRadius: "50%", backgroundColor: status === "active" ? "#4ade80" : status === "idle" ? "#fbbf24" : "#9ca3af", boxShadow: "0 0 8px rgba(0,0,0,0.3)", animation: status === "active" ? "pulse 2s ease-in-out infinite" : undefined }}>
@@ -240,3 +243,6 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
     </>
   )
 })
+
+// New export name + backwards compatibility alias  
+export { PlaygroundMinion as PlaygroundSession }

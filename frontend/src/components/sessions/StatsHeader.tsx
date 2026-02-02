@@ -16,7 +16,7 @@ export function StatsHeader({ sessions }: StatsHeaderProps) {
   return (
     <div className="flex items-center gap-6 px-4 py-3 bg-muted/30 rounded-lg">
       <div className="flex items-center gap-2">
-        <span className="text-lg">🦀</span>
+        <span className="text-lg">👥</span>
         <span className="text-sm font-medium">{sessions.length} Agents</span>
       </div>
       

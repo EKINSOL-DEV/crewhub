@@ -2,13 +2,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { FileText } from "lucide-react"
-import type { MinionSession } from "@/lib/api"
+import type { CrewSession } from "@/lib/api"
 import {
   getSessionStatus,
   getStatusIndicator,
   parseRecentActivities,
   getCurrentActivity,
-  getMinionType,
+  getSessionType,
   getSessionDisplayName,
   formatModel,
   timeAgo,
@@ -16,20 +16,18 @@ import {
   formatCost,
 } from "@/lib/minionUtils"
 import { cn } from "@/lib/utils"
-import { useSessionDisplayName } from "@/hooks/useSessionDisplayNames"
+import { EditableSessionName } from "./EditableSessionName"
 
-interface MinionCardProps {
-  session: MinionSession
+interface SessionCardProps {
+  session: CrewSession
   onViewLogs?: () => void
 }
 
-export function MinionCard({ session, onViewLogs }: MinionCardProps) {
-  const { displayName: customName } = useSessionDisplayName(session.key)
-
+export function SessionCard({ session, onViewLogs }: SessionCardProps) {
   const status = getSessionStatus(session)
   const statusInfo = getStatusIndicator(status)
-  const minionType = getMinionType(session)
-  const displayName = getSessionDisplayName(session, customName)
+  const sessionType = getSessionType(session)
+  const fallbackName = getSessionDisplayName(session)
   const currentActivity = getCurrentActivity(session)
   const recentActivities = parseRecentActivities(session, 3)
   const cost = getSessionCost(session)
@@ -45,10 +43,10 @@ export function MinionCard({ session, onViewLogs }: MinionCardProps) {
           <div className="relative shrink-0">
             <div
               className="w-12 h-12 rounded-full flex items-center justify-center text-2xl border-2"
-              style={{ backgroundColor: `${minionType.color}20`, borderColor: minionType.color }}
-              title={minionType.type}
+              style={{ backgroundColor: `${sessionType.color}20`, borderColor: sessionType.color }}
+              title={sessionType.type}
             >
-              {minionType.emoji}
+              {sessionType.emoji}
             </div>
             <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs" title={statusInfo.label}>
               {statusInfo.emoji}
@@ -57,13 +55,19 @@ export function MinionCard({ session, onViewLogs }: MinionCardProps) {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-sm truncate">{displayName}</h3>
+              <h3 className="font-semibold text-sm truncate">
+                <EditableSessionName
+                  sessionKey={session.key}
+                  fallbackName={fallbackName}
+                  showEditIcon={true}
+                />
+              </h3>
               <Badge
                 variant="outline"
                 className="text-[10px] px-1.5 py-0"
-                style={{ color: minionType.color, borderColor: `${minionType.color}40` }}
+                style={{ color: sessionType.color, borderColor: `${sessionType.color}40` }}
               >
-                {minionType.type}
+                {sessionType.type}
               </Badge>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -115,3 +119,6 @@ export function MinionCard({ session, onViewLogs }: MinionCardProps) {
     </Card>
   )
 }
+
+// Backwards compatibility alias
+export { SessionCard as MinionCard }

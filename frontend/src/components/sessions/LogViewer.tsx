@@ -9,6 +9,7 @@ import { api } from "@/lib/api"
 import type { MinionSession, MinionMessage } from "@/lib/api"
 import { getSessionDisplayName, getMinionType, formatModel, timeAgo } from "@/lib/minionUtils"
 import { cn } from "@/lib/utils"
+import { EditableSessionName } from "./EditableSessionName"
 
 interface LogViewerProps {
   session: MinionSession | null
@@ -48,10 +49,10 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
       if (!silent) { setLoading(true); setError(null) } else setIsRefreshing(true)
       const response = await api.getMinionHistory(session.key, 100)
       // Transform messages - handle both direct messages and wrapped {message, timestamp} format
-      const transformedMessages = (response.messages || []).map((item: MinionMessage & { message?: MinionMessage; timestamp?: string }) => {
+      const transformedMessages = (response.messages || []).map((item: any) => {
         if (item.message) return { ...item.message, timestamp: item.timestamp ? new Date(item.timestamp).getTime() : undefined }
         return item
-      })
+      }) as MinionMessage[]
       setMessages(transformedMessages)
     } catch (err) {
       if (!silent) setError("Failed to load session history")
@@ -105,7 +106,12 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
             </div>
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5" />Logs: {displayName}
+                <FileText className="h-5 w-5" />
+                Logs: <EditableSessionName 
+                  sessionKey={session.key} 
+                  fallbackName={displayName} 
+                  showEditIcon={true}
+                />
               </DialogTitle>
               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
                 <Badge variant="outline" className="text-[10px]">{minionType.type}</Badge>

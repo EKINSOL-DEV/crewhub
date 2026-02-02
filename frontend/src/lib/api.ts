@@ -1,4 +1,4 @@
-export interface MinionSession {
+export interface CrewSession {
   key: string
   kind: string
   channel: string
@@ -18,12 +18,12 @@ export interface MinionSession {
     to?: string
     accountId?: string
   }
-  messages?: MinionMessage[]
+  messages?: SessionMessage[]
 }
 
-export interface MinionMessage {
+export interface SessionMessage {
   role: string
-  content: MinionContentBlock[]
+  content: SessionContentBlock[]
   api?: string
   provider?: string
   model?: string
@@ -45,7 +45,7 @@ export interface MinionMessage {
   timestamp?: number
 }
 
-export interface MinionContentBlock {
+export interface SessionContentBlock {
   type: string
   text?: string
   thinking?: string
@@ -58,13 +58,18 @@ export interface MinionContentBlock {
   isError?: boolean
 }
 
-export interface MinionsResponse {
-  sessions: MinionSession[]
+export interface SessionsResponse {
+  sessions: CrewSession[]
 }
 
-export interface MinionHistoryResponse {
-  messages: MinionMessage[]
+export interface SessionHistoryResponse {
+  messages: SessionMessage[]
 }
+
+// Backwards compatibility aliases
+export type MinionSession = CrewSession
+export type MinionMessage = SessionMessage
+export type MinionContentBlock = SessionContentBlock
 
 export const API_BASE = '/api'
 
@@ -86,11 +91,18 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getSessions: (activeMinutes?: number) =>
+    fetchJSON<SessionsResponse>(`/sessions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`),
+
+  getSessionHistory: (sessionKey: string, limit: number = 50) =>
+    fetchJSON<SessionHistoryResponse>(`/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`),
+
+  // Backwards compatibility aliases
   getMinions: (activeMinutes?: number) =>
-    fetchJSON<MinionsResponse>(`/minions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`),
+    fetchJSON<SessionsResponse>(`/sessions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`),
 
   getMinionHistory: (sessionKey: string, limit: number = 50) =>
-    fetchJSON<MinionHistoryResponse>(`/minions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`),
+    fetchJSON<SessionHistoryResponse>(`/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`),
 }
 
 // Session Display Names API
@@ -102,17 +114,17 @@ export interface SessionDisplayNameResponse {
 
 export const sessionDisplayNameApi = {
   get: (sessionKey: string) =>
-    fetchJSON<SessionDisplayNameResponse>(`/sessions/${encodeURIComponent(sessionKey)}/display-name`),
+    fetchJSON<SessionDisplayNameResponse>(`/session-display-names/${encodeURIComponent(sessionKey)}`),
   
   set: (sessionKey: string, displayName: string) =>
-    fetchJSON<SessionDisplayNameResponse>(`/sessions/${encodeURIComponent(sessionKey)}/display-name`, {
-      method: 'PUT',
+    fetchJSON<SessionDisplayNameResponse>(`/session-display-names/${encodeURIComponent(sessionKey)}`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ display_name: displayName })
     }),
   
   delete: (sessionKey: string) =>
-    fetchJSON<{ session_key: string; deleted: boolean }>(`/sessions/${encodeURIComponent(sessionKey)}/display-name`, {
+    fetchJSON<{ success: boolean; deleted: string }>(`/session-display-names/${encodeURIComponent(sessionKey)}`, {
       method: 'DELETE'
     }),
 }

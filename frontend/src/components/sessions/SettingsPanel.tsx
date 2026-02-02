@@ -15,8 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
+import { Sun, Moon, Monitor } from "lucide-react"
 
-export interface MinionsSettings {
+export interface SessionsSettings {
   refreshInterval: number
   autoRefresh: boolean
   showAnimations: boolean
@@ -27,7 +29,10 @@ export interface MinionsSettings {
   playgroundSpeed: number
 }
 
-const DEFAULT_SETTINGS: MinionsSettings = {
+// Backwards compatibility alias
+export type MinionsSettings = SessionsSettings
+
+const DEFAULT_SETTINGS: SessionsSettings = {
   refreshInterval: 5000,
   autoRefresh: true,
   showAnimations: true,
@@ -41,14 +46,22 @@ const DEFAULT_SETTINGS: MinionsSettings = {
 interface SettingsPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  settings: MinionsSettings
-  onSettingsChange: (settings: MinionsSettings) => void
+  settings: SessionsSettings
+  onSettingsChange: (settings: SessionsSettings) => void
 }
 
 export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }: SettingsPanelProps) {
-  const updateSetting = <K extends keyof MinionsSettings>(key: K, value: MinionsSettings[K]) => {
+  const { theme, setTheme, resolvedMode } = useTheme()
+
+  const updateSetting = <K extends keyof SessionsSettings>(key: K, value: SessionsSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value })
   }
+
+  const themeModeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
+    { value: "light", label: "Light", icon: <Sun className="h-4 w-4" /> },
+    { value: "dark", label: "Dark", icon: <Moon className="h-4 w-4" /> },
+    { value: "system", label: "System", icon: <Monitor className="h-4 w-4" /> },
+  ]
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -59,6 +72,69 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
         </SheetHeader>
 
         <div className="py-6 space-y-6 overflow-y-auto max-h-[calc(100vh-12rem)]">
+          {/* Appearance Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Appearance</h3>
+            
+            {/* Theme Mode */}
+            <div className="space-y-3">
+              <Label>Theme</Label>
+              <div className="flex gap-2">
+                {themeModeOptions.map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => setTheme({ mode: option.value })}
+                    className={`
+                      flex items-center gap-2 px-4 py-2 rounded-lg border transition-all
+                      ${theme.mode === option.value 
+                        ? "border-primary bg-primary/10 text-primary" 
+                        : "border-border bg-background hover:bg-muted"
+                      }
+                    `}
+                  >
+                    {option.icon}
+                    <span className="text-sm">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+              {theme.mode === "system" && (
+                <p className="text-xs text-muted-foreground">
+                  Currently using {resolvedMode} mode based on your system preference
+                </p>
+              )}
+            </div>
+
+            {/* Accent Color */}
+            <div className="space-y-3">
+              <Label>Accent Color</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {(Object.entries(accentColors) as [AccentColor, typeof accentColors[AccentColor]][]).map(([key, config]) => (
+                  <button
+                    key={key}
+                    onClick={() => setTheme({ accentColor: key })}
+                    className={`
+                      flex flex-col items-center gap-1.5 p-2 rounded-lg border transition-all
+                      ${theme.accentColor === key 
+                        ? "border-2 border-primary bg-primary/5" 
+                        : "border-border hover:border-muted-foreground/50"
+                      }
+                    `}
+                    title={config.name}
+                  >
+                    <div 
+                      className="w-6 h-6 rounded-full shadow-sm"
+                      style={{ backgroundColor: config.preview }}
+                    />
+                    <span className="text-[10px] text-muted-foreground">{config.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Updates Section */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">Updates</h3>
             <div className="flex items-center justify-between">
@@ -84,6 +160,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
 
           <Separator />
 
+          {/* Display Section */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">Display</h3>
             <div className="flex items-center justify-between">
@@ -104,6 +181,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
 
           <Separator />
 
+          {/* Playground Section */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">Playground</h3>
             <div className="space-y-2">
@@ -121,6 +199,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
 
           <Separator />
 
+          {/* Fun Section */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">Fun & Playfulness</h3>
             <div className="flex items-center justify-between">

@@ -10,7 +10,7 @@ from typing import Optional
 
 from ..services.gateway import get_gateway
 
-router = APIRouter(tags=["Sessions"])
+router = APIRouter()
 
 
 class SessionPatch(BaseModel):
@@ -46,7 +46,7 @@ async def get_session_history(
     gateway = await get_gateway()
     history = await gateway.get_session_history(session_key, limit)
     
-    return {"history": history, "count": len(history)}
+    return {"messages": history, "count": len(history)}
 
 
 @router.patch("/{session_key:path}")

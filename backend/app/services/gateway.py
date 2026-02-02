@@ -2,7 +2,7 @@
 OpenClaw Gateway WebSocket client.
 Singleton connection manager with persistent connection and auto-reconnect.
 
-Extracted from Ekinbot Planner for ClawCrew.
+Extracted from Ekinbot Planner for CrewHub.
 """
 import asyncio
 import json
@@ -157,7 +157,7 @@ class GatewayClient:
                     "scopes": ["operator.read", "operator.write", "operator.admin"],
                     "auth": {"token": self.token} if self.token else {},
                     "locale": "en-US",
-                    "userAgent": "clawcrew/1.0.0"
+                    "userAgent": "crewhub/1.0.0"
                 }
             }
             
@@ -483,6 +483,51 @@ class GatewayClient:
         if result and isinstance(result, dict):
             return result.get("jobs", [])
         return []
+    
+    async def create_cron_job(
+        self,
+        schedule: dict,
+        payload: dict,
+        session_target: str = "main",
+        name: Optional[str] = None,
+        enabled: bool = True
+    ) -> Optional[dict[str, Any]]:
+        """Create a new cron job."""
+        params = {
+            "schedule": schedule,
+            "payload": payload,
+            "sessionTarget": session_target,
+            "enabled": enabled
+        }
+        if name:
+            params["name"] = name
+        return await self.call("cron.add", params)
+    
+    async def update_cron_job(self, job_id: str, patch: dict[str, Any]) -> Optional[dict[str, Any]]:
+        """Update an existing cron job."""
+        params = {"jobId": job_id, "patch": patch}
+        return await self.call("cron.update", params)
+    
+    async def delete_cron_job(self, job_id: str) -> bool:
+        """Delete a cron job."""
+        result = await self.call("cron.remove", {"jobId": job_id})
+        return result is not None
+    
+    async def enable_cron_job(self, job_id: str) -> bool:
+        """Enable a cron job."""
+        return await self.update_cron_job(job_id, {"enabled": True}) is not None
+    
+    async def disable_cron_job(self, job_id: str) -> bool:
+        """Disable a cron job."""
+        return await self.update_cron_job(job_id, {"enabled": False}) is not None
+    
+    async def run_cron_job(self, job_id: str, force: bool = False) -> bool:
+        """Trigger a cron job to run immediately."""
+        params = {"jobId": job_id}
+        if force:
+            params["force"] = True
+        result = await self.call("cron.run", params)
+        return result is not None
     
     async def get_presence(self) -> dict[str, Any]:
         """Get connected devices/clients."""

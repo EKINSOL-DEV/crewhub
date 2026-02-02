@@ -4,8 +4,8 @@ import { act } from 'react'
 import App from '../App'
 
 // Mock all hooks that make API calls
-vi.mock('../hooks/useMinionsStream', () => ({
-  useMinionsStream: () => ({
+vi.mock('../hooks/useSessionsStream', () => ({
+  useSessionsStream: () => ({
     sessions: [],
     loading: false,
     error: null,
@@ -50,11 +50,11 @@ describe('App', () => {
     cleanup()
   })
 
-  it('renders the ClawCrew header', async () => {
+  it('renders the CrewHub header', async () => {
     await act(async () => {
       render(<App />)
     })
-    expect(screen.getByText('ClawCrew')).toBeInTheDocument()
+    expect(screen.getByText('CrewHub')).toBeInTheDocument()
   })
 
   it('renders the tagline', async () => {
@@ -71,11 +71,11 @@ describe('App', () => {
     expect(screen.getByText('Live')).toBeInTheDocument()
   })
 
-  it('renders the crab emoji logo', async () => {
+  it('renders the team emoji logo', async () => {
     await act(async () => {
       render(<App />)
     })
-    const crabs = screen.getAllByText('🦀')
-    expect(crabs.length).toBeGreaterThan(0)
+    const logos = screen.getAllByText('👥')
+    expect(logos.length).toBeGreaterThan(0)
   })
 })

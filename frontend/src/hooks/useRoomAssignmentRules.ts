@@ -1,22 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { API_BASE } from "@/lib/api"
 
-export interface Room {
-  id: string
-  name: string
-  icon: string | null
-  color: string | null
-  sort_order: number
-  created_at: number
-  updated_at: number
-}
-
-export interface SessionRoomAssignment {
-  session_key: string
-  room_id: string
-  assigned_at: number
-}
-
 export interface RoomAssignmentRule {
   id: string
   room_id: string
@@ -26,55 +10,29 @@ export interface RoomAssignmentRule {
   created_at: number
 }
 
-interface RoomsResponse {
-  rooms: Room[]
-}
-
-interface AssignmentsResponse {
-  assignments: SessionRoomAssignment[]
-}
-
 interface RulesResponse {
   rules: RoomAssignmentRule[]
 }
 
-export function useRooms() {
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [sessionAssignments, setSessionAssignments] = useState<Map<string, string>>(new Map())
+/**
+ * Hook to fetch and manage room assignment rules.
+ * Rules are sorted by priority (highest first).
+ */
+export function useRoomAssignmentRules() {
   const [rules, setRules] = useState<RoomAssignmentRule[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchRooms = useCallback(async () => {
+  const fetchRules = useCallback(async () => {
     try {
-      const [roomsResponse, assignmentsResponse, rulesResponse] = await Promise.all([
-        fetch(`${API_BASE}/rooms`),
-        fetch(`${API_BASE}/session-room-assignments`),
-        fetch(`${API_BASE}/room-assignment-rules`),
-      ])
+      const response = await fetch(`${API_BASE}/room-assignment-rules`)
+      if (!response.ok) throw new Error("Failed to fetch rules")
       
-      if (!roomsResponse.ok) throw new Error("Failed to fetch rooms")
-      
-      const roomsData: RoomsResponse = await roomsResponse.json()
-      setRooms(roomsData.rooms || [])
-      
-      if (assignmentsResponse.ok) {
-        const assignmentsData: AssignmentsResponse = await assignmentsResponse.json()
-        const assignmentsMap = new Map<string, string>()
-        for (const assignment of assignmentsData.assignments || []) {
-          assignmentsMap.set(assignment.session_key, assignment.room_id)
-        }
-        setSessionAssignments(assignmentsMap)
-      }
-      
-      if (rulesResponse.ok) {
-        const rulesData: RulesResponse = await rulesResponse.json()
-        setRules(rulesData.rules || [])
-      }
-      
+      const data: RulesResponse = await response.json()
+      setRules(data.rules || [])
       setError(null)
     } catch (err) {
-      console.error("Failed to fetch rooms:", err)
+      console.error("Failed to fetch room assignment rules:", err)
       setError(err instanceof Error ? err.message : "Unknown error")
     } finally {
       setIsLoading(false)
@@ -82,8 +40,8 @@ export function useRooms() {
   }, [])
 
   useEffect(() => {
-    fetchRooms()
-  }, [fetchRooms])
+    fetchRules()
+  }, [fetchRules])
 
   /**
    * Apply rules to determine room for a session.
@@ -102,6 +60,7 @@ export function useRooms() {
           matches = sessionKey.includes(rule.rule_value)
           break
         case "keyword":
+          // Check in label
           if (sessionData?.label) {
             matches = sessionData.label.toLowerCase().includes(rule.rule_value.toLowerCase())
           }
@@ -112,6 +71,7 @@ export function useRooms() {
           }
           break
         case "label_pattern":
+          // Regex pattern match
           try {
             const regex = new RegExp(rule.rule_value, "i")
             matches = regex.test(sessionData?.label || "") || regex.test(sessionKey)
@@ -120,6 +80,7 @@ export function useRooms() {
           }
           break
         case "session_type":
+          // Match session type based on key patterns
           if (rule.rule_value === "cron") matches = sessionKey.includes(":cron:")
           else if (rule.rule_value === "subagent") matches = sessionKey.includes(":subagent:") || sessionKey.includes(":spawn:")
           else if (rule.rule_value === "main") matches = sessionKey === "agent:main:main"
@@ -138,32 +99,41 @@ export function useRooms() {
     return undefined
   }, [rules])
 
-  /**
-   * Get the room for a session, checking:
-   * 1. Explicit assignment (from API)
-   * 2. Rules-based routing
-   * Returns undefined if neither matches.
-   */
-  const getRoomForSession = useCallback((
-    sessionKey: string,
-    sessionData?: { label?: string; model?: string; channel?: string }
-  ): string | undefined => {
-    // First check explicit assignment
-    const explicitRoom = sessionAssignments.get(sessionKey)
-    if (explicitRoom) return explicitRoom
-    
-    // Then check rules
-    return getRoomFromRules(sessionKey, sessionData)
-  }, [sessionAssignments, getRoomFromRules])
+  const createRule = useCallback(async (rule: Omit<RoomAssignmentRule, "id" | "created_at">) => {
+    try {
+      const response = await fetch(`${API_BASE}/room-assignment-rules`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rule)
+      })
+      if (!response.ok) throw new Error("Failed to create rule")
+      await fetchRules()
+      return true
+    } catch {
+      return false
+    }
+  }, [fetchRules])
+
+  const deleteRule = useCallback(async (ruleId: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/room-assignment-rules/${ruleId}`, {
+        method: "DELETE"
+      })
+      if (!response.ok) throw new Error("Failed to delete rule")
+      await fetchRules()
+      return true
+    } catch {
+      return false
+    }
+  }, [fetchRules])
 
   return { 
-    rooms, 
-    sessionAssignments, 
-    rules,
-    getRoomForSession, 
-    getRoomFromRules,
+    rules, 
     isLoading, 
     error, 
-    refresh: fetchRooms 
+    refresh: fetchRules, 
+    getRoomFromRules,
+    createRule,
+    deleteRule
   }
 }

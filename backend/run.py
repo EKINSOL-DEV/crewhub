@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the ClawCrew backend server."""
+"""Run the CrewHub backend server."""
 
 import uvicorn
 from app.config import settings

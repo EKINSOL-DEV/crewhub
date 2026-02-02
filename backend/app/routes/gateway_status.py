@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 from ..services.gateway import get_gateway
 
-router = APIRouter(tags=["Gateway"])
+router = APIRouter()
 
 
 @router.get("/status")
