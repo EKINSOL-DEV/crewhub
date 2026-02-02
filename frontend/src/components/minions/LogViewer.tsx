@@ -47,7 +47,8 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
     try {
       if (!silent) { setLoading(true); setError(null) } else setIsRefreshing(true)
       const response = await api.getMinionHistory(session.key, 100)
-      const transformedMessages = (response.messages || []).map((item: any) => {
+      // Transform messages - handle both direct messages and wrapped {message, timestamp} format
+      const transformedMessages = (response.messages || []).map((item: MinionMessage & { message?: MinionMessage; timestamp?: string }) => {
         if (item.message) return { ...item.message, timestamp: item.timestamp ? new Date(item.timestamp).getTime() : undefined }
         return item
       })
