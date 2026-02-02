@@ -141,6 +141,141 @@ cd backend && pytest
 cd frontend && npm test
 ```
 
+## 🎯 CrewBar Component
+
+CrewBar is a standalone, reusable component that provides floating chat windows for AI agents. It can be embedded in any React application.
+
+### Features
+
+- 🔘 **Floating Agent Buttons** - Display agent avatars with status indicators
+- 💬 **Chat Windows** - Click to open chat, supports multiple windows simultaneously
+- ✋ **Drag & Drop** - Freely position windows anywhere on screen
+- 📏 **Resizable** - Resize windows to your preference
+- 🔽 **Minimize/Maximize** - Collapse windows to title bar
+- 💾 **Persistent State** - Window positions and open state saved to localStorage
+- 🎨 **Customizable** - Agent colors, avatars, emoji, and more
+
+### Basic Usage
+
+```tsx
+import { CrewBar, type CrewAgent, type CrewBarConfig } from '@/components/crewbar'
+
+// Define your agents
+const agents: CrewAgent[] = [
+  { 
+    id: "claude", 
+    name: "Claude", 
+    emoji: "🤖", 
+    color: "#6366f1", 
+    status: "idle", 
+    isPinned: true 
+  },
+  { 
+    id: "gpt", 
+    name: "GPT", 
+    emoji: "🧠", 
+    color: "#22c55e", 
+    status: "working", 
+    isPinned: true 
+  },
+]
+
+// Configure chat functionality
+const config: CrewBarConfig = {
+  sendMessage: async (agentId, message) => {
+    const response = await fetch(`/api/agents/${agentId}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    })
+    const data = await response.json()
+    return data.response
+  },
+  welcomeMessage: (agent) => `${agent.emoji} Hi! I'm ${agent.name}. How can I help?`,
+  inputPlaceholder: (name) => `Ask ${name} something...`,
+  errorMessage: "⚠️ Connection failed. Please try again.",
+}
+
+// Add to your app
+function App() {
+  return (
+    <div>
+      <YourMainContent />
+      <CrewBar 
+        agents={agents} 
+        config={config}
+        onTogglePin={(agentId) => toggleAgentPin(agentId)}
+      />
+    </div>
+  )
+}
+```
+
+### Types
+
+```typescript
+// Agent definition
+interface CrewAgent {
+  id: string
+  name: string
+  emoji: string
+  avatarUrl?: string        // Optional image URL instead of emoji
+  model?: string            // Shown in window header
+  status: CrewStatus        // idle | thinking | working | success | error | offline
+  currentTask?: string      // Shown in tooltip
+  color: string             // Hex color for avatar border/background
+  isPinned?: boolean        // Whether to show in the bar
+}
+
+// Configuration
+interface CrewBarConfig {
+  // Required: Function to send messages and get responses
+  sendMessage: (agentId: string, message: string) => Promise<string>
+  
+  // Optional customizations
+  loadHistory?: (agentId: string, options?: { limit?: number; before?: number }) => Promise<CrewMessage[]>
+  welcomeMessage?: (agent: CrewAgent) => string
+  inputPlaceholder?: (agentName: string) => string
+  errorMessage?: string
+}
+```
+
+### Integration with Gateway API
+
+For CrewHub, you can use the Gateway API directly:
+
+```tsx
+const config: CrewBarConfig = {
+  sendMessage: async (agentId, message) => {
+    // Connect to OpenClaw Gateway
+    const ws = new WebSocket(`${GATEWAY_URL}/sessions/${sessionId}`)
+    // ... handle WebSocket communication
+    return response
+  },
+}
+```
+
+### Styling
+
+The component uses Tailwind CSS and follows the shadcn/ui design system. It automatically adapts to light/dark mode through CSS variables:
+
+- `--background`, `--foreground`
+- `--muted`, `--muted-foreground`
+- `--primary`, `--primary-foreground`
+- `--border`, `--popover`
+
+### Individual Components
+
+You can also use individual components if you need more control:
+
+```tsx
+import { 
+  CrewAvatar,      // Just the avatar with status indicator
+  CrewWindow,      // Just the chat window
+  useCrewWindows,  // Hook for managing multiple windows
+} from '@/components/crewbar'
+```
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
