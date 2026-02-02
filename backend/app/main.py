@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routes import health, agents
+from app.routes import health, agents, sessions, sse, gateway_status
 
 app = FastAPI(
     title="ClawCrew API",
@@ -24,6 +24,9 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router, tags=["health"])
 app.include_router(agents.router, prefix="/api/agents", tags=["agents"])
+app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
+app.include_router(sse.router, prefix="/api", tags=["sse"])
+app.include_router(gateway_status.router, prefix="/api/gateway", tags=["gateway"])
 
 
 @app.get("/")
