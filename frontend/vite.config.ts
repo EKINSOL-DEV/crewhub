@@ -15,7 +15,7 @@ export default defineConfig({
     allowedHosts: ['ekinbot.local', 'localhost'],
     proxy: {
       '/api': {
-        target: 'http://localhost:8181',
+        target: 'http://localhost:8090',
         changeOrigin: true,
       },
     },
