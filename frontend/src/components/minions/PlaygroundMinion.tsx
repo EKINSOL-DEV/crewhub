@@ -86,6 +86,14 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
     return () => clearTimeout(timer)
   }, [index])
 
+  // Cleanup all timeout refs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current)
+      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current)
+    }
+  }, [])
+
   useEffect(() => {
     const margin = minionSize / 2 + 10
     let initialX, initialY

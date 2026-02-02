@@ -3,6 +3,7 @@ import { PlaygroundView } from './components/minions/PlaygroundView'
 import { StatsHeader } from './components/minions/StatsHeader'
 import { SettingsPanel, DEFAULT_SETTINGS, type MinionsSettings } from './components/minions/SettingsPanel'
 import { useMinionsStream } from './hooks/useMinionsStream'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Settings, RefreshCw, Wifi, WifiOff } from 'lucide-react'
 import { Button } from './components/ui/button'
 
@@ -89,13 +90,15 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-hidden">
-            <PlaygroundView
-              sessions={sessions}
-              settings={settings}
-              onAliasChanged={handleAliasChanged}
-            />
-          </div>
+          <ErrorBoundary>
+            <div className="flex-1 overflow-hidden">
+              <PlaygroundView
+                sessions={sessions}
+                settings={settings}
+                onAliasChanged={handleAliasChanged}
+              />
+            </div>
+          </ErrorBoundary>
         )}
       </main>
 
