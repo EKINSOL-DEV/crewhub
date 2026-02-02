@@ -1,0 +1,283 @@
+"""SQLite database setup for CrewHub."""
+import os
+import aiosqlite
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+# Database path - prefer ~/.crewhub/ for persistent storage
+DB_DIR = Path.home() / ".crewhub"
+DB_PATH = DB_DIR / "crewhub.db"
+
+# Schema version for migrations
+SCHEMA_VERSION = 1
+
+
+async def init_database():
+    """Initialize the CrewHub database with schema.
+    
+    Creates the database file and tables if they don't exist.
+    Safe to call multiple times (idempotent).
+    """
+    try:
+        # Ensure directory exists
+        DB_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # Connect and create tables
+        async with aiosqlite.connect(DB_PATH) as db:
+            # ========================================
+            # ROOMS
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS rooms (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    icon TEXT,
+                    color TEXT,
+                    sort_order INTEGER DEFAULT 0,
+                    default_model TEXT,
+                    speed_multiplier REAL DEFAULT 1.0,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            
+            # ========================================
+            # AGENTS (registry)
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS agents (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    icon TEXT,
+                    avatar_url TEXT,
+                    color TEXT,
+                    agent_session_key TEXT UNIQUE,
+                    default_model TEXT,
+                    default_room_id TEXT,
+                    sort_order INTEGER DEFAULT 0,
+                    is_pinned BOOLEAN DEFAULT FALSE,
+                    auto_spawn BOOLEAN DEFAULT TRUE,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    FOREIGN KEY (default_room_id) REFERENCES rooms(id)
+                )
+            """)
+            
+            # ========================================
+            # SESSION ROOM ASSIGNMENTS
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS session_room_assignments (
+                    session_key TEXT PRIMARY KEY,
+                    room_id TEXT NOT NULL,
+                    assigned_at INTEGER NOT NULL,
+                    FOREIGN KEY (room_id) REFERENCES rooms(id)
+                )
+            """)
+            
+            # ========================================
+            # SESSION DISPLAY NAMES
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS session_display_names (
+                    session_key TEXT PRIMARY KEY,
+                    display_name TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            
+            # ========================================
+            # ROOM ASSIGNMENT RULES
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS room_assignment_rules (
+                    id TEXT PRIMARY KEY,
+                    room_id TEXT NOT NULL,
+                    rule_type TEXT NOT NULL,
+                    rule_value TEXT NOT NULL,
+                    priority INTEGER DEFAULT 0,
+                    created_at INTEGER NOT NULL,
+                    FOREIGN KEY (room_id) REFERENCES rooms(id)
+                )
+            """)
+            
+            # ========================================
+            # SETTINGS (global key-value)
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            
+            # ========================================
+            # SCHEMA VERSION
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS schema_version (
+                    version INTEGER PRIMARY KEY,
+                    applied_at INTEGER DEFAULT (strftime('%s', 'now') * 1000)
+                )
+            """)
+            
+            # Create indexes
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_agents_session_key 
+                ON agents(agent_session_key)
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_agents_pinned 
+                ON agents(is_pinned)
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_room_assignment_rules_priority 
+                ON room_assignment_rules(priority DESC)
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_session_room_assignments_room 
+                ON session_room_assignments(room_id)
+            """)
+            
+            # Set initial version if not exists
+            await db.execute("""
+                INSERT OR IGNORE INTO schema_version (version) 
+                VALUES (?)
+            """, (SCHEMA_VERSION,))
+            
+            await db.commit()
+            
+        logger.info(f"Database initialized at {DB_PATH}")
+        
+        # Seed default data
+        await seed_default_data()
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        return False
+
+
+async def get_db():
+    """Get a database connection.
+    
+    Returns:
+        aiosqlite.Connection: Database connection
+        
+    Note: Caller is responsible for closing the connection.
+    """
+    try:
+        # Ensure database exists
+        if not DB_PATH.exists():
+            await init_database()
+            
+        return await aiosqlite.connect(DB_PATH)
+    except Exception as e:
+        logger.error(f"Failed to connect to database: {e}")
+        raise
+
+
+async def seed_default_data():
+    """Seed the database with default rooms and agents.
+    
+    Safe to call multiple times (uses INSERT OR IGNORE).
+    """
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            import time
+            now = int(time.time() * 1000)
+            
+            # Create default rooms
+            default_rooms = [
+                ('headquarters', 'Headquarters', '🏛️', '#4f46e5', 0, now, now),
+                ('marketing-room', 'Marketing', '📢', '#ec4899', 1, now, now),
+                ('dev-room', 'Dev Room', '💻', '#10b981', 2, now, now),
+                ('creative-room', 'Creative Room', '🎨', '#f59e0b', 3, now, now),
+                ('thinking-room', 'Thinking Room', '🧠', '#8b5cf6', 4, now, now),
+                ('automation-room', 'Automation Room', '⚙️', '#06b6d4', 5, now, now),
+                ('comms-room', 'Comms Room', '📡', '#14b8a6', 6, now, now),
+                ('ops-room', 'Ops Room', '🛠️', '#f97316', 7, now, now),
+            ]
+            
+            await db.executemany("""
+                INSERT OR IGNORE INTO rooms (id, name, icon, color, sort_order, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, default_rooms)
+            
+            # Create default agents
+            default_agents = [
+                ('main', 'Main', '🤖', '#3b82f6', 'agent:main:main', 'anthropic/claude-sonnet-4-5', 'headquarters', 0, True, True, now, now),
+            ]
+            
+            await db.executemany("""
+                INSERT OR IGNORE INTO agents (
+                    id, name, icon, color, agent_session_key, 
+                    default_model, default_room_id, sort_order, 
+                    is_pinned, auto_spawn, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, default_agents)
+            
+            # Create default settings
+            default_settings = [
+                ('active_agent_id', 'main', now),
+                ('layout_mode', 'grid', now),
+                ('grid_columns', '4', now),
+                ('show_room_labels', 'true', now),
+                ('show_room_borders', 'true', now),
+                ('unassigned_room_id', 'headquarters', now),
+            ]
+            
+            await db.executemany("""
+                INSERT OR IGNORE INTO settings (key, value, updated_at)
+                VALUES (?, ?, ?)
+            """, default_settings)
+            
+            await db.commit()
+            logger.info("Default seed data inserted successfully")
+            return True
+            
+    except Exception as e:
+        logger.error(f"Failed to seed default data: {e}")
+        return False
+
+
+async def check_database_health() -> dict:
+    """Check database health and statistics."""
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            # Get counts
+            async with db.execute("SELECT COUNT(*) FROM rooms") as cursor:
+                rooms_count = (await cursor.fetchone())[0]
+            
+            async with db.execute("SELECT COUNT(*) FROM agents") as cursor:
+                agents_count = (await cursor.fetchone())[0]
+            
+            async with db.execute("SELECT COUNT(*) FROM session_room_assignments") as cursor:
+                assignments_count = (await cursor.fetchone())[0]
+            
+            # Get database size
+            size = DB_PATH.stat().st_size if DB_PATH.exists() else 0
+            
+            return {
+                "healthy": True,
+                "path": str(DB_PATH),
+                "rooms_count": rooms_count,
+                "agents_count": agents_count,
+                "assignments_count": assignments_count,
+                "size_bytes": size,
+                "size_mb": round(size / (1024 * 1024), 2)
+            }
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        return {
+            "healthy": False,
+            "error": str(e)
+        }

@@ -11,6 +11,7 @@ services:
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:-}
     volumes:
       - ./backend/app:/app/app
+      - ./data:/root/.crewhub
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -28,7 +29,7 @@ services:
     ports:
       - "5180:5180"
     environment:
-      - VITE_API_URL=http://localhost:8090
+      - VITE_API_URL=http://backend:8090
     volumes:
       - ./frontend/src:/app/src
     depends_on:
