@@ -1,6 +1,9 @@
 import { shouldBeInParkingLane } from './minionUtils'
 import type { CrewSession } from './api'
 
+/** Default: hide parked sessions inactive for more than 30 minutes */
+const PARKING_EXPIRY_MS = 30 * 60 * 1000
+
 /**
  * Split sessions into visible (in rooms) and parked (parking lane / break area).
  * Shared between 2D PlaygroundView and 3D World3DView.
@@ -9,12 +12,14 @@ import type { CrewSession } from './api'
  *  1. Sessions that `shouldBeInParkingLane` → parking
  *  2. Remaining sorted by updatedAt desc, capped at maxVisible
  *  3. Overflow (beyond maxVisible) → also parking
+ *  4. Parked sessions with no activity for >30 min are hidden entirely
  */
 export function splitSessionsForDisplay(
   sessions: CrewSession[],
   isActivelyRunning: (key: string) => boolean,
   idleThreshold: number = 120,
   maxVisible: number = 15,
+  parkingExpiryMs: number = PARKING_EXPIRY_MS,
 ): { visibleSessions: CrewSession[]; parkingSessions: CrewSession[] } {
   const activeSessions = sessions.filter(
     s => !shouldBeInParkingLane(s, isActivelyRunning(s.key), idleThreshold),
@@ -27,9 +32,10 @@ export function splitSessionsForDisplay(
   const visibleSessions = sortedActive.slice(0, maxVisible)
   const overflowSessions = sortedActive.slice(maxVisible)
 
-  const allParking = [...overflowSessions, ...parkingSessions].sort(
-    (a, b) => b.updatedAt - a.updatedAt,
-  )
+  const now = Date.now()
+  const allParking = [...overflowSessions, ...parkingSessions]
+    .filter(s => (now - s.updatedAt) < parkingExpiryMs)
+    .sort((a, b) => b.updatedAt - a.updatedAt)
 
   return { visibleSessions, parkingSessions: allParking }
 }
