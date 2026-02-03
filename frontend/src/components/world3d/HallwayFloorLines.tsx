@@ -26,59 +26,57 @@ export function HallwayFloorLines({
   const gridSpacing = roomSize + hallwayWidth
   const halfRoom = roomSize / 2
 
+  // Compute strict grid bounds — lines must stay within the room grid area
+  const gridMaxX = gridOriginX + (cols - 1) * gridSpacing + halfRoom
+  const gridMaxZ = gridOriginZ + (rows - 1) * gridSpacing + halfRoom
+
   const lines = useMemo(() => {
     const items: { position: [number, number, number]; size: [number, number] }[] = []
+    const dashLength = 1.0
+    const gapLength = 0.6
 
-    // Horizontal hallway lines (between rows)
+    // Horizontal hallway center lines (between rows, spanning across columns + gaps)
     for (let row = 0; row < rows - 1; row++) {
       const z = gridOriginZ + row * gridSpacing + halfRoom + hallwayWidth / 2
 
-      // Dashed lines across the hallway
-      for (let col = 0; col < cols; col++) {
-        const startX = gridOriginX + col * gridSpacing - halfRoom
-        const endX = gridOriginX + col * gridSpacing + halfRoom
+      // Span from first room left edge to last room right edge (entire grid width)
+      const startX = gridOriginX - halfRoom
+      const endX = gridMaxX
+      const totalLength = endX - startX
+      const numDashes = Math.floor(totalLength / (dashLength + gapLength))
 
-        // Create dashes
-        const dashLength = 1.0
-        const gapLength = 0.6
-        const totalLength = endX - startX
-        const numDashes = Math.floor(totalLength / (dashLength + gapLength))
-
-        for (let d = 0; d < numDashes; d++) {
-          const x = startX + d * (dashLength + gapLength) + dashLength / 2
-          items.push({
-            position: [x, 0.085, z],
-            size: [dashLength, 0.12],
-          })
-        }
+      for (let d = 0; d < numDashes; d++) {
+        const x = startX + d * (dashLength + gapLength) + dashLength / 2
+        // Strictly bound within grid
+        if (x + dashLength / 2 > gridMaxX + 0.1) break
+        items.push({
+          position: [x, 0.085, z],
+          size: [dashLength, 0.12],
+        })
       }
     }
 
-    // Vertical hallway lines (between columns)
+    // Vertical hallway center lines (between columns, spanning across rows + gaps)
     for (let col = 0; col < cols - 1; col++) {
       const x = gridOriginX + col * gridSpacing + halfRoom + hallwayWidth / 2
 
-      for (let row = 0; row < rows; row++) {
-        const startZ = gridOriginZ + row * gridSpacing - halfRoom
-        const endZ = gridOriginZ + row * gridSpacing + halfRoom
+      const startZ = gridOriginZ - halfRoom
+      const endZ = gridMaxZ
+      const totalLength = endZ - startZ
+      const numDashes = Math.floor(totalLength / (dashLength + gapLength))
 
-        const dashLength = 1.0
-        const gapLength = 0.6
-        const totalLength = endZ - startZ
-        const numDashes = Math.floor(totalLength / (dashLength + gapLength))
-
-        for (let d = 0; d < numDashes; d++) {
-          const z = startZ + d * (dashLength + gapLength) + dashLength / 2
-          items.push({
-            position: [x, 0.085, z],
-            size: [0.12, dashLength],
-          })
-        }
+      for (let d = 0; d < numDashes; d++) {
+        const z = startZ + d * (dashLength + gapLength) + dashLength / 2
+        if (z + dashLength / 2 > gridMaxZ + 0.1) break
+        items.push({
+          position: [x, 0.085, z],
+          size: [0.12, dashLength],
+        })
       }
     }
 
     return items
-  }, [roomSize, hallwayWidth, cols, rows, gridOriginX, gridOriginZ, gridSpacing, halfRoom])
+  }, [roomSize, hallwayWidth, cols, rows, gridOriginX, gridOriginZ, gridSpacing, halfRoom, gridMaxX, gridMaxZ])
 
   return (
     <group>
