@@ -58,12 +58,20 @@ export function RoomFloor({ color, size = 12 }: RoomFloorProps) {
     return { data, tileSize }
   }, [baseColor, size])
 
+  const baseToonProps = useToonMaterialProps(WARM_COLORS.stoneDark)
+
   return (
     <group>
+      {/* Solid base slab under tiles to prevent clipping with grass */}
+      <mesh position={[0, -0.05, 0]} receiveShadow>
+        <boxGeometry args={[size + 0.5, 0.3, size + 0.5]} />
+        <meshToonMaterial {...baseToonProps} />
+      </mesh>
+      {/* Individual tiles raised above base */}
       {tiles.data.map((tile) => (
         <mesh
           key={tile.key}
-          position={[tile.x, -tile.height / 2, tile.z]}
+          position={[tile.x, 0.1 + tile.height / 2, tile.z]}
           receiveShadow
         >
           <boxGeometry args={[tiles.tileSize, tile.height, tiles.tileSize]} />
