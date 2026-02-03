@@ -148,16 +148,7 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
         </mesh>
       </group>
 
-      {/* ─── Parking spots indicator (subtle floor markings) ─── */}
-      {Array.from({ length: 3 }, (_, i) => {
-        const z = halfD - 3 - i * 3
-        return (
-          <mesh key={`spot-${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[-halfW + 3 + i * 3.5, 0.09, z]}>
-            <ringGeometry args={[0.6, 0.7, 16]} />
-            <meshToonMaterial {...useToonMaterialProps('#C0B090')} />
-          </mesh>
-        )
-      })}
+      {/* Removed parking spot floor markings — they caused visual clipping artifacts */}
     </group>
   )
 }
