@@ -1,4 +1,4 @@
-import { Text } from '@react-three/drei'
+import { Html } from '@react-three/drei'
 import { Float } from '@react-three/drei'
 import { useToonMaterialProps } from './utils/toonMaterials'
 
@@ -38,17 +38,25 @@ export function RoomNameplate({ name, icon, color, size = 12 }: RoomNameplatePro
           <meshToonMaterial color="#FFF8F0" gradientMap={accentToon.gradientMap} />
         </mesh>
 
-        {/* Front text */}
-        <Text
+        {/* Front text (Html for emoji support) */}
+        <Html
           position={[0, 0, 0.08]}
-          fontSize={0.28}
-          color="#333333"
-          anchorX="center"
-          anchorY="middle"
-          maxWidth={2.6}
+          center
+          transform
+          distanceFactor={4}
         >
-          {displayText}
-        </Text>
+          <span style={{
+            color: '#333333',
+            fontSize: '14px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            userSelect: 'none',
+            pointerEvents: 'none',
+          }}>
+            {displayText}
+          </span>
+        </Html>
 
         {/* Back face (slightly lighter) */}
         <mesh position={[0, 0, -0.065]} rotation={[0, Math.PI, 0]}>
@@ -56,18 +64,26 @@ export function RoomNameplate({ name, icon, color, size = 12 }: RoomNameplatePro
           <meshToonMaterial color="#FFF8F0" gradientMap={accentToon.gradientMap} />
         </mesh>
 
-        {/* Back text */}
-        <Text
+        {/* Back text (Html for emoji support) */}
+        <Html
           position={[0, 0, -0.08]}
           rotation={[0, Math.PI, 0]}
-          fontSize={0.28}
-          color="#333333"
-          anchorX="center"
-          anchorY="middle"
-          maxWidth={2.6}
+          center
+          transform
+          distanceFactor={4}
         >
-          {displayText}
-        </Text>
+          <span style={{
+            color: '#333333',
+            fontSize: '14px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+            userSelect: 'none',
+            pointerEvents: 'none',
+          }}>
+            {displayText}
+          </span>
+        </Html>
 
         {/* Support poles */}
         <mesh position={[-1.2, -0.55, 0]}>
