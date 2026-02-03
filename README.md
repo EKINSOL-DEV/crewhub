@@ -1,25 +1,93 @@
-# 🦀 CrewHub
+<p align="center">
+  <img src="frontend/public/logo.svg" width="120" alt="CrewHub">
+</p>
 
-Real-time dashboard for monitoring your AI agent sessions.
+<h1 align="center">CrewHub</h1>
 
-![CrewHub Dashboard](https://via.placeholder.com/800x400?text=CrewHub+Dashboard)
+<p align="center">
+  <strong>Your AI crew, one dashboard.</strong><br>
+  Real-time monitoring, room management, and visual playground for AI agent sessions.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-v0.1.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  <img src="https://img.shields.io/badge/react-18-61dafb" alt="React">
+  <img src="https://img.shields.io/badge/fastapi-0.100+-009688" alt="FastAPI">
+  <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="Docker">
+</p>
+
+---
 
 ## ✨ Features
 
-- 🔴 **Live Updates** - Real-time session monitoring via Server-Sent Events
-- 🏠 **Rooms** - Organize agents in workspaces (Dev Room, Creative Corner, etc.)
-- 📊 **Stats** - Track tokens, costs, and runtime per session
-- 📜 **Log Viewer** - Browse and search chat history with export to JSON
-- 🎨 **Playground View** - Visual grid layout with drag & drop
-- 🌙 **Dark/Light Mode** - Clean, modern UI with theme toggle
-- 🏷️ **Custom Labels** - Name your agents for easy identification
+- 🔴 **Real-time Monitoring** — Live session updates via Server-Sent Events (SSE)
+- 🏠 **Rooms System** — Organize agents into workspaces with drag & drop
+- 🃏 **Cards View** — Filter agents by status: Active, Idle, Working, Error, and more
+- 📜 **Log Viewer** — Search, browse, and export chat history
+- 🔗 **Connections Manager** — Configure OpenClaw, Claude Code, and Codex integrations
+- 🎨 **Agent Design Lab** — 5 custom bot SVGs with unique personalities
+- 🌐 **3D Bot Playground** — Three.js isometric view of your agent fleet
+- 🔍 **Click-to-Detail Panels** — Inspect any agent's info, stats, and activity
+- 🏷️ **Custom Display Names** — Name your agents and set room routing rules
+- ⏰ **Cron Jobs View** — Monitor scheduled and recurring agent tasks
+- 📊 **Session History** — Full archive with search and filtering
+- 🌙 **Dark/Light Theme** — Plus customizable accent colors
+- 🔢 **Version Display** — Always know what you're running (v0.1.0)
+
+## 📸 Screenshots
+
+> _Screenshots coming soon — the dashboard looks better than we can describe._
+
+<!--
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" width="800" alt="CrewHub Dashboard">
+  <img src="docs/screenshots/rooms.png" width="800" alt="Rooms View">
+  <img src="docs/screenshots/playground.png" width="800" alt="3D Playground">
+</p>
+-->
+
+## 🤖 Agent Types
+
+CrewHub ships with 5 distinct bot personalities, each with a custom SVG design:
+
+| Bot | Color | Role |
+|-----|-------|------|
+| 🔧 **Worker Bot** | 🟠 Orange | General task execution |
+| 🧠 **Thinker Bot** | 🔵 Blue | Deep analysis & reasoning |
+| ⏰ **Cron Bot** | 🟢 Green | Scheduled & recurring tasks |
+| 💬 **Comms Bot** | 🟣 Purple | Communication & coordination |
+| 💻 **Dev Bot** | 🔴 Red | Software development & coding |
+
+Design your agents in the **Agent Design Lab** and watch them come alive in the **3D Bot Playground**.
+
+## 🆕 What's New in v0.1.0
+
+- 🌐 **3D Bot Playground** — Three.js isometric view with animated bots
+- 🎨 **Agent Design Lab** — Design and customize 5 bot types with unique SVGs
+- 🏠 **Rooms with drag & drop** — Organize your crew spatially
+- 🃏 **Cards view with multi-filter** — Slice and dice by status
+- 🔗 **Connections management** — First-class support for OpenClaw, Claude Code, and Codex
+- ⏰ **Cron jobs view** — Visibility into scheduled tasks
+- 📊 **Session history & archiving** — Never lose context
+- 🎨 **Accent color customization** — Make it yours
+- 🔍 **Log search & export** — Find anything, export everything
 
 ## 🔗 Compatibility
 
 Works with:
-- **[OpenClaw](https://openclaw.dev)** - Personal AI assistant platform
-- **Claude Code** - Anthropic's CLI coding agent
-- Other AI agent platforms (coming soon)
+- **[OpenClaw](https://openclaw.dev)** — Personal AI assistant platform
+- **Claude Code** — Anthropic's CLI coding agent
+- **ChatGPT Codex CLI** — OpenAI's coding agent
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React, TypeScript, Tailwind CSS, Three.js |
+| Backend | FastAPI (Python), SQLite |
+| Real-time | Server-Sent Events (SSE) |
+| Deployment | Docker, Docker Compose |
 
 ## 🚀 Quick Start
 
@@ -32,19 +100,13 @@ Works with:
 ### Option 1: Docker (Recommended)
 
 ```bash
-# Clone the repository
 git clone https://github.com/ekinsolbot/crewhub.git
 cd crewhub
 
-# Configure environment
 cp .env.example .env
 # Edit .env with your Gateway URL and token (see Configuration below)
 
-# Start with Docker
 make up
-
-# View logs
-make logs
 ```
 
 The dashboard will be available at **http://localhost:5180**
@@ -52,12 +114,10 @@ The dashboard will be available at **http://localhost:5180**
 ### Option 2: Local Development
 
 ```bash
-# Clone and configure
 git clone https://github.com/ekinsolbot/crewhub.git
 cd crewhub
 cp .env.example .env
 
-# Start both backend and frontend with hot-reload
 make dev
 ```
 
@@ -81,11 +141,7 @@ VITE_API_URL=http://localhost:8090
 ### Getting Your Gateway Token
 
 ```bash
-# Generate a new token
 openclaw gateway token
-
-# Or check existing configuration
-cat ~/.openclaw/config.yaml
 ```
 
 ### Docker Network Notes
@@ -101,7 +157,7 @@ When running in Docker, use these Gateway URLs:
 | Frontend | 5180 | React dashboard UI |
 | Backend  | 8090 | FastAPI server |
 
-## 🛠️ Development
+## 🧑‍💻 Development
 
 ```bash
 make dev      # Start backend + frontend with hot-reload
@@ -121,160 +177,19 @@ crewhub/
 │   │   ├── routes/    # API endpoints
 │   │   ├── services/  # Business logic
 │   │   └── config.py  # Settings
-│   └── tests/         # Backend tests
+│   └── tests/
 ├── frontend/          # React + TypeScript frontend
 │   ├── src/
 │   │   ├── components/  # UI components
 │   │   ├── hooks/       # React hooks
 │   │   └── lib/         # Utilities
-│   └── tests/           # Frontend tests
+│   └── public/          # Static assets & logo
 └── docker-compose.yml
 ```
 
-## 🧪 Running Tests
+## 🎯 CrewBar
 
-```bash
-# Backend tests
-cd backend && pytest
-
-# Frontend tests
-cd frontend && npm test
-```
-
-## 🎯 CrewBar Component
-
-CrewBar is a standalone, reusable component that provides floating chat windows for AI agents. It can be embedded in any React application.
-
-### Features
-
-- 🔘 **Floating Agent Buttons** - Display agent avatars with status indicators
-- 💬 **Chat Windows** - Click to open chat, supports multiple windows simultaneously
-- ✋ **Drag & Drop** - Freely position windows anywhere on screen
-- 📏 **Resizable** - Resize windows to your preference
-- 🔽 **Minimize/Maximize** - Collapse windows to title bar
-- 💾 **Persistent State** - Window positions and open state saved to localStorage
-- 🎨 **Customizable** - Agent colors, avatars, emoji, and more
-
-### Basic Usage
-
-```tsx
-import { CrewBar, type CrewAgent, type CrewBarConfig } from '@/components/crewbar'
-
-// Define your agents
-const agents: CrewAgent[] = [
-  { 
-    id: "claude", 
-    name: "Claude", 
-    emoji: "🤖", 
-    color: "#6366f1", 
-    status: "idle", 
-    isPinned: true 
-  },
-  { 
-    id: "gpt", 
-    name: "GPT", 
-    emoji: "🧠", 
-    color: "#22c55e", 
-    status: "working", 
-    isPinned: true 
-  },
-]
-
-// Configure chat functionality
-const config: CrewBarConfig = {
-  sendMessage: async (agentId, message) => {
-    const response = await fetch(`/api/agents/${agentId}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    })
-    const data = await response.json()
-    return data.response
-  },
-  welcomeMessage: (agent) => `${agent.emoji} Hi! I'm ${agent.name}. How can I help?`,
-  inputPlaceholder: (name) => `Ask ${name} something...`,
-  errorMessage: "⚠️ Connection failed. Please try again.",
-}
-
-// Add to your app
-function App() {
-  return (
-    <div>
-      <YourMainContent />
-      <CrewBar 
-        agents={agents} 
-        config={config}
-        onTogglePin={(agentId) => toggleAgentPin(agentId)}
-      />
-    </div>
-  )
-}
-```
-
-### Types
-
-```typescript
-// Agent definition
-interface CrewAgent {
-  id: string
-  name: string
-  emoji: string
-  avatarUrl?: string        // Optional image URL instead of emoji
-  model?: string            // Shown in window header
-  status: CrewStatus        // idle | thinking | working | success | error | offline
-  currentTask?: string      // Shown in tooltip
-  color: string             // Hex color for avatar border/background
-  isPinned?: boolean        // Whether to show in the bar
-}
-
-// Configuration
-interface CrewBarConfig {
-  // Required: Function to send messages and get responses
-  sendMessage: (agentId: string, message: string) => Promise<string>
-  
-  // Optional customizations
-  loadHistory?: (agentId: string, options?: { limit?: number; before?: number }) => Promise<CrewMessage[]>
-  welcomeMessage?: (agent: CrewAgent) => string
-  inputPlaceholder?: (agentName: string) => string
-  errorMessage?: string
-}
-```
-
-### Integration with Gateway API
-
-For CrewHub, you can use the Gateway API directly:
-
-```tsx
-const config: CrewBarConfig = {
-  sendMessage: async (agentId, message) => {
-    // Connect to OpenClaw Gateway
-    const ws = new WebSocket(`${GATEWAY_URL}/sessions/${sessionId}`)
-    // ... handle WebSocket communication
-    return response
-  },
-}
-```
-
-### Styling
-
-The component uses Tailwind CSS and follows the shadcn/ui design system. It automatically adapts to light/dark mode through CSS variables:
-
-- `--background`, `--foreground`
-- `--muted`, `--muted-foreground`
-- `--primary`, `--primary-foreground`
-- `--border`, `--popover`
-
-### Individual Components
-
-You can also use individual components if you need more control:
-
-```tsx
-import { 
-  CrewAvatar,      // Just the avatar with status indicator
-  CrewWindow,      // Just the chat window
-  useCrewWindows,  // Hook for managing multiple windows
-} from '@/components/crewbar'
-```
+CrewHub includes **CrewBar**, a reusable floating chat component for AI agents. It provides draggable, resizable chat windows with status indicators — embeddable in any React app. See the `frontend/src/components/crewbar/` directory for details.
 
 ## 🤝 Contributing
 
@@ -282,12 +197,8 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE)
-
-## 📝 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release notes.
+MIT License — see [LICENSE](LICENSE)
 
 ---
 
-**Made with 🦀 by the OpenClaw community**
+<p align="center"><strong>Made with 🦀 by the OpenClaw community</strong></p>
