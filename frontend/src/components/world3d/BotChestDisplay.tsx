@@ -21,7 +21,7 @@ interface BotChestDisplayProps {
  */
 export function BotChestDisplay({ type, color }: BotChestDisplayProps) {
   const displayY = 0.0   // On the body (body center = -0.02)
-  const displayZ = 0.175  // Front face of body
+  const displayZ = 0.18  // Front face of body (pushed forward to avoid clipping)
 
   return (
     <group position={[0, displayY, displayZ]}>

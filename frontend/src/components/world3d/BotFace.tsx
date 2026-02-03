@@ -34,7 +34,7 @@ export function BotFace({ status, expression }: BotFaceProps) {
   // Eye spacing and size
   const eyeSpacing = 0.09
   const eyeY = 0.34 // Slightly above head center (head center = 0.32)
-  const eyeZ = 0.155 // Front face of head
+  const eyeZ = 0.175 // Pushed forward to avoid clipping with head surface
 
   // Pupil offset per expression
   const pupilOffset = getPupilOffset(expression)
@@ -80,7 +80,7 @@ export function BotFace({ status, expression }: BotFaceProps) {
       </group>
 
       {/* ─── Mouth (per expression) ─── */}
-      <group position={[0, 0.23, eyeZ]}>
+      <group position={[0, 0.27, eyeZ]}>
         <ExpressionMouth expression={expression} />
       </group>
     </group>
