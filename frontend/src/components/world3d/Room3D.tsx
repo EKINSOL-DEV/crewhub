@@ -38,50 +38,50 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
       />
 
       {/* ─── Furniture props ─────────────────────────── */}
-      {/* All props sit on the floor surface (y=0.2) */}
+      {/* All props sit on the floor surface (y ≈ 0.16, top of room floor overlay) */}
       
       {/* Desk with monitor — back-left area */}
       <Desk
-        position={[-halfSize + 2.5, 0.2, halfSize - 2.5]}
+        position={[-halfSize + 2.5, 0.16, halfSize - 2.5]}
         rotation={[0, Math.PI / 4, 0]}
       />
       <Monitor
-        position={[-halfSize + 2.5, 0.98, halfSize - 2.5]}
+        position={[-halfSize + 2.5, 0.94, halfSize - 2.5]}
         rotation={[0, Math.PI / 4, 0]}
       />
 
       {/* Chair in front of desk */}
       <Chair
-        position={[-halfSize + 3.5, 0.2, halfSize - 3.5]}
+        position={[-halfSize + 3.5, 0.16, halfSize - 3.5]}
         rotation={[0, Math.PI + Math.PI / 4, 0]}
       />
 
       {/* Second desk + monitor — right area */}
       <Desk
-        position={[halfSize - 3, 0.2, halfSize - 2]}
+        position={[halfSize - 3, 0.16, halfSize - 2]}
         rotation={[0, -Math.PI / 6, 0]}
       />
       <Monitor
-        position={[halfSize - 3, 0.98, halfSize - 2]}
+        position={[halfSize - 3, 0.94, halfSize - 2]}
         rotation={[0, -Math.PI / 6, 0]}
       />
 
       {/* Chair for second desk */}
       <Chair
-        position={[halfSize - 2.2, 0.2, halfSize - 3]}
+        position={[halfSize - 2.2, 0.16, halfSize - 3]}
         rotation={[0, Math.PI - Math.PI / 6, 0]}
       />
 
       {/* Lamp — near back wall */}
       <Lamp
-        position={[0, 0.2, halfSize - 1.5]}
+        position={[0, 0.16, halfSize - 1.5]}
         lightColor="#FFD700"
         lightIntensity={0.4}
       />
 
       {/* Second lamp — front corner */}
       <Lamp
-        position={[halfSize - 1.5, 0.2, -halfSize + 2]}
+        position={[halfSize - 1.5, 0.16, -halfSize + 2]}
         lightColor="#FFA500"
         lightIntensity={0.3}
       />

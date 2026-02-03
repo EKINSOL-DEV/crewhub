@@ -18,7 +18,7 @@ export function WorldLighting() {
       {/* Main directional light at 45° angle */}
       <directionalLight
         ref={dirLightRef}
-        position={[10, 15, 10]}
+        position={[20, 25, 15]}
         intensity={0.8}
         color="#ffffff"
         castShadow

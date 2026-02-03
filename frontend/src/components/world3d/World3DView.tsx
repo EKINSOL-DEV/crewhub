@@ -5,6 +5,8 @@ import { WorldLighting } from './WorldLighting'
 import { BuildingFloor } from './BuildingFloor'
 import { BuildingWalls } from './BuildingWalls'
 import { Hallway } from './Hallway'
+import { HallwayFloorLines } from './HallwayFloorLines'
+import { EntranceLobby } from './EntranceLobby'
 import { ParkingArea3D } from './ParkingArea3D'
 import { Room3D } from './Room3D'
 import { useRooms } from '@/hooks/useRooms'
@@ -259,6 +261,23 @@ function SceneContent() {
         depth={parkingArea.depth}
       />
 
+      {/* Hallway floor lines (subtle center dashes) */}
+      <HallwayFloorLines
+        roomSize={ROOM_SIZE}
+        hallwayWidth={HALLWAY_WIDTH}
+        cols={cols}
+        rows={rows}
+        gridOriginX={gridOriginX}
+        gridOriginZ={gridOriginZ}
+      />
+
+      {/* Entrance lobby area (front wall is at -Z) */}
+      <EntranceLobby
+        entranceX={entranceX}
+        buildingFrontZ={-buildingDepth / 2}
+        entranceWidth={5}
+      />
+
       {/* Hallway decorations */}
       <Hallway
         roomPositions={roomPositions}
@@ -336,7 +355,7 @@ export function World3DView({ sessions: _sessions, settings: _settings, onAliasC
       {/* Info bar */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50">
         <div className="text-sm px-4 py-2 rounded-full backdrop-blur-md text-gray-700 bg-white/60 shadow-sm border border-gray-200/50">
-          🏢 Office Building — 3D World
+          🏢 CrewHub Office
         </div>
       </div>
     </div>

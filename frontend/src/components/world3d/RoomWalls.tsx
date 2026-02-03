@@ -32,8 +32,8 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5 }: RoomWallsProps
   const gapWidth = 3 // opening width for "door"
 
   // Pre-compute wall segment data
-  // Floor top surface offset — walls sit on top of the floor
-  const floorTop = 0.2
+  // Floor top surface offset — walls sit on top of the room floor overlay
+  const floorTop = 0.16
 
   const { segments, caps } = useMemo(() => {
     const segs: WallSegment[] = []
