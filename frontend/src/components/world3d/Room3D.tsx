@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Html } from '@react-three/drei'
 import { RoomFloor } from './RoomFloor'
 import { RoomWalls } from './RoomWalls'
 import { RoomNameplate } from './RoomNameplate'
-import { RoomProps } from './RoomProps'
+import { GridRoomRenderer } from './grid/GridRoomRenderer'
+import { getBlueprintForRoom } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragDrop } from '@/contexts/DragDropContext'
 import type { Room } from '@/hooks/useRooms'
@@ -138,6 +139,7 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
  */
 export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const roomColor = room.color || '#4f46e5'
+  const blueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
 
   return (
     <group position={position}>
@@ -161,8 +163,8 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
       {/* Drop zone overlay (visible during drag) */}
       <RoomDropZone roomId={room.id} size={size} />
 
-      {/* ─── Room-specific furniture props ─────────────────────────── */}
-      <RoomProps roomName={room.name} roomSize={size} />
+      {/* ─── Grid-based furniture props ────────────────────────────── */}
+      <GridRoomRenderer blueprint={blueprint} roomPosition={position} />
     </group>
   )
 }

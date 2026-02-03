@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { getBlueprintForRoom, gridToWorld, findInteractionCells } from '@/lib/grid'
 import type { BotStatus } from './Bot3D'
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -45,95 +46,56 @@ interface RoomBounds {
   maxZ: number
 }
 
-// ─── Room Interaction Points ────────────────────────────────────
-
-function getRoomType(roomName: string): string {
-  const name = roomName.toLowerCase()
-  if (name.includes('headquarter')) return 'headquarters'
-  if (name.includes('dev')) return 'dev'
-  if (name.includes('creative') || name.includes('design')) return 'creative'
-  if (name.includes('marketing')) return 'marketing'
-  if (name.includes('thinking') || name.includes('strategy')) return 'thinking'
-  if (name.includes('automation') || name.includes('cron')) return 'automation'
-  if (name.includes('comms') || name.includes('comm')) return 'comms'
-  if (name.includes('ops') || name.includes('operation')) return 'ops'
-  return 'default'
-}
+// ─── Room Interaction Points (Grid-Based) ───────────────────────
 
 /**
  * Get world-space positions for room furniture that bots interact with.
- * Positions are approximate — near the relevant props placed by RoomProps.tsx.
+ * Uses grid blueprint interaction points instead of hardcoded positions.
  */
 export function getRoomInteractionPoints(
   roomName: string,
-  roomSize: number,
+  _roomSize: number,
   roomPosition: [number, number, number],
 ): RoomInteractionPoints {
-  const h = roomSize / 2
-  const s = roomSize / 12 // scale factor matching RoomProps
   const rx = roomPosition[0]
   const rz = roomPosition[2]
-  const roomType = getRoomType(roomName)
+  const blueprint = getBlueprintForRoom(roomName)
+  const { cells, cellSize, gridWidth, gridDepth } = blueprint
 
-  switch (roomType) {
-    case 'headquarters':
-      return {
-        deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: [rx + (h - 1.5 * s), 0, rz + (-h + 2.5 * s)],
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (h - 2 * s)],
-      }
-    case 'dev':
-      return {
-        deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (-h + 2 * s)],
-      }
-    case 'creative':
-      return {
-        deskPosition: [rx + (h - 2.5 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (-h + 2 * s), 0, rz + (-h + 2 * s)],
-      }
-    case 'marketing':
-      return {
-        deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (-h + 2 * s)],
-      }
-    case 'thinking':
-      return {
-        deskPosition: [rx, 0, rz],
-        coffeePosition: null,
-        sleepCorner: [rx + (-h + 2 * s), 0, rz + (-h + 2 * s)],
-      }
-    case 'automation':
-      return {
-        deskPosition: [rx + (-h + 2.5 * s), 0, rz + (-h + 2.5 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (h - 2 * s)],
-      }
-    case 'comms':
-      return {
-        deskPosition: [rx + (h - 3 * s), 0, rz + (-h + 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (-h + 2 * s), 0, rz + (h - 2 * s)],
-      }
-    case 'ops':
-      return {
-        deskPosition: [rx, 0, rz],
-        coffeePosition: null,
-        sleepCorner: [rx + (-h + 2 * s), 0, rz + (h - 2 * s)],
-      }
-    default:
-      return {
-        deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (-h + 2 * s)],
-      }
+  // Get interaction cells from grid
+  const workCells = findInteractionCells(cells, 'work')
+  const coffeeCells = findInteractionCells(cells, 'coffee')
+  const sleepCells = findInteractionCells(cells, 'sleep')
+
+  // Convert first found cell of each type to world coords
+  const toWorld = (cell: { x: number; z: number }): [number, number, number] => {
+    const [relX, , relZ] = gridToWorld(cell.x, cell.z, cellSize, gridWidth, gridDepth)
+    return [rx + relX, 0, rz + relZ]
+  }
+
+  // Fallback: use walkable center for desk, and a corner for sleep
+  const fallbackDesk: [number, number, number] = (() => {
+    const [relX, , relZ] = gridToWorld(
+      blueprint.walkableCenter.x,
+      blueprint.walkableCenter.z,
+      cellSize, gridWidth, gridDepth,
+    )
+    return [rx + relX, 0, rz + relZ]
+  })()
+
+  const fallbackSleep: [number, number, number] = (() => {
+    const [relX, , relZ] = gridToWorld(17, 17, cellSize, gridWidth, gridDepth)
+    return [rx + relX, 0, rz + relZ]
+  })()
+
+  return {
+    deskPosition: workCells.length > 0 ? toWorld(workCells[0]) : fallbackDesk,
+    coffeePosition: coffeeCells.length > 0 ? toWorld(coffeeCells[0]) : null,
+    sleepCorner: sleepCells.length > 0 ? toWorld(sleepCells[0]) : fallbackSleep,
   }
 }
 
-// ─── Walkable Zone (safe center area per room) ─────────────────
+// ─── Walkable Zone (Grid-Based) ─────────────────────────────────
 
 export interface WalkableCenter {
   x: number
@@ -142,9 +104,8 @@ export interface WalkableCenter {
 }
 
 /**
- * Returns a safe circular walkable area in the center of each room,
- * avoiding furniture placed along walls and corners.
- * Bots wander within this zone unless directed to a specific point.
+ * Returns a safe circular walkable area in the center of each room.
+ * Uses the grid blueprint's walkableCenter + computed radius from walkable cells.
  */
 export function getWalkableCenter(
   roomName: string,
@@ -153,38 +114,23 @@ export function getWalkableCenter(
 ): WalkableCenter {
   const rx = roomPosition[0]
   const rz = roomPosition[2]
-  const roomType = getRoomType(roomName)
+  const blueprint = getBlueprintForRoom(roomName)
+  const { cellSize, gridWidth, gridDepth } = blueprint
 
-  // Default: ~35% of half-room-size as safe walking radius
+  // Convert blueprint walkable center from grid to world coords
+  const [relX, , relZ] = gridToWorld(
+    blueprint.walkableCenter.x,
+    blueprint.walkableCenter.z,
+    cellSize, gridWidth, gridDepth,
+  )
+
+  // Default radius: ~35% of half-room-size (same as before)
   const defaultRadius = roomSize * 0.17
 
-  switch (roomType) {
-    case 'headquarters':
-      // Desk back-left, coffee back-right, plant front-right — center is clear
-      return { x: rx, z: rz, radius: defaultRadius }
-    case 'dev':
-      // Two desks on back-wall sides, server rack back-right — center corridor clear
-      return { x: rx, z: rz - roomSize * 0.05, radius: defaultRadius }
-    case 'creative':
-      // Easel left, desk right-back — center is safe
-      return { x: rx, z: rz, radius: defaultRadius }
-    case 'marketing':
-      // Standing desk back-left, bar chart right — slightly left-of-center
-      return { x: rx - roomSize * 0.05, z: rz, radius: defaultRadius * 0.85 }
-    case 'thinking':
-      // Round table at center — tighter zone so bots stay near table
-      return { x: rx, z: rz, radius: defaultRadius * 0.55 }
-    case 'automation':
-      // Conveyor belt in center — offset walkable zone forward
-      return { x: rx, z: rz + roomSize * 0.1, radius: defaultRadius * 0.7 }
-    case 'comms':
-      // Antenna back-left, desk front-right — center is clear
-      return { x: rx, z: rz, radius: defaultRadius }
-    case 'ops':
-      // Round table at center — tighter zone near table
-      return { x: rx, z: rz, radius: defaultRadius * 0.55 }
-    default:
-      return { x: rx, z: rz, radius: defaultRadius }
+  return {
+    x: rx + relX,
+    z: rz + relZ,
+    radius: defaultRadius,
   }
 }
 
