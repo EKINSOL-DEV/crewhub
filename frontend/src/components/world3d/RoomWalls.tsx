@@ -32,6 +32,9 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5 }: RoomWallsProps
   const gapWidth = 3 // opening width for "door"
 
   // Pre-compute wall segment data
+  // Floor top surface offset — walls sit on top of the floor
+  const floorTop = 0.2
+
   const { segments, caps } = useMemo(() => {
     const segs: WallSegment[] = []
     const capPositions: Array<{ key: string; position: [number, number, number] }> = []
@@ -39,12 +42,12 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5 }: RoomWallsProps
     // Back wall (full width, at +Z)
     segs.push({
       key: 'back-wall',
-      position: [0, wallHeight / 2, halfSize - wallThickness / 2],
+      position: [0, floorTop + wallHeight / 2, halfSize - wallThickness / 2],
       size: [size, wallHeight, wallThickness],
     })
     segs.push({
       key: 'back-accent',
-      position: [0, wallHeight + accentHeight / 2, halfSize - wallThickness / 2],
+      position: [0, floorTop + wallHeight + accentHeight / 2, halfSize - wallThickness / 2],
       size: [size, accentHeight, wallThickness + 0.02],
       isAccent: true,
     })
@@ -52,12 +55,12 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5 }: RoomWallsProps
     // Left wall (full depth, at -X)
     segs.push({
       key: 'left-wall',
-      position: [-halfSize + wallThickness / 2, wallHeight / 2, 0],
+      position: [-halfSize + wallThickness / 2, floorTop + wallHeight / 2, 0],
       size: [wallThickness, wallHeight, size],
     })
     segs.push({
       key: 'left-accent',
-      position: [-halfSize + wallThickness / 2, wallHeight + accentHeight / 2, 0],
+      position: [-halfSize + wallThickness / 2, floorTop + wallHeight + accentHeight / 2, 0],
       size: [wallThickness + 0.02, accentHeight, size],
       isAccent: true,
     })
@@ -65,12 +68,12 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5 }: RoomWallsProps
     // Right wall (full depth, at +X)
     segs.push({
       key: 'right-wall',
-      position: [halfSize - wallThickness / 2, wallHeight / 2, 0],
+      position: [halfSize - wallThickness / 2, floorTop + wallHeight / 2, 0],
       size: [wallThickness, wallHeight, size],
     })
     segs.push({
       key: 'right-accent',
-      position: [halfSize - wallThickness / 2, wallHeight + accentHeight / 2, 0],
+      position: [halfSize - wallThickness / 2, floorTop + wallHeight + accentHeight / 2, 0],
       size: [wallThickness + 0.02, accentHeight, size],
       isAccent: true,
     })
@@ -80,30 +83,30 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5 }: RoomWallsProps
     // Front-left segment
     segs.push({
       key: 'front-left-wall',
-      position: [-halfSize + sideWidth / 2, wallHeight / 2, -halfSize + wallThickness / 2],
+      position: [-halfSize + sideWidth / 2, floorTop + wallHeight / 2, -halfSize + wallThickness / 2],
       size: [sideWidth, wallHeight, wallThickness],
     })
     segs.push({
       key: 'front-left-accent',
-      position: [-halfSize + sideWidth / 2, wallHeight + accentHeight / 2, -halfSize + wallThickness / 2],
+      position: [-halfSize + sideWidth / 2, floorTop + wallHeight + accentHeight / 2, -halfSize + wallThickness / 2],
       size: [sideWidth, accentHeight, wallThickness + 0.02],
       isAccent: true,
     })
     // Front-right segment
     segs.push({
       key: 'front-right-wall',
-      position: [halfSize - sideWidth / 2, wallHeight / 2, -halfSize + wallThickness / 2],
+      position: [halfSize - sideWidth / 2, floorTop + wallHeight / 2, -halfSize + wallThickness / 2],
       size: [sideWidth, wallHeight, wallThickness],
     })
     segs.push({
       key: 'front-right-accent',
-      position: [halfSize - sideWidth / 2, wallHeight + accentHeight / 2, -halfSize + wallThickness / 2],
+      position: [halfSize - sideWidth / 2, floorTop + wallHeight + accentHeight / 2, -halfSize + wallThickness / 2],
       size: [sideWidth, accentHeight, wallThickness + 0.02],
       isAccent: true,
     })
 
     // Rounded cap cylinders along wall tops (corners + ends of gap)
-    const capY = wallHeight + accentHeight
+    const capY = floorTop + wallHeight + accentHeight
     const capRadius = wallThickness / 2 + 0.02
     const corners: [number, number, number][] = [
       [-halfSize, capY, -halfSize],
@@ -119,7 +122,7 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5 }: RoomWallsProps
     })
 
     return { segments: segs, caps: capPositions, capRadius }
-  }, [halfSize, size, wallHeight, accentHeight, gapWidth])
+  }, [halfSize, size, wallHeight, accentHeight, gapWidth, floorTop])
 
   const capRadius = wallThickness / 2 + 0.02
 
