@@ -63,7 +63,7 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
     sessions.forEach(session => {
       const currentTokens = session.totalTokens || 0
       const tracked = tracking.get(session.key)
-      if (!tracked) tracking.set(session.key, { previousTokens: currentTokens, lastChangeTime: now })
+      if (!tracked) tracking.set(session.key, { previousTokens: currentTokens, lastChangeTime: session.updatedAt })
       else if (tracked.previousTokens !== currentTokens) tracking.set(session.key, { previousTokens: currentTokens, lastChangeTime: now })
     })
     const currentKeys = new Set(sessions.map(s => s.key))
