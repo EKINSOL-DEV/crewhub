@@ -9,7 +9,7 @@ import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
-import { useDragDrop } from '@/contexts/DragDropContext'
+import { useDragActions } from '@/contexts/DragDropContext'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
 import type { RoomBounds } from './World3DView'
@@ -57,7 +57,7 @@ interface Bot3DProps {
 export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
   const { state: focusState, focusBot } = useWorldFocus()
-  const { startDrag, endDrag } = useDragDrop()
+  const { startDrag, endDrag } = useDragActions()
   const [hovered, setHovered] = useState(false)
 
   // Is THIS bot the one being focused on?

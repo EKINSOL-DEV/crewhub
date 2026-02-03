@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
+import { useDragState } from '@/contexts/DragDropContext'
 import { botPositionRegistry } from './Bot3D'
 import type CameraControlsImpl from 'camera-controls'
 import * as THREE from 'three'
@@ -79,6 +80,7 @@ function getBotCamera(botPos: { x: number; y: number; z: number }) {
 export function CameraController({ roomPositions }: CameraControllerProps) {
   const controlsRef = useRef<CameraControlsImpl>(null)
   const { state } = useWorldFocus()
+  const { isDragging } = useDragState()
   const prevLevelRef = useRef<FocusLevel>('overview')
   const prevRoomIdRef = useRef<string | null>(null)
   const prevBotKeyRef = useRef<string | null>(null)
@@ -87,6 +89,14 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const followTarget = useRef(new THREE.Vector3())
   const followPos = useRef(new THREE.Vector3())
   const isFollowing = useRef(false)
+
+  // ─── Disable camera controls during drag ──────────────────────
+
+  useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+    controls.enabled = !isDragging
+  }, [isDragging])
 
   // ─── Transition on focus change ──────────────────────────────
 

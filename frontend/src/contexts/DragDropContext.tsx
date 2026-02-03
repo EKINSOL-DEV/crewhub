@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
 import { API_BASE } from '@/lib/api'
 
 // ─── Types ─────────────────────────────────────────────────────
@@ -8,13 +8,14 @@ export interface DragState {
   sessionKey: string | null
   sessionName: string | null
   sourceRoomId: string | null
+  error: string | null
 }
 
-interface DragDropContextValue {
-  drag: DragState
+interface DragActions {
   startDrag: (sessionKey: string, sessionName: string, sourceRoomId: string) => void
   endDrag: () => void
   dropOnRoom: (targetRoomId: string) => Promise<void>
+  clearError: () => void
 }
 
 const defaultDrag: DragState = {
@@ -22,13 +23,16 @@ const defaultDrag: DragState = {
   sessionKey: null,
   sessionName: null,
   sourceRoomId: null,
+  error: null,
 }
 
-const DragDropContext = createContext<DragDropContextValue>({
-  drag: defaultDrag,
+// Split into two contexts: state (changes during drag) and actions (stable callbacks)
+const DragStateContext = createContext<DragState>(defaultDrag)
+const DragActionsContext = createContext<DragActions>({
   startDrag: () => {},
   endDrag: () => {},
   dropOnRoom: async () => {},
+  clearError: () => {},
 })
 
 // ─── Provider ──────────────────────────────────────────────────
@@ -48,11 +52,16 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
       sessionKey,
       sessionName,
       sourceRoomId,
+      error: null,
     })
   }, [])
 
   const endDrag = useCallback(() => {
-    setDrag(defaultDrag)
+    setDrag(prev => ({ ...defaultDrag, error: prev.error }))
+  }, [])
+
+  const clearError = useCallback(() => {
+    setDrag(prev => ({ ...prev, error: null }))
   }, [])
 
   const dropOnRoom = useCallback(async (targetRoomId: string) => {
@@ -74,27 +83,85 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}))
+        const message = err?.detail || err?.message || 'Failed to move bot. Please try again.'
         console.error('Failed to assign bot to room:', err)
+        setDrag({ ...defaultDrag, error: message })
+        // Auto-clear error after 4 seconds
+        setTimeout(() => setDrag(s => s.error === message ? { ...s, error: null } : s), 4000)
       } else {
         // Refresh assignments so the view updates
         onAssignmentChanged?.()
+        setDrag(defaultDrag)
       }
     } catch (err) {
+      const message = 'Network error — couldn\'t move bot. Please retry.'
       console.error('Failed to assign bot to room:', err)
-    } finally {
-      endDrag()
+      setDrag({ ...defaultDrag, error: message })
+      // Auto-clear error after 4 seconds
+      setTimeout(() => setDrag(s => s.error === message ? { ...s, error: null } : s), 4000)
     }
   }, [drag, endDrag, onAssignmentChanged])
 
+  const actions = useMemo<DragActions>(() => ({
+    startDrag,
+    endDrag,
+    dropOnRoom,
+    clearError,
+  }), [startDrag, endDrag, dropOnRoom, clearError])
+
   return (
-    <DragDropContext.Provider value={{ drag, startDrag, endDrag, dropOnRoom }}>
-      {children}
-    </DragDropContext.Provider>
+    <DragStateContext.Provider value={drag}>
+      <DragActionsContext.Provider value={actions}>
+        {children}
+        {/* Drag error toast overlay */}
+        {drag.error && (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '24px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(220, 38, 38, 0.95)',
+              color: '#fff',
+              padding: '10px 20px',
+              borderRadius: '10px',
+              fontSize: '14px',
+              fontFamily: 'system-ui, sans-serif',
+              fontWeight: 500,
+              zIndex: 9999,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              maxWidth: '400px',
+              animation: 'fadeInUp 0.25s ease-out',
+            }}
+            onClick={clearError}
+          >
+            <span>⚠️</span>
+            <span>{drag.error}</span>
+          </div>
+        )}
+      </DragActionsContext.Provider>
+    </DragStateContext.Provider>
   )
 }
 
-// ─── Hook ──────────────────────────────────────────────────────
+// ─── Hooks ─────────────────────────────────────────────────────
 
-export function useDragDrop(): DragDropContextValue {
-  return useContext(DragDropContext)
+/** Read drag state (re-renders when drag state changes) */
+export function useDragState(): DragState {
+  return useContext(DragStateContext)
+}
+
+/** Read drag actions (stable — doesn't cause re-renders on drag state change) */
+export function useDragActions(): DragActions {
+  return useContext(DragActionsContext)
+}
+
+/** Combined hook for backwards compatibility */
+export function useDragDrop(): { drag: DragState } & DragActions {
+  const state = useContext(DragStateContext)
+  const actions = useContext(DragActionsContext)
+  return { drag: state, ...actions }
 }

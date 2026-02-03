@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Desk } from './props/Desk'
@@ -125,13 +125,17 @@ function ServerRack({ position, rotation }: { position: [number, number, number]
 /** Blinking LED for server rack */
 function ServerLED({ position, color }: { position: [number, number, number]; color: string }) {
   const ref = useRef<THREE.Mesh>(null)
+  // Pre-compute stable blink speed to avoid Math.random() in useFrame
+  const blinkSpeed = useMemo(() => 2 + Math.random() * 0.5, [])
+  const frameSkip = useRef(0)
 
   useFrame(({ clock }) => {
-    if (ref.current) {
-      const mat = ref.current.material as THREE.MeshStandardMaterial
-      const blink = Math.sin(clock.getElapsedTime() * (2 + Math.random() * 0.5) + position[1] * 10) > 0
-      mat.emissiveIntensity = blink ? 0.8 : 0.1
-    }
+    if (!ref.current) return
+    // Throttle: update every 3rd frame
+    if (++frameSkip.current % 3 !== 0) return
+    const mat = ref.current.material as THREE.MeshStandardMaterial
+    const blink = Math.sin(clock.getElapsedTime() * blinkSpeed + position[1] * 10) > 0
+    mat.emissiveIntensity = blink ? 0.8 : 0.1
   })
 
   return (
@@ -503,8 +507,11 @@ function WallClock({ position, rotation }: { position: [number, number, number];
   const faceToon = useToonMaterialProps('#FFFFF0')
   const handRef1 = useRef<THREE.Mesh>(null)
   const handRef2 = useRef<THREE.Mesh>(null)
+  const clockFrameSkip = useRef(0)
 
   useFrame(({ clock }) => {
+    // Throttle: update every 3rd frame (clock hands move slowly anyway)
+    if (++clockFrameSkip.current % 3 !== 0) return
     const t = clock.getElapsedTime()
     if (handRef1.current) handRef1.current.rotation.z = -t * 0.5 // minute hand
     if (handRef2.current) handRef2.current.rotation.z = -t * 0.04 // hour hand
@@ -615,8 +622,11 @@ function GearMechanism({ position, rotation }: { position: [number, number, numb
   const gearToon = useToonMaterialProps('#777777')
   const gear1Ref = useRef<THREE.Group>(null)
   const gear2Ref = useRef<THREE.Group>(null)
+  const gearFrameSkip = useRef(0)
 
   useFrame(({ clock }) => {
+    // Throttle: update every 2nd frame
+    if (++gearFrameSkip.current % 2 !== 0) return
     const t = clock.getElapsedTime()
     if (gear1Ref.current) gear1Ref.current.rotation.z = t * 0.5
     if (gear2Ref.current) gear2Ref.current.rotation.z = -t * 0.5
@@ -815,8 +825,11 @@ function SignalWaves({ position }: { position: [number, number, number] }) {
   const ring1Ref = useRef<THREE.Mesh>(null)
   const ring2Ref = useRef<THREE.Mesh>(null)
   const ring3Ref = useRef<THREE.Mesh>(null)
+  const waveFrameSkip = useRef(0)
 
   useFrame(({ clock }) => {
+    // Throttle: update every 2nd frame
+    if (++waveFrameSkip.current % 2 !== 0) return
     const t = clock.getElapsedTime()
     const refs = [ring1Ref, ring2Ref, ring3Ref]
     refs.forEach((ref, i) => {
