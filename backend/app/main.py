@@ -26,7 +26,7 @@ async def poll_sessions_loop():
         try:
             sessions_data = await gateway.get_sessions()
             if sessions_data:
-                await broadcast("sessions", {"sessions": sessions_data})
+                await broadcast("sessions-refresh", {"sessions": sessions_data})
         except Exception as e:
             logger.debug(f"Polling error: {e}")
         await asyncio.sleep(5)  # Poll every 5 seconds
