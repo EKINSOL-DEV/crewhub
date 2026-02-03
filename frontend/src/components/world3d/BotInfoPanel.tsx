@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { BotStatus } from './Bot3D'
-import { AgentChatPanel } from './AgentChatPanel'
+import { useChatContext } from '@/contexts/ChatContext'
 
 interface BotInfoPanelProps {
   session: CrewSession | null
@@ -76,14 +76,12 @@ function getLastAssistantMessage(session: CrewSession): string | null {
   return null
 }
 
-type TabId = 'info' | 'chat'
-
 // ── Component ──────────────────────────────────────────────────
 
 export function BotInfoPanel({ session, displayName, botConfig, status, onClose, onOpenLog }: BotInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const canChat = session ? isFixedAgent(session.key) : false
-  const [activeTab, setActiveTab] = useState<TabId>('info')
+  const { openChat } = useChatContext()
 
   // Close on outside click
   useEffect(() => {
@@ -114,7 +112,7 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
         top: 16,
         right: 16,
         bottom: 80,
-        width: activeTab === 'chat' ? 400 : 320,
+        width: 320,
         zIndex: 60,
         background: 'rgba(255, 255, 255, 0.85)',
         backdropFilter: 'blur(16px)',
@@ -127,7 +125,6 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
         flexDirection: 'column',
         overflow: 'hidden',
         animation: 'botPanelSlideIn 0.3s ease-out',
-        transition: 'width 0.2s ease',
       }}
     >
       {/* Header */}
@@ -218,120 +215,108 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
         </button>
       </div>
 
-      {/* Tabs (only when canChat) */}
-      {canChat && (
-        <div style={{
-          display: 'flex',
-          gap: 0,
-          padding: '12px 20px 0',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-        }}>
-          <TabButton
-            label="ℹ️ Info"
-            active={activeTab === 'info'}
-            accentColor={botConfig.color}
-            onClick={() => setActiveTab('info')}
-          />
-          <TabButton
-            label="💬 Chat"
-            active={activeTab === 'chat'}
-            accentColor={botConfig.color}
-            onClick={() => setActiveTab('chat')}
-          />
-        </div>
-      )}
+      {/* Separator */}
+      <div style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.06)', margin: '16px 0 0' }} />
 
-      {/* Separator when no tabs */}
-      {!canChat && (
-        <div style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.06)', margin: '16px 0 0' }} />
-      )}
+      {/* Info Body */}
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        padding: '16px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+      }}>
+        <InfoRow label="Type">
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: botConfig.color,
+              display: 'inline-block',
+            }} />
+            {botConfig.label}
+          </span>
+        </InfoRow>
 
-      {/* Tab content */}
-      {activeTab === 'info' ? (
-        <>
-          {/* Info Body */}
-          <div style={{
-            flex: 1,
-            overflow: 'auto',
-            padding: '16px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14,
-          }}>
-            <InfoRow label="Type">
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: botConfig.color,
-                  display: 'inline-block',
-                }} />
-                {botConfig.label}
-              </span>
-            </InfoRow>
+        <InfoRow label="Status">
+          {formatTimeSince(session.updatedAt)}
+        </InfoRow>
 
-            <InfoRow label="Status">
-              {formatTimeSince(session.updatedAt)}
-            </InfoRow>
+        <InfoRow label="Model">
+          {formatModel(session.model)}
+        </InfoRow>
 
-            <InfoRow label="Model">
-              {formatModel(session.model)}
-            </InfoRow>
+        <InfoRow label="Tokens">
+          {formatTokens(session.totalTokens)}
+        </InfoRow>
 
-            <InfoRow label="Tokens">
-              {formatTokens(session.totalTokens)}
-            </InfoRow>
+        {session.lastChannel && (
+          <InfoRow label="Channel">
+            {session.lastChannel}
+          </InfoRow>
+        )}
 
-            {session.lastChannel && (
-              <InfoRow label="Channel">
-                {session.lastChannel}
-              </InfoRow>
-            )}
-
-            {lastMessage && (
-              <div>
-                <div style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: '#9ca3af',
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.05em',
-                  marginBottom: 6,
-                }}>
-                  Last message
-                </div>
-                <div style={{
-                  fontSize: 13,
-                  color: '#4b5563',
-                  lineHeight: 1.5,
-                  background: 'rgba(0, 0, 0, 0.03)',
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  fontStyle: 'italic',
-                  wordBreak: 'break-word',
-                }}>
-                  {lastMessage}
-                  {lastMessage.length >= 120 && '…'}
-                </div>
-              </div>
-            )}
+        {lastMessage && (
+          <div>
+            <div style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: '#9ca3af',
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.05em',
+              marginBottom: 6,
+            }}>
+              Last message
+            </div>
+            <div style={{
+              fontSize: 13,
+              color: '#4b5563',
+              lineHeight: 1.5,
+              background: 'rgba(0, 0, 0, 0.03)',
+              padding: '10px 12px',
+              borderRadius: 10,
+              fontStyle: 'italic',
+              wordBreak: 'break-word',
+            }}>
+              {lastMessage}
+              {lastMessage.length >= 120 && '…'}
+            </div>
           </div>
-        </>
-      ) : (
-        /* Chat tab */
-        <AgentChatPanel
-          sessionKey={session.key}
-          botConfig={botConfig}
-          displayName={displayName}
-        />
-      )}
+        )}
+      </div>
 
       {/* Footer */}
       <div style={{
         padding: '12px 20px 16px',
         borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
       }}>
+        {canChat && (
+          <button
+            onClick={() => openChat(session.key, displayName, botConfig.icon, botConfig.color)}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              borderRadius: 10,
+              border: 'none',
+              background: botConfig.color + 'dd',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: 'system-ui, sans-serif',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+          >
+            💬 Open Chat
+          </button>
+        )}
         <button
           onClick={() => onOpenLog(session)}
           style={{
@@ -339,8 +324,8 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
             padding: '10px 16px',
             borderRadius: 10,
             border: 'none',
-            background: botConfig.color + 'dd',
-            color: '#fff',
+            background: canChat ? 'rgba(0, 0, 0, 0.05)' : botConfig.color + 'dd',
+            color: canChat ? '#374151' : '#fff',
             cursor: 'pointer',
             fontSize: 13,
             fontWeight: 600,
@@ -362,41 +347,6 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
         }
       `}</style>
     </div>
-  )
-}
-
-// ── Tab Button ─────────────────────────────────────────────────
-
-function TabButton({
-  label,
-  active,
-  accentColor,
-  onClick,
-}: {
-  label: string
-  active: boolean
-  accentColor: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        padding: '8px 16px',
-        border: 'none',
-        background: 'transparent',
-        color: active ? accentColor : '#6b7280',
-        fontWeight: active ? 700 : 500,
-        fontSize: 13,
-        fontFamily: 'system-ui, sans-serif',
-        cursor: 'pointer',
-        borderBottom: active ? `2px solid ${accentColor}` : '2px solid transparent',
-        transition: 'color 0.15s, border-color 0.15s',
-        marginBottom: -1,
-      }}
-    >
-      {label}
-    </button>
   )
 }
 

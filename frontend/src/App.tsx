@@ -11,6 +11,8 @@ import { SettingsPanel, DEFAULT_SETTINGS, type SessionsSettings } from './compon
 import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { ChatProvider } from './contexts/ChatContext'
+import { FloatingChatPanel } from './components/chat/FloatingChatPanel'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Square, Globe } from 'lucide-react'
 import { Button } from './components/ui/button'
@@ -227,6 +229,8 @@ function AppContent() {
         settings={settings}
         onSettingsChange={handleSettingsChange}
       />
+
+      <FloatingChatPanel />
     </div>
   )
 }
@@ -240,7 +244,9 @@ function App() {
   
   return (
     <ThemeProvider>
-      <AppContent />
+      <ChatProvider>
+        <AppContent />
+      </ChatProvider>
     </ThemeProvider>
   )
 }

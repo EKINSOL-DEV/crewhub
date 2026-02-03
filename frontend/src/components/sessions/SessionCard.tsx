@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { FileText } from "lucide-react"
+import { FileText, MessageCircle } from "lucide-react"
 import type { CrewSession } from "@/lib/api"
+import { useChatContext } from "@/contexts/ChatContext"
 import {
   getSessionStatus,
   getStatusIndicator,
@@ -23,6 +24,8 @@ interface SessionCardProps {
   onViewLogs?: () => void
 }
 
+const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
+
 export function SessionCard({ session, onViewLogs }: SessionCardProps) {
   const status = getSessionStatus(session)
   const statusInfo = getStatusIndicator(status)
@@ -31,6 +34,8 @@ export function SessionCard({ session, onViewLogs }: SessionCardProps) {
   const currentActivity = getCurrentActivity(session)
   const recentActivities = parseRecentActivities(session, 3)
   const cost = getSessionCost(session)
+  const { openChat } = useChatContext()
+  const isFixedAgent = FIXED_AGENT_RE.test(session.key)
 
   return (
     <Card className={cn(
@@ -110,6 +115,17 @@ export function SessionCard({ session, onViewLogs }: SessionCardProps) {
         </div>
 
         <div className="flex items-center gap-2 pt-2">
+          {isFixedAgent && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 h-8 text-xs"
+              onClick={() => openChat(session.key, fallbackName, sessionType.emoji, sessionType.color)}
+            >
+              <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
+              Chat
+            </Button>
+          )}
           <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={onViewLogs}>
             <FileText className="h-3.5 w-3.5 mr-1.5" />
             Logs
