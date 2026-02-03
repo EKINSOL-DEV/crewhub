@@ -438,14 +438,10 @@ function SceneContent({
     return { roomBots, parkingBots }
   }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames])
 
-  if (isLoading || !layout) return null
-
-  const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
-
-  // Build room positions for CameraController
+  // Build room positions for CameraController (MUST be before early return to respect hooks rules)
   const cameraRoomPositions = useMemo(
-    () => roomPositions.map(rp => ({ roomId: rp.room.id, position: rp.position })),
-    [roomPositions],
+    () => layout?.roomPositions.map(rp => ({ roomId: rp.room.id, position: rp.position })) ?? [],
+    [layout],
   )
 
   // Helper: should a bot show its label based on focus level?
@@ -455,6 +451,10 @@ function SceneContent({
     }
     return focusedRoomId === botRoomId // all bots in focused room
   }
+
+  if (isLoading || !layout) return null
+
+  const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
 
   return (
     <>
