@@ -3,7 +3,7 @@ import type { CrewSession, SessionContentBlock } from "./api"
 // Type aliases for backwards compatibility
 type MinionSession = CrewSession
 type MinionContentBlock = SessionContentBlock
-import { getDisplayName, getTaskEmoji, generateFriendlyName } from "./friendlyNames"
+import { getTaskEmoji, generateFriendlyName } from "./friendlyNames"
 
 export type SessionStatus = "active" | "idle" | "sleeping"
 
@@ -172,19 +172,20 @@ export function getMinionType(session: MinionSession): { type: string; color: st
 }
 
 export function getSessionDisplayName(session: MinionSession, customName?: string | null): string {
+  // 1. Custom name from display names API
   if (customName) return customName
-  if (session.displayName) {
-    return session.displayName
-      .replace("webchat:g-agent-main-main", "Main Agent")
-      .replace("whatsapp:g-", "")
-      .replace("slack:g-", "")
-      .replace("slack:#", "#")
-  }
+  // 2. Human-readable label (e.g. "crewhub-fix-3d-view", "hallo-laurens")
+  if (session.label) return session.label
   const key = session.key || ""
+  // 3. Special case: main agent
   if (key === "agent:main:main") return "Main Agent"
+  // 4. Cron sessions
   const parts = key.split(":")
   if (parts.length >= 4 && parts[2] === "cron") return `Cron Worker ${parts[3].slice(0, 8)}`
-  return getDisplayName(session)
+  // 5. Friendly name for subagents
+  if (key.includes(":subagent:") || key.includes(":spawn:")) return generateFriendlyName(key)
+  // 6. Last resort: cleaned session key
+  return parts.pop() || key
 }
 
 export { getTaskEmoji, generateFriendlyName }
