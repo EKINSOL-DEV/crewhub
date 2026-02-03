@@ -5,7 +5,7 @@
 import { useMemo } from 'react'
 import { gridToWorld } from '@/lib/grid'
 import type { RoomBlueprint } from '@/lib/grid'
-import { getPropComponent } from './PropRegistry'
+import { getPropEntry } from './PropRegistry'
 
 interface GridRoomRendererProps {
   blueprint: RoomBlueprint
@@ -15,15 +15,106 @@ interface GridRoomRendererProps {
 interface PropInstance {
   key: string
   propId: string
+  gridX: number
+  gridZ: number
   position: [number, number, number]
   rotation: number
   span?: { w: number; d: number }
 }
 
+// ─── Wall positioning helpers ───────────────────────────────────
+
+/** Determine which wall is nearest and return snapped position + rotation.
+ *  Returns null if prop is not within wallThreshold cells of a wall. */
+function getWallPlacement(
+  worldX: number,
+  worldZ: number,
+  gridX: number,
+  gridZ: number,
+  gridWidth: number,
+  gridDepth: number,
+  cellSize: number,
+): { x: number; z: number; wallRotation: number } | null {
+  const halfW = (gridWidth * cellSize) / 2
+  const halfD = (gridDepth * cellSize) / 2
+
+  // Distance in grid cells from the interior edge of each wall.
+  // Wall cells are at 0 and gridSize-1; interior starts at 1 and gridSize-2.
+  const distNorth = gridZ - 1
+  const distSouth = (gridDepth - 2) - gridZ
+  const distWest = gridX - 1
+  const distEast = (gridWidth - 2) - gridX
+
+  const minDist = Math.min(distNorth, distSouth, distWest, distEast)
+
+  // Only snap to wall if within 1 cell of wall interior edge
+  if (minDist > 1) return null
+
+  // Small gap from wall surface to prevent z-fighting
+  const WALL_GAP = 0.05
+
+  // Wall inner face positions (inner edge of the wall cell)
+  const northFace = -halfD + cellSize
+  const southFace = halfD - cellSize
+  const westFace = -halfW + cellSize
+  const eastFace = halfW - cellSize
+
+  // Snap to nearest wall and set rotation to face into room.
+  // Default geometry faces +Z, so:
+  //   North wall → face south (+Z) → 0°
+  //   South wall → face north (-Z) → 180°
+  //   West wall  → face east (+X)  → 270°
+  //   East wall  → face west (-X)  → 90°
+  if (distNorth === minDist) {
+    return { x: worldX, z: northFace + WALL_GAP, wallRotation: 0 }
+  }
+  if (distSouth === minDist) {
+    return { x: worldX, z: southFace - WALL_GAP, wallRotation: 180 }
+  }
+  if (distWest === minDist) {
+    return { x: westFace + WALL_GAP, z: worldZ, wallRotation: 270 }
+  }
+  // East
+  return { x: eastFace - WALL_GAP, z: worldZ, wallRotation: 90 }
+}
+
+/** Clamp floor-prop positions inward to prevent wall clipping at grid edges. */
+function clampToRoomBounds(
+  worldX: number,
+  worldZ: number,
+  gridX: number,
+  gridZ: number,
+  gridWidth: number,
+  gridDepth: number,
+  cellSize: number,
+): [number, number] {
+  const halfW = (gridWidth * cellSize) / 2
+  const halfD = (gridDepth * cellSize) / 2
+  const INWARD = 0.15 // small inward offset to avoid wall clipping
+
+  let x = worldX
+  let z = worldZ
+
+  // Clamp near walls (grid cells 1 and gridSize-2 are just inside the wall)
+  if (gridX <= 1) x = Math.max(x, -halfW + cellSize + INWARD)
+  if (gridX >= gridWidth - 2) x = Math.min(x, halfW - cellSize - INWARD)
+  if (gridZ <= 1) z = Math.max(z, -halfD + cellSize + INWARD)
+  if (gridZ >= gridDepth - 2) z = Math.min(z, halfD - cellSize - INWARD)
+
+  return [x, z]
+}
+
+// ─── Renderer ───────────────────────────────────────────────────
+
 /**
  * Renders all props in a room by iterating over the blueprint grid.
  * Skips spanParent cells (only renders from the anchor cell of multi-cell props).
  * Skips interaction-only and empty cells.
+ *
+ * Handles per-prop Y positioning:
+ *  - Floor props: Y = roomPosition.y + 0.16 (floor surface)
+ *  - Wall props: Y = roomPosition.y + propEntry.yOffset (wall mount height)
+ *    Wall props also get snapped toward the nearest wall and rotated to face inward.
  */
 export function GridRoomRenderer({ blueprint, roomPosition }: GridRoomRendererProps) {
   const { cells, cellSize, gridWidth, gridDepth } = blueprint
@@ -42,9 +133,9 @@ export function GridRoomRenderer({ blueprint, roomPosition }: GridRoomRendererPr
         // Skip spanParent cells (rendered from their anchor)
         if (cell.spanParent) continue
 
-        // Get the component — skip if not registered
-        const Component = getPropComponent(cell.propId)
-        if (!Component) continue
+        // Get the entry — skip if not registered
+        const entry = getPropEntry(cell.propId)
+        if (!entry) continue
 
         // Convert grid coords to world coords (relative to room center)
         const [relX, , relZ] = gridToWorld(x, z, cellSize, gridWidth, gridDepth)
@@ -52,6 +143,8 @@ export function GridRoomRenderer({ blueprint, roomPosition }: GridRoomRendererPr
         instances.push({
           key: `${cell.propId}-${x}-${z}`,
           propId: cell.propId,
+          gridX: x,
+          gridZ: z,
           position: [relX, 0, relZ],
           rotation: cell.rotation ?? 0,
           span: cell.span,
@@ -62,26 +155,52 @@ export function GridRoomRenderer({ blueprint, roomPosition }: GridRoomRendererPr
     return instances
   }, [cells, cellSize, gridWidth, gridDepth])
 
-  // Floor Y level from room position
-  const floorY = roomPosition[1] + 0.16 // match the Y = 0.16 offset from RoomProps.tsx
-
   return (
     <group>
-      {propInstances.map(({ key, propId, position, rotation, span }) => {
-        const Component = getPropComponent(propId)
-        if (!Component) return null
+      {propInstances.map(({ key, propId, gridX, gridZ, position, rotation, span }) => {
+        const entry = getPropEntry(propId)
+        if (!entry) return null
 
-        const worldPos: [number, number, number] = [
-          position[0],
-          floorY,
-          position[2],
-        ]
+        const Component = entry.component
+
+        // Determine Y position from prop metadata
+        const yPos = roomPosition[1] + entry.yOffset
+
+        let worldX = position[0]
+        let worldZ = position[2]
+        let finalRotation = rotation
+
+        if (entry.mountType === 'wall') {
+          // Wall-mounted props: snap toward nearest wall + auto-rotate
+          const wallPlacement = getWallPlacement(
+            worldX, worldZ, gridX, gridZ,
+            gridWidth, gridDepth, cellSize,
+          )
+          if (wallPlacement) {
+            worldX = wallPlacement.x
+            worldZ = wallPlacement.z
+            // Only override rotation if cell didn't specify one explicitly
+            if (rotation === 0) {
+              finalRotation = wallPlacement.wallRotation
+            }
+          }
+        } else {
+          // Floor props: clamp to room bounds to prevent wall clipping
+          const [clampedX, clampedZ] = clampToRoomBounds(
+            worldX, worldZ, gridX, gridZ,
+            gridWidth, gridDepth, cellSize,
+          )
+          worldX = clampedX
+          worldZ = clampedZ
+        }
+
+        const worldPos: [number, number, number] = [worldX, yPos, worldZ]
 
         return (
           <Component
             key={key}
             position={worldPos}
-            rotation={rotation}
+            rotation={finalRotation}
             cellSize={cellSize}
             span={span}
           />
