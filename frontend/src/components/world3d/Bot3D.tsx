@@ -8,7 +8,7 @@ import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
-import { SleepingZs, useBotAnimation, tickAnimState, getRoomInteractionPoints } from './BotAnimations'
+import { SleepingZs, useBotAnimation, tickAnimState, getRoomInteractionPoints, getWalkableCenter } from './BotAnimations'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragActions } from '@/contexts/DragDropContext'
 import type { BotVariantConfig } from './utils/botVariants'
@@ -111,6 +111,14 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     return getRoomInteractionPoints(roomName, roomSize, [roomCenterX, 0, roomCenterZ])
   }, [roomName, roomBounds])
 
+  const walkableCenter = useMemo(() => {
+    if (!roomName || !roomBounds) return null
+    const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
+    const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
+    const roomSize = (roomBounds.maxX - roomBounds.minX) + 5 // re-add margin (2.5 × 2)
+    return getWalkableCenter(roomName, roomSize, [roomCenterX, 0, roomCenterZ])
+  }, [roomName, roomBounds])
+
   const animRef = useBotAnimation(status, interactionPoints, roomBounds)
   const lastAppliedOpacity = useRef(1)
   const materialsClonable = useRef(false) // track if materials have been cloned for this bot
@@ -138,7 +146,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     let bounceY = 0
     switch (anim.phase) {
       case 'working':
-        bounceY = anim.headBob ? Math.sin(t * 2) * 0.015 : 0
+        // Almost imperceptible head bob when working
+        bounceY = anim.headBob ? Math.sin(t * 2) * 0.004 : 0
         break
       case 'walking-to-desk':
       case 'getting-coffee':
@@ -149,13 +158,23 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         bounceY = isMoving ? Math.sin(t * 3) * 0.02 : 0
         break
       case 'sleeping':
-        bounceY = Math.sin(t * 0.5) * 0.008
+        // No position bounce — breathing handled via scale below
+        bounceY = 0
         break
       case 'offline':
         bounceY = 0
         break
     }
     groupRef.current.position.y = position[1] + anim.yOffset + bounceY
+
+    // Breathing effect via scale (sleeping: very slow gentle breathing)
+    if (anim.phase === 'sleeping') {
+      const breathe = 1 + Math.sin(t * 0.8) * 0.006
+      groupRef.current.scale.setScalar(scale)
+      groupRef.current.scale.y = scale * breathe
+    } else {
+      groupRef.current.scale.setScalar(scale)
+    }
 
     // ─── Apply opacity (only on change, with cloned materials) ─
     if (anim.opacity !== lastAppliedOpacity.current) {
@@ -207,18 +226,25 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       return
     }
 
-    // Animation released its target → force new random wander target
-    // Use inner bounds (30% margin from edges) to avoid walking into furniture
-    const innerMarginX = (roomBounds.maxX - roomBounds.minX) * 0.3
-    const innerMarginZ = (roomBounds.maxZ - roomBounds.minZ) * 0.3
-    const innerMinX = roomBounds.minX + innerMarginX
-    const innerMaxX = roomBounds.maxX - innerMarginX
-    const innerMinZ = roomBounds.minZ + innerMarginZ
-    const innerMaxZ = roomBounds.maxZ - innerMarginZ
+    // Pick random wander target within safe walkable zone (circular area in room center)
+    const wc = walkableCenter
+    const pickWanderTarget = () => {
+      if (wc) {
+        const angle = Math.random() * Math.PI * 2
+        const r = Math.sqrt(Math.random()) * wc.radius // sqrt for uniform area distribution
+        return { x: wc.x + Math.cos(angle) * r, z: wc.z + Math.sin(angle) * r }
+      }
+      // Fallback: center of room bounds
+      return {
+        x: (roomBounds.minX + roomBounds.maxX) / 2,
+        z: (roomBounds.minZ + roomBounds.maxZ) / 2,
+      }
+    }
 
     if (anim.resetWanderTarget) {
-      state.targetX = innerMinX + Math.random() * (innerMaxX - innerMinX)
-      state.targetZ = innerMinZ + Math.random() * (innerMaxZ - innerMinZ)
+      const target = pickWanderTarget()
+      state.targetX = target.x
+      state.targetZ = target.z
       state.waitTimer = 0.5
       anim.resetWanderTarget = false
     }
@@ -252,19 +278,28 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         }
       }
 
-      // Random wandering: wait then pick new target (within inner bounds)
+      // Random wandering: wait then pick new target within walkable zone
       state.waitTimer -= delta
       if (state.waitTimer <= 0 && anim.targetX === null) {
-        state.targetX = innerMinX + Math.random() * (innerMaxX - innerMinX)
-        state.targetZ = innerMinZ + Math.random() * (innerMaxZ - innerMinZ)
-        state.waitTimer = 2 + Math.random() * 4
+        const target = pickWanderTarget()
+        state.targetX = target.x
+        state.targetZ = target.z
+        state.waitTimer = 3 + Math.random() * 3 // 3-6 seconds between wanders
       }
     } else {
-      // Walk toward target
-      const step = Math.min(speed * delta, dist)
+      // Walk toward target with eased speed (slow down near target)
+      const easedSpeed = speed * Math.min(1, dist / 1.0)
+      const step = Math.min(easedSpeed * delta, dist)
       state.currentX += (dx / dist) * step
       state.currentZ += (dz / dist) * step
-      groupRef.current.rotation.y = Math.atan2(dx, dz)
+
+      // Lerp rotation for smooth turning (shortest path)
+      const targetRotY = Math.atan2(dx, dz)
+      const currentRotY = groupRef.current.rotation.y
+      let angleDiff = targetRotY - currentRotY
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+      groupRef.current.rotation.y = currentRotY + angleDiff * 0.1
     }
 
     groupRef.current.position.x = state.currentX

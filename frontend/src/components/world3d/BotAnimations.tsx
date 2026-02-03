@@ -133,6 +133,61 @@ export function getRoomInteractionPoints(
   }
 }
 
+// ─── Walkable Zone (safe center area per room) ─────────────────
+
+export interface WalkableCenter {
+  x: number
+  z: number
+  radius: number
+}
+
+/**
+ * Returns a safe circular walkable area in the center of each room,
+ * avoiding furniture placed along walls and corners.
+ * Bots wander within this zone unless directed to a specific point.
+ */
+export function getWalkableCenter(
+  roomName: string,
+  roomSize: number,
+  roomPosition: [number, number, number],
+): WalkableCenter {
+  const rx = roomPosition[0]
+  const rz = roomPosition[2]
+  const roomType = getRoomType(roomName)
+
+  // Default: ~35% of half-room-size as safe walking radius
+  const defaultRadius = roomSize * 0.17
+
+  switch (roomType) {
+    case 'headquarters':
+      // Desk back-left, coffee back-right, plant front-right — center is clear
+      return { x: rx, z: rz, radius: defaultRadius }
+    case 'dev':
+      // Two desks on back-wall sides, server rack back-right — center corridor clear
+      return { x: rx, z: rz - roomSize * 0.05, radius: defaultRadius }
+    case 'creative':
+      // Easel left, desk right-back — center is safe
+      return { x: rx, z: rz, radius: defaultRadius }
+    case 'marketing':
+      // Standing desk back-left, bar chart right — slightly left-of-center
+      return { x: rx - roomSize * 0.05, z: rz, radius: defaultRadius * 0.85 }
+    case 'thinking':
+      // Round table at center — tighter zone so bots stay near table
+      return { x: rx, z: rz, radius: defaultRadius * 0.55 }
+    case 'automation':
+      // Conveyor belt in center — offset walkable zone forward
+      return { x: rx, z: rz + roomSize * 0.1, radius: defaultRadius * 0.7 }
+    case 'comms':
+      // Antenna back-left, desk front-right — center is clear
+      return { x: rx, z: rz, radius: defaultRadius }
+    case 'ops':
+      // Round table at center — tighter zone near table
+      return { x: rx, z: rz, radius: defaultRadius * 0.55 }
+    default:
+      return { x: rx, z: rz, radius: defaultRadius }
+  }
+}
+
 // ─── Animation State Machine Hook ───────────────────────────────
 
 function createDefaultAnimState(): AnimState {
