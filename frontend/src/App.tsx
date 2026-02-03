@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { PlaygroundView } from './components/sessions/PlaygroundView'
+// import { Playground3DView } from './components/sessions/Playground3DView' // Disabled: three.js version conflict
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
 import { CronView } from './components/sessions/CronView'
@@ -10,8 +11,22 @@ import { SettingsPanel, DEFAULT_SETTINGS, type SessionsSettings } from './compon
 import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { DevDesigns } from './components/dev/DevDesigns'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
 import { Button } from './components/ui/button'
+
+// Simple path-based routing for dev pages
+function useRoute() {
+  const [path, setPath] = useState(window.location.pathname)
+  
+  useEffect(() => {
+    const handlePopState = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+  
+  return path
+}
 
 type TabId = 'active' | 'cards' | 'all' | 'cron' | 'history' | 'connections'
 
@@ -34,6 +49,10 @@ function AppContent() {
   const { sessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('active')
+  const [is3DMode, setIs3DMode] = useState<boolean>(() => {
+    const stored = localStorage.getItem('crewhub-3d-mode')
+    return stored === 'true'
+  })
   const [settings, setSettings] = useState<SessionsSettings>(() => {
     const stored = localStorage.getItem('crewhub-settings')
     if (stored) {
@@ -45,6 +64,15 @@ function AppContent() {
     }
     return DEFAULT_SETTINGS
   })
+  
+  // Persist 3D mode preference
+  const toggle3DMode = useCallback(() => {
+    setIs3DMode(prev => {
+      const newValue = !prev
+      localStorage.setItem('crewhub-3d-mode', String(newValue))
+      return newValue
+    })
+  }, [])
 
   const handleSettingsChange = useCallback((newSettings: SessionsSettings) => {
     setSettings(newSettings)
@@ -83,6 +111,29 @@ function AppContent() {
                 </>
               )}
             </div>
+            
+            {/* 2D/3D Toggle - only show on Active tab */}
+            {activeTab === 'active' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggle3DMode}
+                className="gap-2"
+                title={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
+              >
+                {is3DMode ? (
+                  <>
+                    <Square className="h-4 w-4" />
+                    <span className="text-xs">2D</span>
+                  </>
+                ) : (
+                  <>
+                    <Box className="h-4 w-4" />
+                    <span className="text-xs">3D</span>
+                  </>
+                )}
+              </Button>
+            )}
             
             {/* Refresh button */}
             <Button variant="ghost" size="sm" onClick={refresh} disabled={loading}>
@@ -139,11 +190,19 @@ function AppContent() {
           <ErrorBoundary>
             <div className="flex-1 overflow-hidden">
               {activeTab === 'active' && (
-                <PlaygroundView
-                  sessions={sessions}
-                  settings={settings}
-                  onAliasChanged={handleAliasChanged}
-                />
+                is3DMode ? (
+                  <Playground3DView
+                    sessions={sessions}
+                    settings={settings}
+                    onAliasChanged={handleAliasChanged}
+                  />
+                ) : (
+                  <PlaygroundView
+                    sessions={sessions}
+                    settings={settings}
+                    onAliasChanged={handleAliasChanged}
+                  />
+                )
               )}
               {activeTab === 'cards' && (
                 <CardsView sessions={sessions} />
@@ -177,6 +236,13 @@ function AppContent() {
 }
 
 function App() {
+  const route = useRoute()
+  
+  // Dev routes
+  if (route === '/dev/designs') {
+    return <DevDesigns />
+  }
+  
   return (
     <ThemeProvider>
       <AppContent />

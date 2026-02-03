@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   Sheet,
   SheetContent,
@@ -15,8 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
 import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
-import { Sun, Moon, Monitor } from "lucide-react"
+import { Sun, Moon, Monitor, Building2, GitBranch, ChevronRight } from "lucide-react"
+import { RoomManagementPanel } from "./RoomManagementPanel"
+import { RoomRoutingRulesPanel } from "./RoomRoutingRulesPanel"
 
 export interface SessionsSettings {
   refreshInterval: number
@@ -52,6 +56,8 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }: SettingsPanelProps) {
   const { theme, setTheme, resolvedMode } = useTheme()
+  const [roomManagementOpen, setRoomManagementOpen] = useState(false)
+  const [roomRoutingOpen, setRoomRoutingOpen] = useState(false)
 
   const updateSetting = <K extends keyof SessionsSettings>(key: K, value: SessionsSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value })
@@ -64,6 +70,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   ]
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
@@ -129,6 +136,45 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Room Configuration Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Room Configuration</h3>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => setRoomManagementOpen(true)}
+              >
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span>Manage Rooms</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Create, edit, and organize workspace rooms
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => setRoomRoutingOpen(true)}
+              >
+                <div className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4" />
+                  <span>Routing Rules</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Configure automatic session routing to rooms
+              </p>
             </div>
           </div>
 
@@ -220,6 +266,17 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
         </div>
       </SheetContent>
     </Sheet>
+
+    <RoomManagementPanel 
+      open={roomManagementOpen} 
+      onOpenChange={setRoomManagementOpen} 
+    />
+    
+    <RoomRoutingRulesPanel 
+      open={roomRoutingOpen} 
+      onOpenChange={setRoomRoutingOpen} 
+    />
+  </>
   )
 }
 

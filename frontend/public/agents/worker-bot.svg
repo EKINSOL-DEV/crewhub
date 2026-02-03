@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Worker Bot - Orange with wrench icon -->
+  <defs>
+    <linearGradient id="workerGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFA033"/>
+      <stop offset="100%" style="stop-color:#FE9600"/>
+    </linearGradient>
+    <linearGradient id="workerDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#E68A00"/>
+      <stop offset="100%" style="stop-color:#CC7A00"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Antenna -->
+  <circle cx="64" cy="12" r="6" fill="url(#workerDark)"/>
+  <rect x="61" y="12" width="6" height="16" rx="3" fill="url(#workerDark)"/>
+  
+  <!-- Head -->
+  <rect x="24" y="28" width="80" height="64" rx="16" fill="url(#workerGradient)"/>
+  
+  <!-- Eyes -->
+  <ellipse cx="44" cy="56" rx="12" ry="14" fill="white"/>
+  <ellipse cx="84" cy="56" rx="12" ry="14" fill="white"/>
+  <circle cx="46" cy="58" r="6" fill="#333"/>
+  <circle cx="86" cy="58" r="6" fill="#333"/>
+  <circle cx="48" cy="56" r="2" fill="white"/>
+  <circle cx="88" cy="56" r="2" fill="white"/>
+  
+  <!-- Smile -->
+  <path d="M48 76 Q64 88 80 76" stroke="#CC7A00" stroke-width="4" fill="none" stroke-linecap="round"/>
+  
+  <!-- Hard hat -->
+  <path d="M20 40 Q20 20 64 20 Q108 20 108 40 L100 44 Q100 32 64 32 Q28 32 28 44 Z" fill="#FFD700"/>
+  <rect x="28" y="38" width="72" height="6" rx="3" fill="#E6C200"/>
+  
+  <!-- Wrench badge -->
+  <circle cx="100" cy="96" r="16" fill="url(#workerDark)"/>
+  <path d="M92 92 L96 96 L92 100 M100 88 L100 104 M108 92 L104 96 L108 100" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Body hint -->
+  <rect x="40" y="92" width="48" height="24" rx="8" fill="url(#workerDark)"/>
+</svg>

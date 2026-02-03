@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dev Bot - Red with code/gear icon -->
+  <defs>
+    <linearGradient id="devGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F44336"/>
+      <stop offset="100%" style="stop-color:#F32A1C"/>
+    </linearGradient>
+    <linearGradient id="devDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#C62828"/>
+      <stop offset="100%" style="stop-color:#B71C1C"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Antenna with gear -->
+  <g transform="translate(64, 14)">
+    <circle cx="0" cy="0" r="10" fill="url(#devDark)"/>
+    <circle cx="0" cy="0" r="4" fill="#1a1a1a"/>
+    <!-- Gear teeth -->
+    <rect x="-2" y="-12" width="4" height="4" rx="1" fill="url(#devDark)"/>
+    <rect x="-2" y="8" width="4" height="4" rx="1" fill="url(#devDark)"/>
+    <rect x="-12" y="-2" width="4" height="4" rx="1" fill="url(#devDark)"/>
+    <rect x="8" y="-2" width="4" height="4" rx="1" fill="url(#devDark)"/>
+  </g>
+  <rect x="61" y="22" width="6" height="14" rx="3" fill="url(#devDark)"/>
+  
+  <!-- Head -->
+  <rect x="24" y="36" width="80" height="60" rx="18" fill="url(#devGradient)"/>
+  
+  <!-- Code display on forehead -->
+  <rect x="36" y="42" width="56" height="18" rx="4" fill="#1a1a1a"/>
+  <text x="42" y="54" fill="#00FF00" font-family="monospace" font-size="10">&lt;/&gt;</text>
+  <text x="64" y="54" fill="#FF6B6B" font-family="monospace" font-size="10">{}</text>
+  
+  <!-- Eyes - focused -->
+  <ellipse cx="44" cy="72" rx="12" ry="12" fill="white"/>
+  <ellipse cx="84" cy="72" rx="12" ry="12" fill="white"/>
+  <circle cx="48" cy="72" r="6" fill="#333"/>
+  <circle cx="88" cy="72" r="6" fill="#333"/>
+  <circle cx="50" cy="70" r="2" fill="white"/>
+  <circle cx="90" cy="70" r="2" fill="white"/>
+  
+  <!-- Determined expression -->
+  <path d="M50 88 L78 88" stroke="#B71C1C" stroke-width="4" fill="none" stroke-linecap="round"/>
+  
+  <!-- Body hint -->
+  <rect x="40" y="96" width="48" height="24" rx="8" fill="url(#devDark)"/>
+  
+  <!-- Code brackets on body -->
+  <text x="50" y="112" fill="#F44336" font-family="monospace" font-size="16" font-weight="bold">{</text>
+  <text x="72" y="112" fill="#F44336" font-family="monospace" font-size="16" font-weight="bold">}</text>
+</svg>
