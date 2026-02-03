@@ -29,13 +29,15 @@ export interface PropProps {
 
 export interface PropEntry {
   component: React.FC<PropProps>
-  /** Mount type determines the base Y position:
-   *  - 'floor': sits on the floor (Y = floorY). Prop geometry builds upward from position.
-   *  - 'wall': attached to wall. Prop component handles its own Y offset internally
-   *    (e.g., +1.5 for whiteboards, +2.2 for clocks) since each wall prop mounts
-   *    at a different height. Renderer still passes floorY as base.
+  /** Mount type determines positioning behaviour:
+   *  - 'floor': sits on the floor. yOffset is height of floor surface (typically 0.16).
+   *  - 'wall': mounted on wall. yOffset is the wall-mount height (center of prop).
+   *    Renderer handles wall-snapping and rotation for wall props.
    */
   mountType: MountType
+  /** Y position offset from room base. Floor props: 0.16 (floor surface).
+   *  Wall props: mount height (e.g., 1.2 for whiteboards, 2.2 for clocks). */
+  yOffset: number
 }
 
 /** Convert degree rotation to [0, radians, 0] euler */
@@ -75,7 +77,7 @@ function WaterCoolerProp({ position, rotation }: PropProps) {
 }
 
 function NoticeBoardProp({ position, rotation }: PropProps) {
-  return <NoticeBoard position={[position[0], position[1] + 1.6, position[2]]} rotation={degToEuler(rotation)} />
+  return <NoticeBoard position={position} rotation={degToEuler(rotation)} />
 }
 
 function BenchProp({ position, rotation }: PropProps) {
@@ -90,7 +92,7 @@ function WhiteboardProp({ position, rotation }: PropProps) {
   const trayToon = useToonMaterialProps('#666666')
 
   return (
-    <group position={[position[0], position[1] + 1.6, position[2]]} rotation={degToEuler(rotation)}>
+    <group position={position} rotation={degToEuler(rotation)}>
       <mesh castShadow>
         <boxGeometry args={[1.6, 1.0, 0.05]} />
         <meshToonMaterial {...frameToon} />
@@ -292,7 +294,7 @@ function MoodBoardProp({ position, rotation }: PropProps) {
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#F97316', '#60A5FA']
 
   return (
-    <group position={[position[0], position[1] + 1.6, position[2]]} rotation={degToEuler(rotation)}>
+    <group position={position} rotation={degToEuler(rotation)}>
       <mesh castShadow>
         <boxGeometry args={[1.2, 0.8, 0.04]} />
         <meshToonMaterial {...frameToon} />
@@ -319,7 +321,7 @@ function PresentationScreenProp({ position, rotation }: PropProps) {
   const frameToon = useToonMaterialProps('#333333')
 
   return (
-    <group position={[position[0], position[1] + 1.8, position[2]]} rotation={degToEuler(rotation)}>
+    <group position={position} rotation={degToEuler(rotation)}>
       <mesh castShadow>
         <boxGeometry args={[1.8, 1.1, 0.05]} />
         <meshToonMaterial {...frameToon} />
@@ -503,7 +505,7 @@ function WallClockProp({ position }: PropProps) {
   })
 
   return (
-    <group position={[position[0], position[1] + 2.2, position[2]]} rotation={[Math.PI / 2, 0, Math.PI]}>
+    <group position={position} rotation={[Math.PI / 2, 0, Math.PI]}>
       <mesh castShadow>
         <cylinderGeometry args={[0.45, 0.45, 0.06, 24]} />
         <meshToonMaterial {...frameToon} />
@@ -542,7 +544,7 @@ function SmallScreenProp({ position, rotation }: PropProps) {
   const frameToon = useToonMaterialProps('#2A2A2A')
 
   return (
-    <group position={[position[0], position[1] + 1.5, position[2]]} rotation={degToEuler(rotation)}>
+    <group position={position} rotation={degToEuler(rotation)}>
       <mesh castShadow>
         <boxGeometry args={[0.5, 0.35, 0.03]} />
         <meshToonMaterial {...frameToon} />
@@ -605,7 +607,7 @@ function GearMechanismProp({ position, rotation }: PropProps) {
   })
 
   return (
-    <group position={[position[0], position[1] + 1.2, position[2]]} rotation={degToEuler(rotation === 0 ? 270 : rotation)}>
+    <group position={position} rotation={degToEuler(rotation === 0 ? 270 : rotation)}>
       <group ref={gear1Ref} position={[-0.18, 0, 0]}>
         <mesh>
           <cylinderGeometry args={[0.2, 0.2, 0.06, 12]} />
@@ -686,7 +688,7 @@ function SatelliteDishProp({ position, rotation }: PropProps) {
   const armToon = useToonMaterialProps('#888888')
 
   return (
-    <group position={[position[0], position[1] + 2.0, position[2]]} rotation={degToEuler(rotation)}>
+    <group position={position} rotation={degToEuler(rotation)}>
       <mesh rotation={[-0.5, 0, 0]} castShadow>
         <sphereGeometry args={[0.4, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshToonMaterial {...dishToon} side={THREE.DoubleSide} />
@@ -739,7 +741,7 @@ function HeadsetProp({ position, rotation }: PropProps) {
   const micToon = useToonMaterialProps('#222222')
 
   return (
-    <group position={[position[0], position[1] + 0.82, position[2]]} rotation={degToEuler(rotation)}>
+    <group position={position} rotation={degToEuler(rotation)}>
       <mesh position={[0, 0.12, 0]}>
         <torusGeometry args={[0.1, 0.015, 8, 12, Math.PI]} />
         <meshToonMaterial {...bandToon} />
@@ -794,7 +796,7 @@ function SignalWavesProp({ position }: PropProps) {
   })
 
   return (
-    <group position={[position[0], position[1] + 2.0, position[2]]}>
+    <group position={position}>
       {[ring1Ref, ring2Ref, ring3Ref].map((ref, i) => (
         <mesh key={i} ref={ref} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.3, 0.02, 8, 24]} />
@@ -820,7 +822,7 @@ function StatusLightsProp({ position }: PropProps) {
   const poleToon = useToonMaterialProps('#666666')
 
   return (
-    <group position={[position[0], position[1] + 1.3, position[2]]}>
+    <group position={position}>
       <mesh castShadow>
         <boxGeometry args={[0.5, 0.06, 0.06]} />
         <meshToonMaterial {...poleToon} />

@@ -269,23 +269,22 @@ async def seed_default_data():
                 VALUES (?, ?, ?)
             """, default_settings)
             
-            # Create default room assignment rules
-            import uuid
+            # Create default room assignment rules (fixed IDs to prevent duplicates on restart)
             default_rules = [
                 # Session type based rules (highest priority)
-                (str(uuid.uuid4()), 'automation-room', 'session_key_contains', ':cron:', 100, now),
-                (str(uuid.uuid4()), 'dev-room', 'session_key_contains', ':subagent:', 90, now),
-                (str(uuid.uuid4()), 'dev-room', 'session_key_contains', ':spawn:', 90, now),
-                (str(uuid.uuid4()), 'headquarters', 'session_type', 'main', 80, now),
+                ('rule-cron-automation', 'automation-room', 'session_key_contains', ':cron:', 100, now),
+                ('rule-subagent-dev', 'dev-room', 'session_key_contains', ':subagent:', 90, now),
+                ('rule-spawn-dev', 'dev-room', 'session_key_contains', ':spawn:', 90, now),
+                ('rule-main-hq', 'headquarters', 'session_type', 'main', 80, now),
                 # Channel based rules
-                (str(uuid.uuid4()), 'comms-room', 'session_key_contains', 'slack', 70, now),
-                (str(uuid.uuid4()), 'comms-room', 'session_key_contains', 'whatsapp', 70, now),
-                (str(uuid.uuid4()), 'comms-room', 'session_key_contains', 'telegram', 70, now),
-                (str(uuid.uuid4()), 'comms-room', 'session_key_contains', 'discord', 70, now),
+                ('rule-slack-comms', 'comms-room', 'session_key_contains', 'slack', 70, now),
+                ('rule-whatsapp-comms', 'comms-room', 'session_key_contains', 'whatsapp', 70, now),
+                ('rule-telegram-comms', 'comms-room', 'session_key_contains', 'telegram', 70, now),
+                ('rule-discord-comms', 'comms-room', 'session_key_contains', 'discord', 70, now),
                 # Model based rules
-                (str(uuid.uuid4()), 'dev-room', 'model', 'opus', 50, now),
-                (str(uuid.uuid4()), 'thinking-room', 'model', 'gpt5', 50, now),
-                (str(uuid.uuid4()), 'thinking-room', 'model', 'gpt-5', 50, now),
+                ('rule-opus-dev', 'dev-room', 'model', 'opus', 50, now),
+                ('rule-gpt5-thinking', 'thinking-room', 'model', 'gpt5', 50, now),
+                ('rule-gpt5v2-thinking', 'thinking-room', 'model', 'gpt-5', 50, now),
             ]
             
             await db.executemany("""
