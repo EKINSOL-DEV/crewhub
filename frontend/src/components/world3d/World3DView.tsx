@@ -571,6 +571,7 @@ function SceneContent({
                 isActive={bot.isActive}
                 roomId={room.id}
                 roomName={room.name}
+                roomSize={ROOM_SIZE}
               />
             ))}
             {overflowCount > 0 && (
@@ -623,6 +624,8 @@ function SceneContent({
             activity={bot.activity}
             isActive={bot.isActive}
             roomId="parking"
+            roomName="parking"
+            roomSize={ROOM_SIZE}
           />
         ))
       })()}

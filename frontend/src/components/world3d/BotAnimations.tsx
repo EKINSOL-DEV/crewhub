@@ -1,51 +1,38 @@
-import { useRef, useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Text } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import type { BotStatus } from './Bot3D'
 
-// ─── Types ──────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────
+// Types
+// ───────────────────────────────────────────────────────────────
 
 export type BotAnimState =
-  | 'walking-to-desk'
   | 'working'
+  | 'walking-to-desk'
   | 'idle-wandering'
   | 'getting-coffee'
-  | 'sleeping-walking'
   | 'sleeping'
   | 'offline'
 
-export interface AnimState {
-  phase: BotAnimState
-  targetX: number | null       // world-space target X (null = random wander)
-  targetZ: number | null       // world-space target Z
-  walkSpeed: number
-  freezeWhenArrived: boolean   // stop moving after reaching target
-  arrived: boolean             // set by Bot3D when close to target
-  bodyTilt: number             // radians, positive = forward lean
-  headBob: boolean             // enable subtle work bobbing
-  opacity: number              // 1 = normal, 0.4 = offline fade
-  yOffset: number              // vertical shift (sleeping crouch)
-  showZzz: boolean             // render ZZZ particles
-  sleepRotZ: number            // sideways lean when sleeping
-  coffeeTimer: number          // seconds remaining at coffee machine
-  resetWanderTarget: boolean   // signal Bot3D to pick new random target
+export interface BotAnimationResult {
+  animState: BotAnimState
+  /** Target position in *room-local* coordinates (room centered at 0,0,0). */
+  targetPosition: [number, number, number] | null
+  /** Forward lean when working (radians). */
+  bodyTilt: number
+  /** 0 = no bob, 0.02 = gentle bob. */
+  headBobAmount: number
+  /** 1.0 normal, 0.4 offline */
+  opacity: number
+  showZzz: boolean
+  /** Lower when sleeping. */
+  yOffset: number
 }
 
-export interface RoomInteractionPoints {
-  deskPosition: [number, number, number]
-  coffeePosition: [number, number, number] | null
-  sleepCorner: [number, number, number]
-}
-
-// Locally-defined bounds type (avoids circular import from World3DView)
-interface RoomBounds {
-  minX: number
-  maxX: number
-  minZ: number
-  maxZ: number
-}
-
-// ─── Room Interaction Points ────────────────────────────────────
+// ───────────────────────────────────────────────────────────────
+// Room interaction points
+// ───────────────────────────────────────────────────────────────
 
 function getRoomType(roomName: string): string {
   const name = roomName.toLowerCase()
@@ -61,330 +48,238 @@ function getRoomType(roomName: string): string {
 }
 
 /**
- * Get world-space positions for room furniture that bots interact with.
- * Positions are approximate — near the relevant props placed by RoomProps.tsx.
+ * Approximate positions of furniture per room type.
+ * Returns *room-local* coordinates (room centered at [0,0,0]).
  */
-export function getRoomInteractionPoints(
-  roomName: string,
-  roomSize: number,
-  roomPosition: [number, number, number],
-): RoomInteractionPoints {
-  const h = roomSize / 2
-  const s = roomSize / 12 // scale factor matching RoomProps
-  const rx = roomPosition[0]
-  const rz = roomPosition[2]
-  const roomType = getRoomType(roomName)
+export function getRoomInteractionPoints(roomName: string, roomSize: number) {
+  const half = roomSize / 2 - 0.3
+  const defaults = {
+    deskPosition: [half * 0.5, 0, -half * 0.3] as [number, number, number],
+    coffeePosition: [-half * 0.7, 0, half * 0.6] as [number, number, number],
+    sleepCorner: [-half * 0.8, 0, -half * 0.8] as [number, number, number],
+  }
 
-  switch (roomType) {
+  const t = getRoomType(roomName)
+  switch (t) {
     case 'headquarters':
       return {
-        deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: [rx + (h - 1.5 * s), 0, rz + (-h + 2.5 * s)],
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (h - 2 * s)],
+        ...defaults,
+        // Coffee machine + water cooler exist here
+        coffeePosition: [half * 0.65, 0, -half * 0.65],
+        deskPosition: [-half * 0.55, 0, half * 0.55],
+        sleepCorner: [half * 0.75, 0, half * 0.75],
       }
     case 'dev':
       return {
-        deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (-h + 2 * s)],
+        ...defaults,
+        deskPosition: [-half * 0.55, 0, half * 0.55],
+        coffeePosition: null as any, // no coffee prop in this room
+        sleepCorner: [half * 0.75, 0, -half * 0.75],
       }
     case 'creative':
       return {
-        deskPosition: [rx + (h - 2.5 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (-h + 2 * s), 0, rz + (-h + 2 * s)],
+        ...defaults,
+        deskPosition: [half * 0.55, 0, half * 0.55],
+        coffeePosition: null as any,
+        sleepCorner: [-half * 0.75, 0, -half * 0.75],
       }
     case 'marketing':
       return {
-        deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (-h + 2 * s)],
+        ...defaults,
+        deskPosition: [-half * 0.55, 0, half * 0.55],
+        coffeePosition: null as any,
+        sleepCorner: [half * 0.75, 0, -half * 0.75],
       }
     case 'thinking':
       return {
-        deskPosition: [rx, 0, rz],
-        coffeePosition: null,
-        sleepCorner: [rx + (-h + 2 * s), 0, rz + (-h + 2 * s)],
+        ...defaults,
+        deskPosition: [0, 0, 0],
+        coffeePosition: null as any,
+        sleepCorner: [-half * 0.75, 0, -half * 0.75],
       }
     case 'automation':
       return {
-        deskPosition: [rx + (-h + 2.5 * s), 0, rz + (-h + 2.5 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (h - 2 * s)],
+        ...defaults,
+        deskPosition: [-half * 0.55, 0, -half * 0.55],
+        coffeePosition: null as any,
+        sleepCorner: [half * 0.75, 0, half * 0.75],
       }
     case 'comms':
       return {
-        deskPosition: [rx + (h - 3 * s), 0, rz + (-h + 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (-h + 2 * s), 0, rz + (h - 2 * s)],
+        ...defaults,
+        deskPosition: [half * 0.55, 0, -half * 0.55],
+        coffeePosition: null as any,
+        sleepCorner: [-half * 0.75, 0, half * 0.75],
       }
     case 'ops':
       return {
-        deskPosition: [rx, 0, rz],
-        coffeePosition: null,
-        sleepCorner: [rx + (-h + 2 * s), 0, rz + (h - 2 * s)],
+        ...defaults,
+        deskPosition: [0, 0, 0],
+        coffeePosition: null as any,
+        sleepCorner: [-half * 0.75, 0, half * 0.75],
       }
     default:
-      return {
-        deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
-        coffeePosition: null,
-        sleepCorner: [rx + (h - 2 * s), 0, rz + (-h + 2 * s)],
-      }
+      return defaults
   }
 }
 
-// ─── Animation State Machine Hook ───────────────────────────────
+// ───────────────────────────────────────────────────────────────
+// Hook
+// ───────────────────────────────────────────────────────────────
 
-function createDefaultAnimState(): AnimState {
-  return {
-    phase: 'idle-wandering',
-    targetX: null,
-    targetZ: null,
-    walkSpeed: 0.5,
-    freezeWhenArrived: false,
-    arrived: false,
-    bodyTilt: 0,
-    headBob: false,
-    opacity: 1,
-    yOffset: 0,
-    showZzz: false,
-    sleepRotZ: 0,
-    coffeeTimer: 0,
-    resetWanderTarget: false,
-  }
-}
-
-/**
- * Manages bot animation state based on status.
- * Returns a mutable ref read by Bot3D's useFrame for zero-overhead integration.
- *
- * State transitions:
- *   active  → walking-to-desk → working (tilt, head bob)
- *   idle    → getting-coffee (if available, 50%) | idle-wandering (slow)
- *   sleeping → sleeping-walking → sleeping (crouch, ZZZ)
- *   offline → frozen, faded
- */
 export function useBotAnimation(
-  status: BotStatus,
-  interactionPoints: RoomInteractionPoints | null,
-  _roomBounds: RoomBounds | undefined,
-): React.MutableRefObject<AnimState> {
-  const stateRef = useRef<AnimState>(createDefaultAnimState())
-
-  // Per-bot random offsets so multiple bots don't stack on the same furniture
+  status: 'active' | 'idle' | 'sleeping' | 'offline',
+  roomName: string,
+  roomSize: number,
+): BotAnimationResult {
+  // stable per-bot decision/jitter
+  const idleMode = useRef<'coffee' | 'wander'>(Math.random() < 0.5 ? 'coffee' : 'wander')
   const jitter = useRef({
     x: (Math.random() - 0.5) * 0.8,
     z: (Math.random() - 0.5) * 0.8,
   })
 
-  // ─── React to status changes ────────────────────────────────
+  const points = useMemo(() => getRoomInteractionPoints(roomName, roomSize), [roomName, roomSize])
+
+  const [animState, setAnimState] = useState<BotAnimState>(() => {
+    if (status === 'offline') return 'offline'
+    if (status === 'sleeping') return 'sleeping'
+    if (status === 'active') return 'walking-to-desk'
+    return idleMode.current === 'coffee' ? 'getting-coffee' : 'idle-wandering'
+  })
+
+  const coffeeTimer = useRef(0)
+
   useEffect(() => {
-    const s = stateRef.current
-    const j = jitter.current
-
-    switch (status) {
-      case 'active': {
-        if (interactionPoints) {
-          s.phase = 'walking-to-desk'
-          s.targetX = interactionPoints.deskPosition[0] + j.x
-          s.targetZ = interactionPoints.deskPosition[2] + j.z
-          s.walkSpeed = 1.2
-          s.freezeWhenArrived = true
-          s.arrived = false
-        } else {
-          s.phase = 'idle-wandering'
-          s.targetX = null
-          s.targetZ = null
-          s.walkSpeed = 1.2
-          s.freezeWhenArrived = false
-          s.arrived = false
-          s.resetWanderTarget = true
-        }
-        s.bodyTilt = 0
-        s.headBob = false
-        s.opacity = 1
-        s.yOffset = 0
-        s.showZzz = false
-        s.sleepRotZ = 0
-        s.coffeeTimer = 0
-        break
-      }
-
-      case 'idle': {
-        const hasCoffee = interactionPoints?.coffeePosition != null
-        const goCoffee = hasCoffee && Math.random() > 0.5
-
-        if (goCoffee && interactionPoints?.coffeePosition) {
-          s.phase = 'getting-coffee'
-          s.targetX = interactionPoints.coffeePosition[0] + j.x * 0.5
-          s.targetZ = interactionPoints.coffeePosition[2] + j.z * 0.5
-          s.walkSpeed = 0.6
-          s.freezeWhenArrived = true
-          s.arrived = false
-          s.coffeeTimer = 5 + Math.random() * 5
-        } else {
-          s.phase = 'idle-wandering'
-          s.targetX = null
-          s.targetZ = null
-          s.walkSpeed = 0.3
-          s.freezeWhenArrived = false
-          s.arrived = false
-          s.resetWanderTarget = true
-        }
-        s.bodyTilt = 0
-        s.headBob = false
-        s.opacity = 1
-        s.yOffset = 0
-        s.showZzz = false
-        s.sleepRotZ = 0
-        break
-      }
-
-      case 'sleeping': {
-        if (interactionPoints) {
-          s.phase = 'sleeping-walking'
-          s.targetX = interactionPoints.sleepCorner[0] + j.x * 0.3
-          s.targetZ = interactionPoints.sleepCorner[2] + j.z * 0.3
-          s.walkSpeed = 0.4
-          s.freezeWhenArrived = true
-          s.arrived = false
-        } else {
-          // No interaction points — sleep in place
-          s.phase = 'sleeping'
-          s.targetX = null
-          s.targetZ = null
-          s.walkSpeed = 0
-          s.freezeWhenArrived = true
-          s.arrived = true
-          s.yOffset = -0.1
-          s.showZzz = true
-          s.sleepRotZ = 0.12
-          s.bodyTilt = -0.08
-        }
-        s.headBob = false
-        s.opacity = 1
-        s.coffeeTimer = 0
-        break
-      }
-
-      case 'offline': {
-        s.phase = 'offline'
-        s.targetX = null
-        s.targetZ = null
-        s.walkSpeed = 0
-        s.freezeWhenArrived = true
-        s.arrived = true
-        s.bodyTilt = 0
-        s.headBob = false
-        s.opacity = 0.4
-        s.yOffset = 0
-        s.showZzz = false
-        s.sleepRotZ = 0
-        s.coffeeTimer = 0
-        break
-      }
+    if (status === 'offline') {
+      setAnimState('offline')
+      return
     }
-  }, [status, interactionPoints])
-
-  return stateRef
-}
-
-// ─── Per-frame animation state transitions ──────────────────────
-// Called from Bot3D's single useFrame to avoid extra callbacks.
-
-export function tickAnimState(s: AnimState, delta: number): void {
-  switch (s.phase) {
-    case 'walking-to-desk': {
-      if (s.arrived) {
-        s.phase = 'working'
-        s.bodyTilt = 0.12
-        s.headBob = true
-        s.walkSpeed = 0
-      }
-      break
+    if (status === 'sleeping') {
+      setAnimState('sleeping')
+      return
+    }
+    if (status === 'active') {
+      setAnimState('walking-to-desk')
+      return
     }
 
-    case 'getting-coffee': {
-      if (s.arrived) {
-        s.coffeeTimer -= delta
-        if (s.coffeeTimer <= 0) {
-          s.phase = 'idle-wandering'
-          s.targetX = null
-          s.targetZ = null
-          s.walkSpeed = 0.3
-          s.freezeWhenArrived = false
-          s.arrived = false
-          s.resetWanderTarget = true
-        }
-      }
-      break
+    // idle
+    if (idleMode.current === 'coffee' && points.coffeePosition) {
+      setAnimState('getting-coffee')
+      coffeeTimer.current = 5
+    } else {
+      setAnimState('idle-wandering')
     }
+  }, [status, points.coffeePosition])
 
-    case 'sleeping-walking': {
-      if (s.arrived) {
-        s.phase = 'sleeping'
-        s.yOffset = -0.1
-        s.showZzz = true
-        s.sleepRotZ = 0.12
-        s.bodyTilt = -0.08
-        s.walkSpeed = 0
+  // after coffee wait → wander
+  useFrame((_, delta) => {
+    if (animState !== 'getting-coffee') return
+    // We don't know arrival here; Bot3D will stop at target and keep idle.
+    // Run a simple countdown once coffee state is entered.
+    if (coffeeTimer.current > 0) {
+      coffeeTimer.current -= delta
+      if (coffeeTimer.current <= 0) {
+        setAnimState('idle-wandering')
       }
-      break
     }
+  })
+
+  // derive output
+  const { x, z } = jitter.current
+
+  let targetPosition: [number, number, number] | null = null
+  let bodyTilt = 0
+  let headBobAmount = 0
+  let opacity = 1
+  let showZzz = false
+  let yOffset = 0
+
+  if (animState === 'offline') {
+    opacity = 0.4
+    targetPosition = null
+  }
+
+  if (status === 'active') {
+    if (animState === 'walking-to-desk' || animState === 'working') {
+      targetPosition = [points.deskPosition[0] + x, 0, points.deskPosition[2] + z]
+    }
+    if (animState === 'working') {
+      bodyTilt = 0.1
+      headBobAmount = 0.02
+    }
+  }
+
+  if (status === 'idle') {
+    if (animState === 'getting-coffee' && points.coffeePosition) {
+      targetPosition = [points.coffeePosition[0] + x * 0.5, 0, points.coffeePosition[2] + z * 0.5]
+    } else {
+      targetPosition = null
+    }
+  }
+
+  if (status === 'sleeping') {
+    // walk to corner; once arrived Bot3D will freeze, but we still show Zs.
+    targetPosition = [points.sleepCorner[0] + x * 0.3, 0, points.sleepCorner[2] + z * 0.3]
+    yOffset = -0.05
+    showZzz = true
+    bodyTilt = -0.05
+  }
+
+  return {
+    animState,
+    targetPosition,
+    bodyTilt,
+    headBobAmount,
+    opacity,
+    showZzz,
+    yOffset,
   }
 }
 
-// ─── Sleeping ZZZ Particles ─────────────────────────────────────
+// ───────────────────────────────────────────────────────────────
+// ZzzParticles
+// ───────────────────────────────────────────────────────────────
 
-/**
- * Lightweight ZZZ particles using sprite planes instead of Troika <Text>.
- * Accepts animRef to control visibility: only shows when bot has actually
- * arrived at sleep corner (showZzz === true), not during walking-to-sleep.
- */
-export function SleepingZs({ animRef }: { animRef: React.MutableRefObject<AnimState> }) {
-  const groupRef = useRef<THREE.Group>(null)
-  const spriteRefs = useRef<THREE.Sprite[]>([])
-
-  // Create shared material instances (one per Z for independent opacity)
-  const materials = useRef(
-    [0, 1, 2].map(() =>
-      new THREE.SpriteMaterial({
-        color: 0x9ca3af,
-        transparent: true,
-        opacity: 0.8,
-      })
-    )
-  ).current
+export function ZzzParticles() {
+  const zRefs = useRef<THREE.Group[]>([])
 
   useFrame(({ clock }) => {
-    if (!groupRef.current) return
-
-    // Only show when the animation state says so (arrived at sleep corner)
-    const show = animRef.current.showZzz
-    groupRef.current.visible = show
-    if (!show) return
-
     const t = clock.getElapsedTime()
-    spriteRefs.current.forEach((sprite, i) => {
-      if (!sprite) return
+    zRefs.current.forEach((ref, i) => {
+      if (!ref) return
       const phase = (t * 0.6 + i * 1.2) % 3
-      sprite.position.y = 0.7 + phase * 0.25
-      sprite.position.x = Math.sin(t + i) * 0.12
-      const opacity = phase < 2.5 ? 0.8 : Math.max(0, 0.8 - (phase - 2.5) * 1.6)
-      const s = 0.1 * (0.5 + phase * 0.12)
-      sprite.scale.set(s, s, 1)
-      materials[i].opacity = opacity
+      ref.position.y = 0.75 + phase * 0.25
+      ref.position.x = Math.sin(t + i) * 0.12
+      const opacity = phase < 2.5 ? 0.85 : Math.max(0, 0.85 - (phase - 2.5) * 1.7)
+      ref.scale.setScalar(0.55 + phase * 0.12)
+      ref.traverse((child) => {
+        const mesh = child as THREE.Mesh
+        const mat = mesh.material as any
+        if (mat && typeof mat.opacity === 'number') {
+          mat.transparent = true
+          mat.opacity = opacity
+        }
+      })
     })
   })
 
   return (
-    <group ref={groupRef}>
-      {[0, 1, 2].map(i => (
-        <sprite
-          key={i}
-          ref={(el: THREE.Sprite | null) => { if (el) spriteRefs.current[i] = el }}
-          material={materials[i]}
-        />
+    <group>
+      {[0, 1, 2].map((i) => (
+        <group key={i} ref={(el) => { if (el) zRefs.current[i] = el }}>
+          <Text
+            fontSize={0.1}
+            color="#9ca3af"
+            anchorX="center"
+            anchorY="middle"
+            material-transparent
+            material-opacity={0.85}
+          >
+            Z
+          </Text>
+        </group>
       ))}
     </group>
   )
