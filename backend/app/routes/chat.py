@@ -83,26 +83,38 @@ async def get_chat_history(
     _validate_session_key(session_key)
 
     gateway = await get_gateway()
-    raw_messages = await gateway.get_session_history(session_key, limit=0)
+    raw_entries = await gateway.get_session_history(session_key, limit=0)
 
     # Parse into chat messages
+    # JSONL entries have structure: { type: "message", message: { role, content }, timestamp }
     messages = []
-    for idx, msg in enumerate(raw_messages):
-        role = msg.get("role")
+    for idx, entry in enumerate(raw_entries):
+        # Messages are nested: entry.message.role / entry.message.content
+        msg = entry.get("message", {}) if isinstance(entry.get("message"), dict) else {}
+        role = msg.get("role") or entry.get("role")
         if role not in ("user", "assistant", "system"):
             continue
 
-        timestamp = msg.get("timestamp") or 0
+        timestamp = entry.get("timestamp") or msg.get("timestamp") or 0
         # Normalise to millis
-        if isinstance(timestamp, (int, float)) and timestamp < 1e12:
-            timestamp = int(timestamp * 1000)
-        else:
-            timestamp = int(timestamp)
+        if isinstance(timestamp, str):
+            # ISO format like "2026-01-31T16:20:59.818Z"
+            from datetime import datetime
+            try:
+                dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                timestamp = int(dt.timestamp() * 1000)
+            except (ValueError, TypeError):
+                timestamp = 0
+        elif isinstance(timestamp, (int, float)):
+            if timestamp < 1e12:
+                timestamp = int(timestamp * 1000)
+            else:
+                timestamp = int(timestamp)
 
-        # Extract text content
+        # Extract text content from the nested message
         content_parts: list[str] = []
         tools: list[dict] = []
-        raw_content = msg.get("content", [])
+        raw_content = msg.get("content", []) if msg else entry.get("content", [])
         if isinstance(raw_content, str):
             content_parts.append(raw_content)
         elif isinstance(raw_content, list):
@@ -130,8 +142,8 @@ async def get_chat_history(
         if not content and not tools:
             continue
 
-        # Token usage
-        usage = msg.get("usage", {})
+        # Token usage (can be on entry level or message level)
+        usage = entry.get("usage") or msg.get("usage") or {}
         tokens = usage.get("totalTokens", 0) if isinstance(usage, dict) else 0
 
         messages.append({
