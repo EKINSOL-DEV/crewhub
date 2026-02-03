@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Html, Text } from '@react-three/drei'
+import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { BotBody } from './BotBody'
 import { BotFace } from './BotFace'
@@ -8,6 +8,7 @@ import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
+import { SleepingZs, useBotAnimation, getRoomInteractionPoints } from './BotAnimations'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragActions } from '@/contexts/DragDropContext'
 import type { BotVariantConfig } from './utils/botVariants'
@@ -47,6 +48,8 @@ interface Bot3DProps {
   isActive?: boolean
   /** Room ID this bot belongs to (for focus navigation) */
   roomId?: string
+  /** Room name (for determining furniture interaction points) */
+  roomName?: string
 }
 
 /**
@@ -54,7 +57,7 @@ interface Bot3DProps {
  * Includes body, face, accessory, chest display, status glow,
  * animations, wandering, and floating name tag.
  */
-export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId }: Bot3DProps) {
+export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId, roomName }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
   const { state: focusState, focusBot } = useWorldFocus()
   const { startDrag, endDrag } = useDragActions()
@@ -99,52 +102,132 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     }
   }, [session?.key])
 
-  // Animations + wandering
+  // ─── Animation state machine ────────────────────────────────
+  const interactionPoints = useMemo(() => {
+    if (!roomName || !roomBounds) return null
+    const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
+    const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
+    const roomSize = (roomBounds.maxX - roomBounds.minX) + 5 // re-add margin (2.5 × 2)
+    return getRoomInteractionPoints(roomName, roomSize, [roomCenterX, 0, roomCenterZ])
+  }, [roomName, roomBounds])
+
+  const animRef = useBotAnimation(status, interactionPoints, roomBounds)
+  const lastAppliedOpacity = useRef(1)
+
+  // Animations + wandering (driven by animation state machine)
   useFrame(({ clock }, delta) => {
     if (!groupRef.current) return
     const t = clock.getElapsedTime()
+    const anim = animRef.current
+    const state = wanderState.current
 
-    // Reset transforms each frame
-    groupRef.current.rotation.z = 0
-    groupRef.current.rotation.x = 0
+    // ─── Apply animation rotations ────────────────────────────
+    groupRef.current.rotation.z = anim.sleepRotZ
+    groupRef.current.rotation.x = anim.bodyTilt
 
-    // ─── Status-based animations ──────────────────────────────
-    switch (status) {
-      case 'active':
-        groupRef.current.position.y = position[1] + Math.sin(t * 4) * 0.06
+    // ─── Y position: base + animation offset + bounce ─────────
+    let bounceY = 0
+    switch (anim.phase) {
+      case 'working':
+        bounceY = anim.headBob ? Math.sin(t * 2) * 0.02 : 0
         break
-      case 'idle':
-        groupRef.current.position.y = position[1] + Math.sin(t * 1.5) * 0.03
+      case 'walking-to-desk':
+      case 'getting-coffee':
+      case 'sleeping-walking':
+        bounceY = Math.sin(t * 4) * 0.04
+        break
+      case 'idle-wandering':
+        bounceY = Math.sin(t * 1.5) * 0.03
         break
       case 'sleeping':
-        groupRef.current.position.y = position[1] + Math.sin(t * 0.8) * 0.015
-        groupRef.current.rotation.z = 0.12
-        groupRef.current.rotation.x = 0.05
+        bounceY = Math.sin(t * 0.8) * 0.015
         break
       case 'offline':
-        groupRef.current.position.y = position[1]
+        bounceY = 0
         break
     }
+    groupRef.current.position.y = position[1] + anim.yOffset + bounceY
 
-    // ─── Wandering logic ──────────────────────────────────────
-    if ((status === 'sleeping' || status === 'offline') || !roomBounds) {
-      // No wandering: stay at base position
-      groupRef.current.position.x = wanderState.current.baseX
-      groupRef.current.position.z = wanderState.current.baseZ
+    // ─── Apply opacity (only on change) ───────────────────────
+    if (anim.opacity !== lastAppliedOpacity.current) {
+      groupRef.current.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const materials = Array.isArray((child as THREE.Mesh).material)
+            ? (child as THREE.Mesh).material as THREE.Material[]
+            : [(child as THREE.Mesh).material as THREE.Material]
+          for (const mat of materials) {
+            if ('opacity' in mat) {
+              mat.transparent = anim.opacity < 1
+              mat.opacity = anim.opacity
+            }
+          }
+        }
+      })
+      lastAppliedOpacity.current = anim.opacity
+    }
+
+    // ─── Movement logic ───────────────────────────────────────
+    if (!roomBounds) {
+      // No bounds — stay at base position
+      groupRef.current.position.x = state.baseX
+      groupRef.current.position.z = state.baseZ
       return
     }
 
-    const state = wanderState.current
-    const speed = status === 'active' ? 1.2 : 0.5
+    // Frozen states (working at desk, sleeping in corner, offline)
+    if (anim.freezeWhenArrived && anim.arrived) {
+      groupRef.current.position.x = state.currentX
+      groupRef.current.position.z = state.currentZ
+      if (session?.key) {
+        botPositionRegistry.set(session.key, {
+          x: state.currentX,
+          y: groupRef.current.position.y,
+          z: state.currentZ,
+        })
+      }
+      return
+    }
 
+    // Animation released its target → force new random wander target
+    if (anim.resetWanderTarget) {
+      state.targetX = roomBounds.minX + Math.random() * (roomBounds.maxX - roomBounds.minX)
+      state.targetZ = roomBounds.minZ + Math.random() * (roomBounds.maxZ - roomBounds.minZ)
+      state.waitTimer = 0.5
+      anim.resetWanderTarget = false
+    }
+
+    // Override wander target from animation system
+    if (anim.targetX !== null && anim.targetZ !== null) {
+      state.targetX = anim.targetX
+      state.targetZ = anim.targetZ
+    }
+
+    const speed = anim.walkSpeed || 0.5
     const dx = state.targetX - state.currentX
     const dz = state.targetZ - state.currentZ
     const dist = Math.sqrt(dx * dx + dz * dz)
 
-    if (dist < 0.15) {
-      // Reached target — wait then pick new one
+    if (dist < 0.3) {
+      // Check if this was an animation target
+      if (anim.targetX !== null && anim.targetZ !== null && !anim.arrived) {
+        anim.arrived = true
+        if (anim.freezeWhenArrived) {
+          groupRef.current.position.x = state.currentX
+          groupRef.current.position.z = state.currentZ
+          if (session?.key) {
+            botPositionRegistry.set(session.key, {
+              x: state.currentX,
+              y: groupRef.current.position.y,
+              z: state.currentZ,
+            })
+          }
+          return
+        }
+      }
+
+      // Random wandering: wait then pick new target
       state.waitTimer -= delta
-      if (state.waitTimer <= 0) {
+      if (state.waitTimer <= 0 && anim.targetX === null) {
         state.targetX = roomBounds.minX + Math.random() * (roomBounds.maxX - roomBounds.minX)
         state.targetZ = roomBounds.minZ + Math.random() * (roomBounds.maxZ - roomBounds.minZ)
         state.waitTimer = 2 + Math.random() * 4
@@ -154,7 +237,6 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       const step = Math.min(speed * delta, dist)
       state.currentX += (dx / dist) * step
       state.currentZ += (dz / dist) * step
-      // Rotate Y toward movement direction
       groupRef.current.rotation.y = Math.atan2(dx, dz)
     }
 
@@ -301,43 +383,5 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   )
 }
 
-// ─── Sleeping ZZZ ──────────────────────────────────────────────
+// SleepingZs moved to BotAnimations.tsx
 
-function SleepingZs() {
-  const zRefs = useRef<THREE.Group[]>([])
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    zRefs.current.forEach((ref, i) => {
-      if (!ref) return
-      const phase = (t * 0.6 + i * 1.2) % 3
-      ref.position.y = 0.7 + phase * 0.25
-      ref.position.x = Math.sin(t + i) * 0.12
-      const opacity = phase < 2.5 ? 0.8 : Math.max(0, 0.8 - (phase - 2.5) * 1.6)
-      ref.scale.setScalar(0.5 + phase * 0.12)
-      ref.children.forEach(child => {
-        const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial
-        if (mat && mat.opacity !== undefined) mat.opacity = opacity
-      })
-    })
-  })
-
-  return (
-    <group>
-      {[0, 1, 2].map(i => (
-        <group key={i} ref={el => { if (el) zRefs.current[i] = el }}>
-          <Text
-            fontSize={0.1}
-            color="#9ca3af"
-            anchorX="center"
-            anchorY="middle"
-            material-transparent
-            material-opacity={0.8}
-          >
-            Z
-          </Text>
-        </group>
-      ))}
-    </group>
-  )
-}

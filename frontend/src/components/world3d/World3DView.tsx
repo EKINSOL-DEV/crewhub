@@ -546,6 +546,7 @@ function SceneContent({
                 activity={bot.activity}
                 isActive={bot.isActive}
                 roomId={room.id}
+                roomName={room.name}
               />
             ))}
             {overflowCount > 0 && (
