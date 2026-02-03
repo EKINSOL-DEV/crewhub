@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
 import { PlaygroundView } from './components/sessions/PlaygroundView'
-import { Playground3DView } from './components/sessions/Playground3DView'
 import { World3DView } from './components/world3d/World3DView'
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
@@ -13,7 +12,7 @@ import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { DevDesigns } from './components/dev/DevDesigns'
-import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Box, Square, Globe } from 'lucide-react'
+import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Square, Globe } from 'lucide-react'
 import { Button } from './components/ui/button'
 
 // Simple path-based routing for dev pages
@@ -50,13 +49,11 @@ function AppContent() {
   const { sessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('active')
-  type ViewMode = '2d' | '3d' | 'world'
+  type ViewMode = '2d' | 'world'
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const stored = localStorage.getItem('crewhub-view-mode')
-    if (stored === '3d' || stored === 'world') return stored
-    // Legacy support
-    const legacy3d = localStorage.getItem('crewhub-3d-mode')
-    if (legacy3d === 'true') return '3d'
+    if (stored === 'world') return 'world'
+    // Backward compat: '3d' maps to '2d'
     return '2d'
   })
   const [settings, setSettings] = useState<SessionsSettings>(() => {
@@ -71,10 +68,10 @@ function AppContent() {
     return DEFAULT_SETTINGS
   })
 
-  // Cycle through view modes: 2D → 3D → World → 2D
+  // Toggle between 2D and World
   const cycleViewMode = useCallback(() => {
     setViewMode(prev => {
-      const next: ViewMode = prev === '2d' ? '3d' : prev === '3d' ? 'world' : '2d'
+      const next: ViewMode = prev === '2d' ? 'world' : '2d'
       localStorage.setItem('crewhub-view-mode', next)
       return next
     })
@@ -130,17 +127,12 @@ function AppContent() {
                 size="sm" 
                 onClick={cycleViewMode}
                 className="gap-2"
-                title={viewMode === '2d' ? 'Switch to 3D view' : viewMode === '3d' ? 'Switch to 3D World' : 'Switch to 2D view'}
+                title={viewMode === '2d' ? 'Switch to World view' : 'Switch to 2D view'}
               >
                 {viewMode === '2d' ? (
                   <>
                     <Square className="h-4 w-4" />
                     <span className="text-xs">2D</span>
-                  </>
-                ) : viewMode === '3d' ? (
-                  <>
-                    <Box className="h-4 w-4" />
-                    <span className="text-xs">3D</span>
                   </>
                 ) : (
                   <>
@@ -197,12 +189,6 @@ function AppContent() {
               {activeTab === 'active' && (
                 viewMode === 'world' ? (
                   <World3DView
-                    sessions={sessions}
-                    settings={settings}
-                    onAliasChanged={handleAliasChanged}
-                  />
-                ) : viewMode === '3d' ? (
-                  <Playground3DView
                     sessions={sessions}
                     settings={settings}
                     onAliasChanged={handleAliasChanged}
