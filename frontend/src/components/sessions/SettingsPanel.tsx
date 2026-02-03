@@ -1,11 +1,4 @@
-import { useState } from "react"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -15,12 +8,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
-import { Sun, Moon, Monitor, Building2, GitBranch, ChevronRight } from "lucide-react"
-import { RoomManagementPanel } from "./RoomManagementPanel"
-import { RoomRoutingRulesPanel } from "./RoomRoutingRulesPanel"
+import {
+  Sun, Moon, Monitor, X, Plus, Trash2, Edit2, Check,
+  ChevronUp, ChevronDown, ChevronRight,
+  AlertCircle,
+} from "lucide-react"
+import { useRooms, type Room } from "@/hooks/useRooms"
+import { useRoomAssignmentRules, type RoomAssignmentRule } from "@/hooks/useRoomAssignmentRules"
+import { useToast } from "@/hooks/use-toast"
 
 export interface SessionsSettings {
   refreshInterval: number
@@ -31,10 +38,9 @@ export interface SessionsSettings {
   showBadges: boolean
   easterEggsEnabled: boolean
   playgroundSpeed: number
-  parkingIdleThreshold: number  // seconds before a session is parked (default: 120)
+  parkingIdleThreshold: number
 }
 
-// Backwards compatibility alias
 export type MinionsSettings = SessionsSettings
 
 const DEFAULT_SETTINGS: SessionsSettings = {
@@ -56,14 +62,229 @@ interface SettingsPanelProps {
   onSettingsChange: (settings: SessionsSettings) => void
 }
 
+// ─── Constants for room management ───────────────────────────────────────────
+
+const ROOM_ICONS = ["🏛️", "💻", "🎨", "🧠", "⚙️", "📡", "🛠️", "📢", "🚀", "📊", "🔬", "📝", "🎯", "💡", "🔧", "📦"]
+const ROOM_COLORS = [
+  "#4f46e5", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#14b8a6", "#f97316", "#ec4899",
+  "#3b82f6", "#ef4444", "#84cc16", "#a855f7", "#0ea5e9", "#f43f5e", "#22c55e", "#6366f1",
+]
+
+const RULE_TYPES = [
+  { value: "session_key_contains", label: "Session Key Contains", description: "Match if session key includes text" },
+  { value: "keyword", label: "Label Keyword", description: "Match if label contains keyword" },
+  { value: "model", label: "Model Name", description: "Match if model includes text" },
+  { value: "label_pattern", label: "Regex Pattern", description: "Match label with regex" },
+  { value: "session_type", label: "Session Type", description: "Match by session type" },
+] as const
+
+const SESSION_TYPES = [
+  { value: "main", label: "Main Session" },
+  { value: "cron", label: "Cron Job" },
+  { value: "subagent", label: "Subagent/Spawn" },
+  { value: "slack", label: "Slack" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "telegram", label: "Telegram" },
+  { value: "discord", label: "Discord" },
+]
+
+// ─── Section wrapper ─────────────────────────────────────────────────────────
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border bg-card/80 p-6 space-y-5 shadow-sm">
+      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+      {children}
+    </div>
+  )
+}
+
+function CollapsibleSection({
+  title,
+  badge,
+  defaultOpen = true,
+  children,
+}: {
+  title: string
+  badge?: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [expanded, setExpanded] = useState(defaultOpen)
+  return (
+    <div className="rounded-xl border bg-card/80 shadow-sm overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-6 pb-4 hover:bg-accent/30 transition-colors text-left"
+      >
+        <div className="flex items-center gap-3">
+          <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+          {badge && (
+            <Badge variant="secondary" className="text-xs">{badge}</Badge>
+          )}
+        </div>
+        <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${expanded ? "rotate-90" : ""}`} />
+      </button>
+      {expanded && <div className="px-6 pb-6 space-y-4">{children}</div>}
+    </div>
+  )
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
+
 export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }: SettingsPanelProps) {
   const { theme, setTheme, resolvedMode } = useTheme()
-  const [roomManagementOpen, setRoomManagementOpen] = useState(false)
-  const [roomRoutingOpen, setRoomRoutingOpen] = useState(false)
+  const { rooms, createRoom, updateRoom, deleteRoom, reorderRooms, isLoading: roomsLoading } = useRooms()
+  const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
+  const { toast } = useToast()
 
+  // ─── Room management state ───
+  const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false)
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null)
+  const [deleteRoomConfirm, setDeleteRoomConfirm] = useState<string | null>(null)
+  const [newRoom, setNewRoom] = useState({ name: "", icon: "🏛️", color: "#4f46e5" })
+
+  // ─── Routing rules state ───
+  const [showCreateRuleDialog, setShowCreateRuleDialog] = useState(false)
+  const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string | null>(null)
+  const [newRule, setNewRule] = useState({
+    rule_type: "session_key_contains" as RoomAssignmentRule["rule_type"],
+    rule_value: "",
+    room_id: "",
+    priority: 50,
+  })
+
+  // ─── Escape key ───
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => {
+      if (
+        e.key === "Escape" &&
+        !showCreateRoomDialog &&
+        !deleteRoomConfirm &&
+        !showCreateRuleDialog &&
+        !deleteRuleConfirm
+      ) {
+        onOpenChange(false)
+      }
+    }
+    document.addEventListener("keydown", handler)
+    return () => document.removeEventListener("keydown", handler)
+  }, [open, onOpenChange, showCreateRoomDialog, deleteRoomConfirm, showCreateRuleDialog, deleteRuleConfirm])
+
+  // ─── Helpers ───
   const updateSetting = <K extends keyof SessionsSettings>(key: K, value: SessionsSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value })
   }
+
+  const generateRoomId = (name: string) =>
+    name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-room"
+
+  // ─── Room handlers ───
+  const handleCreateRoom = async () => {
+    if (!newRoom.name.trim()) {
+      toast({ title: "Name required", description: "Please enter a room name", variant: "destructive" })
+      return
+    }
+    const roomId = generateRoomId(newRoom.name)
+    const result = await createRoom({
+      id: roomId,
+      name: newRoom.name.trim(),
+      icon: newRoom.icon,
+      color: newRoom.color,
+      sort_order: rooms.length,
+    })
+    if (result.success) {
+      toast({ title: "Room Created!", description: `${newRoom.icon} ${newRoom.name} is ready` })
+      setShowCreateRoomDialog(false)
+      setNewRoom({ name: "", icon: "🏛️", color: "#4f46e5" })
+    } else {
+      toast({ title: "Failed to create room", description: result.error, variant: "destructive" })
+    }
+  }
+
+  const handleUpdateRoom = async (room: Room) => {
+    const result = await updateRoom(room.id, {
+      name: room.name,
+      icon: room.icon || undefined,
+      color: room.color || undefined,
+    })
+    if (result.success) {
+      toast({ title: "Room Updated!", description: `${room.icon} ${room.name} saved` })
+      setEditingRoom(null)
+    } else {
+      toast({ title: "Failed to update room", description: result.error, variant: "destructive" })
+    }
+  }
+
+  const handleDeleteRoom = async (roomId: string) => {
+    const room = rooms.find(r => r.id === roomId)
+    const result = await deleteRoom(roomId)
+    if (result.success) {
+      toast({ title: "Room Deleted", description: `${room?.icon} ${room?.name} removed` })
+      setDeleteRoomConfirm(null)
+    } else {
+      toast({ title: "Failed to delete room", description: result.error, variant: "destructive" })
+    }
+  }
+
+  const moveRoom = async (roomId: string, direction: "up" | "down") => {
+    const currentIndex = sortedRooms.findIndex(r => r.id === roomId)
+    if (currentIndex === -1) return
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+    if (newIndex < 0 || newIndex >= rooms.length) return
+    const newOrder = [...sortedRooms.map(r => r.id)]
+    ;[newOrder[currentIndex], newOrder[newIndex]] = [newOrder[newIndex], newOrder[currentIndex]]
+    await reorderRooms(newOrder)
+  }
+
+  // ─── Rule handlers ───
+  const handleCreateRule = async () => {
+    if (!newRule.rule_value.trim()) {
+      toast({ title: "Value required", description: "Please enter a rule value", variant: "destructive" })
+      return
+    }
+    if (!newRule.room_id) {
+      toast({ title: "Room required", description: "Please select a target room", variant: "destructive" })
+      return
+    }
+    const success = await createRule({
+      rule_type: newRule.rule_type,
+      rule_value: newRule.rule_value.trim(),
+      room_id: newRule.room_id,
+      priority: newRule.priority,
+    })
+    if (success) {
+      toast({ title: "Rule Created!", description: "New routing rule is active" })
+      setShowCreateRuleDialog(false)
+      setNewRule({ rule_type: "session_key_contains", rule_value: "", room_id: rooms[0]?.id || "", priority: 50 })
+    } else {
+      toast({ title: "Failed to create rule", variant: "destructive" })
+    }
+  }
+
+  const handleDeleteRule = async (ruleId: string) => {
+    const success = await deleteRule(ruleId)
+    if (success) {
+      toast({ title: "Rule Deleted" })
+      setDeleteRuleConfirm(null)
+    } else {
+      toast({ title: "Failed to delete rule", variant: "destructive" })
+    }
+  }
+
+  const adjustPriority = async (ruleId: string, delta: number) => {
+    const rule = rules.find(r => r.id === ruleId)
+    if (!rule) return
+    const newPriority = Math.max(0, Math.min(100, rule.priority + delta))
+    await updateRule(ruleId, { priority: newPriority })
+  }
+
+  const getRuleTypeLabel = (type: string) =>
+    RULE_TYPES.find(t => t.value === type)?.label || type
+
+  const sortedRooms = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
+  const sortedRules = [...rules].sort((a, b) => b.priority - a.priority)
 
   const themeModeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
     { value: "light", label: "Light", icon: <Sun className="h-4 w-4" /> },
@@ -71,231 +292,672 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
     { value: "system", label: "System", icon: <Monitor className="h-4 w-4" /> },
   ]
 
+  // ─── Early return ───
+  if (!open) return null
+
   return (
     <>
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>⚙️ Crew Settings</SheetTitle>
-          <SheetDescription>Customize how the Crew behaves and looks</SheetDescription>
-        </SheetHeader>
+      {/* ─── Fullscreen overlay ─── */}
+      <div className="fixed inset-0 z-50 animate-in fade-in duration-200">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          onClick={() => onOpenChange(false)}
+        />
 
-        <div className="py-6 space-y-6 overflow-y-auto max-h-[calc(100vh-12rem)]">
-          {/* Appearance Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Appearance</h3>
-            
-            {/* Theme Mode */}
-            <div className="space-y-3">
-              <Label>Theme</Label>
-              <div className="flex gap-2">
-                {themeModeOptions.map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => setTheme({ mode: option.value })}
-                    className={`
-                      flex items-center gap-2 px-4 py-2 rounded-lg border transition-all
-                      ${theme.mode === option.value 
-                        ? "border-primary bg-primary/10 text-primary" 
-                        : "border-border bg-background hover:bg-muted"
-                      }
-                    `}
-                  >
-                    {option.icon}
-                    <span className="text-sm">{option.label}</span>
-                  </button>
-                ))}
-              </div>
-              {theme.mode === "system" && (
-                <p className="text-xs text-muted-foreground">
-                  Currently using {resolvedMode} mode based on your system preference
+        {/* Scrollable content area */}
+        <div className="relative z-10 h-full overflow-y-auto bg-background/95 backdrop-blur-md animate-in slide-in-from-bottom-2 duration-300">
+          <div className="max-w-[1400px] mx-auto px-8 py-8 pb-16">
+
+            {/* ─── Header ─── */}
+            <div className="flex items-start justify-between mb-10">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">⚙️ Crew Settings</h1>
+                <p className="text-muted-foreground mt-1.5 text-sm">
+                  Customize how the Crew behaves and looks
                 </p>
-              )}
+              </div>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="p-2.5 rounded-xl border bg-card hover:bg-accent transition-colors shadow-sm"
+                title="Close settings"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* Accent Color */}
-            <div className="space-y-3">
-              <Label>Accent Color</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {(Object.entries(accentColors) as [AccentColor, typeof accentColors[AccentColor]][]).map(([key, config]) => (
-                  <button
-                    key={key}
-                    onClick={() => setTheme({ accentColor: key })}
-                    className={`
-                      flex flex-col items-center gap-1.5 p-2 rounded-lg border transition-all
-                      ${theme.accentColor === key 
-                        ? "border-2 border-primary bg-primary/5" 
-                        : "border-border hover:border-muted-foreground/50"
-                      }
-                    `}
-                    title={config.name}
+            {/* ─── 3-Column Grid ─── */}
+            <div className="grid grid-cols-3 gap-6 items-start">
+
+              {/* ═══ LEFT COLUMN: Appearance ═══ */}
+              <div className="space-y-6">
+                <Section title="🎨 Appearance">
+                  {/* Theme Mode */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Theme</Label>
+                    <div className="flex gap-2">
+                      {themeModeOptions.map(option => (
+                        <button
+                          key={option.value}
+                          onClick={() => setTheme({ mode: option.value })}
+                          className={`
+                            flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all flex-1 justify-center
+                            ${theme.mode === option.value
+                              ? "border-primary bg-primary/10 text-primary shadow-sm"
+                              : "border-border bg-background hover:bg-muted"
+                            }
+                          `}
+                        >
+                          {option.icon}
+                          <span className="text-sm font-medium">{option.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {theme.mode === "system" && (
+                      <p className="text-xs text-muted-foreground">
+                        Currently using {resolvedMode} mode based on your system preference
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Accent Color — bigger swatches */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Accent Color</Label>
+                    <div className="grid grid-cols-4 gap-3">
+                      {(Object.entries(accentColors) as [AccentColor, typeof accentColors[AccentColor]][]).map(([key, config]) => (
+                        <button
+                          key={key}
+                          onClick={() => setTheme({ accentColor: key })}
+                          className={`
+                            flex flex-col items-center gap-2 p-3 rounded-xl border transition-all
+                            ${theme.accentColor === key
+                              ? "border-2 border-primary bg-primary/5 shadow-sm"
+                              : "border-border hover:border-muted-foreground/50 hover:bg-muted/50"
+                            }
+                          `}
+                          title={config.name}
+                        >
+                          <div
+                            className="w-10 h-10 rounded-full shadow-md ring-2 ring-white/20"
+                            style={{ backgroundColor: config.preview }}
+                          />
+                          <span className="text-xs text-muted-foreground font-medium">{config.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </Section>
+              </div>
+
+              {/* ═══ CENTER COLUMN: Room Configuration ═══ */}
+              <div className="space-y-6">
+                <CollapsibleSection
+                  title="🏢 Room Management"
+                  badge={`${rooms.length} rooms`}
+                >
+                  <Button
+                    onClick={() => setShowCreateRoomDialog(true)}
+                    size="sm"
+                    className="w-full gap-2"
                   >
-                    <div 
-                      className="w-6 h-6 rounded-full shadow-sm"
-                      style={{ backgroundColor: config.preview }}
+                    <Plus className="h-4 w-4" />
+                    Create New Room
+                  </Button>
+
+                  {roomsLoading ? (
+                    <div className="text-center py-6 text-muted-foreground text-sm">Loading rooms…</div>
+                  ) : sortedRooms.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground text-sm">
+                      No rooms yet. Create one to get started!
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {sortedRooms.map((room, index) => (
+                        <div
+                          key={room.id}
+                          className="flex items-center gap-2 p-3 rounded-lg border bg-background hover:bg-accent/30 transition-colors"
+                        >
+                          {/* Reorder buttons */}
+                          <div className="flex flex-col gap-0.5">
+                            <button
+                              onClick={() => moveRoom(room.id, "up")}
+                              disabled={index === 0}
+                              className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
+                            >
+                              <ChevronUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={() => moveRoom(room.id, "down")}
+                              disabled={index === sortedRooms.length - 1}
+                              className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
+                            >
+                              <ChevronDown className="h-3 w-3" />
+                            </button>
+                          </div>
+
+                          {/* Room icon */}
+                          <div
+                            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+                            style={{ backgroundColor: `${room.color}20`, border: `2px solid ${room.color}` }}
+                          >
+                            {room.icon}
+                          </div>
+
+                          {/* Name / edit */}
+                          <div className="flex-1 min-w-0">
+                            {editingRoom?.id === room.id ? (
+                              <div className="flex gap-1.5">
+                                <Input
+                                  value={editingRoom.name}
+                                  onChange={(e) => setEditingRoom({ ...editingRoom, name: e.target.value })}
+                                  className="h-8 text-sm"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleUpdateRoom(editingRoom)
+                                    if (e.key === "Escape") setEditingRoom(null)
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleUpdateRoom(editingRoom)}
+                                  className="p-1.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => setEditingRoom(null)}
+                                  className="p-1.5 hover:bg-muted rounded text-muted-foreground"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="font-medium text-sm truncate">{room.name}</div>
+                                <div className="text-xs text-muted-foreground truncate">{room.id}</div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          {editingRoom?.id !== room.id && (
+                            <div className="flex gap-1 shrink-0">
+                              <button
+                                onClick={() => setEditingRoom({ ...room })}
+                                className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteRoomConfirm(room.id)}
+                                className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CollapsibleSection>
+
+                <CollapsibleSection
+                  title="🔀 Routing Rules"
+                  badge={`${rules.length} rules`}
+                >
+                  <Button
+                    onClick={() => {
+                      setNewRule(r => ({ ...r, room_id: rooms[0]?.id || "" }))
+                      setShowCreateRuleDialog(true)
+                    }}
+                    size="sm"
+                    className="w-full gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Rule
+                  </Button>
+
+                  <div className="p-3 rounded-lg bg-muted/50 text-xs flex items-start gap-2">
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                    <p className="text-muted-foreground">
+                      Rules are evaluated by priority (highest first). First match wins.
+                    </p>
+                  </div>
+
+                  {rulesLoading ? (
+                    <div className="text-center py-6 text-muted-foreground text-sm">Loading rules…</div>
+                  ) : sortedRules.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground text-sm">
+                      No rules yet. Sessions will use default routing.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {sortedRules.map(rule => {
+                        const room = rooms.find(r => r.id === rule.room_id)
+                        return (
+                          <div
+                            key={rule.id}
+                            className="p-3 rounded-lg border bg-background hover:bg-accent/20 transition-colors"
+                          >
+                            <div className="flex items-start gap-2.5">
+                              {/* Priority controls */}
+                              <div className="flex flex-col items-center gap-0.5 shrink-0">
+                                <button
+                                  onClick={() => adjustPriority(rule.id, 10)}
+                                  className="p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                                >
+                                  <ChevronUp className="h-3.5 w-3.5" />
+                                </button>
+                                <Badge variant="secondary" className="text-[10px] font-mono px-1.5">
+                                  {rule.priority}
+                                </Badge>
+                                <button
+                                  onClick={() => adjustPriority(rule.id, -10)}
+                                  className="p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                                >
+                                  <ChevronDown className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+
+                              {/* Rule info */}
+                              <div className="flex-1 min-w-0 space-y-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <Badge variant="outline" className="text-[10px]">
+                                    {getRuleTypeLabel(rule.rule_type)}
+                                  </Badge>
+                                  <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+                                    {rule.rule_value}
+                                  </code>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <span>→</span>
+                                  {room && (
+                                    <span
+                                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                      style={{
+                                        backgroundColor: `${room.color || "#4f46e5"}20`,
+                                        color: room.color || "#4f46e5",
+                                        border: `1px solid ${room.color || "#4f46e5"}40`,
+                                      }}
+                                    >
+                                      {room.icon} {room.name}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Delete */}
+                              <button
+                                onClick={() => setDeleteRuleConfirm(rule.id)}
+                                className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600 shrink-0"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </CollapsibleSection>
+              </div>
+
+              {/* ═══ RIGHT COLUMN: Behavior & Display ═══ */}
+              <div className="space-y-6">
+                <Section title="🔄 Updates">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="auto-refresh" className="flex flex-col gap-1">
+                      <span className="text-sm">Auto-refresh</span>
+                      <span className="text-xs text-muted-foreground font-normal">Automatically update crew data</span>
+                    </Label>
+                    <Switch
+                      id="auto-refresh"
+                      checked={settings.autoRefresh}
+                      onCheckedChange={(checked) => updateSetting("autoRefresh", checked)}
                     />
-                    <span className="text-[10px] text-muted-foreground">{config.name}</span>
-                  </button>
-                ))}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="refresh-interval" className="text-sm">Refresh Interval</Label>
+                    <Select
+                      value={settings.refreshInterval.toString()}
+                      onValueChange={(value) => updateSetting("refreshInterval", parseInt(value))}
+                      disabled={!settings.autoRefresh}
+                    >
+                      <SelectTrigger id="refresh-interval"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3000">3 seconds</SelectItem>
+                        <SelectItem value="5000">5 seconds</SelectItem>
+                        <SelectItem value="10000">10 seconds</SelectItem>
+                        <SelectItem value="30000">30 seconds</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </Section>
+
+                <Section title="📺 Display">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="show-animations" className="flex flex-col gap-1">
+                      <span className="text-sm">Animations</span>
+                      <span className="text-xs text-muted-foreground font-normal">Show wiggle and bounce effects</span>
+                    </Label>
+                    <Switch
+                      id="show-animations"
+                      checked={settings.showAnimations}
+                      onCheckedChange={(checked) => updateSetting("showAnimations", checked)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="show-badges" className="flex flex-col gap-1">
+                      <span className="text-sm">Achievement Badges</span>
+                      <span className="text-xs text-muted-foreground font-normal">Display earned badges</span>
+                    </Label>
+                    <Switch
+                      id="show-badges"
+                      checked={settings.showBadges}
+                      onCheckedChange={(checked) => updateSetting("showBadges", checked)}
+                    />
+                  </div>
+                </Section>
+
+                <Section title="🎮 Playground">
+                  <div className="space-y-2">
+                    <Label htmlFor="parking-idle-threshold" className="text-sm">Parking Idle Threshold</Label>
+                    <Select
+                      value={String(settings.parkingIdleThreshold ?? 120)}
+                      onValueChange={(value) => updateSetting("parkingIdleThreshold", parseInt(value))}
+                    >
+                      <SelectTrigger id="parking-idle-threshold"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30">30 seconds</SelectItem>
+                        <SelectItem value="60">1 minute</SelectItem>
+                        <SelectItem value="120">2 minutes</SelectItem>
+                        <SelectItem value="300">5 minutes</SelectItem>
+                        <SelectItem value="600">10 minutes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">How long before idle sessions move to parking</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="playground-speed" className="text-sm">Movement Speed</Label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        id="playground-speed"
+                        type="range"
+                        min="0.5"
+                        max="2.0"
+                        step="0.25"
+                        value={settings.playgroundSpeed}
+                        onChange={(e) => updateSetting("playgroundSpeed", parseFloat(e.target.value))}
+                        className="flex-1 accent-primary"
+                      />
+                      <span className="text-sm text-muted-foreground w-12 text-right font-mono">
+                        {settings.playgroundSpeed}x
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>🐌 Slow</span>
+                      <span>⚡ Fast</span>
+                    </div>
+                  </div>
+                </Section>
+
+                <Section title="🎉 Fun & Playfulness">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="easter-eggs" className="flex flex-col gap-1">
+                      <span className="text-sm">Easter Eggs</span>
+                      <span className="text-xs text-muted-foreground font-normal">Enable hidden surprises</span>
+                    </Label>
+                    <Switch
+                      id="easter-eggs"
+                      checked={settings.easterEggsEnabled}
+                      onCheckedChange={(checked) => updateSetting("easterEggsEnabled", checked)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="play-sound" className="flex flex-col gap-1">
+                      <span className="text-sm">Sound Effects</span>
+                      <span className="text-xs text-muted-foreground font-normal">Play sounds for easter eggs</span>
+                    </Label>
+                    <Switch
+                      id="play-sound"
+                      checked={settings.playSound}
+                      onCheckedChange={(checked) => updateSetting("playSound", checked)}
+                      disabled={!settings.easterEggsEnabled}
+                    />
+                  </div>
+                </Section>
               </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Room Configuration Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Room Configuration</h3>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => setRoomManagementOpen(true)}
-              >
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  <span>Manage Rooms</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Create, edit, and organize workspace rooms
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => setRoomRoutingOpen(true)}
-              >
-                <div className="flex items-center gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  <span>Routing Rules</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Configure automatic session routing to rooms
-              </p>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Updates Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Updates</h3>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="auto-refresh" className="flex flex-col gap-1">
-                <span>Auto-refresh</span>
-                <span className="text-xs text-muted-foreground font-normal">Automatically update crew data</span>
-              </Label>
-              <Switch id="auto-refresh" checked={settings.autoRefresh} onCheckedChange={(checked) => updateSetting("autoRefresh", checked)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="refresh-interval">Refresh Interval</Label>
-              <Select value={settings.refreshInterval.toString()} onValueChange={(value) => updateSetting("refreshInterval", parseInt(value))} disabled={!settings.autoRefresh}>
-                <SelectTrigger id="refresh-interval"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3000">3 seconds</SelectItem>
-                  <SelectItem value="5000">5 seconds</SelectItem>
-                  <SelectItem value="10000">10 seconds</SelectItem>
-                  <SelectItem value="30000">30 seconds</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Display Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Display</h3>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-animations" className="flex flex-col gap-1">
-                <span>Animations</span>
-                <span className="text-xs text-muted-foreground font-normal">Show wiggle and bounce effects</span>
-              </Label>
-              <Switch id="show-animations" checked={settings.showAnimations} onCheckedChange={(checked) => updateSetting("showAnimations", checked)} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-badges" className="flex flex-col gap-1">
-                <span>Achievement Badges</span>
-                <span className="text-xs text-muted-foreground font-normal">Display earned badges</span>
-              </Label>
-              <Switch id="show-badges" checked={settings.showBadges} onCheckedChange={(checked) => updateSetting("showBadges", checked)} />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Playground Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Playground</h3>
-            <div className="space-y-2">
-              <Label htmlFor="parking-idle-threshold">Parking Idle Threshold</Label>
-              <Select 
-                value={String(settings.parkingIdleThreshold ?? 120)} 
-                onValueChange={(value) => updateSetting("parkingIdleThreshold", parseInt(value))}
-              >
-                <SelectTrigger id="parking-idle-threshold"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 seconds</SelectItem>
-                  <SelectItem value="60">1 minute</SelectItem>
-                  <SelectItem value="120">2 minutes</SelectItem>
-                  <SelectItem value="300">5 minutes</SelectItem>
-                  <SelectItem value="600">10 minutes</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">How long before idle sessions move to parking</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="playground-speed">Movement Speed</Label>
-              <div className="flex items-center gap-4">
-                <input id="playground-speed" type="range" min="0.5" max="2.0" step="0.25" value={settings.playgroundSpeed} onChange={(e) => updateSetting("playgroundSpeed", parseFloat(e.target.value))} className="flex-1" />
-                <span className="text-sm text-muted-foreground w-16 text-right">{settings.playgroundSpeed}x</span>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>🐌 Slow</span>
-                <span>⚡ Fast</span>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Fun Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Fun & Playfulness</h3>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="easter-eggs" className="flex flex-col gap-1">
-                <span>Easter Eggs</span>
-                <span className="text-xs text-muted-foreground font-normal">Enable hidden surprises</span>
-              </Label>
-              <Switch id="easter-eggs" checked={settings.easterEggsEnabled} onCheckedChange={(checked) => updateSetting("easterEggsEnabled", checked)} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="play-sound" className="flex flex-col gap-1">
-                <span>Sound Effects</span>
-                <span className="text-xs text-muted-foreground font-normal">Play sounds for easter eggs</span>
-              </Label>
-              <Switch id="play-sound" checked={settings.playSound} onCheckedChange={(checked) => updateSetting("playSound", checked)} disabled={!settings.easterEggsEnabled} />
             </div>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
 
-    <RoomManagementPanel 
-      open={roomManagementOpen} 
-      onOpenChange={setRoomManagementOpen} 
-    />
-    
-    <RoomRoutingRulesPanel 
-      open={roomRoutingOpen} 
-      onOpenChange={setRoomRoutingOpen} 
-    />
-  </>
+      {/* ─── Create Room Dialog ─── */}
+      <Dialog open={showCreateRoomDialog} onOpenChange={setShowCreateRoomDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Room</DialogTitle>
+            <DialogDescription>
+              Add a new workspace room for organizing your agents and sessions
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="room-name">Room Name</Label>
+              <Input
+                id="room-name"
+                value={newRoom.name}
+                onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
+                placeholder="e.g., Research Lab"
+                onKeyDown={(e) => { if (e.key === "Enter") handleCreateRoom() }}
+              />
+              {newRoom.name && (
+                <p className="text-xs text-muted-foreground">ID: {generateRoomId(newRoom.name)}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Icon</Label>
+              <div className="flex flex-wrap gap-2">
+                {ROOM_ICONS.map(icon => (
+                  <button
+                    key={icon}
+                    onClick={() => setNewRoom({ ...newRoom, icon })}
+                    className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
+                      newRoom.icon === icon
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-muted-foreground"
+                    }`}
+                  >
+                    {icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Color</Label>
+              <div className="flex flex-wrap gap-2">
+                {ROOM_COLORS.map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setNewRoom({ ...newRoom, color })}
+                    className={`w-8 h-8 rounded-full transition-all ${
+                      newRoom.color === color
+                        ? "ring-2 ring-offset-2 ring-primary"
+                        : "hover:scale-110"
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="p-4 rounded-lg border bg-muted/30">
+              <Label className="text-xs text-muted-foreground mb-2 block">Preview</Label>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
+                  style={{ backgroundColor: `${newRoom.color}20`, border: `2px solid ${newRoom.color}` }}
+                >
+                  {newRoom.icon}
+                </div>
+                <div>
+                  <div className="font-semibold">{newRoom.name || "Room Name"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {newRoom.name ? generateRoomId(newRoom.name) : "room-id"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateRoomDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateRoom}>Create Room</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Delete Room Dialog ─── */}
+      <Dialog open={!!deleteRoomConfirm} onOpenChange={() => setDeleteRoomConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Room?</DialogTitle>
+            <DialogDescription>
+              This will remove the room and unassign any sessions from it. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteRoomConfirm(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteRoomConfirm && handleDeleteRoom(deleteRoomConfirm)}>
+              Delete Room
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Create Rule Dialog ─── */}
+      <Dialog open={showCreateRuleDialog} onOpenChange={setShowCreateRuleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Routing Rule</DialogTitle>
+            <DialogDescription>
+              Define a condition to automatically route sessions to a room
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Rule Type</Label>
+              <Select
+                value={newRule.rule_type}
+                onValueChange={(value) =>
+                  setNewRule({
+                    ...newRule,
+                    rule_type: value as RoomAssignmentRule["rule_type"],
+                    rule_value: value === "session_type" ? SESSION_TYPES[0].value : "",
+                  })
+                }
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {RULE_TYPES.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div>
+                        <div>{type.label}</div>
+                        <div className="text-xs text-muted-foreground">{type.description}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{newRule.rule_type === "session_type" ? "Session Type" : "Match Value"}</Label>
+              {newRule.rule_type === "session_type" ? (
+                <Select
+                  value={newRule.rule_value}
+                  onValueChange={(value) => setNewRule({ ...newRule, rule_value: value })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select session type" /></SelectTrigger>
+                  <SelectContent>
+                    {SESSION_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={newRule.rule_value}
+                  onChange={(e) => setNewRule({ ...newRule, rule_value: e.target.value })}
+                  placeholder={
+                    newRule.rule_type === "session_key_contains" ? "e.g., :cron:" :
+                    newRule.rule_type === "keyword" ? "e.g., implement" :
+                    newRule.rule_type === "model" ? "e.g., opus" :
+                    "Enter pattern..."
+                  }
+                />
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Target Room</Label>
+              <Select
+                value={newRule.room_id}
+                onValueChange={(value) => setNewRule({ ...newRule, room_id: value })}
+              >
+                <SelectTrigger><SelectValue placeholder="Select room" /></SelectTrigger>
+                <SelectContent>
+                  {rooms.map(room => (
+                    <SelectItem key={room.id} value={room.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{room.icon}</span>
+                        <span>{room.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority ({newRule.priority})</Label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={newRule.priority}
+                  onChange={(e) => setNewRule({ ...newRule, priority: parseInt(e.target.value) })}
+                  className="flex-1 accent-primary"
+                />
+                <span className="text-sm text-muted-foreground w-12 text-right font-mono">{newRule.priority}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Higher priority rules are evaluated first (100 = highest, 0 = lowest)
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateRuleDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateRule}>Create Rule</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Delete Rule Dialog ─── */}
+      <Dialog open={!!deleteRuleConfirm} onOpenChange={() => setDeleteRuleConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Rule?</DialogTitle>
+            <DialogDescription>
+              This rule will be permanently removed. Sessions may be routed differently.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteRuleConfirm(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteRuleConfirm && handleDeleteRule(deleteRuleConfirm)}>
+              Delete Rule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
