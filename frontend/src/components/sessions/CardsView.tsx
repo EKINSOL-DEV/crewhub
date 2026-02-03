@@ -1,26 +1,22 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { type CrewSession } from "@/lib/api"
 import { SessionCard } from "./SessionCard"
 import { LogViewer } from "./LogViewer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Search, SlidersHorizontal } from "lucide-react"
 import { getSessionStatus, type SessionStatus } from "@/lib/minionUtils"
+import { cn } from "@/lib/utils"
 
 interface CardsViewProps {
   sessions: CrewSession[]
 }
 
 type SortOption = "recent" | "name" | "tokens" | "status"
-type FilterOption = "all" | "active" | "idle" | "sleeping"
+type StatusFilter = "active" | "idle" | "sleeping"
+const ALL_STATUSES: StatusFilter[] = ["active", "idle", "sleeping"]
+const DEFAULT_FILTERS: Set<StatusFilter> = new Set(["active", "idle"])
 
 function getDisplayName(session: CrewSession): string {
   if (session.displayName) return session.displayName
@@ -43,8 +39,7 @@ const sortLabels: Record<SortOption, string> = {
   status: "Status",
 }
 
-const filterLabels: Record<FilterOption, string> = {
-  all: "All Sessions",
+const filterLabels: Record<StatusFilter, string> = {
   active: "Active",
   idle: "Idle",
   sleeping: "Sleeping",
@@ -59,9 +54,29 @@ const statusOrder: Record<SessionStatus, number> = {
 export function CardsView({ sessions }: CardsViewProps) {
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState<SortOption>("recent")
-  const [filterBy, setFilterBy] = useState<FilterOption>("all")
+  const [activeFilters, setActiveFilters] = useState<Set<StatusFilter>>(new Set(DEFAULT_FILTERS))
   const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
+
+  const allSelected = activeFilters.size === ALL_STATUSES.length
+
+  const toggleFilter = useCallback((status: StatusFilter) => {
+    setActiveFilters((prev) => {
+      const next = new Set(prev)
+      if (next.has(status)) {
+        next.delete(status)
+      } else {
+        next.add(status)
+      }
+      return next
+    })
+  }, [])
+
+  const toggleAll = useCallback(() => {
+    setActiveFilters((prev) =>
+      prev.size === ALL_STATUSES.length ? new Set<StatusFilter>() : new Set(ALL_STATUSES)
+    )
+  }, [])
 
   const filteredAndSortedSessions = useMemo(() => {
     let result = [...sessions]
@@ -78,9 +93,11 @@ export function CardsView({ sessions }: CardsViewProps) {
       )
     }
 
-    // Filter by status
-    if (filterBy !== "all") {
-      result = result.filter((s) => getSessionStatus(s) === filterBy)
+    // Filter by status (if not all selected, apply filter)
+    if (activeFilters.size > 0 && activeFilters.size < ALL_STATUSES.length) {
+      result = result.filter((s) => activeFilters.has(getSessionStatus(s) as StatusFilter))
+    } else if (activeFilters.size === 0) {
+      result = []
     }
 
     // Sort
@@ -100,7 +117,7 @@ export function CardsView({ sessions }: CardsViewProps) {
     })
 
     return result
-  }, [sessions, search, sortBy, filterBy])
+  }, [sessions, search, sortBy, activeFilters])
 
   const handleViewLogs = (session: CrewSession) => {
     setSelectedSession(session)
@@ -108,7 +125,7 @@ export function CardsView({ sessions }: CardsViewProps) {
   }
 
   const statusCounts = useMemo(() => {
-    const counts = { all: sessions.length, active: 0, idle: 0, sleeping: 0 }
+    const counts: Record<string, number> = { all: sessions.length, active: 0, idle: 0, sleeping: 0 }
     sessions.forEach((s) => {
       const status = getSessionStatus(s)
       counts[status]++
@@ -132,35 +149,55 @@ export function CardsView({ sessions }: CardsViewProps) {
             />
           </div>
 
-          {/* Filters */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <SlidersHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block" />
-            
-            <Select value={filterBy} onValueChange={(v) => setFilterBy(v as FilterOption)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(filterLabels) as FilterOption[]).map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {filterLabels[option]} ({statusCounts[option]})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Status filter chips */}
+          <div className="flex items-center gap-1.5 w-full sm:w-auto flex-wrap">
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block mr-1" />
 
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(sortLabels) as SortOption[]).map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {sortLabels[option]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <button
+              type="button"
+              onClick={toggleAll}
+              className={cn(
+                "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                "border cursor-pointer select-none",
+                allSelected
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              All ({statusCounts.all})
+            </button>
+
+            {ALL_STATUSES.map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => toggleFilter(status)}
+                className={cn(
+                  "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  "border cursor-pointer select-none",
+                  activeFilters.has(status)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {filterLabels[status]} ({statusCounts[status]})
+              </button>
+            ))}
+
+            <div className="hidden sm:block w-px h-5 bg-border mx-1" />
+
+            {/* Sort select - kept as dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground cursor-pointer"
+            >
+              {(Object.keys(sortLabels) as SortOption[]).map((option) => (
+                <option key={option} value={option}>
+                  Sort: {sortLabels[option]}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Count */}
@@ -177,11 +214,11 @@ export function CardsView({ sessions }: CardsViewProps) {
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
               <div className="text-4xl mb-4">🔍</div>
               <p>No sessions found</p>
-              {filterBy !== "all" && (
+              {!allSelected && (
                 <Button
                   variant="link"
                   className="mt-2"
-                  onClick={() => setFilterBy("all")}
+                  onClick={() => setActiveFilters(new Set(ALL_STATUSES))}
                 >
                   Show all sessions
                 </Button>
