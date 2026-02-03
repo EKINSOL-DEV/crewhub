@@ -11,7 +11,7 @@ interface RoomNameplateProps {
 
 /**
  * Floating nameplate sign above the room entrance.
- * Displays room name + icon emoji with a slight Float animation.
+ * Displays room name + icon emoji on BOTH sides with a slight Float animation.
  */
 export function RoomNameplate({ name, icon, color, size = 12 }: RoomNameplateProps) {
   const accentColor = color || '#4f46e5'
@@ -32,15 +32,34 @@ export function RoomNameplate({ name, icon, color, size = 12 }: RoomNameplatePro
           <meshToonMaterial {...accentToon} />
         </mesh>
 
-        {/* Sign face (slightly lighter) */}
+        {/* Front face (slightly lighter) */}
         <mesh position={[0, 0, 0.065]}>
           <boxGeometry args={[2.9, 0.5, 0.01]} />
           <meshToonMaterial color="#FFF8F0" gradientMap={accentToon.gradientMap} />
         </mesh>
 
-        {/* Text */}
+        {/* Front text */}
         <Text
           position={[0, 0, 0.08]}
+          fontSize={0.28}
+          color="#333333"
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={2.6}
+        >
+          {displayText}
+        </Text>
+
+        {/* Back face (slightly lighter) */}
+        <mesh position={[0, 0, -0.065]} rotation={[0, Math.PI, 0]}>
+          <boxGeometry args={[2.9, 0.5, 0.01]} />
+          <meshToonMaterial color="#FFF8F0" gradientMap={accentToon.gradientMap} />
+        </mesh>
+
+        {/* Back text */}
+        <Text
+          position={[0, 0, -0.08]}
+          rotation={[0, Math.PI, 0]}
           fontSize={0.28}
           color="#333333"
           anchorX="center"
