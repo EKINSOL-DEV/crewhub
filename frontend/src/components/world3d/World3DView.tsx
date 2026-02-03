@@ -197,7 +197,7 @@ function ExteriorGround({ buildingWidth, buildingDepth }: { buildingWidth: numbe
 function ParkingAreaFloor({ x, z, width, depth }: { x: number; z: number; width: number; depth: number }) {
   const floorToon = useToonMaterialProps('#BFB090')
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.01, z]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.08, z]} receiveShadow>
       <boxGeometry args={[width, depth, 0.12]} />
       <meshToonMaterial {...floorToon} />
     </mesh>

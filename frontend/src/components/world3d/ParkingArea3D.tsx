@@ -28,7 +28,7 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
   return (
     <group position={position}>
       {/* ─── Divider line on the left side (separating from work rooms) ─── */}
-      <mesh position={[-halfW - 0.1, 0.1, 0]}>
+      <mesh position={[-halfW - 0.1, 0.22, 0]}>
         <boxGeometry args={[0.08, 0.2, depth - 2]} />
         <meshToonMaterial {...dividerToon} />
       </mesh>
@@ -37,7 +37,7 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
       {Array.from({ length: Math.floor(depth / 4) }, (_, i) => {
         const z = -halfD + 2 + i * 4
         return (
-          <mesh key={`post-${i}`} position={[-halfW - 0.1, 0.3, z]}>
+          <mesh key={`post-${i}`} position={[-halfW - 0.1, 0.45, z]}>
             <boxGeometry args={[0.15, 0.6, 0.15]} />
             <meshToonMaterial {...accentToon} />
           </mesh>
