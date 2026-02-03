@@ -9,7 +9,7 @@ import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
 import { SleepingZs, useBotAnimation, tickAnimState, getRoomInteractionPoints, getWalkableCenter } from './BotAnimations'
-import { getBlueprintForRoom, getWalkableMask, findPath, gridToWorld, worldToGrid } from '@/lib/grid'
+import { getBlueprintForRoom, getWalkableMask, findPath, findNearestWalkable, gridToWorld, worldToGrid } from '@/lib/grid'
 import type { PathNode } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragActions } from '@/contexts/DragDropContext'
@@ -105,8 +105,20 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
     const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
 
-    const startGrid = worldToGrid(fromWorldX - roomCenterX, fromWorldZ - roomCenterZ, cellSize, gridWidth, gridDepth)
-    const endGrid = worldToGrid(toWorldX - roomCenterX, toWorldZ - roomCenterZ, cellSize, gridWidth, gridDepth)
+    let startGrid = worldToGrid(fromWorldX - roomCenterX, fromWorldZ - roomCenterZ, cellSize, gridWidth, gridDepth)
+    let endGrid = worldToGrid(toWorldX - roomCenterX, toWorldZ - roomCenterZ, cellSize, gridWidth, gridDepth)
+
+    // Snap start/end to nearest walkable cell if they're on non-walkable cells
+    if (!walkableMask[startGrid.z]?.[startGrid.x]) {
+      const snapped = findNearestWalkable(walkableMask, startGrid)
+      if (!snapped) return false
+      startGrid = snapped
+    }
+    if (!walkableMask[endGrid.z]?.[endGrid.x]) {
+      const snapped = findNearestWalkable(walkableMask, endGrid)
+      if (!snapped) return false
+      endGrid = snapped
+    }
 
     const path = findPath(walkableMask, startGrid, endGrid)
     if (path && path.length > 1) {
@@ -375,9 +387,56 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
         groupRef.current.rotation.y = currentRotY + angleDiff * 0.1
       }
+    } else if (!gridData) {
+      // No grid data (parking bots or rooms without blueprints) — use direct circular wander
+      // This is safe because there are no walls/furniture to walk through
+      const dx = state.targetX - state.currentX
+      const dz = state.targetZ - state.currentZ
+      const dist = Math.sqrt(dx * dx + dz * dz)
+
+      if (dist < 0.3) {
+        // Arrived — check animation targets
+        if (anim.targetX !== null && anim.targetZ !== null && !anim.arrived) {
+          anim.arrived = true
+          if (anim.freezeWhenArrived) {
+            groupRef.current.position.x = state.currentX
+            groupRef.current.position.z = state.currentZ
+            if (session?.key) {
+              botPositionRegistry.set(session.key, {
+                x: state.currentX,
+                y: groupRef.current.position.y,
+                z: state.currentZ,
+              })
+            }
+            return
+          }
+        }
+
+        // Random wandering: wait then pick new target
+        state.waitTimer -= delta
+        if (state.waitTimer <= 0 && anim.targetX === null) {
+          const target = pickWanderTarget()
+          state.targetX = target.x
+          state.targetZ = target.z
+          state.waitTimer = 3 + Math.random() * 3
+        }
+      } else {
+        // Walk directly toward target (no walls in parking/open areas)
+        const easedSpeed = speed * Math.min(1, dist / 0.8)
+        const step = Math.min(easedSpeed * delta, dist)
+        state.currentX += (dx / dist) * step
+        state.currentZ += (dz / dist) * step
+
+        // Smooth rotation
+        const targetRotY = Math.atan2(dx, dz)
+        const currentRotY = groupRef.current.rotation.y
+        let angleDiff = targetRotY - currentRotY
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+        groupRef.current.rotation.y = currentRotY + angleDiff * 0.1
+      }
     } else {
-      // No path available — NEVER fall back to direct movement (would walk through walls)
-      // Instead: stay in place and retry with a different target or wait
+      // Has grid but no path — stay in place and retry with a different target
       const dx = state.targetX - state.currentX
       const dz = state.targetZ - state.currentZ
       const dist = Math.sqrt(dx * dx + dz * dz)

@@ -152,8 +152,8 @@ export function worldToGrid(
 ): { x: number; z: number } {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
-  const gx = Math.round((worldX + halfW) / cellSize)
-  const gz = Math.round((worldZ + halfD) / cellSize)
+  const gx = Math.floor((worldX + halfW) / cellSize)
+  const gz = Math.floor((worldZ + halfD) / cellSize)
   return {
     x: Math.max(0, Math.min(gridWidth - 1, gx)),
     z: Math.max(0, Math.min(gridDepth - 1, gz)),
