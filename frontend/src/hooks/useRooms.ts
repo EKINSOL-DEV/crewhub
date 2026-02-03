@@ -156,6 +156,84 @@ export function useRooms() {
     return getRoomFromRules(sessionKey, sessionData)
   }, [sessionAssignments, getRoomFromRules])
 
+  const createRoom = useCallback(async (room: {
+    id: string
+    name: string
+    icon?: string
+    color?: string
+    sort_order?: number
+  }) => {
+    try {
+      const response = await fetch(`${API_BASE}/rooms`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: room.id,
+          name: room.name,
+          icon: room.icon || null,
+          color: room.color || null,
+          sort_order: room.sort_order ?? rooms.length
+        })
+      })
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.detail || "Failed to create room")
+      }
+      await fetchRooms()
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : "Unknown error" }
+    }
+  }, [fetchRooms, rooms.length])
+
+  const updateRoom = useCallback(async (roomId: string, updates: {
+    name?: string
+    icon?: string
+    color?: string
+    sort_order?: number
+  }) => {
+    try {
+      const response = await fetch(`${API_BASE}/rooms/${roomId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
+      })
+      if (!response.ok) throw new Error("Failed to update room")
+      await fetchRooms()
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : "Unknown error" }
+    }
+  }, [fetchRooms])
+
+  const deleteRoom = useCallback(async (roomId: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/rooms/${roomId}`, {
+        method: "DELETE"
+      })
+      if (!response.ok) throw new Error("Failed to delete room")
+      await fetchRooms()
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : "Unknown error" }
+    }
+  }, [fetchRooms])
+
+  const reorderRooms = useCallback(async (roomIds: string[]) => {
+    try {
+      const response = await fetch(`${API_BASE}/rooms/reorder`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(roomIds)
+      })
+      if (!response.ok) throw new Error("Failed to reorder rooms")
+      await fetchRooms()
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : "Unknown error" }
+    }
+  }, [fetchRooms])
+
   return { 
     rooms, 
     sessionAssignments, 
@@ -164,6 +242,10 @@ export function useRooms() {
     getRoomFromRules,
     isLoading, 
     error, 
-    refresh: fetchRooms 
+    refresh: fetchRooms,
+    createRoom,
+    updateRoom,
+    deleteRoom,
+    reorderRooms
   }
 }

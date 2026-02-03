@@ -127,6 +127,34 @@ export function useRoomAssignmentRules() {
     }
   }, [fetchRules])
 
+  const updateRule = useCallback(async (ruleId: string, updates: Partial<Omit<RoomAssignmentRule, "id" | "created_at">>) => {
+    try {
+      const response = await fetch(`${API_BASE}/room-assignment-rules/${ruleId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
+      })
+      if (!response.ok) throw new Error("Failed to update rule")
+      await fetchRules()
+      return true
+    } catch {
+      return false
+    }
+  }, [fetchRules])
+
+  const reorderRules = useCallback(async (ruleIds: string[]) => {
+    // Update priorities based on position (higher index = lower priority)
+    try {
+      const maxPriority = ruleIds.length * 10
+      await Promise.all(ruleIds.map((ruleId, index) => 
+        updateRule(ruleId, { priority: maxPriority - (index * 10) })
+      ))
+      return true
+    } catch {
+      return false
+    }
+  }, [updateRule])
+
   return { 
     rules, 
     isLoading, 
@@ -134,6 +162,8 @@ export function useRoomAssignmentRules() {
     refresh: fetchRules, 
     getRoomFromRules,
     createRule,
-    deleteRule
+    deleteRule,
+    updateRule,
+    reorderRules
   }
 }

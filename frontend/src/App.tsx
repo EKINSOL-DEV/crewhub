@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { PlaygroundView } from './components/sessions/PlaygroundView'
 import { AllSessionsView } from './components/sessions/AllSessionsView'
+import { CardsView } from './components/sessions/CardsView'
 import { CronView } from './components/sessions/CronView'
 import { HistoryView } from './components/sessions/HistoryView'
 import { StatsHeader } from './components/sessions/StatsHeader'
@@ -8,10 +9,10 @@ import { SettingsPanel, DEFAULT_SETTINGS, type SessionsSettings } from './compon
 import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
-import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, List, Clock, History } from 'lucide-react'
+import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History } from 'lucide-react'
 import { Button } from './components/ui/button'
 
-type TabId = 'active' | 'all' | 'cron' | 'history'
+type TabId = 'active' | 'cards' | 'all' | 'cron' | 'history'
 
 interface Tab {
   id: TabId
@@ -21,6 +22,7 @@ interface Tab {
 
 const tabs: Tab[] = [
   { id: 'active', label: 'Active', icon: <LayoutGrid className="h-4 w-4" /> },
+  { id: 'cards', label: 'Cards', icon: <Grid3X3 className="h-4 w-4" /> },
   { id: 'all', label: 'All', icon: <List className="h-4 w-4" /> },
   { id: 'cron', label: 'Cron', icon: <Clock className="h-4 w-4" /> },
   { id: 'history', label: 'History', icon: <History className="h-4 w-4" /> },
@@ -140,6 +142,9 @@ function AppContent() {
                   settings={settings}
                   onAliasChanged={handleAliasChanged}
                 />
+              )}
+              {activeTab === 'cards' && (
+                <CardsView sessions={sessions} />
               )}
               {activeTab === 'all' && (
                 <AllSessionsView sessions={sessions} />
