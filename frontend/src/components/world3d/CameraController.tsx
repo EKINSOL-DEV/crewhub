@@ -50,8 +50,8 @@ function applyConstraints(controls: CameraControlsImpl, level: FocusLevel) {
       controls.maxPolarAngle = Math.PI / 2.5
       break
     case 'bot':
-      controls.minDistance = 4
-      controls.maxDistance = 15
+      controls.minDistance = 2
+      controls.maxDistance = 12
       controls.minPolarAngle = Math.PI / 8
       controls.maxPolarAngle = Math.PI / 2.5
       break
@@ -62,7 +62,7 @@ function applyConstraints(controls: CameraControlsImpl, level: FocusLevel) {
 
 // ─── Bot follow camera config ──────────────────────────────────
 
-const BOT_CAM_OFFSET = { x: 5, y: 8, z: 5 }
+const BOT_CAM_OFFSET = { x: 3, y: 5, z: 3 }
 const BOT_CAM_LERP_FACTOR = 0.04 // gentle follow (higher = snappier)
 
 function getBotCamera(botPos: { x: number; y: number; z: number }) {
