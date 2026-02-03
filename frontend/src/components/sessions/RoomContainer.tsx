@@ -92,7 +92,8 @@ export function RoomContainer({
             <div key={runtime.agent.id}>
               <AgentAnchor ref={(el) => { if (el && minionRefs) minionRefs.current[globalIndex] = el }}
                 runtime={runtime} containerWidth={containerSize.width} containerHeight={containerSize.height} index={index}
-                onPositionUpdate={(x, y) => updatePosition(agentPosKey, x, y)} speedMultiplier={settings.playgroundSpeed} easterEggsEnabled={settings.easterEggsEnabled} />
+                onPositionUpdate={(x, y) => updatePosition(agentPosKey, x, y)} speedMultiplier={settings.playgroundSpeed} easterEggsEnabled={settings.easterEggsEnabled}
+                onClick={runtime.session ? () => onMinionClick?.(runtime.session!) : undefined} />
               {runtime.childSessions.map((childSession, childIndex) => {
                 const childGlobalIndex = globalIndex + 1000 + childIndex
                 const parentPosition = positionsRef.current[agentPosKey]

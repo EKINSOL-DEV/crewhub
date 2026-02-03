@@ -12,6 +12,7 @@ interface AgentAnchorProps {
   onPositionUpdate: (x: number, y: number) => void
   speedMultiplier: number
   easterEggsEnabled: boolean
+  onClick?: () => void
 }
 
 const STATUS_MESSAGES: Record<string, string> = {
@@ -38,7 +39,7 @@ function getAgentIcon(runtime: AgentRuntime): "crab" | "clock" | "camera" | "wav
 }
 
 export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
-  ({ runtime, containerWidth, containerHeight, index, onPositionUpdate, speedMultiplier }, ref) => {
+  ({ runtime, containerWidth, containerHeight, index, onPositionUpdate, speedMultiplier, onClick }, ref) => {
     const internalRef = useRef<HTMLDivElement>(null)
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const [targetPosition, setTargetPosition] = useState({ x: 0, y: 0 })
@@ -140,7 +141,7 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
     return (
       <div ref={combinedRef} className={cn("absolute cursor-grab transition-opacity duration-200", isDragging && "opacity-50", isOffline && "opacity-60")}
         style={{ left: position.x, top: position.y, transform: "translate(-50%, -50%)", zIndex: isDragging ? 1000 : (isHovered ? 150 : 100), touchAction: "none" }}
-        onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} {...listeners} {...attributes}>
+        onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={isDragging ? undefined : onClick} {...listeners} {...attributes}>
         {showBubble && (
           <div style={{ position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%) translateY(-10px)", animation: "bubblePop 0.3s ease-out", zIndex: 200, pointerEvents: "none" }}>
             <div className="relative px-4 py-2 rounded-2xl max-w-[180px] text-sm bg-white dark:bg-gray-800 border-2 border-gray-900 dark:border-gray-100 shadow-lg" style={{ fontFamily: "Comic Sans MS, cursive, sans-serif" }}>
