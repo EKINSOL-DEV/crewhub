@@ -226,6 +226,9 @@ export function getIdleOpacity(idleSeconds: number): number {
 export const DEFAULT_PARKING_IDLE_THRESHOLD = 120
 
 export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?: boolean, idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD): boolean {
+  // Fixed agents (agent:*:main) always stay in their room
+  if (/^agent:[a-zA-Z0-9_-]+:main$/.test(session.key)) return false
+
   const idleSeconds = getIdleTimeSeconds(session)
   const status = getSessionStatus(session)
   if (status === "sleeping") return true
