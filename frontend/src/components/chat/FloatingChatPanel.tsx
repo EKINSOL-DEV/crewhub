@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState, type KeyboardEvent, type CSSProperties } from 'react'
-import { useChatContext } from '@/contexts/ChatContext'
+import { useRef, useEffect, useState, useCallback, type KeyboardEvent, type CSSProperties } from 'react'
+import { useChatContext, MIN_WIDTH, MIN_HEIGHT, MAX_WIDTH, MAX_HEIGHT } from '@/contexts/ChatContext'
 import { useAgentChat, type ChatMessageData } from '@/hooks/useAgentChat'
 
 // ── Lightweight markdown ────────────────────────────────────────
@@ -123,9 +123,9 @@ function ChatBubble({
   )
 }
 
-// ── Chat Content (inner) ───────────────────────────────────────
+// ── Tab Content (per-tab chat) ─────────────────────────────────
 
-function ChatContent({
+function TabContent({
   sessionKey,
   agentName,
   accentColor,
@@ -337,24 +337,146 @@ function ChatContent({
 // ── Floating Chat Panel ────────────────────────────────────────
 
 export function FloatingChatPanel() {
-  const { chat, openChat, closeChat, togglePin, toggleMinimize, onFocusAgent } = useChatContext()
+  const {
+    chat,
+    openChat,
+    closeTab,
+    closeChat,
+    switchTab,
+    togglePin,
+    toggleMinimize,
+    updatePosition,
+    updateSize,
+    onFocusAgent,
+  } = useChatContext()
+
   const panelRef = useRef<HTMLDivElement>(null)
+  const isDragging = useRef(false)
 
-  const accentColor = chat.agentColor || '#8b5cf6'
-  const agentIcon = chat.agentIcon || '🤖'
-  const agentName = chat.agentName || 'Agent'
+  const { size, position, tabs, activeTabKey } = chat
+  const activeTab = tabs.find(t => t.sessionKey === activeTabKey) ?? tabs[0] ?? null
+  const accentColor = activeTab?.agentColor || '#8b5cf6'
 
-  // FAB: when closed but pinned with a session, show reopen button
-  if (!chat.isOpen && chat.isPinned && chat.sessionKey) {
+  // Default position: bottom-right corner
+  const defaultX = typeof window !== 'undefined' ? window.innerWidth - size.width - 24 : 0
+  const defaultY = typeof window !== 'undefined' ? window.innerHeight - size.height - 24 : 0
+  const panelX = position?.x ?? defaultX
+  const panelY = position?.y ?? defaultY
+
+  // ── Drag handling ──────────────────────────────────────────
+
+  const handleDragStart = useCallback(
+    (e: React.MouseEvent) => {
+      // Don't drag when clicking buttons, tabs, or interactive elements
+      if ((e.target as HTMLElement).closest('button')) return
+      if ((e.target as HTMLElement).closest('[data-tab]')) return
+
+      e.preventDefault()
+      isDragging.current = true
+
+      const startX = e.clientX - panelX
+      const startY = e.clientY - panelY
+
+      const handleMouseMove = (ev: MouseEvent) => {
+        const x = Math.max(0, Math.min(window.innerWidth - size.width, ev.clientX - startX))
+        const y = Math.max(0, Math.min(window.innerHeight - size.height, ev.clientY - startY))
+        updatePosition({ x, y })
+      }
+      const handleMouseUp = () => {
+        isDragging.current = false
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [panelX, panelY, size.width, size.height, updatePosition]
+  )
+
+  // ── Resize handling ────────────────────────────────────────
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const startX = e.clientX
+      const startY = e.clientY
+      const startW = size.width
+      const startH = size.height
+
+      const handleMouseMove = (ev: MouseEvent) => {
+        const w = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, startW + (ev.clientX - startX)))
+        const h = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startH + (ev.clientY - startY)))
+        updateSize({ width: w, height: h })
+      }
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+    },
+    [size.width, size.height, updateSize]
+  )
+
+  // ── Minimized bar ──────────────────────────────────────────
+
+  if (chat.isMinimized && chat.tabs.length > 0) {
+    return (
+      <>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            zIndex: 1001,
+            background: 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderRadius: 12,
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 14px',
+            cursor: 'pointer',
+            userSelect: 'none',
+            animation: 'floatingChatSlideUp 0.2s ease-out',
+          }}
+          onClick={toggleMinimize}
+          title="Expand chat"
+        >
+          {tabs.map(tab => (
+            <span key={tab.sessionKey} style={{ fontSize: 18 }} title={tab.agentName}>
+              {tab.agentIcon || '🤖'}
+            </span>
+          ))}
+          <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 600, marginLeft: 4 }}>
+            ▲ Expand
+          </span>
+        </div>
+        <style>{floatingStyles}</style>
+      </>
+    )
+  }
+
+  // ── FAB: when closed but pinned with tabs ──────────────────
+
+  if (!chat.isOpen && chat.isPinned && chat.tabs.length > 0) {
+    const firstTab = chat.tabs[0]
+    const fabColor = firstTab.agentColor || '#8b5cf6'
+    const fabIcon = firstTab.agentIcon || '🤖'
     return (
       <>
         <button
           onClick={() =>
             openChat(
-              chat.sessionKey!,
-              chat.agentName || 'Agent',
-              chat.agentIcon || undefined,
-              chat.agentColor || undefined
+              firstTab.sessionKey,
+              firstTab.agentName,
+              firstTab.agentIcon || undefined,
+              firstTab.agentColor || undefined
             )
           }
           style={{
@@ -365,7 +487,7 @@ export function FloatingChatPanel() {
             height: 56,
             borderRadius: '50%',
             border: 'none',
-            background: accentColor,
+            background: fabColor,
             color: '#fff',
             cursor: 'pointer',
             display: 'flex',
@@ -384,9 +506,30 @@ export function FloatingChatPanel() {
             e.currentTarget.style.transform = 'scale(1)'
             e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.2)'
           }}
-          title={`Reopen chat with ${agentName}`}
+          title={`Reopen chat with ${firstTab.agentName}`}
         >
-          {agentIcon}
+          {fabIcon}
+          {tabs.length > 1 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: -2,
+                right: -2,
+                background: '#ef4444',
+                color: '#fff',
+                borderRadius: '50%',
+                width: 18,
+                height: 18,
+                fontSize: 10,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {tabs.length}
+            </span>
+          )}
         </button>
         <style>{floatingStyles}</style>
       </>
@@ -394,59 +537,20 @@ export function FloatingChatPanel() {
   }
 
   // Not open, no FAB → nothing
-  if (!chat.isOpen || !chat.sessionKey) return null
+  if (!chat.isOpen || chat.tabs.length === 0) return null
 
-  // Minimized: header-only bar
-  if (chat.isMinimized) {
-    return (
-      <>
-        <div
-          ref={panelRef}
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            width: 380,
-            zIndex: 1001,
-            background: 'rgba(255, 255, 255, 0.92)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderRadius: 14,
-            border: '1px solid rgba(0, 0, 0, 0.08)',
-            boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            overflow: 'hidden',
-            animation: 'floatingChatSlideUp 0.25s ease-out',
-          }}
-        >
-          <PanelHeader
-            agentIcon={agentIcon}
-            agentName={agentName}
-            accentColor={accentColor}
-            isPinned={chat.isPinned}
-            isMinimized={true}
-            onTogglePin={togglePin}
-            onToggleMinimize={toggleMinimize}
-            onClose={closeChat}
-            onFocusAgent={onFocusAgent && chat.sessionKey ? () => onFocusAgent(chat.sessionKey!) : undefined}
-          />
-        </div>
-        <style>{floatingStyles}</style>
-      </>
-    )
-  }
+  // ── Full panel ─────────────────────────────────────────────
 
-  // Full panel
   return (
     <>
       <div
         ref={panelRef}
         style={{
           position: 'fixed',
-          bottom: 24,
-          right: 24,
-          width: 380,
-          height: 520,
+          left: panelX,
+          top: panelY,
+          width: size.width,
+          height: size.height,
           zIndex: 1001,
           background: 'rgba(255, 255, 255, 0.92)',
           backdropFilter: 'blur(16px)',
@@ -461,129 +565,239 @@ export function FloatingChatPanel() {
           animation: 'floatingChatSlideUp 0.3s ease-out',
         }}
       >
-        <PanelHeader
-          agentIcon={agentIcon}
-          agentName={agentName}
-          accentColor={accentColor}
-          isPinned={chat.isPinned}
-          isMinimized={false}
-          onTogglePin={togglePin}
-          onToggleMinimize={toggleMinimize}
-          onClose={closeChat}
-          onFocusAgent={onFocusAgent && chat.sessionKey ? () => onFocusAgent(chat.sessionKey!) : undefined}
-        />
+        {/* Header / drag handle */}
+        <div
+          onMouseDown={handleDragStart}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            cursor: 'grab',
+            userSelect: 'none',
+            borderBottom: '1px solid rgba(0,0,0,0.06)',
+            background: accentColor + '10',
+          }}
+        >
+          {/* Tab bar row */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '6px 8px 0 8px',
+              gap: 2,
+              overflowX: 'auto',
+              minHeight: 34,
+            }}
+          >
+            {/* Drag grip */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                padding: '0 4px',
+                opacity: 0.3,
+                flexShrink: 0,
+              }}
+            >
+              <div style={{ display: 'flex', gap: 2 }}>
+                <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#6b7280' }} />
+                <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#6b7280' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 2 }}>
+                <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#6b7280' }} />
+                <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#6b7280' }} />
+              </div>
+            </div>
 
-        <ChatContent
-          sessionKey={chat.sessionKey}
-          agentName={agentName}
-          accentColor={accentColor}
-        />
+            {/* Tabs */}
+            <div style={{ display: 'flex', flex: 1, gap: 1, overflow: 'hidden' }}>
+              {tabs.map(tab => {
+                const isActive = tab.sessionKey === activeTabKey
+                const tabColor = tab.agentColor || '#8b5cf6'
+                return (
+                  <Tab
+                    key={tab.sessionKey}
+                    icon={tab.agentIcon || '🤖'}
+                    name={tab.agentName}
+                    isActive={isActive}
+                    color={tabColor}
+                    onClick={() => switchTab(tab.sessionKey)}
+                    onClose={() => closeTab(tab.sessionKey)}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: 2, flexShrink: 0, marginLeft: 4 }}>
+              {onFocusAgent && activeTab && (
+                <HeaderButton
+                  onClick={() => onFocusAgent(activeTab.sessionKey)}
+                  title="Focus agent"
+                >
+                  🎯
+                </HeaderButton>
+              )}
+              <HeaderButton
+                onClick={togglePin}
+                title={chat.isPinned ? 'Unpin' : 'Pin'}
+                active={chat.isPinned}
+                activeColor={accentColor}
+              >
+                📌
+              </HeaderButton>
+              <HeaderButton onClick={toggleMinimize} title="Minimize">
+                ─
+              </HeaderButton>
+              <HeaderButton onClick={closeChat} title="Close all">
+                ✕
+              </HeaderButton>
+            </div>
+          </div>
+
+          {/* Active tab color line */}
+          <div
+            style={{
+              height: 2,
+              marginTop: 4,
+              background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}, ${accentColor}00)`,
+            }}
+          />
+        </div>
+
+        {/* Tab contents — all rendered, inactive hidden */}
+        {tabs.map(tab => (
+          <div
+            key={tab.sessionKey}
+            style={{
+              display: tab.sessionKey === activeTabKey ? 'flex' : 'none',
+              flexDirection: 'column',
+              flex: 1,
+              overflow: 'hidden',
+            }}
+          >
+            <TabContent
+              sessionKey={tab.sessionKey}
+              agentName={tab.agentName}
+              accentColor={tab.agentColor || '#8b5cf6'}
+            />
+          </div>
+        ))}
+
+        {/* Resize handle */}
+        <div
+          onMouseDown={handleResizeStart}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: 20,
+            height: 20,
+            cursor: 'nwse-resize',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+          }}
+          title="Resize"
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" style={{ opacity: 0.3 }}>
+            <path d="M9 1L1 9M9 5L5 9M9 8L8 9" stroke="#6b7280" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
       </div>
       <style>{floatingStyles}</style>
     </>
   )
 }
 
-// ── Panel Header ───────────────────────────────────────────────
+// ── Tab ────────────────────────────────────────────────────────
 
-function PanelHeader({
-  agentIcon,
-  agentName,
-  accentColor,
-  isPinned,
-  isMinimized,
-  onTogglePin,
-  onToggleMinimize,
+function Tab({
+  icon,
+  name,
+  isActive,
+  color,
+  onClick,
   onClose,
-  onFocusAgent,
 }: {
-  agentIcon: string
-  agentName: string
-  accentColor: string
-  isPinned: boolean
-  isMinimized: boolean
-  onTogglePin: () => void
-  onToggleMinimize: () => void
+  icon: string
+  name: string
+  isActive: boolean
+  color: string
+  onClick: () => void
   onClose: () => void
-  onFocusAgent?: () => void
 }) {
+  const [hovered, setHovered] = useState(false)
+
   return (
     <div
+      data-tab
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        padding: '12px 16px',
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
-        borderBottom: isMinimized ? 'none' : '1px solid rgba(0,0,0,0.06)',
-        background: accentColor + '10',
-        cursor: 'default',
-        userSelect: 'none',
+        gap: 4,
+        padding: '4px 8px',
+        borderRadius: '8px 8px 0 0',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: isActive ? 600 : 400,
+        color: isActive ? '#1f2937' : '#6b7280',
+        background: isActive ? 'rgba(255,255,255,0.7)' : hovered ? 'rgba(255,255,255,0.3)' : 'transparent',
+        borderBottom: isActive ? `2px solid ${color}` : '2px solid transparent',
+        maxWidth: 140,
+        minWidth: 0,
+        overflow: 'hidden',
+        position: 'relative',
+        transition: 'background 0.15s',
+        flexShrink: 1,
       }}
     >
-      {/* Agent icon */}
-      <div
+      <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
+      <span
         style={{
-          width: 32,
-          height: 32,
-          borderRadius: 10,
-          background: accentColor + '25',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 18,
-          flexShrink: 0,
-        }}
-      >
-        {agentIcon}
-      </div>
-
-      {/* Name */}
-      <div
-        style={{
-          flex: 1,
-          fontSize: 14,
-          fontWeight: 700,
-          color: '#1f2937',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
         }}
       >
-        {agentName}
-      </div>
-
-      {/* Focus / Locate */}
-      {onFocusAgent && (
-        <HeaderButton
-          onClick={onFocusAgent}
-          title="Focus agent"
+        {name}
+      </span>
+      {hovered && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose()
+          }}
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: 4,
+            border: 'none',
+            background: 'rgba(0,0,0,0.08)',
+            color: '#9ca3af',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 10,
+            fontWeight: 700,
+            flexShrink: 0,
+            marginLeft: 2,
+            lineHeight: 1,
+            padding: 0,
+          }}
+          title={`Close ${name}`}
         >
-          🎯
-        </HeaderButton>
+          ✕
+        </button>
       )}
-
-      {/* Pin */}
-      <HeaderButton
-        onClick={onTogglePin}
-        title={isPinned ? 'Unpin (chat will close on navigation)' : 'Pin (keep open across navigation)'}
-        active={isPinned}
-        activeColor={accentColor}
-      >
-        📌
-      </HeaderButton>
-
-      {/* Minimize / Expand */}
-      <HeaderButton
-        onClick={onToggleMinimize}
-        title={isMinimized ? 'Expand' : 'Minimize'}
-      >
-        {isMinimized ? '▢' : '─'}
-      </HeaderButton>
-
-      {/* Close */}
-      <HeaderButton onClick={onClose} title="Close chat">
-        ✕
-      </HeaderButton>
     </div>
   )
 }
@@ -605,12 +819,15 @@ function HeaderButton({
 }) {
   return (
     <button
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
       title={title}
       style={{
-        width: 28,
-        height: 28,
-        borderRadius: 8,
+        width: 26,
+        height: 26,
+        borderRadius: 7,
         border: 'none',
         background: active ? (activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)') : 'rgba(0,0,0,0.04)',
         color: active ? (activeColor || '#374151') : '#6b7280',
@@ -618,7 +835,7 @@ function HeaderButton({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: 700,
         flexShrink: 0,
         transition: 'background 0.15s, color 0.15s',
