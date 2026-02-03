@@ -5,6 +5,7 @@ import { WorldLighting } from './WorldLighting'
 import { BuildingFloor } from './BuildingFloor'
 import { BuildingWalls } from './BuildingWalls'
 import { Hallway } from './Hallway'
+import { ParkingArea3D } from './ParkingArea3D'
 import { Room3D } from './Room3D'
 import { useRooms } from '@/hooks/useRooms'
 import { useToonMaterialProps } from './utils/toonMaterials'
@@ -247,6 +248,13 @@ function SceneContent() {
       <ParkingAreaFloor
         x={parkingArea.x}
         z={parkingArea.z}
+        width={parkingArea.width}
+        depth={parkingArea.depth}
+      />
+
+      {/* Parking / Break area with props */}
+      <ParkingArea3D
+        position={[parkingArea.x, 0, parkingArea.z]}
         width={parkingArea.width}
         depth={parkingArea.depth}
       />
