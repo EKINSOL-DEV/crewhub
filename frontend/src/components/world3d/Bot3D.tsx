@@ -17,6 +17,26 @@ import type { BotVariantConfig } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
 import type { RoomBounds } from './World3DView'
 
+// ─── Path simplification: remove redundant collinear waypoints ──
+function simplifyPath(path: PathNode[]): PathNode[] {
+  if (path.length <= 2) return path
+  const simplified = [path[0]]
+  for (let i = 1; i < path.length - 1; i++) {
+    const prev = simplified[simplified.length - 1]
+    const next = path[i + 1]
+    // Keep node only if direction changes
+    const dx1 = path[i].x - prev.x
+    const dz1 = path[i].z - prev.z
+    const dx2 = next.x - path[i].x
+    const dz2 = next.z - path[i].z
+    if (dx1 !== dx2 || dz1 !== dz2) {
+      simplified.push(path[i])
+    }
+  }
+  simplified.push(path[path.length - 1])
+  return simplified
+}
+
 // ─── Global bot position registry (module-level, no React state) ──
 // CameraController reads from this to follow bots smoothly.
 export const botPositionRegistry = new Map<string, { x: number; y: number; z: number }>()
@@ -82,7 +102,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     targetZ: position[2],
     currentX: position[0],
     currentZ: position[2],
-    waitTimer: 1 + Math.random() * 3,
+    waitTimer: 3 + Math.random() * 4,
     baseX: position[0],
     baseZ: position[2],
     sessionKey: session?.key || '',
@@ -120,8 +140,9 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       endGrid = snapped
     }
 
-    const path = findPath(walkableMask, startGrid, endGrid)
-    if (path && path.length > 1) {
+    const rawPath = findPath(walkableMask, startGrid, endGrid)
+    if (rawPath && rawPath.length > 1) {
+      const path = simplifyPath(rawPath)
       pathRef.current = path
       pathIndexRef.current = 1 // Skip start node (we're already there)
       // Set first waypoint target in world space
@@ -145,7 +166,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.currentZ = position[2]
       state.targetX = position[0]
       state.targetZ = position[2]
-      state.waitTimer = 1 + Math.random() * 2
+      state.waitTimer = 3 + Math.random() * 3
       state.sessionKey = newKey
       pathRef.current = []
       pathIndexRef.current = 0
@@ -340,7 +361,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       const dist = Math.sqrt(dx * dx + dz * dz)
 
       if (dist < 0.15) {
-        // Arrived at waypoint — advance to next
+        // Arrived at waypoint — advance to next (no stopping)
         pathIndexRef.current++
         if (pathIndexRef.current < pathRef.current.length && gridData && roomBounds) {
           const nextNode = pathRef.current[pathIndexRef.current]
@@ -373,19 +394,34 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           }
         }
       } else {
-        // Walk toward current waypoint
-        const easedSpeed = speed * Math.min(1, dist / 0.8)
-        const step = Math.min(easedSpeed * delta, dist)
+        // Smooth speed: constant along path, ease out near final destination
+        const isNearEnd = pathIndexRef.current >= pathRef.current.length - 2
+        const effectiveSpeed = isNearEnd ? speed * Math.min(1, dist / 0.5) : speed
+        const step = Math.min(effectiveSpeed * delta, dist)
         state.currentX += (dx / dist) * step
         state.currentZ += (dz / dist) * step
 
-        // Lerp rotation for smooth turning
-        const targetRotY = Math.atan2(dx, dz)
+        // Look-ahead rotation: face 2 waypoints ahead for smoother turning
+        let lookDx = dx
+        let lookDz = dz
+        if (gridData && roomBounds) {
+          const lookAheadIndex = Math.min(pathIndexRef.current + 2, pathRef.current.length - 1)
+          if (lookAheadIndex > pathIndexRef.current) {
+            const lookNode = pathRef.current[lookAheadIndex]
+            const { cellSize, gridWidth, gridDepth } = gridData.blueprint
+            const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
+            const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
+            const [lwx, , lwz] = gridToWorld(lookNode.x, lookNode.z, cellSize, gridWidth, gridDepth)
+            lookDx = (roomCenterX + lwx) - state.currentX
+            lookDz = (roomCenterZ + lwz) - state.currentZ
+          }
+        }
+        const targetRotY = Math.atan2(lookDx, lookDz)
         const currentRotY = groupRef.current.rotation.y
         let angleDiff = targetRotY - currentRotY
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        groupRef.current.rotation.y = currentRotY + angleDiff * 0.1
+        groupRef.current.rotation.y = currentRotY + angleDiff * 0.25
       }
     } else if (!gridData) {
       // No grid data (parking bots or rooms without blueprints) — use direct circular wander
@@ -418,22 +454,22 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           const target = pickWanderTarget()
           state.targetX = target.x
           state.targetZ = target.z
-          state.waitTimer = 3 + Math.random() * 3
+          state.waitTimer = 4 + Math.random() * 4
         }
       } else {
         // Walk directly toward target (no walls in parking/open areas)
-        const easedSpeed = speed * Math.min(1, dist / 0.8)
+        const easedSpeed = speed * Math.min(1, dist / 0.5)
         const step = Math.min(easedSpeed * delta, dist)
         state.currentX += (dx / dist) * step
         state.currentZ += (dz / dist) * step
 
-        // Smooth rotation
+        // Smooth rotation (faster lerp)
         const targetRotY = Math.atan2(dx, dz)
         const currentRotY = groupRef.current.rotation.y
         let angleDiff = targetRotY - currentRotY
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        groupRef.current.rotation.y = currentRotY + angleDiff * 0.1
+        groupRef.current.rotation.y = currentRotY + angleDiff * 0.25
       }
     } else {
       // Has grid but no path — stay in place and retry with a different target
@@ -466,7 +502,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           state.targetX = target.x
           state.targetZ = target.z
           computePath(state.currentX, state.currentZ, target.x, target.z)
-          state.waitTimer = 3 + Math.random() * 3
+          state.waitTimer = 4 + Math.random() * 4
         }
       } else {
         // Target is far but pathfinding failed — retry with a different target or stay put
