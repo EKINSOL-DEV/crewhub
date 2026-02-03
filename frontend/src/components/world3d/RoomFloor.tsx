@@ -6,20 +6,17 @@ interface RoomFloorProps {
 }
 
 /**
- * Solid room floor — single box with toon shading.
- * Much simpler and more performant than the old per-tile grid.
+ * Room floor — thin colored overlay sitting on top of the building floor.
+ * Just provides the room-specific color; the building floor is underneath.
  */
 export function RoomFloor({ color, size = 12 }: RoomFloorProps) {
   const baseColor = color || '#9E9684'
   const toonProps = useToonMaterialProps(baseColor)
 
   return (
-    <group>
-      {/* Main floor — single solid box, thick enough to prevent grass clipping */}
-      <mesh position={[0, 0, 0]} receiveShadow>
-        <boxGeometry args={[size, 0.4, size]} />
-        <meshToonMaterial {...toonProps} />
-      </mesh>
-    </group>
+    <mesh position={[0, 0.08, 0]} receiveShadow>
+      <boxGeometry args={[size, 0.16, size]} />
+      <meshToonMaterial {...toonProps} />
+    </mesh>
   )
 }
