@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { DesignLab3D } from './DesignLab3D'
 
 interface AgentDesign {
@@ -6,21 +6,221 @@ interface AgentDesign {
   file: string
   color: string
   description: string
+  role: string
+  fullDescription: string
+  usedFor: string[]
+  personality: string
 }
 
 const agents: AgentDesign[] = [
-  { name: 'Worker Bot', file: 'worker-bot.svg', color: '#FE9600', description: 'Orange - Tool/Wrench icon' },
-  { name: 'Thinker Bot', file: 'thinker-bot.svg', color: '#1277C3', description: 'Blue - Lightbulb/Brain icon' },
-  { name: 'Cron Bot', file: 'cron-bot.svg', color: '#82B30E', description: 'Green - Clock icon' },
-  { name: 'Comms Bot', file: 'comms-bot.svg', color: '#9370DB', description: 'Purple - Chat bubble icon' },
-  { name: 'Dev Bot', file: 'dev-bot.svg', color: '#F32A1C', description: 'Red - Code/Gear icon' },
+  {
+    name: 'Worker Bot',
+    file: 'worker-bot.svg',
+    color: '#FE9600',
+    description: 'Orange - Tool/Wrench icon',
+    role: 'General-purpose task executor',
+    fullDescription: 'The workhorse of CrewHub. Handles day-to-day tasks, file operations, quick fixes, and anything that needs doing. Think of it as the reliable all-rounder.',
+    usedFor: ['Task execution', 'File management', 'Simple automations', 'Background jobs'],
+    personality: 'Dependable, efficient, always ready',
+  },
+  {
+    name: 'Thinker Bot',
+    file: 'thinker-bot.svg',
+    color: '#1277C3',
+    description: 'Blue - Lightbulb/Brain icon',
+    role: 'Deep analysis & reasoning',
+    fullDescription: 'When a problem needs careful thought, the Thinker Bot steps in. It handles complex analysis, architecture decisions, and anything that requires deep reasoning.',
+    usedFor: ['Code review', 'Architecture decisions', 'Complex debugging', 'Research', 'Planning'],
+    personality: 'Thoughtful, methodical, sees the big picture',
+  },
+  {
+    name: 'Cron Bot',
+    file: 'cron-bot.svg',
+    color: '#82B30E',
+    description: 'Green - Clock icon',
+    role: 'Scheduled & recurring tasks',
+    fullDescription: 'The timekeeper of the crew. Runs on schedules, monitors systems, and ensures nothing falls through the cracks. Always on duty, even when everyone else is sleeping.',
+    usedFor: ['Scheduled checks', 'Monitoring', 'Periodic reports', 'Reminders', 'Automated workflows'],
+    personality: 'Punctual, tireless, consistent',
+  },
+  {
+    name: 'Comms Bot',
+    file: 'comms-bot.svg',
+    color: '#9370DB',
+    description: 'Purple - Chat bubble icon',
+    role: 'Communication & coordination',
+    fullDescription: 'The social one. Handles messaging across platforms, coordinates between agents, and makes sure information flows where it needs to go.',
+    usedFor: ['Message routing', 'Cross-platform communication', 'Notifications', 'Team coordination'],
+    personality: 'Sociable, well-connected, clear communicator',
+  },
+  {
+    name: 'Dev Bot',
+    file: 'dev-bot.svg',
+    color: '#F32A1C',
+    description: 'Red - Code/Gear icon',
+    role: 'Software development & coding',
+    fullDescription: 'The builder. Writes code, fixes bugs, implements features, and handles everything development-related. Speaks fluent TypeScript, Python, and whatever else is needed.',
+    usedFor: ['Feature development', 'Bug fixes', 'Refactoring', 'Testing', 'CI/CD', 'Deployment'],
+    personality: 'Creative, precise, loves clean code',
+  },
 ]
+
+function AgentDetailPanel({ agent, darkBg, onClose }: { agent: AgentDesign; darkBg: boolean; onClose: () => void }) {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    // Trigger enter animation
+    requestAnimationFrame(() => setVisible(true))
+  }, [])
+
+  const handleClose = useCallback(() => {
+    setVisible(false)
+    setTimeout(onClose, 300) // Wait for exit animation
+  }, [onClose])
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [handleClose])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-end">
+      {/* Backdrop */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
+        style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+        onClick={handleClose}
+      />
+
+      {/* Slide-in Panel */}
+      <div
+        className={`relative w-full max-w-lg h-full overflow-y-auto transition-transform duration-300 ease-out
+          ${visible ? 'translate-x-0' : 'translate-x-full'}
+          ${darkBg ? 'bg-gray-900' : 'bg-white'}`}
+        style={{ boxShadow: '-4px 0 24px rgba(0,0,0,0.2)' }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={handleClose}
+          className={`absolute top-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center text-lg transition-colors
+            ${darkBg ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          ✕
+        </button>
+
+        {/* Color Banner */}
+        <div
+          className="h-2 w-full"
+          style={{ backgroundColor: agent.color }}
+        />
+
+        {/* Large SVG Preview */}
+        <div
+          className={`flex items-center justify-center py-10 ${darkBg ? 'bg-gray-800/50' : 'bg-gray-50'}`}
+        >
+          <img
+            src={`/agents/${agent.file}`}
+            alt={agent.name}
+            className="w-32 h-32 drop-shadow-lg"
+          />
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Name & Role */}
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-5 h-5 rounded-full" style={{ backgroundColor: agent.color }} />
+              <h2 className={`text-2xl font-bold ${darkBg ? 'text-white' : 'text-gray-900'}`}>
+                {agent.name}
+              </h2>
+            </div>
+            <span
+              className="inline-block px-3 py-1 rounded-full text-sm font-medium text-white"
+              style={{ backgroundColor: agent.color }}
+            >
+              {agent.role}
+            </span>
+          </div>
+
+          {/* Description */}
+          <div>
+            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+              About
+            </h3>
+            <p className={`leading-relaxed ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
+              {agent.fullDescription}
+            </p>
+          </div>
+
+          {/* Used For */}
+          <div>
+            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-3 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+              Used for
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {agent.usedFor.map((use) => (
+                <span
+                  key={use}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                    ${darkBg ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'}`}
+                  style={{ borderLeft: `3px solid ${agent.color}` }}
+                >
+                  {use}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Personality */}
+          <div>
+            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+              Personality
+            </h3>
+            <p className={`italic ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
+              "{agent.personality}"
+            </p>
+          </div>
+
+          {/* File Reference */}
+          <div>
+            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+              Asset
+            </h3>
+            <code className={`text-xs block p-3 rounded-lg
+              ${darkBg ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
+              /agents/{agent.file}
+            </code>
+          </div>
+
+          {/* Color Swatch */}
+          <div>
+            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+              Brand Color
+            </h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg shadow-inner" style={{ backgroundColor: agent.color }} />
+              <code className={`text-sm ${darkBg ? 'text-gray-400' : 'text-gray-600'}`}>
+                {agent.color}
+              </code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const sizes = [32, 64, 128] as const
 
 export function DevDesigns() {
   const [darkBg, setDarkBg] = useState(false)
   const [selectedSize, setSelectedSize] = useState<number>(64)
+  const [selectedAgent, setSelectedAgent] = useState<AgentDesign | null>(null)
 
   return (
     <div className={`min-h-screen p-8 ${darkBg ? 'bg-gray-900' : 'bg-gray-100'}`}>
@@ -107,7 +307,8 @@ export function DevDesigns() {
           {agents.map((agent) => (
             <div
               key={agent.name}
-              className={`rounded-2xl p-6 transition-all hover:scale-[1.02]
+              onClick={() => setSelectedAgent(agent)}
+              className={`rounded-2xl p-6 transition-all hover:scale-[1.02] cursor-pointer
                 ${darkBg ? 'bg-gray-800' : 'bg-white shadow-lg'}`}
             >
               {/* Agent Preview */}
@@ -210,6 +411,15 @@ export function DevDesigns() {
         {/* 3D POC Section */}
         <DesignLab3D darkBg={darkBg} />
       </div>
+
+      {/* Agent Detail Panel */}
+      {selectedAgent && (
+        <AgentDetailPanel
+          agent={selectedAgent}
+          darkBg={darkBg}
+          onClose={() => setSelectedAgent(null)}
+        />
+      )}
     </div>
   )
 }
