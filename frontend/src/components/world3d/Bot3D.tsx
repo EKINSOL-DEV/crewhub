@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { BotBody } from './BotBody'
 import { BotFace } from './BotFace'
 import { BotAccessory } from './BotAccessory'
+import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import type { BotVariantConfig } from './utils/botVariants'
 
@@ -24,7 +25,8 @@ interface Bot3DProps {
 }
 
 /**
- * Complete 3D bot character with body, face, accessory, status glow,
+ * Complete 3D bot character — two-primitive stacked design (head + body).
+ * Includes body, face, accessory, chest display, status glow,
  * animations, and floating name tag.
  */
 export function Bot3D({ position, config, status, name, scale = 1.0 }: Bot3DProps) {
@@ -63,8 +65,9 @@ export function Bot3D({ position, config, status, name, scale = 1.0 }: Bot3DProp
     }
   })
 
-  // Offset y so that bot feet (~-0.35 local) rest on the floor position
-  const yOffset = 0.38
+  // Offset y so bot feet rest on the floor
+  // Feet bottom is at y = -0.33 in local space, offset to put on floor
+  const yOffset = 0.36
 
   return (
     <group
@@ -77,13 +80,16 @@ export function Bot3D({ position, config, status, name, scale = 1.0 }: Bot3DProp
         {/* Status glow ring (on ground) */}
         <BotStatusGlow status={status} />
 
-        {/* Body (capsule + arms + feet) */}
+        {/* Body (head + body rounded boxes + arms + feet) */}
         <BotBody color={config.color} status={status} />
 
-        {/* Face (eyes + mouth) */}
-        <BotFace status={status} />
+        {/* Face (eyes + mouth on the head) */}
+        <BotFace status={status} expression={config.expression} />
 
-        {/* Accessory (type-specific) */}
+        {/* Chest display (per-type icon/text on body) */}
+        <BotChestDisplay type={config.chestDisplay} color={config.color} />
+
+        {/* Accessory (per-type, on top of head) */}
         <BotAccessory type={config.accessory} color={config.color} />
 
         {/* Sleeping ZZZ text */}

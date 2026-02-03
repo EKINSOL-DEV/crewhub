@@ -51,10 +51,10 @@ export function BotStatusGlow({ status }: BotStatusGlowProps) {
   return (
     <mesh
       ref={glowRef}
-      position={[0, -0.33, 0]}
+      position={[0, -0.34, 0]}
       rotation={[-Math.PI / 2, 0, 0]}
     >
-      <ringGeometry args={[0.2, 0.32, 24]} />
+      <ringGeometry args={[0.22, 0.34, 24]} />
       <meshStandardMaterial
         color={glowColor}
         emissive={glowColor}

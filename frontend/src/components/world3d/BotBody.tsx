@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
 import { useToonMaterialProps } from './utils/toonMaterials'
 
@@ -9,55 +10,99 @@ interface BotBodyProps {
 }
 
 /**
- * Bot body — a rounded capsule/pill shape with toon shading.
- * Includes arms and feet.
+ * Darken a hex color by a factor (0 = black, 1 = original).
+ */
+function darkenColor(hex: string, factor: number = 0.6): string {
+  const c = new THREE.Color(hex)
+  c.multiplyScalar(factor)
+  return '#' + c.getHexString()
+}
+
+/**
+ * Bot body — two stacked rounded boxes (head + body) with arms and feet.
+ * Matches the 2D reference design: distinct head sitting on top of body.
+ *
+ * Layout (y positions, bottom of bot at y ≈ -0.35):
+ *   Head:       center y=0.32,  size [0.36, 0.32, 0.32]
+ *   Body:       center y=-0.02, size [0.40, 0.28, 0.34]
+ *   Lower body: center y=-0.13, size [0.40, 0.12, 0.34] (darker)
+ *   Arms:       center y=0.00,  capsule on each side
+ *   Feet:       center y=-0.30, small dark boxes
  */
 export function BotBody({ color, status }: BotBodyProps) {
-  const bodyRef = useRef<THREE.Mesh>(null)
+  const bodyGroupRef = useRef<THREE.Group>(null)
   const toonProps = useToonMaterialProps(color)
-  const darkToon = useToonMaterialProps('#333333')
+  const darkBodyToon = useToonMaterialProps(darkenColor(color, 0.65))
+  const darkToon = useToonMaterialProps('#2a2a2a')
 
-  // Subtle breathing animation for sleeping
+  // Breathing animation for sleeping
   useFrame(({ clock }) => {
-    if (!bodyRef.current) return
+    if (!bodyGroupRef.current) return
     if (status === 'sleeping') {
       const t = clock.getElapsedTime()
       const breathe = 1 + Math.sin(t * 1.2) * 0.015
-      bodyRef.current.scale.set(breathe, 1, breathe)
+      bodyGroupRef.current.scale.set(breathe, 1, breathe)
     } else {
-      bodyRef.current.scale.set(1, 1, 1)
+      bodyGroupRef.current.scale.set(1, 1, 1)
     }
   })
 
   return (
-    <group>
-      {/* Main body capsule */}
-      <mesh ref={bodyRef} position={[0, 0.1, 0]} castShadow>
-        <capsuleGeometry args={[0.18, 0.35, 12, 16]} />
+    <group ref={bodyGroupRef}>
+      {/* ─── Head (upper rounded box) ─── */}
+      <RoundedBox
+        args={[0.36, 0.32, 0.32]}
+        radius={0.07}
+        smoothness={4}
+        position={[0, 0.32, 0]}
+        castShadow
+      >
+        <meshToonMaterial {...toonProps} />
+      </RoundedBox>
+
+      {/* ─── Body (main rounded box, slightly wider) ─── */}
+      <RoundedBox
+        args={[0.40, 0.28, 0.34]}
+        radius={0.06}
+        smoothness={4}
+        position={[0, -0.02, 0]}
+        castShadow
+      >
+        <meshToonMaterial {...toonProps} />
+      </RoundedBox>
+
+      {/* ─── Lower body / base (darker shade) ─── */}
+      <RoundedBox
+        args={[0.40, 0.12, 0.34]}
+        radius={0.04}
+        smoothness={3}
+        position={[0, -0.14, 0]}
+        castShadow
+      >
+        <meshToonMaterial {...darkBodyToon} />
+      </RoundedBox>
+
+      {/* ─── Left arm (stubby capsule) ─── */}
+      <mesh position={[-0.26, 0.0, 0]} rotation={[0, 0, 0.2]} castShadow>
+        <capsuleGeometry args={[0.04, 0.12, 6, 8]} />
         <meshToonMaterial {...toonProps} />
       </mesh>
 
-      {/* Left arm */}
-      <mesh position={[-0.24, 0.05, 0]} castShadow>
-        <capsuleGeometry args={[0.04, 0.15, 6, 8]} />
+      {/* ─── Right arm (stubby capsule) ─── */}
+      <mesh position={[0.26, 0.0, 0]} rotation={[0, 0, -0.2]} castShadow>
+        <capsuleGeometry args={[0.04, 0.12, 6, 8]} />
         <meshToonMaterial {...toonProps} />
       </mesh>
 
-      {/* Right arm */}
-      <mesh position={[0.24, 0.05, 0]} castShadow>
-        <capsuleGeometry args={[0.04, 0.15, 6, 8]} />
-        <meshToonMaterial {...toonProps} />
-      </mesh>
-
-      {/* Left foot */}
-      <mesh position={[-0.08, -0.32, 0.04]} castShadow>
-        <boxGeometry args={[0.08, 0.06, 0.12]} />
+      {/* ─── Left foot ─── */}
+      <mesh position={[-0.09, -0.30, 0.03]} castShadow>
+        <boxGeometry args={[0.10, 0.06, 0.13]} />
         <meshToonMaterial {...darkToon} />
       </mesh>
 
-      {/* Right foot */}
-      <mesh position={[0.08, -0.32, 0.04]} castShadow>
-        <boxGeometry args={[0.08, 0.06, 0.12]} />
+      {/* ─── Right foot ─── */}
+      <mesh position={[0.09, -0.30, 0.03]} castShadow>
+        <boxGeometry args={[0.10, 0.06, 0.13]} />
         <meshToonMaterial {...darkToon} />
       </mesh>
     </group>

@@ -3,11 +3,16 @@
  */
 
 export type BotVariant = 'worker' | 'thinker' | 'cron' | 'comms' | 'dev'
+export type BotExpression = 'happy' | 'thoughtful' | 'determined' | 'talking' | 'serious'
+export type BotAccessoryType = 'crown' | 'lightbulb' | 'clock' | 'signal' | 'gear'
+export type BotChestType = 'tool' | 'dots' | 'clock-display' | 'chat-dots' | 'code'
 
 export interface BotVariantConfig {
   variant: BotVariant
   color: string
-  accessory: 'hardhat' | 'antenna' | 'clock' | 'headset' | 'gear'
+  accessory: BotAccessoryType
+  expression: BotExpression
+  chestDisplay: BotChestType
   icon: string
   label: string
 }
@@ -18,14 +23,18 @@ const VARIANT_CONFIGS: Record<BotVariant, BotVariantConfig> = {
   worker: {
     variant: 'worker',
     color: '#FE9600',
-    accessory: 'hardhat',
+    accessory: 'crown',
+    expression: 'happy',
+    chestDisplay: 'tool',
     icon: '🔧',
     label: 'Worker',
   },
   thinker: {
     variant: 'thinker',
     color: '#1277C3',
-    accessory: 'antenna',
+    accessory: 'lightbulb',
+    expression: 'thoughtful',
+    chestDisplay: 'dots',
     icon: '💡',
     label: 'Thinker',
   },
@@ -33,13 +42,17 @@ const VARIANT_CONFIGS: Record<BotVariant, BotVariantConfig> = {
     variant: 'cron',
     color: '#82B30E',
     accessory: 'clock',
+    expression: 'determined',
+    chestDisplay: 'clock-display',
     icon: '⏰',
     label: 'Cron',
   },
   comms: {
     variant: 'comms',
     color: '#9370DB',
-    accessory: 'headset',
+    accessory: 'signal',
+    expression: 'talking',
+    chestDisplay: 'chat-dots',
     icon: '💬',
     label: 'Comms',
   },
@@ -47,6 +60,8 @@ const VARIANT_CONFIGS: Record<BotVariant, BotVariantConfig> = {
     variant: 'dev',
     color: '#F32A1C',
     accessory: 'gear',
+    expression: 'serious',
+    chestDisplay: 'code',
     icon: '⚙️',
     label: 'Dev',
   },
