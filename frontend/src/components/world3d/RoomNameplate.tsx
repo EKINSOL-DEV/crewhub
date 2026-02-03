@@ -1,5 +1,4 @@
-import { Html } from '@react-three/drei'
-import { Float } from '@react-three/drei'
+import { Text, Float } from '@react-three/drei'
 import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface RoomNameplateProps {
@@ -11,13 +10,12 @@ interface RoomNameplateProps {
 
 /**
  * Floating nameplate sign above the room entrance.
- * Displays room name + icon emoji on the front side with a slight Float animation.
+ * Displays room name on both sides of the sign with 3D text and a slight Float animation.
  */
-export function RoomNameplate({ name, icon, color, size = 12 }: RoomNameplateProps) {
+export function RoomNameplate({ name, icon: _icon, color, size = 12 }: RoomNameplateProps) {
   const accentColor = color || '#4f46e5'
   const accentToon = useToonMaterialProps(accentColor)
   const halfSize = size / 2
-  const displayText = `${icon || '🏠'} ${name}`
 
   return (
     <Float
@@ -38,25 +36,36 @@ export function RoomNameplate({ name, icon, color, size = 12 }: RoomNameplatePro
           <meshToonMaterial color="#FFF8F0" gradientMap={accentToon.gradientMap} />
         </mesh>
 
-        {/* Front text (Html for emoji support) */}
-        <Html
+        {/* Back face (slightly lighter) */}
+        <mesh position={[0, 0, -0.065]}>
+          <boxGeometry args={[2.9, 0.5, 0.01]} />
+          <meshToonMaterial color="#FFF8F0" gradientMap={accentToon.gradientMap} />
+        </mesh>
+
+        {/* Front text (3D) */}
+        <Text
           position={[0, 0, 0.08]}
-          center
-          transform
-          distanceFactor={4}
+          fontSize={0.28}
+          color="#333333"
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={2.6}
         >
-          <span style={{
-            color: '#333333',
-            fontSize: '14px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-            userSelect: 'none',
-            pointerEvents: 'none',
-          }}>
-            {displayText}
-          </span>
-        </Html>
+          {name}
+        </Text>
+
+        {/* Back text (3D, rotated to face backward) */}
+        <Text
+          position={[0, 0, -0.08]}
+          rotation={[0, Math.PI, 0]}
+          fontSize={0.28}
+          color="#333333"
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={2.6}
+        >
+          {name}
+        </Text>
 
         {/* Support poles */}
         <mesh position={[-1.2, -0.55, 0]}>
