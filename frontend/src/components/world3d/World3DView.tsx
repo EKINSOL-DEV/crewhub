@@ -96,12 +96,6 @@ function GroundPlane({ roomPositions }: { roomPositions: { position: [number, nu
       const wz = gz * tileSize
       const s = seed(gx, gz)
 
-      // Skip tiles that overlap with rooms (leave room footprint clear + margin)
-      const isInsideRoom = roomPositions.some(({ position: rp }) => {
-        return Math.abs(wx - rp[0]) < 9 && Math.abs(wz - rp[2]) < 9
-      })
-      if (isInsideRoom) continue
-
       tiles.push({ pos: [wx, -0.15, wz], shade: s })
 
       // Random decorations on some tiles
