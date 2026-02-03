@@ -132,6 +132,10 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
     const targetUpdateInterval = (status === "active" ? 2000 : 4000) / speedMultiplier
     
     const animate = () => {
+      if (isDragging) {
+        animationFrameRef.current = requestAnimationFrame(animate)
+        return // Don't update position while dragging
+      }
       const now = Date.now()
       if (hasParent) setOrbitAngle(prev => prev + (status === "active" ? 0.02 : 0.01) * speedMultiplier)
       if (!hasParent && now - lastTargetUpdateRef.current > targetUpdateInterval) {
@@ -160,7 +164,7 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
     }
     animationFrameRef.current = requestAnimationFrame(animate)
     return () => { if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current) }
-  }, [status, containerWidth, containerHeight, hasParent, parentPosition, orbitAngle, targetPosition, index, speedMultiplier, minionSize])
+  }, [status, containerWidth, containerHeight, hasParent, parentPosition, orbitAngle, targetPosition, index, speedMultiplier, minionSize, isDragging])
 
   useEffect(() => {
     if (status === "active" && !isHovered) {

@@ -98,6 +98,7 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
 
     useEffect(() => {
       if (containerWidth === 0 || containerHeight === 0) return
+      if (isDragging) return // Don't pick new targets while dragging
       const pickNewTarget = () => {
         const margin = 80
         setTargetPosition({ x: margin + Math.random() * (containerWidth - margin * 2), y: margin + Math.random() * (containerHeight - margin * 2) })
@@ -105,10 +106,14 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
       const interval = setInterval(pickNewTarget, 3000 + Math.random() * 5000)
       const initialTimeout = setTimeout(pickNewTarget, 500 + Math.random() * 1000)
       return () => { clearInterval(interval); clearTimeout(initialTimeout) }
-    }, [containerWidth, containerHeight])
+    }, [containerWidth, containerHeight, isDragging])
 
     useEffect(() => {
       const animate = () => {
+        if (isDragging) {
+          animationFrameRef.current = requestAnimationFrame(animate)
+          return // Don't update position while dragging
+        }
         setPosition(prev => {
           const dx = targetPosition.x - prev.x
           const dy = targetPosition.y - prev.y
@@ -127,7 +132,7 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
       }
       animationFrameRef.current = requestAnimationFrame(animate)
       return () => { if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current) }
-    }, [targetPosition, speedMultiplier, onPositionUpdate, runtime.status])
+    }, [targetPosition, speedMultiplier, onPositionUpdate, runtime.status, isDragging])
 
     const isOffline = runtime.status === "offline"
     const statusColor = STATUS_COLORS[runtime.status]
