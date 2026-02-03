@@ -4,6 +4,7 @@ import { OrbitControls } from '@react-three/drei'
 import { WorldLighting } from './WorldLighting'
 import { BuildingFloor } from './BuildingFloor'
 import { BuildingWalls } from './BuildingWalls'
+import { Hallway } from './Hallway'
 import { Room3D } from './Room3D'
 import { useRooms } from '@/hooks/useRooms'
 import { useToonMaterialProps } from './utils/toonMaterials'
@@ -224,7 +225,7 @@ function SceneContent() {
 
   if (isLoading || !layout) return null
 
-  const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX } = layout
+  const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
 
   return (
     <>
@@ -248,6 +249,17 @@ function SceneContent() {
         z={parkingArea.z}
         width={parkingArea.width}
         depth={parkingArea.depth}
+      />
+
+      {/* Hallway decorations */}
+      <Hallway
+        roomPositions={roomPositions}
+        roomSize={ROOM_SIZE}
+        hallwayWidth={HALLWAY_WIDTH}
+        cols={cols}
+        rows={rows}
+        gridOriginX={gridOriginX}
+        gridOriginZ={gridOriginZ}
       />
 
       {/* Rooms in grid layout */}
