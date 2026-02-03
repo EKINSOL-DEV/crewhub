@@ -8,6 +8,7 @@ import asyncio
 
 from app.config import settings
 from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections
+from app.routes.chat import router as chat_router
 from app.db.database import init_database, check_database_health
 from app.services.gateway import GatewayClient
 from app.services.connections import get_connection_manager
@@ -140,6 +141,7 @@ app.include_router(rules.router, prefix="/api/room-assignment-rules", tags=["rul
 app.include_router(cron.router, prefix="/api/cron", tags=["cron"])
 app.include_router(history.router, prefix="/api/sessions/archived", tags=["history"])
 app.include_router(connections.router, prefix="/api", tags=["connections"])
+app.include_router(chat_router)
 
 
 @app.get("/")

@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { BotStatus } from './Bot3D'
+import { AgentChatPanel } from './AgentChatPanel'
 
 interface BotInfoPanelProps {
   session: CrewSession | null
@@ -12,7 +13,13 @@ interface BotInfoPanelProps {
   onOpenLog: (session: CrewSession) => void
 }
 
-// ─── Helpers ───────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────
+
+const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
+
+function isFixedAgent(key: string): boolean {
+  return FIXED_AGENT_RE.test(key)
+}
 
 function formatTimeSince(updatedAt: number): string {
   const seconds = Math.floor((Date.now() - updatedAt) / 1000)
@@ -26,14 +33,12 @@ function formatTimeSince(updatedAt: number): string {
 
 function formatModel(model?: string): string {
   if (!model) return 'Unknown'
-  // Clean up common model names
   if (model.includes('sonnet')) return 'Sonnet'
   if (model.includes('opus')) return 'Opus'
   if (model.includes('haiku')) return 'Haiku'
   if (model.includes('gpt-4o')) return 'GPT-4o'
   if (model.includes('gpt-4')) return 'GPT-4'
   if (model.includes('gpt-5')) return 'GPT-5'
-  // Return last segment or trimmed
   const parts = model.split('/')
   return parts[parts.length - 1].slice(0, 24)
 }
@@ -60,11 +65,9 @@ function getStatusBadge(status: BotStatus): { label: string; color: string; bg: 
 
 function getLastAssistantMessage(session: CrewSession): string | null {
   if (!session.messages || session.messages.length === 0) return null
-  // Find last assistant message
   for (let i = session.messages.length - 1; i >= 0; i--) {
     const msg = session.messages[i]
     if (msg.role === 'assistant' && msg.content) {
-      // Extract text from content blocks
       for (const block of msg.content) {
         if (block.text) return block.text.slice(0, 120)
       }
@@ -73,20 +76,22 @@ function getLastAssistantMessage(session: CrewSession): string | null {
   return null
 }
 
-// ─── Component ─────────────────────────────────────────────────
+type TabId = 'info' | 'chat'
+
+// ── Component ──────────────────────────────────────────────────
 
 export function BotInfoPanel({ session, displayName, botConfig, status, onClose, onOpenLog }: BotInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
+  const canChat = session ? isFixedAgent(session.key) : false
+  const [activeTab, setActiveTab] = useState<TabId>('info')
 
   // Close on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        // Small delay to avoid conflict with bot click
         setTimeout(() => onClose(), 50)
       }
     }
-    // Delay adding listener to avoid the triggering click closing it immediately
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClick)
     }, 200)
@@ -109,7 +114,7 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
         top: 16,
         right: 16,
         bottom: 80,
-        width: 320,
+        width: activeTab === 'chat' ? 400 : 320,
         zIndex: 60,
         background: 'rgba(255, 255, 255, 0.85)',
         backdropFilter: 'blur(16px)',
@@ -122,12 +127,12 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
         flexDirection: 'column',
         overflow: 'hidden',
         animation: 'botPanelSlideIn 0.3s ease-out',
+        transition: 'width 0.2s ease',
       }}
     >
       {/* Header */}
       <div style={{
-        padding: '20px 20px 16px',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+        padding: '20px 20px 0',
         display: 'flex',
         alignItems: 'flex-start',
         gap: 12,
@@ -164,7 +169,6 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
             gap: 8,
             marginTop: 4,
           }}>
-            {/* Status badge */}
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -214,80 +218,114 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
         </button>
       </div>
 
-      {/* Body */}
-      <div style={{
-        flex: 1,
-        overflow: 'auto',
-        padding: '16px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-      }}>
-        {/* Type */}
-        <InfoRow label="Type">
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: botConfig.color,
-              display: 'inline-block',
-            }} />
-            {botConfig.label}
-          </span>
-        </InfoRow>
+      {/* Tabs (only when canChat) */}
+      {canChat && (
+        <div style={{
+          display: 'flex',
+          gap: 0,
+          padding: '12px 20px 0',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+        }}>
+          <TabButton
+            label="ℹ️ Info"
+            active={activeTab === 'info'}
+            accentColor={botConfig.color}
+            onClick={() => setActiveTab('info')}
+          />
+          <TabButton
+            label="💬 Chat"
+            active={activeTab === 'chat'}
+            accentColor={botConfig.color}
+            onClick={() => setActiveTab('chat')}
+          />
+        </div>
+      )}
 
-        {/* Status detail */}
-        <InfoRow label="Status">
-          {formatTimeSince(session.updatedAt)}
-        </InfoRow>
+      {/* Separator when no tabs */}
+      {!canChat && (
+        <div style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.06)', margin: '16px 0 0' }} />
+      )}
 
-        {/* Model */}
-        <InfoRow label="Model">
-          {formatModel(session.model)}
-        </InfoRow>
+      {/* Tab content */}
+      {activeTab === 'info' ? (
+        <>
+          {/* Info Body */}
+          <div style={{
+            flex: 1,
+            overflow: 'auto',
+            padding: '16px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+          }}>
+            <InfoRow label="Type">
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: botConfig.color,
+                  display: 'inline-block',
+                }} />
+                {botConfig.label}
+              </span>
+            </InfoRow>
 
-        {/* Tokens */}
-        <InfoRow label="Tokens">
-          {formatTokens(session.totalTokens)}
-        </InfoRow>
+            <InfoRow label="Status">
+              {formatTimeSince(session.updatedAt)}
+            </InfoRow>
 
-        {/* Channel */}
-        {session.lastChannel && (
-          <InfoRow label="Channel">
-            {session.lastChannel}
-          </InfoRow>
-        )}
+            <InfoRow label="Model">
+              {formatModel(session.model)}
+            </InfoRow>
 
-        {/* Last message */}
-        {lastMessage && (
-          <div>
-            <div style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: '#9ca3af',
-              textTransform: 'uppercase' as const,
-              letterSpacing: '0.05em',
-              marginBottom: 6,
-            }}>
-              Last message
-            </div>
-            <div style={{
-              fontSize: 13,
-              color: '#4b5563',
-              lineHeight: 1.5,
-              background: 'rgba(0, 0, 0, 0.03)',
-              padding: '10px 12px',
-              borderRadius: 10,
-              fontStyle: 'italic',
-              wordBreak: 'break-word',
-            }}>
-              {lastMessage}
-              {lastMessage.length >= 120 && '…'}
-            </div>
+            <InfoRow label="Tokens">
+              {formatTokens(session.totalTokens)}
+            </InfoRow>
+
+            {session.lastChannel && (
+              <InfoRow label="Channel">
+                {session.lastChannel}
+              </InfoRow>
+            )}
+
+            {lastMessage && (
+              <div>
+                <div style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: '#9ca3af',
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.05em',
+                  marginBottom: 6,
+                }}>
+                  Last message
+                </div>
+                <div style={{
+                  fontSize: 13,
+                  color: '#4b5563',
+                  lineHeight: 1.5,
+                  background: 'rgba(0, 0, 0, 0.03)',
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  fontStyle: 'italic',
+                  wordBreak: 'break-word',
+                }}>
+                  {lastMessage}
+                  {lastMessage.length >= 120 && '…'}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      ) : (
+        /* Chat tab */
+        <AgentChatPanel
+          sessionKey={session.key}
+          botConfig={botConfig}
+          displayName={displayName}
+        />
+      )}
 
       {/* Footer */}
       <div style={{
@@ -327,7 +365,42 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
   )
 }
 
-// ─── Reusable row ──────────────────────────────────────────────
+// ── Tab Button ─────────────────────────────────────────────────
+
+function TabButton({
+  label,
+  active,
+  accentColor,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  accentColor: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '8px 16px',
+        border: 'none',
+        background: 'transparent',
+        color: active ? accentColor : '#6b7280',
+        fontWeight: active ? 700 : 500,
+        fontSize: 13,
+        fontFamily: 'system-ui, sans-serif',
+        cursor: 'pointer',
+        borderBottom: active ? `2px solid ${accentColor}` : '2px solid transparent',
+        transition: 'color 0.15s, border-color 0.15s',
+        marginBottom: -1,
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
+// ── Reusable row ───────────────────────────────────────────────
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
