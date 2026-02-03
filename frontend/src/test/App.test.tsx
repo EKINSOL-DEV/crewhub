@@ -11,6 +11,7 @@ vi.mock('../hooks/useSessionsStream', () => ({
     error: null,
     connected: true,
     connectionMethod: 'sse',
+    reconnecting: false,
     refresh: vi.fn(),
   }),
 }))

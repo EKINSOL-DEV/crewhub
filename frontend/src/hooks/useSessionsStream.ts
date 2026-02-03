@@ -7,9 +7,13 @@ export interface SessionsStreamState {
   error: string | null
   connected: boolean
   connectionMethod: "sse" | "polling" | "disconnected"
+  reconnecting: boolean
 }
 
 const getAuthToken = (): string => localStorage.getItem("openclaw_token") || ""
+
+const MAX_BACKOFF_MS = 30_000
+const POLLING_INTERVAL_MS = 5_000
 
 export function useSessionsStream(enabled: boolean = true) {
   const [state, setState] = useState<SessionsStreamState>({
@@ -18,12 +22,15 @@ export function useSessionsStream(enabled: boolean = true) {
     error: null,
     connected: false,
     connectionMethod: "disconnected",
+    reconnecting: false,
   })
   
   const eventSourceRef = useRef<EventSource | null>(null)
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reconnectAttemptsRef = useRef(0)
+  const enabledRef = useRef(enabled)
+  enabledRef.current = enabled
   
   const fetchSessions = useCallback(async () => {
     try {
@@ -37,15 +44,23 @@ export function useSessionsStream(enabled: boolean = true) {
     }
   }, [])
   
-  const fallbackToPolling = useCallback(() => {
-    setState(prev => ({ ...prev, connectionMethod: "polling", connected: true }))
+  const stopPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+  }, [])
+  
+  const startPolling = useCallback(() => {
+    stopPolling()
     fetchSessions()
-    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
-    pollingIntervalRef.current = setInterval(fetchSessions, 5000)
-  }, [fetchSessions])
+    pollingIntervalRef.current = setInterval(fetchSessions, POLLING_INTERVAL_MS)
+  }, [fetchSessions, stopPolling])
   
   const setupSSE = useCallback(() => {
-    if (!enabled) return
+    if (!enabledRef.current) return
+    
+    // Clean up any existing SSE connection
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
       eventSourceRef.current = null
@@ -58,8 +73,16 @@ export function useSessionsStream(enabled: boolean = true) {
       eventSourceRef.current = eventSource
       
       eventSource.onopen = () => {
+        // SSE connected successfully — stop polling, reset counter
         reconnectAttemptsRef.current = 0
-        setState(prev => ({ ...prev, connected: true, connectionMethod: "sse", error: null }))
+        stopPolling()
+        setState(prev => ({
+          ...prev,
+          connected: true,
+          connectionMethod: "sse",
+          reconnecting: false,
+          error: null,
+        }))
         // Fetch initial data since SSE doesn't send it on connect
         fetchSessions()
       }
@@ -106,24 +129,53 @@ export function useSessionsStream(enabled: boolean = true) {
       eventSource.onerror = () => {
         eventSource.close()
         eventSourceRef.current = null
-        setState(prev => ({ ...prev, connected: false, connectionMethod: "disconnected" }))
         
-        if (reconnectAttemptsRef.current < 5) {
-          const delay = 1000 * Math.pow(2, reconnectAttemptsRef.current)
-          reconnectAttemptsRef.current++
-          reconnectTimeoutRef.current = setTimeout(setupSSE, delay)
-        } else {
-          fallbackToPolling()
-        }
+        // Calculate backoff: 1s, 2s, 4s, 8s, 16s, 30s, 30s, 30s...
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), MAX_BACKOFF_MS)
+        reconnectAttemptsRef.current++
+        
+        console.log(`SSE disconnected — reconnecting in ${delay / 1000}s (attempt ${reconnectAttemptsRef.current})`)
+        
+        // Switch to polling to keep data fresh while reconnecting
+        setState(prev => ({
+          ...prev,
+          connected: false,
+          connectionMethod: "polling",
+          reconnecting: true,
+        }))
+        startPolling()
+        
+        // Schedule next SSE attempt
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = setTimeout(setupSSE, delay)
       }
     } catch {
-      fallbackToPolling()
+      // SSE constructor failed — poll and retry
+      setState(prev => ({
+        ...prev,
+        connected: false,
+        connectionMethod: "polling",
+        reconnecting: true,
+      }))
+      startPolling()
+      
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), MAX_BACKOFF_MS)
+      reconnectAttemptsRef.current++
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = setTimeout(setupSSE, delay)
     }
-  }, [enabled, fallbackToPolling])
+  }, [fetchSessions, startPolling, stopPolling])
   
   useEffect(() => {
     if (!enabled) {
-      setState({ sessions: [], loading: false, error: null, connected: false, connectionMethod: "disconnected" })
+      setState({
+        sessions: [],
+        loading: false,
+        error: null,
+        connected: false,
+        connectionMethod: "disconnected",
+        reconnecting: false,
+      })
       return
     }
     setupSSE()
