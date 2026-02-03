@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DesignLab3D } from './DesignLab3D'
 
 interface AgentDesign {
   name: string
@@ -205,6 +206,9 @@ export function DevDesigns() {
             <li>✓ <strong>Clean vectors</strong> - Crisp rendering at all sizes</li>
           </ul>
         </div>
+
+        {/* 3D POC Section */}
+        <DesignLab3D darkBg={darkBg} />
       </div>
     </div>
   )
