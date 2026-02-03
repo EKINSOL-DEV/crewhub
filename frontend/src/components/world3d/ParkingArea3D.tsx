@@ -60,7 +60,7 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
           </mesh>
 
           {/* Text */}
-          <Html
+          <Html zIndexRange={[1, 5]}
             position={[0, 0, 0.08]}
             center
             transform

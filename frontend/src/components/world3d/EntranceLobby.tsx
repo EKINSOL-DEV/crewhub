@@ -42,7 +42,7 @@ export function EntranceLobby({
         </mesh>
 
         {/* Welcome text */}
-        <Html
+        <Html zIndexRange={[1, 5]}
           position={[0, 0.06, 0]}
           center
           transform

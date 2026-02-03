@@ -24,7 +24,7 @@ function RoomFocusButton({ roomId }: { roomId: string }) {
   const isFocused = state.focusedRoomId === roomId
 
   return (
-    <Html position={[0, 4.2, 0]} center style={{ pointerEvents: 'auto' }}>
+    <Html position={[0, 4.2, 0]} center zIndexRange={[1, 5]} style={{ pointerEvents: 'auto' }}>
       <button
         onClick={(e) => {
           e.stopPropagation()

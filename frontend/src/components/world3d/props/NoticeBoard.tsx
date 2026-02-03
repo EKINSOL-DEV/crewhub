@@ -51,7 +51,7 @@ export function NoticeBoard({ position = [0, 0, 0], rotation = [0, 0, 0] }: Noti
       ))}
 
       {/* Small label */}
-      <Html
+      <Html zIndexRange={[1, 5]}
         position={[0, -0.48, 0.04]}
         center
         transform

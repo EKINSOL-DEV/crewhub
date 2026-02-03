@@ -500,6 +500,7 @@ function SceneContent({
                 position={[position[0] + ROOM_SIZE / 2 - 1.5, 1.2, position[2] + ROOM_SIZE / 2 - 1]}
                 center
                 distanceFactor={15}
+                zIndexRange={[1, 5]}
                 style={{ pointerEvents: 'none' }}
               >
                 <div style={{
