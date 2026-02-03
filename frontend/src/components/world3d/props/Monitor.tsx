@@ -38,12 +38,14 @@ export function Monitor({ position = [0, 0, 0], rotation = [0, 0, 0] }: MonitorP
       </mesh>
 
       {/* Screen face (glowing) */}
-      <mesh position={[0, 0.38, screenDepth / 2 + 0.001]}>
+      <mesh position={[0, 0.38, screenDepth / 2 + 0.01]}>
         <planeGeometry args={[screenWidth, screenHeight]} />
         <meshStandardMaterial
           color="#E8F0FE"
           emissive="#A0C4FF"
           emissiveIntensity={0.4}
+          polygonOffset
+          polygonOffsetFactor={-1}
         />
       </mesh>
     </group>
