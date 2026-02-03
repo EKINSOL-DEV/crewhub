@@ -24,6 +24,7 @@ import { CameraController } from './CameraController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
+import { DragDropProvider } from '@/contexts/DragDropContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
 import type { CrewSession } from '@/lib/api'
@@ -625,7 +626,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const { setFocusHandler } = useChatContext()
 
   // Rooms for overlays (tabs bar, navigation)
-  const { rooms, getRoomForSession } = useRooms()
+  const { rooms, getRoomForSession, refresh: refreshRooms } = useRooms()
 
   // Register 3D focus handler: zoom to bot when 🎯 is clicked in chat panel
   const handleFocusAgent = useCallback((sessionKey: string) => {
@@ -696,65 +697,67 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   }, [focusedSession, isActivelyRunning])
 
   return (
-    <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
-      <Canvas
-        shadows
-        camera={{ position: [45, 40, 45], fov: 40, near: 0.1, far: 300 }}
-        style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)' }}
-      >
-        <Suspense fallback={<LoadingFallback />}>
-          <WorldLighting />
-          <SceneContent
-            visibleSessions={visibleSessions}
-            parkingSessions={parkingSessions}
-            settings={settings}
-            isActivelyRunning={isActivelyRunning}
-            displayNames={displayNames}
-            onBotClick={handleBotClick}
-            focusLevel={focusState.level}
-            focusedRoomId={focusState.focusedRoomId}
-            focusedBotKey={focusState.focusedBotKey}
-          />
-        </Suspense>
-      </Canvas>
+    <DragDropProvider onAssignmentChanged={refreshRooms}>
+      <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
+        <Canvas
+          shadows
+          camera={{ position: [45, 40, 45], fov: 40, near: 0.1, far: 300 }}
+          style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)' }}
+        >
+          <Suspense fallback={<LoadingFallback />}>
+            <WorldLighting />
+            <SceneContent
+              visibleSessions={visibleSessions}
+              parkingSessions={parkingSessions}
+              settings={settings}
+              isActivelyRunning={isActivelyRunning}
+              displayNames={displayNames}
+              onBotClick={handleBotClick}
+              focusLevel={focusState.level}
+              focusedRoomId={focusState.focusedRoomId}
+              focusedBotKey={focusState.focusedBotKey}
+            />
+          </Suspense>
+        </Canvas>
 
-      {/* Back button / navigation (top-left) */}
-      <WorldNavigation rooms={rooms} />
+        {/* Back button / navigation (top-left) */}
+        <WorldNavigation rooms={rooms} />
 
-      {/* Overlay controls hint (hide when bot panel is showing) */}
-      {focusState.level !== 'bot' && (
-        <div className="absolute top-4 right-4 z-50">
-          <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm">
-            🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan
+        {/* Overlay controls hint (hide when bot panel is showing) */}
+        {focusState.level !== 'bot' && (
+          <div className="absolute top-4 right-4 z-50">
+            <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm">
+              🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Bot Info Panel (slides in when bot is focused) */}
-      {focusState.level === 'bot' && focusState.focusedBotKey && focusedSession && focusedBotConfig && (
-        <BotInfoPanel
-          session={focusedSession}
-          displayName={displayNames.get(focusState.focusedBotKey) || getSessionDisplayName(focusedSession, null)}
-          botConfig={focusedBotConfig}
-          status={focusedBotStatus}
-          onClose={() => goBack()}
-          onOpenLog={(session) => {
-            setSelectedSession(session)
-            setLogViewerOpen(true)
-          }}
+        {/* Bot Info Panel (slides in when bot is focused) */}
+        {focusState.level === 'bot' && focusState.focusedBotKey && focusedSession && focusedBotConfig && (
+          <BotInfoPanel
+            session={focusedSession}
+            displayName={displayNames.get(focusState.focusedBotKey) || getSessionDisplayName(focusedSession, null)}
+            botConfig={focusedBotConfig}
+            status={focusedBotStatus}
+            onClose={() => goBack()}
+            onOpenLog={(session) => {
+              setSelectedSession(session)
+              setLogViewerOpen(true)
+            }}
+          />
+        )}
+
+        {/* Room tabs bar (bottom) */}
+        <RoomTabsBar
+          rooms={rooms}
+          roomBotCounts={roomBotCounts}
+          parkingBotCount={parkingSessions.length}
         />
-      )}
 
-      {/* Room tabs bar (bottom) */}
-      <RoomTabsBar
-        rooms={rooms}
-        roomBotCounts={roomBotCounts}
-        parkingBotCount={parkingSessions.length}
-      />
-
-      {/* LogViewer (outside Canvas) */}
-      <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
-    </div>
+        {/* LogViewer (outside Canvas) */}
+        <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
+      </div>
+    </DragDropProvider>
   )
 }
 

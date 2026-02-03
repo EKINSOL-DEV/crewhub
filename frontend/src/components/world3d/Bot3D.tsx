@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html, Text } from '@react-three/drei'
 import * as THREE from 'three'
@@ -9,6 +9,7 @@ import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
+import { useDragDrop } from '@/contexts/DragDropContext'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
 import type { RoomBounds } from './World3DView'
@@ -56,6 +57,8 @@ interface Bot3DProps {
 export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
   const { state: focusState, focusBot } = useWorldFocus()
+  const { startDrag, endDrag } = useDragDrop()
+  const [hovered, setHovered] = useState(false)
 
   // Is THIS bot the one being focused on?
   const isFocused = focusState.level === 'bot' && focusState.focusedBotKey === session?.key
@@ -184,9 +187,11 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         if (onClick && session) onClick(session)
       }}
       onPointerOver={() => {
+        setHovered(true)
         if (session && onClick) document.body.style.cursor = 'pointer'
       }}
       onPointerOut={() => {
+        setHovered(false)
         document.body.style.cursor = 'auto'
       }}
     >
@@ -245,6 +250,49 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
               }}
             >
               {name}
+            </div>
+          </Html>
+        )}
+
+        {/* Drag handle (visible on hover) */}
+        {session && roomId && (
+          <Html
+            position={[0, 0.95, 0]}
+            center
+            distanceFactor={15}
+            zIndexRange={[10, 20]}
+            style={{ pointerEvents: hovered ? 'auto' : 'none' }}
+          >
+            <div
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/plain', session.key)
+                e.dataTransfer.effectAllowed = 'move'
+                // Create a small drag image
+                const ghost = document.createElement('div')
+                ghost.textContent = `🤖 ${name}`
+                ghost.style.cssText = 'position:fixed;top:-100px;left:-100px;background:rgba(0,0,0,0.8);color:#fff;padding:4px 10px;border-radius:8px;font-size:12px;font-family:system-ui,sans-serif;white-space:nowrap;'
+                document.body.appendChild(ghost)
+                e.dataTransfer.setDragImage(ghost, 0, 0)
+                // Clean up ghost after a tick
+                requestAnimationFrame(() => document.body.removeChild(ghost))
+                startDrag(session.key, name, roomId)
+              }}
+              onDragEnd={() => endDrag()}
+              style={{
+                cursor: 'grab',
+                padding: '2px 6px',
+                fontSize: '13px',
+                background: 'rgba(0,0,0,0.5)',
+                borderRadius: '6px',
+                opacity: hovered ? 1 : 0,
+                transition: 'opacity 0.2s ease',
+                userSelect: 'none',
+                lineHeight: 1,
+              }}
+              title="Drag to move to another room"
+            >
+              <span style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>✋</span>
             </div>
           </Html>
         )}
