@@ -8,7 +8,7 @@ import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
-import { SleepingZs, useBotAnimation, getRoomInteractionPoints } from './BotAnimations'
+import { SleepingZs, useBotAnimation, tickAnimState, getRoomInteractionPoints } from './BotAnimations'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragActions } from '@/contexts/DragDropContext'
 import type { BotVariantConfig } from './utils/botVariants'
@@ -113,13 +113,17 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
 
   const animRef = useBotAnimation(status, interactionPoints, roomBounds)
   const lastAppliedOpacity = useRef(1)
+  const materialsClonable = useRef(false) // track if materials have been cloned for this bot
 
-  // Animations + wandering (driven by animation state machine)
+  // Single consolidated useFrame: animation ticks + transforms + movement
   useFrame(({ clock }, delta) => {
     if (!groupRef.current) return
     const t = clock.getElapsedTime()
     const anim = animRef.current
     const state = wanderState.current
+
+    // ─── Tick animation state machine (phase transitions) ─────
+    tickAnimState(anim, delta)
 
     // ─── Apply animation rotations ────────────────────────────
     groupRef.current.rotation.z = anim.sleepRotZ
@@ -148,14 +152,23 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     }
     groupRef.current.position.y = position[1] + anim.yOffset + bounceY
 
-    // ─── Apply opacity (only on change) ───────────────────────
+    // ─── Apply opacity (only on change, with cloned materials) ─
     if (anim.opacity !== lastAppliedOpacity.current) {
       groupRef.current.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
-          const materials = Array.isArray((child as THREE.Mesh).material)
-            ? (child as THREE.Mesh).material as THREE.Material[]
-            : [(child as THREE.Mesh).material as THREE.Material]
-          for (const mat of materials) {
+          const mesh = child as THREE.Mesh
+          // Clone materials on first opacity change to avoid shared-material side effects
+          if (!materialsClonable.current) {
+            if (Array.isArray(mesh.material)) {
+              mesh.material = (mesh.material as THREE.Material[]).map(m => m.clone())
+            } else {
+              mesh.material = (mesh.material as THREE.Material).clone()
+            }
+          }
+          const mats = Array.isArray(mesh.material)
+            ? mesh.material as THREE.Material[]
+            : [mesh.material as THREE.Material]
+          for (const mat of mats) {
             if ('opacity' in mat) {
               mat.transparent = anim.opacity < 1
               mat.opacity = anim.opacity
@@ -163,6 +176,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           }
         }
       })
+      materialsClonable.current = true
       lastAppliedOpacity.current = anim.opacity
     }
 
@@ -294,8 +308,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         {/* Accessory (per-type, on top of head) */}
         <BotAccessory type={config.accessory} color={config.color} />
 
-        {/* Sleeping ZZZ text */}
-        {status === 'sleeping' && <SleepingZs />}
+        {/* Sleeping ZZZ (visibility controlled by animRef.showZzz, not raw status) */}
+        {status === 'sleeping' && <SleepingZs animRef={animRef} />}
 
         {/* Activity bubble (above head) */}
         {showActivity && activity && status !== 'sleeping' && status !== 'offline' && (

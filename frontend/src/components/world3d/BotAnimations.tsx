@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 import type { BotStatus } from './Bot3D'
 
@@ -287,96 +286,105 @@ export function useBotAnimation(
     }
   }, [status, interactionPoints])
 
-  // ─── Per-frame sub-state transitions ──────────────────────────
-  useFrame((_, delta) => {
-    const s = stateRef.current
-
-    switch (s.phase) {
-      case 'walking-to-desk': {
-        if (s.arrived) {
-          // Arrived at desk → start working
-          s.phase = 'working'
-          s.bodyTilt = 0.12  // ~7° forward lean
-          s.headBob = true
-          s.walkSpeed = 0
-        }
-        break
-      }
-
-      case 'getting-coffee': {
-        if (s.arrived) {
-          // Standing at coffee machine — count down
-          s.coffeeTimer -= delta
-          if (s.coffeeTimer <= 0) {
-            // Coffee break done → start wandering
-            s.phase = 'idle-wandering'
-            s.targetX = null
-            s.targetZ = null
-            s.walkSpeed = 0.3
-            s.freezeWhenArrived = false
-            s.arrived = false
-            s.resetWanderTarget = true
-          }
-        }
-        break
-      }
-
-      case 'sleeping-walking': {
-        if (s.arrived) {
-          // Arrived at sleep corner → settle down
-          s.phase = 'sleeping'
-          s.yOffset = -0.1
-          s.showZzz = true
-          s.sleepRotZ = 0.12
-          s.bodyTilt = -0.08  // lean back slightly
-          s.walkSpeed = 0
-        }
-        break
-      }
-
-      // working, sleeping, idle-wandering, offline — no per-frame transitions
-    }
-  })
-
   return stateRef
+}
+
+// ─── Per-frame animation state transitions ──────────────────────
+// Called from Bot3D's single useFrame to avoid extra callbacks.
+
+export function tickAnimState(s: AnimState, delta: number): void {
+  switch (s.phase) {
+    case 'walking-to-desk': {
+      if (s.arrived) {
+        s.phase = 'working'
+        s.bodyTilt = 0.12
+        s.headBob = true
+        s.walkSpeed = 0
+      }
+      break
+    }
+
+    case 'getting-coffee': {
+      if (s.arrived) {
+        s.coffeeTimer -= delta
+        if (s.coffeeTimer <= 0) {
+          s.phase = 'idle-wandering'
+          s.targetX = null
+          s.targetZ = null
+          s.walkSpeed = 0.3
+          s.freezeWhenArrived = false
+          s.arrived = false
+          s.resetWanderTarget = true
+        }
+      }
+      break
+    }
+
+    case 'sleeping-walking': {
+      if (s.arrived) {
+        s.phase = 'sleeping'
+        s.yOffset = -0.1
+        s.showZzz = true
+        s.sleepRotZ = 0.12
+        s.bodyTilt = -0.08
+        s.walkSpeed = 0
+      }
+      break
+    }
+  }
 }
 
 // ─── Sleeping ZZZ Particles ─────────────────────────────────────
 
-export function SleepingZs() {
-  const zRefs = useRef<THREE.Group[]>([])
+/**
+ * Lightweight ZZZ particles using sprite planes instead of Troika <Text>.
+ * Accepts animRef to control visibility: only shows when bot has actually
+ * arrived at sleep corner (showZzz === true), not during walking-to-sleep.
+ */
+export function SleepingZs({ animRef }: { animRef: React.MutableRefObject<AnimState> }) {
+  const groupRef = useRef<THREE.Group>(null)
+  const spriteRefs = useRef<THREE.Sprite[]>([])
+
+  // Create shared material instances (one per Z for independent opacity)
+  const materials = useRef(
+    [0, 1, 2].map(() =>
+      new THREE.SpriteMaterial({
+        color: 0x9ca3af,
+        transparent: true,
+        opacity: 0.8,
+      })
+    )
+  ).current
 
   useFrame(({ clock }) => {
+    if (!groupRef.current) return
+
+    // Only show when the animation state says so (arrived at sleep corner)
+    const show = animRef.current.showZzz
+    groupRef.current.visible = show
+    if (!show) return
+
     const t = clock.getElapsedTime()
-    zRefs.current.forEach((ref, i) => {
-      if (!ref) return
+    spriteRefs.current.forEach((sprite, i) => {
+      if (!sprite) return
       const phase = (t * 0.6 + i * 1.2) % 3
-      ref.position.y = 0.7 + phase * 0.25
-      ref.position.x = Math.sin(t + i) * 0.12
+      sprite.position.y = 0.7 + phase * 0.25
+      sprite.position.x = Math.sin(t + i) * 0.12
       const opacity = phase < 2.5 ? 0.8 : Math.max(0, 0.8 - (phase - 2.5) * 1.6)
-      ref.scale.setScalar(0.5 + phase * 0.12)
-      ref.children.forEach(child => {
-        const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial
-        if (mat && mat.opacity !== undefined) mat.opacity = opacity
-      })
+      const s = 0.1 * (0.5 + phase * 0.12)
+      sprite.scale.set(s, s, 1)
+      materials[i].opacity = opacity
     })
   })
 
   return (
-    <group>
+    <group ref={groupRef}>
       {[0, 1, 2].map(i => (
-        <group key={i} ref={el => { if (el) zRefs.current[i] = el }}>
-          <Text
-            fontSize={0.1}
-            color="#9ca3af"
-            anchorX="center"
-            anchorY="middle"
-            material-transparent
-            material-opacity={0.8}
-          >
-            Z
-          </Text>
-        </group>
+        <sprite
+          key={i}
+          ref={(el: THREE.Sprite | null) => { if (el) spriteRefs.current[i] = el }}
+          material={materials[i]}
+        />
       ))}
     </group>
   )

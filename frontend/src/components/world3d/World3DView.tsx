@@ -1,6 +1,7 @@
-import { Suspense, useMemo, useState, useEffect, useCallback } from 'react'
+import { Suspense, useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
+import * as THREE from 'three'
 import { WorldLighting } from './WorldLighting'
 import { BuildingFloor } from './BuildingFloor'
 import { BuildingWalls } from './BuildingWalls'
@@ -92,19 +93,7 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   return { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
 }
 
-// ─── Grass Ground (outside building) ───────────────────────────
-
-function GrassTile({ position, size, shade }: { position: [number, number, number]; size: number; shade: number }) {
-  const baseGreen = [0.38 + shade * 0.06, 0.50 + shade * 0.05, 0.32 + shade * 0.04]
-  const color = `rgb(${Math.floor(baseGreen[0] * 255)}, ${Math.floor(baseGreen[1] * 255)}, ${Math.floor(baseGreen[2] * 255)})`
-  const toonProps = useToonMaterialProps(color)
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={position} receiveShadow>
-      <boxGeometry args={[size, size, 0.08 + shade * 0.04]} />
-      <meshToonMaterial {...toonProps} />
-    </mesh>
-  )
-}
+// ─── Grass Ground (outside building) — InstancedMesh for performance ─
 
 function GrassTuft({ position }: { position: [number, number, number] }) {
   const toonProps = useToonMaterialProps('#5A8A3C')
@@ -130,35 +119,70 @@ function SmallRock({ position, scale = 1 }: { position: [number, number, number]
   )
 }
 
+/**
+ * Instanced grass ground: replaces ~1681 individual tile meshes with a single
+ * InstancedMesh draw call. Per-instance color provides shade variation.
+ */
 function ExteriorGround({ buildingWidth, buildingDepth }: { buildingWidth: number; buildingDepth: number }) {
   const seed = (x: number, z: number) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1
   const tileSize = 4
   const gridRange = 20
   const halfBW = buildingWidth / 2 + 0.5
   const halfBD = buildingDepth / 2 + 0.5
+  const toonProps = useToonMaterialProps('#6B8F52') // base green, overridden by instance color
+  const instanceRef = useRef<THREE.InstancedMesh>(null)
 
-  const { tiles, decorations } = useMemo(() => {
-    const t: { pos: [number, number, number]; shade: number }[] = []
+  const { count, matrices, colors, decorations } = useMemo(() => {
+    const mList: THREE.Matrix4[] = []
+    const cList: THREE.Color[] = []
     const d: { type: 'tuft' | 'rock'; pos: [number, number, number]; scale?: number }[] = []
+    const mat4 = new THREE.Matrix4()
+    const quat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2)
+
     for (let gx = -gridRange; gx <= gridRange; gx++) {
       for (let gz = -gridRange; gz <= gridRange; gz++) {
         const wx = gx * tileSize
         const wz = gz * tileSize
         if (Math.abs(wx) < halfBW && Math.abs(wz) < halfBD) continue
         const s = seed(gx, gz)
-        t.push({ pos: [wx, -0.15, wz], shade: s })
+
+        // Tile thickness varies slightly with shade
+        const thickness = 0.08 + s * 0.04
+        const scaleVec = new THREE.Vector3(1, 1, thickness / 0.1) // geometry base is 0.1 thick
+        mat4.compose(new THREE.Vector3(wx, -0.15, wz), quat, scaleVec)
+        mList.push(mat4.clone())
+
+        // Per-instance shade color
+        const r = 0.38 + s * 0.06
+        const g = 0.50 + s * 0.05
+        const b = 0.32 + s * 0.04
+        cList.push(new THREE.Color(r, g, b))
+
         if (s > 0.75) d.push({ type: 'tuft', pos: [wx + s * 1.5 - 0.75, -0.1, wz + (1 - s) * 1.5 - 0.75] })
         if (s > 0.88) d.push({ type: 'rock', pos: [wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75], scale: 0.5 + s * 0.8 })
       }
     }
-    return { tiles: t, decorations: d }
+    return { count: mList.length, matrices: mList, colors: cList, decorations: d }
   }, [halfBW, halfBD])
+
+  // Apply matrices and colors to the instanced mesh
+  useEffect(() => {
+    const mesh = instanceRef.current
+    if (!mesh) return
+    for (let i = 0; i < count; i++) {
+      mesh.setMatrixAt(i, matrices[i])
+      mesh.setColorAt(i, colors[i])
+    }
+    mesh.instanceMatrix.needsUpdate = true
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  }, [count, matrices, colors])
 
   return (
     <group>
-      {tiles.map((tile, i) => (
-        <GrassTile key={i} position={tile.pos} size={tileSize} shade={tile.shade} />
-      ))}
+      <instancedMesh ref={instanceRef} args={[undefined, undefined, count]} receiveShadow>
+        <boxGeometry args={[tileSize, tileSize, 0.1]} />
+        <meshToonMaterial {...toonProps} />
+      </instancedMesh>
       {decorations.map((dec, i) =>
         dec.type === 'tuft'
           ? <GrassTuft key={`d${i}`} position={dec.pos} />
