@@ -239,6 +239,10 @@ async def seed_default_data():
             # Create default agents
             default_agents = [
                 ('main', 'Main', '🤖', '#3b82f6', 'agent:main:main', 'anthropic/claude-sonnet-4-5', 'headquarters', 0, True, True, now, now),
+                ('dev', 'Dev', '💻', '#10b981', 'agent:dev:main', None, 'dev-room', 1, False, True, now, now),
+                ('flowy', 'Flowy', '🌊', '#8b5cf6', 'agent:flowy:main', None, 'headquarters', 2, False, True, now, now),
+                ('creator', 'Creator', '🎨', '#f59e0b', 'agent:creator:main', None, 'creative-room', 3, False, True, now, now),
+                ('reviewer', 'Reviewer', '🔍', '#ef4444', 'agent:reviewer:main', None, 'headquarters', 4, False, True, now, now),
             ]
             
             await db.executemany("""
