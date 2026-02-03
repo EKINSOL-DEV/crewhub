@@ -3,6 +3,7 @@ import { useDraggable } from "@dnd-kit/core"
 import { SessionSVGWithIcon } from "./SessionSVGWithIcon"
 import type { AgentRuntime } from "@/hooks/useAgentsRegistry"
 import { cn } from "@/lib/utils"
+import { getAgentVariant } from "@/lib/agentUtils"
 
 interface AgentAnchorProps {
   runtime: AgentRuntime
@@ -151,7 +152,7 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
           </div>
         )}
         <div className="relative">
-          <SessionSVGWithIcon variant={isOffline ? "blue" : "orange"} agentIcon={getAgentIcon(runtime)} size={120} flipped={false} animDelay={index * 0.1} />
+          <SessionSVGWithIcon variant={getAgentVariant(runtime.agent.id)} agentIcon={getAgentIcon(runtime)} size={120} flipped={false} animDelay={index * 0.1} />
           <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap" style={{ backgroundColor: "rgba(0,0,0,0.7)", color: "white", border: `1px solid ${statusColor}` }}>
             {runtime.agent.name}
           </div>

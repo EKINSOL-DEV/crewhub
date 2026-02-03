@@ -12,6 +12,7 @@ import { SessionSVGWithIcon } from "./SessionSVGWithIcon"
 import { useAgentsRegistry, type AgentRuntime } from "@/hooks/useAgentsRegistry"
 import { useRooms } from "@/hooks/useRooms"
 import { getDefaultRoomForSession } from "@/lib/roomsConfig"
+import { getAgentVariant } from "@/lib/agentUtils"
 
 interface PlaygroundViewProps {
   sessions: MinionSession[]
@@ -235,7 +236,7 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
               {activeId && (isDraggingAgent ? activeAgent : activeSession) && (
                 <div style={{ cursor: "grabbing", opacity: 0.9, transform: "scale(1.1)" }}>
                   {isDraggingAgent && activeAgent ? (
-                    <div className="text-center"><SessionSVGWithIcon variant={activeAgent.agent.color ? getVariantFromColor(activeAgent.agent.color) : (activeAgent.session ? getVariantFromColor(getMinionType(activeAgent.session).color) : "orange")} agentIcon={activeAgent.session ? getAgentIcon(activeAgent.session) : "crab"} size={120} flipped={false} animDelay={0} /><div className="text-sm font-semibold mt-2 text-foreground dark:text-white">{activeAgent.agent.name}</div></div>
+                    <div className="text-center"><SessionSVGWithIcon variant={getAgentVariant(activeAgent.agent.id)} agentIcon={activeAgent.session ? getAgentIcon(activeAgent.session) : "crab"} size={120} flipped={false} animDelay={0} /><div className="text-sm font-semibold mt-2 text-foreground dark:text-white">{activeAgent.agent.name}</div></div>
                   ) : activeSession ? (
                     <SessionSVGWithIcon variant={getVariantFromColor(getMinionType(activeSession).color)} agentIcon={getAgentIcon(activeSession)} size={activeSession.key.includes(":subagent:") ? 72 : 120} flipped={false} animDelay={0} />
                   ) : null}
