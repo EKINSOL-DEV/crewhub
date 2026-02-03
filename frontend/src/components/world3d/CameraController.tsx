@@ -131,8 +131,17 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
         followPos.current.set(c.posX, c.posY, c.posZ)
         followTarget.current.set(c.targetX, c.targetY, c.targetZ)
       }
-      // Start following slightly before transition ends for seamless handoff
-      setTimeout(() => { isFollowing.current = true }, 600)
+      // Start following after transition — initialize lerp targets from actual camera position
+      setTimeout(() => {
+        if (controlsRef.current) {
+          const cam = controlsRef.current
+          // Read actual camera position to avoid pop
+          followPos.current.set(cam.camera.position.x, cam.camera.position.y, cam.camera.position.z)
+          const target = cam.getTarget(new THREE.Vector3())
+          followTarget.current.copy(target)
+        }
+        isFollowing.current = true
+      }, 850)
     }
   }, [state.level, state.focusedRoomId, state.focusedBotKey, roomPositions])
 
