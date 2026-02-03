@@ -72,12 +72,13 @@ export function Hallway({
           })
         }
 
-        // Notice board on a room's outer wall (back of first row, facing hallway)
-        if (row === 0 && col === Math.floor(cols / 2)) {
+        // Notice board mounted on a room's north wall, facing into the hallway between rows
+        if (row < rows - 1 && col === Math.floor(cols / 2)) {
           items.push({
             type: 'noticeBoard',
-            position: [roomX, 1.2, roomZ - halfRoom - 0.2],
-            rotation: [0, 0, 0],
+            // Flush against north wall: board back sits at wall surface (halfRoom + 0.03 = half board depth)
+            position: [roomX, 1.2, roomZ + halfRoom + 0.03],
+            rotation: [0, 0, 0], // notes face +Z into hallway
           })
         }
       }
