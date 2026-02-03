@@ -9,8 +9,11 @@ import { HallwayFloorLines } from './HallwayFloorLines'
 import { EntranceLobby } from './EntranceLobby'
 import { ParkingArea3D } from './ParkingArea3D'
 import { Room3D } from './Room3D'
+import { Bot3D, type BotStatus } from './Bot3D'
 import { useRooms } from '@/hooks/useRooms'
+import { useAgentsRegistry, type AgentRuntime } from '@/hooks/useAgentsRegistry'
 import { useToonMaterialProps } from './utils/toonMaterials'
+import { getBotConfigFromSession, getBotDisplayName, isSubagent } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
@@ -218,13 +221,205 @@ function LoadingFallback() {
 
 // ─── Scene Content ─────────────────────────────────────────────
 
-function SceneContent() {
-  const { rooms, isLoading } = useRooms()
+// ─── Bot Placement Helpers ──────────────────────────────────────
+
+/** Map agent status to BotStatus */
+function agentStatusToBotStatus(agentStatus: string, session?: CrewSession): BotStatus {
+  if (!session) return 'offline'
+  const now = Date.now()
+  const lastActivity = session.updatedAt || 0
+  const timeSinceActivity = now - lastActivity
+
+  // If no activity for 10+ minutes → sleeping
+  if (timeSinceActivity > 10 * 60 * 1000) return 'sleeping'
+
+  switch (agentStatus) {
+    case 'working':
+    case 'thinking':
+      return 'active'
+    case 'idle':
+      return 'idle'
+    case 'offline':
+      return 'offline'
+    default:
+      return 'idle'
+  }
+}
+
+/** Calculate positions for multiple bots inside a room, spaced evenly */
+function getBotPositionsInRoom(
+  roomPos: [number, number, number],
+  roomSize: number,
+  botCount: number,
+): [number, number, number][] {
+  const positions: [number, number, number][] = []
+  const floorY = roomPos[1] + 0.16 // room floor surface
+  const margin = 2.5 // stay away from walls and props
+
+  if (botCount === 0) return positions
+
+  if (botCount === 1) {
+    // Center of room, slightly offset
+    positions.push([roomPos[0], floorY, roomPos[2] + 0.5])
+    return positions
+  }
+
+  // Spread bots in a grid pattern inside the room
+  const availableWidth = roomSize - margin * 2
+  const cols = Math.min(botCount, 3)
+  const rows = Math.ceil(botCount / cols)
+  const spacingX = availableWidth / (cols + 1)
+  const spacingZ = availableWidth / (rows + 1)
+
+  for (let i = 0; i < botCount; i++) {
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    const x = roomPos[0] - availableWidth / 2 + (col + 1) * spacingX
+    const z = roomPos[2] - availableWidth / 2 + (row + 1) * spacingZ
+    positions.push([x, floorY, z])
+  }
+
+  return positions
+}
+
+/** Calculate positions for bots in the parking area */
+function getBotPositionsInParking(
+  parkingX: number,
+  parkingZ: number,
+  parkingWidth: number,
+  parkingDepth: number,
+  botCount: number,
+): [number, number, number][] {
+  const positions: [number, number, number][] = []
+  const floorY = 0.02 // parking floor level
+  const margin = 2
+
+  if (botCount === 0) return positions
+
+  const availableWidth = parkingWidth - margin * 2
+  const availableDepth = parkingDepth - margin * 2
+  const cols = Math.min(botCount, 3)
+  const rows = Math.ceil(botCount / cols)
+  const spacingX = availableWidth / (cols + 1)
+  const spacingZ = availableDepth / (rows + 1)
+
+  for (let i = 0; i < botCount; i++) {
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    const x = parkingX - availableWidth / 2 + (col + 1) * spacingX
+    const z = parkingZ - availableDepth / 2 + (row + 1) * spacingZ
+    positions.push([x, floorY, z])
+  }
+
+  return positions
+}
+
+// ─── Bot data for placement ──────────────────────────────────────
+
+interface BotPlacement {
+  key: string
+  session: CrewSession
+  status: BotStatus
+  config: ReturnType<typeof getBotConfigFromSession>
+  name: string
+  scale: number
+}
+
+function SceneContent({ sessions }: { sessions: CrewSession[] }) {
+  const { rooms, getRoomForSession, isLoading } = useRooms()
+  const { agents: agentRuntimes } = useAgentsRegistry(sessions)
 
   const layout = useMemo(() => {
     if (rooms.length === 0) return null
     return calculateBuildingLayout(rooms)
   }, [rooms])
+
+  // ─── Bot placement logic ──────────────────────────────────────
+
+  /** Build a BotPlacement from a session + optional agent runtime */
+  const buildBotPlacement = (session: CrewSession, runtime?: AgentRuntime): BotPlacement => {
+    const status = runtime
+      ? agentStatusToBotStatus(runtime.status, session)
+      : agentStatusToBotStatus('idle', session)
+    const config = getBotConfigFromSession(
+      session.key,
+      session.label,
+      runtime?.agent?.color
+    )
+    const name = getBotDisplayName(session.key, session.displayName, session.label)
+    const scale = isSubagent(session.key) ? 0.6 : 1.0
+    return { key: session.key, session, status, config, name, scale }
+  }
+
+  /** Map bots to rooms and parking */
+  const { roomBots, parkingBots } = useMemo(() => {
+    const roomBots = new Map<string, BotPlacement[]>()
+    const parkingBots: BotPlacement[] = []
+
+    // Initialize room bot arrays
+    for (const room of rooms) {
+      roomBots.set(room.id, [])
+    }
+
+    // Place agent runtimes (main agents + their child sessions)
+    const placedKeys = new Set<string>()
+
+    for (const runtime of agentRuntimes) {
+      // Main agent session
+      if (runtime.session) {
+        const roomId = runtime.agent.default_room_id
+          || getRoomForSession(runtime.session.key, {
+            label: runtime.session.label,
+            model: runtime.session.model,
+            channel: runtime.session.channel,
+          })
+        const placement = buildBotPlacement(runtime.session, runtime)
+        if (roomId && roomBots.has(roomId)) {
+          roomBots.get(roomId)!.push(placement)
+        } else {
+          parkingBots.push(placement)
+        }
+        placedKeys.add(runtime.session.key)
+      }
+
+      // Child sessions (subagents)
+      for (const child of runtime.childSessions) {
+        if (placedKeys.has(child.key)) continue
+        const roomId = getRoomForSession(child.key, {
+          label: child.label,
+          model: child.model,
+          channel: child.channel,
+        }) || runtime.agent.default_room_id
+
+        const placement = buildBotPlacement(child)
+        if (roomId && roomBots.has(roomId)) {
+          roomBots.get(roomId)!.push(placement)
+        } else {
+          parkingBots.push(placement)
+        }
+        placedKeys.add(child.key)
+      }
+    }
+
+    // Any remaining sessions not matched to agents
+    for (const session of sessions) {
+      if (placedKeys.has(session.key)) continue
+      const roomId = getRoomForSession(session.key, {
+        label: session.label,
+        model: session.model,
+        channel: session.channel,
+      })
+      const placement = buildBotPlacement(session)
+      if (roomId && roomBots.has(roomId)) {
+        roomBots.get(roomId)!.push(placement)
+      } else {
+        parkingBots.push(placement)
+      }
+      placedKeys.add(session.key)
+    }
+
+    return { roomBots, parkingBots }
+  }, [sessions, rooms, agentRuntimes, getRoomForSession])
 
   if (isLoading || !layout) return null
 
@@ -290,14 +485,50 @@ function SceneContent() {
       />
 
       {/* Rooms in grid layout */}
-      {roomPositions.map(({ room, position }) => (
-        <Room3D
-          key={room.id}
-          room={room}
-          position={position}
-          size={ROOM_SIZE}
-        />
-      ))}
+      {roomPositions.map(({ room, position }) => {
+        const botsInRoom = roomBots.get(room.id) || []
+        const botPositions = getBotPositionsInRoom(position, ROOM_SIZE, botsInRoom.length)
+
+        return (
+          <group key={room.id}>
+            <Room3D
+              room={room}
+              position={position}
+              size={ROOM_SIZE}
+            />
+            {/* Bots inside this room */}
+            {botsInRoom.map((bot, i) => (
+              <Bot3D
+                key={bot.key}
+                position={botPositions[i] || position}
+                config={bot.config}
+                status={bot.status}
+                name={bot.name}
+                scale={bot.scale}
+              />
+            ))}
+          </group>
+        )
+      })}
+
+      {/* Parking area bots */}
+      {parkingBots.length > 0 && (() => {
+        const positions = getBotPositionsInParking(
+          parkingArea.x, parkingArea.z,
+          parkingArea.width, parkingArea.depth,
+          parkingBots.length,
+        )
+        return parkingBots.map((bot, i) => (
+          <Bot3D
+            key={bot.key}
+            position={positions[i] || [parkingArea.x, 0.02, parkingArea.z]}
+            config={bot.config}
+            status={bot.status}
+            name={bot.name}
+            scale={bot.scale}
+          />
+        ))
+      })()}
     </>
   )
 }
@@ -309,8 +540,7 @@ function SceneContent() {
  * Rooms arranged in a grid with hallways, surrounded by outer walls,
  * with a parking/break area and grass exterior.
  */
-export function World3DView({ sessions: _sessions, settings: _settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
-  void _sessions
+export function World3DView({ sessions, settings: _settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
   void _settings
   void _onAliasChanged
 
@@ -330,7 +560,7 @@ export function World3DView({ sessions: _sessions, settings: _settings, onAliasC
       >
         <Suspense fallback={<LoadingFallback />}>
           <WorldLighting />
-          <SceneContent />
+          <SceneContent sessions={sessions} />
           <OrbitControls
             makeDefault
             enablePan
