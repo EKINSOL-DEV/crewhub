@@ -11,7 +11,7 @@ DB_DIR = Path.home() / ".crewhub"
 DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2  # v2: Added connections table
 
 
 async def init_database():
@@ -115,6 +115,21 @@ async def init_database():
             """)
             
             # ========================================
+            # CONNECTIONS
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS connections (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    config TEXT NOT NULL DEFAULT '{}',
+                    enabled BOOLEAN DEFAULT TRUE,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            
+            # ========================================
             # SCHEMA VERSION
             # ========================================
             await db.execute("""
@@ -143,6 +158,16 @@ async def init_database():
             await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_session_room_assignments_room 
                 ON session_room_assignments(room_id)
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_connections_type 
+                ON connections(type)
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_connections_enabled 
+                ON connections(enabled)
             """)
             
             # Set initial version if not exists
@@ -263,6 +288,30 @@ async def seed_default_data():
                 INSERT OR IGNORE INTO room_assignment_rules (id, room_id, rule_type, rule_value, priority, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, default_rules)
+            
+            # Create default connections
+            import json as json_module
+            default_connections = [
+                (
+                    'default-openclaw',
+                    'OpenClaw Gateway',
+                    'openclaw',
+                    json_module.dumps({
+                        'url': 'ws://localhost:18789',
+                        'auto_reconnect': True,
+                        'reconnect_delay': 1.0,
+                        'max_reconnect_delay': 60.0,
+                    }),
+                    True,
+                    now,
+                    now,
+                ),
+            ]
+            
+            await db.executemany("""
+                INSERT OR IGNORE INTO connections (id, name, type, config, enabled, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, default_connections)
             
             await db.commit()
             logger.info("Default seed data inserted successfully")

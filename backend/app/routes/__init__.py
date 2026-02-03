@@ -1,2 +1,2 @@
 """Routes package."""
-from . import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules
+from . import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, connections

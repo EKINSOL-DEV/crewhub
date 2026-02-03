@@ -174,3 +174,39 @@ class Setting(BaseModel):
 class SettingUpdate(BaseModel):
     """Request model for updating a setting."""
     value: str
+
+
+# ========================================
+# CONNECTIONS
+# ========================================
+
+class Connection(BaseModel):
+    """
+    Agent connection configuration.
+    
+    Stores connection details for different agent systems
+    (OpenClaw, Claude Code, Codex, etc.)
+    """
+    id: str
+    name: str
+    type: str  # 'openclaw', 'claude_code', 'codex'
+    config: dict  # JSON config (url, token, etc.)
+    enabled: bool = True
+    created_at: int
+    updated_at: int
+
+
+class ConnectionCreate(BaseModel):
+    """Request model for creating a new connection."""
+    id: Optional[str] = None  # Auto-generated if not provided
+    name: str
+    type: str  # 'openclaw', 'claude_code', 'codex'
+    config: dict = {}  # Connection-specific config
+    enabled: bool = True
+
+
+class ConnectionUpdate(BaseModel):
+    """Request model for updating a connection."""
+    name: Optional[str] = None
+    config: Optional[dict] = None
+    enabled: Optional[bool] = None

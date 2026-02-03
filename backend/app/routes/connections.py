@@ -1,0 +1,512 @@
+"""
+API routes for managing connections.
+
+Provides CRUD operations for connection configurations stored in the database.
+"""
+
+import json
+import logging
+import time
+import uuid
+from typing import Any, Optional
+
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
+
+from ..db.database import get_db
+from ..db.models import Connection, ConnectionCreate, ConnectionUpdate
+from ..services.connections import (
+    ConnectionManager,
+    get_connection_manager,
+    ConnectionStatus,
+)
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/connections", tags=["connections"])
+
+
+# ============================================================================
+# Response Models
+# ============================================================================
+
+class ConnectionResponse(BaseModel):
+    """Connection with runtime status."""
+    id: str
+    name: str
+    type: str
+    config: dict
+    enabled: bool
+    status: str  # Runtime connection status
+    error: Optional[str] = None
+    created_at: int
+    updated_at: int
+
+
+class ConnectionListResponse(BaseModel):
+    """List of connections."""
+    connections: list[ConnectionResponse]
+    total: int
+
+
+class ConnectionHealthResponse(BaseModel):
+    """Health status for a connection."""
+    id: str
+    name: str
+    type: str
+    status: str
+    healthy: bool
+    error: Optional[str] = None
+
+
+# ============================================================================
+# Database Operations
+# ============================================================================
+
+async def _get_all_connections() -> list[dict[str, Any]]:
+    """Get all connections from database."""
+    async with await get_db() as db:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        async with db.execute(
+            "SELECT * FROM connections ORDER BY created_at"
+        ) as cursor:
+            rows = await cursor.fetchall()
+            
+    # Parse JSON config
+    for row in rows:
+        if isinstance(row.get("config"), str):
+            try:
+                row["config"] = json.loads(row["config"])
+            except json.JSONDecodeError:
+                row["config"] = {}
+    
+    return rows
+
+
+async def _get_connection_by_id(connection_id: str) -> Optional[dict[str, Any]]:
+    """Get a single connection by ID."""
+    async with await get_db() as db:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        async with db.execute(
+            "SELECT * FROM connections WHERE id = ?",
+            (connection_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+    
+    if row and isinstance(row.get("config"), str):
+        try:
+            row["config"] = json.loads(row["config"])
+        except json.JSONDecodeError:
+            row["config"] = {}
+    
+    return row
+
+
+async def _create_connection(data: ConnectionCreate) -> dict[str, Any]:
+    """Create a new connection in database."""
+    now = int(time.time() * 1000)
+    connection_id = data.id or str(uuid.uuid4())
+    
+    async with await get_db() as db:
+        await db.execute(
+            """
+            INSERT INTO connections (id, name, type, config, enabled, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                connection_id,
+                data.name,
+                data.type,
+                json.dumps(data.config),
+                data.enabled,
+                now,
+                now,
+            )
+        )
+        await db.commit()
+    
+    return {
+        "id": connection_id,
+        "name": data.name,
+        "type": data.type,
+        "config": data.config,
+        "enabled": data.enabled,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+
+async def _update_connection(
+    connection_id: str,
+    data: ConnectionUpdate,
+) -> Optional[dict[str, Any]]:
+    """Update a connection in database."""
+    existing = await _get_connection_by_id(connection_id)
+    if not existing:
+        return None
+    
+    now = int(time.time() * 1000)
+    
+    # Build update fields
+    updates = {"updated_at": now}
+    if data.name is not None:
+        updates["name"] = data.name
+    if data.config is not None:
+        updates["config"] = json.dumps(data.config)
+    if data.enabled is not None:
+        updates["enabled"] = data.enabled
+    
+    set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
+    values = list(updates.values()) + [connection_id]
+    
+    async with await get_db() as db:
+        await db.execute(
+            f"UPDATE connections SET {set_clause} WHERE id = ?",
+            values
+        )
+        await db.commit()
+    
+    return await _get_connection_by_id(connection_id)
+
+
+async def _delete_connection(connection_id: str) -> bool:
+    """Delete a connection from database."""
+    async with await get_db() as db:
+        cursor = await db.execute(
+            "DELETE FROM connections WHERE id = ?",
+            (connection_id,)
+        )
+        await db.commit()
+        return cursor.rowcount > 0
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def _get_runtime_status(connection_id: str, manager: ConnectionManager) -> tuple[str, Optional[str]]:
+    """Get runtime status and error for a connection."""
+    conn = manager.get_connection(connection_id)
+    if conn:
+        return conn.status.value, conn.error_message
+    return "not_loaded", None
+
+
+def _db_to_response(
+    db_conn: dict[str, Any],
+    manager: ConnectionManager,
+) -> ConnectionResponse:
+    """Convert database row to response with runtime status."""
+    status, error = _get_runtime_status(db_conn["id"], manager)
+    return ConnectionResponse(
+        id=db_conn["id"],
+        name=db_conn["name"],
+        type=db_conn["type"],
+        config=db_conn["config"],
+        enabled=bool(db_conn["enabled"]),
+        status=status,
+        error=error,
+        created_at=db_conn["created_at"],
+        updated_at=db_conn["updated_at"],
+    )
+
+
+# ============================================================================
+# Routes
+# ============================================================================
+
+@router.get("", response_model=ConnectionListResponse)
+async def list_connections():
+    """
+    List all configured connections.
+    
+    Returns connections from database with their runtime status.
+    """
+    manager = await get_connection_manager()
+    db_connections = await _get_all_connections()
+    
+    connections = [
+        _db_to_response(conn, manager)
+        for conn in db_connections
+    ]
+    
+    return ConnectionListResponse(
+        connections=connections,
+        total=len(connections),
+    )
+
+
+@router.get("/{connection_id}", response_model=ConnectionResponse)
+async def get_connection(connection_id: str):
+    """
+    Get a specific connection by ID.
+    """
+    db_conn = await _get_connection_by_id(connection_id)
+    if not db_conn:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not found: {connection_id}",
+        )
+    
+    manager = await get_connection_manager()
+    return _db_to_response(db_conn, manager)
+
+
+@router.post("", response_model=ConnectionResponse, status_code=status.HTTP_201_CREATED)
+async def create_connection(data: ConnectionCreate):
+    """
+    Create a new connection.
+    
+    Valid types: openclaw, claude_code, codex
+    """
+    # Validate type
+    valid_types = {"openclaw", "claude_code", "codex"}
+    if data.type not in valid_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid connection type: {data.type}. Must be one of: {valid_types}",
+        )
+    
+    # Check for duplicate ID
+    if data.id:
+        existing = await _get_connection_by_id(data.id)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Connection already exists: {data.id}",
+            )
+    
+    # Create in database
+    db_conn = await _create_connection(data)
+    
+    # Add to manager if enabled
+    manager = await get_connection_manager()
+    if data.enabled:
+        try:
+            await manager.add_connection(
+                connection_id=db_conn["id"],
+                connection_type=db_conn["type"],
+                config=db_conn["config"],
+                name=db_conn["name"],
+                auto_connect=True,
+            )
+        except Exception as e:
+            logger.error(f"Failed to add connection to manager: {e}")
+            # Connection is created in DB but may not be connected
+    
+    return _db_to_response(db_conn, manager)
+
+
+@router.patch("/{connection_id}", response_model=ConnectionResponse)
+async def update_connection(connection_id: str, data: ConnectionUpdate):
+    """
+    Update a connection's configuration.
+    
+    Note: Changing config may require reconnection.
+    """
+    db_conn = await _update_connection(connection_id, data)
+    if not db_conn:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not found: {connection_id}",
+        )
+    
+    manager = await get_connection_manager()
+    
+    # Handle enable/disable
+    if data.enabled is not None:
+        existing_conn = manager.get_connection(connection_id)
+        
+        if data.enabled and not existing_conn:
+            # Enable: add to manager
+            try:
+                await manager.add_connection(
+                    connection_id=db_conn["id"],
+                    connection_type=db_conn["type"],
+                    config=db_conn["config"],
+                    name=db_conn["name"],
+                    auto_connect=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to enable connection: {e}")
+        elif not data.enabled and existing_conn:
+            # Disable: remove from manager
+            await manager.remove_connection(connection_id)
+    
+    # Handle config change (requires reconnect)
+    elif data.config is not None:
+        existing_conn = manager.get_connection(connection_id)
+        if existing_conn and existing_conn.is_connected():
+            # Reconnect with new config
+            await manager.remove_connection(connection_id)
+            try:
+                await manager.add_connection(
+                    connection_id=db_conn["id"],
+                    connection_type=db_conn["type"],
+                    config=db_conn["config"],
+                    name=db_conn["name"],
+                    auto_connect=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to reconnect with new config: {e}")
+    
+    return _db_to_response(db_conn, manager)
+
+
+@router.delete("/{connection_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_connection(connection_id: str):
+    """
+    Delete a connection.
+    
+    Disconnects if currently connected.
+    """
+    # Remove from manager first
+    manager = await get_connection_manager()
+    await manager.remove_connection(connection_id)
+    
+    # Delete from database
+    deleted = await _delete_connection(connection_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not found: {connection_id}",
+        )
+
+
+@router.post("/{connection_id}/connect")
+async def connect_connection(connection_id: str):
+    """
+    Manually connect a connection.
+    """
+    db_conn = await _get_connection_by_id(connection_id)
+    if not db_conn:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not found: {connection_id}",
+        )
+    
+    if not db_conn["enabled"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Connection is disabled",
+        )
+    
+    manager = await get_connection_manager()
+    conn = manager.get_connection(connection_id)
+    
+    # Add if not exists
+    if not conn:
+        try:
+            conn = await manager.add_connection(
+                connection_id=db_conn["id"],
+                connection_type=db_conn["type"],
+                config=db_conn["config"],
+                name=db_conn["name"],
+                auto_connect=False,
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to initialize connection: {e}",
+            )
+    
+    # Connect
+    success = await conn.connect()
+    
+    return {
+        "id": connection_id,
+        "connected": success,
+        "status": conn.status.value,
+        "error": conn.error_message,
+    }
+
+
+@router.post("/{connection_id}/disconnect")
+async def disconnect_connection(connection_id: str):
+    """
+    Manually disconnect a connection.
+    """
+    manager = await get_connection_manager()
+    conn = manager.get_connection(connection_id)
+    
+    if not conn:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not loaded: {connection_id}",
+        )
+    
+    await conn.disconnect()
+    
+    return {
+        "id": connection_id,
+        "status": conn.status.value,
+    }
+
+
+@router.get("/{connection_id}/health", response_model=ConnectionHealthResponse)
+async def get_connection_health(connection_id: str):
+    """
+    Get health status for a connection.
+    """
+    db_conn = await _get_connection_by_id(connection_id)
+    if not db_conn:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not found: {connection_id}",
+        )
+    
+    manager = await get_connection_manager()
+    conn = manager.get_connection(connection_id)
+    
+    if not conn:
+        return ConnectionHealthResponse(
+            id=connection_id,
+            name=db_conn["name"],
+            type=db_conn["type"],
+            status="not_loaded",
+            healthy=False,
+            error="Connection not loaded in manager",
+        )
+    
+    healthy = await conn.health_check()
+    
+    return ConnectionHealthResponse(
+        id=connection_id,
+        name=db_conn["name"],
+        type=db_conn["type"],
+        status=conn.status.value,
+        healthy=healthy,
+        error=conn.error_message,
+    )
+
+
+@router.get("/{connection_id}/sessions")
+async def get_connection_sessions(connection_id: str):
+    """
+    Get sessions from a specific connection.
+    """
+    manager = await get_connection_manager()
+    conn = manager.get_connection(connection_id)
+    
+    if not conn:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not loaded: {connection_id}",
+        )
+    
+    if not conn.is_connected():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Connection not connected: {connection_id}",
+        )
+    
+    sessions = await conn.get_sessions()
+    
+    return {
+        "connection_id": connection_id,
+        "sessions": [s.to_dict() for s in sessions],
+        "total": len(sessions),
+    }
