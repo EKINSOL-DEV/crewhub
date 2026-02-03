@@ -130,21 +130,26 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     groupRef.current.rotation.x = anim.bodyTilt
 
     // ─── Y position: base + animation offset + bounce ─────────
+    // Only bounce when actually moving (dist > threshold)
+    const moveDist = Math.sqrt(
+      (state.targetX - state.currentX) ** 2 + (state.targetZ - state.currentZ) ** 2
+    )
+    const isMoving = moveDist > 0.3
     let bounceY = 0
     switch (anim.phase) {
       case 'working':
-        bounceY = anim.headBob ? Math.sin(t * 2) * 0.02 : 0
+        bounceY = anim.headBob ? Math.sin(t * 2) * 0.015 : 0
         break
       case 'walking-to-desk':
       case 'getting-coffee':
       case 'sleeping-walking':
-        bounceY = Math.sin(t * 4) * 0.04
+        bounceY = isMoving ? Math.sin(t * 4) * 0.03 : 0
         break
       case 'idle-wandering':
-        bounceY = Math.sin(t * 1.5) * 0.03
+        bounceY = isMoving ? Math.sin(t * 3) * 0.02 : 0
         break
       case 'sleeping':
-        bounceY = Math.sin(t * 0.8) * 0.015
+        bounceY = Math.sin(t * 0.5) * 0.008
         break
       case 'offline':
         bounceY = 0
@@ -203,9 +208,17 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     }
 
     // Animation released its target → force new random wander target
+    // Use inner bounds (30% margin from edges) to avoid walking into furniture
+    const innerMarginX = (roomBounds.maxX - roomBounds.minX) * 0.3
+    const innerMarginZ = (roomBounds.maxZ - roomBounds.minZ) * 0.3
+    const innerMinX = roomBounds.minX + innerMarginX
+    const innerMaxX = roomBounds.maxX - innerMarginX
+    const innerMinZ = roomBounds.minZ + innerMarginZ
+    const innerMaxZ = roomBounds.maxZ - innerMarginZ
+
     if (anim.resetWanderTarget) {
-      state.targetX = roomBounds.minX + Math.random() * (roomBounds.maxX - roomBounds.minX)
-      state.targetZ = roomBounds.minZ + Math.random() * (roomBounds.maxZ - roomBounds.minZ)
+      state.targetX = innerMinX + Math.random() * (innerMaxX - innerMinX)
+      state.targetZ = innerMinZ + Math.random() * (innerMaxZ - innerMinZ)
       state.waitTimer = 0.5
       anim.resetWanderTarget = false
     }
@@ -239,11 +252,11 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         }
       }
 
-      // Random wandering: wait then pick new target
+      // Random wandering: wait then pick new target (within inner bounds)
       state.waitTimer -= delta
       if (state.waitTimer <= 0 && anim.targetX === null) {
-        state.targetX = roomBounds.minX + Math.random() * (roomBounds.maxX - roomBounds.minX)
-        state.targetZ = roomBounds.minZ + Math.random() * (roomBounds.maxZ - roomBounds.minZ)
+        state.targetX = innerMinX + Math.random() * (innerMaxX - innerMinX)
+        state.targetZ = innerMinZ + Math.random() * (innerMaxZ - innerMinZ)
         state.waitTimer = 2 + Math.random() * 4
       }
     } else {
