@@ -347,7 +347,7 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
       runtime?.agent?.color
     )
     const name = getBotDisplayName(session.key, session.displayName, session.label)
-    const scale = isSubagent(session.key) ? 0.6 : 1.0
+    const scale = isSubagent(session.key) ? 1.0 : 1.8
     return { key: session.key, session, status, config, name, scale }
   }
 
