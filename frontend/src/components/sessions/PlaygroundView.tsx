@@ -6,6 +6,8 @@ import { ParkingLane } from "./ParkingLane"
 import { API_BASE, type MinionSession } from "@/lib/api"
 import type { MinionsSettings } from "./SettingsPanel"
 import { getMinionType, shouldBeInParkingLane } from "@/lib/minionUtils"
+import { splitSessionsForDisplay } from "@/lib/sessionFiltering"
+import { useSessionActivity } from "@/hooks/useSessionActivity"
 import { checkKonamiCode, triggerDance, playSound } from "@/lib/easterEggs"
 import { useToast } from "@/hooks/use-toast"
 import { SessionSVGWithIcon } from "./SessionSVGWithIcon"
@@ -54,33 +56,9 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
 
   const { agents: agentRuntimes, refresh: refreshAgents } = useAgentsRegistry(sessions)
   const { rooms, getRoomForSession, isLoading: roomsLoading, refresh: refreshRooms } = useRooms()
-  const tokenTrackingRef = useRef<Map<string, { previousTokens: number; lastChangeTime: number }>>(new Map())
+  const { isActivelyRunning } = useSessionActivity(sessions)
   
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
-  
-  useEffect(() => {
-    const now = Date.now()
-    const tracking = tokenTrackingRef.current
-    sessions.forEach(session => {
-      const currentTokens = session.totalTokens || 0
-      const tracked = tracking.get(session.key)
-      if (!tracked) tracking.set(session.key, { previousTokens: currentTokens, lastChangeTime: session.updatedAt })
-      else if (tracked.previousTokens !== currentTokens) tracking.set(session.key, { previousTokens: currentTokens, lastChangeTime: now })
-    })
-    const currentKeys = new Set(sessions.map(s => s.key))
-    for (const key of tracking.keys()) { if (!currentKeys.has(key)) tracking.delete(key) }
-  }, [sessions])
-  
-  const isActivelyRunning = useCallback((sessionKey: string): boolean => {
-    const tracked = tokenTrackingRef.current.get(sessionKey)
-    if (!tracked) return false
-    // Token count changed in last 30s → actively generating
-    if (Date.now() - tracked.lastChangeTime < 30000) return true
-    // Also check updatedAt — catches tool work that doesn't generate tokens
-    const session = sessions.find(s => s.key === sessionKey)
-    if (session && (Date.now() - session.updatedAt) < 30000) return true
-    return false
-  }, [sessions])
   
   const assignSessionToRoom = useCallback(async (sessionKey: string, roomId: string) => {
     try {
@@ -113,13 +91,9 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
   }, [settings.easterEggsEnabled, settings.playSound, toast])
 
   const idleThreshold = settings.parkingIdleThreshold ?? 120
-  const activeSessions = sessions.filter(s => !shouldBeInParkingLane(s, isActivelyRunning(s.key), idleThreshold))
-  const parkingSessions = sessions.filter(s => shouldBeInParkingLane(s, isActivelyRunning(s.key), idleThreshold))
-  const sortedActiveSessions = [...activeSessions].sort((a, b) => b.updatedAt - a.updatedAt)
-  const visibleSessions = sortedActiveSessions.slice(0, 15)
-  const overflowSessions = sortedActiveSessions.slice(15)
-  const allParkingSessions = [...overflowSessions, ...parkingSessions]
-  const sortedParkingSessions = [...allParkingSessions].sort((a, b) => b.updatedAt - a.updatedAt)
+  const { visibleSessions, parkingSessions: sortedParkingSessions } = splitSessionsForDisplay(sessions, isActivelyRunning, idleThreshold)
+  // Overflow count: total parked minus those that are genuinely idle/sleeping (overflow = active but beyond 15-cap)
+  const overflowCount = Math.max(0, sortedParkingSessions.length - sessions.filter(s => shouldBeInParkingLane(s, isActivelyRunning(s.key), idleThreshold)).length)
   
   const itemsByRoom = useMemo(() => {
     const grouped = new Map<string, { agents: AgentRuntime[]; orphanSessions: MinionSession[] }>()
@@ -247,7 +221,7 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
           {/* Easter egg moved to less intrusive position */}
           <div className="absolute bottom-2 left-4 z-40 opacity-40 hover:opacity-70 transition-opacity"><div className="text-[10px] text-muted-foreground/50 italic">🍌 Banana-powered workforce</div></div>
         </div>
-        <div className="h-full" style={{ width: "15%" }}><ParkingLane sessions={sortedParkingSessions} overflowCount={overflowSessions.length} onMinionClick={handleMinionClick} /></div>
+        <div className="h-full" style={{ width: "15%" }}><ParkingLane sessions={sortedParkingSessions} overflowCount={overflowCount} onMinionClick={handleMinionClick} /></div>
       </div>
       <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
     </>
