@@ -31,6 +31,7 @@ export interface SessionsSettings {
   showBadges: boolean
   easterEggsEnabled: boolean
   playgroundSpeed: number
+  parkingIdleThreshold: number  // seconds before a session is parked (default: 120)
 }
 
 // Backwards compatibility alias
@@ -45,6 +46,7 @@ const DEFAULT_SETTINGS: SessionsSettings = {
   showBadges: true,
   easterEggsEnabled: true,
   playgroundSpeed: 1.0,
+  parkingIdleThreshold: 120,
 }
 
 interface SettingsPanelProps {
@@ -230,6 +232,23 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
           {/* Playground Section */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">Playground</h3>
+            <div className="space-y-2">
+              <Label htmlFor="parking-idle-threshold">Parking Idle Threshold</Label>
+              <Select 
+                value={String(settings.parkingIdleThreshold ?? 120)} 
+                onValueChange={(value) => updateSetting("parkingIdleThreshold", parseInt(value))}
+              >
+                <SelectTrigger id="parking-idle-threshold"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30">30 seconds</SelectItem>
+                  <SelectItem value="60">1 minute</SelectItem>
+                  <SelectItem value="120">2 minutes</SelectItem>
+                  <SelectItem value="300">5 minutes</SelectItem>
+                  <SelectItem value="600">10 minutes</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">How long before idle sessions move to parking</p>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="playground-speed">Movement Speed</Label>
               <div className="flex items-center gap-4">

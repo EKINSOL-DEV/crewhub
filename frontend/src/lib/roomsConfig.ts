@@ -52,6 +52,7 @@ export const DEFAULT_ROOMS_CONFIG: RoomsConfig = {
 const STORAGE_KEY = "crewhub-rooms-config"
 const CONFIG_VERSION = 1
 
+/** @deprecated Use the API-based room system (useRooms hook) instead */
 export function loadRoomsConfig(): RoomsConfig {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -66,6 +67,7 @@ export function loadRoomsConfig(): RoomsConfig {
   }
 }
 
+/** @deprecated Use the API-based room system (useRooms hook) instead */
 export function saveRoomsConfig(config: RoomsConfig): { success: boolean; error?: string } {
   try {
     const stored: StoredRoomsConfig = { version: CONFIG_VERSION, config, lastModified: Date.now() }
@@ -105,8 +107,8 @@ export function getDefaultRoomForSession(sessionKey: string): string | undefined
 }
 
 /**
- * Full room routing with config (legacy, kept for compatibility).
- * Prefer using useRooms().getRoomForSession() which uses API rules.
+ * @deprecated Use useRooms().getRoomForSession() which uses API rules.
+ * Legacy full room routing with localStorage config, kept for compatibility.
  */
 export function getRoomForSession(
   sessionKey: string,

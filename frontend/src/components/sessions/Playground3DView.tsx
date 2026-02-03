@@ -642,7 +642,7 @@ export function Playground3DView({ sessions, onAliasChanged: _onAliasChanged, se
   const [selectedSession, setSelectedSession] = useState<MinionSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
   
-  const { agents: agentRuntimes } = useAgentsRegistry(true)
+  const { agents: agentRuntimes } = useAgentsRegistry(sessions)
   const { rooms, getRoomForSession, isLoading: roomsLoading } = useRooms()
   const tokenTrackingRef = useRef<Map<string, { previousTokens: number; lastChangeTime: number }>>(new Map())
   
@@ -663,8 +663,11 @@ export function Playground3DView({ sessions, onAliasChanged: _onAliasChanged, se
   const isActivelyRunning = useCallback((sessionKey: string): boolean => {
     const tracked = tokenTrackingRef.current.get(sessionKey)
     if (!tracked) return false
-    return Date.now() - tracked.lastChangeTime < 30000
-  }, [])
+    if (Date.now() - tracked.lastChangeTime < 30000) return true
+    const session = sessions.find(s => s.key === sessionKey)
+    if (session && (Date.now() - session.updatedAt) < 30000) return true
+    return false
+  }, [sessions])
   
   // Filter sessions
   const activeSessions = sessions.filter(s => !shouldBeInParkingLane(s, isActivelyRunning(s.key)))

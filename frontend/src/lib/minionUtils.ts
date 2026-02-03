@@ -222,12 +222,15 @@ export function getIdleOpacity(idleSeconds: number): number {
   return 0
 }
 
-export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?: boolean): boolean {
+/** Default parking idle threshold in seconds */
+export const DEFAULT_PARKING_IDLE_THRESHOLD = 120
+
+export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?: boolean, idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD): boolean {
   const idleSeconds = getIdleTimeSeconds(session)
   const status = getSessionStatus(session)
   if (status === "sleeping") return true
   if (isActivelyRunning) return false
-  return idleSeconds > 30
+  return idleSeconds > idleThresholdSeconds
 }
 
 // Backwards compatibility alias

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { useSessionsStream } from "./useSessionsStream"
 import { API_BASE, type CrewSession } from "@/lib/api"
 
 export interface Agent {
@@ -31,12 +30,10 @@ interface AgentsResponse {
   agents: Agent[]
 }
 
-export function useAgentsRegistry(enableStream: boolean = true) {
+export function useAgentsRegistry(sessions: CrewSession[]) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
-  const { sessions, connected: streamConnected } = useSessionsStream(enableStream)
   
   const fetchAgents = useCallback(async () => {
     try {
@@ -107,5 +104,5 @@ export function useAgentsRegistry(enableStream: boolean = true) {
     }
   }, [agents, fetchAgents])
   
-  return { agents: agentRuntimes, pinnedAgents, isLoading, error, streamConnected, refresh: fetchAgents, togglePin }
+  return { agents: agentRuntimes, pinnedAgents, isLoading, error, refresh: fetchAgents, togglePin }
 }

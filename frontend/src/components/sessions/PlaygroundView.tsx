@@ -51,7 +51,7 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
   const [activeAgent, setActiveAgent] = useState<AgentRuntime | null>(null)
   const [isDraggingAgent, setIsDraggingAgent] = useState(false)
 
-  const { agents: agentRuntimes, refresh: refreshAgents } = useAgentsRegistry(true)
+  const { agents: agentRuntimes, refresh: refreshAgents } = useAgentsRegistry(sessions)
   const { rooms, getRoomForSession, isLoading: roomsLoading, refresh: refreshRooms } = useRooms()
   const tokenTrackingRef = useRef<Map<string, { previousTokens: number; lastChangeTime: number }>>(new Map())
   
@@ -73,8 +73,13 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
   const isActivelyRunning = useCallback((sessionKey: string): boolean => {
     const tracked = tokenTrackingRef.current.get(sessionKey)
     if (!tracked) return false
-    return Date.now() - tracked.lastChangeTime < 30000
-  }, [])
+    // Token count changed in last 30s → actively generating
+    if (Date.now() - tracked.lastChangeTime < 30000) return true
+    // Also check updatedAt — catches tool work that doesn't generate tokens
+    const session = sessions.find(s => s.key === sessionKey)
+    if (session && (Date.now() - session.updatedAt) < 30000) return true
+    return false
+  }, [sessions])
   
   const assignSessionToRoom = useCallback(async (sessionKey: string, roomId: string) => {
     try {
@@ -106,11 +111,14 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [settings.easterEggsEnabled, settings.playSound, toast])
 
-  const activeSessions = sessions.filter(s => !shouldBeInParkingLane(s, isActivelyRunning(s.key)))
-  const parkingSessions = sessions.filter(s => shouldBeInParkingLane(s, isActivelyRunning(s.key)))
+  const idleThreshold = settings.parkingIdleThreshold ?? 120
+  const activeSessions = sessions.filter(s => !shouldBeInParkingLane(s, isActivelyRunning(s.key), idleThreshold))
+  const parkingSessions = sessions.filter(s => shouldBeInParkingLane(s, isActivelyRunning(s.key), idleThreshold))
   const sortedActiveSessions = [...activeSessions].sort((a, b) => b.updatedAt - a.updatedAt)
-  const sortedParkingSessions = [...parkingSessions].sort((a, b) => b.updatedAt - a.updatedAt)
   const visibleSessions = sortedActiveSessions.slice(0, 15)
+  const overflowSessions = sortedActiveSessions.slice(15)
+  const allParkingSessions = [...overflowSessions, ...parkingSessions]
+  const sortedParkingSessions = [...allParkingSessions].sort((a, b) => b.updatedAt - a.updatedAt)
   
   const itemsByRoom = useMemo(() => {
     const grouped = new Map<string, { agents: AgentRuntime[]; orphanSessions: MinionSession[] }>()
@@ -238,7 +246,7 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
           {/* Easter egg moved to less intrusive position */}
           <div className="absolute bottom-2 left-4 z-40 opacity-40 hover:opacity-70 transition-opacity"><div className="text-[10px] text-muted-foreground/50 italic">🍌 Banana-powered workforce</div></div>
         </div>
-        <div className="h-full" style={{ width: "15%" }}><ParkingLane sessions={sortedParkingSessions} onMinionClick={handleMinionClick} /></div>
+        <div className="h-full" style={{ width: "15%" }}><ParkingLane sessions={sortedParkingSessions} overflowCount={overflowSessions.length} onMinionClick={handleMinionClick} /></div>
       </div>
       <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
     </>

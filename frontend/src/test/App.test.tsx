@@ -16,12 +16,11 @@ vi.mock('../hooks/useSessionsStream', () => ({
 }))
 
 vi.mock('../hooks/useAgentsRegistry', () => ({
-  useAgentsRegistry: () => ({
+  useAgentsRegistry: (_sessions: unknown[]) => ({
     agents: [],
     pinnedAgents: [],
     isLoading: false,
     error: null,
-    streamConnected: true,
     refresh: vi.fn(),
     togglePin: vi.fn(),
   }),

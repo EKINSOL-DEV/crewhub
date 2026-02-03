@@ -3,11 +3,12 @@ import type { MinionSession } from "@/lib/api"
 import { getIdleTimeSeconds, getIdleOpacity, getMinionType, getCurrentActivity } from "@/lib/minionUtils"
 import { SessionSVGWithIcon } from "./SessionSVGWithIcon"
 import { getMinionName, getTaskEmoji } from "@/lib/friendlyNames"
-import { getRoomForSession, loadRoomsConfig } from "@/lib/roomsConfig"
+import { getDefaultRoomForSession } from "@/lib/roomsConfig"
 import { useSessionDisplayNames } from "@/hooks/useSessionDisplayNames"
 
 interface ParkingLaneProps {
   sessions: MinionSession[]
+  overflowCount?: number  // Number of overflow sessions routed from active view
   onMinionClick: (session: MinionSession) => void
 }
 
@@ -32,9 +33,8 @@ function getAgentIcon(session: MinionSession): "crab" | "clock" | "camera" | "wa
   return "default"
 }
 
-export function ParkingLane({ sessions, onMinionClick }: ParkingLaneProps) {
+export function ParkingLane({ sessions, overflowCount = 0, onMinionClick }: ParkingLaneProps) {
   const [visibleSessions, setVisibleSessions] = useState<MinionSession[]>([])
-  const [roomsConfig] = useState(() => loadRoomsConfig())
   
   // Fetch custom display names for all sessions
   const sessionKeys = useMemo(() => sessions.map(s => s.key), [sessions])
@@ -54,6 +54,14 @@ export function ParkingLane({ sessions, onMinionClick }: ParkingLaneProps) {
         <span className="text-muted-foreground text-xs ml-auto">{visibleSessions.length}</span>
       </div>
 
+      {overflowCount > 0 && (
+        <div className="px-3 py-2 border-b border-border dark:border-white/10 bg-amber-100/60 dark:bg-amber-900/30">
+          <div className="text-xs font-medium text-amber-700 dark:text-amber-300">
+            ⚡ +{overflowCount} overflow from active view
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-2" style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}>
         {visibleSessions.length === 0 && (
           <div className="text-center text-muted-foreground/60 text-xs py-8 px-2">All crew members active</div>
@@ -63,7 +71,7 @@ export function ParkingLane({ sessions, onMinionClick }: ParkingLaneProps) {
           const idleSeconds = getIdleTimeSeconds(session)
           const opacity = getIdleOpacity(idleSeconds)
           const minionType = getMinionType(session)
-          const roomId = getRoomForSession(session.key, roomsConfig, { label: session.label, model: session.model })
+          const roomId = getDefaultRoomForSession(session.key) || "headquarters"
           const fallbackName = getMinionName(session.key, roomId)
           const customName = displayNames.get(session.key)
           const minionName = customName || fallbackName
