@@ -22,7 +22,7 @@ type WallSegment = {
  */
 export function RoomWalls({ color, size = 12, wallHeight = 1.5 }: RoomWallsProps) {
   const accentColor = color || '#4f46e5'
-  const wallColor = WARM_COLORS.warmWhite
+  const wallColor = WARM_COLORS.stone
   const wallToon = useToonMaterialProps(wallColor)
   const accentToon = useToonMaterialProps(accentColor)
 
