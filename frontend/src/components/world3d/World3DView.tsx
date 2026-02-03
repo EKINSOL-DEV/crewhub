@@ -24,7 +24,7 @@ function GroundPlane() {
       position={[0, -0.15, 0]}
       receiveShadow
     >
-      <boxGeometry args={[80, 80, 0.1]} />
+      <boxGeometry args={[120, 120, 0.1]} />
       <meshToonMaterial {...toonProps} />
     </mesh>
   )
@@ -44,17 +44,22 @@ function LoadingFallback() {
 function SceneContent() {
   const { rooms, isLoading } = useRooms()
 
-  // Compute room positions in a 2-column grid layout
+  // Compute room positions in a centered 2-column grid layout
   const roomPositions = useMemo(() => {
     const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
     const spacing = 16 // distance between room centers
-    const cols = 2
+    const cols = Math.min(sorted.length, 3) // up to 3 columns
+    const totalRows = Math.ceil(sorted.length / cols)
+
+    // Center the grid around origin
+    const offsetX = ((cols - 1) * spacing) / 2
+    const offsetZ = ((totalRows - 1) * spacing) / 2
 
     return sorted.map((room, index) => {
       const row = Math.floor(index / cols)
       const col = index % cols
-      const x = (col - (cols - 1) / 2) * spacing
-      const z = row * spacing
+      const x = col * spacing - offsetX
+      const z = row * spacing - offsetZ
       return { room, position: [x, 0, z] as [number, number, number] }
     })
   }, [rooms])
@@ -92,8 +97,8 @@ export function World3DView({ sessions: _sessions, settings: _settings, onAliasC
       <Canvas
         shadows
         camera={{
-          position: [20, 20, 20],
-          fov: 35,
+          position: [35, 30, 35],
+          fov: 40,
           near: 0.1,
           far: 200,
         }}
@@ -118,7 +123,7 @@ export function World3DView({ sessions: _sessions, settings: _settings, onAliasC
             enableZoom
             enableRotate
             minDistance={10}
-            maxDistance={60}
+            maxDistance={80}
             minPolarAngle={Math.PI / 6}
             maxPolarAngle={Math.PI / 3}
             target={[0, 0, 0]}
