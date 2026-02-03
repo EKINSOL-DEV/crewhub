@@ -30,8 +30,8 @@ const GRID_SPACING = ROOM_SIZE + HALLWAY_WIDTH // 16
 const MAX_COLS = 3
 const BUILDING_PADDING = 3 // padding inside building walls around the grid
 const MAX_VISIBLE_BOTS_PER_ROOM = 8 // limit rendered bots; remainder shown as "+N more"
-const PARKING_WIDTH = ROOM_SIZE + 2 // width of parking/break area
-const PARKING_DEPTH_MIN = ROOM_SIZE + 2 // minimum depth
+const PARKING_WIDTH = 9 // width of parking/break area (compact break room)
+const PARKING_DEPTH_MIN = ROOM_SIZE // minimum depth (≈ 1 room tall)
 
 // ─── Building Layout Calculation ───────────────────────────────
 interface BuildingLayout {
@@ -64,8 +64,9 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
 
   // Building includes grid + padding + parking area on the right
   const buildingWidth = BUILDING_PADDING * 2 + gridWidth + HALLWAY_WIDTH + PARKING_WIDTH
-  const parkingDepth = Math.max(PARKING_DEPTH_MIN, gridDepth)
-  const buildingDepth = BUILDING_PADDING * 2 + Math.max(gridDepth, parkingDepth)
+  // Parking depth capped at 2 rooms max — it's a cozy break room, not a warehouse
+  const parkingDepth = Math.min(Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2), gridDepth)
+  const buildingDepth = BUILDING_PADDING * 2 + gridDepth
 
   // Grid origin: top-left room center, relative to building center
   const gridOriginX = -buildingWidth / 2 + BUILDING_PADDING + ROOM_SIZE / 2
@@ -80,9 +81,9 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
     return { room, position: [x, 0, z] as [number, number, number] }
   })
 
-  // Parking area on the right side
+  // Parking area on the right side, aligned to the top of the grid
   const parkingX = gridOriginX + cols * GRID_SPACING + HALLWAY_WIDTH / 2 + PARKING_WIDTH / 2 - ROOM_SIZE / 2
-  const parkingZ = 0 // centered vertically
+  const parkingZ = gridOriginZ + parkingDepth / 2 - ROOM_SIZE / 2
   const parkingArea = {
     x: parkingX,
     z: parkingZ,

@@ -91,40 +91,33 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
         </group>
       </Float>
 
-      {/* ─── Props ─── */}
+      {/* ─── Props (compact layout for smaller break room) ─── */}
 
       {/* Bench — center of break area */}
       <Bench
-        position={[0, 0.16, -1]}
+        position={[0, 0.16, -0.5]}
         rotation={[0, 0, 0]}
       />
 
-      {/* Second bench, rotated */}
-      <Bench
-        position={[0, 0.16, 2]}
-        rotation={[0, Math.PI, 0]}
-      />
-
-      {/* Coffee machine — back wall area */}
+      {/* Coffee machine — back corner */}
       <CoffeeMachine
-        position={[halfW - 1.5, 0.16, -halfD + 2]}
+        position={[halfW - 1.2, 0.16, -halfD + 1.5]}
         rotation={[0, -Math.PI / 6, 0]}
       />
 
-      {/* Water cooler — near the benches */}
+      {/* Water cooler — opposite corner */}
       <WaterCooler
-        position={[-halfW + 1.5, 0.16, 0]}
+        position={[-halfW + 1.2, 0.16, -halfD + 1.5]}
         rotation={[0, Math.PI / 4, 0]}
       />
 
-      {/* Plants in corners */}
-      <Plant position={[halfW - 1, 0.16, halfD - 1.5]} scale={1.0} />
-      <Plant position={[-halfW + 1, 0.16, -halfD + 1.5]} scale={0.8} />
-      <Plant position={[halfW - 1, 0.16, -halfD + 1.5]} scale={0.9} />
+      {/* Plants — two corners only */}
+      <Plant position={[halfW - 0.8, 0.16, halfD - 1]} scale={0.8} />
+      <Plant position={[-halfW + 0.8, 0.16, halfD - 1]} scale={0.7} />
 
       {/* Lamp for ambient lighting */}
       <Lamp
-        position={[-halfW + 2, 0.16, halfD - 2]}
+        position={[halfW - 1, 0.16, 0.5]}
         lightColor="#FFA500"
         lightIntensity={0.3}
       />
