@@ -111,9 +111,9 @@ function clampToRoomBounds(
  * Skips spanParent cells (only renders from the anchor cell of multi-cell props).
  * Skips interaction-only and empty cells.
  *
- * Handles per-prop Y positioning:
- *  - Floor props: Y = roomPosition.y + 0.16 (floor surface)
- *  - Wall props: Y = roomPosition.y + propEntry.yOffset (wall mount height)
+ * Handles per-prop Y positioning (room-local space, parent group handles world Y):
+ *  - Floor props: Y = 0.16 (floor surface)
+ *  - Wall props: Y = propEntry.yOffset (wall mount height, e.g. 1.2 for whiteboards)
  *    Wall props also get snapped toward the nearest wall and rotated to face inward.
  */
 export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: GridRoomRendererProps) {
