@@ -1,4 +1,4 @@
-import { useToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
+import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface RoomFloorProps {
   color?: string
@@ -10,21 +10,14 @@ interface RoomFloorProps {
  * Much simpler and more performant than the old per-tile grid.
  */
 export function RoomFloor({ color, size = 12 }: RoomFloorProps) {
-  const baseColor = color || WARM_COLORS.stone
+  const baseColor = color || '#9E9684'
   const toonProps = useToonMaterialProps(baseColor)
-  const baseToonProps = useToonMaterialProps(WARM_COLORS.stoneDark)
 
   return (
     <group>
-      {/* Solid base slab underneath (dark stone) to prevent clipping with grass */}
-      <mesh position={[0, -0.05, 0]} receiveShadow>
-        <boxGeometry args={[size + 0.5, 0.3, size + 0.5]} />
-        <meshToonMaterial {...baseToonProps} />
-      </mesh>
-
-      {/* Main floor — single solid box */}
-      <mesh position={[0, 0.14, 0]} receiveShadow>
-        <boxGeometry args={[size, 0.1, size]} />
+      {/* Main floor — single solid box, thick enough to prevent grass clipping */}
+      <mesh position={[0, 0, 0]} receiveShadow>
+        <boxGeometry args={[size, 0.4, size]} />
         <meshToonMaterial {...toonProps} />
       </mesh>
     </group>
