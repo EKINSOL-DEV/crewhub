@@ -1056,6 +1056,16 @@ export function getPropEntry(propId: string): PropEntry | null {
 }
 
 /**
+ * Get the Y offset for a given propId.
+ * Floor props default to 0.16 (floor surface); wall props default to 1.2.
+ */
+export function getPropYOffset(propId: string): number {
+  const entry = PROP_REGISTRY[propId]
+  if (!entry) return 0.16 // default: floor surface
+  return entry.yOffset
+}
+
+/**
  * Get the mount type for a given propId.
  * Returns 'floor' as default for unknown props.
  */

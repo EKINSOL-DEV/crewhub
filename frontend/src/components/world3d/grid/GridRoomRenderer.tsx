@@ -116,7 +116,7 @@ function clampToRoomBounds(
  *  - Wall props: Y = roomPosition.y + propEntry.yOffset (wall mount height)
  *    Wall props also get snapped toward the nearest wall and rotated to face inward.
  */
-export function GridRoomRenderer({ blueprint, roomPosition }: GridRoomRendererProps) {
+export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: GridRoomRendererProps) {
   const { cells, cellSize, gridWidth, gridDepth } = blueprint
 
   // Build list of prop instances from grid (memoized per blueprint)
@@ -163,8 +163,8 @@ export function GridRoomRenderer({ blueprint, roomPosition }: GridRoomRendererPr
 
         const Component = entry.component
 
-        // Determine Y position from prop metadata
-        const yPos = roomPosition[1] + entry.yOffset
+        // Y position from prop metadata (room-local space; parent group handles world Y)
+        const yPos = entry.yOffset
 
         let worldX = position[0]
         let worldZ = position[2]
