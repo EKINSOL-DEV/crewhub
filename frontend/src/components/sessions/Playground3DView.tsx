@@ -1,4 +1,4 @@
-// @ts-nocheck - WIP 3D view, has some unused variables
+
 import { useState, useRef, useMemo, useCallback, Suspense, useEffect } from "react"
 import { Canvas, useFrame, ThreeEvent } from "@react-three/fiber"
 import { OrbitControls, Text, RoundedBox, Float, Html, Sparkles } from "@react-three/drei"
