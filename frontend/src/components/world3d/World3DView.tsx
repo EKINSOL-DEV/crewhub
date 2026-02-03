@@ -199,6 +199,35 @@ function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatu
   return 'offline'
 }
 
+// ─── Activity Text for Bubbles ──────────────────────────────────
+
+function getActivityText(session: CrewSession, isActive: boolean): string {
+  if (isActive) {
+    // Prefer session label (e.g. "review-chat-design")
+    if (session.label) return session.label
+    // Check last tool call from messages
+    if (session.messages && session.messages.length > 0) {
+      const recentMessages = session.messages.slice(-3)
+      for (let i = recentMessages.length - 1; i >= 0; i--) {
+        const msg = recentMessages[i]
+        if (Array.isArray(msg.content)) {
+          for (const block of msg.content) {
+            if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
+              return `🔧 ${block.name}`
+            }
+            if (block.type === 'thinking') {
+              return '💭 Thinking...'
+            }
+          }
+        }
+      }
+    }
+    return 'Working...'
+  }
+  // Idle
+  return '💤 Idle'
+}
+
 // ─── Bot Placement Helpers ──────────────────────────────────────
 
 function getBotPositionsInRoom(
@@ -271,6 +300,8 @@ interface BotPlacement {
   config: ReturnType<typeof getBotConfigFromSession>
   name: string
   scale: number
+  activity: string
+  isActive: boolean
 }
 
 // ─── Room bounds for wandering ──────────────────────────────────
@@ -313,6 +344,7 @@ interface SceneContentProps {
   onBotClick?: (session: CrewSession) => void
   focusLevel: FocusLevel
   focusedRoomId: string | null
+  focusedBotKey: string | null
 }
 
 // ─── Scene Content ─────────────────────────────────────────────
@@ -326,6 +358,7 @@ function SceneContent({
   onBotClick,
   focusLevel,
   focusedRoomId,
+  focusedBotKey,
 }: SceneContentProps) {
   void _settings // Available for future use (e.g. animation speed)
   // Combine all sessions for agent registry lookup
@@ -349,7 +382,8 @@ function SceneContent({
     const config = getBotConfigFromSession(session.key, session.label, _runtime?.agent?.color)
     const name = getSessionDisplayName(session, displayNames.get(session.key))
     const scale = isSubagent(session.key) ? 0.6 : 1.0
-    return { key: session.key, session, status, config, name, scale }
+    const activity = getActivityText(session, isActive)
+    return { key: session.key, session, status, config, name, scale, activity, isActive }
   }
 
   /** Map visible bots to rooms */
@@ -453,6 +487,18 @@ function SceneContent({
     return focusedRoomId === botRoomId // all bots in focused room
   }
 
+  // Helper: should a bot show its activity bubble based on focus level?
+  const shouldShowActivity = (botStatus: BotStatus, botRoomId: string, botKey: string): boolean => {
+    // Never show for sleeping/offline
+    if (botStatus === 'sleeping' || botStatus === 'offline') return false
+    // Bot focus: always show for focused bot
+    if (focusLevel === 'bot' && focusedBotKey === botKey) return true
+    // Overview: only active bots
+    if (focusLevel === 'overview') return botStatus === 'active'
+    // Room focus: all bots in focused room + active bots elsewhere
+    return focusedRoomId === botRoomId || botStatus === 'active'
+  }
+
   if (isLoading || !layout) return null
 
   const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
@@ -494,6 +540,9 @@ function SceneContent({
                 onClick={onBotClick}
                 roomBounds={bounds}
                 showLabel={shouldShowLabel(bot.status, room.id)}
+                showActivity={shouldShowActivity(bot.status, room.id, bot.key)}
+                activity={bot.activity}
+                isActive={bot.isActive}
                 roomId={room.id}
               />
             ))}
@@ -543,6 +592,9 @@ function SceneContent({
             onClick={onBotClick}
             roomBounds={bounds}
             showLabel={focusLevel === 'overview' ? bot.status === 'active' : false}
+            showActivity={shouldShowActivity(bot.status, 'parking', bot.key)}
+            activity={bot.activity}
+            isActive={bot.isActive}
             roomId="parking"
           />
         ))
@@ -633,6 +685,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             onBotClick={handleBotClick}
             focusLevel={focusState.level}
             focusedRoomId={focusState.focusedRoomId}
+            focusedBotKey={focusState.focusedBotKey}
           />
         </Suspense>
       </Canvas>

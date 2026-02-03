@@ -7,6 +7,7 @@ import { BotFace } from './BotFace'
 import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
+import { BotActivityBubble } from './BotActivityBubble'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
@@ -37,6 +38,12 @@ interface Bot3DProps {
   roomBounds?: RoomBounds
   /** Whether to show the floating name label (controlled by focus level) */
   showLabel?: boolean
+  /** Whether to show the activity bubble above the bot */
+  showActivity?: boolean
+  /** Current activity text (e.g. "🔧 web_search", "Working...", "💤 Idle") */
+  activity?: string
+  /** Whether the bot is actively running (tokens changing in last 30s) */
+  isActive?: boolean
   /** Room ID this bot belongs to (for focus navigation) */
   roomId?: string
 }
@@ -46,7 +53,7 @@ interface Bot3DProps {
  * Includes body, face, accessory, chest display, status glow,
  * animations, wandering, and floating name tag.
  */
-export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, roomId }: Bot3DProps) {
+export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
   const { state: focusState, focusBot } = useWorldFocus()
 
@@ -202,6 +209,15 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
 
         {/* Sleeping ZZZ text */}
         {status === 'sleeping' && <SleepingZs />}
+
+        {/* Activity bubble (above head) */}
+        {showActivity && activity && status !== 'sleeping' && status !== 'offline' && (
+          <BotActivityBubble
+            activity={activity}
+            status={status}
+            isActive={isActive}
+          />
+        )}
 
         {/* Name tag (conditionally shown based on focus level, always shown when focused) */}
         {(showLabel || isFocused) && (
