@@ -62,8 +62,8 @@ function applyConstraints(controls: CameraControlsImpl, level: FocusLevel) {
 
 // ─── Bot follow camera config ──────────────────────────────────
 
-const BOT_CAM_OFFSET = { x: 3, y: 5, z: 3 }
-const BOT_CAM_LERP_FACTOR = 0.04 // gentle follow (higher = snappier)
+const BOT_CAM_OFFSET = { x: 4, y: 6.5, z: 4 }
+const BOT_CAM_LERP_FACTOR = 0.03 // gentle follow (lower = smoother, less pop)
 
 function getBotCamera(botPos: { x: number; y: number; z: number }) {
   return {
@@ -131,8 +131,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
         followPos.current.set(c.posX, c.posY, c.posZ)
         followTarget.current.set(c.targetX, c.targetY, c.targetZ)
       }
-      // Start following after initial transition settles
-      setTimeout(() => { isFollowing.current = true }, 900)
+      // Start following slightly before transition ends for seamless handoff
+      setTimeout(() => { isFollowing.current = true }, 600)
     }
   }, [state.level, state.focusedRoomId, state.focusedBotKey, roomPositions])
 
