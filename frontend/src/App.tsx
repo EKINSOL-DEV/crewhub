@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { PlaygroundView } from './components/sessions/PlaygroundView'
-// import { Playground3DView } from './components/sessions/Playground3DView' // Disabled: three.js version conflict
+import { Playground3DView } from './components/sessions/Playground3DView'
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
 import { CronView } from './components/sessions/CronView'
@@ -12,7 +12,7 @@ import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { DevDesigns } from './components/dev/DevDesigns'
-import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
+import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Box, Square } from 'lucide-react'
 import { Button } from './components/ui/button'
 
 // Simple path-based routing for dev pages
@@ -64,7 +64,7 @@ function AppContent() {
     }
     return DEFAULT_SETTINGS
   })
-  
+
   // Persist 3D mode preference
   const toggle3DMode = useCallback(() => {
     setIs3DMode(prev => {
@@ -73,7 +73,7 @@ function AppContent() {
       return newValue
     })
   }, [])
-
+  
   const handleSettingsChange = useCallback((newSettings: SessionsSettings) => {
     setSettings(newSettings)
     localStorage.setItem('crewhub-settings', JSON.stringify(newSettings))
@@ -83,9 +83,16 @@ function AppContent() {
     refresh()
   }, [refresh])
 
+  const refreshClass = loading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'
+  const tabClass = (isActive: boolean) => 
+    `flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+      isActive 
+        ? 'bg-background text-foreground shadow-sm' 
+        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+    }`
+
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
       <header className="border-b bg-card shrink-0">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -97,7 +104,6 @@ function AppContent() {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Connection status */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {connected ? (
                 <>
@@ -112,7 +118,6 @@ function AppContent() {
               )}
             </div>
             
-            {/* 2D/3D Toggle - only show on Active tab */}
             {activeTab === 'active' && (
               <Button 
                 variant="outline" 
@@ -135,37 +140,27 @@ function AppContent() {
               </Button>
             )}
             
-            {/* Refresh button */}
             <Button variant="ghost" size="sm" onClick={refresh} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={refreshClass} />
             </Button>
             
-            {/* Settings button */}
             <Button variant="ghost" size="sm" onClick={() => setSettingsOpen(true)}>
               <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
         
-        {/* Stats Header */}
         <div className="px-4 pb-3">
           <StatsHeader sessions={sessions} />
         </div>
         
-        {/* Tab Navigation */}
         <div className="px-4 pb-2">
           <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
-                  ${activeTab === tab.id 
-                    ? 'bg-background text-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                  }
-                `}
+                className={tabClass(activeTab === tab.id)}
               >
                 {tab.icon}
                 {tab.label}
@@ -175,7 +170,6 @@ function AppContent() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {error ? (
           <div className="flex-1 flex items-center justify-center">
@@ -224,7 +218,6 @@ function AppContent() {
         )}
       </main>
 
-      {/* Settings Panel */}
       <SettingsPanel
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
@@ -238,7 +231,6 @@ function AppContent() {
 function App() {
   const route = useRoute()
   
-  // Dev routes
   if (route === '/dev/designs') {
     return <DevDesigns />
   }

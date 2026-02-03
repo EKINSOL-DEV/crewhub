@@ -452,19 +452,16 @@ function Floor() {
 function Scene({
   rooms,
   itemsByRoom,
-  agentRuntimes,
-  visibleSessions,
   onSessionClick,
   tokenTrackingRef,
 }: {
   rooms: Room[]
   itemsByRoom: Map<string, { agents: AgentRuntime[]; orphanSessions: MinionSession[] }>
-  agentRuntimes: AgentRuntime[]
-  visibleSessions: MinionSession[]
   onSessionClick: (session: MinionSession) => void
   tokenTrackingRef: React.MutableRefObject<Map<string, { previousTokens: number; lastChangeTime: number }>>
 }) {
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  // setHoveredItem used for hover tracking (value not read yet but used for events)
+  const [, setHoveredItem] = useState<string | null>(null)
   
   // Calculate room positions in a 2x2 grid
   const roomPositions = useMemo(() => {
@@ -637,12 +634,16 @@ function LoadingPlaceholder() {
   )
 }
 
-export function Playground3DView({ sessions, onAliasChanged, settings }: Playground3DViewProps) {
+export function Playground3DView({ sessions, onAliasChanged: _onAliasChanged, settings: _settings }: Playground3DViewProps) {
+  // _onAliasChanged and _settings reserved for future use
+  void _onAliasChanged
+  void _settings
+  
   const [selectedSession, setSelectedSession] = useState<MinionSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
   
-  const { agents: agentRuntimes, refresh: refreshAgents } = useAgentsRegistry(true)
-  const { rooms, getRoomForSession, isLoading: roomsLoading, refresh: refreshRooms } = useRooms()
+  const { agents: agentRuntimes } = useAgentsRegistry(true)
+  const { rooms, getRoomForSession, isLoading: roomsLoading } = useRooms()
   const tokenTrackingRef = useRef<Map<string, { previousTokens: number; lastChangeTime: number }>>(new Map())
   
   // Track token changes for activity detection
@@ -740,8 +741,6 @@ export function Playground3DView({ sessions, onAliasChanged, settings }: Playgro
             <Scene
               rooms={rooms}
               itemsByRoom={itemsByRoom}
-              agentRuntimes={agentRuntimes}
-              visibleSessions={visibleSessions}
               onSessionClick={handleSessionClick}
               tokenTrackingRef={tokenTrackingRef}
             />
