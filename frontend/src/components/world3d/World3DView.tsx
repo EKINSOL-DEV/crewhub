@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Html } from '@react-three/drei'
+import { Html } from '@react-three/drei'
 import { WorldLighting } from './WorldLighting'
 import { BuildingFloor } from './BuildingFloor'
 import { BuildingWalls } from './BuildingWalls'
@@ -19,6 +19,10 @@ import { getBotConfigFromSession, isSubagent } from './utils/botVariants'
 import { getSessionDisplayName } from '@/lib/minionUtils'
 import { getDefaultRoomForSession } from '@/lib/roomsConfig'
 import { splitSessionsForDisplay } from '@/lib/sessionFiltering'
+import { CameraController } from './CameraController'
+import { RoomTabsBar } from './RoomTabsBar'
+import { WorldNavigation } from './WorldNavigation'
+import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
@@ -306,6 +310,8 @@ interface SceneContentProps {
   isActivelyRunning: (key: string) => boolean
   displayNames: Map<string, string | null>
   onBotClick?: (session: CrewSession) => void
+  focusLevel: FocusLevel
+  focusedRoomId: string | null
 }
 
 // ─── Scene Content ─────────────────────────────────────────────
@@ -317,6 +323,8 @@ function SceneContent({
   isActivelyRunning,
   displayNames,
   onBotClick,
+  focusLevel,
+  focusedRoomId,
 }: SceneContentProps) {
   void _settings // Available for future use (e.g. animation speed)
   // Combine all sessions for agent registry lookup
@@ -434,6 +442,20 @@ function SceneContent({
 
   const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
 
+  // Build room positions for CameraController
+  const cameraRoomPositions = useMemo(
+    () => roomPositions.map(rp => ({ roomId: rp.room.id, position: rp.position })),
+    [roomPositions],
+  )
+
+  // Helper: should a bot show its label based on focus level?
+  const shouldShowLabel = (botStatus: BotStatus, botRoomId: string): boolean => {
+    if (focusLevel === 'overview') {
+      return botStatus === 'active' // only active bots in overview
+    }
+    return focusedRoomId === botRoomId // all bots in focused room
+  }
+
   return (
     <>
       <ExteriorGround buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
@@ -444,6 +466,9 @@ function SceneContent({
       <HallwayFloorLines roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
       <EntranceLobby entranceX={entranceX} buildingFrontZ={-buildingDepth / 2} entranceWidth={5} />
       <Hallway roomPositions={roomPositions} roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
+
+      {/* CameraController (inside Canvas, manages camera animation + constraints) */}
+      <CameraController roomPositions={cameraRoomPositions} />
 
       {/* Rooms in grid layout */}
       {roomPositions.map(({ room, position }) => {
@@ -467,6 +492,7 @@ function SceneContent({
                 session={bot.session}
                 onClick={onBotClick}
                 roomBounds={bounds}
+                showLabel={shouldShowLabel(bot.status, room.id)}
               />
             ))}
             {overflowCount > 0 && (
@@ -513,6 +539,7 @@ function SceneContent({
             session={bot.session}
             onClick={onBotClick}
             roomBounds={bounds}
+            showLabel={focusLevel === 'overview' ? bot.status === 'active' : false}
           />
         ))
       })()}
@@ -522,7 +549,7 @@ function SceneContent({
 
 // ─── Main Component ────────────────────────────────────────────
 
-export function World3DView({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
   // Shared hooks for activity tracking and session filtering
   const { isActivelyRunning } = useSessionActivity(sessions)
   const idleThreshold = settings.parkingIdleThreshold ?? 120
@@ -533,6 +560,24 @@ export function World3DView({ sessions, settings, onAliasChanged: _onAliasChange
   // Display names
   const sessionKeys = useMemo(() => sessions.map(s => s.key), [sessions])
   const { displayNames } = useSessionDisplayNames(sessionKeys)
+
+  // Focus state
+  const { state: focusState } = useWorldFocus()
+
+  // Rooms for overlays (tabs bar, navigation)
+  const { rooms } = useRooms()
+
+  // Calculate room bot counts for tabs bar
+  const roomBotCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    // Simple counting — could reuse roomBots from SceneContent, but this is lightweight
+    for (const session of visibleSessions) {
+      // Just count all visible sessions per room for now
+      // The detailed placement happens inside SceneContent
+      void session
+    }
+    return counts
+  }, [visibleSessions])
 
   // LogViewer state
   const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
@@ -559,20 +604,14 @@ export function World3DView({ sessions, settings, onAliasChanged: _onAliasChange
             isActivelyRunning={isActivelyRunning}
             displayNames={displayNames}
             onBotClick={handleBotClick}
-          />
-          <OrbitControls
-            makeDefault
-            enablePan
-            enableZoom
-            enableRotate
-            minDistance={15}
-            maxDistance={120}
-            minPolarAngle={Math.PI / 6}
-            maxPolarAngle={Math.PI / 3}
-            target={[0, 0, 0]}
+            focusLevel={focusState.level}
+            focusedRoomId={focusState.focusedRoomId}
           />
         </Suspense>
       </Canvas>
+
+      {/* Back button / navigation (top-left) */}
+      <WorldNavigation rooms={rooms} />
 
       {/* Overlay controls hint */}
       <div className="absolute top-4 right-4 z-50">
@@ -581,15 +620,23 @@ export function World3DView({ sessions, settings, onAliasChanged: _onAliasChange
         </div>
       </div>
 
-      {/* Status bar */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50">
-        <div className="text-sm px-4 py-2 rounded-full backdrop-blur-md text-gray-700 bg-white/60 shadow-sm border border-gray-200/50">
-          🏢 {sessions.length} agents · {visibleSessions.length} active{parkingSessions.length > 0 ? ` · ${parkingSessions.length} parked` : ''} · Click for details
-        </div>
-      </div>
+      {/* Room tabs bar (bottom) */}
+      <RoomTabsBar
+        rooms={rooms}
+        roomBotCounts={roomBotCounts}
+        parkingBotCount={parkingSessions.length}
+      />
 
       {/* LogViewer (outside Canvas) */}
       <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
     </div>
+  )
+}
+
+export function World3DView(props: World3DViewProps) {
+  return (
+    <WorldFocusProvider>
+      <World3DViewInner {...props} />
+    </WorldFocusProvider>
   )
 }

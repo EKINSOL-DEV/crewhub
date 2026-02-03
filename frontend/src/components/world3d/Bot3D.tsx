@@ -30,6 +30,8 @@ interface Bot3DProps {
   onClick?: (session: CrewSession) => void
   /** Room bounds for wandering */
   roomBounds?: RoomBounds
+  /** Whether to show the floating name label (controlled by focus level) */
+  showLabel?: boolean
 }
 
 /**
@@ -37,7 +39,7 @@ interface Bot3DProps {
  * Includes body, face, accessory, chest display, status glow,
  * animations, wandering, and floating name tag.
  */
-export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds }: Bot3DProps) {
+export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   // ─── Wandering state ──────────────────────────────────────────
@@ -170,32 +172,34 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         {/* Sleeping ZZZ text */}
         {status === 'sleeping' && <SleepingZs />}
 
-        {/* Name tag */}
-        <Html
-          position={[0, -0.55, 0]}
-          center
-          distanceFactor={15}
-          style={{ pointerEvents: 'none' }}
-        >
-          <div
-            style={{
-              background: 'rgba(0,0,0,0.6)',
-              color: '#fff',
-              padding: '2px 8px',
-              borderRadius: '4px',
-              fontSize: '11px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              fontFamily: 'system-ui, sans-serif',
-              textAlign: 'center',
-              maxWidth: '120px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
+        {/* Name tag (conditionally shown based on focus level) */}
+        {showLabel && (
+          <Html
+            position={[0, -0.55, 0]}
+            center
+            distanceFactor={15}
+            style={{ pointerEvents: 'none' }}
           >
-            {name}
-          </div>
-        </Html>
+            <div
+              style={{
+                background: 'rgba(0,0,0,0.6)',
+                color: '#fff',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                fontFamily: 'system-ui, sans-serif',
+                textAlign: 'center',
+                maxWidth: '120px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {name}
+            </div>
+          </Html>
+        )}
       </group>
     </group>
   )
