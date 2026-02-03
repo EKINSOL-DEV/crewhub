@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -18,6 +18,8 @@ export interface ChatContextValue {
   closeChat: () => void
   togglePin: () => void
   toggleMinimize: () => void
+  onFocusAgent: ((sessionKey: string) => void) | null
+  setFocusHandler: (handler: ((sessionKey: string) => void) | null) => void
 }
 
 // ── Storage ────────────────────────────────────────────────────
@@ -90,6 +92,15 @@ const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chat, setChat] = useState<ChatState>(getInitialState)
+  const focusHandlerRef = useRef<((sessionKey: string) => void) | null>(null)
+  const [, setFocusHandlerVersion] = useState(0) // trigger re-render when handler changes
+
+  const setFocusHandler = useCallback((handler: ((sessionKey: string) => void) | null) => {
+    focusHandlerRef.current = handler
+    setFocusHandlerVersion(v => v + 1)
+  }, [])
+
+  const onFocusAgent = focusHandlerRef.current
 
   // Persist pinned state
   useEffect(() => {
@@ -145,7 +156,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <ChatContext.Provider value={{ chat, openChat, closeChat, togglePin, toggleMinimize }}>
+    <ChatContext.Provider value={{ chat, openChat, closeChat, togglePin, toggleMinimize, onFocusAgent, setFocusHandler }}>
       {children}
     </ChatContext.Provider>
   )

@@ -15,6 +15,7 @@ import { useAgentsRegistry, type AgentRuntime } from "@/hooks/useAgentsRegistry"
 import { useRooms } from "@/hooks/useRooms"
 import { getDefaultRoomForSession } from "@/lib/roomsConfig"
 import { getAgentVariant } from "@/lib/agentUtils"
+import { useChatContext } from "@/contexts/ChatContext"
 
 interface PlaygroundViewProps {
   sessions: MinionSession[]
@@ -57,6 +58,20 @@ export function PlaygroundView({ sessions, onAliasChanged, settings }: Playgroun
   const { agents: agentRuntimes, refresh: refreshAgents } = useAgentsRegistry(sessions)
   const { rooms, getRoomForSession, isLoading: roomsLoading, refresh: refreshRooms } = useRooms()
   const { isActivelyRunning } = useSessionActivity(sessions)
+  const { setFocusHandler } = useChatContext()
+
+  // Register 2D focus handler: highlight + scroll to session card when 🎯 is clicked
+  useEffect(() => {
+    setFocusHandler((sessionKey: string) => {
+      const el = document.querySelector(`[data-session-key="${sessionKey}"]`)
+      if (el) {
+        el.classList.add('session-highlight')
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setTimeout(() => el.classList.remove('session-highlight'), 2000)
+      }
+    })
+    return () => setFocusHandler(null)
+  }, [setFocusHandler])
   
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   

@@ -146,6 +146,7 @@ export const AgentAnchor = forwardRef<HTMLDivElement, AgentAnchorProps>(
 
     return (
       <div ref={combinedRef} className={cn("absolute cursor-grab transition-opacity duration-200", isDragging && "opacity-50", isOffline && "opacity-60")}
+        data-session-key={runtime.agent.agent_session_key || runtime.session?.key}
         style={{ left: position.x, top: position.y, transform: "translate(-50%, -50%)", zIndex: isDragging ? 1000 : (isHovered ? 150 : 100), touchAction: "none" }}
         onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={isDragging ? undefined : onClick} {...listeners} {...attributes}>
         {showBubble && (

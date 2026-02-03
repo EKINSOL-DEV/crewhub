@@ -337,7 +337,7 @@ function ChatContent({
 // ── Floating Chat Panel ────────────────────────────────────────
 
 export function FloatingChatPanel() {
-  const { chat, openChat, closeChat, togglePin, toggleMinimize } = useChatContext()
+  const { chat, openChat, closeChat, togglePin, toggleMinimize, onFocusAgent } = useChatContext()
   const panelRef = useRef<HTMLDivElement>(null)
 
   const accentColor = chat.agentColor || '#8b5cf6'
@@ -428,6 +428,7 @@ export function FloatingChatPanel() {
             onTogglePin={togglePin}
             onToggleMinimize={toggleMinimize}
             onClose={closeChat}
+            onFocusAgent={onFocusAgent && chat.sessionKey ? () => onFocusAgent(chat.sessionKey!) : undefined}
           />
         </div>
         <style>{floatingStyles}</style>
@@ -469,6 +470,7 @@ export function FloatingChatPanel() {
           onTogglePin={togglePin}
           onToggleMinimize={toggleMinimize}
           onClose={closeChat}
+          onFocusAgent={onFocusAgent && chat.sessionKey ? () => onFocusAgent(chat.sessionKey!) : undefined}
         />
 
         <ChatContent
@@ -493,6 +495,7 @@ function PanelHeader({
   onTogglePin,
   onToggleMinimize,
   onClose,
+  onFocusAgent,
 }: {
   agentIcon: string
   agentName: string
@@ -502,6 +505,7 @@ function PanelHeader({
   onTogglePin: () => void
   onToggleMinimize: () => void
   onClose: () => void
+  onFocusAgent?: () => void
 }) {
   return (
     <div
@@ -547,6 +551,16 @@ function PanelHeader({
       >
         {agentName}
       </div>
+
+      {/* Focus / Locate */}
+      {onFocusAgent && (
+        <HeaderButton
+          onClick={onFocusAgent}
+          title="Focus agent"
+        >
+          🎯
+        </HeaderButton>
+      )}
 
       {/* Pin */}
       <HeaderButton

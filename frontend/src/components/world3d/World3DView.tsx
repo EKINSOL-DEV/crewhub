@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState, useEffect, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { WorldLighting } from './WorldLighting'
@@ -24,6 +24,7 @@ import { CameraController } from './CameraController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
+import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
@@ -618,10 +619,37 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const { displayNames } = useSessionDisplayNames(sessionKeys)
 
   // Focus state
-  const { state: focusState, goBack } = useWorldFocus()
+  const { state: focusState, focusBot, goBack } = useWorldFocus()
+
+  // Chat context — register focus handler for 3D view
+  const { setFocusHandler } = useChatContext()
 
   // Rooms for overlays (tabs bar, navigation)
-  const { rooms } = useRooms()
+  const { rooms, getRoomForSession } = useRooms()
+
+  // Register 3D focus handler: zoom to bot when 🎯 is clicked in chat panel
+  const handleFocusAgent = useCallback((sessionKey: string) => {
+    // Find the session to determine its room
+    const session = [...visibleSessions, ...parkingSessions].find(s => s.key === sessionKey)
+    if (!session) return
+
+    // Determine room using same logic as SceneContent
+    const roomId = getRoomForSession(session.key, {
+      label: session.label,
+      model: session.model,
+      channel: session.lastChannel || session.channel,
+    })
+      || getDefaultRoomForSession(session.key)
+      || rooms[0]?.id
+      || 'headquarters'
+
+    focusBot(sessionKey, roomId)
+  }, [visibleSessions, parkingSessions, getRoomForSession, rooms, focusBot])
+
+  useEffect(() => {
+    setFocusHandler(handleFocusAgent)
+    return () => setFocusHandler(null)
+  }, [setFocusHandler, handleFocusAgent])
 
   // Calculate room bot counts for tabs bar
   const roomBotCounts = useMemo(() => {

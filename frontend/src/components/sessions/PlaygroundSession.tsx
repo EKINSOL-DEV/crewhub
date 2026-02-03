@@ -220,6 +220,7 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
   return (
     <>
       <div ref={(node) => { setNodeRef(node); if (typeof ref === 'function') ref(node); else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node }}
+        data-session-key={session.key}
         {...listeners} {...attributes} role="button" tabIndex={0} aria-label={`${displayName} - ${status}`}
         style={{ position: "absolute", left: position.x - halfSize, top: position.y - halfSize, cursor: isDragging ? "grabbing" : "grab", zIndex: isDragging ? 1000 : (isHovered ? 100 : (isSub ? index + 50 : index)), opacity: isDragging ? 0.5 : (isSpawning ? 0 : 1), transform: isSpawning ? "scale(0.3)" : "scale(1)", animation: isSpawning ? "spawnPop 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)" : undefined, touchAction: "none" }}
         onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={isDragging ? undefined : onMinionClick}>
