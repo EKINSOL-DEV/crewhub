@@ -195,7 +195,7 @@ function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatu
   if (isActive) return 'active'
   const idleSeconds = (Date.now() - session.updatedAt) / 1000
   if (idleSeconds < 120) return 'idle'
-  if (idleSeconds < 600) return 'sleeping'
+  if (idleSeconds < 1800) return 'sleeping'  // 30 min before offline (was 10 min)
   return 'offline'
 }
 
