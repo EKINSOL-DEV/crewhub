@@ -25,7 +25,7 @@ interface RoomContainerProps {
 }
 
 export function RoomContainer({
-  room, agents, orphanSessions, settings, showLabel, showBorder, onMinionClick, onAliasChanged, minionRefs, roomIndex = 0, isDragOver = false
+  room, agents, orphanSessions, settings, showLabel, showBorder, onMinionClick, onAliasChanged, minionRefs, roomIndex = 0, isDragOver: _isDragOver = false
 }: RoomContainerProps) {
   const { resolvedMode } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -66,12 +66,12 @@ export function RoomContainer({
     setNodeRef(node)
   }, [setNodeRef])
 
-  // Only show drop highlight when hovering over a DIFFERENT room (not the source room)
-  const showDropHighlight = (isOver && !isDraggingFromThisRoom) || (isDragOver && !isOver)
+  // Only show drop highlight when item is directly hovering over THIS room (and not from this room)
+  const showDropHighlight = isOver && !isDraggingFromThisRoom
 
   return (
     <div ref={combinedRef} role="region" aria-label={`${room.name} - ${totalItems} item${totalItems !== 1 ? 's' : ''}`}
-      className="relative overflow-hidden rounded-lg transition-all duration-200" style={{
+      className="relative overflow-hidden rounded-lg transition-[background-color,border-color,box-shadow,transform] duration-200" style={{
         backgroundColor: (isOver && !isDraggingFromThisRoom) ? `${room.color || "#4f46e5"}30` : showBorder ? `${room.color || "#4f46e5"}10` : "transparent",
         border: (isOver && !isDraggingFromThisRoom) ? `3px dashed ${room.color || "#4f46e5"}` : showDropHighlight && showBorder ? `2px dashed ${room.color || "#4f46e5"}60` : showBorder ? `2px solid ${room.color || "#4f46e5"}40` : "none",
         minHeight: "300px", transform: (isOver && !isDraggingFromThisRoom) ? "scale(1.02)" : "scale(1)", boxShadow: (isOver && !isDraggingFromThisRoom) ? `0 0 20px ${room.color || "#4f46e5"}40` : "none"
