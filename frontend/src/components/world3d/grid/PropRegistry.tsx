@@ -18,11 +18,24 @@ import { useToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
 
 // ─── Prop Component Interface ───────────────────────────────────
 
+export type MountType = 'floor' | 'wall'
+
 export interface PropProps {
   position: [number, number, number]
   rotation: number  // degrees (0, 90, 180, 270)
   cellSize: number
   span?: { w: number; d: number }
+}
+
+export interface PropEntry {
+  component: React.FC<PropProps>
+  /** Mount type determines the base Y position:
+   *  - 'floor': sits on the floor (Y = floorY). Prop geometry builds upward from position.
+   *  - 'wall': attached to wall. Prop component handles its own Y offset internally
+   *    (e.g., +1.5 for whiteboards, +2.2 for clocks) since each wall prop mounts
+   *    at a different height. Renderer still passes floorY as base.
+   */
+  mountType: MountType
 }
 
 /** Convert degree rotation to [0, radians, 0] euler */
@@ -244,11 +257,18 @@ function EaselProp({ position, rotation }: PropProps) {
 
 function ColorPaletteProp({ position, rotation }: PropProps) {
   const baseToon = useToonMaterialProps(WARM_COLORS.woodLight)
+  const stoolToon = useToonMaterialProps(WARM_COLORS.wood)
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#34D399', '#F97316', '#FFFFFF']
 
   return (
-    <group position={[position[0], position[1] + 0.5, position[2]]} rotation={degToEuler(rotation)}>
-      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow>
+    <group position={position} rotation={degToEuler(rotation)}>
+      {/* Small stool/stand to hold the palette */}
+      <mesh position={[0, 0.2, 0]} castShadow>
+        <cylinderGeometry args={[0.12, 0.14, 0.4, 8]} />
+        <meshToonMaterial {...stoolToon} />
+      </mesh>
+      {/* Palette on top of stool */}
+      <mesh position={[0, 0.41, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow>
         <circleGeometry args={[0.15, 16]} />
         <meshToonMaterial {...baseToon} side={THREE.DoubleSide} />
       </mesh>
@@ -256,7 +276,7 @@ function ColorPaletteProp({ position, rotation }: PropProps) {
         const angle = (i / colors.length) * Math.PI * 2
         const r = 0.08
         return (
-          <mesh key={i} position={[Math.cos(angle) * r, 0.02, Math.sin(angle) * r]}>
+          <mesh key={i} position={[Math.cos(angle) * r, 0.42, Math.sin(angle) * r]}>
             <sphereGeometry args={[0.02, 6, 6]} />
             <meshToonMaterial {...useToonMaterialProps(col)} />
           </mesh>
@@ -961,60 +981,60 @@ function NullProp(_props: PropProps) {
 
 // ─── Prop Registry ──────────────────────────────────────────────
 
-export const PROP_COMPONENTS: Record<string, React.FC<PropProps>> = {
-  // Existing prop components (wrapped)
-  'desk': DeskProp,
-  'monitor': MonitorProp,
-  'chair': ChairProp,
-  'lamp': LampProp,
-  'plant': PlantProp,
-  'coffee-machine': CoffeeMachineProp,
-  'water-cooler': WaterCoolerProp,
-  'notice-board': NoticeBoardProp,
-  'bench': BenchProp,
+const PROP_REGISTRY: Record<string, PropEntry> = {
+  // ─── Floor props (sit on room floor, geometry builds upward) ──
+  'desk':                       { component: DeskProp,                    mountType: 'floor' },
+  'chair':                      { component: ChairProp,                   mountType: 'floor' },
+  'lamp':                       { component: LampProp,                    mountType: 'floor' },
+  'plant':                      { component: PlantProp,                   mountType: 'floor' },
+  'coffee-machine':             { component: CoffeeMachineProp,           mountType: 'floor' },
+  'water-cooler':               { component: WaterCoolerProp,             mountType: 'floor' },
+  'bench':                      { component: BenchProp,                   mountType: 'floor' },
+  'server-rack':                { component: ServerRackProp,              mountType: 'floor' },
+  'desk-lamp':                  { component: DeskLampProp,                mountType: 'floor' },
+  'cable-mess':                 { component: CableMessProp,               mountType: 'floor' },
+  'easel':                      { component: EaselProp,                   mountType: 'floor' },
+  'color-palette':              { component: ColorPaletteProp,            mountType: 'floor' },
+  'bar-chart':                  { component: BarChartProp,                mountType: 'floor' },
+  'megaphone':                  { component: MegaphoneProp,               mountType: 'floor' },
+  'standing-desk':              { component: StandingDeskProp,            mountType: 'floor' },
+  'round-table':                { component: RoundTableProp,              mountType: 'floor' },
+  'bean-bag':                   { component: BeanBagProp,                 mountType: 'floor' },
+  'bookshelf':                  { component: BookshelfProp,               mountType: 'floor' },
+  'conveyor-belt':              { component: ConveyorBeltProp,            mountType: 'floor' },
+  'control-panel':              { component: ControlPanelProp,            mountType: 'floor' },
+  'antenna-tower':              { component: AntennaTowerProp,            mountType: 'floor' },
+  'filing-cabinet':             { component: FilingCabinetProp,           mountType: 'floor' },
+  'fire-extinguisher':          { component: FireExtinguisherProp,        mountType: 'floor' },
 
-  // Mini-props (from RoomProps.tsx)
-  'whiteboard': WhiteboardProp,
-  'server-rack': ServerRackProp,
-  'desk-lamp': DeskLampProp,
-  'cable-mess': CableMessProp,
-  'easel': EaselProp,
-  'color-palette': ColorPaletteProp,
-  'mood-board': MoodBoardProp,
-  'presentation-screen': PresentationScreenProp,
-  'bar-chart': BarChartProp,
-  'megaphone': MegaphoneProp,
-  'standing-desk': StandingDeskProp,
-  'round-table': RoundTableProp,
-  'bean-bag': BeanBagProp,
-  'bookshelf': BookshelfProp,
-  'wall-clock': WallClockProp,
-  'small-screen': SmallScreenProp,
-  'conveyor-belt': ConveyorBeltProp,
-  'gear-mechanism': GearMechanismProp,
-  'control-panel': ControlPanelProp,
-  'satellite-dish': SatelliteDishProp,
-  'antenna-tower': AntennaTowerProp,
-  'headset': HeadsetProp,
-  'signal-waves': SignalWavesProp,
-  'status-lights': StatusLightsProp,
-  'filing-cabinet': FilingCabinetProp,
-  'fire-extinguisher': FireExtinguisherProp,
-  'drawing-tablet': DrawingTabletProp,
+  // ─── Wall props (mounted on walls; Y offset handled internally) ──
+  'monitor':                    { component: MonitorProp,                 mountType: 'wall' },
+  'notice-board':               { component: NoticeBoardProp,             mountType: 'wall' },
+  'whiteboard':                 { component: WhiteboardProp,              mountType: 'wall' },
+  'mood-board':                 { component: MoodBoardProp,               mountType: 'wall' },
+  'presentation-screen':        { component: PresentationScreenProp,      mountType: 'wall' },
+  'wall-clock':                 { component: WallClockProp,               mountType: 'wall' },
+  'small-screen':               { component: SmallScreenProp,             mountType: 'wall' },
+  'gear-mechanism':             { component: GearMechanismProp,           mountType: 'wall' },
+  'satellite-dish':             { component: SatelliteDishProp,           mountType: 'wall' },
+  'headset':                    { component: HeadsetProp,                 mountType: 'wall' },
+  'signal-waves':               { component: SignalWavesProp,             mountType: 'wall' },
+  'status-lights':              { component: StatusLightsProp,            mountType: 'wall' },
+  'drawing-tablet':             { component: DrawingTabletProp,           mountType: 'wall' },
 
-  // Composite props (desk + accessory combos — avoids grid cell overwrites)
-  'desk-with-monitor': DeskWithMonitorProp,
-  'desk-with-dual-monitors': DeskWithDualMonitorsProp,
-  'standing-desk-with-monitor': StandingDeskWithMonitorProp,
-  'desk-with-monitor-headset': DeskWithMonitorHeadsetProp,
-  'desk-with-monitor-tablet': DeskWithMonitorTabletProp,
+  // ─── Composite props (desk + accessory combos) ───────────────
+  'desk-with-monitor':          { component: DeskWithMonitorProp,         mountType: 'floor' },
+  'desk-with-dual-monitors':    { component: DeskWithDualMonitorsProp,    mountType: 'floor' },
+  'standing-desk-with-monitor': { component: StandingDeskWithMonitorProp, mountType: 'floor' },
+  'desk-with-monitor-headset':  { component: DeskWithMonitorHeadsetProp,  mountType: 'floor' },
+  'desk-with-monitor-tablet':   { component: DeskWithMonitorTabletProp,   mountType: 'floor' },
 
-  // Interaction-only (no visual)
-  'work-point': NullProp,
-  'work-point-1': NullProp,
-  'work-point-2': NullProp,
-  'coffee-point': NullProp,
-  'sleep-corner': NullProp,
+  // ─── Interaction-only (no visual) ────────────────────────────
+  'work-point':                 { component: NullProp,                    mountType: 'floor' },
+  'work-point-1':               { component: NullProp,                    mountType: 'floor' },
+  'work-point-2':               { component: NullProp,                    mountType: 'floor' },
+  'coffee-point':               { component: NullProp,                    mountType: 'floor' },
+  'sleep-corner':               { component: NullProp,                    mountType: 'floor' },
 }
 
 /**
@@ -1022,5 +1042,13 @@ export const PROP_COMPONENTS: Record<string, React.FC<PropProps>> = {
  * Returns null if not found (unknown props are silently skipped).
  */
 export function getPropComponent(propId: string): React.FC<PropProps> | null {
-  return PROP_COMPONENTS[propId] ?? null
+  return PROP_REGISTRY[propId]?.component ?? null
+}
+
+/**
+ * Get the mount type for a given propId.
+ * Returns 'floor' as default for unknown props.
+ */
+export function getPropMountType(propId: string): MountType {
+  return PROP_REGISTRY[propId]?.mountType ?? 'floor'
 }

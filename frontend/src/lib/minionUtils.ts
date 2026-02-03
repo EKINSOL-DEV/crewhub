@@ -177,10 +177,21 @@ export function getSessionDisplayName(session: MinionSession, customName?: strin
   // 2. Human-readable label (e.g. "crewhub-fix-3d-view", "hallo-laurens")
   if (session.label) return session.label
   const key = session.key || ""
-  // 3. Special case: main agent
-  if (key === "agent:main:main") return "Main Agent"
-  // 4. Cron sessions
+  // 3. Fixed agents (agent:*:main) — use agent ID as display name
   const parts = key.split(":")
+  if (parts.length === 3 && parts[0] === "agent" && parts[2] === "main") {
+    const agentId = parts[1]
+    const AGENT_NAMES: Record<string, string> = {
+      main: "Assistent",
+      flowy: "Flowy",
+      creator: "Creator",
+      dev: "Dev",
+      reviewer: "Reviewer",
+      gamedev: "Game Dev",
+    }
+    return AGENT_NAMES[agentId] || agentId.charAt(0).toUpperCase() + agentId.slice(1)
+  }
+  // 4. Cron sessions
   if (parts.length >= 4 && parts[2] === "cron") return `Cron Worker ${parts[3].slice(0, 8)}`
   // 5. Friendly name for subagents
   if (key.includes(":subagent:") || key.includes(":spawn:")) return generateFriendlyName(key)
