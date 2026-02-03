@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Html } from '@react-three/drei'
 import { WorldLighting } from './WorldLighting'
@@ -12,8 +12,14 @@ import { Room3D } from './Room3D'
 import { Bot3D, type BotStatus } from './Bot3D'
 import { useRooms } from '@/hooks/useRooms'
 import { useAgentsRegistry, type AgentRuntime } from '@/hooks/useAgentsRegistry'
+import { useSessionActivity } from '@/hooks/useSessionActivity'
+import { useSessionDisplayNames } from '@/hooks/useSessionDisplayNames'
 import { useToonMaterialProps } from './utils/toonMaterials'
-import { getBotConfigFromSession, getBotDisplayName, isSubagent } from './utils/botVariants'
+import { getBotConfigFromSession, isSubagent } from './utils/botVariants'
+import { getSessionDisplayName } from '@/lib/minionUtils'
+import { getDefaultRoomForSession } from '@/lib/roomsConfig'
+import { splitSessionsForDisplay } from '@/lib/sessionFiltering'
+import { LogViewer } from '@/components/sessions/LogViewer'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
@@ -35,19 +41,13 @@ const PARKING_DEPTH_MIN = ROOM_SIZE // minimum depth (≈ 1 room tall)
 
 // ─── Building Layout Calculation ───────────────────────────────
 interface BuildingLayout {
-  /** Positions for each room in 3D space */
   roomPositions: { room: ReturnType<typeof useRooms>['rooms'][0]; position: [number, number, number] }[]
-  /** Total building dimensions */
   buildingWidth: number
   buildingDepth: number
-  /** Parking area bounds (relative to building center) */
   parkingArea: { x: number; z: number; width: number; depth: number }
-  /** Entrance position on front wall */
   entranceX: number
-  /** Number of columns and rows in the grid */
   cols: number
   rows: number
-  /** Grid origin (top-left room center) relative to building center */
   gridOriginX: number
   gridOriginZ: number
 }
@@ -58,21 +58,16 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   const cols = Math.min(roomCount, MAX_COLS)
   const rows = Math.ceil(roomCount / cols)
 
-  // Grid dimensions (just the rooms + hallways between them)
   const gridWidth = cols * ROOM_SIZE + (cols - 1) * HALLWAY_WIDTH
   const gridDepth = rows * ROOM_SIZE + (rows - 1) * HALLWAY_WIDTH
 
-  // Building includes grid + padding + parking area on the right
   const buildingWidth = BUILDING_PADDING * 2 + gridWidth + HALLWAY_WIDTH + PARKING_WIDTH
-  // Parking depth capped at 2 rooms max — it's a cozy break room, not a warehouse
   const parkingDepth = Math.min(Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2), gridDepth)
   const buildingDepth = BUILDING_PADDING * 2 + gridDepth
 
-  // Grid origin: top-left room center, relative to building center
   const gridOriginX = -buildingWidth / 2 + BUILDING_PADDING + ROOM_SIZE / 2
   const gridOriginZ = -buildingDepth / 2 + BUILDING_PADDING + ROOM_SIZE / 2
 
-  // Room positions
   const roomPositions = sorted.map((room, index) => {
     const row = Math.floor(index / cols)
     const col = index % cols
@@ -81,40 +76,21 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
     return { room, position: [x, 0, z] as [number, number, number] }
   })
 
-  // Parking area on the right side, aligned to the top of the grid
   const parkingX = gridOriginX + cols * GRID_SPACING + HALLWAY_WIDTH / 2 + PARKING_WIDTH / 2 - ROOM_SIZE / 2
   const parkingZ = gridOriginZ + parkingDepth / 2 - ROOM_SIZE / 2
-  const parkingArea = {
-    x: parkingX,
-    z: parkingZ,
-    width: PARKING_WIDTH,
-    depth: parkingDepth,
-  }
+  const parkingArea = { x: parkingX, z: parkingZ, width: PARKING_WIDTH, depth: parkingDepth }
 
-  // Entrance centered on the grid, on the front wall (-Z side)
   const entranceX = gridOriginX + ((cols - 1) * GRID_SPACING) / 2
 
-  return {
-    roomPositions,
-    buildingWidth,
-    buildingDepth,
-    parkingArea,
-    entranceX,
-    cols,
-    rows,
-    gridOriginX,
-    gridOriginZ,
-  }
+  return { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
 }
 
 // ─── Grass Ground (outside building) ───────────────────────────
 
-/** Procedural grass tile */
 function GrassTile({ position, size, shade }: { position: [number, number, number]; size: number; shade: number }) {
   const baseGreen = [0.38 + shade * 0.06, 0.50 + shade * 0.05, 0.32 + shade * 0.04]
   const color = `rgb(${Math.floor(baseGreen[0] * 255)}, ${Math.floor(baseGreen[1] * 255)}, ${Math.floor(baseGreen[2] * 255)})`
   const toonProps = useToonMaterialProps(color)
-
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={position} receiveShadow>
       <boxGeometry args={[size, size, 0.08 + shade * 0.04]} />
@@ -123,7 +99,6 @@ function GrassTile({ position, size, shade }: { position: [number, number, numbe
   )
 }
 
-/** Small decorative grass tuft */
 function GrassTuft({ position }: { position: [number, number, number] }) {
   const toonProps = useToonMaterialProps('#5A8A3C')
   return (
@@ -138,7 +113,6 @@ function GrassTuft({ position }: { position: [number, number, number] }) {
   )
 }
 
-/** Small decorative stone */
 function SmallRock({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
   const toonProps = useToonMaterialProps('#9E9684')
   return (
@@ -149,10 +123,8 @@ function SmallRock({ position, scale = 1 }: { position: [number, number, number]
   )
 }
 
-/** Grass ground outside the building */
 function ExteriorGround({ buildingWidth, buildingDepth }: { buildingWidth: number; buildingDepth: number }) {
   const seed = (x: number, z: number) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1
-
   const tileSize = 4
   const gridRange = 20
   const halfBW = buildingWidth / 2 + 0.5
@@ -161,23 +133,15 @@ function ExteriorGround({ buildingWidth, buildingDepth }: { buildingWidth: numbe
   const { tiles, decorations } = useMemo(() => {
     const t: { pos: [number, number, number]; shade: number }[] = []
     const d: { type: 'tuft' | 'rock'; pos: [number, number, number]; scale?: number }[] = []
-
     for (let gx = -gridRange; gx <= gridRange; gx++) {
       for (let gz = -gridRange; gz <= gridRange; gz++) {
         const wx = gx * tileSize
         const wz = gz * tileSize
-        // Skip tiles inside the building footprint
         if (Math.abs(wx) < halfBW && Math.abs(wz) < halfBD) continue
-
         const s = seed(gx, gz)
         t.push({ pos: [wx, -0.15, wz], shade: s })
-
-        if (s > 0.75) {
-          d.push({ type: 'tuft', pos: [wx + s * 1.5 - 0.75, -0.1, wz + (1 - s) * 1.5 - 0.75] })
-        }
-        if (s > 0.88) {
-          d.push({ type: 'rock', pos: [wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75], scale: 0.5 + s * 0.8 })
-        }
+        if (s > 0.75) d.push({ type: 'tuft', pos: [wx + s * 1.5 - 0.75, -0.1, wz + (1 - s) * 1.5 - 0.75] })
+        if (s > 0.88) d.push({ type: 'rock', pos: [wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75], scale: 0.5 + s * 0.8 })
       }
     }
     return { tiles: t, decorations: d }
@@ -201,7 +165,6 @@ function ExteriorGround({ buildingWidth, buildingDepth }: { buildingWidth: numbe
 
 function ParkingAreaFloor({ x, z, width, depth }: { x: number; z: number; width: number; depth: number }) {
   const floorToon = useToonMaterialProps('#BFB090')
-
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.01, z]} receiveShadow>
       <boxGeometry args={[width, depth, 0.12]} />
@@ -221,52 +184,33 @@ function LoadingFallback() {
   )
 }
 
-// ─── Scene Content ─────────────────────────────────────────────
+// ─── Bot Status (accurate, matching 2D) ────────────────────────
+
+function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatus {
+  if (isActive) return 'active'
+  const idleSeconds = (Date.now() - session.updatedAt) / 1000
+  if (idleSeconds < 120) return 'idle'
+  if (idleSeconds < 600) return 'sleeping'
+  return 'offline'
+}
 
 // ─── Bot Placement Helpers ──────────────────────────────────────
 
-/** Map agent status to BotStatus */
-function agentStatusToBotStatus(agentStatus: string, session?: CrewSession): BotStatus {
-  if (!session) return 'offline'
-  const now = Date.now()
-  const lastActivity = session.updatedAt || 0
-  const timeSinceActivity = now - lastActivity
-
-  // If no activity for 10+ minutes → sleeping
-  if (timeSinceActivity > 10 * 60 * 1000) return 'sleeping'
-
-  switch (agentStatus) {
-    case 'working':
-    case 'thinking':
-      return 'active'
-    case 'idle':
-      return 'idle'
-    case 'offline':
-      return 'offline'
-    default:
-      return 'idle'
-  }
-}
-
-/** Calculate positions for multiple bots inside a room, spaced evenly */
 function getBotPositionsInRoom(
   roomPos: [number, number, number],
   roomSize: number,
   botCount: number,
 ): [number, number, number][] {
   const positions: [number, number, number][] = []
-  const floorY = roomPos[1] + 0.16 // room floor surface
-  const margin = 2.5 // stay away from walls and props
+  const floorY = roomPos[1] + 0.16
+  const margin = 2.5
 
   if (botCount === 0) return positions
-
   if (botCount === 1) {
-    // Center of room, slightly offset
     positions.push([roomPos[0], floorY, roomPos[2] + 0.5])
     return positions
   }
 
-  // Spread bots in a grid pattern inside the room
   const availableWidth = roomSize - margin * 2
   const cols = Math.min(botCount, 3)
   const rows = Math.ceil(botCount / cols)
@@ -280,11 +224,9 @@ function getBotPositionsInRoom(
     const z = roomPos[2] - availableWidth / 2 + (row + 1) * spacingZ
     positions.push([x, floorY, z])
   }
-
   return positions
 }
 
-/** Calculate positions for bots in the parking area */
 function getBotPositionsInParking(
   parkingX: number,
   parkingZ: number,
@@ -293,7 +235,7 @@ function getBotPositionsInParking(
   botCount: number,
 ): [number, number, number][] {
   const positions: [number, number, number][] = []
-  const floorY = 0.02 // parking floor level
+  const floorY = 0.02
   const margin = 2
 
   if (botCount === 0) return positions
@@ -312,7 +254,6 @@ function getBotPositionsInParking(
     const z = parkingZ - availableDepth / 2 + (row + 1) * spacingZ
     positions.push([x, floorY, z])
   }
-
   return positions
 }
 
@@ -327,9 +268,64 @@ interface BotPlacement {
   scale: number
 }
 
-function SceneContent({ sessions }: { sessions: CrewSession[] }) {
+// ─── Room bounds for wandering ──────────────────────────────────
+
+export interface RoomBounds {
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+}
+
+function getRoomBounds(roomPos: [number, number, number], roomSize: number): RoomBounds {
+  const margin = 2.5
+  return {
+    minX: roomPos[0] - roomSize / 2 + margin,
+    maxX: roomPos[0] + roomSize / 2 - margin,
+    minZ: roomPos[2] - roomSize / 2 + margin,
+    maxZ: roomPos[2] + roomSize / 2 - margin,
+  }
+}
+
+function getParkingBounds(x: number, z: number, width: number, depth: number): RoomBounds {
+  const margin = 2
+  return {
+    minX: x - width / 2 + margin,
+    maxX: x + width / 2 - margin,
+    minZ: z - depth / 2 + margin,
+    maxZ: z + depth / 2 - margin,
+  }
+}
+
+// ─── Scene Content Props ────────────────────────────────────────
+
+interface SceneContentProps {
+  visibleSessions: CrewSession[]
+  parkingSessions: CrewSession[]
+  settings: SessionsSettings
+  isActivelyRunning: (key: string) => boolean
+  displayNames: Map<string, string | null>
+  onBotClick?: (session: CrewSession) => void
+}
+
+// ─── Scene Content ─────────────────────────────────────────────
+
+function SceneContent({
+  visibleSessions,
+  parkingSessions,
+  settings: _settings,
+  isActivelyRunning,
+  displayNames,
+  onBotClick,
+}: SceneContentProps) {
+  void _settings // Available for future use (e.g. animation speed)
+  // Combine all sessions for agent registry lookup
+  const allSessions = useMemo(
+    () => [...visibleSessions, ...parkingSessions],
+    [visibleSessions, parkingSessions],
+  )
   const { rooms, getRoomForSession, isLoading } = useRooms()
-  const { agents: agentRuntimes } = useAgentsRegistry(sessions)
+  const { agents: agentRuntimes } = useAgentsRegistry(allSessions)
 
   const layout = useMemo(() => {
     if (rooms.length === 0) return null
@@ -338,90 +334,101 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
 
   // ─── Bot placement logic ──────────────────────────────────────
 
-  /** Build a BotPlacement from a session + optional agent runtime */
-  const buildBotPlacement = (session: CrewSession, runtime?: AgentRuntime): BotPlacement => {
-    const status = runtime
-      ? agentStatusToBotStatus(runtime.status, session)
-      : agentStatusToBotStatus('idle', session)
-    const config = getBotConfigFromSession(
-      session.key,
-      session.label,
-      runtime?.agent?.color
-    )
-    const name = getBotDisplayName(session.key, session.displayName, session.label)
-    const scale = isSubagent(session.key) ? 1.0 : 1.8
+  const buildBotPlacement = (session: CrewSession, _runtime?: AgentRuntime): BotPlacement => {
+    const isActive = isActivelyRunning(session.key)
+    const status = getAccurateBotStatus(session, isActive)
+    const config = getBotConfigFromSession(session.key, session.label, _runtime?.agent?.color)
+    const name = getSessionDisplayName(session, displayNames.get(session.key))
+    const scale = isSubagent(session.key) ? 0.6 : 1.0
     return { key: session.key, session, status, config, name, scale }
   }
 
-  /** Map bots to rooms and parking */
+  /** Map visible bots to rooms */
   const { roomBots, parkingBots } = useMemo(() => {
     const roomBots = new Map<string, BotPlacement[]>()
     const parkingBots: BotPlacement[] = []
 
-    // Initialize room bot arrays
     for (const room of rooms) {
       roomBots.set(room.id, [])
     }
 
-    // Place agent runtimes (main agents + their child sessions)
+    // Place agent runtimes (main agents + child sessions) — only from visible sessions
     const placedKeys = new Set<string>()
+    const visibleKeys = new Set(visibleSessions.map(s => s.key))
 
     for (const runtime of agentRuntimes) {
       // Main agent session
-      if (runtime.session) {
+      if (runtime.session && visibleKeys.has(runtime.session.key)) {
         const roomId = runtime.agent.default_room_id
           || getRoomForSession(runtime.session.key, {
             label: runtime.session.label,
             model: runtime.session.model,
-            channel: runtime.session.channel,
+            channel: runtime.session.lastChannel || runtime.session.channel,
           })
+          || getDefaultRoomForSession(runtime.session.key)
+          || rooms[0]?.id || 'headquarters'
         const placement = buildBotPlacement(runtime.session, runtime)
-        if (roomId && roomBots.has(roomId)) {
+        if (roomBots.has(roomId)) {
           roomBots.get(roomId)!.push(placement)
         } else {
-          parkingBots.push(placement)
+          // Room doesn't exist, fallback
+          const fallback = rooms[0]?.id || 'headquarters'
+          if (roomBots.has(fallback)) roomBots.get(fallback)!.push(placement)
         }
         placedKeys.add(runtime.session.key)
       }
 
-      // Child sessions (subagents)
+      // Child sessions (subagents) — only from visible sessions
       for (const child of runtime.childSessions) {
-        if (placedKeys.has(child.key)) continue
+        if (placedKeys.has(child.key) || !visibleKeys.has(child.key)) continue
         const roomId = getRoomForSession(child.key, {
           label: child.label,
           model: child.model,
-          channel: child.channel,
-        }) || runtime.agent.default_room_id
+          channel: child.lastChannel || child.channel,
+        })
+          || getDefaultRoomForSession(child.key)
+          || runtime.agent.default_room_id
+          || rooms[0]?.id || 'headquarters'
 
         const placement = buildBotPlacement(child)
-        if (roomId && roomBots.has(roomId)) {
+        if (roomBots.has(roomId)) {
           roomBots.get(roomId)!.push(placement)
         } else {
-          parkingBots.push(placement)
+          const fallback = rooms[0]?.id || 'headquarters'
+          if (roomBots.has(fallback)) roomBots.get(fallback)!.push(placement)
         }
         placedKeys.add(child.key)
       }
     }
 
-    // Any remaining sessions not matched to agents
-    for (const session of sessions) {
+    // Remaining visible sessions not matched to agents
+    for (const session of visibleSessions) {
       if (placedKeys.has(session.key)) continue
       const roomId = getRoomForSession(session.key, {
         label: session.label,
         model: session.model,
-        channel: session.channel,
+        channel: session.lastChannel || session.channel,
       })
+        || getDefaultRoomForSession(session.key)
+        || rooms[0]?.id || 'headquarters'
+
       const placement = buildBotPlacement(session)
-      if (roomId && roomBots.has(roomId)) {
+      if (roomBots.has(roomId)) {
         roomBots.get(roomId)!.push(placement)
       } else {
-        parkingBots.push(placement)
+        const fallback = rooms[0]?.id || 'headquarters'
+        if (roomBots.has(fallback)) roomBots.get(fallback)!.push(placement)
       }
       placedKeys.add(session.key)
     }
 
+    // Parking sessions
+    for (const session of parkingSessions) {
+      parkingBots.push(buildBotPlacement(session))
+    }
+
     return { roomBots, parkingBots }
-  }, [sessions, rooms, agentRuntimes, getRoomForSession])
+  }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames])
 
   if (isLoading || !layout) return null
 
@@ -429,62 +436,14 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
 
   return (
     <>
-      {/* Exterior grass (outside building) */}
       <ExteriorGround buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
-
-      {/* Building floor slab */}
       <BuildingFloor width={buildingWidth} depth={buildingDepth} />
-
-      {/* Outer perimeter walls */}
-      <BuildingWalls
-        width={buildingWidth}
-        depth={buildingDepth}
-        entranceWidth={5}
-        entranceOffset={entranceX}
-      />
-
-      {/* Parking / Break area floor (slightly different shade) */}
-      <ParkingAreaFloor
-        x={parkingArea.x}
-        z={parkingArea.z}
-        width={parkingArea.width}
-        depth={parkingArea.depth}
-      />
-
-      {/* Parking / Break area with props */}
-      <ParkingArea3D
-        position={[parkingArea.x, 0, parkingArea.z]}
-        width={parkingArea.width}
-        depth={parkingArea.depth}
-      />
-
-      {/* Hallway floor lines (subtle center dashes) */}
-      <HallwayFloorLines
-        roomSize={ROOM_SIZE}
-        hallwayWidth={HALLWAY_WIDTH}
-        cols={cols}
-        rows={rows}
-        gridOriginX={gridOriginX}
-        gridOriginZ={gridOriginZ}
-      />
-
-      {/* Entrance lobby area (front wall is at -Z) */}
-      <EntranceLobby
-        entranceX={entranceX}
-        buildingFrontZ={-buildingDepth / 2}
-        entranceWidth={5}
-      />
-
-      {/* Hallway decorations */}
-      <Hallway
-        roomPositions={roomPositions}
-        roomSize={ROOM_SIZE}
-        hallwayWidth={HALLWAY_WIDTH}
-        cols={cols}
-        rows={rows}
-        gridOriginX={gridOriginX}
-        gridOriginZ={gridOriginZ}
-      />
+      <BuildingWalls width={buildingWidth} depth={buildingDepth} entranceWidth={5} entranceOffset={entranceX} />
+      <ParkingAreaFloor x={parkingArea.x} z={parkingArea.z} width={parkingArea.width} depth={parkingArea.depth} />
+      <ParkingArea3D position={[parkingArea.x, 0, parkingArea.z]} width={parkingArea.width} depth={parkingArea.depth} />
+      <HallwayFloorLines roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
+      <EntranceLobby entranceX={entranceX} buildingFrontZ={-buildingDepth / 2} entranceWidth={5} />
+      <Hallway roomPositions={roomPositions} roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
 
       {/* Rooms in grid layout */}
       {roomPositions.map(({ room, position }) => {
@@ -492,15 +451,11 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
         const visibleBots = botsInRoom.slice(0, MAX_VISIBLE_BOTS_PER_ROOM)
         const overflowCount = botsInRoom.length - visibleBots.length
         const botPositions = getBotPositionsInRoom(position, ROOM_SIZE, visibleBots.length)
+        const bounds = getRoomBounds(position, ROOM_SIZE)
 
         return (
           <group key={room.id}>
-            <Room3D
-              room={room}
-              position={position}
-              size={ROOM_SIZE}
-            />
-            {/* Bots inside this room (limited to MAX_VISIBLE) */}
+            <Room3D room={room} position={position} size={ROOM_SIZE} />
             {visibleBots.map((bot, i) => (
               <Bot3D
                 key={bot.key}
@@ -509,9 +464,11 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
                 status={bot.status}
                 name={bot.name}
                 scale={bot.scale}
+                session={bot.session}
+                onClick={onBotClick}
+                roomBounds={bounds}
               />
             ))}
-            {/* Overflow indicator */}
             {overflowCount > 0 && (
               <Html
                 position={[position[0] + ROOM_SIZE / 2 - 1.5, 1.2, position[2] + ROOM_SIZE / 2 - 1]}
@@ -544,6 +501,7 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
           parkingArea.width, parkingArea.depth,
           parkingBots.length,
         )
+        const bounds = getParkingBounds(parkingArea.x, parkingArea.z, parkingArea.width, parkingArea.depth)
         return parkingBots.map((bot, i) => (
           <Bot3D
             key={bot.key}
@@ -552,6 +510,9 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
             status={bot.status}
             name={bot.name}
             scale={bot.scale}
+            session={bot.session}
+            onClick={onBotClick}
+            roomBounds={bounds}
           />
         ))
       })()}
@@ -561,32 +522,44 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
 
 // ─── Main Component ────────────────────────────────────────────
 
-/**
- * Main 3D World view — Office Building layout.
- * Rooms arranged in a grid with hallways, surrounded by outer walls,
- * with a parking/break area and grass exterior.
- */
-export function World3DView({ sessions, settings: _settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
-  void _settings
-  void _onAliasChanged
+export function World3DView({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+  // Shared hooks for activity tracking and session filtering
+  const { isActivelyRunning } = useSessionActivity(sessions)
+  const idleThreshold = settings.parkingIdleThreshold ?? 120
+  const { visibleSessions, parkingSessions } = splitSessionsForDisplay(
+    sessions, isActivelyRunning, idleThreshold,
+  )
+
+  // Display names
+  const sessionKeys = useMemo(() => sessions.map(s => s.key), [sessions])
+  const { displayNames } = useSessionDisplayNames(sessionKeys)
+
+  // LogViewer state
+  const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
+  const [logViewerOpen, setLogViewerOpen] = useState(false)
+
+  const handleBotClick = (session: CrewSession) => {
+    setSelectedSession(session)
+    setLogViewerOpen(true)
+  }
 
   return (
     <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
       <Canvas
         shadows
-        camera={{
-          position: [45, 40, 45],
-          fov: 40,
-          near: 0.1,
-          far: 300,
-        }}
-        style={{
-          background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)',
-        }}
+        camera={{ position: [45, 40, 45], fov: 40, near: 0.1, far: 300 }}
+        style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)' }}
       >
         <Suspense fallback={<LoadingFallback />}>
           <WorldLighting />
-          <SceneContent sessions={sessions} />
+          <SceneContent
+            visibleSessions={visibleSessions}
+            parkingSessions={parkingSessions}
+            settings={settings}
+            isActivelyRunning={isActivelyRunning}
+            displayNames={displayNames}
+            onBotClick={handleBotClick}
+          />
           <OrbitControls
             makeDefault
             enablePan
@@ -608,12 +581,15 @@ export function World3DView({ sessions, settings: _settings, onAliasChanged: _on
         </div>
       </div>
 
-      {/* Info bar */}
+      {/* Status bar */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50">
         <div className="text-sm px-4 py-2 rounded-full backdrop-blur-md text-gray-700 bg-white/60 shadow-sm border border-gray-200/50">
-          🏢 CrewHub Office
+          🏢 {sessions.length} agents · {visibleSessions.length} active{parkingSessions.length > 0 ? ` · ${parkingSessions.length} parked` : ''} · Click for details
         </div>
       </div>
+
+      {/* LogViewer (outside Canvas) */}
+      <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html, Text } from '@react-three/drei'
 import * as THREE from 'three'
@@ -8,6 +8,8 @@ import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import type { BotVariantConfig } from './utils/botVariants'
+import type { CrewSession } from '@/lib/api'
+import type { RoomBounds } from './World3DView'
 
 export type BotStatus = 'active' | 'idle' | 'sleeping' | 'offline'
 
@@ -22,18 +24,52 @@ interface Bot3DProps {
   name: string
   /** Scale factor (1.0 = main agent, 0.6 = subagent) */
   scale?: number
+  /** Session data (for click handler) */
+  session?: CrewSession
+  /** Click handler */
+  onClick?: (session: CrewSession) => void
+  /** Room bounds for wandering */
+  roomBounds?: RoomBounds
 }
 
 /**
  * Complete 3D bot character — two-primitive stacked design (head + body).
  * Includes body, face, accessory, chest display, status glow,
- * animations, and floating name tag.
+ * animations, wandering, and floating name tag.
  */
-export function Bot3D({ position, config, status, name, scale = 1.0 }: Bot3DProps) {
+export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
 
-  // Animations based on status
-  useFrame(({ clock }) => {
+  // ─── Wandering state ──────────────────────────────────────────
+  const wanderState = useRef({
+    targetX: position[0],
+    targetZ: position[2],
+    currentX: position[0],
+    currentZ: position[2],
+    waitTimer: 1 + Math.random() * 3,
+    baseX: position[0],
+    baseZ: position[2],
+    sessionKey: session?.key || '',
+  })
+
+  // Update base position when session key changes (bot reassigned to a new spot)
+  useEffect(() => {
+    const state = wanderState.current
+    const newKey = session?.key || ''
+    if (state.sessionKey !== newKey) {
+      state.baseX = position[0]
+      state.baseZ = position[2]
+      state.currentX = position[0]
+      state.currentZ = position[2]
+      state.targetX = position[0]
+      state.targetZ = position[2]
+      state.waitTimer = 1 + Math.random() * 2
+      state.sessionKey = newKey
+    }
+  }, [session?.key, position])
+
+  // Animations + wandering
+  useFrame(({ clock }, delta) => {
     if (!groupRef.current) return
     const t = clock.getElapsedTime()
 
@@ -41,32 +77,61 @@ export function Bot3D({ position, config, status, name, scale = 1.0 }: Bot3DProp
     groupRef.current.rotation.z = 0
     groupRef.current.rotation.x = 0
 
+    // ─── Status-based animations ──────────────────────────────
     switch (status) {
       case 'active':
-        // Faster bobbing + slight rotation (working)
         groupRef.current.position.y = position[1] + Math.sin(t * 4) * 0.06
-        groupRef.current.rotation.y = Math.sin(t * 2) * 0.15
         break
       case 'idle':
-        // Gentle bobbing
         groupRef.current.position.y = position[1] + Math.sin(t * 1.5) * 0.03
-        groupRef.current.rotation.y = Math.sin(t * 0.4) * 0.2
         break
       case 'sleeping':
-        // Slow movement, tilted
         groupRef.current.position.y = position[1] + Math.sin(t * 0.8) * 0.015
-        groupRef.current.rotation.z = 0.12 // tilted
+        groupRef.current.rotation.z = 0.12
         groupRef.current.rotation.x = 0.05
         break
       case 'offline':
-        // Static, no animation
         groupRef.current.position.y = position[1]
         break
     }
+
+    // ─── Wandering logic ──────────────────────────────────────
+    if ((status === 'sleeping' || status === 'offline') || !roomBounds) {
+      // No wandering: stay at base position
+      groupRef.current.position.x = wanderState.current.baseX
+      groupRef.current.position.z = wanderState.current.baseZ
+      return
+    }
+
+    const state = wanderState.current
+    const speed = status === 'active' ? 1.2 : 0.5
+
+    const dx = state.targetX - state.currentX
+    const dz = state.targetZ - state.currentZ
+    const dist = Math.sqrt(dx * dx + dz * dz)
+
+    if (dist < 0.15) {
+      // Reached target — wait then pick new one
+      state.waitTimer -= delta
+      if (state.waitTimer <= 0) {
+        state.targetX = roomBounds.minX + Math.random() * (roomBounds.maxX - roomBounds.minX)
+        state.targetZ = roomBounds.minZ + Math.random() * (roomBounds.maxZ - roomBounds.minZ)
+        state.waitTimer = 2 + Math.random() * 4
+      }
+    } else {
+      // Walk toward target
+      const step = Math.min(speed * delta, dist)
+      state.currentX += (dx / dist) * step
+      state.currentZ += (dz / dist) * step
+      // Rotate Y toward movement direction
+      groupRef.current.rotation.y = Math.atan2(dx, dz)
+    }
+
+    groupRef.current.position.x = state.currentX
+    groupRef.current.position.z = state.currentZ
   })
 
   // Offset y so bot feet rest on the floor
-  // Feet bottom is at y = -0.33 in local space, offset to put on floor
   const yOffset = 0.36
 
   return (
@@ -74,6 +139,16 @@ export function Bot3D({ position, config, status, name, scale = 1.0 }: Bot3DProp
       ref={groupRef}
       position={[position[0], position[1], position[2]]}
       scale={scale}
+      onClick={(e) => {
+        e.stopPropagation()
+        if (onClick && session) onClick(session)
+      }}
+      onPointerOver={() => {
+        if (session && onClick) document.body.style.cursor = 'pointer'
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = 'auto'
+      }}
     >
       {/* Offset group to put feet on the floor */}
       <group position={[0, yOffset, 0]}>
