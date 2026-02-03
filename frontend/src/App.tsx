@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { PlaygroundView } from './components/sessions/PlaygroundView'
 import { Playground3DView } from './components/sessions/Playground3DView'
+import { World3DView } from './components/world3d/World3DView'
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
 import { CronView } from './components/sessions/CronView'
@@ -12,7 +13,7 @@ import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { DevDesigns } from './components/dev/DevDesigns'
-import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Box, Square } from 'lucide-react'
+import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Box, Square, Globe } from 'lucide-react'
 import { Button } from './components/ui/button'
 
 // Simple path-based routing for dev pages
@@ -49,9 +50,14 @@ function AppContent() {
   const { sessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('active')
-  const [is3DMode, setIs3DMode] = useState<boolean>(() => {
-    const stored = localStorage.getItem('crewhub-3d-mode')
-    return stored === 'true'
+  type ViewMode = '2d' | '3d' | 'world'
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const stored = localStorage.getItem('crewhub-view-mode')
+    if (stored === '3d' || stored === 'world') return stored
+    // Legacy support
+    const legacy3d = localStorage.getItem('crewhub-3d-mode')
+    if (legacy3d === 'true') return '3d'
+    return '2d'
   })
   const [settings, setSettings] = useState<SessionsSettings>(() => {
     const stored = localStorage.getItem('crewhub-settings')
@@ -65,12 +71,12 @@ function AppContent() {
     return DEFAULT_SETTINGS
   })
 
-  // Persist 3D mode preference
-  const toggle3DMode = useCallback(() => {
-    setIs3DMode(prev => {
-      const newValue = !prev
-      localStorage.setItem('crewhub-3d-mode', String(newValue))
-      return newValue
+  // Cycle through view modes: 2D → 3D → World → 2D
+  const cycleViewMode = useCallback(() => {
+    setViewMode(prev => {
+      const next: ViewMode = prev === '2d' ? '3d' : prev === '3d' ? 'world' : '2d'
+      localStorage.setItem('crewhub-view-mode', next)
+      return next
     })
   }, [])
   
@@ -122,19 +128,24 @@ function AppContent() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={toggle3DMode}
+                onClick={cycleViewMode}
                 className="gap-2"
-                title={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
+                title={viewMode === '2d' ? 'Switch to 3D view' : viewMode === '3d' ? 'Switch to 3D World' : 'Switch to 2D view'}
               >
-                {is3DMode ? (
+                {viewMode === '2d' ? (
                   <>
                     <Square className="h-4 w-4" />
                     <span className="text-xs">2D</span>
                   </>
-                ) : (
+                ) : viewMode === '3d' ? (
                   <>
                     <Box className="h-4 w-4" />
                     <span className="text-xs">3D</span>
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-4 w-4" />
+                    <span className="text-xs">World</span>
                   </>
                 )}
               </Button>
@@ -184,7 +195,13 @@ function AppContent() {
           <ErrorBoundary>
             <div className="flex-1 overflow-hidden">
               {activeTab === 'active' && (
-                is3DMode ? (
+                viewMode === 'world' ? (
+                  <World3DView
+                    sessions={sessions}
+                    settings={settings}
+                    onAliasChanged={handleAliasChanged}
+                  />
+                ) : viewMode === '3d' ? (
                   <Playground3DView
                     sessions={sessions}
                     settings={settings}
