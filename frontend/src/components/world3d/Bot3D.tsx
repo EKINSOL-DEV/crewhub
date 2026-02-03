@@ -7,9 +7,14 @@ import { BotFace } from './BotFace'
 import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
+import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
 import type { RoomBounds } from './World3DView'
+
+// ─── Global bot position registry (module-level, no React state) ──
+// CameraController reads from this to follow bots smoothly.
+export const botPositionRegistry = new Map<string, { x: number; y: number; z: number }>()
 
 export type BotStatus = 'active' | 'idle' | 'sleeping' | 'offline'
 
@@ -26,12 +31,14 @@ interface Bot3DProps {
   scale?: number
   /** Session data (for click handler) */
   session?: CrewSession
-  /** Click handler */
+  /** Click handler (called in addition to focusBot) */
   onClick?: (session: CrewSession) => void
   /** Room bounds for wandering */
   roomBounds?: RoomBounds
   /** Whether to show the floating name label (controlled by focus level) */
   showLabel?: boolean
+  /** Room ID this bot belongs to (for focus navigation) */
+  roomId?: string
 }
 
 /**
@@ -39,8 +46,12 @@ interface Bot3DProps {
  * Includes body, face, accessory, chest display, status glow,
  * animations, wandering, and floating name tag.
  */
-export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true }: Bot3DProps) {
+export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, roomId }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
+  const { state: focusState, focusBot } = useWorldFocus()
+
+  // Is THIS bot the one being focused on?
+  const isFocused = focusState.level === 'bot' && focusState.focusedBotKey === session?.key
 
   // ─── Wandering state ──────────────────────────────────────────
   const wanderState = useRef({
@@ -69,6 +80,14 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.sessionKey = newKey
     }
   }, [session?.key, position])
+
+  // Clean up position registry on unmount
+  useEffect(() => {
+    const key = session?.key
+    return () => {
+      if (key) botPositionRegistry.delete(key)
+    }
+  }, [session?.key])
 
   // Animations + wandering
   useFrame(({ clock }, delta) => {
@@ -131,6 +150,15 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
 
     groupRef.current.position.x = state.currentX
     groupRef.current.position.z = state.currentZ
+
+    // Update position registry for camera following
+    if (session?.key) {
+      botPositionRegistry.set(session.key, {
+        x: state.currentX,
+        y: groupRef.current.position.y,
+        z: state.currentZ,
+      })
+    }
   })
 
   // Offset y so bot feet rest on the floor
@@ -143,6 +171,9 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       scale={scale}
       onClick={(e) => {
         e.stopPropagation()
+        if (session && roomId) {
+          focusBot(session.key, roomId)
+        }
         if (onClick && session) onClick(session)
       }}
       onPointerOver={() => {
@@ -172,8 +203,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         {/* Sleeping ZZZ text */}
         {status === 'sleeping' && <SleepingZs />}
 
-        {/* Name tag (conditionally shown based on focus level) */}
-        {showLabel && (
+        {/* Name tag (conditionally shown based on focus level, always shown when focused) */}
+        {(showLabel || isFocused) && (
           <Html
             position={[0, -0.55, 0]}
             center

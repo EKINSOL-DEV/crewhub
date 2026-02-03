@@ -10,6 +10,7 @@ import { EntranceLobby } from './EntranceLobby'
 import { ParkingArea3D } from './ParkingArea3D'
 import { Room3D } from './Room3D'
 import { Bot3D, type BotStatus } from './Bot3D'
+import { BotInfoPanel } from './BotInfoPanel'
 import { useRooms } from '@/hooks/useRooms'
 import { useAgentsRegistry, type AgentRuntime } from '@/hooks/useAgentsRegistry'
 import { useSessionActivity } from '@/hooks/useSessionActivity'
@@ -493,6 +494,7 @@ function SceneContent({
                 onClick={onBotClick}
                 roomBounds={bounds}
                 showLabel={shouldShowLabel(bot.status, room.id)}
+                roomId={room.id}
               />
             ))}
             {overflowCount > 0 && (
@@ -541,6 +543,7 @@ function SceneContent({
             onClick={onBotClick}
             roomBounds={bounds}
             showLabel={focusLevel === 'overview' ? bot.status === 'active' : false}
+            roomId="parking"
           />
         ))
       })()}
@@ -563,7 +566,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const { displayNames } = useSessionDisplayNames(sessionKeys)
 
   // Focus state
-  const { state: focusState } = useWorldFocus()
+  const { state: focusState, goBack } = useWorldFocus()
 
   // Rooms for overlays (tabs bar, navigation)
   const { rooms } = useRooms()
@@ -584,10 +587,33 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
 
-  const handleBotClick = (session: CrewSession) => {
-    setSelectedSession(session)
-    setLogViewerOpen(true)
+  // Bot click no longer opens LogViewer directly — focusBot is triggered inside Bot3D
+  const handleBotClick = (_session: CrewSession) => {
+    // Intentionally empty: Bot3D now calls focusBot() directly via context.
+    // LogViewer is opened from BotInfoPanel's "Open Full Log" button.
+    void _session
   }
+
+  // Find session by key for BotInfoPanel
+  const allSessions = useMemo(
+    () => [...visibleSessions, ...parkingSessions],
+    [visibleSessions, parkingSessions],
+  )
+
+  const focusedSession = useMemo(() => {
+    if (!focusState.focusedBotKey) return null
+    return allSessions.find(s => s.key === focusState.focusedBotKey) ?? null
+  }, [focusState.focusedBotKey, allSessions])
+
+  const focusedBotConfig = useMemo(() => {
+    if (!focusedSession) return null
+    return getBotConfigFromSession(focusedSession.key, focusedSession.label)
+  }, [focusedSession])
+
+  const focusedBotStatus: BotStatus = useMemo(() => {
+    if (!focusedSession) return 'offline'
+    return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key))
+  }, [focusedSession, isActivelyRunning])
 
   return (
     <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
@@ -614,12 +640,29 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
       {/* Back button / navigation (top-left) */}
       <WorldNavigation rooms={rooms} />
 
-      {/* Overlay controls hint */}
-      <div className="absolute top-4 right-4 z-50">
-        <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm">
-          🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan
+      {/* Overlay controls hint (hide when bot panel is showing) */}
+      {focusState.level !== 'bot' && (
+        <div className="absolute top-4 right-4 z-50">
+          <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm">
+            🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Bot Info Panel (slides in when bot is focused) */}
+      {focusState.level === 'bot' && focusState.focusedBotKey && focusedSession && focusedBotConfig && (
+        <BotInfoPanel
+          session={focusedSession}
+          displayName={displayNames.get(focusState.focusedBotKey) || getSessionDisplayName(focusedSession, null)}
+          botConfig={focusedBotConfig}
+          status={focusedBotStatus}
+          onClose={() => goBack()}
+          onOpenLog={(session) => {
+            setSelectedSession(session)
+            setLogViewerOpen(true)
+          }}
+        />
+      )}
 
       {/* Room tabs bar (bottom) */}
       <RoomTabsBar
