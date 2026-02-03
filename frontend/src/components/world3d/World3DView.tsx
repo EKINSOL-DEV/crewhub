@@ -1,6 +1,6 @@
 import { Suspense, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Html } from '@react-three/drei'
 import { WorldLighting } from './WorldLighting'
 import { BuildingFloor } from './BuildingFloor'
 import { BuildingWalls } from './BuildingWalls'
@@ -29,6 +29,7 @@ const HALLWAY_WIDTH = 4
 const GRID_SPACING = ROOM_SIZE + HALLWAY_WIDTH // 16
 const MAX_COLS = 3
 const BUILDING_PADDING = 3 // padding inside building walls around the grid
+const MAX_VISIBLE_BOTS_PER_ROOM = 8 // limit rendered bots; remainder shown as "+N more"
 const PARKING_WIDTH = ROOM_SIZE + 2 // width of parking/break area
 const PARKING_DEPTH_MIN = ROOM_SIZE + 2 // minimum depth
 
@@ -487,7 +488,9 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
       {/* Rooms in grid layout */}
       {roomPositions.map(({ room, position }) => {
         const botsInRoom = roomBots.get(room.id) || []
-        const botPositions = getBotPositionsInRoom(position, ROOM_SIZE, botsInRoom.length)
+        const visibleBots = botsInRoom.slice(0, MAX_VISIBLE_BOTS_PER_ROOM)
+        const overflowCount = botsInRoom.length - visibleBots.length
+        const botPositions = getBotPositionsInRoom(position, ROOM_SIZE, visibleBots.length)
 
         return (
           <group key={room.id}>
@@ -496,8 +499,8 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
               position={position}
               size={ROOM_SIZE}
             />
-            {/* Bots inside this room */}
-            {botsInRoom.map((bot, i) => (
+            {/* Bots inside this room (limited to MAX_VISIBLE) */}
+            {visibleBots.map((bot, i) => (
               <Bot3D
                 key={bot.key}
                 position={botPositions[i] || position}
@@ -507,6 +510,28 @@ function SceneContent({ sessions }: { sessions: CrewSession[] }) {
                 scale={bot.scale}
               />
             ))}
+            {/* Overflow indicator */}
+            {overflowCount > 0 && (
+              <Html
+                position={[position[0] + ROOM_SIZE / 2 - 1.5, 1.2, position[2] + ROOM_SIZE / 2 - 1]}
+                center
+                distanceFactor={15}
+                style={{ pointerEvents: 'none' }}
+              >
+                <div style={{
+                  background: 'rgba(0,0,0,0.55)',
+                  color: '#fff',
+                  padding: '3px 8px',
+                  borderRadius: '10px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  fontFamily: 'system-ui, sans-serif',
+                }}>
+                  +{overflowCount} more
+                </div>
+              </Html>
+            )}
           </group>
         )
       })}
