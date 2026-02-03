@@ -23,9 +23,8 @@ const CELL_SIZE = 0.6
 function createHeadquarters(): RoomBlueprint {
   const grid = createEmptyGrid(GRID_W, GRID_D)
 
-  // Desk + monitor — back-left area (~(-3.5, 3.5) → grid (4, 4))
-  placeOnGrid(grid, 3, 3, 'desk', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 3, 3, 'monitor', { type: 'decoration' })
+  // Desk with monitor — back-left area (~(-3.5, 3.5) → grid (4, 4))
+  placeOnGrid(grid, 3, 3, 'desk-with-monitor', { span: { w: 2, d: 2 } })
 
   // Chair — in front of desk (~(-1.5, 1.5) → grid (6, 6))
   placeOnGrid(grid, 5, 5, 'chair')
@@ -78,19 +77,15 @@ function createHeadquarters(): RoomBlueprint {
 function createDevRoom(): RoomBlueprint {
   const grid = createEmptyGrid(GRID_W, GRID_D)
 
-  // Desk 1 — left side (~(-3.5, 3.5) → grid (4, 4))
-  placeOnGrid(grid, 3, 3, 'desk', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 3, 3, 'monitor', { type: 'decoration' })
-  placeOnGrid(grid, 4, 3, 'monitor', { type: 'decoration' })
+  // Desk 1 with dual monitors — left side (~(-3.5, 3.5) → grid (4, 4))
+  placeOnGrid(grid, 3, 3, 'desk-with-dual-monitors', { span: { w: 2, d: 2 } })
   placeOnGrid(grid, 4, 5, 'chair')
 
   // Work point desk 1
   placeOnGrid(grid, 3, 5, 'work-point-1', { type: 'interaction', interactionType: 'work' })
 
-  // Desk 2 — right side (~(3.5, 3.5) → grid (15, 4))
-  placeOnGrid(grid, 15, 3, 'desk', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 15, 3, 'monitor', { type: 'decoration' })
-  placeOnGrid(grid, 16, 3, 'monitor', { type: 'decoration' })
+  // Desk 2 with dual monitors — right side (~(3.5, 3.5) → grid (15, 4))
+  placeOnGrid(grid, 15, 3, 'desk-with-dual-monitors', { span: { w: 2, d: 2 } })
   placeOnGrid(grid, 15, 5, 'chair')
 
   // Work point desk 2
@@ -142,10 +137,8 @@ function createCreativeRoom(): RoomBlueprint {
   // Easel — center-left (~(-3.5, 0) → grid (4, 10))
   placeOnGrid(grid, 4, 9, 'easel', { span: { w: 2, d: 2 } })
 
-  // Desk + monitor — right side (~(3.5, 3.5) → grid (15, 4))
-  placeOnGrid(grid, 14, 3, 'desk', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 14, 3, 'monitor', { type: 'decoration' })
-  placeOnGrid(grid, 15, 4, 'drawing-tablet', { type: 'decoration' })
+  // Desk with monitor + drawing tablet — right side (~(3.5, 3.5) → grid (15, 4))
+  placeOnGrid(grid, 14, 3, 'desk-with-monitor-tablet', { span: { w: 2, d: 2 } })
   placeOnGrid(grid, 16, 5, 'chair')
 
   // Work point at desk
@@ -193,9 +186,8 @@ function createCreativeRoom(): RoomBlueprint {
 function createMarketingRoom(): RoomBlueprint {
   const grid = createEmptyGrid(GRID_W, GRID_D)
 
-  // Standing desk — left-back (~(-2, 3.5) → grid (5, 4))
-  placeOnGrid(grid, 4, 3, 'standing-desk', { span: { w: 3, d: 2 } })
-  placeOnGrid(grid, 5, 3, 'monitor', { type: 'decoration' })
+  // Standing desk with monitor — left-back (~(-2, 3.5) → grid (5, 4))
+  placeOnGrid(grid, 4, 3, 'standing-desk-with-monitor', { span: { w: 3, d: 2 } })
 
   // Work point in front of standing desk
   placeOnGrid(grid, 5, 5, 'work-point', { type: 'interaction', interactionType: 'work' })
@@ -360,10 +352,8 @@ function createCommsRoom(): RoomBlueprint {
   placeOnGrid(grid, 12, 1, 'small-screen', { type: 'decoration' })
   placeOnGrid(grid, 10, 3, 'small-screen', { type: 'decoration' })
 
-  // Desk + monitor + headset — bottom-right (~(3.5, -3.5) → grid (15, 15))
-  placeOnGrid(grid, 14, 14, 'desk', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 14, 14, 'monitor', { type: 'decoration' })
-  placeOnGrid(grid, 15, 14, 'headset', { type: 'decoration' })
+  // Desk with monitor + headset — bottom-right (~(3.5, -3.5) → grid (15, 15))
+  placeOnGrid(grid, 14, 14, 'desk-with-monitor-headset', { span: { w: 2, d: 2 } })
   placeOnGrid(grid, 14, 16, 'chair')
 
   // Work point at desk
@@ -464,9 +454,8 @@ function createOpsRoom(): RoomBlueprint {
 function createDefaultRoom(): RoomBlueprint {
   const grid = createEmptyGrid(GRID_W, GRID_D)
 
-  // Desk + monitor — back-left
-  placeOnGrid(grid, 3, 3, 'desk', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 3, 3, 'monitor', { type: 'decoration' })
+  // Desk with monitor — back-left
+  placeOnGrid(grid, 3, 3, 'desk-with-monitor', { span: { w: 2, d: 2 } })
 
   // Chair
   placeOnGrid(grid, 5, 5, 'chair')

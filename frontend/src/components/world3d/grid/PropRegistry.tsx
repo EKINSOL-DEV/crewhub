@@ -896,6 +896,63 @@ function DrawingTabletProp({ position, rotation }: PropProps) {
   )
 }
 
+// ─── Composite Props (desk + monitor combos) ───────────────────
+
+/** Desk with a single monitor on top */
+function DeskWithMonitorProp({ position, rotation, cellSize, span }: PropProps) {
+  return (
+    <group>
+      <DeskProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+      <MonitorProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+    </group>
+  )
+}
+
+/** Desk with dual monitors on top */
+function DeskWithDualMonitorsProp({ position, rotation, cellSize, span }: PropProps) {
+  const offset = 0.3
+  return (
+    <group>
+      <DeskProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+      <MonitorProp position={[position[0] - offset, position[1], position[2]]} rotation={rotation} cellSize={cellSize} span={span} />
+      <MonitorProp position={[position[0] + offset, position[1], position[2]]} rotation={rotation} cellSize={cellSize} span={span} />
+    </group>
+  )
+}
+
+/** Standing desk with a single monitor on top */
+function StandingDeskWithMonitorProp({ position, rotation, cellSize, span }: PropProps) {
+  return (
+    <group>
+      <StandingDeskProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+      {/* Monitor sits higher on standing desk (1.05 desk height vs 0.78 normal) */}
+      <Monitor position={[position[0], position[1] + 1.05, position[2]]} rotation={degToEuler(rotation)} />
+    </group>
+  )
+}
+
+/** Desk with monitor and headset (for comms room) */
+function DeskWithMonitorHeadsetProp({ position, rotation, cellSize, span }: PropProps) {
+  return (
+    <group>
+      <DeskProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+      <MonitorProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+      <HeadsetProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+    </group>
+  )
+}
+
+/** Desk with monitor and drawing tablet (for creative room) */
+function DeskWithMonitorTabletProp({ position, rotation, cellSize, span }: PropProps) {
+  return (
+    <group>
+      <DeskProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+      <MonitorProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
+      <DrawingTabletProp position={[position[0] + 0.3, position[1], position[2] + 0.1]} rotation={rotation} cellSize={cellSize} span={span} />
+    </group>
+  )
+}
+
 // ─── Null Prop (for interaction points, doors, etc.) ────────────
 
 function NullProp(_props: PropProps) {
@@ -944,6 +1001,13 @@ export const PROP_COMPONENTS: Record<string, React.FC<PropProps>> = {
   'filing-cabinet': FilingCabinetProp,
   'fire-extinguisher': FireExtinguisherProp,
   'drawing-tablet': DrawingTabletProp,
+
+  // Composite props (desk + accessory combos — avoids grid cell overwrites)
+  'desk-with-monitor': DeskWithMonitorProp,
+  'desk-with-dual-monitors': DeskWithDualMonitorsProp,
+  'standing-desk-with-monitor': StandingDeskWithMonitorProp,
+  'desk-with-monitor-headset': DeskWithMonitorHeadsetProp,
+  'desk-with-monitor-tablet': DeskWithMonitorTabletProp,
 
   // Interaction-only (no visual)
   'work-point': NullProp,

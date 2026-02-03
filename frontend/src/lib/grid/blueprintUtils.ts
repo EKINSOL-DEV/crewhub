@@ -55,6 +55,15 @@ export function placeOnGrid(
       if (cz < 0 || cz >= grid.length || cx < 0 || cx >= grid[0].length) continue
 
       const cell = grid[cz][cx]
+
+      // Dev aid: warn if overwriting an existing prop
+      if (import.meta.env?.DEV && cell.propId && cell.propId !== propId) {
+        console.warn(
+          `[placeOnGrid] Overwriting prop '${cell.propId}' with '${propId}' at cell (${cx}, ${cz}). ` +
+          `Use composite props (e.g. 'desk-with-monitor') to avoid collisions.`
+        )
+      }
+
       cell.type = cellType
       cell.walkable = walkable
       cell.propId = propId
@@ -143,8 +152,8 @@ export function worldToGrid(
 ): { x: number; z: number } {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
-  const gx = Math.floor((worldX + halfW) / cellSize)
-  const gz = Math.floor((worldZ + halfD) / cellSize)
+  const gx = Math.round((worldX + halfW) / cellSize)
+  const gz = Math.round((worldZ + halfD) / cellSize)
   return {
     x: Math.max(0, Math.min(gridWidth - 1, gx)),
     z: Math.max(0, Math.min(gridDepth - 1, gz)),

@@ -92,6 +92,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   const pathRef = useRef<PathNode[]>([])
   const pathIndexRef = useRef(0)
   const pathTargetWorld = useRef<{ x: number; z: number } | null>(null)
+  const pathRetryCount = useRef(0)
+  const MAX_PATH_RETRIES = 3
 
   // Helper to compute a path from current position to a world target
   const computePath = useCallback((fromWorldX: number, fromWorldZ: number, toWorldX: number, toWorldZ: number) => {
@@ -113,8 +115,10 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       // Set first waypoint target in world space
       const [wx, , wz] = gridToWorld(path[1].x, path[1].z, cellSize, gridWidth, gridDepth)
       pathTargetWorld.current = { x: roomCenterX + wx, z: roomCenterZ + wz }
+      pathRetryCount.current = 0 // Reset retry counter on success
       return true
     }
+    // Path not found — never fall back to direct movement
     return false
   }, [gridData, roomBounds])
 
@@ -301,9 +305,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.targetX = anim.targetX
       state.targetZ = anim.targetZ
 
-      // Compute path when animation target changes
+      // When animation target changes, clear stale path and recompute immediately
       const targetChanged = Math.abs(prevTargetX - anim.targetX) > 0.5 || Math.abs(prevTargetZ - anim.targetZ) > 0.5
-      if (targetChanged && pathRef.current.length === 0) {
+      if (targetChanged) {
+        pathRef.current = []
+        pathIndexRef.current = 0
+        pathTargetWorld.current = null
         computePath(state.currentX, state.currentZ, anim.targetX, anim.targetZ)
       }
     }
@@ -369,13 +376,14 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         groupRef.current.rotation.y = currentRotY + angleDiff * 0.1
       }
     } else {
-      // No path — use direct movement (fallback)
+      // No path available — NEVER fall back to direct movement (would walk through walls)
+      // Instead: stay in place and retry with a different target or wait
       const dx = state.targetX - state.currentX
       const dz = state.targetZ - state.currentZ
       const dist = Math.sqrt(dx * dx + dz * dz)
 
       if (dist < 0.3) {
-        // Check if this was an animation target
+        // Already at or very near target
         if (anim.targetX !== null && anim.targetZ !== null && !anim.arrived) {
           anim.arrived = true
           if (anim.freezeWhenArrived) {
@@ -398,24 +406,38 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           const target = pickWanderTarget()
           state.targetX = target.x
           state.targetZ = target.z
-          // Try pathfinding for wander
           computePath(state.currentX, state.currentZ, target.x, target.z)
-          state.waitTimer = 3 + Math.random() * 3 // 3-6 seconds between wanders
+          state.waitTimer = 3 + Math.random() * 3
         }
       } else {
-        // Walk toward target with eased speed (slow down near target)
-        const easedSpeed = speed * Math.min(1, dist / 1.0)
-        const step = Math.min(easedSpeed * delta, dist)
-        state.currentX += (dx / dist) * step
-        state.currentZ += (dz / dist) * step
-
-        // Lerp rotation for smooth turning (shortest path)
-        const targetRotY = Math.atan2(dx, dz)
-        const currentRotY = groupRef.current.rotation.y
-        let angleDiff = targetRotY - currentRotY
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        groupRef.current.rotation.y = currentRotY + angleDiff * 0.1
+        // Target is far but pathfinding failed — retry with a different target or stay put
+        if (pathRetryCount.current < MAX_PATH_RETRIES) {
+          pathRetryCount.current++
+          if (anim.targetX !== null && anim.targetZ !== null) {
+            // Retry pathfinding to the animation target (grid snapping may differ slightly)
+            const found = computePath(state.currentX, state.currentZ, anim.targetX, anim.targetZ)
+            if (!found) {
+              // Try a walkable target near the intended destination
+              const target = pickWanderTarget()
+              state.targetX = target.x
+              state.targetZ = target.z
+              computePath(state.currentX, state.currentZ, target.x, target.z)
+            }
+          } else {
+            // Wander target unreachable — pick a different one
+            const target = pickWanderTarget()
+            state.targetX = target.x
+            state.targetZ = target.z
+            computePath(state.currentX, state.currentZ, target.x, target.z)
+          }
+          state.waitTimer = 0.5 + Math.random() * 1.0
+        } else {
+          // Max retries exhausted — stay put and wait, then reset
+          state.targetX = state.currentX
+          state.targetZ = state.currentZ
+          state.waitTimer = 4 + Math.random() * 3 // Wait 4-7s before trying again
+          pathRetryCount.current = 0
+        }
       }
     }
 

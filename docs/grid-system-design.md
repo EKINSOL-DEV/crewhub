@@ -1,735 +1,651 @@
 # Grid-Based Room & Building System — Design Document
 
 *Version: 1.0 — 2026-02-03*
-*Status: Proposal / Analysis*
-*Author: Ekinbot (automated analysis)*
+*Authors: Claude Opus (architecture), with GPT-5.2 review incorporated*
+*Status: Proposal / RFC*
 
 ---
 
 ## Table of Contents
 
 1. [Current State Analysis](#1-current-state-analysis)
-2. [Grid System Architecture](#2-grid-system-architecture)
-3. [Bot Pathfinding on Grid](#3-bot-pathfinding-on-grid)
-4. [Room Templates / Blueprints](#4-room-templates--blueprints)
+2. [Grid Architecture](#2-grid-architecture)
+3. [Bot Pathfinding](#3-bot-pathfinding)
+4. [Room Blueprints](#4-room-blueprints)
 5. [Data Model](#5-data-model)
 6. [Rendering Pipeline](#6-rendering-pipeline)
 7. [Migration Path](#7-migration-path)
-8. [Comparison: Current vs Grid](#8-comparison-current-vs-grid)
+8. [Current vs Grid Comparison](#8-current-vs-grid-comparison)
 9. [Risks & Considerations](#9-risks--considerations)
+10. [GPT-5.2 Feedback & Hybrid Recommendation](#10-gpt-52-feedback--hybrid-recommendation)
 
 ---
 
 ## 1. Current State Analysis
 
-### 1.1 How Rooms Are Built
+### How It Works Now
 
-Rooms are rendered by `Room3D.tsx`, which composes four sub-components:
+#### Room Rendering (`Room3D.tsx`)
+Each room is a self-contained `<group>` at a given world position with a fixed `size` (default 12 units). The room composes:
+- `<RoomFloor />` — toon-shaded floor tiles
+- `<RoomWalls />` — low perimeter walls with a door opening
+- `<RoomNameplate />` — floating sign above room
+- `<RoomProps />` — room-specific furniture
 
-```
-<Room3D room={room} position={position} size={12}>
-  <RoomFloor />      — flat tiled plane
-  <RoomWalls />      — perimeter box meshes with accent strip
-  <RoomNameplate />  — floating HTML label
-  <RoomProps />      — hardcoded furniture per room type
-</Room3D>
-```
+Rooms are placed in a grid layout by `World3DView` with fixed spacing. There is no concept of hallways, corridors, or shared walls between rooms.
 
-**Room size** is fixed at `ROOM_SIZE = 12` world units. The building layout (`World3DView.tsx`) places rooms in a grid with `GRID_SPACING = 16` (room 12 + hallway 4), capped at `MAX_COLS = 3`.
-
-**Walls** are generated manually in `RoomWalls.tsx`. Four wall segments (back, left, right, front-split) are created as `boxGeometry` meshes at hardcoded positions. The front wall has a 3-unit gap for the "door." Each wall has an accent-colored strip on top and spherical caps at corners/gap edges. Wall thickness, height, and gap width are all constants — changing room shape means editing `RoomWalls.tsx` directly.
-
-### 1.2 How Props Are Placed
-
-`RoomProps.tsx` is the largest file in the system (~900 lines). It contains:
-
-- **8 room-type components** (`HeadquartersProps`, `DevRoomProps`, `CreativeRoomProps`, etc.)
-- **~25 mini-prop components** (`Whiteboard`, `ServerRack`, `Easel`, `Bookshelf`, `ConveyorBelt`, etc.)
-- Each room type function places props at **hardcoded positions** using a scale factor:
+#### Prop Placement (`RoomProps.tsx`)
+Props are placed with **hardcoded absolute positions** calculated from `roomSize` and a scale factor `s = roomSize / 12`. Each room type has a dedicated React component (e.g., `DevRoomProps`, `HeadquartersProps`) that manually positions every piece of furniture:
 
 ```tsx
-const s = roomSize / 12  // scale factor
-const h = size / 2       // half-size
-
-// Example from DevRoomProps:
+// Example from DevRoomProps — every position is a manual calculation
 <Desk position={[-h + 2.5 * s, Y, h - 2.5 * s]} rotation={[0, Math.PI / 6, 0]} />
 <Monitor position={[-h + 2.3 * s, Y + 0.78, h - 2.4 * s]} rotation={[0, Math.PI / 6, 0]} />
 <Chair position={[-h + 3.2 * s, Y, h - 3.5 * s]} rotation={[0, Math.PI + Math.PI / 6, 0]} />
 ```
 
-Props use **arbitrary rotation values** (e.g., `Math.PI / 6`, `-Math.PI / 4`) and **Y offsets** for stacking (monitor on desk = `Y + 0.78`). There is no spatial awareness — props don't know about each other's positions.
+There are **~30+ unique mini-prop components** (Whiteboard, ServerRack, Easel, ConveyorBelt, GearMechanism, etc.) all defined inline in `RoomProps.tsx` — a 900+ line file. Props have no concept of their own footprint, bounding box, or occupied floor area.
 
-### 1.3 How Bots Navigate
+#### Bot Wandering (`Bot3D.tsx`)
+Bots maintain a `wanderState` ref with `currentX/Z` and `targetX/Z`. Movement works as follows:
+1. **Active bots** walk to their desk's `interactionPoints.deskPosition` and freeze there (working animation).
+2. **Idle bots** either walk to the coffee machine (50% chance if available) or wander randomly within a circular "walkable center" zone.
+3. **Sleeping bots** walk to a corner (`sleepCorner`) and play sleep animation.
+4. **Offline bots** freeze in place and fade to 40% opacity.
 
-Bot movement is handled in `Bot3D.tsx` and `BotAnimations.tsx`:
+Random wandering picks a point within a circular safe zone (`WalkableCenter`) defined per room type in `BotAnimations.tsx`.
 
-1. **Room bounds** are calculated as a shrunk rectangle (`margin = 2.5` from each wall):
-   ```tsx
-   function getRoomBounds(roomPos, roomSize): RoomBounds {
-     return {
-       minX: roomPos[0] - roomSize / 2 + 2.5,
-       maxX: roomPos[0] + roomSize / 2 - 2.5,
-       minZ: roomPos[2] - roomSize / 2 + 2.5,
-       maxZ: roomPos[2] + roomSize / 2 - 2.5,
-     }
-   }
-   ```
+#### Bot Animations (`BotAnimations.tsx`)
+The animation state machine has phases: `walking-to-desk`, `working`, `idle-wandering`, `getting-coffee`, `sleeping-walking`, `sleeping`, `offline`. Transitions are driven by `status` changes and the `arrived` flag (set when bot is within 0.3 units of target).
 
-2. **Walkable zone** is a circular area in the room center (per `getWalkableCenter()`):
-   - Default radius: `roomSize * 0.17` (≈2 units in a 12-unit room)
-   - Some rooms have tighter zones (thinking/ops: `radius * 0.55`, automation: `radius * 0.7`)
+Interaction points are defined per room type as hardcoded offsets:
+```tsx
+// Each room type maps to specific furniture positions
+case 'headquarters':
+  return {
+    deskPosition: [rx + (-h + 3 * s), 0, rz + (h - 3 * s)],
+    coffeePosition: [rx + (h - 1.5 * s), 0, rz + (-h + 2.5 * s)],
+    sleepCorner: [rx + (h - 2 * s), 0, rz + (h - 2 * s)],
+  }
+```
 
-3. **Wandering** = pick a random point within the walkable circle, lerp toward it at 0.3 speed, wait 3–6 seconds, repeat.
+### Pain Points
 
-4. **Interaction points** (desk, coffee, sleep corner) are hardcoded per room type in `getRoomInteractionPoints()`. Active bots walk to desk, idle bots 50% chance to get coffee (only headquarters has coffee), sleeping bots walk to a corner.
+| Problem | Severity | Root Cause |
+|---------|----------|------------|
+| **Bots walk through furniture** | High | No collision detection; walkable zone is a simple circle that doesn't account for prop footprints |
+| **Props clip into each other** | Medium | Positions are hardcoded magic numbers; no overlap validation |
+| **Interaction points don't match props** | Medium | `BotAnimations.tsx` duplicates position logic from `RoomProps.tsx`; they can drift apart |
+| **Adding new room types is tedious** | Medium | Must manually calculate every position; no reusable templates or snapping |
+| **Walkable zones are inaccurate** | Medium | Circular zones per room type are manually tuned; don't adapt to prop changes |
+| **No concept of room boundaries for navigation** | Low | Bots can only wander within their room; no inter-room movement |
+| **Single Y-plane assumed** | Low | Everything at `Y = 0.16`; no multi-level support |
+| **Prop jitter for multiple bots** | Low | Bots add random jitter `(Math.random() - 0.5) * 0.8` to avoid stacking on same desk; sometimes places them inside furniture |
+| **900+ line RoomProps.tsx** | Low | Every prop component is defined inline; no separation of prop definition from layout |
 
-5. **No pathfinding** — bots move in straight lines. No obstacle avoidance. Multiple bots use random jitter (`±0.4 units`) to avoid stacking on the same furniture.
-
-### 1.4 Pain Points
-
-| Problem | Details |
-|---------|---------|
-| **Furniture clipping** | Bots walk through desks, server racks, and walls. The walkable circle is a rough approximation that doesn't account for furniture footprints. |
-| **Bot stacking** | Multiple bots targeting the same desk/coffee position pile on top of each other. Jitter offsets (±0.4) are too small. |
-| **Non-modular rooms** | Adding a new room type requires writing a new function with ~20 lines of hardcoded positions. Changing furniture layout = code change. |
-| **Interaction point limitations** | Only 3 interaction points per room (desk, coffee, sleep). Only headquarters has coffee. No "sit in chair" or "check whiteboard" interactions. |
-| **Wall rigidity** | Walls are fixed perimeter boxes. Cannot have internal walls, L-shaped rooms, or variable door positions. |
-| **No collision data** | The renderer has zero knowledge of which world-space areas are occupied by furniture. Bots and props exist in separate coordinate systems. |
-| **Scaling pain** | Adding props to a room requires trial-and-error positioning. The `s = roomSize / 12` scale factor helps but doesn't prevent overlaps. |
-| **Maintenance burden** | `RoomProps.tsx` is 900+ lines of handcrafted positions. `BotAnimations.tsx` duplicates room-type logic to compute interaction points. Any layout change requires editing both files. |
+### Key Metrics (Current)
+- **Room types:** 8 (headquarters, dev, creative, marketing, thinking, automation, comms, ops) + default
+- **Unique prop types:** ~30 (Desk, Monitor, Chair, Lamp, Plant, ServerRack, Whiteboard, Easel, ConveyorBelt, etc.)
+- **Interaction points per room:** 3 (desk, coffee, sleep corner)
+- **Bot count per room:** typically 1-5
+- **Room size:** fixed 12×12 units
 
 ---
 
-## 2. Grid System Architecture
+## 2. Grid Architecture
 
-### 2.1 Room Grid (Micro Grid)
+### 2.1 Room Grid (Interior)
 
-Each room is subdivided into an **NxM grid** of cells. This is the fundamental building block.
+Each room's interior is divided into an NxN grid of cells. Given the current room size of 12 units:
 
-**Recommended cell size: `0.6 × 0.6` world units**
+**Cell size: 0.5 units** (recommended — see §9 for trade-off analysis)
 
-Rationale:
-- Room size = 12 units → 20×20 grid = 400 cells per room
-- A desk (currently ~1.4 × 0.7 units) fits in a 3×2 cell span (1.8 × 1.2 units with padding)
-- Fine enough for meaningful pathfinding, coarse enough to keep things simple
-- Props snap to cell boundaries; bots walk cell-to-cell
+This yields a **24×24 grid per room** (576 cells). At 0.5 units per cell:
+- A chair occupies ~1×1 cells (0.5×0.5 real units)
+- A desk occupies ~3×2 cells (1.5×1.0 real units)
+- A round table occupies ~4×4 cells (2.0×2.0 real units)
+- Walkable paths need ~2 cells width (1.0 real unit) for comfortable bot passage
 
-Alternative: `0.5 units/cell` → 24×24 = 576 cells (more granular but more data). `1.0 units/cell` → 12×12 = 144 cells (simpler but too coarse for small props like lamps).
+#### Cell Types
 
-**Cell types:**
-
-| Type | Walkable | Description |
-|------|----------|-------------|
-| `empty` | ✅ | Open floor — bots can walk here |
-| `wall` | ❌ | Perimeter or internal wall |
-| `door` | ✅ | Passage between room and hallway |
-| `furniture` | ❌ | Solid prop (desk, server rack, filing cabinet) |
-| `decoration` | ✅ | Visual-only prop that bots walk over/past (cable mess, floor lamp base) |
-| `interaction` | ❌* | Furniture with an interaction point (desk+chair, coffee machine). *The interaction cell itself is blocked; an adjacent cell is the "use" position. |
-
-**Multi-cell props** span across grid cells. The "anchor" cell (top-left) holds the prop definition; spanned cells reference the anchor:
-
-```
-Grid view of a 3×2 desk:
-[D1][D·][D·]    D1 = anchor cell (propId: 'desk', span: {w:3, d:2})
-[D·][D·][D·]    D· = continuation cell (references anchor)
-```
-
-**Walkable mask** is derived automatically: any cell with `walkable: true` is passable. This mask is the input for pathfinding.
-
-### 2.2 Building Grid (Macro Grid)
-
-The building layout uses a **higher-level grid** where each cell represents an entire room or hallway segment.
-
-Current layout constants (unchanged):
-```
-ROOM_SIZE = 12 units
-HALLWAY_WIDTH = 4 units
-GRID_SPACING = 16 units (12 + 4)
-MAX_COLS = 3
-```
-
-**Building super-cells:**
-
-| Super-cell type | Size | Description |
-|-----------------|------|-------------|
-| `room` | 12×12 units | Contains a room micro-grid (20×20 cells at 0.6/cell) |
-| `hallway-h` | 4×12 units | Horizontal hallway between rooms |
-| `hallway-v` | 12×4 units | Vertical hallway between rooms |
-| `junction` | 4×4 units | Intersection of two hallways |
-| `parking` | 9×12+ units | Break area (special room type) |
-| `entrance` | 5×4 units | Lobby/entrance zone |
-
-**Automatic wall generation:** Walls are placed wherever a room's edge borders a hallway or the building exterior. Doors are placed where a room connects to a hallway — one door per hallway-facing wall.
-
-**Building macro-grid example** (3-column, 3-row layout):
-
-```
-┌──────────┬────┬──────────┬────┬──────────┬────┬─────────┐
-│          │    │          │    │          │    │         │
-│  Room 0  │ HH │  Room 1  │ HH │  Room 2  │ HH │ Parking │
-│  (HQ)    │    │  (Dev)   │    │ (Create) │    │  Area   │
-│          │    │          │    │          │    │         │
-├──────────┼────┼──────────┼────┼──────────┼────┤         │
-│   HV     │ JN │   HV     │ JN │   HV     │ JN │         │
-├──────────┼────┼──────────┼────┼──────────┼────┤         │
-│          │    │          │    │          │    │         │
-│  Room 3  │ HH │  Room 4  │ HH │  Room 5  │ HH │         │
-│ (Market) │    │ (Think)  │    │ (Auto)   │    │         │
-│          │    │          │    │          │    │         │
-├──────────┼────┼──────────┼────┼──────────┼────┼─────────┤
-│   HV     │ JN │   HV     │ JN │   HV     │ JN │         │
-├──────────┼────┼──────────┼────┼──────────┼────┤         │
-│          │    │          │    │          │    │         │
-│  Room 6  │ HH │  Room 7  │ HH │  (empty) │    │         │
-│  (Comms) │    │  (Ops)   │    │          │    │         │
-│          │    │          │    │          │    │         │
-└──────────┴────┴──────────┴────┴──────────┴────┴─────────┘
-
-HH = horizontal hallway    HV = vertical hallway    JN = junction
-```
-
-### 2.3 Wall Generation from Grid
-
-Walls are derived from **grid boundaries** rather than manually placed:
-
-**Rule 1 — Room perimeter:** For every cell at the edge of a room grid, if the adjacent cell outside the room is not a door, place a wall segment on that edge.
-
-**Rule 2 — Door placement:** For each wall of a room that faces a hallway, place a door at the center cell(s). Door width = 2 cells (1.2 units) — enough for one bot to pass.
-
-**Rule 3 — Building exterior:** For every hallway/junction cell at the building perimeter, place an exterior wall.
-
-**Wall mesh generation:** Instead of 4 large box meshes, generate wall segments from edge data:
-
-```tsx
-// Pseudocode
-for each cell in roomGrid:
-  for each edge (north, south, east, west):
-    if neighbor is out-of-bounds or non-walkable exterior:
-      if cell is not a door:
-        addWallSegment(cell.position, edge.direction, wallHeight)
-```
-
-This automatically handles:
-- Standard rectangular rooms (same as now)
-- Internal wall segments (future: L-shaped rooms, dividers)
-- Variable door positions (not always center-front)
-- Multiple doors per room
-
----
-
-## 3. Bot Pathfinding on Grid
-
-### 3.1 Algorithm: A* on 2D Grid
-
-Grid-based pathfinding replaces the current "pick random point, lerp in a straight line" approach.
-
-**A\* implementation** (simple, well-understood, optimal for small grids):
-
-```tsx
-function findPath(
-  grid: GridCell[][],
-  start: {x: number, z: number},
-  goal: {x: number, z: number},
-): {x: number, z: number}[] | null {
-  // Standard A* with Manhattan distance heuristic
-  // Returns array of cell coordinates from start to goal
-  // Returns null if no path exists
-  // Grid size: 20×20 = 400 cells — A* completes in <1ms
+```typescript
+enum CellType {
+  EMPTY = 0,         // Walkable floor
+  BLOCKED = 1,       // Occupied by furniture (non-walkable)
+  PROP_ANCHOR = 2,   // Origin cell of a multi-cell prop
+  INTERACTION = 3,   // Where a bot stands to use a prop (walkable + semantic)
+  WALL = 4,          // Perimeter wall cell
+  DOOR = 5,          // Entrance/exit opening
+  RESERVED = 6,      // Clearance zone (walkable but not for prop placement)
 }
 ```
 
-**Movement directions:** 8-directional (cardinal + diagonal). Diagonal moves cost √2 ≈ 1.414 vs 1.0 for cardinal. Diagonal moves are blocked if either adjacent cardinal cell is non-walkable (prevents corner-cutting through furniture).
+#### Prop Snapping
 
-### 3.2 Bot Movement Along Path
-
-Once a path is computed:
-
-1. Bot receives a `path: {x, z}[]` — list of cell coordinates
-2. Each frame, bot lerps toward the next cell center
-3. When within 0.1 units of cell center, advance to next cell
-4. Smooth turning: lerp rotation toward next cell direction (already implemented)
-5. **Path recomputation:** only when target changes (status transition), not every frame
-
-**Speed by status:**
-
-| Status | Walk speed | Behavior |
-|--------|-----------|----------|
-| Active | 1.2 u/s | Walk to assigned desk, then stop |
-| Idle | 0.3–0.6 u/s | Wander to random walkable cell, or visit coffee/interaction |
-| Sleeping | 0.4 u/s | Walk to sleep corner, then stop |
-| Offline | 0 | Frozen in place |
-
-### 3.3 Interaction Targets as Grid Cells
-
-Instead of hardcoded world-space coordinates, interaction points are **specific cells** in the blueprint:
+Props snap to grid cells based on their **footprint** — a rectangular region of cells they occupy:
 
 ```
-Desk interaction:  The cell adjacent to the desk marked as 'interaction' (type: 'work')
-Coffee interaction: The cell in front of the coffee machine (type: 'coffee')
-Sleep corner:      Any 'empty' cell in a room corner (type: 'rest')
+Desk (3×2 footprint, facing south):
+  ┌─┬─┬─┐
+  │B│B│B│  B = BLOCKED
+  │B│A│B│  A = PROP_ANCHOR (origin, where the desk "is")
+  └─┴─┴─┘
+  │I│ │I│  I = INTERACTION (chairs go here)
 ```
 
-Bots pathfind **to the interaction cell** (not the furniture cell itself). The interaction cell is the "stand here to use" position — like how you stand in front of a desk, not on top of it.
+Props define:
+- `footprint: [width, depth]` in cells
+- `anchorOffset: [x, z]` — which cell in the footprint is the "origin"
+- `interactionCells: Array<{dx, dz, facing}>` — relative cells where bots stand to use it
+- `clearanceCells: Array<{dx, dz}>` — cells that should stay empty but aren't blocked
 
-### 3.4 Collision Avoidance
+### 2.2 Building Grid (Room Placement)
 
-**Simple reservation system:**
-- Each bot "reserves" its current cell and target cell
-- When picking a wander target, exclude reserved cells
-- When multiple bots want the same interaction point, queue them or assign alternative points
-- No need for dynamic obstacle avoidance — grid prevents walking through furniture
+At the building level, rooms are placed on a **coarser grid**:
 
-**Multiple desk positions:** Blueprints should define multiple `interaction:work` cells per room so multiple bots can "work" simultaneously without stacking.
+**Building cell size: 1 room unit** (each cell can hold a room section or hallway)
 
-### 3.5 Natural Movement (Anti-Robotic)
+```
+Building Layout (example):
+  ┌────────┬────────┬────────┐
+  │  Dev   │Hallway │Creative│
+  │  Room  │        │ Room   │
+  ├────────┼────────┼────────┤
+  │Hallway │ Lobby  │Hallway │
+  │        │        │        │
+  ├────────┼────────┼────────┤
+  │  Ops   │Hallway │ Comms  │
+  │  Room  │        │  Room  │
+  └────────┴────────┴────────┘
+```
 
-Pure grid movement looks robotic. Mitigations:
+Room sizes can vary (small: 8×8, medium: 12×12, large: 16×16). The building grid handles:
+- Room placement and sizing
+- Hallway generation between adjacent rooms
+- Shared wall detection (rooms sharing an edge → single wall)
+- Door placement (aligned with hallway connections)
 
-1. **Position jitter:** Bot visual position = cell center + small random offset (±0.1 units). Different per bot, consistent per cell.
-2. **Smooth interpolation:** Use eased lerp (ease-in-out) between cells, not linear.
-3. **Speed variation:** ±10% random speed multiplier per bot.
-4. **Path smoothing:** Skip waypoints where 3+ consecutive cells are in a straight line — just lerp to the endpoint of the straight segment.
-5. **Idle micro-movements:** When stopped at a desk, gentle random sway (already implemented as bobbing).
-6. **Occasional diagonal preference:** For wandering, sometimes pick diagonal-adjacent cells to create curved-looking paths.
+### 2.3 Wall Auto-Generation
+
+Walls are generated from grid edges rather than being manually placed:
+
+**Rules:**
+1. Every room-edge cell on the boundary gets a `WALL` cell type
+2. Where two rooms are adjacent, the shared edge gets a single wall (not double)
+3. Doors are placed where a room edge meets a hallway
+4. Internal walls (subdivisions) can be defined in blueprints as `WALL` cells mid-room
+
+**Algorithm:**
+```
+For each room:
+  1. Mark perimeter cells as WALL
+  2. For each adjacent room/hallway:
+     a. Find shared edge cells
+     b. Remove WALL from 2-3 consecutive cells → DOOR
+     c. If adjacent to hallway: align door with hallway center
+  3. Generate wall meshes from contiguous WALL cell runs
+     (merge consecutive cells into single wall segments for rendering efficiency)
+```
+
+Wall meshes are generated as **merged box geometries** — one mesh per continuous wall segment rather than per-cell, for performance.
 
 ---
 
-## 4. Room Templates / Blueprints
+## 3. Bot Pathfinding
+
+### 3.1 Approach: Hybrid Waypoint + Grid Fallback
+
+Given GPT-5.2's valid critique (see §10) and our actual bot count (1-5 per room), we recommend a **hybrid approach**:
+
+**Primary: Semantic waypoint graph** (lightweight, covers 90% of movement)
+**Fallback: Grid-based A*** (for edge cases and future extensibility)
+
+#### Waypoint Graph (Primary)
+
+Each room blueprint defines semantic waypoints derived from its grid:
+
+```typescript
+interface RoomWaypoint {
+  id: string               // e.g., 'desk-1', 'coffee', 'door', 'center'
+  position: [number, number, number]  // world-space
+  type: 'desk' | 'coffee' | 'sleep' | 'door' | 'social' | 'wander'
+  connectedTo: string[]    // IDs of reachable waypoints
+  capacity: number         // max bots at this waypoint (1 for desk, 3 for social)
+}
+```
+
+Waypoints are **auto-generated from the grid blueprint**:
+1. Every `INTERACTION` cell becomes a waypoint
+2. Room center becomes a `wander` waypoint
+3. Door cells become `door` waypoints
+4. Clear floor areas get 2-3 `wander` waypoints
+5. Edges between waypoints are validated: the grid path between them must be clear of `BLOCKED` cells
+
+Bots navigate by:
+1. Pick target waypoint (desk when active, coffee when idle, corner when sleeping)
+2. Walk along waypoint edges
+3. Smooth interpolation with Catmull-Rom spline through waypoint positions
+
+#### Grid A* (Fallback)
+
+When the waypoint graph doesn't have a direct path (e.g., dynamic obstacles, edge cases), fall back to A* on the room grid:
+
+```typescript
+function findPath(
+  grid: GridCell[][],
+  start: GridCoord,
+  end: GridCoord
+): GridCoord[] {
+  // Standard A* with 8-directional movement
+  // Heuristic: octile distance (allows diagonal movement)
+  // Cost: 1.0 for cardinal, 1.414 for diagonal
+  // Blocked cells: BLOCKED, WALL, PROP_ANCHOR
+  // Walkable: EMPTY, INTERACTION, RESERVED, DOOR
+}
+```
+
+**When to recompute paths:**
+- Bot status changes (active → idle → sleeping)
+- Bot arrives at waypoint and needs next segment
+- Every 5 seconds as a stuck-detection fallback
+- Never per-frame
+
+### 3.2 Smooth Interpolation
+
+Raw grid/waypoint paths produce angular movement. We smooth via:
+
+1. **Path simplification:** Remove intermediate waypoints that have line-of-sight to the next (raycast on grid)
+2. **Catmull-Rom spline:** Fit a smooth curve through remaining waypoints
+3. **Speed easing:** Slow down approaching targets, speed up mid-path
+4. **Rotation lerp:** Current system's `angleDiff * 0.1` approach works well — keep it
+
+### 3.3 Interaction Targets as Grid Cells
+
+Each prop's `interactionCells` map directly to world positions where bots stand:
+
+```
+Desk blueprint:
+  ┌─┬─┬─┐
+  │ │D│ │  D = desk surface
+  │ │D│ │
+  └─┴─┴─┘
+    │I│    I = interaction cell (bot faces desk, plays typing animation)
+```
+
+The interaction cell knows:
+- `facing: number` — rotation the bot should have when interacting
+- `animation: BotAnimState` — which animation to play (working, getting-coffee, etc.)
+- `propId: string` — which prop this interaction belongs to
+
+This replaces the current manual `getRoomInteractionPoints()` function entirely — interaction points are derived from the blueprint data.
+
+### 3.4 Bot-Bot Avoidance
+
+With only 1-5 bots per room, heavy avoidance isn't needed:
+
+1. **Waypoint capacity:** If a desk waypoint is at capacity, idle bots pick another
+2. **Jitter on arrival:** Small random offset (±0.2 units) from exact waypoint position
+3. **Simple separation:** If two bots are within 0.5 units, apply gentle repulsion force
+
+---
+
+## 4. Room Blueprints
 
 ### 4.1 Blueprint Concept
 
-Each room type has a predefined **blueprint** — a 2D array defining cell contents. Blueprints replace the hardcoded position functions in `RoomProps.tsx`.
+Each room type has a **blueprint** — a data-driven template that defines:
+- Grid dimensions
+- Cell map (which cells are blocked, walkable, interaction points)
+- Prop list with grid positions
+- Waypoints (auto-generated or manually placed)
+- Wall openings / door positions
 
-Grid size: **20×20 cells** (12 units ÷ 0.6 units/cell)
+### 4.2 ASCII Art Layouts
 
-**Legend for blueprints below:**
-
-| Symbol | Meaning | Cell Type |
-|--------|---------|-----------|
-| `██` | Wall | `wall` |
-| `🚪` | Door | `door` |
-| `··` | Empty (walkable) | `empty` |
-| `🖥️` | Desk + Monitor | `furniture` (propId: `desk-monitor`) |
-| `💺` | Chair (interaction: work) | `interaction` (interactionType: `work`) |
-| `☕` | Coffee machine | `furniture` (propId: `coffee-machine`) |
-| `☕·` | Coffee use point | `interaction` (interactionType: `coffee`) |
-| `📋` | Whiteboard / Notice board | `decoration` (propId: `whiteboard`) |
-| `🪴` | Plant | `decoration` (propId: `plant`) |
-| `💡` | Lamp | `decoration` (propId: `lamp`) |
-| `🖲️` | Server rack | `furniture` (propId: `server-rack`) |
-| `🎨` | Easel | `furniture` (propId: `easel`) |
-| `📊` | Presentation screen | `decoration` (propId: `screen`) |
-| `📺` | Small screen | `decoration` (propId: `small-screen`) |
-| `🛋️` | Bean bag | `furniture` (propId: `bean-bag`) |
-| `📚` | Bookshelf | `furniture` (propId: `bookshelf`) |
-| `⚙️` | Gear mechanism | `decoration` (propId: `gear`) |
-| `🎛️` | Control panel | `furniture` (propId: `control-panel`) |
-| `📡` | Satellite dish | `decoration` (propId: `satellite`) |
-| `🗄️` | Filing cabinet | `furniture` (propId: `filing-cabinet`) |
-| `🧯` | Fire extinguisher | `decoration` (propId: `extinguisher`) |
-| `🎧` | Headset | `decoration` (propId: `headset`) |
-| `🔔` | Antenna tower | `decoration` (propId: `antenna`) |
-| `⏰` | Wall clock | `decoration` (propId: `clock`) |
-| `🥤` | Water cooler | `furniture` (propId: `water-cooler`) |
-| `💤` | Sleep zone | `interaction` (interactionType: `rest`) |
-| `~~` | Cable mess | `decoration` (propId: `cables`) |
-
-> **Note:** Blueprints below use a simplified **10×10 view** for readability (each cell shown = 2×2 actual grid cells). Actual implementation uses 20×20 cells at 0.6 units each.
-
-### 4.2 Headquarters Blueprint
+#### Dev Room (24×24 grid, 0.5u cells, 12×12 real units)
 
 ```
- ┌────────────────────────────────────────────┐
- │ ██  ██  ██  ██  ██  🚪  🚪  ██  ██  ██  │  N
- │ ██  🖥️  🖥️  ··  ··  ··  ··  ··  🪴  ██  │  ↑
- │ ██  💺  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  🥤  ··  ··  ··  ··  ··  ☕  ☕· ██  │
- │ ██  ··  ··  ··  ··  ··  📋  📋  ··  ██  │
- │ ██  💤  ··  ··  ··  ··  ··  ··  💤  ██  │
- │ ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  │  S
- └────────────────────────────────────────────┘
-   W                                       E
+Legend: . = empty/walkable  # = wall  D = door  
+        d = desk  m = monitor  c = chair  s = server rack
+        w = whiteboard (wall-mounted)  L = lamp  C = cables
+        i = interaction point
+
+  ########################
+  #d d m . . . . . d d m#
+  #d d . . . . . . d d .#
+  #. i . . . . . . . i .#
+  #c . . . . . . . . . c#
+  #. . . . . . . . . . .#
+  #. . . . . . . . . . .#
+  #. . . C . . . . . . .#
+  #. . . . . . . . . . .#
+  #. . . . . . . . . . .#
+  #. . . . . . . . . . .#
+  #L . . . . . . . . . s#
+  #. . . . . . . . . . s#
+  ## ## ## #DD# ## ## ## #
+        wwwwwwww
+  (whiteboard on back wall, not shown in grid)
 ```
 
-- Desk + monitor at top-left wall, chair facing it
-- Coffee machine bottom-right, water cooler bottom-left
-- Notice board on east wall
-- Plant in NE corner, sleep zones in SW/SE corners
-- Large open center for wandering
-
-### 4.3 Dev Room Blueprint
+#### Headquarters (24×24)
 
 ```
- ┌────────────────────────────────────────────┐
- │ ██  ██  ██  ██  🚪  🚪  ██  ██  ██  ██  │
- │ ██  🖥️  🖥️  ··  ··  ··  🖥️  🖥️  🖲️  ██  │
- │ ██  💺  ··  ··  ··  ··  💺  ··  🖲️  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ~~  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  💡  ··  ··  ··  ··  ··  📋  📋  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  💤  ··  ··  ··  ··  ··  ··  💤  ██  │
- │ ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  │
- └────────────────────────────────────────────┘
+  ########################
+  #. . . . . . . . . . .#
+  #. . . . N . . . . . .#    N = notice board (wall)
+  #. d d m . . . . . . .#
+  #. d d . . . . . . . .#
+  #. . i . . . . . . . .#
+  #. c . . . . . . . . .#
+  #. . . . . . . . . . .#
+  #. . . . . . . . . . .#
+  #W . . . . . . . . . K#    W = water cooler, K = coffee machine
+  #. . . . . . . . . . .#
+  #. . . . . . . P . . .#    P = plant
+  ## ## ## #DD# ## ## ## #
 ```
 
-- Two desk+monitor stations (left and right of back wall)
-- Server racks in NE corner (2 cells tall)
-- Whiteboard on east wall
-- Cable mess on floor (decoration, walkable)
-- Desk lamp near left workstation
-
-### 4.4 Creative Room Blueprint
+#### Thinking Room (24×24)
 
 ```
- ┌────────────────────────────────────────────┐
- │ ██  ██  ██  ██  🚪  🚪  ██  ██  ██  ██  │
- │ ██  🪴  ··  ··  ··  ··  🖥️  🖥️  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  💺  ··  ··  ██  │
- │ ██  🎨  🎨  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  🪴  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  📋  📋  📋  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  💤  ··  ··  ··  ··  ··  ··  💤  ██  │
- │ ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  │
- └────────────────────────────────────────────┘
+  ########################
+  #. . . . . . . . . . .#
+  #. . . . . . . . . . .#
+  #. . . . . . . . . . B#    B = bookshelf
+  #. . . . . . . . . . B#
+  #. b . . . . . . . . .#    b = bean bag
+  #. . . .T T . . . b .#    T = round table
+  #. . . .T T . . . . .#
+  #. b . . . . . . . . .#
+  #. . . . . . b . . . .#
+  #L . . . . . . . . . .#    L = lamp
+  #. . . . . . . . . . .#
+  ## ## ## #DD# ## ## ## #
+  wwwwww (whiteboard on left wall)
 ```
 
-- Easel (2-cell) on west wall
-- Desk + monitor + drawing tablet on NE area
-- Mood board on south wall (3-cell wide)
-- Plants in NW and E corners
-
-### 4.5 Marketing Room Blueprint
+#### Automation Room (24×24)
 
 ```
- ┌────────────────────────────────────────────┐
- │ ██  ██  ██  ██  🚪  🚪  ██  ██  ██  ██  │
- │ ██  🖥️  🖥️  ··  ··  ··  ··  ··  🪴  ██  │
- │ ██  💺  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  📊  📊  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  📋  📋  📋  ··  ··  ··  💺  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  💤  ··  ··  ··  ··  ··  ··  💤  ██  │
- │ ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  │
- └────────────────────────────────────────────┘
+  ########################
+  #. . . . . CK. . . . .#    CK = wall clock
+  #S . . . . . . . . . S#    S = small screen (wall)
+  #S . . . . . . . . . S#
+  #. . . . . . . . . . .#
+  #. . . . . . . . . . .#
+  #. .CCCCCCCCCCCC. . . .#    C = conveyor belt
+  #. . . . . . . . . . .#
+  #. . . . . . . . . G .#    G = gear mechanism (wall)
+  #P . . . . . . . . . .#    P = control panel
+  #P i . . . . . . . . .#
+  #. . . . . . . . . . .#
+  ## ## ## #DD# ## ## ## #
 ```
 
-- Standing desk + monitor at NW (standing desk variant)
-- Presentation screen on east wall (2-cell)
-- Bar chart prop center-right
-- Guest chair on south side
+### 4.3 Blueprint Data Model
 
-### 4.6 Thinking Room Blueprint
+```typescript
+interface RoomBlueprint {
+  id: string                          // 'dev', 'headquarters', etc.
+  name: string                        // Display name
+  gridWidth: number                   // Cells wide (24 for 12-unit room)
+  gridHeight: number                  // Cells deep (24)
+  cellSize: number                    // World units per cell (0.5)
+  
+  // Cell map — flattened row-major array
+  cells: CellType[]                   // length = gridWidth * gridHeight
+  
+  // Props placed in this blueprint
+  props: BlueprintProp[]
+  
+  // Auto-generated or manually-defined waypoints
+  waypoints: RoomWaypoint[]
+  
+  // Door positions (relative to room grid)
+  doors: DoorDefinition[]
+  
+  // Wall-mounted decorations (not on grid, attached to walls)
+  wallDecor: WallDecoration[]
+  
+  // Metadata
+  defaultSize: number                 // Real-world units (12)
+  minBots: number                     // Minimum bots before room feels empty
+  maxBots: number                     // Maximum comfortable bot count
+  tags: string[]                      // ['office', 'tech', 'creative']
+}
 
+interface BlueprintProp {
+  type: string                        // 'desk', 'monitor', 'chair', 'server-rack', etc.
+  gridX: number                       // Cell X position (anchor cell)
+  gridZ: number                       // Cell Z position (anchor cell)
+  rotation: 0 | 90 | 180 | 270       // Snap rotation in degrees
+  variant?: string                    // Optional variant (e.g., 'standing' for desk)
+}
+
+interface DoorDefinition {
+  edge: 'north' | 'south' | 'east' | 'west'
+  startCell: number                   // Start cell index along that edge
+  width: number                       // Door width in cells (typically 2-3)
+}
+
+interface WallDecoration {
+  type: string                        // 'whiteboard', 'clock', 'screen', 'notice-board'
+  wall: 'north' | 'south' | 'east' | 'west'
+  positionAlongWall: number           // 0.0 - 1.0 (fraction along wall length)
+  height: number                      // Height on wall (world units)
+}
 ```
- ┌────────────────────────────────────────────┐
- │ ██  ██  ██  ██  🚪  🚪  ██  ██  ██  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  📚  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  📚  ██  │
- │ ██  📋  📋  ··  🛋️  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  🛋️  🍽️  🍽️  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  🍽️  🍽️  🛋️  ··  ··  ██  │
- │ ██  💡  ··  ··  ··  🛋️  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  💤  ··  ··  ··  ··  ··  ··  💤  ██  │
- │ ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  │
- └────────────────────────────────────────────┘
-```
-
-*🍽️ = round table (4-cell, furniture)*
-
-- Central round table (2×2 cells)
-- 4 bean bags around the table (interaction: think)
-- Bookshelf on east wall
-- Whiteboard on west wall
-- Lamp in SW area
-
-### 4.7 Automation Room Blueprint
-
-```
- ┌────────────────────────────────────────────┐
- │ ██  ██  ██  ██  🚪  🚪  ██  ██  ██  ██  │
- │ ██  📺  ··  ··  ⏰  ··  ··  📺  ··  ██  │
- │ ██  📺  ··  ··  ··  ··  ··  📺  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ⚙️  ██  │
- │ ██  ··  🔲  🔲  🔲  🔲  ··  ··  ⚙️  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  🎛️  🎛️  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  💺  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  💤  ··  ··  ··  ··  ··  ··  💤  ██  │
- │ ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  │
- └────────────────────────────────────────────┘
-```
-
-*🔲 = conveyor belt segment (furniture, 4-cell wide)*
-
-- Wall clock (decoration, on back wall)
-- 4 small dashboard screens (2 left, 2 right of back wall)
-- Conveyor belt through center (4-cell, furniture)
-- Gear mechanism on east wall
-- Control panel at SW with interaction chair
-
-### 4.8 Comms Room Blueprint
-
-```
- ┌────────────────────────────────────────────┐
- │ ██  ██  ██  ██  🚪  🚪  ██  ██  ██  ██  │
- │ ██  🔔  ··  ··  ··  ··  ··  ··  📡  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  📺  ··  ··  ··  ··  📺  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  📺  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  🖥️  🖥️  🎧  ··  ██  │
- │ ██  ··  ··  ··  ··  💺  ··  ··  ··  ██  │
- │ ██  💤  ··  ··  ··  ··  ··  ··  💤  ██  │
- │ ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  │
- └────────────────────────────────────────────┘
-```
-
-- Antenna tower in NW corner (tall decoration)
-- Satellite dish in NE corner
-- 3 small screens on west wall
-- Desk + monitor + headset in south area
-- Signal wave effects at antenna (animated decoration)
-
-### 4.9 Ops Room Blueprint
-
-```
- ┌────────────────────────────────────────────┐
- │ ██  ██  ██  ██  🚪  🚪  ██  ██  ██  ██  │
- │ ██  🗄️  ··  📺  📺  📺  ··  ··  ··  ██  │
- │ ██  🗄️  ··  📺  ··  📺  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  🚦  ██  │
- │ ██  ··  💺  🍽️  🍽️  ··  ··  ··  🚦  ██  │
- │ ██  ··  ··  🍽️  🍽️  💺  ··  ··  ··  ██  │
- │ ██  ··  ··  ··  ··  ··  ··  ··  ··  ██  │
- │ ██  💺  ··  ··  ··  ··  ··  🧯  ··  ██  │
- │ ██  💤  ··  ··  ··  ··  ··  ··  💤  ██  │
- │ ██  ██  ██  ██  ██  ██  ██  ██  ██  ██  │
- └────────────────────────────────────────────┘
-```
-
-*🚦 = status lights (decoration)*
-
-- Central round table (command table, 2×2)
-- 5 wall screens (command center display)
-- 3 chairs around the table (interaction: work)
-- Filing cabinets NW
-- Status lights on east wall
-- Fire extinguisher near entrance
-
-### 4.10 Future Customization
-
-Should templates be user-configurable? **Yes, eventually (Phase 5).**
-
-A grid editor would let users:
-1. View room blueprint as a 2D grid
-2. Drag-and-drop props onto cells
-3. Mark cells as walkable/blocked
-4. Save custom blueprints per team/instance
-
-This is a natural extension of the grid system but not required for the initial implementation. The data model should support it from the start.
 
 ---
 
 ## 5. Data Model
 
-### 5.1 Core Types
+### 5.1 Core Interfaces
 
 ```typescript
-// ─── Cell Types ─────────────────────────────────────────────────
+// ─── Grid Cell ──────────────────────────────────────────────────
 
-type CellType = 'empty' | 'wall' | 'door' | 'furniture' | 'decoration' | 'interaction'
-
-type InteractionType = 'work' | 'coffee' | 'rest' | 'think' | 'observe'
-
-type Rotation = 0 | 90 | 180 | 270
+enum CellType {
+  EMPTY = 0,
+  BLOCKED = 1,
+  PROP_ANCHOR = 2,
+  INTERACTION = 3,
+  WALL = 4,
+  DOOR = 5,
+  RESERVED = 6,
+}
 
 interface GridCell {
   type: CellType
-  walkable: boolean               // derived from type, but explicit for fast lookups
-
-  // Prop rendering
-  propId?: string                 // e.g., 'desk', 'server-rack', 'coffee-machine'
-  rotation?: Rotation             // orientation of the prop (clockwise from north)
-
-  // Multi-cell props
-  span?: {
-    width: number                 // cells wide (x-axis)
-    depth: number                 // cells deep (z-axis)
+  propId?: string           // If BLOCKED/PROP_ANCHOR: which prop occupies this cell
+  interactionMeta?: {       // If INTERACTION: metadata for bot behavior
+    propId: string          // Which prop this interacts with
+    facing: number          // Radians — direction bot should face
+    animation: string       // Animation to play ('working', 'coffee', 'sleeping')
+    capacity: number        // Max simultaneous bots (usually 1)
   }
-  anchorRef?: {                   // for continuation cells: reference to anchor
-    x: number
-    z: number
-  }
-
-  // Interaction
-  interactionType?: InteractionType
-  interactionFacing?: Rotation    // which direction the bot faces when interacting
-
-  // Metadata
-  label?: string                  // human-readable label for editor UI
-}
-```
-
-### 5.2 Room Blueprint
-
-```typescript
-interface DoorPosition {
-  /** Cell coordinates within the room grid */
-  x: number
-  z: number
-  /** Which wall this door is on */
-  facing: 'north' | 'south' | 'east' | 'west'
-  /** Width in cells (typically 2) */
-  width: number
 }
 
-interface RoomBlueprint {
-  /** Blueprint identifier (e.g., 'headquarters', 'dev-room') */
+// ─── Prop Definition (registry) ─────────────────────────────────
+
+interface PropDefinition {
+  type: string                            // 'desk', 'monitor', etc.
+  displayName: string
+  footprint: [number, number]             // [width, depth] in cells
+  anchorOffset: [number, number]          // Which cell is the "origin" [x, z]
+  interactionCells: InteractionCell[]     // Relative interaction positions
+  clearanceCells: [number, number][]      // Cells that should stay empty nearby
+  category: 'furniture' | 'tech' | 'decor' | 'utility'
+  wallMounted: boolean                    // If true, must be placed against a wall
+  stackable: boolean                      // Can another prop be placed on top (e.g., monitor on desk)
+  yOffset: number                         // Base Y position (0.16 for floor items)
+  component: string                       // React component name to render
+}
+
+interface InteractionCell {
+  dx: number                // Offset from anchor in cells
+  dz: number
+  facing: number            // Radians
+  animation: string         // Animation state for bot
+  capacity: number          // Max bots at this point
+}
+
+// ─── Room Blueprint ─────────────────────────────────────────────
+
+// (See §4.3 above for full interface)
+
+// ─── Building Layout ────────────────────────────────────────────
+
+interface BuildingLayout {
   id: string
-  /** Human-readable name */
   name: string
-  /** Display icon */
-  icon?: string
-
-  /** Grid dimensions in cells */
-  gridWidth: number               // typically 20
-  gridDepth: number               // typically 20
-
-  /** World units per cell */
-  cellSize: number                // 0.6
-
-  /** 2D array of cells [z][x] (row-major, z=0 is north/back wall) */
-  cells: GridCell[][]
-
-  /** Door positions (derived from cells but stored for quick lookup) */
-  doors: DoorPosition[]
-
-  /** Pre-computed walkable cell list for pathfinding */
-  walkableCells?: { x: number; z: number }[]
-
-  /** Pre-computed interaction points by type */
-  interactionPoints?: {
-    type: InteractionType
-    cells: { x: number; z: number; facing: Rotation }[]
-  }[]
+  
+  // Building grid (coarse — room-level placement)
+  gridWidth: number         // Building grid columns
+  gridHeight: number        // Building grid rows
+  cellSize: number          // World units per building cell (e.g., 14 = room + padding)
+  
+  // Room placements
+  rooms: RoomPlacement[]
+  
+  // Hallway segments
+  hallways: HallwaySegment[]
+  
+  // Shared facilities
+  sharedAreas: SharedArea[]
 }
-```
 
-### 5.3 Building Layout
-
-```typescript
 interface RoomPlacement {
-  /** Reference to blueprint */
-  blueprintId: string
-  /** Position in building grid (macro cell coordinates) */
-  gridX: number
-  gridZ: number
-  /** Associated room data (from useRooms) */
-  roomId: string
+  roomId: string            // Links to Room entity
+  blueprintId: string       // Which blueprint to use
+  gridX: number             // Building grid X
+  gridZ: number             // Building grid Z
+  spanX: number             // How many building cells wide (1 = standard, 2 = large room)
+  spanZ: number             // How many building cells deep
+  rotation: 0 | 90 | 180 | 270
 }
 
 interface HallwaySegment {
-  /** Start and end in building grid coordinates */
-  from: { x: number; z: number }
-  to: { x: number; z: number }
-  /** Orientation */
-  direction: 'horizontal' | 'vertical'
-  /** Width in world units */
-  width: number
+  fromCell: [number, number]   // Building grid coords
+  toCell: [number, number]     // Building grid coords
+  width: number                // Hallway width in room-grid cells
 }
 
-interface BuildingLayout {
-  /** Building grid dimensions (in macro cells) */
-  gridWidth: number
-  gridDepth: number
-
-  /** Room placements */
-  rooms: RoomPlacement[]
-
-  /** Hallway connections */
-  hallways: HallwaySegment[]
-
-  /** Parking area */
-  parking?: {
-    gridX: number
-    gridZ: number
-    width: number                 // world units
-    depth: number                 // world units
-  }
-
-  /** Entrance position */
-  entrance?: {
-    x: number                     // world units
-    z: number
-    width: number
-  }
+interface SharedArea {
+  type: 'lobby' | 'parking' | 'break-room' | 'garden'
+  gridX: number
+  gridZ: number
+  spanX: number
+  spanZ: number
+  blueprintId: string
 }
 ```
 
-### 5.4 Pathfinding State
+### 5.2 Prop Registry
+
+A centralized registry maps prop types to their definitions:
 
 ```typescript
-interface PathfindingGrid {
-  /** Flat walkability map: true = walkable */
-  walkable: boolean[][]           // [z][x]
-  width: number
-  height: number
-}
-
-interface BotPath {
-  /** Sequence of cell coordinates */
-  waypoints: { x: number; z: number }[]
-  /** Current index in the waypoint list */
-  currentIndex: number
-  /** Whether the bot has reached the final waypoint */
-  completed: boolean
-}
-
-interface CellReservation {
-  /** Bot session key */
-  botKey: string
-  /** Cell position */
-  x: number
-  z: number
-  /** Reservation type */
-  type: 'current' | 'target'
+const PROP_REGISTRY: Record<string, PropDefinition> = {
+  'desk': {
+    type: 'desk',
+    displayName: 'Office Desk',
+    footprint: [3, 2],       // 1.5 × 1.0 real units
+    anchorOffset: [1, 1],
+    interactionCells: [
+      { dx: 0, dz: 2, facing: 0, animation: 'working', capacity: 1 },
+    ],
+    clearanceCells: [[0, 2], [1, 2], [2, 2]],  // Space in front for chair
+    category: 'furniture',
+    wallMounted: false,
+    stackable: true,
+    yOffset: 0.16,
+    component: 'Desk',
+  },
+  'chair': {
+    type: 'chair',
+    displayName: 'Office Chair',
+    footprint: [1, 1],
+    anchorOffset: [0, 0],
+    interactionCells: [],     // Chair is part of desk interaction
+    clearanceCells: [],
+    category: 'furniture',
+    wallMounted: false,
+    stackable: false,
+    yOffset: 0.16,
+    component: 'Chair',
+  },
+  'server-rack': {
+    type: 'server-rack',
+    displayName: 'Server Rack',
+    footprint: [2, 1],
+    anchorOffset: [0, 0],
+    interactionCells: [
+      { dx: 0, dz: 1, facing: 0, animation: 'working', capacity: 1 },
+    ],
+    clearanceCells: [[0, 1], [1, 1]],
+    category: 'tech',
+    wallMounted: false,
+    stackable: false,
+    yOffset: 0.16,
+    component: 'ServerRack',
+  },
+  'coffee-machine': {
+    type: 'coffee-machine',
+    displayName: 'Coffee Machine',
+    footprint: [1, 1],
+    anchorOffset: [0, 0],
+    interactionCells: [
+      { dx: 0, dz: 1, facing: 0, animation: 'getting-coffee', capacity: 2 },
+    ],
+    clearanceCells: [[0, 1]],
+    category: 'utility',
+    wallMounted: false,
+    stackable: false,
+    yOffset: 0.16,
+    component: 'CoffeeMachine',
+  },
+  'round-table': {
+    type: 'round-table',
+    displayName: 'Round Table',
+    footprint: [4, 4],
+    anchorOffset: [2, 2],
+    interactionCells: [
+      { dx: -1, dz: 3, facing: 0, animation: 'working', capacity: 1 },
+      { dx: 3, dz: 1, facing: -Math.PI / 2, animation: 'working', capacity: 1 },
+      { dx: 1, dz: -1, facing: Math.PI, animation: 'working', capacity: 1 },
+    ],
+    clearanceCells: [],
+    category: 'furniture',
+    wallMounted: false,
+    stackable: false,
+    yOffset: 0.16,
+    component: 'RoundTable',
+  },
+  // ... more props
 }
 ```
 
-### 5.5 Helper: Blueprint to Walkable Grid
+### 5.3 Runtime State
 
 ```typescript
-function blueprintToWalkableGrid(blueprint: RoomBlueprint): boolean[][] {
-  return blueprint.cells.map(row =>
-    row.map(cell => cell.walkable)
-  )
-}
-
-function getInteractionCells(
-  blueprint: RoomBlueprint,
-  type: InteractionType,
-): { x: number; z: number; facing: Rotation }[] {
-  const results: { x: number; z: number; facing: Rotation }[] = []
-  for (let z = 0; z < blueprint.gridDepth; z++) {
-    for (let x = 0; x < blueprint.gridWidth; x++) {
-      const cell = blueprint.cells[z][x]
-      if (cell.type === 'interaction' && cell.interactionType === type) {
-        results.push({ x, z, facing: cell.interactionFacing ?? 0 })
-      }
-    }
-  }
-  return results
+interface RuntimeRoomState {
+  roomId: string
+  blueprint: RoomBlueprint
+  
+  // Live grid state (cells may change if props are moved at runtime)
+  grid: GridCell[][]
+  
+  // Waypoint graph (generated from blueprint)
+  waypoints: Map<string, RoomWaypoint>
+  
+  // Current bot assignments
+  botAssignments: Map<string, {
+    waypointId: string      // Which waypoint/interaction point the bot is using
+    position: [number, number, number]  // Current world position
+    targetWaypointId: string | null     // Where they're heading
+  }>
 }
 ```
 
@@ -737,554 +653,411 @@ function getInteractionCells(
 
 ## 6. Rendering Pipeline
 
-### 6.1 Blueprint → Three.js Meshes
+### 6.1 Grid → Three.js Meshes
 
-The rendering pipeline transforms a `RoomBlueprint` into a React Three Fiber scene:
+The rendering pipeline transforms grid data into Three.js scene objects:
 
 ```
-RoomBlueprint (data)
-    ↓
-GridCellRenderer (iterates cells)
-    ↓
-PropRegistry.get(propId) → React component
-    ↓
-Three.js mesh at (cellX * cellSize, 0, cellZ * cellSize)
+Blueprint JSON
+     ↓
+[GridParser] → GridCell[][] (2D array)
+     ↓
+[PropPlacer] → For each BlueprintProp:
+     │           1. Look up PropDefinition in registry
+     │           2. Convert grid coords → world coords:
+     │              worldX = (gridX - gridWidth/2) * cellSize
+     │              worldZ = (gridZ - gridHeight/2) * cellSize
+     │           3. Apply rotation
+     │           4. Render component at world position
+     ↓
+[WallGenerator] → Scan grid edges:
+     │             1. Collect contiguous WALL cells into segments
+     │             2. Merge segments into single box meshes
+     │             3. Cut openings at DOOR cells
+     ↓
+[WaypointGenerator] → From INTERACTION + EMPTY cells:
+     │                  1. Create waypoint nodes
+     │                  2. Validate edges (line-of-sight on grid)
+     │                  3. Store as graph for pathfinding
+     ↓
+[React Three Fiber Scene]
+     ├── <RoomFloor /> — unchanged
+     ├── <GeneratedWalls /> — from WallGenerator
+     ├── <Props /> — from PropPlacer (existing prop components)
+     └── <Bot3D /> — uses waypoint graph for navigation
 ```
 
-**New component: `GridRoomRenderer`**
+### 6.2 Key Rendering Component
 
 ```tsx
-interface GridRoomRendererProps {
-  blueprint: RoomBlueprint
-  roomPosition: [number, number, number]  // world-space offset
-  roomColor: string                       // accent color
-}
-
-function GridRoomRenderer({ blueprint, roomPosition, roomColor }: GridRoomRendererProps) {
-  const { cellSize, gridWidth, gridDepth, cells } = blueprint
-  const roomWidth = gridWidth * cellSize
-  const roomDepth = gridDepth * cellSize
+function GridRoom({ blueprint, roomPosition }: { blueprint: RoomBlueprint; roomPosition: [number, number, number] }) {
+  const { props, walls, waypoints } = useMemo(() => {
+    const grid = parseBlueprint(blueprint)
+    const props = placeProps(blueprint, grid)
+    const walls = generateWalls(grid, blueprint)
+    const waypoints = generateWaypoints(grid, blueprint)
+    return { props, walls, waypoints }
+  }, [blueprint])
 
   return (
     <group position={roomPosition}>
-      {/* Floor */}
-      <RoomFloor color={roomColor} size={roomWidth} />
-
-      {/* Walls — generated from grid edges */}
-      <GridWalls cells={cells} cellSize={cellSize} roomColor={roomColor} />
-
-      {/* Props — one per anchor cell */}
-      {cells.flatMap((row, z) =>
-        row.map((cell, x) => {
-          if (!cell.propId || cell.anchorRef) return null  // skip empty & continuation cells
-          const worldX = (x - gridWidth / 2 + 0.5) * cellSize
-          const worldZ = (z - gridDepth / 2 + 0.5) * cellSize
-          const rotation = ((cell.rotation ?? 0) * Math.PI) / 180
-          return (
-            <PropRenderer
-              key={`${x}-${z}`}
-              propId={cell.propId}
-              position={[worldX, 0.16, worldZ]}
-              rotation={[0, rotation, 0]}
-              cellSize={cellSize}
-              span={cell.span}
-            />
-          )
-        })
-      )}
+      <RoomFloor color={roomColor} size={blueprint.defaultSize} />
+      
+      {/* Generated walls from grid edges */}
+      {walls.map((segment, i) => (
+        <WallSegment key={i} {...segment} />
+      ))}
+      
+      {/* Props from blueprint */}
+      {props.map((prop, i) => {
+        const Component = PROP_COMPONENTS[prop.type]
+        return (
+          <Component
+            key={i}
+            position={prop.worldPosition}
+            rotation={prop.worldRotation}
+          />
+        )
+      })}
     </group>
   )
 }
 ```
 
-### 6.2 Prop Registry
+### 6.3 Performance Considerations
 
-A registry maps `propId` strings to React components:
-
-```tsx
-const PROP_REGISTRY: Record<string, React.FC<PropRendererProps>> = {
-  'desk':            DeskProp,
-  'desk-monitor':    DeskWithMonitorProp,
-  'standing-desk':   StandingDeskProp,
-  'chair':           ChairProp,
-  'server-rack':     ServerRackProp,
-  'coffee-machine':  CoffeeMachineProp,
-  'water-cooler':    WaterCoolerProp,
-  'whiteboard':      WhiteboardProp,
-  'notice-board':    NoticeBoardProp,
-  'plant':           PlantProp,
-  'lamp':            LampProp,
-  'easel':           EaselProp,
-  'bookshelf':       BookshelfProp,
-  'bean-bag':        BeanBagProp,
-  'round-table':     RoundTableProp,
-  'small-screen':    SmallScreenProp,
-  'conveyor-belt':   ConveyorBeltProp,
-  'gear':            GearMechanismProp,
-  'control-panel':   ControlPanelProp,
-  'satellite':       SatelliteDishProp,
-  'antenna':         AntennaTowerProp,
-  'headset':         HeadsetProp,
-  'filing-cabinet':  FilingCabinetProp,
-  'extinguisher':    FireExtinguisherProp,
-  'clock':           WallClockProp,
-  'status-lights':   StatusLightsProp,
-  'cables':          CableMessProp,
-  'bar-chart':       BarChartProp,
-  'mood-board':      MoodBoardProp,
-  'presentation':    PresentationScreenProp,
-  'megaphone':       MegaphoneProp,
-  'drawing-tablet':  DrawingTabletProp,
-  'color-palette':   ColorPaletteProp,
-  'desk-lamp':       DeskLampProp,
-}
-```
-
-Existing prop components from `RoomProps.tsx` can be reused directly — they just need to accept grid-based positioning instead of hardcoded coordinates.
-
-### 6.3 Wall Generation from Grid Edges
+#### Instancing
+Props that appear many times across rooms (desks, chairs, monitors) should use `InstancedMesh`:
 
 ```tsx
-function GridWalls({ cells, cellSize, roomColor }: GridWallsProps) {
-  const wallSegments = useMemo(() => {
-    const segments: WallSegmentData[] = []
-
-    for (let z = 0; z < cells.length; z++) {
-      for (let x = 0; x < cells[z].length; x++) {
-        const cell = cells[z][x]
-        if (cell.type !== 'wall') continue
-
-        // Check each edge: if the neighbor is walkable, this is a visible wall face
-        // Merge adjacent wall cells into longer segments for fewer draw calls
-        // ...
-      }
-    }
-
-    return mergeAdjacentWallSegments(segments)
-  }, [cells, cellSize])
-
-  return (
-    <>
-      {wallSegments.map(seg => (
-        <WallMesh key={seg.key} {...seg} accentColor={roomColor} />
-      ))}
-    </>
-  )
-}
+// Instead of 20 separate <Desk /> components:
+<instancedMesh args={[deskGeometry, deskMaterial, 20]}>
+  {deskPositions.map((pos, i) => (
+    <DeskInstance key={i} position={pos} index={i} />
+  ))}
+</instancedMesh>
 ```
 
-**Wall merging:** Adjacent wall cells on the same edge are merged into a single long box mesh. A 20-cell wall becomes 1 mesh instead of 20, dramatically reducing draw calls.
+**Expected savings:** With ~8 rooms × ~5 desks = 40 desk instances, instancing reduces draw calls from 40 to 1 for desk bodies.
 
-### 6.4 Instancing Opportunities
+#### Geometry Merging for Walls
+Wall segments per room are merged into a single `BufferGeometry` using `BufferGeometryUtils.mergeGeometries()`:
 
-Many props repeat across rooms. Use `InstancedMesh` for:
+```typescript
+// Merge all wall segments for a room into one mesh
+const wallGeometries = wallSegments.map(s => createWallBox(s))
+const mergedWalls = BufferGeometryUtils.mergeGeometries(wallGeometries)
+// Single draw call for all walls in a room
+```
 
-| Prop | Instances | Savings |
-|------|-----------|---------|
-| Desk | ~8-10 across all rooms | 8 draw calls → 1 |
-| Chair | ~10-12 | 10 → 1 |
-| Small screen | ~8-10 | 8 → 1 |
-| Plant | ~5-6 | 5 → 1 |
-| Wall segments | ~40-60 | 40 → 1 (per wall type) |
-
-**Implementation:** Group all instances of the same `propId` across all rooms into a single `InstancedMesh`. Each instance gets a unique transform matrix:
+#### Grid Debug Overlay (Development Only)
+An optional debug overlay renders the grid as a wireframe:
 
 ```tsx
-function InstancedProps({ allRoomBlueprints }: { allRoomBlueprints: RoomBlueprint[] }) {
-  // Collect all instances per propId
-  const instances = useMemo(() => {
-    const map = new Map<string, THREE.Matrix4[]>()
-    for (const bp of allRoomBlueprints) {
-      for (let z = 0; z < bp.gridDepth; z++) {
-        for (let x = 0; x < bp.gridWidth; x++) {
-          const cell = bp.cells[z][x]
-          if (!cell.propId || cell.anchorRef) continue
-          const matrix = new THREE.Matrix4()
-          // ... compute world position from room position + cell position
-          const list = map.get(cell.propId) || []
-          list.push(matrix)
-          map.set(cell.propId, list)
-        }
-      }
-    }
-    return map
-  }, [allRoomBlueprints])
-
-  return (
-    <>
-      {Array.from(instances.entries()).map(([propId, matrices]) => (
-        <InstancedProp key={propId} propId={propId} matrices={matrices} />
-      ))}
-    </>
-  )
-}
+{__DEV__ && showGridDebug && (
+  <GridDebugOverlay
+    grid={grid}
+    cellSize={blueprint.cellSize}
+    position={roomPosition}
+  />
+)}
 ```
 
-### 6.5 Performance Considerations
+This helps during blueprint authoring but is stripped in production.
 
-| Aspect | Current | Grid-Based | Impact |
-|--------|---------|------------|--------|
-| **Mesh count** | ~200-300 individual meshes | ~50-80 (instanced + merged walls) | 3-4x fewer draw calls |
-| **Pathfinding** | None (random point) | A* on 400-cell grid | <1ms per path, negligible |
-| **Memory** | Prop components hold refs | 8 rooms × 400 cells × ~20 bytes = ~64KB | Negligible |
-| **Grid data** | N/A | Serializable JSON blueprints (~2KB each) | Trivial |
-| **Culling** | Per-mesh frustum culling | Per-room group culling (skip entire room if off-screen) | Better |
+#### Performance Budget
+
+| Metric | Current | With Grid | Target |
+|--------|---------|-----------|--------|
+| Draw calls per room | ~30-50 (individual props) | ~10-15 (instanced + merged) | <20 |
+| Geometry count | ~200 meshes/room | ~50 meshes/room (instanced) | <100 |
+| Grid computation | N/A | Once on load + on layout change | <5ms |
+| Pathfinding (A*) | N/A | On-demand, cached | <1ms per path |
+| Memory per room | ~2MB | ~2.5MB (+grid data ~50KB) | <3MB |
 
 ---
 
 ## 7. Migration Path
 
-### Phase 1: Data Model + Blueprints (Data Only)
+### Phase 0: Data-Driven Prop Placement (1 week)
+**Goal:** Extract hardcoded positions into data; no grid yet.
 
-**Effort: ~2-3 days**
-**Risk: None (no rendering changes)**
+1. Create `room-layouts.json` with current positions extracted from `RoomProps.tsx`
+2. Refactor `RoomProps.tsx` to read from data instead of hardcoded JSX
+3. Unify `getRoomInteractionPoints()` to read from same data source
+4. **Result:** Same visual output, but layout is data-driven and easier to modify
 
-- Define TypeScript interfaces (`GridCell`, `RoomBlueprint`, `BuildingLayout`)
-- Create blueprint data files for all 8 room types
-- Write helper functions: `blueprintToWalkableGrid()`, `getInteractionCells()`
-- Write A* pathfinding module (pure function, no React dependency)
-- Write unit tests for pathfinding and blueprint validation
-- **No UI changes** — existing rendering continues to work
+```typescript
+// Before (hardcoded):
+<Desk position={[-h + 2.5 * s, Y, h - 2.5 * s]} />
 
-**Files created:**
-```
-src/components/world3d/grid/
-├── types.ts              — GridCell, RoomBlueprint, BuildingLayout
-├── blueprints/
-│   ├── headquarters.ts
-│   ├── dev-room.ts
-│   ├── creative-room.ts
-│   ├── marketing-room.ts
-│   ├── thinking-room.ts
-│   ├── automation-room.ts
-│   ├── comms-room.ts
-│   └── ops-room.ts
-├── pathfinding.ts        — A* implementation
-├── gridUtils.ts          — walkable mask, cell queries
-└── __tests__/
-    ├── pathfinding.test.ts
-    └── blueprints.test.ts
+// After (data-driven):
+{layout.props.map(prop => (
+  <PropRenderer key={prop.id} type={prop.type} position={prop.position} rotation={prop.rotation} />
+))}
 ```
 
-### Phase 2: Grid-Based Prop Renderer
+### Phase 1: Prop Footprints + Collision Volumes (1 week)
+**Goal:** Stop bots walking through furniture.
 
-**Effort: ~3-4 days**
-**Risk: Medium (visual changes, but room-by-room rollout possible)**
+1. Define `PropDefinition` with footprints for each prop type
+2. Generate blocked rectangles from prop positions + footprints
+3. Replace circular `WalkableCenter` with polygon-based walkable area
+4. Bot movement checks against blocked rectangles before moving
+5. **Result:** Bots avoid furniture; still using waypoint-style navigation
 
-- Create `GridRoomRenderer` component
-- Create `PropRegistry` mapping `propId → React component`
-- Refactor existing prop components to accept grid-based positioning
-- Add feature flag: `useGridRenderer` (per room or global)
-- Replace `RoomProps.tsx` hardcoded functions with `GridRoomRenderer`
-- Visual regression testing: compare grid-rendered rooms vs current
+### Phase 2: Grid Data Model + Waypoint Generation (1-2 weeks)
+**Goal:** Full grid representation; auto-generated waypoints.
 
-**Files modified:**
-```
-src/components/world3d/
-├── Room3D.tsx            — conditionally use GridRoomRenderer
-├── RoomProps.tsx          — keep as fallback, mark deprecated
-└── grid/
-    ├── GridRoomRenderer.tsx
-    └── PropRegistry.ts
-```
+1. Implement `GridCell[][]` data model
+2. Convert existing room layouts to grid blueprints
+3. Auto-generate `RoomWaypoint` graphs from grid data
+4. Replace manual `getRoomInteractionPoints()` with grid-derived points
+5. Implement waypoint-based navigation (replaces random wandering)
+6. **Result:** Bots navigate semantically; interaction points match props perfectly
 
-### Phase 3: Grid-Based Bot Pathfinding
+### Phase 3: Wall Generation from Grid (1 week)
+**Goal:** Walls derived from data, not hardcoded.
 
-**Effort: ~2-3 days**
-**Risk: Medium (behavior change, but gradual rollout)**
+1. Implement wall auto-generation from grid boundaries
+2. Replace `RoomWalls` component with `GridWalls` component
+3. Support shared walls between adjacent rooms
+4. Auto-place doors based on building layout
+5. **Result:** Walls are consistent and data-driven
 
-- Replace `wanderState` random-point logic with A* pathfinding
-- Replace `getRoomInteractionPoints()` with grid cell lookups
-- Replace `getWalkableCenter()` with grid-derived walkable mask
-- Bots pathfind to interaction cells instead of hardcoded positions
-- Add cell reservation system for collision avoidance
-- Feature flag: `useGridPathfinding`
+### Phase 4: Building Layout + Hallways (1-2 weeks)
+**Goal:** Multi-room building with corridors.
 
-**Files modified:**
-```
-src/components/world3d/
-├── Bot3D.tsx              — use path waypoints instead of random targets
-├── BotAnimations.tsx      — read interaction points from blueprint
-└── grid/
-    ├── pathfinding.ts     — integrate with bot movement
-    └── botMovement.ts     — path following, reservation system
-```
+1. Implement `BuildingLayout` data model
+2. Generate hallway segments between rooms
+3. Inter-room pathfinding (bot can walk between rooms via hallways)
+4. Camera improvements for building-level navigation
+5. **Result:** Cohesive building rather than isolated rooms
 
-### Phase 4: Grid-Based Wall Generation
+### Phase 5: Blueprint Editor (2-4 weeks, optional)
+**Goal:** Visual tool for creating/editing room layouts.
 
-**Effort: ~2 days**
-**Risk: Low (walls look the same, just generated differently)**
+1. In-app grid overlay with click-to-place props
+2. Prop palette, rotation, deletion
+3. Footprint validation (prevent overlaps)
+4. Waypoint preview
+5. Save/load blueprints
+6. **Result:** Non-developers can create room layouts
 
-- Create `GridWalls` component that reads cell data
-- Merge adjacent wall cells into long segments
-- Generate door openings from `door` cells
-- Replace `RoomWalls.tsx` static wall placement
-- Verify accent strips and cap spheres still look correct
+### Timeline Summary
 
-**Files modified:**
-```
-src/components/world3d/
-├── RoomWalls.tsx          — keep as fallback
-└── grid/
-    └── GridWalls.tsx      — wall generation from grid edges
-```
+| Phase | Duration | Value Delivered | Risk |
+|-------|----------|-----------------|------|
+| Phase 0 | 1 week | Data-driven layouts, easier iteration | Very low |
+| Phase 1 | 1 week | No more furniture clipping | Low |
+| Phase 2 | 1-2 weeks | Smart navigation, proper interaction points | Medium |
+| Phase 3 | 1 week | Auto-generated walls | Low |
+| Phase 4 | 1-2 weeks | Connected building | Medium |
+| Phase 5 | 2-4 weeks | Visual editor | High (scope) |
 
-### Phase 5: Visual Grid Editor (Future)
-
-**Effort: ~5-7 days**
-**Risk: Low (additive feature)**
-
-- 2D grid editor component (HTML canvas or SVG overlay)
-- Drag-and-drop props from a palette onto grid cells
-- Real-time 3D preview
-- Save/load custom blueprints
-- Per-team room customization (stored in backend)
-- Undo/redo support
-
-This phase is optional and depends on user demand for room customization.
+**Recommended MVP:** Phases 0-2 (3-4 weeks). This fixes all stated pain points without the full scope of a building editor.
 
 ---
 
-## 8. Comparison: Current vs Grid
+## 8. Current vs Grid Comparison
 
 | Aspect | Current System | Grid-Based System |
 |--------|---------------|-------------------|
-| **Prop placement** | Hardcoded xyz coordinates in code (`[-h + 2.5 * s, Y, h - 2.5 * s]`) | Cell-snapped: `cells[2][3] = { propId: 'desk' }` |
-| **Adding a new room** | Write ~30 lines of position math per room type | Define a 20×20 cell array (data, not code) |
-| **Moving furniture** | Change coordinate values, rebuild, visually verify | Change cell in blueprint array |
-| **Bot navigation** | Random point in circular zone, straight-line lerp | A* pathfinding on walkable grid |
-| **Collision avoidance** | None — bots clip through furniture | Impossible — non-walkable cells block paths |
-| **Bot stacking** | ±0.4 unit jitter (bots overlap at interaction points) | Cell reservation system (max 1 bot per cell) |
-| **Interaction points** | 3 hardcoded points per room (desk, coffee, sleep) | Arbitrary number of typed cells per room |
-| **Wall generation** | 4 manual box meshes per room | Auto-generated from grid boundary cells |
-| **Door placement** | Fixed 3-unit gap at front wall center | Configurable door cells on any wall |
-| **Room shapes** | Rectangular only (12×12) | Any shape expressible in a grid (L-shapes, irregular) |
-| **Maintenance** | Edit `RoomProps.tsx` (900+ lines) + `BotAnimations.tsx` | Edit blueprint data files |
-| **Rendering perf** | ~200-300 individual meshes | ~50-80 with instancing + wall merging |
-| **Customization** | Code change required | Blueprint data change (future: visual editor) |
-| **Data format** | Embedded in React components | Serializable JSON (exportable, version-controllable) |
+| **Prop placement** | Hardcoded positions in TSX, magic-number math | Data-driven from grid blueprints, snap-to-cell |
+| **Adding a room type** | Write a new `*Props` component with manual positions (~50-100 lines) | Create a JSON blueprint with grid coordinates |
+| **Collision handling** | None — bots walk through everything | Grid cells marked BLOCKED; bots can't enter |
+| **Walkable areas** | Manually-tuned circular zones per room type | Derived automatically from non-blocked cells |
+| **Interaction points** | Duplicated in `BotAnimations.tsx`, can drift from actual prop positions | Part of prop definition; always match prop location |
+| **Bot navigation** | Random wandering within circle + direct walk-to-target | Waypoint graph with A* fallback; smooth paths around furniture |
+| **Walls** | Fixed perimeter with hardcoded door opening | Auto-generated from grid boundaries; shared walls supported |
+| **Room sizing** | Fixed 12×12; scale factor adjusts props but doesn't validate | Variable room sizes with validated layouts |
+| **Multi-room connection** | Rooms are isolated islands with spacing | Hallway system connects rooms; bots can move between rooms |
+| **Performance** | 30-50 draw calls per room (individual props) | 10-15 draw calls per room (instanced + merged) |
+| **Props file size** | 900+ lines in single file (`RoomProps.tsx`) | ~50 lines per blueprint JSON + shared prop definitions |
+| **Bot jitter** | Random ±0.4 unit offset; sometimes inside furniture | Capacity-aware waypoints; guaranteed clear positions |
+| **Room editing** | Edit code, rebuild, check visually | Edit JSON/grid data (or future visual editor) |
+| **Extensibility** | Hard to add rooms or change layouts without code | New room = new blueprint JSON; props are reusable |
+| **Maintenance burden** | Two places to update (props + interaction points) | Single source of truth (blueprint) |
 
 ---
 
 ## 9. Risks & Considerations
 
-### 9.1 Cell Size Granularity
+### 9.1 Scope Risk — The Biggest Danger
 
-**Risk:** Too large → rooms look blocky, props don't fit well. Too small → excessive grid complexity.
+A full grid system (grid + pathfinding + walls + building layout + editor) is effectively a **systems rewrite**. The migration path in §7 is designed to mitigate this by delivering value incrementally, but there's a real risk of "almost done" features dragging on.
 
-| Cell Size | Grid Dims | Cells/Room | Fit Quality | Complexity |
-|-----------|-----------|------------|-------------|------------|
-| 1.0 | 12×12 | 144 | Poor — desk wider than 1 cell | Very low |
-| 0.6 | 20×20 | 400 | Good — desk = 3×2 cells, fine control | Low |
-| 0.5 | 24×24 | 576 | Great — very precise | Medium |
-| 0.3 | 40×40 | 1600 | Overkill | High |
+**Mitigation:**
+- Hard stop-point after Phase 2. Evaluate whether Phase 3+ is needed.
+- Each phase must be independently shippable.
+- No "big bang" migration — old and new systems coexist during transition.
 
-**Recommendation:** Start with **0.6 units/cell**. If props need finer positioning, can migrate to 0.5 without changing the architecture.
+### 9.2 Cell Size Trade-offs
 
-### 9.2 Non-Rectangular Props
+| Cell Size | Grid per 12u Room | Pros | Cons |
+|-----------|-------------------|------|------|
+| **1.0 unit** | 12×12 (144 cells) | Simple blueprints, fast pathfinding | Too coarse — chairs can't be placed accurately; looks "board-gamey" |
+| **0.5 unit** | 24×24 (576 cells) | Good balance; most props fit integer footprints | Moderate blueprint complexity |
+| **0.25 unit** | 48×48 (2304 cells) | High fidelity; smooth prop placement | Blueprint authoring is tedious; 4× more data; pathfinding graph is large |
 
-Some props don't fit neatly into rectangular cell spans:
-- **Round table** (circular) → approximate as 2×2 square
-- **Easel** (triangular footprint) → 2×1 with padding
-- **Cable mess** (irregular floor scatter) → 2×2 walkable decoration
+**Recommendation: 0.5 units.** This is the standard "half-meter" grid used by Prison Architect and similar games. It's granular enough for chairs (1×1 cell) and desks (3×2 cells) while keeping blueprints manageable.
 
-**Mitigation:** Props render at any size/shape — the grid only constrains their *footprint* for walkability. Visual overhang beyond cell boundaries is fine.
+### 9.3 Blueprint Authoring Cost
 
-### 9.3 Diagonal Movement Looks Robotic
+Without a visual editor, creating blueprints means manually specifying grid coordinates. For 8 room types, this is ~2-4 hours of work per room type.
 
-Grid-locked movement with only cardinal/diagonal directions can look mechanical.
+**Mitigation:**
+- Phase 0 auto-generates initial blueprints from existing hardcoded positions
+- A simple script can convert `[x, y, z]` world positions to grid coordinates
+- ASCII art previews in the design doc serve as visual guides
 
-**Mitigations (see §3.5):**
-- Eased interpolation between cell centers
-- Position jitter (±0.1 units)
-- Speed variation (±10%)
-- Path smoothing for straight segments
-- These combined make movement look natural in testing of similar systems
+### 9.4 Migration Effort vs. Value
 
-### 9.4 Memory Impact
+Honest assessment: Phases 0-1 deliver 80% of the collision-fixing value with 20% of the effort. The full grid system is a strategic investment that pays off if:
+- More room types are planned
+- User-editable layouts become a feature
+- Inter-room navigation is desired
+- The 3D world becomes a core product differentiator
 
-- 8 rooms × 400 cells × ~32 bytes/cell ≈ **100 KB** (negligible)
-- Pathfinding state: A* open/closed sets ≈ 400 entries max ≈ **10 KB** per active path search
-- Reservation map: ~30 bots × 2 reservations ≈ **240 bytes**
-- **Total: well under 1 MB**
+If CrewHub's 3D world remains a fun visualization rather than a core product surface, the lightweight approach (Phase 0-1 only) may be the right call.
 
-### 9.5 Migration Effort Estimates
+### 9.5 Visual Regression Risk
 
-| Phase | Effort | Dependencies | Risk |
-|-------|--------|-------------|------|
-| Phase 1: Data model + blueprints | 2-3 days | None | None |
-| Phase 2: Grid prop renderer | 3-4 days | Phase 1 | Medium |
-| Phase 3: Bot pathfinding | 2-3 days | Phase 1 | Medium |
-| Phase 4: Wall generation | 2 days | Phase 1 | Low |
-| Phase 5: Visual editor | 5-7 days | Phases 1-4 | Low |
-| **Total (Phases 1-4)** | **9-12 days** | | |
+Grid snapping can make layouts feel more "mechanical" than hand-tuned positions. Organic touches (slight rotations, offset props) add visual charm.
 
-Phases 2, 3, and 4 can be done in parallel after Phase 1. Feature flags allow gradual rollout.
+**Mitigation:**
+- Allow props to have per-instance visual offsets (±0.1 units) that don't affect grid occupancy
+- Support non-grid-snapped decorative props (plants, cable messes) that don't block movement
+- Use the `decorOnly` flag for props that add character without affecting navigation
 
-### 9.6 Backward Compatibility
+### 9.6 Three.js Performance
 
-- Current `RoomProps.tsx` and `RoomWalls.tsx` remain as fallbacks
-- Feature flag toggles between old and new rendering
-- No backend changes required (grid data is client-side only in Phases 1-4)
-- Blueprint data can be loaded from JSON files or inlined constants
-
-### 9.7 Cross-Room Pathfinding (Future)
-
-The current proposal handles pathfinding **within a single room**. Cross-room movement (bot walking through hallway to another room) requires:
-- A building-level walkable grid (hallways + room doors)
-- Multi-segment paths: room A → door → hallway → door → room B
-- This is not needed for current bot behavior (bots teleport between rooms on reassignment)
-- Can be added later by connecting room grids via door cells to hallway grids
-
-### 9.8 Props with Vertical Dimension
-
-Some props are wall-mounted (whiteboard, wall clock, screens) rather than floor-placed:
-- These occupy a cell for walkability purposes but render at wall height
-- Grid cell can include a `mountHeight` or `wallMounted: boolean` flag
-- Or: wall-mounted props are treated as `decoration` (walkable) since they don't block floor movement
+The grid system itself adds minimal overhead (grid data is small, computed once). The rendering improvements (instancing, wall merging) should actually improve performance. The A* pathfinding on a 24×24 grid is negligible (< 0.1ms per path computation).
 
 ---
 
-## Appendix A: A* Pathfinding Reference Implementation
+## 10. GPT-5.2 Feedback & Hybrid Recommendation
 
-```typescript
-interface PathNode {
-  x: number
-  z: number
-  g: number      // cost from start
-  h: number      // heuristic to goal
-  f: number      // g + h
-  parent: PathNode | null
-}
+### Summary of GPT-5.2's Position
 
-const DIRECTIONS = [
-  { dx: 0, dz: -1, cost: 1 },     // north
-  { dx: 0, dz: 1, cost: 1 },      // south
-  { dx: -1, dz: 0, cost: 1 },     // west
-  { dx: 1, dz: 0, cost: 1 },      // east
-  { dx: -1, dz: -1, cost: 1.414 }, // NW
-  { dx: 1, dz: -1, cost: 1.414 },  // NE
-  { dx: -1, dz: 1, cost: 1.414 },  // SW
-  { dx: 1, dz: 1, cost: 1.414 },   // SE
-]
+GPT-5.2's review (see `grid-system-review-gpt5.md`) makes several strong arguments:
 
-export function findPath(
-  walkable: boolean[][],
-  start: { x: number; z: number },
-  goal: { x: number; z: number },
-  reserved?: Set<string>,         // "x,z" keys of reserved cells
-): { x: number; z: number }[] | null {
-  const height = walkable.length
-  const width = walkable[0].length
+1. **A grid is a product-level commitment, not a collision fix.** If the goal is just "stop bots walking through desks," simpler solutions exist.
 
-  if (!walkable[start.z]?.[start.x] || !walkable[goal.z]?.[goal.x]) return null
+2. **Waypoint graphs solve 90% of navigation issues** with far less implementation cost. With only 1-5 bots per room, heavy pathfinding infrastructure is overkill.
 
-  const key = (x: number, z: number) => `${x},${z}`
+3. **A visual editor is a hidden cost.** Without one, blueprint authoring is tedious. With one, you're building a game editor — months of work.
 
-  const openSet = new Map<string, PathNode>()
-  const closedSet = new Set<string>()
+4. **Incremental migration is key.** Don't rewrite everything; fix the actual pain points first.
 
-  const startNode: PathNode = {
-    x: start.x, z: start.z,
-    g: 0,
-    h: Math.abs(goal.x - start.x) + Math.abs(goal.z - start.z),
-    f: 0,
-    parent: null,
-  }
-  startNode.f = startNode.g + startNode.h
-  openSet.set(key(start.x, start.z), startNode)
+5. **Cell size of 0.5 is the sweet spot** if you do go grid. (We agree.)
 
-  while (openSet.size > 0) {
-    // Find node with lowest f
-    let current: PathNode | null = null
-    for (const node of openSet.values()) {
-      if (!current || node.f < current.f) current = node
-    }
-    if (!current) break
+6. **Start with JSON blueprints in-repo,** not a database. (We agree.)
 
-    if (current.x === goal.x && current.z === goal.z) {
-      // Reconstruct path
-      const path: { x: number; z: number }[] = []
-      let node: PathNode | null = current
-      while (node) {
-        path.unshift({ x: node.x, z: node.z })
-        node = node.parent
-      }
-      return path
-    }
+### Where We Agree with GPT-5.2
 
-    const currentKey = key(current.x, current.z)
-    openSet.delete(currentKey)
-    closedSet.add(currentKey)
+- **Waypoint graphs are the right primary navigation system** for CrewHub's current scale. A* on a grid is a fallback, not the main path.
+- **Phase 0 (data-driven layouts) should come first.** This alone fixes the code maintenance burden.
+- **No visual editor in the near term.** JSON + helper scripts are sufficient.
+- **The lightweight approach covers most pain points.** Phases 0-1 fix 80% of issues.
 
-    for (const dir of DIRECTIONS) {
-      const nx = current.x + dir.dx
-      const nz = current.z + dir.dz
-      const nKey = key(nx, nz)
+### Where We Respectfully Disagree
 
-      if (nx < 0 || nx >= width || nz < 0 || nz >= height) continue
-      if (!walkable[nz][nx]) continue
-      if (closedSet.has(nKey)) continue
-      if (reserved?.has(nKey)) continue
+1. **Grid as data model has value even without user editing.** The grid isn't just for pathfinding — it's a **validation layer**. With a grid, you can programmatically verify that no two props overlap, that every interaction point is accessible, and that walkable areas are truly walkable. This catches bugs that manual authoring misses.
 
-      // Prevent diagonal corner-cutting
-      if (dir.dx !== 0 && dir.dz !== 0) {
-        if (!walkable[current.z][current.x + dir.dx] ||
-            !walkable[current.z + dir.dz][current.x]) continue
-      }
+2. **Waypoints alone don't prevent prop clipping.** GPT-5.2's waypoint approach solves navigation but doesn't address the root cause of prop overlap. A grid with footprints does.
 
-      const g = current.g + dir.cost
-      const existing = openSet.get(nKey)
-      if (existing && g >= existing.g) continue
+3. **The cost is manageable with the phased approach.** Phases 0-2 are 3-4 weeks total. This is not a "months-long rewrite" — it's a focused refactoring that happens to introduce grid coordinates as the underlying representation.
 
-      const h = Math.abs(goal.x - nx) + Math.abs(goal.z - nz)
-      const node: PathNode = { x: nx, z: nz, g, h, f: g + h, parent: current }
-      openSet.set(nKey, node)
-    }
-  }
+### Hybrid Recommendation
 
-  return null // no path found
-}
+**We recommend the Waypoint-First Hybrid approach:**
+
+```
+┌─────────────────────────────────────────────────────┐
+│                 HYBRID ARCHITECTURE                  │
+│                                                      │
+│  Data Layer:     Grid cells (validation + footprints)│
+│  Navigation:     Waypoint graph (primary)            │
+│  Fallback:       A* on grid (edge cases only)        │
+│  Rendering:      Unchanged prop components           │
+│  Authoring:      JSON blueprints → grid → waypoints  │
+│                                                      │
+│  Grid exists as data model, NOT as visible artifact  │
+│  Bots navigate via waypoints, NOT cell-by-cell       │
+└─────────────────────────────────────────────────────┘
 ```
 
+The grid serves as an **internal validation and spatial indexing layer** while waypoints handle the actual bot movement. This gives us:
+
+- ✅ Prop overlap detection (grid footprints)
+- ✅ Walkable area derivation (non-blocked cells → walkable polygon)
+- ✅ Smooth, natural-looking bot movement (waypoints + splines)
+- ✅ Validated interaction points (grid ensures they're accessible)
+- ✅ Future extensibility (full A* pathfinding is there if needed)
+- ✅ Reasonable implementation cost (3-4 weeks for Phases 0-2)
+- ❌ No visual editor required (JSON + validation scripts)
+- ❌ No user-facing grid visible at runtime
+
+### Decision Matrix
+
+| Approach | Fixes Clipping | Fixes Navigation | Authoring Cost | Implementation | Future-Proof |
+|----------|---------------|-----------------|----------------|----------------|-------------|
+| **Status quo** | ❌ | ❌ | Low (just edit code) | 0 weeks | ❌ |
+| **GPT-5.2: Waypoints only** | ❌ Partial | ✅ | Medium | 1-2 weeks | ⚠️ Limited |
+| **Full grid (Prison Architect)** | ✅ | ✅ | High | 6-8 weeks | ✅ |
+| **Hybrid (recommended)** | ✅ | ✅ | Medium | 3-4 weeks | ✅ |
+
+### Final Verdict
+
+**Start with Phase 0 (data-driven layouts) immediately.** It's low-risk, high-value, and unblocks everything else.
+
+Then proceed to Phase 1 (collision volumes) and Phase 2 (grid + waypoints) to fully resolve the pain points.
+
+Evaluate Phase 3+ only after Phase 2 ships and we see whether building-level features (hallways, inter-room movement) are worth the investment.
+
 ---
 
-## Appendix B: Blueprint Data Format (JSON Example)
+## Appendix A: File Structure
 
-```json
-{
-  "id": "dev-room",
-  "name": "Dev Room",
-  "icon": "🔧",
-  "gridWidth": 10,
-  "gridDepth": 10,
-  "cellSize": 1.2,
-  "cells": [
-    [
-      {"type":"wall","walkable":false},
-      {"type":"wall","walkable":false},
-      {"type":"wall","walkable":false},
-      {"type":"wall","walkable":false},
-      {"type":"door","walkable":true},
-      {"type":"door","walkable":true},
-      {"type":"wall","walkable":false},
-      {"type":"wall","walkable":false},
-      {"type":"wall","walkable":false},
-      {"type":"wall","walkable":false}
-    ],
-    "... (remaining rows)"
-  ],
-  "doors": [
-    {"x": 4, "z": 0, "facing": "north", "width": 2}
-  ]
-}
+```
+frontend/src/components/world3d/
+├── grid/
+│   ├── GridTypes.ts              // CellType, GridCell, PropDefinition interfaces
+│   ├── PropRegistry.ts           // PROP_REGISTRY constant
+│   ├── BlueprintParser.ts        // Parse blueprint JSON → GridCell[][]
+│   ├── WaypointGenerator.ts      // Grid → RoomWaypoint graph
+│   ├── WallGenerator.ts          // Grid edges → wall segment meshes
+│   ├── PathFinder.ts             // A* on grid (fallback)
+│   └── GridDebugOverlay.tsx      // Dev-only grid visualization
+├── blueprints/
+│   ├── headquarters.json
+│   ├── dev.json
+│   ├── creative.json
+│   ├── marketing.json
+│   ├── thinking.json
+│   ├── automation.json
+│   ├── comms.json
+│   ├── ops.json
+│   └── default.json
+├── GridRoom.tsx                  // New room renderer using blueprints
+└── ... (existing files)
 ```
 
-Blueprints can be stored as:
-- **TypeScript constants** (Phases 1-4): imported directly, type-safe
-- **JSON files** (Phase 5): loaded at runtime for user-customizable rooms
-- **Database records** (future): per-team custom blueprints stored in backend
+## Appendix B: Glossary
+
+| Term | Definition |
+|------|-----------|
+| **Cell** | A single unit in the grid (0.5 × 0.5 world units) |
+| **Footprint** | The set of cells a prop occupies |
+| **Anchor** | The origin cell of a multi-cell prop |
+| **Interaction cell** | A cell where a bot stands to use a prop |
+| **Waypoint** | A navigation node; bots move between waypoints |
+| **Blueprint** | A room layout template (JSON) with grid data, props, and waypoints |
+| **Building layout** | The arrangement of rooms, hallways, and shared areas |
+| **Walkable center** | The circular safe zone where bots can wander freely (current system) |
+| **Walkable polygon** | The non-blocked area derived from grid data (proposed system) |
 
 ---
 
-*This document serves as a reference for implementing the grid-based system. Each phase can be implemented and tested independently. The architecture is designed to coexist with the current system during migration.*
+*This document was written alongside the existing `3d-world-design.md` (original vision) and `grid-system-review-gpt5.md` (GPT-5.2's critique). All three should be read together for full context.*
