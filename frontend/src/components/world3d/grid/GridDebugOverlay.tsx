@@ -171,10 +171,11 @@ function CoordinateLabels({ gridWidth, gridDepth, cellSize }: { gridWidth: numbe
           style={{ pointerEvents: 'none' }}
         >
           <span style={{
-            fontSize: '8px',
+            fontSize: lbl.text.includes('→') || lbl.text.includes('↓') ? '16px' : '13px',
+            fontWeight: 'bold',
             fontFamily: 'monospace',
-            color: 'rgba(255,255,255,0.6)',
-            textShadow: '0 0 2px rgba(0,0,0,0.8)',
+            color: '#facc15',
+            textShadow: '0 0 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.5)',
             userSelect: 'none',
           }}>
             {lbl.text}
