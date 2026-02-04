@@ -10,6 +10,7 @@ import os
 from app.config import settings
 from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections
 from app.routes.chat import router as chat_router
+from app.routes import discovery, settings as settings_routes, backup, onboarding
 from app.db.database import init_database, check_database_health
 from app.services.connections import get_connection_manager
 from app.routes.sse import broadcast
@@ -169,6 +170,12 @@ app.include_router(cron.router, prefix="/api/cron", tags=["cron"])
 app.include_router(history.router, prefix="/api/sessions/archived", tags=["history"])
 app.include_router(connections.router, prefix="/api", tags=["connections"])
 app.include_router(chat_router)
+
+# Phase 0+1: Discovery, Settings, Backup, Onboarding
+app.include_router(discovery.router, prefix="/api", tags=["discovery"])
+app.include_router(settings_routes.router, prefix="/api", tags=["settings"])
+app.include_router(backup.router, prefix="/api", tags=["backup"])
+app.include_router(onboarding.router, prefix="/api", tags=["onboarding"])
 
 
 @app.get("/")

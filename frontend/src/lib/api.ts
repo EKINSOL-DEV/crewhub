@@ -73,6 +73,69 @@ export type MinionContentBlock = SessionContentBlock
 
 export const API_BASE = '/api'
 
+// ─── Discovery Types ──────────────────────────────────────────────
+
+export interface DiscoveryCandidate {
+  runtime_type: 'openclaw' | 'claude_code' | 'codex_cli' | 'unknown'
+  discovery_method: 'port_probe' | 'config_file' | 'cli_detect' | 'mdns' | 'manual'
+  target: {
+    url?: string
+    host?: string
+    port?: number
+    transport?: string
+  }
+  auth: {
+    required: boolean
+    token_hint?: string
+  }
+  confidence: 'high' | 'medium' | 'low'
+  status: 'reachable' | 'unreachable' | 'auth_required' | 'installed' | 'unknown'
+  evidence: string[]
+  metadata: {
+    version?: string
+    active_sessions?: number
+    machine_name?: string
+  }
+}
+
+export interface ScanResult {
+  candidates: DiscoveryCandidate[]
+  scan_duration_ms: number
+}
+
+export interface TestResult {
+  reachable: boolean
+  sessions?: number
+  error?: string
+}
+
+// ─── Settings Types ───────────────────────────────────────────────
+
+export type SettingsMap = Record<string, string>
+
+// ─── Backup Types ─────────────────────────────────────────────────
+
+export interface BackupInfo {
+  filename: string
+  path?: string
+  size: number
+  created_at: string
+}
+
+export interface ImportResult {
+  success: boolean
+  message?: string
+  error?: string
+}
+
+// ─── Onboarding Types ─────────────────────────────────────────────
+
+export interface OnboardingStatus {
+  completed: boolean
+  connections_count: number
+  has_active_connection: boolean
+}
+
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${url}`, {
     ...options,
@@ -103,6 +166,82 @@ export const api = {
 
   getMinionHistory: (sessionKey: string, limit: number = 50) =>
     fetchJSON<SessionHistoryResponse>(`/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`),
+}
+
+// ─── Discovery API ──────────────────────────────────────────────
+
+export async function scanForRuntimes(): Promise<ScanResult> {
+  return fetchJSON<ScanResult>('/discovery/scan', { method: 'POST' })
+}
+
+export async function testConnection(
+  type: string,
+  url: string,
+  token?: string
+): Promise<TestResult> {
+  return fetchJSON<TestResult>('/discovery/test', {
+    method: 'POST',
+    body: JSON.stringify({ type, url, token }),
+  })
+}
+
+// ─── Settings API ───────────────────────────────────────────────
+
+export async function getSettings(): Promise<SettingsMap> {
+  return fetchJSON<SettingsMap>('/settings')
+}
+
+export async function updateSetting(key: string, value: string): Promise<void> {
+  await fetchJSON<{ key: string; value: string }>(`/settings/${encodeURIComponent(key)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ value }),
+  })
+}
+
+export async function updateSettingsBatch(
+  settings: Record<string, string>
+): Promise<void> {
+  await fetchJSON<{ settings: Record<string, string> }>('/settings/batch', {
+    method: 'PUT',
+    body: JSON.stringify({ settings }),
+  })
+}
+
+// ─── Backup API ─────────────────────────────────────────────────
+
+export async function exportBackup(): Promise<Blob> {
+  const response = await fetch(`${API_BASE}/backup/export`)
+  if (!response.ok) {
+    throw new Error(`Export failed: ${response.status}`)
+  }
+  return response.blob()
+}
+
+export async function importBackup(file: File): Promise<ImportResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await fetch(`${API_BASE}/backup/import`, {
+    method: 'POST',
+    body: formData,
+  })
+  if (!response.ok) {
+    throw new Error(`Import failed: ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function createBackup(): Promise<BackupInfo> {
+  return fetchJSON<BackupInfo>('/backup/create', { method: 'POST' })
+}
+
+export async function listBackups(): Promise<BackupInfo[]> {
+  return fetchJSON<BackupInfo[]>('/backup/list')
+}
+
+// ─── Onboarding API ─────────────────────────────────────────────
+
+export async function getOnboardingStatus(): Promise<OnboardingStatus> {
+  return fetchJSON<OnboardingStatus>('/onboarding/status')
 }
 
 // Session Display Names API

@@ -11,7 +11,7 @@ DB_DIR = Path.home() / ".crewhub"
 DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 2  # v2: Added connections table
+SCHEMA_VERSION = 3  # v3: Added discovery, settings API, backup system
 
 
 async def init_database():
