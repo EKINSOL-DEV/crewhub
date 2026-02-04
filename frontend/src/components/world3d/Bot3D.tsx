@@ -151,6 +151,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   const animRef = useBotAnimation(status, interactionPoints, roomBounds)
   const lastAppliedOpacity = useRef(1)
   const materialsClonable = useRef(false) // track if materials have been cloned for this bot
+  const hasInitialized = useRef(false) // skip interpolation on first frame
 
   // Single consolidated useFrame: animation ticks + transforms + movement
   useFrame(({ clock }, delta) => {
@@ -158,6 +159,21 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     const t = clock.getElapsedTime()
     const anim = animRef.current
     const state = wanderState.current
+
+    // ─── First frame: snap to position without interpolation ──
+    if (!hasInitialized.current) {
+      hasInitialized.current = true
+      groupRef.current.position.set(state.currentX, position[1], state.currentZ)
+      groupRef.current.rotation.set(0, groupRef.current.rotation.y, 0)
+      if (session?.key) {
+        botPositionRegistry.set(session.key, {
+          x: state.currentX,
+          y: position[1],
+          z: state.currentZ,
+        })
+      }
+      return
+    }
 
     // ─── Tick animation state machine (phase transitions) ─────
     tickAnimState(anim, delta)
@@ -461,6 +477,15 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
 
     groupRef.current.position.x = state.currentX
     groupRef.current.position.z = state.currentZ
+
+    // ─── Prevent tilt: lock rotation to Y-axis only ───────────
+    // Animation may set rotation.x (bodyTilt) and rotation.z (sleepRotZ)
+    // but during non-sleep phases these must stay 0 to prevent visual tilt
+    // (especially noticeable when camera orbits the bot).
+    if (anim.phase !== 'sleeping') {
+      groupRef.current.rotation.x = 0
+      groupRef.current.rotation.z = 0
+    }
 
     // Update position registry for camera following
     if (session?.key) {

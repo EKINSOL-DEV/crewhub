@@ -63,18 +63,16 @@ function loadStoredWindows(): StoredWindow[] {
 
 function saveStoredWindows(windows: ChatWindowState[]): void {
   try {
-    const toStore: StoredWindow[] = windows
-      .filter(w => w.isPinned) // Only persist pinned windows
-      .map(w => ({
-        sessionKey: w.sessionKey,
-        agentName: w.agentName,
-        agentIcon: w.agentIcon,
-        agentColor: w.agentColor,
-        isMinimized: w.isMinimized,
-        isPinned: w.isPinned,
-        position: w.position,
-        size: w.size,
-      }))
+    const toStore: StoredWindow[] = windows.map(w => ({
+      sessionKey: w.sessionKey,
+      agentName: w.agentName,
+      agentIcon: w.agentIcon,
+      agentColor: w.agentColor,
+      isMinimized: w.isMinimized,
+      isPinned: w.isPinned,
+      position: w.position,
+      size: w.size,
+    }))
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore))
   } catch {
     // Ignore storage errors
@@ -106,7 +104,7 @@ function getInitialWindows(): ChatWindowState[] {
   return stored.map((w, i) => ({
     ...w,
     zIndex: getNextZIndex(),
-    isMinimized: w.isMinimized ?? true, // Restore pinned as minimized
+    isMinimized: w.isMinimized ?? false,
     position: w.position ?? getDefaultPosition(i),
     size: w.size ?? DEFAULT_SIZE,
   }))
