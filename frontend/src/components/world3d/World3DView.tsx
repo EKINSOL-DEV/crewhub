@@ -59,7 +59,7 @@ import { Bot3D, type BotStatus } from './Bot3D'
 import { BotInfoPanel } from './BotInfoPanel'
 import { RoomInfoPanel } from './RoomInfoPanel'
 import { ProjectDocsPanel } from './ProjectDocsPanel'
-import { useRooms } from '@/hooks/useRooms'
+import { useRooms, type Room } from '@/hooks/useRooms'
 import { useAgentsRegistry, type AgentRuntime } from '@/hooks/useAgentsRegistry'
 import { useSessionActivity } from '@/hooks/useSessionActivity'
 import { useSessionDisplayNames } from '@/hooks/useSessionDisplayNames'
@@ -361,6 +361,10 @@ interface SceneContentProps {
   onLeaveRoom?: () => void
   /** Debug bot room overrides: session key → room ID */
   debugRoomMap?: Map<string, string>
+  /** Rooms data passed from outside Canvas (hooks don't work reliably inside R3F Canvas) */
+  rooms: Room[]
+  getRoomForSession: (sessionKey: string, sessionData?: { label?: string; model?: string; channel?: string }) => string | undefined
+  isRoomsLoading: boolean
 }
 
 // ─── Scene Content ─────────────────────────────────────────────
@@ -378,6 +382,9 @@ function SceneContent({
   onEnterRoom,
   onLeaveRoom,
   debugRoomMap,
+  rooms,
+  getRoomForSession,
+  isRoomsLoading,
 }: SceneContentProps) {
   void _settings // Available for future use (e.g. animation speed)
   // Combine all sessions for agent registry lookup
@@ -385,7 +392,6 @@ function SceneContent({
     () => [...visibleSessions, ...parkingSessions],
     [visibleSessions, parkingSessions],
   )
-  const { rooms, getRoomForSession, isLoading } = useRooms()
   const { agents: agentRuntimes } = useAgentsRegistry(allSessions)
 
   const layout = useMemo(() => {
@@ -541,7 +547,7 @@ function SceneContent({
 
   // DEBUG: Log loading state
 
-  if (isLoading || !layout) {
+  if (isRoomsLoading || !layout) {
     return null
   }
 
@@ -734,7 +740,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const { setFocusHandler } = useChatContext()
 
   // Rooms for overlays (tabs bar, navigation)
-  const { rooms, getRoomForSession, refresh: refreshRooms } = useRooms()
+  const { rooms, getRoomForSession, refresh: refreshRooms, isLoading: isRoomsLoading } = useRooms()
 
   // Register 3D focus handler: zoom to bot when 🎯 is clicked in chat panel
   // Use a ref to avoid infinite re-render loop (handleFocusAgent deps change every render
@@ -863,6 +869,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               onEnterRoom={handleFpEnterRoom}
               onLeaveRoom={handleFpLeaveRoom}
               debugRoomMap={debugRoomMap}
+              rooms={rooms}
+              getRoomForSession={getRoomForSession}
+              isRoomsLoading={isRoomsLoading}
               />
             </Suspense>
           </Canvas>

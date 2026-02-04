@@ -78,7 +78,7 @@ export function useRooms() {
       
       setError(null)
     } catch (err) {
-      console.error("Failed to fetch rooms:", err)
+      console.error("[useRooms] CATCH - Failed to fetch rooms:", err)
       setError(err instanceof Error ? err.message : "Unknown error")
     } finally {
       setIsLoading(false)
