@@ -19,6 +19,7 @@ class ProjectCreate(BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None
     color: Optional[str] = None
+    folder_path: Optional[str] = None
 
 
 class ProjectUpdate(BaseModel):
@@ -28,6 +29,7 @@ class ProjectUpdate(BaseModel):
     icon: Optional[str] = None
     color: Optional[str] = None
     status: Optional[str] = None
+    folder_path: Optional[str] = None
 
 
 class ProjectResponse(BaseModel):
@@ -37,6 +39,7 @@ class ProjectResponse(BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None
     color: Optional[str] = None
+    folder_path: Optional[str] = None
     status: str = "active"
     created_at: int
     updated_at: int
@@ -63,6 +66,7 @@ class Room(BaseModel):
     speed_multiplier: float = 1.0
     project_id: Optional[str] = None
     project_name: Optional[str] = None
+    project_color: Optional[str] = None
     is_hq: bool = False
     created_at: int
     updated_at: int

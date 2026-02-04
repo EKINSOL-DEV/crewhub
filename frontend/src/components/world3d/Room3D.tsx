@@ -152,7 +152,13 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
       onClick={handleClick}
     >
       {/* Floor tiles */}
-      <RoomFloor color={roomColor} size={size} hovered={hovered} />
+      <RoomFloor
+        color={roomColor}
+        size={size}
+        hovered={hovered}
+        projectColor={room.project_color}
+        isHQ={room.is_hq}
+      />
 
       {/* Perimeter walls */}
       <RoomWalls color={roomColor} size={size} hovered={hovered} />
@@ -164,6 +170,9 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
         color={roomColor}
         size={size}
         hovered={hovered}
+        projectName={room.project_name}
+        projectColor={room.project_color}
+        isHQ={room.is_hq}
       />
 
       {/* Drop zone overlay (visible during drag) */}

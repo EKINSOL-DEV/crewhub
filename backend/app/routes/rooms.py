@@ -24,6 +24,7 @@ def _row_to_room(row: dict) -> Room:
         speed_multiplier=row.get("speed_multiplier", 1.0),
         project_id=row.get("project_id"),
         project_name=row.get("project_name"),
+        project_color=row.get("project_color"),
         is_hq=bool(row.get("is_hq", 0)),
         created_at=row["created_at"],
         updated_at=row["updated_at"],
@@ -31,7 +32,7 @@ def _row_to_room(row: dict) -> Room:
 
 
 _ROOMS_SELECT = """
-    SELECT r.*, p.name as project_name
+    SELECT r.*, p.name as project_name, p.color as project_color
     FROM rooms r
     LEFT JOIN projects p ON r.project_id = p.id
 """

@@ -9,6 +9,7 @@ export interface Room {
   sort_order: number
   project_id: string | null
   project_name: string | null
+  project_color: string | null
   is_hq: boolean
   created_at: number
   updated_at: number
