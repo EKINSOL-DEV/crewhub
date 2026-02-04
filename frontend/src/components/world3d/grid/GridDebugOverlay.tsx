@@ -20,10 +20,10 @@ const COLORS = {
 } as const
 
 const OPACITY = {
-  walkable:    0.3,
-  blocked:     0.45,
-  interaction: 0.5,
-  door:        0.5,
+  walkable:    0.55,
+  blocked:     0.7,
+  interaction: 0.75,
+  door:        0.75,
 } as const
 
 // ─── Types ──────────────────────────────────────────────────────
