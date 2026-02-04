@@ -51,7 +51,8 @@ export function useSessionsStream(enabled: boolean = true) {
     fetchSessions()
     pollingIntervalRef.current = setInterval(fetchSessions, POLLING_INTERVAL_MS)
   }, [fetchSessions, stopPolling])
-  
+
+  // Handle SSE connection state changes
   useEffect(() => {
     if (!enabled) {
       setState({
@@ -64,11 +65,46 @@ export function useSessionsStream(enabled: boolean = true) {
       })
       return
     }
-    
-    // Fetch initial data
-    fetchSessions()
-    
-    // Subscribe to SSE events via central manager
+
+    const unsubscribeState = sseManager.onStateChange((connectionState) => {
+      if (connectionState === "connected") {
+        stopPolling()
+        setState(prev => ({
+          ...prev,
+          connected: true,
+          connectionMethod: "sse",
+          reconnecting: false,
+          error: null,
+        }))
+        // Fetch initial data since SSE doesn't send it on connect
+        fetchSessions()
+      } else if (connectionState === "connecting") {
+        setState(prev => ({
+          ...prev,
+          reconnecting: true,
+        }))
+      } else {
+        // disconnected - fall back to polling
+        setState(prev => ({
+          ...prev,
+          connected: false,
+          connectionMethod: "polling",
+          reconnecting: true,
+        }))
+        startPolling()
+      }
+    })
+
+    return () => {
+      unsubscribeState()
+      stopPolling()
+    }
+  }, [enabled, fetchSessions, startPolling, stopPolling])
+
+  // Subscribe to session events via central SSE manager
+  useEffect(() => {
+    if (!enabled) return
+
     const handleSessionsRefresh = (event: MessageEvent) => {
       try {
         const { sessions } = JSON.parse(event.data)
@@ -77,7 +113,7 @@ export function useSessionsStream(enabled: boolean = true) {
         console.error("Failed to parse sessions-refresh event:", error)
       }
     }
-    
+
     const handleSessionCreated = (event: MessageEvent) => {
       try {
         const session: CrewSession = JSON.parse(event.data)
@@ -86,7 +122,7 @@ export function useSessionsStream(enabled: boolean = true) {
         console.error("Failed to parse session-created event:", error)
       }
     }
-    
+
     const handleSessionUpdated = (event: MessageEvent) => {
       try {
         const updatedSession: CrewSession = JSON.parse(event.data)
@@ -98,7 +134,7 @@ export function useSessionsStream(enabled: boolean = true) {
         console.error("Failed to parse session-updated event:", error)
       }
     }
-    
+
     const handleSessionRemoved = (event: MessageEvent) => {
       try {
         const { key } = JSON.parse(event.data)
@@ -107,52 +143,20 @@ export function useSessionsStream(enabled: boolean = true) {
         console.error("Failed to parse session-removed event:", error)
       }
     }
-    
+
     // Subscribe to all session events
-    const unsubRefresh = sseManager.subscribe("sessions-refresh", handleSessionsRefresh)
-    const unsubCreated = sseManager.subscribe("session-created", handleSessionCreated)
-    const unsubUpdated = sseManager.subscribe("session-updated", handleSessionUpdated)
-    const unsubRemoved = sseManager.subscribe("session-removed", handleSessionRemoved)
-    
-    // Subscribe to connection state changes
-    const unsubState = sseManager.onStateChange((sseState) => {
-      if (sseState === "connected") {
-        stopPolling()
-        setState(prev => ({
-          ...prev,
-          connected: true,
-          connectionMethod: "sse",
-          reconnecting: false,
-          error: null,
-        }))
-      } else if (sseState === "connecting") {
-        setState(prev => ({
-          ...prev,
-          connected: false,
-          connectionMethod: "polling",
-          reconnecting: true,
-        }))
-        // Start polling while reconnecting
-        startPolling()
-      } else {
-        setState(prev => ({
-          ...prev,
-          connected: false,
-          connectionMethod: "disconnected",
-          reconnecting: false,
-        }))
-      }
-    })
-    
+    const unsubscribeRefresh = sseManager.subscribe("sessions-refresh", handleSessionsRefresh)
+    const unsubscribeCreated = sseManager.subscribe("session-created", handleSessionCreated)
+    const unsubscribeUpdated = sseManager.subscribe("session-updated", handleSessionUpdated)
+    const unsubscribeRemoved = sseManager.subscribe("session-removed", handleSessionRemoved)
+
     return () => {
-      unsubRefresh()
-      unsubCreated()
-      unsubUpdated()
-      unsubRemoved()
-      unsubState()
-      stopPolling()
+      unsubscribeRefresh()
+      unsubscribeCreated()
+      unsubscribeUpdated()
+      unsubscribeRemoved()
     }
-  }, [enabled, fetchSessions, startPolling, stopPolling])
+  }, [enabled])
   
   const refresh = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true }))
