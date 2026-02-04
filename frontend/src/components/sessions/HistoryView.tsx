@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -7,35 +7,58 @@ import {
   History, 
   RefreshCw, 
   Search, 
+  Archive,
   CheckCircle2, 
   XCircle, 
   Clock,
   ChevronRight,
-  Filter
+  Filter,
+  ChevronDown,
+  MessageSquare,
+  Bot
 } from "lucide-react"
 
 interface ArchivedSession {
-  id: string
-  key: string
-  label?: string
-  displayName?: string
-  model?: string
-  startedAt: number
-  endedAt: number
-  totalTokens: number
-  outcome: "success" | "error" | "aborted" | "timeout"
-  summary?: string
+  session_key: string
+  session_id: string
+  agent_id: string
+  display_name: string
+  minion_type: string
+  model: string | null
+  channel: string | null
+  started_at: string   // ISO string
+  ended_at: string     // ISO string
+  message_count: number
+  status: string
+  summary: string
+  file_path: string
 }
 
-function formatDuration(start: number, end: number): string {
-  const diff = end - start
+interface ArchivedResponse {
+  sessions: ArchivedSession[]
+  total: number
+  limit: number
+  offset: number
+}
+
+const PAGE_SIZE = 50
+
+function parseTimestamp(iso: string): number {
+  return new Date(iso).getTime()
+}
+
+function formatDuration(startIso: string, endIso: string): string {
+  const diff = parseTimestamp(endIso) - parseTimestamp(startIso)
+  if (diff < 0) return "—"
   if (diff < 1000) return "< 1s"
   if (diff < 60000) return `${Math.floor(diff / 1000)}s`
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ${Math.floor((diff % 60000) / 1000)}s`
   return `${Math.floor(diff / 3600000)}h ${Math.floor((diff % 3600000) / 60000)}m`
 }
 
-function formatDate(timestamp: number): string {
+function formatDate(iso: string): string {
+  const timestamp = parseTimestamp(iso)
+  if (isNaN(timestamp)) return "—"
   const date = new Date(timestamp)
   const now = new Date()
   const diffDays = Math.floor((now.getTime() - timestamp) / 86400000)
@@ -46,72 +69,101 @@ function formatDate(timestamp: number): string {
   return date.toLocaleDateString()
 }
 
-function formatTokens(tokens: number): string {
-  if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`
-  if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`
-  return tokens.toString()
+function formatCount(n: number): string {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
+  return n.toString()
 }
 
-function getOutcomeIcon(outcome: ArchivedSession["outcome"]) {
-  switch (outcome) {
+function formatTotal(n: number): string {
+  return n.toLocaleString()
+}
+
+function getStatusIcon(status: string) {
+  switch (status) {
+    case "archived": return <Archive className="h-4 w-4 text-blue-500" />
+    case "completed":
     case "success": return <CheckCircle2 className="h-4 w-4 text-green-500" />
-    case "error": return <XCircle className="h-4 w-4 text-red-500" />
-    case "aborted": return <XCircle className="h-4 w-4 text-yellow-500" />
+    case "error":
+    case "failed": return <XCircle className="h-4 w-4 text-red-500" />
     case "timeout": return <Clock className="h-4 w-4 text-orange-500" />
+    default: return <Archive className="h-4 w-4 text-muted-foreground" />
   }
 }
 
-function getOutcomeBadge(outcome: ArchivedSession["outcome"]) {
-  const variants: Record<ArchivedSession["outcome"], "default" | "secondary" | "destructive" | "outline"> = {
-    success: "default",
-    error: "destructive",
-    aborted: "secondary",
-    timeout: "outline",
-  }
-  return <Badge variant={variants[outcome]}>{outcome}</Badge>
+function getStatusBadge(status: string) {
+  let variant: "default" | "secondary" | "destructive" | "outline" = "secondary"
+  if (status === "error" || status === "failed") variant = "destructive"
+  else if (status === "completed" || status === "success") variant = "default"
+  else if (status === "timeout") variant = "outline"
+  return <Badge variant={variant}>{status}</Badge>
 }
 
 export function HistoryView() {
   const [sessions, setSessions] = useState<ArchivedSession[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
-  const [outcomeFilter, setOutcomeFilter] = useState<ArchivedSession["outcome"] | "all">("all")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
 
-  const fetchHistory = async () => {
-    setLoading(true)
+  const fetchHistory = useCallback(async (offset = 0, append = false) => {
+    if (!append) setLoading(true)
+    else setLoadingMore(true)
+
     try {
-      const response = await fetch("/api/sessions/archived")
+      const params = new URLSearchParams({
+        limit: PAGE_SIZE.toString(),
+        offset: offset.toString(),
+      })
+      const response = await fetch(`/api/sessions/archived?${params}`)
       if (!response.ok) {
         // API not implemented yet - show placeholder
-        setSessions([])
+        if (!append) setSessions([])
+        setTotal(0)
         setError(null)
       } else {
-        const data = await response.json()
-        setSessions(data.sessions || [])
+        const data: ArchivedResponse = await response.json()
+        if (append) {
+          setSessions(prev => [...prev, ...(data.sessions || [])])
+        } else {
+          setSessions(data.sessions || [])
+        }
+        setTotal(data.total ?? 0)
         setError(null)
       }
-    } catch (err) {
+    } catch (_err) {
       // API not available - show placeholder
-      setSessions([])
+      if (!append) setSessions([])
+      setTotal(0)
       setError(null)
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchHistory()
-  }, [])
+  }, [fetchHistory])
+
+  const handleLoadMore = () => {
+    fetchHistory(sessions.length, true)
+  }
+
+  const hasMore = sessions.length < total
 
   const filteredSessions = sessions.filter(s => {
-    if (outcomeFilter !== "all" && s.outcome !== outcomeFilter) return false
+    if (statusFilter !== "all" && s.status !== statusFilter) return false
     if (search.trim()) {
       const searchLower = search.toLowerCase()
       return (
-        s.key.toLowerCase().includes(searchLower) ||
-        s.label?.toLowerCase().includes(searchLower) ||
-        s.displayName?.toLowerCase().includes(searchLower)
+        s.session_key.toLowerCase().includes(searchLower) ||
+        s.session_id.toLowerCase().includes(searchLower) ||
+        s.display_name?.toLowerCase().includes(searchLower) ||
+        s.agent_id?.toLowerCase().includes(searchLower) ||
+        s.summary?.toLowerCase().includes(searchLower)
       )
     }
     return true
@@ -127,14 +179,16 @@ export function HistoryView() {
             <div>
               <h2 className="text-lg font-semibold text-foreground">Session History</h2>
               <p className="text-sm text-muted-foreground">
-                Archived and completed sessions
+                {total > 0
+                  ? `${formatTotal(total)} archived sessions`
+                  : "Archived and completed sessions"}
               </p>
             </div>
           </div>
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={fetchHistory}
+            onClick={() => fetchHistory()}
             disabled={loading}
             className="gap-2"
           >
@@ -156,14 +210,14 @@ export function HistoryView() {
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
             <select
-              value={outcomeFilter}
-              onChange={(e) => setOutcomeFilter(e.target.value as ArchivedSession["outcome"] | "all")}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-background border border-border rounded-md px-3 py-2 text-sm"
             >
-              <option value="all">All outcomes</option>
-              <option value="success">Success</option>
+              <option value="all">All statuses</option>
+              <option value="archived">Archived</option>
+              <option value="completed">Completed</option>
               <option value="error">Error</option>
-              <option value="aborted">Aborted</option>
               <option value="timeout">Timeout</option>
             </select>
           </div>
@@ -180,7 +234,7 @@ export function HistoryView() {
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <XCircle className="h-12 w-12 text-red-500 mb-4" />
             <p className="text-muted-foreground">{error}</p>
-            <Button variant="outline" className="mt-4" onClick={fetchHistory}>
+            <Button variant="outline" className="mt-4" onClick={() => fetchHistory()}>
               Try Again
             </Button>
           </div>
@@ -209,23 +263,32 @@ export function HistoryView() {
           <div className="p-4 space-y-2">
             {filteredSessions.map((session) => (
               <div 
-                key={session.id}
+                key={session.session_id}
                 className="p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors cursor-pointer group"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {getOutcomeIcon(session.outcome)}
+                    {getStatusIcon(session.status)}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium text-foreground truncate">
-                          {session.displayName || session.label || session.key}
+                          {session.display_name || session.session_key}
                         </h3>
-                        {getOutcomeBadge(session.outcome)}
+                        {getStatusBadge(session.status)}
                       </div>
                       <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                        <span>{formatDate(session.endedAt)}</span>
-                        <span>Duration: {formatDuration(session.startedAt, session.endedAt)}</span>
-                        <span>{formatTokens(session.totalTokens)} tokens</span>
+                        <span>{formatDate(session.ended_at)}</span>
+                        <span>Duration: {formatDuration(session.started_at, session.ended_at)}</span>
+                        <span className="inline-flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {formatCount(session.message_count)} messages
+                        </span>
+                        {session.agent_id && (
+                          <span className="inline-flex items-center gap-1">
+                            <Bot className="h-3 w-3" />
+                            {session.agent_id}
+                          </span>
+                        )}
                         {session.model && <span>{session.model}</span>}
                       </div>
                       {session.summary && (
@@ -239,6 +302,26 @@ export function HistoryView() {
                 </div>
               </div>
             ))}
+
+            {/* Load More */}
+            {hasMore && (
+              <div className="flex justify-center pt-4 pb-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="gap-2"
+                >
+                  {loadingMore ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  Load more ({formatTotal(total - sessions.length)} remaining)
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </ScrollArea>
