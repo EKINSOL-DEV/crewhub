@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.db.database import get_db
 from app.db.models import SessionRoomAssignment, SessionRoomAssignmentCreate
+from app.routes.sse import broadcast
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -92,7 +93,14 @@ async def create_or_update_assignment(assignment: SessionRoomAssignmentCreate):
                 (assignment.session_key,)
             ) as cursor:
                 row = await cursor.fetchone()
-                return SessionRoomAssignment(**row)
+                result = SessionRoomAssignment(**row)
+            
+            await broadcast("rooms-refresh", {
+                "action": "assignment_changed",
+                "session_key": assignment.session_key,
+                "room_id": assignment.room_id,
+            })
+            return result
         finally:
             await db.close()
     except HTTPException:
@@ -122,6 +130,10 @@ async def delete_assignment(session_key: str):
             )
             await db.commit()
             
+            await broadcast("rooms-refresh", {
+                "action": "assignment_removed",
+                "session_key": session_key,
+            })
             return {"success": True, "deleted": session_key}
         finally:
             await db.close()
@@ -182,6 +194,12 @@ async def batch_assign(assignments: list[SessionRoomAssignmentCreate]):
                 created.append(assignment.session_key)
             
             await db.commit()
+            
+            if created:
+                await broadcast("rooms-refresh", {
+                    "action": "assignments_batch_changed",
+                    "session_keys": created,
+                })
             return {"success": True, "assigned": created, "count": len(created)}
         finally:
             await db.close()

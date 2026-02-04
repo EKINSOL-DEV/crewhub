@@ -388,12 +388,13 @@ function SceneContent({
     for (const runtime of agentRuntimes) {
       // Main agent session
       if (runtime.session && visibleKeys.has(runtime.session.key)) {
-        const roomId = runtime.agent.default_room_id
-          || getRoomForSession(runtime.session.key, {
+        // Priority: explicit assignment > agent default_room_id > rules > fallback
+        const roomId = getRoomForSession(runtime.session.key, {
             label: runtime.session.label,
             model: runtime.session.model,
             channel: runtime.session.lastChannel || runtime.session.channel,
           })
+          || runtime.agent.default_room_id
           || getDefaultRoomForSession(runtime.session.key)
           || rooms[0]?.id || 'headquarters'
         const placement = buildBotPlacement(runtime.session, runtime)

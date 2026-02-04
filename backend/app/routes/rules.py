@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.db.database import get_db
 from app.db.models import RoomAssignmentRule, RoomAssignmentRuleCreate, RoomAssignmentRuleUpdate
+from app.routes.sse import broadcast
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -88,7 +89,10 @@ async def create_rule(rule: RoomAssignmentRuleCreate):
                 "SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)
             ) as cursor:
                 row = await cursor.fetchone()
-                return RoomAssignmentRule(**row)
+                result = RoomAssignmentRule(**row)
+            
+            await broadcast("rooms-refresh", {"action": "rule_created", "rule_id": rule_id})
+            return result
         finally:
             await db.close()
     except HTTPException:
@@ -137,7 +141,10 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
                 "SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)
             ) as cursor:
                 row = await cursor.fetchone()
-                return RoomAssignmentRule(**row)
+                result = RoomAssignmentRule(**row)
+            
+            await broadcast("rooms-refresh", {"action": "rule_updated", "rule_id": rule_id})
+            return result
         finally:
             await db.close()
     except HTTPException:
@@ -165,6 +172,7 @@ async def delete_rule(rule_id: str):
             )
             await db.commit()
             
+            await broadcast("rooms-refresh", {"action": "rule_deleted", "rule_id": rule_id})
             return {"success": True, "deleted": rule_id}
         finally:
             await db.close()
