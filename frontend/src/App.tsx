@@ -81,6 +81,13 @@ function AppContent() {
     onboardingCheckRef.current = true
 
     const checkOnboarding = async () => {
+      // Force onboarding via URL param: ?onboarding=true
+      if (new URLSearchParams(window.location.search).get('onboarding') === 'true') {
+        setShowOnboarding(true)
+        setOnboardingChecked(true)
+        return
+      }
+
       // Quick localStorage check first
       if (localStorage.getItem('crewhub-onboarded') === 'true') {
         setOnboardingChecked(true)
