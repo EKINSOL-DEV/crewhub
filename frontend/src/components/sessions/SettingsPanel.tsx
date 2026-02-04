@@ -38,6 +38,7 @@ import {
   ChevronUp, ChevronDown, ChevronRight,
   AlertCircle, Download, Upload, Database, Loader2, Clock,
   HardDrive, RefreshCw,
+  Palette, LayoutGrid, SlidersHorizontal, Wrench,
 } from "lucide-react"
 import {
   exportBackup,
@@ -109,6 +110,20 @@ const SESSION_TYPES = [
   { value: "discord", label: "Discord" },
 ]
 
+// ─── Tab definitions ─────────────────────────────────────────────────────────
+
+type SettingsTab = "look" | "rooms" | "behavior" | "data" | "advanced"
+
+const SETTINGS_TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
+  { id: "look", label: "Look & Feel", icon: <Palette className="h-4 w-4" /> },
+  { id: "rooms", label: "Rooms", icon: <LayoutGrid className="h-4 w-4" /> },
+  { id: "behavior", label: "Behavior", icon: <SlidersHorizontal className="h-4 w-4" /> },
+  { id: "data", label: "Data", icon: <Database className="h-4 w-4" /> },
+  { id: "advanced", label: "Advanced", icon: <Wrench className="h-4 w-4" /> },
+]
+
+const SETTINGS_TAB_STORAGE_KEY = "crewhub-settings-tab"
+
 // ─── Section wrapper ─────────────────────────────────────────────────────────
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -164,6 +179,18 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   const [environment, setEnvironment] = useEnvironment()
   const sessionConfig = useSessionConfig()
   const overrideCount = getOverrideCount()
+
+  // ─── Tab state (persisted in localStorage) ───
+  const [selectedTab, setSelectedTab] = useState<SettingsTab>(() => {
+    const stored = localStorage.getItem(SETTINGS_TAB_STORAGE_KEY)
+    if (stored && SETTINGS_TABS.some(t => t.id === stored)) return stored as SettingsTab
+    return "look"
+  })
+
+  const handleTabChange = useCallback((tab: SettingsTab) => {
+    setSelectedTab(tab)
+    localStorage.setItem(SETTINGS_TAB_STORAGE_KEY, tab)
+  }, [])
 
   // ─── Room management state ───
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false)
@@ -337,7 +364,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
           <div className="max-w-[1400px] mx-auto px-8 py-8 pb-16">
 
             {/* ─── Header ─── */}
-            <div className="flex items-start justify-between mb-10">
+            <div className="flex items-start justify-between mb-6">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">⚙️ Crew Settings</h1>
                 <p className="text-muted-foreground mt-1.5 text-sm">
@@ -353,11 +380,30 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
               </button>
             </div>
 
-            {/* ─── 3-Column Grid ─── */}
-            <div className="grid grid-cols-3 gap-6 items-start">
+            {/* ─── Tab Bar ─── */}
+            <div className="flex gap-1 border-b border-border mb-8 overflow-x-auto">
+              {SETTINGS_TABS.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`
+                    flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap
+                    border-b-2 transition-colors -mb-px
+                    ${selectedTab === tab.id
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                    }
+                  `}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-              {/* ═══ LEFT COLUMN: Appearance ═══ */}
-              <div className="space-y-6">
+            {/* ═══ Tab: Look & Feel ═══ */}
+            {selectedTab === "look" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                 <Section title="🎨 Appearance">
                   {/* Theme Mode */}
                   <div className="space-y-3">
@@ -447,10 +493,65 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                     </div>
                   </div>
                 </Section>
-              </div>
 
-              {/* ═══ CENTER COLUMN: Room Configuration ═══ */}
-              <div className="space-y-6">
+                <div className="space-y-6">
+                  <Section title="📺 Display">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-animations" className="flex flex-col gap-1">
+                        <span className="text-sm">Animations</span>
+                        <span className="text-xs text-muted-foreground font-normal">Show wiggle and bounce effects</span>
+                      </Label>
+                      <Switch
+                        id="show-animations"
+                        checked={settings.showAnimations}
+                        onCheckedChange={(checked) => updateSetting("showAnimations", checked)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="show-badges" className="flex flex-col gap-1">
+                        <span className="text-sm">Achievement Badges</span>
+                        <span className="text-xs text-muted-foreground font-normal">Display earned badges</span>
+                      </Label>
+                      <Switch
+                        id="show-badges"
+                        checked={settings.showBadges}
+                        onCheckedChange={(checked) => updateSetting("showBadges", checked)}
+                      />
+                    </div>
+                  </Section>
+
+                  <Section title="🎉 Fun & Playfulness">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="easter-eggs" className="flex flex-col gap-1">
+                        <span className="text-sm">Easter Eggs</span>
+                        <span className="text-xs text-muted-foreground font-normal">Enable hidden surprises</span>
+                      </Label>
+                      <Switch
+                        id="easter-eggs"
+                        checked={settings.easterEggsEnabled}
+                        onCheckedChange={(checked) => updateSetting("easterEggsEnabled", checked)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="play-sound" className="flex flex-col gap-1">
+                        <span className="text-sm">Sound Effects</span>
+                        <span className="text-xs text-muted-foreground font-normal">Play sounds for easter eggs</span>
+                      </Label>
+                      <Switch
+                        id="play-sound"
+                        checked={settings.playSound}
+                        onCheckedChange={(checked) => updateSetting("playSound", checked)}
+                        disabled={!settings.easterEggsEnabled}
+                      />
+                    </div>
+                  </Section>
+                </div>
+              </div>
+            )}
+
+            {/* ═══ Tab: Rooms ═══ */}
+            {selectedTab === "rooms" && (
+              <div className="max-w-3xl space-y-6">
                 <CollapsibleSection
                   title="🏢 Room Management"
                   badge={`${rooms.length} rooms`}
@@ -661,9 +762,11 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                   )}
                 </CollapsibleSection>
               </div>
+            )}
 
-              {/* ═══ RIGHT COLUMN: Behavior & Display ═══ */}
-              <div className="space-y-6">
+            {/* ═══ Tab: Behavior ═══ */}
+            {selectedTab === "behavior" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                 <Section title="🔄 Updates">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="auto-refresh" className="flex flex-col gap-1">
@@ -691,31 +794,6 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                         <SelectItem value="30000">30 seconds</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                </Section>
-
-                <Section title="📺 Display">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="show-animations" className="flex flex-col gap-1">
-                      <span className="text-sm">Animations</span>
-                      <span className="text-xs text-muted-foreground font-normal">Show wiggle and bounce effects</span>
-                    </Label>
-                    <Switch
-                      id="show-animations"
-                      checked={settings.showAnimations}
-                      onCheckedChange={(checked) => updateSetting("showAnimations", checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="show-badges" className="flex flex-col gap-1">
-                      <span className="text-sm">Achievement Badges</span>
-                      <span className="text-xs text-muted-foreground font-normal">Display earned badges</span>
-                    </Label>
-                    <Switch
-                      id="show-badges"
-                      checked={settings.showBadges}
-                      onCheckedChange={(checked) => updateSetting("showBadges", checked)}
-                    />
                   </div>
                 </Section>
 
@@ -768,9 +846,19 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                 >
                   <ThresholdsTimingSection config={sessionConfig} />
                 </CollapsibleSection>
+              </div>
+            )}
 
+            {/* ═══ Tab: Data ═══ */}
+            {selectedTab === "data" && (
+              <div className="max-w-2xl">
                 <BackupSection />
+              </div>
+            )}
 
+            {/* ═══ Tab: Advanced ═══ */}
+            {selectedTab === "advanced" && (
+              <div className="max-w-2xl">
                 <Section title="🔧 Developer">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="grid-debug" className="flex flex-col gap-1">
@@ -806,34 +894,9 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                     />
                   </div>
                 </Section>
-
-                <Section title="🎉 Fun & Playfulness">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="easter-eggs" className="flex flex-col gap-1">
-                      <span className="text-sm">Easter Eggs</span>
-                      <span className="text-xs text-muted-foreground font-normal">Enable hidden surprises</span>
-                    </Label>
-                    <Switch
-                      id="easter-eggs"
-                      checked={settings.easterEggsEnabled}
-                      onCheckedChange={(checked) => updateSetting("easterEggsEnabled", checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="play-sound" className="flex flex-col gap-1">
-                      <span className="text-sm">Sound Effects</span>
-                      <span className="text-xs text-muted-foreground font-normal">Play sounds for easter eggs</span>
-                    </Label>
-                    <Switch
-                      id="play-sound"
-                      checked={settings.playSound}
-                      onCheckedChange={(checked) => updateSetting("playSound", checked)}
-                      disabled={!settings.easterEggsEnabled}
-                    />
-                  </div>
-                </Section>
               </div>
-            </div>
+            )}
+
           </div>
         </div>
       </div>
