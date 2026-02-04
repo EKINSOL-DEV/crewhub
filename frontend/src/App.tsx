@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { PlaygroundView } from './components/sessions/PlaygroundView'
 import { World3DView } from './components/world3d/World3DView'
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
@@ -16,7 +15,7 @@ import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
 import { getOnboardingStatus } from './lib/api'
-import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Square, Globe } from 'lucide-react'
+import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Globe } from 'lucide-react'
 import { Button } from './components/ui/button'
 
 // Simple path-based routing for dev pages
@@ -56,12 +55,11 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingChecked, setOnboardingChecked] = useState(false)
   const onboardingCheckRef = useRef(false)
-  type ViewMode = '2d' | 'world'
+  type ViewMode = 'world' | 'cards'
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const stored = localStorage.getItem('crewhub-view-mode')
-    if (stored === 'world') return 'world'
-    // Backward compat: '3d' maps to '2d'
-    return '2d'
+    if (stored === 'cards') return 'cards'
+    return 'world'
   })
   const [settings, setSettings] = useState<SessionsSettings>(() => {
     const stored = localStorage.getItem('crewhub-settings')
@@ -137,10 +135,10 @@ function AppContent() {
     setShowOnboarding(false)
   }, [])
 
-  // Toggle between 2D and World
+  // Toggle between World and Cards
   const cycleViewMode = useCallback(() => {
     setViewMode(prev => {
-      const next: ViewMode = prev === '2d' ? 'world' : '2d'
+      const next: ViewMode = prev === 'world' ? 'cards' : 'world'
       localStorage.setItem('crewhub-view-mode', next)
       return next
     })
@@ -170,7 +168,7 @@ function AppContent() {
           <div className="flex items-center gap-3">
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.5.0</span></h1>
+              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.5.1-dev</span></h1>
               <p className="text-xs text-muted-foreground">Multi-agent orchestration</p>
             </div>
           </div>
@@ -196,17 +194,17 @@ function AppContent() {
                 size="sm" 
                 onClick={cycleViewMode}
                 className="gap-2"
-                title={viewMode === '2d' ? 'Switch to World view' : 'Switch to 2D view'}
+                title={viewMode === 'world' ? 'Switch to Cards view' : 'Switch to World view'}
               >
-                {viewMode === '2d' ? (
-                  <>
-                    <Square className="h-4 w-4" />
-                    <span className="text-xs">2D</span>
-                  </>
-                ) : (
+                {viewMode === 'world' ? (
                   <>
                     <Globe className="h-4 w-4" />
                     <span className="text-xs">World</span>
+                  </>
+                ) : (
+                  <>
+                    <Grid3X3 className="h-4 w-4" />
+                    <span className="text-xs">Cards</span>
                   </>
                 )}
               </Button>
@@ -263,11 +261,7 @@ function AppContent() {
                     onAliasChanged={handleAliasChanged}
                   />
                 ) : (
-                  <PlaygroundView
-                    sessions={sessions}
-                    settings={settings}
-                    onAliasChanged={handleAliasChanged}
-                  />
+                  <CardsView sessions={sessions} />
                 )
               )}
               {activeTab === 'cards' && (
