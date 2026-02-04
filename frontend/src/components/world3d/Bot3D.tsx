@@ -107,6 +107,9 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     dirZ: -1,
     stepsRemaining: 0,
     cellProgress: 0, // 0..1 progress toward next cell center
+    // Previous position for actual movement delta (Fix 4)
+    prevX: position[0],
+    prevZ: position[2],
   })
 
   // Update base position when session key changes (bot reassigned to a new spot)
@@ -156,6 +159,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.sessionKey = newKey
       state.stepsRemaining = 0
       state.cellProgress = 0
+      state.prevX = spawnX
+      state.prevZ = spawnZ
     }
   }, [session?.key, position, roomBounds, gridData])
 
@@ -168,13 +173,19 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   }, [session?.key])
 
   // ─── Animation state machine ────────────────────────────────
+  // Stable serialization of roomBounds to prevent unnecessary recalculation
+  const roomBoundsKey = roomBounds
+    ? `${roomBounds.minX},${roomBounds.maxX},${roomBounds.minZ},${roomBounds.maxZ}`
+    : ''
+
   const interactionPoints = useMemo(() => {
     if (!roomName || !roomBounds) return null
     const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
     const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
     const roomSize = (roomBounds.maxX - roomBounds.minX) + 5 // re-add margin (2.5 × 2)
     return getRoomInteractionPoints(roomName, roomSize, [roomCenterX, 0, roomCenterZ])
-  }, [roomName, roomBounds])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomName, roomBoundsKey])
 
   const walkableCenter = useMemo(() => {
     if (!roomName || !roomBounds) return null
@@ -182,7 +193,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
     const roomSize = (roomBounds.maxX - roomBounds.minX) + 5 // re-add margin (2.5 × 2)
     return getWalkableCenter(roomName, roomSize, [roomCenterX, 0, roomCenterZ])
-  }, [roomName, roomBounds])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomName, roomBoundsKey])
 
   const animRef = useBotAnimation(status, interactionPoints, roomBounds)
   const lastAppliedOpacity = useRef(1)
@@ -200,7 +212,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     if (!hasInitialized.current) {
       hasInitialized.current = true
       groupRef.current.position.set(state.currentX, position[1], state.currentZ)
-      groupRef.current.rotation.set(0, groupRef.current.rotation.y, 0)
+      groupRef.current.scale.setScalar(scale)
+      groupRef.current.rotation.set(0, 0, 0)
       if (session?.key) {
         botPositionRegistry.set(session.key, {
           x: state.currentX,
@@ -219,11 +232,11 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     groupRef.current.rotation.x = anim.bodyTilt
 
     // ─── Y position: base + animation offset + bounce ─────────
-    // Only bounce when actually moving (dist > threshold)
-    const moveDist = Math.sqrt(
-      (state.targetX - state.currentX) ** 2 + (state.targetZ - state.currentZ) ** 2
-    )
-    const isMoving = moveDist > 0.3
+    // Only bounce when actually moving (actual frame delta)
+    const actualDeltaX = state.currentX - state.prevX
+    const actualDeltaZ = state.currentZ - state.prevZ
+    const moveDelta = Math.sqrt(actualDeltaX * actualDeltaX + actualDeltaZ * actualDeltaZ)
+    const isMoving = moveDelta > 0.001
     let bounceY = 0
     switch (anim.phase) {
       case 'working':
@@ -355,7 +368,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       const dz = state.targetZ - state.currentZ
       const dist = Math.sqrt(dx * dx + dz * dz)
 
-      if (dist < 0.3) {
+      if (dist < 0.4) {
         if (hasAnimTarget && !anim.arrived) {
           anim.arrived = true
           if (anim.freezeWhenArrived) {
@@ -392,7 +405,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         let angleDiff = targetRotY - currentRotY
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        groupRef.current.rotation.y = currentRotY + angleDiff * 0.2
+        // Rotation dead-zone snap [Fix 6]
+        if (Math.abs(angleDiff) < 0.01) {
+          groupRef.current.rotation.y = targetRotY
+        } else {
+          groupRef.current.rotation.y = currentRotY + angleDiff * 0.2
+        }
       }
     } else if (hasAnimTarget && !anim.arrived) {
       // ─── Walking toward animation target (desk/coffee/sleep) ──
@@ -400,7 +418,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       const dz = state.targetZ - state.currentZ
       const dist = Math.sqrt(dx * dx + dz * dz)
 
-      if (dist < 0.3) {
+      if (dist < 0.4) {
         anim.arrived = true
         if (anim.freezeWhenArrived) {
           groupRef.current.position.x = state.currentX
@@ -413,30 +431,40 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           return
         }
       } else {
-        // Determine best walkable direction toward the target
-        const cellSize = gridData.blueprint.cellSize
-        const ndx = dx / dist
-        const ndz = dz / dist
-
-        // Score each direction by dot product with target direction, pick best walkable
-        let bestDir: { x: number; z: number } | null = null
-        let bestScore = -Infinity
-        for (const d of DIRECTIONS) {
-          const nextX = state.currentX + d.x * cellSize
-          const nextZ = state.currentZ + d.z * cellSize
-          if (!isWalkableAt(nextX, nextZ)) continue
-          const score = d.x * ndx + d.z * ndz // dot product
-          if (score > bestScore) {
-            bestScore = score
-            bestDir = d
-          }
-        }
-
-        if (bestDir) {
+        if (dist < 0.8) {
+          // Close to target — direct linear movement (no grid snapping) [Fix 3]
           const easedSpeed = speed * Math.min(1, dist / 0.5)
           const step = Math.min(easedSpeed * delta, dist)
-          state.currentX += bestDir.x * step
-          state.currentZ += bestDir.z * step
+          state.currentX += (dx / dist) * step
+          state.currentZ += (dz / dist) * step
+        } else {
+          // Far from target — grid-snapped direction picking
+          const cellSize = gridData.blueprint.cellSize
+          const ndx = dx / dist
+          const ndz = dz / dist
+
+          // Score each direction by dot product with target direction, pick best walkable
+          let bestDir: { x: number; z: number } | null = null
+          let bestScore = -Infinity
+          for (const d of DIRECTIONS) {
+            const nextX = state.currentX + d.x * cellSize
+            const nextZ = state.currentZ + d.z * cellSize
+            if (!isWalkableAt(nextX, nextZ)) continue
+            const score = d.x * ndx + d.z * ndz // dot product
+            if (score > bestScore) {
+              bestScore = score
+              bestDir = d
+            }
+          }
+
+          if (bestDir) {
+            const easedSpeed = speed * Math.min(1, dist / 0.5)
+            const step = Math.min(easedSpeed * delta, dist)
+            // Normalize diagonal movement vectors [Fix 5]
+            const dirMag = Math.sqrt(bestDir.x * bestDir.x + bestDir.z * bestDir.z)
+            state.currentX += (bestDir.x / dirMag) * step
+            state.currentZ += (bestDir.z / dirMag) * step
+          }
         }
 
         // Smooth rotation toward target
@@ -445,7 +473,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         let angleDiff = targetRotY - currentRotY
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
+        // Rotation dead-zone snap [Fix 6]
+        if (Math.abs(angleDiff) < 0.01) {
+          groupRef.current.rotation.y = targetRotY
+        } else {
+          groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
+        }
       }
     } else {
       // ─── Random walk with obstacle avoidance ───────────────
@@ -461,7 +494,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           let angleDiff = targetRotY - currentRotY
           while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
           while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-          groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
+          // Rotation dead-zone snap [Fix 6]
+          if (Math.abs(angleDiff) < 0.01) {
+            groupRef.current.rotation.y = targetRotY
+          } else {
+            groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
+          }
         }
       } else if (state.stepsRemaining <= 0) {
         // Pick a new random direction and number of steps
@@ -495,8 +533,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           const step = speed * delta
           state.cellProgress += step / cellSize
 
-          state.currentX += state.dirX * step
-          state.currentZ += state.dirZ * step
+          // Normalize diagonal movement vectors [Fix 5]
+          const dirMag = Math.sqrt(state.dirX * state.dirX + state.dirZ * state.dirZ)
+          if (dirMag > 0) {
+            state.currentX += (state.dirX / dirMag) * step
+            state.currentZ += (state.dirZ / dirMag) * step
+          }
 
           // When we've traversed one cell width, count it
           if (state.cellProgress >= 1) {
@@ -510,7 +552,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           let angleDiff = targetRotY - currentRotY
           while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
           while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-          groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
+          // Rotation dead-zone snap [Fix 6]
+          if (Math.abs(angleDiff) < 0.01) {
+            groupRef.current.rotation.y = targetRotY
+          } else {
+            groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
+          }
         }
       }
     }
@@ -520,6 +567,10 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.currentX = Math.max(roomBounds.minX, Math.min(roomBounds.maxX, state.currentX))
       state.currentZ = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, state.currentZ))
     }
+
+    // Update previous position for next frame's movement delta calculation
+    state.prevX = state.currentX
+    state.prevZ = state.currentZ
 
     groupRef.current.position.x = state.currentX
     groupRef.current.position.z = state.currentZ
@@ -549,8 +600,6 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   return (
     <group
       ref={groupRef}
-      position={[position[0], position[1], position[2]]}
-      scale={scale}
       onClick={(e) => {
         e.stopPropagation()
         if (session && roomId) {

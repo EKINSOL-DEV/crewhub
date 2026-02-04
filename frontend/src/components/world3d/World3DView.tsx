@@ -308,6 +308,22 @@ function SceneContent({
     return calculateBuildingLayout(rooms)
   }, [rooms])
 
+  // ─── Stable room bounds (avoid new objects every render) ──────
+  const roomBoundsMap = useMemo(() => {
+    if (!layout) return new Map<string, RoomBounds>()
+    const map = new Map<string, RoomBounds>()
+    for (const { room, position } of layout.roomPositions) {
+      map.set(room.id, getRoomBounds(position, ROOM_SIZE))
+    }
+    return map
+  }, [layout])
+
+  const parkingBoundsStable = useMemo(() => {
+    if (!layout) return undefined
+    const { parkingArea } = layout
+    return getParkingBounds(parkingArea.x, parkingArea.z, parkingArea.width, parkingArea.depth)
+  }, [layout])
+
   // ─── Bot placement logic ──────────────────────────────────────
 
   const buildBotPlacement = (session: CrewSession, _runtime?: AgentRuntime): BotPlacement => {
@@ -471,7 +487,7 @@ function SceneContent({
         const visibleBots = botsInRoom.slice(0, SESSION_CONFIG.maxVisibleBotsPerRoom)
         const overflowCount = botsInRoom.length - visibleBots.length
         const botPositions = getBotPositionsInRoom(position, ROOM_SIZE, visibleBots.length)
-        const bounds = getRoomBounds(position, ROOM_SIZE)
+        const bounds = roomBoundsMap.get(room.id)!
 
         return (
           <group key={room.id}>
@@ -528,7 +544,7 @@ function SceneContent({
           parkingArea.width, parkingArea.depth,
           parkingBots.length,
         )
-        const bounds = getParkingBounds(parkingArea.x, parkingArea.z, parkingArea.width, parkingArea.depth)
+        const bounds = parkingBoundsStable!
         return parkingBots.map((bot, i) => (
           <Bot3D
             key={bot.key}
