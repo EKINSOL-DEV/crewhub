@@ -77,7 +77,7 @@ function CellLayer({
 
     for (let i = 0; i < count; i++) {
       const c = cells[i]
-      dummy.position.set(c.worldX, 0.02, c.worldZ)
+      dummy.position.set(c.worldX, 0.12, c.worldZ)
       dummy.rotation.set(-Math.PI / 2, 0, 0) // lay flat on ground
       dummy.scale.set(pad, pad, 1)
       dummy.updateMatrix()
@@ -113,14 +113,14 @@ function GridLines({ gridWidth, gridDepth, cellSize }: { gridWidth: number; grid
     // Vertical lines (along Z)
     for (let x = 0; x <= gridWidth; x++) {
       const wx = x * cellSize - halfW
-      points.push(new THREE.Vector3(wx, 0.025, -halfD))
-      points.push(new THREE.Vector3(wx, 0.025, halfD))
+      points.push(new THREE.Vector3(wx, 0.13, -halfD))
+      points.push(new THREE.Vector3(wx, 0.13, halfD))
     }
     // Horizontal lines (along X)
     for (let z = 0; z <= gridDepth; z++) {
       const wz = z * cellSize - halfD
-      points.push(new THREE.Vector3(-halfW, 0.025, wz))
-      points.push(new THREE.Vector3(halfW, 0.025, wz))
+      points.push(new THREE.Vector3(-halfW, 0.13, wz))
+      points.push(new THREE.Vector3(halfW, 0.13, wz))
     }
 
     return new THREE.BufferGeometry().setFromPoints(points)
@@ -145,12 +145,12 @@ function CoordinateLabels({ gridWidth, gridDepth, cellSize }: { gridWidth: numbe
     // X-axis labels along south edge (z = gridDepth)
     for (let x = 0; x < gridWidth; x += 2) {
       const wx = x * cellSize - halfW + cellSize / 2
-      result.push({ text: String(x), pos: [wx, 0.03, halfD + 0.25] })
+      result.push({ text: String(x), pos: [wx, 0.14, halfD + 0.25] })
     }
     // Z-axis labels along west edge (x = 0)
     for (let z = 0; z < gridDepth; z += 2) {
       const wz = z * cellSize - halfD + cellSize / 2
-      result.push({ text: String(z), pos: [-halfW - 0.25, 0.03, wz] })
+      result.push({ text: String(z), pos: [-halfW - 0.25, 0.14, wz] })
     }
 
     return result
@@ -161,7 +161,7 @@ function CoordinateLabels({ gridWidth, gridDepth, cellSize }: { gridWidth: numbe
       {labels.map((lbl, i) => (
         <Html
           key={i}
-          position={lbl.pos}
+          position={lbl.pos as [number, number, number]}
           center
           zIndexRange={[0, 1]}
           style={{ pointerEvents: 'none' }}
@@ -208,7 +208,7 @@ function PropLabels({ cells }: {
       {labelCells.map((cell, i) => (
         <Html
           key={i}
-          position={[cell.worldX, 0.06, cell.worldZ]}
+          position={[cell.worldX, 0.15, cell.worldZ]}
           center
           zIndexRange={[0, 1]}
           style={{ pointerEvents: 'none' }}
@@ -258,7 +258,7 @@ export function GridDebugOverlay({ blueprint }: Omit<GridDebugOverlayProps, 'sho
   }, [cells, cellSize, gridWidth, gridDepth])
 
   return (
-    <group position-y={0.01}>
+    <group position-y={0.10}>
       {/* Cell layers — each instance is individually rotated flat */}
       <CellLayer cells={byCategory.walkable} cellSize={cellSize} opacity={OPACITY.walkable} color={COLORS.walkable} />
       <CellLayer cells={byCategory.blocked} cellSize={cellSize} opacity={OPACITY.blocked} color={COLORS.blocked} />
