@@ -359,9 +359,10 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
           onClick={() => onOpenChange(false)}
         />
 
-        {/* Scrollable content area */}
-        <div className="relative z-10 h-full overflow-y-auto bg-background/95 backdrop-blur-md animate-in slide-in-from-bottom-2 duration-300">
-          <div className="max-w-[1400px] mx-auto px-8 py-8 pb-16">
+        {/* Fullscreen content area */}
+        <div className="relative z-10 h-full flex flex-col bg-background/95 backdrop-blur-md animate-in slide-in-from-bottom-2 duration-300">
+          {/* ─── Sticky Header + Tabs ─── */}
+          <div className="flex-shrink-0 max-w-[1400px] w-full mx-auto px-8 pt-8">
 
             {/* ─── Header ─── */}
             <div className="flex items-start justify-between mb-6">
@@ -381,7 +382,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
             </div>
 
             {/* ─── Tab Bar ─── */}
-            <div className="flex gap-1 border-b border-border mb-8 overflow-x-auto">
+            <div className="flex gap-1 border-b border-border">
               {SETTINGS_TABS.map(tab => (
                 <button
                   key={tab.id}
@@ -400,6 +401,11 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* ─── Scrollable Tab Content ─── */}
+          <div className="flex-1 overflow-y-auto">
+          <div className="max-w-[1400px] mx-auto px-8 py-8 pb-16">
 
             {/* ═══ Tab: Look & Feel ═══ */}
             {selectedTab === "look" && (
@@ -897,6 +903,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
               </div>
             )}
 
+          </div>
           </div>
         </div>
       </div>
