@@ -728,6 +728,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   // LogViewer state
   const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
+  const [docsPanel, setDocsPanel] = useState<{ projectId: string; projectName: string; projectColor?: string } | null>(null)
 
   // Bot click no longer opens LogViewer directly — focusBot is triggered inside Bot3D
   const handleBotClick = (_session: CrewSession) => {
@@ -838,7 +839,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         )}
 
         {/* Room Info Panel (slides in when room is focused, replaces bot panel slot) */}
-        {focusState.level === 'room' && focusedRoom && (
+        {focusState.level === 'room' && focusedRoom && !docsPanel && (
           <RoomInfoPanel
             room={focusedRoom}
             sessions={focusedRoomSessions}
@@ -847,6 +848,17 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             onClose={() => goBack()}
             onBotClick={handleRoomPanelBotClick}
             onFocusRoom={focusRoom}
+            onOpenDocs={(projectId, projectName, projectColor) => setDocsPanel({ projectId, projectName, projectColor })}
+          />
+        )}
+
+        {/* Project Docs Panel (overlays room info panel when browsing docs) */}
+        {docsPanel && (
+          <ProjectDocsPanel
+            projectId={docsPanel.projectId}
+            projectName={docsPanel.projectName}
+            projectColor={docsPanel.projectColor}
+            onClose={() => setDocsPanel(null)}
           />
         )}
 
