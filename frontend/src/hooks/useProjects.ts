@@ -79,21 +79,59 @@ export function useProjects() {
       icon?: string
       color?: string
       folder_path?: string
-    }) => {
+    }): Promise<{ success: true; project: Project } | { success: false; error: string }> => {
+      console.log('[useProjects] createProject CALLED with:', project)
+      
+      // Use AbortController for timeout (Vite proxy can sometimes hang)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      
       try {
+        console.log('[useProjects] About to fetch POST /projects')
         const response = await fetch(`${API_BASE}/projects`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(project),
+          signal: controller.signal,
         })
+        clearTimeout(timeoutId)
+        console.log('[useProjects] fetch completed, status:', response.status)
+        
         if (!response.ok) {
           const err = await response.json().catch(() => ({}))
           throw new Error(err.detail || "Failed to create project")
         }
+        
         const created: Project = await response.json()
+        console.log('[useProjects] project created:', created)
         await fetchProjects()
         return { success: true as const, project: created }
       } catch (err) {
+        clearTimeout(timeoutId)
+        console.log('[useProjects] createProject error:', err)
+        
+        // If aborted due to timeout, check if project was actually created
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log('[useProjects] Request timed out, checking if project was created...')
+          // Refresh projects and look for the new one
+          await fetchProjects()
+          // Wait a moment for state to update, then check
+          await new Promise(resolve => setTimeout(resolve, 100))
+          
+          // Try to find the project by name in current projects state
+          // Note: This is a fallback - the project might be in the refreshed list
+          const refreshResponse = await fetch(`${API_BASE}/projects`)
+          if (refreshResponse.ok) {
+            const data = await refreshResponse.json()
+            const found = data.projects?.find((p: Project) => p.name === project.name)
+            if (found) {
+              console.log('[useProjects] Found project after timeout:', found)
+              return { success: true as const, project: found }
+            }
+          }
+          return { success: false as const, error: "Request timed out - please check if project was created" }
+        }
+        
         return {
           success: false as const,
           error: err instanceof Error ? err.message : "Unknown error",

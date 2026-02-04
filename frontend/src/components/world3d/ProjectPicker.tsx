@@ -120,13 +120,25 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
     if (!newName.trim()) return
     setIsCreating(true)
     setCreateError(null)
-    const folderPath = newFolderPath.trim() || undefined
-    const result = await onCreate({ name: newName.trim(), icon: newIcon, color: newColor, folder_path: folderPath })
-    setIsCreating(false)
-    if (result.success && result.project) {
-      onSelect(result.project.id)
-    } else {
-      setCreateError('error' in result ? (result as { error: string }).error : 'Failed to create')
+    
+    try {
+      const folderPath = newFolderPath.trim() || undefined
+      console.log('[ProjectPicker] handleCreate calling onCreate...')
+      const result = await onCreate({ name: newName.trim(), icon: newIcon, color: newColor, folder_path: folderPath })
+      console.log('[ProjectPicker] onCreate returned:', result)
+      
+      setIsCreating(false)
+      if (result && result.success && result.project) {
+        onSelect(result.project.id)
+      } else if (result) {
+        setCreateError('error' in result ? (result as { error: string }).error : 'Failed to create project')
+      } else {
+        setCreateError('No response from create - please try again')
+      }
+    } catch (err) {
+      console.error('[ProjectPicker] handleCreate error:', err)
+      setIsCreating(false)
+      setCreateError(err instanceof Error ? err.message : 'Unexpected error')
     }
   }, [newName, newIcon, newColor, newFolderPath, onCreate, onSelect])
 
