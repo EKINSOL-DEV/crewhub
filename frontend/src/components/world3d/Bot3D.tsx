@@ -310,6 +310,28 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     if (anim.freezeWhenArrived && anim.arrived) {
       groupRef.current.position.x = state.currentX
       groupRef.current.position.z = state.currentZ
+
+      // Face toward the desk/target when frozen at work position
+      // The bot is at the work-point (in front of desk), facing toward the desk (behind/above)
+      if (anim.phase === 'working' && roomBounds) {
+        // Desk is toward the back wall — face from bot toward nearest wall
+        const roomCX = (roomBounds.minX + roomBounds.maxX) / 2
+        const roomCZ = (roomBounds.minZ + roomBounds.maxZ) / 2
+        // Direction from room center toward the bot's position indicates which wall the desk is near
+        // Bot should face AWAY from center (toward the wall the desk is against)
+        const toCenterDx = roomCX - state.currentX
+        const toCenterDz = roomCZ - state.currentZ
+        // Face away from center = toward the nearest wall (where desk is)
+        groupRef.current.rotation.y = Math.atan2(-toCenterDx, -toCenterDz)
+      } else if (anim.targetX !== null && anim.targetZ !== null) {
+        const faceDx = anim.targetX - state.currentX
+        const faceDz = anim.targetZ - state.currentZ
+        const faceDist = Math.sqrt(faceDx * faceDx + faceDz * faceDz)
+        if (faceDist > 0.01) {
+          groupRef.current.rotation.y = Math.atan2(faceDx, faceDz)
+        }
+      }
+
       if (session?.key) {
         botPositionRegistry.set(session.key, {
           x: state.currentX,
