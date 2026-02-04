@@ -78,7 +78,8 @@ function CellLayer({
     for (let i = 0; i < count; i++) {
       const c = cells[i]
       dummy.position.set(c.worldX, 0.02, c.worldZ)
-      dummy.scale.set(pad, 1, pad)
+      dummy.rotation.set(-Math.PI / 2, 0, 0) // lay flat on ground
+      dummy.scale.set(pad, pad, 1)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
     }
@@ -257,17 +258,15 @@ export function GridDebugOverlay({ blueprint }: Omit<GridDebugOverlayProps, 'sho
   }, [cells, cellSize, gridWidth, gridDepth])
 
   return (
-    <group rotation-x={-Math.PI / 2} position-y={0.01}>
-      {/* Cell layers */}
+    <group position-y={0.01}>
+      {/* Cell layers — each instance is individually rotated flat */}
       <CellLayer cells={byCategory.walkable} cellSize={cellSize} opacity={OPACITY.walkable} color={COLORS.walkable} />
       <CellLayer cells={byCategory.blocked} cellSize={cellSize} opacity={OPACITY.blocked} color={COLORS.blocked} />
       <CellLayer cells={byCategory.interaction} cellSize={cellSize} opacity={OPACITY.interaction} color={COLORS.interaction} />
       <CellLayer cells={byCategory.door} cellSize={cellSize} opacity={OPACITY.door} color={COLORS.door} />
 
       {/* Grid lines */}
-      <group rotation-x={Math.PI / 2}>
-        <GridLines gridWidth={gridWidth} gridDepth={gridDepth} cellSize={cellSize} />
-      </group>
+      <GridLines gridWidth={gridWidth} gridDepth={gridDepth} cellSize={cellSize} />
     </group>
   )
 }
