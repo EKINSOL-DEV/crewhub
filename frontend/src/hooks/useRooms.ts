@@ -85,6 +85,26 @@ export function useRooms() {
     fetchRooms()
   }, [fetchRooms])
 
+  // Listen for SSE rooms-refresh events (multi-tab / external changes)
+  useEffect(() => {
+    const token = localStorage.getItem("openclaw_token") || ""
+    const sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : "/api/events"
+    const es = new EventSource(sseUrl)
+
+    es.addEventListener("rooms-refresh", () => {
+      fetchRooms()
+    })
+
+    es.onerror = () => {
+      // SSE errors are handled by useSessionsStream; just close this listener
+      es.close()
+    }
+
+    return () => {
+      es.close()
+    }
+  }, [fetchRooms])
+
   /**
    * Apply rules to determine room for a session.
    * Returns room_id or undefined if no rule matches.

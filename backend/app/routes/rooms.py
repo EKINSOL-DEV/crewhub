@@ -6,6 +6,7 @@ from typing import List
 
 from app.db.database import get_db
 from app.db.models import Room, RoomCreate, RoomUpdate
+from app.routes.sse import broadcast
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -91,7 +92,10 @@ async def create_room(room: RoomCreate):
                 "SELECT * FROM rooms WHERE id = ?", (room.id,)
             ) as cursor:
                 row = await cursor.fetchone()
-                return Room(**row)
+                created = Room(**row)
+            
+            await broadcast("rooms-refresh", {"action": "created", "room_id": room.id})
+            return created
         finally:
             await db.close()
     except HTTPException:
@@ -143,7 +147,10 @@ async def update_room(room_id: str, room: RoomUpdate):
                 "SELECT * FROM rooms WHERE id = ?", (room_id,)
             ) as cursor:
                 row = await cursor.fetchone()
-                return Room(**row)
+                updated = Room(**row)
+            
+            await broadcast("rooms-refresh", {"action": "updated", "room_id": room_id})
+            return updated
         finally:
             await db.close()
     except HTTPException:
@@ -180,6 +187,7 @@ async def delete_room(room_id: str):
             await db.execute("DELETE FROM rooms WHERE id = ?", (room_id,))
             await db.commit()
             
+            await broadcast("rooms-refresh", {"action": "deleted", "room_id": room_id})
             return {"success": True, "deleted": room_id}
         finally:
             await db.close()
@@ -203,6 +211,8 @@ async def reorder_rooms(room_order: List[str]):
                     (i, now, room_id)
                 )
             await db.commit()
+            
+            await broadcast("rooms-refresh", {"action": "reordered"})
             return {"success": True, "order": room_order}
         finally:
             await db.close()
