@@ -112,6 +112,7 @@ export function useProjects() {
         icon?: string
         color?: string
         status?: string
+        folder_path?: string
       },
     ) => {
       try {
@@ -120,7 +121,10 @@ export function useProjects() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         })
-        if (!response.ok) throw new Error("Failed to update project")
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}))
+          throw new Error(err.detail || "Failed to update project")
+        }
         await fetchProjects()
         return { success: true as const }
       } catch (err) {
@@ -139,7 +143,10 @@ export function useProjects() {
         const response = await fetch(`${API_BASE}/projects/${projectId}`, {
           method: "DELETE",
         })
-        if (!response.ok) throw new Error("Failed to delete project")
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}))
+          throw new Error(err.detail || "Failed to delete project")
+        }
         await fetchProjects()
         return { success: true as const }
       } catch (err) {

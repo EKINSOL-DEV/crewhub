@@ -38,7 +38,7 @@ import {
   ChevronUp, ChevronDown, ChevronRight,
   AlertCircle, Download, Upload, Database, Loader2, Clock,
   HardDrive, RefreshCw, FolderOpen,
-  Palette, LayoutGrid, SlidersHorizontal, Wrench,
+  Palette, LayoutGrid, SlidersHorizontal, Wrench, FolderKanban, Archive, ArchiveRestore,
 } from "lucide-react"
 import {
   exportBackup,
@@ -51,6 +51,7 @@ import {
 } from "@/lib/api"
 import { useRooms, type Room } from "@/hooks/useRooms"
 import { useRoomAssignmentRules, type RoomAssignmentRule } from "@/hooks/useRoomAssignmentRules"
+import { useProjects, type Project } from "@/hooks/useProjects"
 import { useToast } from "@/hooks/use-toast"
 
 export interface SessionsSettings {
@@ -114,11 +115,12 @@ const SESSION_TYPES = [
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 
-type SettingsTab = "look" | "rooms" | "behavior" | "data" | "advanced"
+type SettingsTab = "look" | "rooms" | "projects" | "behavior" | "data" | "advanced"
 
 const SETTINGS_TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "look", label: "Look & Feel", icon: <Palette className="h-4 w-4" /> },
   { id: "rooms", label: "Rooms", icon: <LayoutGrid className="h-4 w-4" /> },
+  { id: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> },
   { id: "behavior", label: "Behavior", icon: <SlidersHorizontal className="h-4 w-4" /> },
   { id: "data", label: "Data", icon: <Database className="h-4 w-4" /> },
   { id: "advanced", label: "Advanced", icon: <Wrench className="h-4 w-4" /> },
@@ -174,6 +176,12 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   const { theme, setTheme, resolvedMode } = useTheme()
   const { rooms, createRoom, updateRoom, deleteRoom, reorderRooms, isLoading: roomsLoading } = useRooms()
   const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
+  const {
+    projects,
+    isLoading: projectsLoading,
+    updateProject,
+    deleteProject: deleteProjectApi,
+  } = useProjects()
   const { toast } = useToast()
   const [gridDebugEnabled, toggleGridDebug] = useGridDebug()
   const { debugBotsEnabled, setDebugBotsEnabled } = useDebugBots()
@@ -772,6 +780,53 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
               </div>
             )}
 
+            {/* ═══ Tab: Projects ═══ */}
+            {selectedTab === "projects" && (
+              <div className="max-w-4xl">
+                <ProjectsSettingsSection
+                  projects={projects}
+                  rooms={rooms}
+                  isLoading={projectsLoading}
+                  onArchive={async (projectId) => {
+                    const result = await updateProject(projectId, { status: "archived" })
+                    if (result.success) {
+                      toast({ title: "Project Archived", description: "Project has been archived" })
+                    } else {
+                      toast({ title: "Cannot Archive", description: result.error, variant: "destructive" })
+                    }
+                    return result
+                  }}
+                  onUnarchive={async (projectId) => {
+                    const result = await updateProject(projectId, { status: "active" })
+                    if (result.success) {
+                      toast({ title: "Project Restored", description: "Project is now active again" })
+                    } else {
+                      toast({ title: "Failed to Unarchive", description: result.error, variant: "destructive" })
+                    }
+                    return result
+                  }}
+                  onDelete={async (projectId) => {
+                    const result = await deleteProjectApi(projectId)
+                    if (result.success) {
+                      toast({ title: "Project Deleted", description: "Project has been permanently deleted" })
+                    } else {
+                      toast({ title: "Failed to Delete", description: result.error, variant: "destructive" })
+                    }
+                    return result
+                  }}
+                  onUpdate={async (projectId, updates) => {
+                    const result = await updateProject(projectId, updates)
+                    if (result.success) {
+                      toast({ title: "Project Updated" })
+                    } else {
+                      toast({ title: "Failed to Update", description: result.error, variant: "destructive" })
+                    }
+                    return result
+                  }}
+                />
+              </div>
+            )}
+
             {/* ═══ Tab: Behavior ═══ */}
             {selectedTab === "behavior" && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
@@ -1132,6 +1187,274 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
             <Button variant="outline" onClick={() => setDeleteRuleConfirm(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteRuleConfirm && handleDeleteRule(deleteRuleConfirm)}>
               Delete Rule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+// ─── Projects Settings Section ───────────────────────────────────────────────
+
+function ProjectsSettingsSection({
+  projects,
+  rooms,
+  isLoading,
+  onArchive,
+  onUnarchive,
+  onDelete,
+  onUpdate,
+}: {
+  projects: Project[]
+  rooms: Room[]
+  isLoading: boolean
+  onArchive: (id: string) => Promise<{ success: boolean; error?: string }>
+  onUnarchive: (id: string) => Promise<{ success: boolean; error?: string }>
+  onDelete: (id: string) => Promise<{ success: boolean; error?: string }>
+  onUpdate: (id: string, updates: { name?: string; description?: string; icon?: string; color?: string; status?: string; folder_path?: string }) => Promise<{ success: boolean; error?: string }>
+}) {
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState("")
+  const [archiveError, setArchiveError] = useState<string | null>(null)
+
+  // Sort: active first, then archived
+  const sortedProjects = [...projects].sort((a, b) => {
+    if (a.status === "archived" && b.status !== "archived") return 1
+    if (a.status !== "archived" && b.status === "archived") return -1
+    return b.created_at - a.created_at
+  })
+
+  const getAssignedRoomCount = (projectId: string) =>
+    rooms.filter(r => r.project_id === projectId).length
+
+  const getAssignedRoomNames = (projectId: string) =>
+    rooms.filter(r => r.project_id === projectId).map(r => `${r.icon || "🏠"} ${r.name}`)
+
+  const handleArchive = async (projectId: string) => {
+    setArchiveError(null)
+    const result = await onArchive(projectId)
+    if (!result.success && result.error) {
+      setArchiveError(result.error)
+    }
+  }
+
+  const handleStartEdit = (project: Project) => {
+    setEditingId(project.id)
+    setEditName(project.name)
+  }
+
+  const handleSaveEdit = async (projectId: string) => {
+    if (editName.trim()) {
+      await onUpdate(projectId, { name: editName.trim() })
+    }
+    setEditingId(null)
+  }
+
+  const formatDate = (ts: number) => {
+    try {
+      return new Date(ts).toLocaleDateString()
+    } catch {
+      return "—"
+    }
+  }
+
+  const projectToDelete = deleteConfirm ? projects.find(p => p.id === deleteConfirm) : null
+
+  return (
+    <>
+      <CollapsibleSection
+        title="📋 All Projects"
+        badge={`${projects.length} project${projects.length !== 1 ? "s" : ""}`}
+      >
+        {/* Archive error banner */}
+        {archiveError && (
+          <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-sm text-red-700 dark:text-red-300 flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-medium">{archiveError}</div>
+            </div>
+            <button
+              onClick={() => setArchiveError(null)}
+              className="ml-auto p-1 hover:bg-red-200 dark:hover:bg-red-800 rounded shrink-0"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+            Loading projects…
+          </div>
+        ) : sortedProjects.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            No projects yet. Create one from the 3D World view.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {sortedProjects.map(project => {
+              const isArchived = project.status === "archived"
+              const roomCount = getAssignedRoomCount(project.id)
+              const assignedRoomNames = getAssignedRoomNames(project.id)
+              const isEditing = editingId === project.id
+
+              return (
+                <div
+                  key={project.id}
+                  className={`p-4 rounded-lg border transition-colors ${
+                    isArchived
+                      ? "bg-muted/30 opacity-60 border-border/50"
+                      : "bg-background hover:bg-accent/20 border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Color dot + icon */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: project.color || "#6b7280" }}
+                      />
+                      <span className="text-lg">{project.icon || "📋"}</span>
+                    </div>
+
+                    {/* Name + meta */}
+                    <div className="flex-1 min-w-0">
+                      {isEditing ? (
+                        <div className="flex gap-1.5">
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="h-7 text-sm"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveEdit(project.id)
+                              if (e.key === "Escape") setEditingId(null)
+                            }}
+                          />
+                          <button
+                            onClick={() => handleSaveEdit(project.id)}
+                            className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="p-1 hover:bg-muted rounded text-muted-foreground"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm truncate">{project.name}</span>
+                            {isArchived && (
+                              <Badge variant="secondary" className="text-[10px] shrink-0">
+                                Archived
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                            <span>{roomCount} room{roomCount !== 1 ? "s" : ""}</span>
+                            {project.folder_path && (
+                              <span className="truncate font-mono max-w-[200px]">{project.folder_path}</span>
+                            )}
+                            <span>Created {formatDate(project.created_at)}</span>
+                          </div>
+                          {/* Show assigned rooms if any */}
+                          {roomCount > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {assignedRoomNames.map((name, i) => (
+                                <span
+                                  key={i}
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                                >
+                                  {name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    {!isEditing && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Edit */}
+                        <button
+                          onClick={() => handleStartEdit(project)}
+                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                          title="Edit name"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+
+                        {/* Archive / Unarchive */}
+                        {isArchived ? (
+                          <button
+                            onClick={() => onUnarchive(project.id)}
+                            className="p-1.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-muted-foreground hover:text-green-600"
+                            title="Unarchive — restore to active"
+                          >
+                            <ArchiveRestore className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleArchive(project.id)}
+                            className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded text-muted-foreground hover:text-amber-600"
+                            title={roomCount > 0 ? "Remove from all rooms first" : "Archive project"}
+                          >
+                            <Archive className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+
+                        {/* Delete — only archived */}
+                        {isArchived && (
+                          <button
+                            onClick={() => setDeleteConfirm(project.id)}
+                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
+                            title="Delete project permanently"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </CollapsibleSection>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Project?</DialogTitle>
+            <DialogDescription>
+              Delete project <strong>"{projectToDelete?.name}"</strong>? This action cannot be undone.
+              <br /><br />
+              <span className="text-muted-foreground">This will NOT delete any files on disk.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (deleteConfirm) {
+                  await onDelete(deleteConfirm)
+                  setDeleteConfirm(null)
+                }
+              }}
+            >
+              Delete Project
             </Button>
           </DialogFooter>
         </DialogContent>

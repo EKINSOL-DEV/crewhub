@@ -204,17 +204,37 @@ async def update_project(project_id: str, project: ProjectUpdate):
     try:
         db = await get_db()
         try:
+            db.row_factory = lambda cursor, row: dict(
+                zip([col[0] for col in cursor.description], row)
+            )
+
             # Check if project exists
             async with db.execute(
-                "SELECT id FROM projects WHERE id = ?", (project_id,)
+                "SELECT * FROM projects WHERE id = ?", (project_id,)
             ) as cursor:
-                if not await cursor.fetchone():
+                existing = await cursor.fetchone()
+                if not existing:
                     raise HTTPException(status_code=404, detail="Project not found")
+
+            update_data = project.model_dump(exclude_unset=True)
+
+            # Archive validation: cannot archive if assigned to rooms
+            if update_data.get("status") == "archived" and existing["status"] != "archived":
+                async with db.execute(
+                    "SELECT id, name FROM rooms WHERE project_id = ?", (project_id,)
+                ) as cursor:
+                    assigned_rooms = await cursor.fetchall()
+                if assigned_rooms:
+                    room_names = [r["name"] for r in assigned_rooms]
+                    room_ids = [r["id"] for r in assigned_rooms]
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Cannot archive: project is assigned to {len(assigned_rooms)} room(s): {', '.join(room_names)}",
+                    )
 
             # Build update query dynamically
             updates = []
             values = []
-            update_data = project.model_dump(exclude_unset=True)
 
             for field, value in update_data.items():
                 if value is not None:
@@ -260,18 +280,30 @@ async def update_project(project_id: str, project: ProjectUpdate):
 
 @router.delete("/{project_id}")
 async def delete_project(project_id: str):
-    """Delete a project. Clears room assignments first."""
+    """Delete a project. Only archived projects can be deleted."""
     try:
         db = await get_db()
         try:
+            db.row_factory = lambda cursor, row: dict(
+                zip([col[0] for col in cursor.description], row)
+            )
+
             # Check if project exists
             async with db.execute(
-                "SELECT id FROM projects WHERE id = ?", (project_id,)
+                "SELECT * FROM projects WHERE id = ?", (project_id,)
             ) as cursor:
-                if not await cursor.fetchone():
+                existing = await cursor.fetchone()
+                if not existing:
                     raise HTTPException(status_code=404, detail="Project not found")
 
-            # Clear room assignments
+            # Only archived projects can be deleted
+            if existing["status"] != "archived":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Only archived projects can be deleted. Archive the project first.",
+                )
+
+            # Clear room assignments (safety — archived shouldn't have any)
             await db.execute(
                 "UPDATE rooms SET project_id = NULL WHERE project_id = ?",
                 (project_id,),
