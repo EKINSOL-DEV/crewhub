@@ -11,6 +11,7 @@ import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ChatProvider } from './contexts/ChatContext'
+import { RoomsProvider } from './contexts/RoomsContext'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
@@ -271,9 +272,11 @@ function App() {
   
   return (
     <ThemeProvider>
-      <ChatProvider>
-        <AppContent />
-      </ChatProvider>
+      <RoomsProvider>
+        <ChatProvider>
+          <AppContent />
+        </ChatProvider>
+      </RoomsProvider>
     </ThemeProvider>
   )
 }
