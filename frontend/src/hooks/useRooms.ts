@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { API_BASE } from "@/lib/api"
+import { sseManager } from "@/lib/sseManager"
 
 export interface Room {
   id: string
@@ -48,13 +49,21 @@ export function useRooms() {
   const [rules, setRules] = useState<RoomAssignmentRule[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const fetchRooms = useCallback(async () => {
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    abortControllerRef.current = new AbortController()
+    const signal = abortControllerRef.current.signal
+
     try {
       const [roomsResponse, assignmentsResponse, rulesResponse] = await Promise.all([
-        fetch(`${API_BASE}/rooms`),
-        fetch(`${API_BASE}/session-room-assignments`),
-        fetch(`${API_BASE}/room-assignment-rules`),
+        fetch(`${API_BASE}/rooms`, { signal }),
+        fetch(`${API_BASE}/session-room-assignments`, { signal }),
+        fetch(`${API_BASE}/room-assignment-rules`, { signal }),
       ])
       
       if (!roomsResponse.ok) throw new Error("Failed to fetch rooms")
@@ -78,6 +87,8 @@ export function useRooms() {
       
       setError(null)
     } catch (err) {
+      // Ignore abort errors
+      if (err instanceof Error && err.name === 'AbortError') return
       console.error("[useRooms] CATCH - Failed to fetch rooms:", err)
       setError(err instanceof Error ? err.message : "Unknown error")
     } finally {
@@ -87,25 +98,26 @@ export function useRooms() {
 
   useEffect(() => {
     fetchRooms()
+    
+    // Cleanup: abort any in-flight requests on unmount
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
   }, [fetchRooms])
 
-  // Listen for SSE rooms-refresh events (multi-tab / external changes)
+  // Listen for SSE rooms-refresh events via central manager
   useEffect(() => {
-    const token = localStorage.getItem("openclaw_token") || ""
-    const sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : "/api/events"
-    const es = new EventSource(sseUrl)
-
-    es.addEventListener("rooms-refresh", () => {
+    const handleRoomsRefresh = () => {
       fetchRooms()
-    })
-
-    es.onerror = () => {
-      // SSE errors are handled by useSessionsStream; just close this listener
-      es.close()
     }
 
+    // Subscribe to rooms-refresh events using the central SSE manager
+    const unsubscribe = sseManager.subscribe("rooms-refresh", handleRoomsRefresh)
+
     return () => {
-      es.close()
+      unsubscribe()
     }
   }, [fetchRooms])
 
