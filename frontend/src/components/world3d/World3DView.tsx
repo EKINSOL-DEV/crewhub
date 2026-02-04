@@ -796,8 +796,10 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Overlay controls hint (hide when bot panel is showing or in first person) */}
         {focusState.level !== 'bot' && focusState.level !== 'firstperson' && (
           <div className="absolute top-4 right-4 z-50">
-            <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm">
-              🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan · ⌨️ WASD: Move · QE: Rotate
+            <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
+              <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
+              <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast</div>
+              <div className="text-gray-400">🐛 F2: Grid · F3: Lighting · F4: Debug Bots</div>
             </div>
           </div>
         )}
