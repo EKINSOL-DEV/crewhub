@@ -557,7 +557,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
 
             {/* ═══ Tab: Rooms ═══ */}
             {selectedTab === "rooms" && (
-              <div className="max-w-3xl space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 <CollapsibleSection
                   title="🏢 Room Management"
                   badge={`${rooms.length} rooms`}
