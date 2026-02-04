@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
 import { useGridDebug } from "@/hooks/useGridDebug"
+import { useLightingPanelVisibility } from "@/hooks/useLightingConfig"
 import { useEnvironment, type EnvironmentType } from "@/components/world3d/environments"
 import { useSessionConfig } from "@/hooks/useSessionConfig"
 import {
@@ -149,6 +150,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
   const { toast } = useToast()
   const [gridDebugEnabled, toggleGridDebug] = useGridDebug()
+  const { visible: lightingPanelVisible, setVisible: setLightingPanelVisible } = useLightingPanelVisibility()
   const [environment, setEnvironment] = useEnvironment()
   const sessionConfig = useSessionConfig()
   const overrideCount = getOverrideCount()
@@ -767,6 +769,17 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                       id="grid-debug"
                       checked={gridDebugEnabled}
                       onCheckedChange={(checked) => toggleGridDebug(checked)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="lighting-editor" className="flex flex-col gap-1">
+                      <span className="text-sm">💡 Lighting Editor</span>
+                      <span className="text-xs text-muted-foreground font-normal">Live lighting debug panel with sliders &amp; JSON export</span>
+                    </Label>
+                    <Switch
+                      id="lighting-editor"
+                      checked={lightingPanelVisible}
+                      onCheckedChange={(checked) => setLightingPanelVisible(checked)}
                     />
                   </div>
                 </Section>

@@ -30,6 +30,7 @@ import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/W
 import { DragDropProvider } from '@/contexts/DragDropContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
+import { LightingDebugPanel } from './LightingDebugPanel'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
@@ -728,6 +729,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             parkingBotCount={parkingSessions.length}
           />
         )}
+
+        {/* Lighting Debug Panel (floating overlay) */}
+        <LightingDebugPanel />
 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
