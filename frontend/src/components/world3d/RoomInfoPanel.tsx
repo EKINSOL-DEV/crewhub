@@ -1,7 +1,9 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import type { CrewSession } from '@/lib/api'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import type { Room } from '@/hooks/useRooms'
+import { useProjects, type ProjectOverview } from '@/hooks/useProjects'
+import { ProjectPicker } from './ProjectPicker'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -14,6 +16,8 @@ interface RoomInfoPanelProps {
   displayNames: Map<string, string | null>
   onClose: () => void
   onBotClick?: (session: CrewSession) => void
+  onFocusRoom?: (roomId: string) => void
+  onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -54,7 +58,6 @@ function formatModel(model?: string): string {
 function getDisplayName(session: CrewSession, aliasName: string | null | undefined): string {
   if (aliasName) return aliasName
   if (session.displayName) return session.displayName
-  // Extract agent name from key like "agent:gamedev:main" → "Gamedev"
   const parts = session.key.split(':')
   if (parts.length >= 2) {
     const name = parts[1]
@@ -72,6 +75,16 @@ function getRoomActivityStatus(statuses: BotStatus[]): { label: string; color: s
   return { label: 'Empty', color: '#9ca3af' }
 }
 
+function getProjectStatusBadge(status: string): { label: string; color: string; bg: string } {
+  switch (status) {
+    case 'active': return { label: 'Active', color: '#15803d', bg: '#dcfce7' }
+    case 'paused': return { label: 'Paused', color: '#a16207', bg: '#fef9c3' }
+    case 'completed': return { label: 'Completed', color: '#1d4ed8', bg: '#dbeafe' }
+    case 'archived': return { label: 'Archived', color: '#6b7280', bg: '#f3f4f6' }
+    default: return { label: status, color: '#6b7280', bg: '#f3f4f6' }
+  }
+}
+
 // ── Component ──────────────────────────────────────────────────
 
 export function RoomInfoPanel({
@@ -81,9 +94,44 @@ export function RoomInfoPanel({
   displayNames,
   onClose,
   onBotClick,
+  onFocusRoom,
 }: RoomInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const roomColor = room.color || '#4f46e5'
+
+  // Projects hook
+  const {
+    projects,
+    assignProjectToRoom,
+    clearRoomProject,
+    createProject,
+    fetchOverview,
+  } = useProjects()
+
+  // UI state
+  const [showPicker, setShowPicker] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<'change' | 'clear' | null>(null)
+  const [hqOverview, setHqOverview] = useState<ProjectOverview[]>([])
+  const [hqLoading, setHqLoading] = useState(false)
+
+  // Current project from room data
+  const currentProject = useMemo(() => {
+    if (!room.project_id) return null
+    return projects.find(p => p.id === room.project_id) ?? null
+  }, [room.project_id, projects])
+
+  // Fetch HQ overview when room is HQ
+  useEffect(() => {
+    if (room.is_hq) {
+      setHqLoading(true)
+      fetchOverview().then(result => {
+        if (result.success) {
+          setHqOverview(result.projects)
+        }
+        setHqLoading(false)
+      })
+    }
+  }, [room.is_hq, fetchOverview])
 
   // Close on outside click
   useEffect(() => {
@@ -109,7 +157,6 @@ export function RoomInfoPanel({
       const name = getDisplayName(s, displayNames.get(s.key))
       return { session: s, status, name }
     }).sort((a, b) => {
-      // Sort: active first, then idle, sleeping, offline
       const order: Record<BotStatus, number> = { active: 0, idle: 1, sleeping: 2, offline: 3 }
       return order[a.status] - order[b.status]
     })
@@ -120,6 +167,42 @@ export function RoomInfoPanel({
   const idleCount = statuses.filter(s => s === 'idle').length
   const sleepingCount = statuses.filter(s => s === 'sleeping' || s === 'offline').length
   const activityStatus = getRoomActivityStatus(statuses)
+
+  // Handlers
+  const handleAssignProject = useCallback(async (projectId: string) => {
+    await assignProjectToRoom(room.id, projectId)
+    setShowPicker(false)
+  }, [assignProjectToRoom, room.id])
+
+  const handleClearProject = useCallback(async () => {
+    await clearRoomProject(room.id)
+    setConfirmAction(null)
+  }, [clearRoomProject, room.id])
+
+  const handleChangeClick = useCallback(() => {
+    if (activeCount > 0) {
+      setConfirmAction('change')
+    } else {
+      setShowPicker(true)
+    }
+  }, [activeCount])
+
+  const handleClearClick = useCallback(() => {
+    if (activeCount > 0) {
+      setConfirmAction('clear')
+    } else {
+      handleClearProject()
+    }
+  }, [activeCount, handleClearProject])
+
+  const handleConfirm = useCallback(() => {
+    if (confirmAction === 'change') {
+      setConfirmAction(null)
+      setShowPicker(true)
+    } else if (confirmAction === 'clear') {
+      handleClearProject()
+    }
+  }, [confirmAction, handleClearProject])
 
   return (
     <div
@@ -144,6 +227,27 @@ export function RoomInfoPanel({
         animation: 'roomPanelSlideIn 0.3s ease-out',
       }}
     >
+      {/* Project Picker overlay */}
+      {showPicker && (
+        <ProjectPicker
+          projects={projects}
+          currentProjectId={room.project_id}
+          onSelect={handleAssignProject}
+          onCreate={createProject}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+
+      {/* Confirmation Dialog overlay */}
+      {confirmAction && (
+        <ConfirmDialog
+          activeCount={activeCount}
+          action={confirmAction}
+          onConfirm={handleConfirm}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+
       {/* Header */}
       <div style={{
         padding: '20px 20px 0',
@@ -244,6 +348,166 @@ export function RoomInfoPanel({
         flexDirection: 'column',
         gap: 20,
       }}>
+        {/* Project Section */}
+        <div>
+          <SectionHeader>📋 Project</SectionHeader>
+          {currentProject ? (
+            /* Has project assigned */
+            <div style={{ marginTop: 8 }}>
+              <div style={{
+                padding: '12px 14px',
+                background: (currentProject.color || '#6b7280') + '10',
+                borderRadius: 10,
+                border: `1px solid ${(currentProject.color || '#6b7280')}20`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: currentProject.color || '#6b7280',
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>
+                    {currentProject.icon || '📋'}
+                  </span>
+                  <span style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: '#1f2937',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                  }}>
+                    {currentProject.name}
+                  </span>
+                </div>
+
+                {currentProject.description && (
+                  <div style={{
+                    fontSize: 12,
+                    color: '#6b7280',
+                    marginTop: 6,
+                    lineHeight: 1.4,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical' as const,
+                    overflow: 'hidden',
+                  }}>
+                    {currentProject.description}
+                  </div>
+                )}
+
+                <div style={{ marginTop: 8 }}>
+                  {(() => {
+                    const badge = getProjectStatusBadge(currentProject.status)
+                    return (
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: badge.color,
+                        background: badge.bg,
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                      }}>
+                        {badge.label}
+                      </span>
+                    )
+                  })()}
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <button
+                  onClick={handleChangeClick}
+                  style={{
+                    flex: 1,
+                    padding: '7px 12px',
+                    borderRadius: 8,
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    background: 'white',
+                    color: '#374151',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.03)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'white' }}
+                >
+                  Change Project
+                </button>
+                <button
+                  onClick={handleClearClick}
+                  style={{
+                    padding: '7px 12px',
+                    borderRadius: 8,
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    background: 'white',
+                    color: '#ef4444',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'white' }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* No project — General Room */
+            <div style={{ marginTop: 8 }}>
+              <div style={{
+                padding: '12px 14px',
+                background: 'rgba(0, 0, 0, 0.03)',
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
+                  {room.is_hq ? '🏛️ Command Center' : 'General Room'}
+                </span>
+                <button
+                  onClick={() => setShowPicker(true)}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(59,130,246,0.3)',
+                    background: 'rgba(59,130,246,0.05)',
+                    color: '#3b82f6',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.05)' }}
+                >
+                  Assign Project
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* HQ Command Center — All Projects Dashboard */}
+        {room.is_hq && (
+          <HQDashboard
+            overview={hqOverview}
+            loading={hqLoading}
+            onProjectClick={onFocusRoom}
+          />
+        )}
+
         {/* Room Stats */}
         <div>
           <SectionHeader>📊 Room Stats</SectionHeader>
@@ -301,7 +565,6 @@ export function RoomInfoPanel({
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.06)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.02)' }}
                   >
-                    {/* Status dot */}
                     <span style={{
                       width: 8,
                       height: 8,
@@ -309,8 +572,6 @@ export function RoomInfoPanel({
                       background: badge.dot,
                       flexShrink: 0,
                     }} />
-
-                    {/* Name */}
                     <span style={{
                       flex: 1,
                       fontSize: 13,
@@ -322,8 +583,6 @@ export function RoomInfoPanel({
                     }}>
                       {name}
                     </span>
-
-                    {/* Status label */}
                     <span style={{
                       fontSize: 11,
                       fontWeight: 500,
@@ -331,8 +590,6 @@ export function RoomInfoPanel({
                     }}>
                       {badge.label}
                     </span>
-
-                    {/* Model */}
                     <span style={{
                       fontSize: 11,
                       fontWeight: 500,
@@ -348,22 +605,6 @@ export function RoomInfoPanel({
             </div>
           )}
         </div>
-
-        {/* Project Section — Placeholder for Phase 3 */}
-        <div>
-          <SectionHeader>📋 Project</SectionHeader>
-          <div style={{
-            marginTop: 8,
-            padding: '12px 14px',
-            background: 'rgba(0, 0, 0, 0.03)',
-            borderRadius: 10,
-            fontSize: 13,
-            color: '#9ca3af',
-            textAlign: 'center',
-          }}>
-            General Room
-          </div>
-        </div>
       </div>
 
       {/* Slide-in animation */}
@@ -371,6 +612,234 @@ export function RoomInfoPanel({
         @keyframes roomPanelSlideIn {
           from { transform: translateX(40px); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// ── HQ Dashboard ───────────────────────────────────────────────
+
+function HQDashboard({
+  overview,
+  loading,
+  onProjectClick,
+}: {
+  overview: ProjectOverview[]
+  loading: boolean
+  onProjectClick?: (roomId: string) => void
+}) {
+  return (
+    <div>
+      <SectionHeader>🏛️ COMMAND CENTER</SectionHeader>
+      {loading ? (
+        <div style={{
+          marginTop: 8,
+          padding: '16px 14px',
+          background: 'rgba(245,158,11,0.05)',
+          borderRadius: 10,
+          fontSize: 13,
+          color: '#9ca3af',
+          textAlign: 'center',
+        }}>
+          Loading projects…
+        </div>
+      ) : overview.length === 0 ? (
+        <div style={{
+          marginTop: 8,
+          padding: '16px 14px',
+          background: 'rgba(245,158,11,0.05)',
+          borderRadius: 10,
+          fontSize: 13,
+          color: '#9ca3af',
+          textAlign: 'center',
+        }}>
+          No projects yet
+        </div>
+      ) : (
+        <div style={{
+          marginTop: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+        }}>
+          {overview.map(project => {
+            const statusBadge = getProjectStatusBadge(project.status)
+            // Find the first room assigned to this project for navigation
+            const primaryRoomId = project.rooms?.[0]
+            const clickable = !!primaryRoomId && !!onProjectClick
+
+            return (
+              <button
+                key={project.id}
+                onClick={() => {
+                  if (clickable) onProjectClick!(primaryRoomId)
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  border: '1px solid rgba(245,158,11,0.12)',
+                  background: 'rgba(245,158,11,0.04)',
+                  cursor: clickable ? 'pointer' : 'default',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                  width: '100%',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => { if (clickable) e.currentTarget.style.background = 'rgba(245,158,11,0.1)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.04)' }}
+              >
+                {/* Color dot */}
+                <span style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: project.color || '#6b7280',
+                  flexShrink: 0,
+                }} />
+
+                {/* Icon + info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>{project.icon || '📋'}</span>
+                    <span style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: '#1f2937',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {project.name}
+                    </span>
+                  </div>
+                  <div style={{
+                    fontSize: 11,
+                    color: '#9ca3af',
+                    marginTop: 2,
+                  }}>
+                    {project.room_count} room{project.room_count !== 1 ? 's' : ''} · {project.agent_count} agent{project.agent_count !== 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                {/* Status */}
+                <span style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: statusBadge.color,
+                  background: statusBadge.bg,
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  flexShrink: 0,
+                }}>
+                  {statusBadge.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Confirmation Dialog ────────────────────────────────────────
+
+function ConfirmDialog({
+  activeCount,
+  action,
+  onConfirm,
+  onCancel,
+}: {
+  activeCount: number
+  action: 'change' | 'clear'
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      borderRadius: 16,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 32,
+      zIndex: 70,
+      animation: 'pickerFadeIn 0.15s ease-out',
+    }}>
+      <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+      <div style={{
+        fontSize: 15,
+        fontWeight: 700,
+        color: '#1f2937',
+        textAlign: 'center',
+        marginBottom: 8,
+      }}>
+        {action === 'change' ? 'Change room project?' : 'Clear room project?'}
+      </div>
+      <div style={{
+        fontSize: 13,
+        color: '#6b7280',
+        textAlign: 'center',
+        lineHeight: 1.5,
+        marginBottom: 20,
+        maxWidth: 260,
+      }}>
+        This room has <strong>{activeCount}</strong> active agent{activeCount !== 1 ? 's' : ''}.
+        {action === 'change'
+          ? ' Changing the project will update their context.'
+          : ' Clearing the project will remove their project context.'}
+      </div>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button
+          onClick={onCancel}
+          style={{
+            padding: '8px 20px',
+            borderRadius: 8,
+            border: '1px solid rgba(0,0,0,0.1)',
+            background: 'white',
+            color: '#6b7280',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          style={{
+            padding: '8px 20px',
+            borderRadius: 8,
+            border: 'none',
+            background: action === 'clear' ? '#ef4444' : '#3b82f6',
+            color: 'white',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          {action === 'change' ? 'Change Project' : 'Clear Project'}
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes pickerFadeIn {
+          from { opacity: 0; transform: scale(0.97); }
+          to { opacity: 1; transform: scale(1); }
         }
       `}</style>
     </div>

@@ -660,7 +660,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const { displayNames } = useSessionDisplayNames(sessionKeys)
 
   // Focus state
-  const { state: focusState, focusBot, goBack } = useWorldFocus()
+  const { state: focusState, focusRoom, focusBot, goBack } = useWorldFocus()
 
   // First person HUD state
   const [fpCurrentRoom, setFpCurrentRoom] = useState<string | null>(null)
@@ -845,6 +845,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             displayNames={displayNames}
             onClose={() => goBack()}
             onBotClick={handleRoomPanelBotClick}
+            onFocusRoom={focusRoom}
           />
         )}
 
