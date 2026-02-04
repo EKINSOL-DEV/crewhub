@@ -186,26 +186,36 @@ export function useBotAnimation(
   useEffect(() => {
     const s = stateRef.current
     const j = jitter.current
-    const prevStatus = prevStatusRef.current
     prevStatusRef.current = status
 
-    // Group statuses: active/idle are both "awake" — don't reset animation
-    // when transitioning between them (prevents desk jitter)
-    const isAwake = (st: string) => st === 'active' || st === 'idle'
-    const isWandering = s.phase === 'idle-wandering' || s.phase === 'getting-coffee'
-    if (isAwake(prevStatus) && isAwake(status) && !isWandering) {
-      // Stay in current phase (working, walking-to-desk, sleeping-walking, etc.)
-      // Don't reset animation for active↔idle transitions — prevents desk jitter
+    // Check if current animation phase is already compatible with the new status.
+    // If so, skip the reset entirely — prevents jitter from status flickering.
+    const phaseCompatible: Record<string, string[]> = {
+      active: ['walking-to-desk', 'working'],
+      idle: ['idle-wandering', 'getting-coffee', 'walking-to-desk', 'working'],
+      sleeping: ['sleeping-walking', 'sleeping'],
+      offline: ['offline'],
+    }
+    const compatible = phaseCompatible[status] || []
+    if (compatible.includes(s.phase)) {
+      // Current phase already matches what this status would set up — no reset needed.
+      // Exception: if idle and currently working, let them eventually wander
+      // (but don't reset — the tick function handles the working→coffee transition)
       return
     }
-    if (isAwake(prevStatus) && isAwake(status) && isWandering && status === 'active' && interactionPoints) {
-      // Was wandering/coffee, now active again → go to desk
+
+    // Special case: active and currently wandering → redirect to desk
+    if (status === 'active' && (s.phase === 'idle-wandering' || s.phase === 'getting-coffee') && interactionPoints) {
       s.phase = 'walking-to-desk'
       s.targetX = interactionPoints.deskPosition[0] + j.x
       s.targetZ = interactionPoints.deskPosition[2] + j.z
       s.walkSpeed = SESSION_CONFIG.botWalkSpeedActive
       s.freezeWhenArrived = true
       s.arrived = false
+      s.bodyTilt = 0
+      s.headBob = false
+      s.showZzz = false
+      s.sleepRotZ = 0
       return
     }
 
