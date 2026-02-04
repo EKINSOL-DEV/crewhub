@@ -91,20 +91,6 @@ export function DebugPanel() {
 
   if (!debugBotsEnabled) return null
 
-  // ─── Collapsed: just the toggle button ────────────────────────
-  if (collapsed) {
-    return (
-      <button
-        onClick={() => setCollapsed(false)}
-        className="fixed z-[60] right-4 top-20 w-10 h-10 rounded-xl bg-gray-900/80 backdrop-blur-md border border-gray-700/60 shadow-lg flex items-center justify-center text-lg hover:bg-gray-800/90 transition-colors"
-        title="Debug Bots Panel"
-      >
-        🧪
-      </button>
-    )
-  }
-
-  // ─── Expanded panel ───────────────────────────────────────────
   return (
     <div
       className="fixed z-[60] select-none"
@@ -125,16 +111,17 @@ export function DebugPanel() {
           <div className="flex items-center gap-1.5">
             <span className="text-[9px] text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded-full">{debugBots.length}</span>
             <button
-              onClick={() => setCollapsed(true)}
-              className="text-gray-400 hover:text-white text-sm leading-none px-1"
-              title="Collapse"
+              onClick={() => setCollapsed(c => !c)}
+              className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700/60 transition-colors text-xs"
+              title={collapsed ? "Expand" : "Minimize"}
             >
-              ✕
+              {collapsed ? '□' : '—'}
             </button>
           </div>
         </div>
 
         {/* Scrollable content */}
+        {!collapsed && (
         <div className="overflow-y-auto p-3 space-y-1" style={{ maxHeight: 'calc(100vh - 180px)' }}>
 
           {/* ── Add Bot ── */}
@@ -261,6 +248,7 @@ export function DebugPanel() {
             </>
           )}
         </div>
+        )}
       </div>
     </div>
   )
