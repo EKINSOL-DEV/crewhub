@@ -54,7 +54,7 @@ export function DebugPanel() {
   const [selectedRoomId, setSelectedRoomId] = useState('')
 
   // Dragging
-  const [pos, setPos] = useState({ x: 16, y: 80 })
+  const [pos, setPos] = useState({ x: typeof window !== 'undefined' ? window.innerWidth - 280 : 700, y: 80 })
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null)
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -96,7 +96,7 @@ export function DebugPanel() {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="fixed z-[60] left-4 top-20 w-10 h-10 rounded-xl bg-gray-900/80 backdrop-blur-md border border-gray-700/60 shadow-lg flex items-center justify-center text-lg hover:bg-gray-800/90 transition-colors"
+        className="fixed z-[60] right-4 top-20 w-10 h-10 rounded-xl bg-gray-900/80 backdrop-blur-md border border-gray-700/60 shadow-lg flex items-center justify-center text-lg hover:bg-gray-800/90 transition-colors"
         title="Debug Bots Panel"
       >
         🧪
