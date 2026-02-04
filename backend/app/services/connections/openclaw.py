@@ -200,7 +200,7 @@ class OpenClawConnection(AgentConnection):
                     "minProtocol": 3,
                     "maxProtocol": 3,
                     "client": {
-                        "id": "crewhub",
+                        "id": "cli",
                         "version": "1.0.0",
                         "platform": "python",
                         "mode": "cli"
@@ -717,3 +717,207 @@ class OpenClawConnection(AgentConnection):
                 self._event_handlers[event_name].remove(handler)
             except ValueError:
                 pass
+    
+    # =========================================================================
+    # Raw data access (backward-compat with legacy GatewayClient)
+    # =========================================================================
+    
+    async def get_sessions_raw(self) -> list[dict[str, Any]]:
+        """Get raw session dicts from Gateway (legacy format)."""
+        result = await self.call("sessions.list")
+        if result and isinstance(result, dict):
+            return result.get("sessions", [])
+        return []
+    
+    async def get_session_history_raw(
+        self,
+        session_key: str,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """Get raw JSONL history entries (legacy format)."""
+        import json as _json
+        
+        try:
+            sessions = await self.get_sessions_raw()
+            session = next(
+                (s for s in sessions if s.get("key") == session_key), None
+            )
+            if not session:
+                return []
+            
+            session_id = session.get("sessionId", "")
+            if not session_id:
+                return []
+            
+            session_id = _safe_id(session_id)
+            agent_id = "main"
+            if ":" in session_key:
+                parts = session_key.split(":")
+                if len(parts) > 1:
+                    agent_id = _safe_id(parts[1])
+            
+            base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
+            session_file = (base / f"{session_id}.jsonl").resolve()
+            
+            if not str(session_file).startswith(str(base.resolve())):
+                raise ValueError("Invalid session path")
+            
+            if not session_file.exists():
+                return []
+            
+            messages: list[dict[str, Any]] = []
+            with open(session_file, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            messages.append(_json.loads(line))
+                        except _json.JSONDecodeError:
+                            continue
+            
+            return messages[-limit:] if limit else messages
+            
+        except (ValueError, OSError) as e:
+            logger.error(f"Error reading session history: {e}")
+            return []
+    
+    # =========================================================================
+    # Extended API methods (migrated from legacy GatewayClient)
+    # =========================================================================
+    
+    async def send_chat(
+        self,
+        message: str,
+        agent_id: str = "main",
+        session_id: Optional[str] = None,
+        timeout: float = 90.0,
+    ) -> Optional[str]:
+        """Send a chat message to an agent and return the assistant text."""
+        params: dict[str, Any] = {
+            "message": message,
+            "agentId": agent_id,
+            "deliver": False,
+            "idempotencyKey": str(uuid.uuid4()),
+        }
+        if session_id:
+            params["sessionId"] = session_id
+
+        result = await self.call(
+            "agent",
+            params,
+            timeout=timeout,
+            wait_for_final_agent_result=True,
+        )
+
+        if not result:
+            return None
+
+        agent_result = result.get("result") if isinstance(result, dict) else None
+        if isinstance(agent_result, dict):
+            payloads = agent_result.get("payloads")
+            if isinstance(payloads, list) and payloads:
+                text = payloads[0].get("text")
+                if isinstance(text, str):
+                    return text
+
+        for key in ("text", "response", "content", "reply"):
+            val = result.get(key) if isinstance(result, dict) else None
+            if isinstance(val, str) and val:
+                return val
+
+        return None
+    
+    async def patch_session(
+        self, session_id: str, model: Optional[str] = None
+    ) -> bool:
+        """Update session configuration (e.g., switch model)."""
+        params: dict[str, Any] = {"sessionId": session_id}
+        if model:
+            params["model"] = model
+        result = await self.call("session.status", params)
+        return result is not None
+    
+    async def spawn_session(
+        self,
+        task: str,
+        model: str = "sonnet",
+        label: Optional[str] = None,
+    ) -> Optional[dict[str, Any]]:
+        """Spawn a new sub-agent session."""
+        params: dict[str, Any] = {"task": task, "model": model}
+        if label:
+            params["label"] = label
+        return await self.call("sessions.spawn", params, timeout=120.0)
+    
+    # ── Cron management ─────────────────────────────────────────────
+    
+    async def list_cron_jobs(self, all_jobs: bool = True) -> list[dict[str, Any]]:
+        """Get list of cron jobs."""
+        params = {"includeDisabled": all_jobs} if all_jobs else {}
+        result = await self.call("cron.list", params)
+        if result and isinstance(result, dict):
+            return result.get("jobs", [])
+        return []
+    
+    async def create_cron_job(
+        self,
+        schedule: dict,
+        payload: dict,
+        session_target: str = "main",
+        name: Optional[str] = None,
+        enabled: bool = True,
+    ) -> Optional[dict[str, Any]]:
+        """Create a new cron job."""
+        params: dict[str, Any] = {
+            "schedule": schedule,
+            "payload": payload,
+            "sessionTarget": session_target,
+            "enabled": enabled,
+        }
+        if name:
+            params["name"] = name
+        return await self.call("cron.add", params)
+    
+    async def update_cron_job(
+        self, job_id: str, patch: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
+        """Update an existing cron job."""
+        return await self.call("cron.update", {"jobId": job_id, "patch": patch})
+    
+    async def delete_cron_job(self, job_id: str) -> bool:
+        """Delete a cron job."""
+        result = await self.call("cron.remove", {"jobId": job_id})
+        return result is not None
+    
+    async def enable_cron_job(self, job_id: str) -> bool:
+        """Enable a cron job."""
+        return await self.update_cron_job(job_id, {"enabled": True}) is not None
+    
+    async def disable_cron_job(self, job_id: str) -> bool:
+        """Disable a cron job."""
+        return await self.update_cron_job(job_id, {"enabled": False}) is not None
+    
+    async def run_cron_job(self, job_id: str, force: bool = False) -> bool:
+        """Trigger a cron job to run immediately."""
+        params: dict[str, Any] = {"jobId": job_id}
+        if force:
+            params["force"] = True
+        result = await self.call("cron.run", params)
+        return result is not None
+    
+    # ── System queries ──────────────────────────────────────────────
+    
+    async def get_presence(self) -> dict[str, Any]:
+        """Get connected devices/clients."""
+        result = await self.call("system-presence")
+        return result or {}
+    
+    async def list_nodes(self) -> list[dict[str, Any]]:
+        """Get list of paired nodes."""
+        for method in ["nodes-status", "nodes.list", "nodes"]:
+            result = await self.call(method)
+            if result and isinstance(result, dict):
+                nodes = result.get("nodes", [])
+                if nodes or "nodes" in result:
+                    return nodes
+        return []

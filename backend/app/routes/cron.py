@@ -1,11 +1,12 @@
 """
 Cron job management routes.
-Full CRUD operations for OpenClaw cron jobs via Gateway.
+Full CRUD operations for OpenClaw cron jobs via ConnectionManager.
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, model_validator
 from typing import Optional, Literal
-from ..services.gateway import get_gateway
+
+from ..services.connections import get_connection_manager
 
 router = APIRouter()
 
@@ -62,29 +63,38 @@ class CronJobUpdate(BaseModel):
     enabled: Optional[bool] = None
 
 
+async def _get_openclaw():
+    """Get the default OpenClaw connection or raise 503."""
+    manager = await get_connection_manager()
+    conn = manager.get_default_openclaw()
+    if not conn:
+        raise HTTPException(status_code=503, detail="No OpenClaw connection available")
+    return conn
+
+
 @router.get("/jobs")
 async def list_cron_jobs(all: bool = True):
     """Get all cron jobs."""
-    gateway = await get_gateway()
-    jobs = await gateway.list_cron_jobs(all_jobs=all)
+    conn = await _get_openclaw()
+    jobs = await conn.list_cron_jobs(all_jobs=all)
     return {"jobs": jobs}
 
 
 @router.post("/jobs")
 async def create_cron_job(job: CronJobCreate):
     """Create a new cron job."""
-    gateway = await get_gateway()
+    conn = await _get_openclaw()
     
     # Convert Pydantic models to dicts, excluding None values
     schedule_dict = {k: v for k, v in job.schedule.model_dump().items() if v is not None}
     payload_dict = {k: v for k, v in job.payload.model_dump().items() if v is not None}
     
-    result = await gateway.create_cron_job(
+    result = await conn.create_cron_job(
         schedule=schedule_dict,
         payload=payload_dict,
         session_target=job.sessionTarget,
         name=job.name,
-        enabled=job.enabled
+        enabled=job.enabled,
     )
     
     if result is None:
@@ -96,8 +106,8 @@ async def create_cron_job(job: CronJobCreate):
 @router.get("/jobs/{job_id}")
 async def get_cron_job(job_id: str):
     """Get a specific cron job by ID."""
-    gateway = await get_gateway()
-    jobs = await gateway.list_cron_jobs(all_jobs=True)
+    conn = await _get_openclaw()
+    jobs = await conn.list_cron_jobs(all_jobs=True)
     
     job = next((j for j in jobs if j.get("id") == job_id), None)
     
@@ -110,7 +120,7 @@ async def get_cron_job(job_id: str):
 @router.patch("/jobs/{job_id}")
 async def update_cron_job(job_id: str, update: CronJobUpdate):
     """Update a cron job."""
-    gateway = await get_gateway()
+    conn = await _get_openclaw()
     
     # Build patch dict with only provided fields
     patch = {}
@@ -130,7 +140,7 @@ async def update_cron_job(job_id: str, update: CronJobUpdate):
     if update.enabled is not None:
         patch["enabled"] = update.enabled
     
-    result = await gateway.update_cron_job(job_id, patch)
+    result = await conn.update_cron_job(job_id, patch)
     
     if result is None:
         raise HTTPException(status_code=500, detail="Failed to update cron job")
@@ -141,8 +151,8 @@ async def update_cron_job(job_id: str, update: CronJobUpdate):
 @router.delete("/jobs/{job_id}")
 async def delete_cron_job(job_id: str):
     """Delete a cron job."""
-    gateway = await get_gateway()
-    success = await gateway.delete_cron_job(job_id)
+    conn = await _get_openclaw()
+    success = await conn.delete_cron_job(job_id)
     
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete cron job")
@@ -153,8 +163,8 @@ async def delete_cron_job(job_id: str):
 @router.post("/jobs/{job_id}/enable")
 async def enable_cron_job(job_id: str):
     """Enable a cron job."""
-    gateway = await get_gateway()
-    success = await gateway.enable_cron_job(job_id)
+    conn = await _get_openclaw()
+    success = await conn.enable_cron_job(job_id)
     
     if not success:
         raise HTTPException(status_code=500, detail="Failed to enable cron job")
@@ -165,8 +175,8 @@ async def enable_cron_job(job_id: str):
 @router.post("/jobs/{job_id}/disable")
 async def disable_cron_job(job_id: str):
     """Disable a cron job."""
-    gateway = await get_gateway()
-    success = await gateway.disable_cron_job(job_id)
+    conn = await _get_openclaw()
+    success = await conn.disable_cron_job(job_id)
     
     if not success:
         raise HTTPException(status_code=500, detail="Failed to disable cron job")
@@ -177,8 +187,8 @@ async def disable_cron_job(job_id: str):
 @router.post("/jobs/{job_id}/run")
 async def run_cron_job(job_id: str, force: bool = True):
     """Trigger a cron job to run immediately."""
-    gateway = await get_gateway()
-    success = await gateway.run_cron_job(job_id, force=force)
+    conn = await _get_openclaw()
+    success = await conn.run_cron_job(job_id, force=force)
     
     if not success:
         raise HTTPException(status_code=500, detail="Failed to run cron job")

@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from app.services.gateway import get_gateway
+from app.services.connections import get_connection_manager
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
@@ -82,8 +82,12 @@ async def get_chat_history(
     """Get chat history for a session with pagination."""
     _validate_session_key(session_key)
 
-    gateway = await get_gateway()
-    raw_entries = await gateway.get_session_history(session_key, limit=0)
+    manager = await get_connection_manager()
+    conn = manager.get_default_openclaw()
+    if not conn:
+        return {"messages": [], "hasMore": False, "oldestTimestamp": None}
+    
+    raw_entries = await conn.get_session_history_raw(session_key, limit=0)
 
     # Parse into chat messages
     # JSONL entries have structure: { type: "message", message: { role, content }, timestamp }
@@ -185,15 +189,19 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
 
     agent_id = _get_agent_id(session_key)
 
-    gateway = await get_gateway()
+    manager = await get_connection_manager()
+    conn = manager.get_default_openclaw()
+    if not conn:
+        return {"response": None, "tokens": 0, "success": False, "error": "No OpenClaw connection"}
+    
     try:
-        response_text = await gateway.send_chat(
+        response_text = await conn.send_chat(
             message=message,
             agent_id=agent_id,
             timeout=90.0,
         )
     except Exception as e:
-        logger.error(f"Gateway send_chat error: {e}")
+        logger.error(f"send_chat error: {e}")
         return {"response": None, "tokens": 0, "success": False, "error": str(e)}
 
     if response_text:

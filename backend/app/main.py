@@ -5,12 +5,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import asyncio
+import os
 
 from app.config import settings
 from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections
 from app.routes.chat import router as chat_router
 from app.db.database import init_database, check_database_health
-from app.services.gateway import GatewayClient
 from app.services.connections import get_connection_manager
 from app.routes.sse import broadcast
 
@@ -21,26 +21,34 @@ _polling_task = None
 
 
 async def poll_sessions_loop():
-    """Background task that polls Gateway for sessions and broadcasts to SSE clients."""
-    gateway = await GatewayClient.get_instance()
+    """Background task that polls all connections for sessions and broadcasts to SSE clients."""
+    manager = await get_connection_manager()
     while True:
         try:
-            sessions_data = await gateway.get_sessions()
+            sessions_data = await manager.get_all_sessions()
             if sessions_data:
-                await broadcast("sessions-refresh", {"sessions": sessions_data})
+                await broadcast(
+                    "sessions-refresh",
+                    {"sessions": [s.to_dict() for s in sessions_data]},
+                )
         except Exception as e:
             logger.debug(f"Polling error: {e}")
         await asyncio.sleep(5)  # Poll every 5 seconds
 
 
 async def load_connections_from_db():
-    """Load enabled connections from database into ConnectionManager."""
+    """Load enabled connections from database into ConnectionManager.
+    
+    If no connections are configured in the DB, auto-creates a default
+    OpenClaw connection from environment variables for backward compat.
+    """
     import json
     import aiosqlite
     from app.db.database import DB_PATH
     
     manager = await get_connection_manager()
     
+    loaded_count = 0
     try:
         async with aiosqlite.connect(DB_PATH) as db:
             db.row_factory = lambda cursor, row: dict(
@@ -61,12 +69,31 @@ async def load_connections_from_db():
                     name=row["name"],
                     auto_connect=True,
                 )
+                loaded_count += 1
                 logger.info(f"Loaded connection: {row['id']} ({row['type']})")
             except Exception as e:
                 logger.error(f"Failed to load connection {row['id']}: {e}")
                 
     except Exception as e:
         logger.error(f"Failed to load connections from database: {e}")
+    
+    # Backward compat: if no OpenClaw connections loaded, create one from env
+    if not manager.get_default_openclaw():
+        url = os.getenv("OPENCLAW_GATEWAY_URL", "ws://localhost:18789")
+        token = os.getenv("OPENCLAW_GATEWAY_TOKEN", "")
+        logger.info(
+            f"No OpenClaw connections in DB — creating default from env: {url}"
+        )
+        try:
+            await manager.add_connection(
+                connection_id="default-openclaw",
+                connection_type="openclaw",
+                config={"url": url, "token": token},
+                name="OpenClaw (default)",
+                auto_connect=True,
+            )
+        except Exception as e:
+            logger.error(f"Failed to create default OpenClaw connection: {e}")
 
 
 @asynccontextmanager

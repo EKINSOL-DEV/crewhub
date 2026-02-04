@@ -2,13 +2,13 @@
 Session management routes.
 Handles listing, viewing, spawning, and killing agent sessions.
 
-Pure Gateway monitoring - no database dependencies.
+Uses ConnectionManager to aggregate sessions from all agent connections.
 """
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
 
-from ..services.gateway import get_gateway
+from ..services.connections import get_connection_manager
 
 router = APIRouter()
 
@@ -25,11 +25,11 @@ class SessionSpawn(BaseModel):
 
 @router.get("")
 async def list_sessions():
-    """Get all active sessions."""
-    gateway = await get_gateway()
-    sessions = await gateway.get_sessions()
+    """Get all active sessions from all connections."""
+    manager = await get_connection_manager()
+    sessions = await manager.get_all_sessions()
     
-    return {"sessions": sessions}
+    return {"sessions": [s.to_dict() for s in sessions]}
 
 
 @router.get("/{session_key:path}/history")
@@ -39,12 +39,18 @@ async def get_session_history(
 ):
     """Get message history for a specific session.
     
+    Returns raw JSONL entries for backward compatibility.
+    
     Args:
         session_key: URL-encoded session key (e.g., agent:main:main)
         limit: Maximum number of messages to return (1-500)
     """
-    gateway = await get_gateway()
-    history = await gateway.get_session_history(session_key, limit)
+    manager = await get_connection_manager()
+    conn = manager.get_default_openclaw()
+    if not conn:
+        raise HTTPException(status_code=503, detail="No OpenClaw connection available")
+    
+    history = await conn.get_session_history_raw(session_key, limit)
     
     return {"messages": history, "count": len(history)}
 
@@ -57,27 +63,30 @@ async def patch_session(session_key: str, patch: SessionPatch):
         session_key: URL-encoded session key
         patch: Fields to update (model, etc.)
     """
-    gateway = await get_gateway()
+    if not patch.model:
+        raise HTTPException(status_code=400, detail="No fields to update")
     
-    if patch.model:
-        sessions = await gateway.get_sessions()
-        session = next((s for s in sessions if s.get("key") == session_key), None)
-        
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-        
-        session_id = session.get("sessionId")
-        if not session_id:
-            raise HTTPException(status_code=500, detail="Session missing sessionId")
-        
-        success = await gateway.patch_session(session_id, model=patch.model)
-        
-        if not success:
-            raise HTTPException(status_code=502, detail="Failed to update session")
-        
-        return {"success": True, "sessionKey": session_key, "model": patch.model}
+    manager = await get_connection_manager()
+    conn = manager.get_default_openclaw()
+    if not conn:
+        raise HTTPException(status_code=503, detail="No OpenClaw connection available")
     
-    raise HTTPException(status_code=400, detail="No fields to update")
+    sessions = await conn.get_sessions_raw()
+    session = next((s for s in sessions if s.get("key") == session_key), None)
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    session_id = session.get("sessionId")
+    if not session_id:
+        raise HTTPException(status_code=500, detail="Session missing sessionId")
+    
+    success = await conn.patch_session(session_id, model=patch.model)
+    
+    if not success:
+        raise HTTPException(status_code=502, detail="Failed to update session")
+    
+    return {"success": True, "sessionKey": session_key, "model": patch.model}
 
 
 @router.delete("/{session_key:path}")
@@ -87,8 +96,8 @@ async def kill_session(session_key: str):
     Args:
         session_key: URL-encoded session key
     """
-    gateway = await get_gateway()
-    success = await gateway.kill_session(session_key)
+    manager = await get_connection_manager()
+    success = await manager.kill_session(session_key)
     
     if not success:
         raise HTTPException(status_code=500, detail="Failed to kill session")
@@ -103,11 +112,15 @@ async def spawn_session(spawn: SessionSpawn):
     Args:
         spawn: Task description, model, and optional label
     """
-    gateway = await get_gateway()
-    result = await gateway.spawn_session(
+    manager = await get_connection_manager()
+    conn = manager.get_default_openclaw()
+    if not conn:
+        raise HTTPException(status_code=503, detail="No OpenClaw connection available")
+    
+    result = await conn.spawn_session(
         task=spawn.task,
         model=spawn.model,
-        label=spawn.label
+        label=spawn.label,
     )
     
     if not result:

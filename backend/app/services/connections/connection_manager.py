@@ -493,6 +493,70 @@ class ConnectionManager:
         return False
     
     # =========================================================================
+    # Default connection helper
+    # =========================================================================
+    
+    def get_default_openclaw(self) -> Optional["OpenClawConnection"]:
+        """
+        Get the first connected OpenClaw connection (the "default").
+        
+        Falls back to the first OpenClaw connection even if disconnected,
+        so callers can attempt a reconnect via connect().
+        
+        Returns:
+            OpenClawConnection or None if none registered.
+        """
+        # Prefer a connected one
+        for conn in self._connections.values():
+            if isinstance(conn, OpenClawConnection) and conn.is_connected():
+                return conn
+        # Fall back to any OpenClaw connection
+        for conn in self._connections.values():
+            if isinstance(conn, OpenClawConnection):
+                return conn
+        return None
+    
+    async def send_message(
+        self,
+        session_key: str,
+        message: str,
+        connection_id: Optional[str] = None,
+        timeout: float = 90.0,
+    ) -> Optional[str]:
+        """
+        Send a message to a session, routing to the correct connection.
+        
+        Args:
+            session_key: Target session
+            message: Message text
+            connection_id: Specific connection to use (optional)
+            timeout: Timeout in seconds
+            
+        Returns:
+            Response text or None
+        """
+        if connection_id:
+            conn = self._connections.get(connection_id)
+            if conn and conn.is_connected():
+                return await conn.send_message(session_key, message, timeout)
+            return None
+        
+        # Try all connected
+        for conn in self._connections.values():
+            if not conn.is_connected():
+                continue
+            try:
+                result = await conn.send_message(session_key, message, timeout)
+                if result is not None:
+                    return result
+            except NotImplementedError:
+                continue
+            except Exception as e:
+                logger.debug(f"send_message failed on {conn.connection_id}: {e}")
+        
+        return None
+    
+    # =========================================================================
     # Event Handling
     # =========================================================================
     

@@ -16,7 +16,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ..db.database import get_db
-from ..services.gateway import get_gateway
+from ..services.connections import get_connection_manager
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +62,9 @@ async def sync_agents_from_gateway() -> int:
     one exists in the local DB.  Returns the number of agents upserted.
     """
     try:
-        gateway = await get_gateway()
-        status = await gateway.call("status")
+        manager = await get_connection_manager()
+        conn = manager.get_default_openclaw()
+        status = await conn.call("status") if conn else None
         if not status:
             return 0
 

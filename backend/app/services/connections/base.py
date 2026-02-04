@@ -62,8 +62,14 @@ class SessionInfo:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
+        """Convert to dictionary for JSON serialization.
+        
+        Metadata fields are flattened to the top level for backward
+        compatibility with the legacy GatewayClient raw format.
+        Standard fields always take precedence over metadata keys.
+        """
+        result: dict[str, Any] = dict(self.metadata)  # raw fields first
+        result.update({
             "key": self.key,
             "sessionId": self.session_id,
             "source": self.source,
@@ -75,8 +81,8 @@ class SessionInfo:
             "status": self.status,
             "createdAt": self.created_at,
             "lastActivity": self.last_activity,
-            "metadata": self.metadata,
-        }
+        })
+        return result
 
 
 @dataclass
