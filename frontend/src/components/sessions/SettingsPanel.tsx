@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -35,8 +35,16 @@ import {
 import {
   Sun, Moon, Monitor, X, Plus, Trash2, Edit2, Check,
   ChevronUp, ChevronDown, ChevronRight,
-  AlertCircle,
+  AlertCircle, Download, Upload, Database, Loader2, Clock,
+  HardDrive, RefreshCw,
 } from "lucide-react"
+import {
+  exportBackup,
+  importBackup,
+  createBackup,
+  listBackups,
+  type BackupInfo,
+} from "@/lib/api"
 import { useRooms, type Room } from "@/hooks/useRooms"
 import { useRoomAssignmentRules, type RoomAssignmentRule } from "@/hooks/useRoomAssignmentRules"
 import { useToast } from "@/hooks/use-toast"
@@ -759,6 +767,8 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                   <ThresholdsTimingSection config={sessionConfig} />
                 </CollapsibleSection>
 
+                <BackupSection />
+
                 <Section title="🔧 Developer">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="grid-debug" className="flex flex-col gap-1">
@@ -1036,6 +1046,292 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
             <Button variant="outline" onClick={() => setDeleteRuleConfirm(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteRuleConfirm && handleDeleteRule(deleteRuleConfirm)}>
               Delete Rule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+// ─── Backup Section ──────────────────────────────────────────────────────────
+
+function BackupSection() {
+  const [backups, setBackups] = useState<BackupInfo[]>([])
+  const [loading, setLoading] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [showImportConfirm, setShowImportConfirm] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const pendingFileRef = useRef<File | null>(null)
+
+  const loadBackups = useCallback(async () => {
+    setLoading(true)
+    try {
+      const list = await listBackups()
+      setBackups(list)
+    } catch {
+      // API not available yet
+      setBackups([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadBackups()
+  }, [loadBackups])
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const blob = await exportBackup()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `crewhub-backup-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setImportResult({
+        success: false,
+        message: err instanceof Error ? err.message : "Export failed",
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    pendingFileRef.current = file
+    setShowImportConfirm(true)
+    // Reset file input so same file can be selected again
+    e.target.value = ""
+  }
+
+  const handleImportConfirmed = async () => {
+    const file = pendingFileRef.current
+    if (!file) return
+    setShowImportConfirm(false)
+    setImporting(true)
+    setImportResult(null)
+    try {
+      const result = await importBackup(file)
+      setImportResult({
+        success: result.success,
+        message: result.message || "Backup imported successfully",
+      })
+      await loadBackups()
+    } catch (err) {
+      setImportResult({
+        success: false,
+        message: err instanceof Error ? err.message : "Import failed",
+      })
+    } finally {
+      setImporting(false)
+      pendingFileRef.current = null
+    }
+  }
+
+  const handleCreateSnapshot = async () => {
+    setCreating(true)
+    try {
+      await createBackup()
+      await loadBackups()
+    } catch {
+      // Best-effort
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr)
+      return d.toLocaleString()
+    } catch {
+      return dateStr
+    }
+  }
+
+  return (
+    <>
+      <CollapsibleSection title="💾 Data & Backup" defaultOpen={false}>
+        <div className="space-y-4">
+          {/* Action buttons */}
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              disabled={exporting}
+              className="gap-1.5 h-10"
+            >
+              {exporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              <span className="text-xs">Export</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="gap-1.5 h-10"
+            >
+              {importing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
+              <span className="text-xs">Import</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCreateSnapshot}
+              disabled={creating}
+              className="gap-1.5 h-10"
+            >
+              {creating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Database className="h-3.5 w-3.5" />
+              )}
+              <span className="text-xs">Snapshot</span>
+            </Button>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {/* Result message */}
+          {importResult && (
+            <div
+              className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
+                importResult.success
+                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                  : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+              }`}
+            >
+              {importResult.success ? (
+                <Check className="h-4 w-4 shrink-0" />
+              ) : (
+                <AlertCircle className="h-4 w-4 shrink-0" />
+              )}
+              {importResult.message}
+            </div>
+          )}
+
+          {/* Backup history */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Backup History
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={loadBackups}
+                disabled={loading}
+                className="h-6 w-6 p-0"
+              >
+                <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+
+            {loading && backups.length === 0 ? (
+              <div className="text-center py-4 text-sm text-muted-foreground">
+                Loading…
+              </div>
+            ) : backups.length === 0 ? (
+              <div className="text-center py-4 text-sm text-muted-foreground">
+                No backups yet
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {backups.map((backup, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 text-sm"
+                  >
+                    <HardDrive className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate text-xs font-medium">
+                        {backup.filename}
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                        <span>{formatSize(backup.size)}</span>
+                        <span>·</span>
+                        <span className="flex items-center gap-0.5">
+                          <Clock className="h-2.5 w-2.5" />
+                          {formatDate(backup.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      {/* Import confirmation dialog */}
+      <Dialog open={showImportConfirm} onOpenChange={setShowImportConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import Backup?</DialogTitle>
+            <DialogDescription>
+              <span className="flex items-start gap-2 mt-2">
+                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <span>
+                  <strong className="text-foreground">Warning:</strong> This will replace all current data
+                  including connections, rooms, routing rules, and settings.
+                  This action cannot be undone.
+                </span>
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          {pendingFileRef.current && (
+            <div className="p-3 rounded-lg bg-muted/50 text-sm">
+              File: <span className="font-mono">{pendingFileRef.current.name}</span>
+              <span className="text-muted-foreground ml-2">
+                ({formatSize(pendingFileRef.current.size)})
+              </span>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowImportConfirm(false)
+                pendingFileRef.current = null
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleImportConfirmed}>
+              Replace & Import
             </Button>
           </DialogFooter>
         </DialogContent>

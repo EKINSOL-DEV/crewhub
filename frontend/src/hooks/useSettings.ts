@@ -26,8 +26,6 @@ const MIGRATED_KEYS = [
   "crewhub-session-config",
 ] as const
 
-type MigratedKey = (typeof MIGRATED_KEYS)[number]
-
 interface UseSettingsReturn {
   /** All settings (merged API + localStorage) */
   settings: Record<string, string>

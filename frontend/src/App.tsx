@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { PlaygroundView } from './components/sessions/PlaygroundView'
 import { World3DView } from './components/world3d/World3DView'
 import { AllSessionsView } from './components/sessions/AllSessionsView'
@@ -14,6 +14,8 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { ChatProvider } from './contexts/ChatContext'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
+import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
+import { getOnboardingStatus } from './lib/api'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Square, Globe } from 'lucide-react'
 import { Button } from './components/ui/button'
 
@@ -51,6 +53,9 @@ function AppContent() {
   const { sessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('active')
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingChecked, setOnboardingChecked] = useState(false)
+  const onboardingCheckRef = useRef(false)
   type ViewMode = '2d' | 'world'
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const stored = localStorage.getItem('crewhub-view-mode')
@@ -69,6 +74,61 @@ function AppContent() {
     }
     return DEFAULT_SETTINGS
   })
+
+  // Check onboarding status on mount
+  useEffect(() => {
+    if (onboardingCheckRef.current) return
+    onboardingCheckRef.current = true
+
+    const checkOnboarding = async () => {
+      // Quick localStorage check first
+      if (localStorage.getItem('crewhub-onboarded') === 'true') {
+        setOnboardingChecked(true)
+        return
+      }
+
+      // Try API check
+      try {
+        const status = await getOnboardingStatus()
+        if (status.completed || status.connections_count > 0) {
+          // Already set up
+          localStorage.setItem('crewhub-onboarded', 'true')
+          setOnboardingChecked(true)
+        } else {
+          setShowOnboarding(true)
+          setOnboardingChecked(true)
+        }
+      } catch {
+        // API unavailable — check if connections exist via connections endpoint
+        try {
+          const resp = await fetch('/api/connections')
+          if (resp.ok) {
+            const data = await resp.json()
+            if (data.connections && data.connections.length > 0) {
+              localStorage.setItem('crewhub-onboarded', 'true')
+              setOnboardingChecked(true)
+              return
+            }
+          }
+        } catch {
+          // Ignore
+        }
+        // No API, no localStorage flag → show onboarding
+        setShowOnboarding(true)
+        setOnboardingChecked(true)
+      }
+    }
+    checkOnboarding()
+  }, [])
+
+  const handleOnboardingComplete = useCallback(() => {
+    setShowOnboarding(false)
+    refresh()
+  }, [refresh])
+
+  const handleOnboardingSkip = useCallback(() => {
+    setShowOnboarding(false)
+  }, [])
 
   // Toggle between 2D and World
   const cycleViewMode = useCallback(() => {
@@ -231,6 +291,13 @@ function AppContent() {
       />
 
       <ChatWindowManager />
+
+      {showOnboarding && onboardingChecked && (
+        <OnboardingWizard
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
     </div>
   )
 }
