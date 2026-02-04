@@ -33,6 +33,7 @@ import { LogViewer } from '@/components/sessions/LogViewer'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
 import { useDebugBots, type DebugBot } from '@/hooks/useDebugBots'
+import { useDebugKeyboardShortcuts } from '@/hooks/useDebugKeyboardShortcuts'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
@@ -612,6 +613,9 @@ function SceneContent({
 // ─── Main Component ────────────────────────────────────────────
 
 function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+  // Debug keyboard shortcuts (F2=Grid, F3=Lighting, F4=Bots)
+  useDebugKeyboardShortcuts()
+
   // Debug bots
   const { debugBots, debugBotsEnabled } = useDebugBots()
 
@@ -793,7 +797,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {focusState.level !== 'bot' && focusState.level !== 'firstperson' && (
           <div className="absolute top-4 right-4 z-50">
             <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm">
-              🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan
+              🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan · ⌨️ WASD: Move · QE: Rotate
             </div>
           </div>
         )}
