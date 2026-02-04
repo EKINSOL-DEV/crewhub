@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import type { Project } from '@/hooks/useProjects'
+import { SYNOLOGY_PROJECTS_BASE } from '@/hooks/useProjects'
+import { API_BASE } from '@/lib/api'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -7,7 +9,7 @@ interface ProjectPickerProps {
   projects: Project[]
   currentProjectId: string | null
   onSelect: (projectId: string) => void
-  onCreate: (project: { name: string; icon?: string; color?: string }) => Promise<{ success: boolean; project?: Project }>
+  onCreate: (project: { name: string; icon?: string; color?: string; folder_path?: string }) => Promise<{ success: boolean; project?: Project }>
   onClose: () => void
 }
 
@@ -32,8 +34,21 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState('#3b82f6')
   const [newIcon, setNewIcon] = useState('🚀')
+  const [newFolderPath, setNewFolderPath] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [discoveredFolders, setDiscoveredFolders] = useState<{ name: string; path: string; file_count: number; has_readme: boolean; has_docs: boolean }[]>([])
+
+  // Fetch available Synology Drive folders when showing create form
+  useEffect(() => {
+    if (!showCreate) return
+    fetch(`${API_BASE}/project-folders/discover`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.folders) setDiscoveredFolders(data.folders)
+      })
+      .catch(() => {})
+  }, [showCreate])
   const containerRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -85,7 +100,8 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
     if (!newName.trim()) return
     setIsCreating(true)
     setCreateError(null)
-    const result = await onCreate({ name: newName.trim(), icon: newIcon, color: newColor })
+    const folderPath = newFolderPath.trim() || undefined
+    const result = await onCreate({ name: newName.trim(), icon: newIcon, color: newColor, folder_path: folderPath })
     setIsCreating(false)
     if (result.success && result.project) {
       onSelect(result.project.id)
@@ -248,6 +264,23 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                   )}
                 </div>
 
+                {/* Folder indicator */}
+                {project.folder_path && (
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: '#059669',
+                    background: '#ecfdf5',
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    flexShrink: 0,
+                  }}
+                    title={project.folder_path}
+                  >
+                    📂
+                  </span>
+                )}
+
                 {/* Status badge */}
                 {project.status === 'paused' && (
                   <span style={{
@@ -383,6 +416,73 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                 />
               ))}
             </div>
+          </div>
+
+          {/* Folder Path */}
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4, display: 'block' }}>
+              Project Folder (optional)
+            </label>
+            <input
+              type="text"
+              placeholder={`${SYNOLOGY_PROJECTS_BASE}/MyProject`}
+              value={newFolderPath}
+              onChange={e => setNewFolderPath(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(0,0,0,0.03)',
+                fontSize: 12,
+                outline: 'none',
+                fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                boxSizing: 'border-box',
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#3b82f6' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' }}
+            />
+            {/* Quick-link suggestions from Synology Drive */}
+            {discoveredFolders.length > 0 && !newFolderPath && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                {discoveredFolders
+                  .filter(f => f.name.toLowerCase().includes(newName.toLowerCase()) || !newName)
+                  .slice(0, 5)
+                  .map(folder => (
+                    <button
+                      key={folder.path}
+                      type="button"
+                      onClick={() => {
+                        setNewFolderPath(folder.path)
+                        if (!newName) setNewName(folder.name)
+                      }}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        border: '1px solid rgba(0,0,0,0.08)',
+                        background: 'rgba(59,130,246,0.05)',
+                        color: '#3b82f6',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                      }}
+                    >
+                      📂 {folder.name}
+                      {folder.has_docs && <span style={{ color: '#059669' }}>📝</span>}
+                    </button>
+                  ))
+                }
+              </div>
+            )}
+            {!discoveredFolders.length && (
+              <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>
+                Path to project files for the docs browser
+              </div>
+            )}
           </div>
 
           {/* Error */}

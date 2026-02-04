@@ -10,6 +10,7 @@ import os
 from app.config import settings
 from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections, projects
 from app.routes import project_files
+from app.routes.project_files import discover_router as project_discover_router
 from app.routes.chat import router as chat_router
 from app.routes import discovery, settings as settings_routes, backup, onboarding
 from app.db.database import init_database, check_database_health
@@ -165,6 +166,7 @@ app.include_router(gateway_status.router, prefix="/api/gateway", tags=["gateway"
 # New database-backed routes
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(project_files.router, prefix="/api/projects", tags=["project-files"])
+app.include_router(project_discover_router, prefix="/api", tags=["project-discovery"])
 app.include_router(rooms.router, prefix="/api/rooms", tags=["rooms"])
 app.include_router(assignments.router, prefix="/api/session-room-assignments", tags=["assignments"])
 app.include_router(display_names.router, prefix="/api/session-display-names", tags=["display-names"])

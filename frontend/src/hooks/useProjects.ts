@@ -7,6 +7,7 @@ export interface Project {
   description: string | null
   icon: string | null
   color: string | null
+  folder_path: string | null
   status: "active" | "paused" | "completed" | "archived"
   created_at: number
   updated_at: number
@@ -17,6 +18,9 @@ export interface ProjectOverview extends Project {
   room_count: number
   agent_count: number
 }
+
+/** Well-known Synology Drive projects base path */
+export const SYNOLOGY_PROJECTS_BASE = "~/SynologyDrive/ekinbot/01-Projects"
 
 interface ProjectsResponse {
   projects: Project[]
@@ -77,6 +81,7 @@ export function useProjects() {
       description?: string
       icon?: string
       color?: string
+      folder_path?: string
     }) => {
       try {
         const response = await fetch(`${API_BASE}/projects`, {

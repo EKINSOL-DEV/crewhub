@@ -3,7 +3,7 @@ import os
 import logging
 import mimetypes
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 
@@ -233,3 +233,69 @@ async def get_project_image(
     
     mime = mimetypes.guess_type(str(target))[0] or 'application/octet-stream'
     return FileResponse(str(target), media_type=mime)
+
+
+# ── Synology Drive Project Folder Discovery ─────────────────────
+# NOTE: This endpoint is exposed via a separate router to avoid
+# conflicts with the /{project_id} catch-all in projects.py.
+
+# Well-known Synology Drive projects base path
+SYNOLOGY_PROJECTS_BASE = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects"
+
+discover_router = APIRouter()
+
+
+@discover_router.get("/project-folders/discover")
+async def discover_project_folders():
+    """Discover available project folders in the Synology Drive projects directory.
+    
+    Returns folders found in ~/SynologyDrive/ekinbot/01-Projects/
+    that could be linked to CrewHub projects.
+    """
+    folders: List[dict] = []
+    
+    # Resolve through FileProvider symlinks
+    base = SYNOLOGY_PROJECTS_BASE
+    if not base.exists():
+        # Try the expanded path
+        base = Path(os.path.expanduser("~/SynologyDrive/ekinbot/01-Projects"))
+    
+    if not base.exists():
+        return {"base_path": str(SYNOLOGY_PROJECTS_BASE), "folders": []}
+    
+    resolved_base = base.resolve()
+    
+    try:
+        for entry in sorted(resolved_base.iterdir()):
+            if entry.is_dir() and not entry.name.startswith('.'):
+                # Count files inside
+                file_count = 0
+                has_readme = False
+                has_docs = False
+                try:
+                    for child in entry.iterdir():
+                        if child.is_file() and child.suffix.lower() in ALLOWED_EXTENSIONS:
+                            file_count += 1
+                        if child.name.lower() in ('readme.md', 'readme.txt'):
+                            has_readme = True
+                        if child.name.lower() == 'docs' and child.is_dir():
+                            has_docs = True
+                except PermissionError:
+                    pass
+                
+                folders.append({
+                    'name': entry.name,
+                    'path': f"~/SynologyDrive/ekinbot/01-Projects/{entry.name}",
+                    'resolved_path': str(entry),
+                    'file_count': file_count,
+                    'has_readme': has_readme,
+                    'has_docs': has_docs,
+                })
+    except PermissionError:
+        pass
+    
+    return {
+        "base_path": str(SYNOLOGY_PROJECTS_BASE),
+        "resolved_path": str(resolved_base),
+        "folders": folders,
+    }

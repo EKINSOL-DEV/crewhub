@@ -419,8 +419,8 @@ export function RoomInfoPanel({
                 </div>
               </div>
 
-              {/* Browse Docs button */}
-              {currentProject && (
+              {/* Browse Docs button (only when folder_path is set) */}
+              {currentProject?.folder_path && (
                 <button
                   onClick={() => onOpenDocs?.(currentProject.id, currentProject.name, currentProject.color || undefined)}
                   style={{

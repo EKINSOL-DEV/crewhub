@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
 import { API_BASE } from '@/lib/api'
 
 // ── Types ──────────────────────────────────────────────────────
@@ -57,87 +60,6 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-// ── Markdown Renderer ──────────────────────────────────────────
-
-function renderMarkdown(content: string, projectId: string): string {
-  let html = content
-  
-  // Escape HTML
-  html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  
-  // Code blocks (fenced)
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const langLabel = lang ? `<span class="md-code-lang">${lang}</span>` : ''
-    return `<div class="md-code-block">${langLabel}<pre><code>${code.trim()}</code></pre></div>`
-  })
-  
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code class="md-inline-code">$1</code>')
-  
-  // Headers
-  html = html.replace(/^#### (.+)$/gm, '<h4 class="md-h4">$1</h4>')
-  html = html.replace(/^### (.+)$/gm, '<h3 class="md-h3">$1</h3>')
-  html = html.replace(/^## (.+)$/gm, '<h2 class="md-h2">$1</h2>')
-  html = html.replace(/^# (.+)$/gm, '<h1 class="md-h1">$1</h1>')
-  
-  // Bold and italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
-  
-  // Strikethrough
-  html = html.replace(/~~(.+?)~~/g, '<del>$1</del>')
-  
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="md-link">$1</a>')
-  
-  // Images (relative to project)
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
-    // If relative path, resolve through project files API
-    if (!src.startsWith('http')) {
-      src = `${API_BASE}/projects/${projectId}/files/image?path=${encodeURIComponent(src)}`
-    }
-    return `<img src="${src}" alt="${alt}" class="md-image" />`
-  })
-  
-  // Horizontal rules
-  html = html.replace(/^---+$/gm, '<hr class="md-hr" />')
-  
-  // Blockquotes
-  html = html.replace(/^&gt; (.+)$/gm, '<blockquote class="md-blockquote">$1</blockquote>')
-  
-  // Unordered lists
-  html = html.replace(/^[\s]*[-*+] (.+)$/gm, '<li class="md-li">$1</li>')
-  html = html.replace(/(<li class="md-li">[\s\S]*?<\/li>)/g, (match) => {
-    if (!match.startsWith('<ul')) return `<ul class="md-ul">${match}</ul>`
-    return match
-  })
-  
-  // Ordered lists
-  html = html.replace(/^\d+\. (.+)$/gm, '<li class="md-oli">$1</li>')
-  
-  // Task lists
-  html = html.replace(/<li class="md-li">\[x\] (.+)<\/li>/g, '<li class="md-li md-task-done">✅ $1</li>')
-  html = html.replace(/<li class="md-li">\[ \] (.+)<\/li>/g, '<li class="md-li md-task">⬜ $1</li>')
-  
-  // Tables (basic)
-  html = html.replace(/^\|(.+)\|$/gm, (_, row) => {
-    const cells = row.split('|').map((c: string) => c.trim())
-    if (cells.every((c: string) => /^[-:]+$/.test(c))) return '' // Skip separator row
-    const cellHtml = cells.map((c: string) => `<td class="md-td">${c}</td>`).join('')
-    return `<tr class="md-tr">${cellHtml}</tr>`
-  })
-  
-  // Paragraphs (double newlines)
-  html = html.replace(/\n\n+/g, '</p><p class="md-p">')
-  html = `<p class="md-p">${html}</p>`
-  
-  // Clean up empty paragraphs
-  html = html.replace(/<p class="md-p">\s*<\/p>/g, '')
-  
-  return html
-}
-
 // ── TOC Extractor ──────────────────────────────────────────────
 
 interface TocEntry {
@@ -149,12 +71,18 @@ interface TocEntry {
 function extractToc(content: string): TocEntry[] {
   const toc: TocEntry[] = []
   const lines = content.split('\n')
+  let inCodeBlock = false
   for (const line of lines) {
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock
+      continue
+    }
+    if (inCodeBlock) continue
     const match = line.match(/^(#{1,4})\s+(.+)$/)
     if (match) {
       const level = match[1].length
       const text = match[2].trim()
-      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
       toc.push({ level, text, id })
     }
   }
@@ -253,6 +181,195 @@ function FileTree({
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// ── Markdown Viewer (react-markdown) ───────────────────────────
+
+function MarkdownViewer({ content, projectId }: { content: string; projectId: string }) {
+  return (
+    <div className="md-content">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          // Custom image handler: resolve relative paths through the API
+          img: ({ src, alt, ...props }) => {
+            let resolvedSrc = src || ''
+            if (resolvedSrc && !resolvedSrc.startsWith('http') && !resolvedSrc.startsWith('data:')) {
+              resolvedSrc = `${API_BASE}/projects/${projectId}/files/image?path=${encodeURIComponent(resolvedSrc)}`
+            }
+            return (
+              <img
+                {...props}
+                src={resolvedSrc}
+                alt={alt || ''}
+                style={{
+                  maxWidth: '100%',
+                  borderRadius: 8,
+                  margin: '8px 0',
+                }}
+                loading="lazy"
+              />
+            )
+          },
+          // External links open in new tab
+          a: ({ href, children, ...props }) => (
+            <a
+              {...props}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#4f46e5', textDecoration: 'none' }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.textDecoration = 'underline' }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.textDecoration = 'none' }}
+            >
+              {children}
+            </a>
+          ),
+          // Code blocks with language label
+          pre: ({ children, ...props }) => (
+            <pre
+              {...props}
+              style={{
+                margin: '10px 0',
+                padding: 12,
+                background: 'rgba(0,0,0,0.04)',
+                borderRadius: 8,
+                fontSize: 12,
+                lineHeight: 1.5,
+                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                overflow: 'auto',
+              }}
+            >
+              {children}
+            </pre>
+          ),
+          code: ({ className, children, ...props }) => {
+            const isInline = !className
+            if (isInline) {
+              return (
+                <code
+                  {...props}
+                  style={{
+                    padding: '1px 6px',
+                    background: 'rgba(0,0,0,0.06)',
+                    borderRadius: 4,
+                    fontSize: '0.9em',
+                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                  }}
+                >
+                  {children}
+                </code>
+              )
+            }
+            // Extract language from className (e.g. "language-python")
+            const lang = className?.replace('language-', '')
+            return (
+              <div style={{ position: 'relative' }}>
+                {lang && (
+                  <span style={{
+                    position: 'absolute',
+                    top: -20,
+                    right: 8,
+                    fontSize: 10,
+                    color: '#9ca3af',
+                    fontFamily: 'system-ui, sans-serif',
+                  }}>
+                    {lang}
+                  </span>
+                )}
+                <code {...props} className={className}>
+                  {children}
+                </code>
+              </div>
+            )
+          },
+          // Styled blockquotes
+          blockquote: ({ children, ...props }) => (
+            <blockquote
+              {...props}
+              style={{
+                borderLeft: '3px solid rgba(79, 70, 229, 0.3)',
+                padding: '4px 12px',
+                margin: '8px 0',
+                color: '#6b7280',
+                background: 'rgba(0,0,0,0.02)',
+                borderRadius: '0 6px 6px 0',
+              }}
+            >
+              {children}
+            </blockquote>
+          ),
+          // Table styling
+          table: ({ children, ...props }) => (
+            <div style={{ overflowX: 'auto', margin: '8px 0' }}>
+              <table
+                {...props}
+                style={{
+                  borderCollapse: 'collapse',
+                  width: '100%',
+                  fontSize: 12,
+                }}
+              >
+                {children}
+              </table>
+            </div>
+          ),
+          th: ({ children, ...props }) => (
+            <th
+              {...props}
+              style={{
+                padding: '6px 10px',
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(0,0,0,0.04)',
+                fontWeight: 600,
+                textAlign: 'left',
+              }}
+            >
+              {children}
+            </th>
+          ),
+          td: ({ children, ...props }) => (
+            <td
+              {...props}
+              style={{
+                padding: '4px 10px',
+                border: '1px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              {children}
+            </td>
+          ),
+          // Task list items
+          li: ({ children, className, ...props }) => {
+            const isTask = className === 'task-list-item'
+            return (
+              <li
+                {...props}
+                className={className}
+                style={{
+                  margin: '2px 0',
+                  ...(isTask ? { listStyleType: 'none', marginLeft: -20 } : {}),
+                }}
+              >
+                {children}
+              </li>
+            )
+          },
+          // Horizontal rules
+          hr: () => (
+            <hr style={{
+              border: 'none',
+              borderTop: '1px solid rgba(0,0,0,0.08)',
+              margin: '12px 0',
+            }} />
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   )
 }
@@ -548,8 +665,8 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
                     <div key={i} style={{
                       fontSize: 11,
                       color: '#6b7280',
-                      paddingLeft: (entry.level - 1) * 12,
                       padding: '2px 0',
+                      paddingLeft: (entry.level - 1) * 12,
                       cursor: 'default',
                     }}>
                       {entry.text}
@@ -579,10 +696,7 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
                 )}
 
                 {fileContent.type === 'document' && fileContent.extension === '.md' && (
-                  <div
-                    className="md-content"
-                    dangerouslySetInnerHTML={{ __html: renderMarkdown(fileContent.content, projectId) }}
-                  />
+                  <MarkdownViewer content={fileContent.content} projectId={projectId} />
                 )}
 
                 {(fileContent.type === 'code' || fileContent.type === 'config' || 
@@ -620,7 +734,7 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
           line-height: 1.7;
           color: #374151;
         }
-        .md-content .md-h1 {
+        .md-content h1 {
           font-size: 20px;
           font-weight: 800;
           color: #111827;
@@ -628,109 +742,47 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
           padding-bottom: 6px;
           border-bottom: 1px solid rgba(0,0,0,0.08);
         }
-        .md-content .md-h2 {
+        .md-content h2 {
           font-size: 16px;
           font-weight: 700;
           color: #1f2937;
           margin: 14px 0 6px;
         }
-        .md-content .md-h3 {
+        .md-content h3 {
           font-size: 14px;
           font-weight: 700;
           color: #374151;
           margin: 12px 0 4px;
         }
-        .md-content .md-h4 {
+        .md-content h4 {
           font-size: 13px;
           font-weight: 700;
           color: #4b5563;
           margin: 10px 0 4px;
         }
-        .md-content .md-p {
+        .md-content p {
           margin: 6px 0;
         }
-        .md-content .md-code-block {
-          position: relative;
-          margin: 10px 0;
-          background: rgba(0,0,0,0.04);
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        .md-content .md-code-block pre {
-          margin: 0;
-          padding: 12px;
-          font-size: 12px;
-          line-height: 1.5;
-          font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-          overflow-x: auto;
-        }
-        .md-content .md-code-lang {
-          position: absolute;
-          top: 4px;
-          right: 8px;
-          font-size: 10px;
-          color: #9ca3af;
-          font-family: system-ui, sans-serif;
-        }
-        .md-content .md-inline-code {
-          padding: 1px 6px;
-          background: rgba(0,0,0,0.06);
-          border-radius: 4px;
-          font-size: 12px;
-          font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-        }
-        .md-content .md-link {
-          color: #4f46e5;
-          text-decoration: none;
-        }
-        .md-content .md-link:hover {
-          text-decoration: underline;
-        }
-        .md-content .md-ul, .md-content .md-ol {
+        .md-content ul, .md-content ol {
           padding-left: 20px;
           margin: 4px 0;
         }
-        .md-content .md-li, .md-content .md-oli {
+        .md-content li {
           margin: 2px 0;
-          list-style-type: disc;
         }
-        .md-content .md-oli {
-          list-style-type: decimal;
+        .md-content input[type="checkbox"] {
+          margin-right: 6px;
         }
-        .md-content .md-task-done {
-          list-style-type: none;
-          margin-left: -16px;
+        .md-content strong {
+          font-weight: 700;
+          color: #1f2937;
         }
-        .md-content .md-task {
-          list-style-type: none;
-          margin-left: -16px;
+        .md-content em {
+          font-style: italic;
         }
-        .md-content .md-blockquote {
-          border-left: 3px solid rgba(79, 70, 229, 0.3);
-          padding: 4px 12px;
-          margin: 8px 0;
-          color: #6b7280;
-          background: rgba(0,0,0,0.02);
-          border-radius: 0 6px 6px 0;
-        }
-        .md-content .md-hr {
-          border: none;
-          border-top: 1px solid rgba(0,0,0,0.08);
-          margin: 12px 0;
-        }
-        .md-content .md-image {
-          max-width: 100%;
-          border-radius: 8px;
-          margin: 8px 0;
-        }
-        .md-content .md-td {
-          padding: 4px 10px;
-          border: 1px solid rgba(0,0,0,0.08);
-          font-size: 12px;
-        }
-        .md-content .md-tr:first-child .md-td {
-          font-weight: 600;
-          background: rgba(0,0,0,0.03);
+        .md-content del {
+          text-decoration: line-through;
+          color: #9ca3af;
         }
       `}</style>
     </div>
