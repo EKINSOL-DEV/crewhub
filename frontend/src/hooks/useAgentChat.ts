@@ -33,24 +33,35 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
   const [hasMore, setHasMore] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const initialLoadDone = useRef(false)
+  const historyAbortRef = useRef<AbortController | null>(null)
+  const sendAbortRef = useRef<AbortController | null>(null)
 
   // Load initial history on mount
   useEffect(() => {
     if (!sessionKey || initialLoadDone.current) return
     initialLoadDone.current = true
 
+    // Cancel any in-flight history request
+    if (historyAbortRef.current) {
+      historyAbortRef.current.abort()
+    }
+    historyAbortRef.current = new AbortController()
+
     const loadInitial = async () => {
       setIsLoadingHistory(true)
       setError(null)
       try {
         const resp = await fetch(
-          `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?limit=30`
+          `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?limit=30`,
+          { signal: historyAbortRef.current?.signal }
         )
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
         const data: HistoryResponse = await resp.json()
         setMessages(data.messages)
         setHasMore(data.hasMore)
       } catch (e: unknown) {
+        // Ignore abort errors
+        if (e instanceof Error && e.name === 'AbortError') return
         setError(e instanceof Error ? e.message : 'Failed to load history')
       } finally {
         setIsLoadingHistory(false)
@@ -59,10 +70,17 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
     loadInitial()
   }, [sessionKey])
 
-  // Reset when session changes
+  // Reset and cleanup when session changes
   useEffect(() => {
     return () => {
       initialLoadDone.current = false
+      // Abort any in-flight requests on session change or unmount
+      if (historyAbortRef.current) {
+        historyAbortRef.current.abort()
+      }
+      if (sendAbortRef.current) {
+        sendAbortRef.current.abort()
+      }
     }
   }, [sessionKey])
 
@@ -83,6 +101,12 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
       setIsSending(true)
       setError(null)
 
+      // Cancel any previous send request
+      if (sendAbortRef.current) {
+        sendAbortRef.current.abort()
+      }
+      sendAbortRef.current = new AbortController()
+
       try {
         const resp = await fetch(
           `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/send`,
@@ -90,6 +114,7 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: trimmed }),
+            signal: sendAbortRef.current.signal,
           }
         )
 
@@ -116,6 +141,8 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
           setError(data.error || 'No response from agent')
         }
       } catch (e: unknown) {
+        // Ignore abort errors
+        if (e instanceof Error && e.name === 'AbortError') return
         setError(e instanceof Error ? e.message : 'Failed to send message')
       } finally {
         setIsSending(false)
@@ -130,16 +157,25 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
     const oldest = messages[0]?.timestamp
     if (!oldest) return
 
+    // Cancel any in-flight history request
+    if (historyAbortRef.current) {
+      historyAbortRef.current.abort()
+    }
+    historyAbortRef.current = new AbortController()
+
     setIsLoadingHistory(true)
     try {
       const resp = await fetch(
-        `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?limit=30&before=${oldest}`
+        `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?limit=30&before=${oldest}`,
+        { signal: historyAbortRef.current.signal }
       )
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
       const data: HistoryResponse = await resp.json()
       setMessages((prev) => [...data.messages, ...prev])
       setHasMore(data.hasMore)
     } catch (e: unknown) {
+      // Ignore abort errors
+      if (e instanceof Error && e.name === 'AbortError') return
       setError(e instanceof Error ? e.message : 'Failed to load older messages')
     } finally {
       setIsLoadingHistory(false)

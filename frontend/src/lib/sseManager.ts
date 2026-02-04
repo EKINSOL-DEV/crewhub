@@ -9,11 +9,6 @@
 
 type EventHandler = (event: MessageEvent) => void
 
-interface Subscription {
-  eventType: string
-  handler: EventHandler
-}
-
 const getAuthToken = (): string => localStorage.getItem("openclaw_token") || ""
 
 const MAX_BACKOFF_MS = 30_000
