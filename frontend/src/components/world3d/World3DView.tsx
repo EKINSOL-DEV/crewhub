@@ -540,15 +540,12 @@ function SceneContent({
   }
 
   // DEBUG: Log loading state
-  console.log('[SceneContent] isLoading:', isLoading, 'layout:', layout ? 'exists' : 'null', 'rooms:', rooms.length)
 
   if (isLoading || !layout) {
-    console.log('[SceneContent] Early return - isLoading:', isLoading, 'layout:', layout)
     return null
   }
 
   const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
-  console.log('[SceneContent] Rendering with', roomPositions.length, 'rooms')
 
   return (
     <>
