@@ -110,22 +110,54 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   })
 
   // Update base position when session key changes (bot reassigned to a new spot)
+  // Also validates spawn position is within room bounds and on a walkable cell
   useEffect(() => {
     const state = wanderState.current
     const newKey = session?.key || ''
     if (state.sessionKey !== newKey) {
-      state.baseX = position[0]
-      state.baseZ = position[2]
-      state.currentX = position[0]
-      state.currentZ = position[2]
-      state.targetX = position[0]
-      state.targetZ = position[2]
+      let spawnX = position[0]
+      let spawnZ = position[2]
+
+      // Validate spawn position: clamp to room bounds
+      if (roomBounds) {
+        spawnX = Math.max(roomBounds.minX, Math.min(roomBounds.maxX, spawnX))
+        spawnZ = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, spawnZ))
+      }
+
+      // Validate spawn position: check if it's on a walkable cell (not a door)
+      if (gridData && roomBounds) {
+        const roomCX = (roomBounds.minX + roomBounds.maxX) / 2
+        const roomCZ = (roomBounds.minZ + roomBounds.maxZ) / 2
+        const { cellSize, gridWidth, gridDepth } = gridData.blueprint
+        const g = worldToGrid(spawnX - roomCX, spawnZ - roomCZ, cellSize, gridWidth, gridDepth)
+        const isSpawnWalkable = !!gridData.botWalkableMask[g.z]?.[g.x]
+        if (!isSpawnWalkable) {
+          // Snap to walkable center
+          const wc = gridData.blueprint.walkableCenter
+          const [relX, , relZ] = (() => {
+            const halfW = (gridWidth * cellSize) / 2
+            const halfD = (gridDepth * cellSize) / 2
+            const wx = wc.x * cellSize - halfW + cellSize / 2
+            const wz = wc.z * cellSize - halfD + cellSize / 2
+            return [wx, 0, wz] as [number, number, number]
+          })()
+          spawnX = roomCX + relX
+          spawnZ = roomCZ + relZ
+        }
+      }
+
+      state.baseX = spawnX
+      state.baseZ = spawnZ
+      state.currentX = spawnX
+      state.currentZ = spawnZ
+      state.targetX = spawnX
+      state.targetZ = spawnZ
       state.waitTimer = SESSION_CONFIG.wanderMinWaitS + Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
       state.sessionKey = newKey
       state.stepsRemaining = 0
       state.cellProgress = 0
     }
-  }, [session?.key, position])
+  }, [session?.key, position, roomBounds, gridData])
 
   // Clean up position registry on unmount
   useEffect(() => {
