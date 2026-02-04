@@ -179,10 +179,35 @@ export function useBotAnimation(
     z: (Math.random() - 0.5) * 0.8,
   })
 
+  // Track previous status to avoid unnecessary resets
+  const prevStatusRef = useRef<string>(status)
+
   // ─── React to status changes ────────────────────────────────
   useEffect(() => {
     const s = stateRef.current
     const j = jitter.current
+    const prevStatus = prevStatusRef.current
+    prevStatusRef.current = status
+
+    // Group statuses: active/idle are both "awake" — don't reset animation
+    // when transitioning between them (prevents desk jitter)
+    const isAwake = (st: string) => st === 'active' || st === 'idle'
+    const isWandering = s.phase === 'idle-wandering' || s.phase === 'getting-coffee'
+    if (isAwake(prevStatus) && isAwake(status) && !isWandering) {
+      // Stay in current phase (working, walking-to-desk, sleeping-walking, etc.)
+      // Don't reset animation for active↔idle transitions — prevents desk jitter
+      return
+    }
+    if (isAwake(prevStatus) && isAwake(status) && isWandering && status === 'active' && interactionPoints) {
+      // Was wandering/coffee, now active again → go to desk
+      s.phase = 'walking-to-desk'
+      s.targetX = interactionPoints.deskPosition[0] + j.x
+      s.targetZ = interactionPoints.deskPosition[2] + j.z
+      s.walkSpeed = SESSION_CONFIG.botWalkSpeedActive
+      s.freezeWhenArrived = true
+      s.arrived = false
+      return
+    }
 
     switch (status) {
       case 'active': {
