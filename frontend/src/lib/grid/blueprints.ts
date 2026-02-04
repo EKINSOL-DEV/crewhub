@@ -230,11 +230,11 @@ function createThinkingRoom(): RoomBlueprint {
   // Round table — center (spans 4×4, centered around (10,10))
   placeOnGrid(grid, 8, 8, 'round-table', { span: { w: 4, d: 4 } })
 
-  // Bean bags (world positions → grid)
-  placeOnGrid(grid, 8, 9, 'bean-bag', { type: 'decoration' })
+  // Bean bags — around the table (outside the 4×4 span at 8,8-11,11)
+  placeOnGrid(grid, 7, 9, 'bean-bag', { type: 'decoration' })
   placeOnGrid(grid, 12, 9, 'bean-bag', { type: 'decoration' })
   placeOnGrid(grid, 10, 12, 'bean-bag', { type: 'decoration' })
-  placeOnGrid(grid, 8, 12, 'bean-bag', { type: 'decoration' })
+  placeOnGrid(grid, 7, 12, 'bean-bag', { type: 'decoration' })
 
   // Work point — near the table
   placeOnGrid(grid, 10, 13, 'work-point', { type: 'interaction', interactionType: 'work' })
@@ -349,7 +349,7 @@ function createCommsRoom(): RoomBlueprint {
   placeOnGrid(grid, 15, 4, 'work-point', { type: 'interaction', interactionType: 'work' })
 
   // Signal waves — near antenna (wall-mounted)
-  placeOnGrid(grid, 2, 18, 'signal-waves', { type: 'decoration' })
+  placeOnGrid(grid, 4, 18, 'signal-waves', { type: 'decoration' })
 
   // Sleep corner — front-left
   placeOnGrid(grid, 2, 2, 'sleep-corner', { type: 'interaction', interactionType: 'sleep' })
@@ -404,10 +404,10 @@ function createOpsRoom(): RoomBlueprint {
   // Fire extinguisher — front-right (world ~(+5.0, -4.8) → grid (18, 2))
   placeOnGrid(grid, 18, 2, 'fire-extinguisher', { type: 'decoration' })
 
-  // Chairs around table
-  placeOnGrid(grid, 8, 10, 'chair')
+  // Chairs around table (outside the 4×4 span at 8,8-11,11)
+  placeOnGrid(grid, 7, 10, 'chair')
   placeOnGrid(grid, 12, 10, 'chair')
-  placeOnGrid(grid, 10, 8, 'chair')
+  placeOnGrid(grid, 10, 7, 'chair')
 
   // Work point — near the table (avoid overwriting the table span)
   placeOnGrid(grid, 10, 13, 'work-point', { type: 'interaction', interactionType: 'work' })

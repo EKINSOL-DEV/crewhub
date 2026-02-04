@@ -108,15 +108,22 @@ function saveOverrides(data: Partial<SessionConfig>) {
 // Initialize on module load
 overrides = loadOverrides()
 
+// Cached snapshot for useSyncExternalStore (must return same reference if unchanged)
+let cachedSnapshot: SessionConfig = { ...SESSION_CONFIG_DEFAULTS, ...overrides } as SessionConfig
+
+function rebuildSnapshot() {
+  cachedSnapshot = { ...SESSION_CONFIG_DEFAULTS, ...overrides } as SessionConfig
+}
+
 // ─── Public API ─────────────────────────────────────────────────
 
 /**
  * Merged config: defaults + localStorage overrides.
- * Read this from any file for current values.
- * For React components that need reactivity, use `useSessionConfig()`.
+ * Returns a cached object — same reference until config changes.
+ * Safe for useSyncExternalStore.
  */
 export function getSessionConfig(): SessionConfig {
-  return { ...SESSION_CONFIG_DEFAULTS, ...overrides } as SessionConfig
+  return cachedSnapshot
 }
 
 /** Convenience: the current config snapshot (re-exported for direct imports) */
@@ -136,6 +143,7 @@ export function updateConfig<K extends SessionConfigKey>(key: K, value: number):
     overrides[key] = value
   }
   saveOverrides(overrides)
+  rebuildSnapshot()
   notifyListeners()
 }
 
@@ -150,6 +158,7 @@ export function updateConfigBatch(updates: Partial<SessionConfig>): void {
     }
   }
   saveOverrides(overrides)
+  rebuildSnapshot()
   notifyListeners()
 }
 
@@ -157,6 +166,7 @@ export function updateConfigBatch(updates: Partial<SessionConfig>): void {
 export function resetConfig(): void {
   overrides = {}
   saveOverrides(overrides)
+  rebuildSnapshot()
   notifyListeners()
 }
 
