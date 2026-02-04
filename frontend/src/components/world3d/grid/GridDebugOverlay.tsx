@@ -142,12 +142,16 @@ function CoordinateLabels({ gridWidth, gridDepth, cellSize }: { gridWidth: numbe
   const labels = useMemo(() => {
     const result: { text: string; pos: [number, number, number] }[] = []
 
-    // X-axis labels along south edge (z = gridDepth)
+    // X-axis label
+    result.push({ text: 'X →', pos: [halfW + 0.5, 0.14, halfD + 0.25] })
+    // X-axis number labels along south edge (z = gridDepth)
     for (let x = 0; x < gridWidth; x += 2) {
       const wx = x * cellSize - halfW + cellSize / 2
       result.push({ text: String(x), pos: [wx, 0.14, halfD + 0.25] })
     }
-    // Z-axis labels along west edge (x = 0)
+    // Z-axis label
+    result.push({ text: 'Z ↓', pos: [-halfW - 0.6, 0.14, -halfD - 0.15] })
+    // Z-axis number labels along west edge (x = 0)
     for (let z = 0; z < gridDepth; z += 2) {
       const wz = z * cellSize - halfD + cellSize / 2
       result.push({ text: String(z), pos: [-halfW - 0.25, 0.14, wz] })

@@ -33,7 +33,7 @@ function createHeadquarters(): RoomBlueprint {
   // Chair — in front of desk (world ~(-2.5, +2.5) → grid (6, 14))
 
   // Work interaction point — at desk
-  placeOnGrid(grid, 5, 15, 'work-point', { type: 'interaction', interactionType: 'work' })
+  placeOnGrid(grid, 4, 15, 'work-point', { type: 'interaction', interactionType: 'work' })
 
   // Plant — back-right corner (world ~(+4.8, +4.8) → grid (18, 18))
   placeOnGrid(grid, 18, 18, 'plant', { type: 'decoration' })
@@ -65,7 +65,7 @@ function createHeadquarters(): RoomBlueprint {
     doorPositions: [{ x: 9, z: 19, facing: 'south' }],
     walkableCenter: { x: 10, z: 10 },
     interactionPoints: {
-      work: [{ x: 5, z: 15 }],
+      work: [{ x: 4, z: 15 }],
       coffee: [{ x: 17, z: 3 }],
       sleep: [{ x: 2, z: 18 }],
     },
@@ -439,7 +439,7 @@ function createDefaultRoom(): RoomBlueprint {
   // Chair
 
   // Work point
-  placeOnGrid(grid, 5, 15, 'work-point', { type: 'interaction', interactionType: 'work' })
+  placeOnGrid(grid, 4, 15, 'work-point', { type: 'interaction', interactionType: 'work' })
 
   // Lamp — front-right (world ~(+4.5, -4) → grid (18, 3))
   placeOnGrid(grid, 18, 3, 'lamp', { type: 'decoration' })
@@ -464,7 +464,7 @@ function createDefaultRoom(): RoomBlueprint {
     doorPositions: [{ x: 9, z: 19, facing: 'south' }],
     walkableCenter: { x: 10, z: 10 },
     interactionPoints: {
-      work: [{ x: 5, z: 15 }],
+      work: [{ x: 4, z: 15 }],
       coffee: [],
       sleep: [{ x: 2, z: 2 }],
     },
