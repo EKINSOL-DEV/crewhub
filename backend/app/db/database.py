@@ -11,7 +11,7 @@ DB_DIR = Path.home() / ".crewhub"
 DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 4  # v4: Added projects table, rooms.project_id, rooms.is_hq
+SCHEMA_VERSION = 5  # v5: Added projects.folder_path for project docs
 
 
 async def init_database():
@@ -212,6 +212,12 @@ async def init_database():
                 CREATE INDEX IF NOT EXISTS idx_rooms_project_id 
                 ON rooms(project_id)
             """)
+            
+            # v5: Add folder_path to projects
+            try:
+                await db.execute("ALTER TABLE projects ADD COLUMN folder_path TEXT")
+            except Exception:
+                pass  # Column already exists
             
             # Set initial version if not exists
             await db.execute("""

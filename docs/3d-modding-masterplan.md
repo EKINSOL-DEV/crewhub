@@ -635,7 +635,104 @@ The grid system (`frontend/src/lib/grid/`) is the ideal foundation. The editor m
 
 ---
 
-## 8. Security & Sandboxing
+## 8. Documentation System
+
+### Why Starlight
+
+CrewHub already runs an Astro website (`crewhub-web/`). Starlight is Astro's built-in docs framework — same stack, same build tooling, same deploy pipeline. No new technology to learn.
+
+What you get out of the box: `.md`/`.mdx` content files, auto-generated sidebar from folder structure, full-text search, dark mode, versioning support, i18n-ready, responsive mobile layout, OpenGraph/SEO. It's the obvious choice.
+
+**Where it lives:** `docs.crewhub.dev` — a separate Starlight site deployed alongside the main `crewhub.dev` marketing site. Docs source lives in-repo under `docs/` as plain Markdown files. Anyone can submit a PR to fix a typo.
+
+### Documentation Structure
+
+```
+docs/
+├── astro.config.mjs          # Starlight config
+├── src/
+│   └── content/docs/
+│       ├── getting-started/
+│       │   ├── installation.md
+│       │   ├── first-run.md
+│       │   ├── connect-openclaw.md
+│       │   └── quickstart.md
+│       ├── user-guide/
+│       │   ├── rooms.md
+│       │   ├── bots.md
+│       │   ├── views.md
+│       │   ├── settings.md
+│       │   └── 3d-world.md
+│       ├── modding/
+│       │   ├── overview.md
+│       │   ├── creating-props.md
+│       │   ├── room-blueprints.md
+│       │   ├── environments.md
+│       │   ├── bot-skins.md
+│       │   ├── world-packs.md
+│       │   └── json-schemas.md
+│       ├── api/
+│       │   ├── rest-endpoints.md
+│       │   ├── sse-events.md
+│       │   └── authentication.md
+│       └── contributing/
+│           ├── development-setup.md
+│           ├── architecture.md
+│           └── style-guide.md
+```
+
+**Category breakdown:**
+
+| Section | Audience | Priority |
+|---------|----------|----------|
+| Getting Started | New users | Phase 2 — ship with first public release |
+| User Guide | All users | Phase 2 — core feature docs |
+| Modding Guide | Content creators | Phase 3+ — alongside modding features |
+| API Reference | Developers / integrators | Phase 3 — after API stabilizes |
+| Contributing | OSS contributors | Phase 2 — attract early contributors |
+
+### Modding Docs as First-Class Citizens
+
+The modding guide isn't an afterthought buried in a wiki. It's a top-level section with the same polish as the user guide. Every content format defined in this masterplan (Section 4) gets its own page with:
+
+- Full JSON schema reference with annotated examples
+- Step-by-step tutorial ("Your first custom prop in 5 minutes")
+- Common mistakes and validation error explanations
+- Links to the JSON Schema files hosted at `crewhub.dev/schemas/`
+
+When a modding phase ships, its documentation ships with it. Not after. Not "we'll document it later." Same PR.
+
+### API Reference Auto-Generation
+
+The backend uses Python route decorators (`@app.route`, response models). Instead of hand-writing API docs that drift out of sync:
+
+1. Add OpenAPI/Swagger annotations to backend routes (many are already typed)
+2. Export `openapi.json` at build time
+3. Use a Starlight plugin or custom script to generate API reference pages from the spec
+4. CI ensures the generated docs match the actual routes — if they diverge, the build fails
+
+This is Phase 3+ work. For Phase 2, hand-written API docs covering the most-used endpoints are fine.
+
+### Deployment
+
+Starlight produces a static site. Deploy options, in order of preference:
+
+1. **Vercel** — already used for `crewhub.dev` (if applicable), automatic preview deploys on PRs, zero config
+2. **GitHub Pages** — free, simple, `docs.crewhub.dev` via CNAME
+3. **Netlify** — similar to Vercel, good free tier
+
+CI pipeline: push to `main` → build docs → deploy to `docs.crewhub.dev`. Preview deploys on PRs so doc changes can be reviewed visually before merge.
+
+### What We're NOT Building
+
+- ❌ Interactive API playground (Swagger UI is fine for that, link to it)
+- ❌ User-generated wiki (GitHub Issues/Discussions handle community Q&A)
+- ❌ Video tutorials in v1 (written docs first, video later if demand exists)
+- ❌ Multi-language translations in v1 (English first, i18n infrastructure is there when needed)
+
+---
+
+## 9. Security & Sandboxing
 
 ### What Mods Can Do
 
@@ -681,7 +778,7 @@ Even data-only mods can cause issues:
 
 ---
 
-## 9. Implementation Phases
+## 10. Implementation Phases
 
 ### Phase 1: Registry Pattern (2-3 days)
 
@@ -712,9 +809,9 @@ Even data-only mods can cause issues:
 
 **Dependencies:** None. Can start immediately.
 
-### Phase 2: Blueprint Serialization (2-3 days)
+### Phase 2: Blueprint Serialization + Initial Docs (2-3 days)
 
-**Goal:** Blueprints defined in JSON files, loaded via a parser/validator. Existing blueprints converted.
+**Goal:** Blueprints defined in JSON files, loaded via a parser/validator. Existing blueprints converted. Starlight docs site live with initial content.
 
 **Tasks:**
 
@@ -727,6 +824,9 @@ Even data-only mods can cause issues:
 | Refactor `blueprints.ts` to load from JSON + register | `frontend/src/lib/grid/blueprints.ts` — major refactor | 0.5 day |
 | Replace fuzzy `getBlueprintForRoom()` with registry lookup | `blueprints.ts` + `Room3D.tsx` | 0.25 day |
 | Add `blueprintId` field support on Room objects | Backend: Room model + frontend hook | 0.25 day |
+| Set up Starlight docs site + deploy to `docs.crewhub.dev` | `docs/` directory (new Starlight project) | 0.5 day |
+| Write Getting Started + User Guide (initial pages) | `docs/src/content/docs/getting-started/`, `user-guide/` | 0.5 day |
+| Write Contributing Guide (dev setup, architecture) | `docs/src/content/docs/contributing/` | 0.25 day |
 
 **Key files changed:**
 - `frontend/src/lib/grid/blueprints.ts` — refactored from imperative to JSON loader
@@ -783,7 +883,7 @@ Even data-only mods can cause issues:
 
 ### Phase 5: Polish & Community Features (2-3 days)
 
-**Goal:** glTF model support, prop splitting, documentation, pack template.
+**Goal:** glTF model support, prop splitting, full modding docs, API reference, pack template.
 
 **Tasks:**
 
@@ -791,7 +891,8 @@ Even data-only mods can cause issues:
 |------|---------|--------|
 | glTF/GLB model loader for props | Three.js `useGLTF` integration in prop renderer | 1 day |
 | Split `PropRegistry.tsx` (830 lines) into individual files | `grid/props/floor/`, `grid/props/wall/` directories | 0.5 day |
-| Modding documentation | `docs/modding/getting-started.md`, etc. | 0.5 day |
+| Write full Modding Guide (props, blueprints, environments, world packs) | `docs/src/content/docs/modding/` — all pages | 0.5 day |
+| Write API Reference (REST endpoints, SSE events) | `docs/src/content/docs/api/` + OpenAPI auto-gen setup | 0.5 day |
 | World pack template repository | `worldpack-template/` folder | 0.25 day |
 | Content preview panel (3D thumbnail of props/blueprints) | Preview renderer component | 0.5 day |
 | Environment settings persistence (localStorage → backend) | Settings API integration | 0.25 day |
@@ -817,7 +918,7 @@ Phase 5: Polish & Community        ░░░░░░░░░░░░░░░
 
 ---
 
-## 10. Risk Assessment
+## 11. Risk Assessment
 
 ### Risk 1: Over-Engineering 🔴 HIGH
 

@@ -95,6 +95,7 @@ export function RoomInfoPanel({
   onClose,
   onBotClick,
   onFocusRoom,
+  onOpenDocs,
 }: RoomInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const roomColor = room.color || '#4f46e5'
@@ -417,6 +418,35 @@ export function RoomInfoPanel({
                   })()}
                 </div>
               </div>
+
+              {/* Browse Docs button */}
+              {currentProject && (
+                <button
+                  onClick={() => onOpenDocs?.(currentProject.id, currentProject.name, currentProject.color || undefined)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '10px 16px',
+                    marginTop: 8,
+                    borderRadius: 8,
+                    border: 'none',
+                    background: (currentProject.color || roomColor) + '15',
+                    color: currentProject.color || roomColor,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    fontFamily: 'inherit',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = (currentProject.color || roomColor) + '25' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = (currentProject.color || roomColor) + '15' }}
+                >
+                  📂 Browse Project Docs
+                </button>
+              )}
 
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>

@@ -141,14 +141,15 @@ async def create_project(project: ProjectCreate):
             project_id = generate_id()
 
             await db.execute(
-                """INSERT INTO projects (id, name, description, icon, color, status, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, 'active', ?, ?)""",
+                """INSERT INTO projects (id, name, description, icon, color, folder_path, status, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
                 (
                     project_id,
                     project.name,
                     project.description,
                     project.icon,
                     project.color,
+                    project.folder_path,
                     now,
                     now,
                 ),
@@ -163,6 +164,7 @@ async def create_project(project: ProjectCreate):
                 description=project.description,
                 icon=project.icon,
                 color=project.color,
+                folder_path=project.folder_path,
                 status="active",
                 created_at=now,
                 updated_at=now,
