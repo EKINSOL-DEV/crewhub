@@ -2,13 +2,15 @@ import { createContext, useContext, useState, useCallback, useRef, type ReactNod
 
 // ─── Types ─────────────────────────────────────────────────────
 
-export type FocusLevel = 'overview' | 'room' | 'bot'
+export type FocusLevel = 'overview' | 'room' | 'bot' | 'firstperson'
 
 export interface WorldFocusState {
   level: FocusLevel
   focusedRoomId: string | null
   focusedBotKey: string | null
   isAnimating: boolean
+  /** Previous state stored when entering first person, for restoring on exit */
+  previousState?: { level: FocusLevel; focusedRoomId: string | null; focusedBotKey: string | null }
 }
 
 interface WorldFocusContextValue {
@@ -17,6 +19,8 @@ interface WorldFocusContextValue {
   focusBot: (botKey: string, roomId: string) => void
   goBack: () => void
   goOverview: () => void
+  enterFirstPerson: () => void
+  exitFirstPerson: () => void
 }
 
 const defaultState: WorldFocusState = {
@@ -32,6 +36,8 @@ const WorldFocusContext = createContext<WorldFocusContextValue>({
   focusBot: () => {},
   goBack: () => {},
   goOverview: () => {},
+  enterFirstPerson: () => {},
+  exitFirstPerson: () => {},
 })
 
 // ─── Provider ──────────────────────────────────────────────────
@@ -76,6 +82,15 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
 
   const goBack = useCallback(() => {
     setWithAnimation(prev => {
+      if (prev.level === 'firstperson') {
+        const restored = prev.previousState || { level: 'overview' as FocusLevel, focusedRoomId: null, focusedBotKey: null }
+        return {
+          level: restored.level,
+          focusedRoomId: restored.focusedRoomId,
+          focusedBotKey: restored.focusedBotKey,
+          isAnimating: false,
+        }
+      }
       if (prev.level === 'bot') {
         return {
           level: 'room',
@@ -92,8 +107,36 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
     setWithAnimation(() => ({ ...defaultState }))
   }, [setWithAnimation])
 
+  const enterFirstPerson = useCallback(() => {
+    setState(prev => ({
+      level: 'firstperson',
+      focusedRoomId: null,
+      focusedBotKey: null,
+      isAnimating: false,
+      previousState: {
+        level: prev.level,
+        focusedRoomId: prev.focusedRoomId,
+        focusedBotKey: prev.focusedBotKey,
+      },
+    }))
+  }, [])
+
+  const exitFirstPerson = useCallback(() => {
+    setState(prev => {
+      const restored = prev.previousState || { level: 'overview' as FocusLevel, focusedRoomId: null, focusedBotKey: null }
+      return {
+        level: restored.level,
+        focusedRoomId: restored.focusedRoomId,
+        focusedBotKey: restored.focusedBotKey,
+        isAnimating: true,
+      }
+    })
+    // Clear animating after camera transition
+    setTimeout(() => setState(prev => ({ ...prev, isAnimating: false })), 900)
+  }, [])
+
   return (
-    <WorldFocusContext.Provider value={{ state, focusRoom, focusBot, goBack, goOverview }}>
+    <WorldFocusContext.Provider value={{ state, focusRoom, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson }}>
       {children}
     </WorldFocusContext.Provider>
   )

@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState, useEffect, useCallback } from 'react'
+import { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { WorldLighting } from './WorldLighting'
@@ -23,6 +23,7 @@ import { getDefaultRoomForSession } from '@/lib/roomsConfig'
 import { splitSessionsForDisplay } from '@/lib/sessionFiltering'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { CameraController } from './CameraController'
+import { FirstPersonController, FirstPersonHUD } from './FirstPersonController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
@@ -273,6 +274,8 @@ interface SceneContentProps {
   focusLevel: FocusLevel
   focusedRoomId: string | null
   focusedBotKey: string | null
+  onEnterRoom?: (roomName: string) => void
+  onLeaveRoom?: () => void
 }
 
 // ─── Scene Content ─────────────────────────────────────────────
@@ -287,6 +290,8 @@ function SceneContent({
   focusLevel,
   focusedRoomId,
   focusedBotKey,
+  onEnterRoom,
+  onLeaveRoom,
 }: SceneContentProps) {
   void _settings // Available for future use (e.g. animation speed)
   // Combine all sessions for agent registry lookup
@@ -445,6 +450,20 @@ function SceneContent({
       {/* CameraController (inside Canvas, manages camera animation + constraints) */}
       <CameraController roomPositions={cameraRoomPositions} />
 
+      {/* First Person Controller (inside Canvas, manages pointer lock + WASD movement) */}
+      <FirstPersonController
+        roomPositions={roomPositions.map(rp => ({
+          roomId: rp.room.id,
+          roomName: rp.room.name,
+          position: rp.position,
+        }))}
+        roomSize={ROOM_SIZE}
+        buildingWidth={buildingWidth}
+        buildingDepth={buildingDepth}
+        onEnterRoom={onEnterRoom}
+        onLeaveRoom={onLeaveRoom}
+      />
+
       {/* Rooms in grid layout */}
       {roomPositions.map(({ room, position }) => {
         const botsInRoom = roomBots.get(room.id) || []
@@ -549,6 +568,23 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   // Focus state
   const { state: focusState, focusBot, goBack } = useWorldFocus()
 
+  // First person HUD state
+  const [fpCurrentRoom, setFpCurrentRoom] = useState<string | null>(null)
+  const [fpShowRoomLabel, setFpShowRoomLabel] = useState(false)
+  const fpRoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleFpEnterRoom = useCallback((roomName: string) => {
+    setFpCurrentRoom(roomName)
+    setFpShowRoomLabel(true)
+    if (fpRoomTimerRef.current) clearTimeout(fpRoomTimerRef.current)
+    fpRoomTimerRef.current = setTimeout(() => setFpShowRoomLabel(false), 2500)
+  }, [])
+
+  const handleFpLeaveRoom = useCallback(() => {
+    setFpCurrentRoom(null)
+    setFpShowRoomLabel(false)
+  }, [])
+
   // Chat context — register focus handler for 3D view
   const { setFocusHandler } = useChatContext()
 
@@ -643,15 +679,25 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               focusLevel={focusState.level}
               focusedRoomId={focusState.focusedRoomId}
               focusedBotKey={focusState.focusedBotKey}
+              onEnterRoom={handleFpEnterRoom}
+              onLeaveRoom={handleFpLeaveRoom}
             />
           </Suspense>
         </Canvas>
 
+        {/* First Person HUD (rendered on top of everything when in FP mode) */}
+        {focusState.level === 'firstperson' && (
+          <FirstPersonHUD
+            currentRoom={fpCurrentRoom}
+            showRoomLabel={fpShowRoomLabel}
+          />
+        )}
+
         {/* Back button / navigation (top-left) */}
         <WorldNavigation rooms={rooms} />
 
-        {/* Overlay controls hint (hide when bot panel is showing) */}
-        {focusState.level !== 'bot' && (
+        {/* Overlay controls hint (hide when bot panel is showing or in first person) */}
+        {focusState.level !== 'bot' && focusState.level !== 'firstperson' && (
           <div className="absolute top-4 right-4 z-50">
             <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm">
               🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan
@@ -674,12 +720,14 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           />
         )}
 
-        {/* Room tabs bar (bottom) */}
-        <RoomTabsBar
-          rooms={rooms}
-          roomBotCounts={roomBotCounts}
-          parkingBotCount={parkingSessions.length}
-        />
+        {/* Room tabs bar (bottom, hidden in first person) */}
+        {focusState.level !== 'firstperson' && (
+          <RoomTabsBar
+            rooms={rooms}
+            roomBotCounts={roomBotCounts}
+            parkingBotCount={parkingSessions.length}
+          />
+        )}
 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />

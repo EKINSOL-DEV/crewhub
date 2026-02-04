@@ -131,6 +131,18 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     const controls = controlsRef.current
     if (!controls) return
 
+    // Disable orbital controls in first person mode
+    if (state.level === 'firstperson') {
+      controls.enabled = false
+      prevLevelRef.current = state.level
+      return
+    }
+
+    // Re-enable when exiting first person
+    if ((prevLevelRef.current as string) === 'firstperson') {
+      controls.enabled = true
+    }
+
     // Skip if nothing changed
     if (
       state.level === prevLevelRef.current &&
