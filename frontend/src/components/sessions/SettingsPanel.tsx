@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
 import { useGridDebug } from "@/hooks/useGridDebug"
+import { useDebugBots } from "@/hooks/useDebugBots"
 import { useLightingPanelVisibility } from "@/hooks/useLightingConfig"
 import { useEnvironment, type EnvironmentType } from "@/components/world3d/environments"
 import { useSessionConfig } from "@/hooks/useSessionConfig"
@@ -158,6 +159,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
   const { toast } = useToast()
   const [gridDebugEnabled, toggleGridDebug] = useGridDebug()
+  const { debugBotsEnabled, setDebugBotsEnabled } = useDebugBots()
   const { visible: lightingPanelVisible, setVisible: setLightingPanelVisible } = useLightingPanelVisibility()
   const [environment, setEnvironment] = useEnvironment()
   const sessionConfig = useSessionConfig()
@@ -790,6 +792,17 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                       id="lighting-editor"
                       checked={lightingPanelVisible}
                       onCheckedChange={(checked) => setLightingPanelVisible(checked)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="debug-bots" className="flex flex-col gap-1">
+                      <span className="text-sm">🧪 Debug Bots</span>
+                      <span className="text-xs text-muted-foreground font-normal">Add fake test bots to rooms for visual testing</span>
+                    </Label>
+                    <Switch
+                      id="debug-bots"
+                      checked={debugBotsEnabled}
+                      onCheckedChange={(checked) => setDebugBotsEnabled(checked)}
                     />
                   </div>
                 </Section>

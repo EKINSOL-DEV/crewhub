@@ -31,6 +31,8 @@ import { DragDropProvider } from '@/contexts/DragDropContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
 import { LightingDebugPanel } from './LightingDebugPanel'
+import { DebugPanel } from './DebugPanel'
+import { useDebugBots, type DebugBot } from '@/hooks/useDebugBots'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
@@ -221,6 +223,37 @@ function getBotPositionsInParking(
   return positions
 }
 
+// ─── Debug Bot → CrewSession Conversion ─────────────────────────
+
+function debugBotToCrewSession(bot: DebugBot): CrewSession {
+  const now = Date.now()
+  // Calculate updatedAt based on status so getAccurateBotStatus works correctly
+  let updatedAt = now
+  if (bot.status === 'idle') {
+    updatedAt = now - 10_000 // 10s ago — past active threshold but within idle
+  } else if (bot.status === 'sleeping') {
+    updatedAt = now - 600_000 // 10 min ago — past idle threshold
+  } else if (bot.status === 'offline') {
+    updatedAt = now - 7_200_000 // 2 hours ago — well past sleeping threshold
+  }
+
+  return {
+    key: `debug:${bot.id}`,
+    kind: 'debug',
+    channel: 'debug',
+    displayName: `🧪 ${bot.name}`,
+    label: `debug-${bot.status}`,
+    updatedAt,
+    sessionId: bot.id,
+    model: 'debug-bot',
+  }
+}
+
+// Flag to check if a session key is a debug bot
+function isDebugSession(key: string): boolean {
+  return key.startsWith('debug:debug-')
+}
+
 // ─── Bot data for placement ──────────────────────────────────────
 
 interface BotPlacement {
@@ -277,6 +310,8 @@ interface SceneContentProps {
   focusedBotKey: string | null
   onEnterRoom?: (roomName: string) => void
   onLeaveRoom?: () => void
+  /** Debug bot room overrides: session key → room ID */
+  debugRoomMap?: Map<string, string>
 }
 
 // ─── Scene Content ─────────────────────────────────────────────
@@ -293,6 +328,7 @@ function SceneContent({
   focusedBotKey,
   onEnterRoom,
   onLeaveRoom,
+  debugRoomMap,
 }: SceneContentProps) {
   void _settings // Available for future use (e.g. animation speed)
   // Combine all sessions for agent registry lookup
@@ -397,11 +433,15 @@ function SceneContent({
     // Remaining visible sessions not matched to agents
     for (const session of visibleSessions) {
       if (placedKeys.has(session.key)) continue
-      const roomId = getRoomForSession(session.key, {
-        label: session.label,
-        model: session.model,
-        channel: session.lastChannel || session.channel,
-      })
+
+      // Debug bots use their assigned room from the debug room map
+      const debugRoom = debugRoomMap?.get(session.key)
+      const roomId = debugRoom
+        || getRoomForSession(session.key, {
+          label: session.label,
+          model: session.model,
+          channel: session.lastChannel || session.channel,
+        })
         || getDefaultRoomForSession(session.key)
         || rooms[0]?.id || 'headquarters'
 
@@ -421,7 +461,7 @@ function SceneContent({
     }
 
     return { roomBots, parkingBots }
-  }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames])
+  }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames, debugRoomMap])
 
   // Build room positions for CameraController (MUST be before early return to respect hooks rules)
   const cameraRoomPositions = useMemo(
@@ -571,12 +611,43 @@ function SceneContent({
 // ─── Main Component ────────────────────────────────────────────
 
 function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+  // Debug bots
+  const { debugBots, debugBotsEnabled } = useDebugBots()
+
   // Shared hooks for activity tracking and session filtering
-  const { isActivelyRunning } = useSessionActivity(sessions)
+  const { isActivelyRunning: isRealActivelyRunning } = useSessionActivity(sessions)
+
+  // Wrap isActivelyRunning to handle debug bots (active status = actively running)
+  const isActivelyRunning = useCallback((key: string): boolean => {
+    if (isDebugSession(key)) {
+      const botId = key.replace('debug:', '')
+      const bot = debugBots.find(b => b.id === botId)
+      return bot?.status === 'active'
+    }
+    return isRealActivelyRunning(key)
+  }, [isRealActivelyRunning, debugBots])
+
   const idleThreshold = settings.parkingIdleThreshold ?? 120
-  const { visibleSessions, parkingSessions } = splitSessionsForDisplay(
-    sessions, isActivelyRunning, idleThreshold,
+  const { visibleSessions: realVisibleSessions, parkingSessions } = splitSessionsForDisplay(
+    sessions, isRealActivelyRunning, idleThreshold,
   )
+
+  // Merge debug bots as fake sessions into visible sessions
+  const visibleSessions = useMemo(() => {
+    if (!debugBotsEnabled || debugBots.length === 0) return realVisibleSessions
+    const debugSessions = debugBots.map(debugBotToCrewSession)
+    return [...realVisibleSessions, ...debugSessions]
+  }, [realVisibleSessions, debugBots, debugBotsEnabled])
+
+  // Map debug session keys to their assigned rooms
+  const debugRoomMap = useMemo(() => {
+    if (!debugBotsEnabled || debugBots.length === 0) return undefined
+    const map = new Map<string, string>()
+    for (const bot of debugBots) {
+      map.set(`debug:${bot.id}`, bot.roomId)
+    }
+    return map
+  }, [debugBots, debugBotsEnabled])
 
   // Display names
   const sessionKeys = useMemo(() => sessions.map(s => s.key), [sessions])
@@ -698,6 +769,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               focusedBotKey={focusState.focusedBotKey}
               onEnterRoom={handleFpEnterRoom}
               onLeaveRoom={handleFpLeaveRoom}
+              debugRoomMap={debugRoomMap}
             />
           </Suspense>
         </Canvas>
@@ -748,6 +820,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
         {/* Lighting Debug Panel (floating overlay) */}
         <LightingDebugPanel />
+
+        {/* Debug Bots Panel (floating overlay, left side) */}
+        <DebugPanel />
 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
