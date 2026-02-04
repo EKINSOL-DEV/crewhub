@@ -99,7 +99,8 @@ async def init_database():
                     rule_value TEXT NOT NULL,
                     priority INTEGER DEFAULT 0,
                     created_at INTEGER NOT NULL,
-                    FOREIGN KEY (room_id) REFERENCES rooms(id)
+                    FOREIGN KEY (room_id) REFERENCES rooms(id),
+                    UNIQUE(room_id, rule_type, rule_value)
                 )
             """)
             
@@ -153,6 +154,13 @@ async def init_database():
             await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_room_assignment_rules_priority 
                 ON room_assignment_rules(priority DESC)
+            """)
+            
+            # Migration: add unique constraint for existing databases
+            # SQLite doesn't support ALTER TABLE ADD CONSTRAINT, so create unique index instead
+            await db.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_room_assignment_rules_unique
+                ON room_assignment_rules(room_id, rule_type, rule_value)
             """)
             
             await db.execute("""
