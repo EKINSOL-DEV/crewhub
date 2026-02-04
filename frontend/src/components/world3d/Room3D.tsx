@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { Html } from '@react-three/drei'
 import { RoomFloor } from './RoomFloor'
 import { RoomWalls } from './RoomWalls'
@@ -10,60 +10,12 @@ import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragDrop } from '@/contexts/DragDropContext'
 import { useGridDebug } from '@/hooks/useGridDebug'
 import type { Room } from '@/hooks/useRooms'
+import type { ThreeEvent } from '@react-three/fiber'
 
 interface Room3DProps {
   room: Room
   position?: [number, number, number]
   size?: number
-}
-
-// ─── Room Focus Button (3D icon above room) ────────────────────
-
-function RoomFocusButton({ roomId }: { roomId: string }) {
-  const { focusRoom, state } = useWorldFocus()
-  const [hovered, setHovered] = useState(false)
-  const isFocused = state.focusedRoomId === roomId
-
-  return (
-    <Html position={[0, 4.2, 0]} center zIndexRange={[1, 5]} style={{ pointerEvents: 'auto' }}>
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          focusRoom(roomId)
-        }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 30,
-          height: 30,
-          borderRadius: '50%',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: 15,
-          background: isFocused
-            ? 'rgba(79, 70, 229, 0.85)'
-            : hovered
-              ? 'rgba(0,0,0,0.55)'
-              : 'rgba(0,0,0,0.35)',
-          color: '#fff',
-          transform: hovered ? 'scale(1.15)' : 'scale(1)',
-          transition: 'all 0.2s ease',
-          boxShadow: hovered
-            ? '0 0 12px rgba(79,70,229,0.5)'
-            : '0 1px 4px rgba(0,0,0,0.2)',
-          fontFamily: 'system-ui, sans-serif',
-          lineHeight: 1,
-          padding: 0,
-        }}
-        title={isFocused ? 'Back to overview' : 'Focus on room'}
-      >
-        🔍
-      </button>
-    </Html>
-  )
 }
 
 // ─── Room Drop Zone (visible when dragging) ────────────────────
@@ -138,21 +90,72 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
 /**
  * Composes a complete 3D room: floor, walls, nameplate, and furniture props.
  * Room size defaults to ~12x12 units.
+ *
+ * Rooms are directly interactive:
+ * - Hover: emissive glow on floor/walls, nameplate micro-scale, pointer cursor
+ * - Click at overview: focusRoom → camera zooms in, Room HUD opens
+ * - Click at room level: floor click re-opens Room HUD, bot clicks handled by Bot3D
  */
 export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const roomColor = room.color || '#4f46e5'
   const blueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
   const [gridDebugEnabled] = useGridDebug()
-  const { state } = useWorldFocus()
+  const { state, focusRoom, goBack } = useWorldFocus()
   const isRoomFocused = state.focusedRoomId === room.id && state.level === 'room'
 
+  // ─── Hover state with 80ms debounce/hysteresis ──────────────
+  const [hovered, setHovered] = useState(false)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handlePointerOver = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+    setHovered(true)
+    document.body.style.cursor = 'pointer'
+  }, [])
+
+  const handlePointerOut = useCallback((_e: ThreeEvent<PointerEvent>) => {
+    // 80ms hysteresis to prevent flicker at room boundaries
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    hoverTimerRef.current = setTimeout(() => {
+      setHovered(false)
+      document.body.style.cursor = 'auto'
+      hoverTimerRef.current = null
+    }, 80)
+  }, [])
+
+  // ─── Click handler (focus-level aware) ──────────────────────
+  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation()
+
+    if (state.level === 'overview' || state.level === 'firstperson') {
+      // Overview: zoom into room
+      focusRoom(room.id)
+    } else if (state.level === 'bot' && state.focusedRoomId === room.id) {
+      // Bot level, same room: go back to room level (re-open Room HUD)
+      goBack()
+    } else if (state.focusedRoomId !== room.id) {
+      // Different room: switch to it
+      focusRoom(room.id)
+    }
+    // Room level, same room: no-op — Room HUD stays open
+  }, [state.level, state.focusedRoomId, room.id, focusRoom, goBack])
+
   return (
-    <group position={position}>
+    <group
+      position={position}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
+      onClick={handleClick}
+    >
       {/* Floor tiles */}
-      <RoomFloor color={roomColor} size={size} />
+      <RoomFloor color={roomColor} size={size} hovered={hovered} />
 
       {/* Perimeter walls */}
-      <RoomWalls color={roomColor} size={size} />
+      <RoomWalls color={roomColor} size={size} hovered={hovered} />
 
       {/* Floating nameplate above entrance */}
       <RoomNameplate
@@ -160,10 +163,8 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
         icon={room.icon}
         color={roomColor}
         size={size}
+        hovered={hovered}
       />
-
-      {/* Focus button above room */}
-      <RoomFocusButton roomId={room.id} />
 
       {/* Drop zone overlay (visible during drag) */}
       <RoomDropZone roomId={room.id} size={size} />

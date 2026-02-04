@@ -11,6 +11,7 @@ import { ParkingArea3D } from './ParkingArea3D'
 import { Room3D } from './Room3D'
 import { Bot3D, type BotStatus } from './Bot3D'
 import { BotInfoPanel } from './BotInfoPanel'
+import { RoomInfoPanel } from './RoomInfoPanel'
 import { useRooms } from '@/hooks/useRooms'
 import { useAgentsRegistry, type AgentRuntime } from '@/hooks/useAgentsRegistry'
 import { useSessionActivity } from '@/hooks/useSessionActivity'
@@ -755,6 +756,37 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key))
   }, [focusedSession, isActivelyRunning])
 
+  // ─── Room Info Panel: compute sessions in focused room ────────
+  const focusedRoom = useMemo(() => {
+    if (!focusState.focusedRoomId) return null
+    return rooms.find(r => r.id === focusState.focusedRoomId) ?? null
+  }, [focusState.focusedRoomId, rooms])
+
+  const focusedRoomSessions = useMemo(() => {
+    if (!focusState.focusedRoomId) return []
+    const targetRoomId = focusState.focusedRoomId
+    return visibleSessions.filter(s => {
+      const debugRoom = debugRoomMap?.get(s.key)
+      const roomId = debugRoom
+        || getRoomForSession(s.key, {
+          label: s.label,
+          model: s.model,
+          channel: s.lastChannel || s.channel,
+        })
+        || getDefaultRoomForSession(s.key)
+        || rooms[0]?.id
+        || 'headquarters'
+      return roomId === targetRoomId
+    })
+  }, [focusState.focusedRoomId, visibleSessions, getRoomForSession, rooms, debugRoomMap])
+
+  // Handle bot click from RoomInfoPanel → focus that bot
+  const handleRoomPanelBotClick = useCallback((session: CrewSession) => {
+    if (focusState.focusedRoomId) {
+      focusBot(session.key, focusState.focusedRoomId)
+    }
+  }, [focusBot, focusState.focusedRoomId])
+
   return (
     <DragDropProvider onAssignmentChanged={refreshRooms}>
       <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
@@ -793,8 +825,8 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Back button / navigation (top-left) */}
         <WorldNavigation rooms={rooms} />
 
-        {/* Overlay controls hint (hide when bot panel is showing or in first person) */}
-        {focusState.level !== 'bot' && focusState.level !== 'firstperson' && (
+        {/* Overlay controls hint (hide when any panel is showing or in first person) */}
+        {focusState.level !== 'bot' && focusState.level !== 'room' && focusState.level !== 'firstperson' && (
           <div className="absolute top-4 right-4 z-50">
             <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
               <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
@@ -802,6 +834,18 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               <div className="text-gray-400">🐛 F2: Grid · F3: Lighting · F4: Debug Bots</div>
             </div>
           </div>
+        )}
+
+        {/* Room Info Panel (slides in when room is focused, replaces bot panel slot) */}
+        {focusState.level === 'room' && focusedRoom && (
+          <RoomInfoPanel
+            room={focusedRoom}
+            sessions={focusedRoomSessions}
+            isActivelyRunning={isActivelyRunning}
+            displayNames={displayNames}
+            onClose={() => goBack()}
+            onBotClick={handleRoomPanelBotClick}
+          />
         )}
 
         {/* Bot Info Panel (slides in when bot is focused) */}
