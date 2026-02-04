@@ -33,7 +33,7 @@ const ALL_STATUSES: DebugBotStatus[] = ['active', 'idle', 'sleeping', 'offline']
 // ─── Main Panel ─────────────────────────────────────────────────
 
 export function DebugPanel() {
-  const [collapsed, setCollapsed] = useState(true)
+  const [collapsed, setCollapsed] = useState(false)
   const {
     debugBots,
     debugBotsEnabled,
