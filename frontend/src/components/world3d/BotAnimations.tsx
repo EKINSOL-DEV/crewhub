@@ -324,7 +324,7 @@ export function tickAnimState(s: AnimState, delta: number): void {
     case 'walking-to-desk': {
       if (s.arrived) {
         s.phase = 'working'
-        s.bodyTilt = 0.12
+        s.bodyTilt = 0.06
         s.headBob = true
         s.walkSpeed = 0
       }
