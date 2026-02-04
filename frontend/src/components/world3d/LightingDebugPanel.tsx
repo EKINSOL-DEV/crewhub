@@ -101,6 +101,9 @@ export function LightingDebugPanel() {
   const { visible } = useLightingPanelVisibility()
   const { config, setConfig, resetConfig, importConfig, exportConfig } = useLightingConfig()
 
+  // Minimize state
+  const [minimized, setMinimized] = useState(false)
+
   // Dragging
   const [pos, setPos] = useState({ x: 16, y: 80 })
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null)
@@ -226,10 +229,17 @@ export function LightingDebugPanel() {
           onMouseDown={handleMouseDown}
         >
           <span className="text-xs font-semibold text-gray-200">💡 Lighting Editor</span>
-          <span className="text-[9px] text-gray-500">drag to move</span>
+          <button
+            onClick={() => setMinimized(m => !m)}
+            className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700/60 transition-colors text-xs"
+            title={minimized ? "Expand" : "Minimize"}
+          >
+            {minimized ? '□' : '—'}
+          </button>
         </div>
 
         {/* Scrollable content */}
+        {!minimized && (
         <div className="overflow-y-auto p-3 space-y-1" style={{ maxHeight: 'calc(100vh - 180px)' }}>
 
           {/* ── Ambient ── */}
@@ -277,8 +287,10 @@ export function LightingDebugPanel() {
           <Slider label="Exposure" value={config.toneMappingExposure} min={0} max={3} step={0.1} onChange={v => setConfig({ toneMappingExposure: v })} />
           <Slider label="Env Int." value={config.environmentIntensity} min={0} max={3} step={0.1} onChange={v => setConfig({ environmentIntensity: v })} />
         </div>
+        )}
 
         {/* Footer buttons */}
+        {!minimized && (
         <div className="border-t border-gray-700/60 p-2 flex flex-wrap gap-1.5">
           <button
             onClick={handleCopy}
@@ -302,6 +314,7 @@ export function LightingDebugPanel() {
             <div className="w-full text-[9px] text-red-400 text-center">{pasteError}</div>
           )}
         </div>
+        )}
       </div>
     </div>
   )
