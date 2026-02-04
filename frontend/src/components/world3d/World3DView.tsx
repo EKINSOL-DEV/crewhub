@@ -1,6 +1,52 @@
-import { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react'
+import { Suspense, useMemo, useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
+
+// ─── Error Boundary for Canvas ─────────────────────────────────
+
+interface ErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+}
+
+class CanvasErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Canvas Error Boundary caught:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center w-full h-full bg-red-50 text-red-800 p-8">
+          <div className="max-w-lg">
+            <h2 className="text-xl font-bold mb-2">🔥 3D World Crashed</h2>
+            <pre className="bg-red-100 p-4 rounded text-sm overflow-auto max-h-64">
+              {this.state.error?.message || 'Unknown error'}
+              {'\n\n'}
+              {this.state.error?.stack}
+            </pre>
+            <button 
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 import { WorldLighting } from './WorldLighting'
 import { BuildingFloor } from './BuildingFloor'
 import { BuildingWalls } from './BuildingWalls'
@@ -493,9 +539,16 @@ function SceneContent({
     return focusedRoomId === botRoomId || botStatus === 'active'
   }
 
-  if (isLoading || !layout) return null
+  // DEBUG: Log loading state
+  console.log('[SceneContent] isLoading:', isLoading, 'layout:', layout ? 'exists' : 'null', 'rooms:', rooms.length)
+
+  if (isLoading || !layout) {
+    console.log('[SceneContent] Early return - isLoading:', isLoading, 'layout:', layout)
+    return null
+  }
 
   const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
+  console.log('[SceneContent] Rendering with', roomPositions.length, 'rooms')
 
   return (
     <>
@@ -792,14 +845,15 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   return (
     <DragDropProvider onAssignmentChanged={refreshRooms}>
       <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
-        <Canvas
-          shadows
-          camera={{ position: [45, 40, 45], fov: 40, near: 0.1, far: 300 }}
-          style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)' }}
-        >
-          <Suspense fallback={<LoadingFallback />}>
-            <WorldLighting />
-            <SceneContent
+        <CanvasErrorBoundary>
+          <Canvas
+            shadows
+            camera={{ position: [45, 40, 45], fov: 40, near: 0.1, far: 300 }}
+            style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)' }}
+          >
+            <Suspense fallback={<LoadingFallback />}>
+              <WorldLighting />
+              <SceneContent
               visibleSessions={visibleSessions}
               parkingSessions={parkingSessions}
               settings={settings}
@@ -812,9 +866,10 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               onEnterRoom={handleFpEnterRoom}
               onLeaveRoom={handleFpLeaveRoom}
               debugRoomMap={debugRoomMap}
-            />
-          </Suspense>
-        </Canvas>
+              />
+            </Suspense>
+          </Canvas>
+        </CanvasErrorBoundary>
 
         {/* First Person HUD (rendered on top of everything when in FP mode) */}
         {focusState.level === 'firstperson' && (
@@ -832,7 +887,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           <div className="absolute top-4 right-4 z-50">
             <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
               <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
-              <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast · C: Camera</div>
+              <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast</div>
               <div className="text-gray-400">🐛 F2: Grid · F3: Lighting · F4: Debug Bots</div>
             </div>
           </div>

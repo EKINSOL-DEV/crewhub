@@ -26,6 +26,9 @@ export function WorldLighting() {
   const dirLightRef = useRef<THREE.DirectionalLight>(null)
   const { config } = useLightingConfig()
   const { gl } = useThree()
+  
+  // DEBUG
+  console.log('[WorldLighting] Rendering, config:', config ? 'exists' : 'null', 'gl:', gl ? 'exists' : 'null')
 
   // Apply tone mapping to renderer
   const mapping = TONE_MAP[config.toneMapping] ?? THREE.ACESFilmicToneMapping
