@@ -680,7 +680,10 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const { rooms, getRoomForSession, refresh: refreshRooms } = useRooms()
 
   // Register 3D focus handler: zoom to bot when 🎯 is clicked in chat panel
-  const handleFocusAgent = useCallback((sessionKey: string) => {
+  // Use a ref to avoid infinite re-render loop (handleFocusAgent deps change every render
+  // → effect re-runs → cleanup bumps ChatContext state → re-render → loop)
+  const handleFocusAgentRef = useRef<(sessionKey: string) => void>(() => {})
+  handleFocusAgentRef.current = useCallback((sessionKey: string) => {
     // Find the session to determine its room
     const session = [...visibleSessions, ...parkingSessions].find(s => s.key === sessionKey)
     if (!session) return
@@ -699,9 +702,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   }, [visibleSessions, parkingSessions, getRoomForSession, rooms, focusBot])
 
   useEffect(() => {
-    setFocusHandler(handleFocusAgent)
+    setFocusHandler((sessionKey: string) => handleFocusAgentRef.current(sessionKey))
     return () => setFocusHandler(null)
-  }, [setFocusHandler, handleFocusAgent])
+  }, [setFocusHandler])
 
   // Calculate room bot counts for tabs bar
   const roomBotCounts = useMemo(() => {
