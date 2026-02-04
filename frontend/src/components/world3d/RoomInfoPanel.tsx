@@ -176,7 +176,7 @@ export function RoomInfoPanel({
   }, [assignProjectToRoom, room.id])
 
   const handleClearProject = useCallback(async () => {
-    await clearRoomProject(room.id)
+    const result = await clearRoomProject(room.id)
     setConfirmAction(null)
   }, [clearRoomProject, room.id])
 
