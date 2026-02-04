@@ -5,11 +5,36 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 
 from app.db.database import get_db
-from app.db.models import Room, RoomCreate, RoomUpdate
+from app.db.models import Room, RoomCreate, RoomUpdate, RoomProjectAssign
 from app.routes.sse import broadcast
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _row_to_room(row: dict) -> Room:
+    """Convert a DB row to a Room model, handling project_name join."""
+    return Room(
+        id=row["id"],
+        name=row["name"],
+        icon=row.get("icon"),
+        color=row.get("color"),
+        sort_order=row.get("sort_order", 0),
+        default_model=row.get("default_model"),
+        speed_multiplier=row.get("speed_multiplier", 1.0),
+        project_id=row.get("project_id"),
+        project_name=row.get("project_name"),
+        is_hq=bool(row.get("is_hq", 0)),
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+    )
+
+
+_ROOMS_SELECT = """
+    SELECT r.*, p.name as project_name
+    FROM rooms r
+    LEFT JOIN projects p ON r.project_id = p.id
+"""
 
 
 @router.get("", response_model=dict)
@@ -22,10 +47,10 @@ async def list_rooms():
                 zip([col[0] for col in cursor.description], row)
             )
             async with db.execute(
-                "SELECT * FROM rooms ORDER BY sort_order ASC"
+                f"{_ROOMS_SELECT} ORDER BY r.sort_order ASC"
             ) as cursor:
                 rows = await cursor.fetchall()
-                rooms = [Room(**row) for row in rows]
+                rooms = [_row_to_room(row) for row in rows]
             return {"rooms": [room.model_dump() for room in rooms]}
         finally:
             await db.close()
@@ -44,12 +69,12 @@ async def get_room(room_id: str):
                 zip([col[0] for col in cursor.description], row)
             )
             async with db.execute(
-                "SELECT * FROM rooms WHERE id = ?", (room_id,)
+                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
             ) as cursor:
                 row = await cursor.fetchone()
                 if not row:
                     raise HTTPException(status_code=404, detail="Room not found")
-                return Room(**row)
+                return _row_to_room(row)
         finally:
             await db.close()
     except HTTPException:
@@ -89,10 +114,10 @@ async def create_room(room: RoomCreate):
                 zip([col[0] for col in cursor.description], row)
             )
             async with db.execute(
-                "SELECT * FROM rooms WHERE id = ?", (room.id,)
+                f"{_ROOMS_SELECT} WHERE r.id = ?", (room.id,)
             ) as cursor:
                 row = await cursor.fetchone()
-                created = Room(**row)
+                created = _row_to_room(row)
             
             await broadcast("rooms-refresh", {"action": "created", "room_id": room.id})
             return created
@@ -144,10 +169,10 @@ async def update_room(room_id: str, room: RoomUpdate):
                 zip([col[0] for col in cursor.description], row)
             )
             async with db.execute(
-                "SELECT * FROM rooms WHERE id = ?", (room_id,)
+                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
             ) as cursor:
                 row = await cursor.fetchone()
-                updated = Room(**row)
+                updated = _row_to_room(row)
             
             await broadcast("rooms-refresh", {"action": "updated", "room_id": room_id})
             return updated
@@ -195,6 +220,141 @@ async def delete_room(room_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete room {room_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{room_id}/project", response_model=Room)
+async def assign_project(room_id: str, body: RoomProjectAssign):
+    """Assign a project to a room."""
+    try:
+        db = await get_db()
+        try:
+            # Verify room exists
+            async with db.execute(
+                "SELECT id FROM rooms WHERE id = ?", (room_id,)
+            ) as cursor:
+                if not await cursor.fetchone():
+                    raise HTTPException(status_code=404, detail="Room not found")
+
+            # Verify project exists
+            async with db.execute(
+                "SELECT id FROM projects WHERE id = ?", (body.project_id,)
+            ) as cursor:
+                if not await cursor.fetchone():
+                    raise HTTPException(status_code=404, detail="Project not found")
+
+            now = int(time.time() * 1000)
+            await db.execute(
+                "UPDATE rooms SET project_id = ?, updated_at = ? WHERE id = ?",
+                (body.project_id, now, room_id),
+            )
+            await db.commit()
+
+            # Return updated room with project join
+            db.row_factory = lambda cursor, row: dict(
+                zip([col[0] for col in cursor.description], row)
+            )
+            async with db.execute(
+                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
+            ) as cursor:
+                row = await cursor.fetchone()
+
+            await broadcast("rooms-refresh", {"action": "project_assigned", "room_id": room_id})
+            return _row_to_room(row)
+        finally:
+            await db.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to assign project to room {room_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{room_id}/project", response_model=Room)
+async def clear_project(room_id: str):
+    """Clear project assignment from a room."""
+    try:
+        db = await get_db()
+        try:
+            # Verify room exists
+            async with db.execute(
+                "SELECT id FROM rooms WHERE id = ?", (room_id,)
+            ) as cursor:
+                if not await cursor.fetchone():
+                    raise HTTPException(status_code=404, detail="Room not found")
+
+            now = int(time.time() * 1000)
+            await db.execute(
+                "UPDATE rooms SET project_id = NULL, updated_at = ? WHERE id = ?",
+                (now, room_id),
+            )
+            await db.commit()
+
+            # Return updated room
+            db.row_factory = lambda cursor, row: dict(
+                zip([col[0] for col in cursor.description], row)
+            )
+            async with db.execute(
+                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
+            ) as cursor:
+                row = await cursor.fetchone()
+
+            await broadcast("rooms-refresh", {"action": "project_cleared", "room_id": room_id})
+            return _row_to_room(row)
+        finally:
+            await db.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to clear project from room {room_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{room_id}/hq", response_model=Room)
+async def set_hq(room_id: str):
+    """Set a room as HQ. Only one room can be HQ at a time."""
+    try:
+        db = await get_db()
+        try:
+            # Verify room exists
+            async with db.execute(
+                "SELECT id FROM rooms WHERE id = ?", (room_id,)
+            ) as cursor:
+                if not await cursor.fetchone():
+                    raise HTTPException(status_code=404, detail="Room not found")
+
+            now = int(time.time() * 1000)
+
+            # Clear HQ from all rooms first
+            await db.execute(
+                "UPDATE rooms SET is_hq = 0, updated_at = ? WHERE is_hq = 1",
+                (now,),
+            )
+
+            # Set new HQ
+            await db.execute(
+                "UPDATE rooms SET is_hq = 1, updated_at = ? WHERE id = ?",
+                (now, room_id),
+            )
+            await db.commit()
+
+            # Return updated room
+            db.row_factory = lambda cursor, row: dict(
+                zip([col[0] for col in cursor.description], row)
+            )
+            async with db.execute(
+                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
+            ) as cursor:
+                row = await cursor.fetchone()
+
+            await broadcast("rooms-refresh", {"action": "hq_changed", "room_id": room_id})
+            return _row_to_room(row)
+        finally:
+            await db.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to set HQ for room {room_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

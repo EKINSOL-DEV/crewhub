@@ -1,12 +1,51 @@
 """Pydantic models for CrewHub database entities."""
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import uuid
 
 
 def generate_id() -> str:
     """Generate a unique UUID string for model IDs."""
     return str(uuid.uuid4())
+
+
+# ========================================
+# PROJECTS
+# ========================================
+
+class ProjectCreate(BaseModel):
+    """Request model for creating a new project."""
+    name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+
+
+class ProjectUpdate(BaseModel):
+    """Request model for updating a project."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    status: Optional[str] = None
+
+
+class ProjectResponse(BaseModel):
+    """Response model for a project."""
+    id: str
+    name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    status: str = "active"
+    created_at: int
+    updated_at: int
+    rooms: List[str] = []
+
+
+class RoomProjectAssign(BaseModel):
+    """Request model for assigning a project to a room."""
+    project_id: str
 
 
 # ========================================
@@ -22,6 +61,9 @@ class Room(BaseModel):
     sort_order: int = 0
     default_model: Optional[str] = None
     speed_multiplier: float = 1.0
+    project_id: Optional[str] = None
+    project_name: Optional[str] = None
+    is_hq: bool = False
     created_at: int
     updated_at: int
 

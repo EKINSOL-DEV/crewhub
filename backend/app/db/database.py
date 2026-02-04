@@ -11,7 +11,7 @@ DB_DIR = Path.home() / ".crewhub"
 DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 3  # v3: Added discovery, settings API, backup system
+SCHEMA_VERSION = 4  # v4: Added projects table, rooms.project_id, rooms.is_hq
 
 
 async def init_database():
@@ -38,6 +38,22 @@ async def init_database():
                     sort_order INTEGER DEFAULT 0,
                     default_model TEXT,
                     speed_multiplier REAL DEFAULT 1.0,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            
+            # ========================================
+            # PROJECTS
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS projects (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    icon TEXT,
+                    color TEXT,
+                    status TEXT DEFAULT 'active',
                     created_at INTEGER NOT NULL,
                     updated_at INTEGER NOT NULL
                 )
@@ -178,6 +194,25 @@ async def init_database():
                 ON connections(enabled)
             """)
             
+            # ========================================
+            # MIGRATIONS
+            # ========================================
+            # v4: Add project_id and is_hq to rooms
+            try:
+                await db.execute("ALTER TABLE rooms ADD COLUMN project_id TEXT REFERENCES projects(id)")
+            except Exception:
+                pass  # Column already exists
+            
+            try:
+                await db.execute("ALTER TABLE rooms ADD COLUMN is_hq BOOLEAN DEFAULT 0")
+            except Exception:
+                pass  # Column already exists
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_rooms_project_id 
+                ON rooms(project_id)
+            """)
+            
             # Set initial version if not exists
             await db.execute("""
                 INSERT OR IGNORE INTO schema_version (version) 
@@ -243,6 +278,11 @@ async def seed_default_data():
                 INSERT OR IGNORE INTO rooms (id, name, icon, color, sort_order, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, default_rooms)
+            
+            # Set headquarters as HQ
+            await db.execute(
+                "UPDATE rooms SET is_hq = 1 WHERE id = 'headquarters'"
+            )
             
             # Create default agents
             default_agents = [

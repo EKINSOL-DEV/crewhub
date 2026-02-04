@@ -7,6 +7,9 @@ export interface Room {
   icon: string | null
   color: string | null
   sort_order: number
+  project_id: string | null
+  project_name: string | null
+  is_hq: boolean
   created_at: number
   updated_at: number
 }
