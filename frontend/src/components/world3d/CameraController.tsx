@@ -4,7 +4,7 @@ import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { useDragState } from '@/contexts/DragDropContext'
 import { botPositionRegistry } from './Bot3D'
-import type CameraControlsImpl from 'camera-controls'
+import CameraControlsImpl from 'camera-controls'
 import * as THREE from 'three'
 
 interface RoomPosition {
@@ -34,7 +34,11 @@ function getRoomCamera(roomPos: [number, number, number]) {
   }
 }
 
-// ─── Constraints per level ─────────────────────────────────────
+// ─── Mouse / touch actions ─────────────────────────────────────
+
+const ACTION = CameraControlsImpl.ACTION
+
+// ─── Constraints + interaction config per level ────────────────
 
 function applyConstraints(controls: CameraControlsImpl, level: FocusLevel) {
   switch (level) {
@@ -43,18 +47,39 @@ function applyConstraints(controls: CameraControlsImpl, level: FocusLevel) {
       controls.maxDistance = 120
       controls.minPolarAngle = Math.PI / 6
       controls.maxPolarAngle = Math.PI / 3
+      // Full controls: rotate, pan, zoom
+      controls.mouseButtons.left = ACTION.ROTATE
+      controls.mouseButtons.right = ACTION.TRUCK
+      controls.mouseButtons.wheel = ACTION.DOLLY
+      controls.touches.one = ACTION.TOUCH_ROTATE
+      controls.touches.two = ACTION.TOUCH_DOLLY_TRUCK
+      controls.touches.three = ACTION.TOUCH_TRUCK
       break
     case 'room':
       controls.minDistance = 8
       controls.maxDistance = 30
       controls.minPolarAngle = Math.PI / 8
       controls.maxPolarAngle = Math.PI / 2.5
+      // Full controls: rotate, pan, zoom
+      controls.mouseButtons.left = ACTION.ROTATE
+      controls.mouseButtons.right = ACTION.TRUCK
+      controls.mouseButtons.wheel = ACTION.DOLLY
+      controls.touches.one = ACTION.TOUCH_ROTATE
+      controls.touches.two = ACTION.TOUCH_DOLLY_TRUCK
+      controls.touches.three = ACTION.TOUCH_TRUCK
       break
     case 'bot':
       controls.minDistance = 2
       controls.maxDistance = 12
       controls.minPolarAngle = Math.PI / 8
       controls.maxPolarAngle = Math.PI / 2.5
+      // Orbital mode: rotate + zoom only, NO panning (keep orbit on bot)
+      controls.mouseButtons.left = ACTION.ROTATE
+      controls.mouseButtons.right = ACTION.NONE
+      controls.mouseButtons.wheel = ACTION.DOLLY
+      controls.touches.one = ACTION.TOUCH_ROTATE
+      controls.touches.two = ACTION.TOUCH_DOLLY
+      controls.touches.three = ACTION.NONE
       break
   }
 }
@@ -64,7 +89,10 @@ function applyConstraints(controls: CameraControlsImpl, level: FocusLevel) {
 // ─── Bot follow camera config ──────────────────────────────────
 
 const BOT_CAM_OFFSET = { x: 4, y: 6.5, z: 4 }
-const BOT_CAM_LERP_FACTOR = 0.03 // gentle follow (lower = smoother, less pop)
+const BOT_CAM_LERP_FACTOR = 0.05 // smooth orbit-target follow
+
+// Reusable vector to avoid GC pressure in useFrame
+const _desiredTarget = new THREE.Vector3()
 
 function getBotCamera(botPos: { x: number; y: number; z: number }) {
   return {
@@ -85,9 +113,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const prevRoomIdRef = useRef<string | null>(null)
   const prevBotKeyRef = useRef<string | null>(null)
 
-  // Lerp targets for smooth bot following
+  // Lerp target for smooth orbital following (orbit center tracks bot)
   const followTarget = useRef(new THREE.Vector3())
-  const followPos = useRef(new THREE.Vector3())
   const isFollowing = useRef(false)
 
   // ─── Disable camera controls during drag ──────────────────────
@@ -117,7 +144,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     prevRoomIdRef.current = state.focusedRoomId
     prevBotKeyRef.current = state.focusedBotKey
 
-    // Apply constraints for the new level
+    // Apply constraints + interaction config for the new level
     applyConstraints(controls, state.level)
 
     if (state.level === 'overview') {
@@ -132,22 +159,18 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
         controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, true)
       }
     } else if (state.level === 'bot' && state.focusedBotKey) {
-      // Initial fly-to the bot position
+      // Fly-to the bot's initial orbital position
       const botPos = botPositionRegistry.get(state.focusedBotKey)
       if (botPos) {
         const c = getBotCamera(botPos)
         controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, true)
-        // Initialize follow lerp targets
-        followPos.current.set(c.posX, c.posY, c.posZ)
         followTarget.current.set(c.targetX, c.targetY, c.targetZ)
       }
-      // Start following after transition — initialize lerp targets from actual camera position
+      // After fly-to transition completes, enable orbital following
       setTimeout(() => {
         if (controlsRef.current) {
-          const cam = controlsRef.current
-          // Read actual camera position to avoid pop
-          followPos.current.set(cam.camera.position.x, cam.camera.position.y, cam.camera.position.z)
-          const target = cam.getTarget(new THREE.Vector3())
+          // Sync follow target from actual camera target to avoid pop
+          const target = controlsRef.current.getTarget(new THREE.Vector3())
           followTarget.current.copy(target)
         }
         isFollowing.current = true
@@ -155,7 +178,11 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     }
   }, [state.level, state.focusedRoomId, state.focusedBotKey, roomPositions])
 
-  // ─── Smooth bot follow in useFrame ───────────────────────────
+  // ─── Orbital bot follow (useFrame) ───────────────────────────
+  // Only updates the orbit TARGET (look-at / orbit center).
+  // Camera position adjusts automatically via CameraControls,
+  // preserving the user's azimuth, polar angle, and distance.
+  // This enables free orbital rotation around the focused bot.
 
   useFrame(() => {
     if (!isFollowing.current || state.level !== 'bot' || !state.focusedBotKey || !controlsRef.current) return
@@ -164,16 +191,16 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     if (!botPos) return
 
     const controls = controlsRef.current
-    const cam = getBotCamera(botPos)
 
-    // Lerp toward desired camera + target positions
-    followPos.current.lerp(new THREE.Vector3(cam.posX, cam.posY, cam.posZ), BOT_CAM_LERP_FACTOR)
-    followTarget.current.lerp(new THREE.Vector3(cam.targetX, cam.targetY, cam.targetZ), BOT_CAM_LERP_FACTOR)
+    // Smoothly lerp orbit center toward bot's current position
+    _desiredTarget.set(botPos.x, 0.5, botPos.z)
+    followTarget.current.lerp(_desiredTarget, BOT_CAM_LERP_FACTOR)
 
-    // Apply (false = no transition animation, we handle smoothing ourselves)
-    controls.setLookAt(
-      followPos.current.x, followPos.current.y, followPos.current.z,
-      followTarget.current.x, followTarget.current.y, followTarget.current.z,
+    // Update only the orbit target — user's rotation & zoom are preserved
+    controls.setTarget(
+      followTarget.current.x,
+      followTarget.current.y,
+      followTarget.current.z,
       false,
     )
   })
