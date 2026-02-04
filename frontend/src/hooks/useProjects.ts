@@ -19,9 +19,6 @@ export interface ProjectOverview extends Project {
   agent_count: number
 }
 
-/** Well-known Synology Drive projects base path */
-export const SYNOLOGY_PROJECTS_BASE = "~/SynologyDrive/ekinbot/01-Projects"
-
 interface ProjectsResponse {
   projects: Project[]
 }

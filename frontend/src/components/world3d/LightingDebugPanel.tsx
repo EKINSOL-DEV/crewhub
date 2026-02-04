@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useLightingConfig, useLightingPanelVisibility, type LightingConfig } from '@/hooks/useLightingConfig'
+import { useLightingConfig, useLightingPanelVisibility, type LightingConfig, type ShadowMapType } from '@/hooks/useLightingConfig'
 
 // ─── Slider Component ───────────────────────────────────────────
 
@@ -31,7 +31,7 @@ function Slider({
         className="flex-1 h-1 accent-blue-400"
         style={{ minWidth: 60 }}
       />
-      <span className="text-[10px] text-gray-300 font-mono w-8 text-right">{value.toFixed(1)}</span>
+      <span className="text-[10px] text-gray-300 font-mono w-10 text-right">{step < 0.01 ? value.toFixed(4) : step < 0.1 ? value.toFixed(2) : value.toFixed(1)}</span>
     </div>
   )
 }
@@ -94,6 +94,24 @@ const TONE_LABELS: Record<string, string> = {
   ReinhardToneMapping: 'Reinhard',
   CineonToneMapping: 'Cineon',
 }
+
+// ─── Shadow Type Dropdown ────────────────────────────────────────
+
+const SHADOW_TYPE_OPTIONS: ShadowMapType[] = [
+  'BasicShadowMap',
+  'PCFShadowMap',
+  'PCFSoftShadowMap',
+  'VSMShadowMap',
+]
+
+const SHADOW_TYPE_LABELS: Record<ShadowMapType, string> = {
+  BasicShadowMap: 'Basic',
+  PCFShadowMap: 'PCF',
+  PCFSoftShadowMap: 'PCF Soft',
+  VSMShadowMap: 'VSM',
+}
+
+const SHADOW_MAP_SIZES = [512, 1024, 2048, 4096]
 
 // ─── Main Panel ─────────────────────────────────────────────────
 
@@ -208,6 +226,10 @@ export function LightingDebugPanel() {
       p[axis] = val
       return { ...prev, fill: { ...prev.fill, position: p } }
     })
+  const setShadows = (patch: Partial<LightingConfig['shadows']>) =>
+    setConfig(prev => ({ ...prev, shadows: { ...prev.shadows, ...patch } }))
+  const setShadowCamera = (patch: Partial<LightingConfig['shadows']['camera']>) =>
+    setConfig(prev => ({ ...prev, shadows: { ...prev.shadows, camera: { ...prev.shadows.camera, ...patch } } }))
 
   if (!visible) return null
 
@@ -261,6 +283,43 @@ export function LightingDebugPanel() {
           <Slider label="Pos Y" value={config.sun.position[1]} min={-50} max={50} step={1} onChange={v => setSunPos(1, v)} />
           <Slider label="Pos Z" value={config.sun.position[2]} min={-50} max={50} step={1} onChange={v => setSunPos(2, v)} />
           <Toggle label="Shadows" checked={config.sun.castShadow} onChange={v => setSun({ castShadow: v })} />
+
+          {/* ── Shadows ── */}
+          <SectionHeader title="☁️ Shadows" />
+          <Toggle label="Enabled" checked={config.shadows.enabled} onChange={v => setShadows({ enabled: v })} />
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-400 w-14 shrink-0">Type</span>
+            <select
+              value={config.shadows.type}
+              onChange={e => setShadows({ type: e.target.value as ShadowMapType })}
+              className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
+            >
+              {SHADOW_TYPE_OPTIONS.map(opt => (
+                <option key={opt} value={opt}>{SHADOW_TYPE_LABELS[opt]}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-400 w-14 shrink-0">Map Size</span>
+            <select
+              value={config.shadows.mapSize}
+              onChange={e => setShadows({ mapSize: parseInt(e.target.value, 10) })}
+              className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
+            >
+              {SHADOW_MAP_SIZES.map(size => (
+                <option key={size} value={size}>{size}×{size}</option>
+              ))}
+            </select>
+          </div>
+          <Slider label="Bias" value={config.shadows.bias} min={-0.005} max={0.005} step={0.0001} onChange={v => setShadows({ bias: v })} />
+          <Slider label="N. Bias" value={config.shadows.normalBias} min={0} max={0.1} step={0.001} onChange={v => setShadows({ normalBias: v })} />
+          {config.shadows.type === 'PCFSoftShadowMap' && (
+            <Slider label="Radius" value={config.shadows.radius} min={0} max={10} step={0.1} onChange={v => setShadows({ radius: v })} />
+          )}
+          <Slider label="Darkness" value={config.shadows.darkness} min={0} max={1} step={0.05} onChange={v => setShadows({ darkness: v })} />
+          <Slider label="Cam Near" value={config.shadows.camera.near} min={0.1} max={10} step={0.1} onChange={v => setShadowCamera({ near: v })} />
+          <Slider label="Cam Far" value={config.shadows.camera.far} min={10} max={500} step={5} onChange={v => setShadowCamera({ far: v })} />
+          <Slider label="Cam Size" value={config.shadows.camera.size} min={5} max={100} step={1} onChange={v => setShadowCamera({ size: v })} />
 
           {/* ── Fill Light ── */}
           <SectionHeader title="🔆 Fill Light" />

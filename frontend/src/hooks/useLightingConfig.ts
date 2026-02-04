@@ -2,11 +2,29 @@ import { useState, useCallback, useEffect } from 'react'
 
 // ─── Lighting Config Types ──────────────────────────────────────
 
+export type ShadowMapType = 'BasicShadowMap' | 'PCFShadowMap' | 'PCFSoftShadowMap' | 'VSMShadowMap'
+
+export interface ShadowConfig {
+  enabled: boolean
+  type: ShadowMapType
+  mapSize: number
+  bias: number
+  normalBias: number
+  radius: number
+  darkness: number
+  camera: {
+    near: number
+    far: number
+    size: number
+  }
+}
+
 export interface LightingConfig {
   ambient: { intensity: number; color: string }
   hemisphere: { skyColor: string; groundColor: string; intensity: number }
   sun: { intensity: number; color: string; position: [number, number, number]; castShadow: boolean }
   fill: { intensity: number; color: string; position: [number, number, number] }
+  shadows: ShadowConfig
   toneMapping: 'NoToneMapping' | 'ACESFilmicToneMapping' | 'ReinhardToneMapping' | 'CineonToneMapping'
   toneMappingExposure: number
   environmentIntensity: number
@@ -14,11 +32,27 @@ export interface LightingConfig {
 
 // ─── Brighter Defaults ──────────────────────────────────────────
 
+export const DEFAULT_SHADOWS: ShadowConfig = {
+  enabled: true,
+  type: 'PCFSoftShadowMap',
+  mapSize: 2048,
+  bias: -0.001,
+  normalBias: 0.02,
+  radius: 2,
+  darkness: 0.4,
+  camera: {
+    near: 0.5,
+    far: 100,
+    size: 30,
+  },
+}
+
 export const DEFAULT_LIGHTING: LightingConfig = {
   ambient: { intensity: 0.8, color: '#ffffff' },
   hemisphere: { skyColor: '#87CEEB', groundColor: '#8B7355', intensity: 0.6 },
   sun: { intensity: 1.5, color: '#FFF5E6', position: [15, 25, 10], castShadow: true },
   fill: { intensity: 0.4, color: '#E6F0FF', position: [-10, 15, -8] },
+  shadows: { ...DEFAULT_SHADOWS },
   toneMapping: 'ACESFilmicToneMapping',
   toneMappingExposure: 1.0,
   environmentIntensity: 1.0,
@@ -31,7 +65,16 @@ function loadConfig(): LightingConfig {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<LightingConfig>
-      return { ...DEFAULT_LIGHTING, ...parsed }
+      // Deep-merge shadows to handle old configs missing the shadows field or partial shadows
+      const shadows: ShadowConfig = {
+        ...DEFAULT_SHADOWS,
+        ...(parsed.shadows ?? {}),
+        camera: {
+          ...DEFAULT_SHADOWS.camera,
+          ...(parsed.shadows?.camera ?? {}),
+        },
+      }
+      return { ...DEFAULT_LIGHTING, ...parsed, shadows }
     }
   } catch { /* ignore */ }
   return { ...DEFAULT_LIGHTING }
