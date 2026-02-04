@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
@@ -16,12 +16,91 @@ interface CameraControllerProps {
   roomPositions: RoomPosition[]
 }
 
-// ─── Camera presets per focus level ────────────────────────────
+// ─── Overview Camera Presets ───────────────────────────────────
 
-const OVERVIEW_CAMERA = {
-  posX: 45, posY: 40, posZ: 45,
-  targetX: 0, targetY: 0, targetZ: 0,
+export interface CameraPreset {
+  name: string
+  icon: string
+  /** Polar angle from Y axis (radians). Lower = more overhead. */
+  polarAngle: number
+  /** Azimuth angle around Y axis (radians). */
+  azimuthAngle: number
+  /** Camera distance from target. */
+  distance: number
 }
+
+export const CAMERA_PRESETS: CameraPreset[] = [
+  {
+    name: 'Isometric',
+    icon: '🏗️',
+    polarAngle: 1.0,           // ~57° from Y axis ≈ 33° elevation
+    azimuthAngle: Math.PI / 4, // 45°
+    distance: 75,
+  },
+  {
+    name: 'Management Sim',
+    icon: '🏛️',
+    polarAngle: 0.55,          // ~31.5° from Y axis ≈ 58.5° elevation (more overhead)
+    azimuthAngle: Math.PI / 4, // 45°
+    distance: 90,              // Slightly further out to see more of the world
+  },
+]
+
+// ─── Preset Store (module-level, synced with localStorage) ─────
+
+const PRESET_STORAGE_KEY = 'crewhub-camera-preset'
+
+function loadPresetIndex(): number {
+  try {
+    const stored = localStorage.getItem(PRESET_STORAGE_KEY)
+    if (stored !== null) {
+      const idx = parseInt(stored, 10)
+      if (idx >= 0 && idx < CAMERA_PRESETS.length) return idx
+    }
+  } catch { /* ignore */ }
+  return 0
+}
+
+let _presetIndex = loadPresetIndex()
+const _presetListeners = new Set<() => void>()
+
+function getPresetSnapshot(): number { return _presetIndex }
+function subscribePreset(listener: () => void) {
+  _presetListeners.add(listener)
+  return () => { _presetListeners.delete(listener) }
+}
+function setPresetIndex(index: number) {
+  _presetIndex = index
+  try { localStorage.setItem(PRESET_STORAGE_KEY, String(index)) } catch { /* ignore */ }
+  _presetListeners.forEach(l => l())
+}
+
+/** Hook to read and cycle overview camera presets (works outside Canvas too). */
+export function useCameraPreset() {
+  const index = useSyncExternalStore(subscribePreset, getPresetSnapshot, getPresetSnapshot)
+  return {
+    preset: CAMERA_PRESETS[index] || CAMERA_PRESETS[0],
+    presetIndex: index,
+    presetCount: CAMERA_PRESETS.length,
+    cyclePreset: () => setPresetIndex((index + 1) % CAMERA_PRESETS.length),
+  }
+}
+
+// ─── Helpers ───────────────────────────────────────────────────
+
+/** Convert a preset's spherical coordinates to a camera look-at position (target at origin). */
+function presetToLookAt(preset: CameraPreset) {
+  return {
+    posX: preset.distance * Math.sin(preset.polarAngle) * Math.sin(preset.azimuthAngle),
+    posY: preset.distance * Math.cos(preset.polarAngle),
+    posZ: preset.distance * Math.sin(preset.polarAngle) * Math.cos(preset.azimuthAngle),
+    targetX: 0,
+    targetY: 0,
+    targetZ: 0,
+  }
+}
+
+// ─── Camera presets per focus level ────────────────────────────
 
 function getRoomCamera(roomPos: [number, number, number]) {
   return {
@@ -148,6 +227,10 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const wasdVelocity = useRef(new THREE.Vector3())
   const wasdRotVelocity = useRef(0)
 
+  // ─── Camera preset cycling ────────────────────────────────────
+  const presetIndex = useSyncExternalStore(subscribePreset, getPresetSnapshot, getPresetSnapshot)
+  const prevPresetRef = useRef(presetIndex)
+
   // ─── Disable camera controls during drag ──────────────────────
 
   useEffect(() => {
@@ -213,6 +296,39 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     }
   }, [wasdEnabled])
 
+  // ─── 'C' key: cycle camera presets (overview only) ──────────
+
+  useEffect(() => {
+    if (state.level !== 'overview') return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInputFocused()) return
+      if (e.code === 'KeyC') {
+        setPresetIndex((getPresetSnapshot() + 1) % CAMERA_PRESETS.length)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [state.level])
+
+  // ─── Animate to new preset when cycling within overview ───────
+
+  useEffect(() => {
+    // Skip on initial mount (prevPresetRef matches presetIndex)
+    if (prevPresetRef.current === presetIndex) return
+    prevPresetRef.current = presetIndex
+
+    const controls = controlsRef.current
+    if (!controls || state.level !== 'overview') return
+
+    const preset = CAMERA_PRESETS[presetIndex]
+    if (!preset) return
+
+    controls.rotateTo(preset.azimuthAngle, preset.polarAngle, true)
+    controls.dollyTo(preset.distance, true)
+  }, [presetIndex, state.level])
+
   // ─── Transition on focus change ──────────────────────────────
 
   useEffect(() => {
@@ -249,7 +365,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
 
     if (state.level === 'overview') {
       isFollowing.current = false
-      const c = OVERVIEW_CAMERA
+      const preset = CAMERA_PRESETS[getPresetSnapshot()] || CAMERA_PRESETS[0]
+      const c = presetToLookAt(preset)
       controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, true)
     } else if (state.level === 'room' && state.focusedRoomId) {
       isFollowing.current = false

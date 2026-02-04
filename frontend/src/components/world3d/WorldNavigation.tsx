@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
+import { useCameraPreset } from './CameraController'
 import type { Room } from '@/hooks/useRooms'
 
 interface WorldNavigationProps {
@@ -8,6 +9,7 @@ interface WorldNavigationProps {
 
 export function WorldNavigation({ rooms }: WorldNavigationProps) {
   const { state, goBack, enterFirstPerson } = useWorldFocus()
+  const { preset, cyclePreset } = useCameraPreset()
 
   // Keyboard: Escape goes up one level (but NOT in first person — PointerLockControls handles ESC)
   useEffect(() => {
@@ -23,7 +25,7 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
   // Hide navigation in first person mode (HUD takes over)
   if (state.level === 'firstperson') return null
 
-  // Show first person button in overview mode
+  // Show first person button + camera preset button in overview mode
   if (state.level === 'overview') {
     return (
       <div
@@ -32,6 +34,9 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
           top: 16,
           left: 16,
           zIndex: 50,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
         }}
       >
         <button
@@ -65,6 +70,42 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
           title="Enter first person walking mode"
         >
           🚶 Walk Around
+        </button>
+
+        {/* Camera preset cycle button */}
+        <button
+          onClick={cyclePreset}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 12px',
+            borderRadius: 10,
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontWeight: 500,
+            color: '#6B7280',
+            background: 'rgba(255,255,255,0.65)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
+            transition: 'all 0.2s ease',
+            fontFamily: 'system-ui, sans-serif',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.85)'
+            e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.12)'
+            e.currentTarget.style.color = '#374151'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.65)'
+            e.currentTarget.style.boxShadow = '0 1px 6px rgba(0,0,0,0.08)'
+            e.currentTarget.style.color = '#6B7280'
+          }}
+          title="Cycle camera angle (C)"
+        >
+          📐 {preset.name}
         </button>
       </div>
     )
