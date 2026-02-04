@@ -4,9 +4,11 @@ import { RoomFloor } from './RoomFloor'
 import { RoomWalls } from './RoomWalls'
 import { RoomNameplate } from './RoomNameplate'
 import { GridRoomRenderer } from './grid/GridRoomRenderer'
+import { GridDebugOverlay, GridDebugLabels } from './grid/GridDebugOverlay'
 import { getBlueprintForRoom } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragDrop } from '@/contexts/DragDropContext'
+import { useGridDebug } from '@/hooks/useGridDebug'
 import type { Room } from '@/hooks/useRooms'
 
 interface Room3DProps {
@@ -140,6 +142,9 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
 export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const roomColor = room.color || '#4f46e5'
   const blueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
+  const [gridDebugEnabled] = useGridDebug()
+  const { state } = useWorldFocus()
+  const isRoomFocused = state.focusedRoomId === room.id && state.level === 'room'
 
   return (
     <group position={position}>
@@ -165,6 +170,14 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
 
       {/* ─── Grid-based furniture props ────────────────────────────── */}
       <GridRoomRenderer blueprint={blueprint} roomPosition={position} />
+
+      {/* ─── Grid debug overlay (dev tool) ─────────────────────────── */}
+      {gridDebugEnabled && (
+        <>
+          <GridDebugOverlay blueprint={blueprint} />
+          <GridDebugLabels blueprint={blueprint} showLabels={isRoomFocused} />
+        </>
+      )}
     </group>
   )
 }

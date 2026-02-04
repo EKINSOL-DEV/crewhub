@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
+import { useGridDebug } from "@/hooks/useGridDebug"
 import {
   Sun, Moon, Monitor, X, Plus, Trash2, Edit2, Check,
   ChevronUp, ChevronDown, ChevronRight,
@@ -137,6 +138,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   const { rooms, createRoom, updateRoom, deleteRoom, reorderRooms, isLoading: roomsLoading } = useRooms()
   const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
   const { toast } = useToast()
+  const [gridDebugEnabled, toggleGridDebug] = useGridDebug()
 
   // ─── Room management state ───
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false)
@@ -698,6 +700,20 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                       <span>🐌 Slow</span>
                       <span>⚡ Fast</span>
                     </div>
+                  </div>
+                </Section>
+
+                <Section title="🔧 Developer">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="grid-debug" className="flex flex-col gap-1">
+                      <span className="text-sm">Grid Overlay</span>
+                      <span className="text-xs text-muted-foreground font-normal">Show 20×20 grid debug overlay on rooms</span>
+                    </Label>
+                    <Switch
+                      id="grid-debug"
+                      checked={gridDebugEnabled}
+                      onCheckedChange={(checked) => toggleGridDebug(checked)}
+                    />
                   </div>
                 </Section>
 
