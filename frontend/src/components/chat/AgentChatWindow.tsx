@@ -186,19 +186,20 @@ export function AgentChatWindow({
       container.scrollHeight - container.scrollTop - container.clientHeight < threshold
   }, [])
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (only if already near bottom)
   useEffect(() => {
-    if (messages.length > prevMessageCount.current && isNearBottomRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messages.length > prevMessageCount.current) {
+      if (prevMessageCount.current === 0) {
+        // First load — instant scroll, no visual jump
+        const container = scrollContainerRef.current
+        if (container) {
+          container.scrollTop = container.scrollHeight
+        }
+      } else if (isNearBottomRef.current) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }
     }
     prevMessageCount.current = messages.length
-  }, [messages.length])
-
-  // Instant scroll on first load
-  useEffect(() => {
-    if (messages.length > 0 && prevMessageCount.current === 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
-    }
   }, [messages.length])
 
   // Focus input on mount
