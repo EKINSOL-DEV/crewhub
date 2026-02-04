@@ -180,7 +180,7 @@ function ExteriorGround({ buildingWidth, buildingDepth }: { buildingWidth: numbe
 
   return (
     <group>
-      <instancedMesh ref={instanceRef} args={[undefined, undefined, count]} receiveShadow>
+      <instancedMesh ref={instanceRef} args={[undefined, undefined, count]} receiveShadow frustumCulled={false}>
         <boxGeometry args={[tileSize, tileSize, 0.1]} />
         <meshToonMaterial {...toonProps} />
       </instancedMesh>
