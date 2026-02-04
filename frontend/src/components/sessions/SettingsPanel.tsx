@@ -510,6 +510,31 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                   </div>
                 </Section>
 
+                <Section title="📷 Camera">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex flex-col gap-1">
+                        <span className="text-sm">Camera Height</span>
+                        <span className="text-xs text-muted-foreground font-normal">Adjust overview camera elevation</span>
+                      </Label>
+                      <span className="text-sm text-muted-foreground">{sessionConfig.cameraHeight}</span>
+                    </div>
+                    <input
+                      type="range"
+                      value={sessionConfig.cameraHeight}
+                      onChange={(e) => updateConfig('cameraHeight', Number(e.target.value))}
+                      min={20}
+                      max={80}
+                      step={5}
+                      className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Close</span>
+                      <span>Far</span>
+                    </div>
+                  </div>
+                </Section>
+
                 <div className="space-y-6">
                   <Section title="📺 Display">
                     <div className="flex items-center justify-between">

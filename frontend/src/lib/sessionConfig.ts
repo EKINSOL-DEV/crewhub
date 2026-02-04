@@ -46,6 +46,9 @@ export const SESSION_CONFIG_DEFAULTS = {
   logViewerPollMs: 3_000,               // log viewer refresh interval
   cronViewPollMs: 30_000,               // cron view refresh interval
 
+  // ── Camera (3D) ──
+  cameraHeight: 40,                     // overview camera Y position (20-80)
+
   // ── Playground 2D ──
   targetUpdateActiveMs: 2_000,           // movement target update for active sessions
   targetUpdateIdleMs: 4_000,             // movement target update for idle sessions

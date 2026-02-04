@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { useDragState } from '@/contexts/DragDropContext'
+import { useSessionConfig } from '@/hooks/useSessionConfig'
 import { botPositionRegistry } from './Bot3D'
 import CameraControlsImpl from 'camera-controls'
 import * as THREE from 'three'
@@ -16,11 +17,19 @@ interface CameraControllerProps {
   roomPositions: RoomPosition[]
 }
 
-// ─── Camera presets per focus level ────────────────────────────
+// ─── Camera helpers ────────────────────────────────────────────
 
-const OVERVIEW_CAMERA = {
-  posX: 45, posY: 40, posZ: 45,
-  targetX: 0, targetY: 0, targetZ: 0,
+function getOverviewCamera(height: number) {
+  // Maintain ~45° isometric angle: X and Z scale with height
+  const xzFactor = 1.125 // original: 45/40
+  return {
+    posX: height * xzFactor,
+    posY: height,
+    posZ: height * xzFactor,
+    targetX: 0,
+    targetY: 0,
+    targetZ: 0,
+  }
 }
 
 function getRoomCamera(roomPos: [number, number, number]) {
@@ -136,6 +145,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const controlsRef = useRef<CameraControlsImpl>(null)
   const { state } = useWorldFocus()
   const { isDragging } = useDragState()
+  const sessionConfig = useSessionConfig()
   const prevLevelRef = useRef<FocusLevel>('overview')
   const prevRoomIdRef = useRef<string | null>(null)
   const prevBotKeyRef = useRef<string | null>(null)
@@ -249,7 +259,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
 
     if (state.level === 'overview') {
       isFollowing.current = false
-      const c = OVERVIEW_CAMERA
+      const c = getOverviewCamera(sessionConfig.cameraHeight)
       controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, true)
     } else if (state.level === 'room' && state.focusedRoomId) {
       isFollowing.current = false
