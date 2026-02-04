@@ -96,6 +96,13 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
       .sort((a, b) => b.updated_at - a.updated_at)
   }, [projects, search, currentProjectId])
 
+  // Auto-generated folder path preview
+  const autoFolderPath = useMemo(() => {
+    if (!newName.trim()) return ''
+    const slug = newName.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '')
+    return `${SYNOLOGY_PROJECTS_BASE}/${slug}`
+  }, [newName])
+
   const handleCreate = useCallback(async () => {
     if (!newName.trim()) return
     setIsCreating(true)
@@ -108,7 +115,7 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
     } else {
       setCreateError('error' in result ? (result as { error: string }).error : 'Failed to create')
     }
-  }, [newName, newIcon, newColor, onCreate, onSelect])
+  }, [newName, newIcon, newColor, newFolderPath, onCreate, onSelect])
 
   return (
     <div
@@ -421,11 +428,11 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
           {/* Folder Path */}
           <div>
             <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4, display: 'block' }}>
-              Project Folder (optional)
+              Project Folder
             </label>
             <input
               type="text"
-              placeholder={`${SYNOLOGY_PROJECTS_BASE}/MyProject`}
+              placeholder={autoFolderPath || `${SYNOLOGY_PROJECTS_BASE}/MyProject`}
               value={newFolderPath}
               onChange={e => setNewFolderPath(e.target.value)}
               style={{
@@ -442,6 +449,11 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
               onFocus={e => { e.currentTarget.style.borderColor = '#3b82f6' }}
               onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' }}
             />
+            {!newFolderPath && autoFolderPath && (
+              <div style={{ fontSize: 10, color: '#059669', marginTop: 3 }}>
+                Auto-generated: {autoFolderPath}
+              </div>
+            )}
             {/* Quick-link suggestions from Synology Drive */}
             {discoveredFolders.length > 0 && !newFolderPath && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>

@@ -395,7 +395,15 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
         const res = await fetch(`${API_BASE}/projects/${projectId}/files?depth=3`)
         if (!res.ok) {
           const err = await res.json().catch(() => ({ detail: 'Failed to load files' }))
-          throw new Error(err.detail || 'Failed to load files')
+          const detail = err.detail || 'Failed to load files'
+          // Friendly message for missing folder
+          if (detail.includes('no folder configured')) {
+            throw new Error('No project folder configured. Set a folder path in project settings to browse docs.')
+          }
+          if (detail.includes('not found')) {
+            throw new Error('Project folder not found on disk. The configured path may not exist yet.')
+          }
+          throw new Error(detail)
         }
         const data = await res.json()
         setFiles(data.files || [])

@@ -420,7 +420,7 @@ export function RoomInfoPanel({
               </div>
 
               {/* Browse Docs button (only when folder_path is set) */}
-              {currentProject?.folder_path && (
+              {currentProject?.folder_path ? (
                 <button
                   onClick={() => onOpenDocs?.(currentProject.id, currentProject.name, currentProject.color || undefined)}
                   style={{
@@ -446,6 +446,18 @@ export function RoomInfoPanel({
                 >
                   📂 Browse Project Docs
                 </button>
+              ) : (
+                <div style={{
+                  marginTop: 8,
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  background: 'rgba(0, 0, 0, 0.03)',
+                  fontSize: 11,
+                  color: '#9ca3af',
+                  textAlign: 'center',
+                }}>
+                  No folder configured — docs browser unavailable
+                </div>
               )}
 
               {/* Action buttons */}

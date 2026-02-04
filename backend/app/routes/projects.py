@@ -1,4 +1,5 @@
 """Projects API routes."""
+import re
 import time
 import logging
 from fastapi import APIRouter, HTTPException
@@ -140,6 +141,12 @@ async def create_project(project: ProjectCreate):
             now = int(time.time() * 1000)
             project_id = generate_id()
 
+            # Auto-generate folder_path from name if not provided
+            folder_path = project.folder_path
+            if not folder_path:
+                slug = re.sub(r'[^a-zA-Z0-9]+', '-', project.name).strip('-')
+                folder_path = f"~/SynologyDrive/ekinbot/01-Projects/{slug}"
+
             await db.execute(
                 """INSERT INTO projects (id, name, description, icon, color, folder_path, status, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
@@ -149,7 +156,7 @@ async def create_project(project: ProjectCreate):
                     project.description,
                     project.icon,
                     project.color,
-                    project.folder_path,
+                    folder_path,
                     now,
                     now,
                 ),
@@ -164,7 +171,7 @@ async def create_project(project: ProjectCreate):
                 description=project.description,
                 icon=project.icon,
                 color=project.color,
-                folder_path=project.folder_path,
+                folder_path=folder_path,
                 status="active",
                 created_at=now,
                 updated_at=now,
