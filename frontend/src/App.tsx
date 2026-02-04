@@ -12,7 +12,7 @@ import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ChatProvider } from './contexts/ChatContext'
-import { FloatingChatPanel } from './components/chat/FloatingChatPanel'
+import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Square, Globe } from 'lucide-react'
 import { Button } from './components/ui/button'
@@ -230,7 +230,7 @@ function AppContent() {
         onSettingsChange={handleSettingsChange}
       />
 
-      <FloatingChatPanel />
+      <ChatWindowManager />
     </div>
   )
 }

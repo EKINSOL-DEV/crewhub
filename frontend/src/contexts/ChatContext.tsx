@@ -2,112 +2,114 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef, ty
 
 // ── Types ──────────────────────────────────────────────────────
 
-export interface ChatTab {
+export interface ChatWindowState {
   sessionKey: string
   agentName: string
   agentIcon: string | null
   agentColor: string | null
-}
-
-export interface ChatState {
-  isOpen: boolean
   isMinimized: boolean
-  tabs: ChatTab[]
-  activeTabKey: string | null
   isPinned: boolean
-  position: { x: number; y: number } | null
+  position: { x: number; y: number }
   size: { width: number; height: number }
+  zIndex: number
 }
 
 export interface ChatContextValue {
-  chat: ChatState
+  windows: ChatWindowState[]
   openChat: (sessionKey: string, agentName: string, agentIcon?: string, agentColor?: string) => void
-  closeTab: (sessionKey: string) => void
-  closeChat: () => void
-  switchTab: (sessionKey: string) => void
-  togglePin: () => void
-  toggleMinimize: () => void
-  updatePosition: (pos: { x: number; y: number }) => void
-  updateSize: (size: { width: number; height: number }) => void
+  closeChat: (sessionKey: string) => void
+  minimizeChat: (sessionKey: string) => void
+  restoreChat: (sessionKey: string) => void
+  togglePin: (sessionKey: string) => void
+  focusChat: (sessionKey: string) => void
+  updatePosition: (sessionKey: string, pos: { x: number; y: number }) => void
+  updateSize: (sessionKey: string, size: { width: number; height: number }) => void
   onFocusAgent: ((sessionKey: string) => void) | null
   setFocusHandler: (handler: ((sessionKey: string) => void) | null) => void
 }
 
 // ── Constants ──────────────────────────────────────────────────
 
-const DEFAULT_SIZE = { width: 400, height: 520 }
-const MIN_WIDTH = 320
-const MIN_HEIGHT = 300
-const MAX_WIDTH = 700
-const MAX_HEIGHT = 800
-
-export { MIN_WIDTH, MIN_HEIGHT, MAX_WIDTH, MAX_HEIGHT }
+export const DEFAULT_SIZE = { width: 420, height: 520 }
+export const MIN_SIZE = { width: 320, height: 350 }
+export const MAX_SIZE = { width: 700, height: 800 }
 
 // ── Storage ────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'crewhub-chat-state'
+const STORAGE_KEY = 'crewhub-chat-windows'
 
-interface StoredChatState {
-  tabs: ChatTab[]
-  activeTabKey: string | null
+interface StoredWindow {
+  sessionKey: string
+  agentName: string
+  agentIcon: string | null
+  agentColor: string | null
+  isMinimized: boolean
   isPinned: boolean
-  position: { x: number; y: number } | null
+  position: { x: number; y: number }
   size: { width: number; height: number }
 }
 
-function loadStoredState(): StoredChatState | null {
+function loadStoredWindows(): StoredWindow[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
+    if (!raw) return []
     const parsed = JSON.parse(raw)
-    // Validate structure
-    if (!Array.isArray(parsed.tabs)) return null
-    return parsed as StoredChatState
+    if (!Array.isArray(parsed)) return []
+    return parsed as StoredWindow[]
   } catch {
-    return null
+    return []
   }
 }
 
-function saveStoredState(state: StoredChatState): void {
+function saveStoredWindows(windows: ChatWindowState[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    const toStore: StoredWindow[] = windows
+      .filter(w => w.isPinned) // Only persist pinned windows
+      .map(w => ({
+        sessionKey: w.sessionKey,
+        agentName: w.agentName,
+        agentIcon: w.agentIcon,
+        agentColor: w.agentColor,
+        isMinimized: w.isMinimized,
+        isPinned: w.isPinned,
+        position: w.position,
+        size: w.size,
+      }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore))
   } catch {
     // Ignore storage errors
   }
 }
 
-function clearStoredState(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY)
-  } catch {
-    // Ignore
+// ── Helpers ────────────────────────────────────────────────────
+
+let nextZIndex = 1000
+
+function getNextZIndex(): number {
+  return ++nextZIndex
+}
+
+function getDefaultPosition(index: number): { x: number; y: number } {
+  // Cascade windows with offset, starting from center-ish
+  const baseX = typeof window !== 'undefined' ? Math.max(200, window.innerWidth / 2 - 200) : 300
+  const baseY = typeof window !== 'undefined' ? Math.max(80, window.innerHeight / 4) : 100
+  return {
+    x: baseX + (index % 5) * 30,
+    y: baseY + (index % 5) * 30,
   }
 }
 
-// ── Default state ──────────────────────────────────────────────
+// ── Initial state ──────────────────────────────────────────────
 
-function getInitialState(): ChatState {
-  const stored = loadStoredState()
-  if (stored?.isPinned && stored.tabs.length > 0) {
-    return {
-      isOpen: true,
-      isMinimized: false,
-      tabs: stored.tabs,
-      activeTabKey: stored.activeTabKey ?? stored.tabs[0]?.sessionKey ?? null,
-      isPinned: true,
-      position: stored.position ?? null,
-      size: stored.size ?? DEFAULT_SIZE,
-    }
-  }
-  return {
-    isOpen: false,
-    isMinimized: false,
-    tabs: [],
-    activeTabKey: null,
-    isPinned: false,
-    position: null,
-    size: DEFAULT_SIZE,
-  }
+function getInitialWindows(): ChatWindowState[] {
+  const stored = loadStoredWindows()
+  return stored.map((w, i) => ({
+    ...w,
+    zIndex: getNextZIndex(),
+    isMinimized: w.isMinimized ?? true, // Restore pinned as minimized
+    position: w.position ?? getDefaultPosition(i),
+    size: w.size ?? DEFAULT_SIZE,
+  }))
 }
 
 // ── Context ────────────────────────────────────────────────────
@@ -115,7 +117,7 @@ function getInitialState(): ChatState {
 const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
-  const [chat, setChat] = useState<ChatState>(getInitialState)
+  const [windows, setWindows] = useState<ChatWindowState[]>(getInitialWindows)
   const focusHandlerRef = useRef<((sessionKey: string) => void) | null>(null)
   const [, setFocusHandlerVersion] = useState(0)
 
@@ -128,140 +130,111 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   // Persist state
   useEffect(() => {
-    if (chat.isPinned && chat.tabs.length > 0) {
-      saveStoredState({
-        tabs: chat.tabs,
-        activeTabKey: chat.activeTabKey,
-        isPinned: true,
-        position: chat.position,
-        size: chat.size,
-      })
-    } else if (!chat.isPinned) {
-      clearStoredState()
-    }
-  }, [chat.isPinned, chat.tabs, chat.activeTabKey, chat.position, chat.size])
+    saveStoredWindows(windows)
+  }, [windows])
 
   const openChat = useCallback(
     (sessionKey: string, agentName: string, agentIcon?: string, agentColor?: string) => {
-      setChat((prev) => {
-        const existingTab = prev.tabs.find(t => t.sessionKey === sessionKey)
-        if (existingTab) {
-          // Tab exists → just switch to it and open
-          return {
-            ...prev,
-            isOpen: true,
-            isMinimized: false,
-            activeTabKey: sessionKey,
-          }
+      setWindows(prev => {
+        const existing = prev.find(w => w.sessionKey === sessionKey)
+        if (existing) {
+          // Already open — restore if minimized and bring to front
+          return prev.map(w =>
+            w.sessionKey === sessionKey
+              ? { ...w, isMinimized: false, zIndex: getNextZIndex() }
+              : w
+          )
         }
-        // New tab
-        const newTab: ChatTab = {
+        // New window
+        const newWindow: ChatWindowState = {
           sessionKey,
           agentName,
           agentIcon: agentIcon ?? null,
           agentColor: agentColor ?? null,
-        }
-        return {
-          ...prev,
-          isOpen: true,
           isMinimized: false,
-          tabs: [...prev.tabs, newTab],
-          activeTabKey: sessionKey,
+          isPinned: false,
+          position: getDefaultPosition(prev.length),
+          size: { ...DEFAULT_SIZE },
+          zIndex: getNextZIndex(),
         }
+        return [...prev, newWindow]
       })
     },
     []
   )
 
-  const closeTab = useCallback((sessionKey: string) => {
-    setChat((prev) => {
-      const newTabs = prev.tabs.filter(t => t.sessionKey !== sessionKey)
-      if (newTabs.length === 0) {
-        // No tabs left → close panel
-        return {
-          ...prev,
-          isOpen: false,
-          isMinimized: false,
-          tabs: [],
-          activeTabKey: null,
-          isPinned: false,
-        }
-      }
-      // If we closed the active tab, switch to another
-      let newActiveKey = prev.activeTabKey
-      if (prev.activeTabKey === sessionKey) {
-        // Try to find the tab that was before the closed one
-        const closedIndex = prev.tabs.findIndex(t => t.sessionKey === sessionKey)
-        const newIndex = Math.min(closedIndex, newTabs.length - 1)
-        newActiveKey = newTabs[newIndex]?.sessionKey ?? newTabs[0]?.sessionKey ?? null
-      }
-      return {
-        ...prev,
-        tabs: newTabs,
-        activeTabKey: newActiveKey,
-      }
-    })
+  const closeChat = useCallback((sessionKey: string) => {
+    setWindows(prev => prev.filter(w => w.sessionKey !== sessionKey))
   }, [])
 
-  const closeChat = useCallback(() => {
-    setChat((prev) => ({
-      ...prev,
-      isOpen: false,
-      isMinimized: false,
-      tabs: [],
-      activeTabKey: null,
-      isPinned: false,
-    }))
+  const minimizeChat = useCallback((sessionKey: string) => {
+    setWindows(prev =>
+      prev.map(w =>
+        w.sessionKey === sessionKey ? { ...w, isMinimized: true } : w
+      )
+    )
   }, [])
 
-  const switchTab = useCallback((sessionKey: string) => {
-    setChat((prev) => ({
-      ...prev,
-      activeTabKey: sessionKey,
-    }))
+  const restoreChat = useCallback((sessionKey: string) => {
+    setWindows(prev =>
+      prev.map(w =>
+        w.sessionKey === sessionKey
+          ? { ...w, isMinimized: false, zIndex: getNextZIndex() }
+          : w
+      )
+    )
   }, [])
 
-  const togglePin = useCallback(() => {
-    setChat((prev) => ({
-      ...prev,
-      isPinned: !prev.isPinned,
-    }))
+  const togglePin = useCallback((sessionKey: string) => {
+    setWindows(prev =>
+      prev.map(w =>
+        w.sessionKey === sessionKey ? { ...w, isPinned: !w.isPinned } : w
+      )
+    )
   }, [])
 
-  const toggleMinimize = useCallback(() => {
-    setChat((prev) => ({
-      ...prev,
-      isMinimized: !prev.isMinimized,
-    }))
+  const focusChat = useCallback((sessionKey: string) => {
+    setWindows(prev =>
+      prev.map(w =>
+        w.sessionKey === sessionKey ? { ...w, zIndex: getNextZIndex() } : w
+      )
+    )
   }, [])
 
-  const updatePosition = useCallback((pos: { x: number; y: number }) => {
-    setChat((prev) => ({
-      ...prev,
-      position: pos,
-    }))
+  const updatePosition = useCallback((sessionKey: string, pos: { x: number; y: number }) => {
+    setWindows(prev =>
+      prev.map(w =>
+        w.sessionKey === sessionKey ? { ...w, position: pos } : w
+      )
+    )
   }, [])
 
-  const updateSize = useCallback((size: { width: number; height: number }) => {
-    setChat((prev) => ({
-      ...prev,
-      size: {
-        width: Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, size.width)),
-        height: Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, size.height)),
-      },
-    }))
+  const updateSize = useCallback((sessionKey: string, size: { width: number; height: number }) => {
+    setWindows(prev =>
+      prev.map(w =>
+        w.sessionKey === sessionKey
+          ? {
+              ...w,
+              size: {
+                width: Math.max(MIN_SIZE.width, Math.min(MAX_SIZE.width, size.width)),
+                height: Math.max(MIN_SIZE.height, Math.min(MAX_SIZE.height, size.height)),
+              },
+            }
+          : w
+      )
+    )
   }, [])
 
   return (
     <ChatContext.Provider
       value={{
-        chat,
+        windows,
         openChat,
-        closeTab,
         closeChat,
-        switchTab,
+        minimizeChat,
+        restoreChat,
         togglePin,
-        toggleMinimize,
+        focusChat,
         updatePosition,
         updateSize,
         onFocusAgent,
