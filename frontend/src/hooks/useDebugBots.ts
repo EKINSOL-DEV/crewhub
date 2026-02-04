@@ -114,12 +114,14 @@ export function useDebugBots(): UseDebugBotsReturn {
       setDebugBots(readBots())
       setEnabledState(readEnabled())
     }
-    window.addEventListener(EVENT_NAME, handler)
-    window.addEventListener('storage', (e) => {
+    const storageHandler = (e: StorageEvent) => {
       if (e.key === BOTS_STORAGE_KEY || e.key === ENABLED_STORAGE_KEY) handler()
-    })
+    }
+    window.addEventListener(EVENT_NAME, handler)
+    window.addEventListener('storage', storageHandler)
     return () => {
       window.removeEventListener(EVENT_NAME, handler)
+      window.removeEventListener('storage', storageHandler)
     }
   }, [])
 

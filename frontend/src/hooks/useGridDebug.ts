@@ -24,13 +24,15 @@ export function useGridDebug(): [boolean, (value?: boolean) => void] {
   // Listen for cross-component changes (custom event)
   useEffect(() => {
     const handler = () => setEnabled(readStored())
+    const storageHandler = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) setEnabled(e.newValue === 'true')
+    }
     window.addEventListener('crewhub-grid-debug', handler)
     // Also listen to storage events (other tabs)
-    window.addEventListener('storage', (e) => {
-      if (e.key === STORAGE_KEY) setEnabled(e.newValue === 'true')
-    })
+    window.addEventListener('storage', storageHandler)
     return () => {
       window.removeEventListener('crewhub-grid-debug', handler)
+      window.removeEventListener('storage', storageHandler)
     }
   }, [])
 
