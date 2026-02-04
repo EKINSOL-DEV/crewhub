@@ -103,7 +103,7 @@ function AppContent() {
           <div className="flex items-center gap-3">
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.3.0-dev</span></h1>
+              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.3.0</span></h1>
               <p className="text-xs text-muted-foreground">Multi-agent orchestration</p>
             </div>
           </div>

@@ -28,5 +28,5 @@ async def test_root_endpoint(client):
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "CrewHub API"
-    assert data["version"] == "0.1.0"
+    assert data["version"] == "0.3.0"
     assert data["status"] == "running"

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.1.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.3.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/badge/react-18-61dafb" alt="React">
   <img src="https://img.shields.io/badge/fastapi-0.100+-009688" alt="FastAPI">
@@ -33,7 +33,13 @@
 - ⏰ **Cron Jobs View** — Monitor scheduled and recurring agent tasks
 - 📊 **Session History** — Full archive with search and filtering
 - 🌙 **Dark/Light Theme** — Plus customizable accent colors
-- 🔢 **Version Display** — Always know what you're running (v0.1.0)
+- 🗺️ **Grid System** — 20×20 grid per room with blueprints, prop registry, and debug overlay
+- 🤖 **Smart Bot Movement** — Natural random walk with obstacle avoidance
+- 🎥 **Camera Orbit** — Rotate around focused bot in zoom level 3
+- 💬 **Planner-style Chat** — Draggable/resizable chat windows with minimize bar
+- ⚙️ **Settings Consolidation** — All thresholds configurable via Settings UI
+- 🔄 **Live Room Refresh** — New rooms appear instantly without page reload
+- 🔢 **Version Display** — Always know what you're running (v0.3.0)
 
 ## 📸 Screenshots
 
@@ -61,17 +67,17 @@ CrewHub ships with 5 distinct bot personalities, each with a custom SVG design:
 
 Design your agents in the **Agent Design Lab** and watch them come alive in the **3D Bot Playground**.
 
-## 🆕 What's New in v0.1.0
+## 🆕 What's New in v0.3.0
 
-- 🌐 **3D Bot Playground** — Three.js isometric view with animated bots
-- 🎨 **Agent Design Lab** — Design and customize 5 bot types with unique SVGs
-- 🏠 **Rooms with drag & drop** — Organize your crew spatially
-- 🃏 **Cards view with multi-filter** — Slice and dice by status
-- 🔗 **Connections management** — First-class support for OpenClaw, Claude Code, and Codex
-- ⏰ **Cron jobs view** — Visibility into scheduled tasks
-- 📊 **Session history & archiving** — Never lose context
-- 🎨 **Accent color customization** — Make it yours
-- 🔍 **Log search & export** — Find anything, export everything
+- 🗺️ **Grid System** — 20×20 grid per room with data model, blueprints, and prop registry
+- 🧱 **Grid-based Prop Rendering** — Rooms built from blueprints instead of hardcoded positions
+- 🔍 **Grid Debug Overlay** — Visual grid with color-coded cells (toggle in Settings)
+- 🤖 **Simplified Bot Movement** — Natural random walk with obstacle avoidance
+- 🎥 **Camera Orbit** — Orbital rotation around focused bot
+- 💬 **Planner-style Chat Windows** — Individual draggable/resizable windows with minimize bar
+- ⚙️ **Settings Consolidation** — All thresholds configurable via Settings UI
+- 🔄 **Live Room Refresh** — New rooms appear instantly without page reload
+- 🐛 **Many Bug Fixes** — Pathfinding alignment, prop positioning, routing duplication, and more
 
 ## 🔗 Compatibility
 
