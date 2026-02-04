@@ -85,7 +85,11 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     if (!roomName) return null
     const blueprint = getBlueprintForRoom(roomName)
     const walkableMask = getWalkableMask(blueprint.cells)
-    return { blueprint, walkableMask }
+    // Bot-specific mask: door cells are NOT walkable (prevents bots escaping rooms)
+    const botWalkableMask = blueprint.cells.map(row =>
+      row.map(cell => cell.walkable && cell.type !== 'door')
+    )
+    return { blueprint, walkableMask, botWalkableMask }
   }, [roomName])
 
   // ─── Wandering state ──────────────────────────────────────────
@@ -275,12 +279,16 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
     const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
 
-    // Helper: check if a world position is walkable on the grid
+    // Helper: check if a world position is walkable on the grid (doors blocked for bots)
     const isWalkableAt = (wx: number, wz: number): boolean => {
       if (!gridData) return true // No grid = open area, always walkable
+      // Hard room bounds check first — reject anything outside room bounds
+      if (wx < roomBounds.minX || wx > roomBounds.maxX || wz < roomBounds.minZ || wz > roomBounds.maxZ) {
+        return false
+      }
       const { cellSize, gridWidth, gridDepth } = gridData.blueprint
       const g = worldToGrid(wx - roomCenterX, wz - roomCenterZ, cellSize, gridWidth, gridDepth)
-      return !!gridData.walkableMask[g.z]?.[g.x]
+      return !!gridData.botWalkableMask[g.z]?.[g.x]
     }
 
     // Helper: pick a random walkable direction from current position
@@ -473,6 +481,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
         }
       }
+    }
+
+    // ─── Hard clamp to room bounds (safety net) ─────────────────
+    if (roomBounds) {
+      state.currentX = Math.max(roomBounds.minX, Math.min(roomBounds.maxX, state.currentX))
+      state.currentZ = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, state.currentZ))
     }
 
     groupRef.current.position.x = state.currentX

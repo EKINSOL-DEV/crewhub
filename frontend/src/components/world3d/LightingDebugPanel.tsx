@@ -133,19 +133,41 @@ export function LightingDebugPanel() {
   const [pasteError, setPasteError] = useState('')
 
   const handleCopy = async () => {
+    const json = exportConfig()
     try {
-      await navigator.clipboard.writeText(exportConfig())
+      // Try modern clipboard API first
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(json)
+      } else {
+        // Fallback: textarea + execCommand for HTTP contexts
+        const ta = document.createElement('textarea')
+        ta.value = json
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
       setCopyLabel('✅ Copied!')
       setTimeout(() => setCopyLabel('📋 Copy JSON'), 1500)
     } catch {
-      setCopyLabel('❌ Failed')
-      setTimeout(() => setCopyLabel('📋 Copy JSON'), 1500)
+      // Last resort: prompt with the JSON so user can manually copy
+      window.prompt('Copy this lighting config:', json)
+      setCopyLabel('📋 Copy JSON')
     }
   }
 
   const handlePaste = async () => {
     try {
-      const text = await navigator.clipboard.readText()
+      let text = ''
+      if (navigator.clipboard?.readText) {
+        text = await navigator.clipboard.readText()
+      } else {
+        // Fallback: prompt for paste
+        text = window.prompt('Paste lighting config JSON:') || ''
+      }
+      if (!text) return
       if (importConfig(text)) {
         setPasteError('')
       } else {
@@ -153,8 +175,12 @@ export function LightingDebugPanel() {
         setTimeout(() => setPasteError(''), 2000)
       }
     } catch {
-      setPasteError('Clipboard denied')
-      setTimeout(() => setPasteError(''), 2000)
+      // Fallback: prompt
+      const text = window.prompt('Paste lighting config JSON:') || ''
+      if (text && !importConfig(text)) {
+        setPasteError('Invalid JSON')
+        setTimeout(() => setPasteError(''), 2000)
+      }
     }
   }
 
