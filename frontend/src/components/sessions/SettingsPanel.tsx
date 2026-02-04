@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
 import { useGridDebug } from "@/hooks/useGridDebug"
+import { useEnvironment, type EnvironmentType } from "@/components/world3d/environments"
 import { useSessionConfig } from "@/hooks/useSessionConfig"
 import {
   SESSION_CONFIG_DEFAULTS,
@@ -148,6 +149,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
   const { toast } = useToast()
   const [gridDebugEnabled, toggleGridDebug] = useGridDebug()
+  const [environment, setEnvironment] = useEnvironment()
   const sessionConfig = useSessionConfig()
   const overrideCount = getOverrideCount()
 
@@ -395,6 +397,39 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                             style={{ backgroundColor: config.preview }}
                           />
                           <span className="text-xs text-muted-foreground font-medium">{config.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </Section>
+
+                <Section title="🌍 World Environment">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Environment Style</Label>
+                    <div className="space-y-2">
+                      {([
+                        { value: 'grass' as EnvironmentType, label: '🌿 Classic Grass', desc: 'Flat grass field with tufts and rocks' },
+                        { value: 'island' as EnvironmentType, label: '🏝️ Floating Island', desc: 'Monument Valley-style floating island' },
+                        { value: 'floating' as EnvironmentType, label: '✨ Sky Platform', desc: 'Futuristic hexagonal floating platform' },
+                      ]).map(option => (
+                        <button
+                          key={option.value}
+                          onClick={() => setEnvironment(option.value)}
+                          className={`
+                            w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-left
+                            ${environment === option.value
+                              ? "border-primary bg-primary/10 shadow-sm"
+                              : "border-border bg-background hover:bg-muted"
+                            }
+                          `}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">{option.label}</div>
+                            <div className="text-xs text-muted-foreground">{option.desc}</div>
+                          </div>
+                          {environment === option.value && (
+                            <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                          )}
                         </button>
                       ))}
                     </div>
