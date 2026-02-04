@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { api, type CrewSession } from "@/lib/api"
+import { sseManager } from "@/lib/sseManager"
 
 export interface SessionsStreamState {
   sessions: CrewSession[]
@@ -10,9 +11,6 @@ export interface SessionsStreamState {
   reconnecting: boolean
 }
 
-const getAuthToken = (): string => localStorage.getItem("openclaw_token") || ""
-
-const MAX_BACKOFF_MS = 30_000
 const POLLING_INTERVAL_MS = 5_000
 
 export function useSessionsStream(enabled: boolean = true) {
@@ -25,10 +23,7 @@ export function useSessionsStream(enabled: boolean = true) {
     reconnecting: false,
   })
   
-  const eventSourceRef = useRef<EventSource | null>(null)
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const reconnectAttemptsRef = useRef(0)
   const enabledRef = useRef(enabled)
   enabledRef.current = enabled
   
@@ -57,115 +52,6 @@ export function useSessionsStream(enabled: boolean = true) {
     pollingIntervalRef.current = setInterval(fetchSessions, POLLING_INTERVAL_MS)
   }, [fetchSessions, stopPolling])
   
-  const setupSSE = useCallback(() => {
-    if (!enabledRef.current) return
-    
-    // Clean up any existing SSE connection
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-      eventSourceRef.current = null
-    }
-    
-    try {
-      const token = getAuthToken()
-      const sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : "/api/events"
-      const eventSource = new EventSource(sseUrl)
-      eventSourceRef.current = eventSource
-      
-      eventSource.onopen = () => {
-        // SSE connected successfully — stop polling, reset counter
-        reconnectAttemptsRef.current = 0
-        stopPolling()
-        setState(prev => ({
-          ...prev,
-          connected: true,
-          connectionMethod: "sse",
-          reconnecting: false,
-          error: null,
-        }))
-        // Fetch initial data since SSE doesn't send it on connect
-        fetchSessions()
-      }
-      
-      eventSource.addEventListener("sessions-refresh", (event) => {
-        try {
-          const { sessions } = JSON.parse(event.data)
-          setState(prev => ({ ...prev, sessions: sessions || [], loading: false, error: null }))
-        } catch (error) {
-          console.error("Failed to parse sessions-refresh event:", error)
-        }
-      })
-      
-      eventSource.addEventListener("session-created", (event) => {
-        try {
-          const session: CrewSession = JSON.parse(event.data)
-          setState(prev => ({ ...prev, sessions: [...prev.sessions, session] }))
-        } catch (error) {
-          console.error("Failed to parse session-created event:", error)
-        }
-      })
-      
-      eventSource.addEventListener("session-updated", (event) => {
-        try {
-          const updatedSession: CrewSession = JSON.parse(event.data)
-          setState(prev => ({
-            ...prev,
-            sessions: prev.sessions.map(s => s.key === updatedSession.key ? updatedSession : s)
-          }))
-        } catch (error) {
-          console.error("Failed to parse session-updated event:", error)
-        }
-      })
-      
-      eventSource.addEventListener("session-removed", (event) => {
-        try {
-          const { key } = JSON.parse(event.data)
-          setState(prev => ({ ...prev, sessions: prev.sessions.filter(s => s.key !== key) }))
-        } catch (error) {
-          console.error("Failed to parse session-removed event:", error)
-        }
-      })
-      
-      eventSource.onerror = () => {
-        eventSource.close()
-        eventSourceRef.current = null
-        
-        // Calculate backoff: 1s, 2s, 4s, 8s, 16s, 30s, 30s, 30s...
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), MAX_BACKOFF_MS)
-        reconnectAttemptsRef.current++
-        
-        console.log(`SSE disconnected — reconnecting in ${delay / 1000}s (attempt ${reconnectAttemptsRef.current})`)
-        
-        // Switch to polling to keep data fresh while reconnecting
-        setState(prev => ({
-          ...prev,
-          connected: false,
-          connectionMethod: "polling",
-          reconnecting: true,
-        }))
-        startPolling()
-        
-        // Schedule next SSE attempt
-        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-        reconnectTimeoutRef.current = setTimeout(setupSSE, delay)
-      }
-    } catch {
-      // SSE constructor failed — poll and retry
-      setState(prev => ({
-        ...prev,
-        connected: false,
-        connectionMethod: "polling",
-        reconnecting: true,
-      }))
-      startPolling()
-      
-      const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), MAX_BACKOFF_MS)
-      reconnectAttemptsRef.current++
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = setTimeout(setupSSE, delay)
-    }
-  }, [fetchSessions, startPolling, stopPolling])
-  
   useEffect(() => {
     if (!enabled) {
       setState({
@@ -178,13 +64,95 @@ export function useSessionsStream(enabled: boolean = true) {
       })
       return
     }
-    setupSSE()
-    return () => {
-      if (eventSourceRef.current) { eventSourceRef.current.close(); eventSourceRef.current = null }
-      if (pollingIntervalRef.current) { clearInterval(pollingIntervalRef.current); pollingIntervalRef.current = null }
-      if (reconnectTimeoutRef.current) { clearTimeout(reconnectTimeoutRef.current); reconnectTimeoutRef.current = null }
+    
+    // Fetch initial data
+    fetchSessions()
+    
+    // Subscribe to SSE events via central manager
+    const handleSessionsRefresh = (event: MessageEvent) => {
+      try {
+        const { sessions } = JSON.parse(event.data)
+        setState(prev => ({ ...prev, sessions: sessions || [], loading: false, error: null }))
+      } catch (error) {
+        console.error("Failed to parse sessions-refresh event:", error)
+      }
     }
-  }, [enabled, setupSSE])
+    
+    const handleSessionCreated = (event: MessageEvent) => {
+      try {
+        const session: CrewSession = JSON.parse(event.data)
+        setState(prev => ({ ...prev, sessions: [...prev.sessions, session] }))
+      } catch (error) {
+        console.error("Failed to parse session-created event:", error)
+      }
+    }
+    
+    const handleSessionUpdated = (event: MessageEvent) => {
+      try {
+        const updatedSession: CrewSession = JSON.parse(event.data)
+        setState(prev => ({
+          ...prev,
+          sessions: prev.sessions.map(s => s.key === updatedSession.key ? updatedSession : s)
+        }))
+      } catch (error) {
+        console.error("Failed to parse session-updated event:", error)
+      }
+    }
+    
+    const handleSessionRemoved = (event: MessageEvent) => {
+      try {
+        const { key } = JSON.parse(event.data)
+        setState(prev => ({ ...prev, sessions: prev.sessions.filter(s => s.key !== key) }))
+      } catch (error) {
+        console.error("Failed to parse session-removed event:", error)
+      }
+    }
+    
+    // Subscribe to all session events
+    const unsubRefresh = sseManager.subscribe("sessions-refresh", handleSessionsRefresh)
+    const unsubCreated = sseManager.subscribe("session-created", handleSessionCreated)
+    const unsubUpdated = sseManager.subscribe("session-updated", handleSessionUpdated)
+    const unsubRemoved = sseManager.subscribe("session-removed", handleSessionRemoved)
+    
+    // Subscribe to connection state changes
+    const unsubState = sseManager.onStateChange((sseState) => {
+      if (sseState === "connected") {
+        stopPolling()
+        setState(prev => ({
+          ...prev,
+          connected: true,
+          connectionMethod: "sse",
+          reconnecting: false,
+          error: null,
+        }))
+      } else if (sseState === "connecting") {
+        setState(prev => ({
+          ...prev,
+          connected: false,
+          connectionMethod: "polling",
+          reconnecting: true,
+        }))
+        // Start polling while reconnecting
+        startPolling()
+      } else {
+        setState(prev => ({
+          ...prev,
+          connected: false,
+          connectionMethod: "disconnected",
+          reconnecting: false,
+        }))
+      }
+    })
+    
+    return () => {
+      unsubRefresh()
+      unsubCreated()
+      unsubUpdated()
+      unsubRemoved()
+      unsubState()
+      stopPolling()
+    }
+  }, [enabled, fetchSessions, startPolling, stopPolling])
   
   const refresh = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true }))
