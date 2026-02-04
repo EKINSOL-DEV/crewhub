@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, useState, useCallback } from 'react'
+import { useRef, useEffect, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -9,33 +9,24 @@ import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
 import { SleepingZs, useBotAnimation, tickAnimState, getRoomInteractionPoints, getWalkableCenter } from './BotAnimations'
-import { getBlueprintForRoom, getWalkableMask, findPath, findNearestWalkable, gridToWorld, worldToGrid } from '@/lib/grid'
-import type { PathNode } from '@/lib/grid'
+import { getBlueprintForRoom, getWalkableMask, worldToGrid } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragActions } from '@/contexts/DragDropContext'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
 import type { RoomBounds } from './World3DView'
 
-// ─── Path simplification: remove redundant collinear waypoints ──
-function simplifyPath(path: PathNode[]): PathNode[] {
-  if (path.length <= 2) return path
-  const simplified = [path[0]]
-  for (let i = 1; i < path.length - 1; i++) {
-    const prev = simplified[simplified.length - 1]
-    const next = path[i + 1]
-    // Keep node only if direction changes
-    const dx1 = path[i].x - prev.x
-    const dz1 = path[i].z - prev.z
-    const dx2 = next.x - path[i].x
-    const dz2 = next.z - path[i].z
-    if (dx1 !== dx2 || dz1 !== dz2) {
-      simplified.push(path[i])
-    }
-  }
-  simplified.push(path[path.length - 1])
-  return simplified
-}
+// ─── Cardinal + diagonal directions for random walk ──
+const DIRECTIONS = [
+  { x: 0, z: -1 },  // N
+  { x: 1, z: -1 },  // NE
+  { x: 1, z: 0 },   // E
+  { x: 1, z: 1 },   // SE
+  { x: 0, z: 1 },   // S
+  { x: -1, z: 1 },  // SW
+  { x: -1, z: 0 },  // W
+  { x: -1, z: -1 }, // NW
+]
 
 // ─── Global bot position registry (module-level, no React state) ──
 // CameraController reads from this to follow bots smoothly.
@@ -106,54 +97,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     baseX: position[0],
     baseZ: position[2],
     sessionKey: session?.key || '',
+    // Random walk state
+    dirX: 0,
+    dirZ: -1,
+    stepsRemaining: 0,
+    cellProgress: 0, // 0..1 progress toward next cell center
   })
-
-  // Path following state
-  const pathRef = useRef<PathNode[]>([])
-  const pathIndexRef = useRef(0)
-  const pathTargetWorld = useRef<{ x: number; z: number } | null>(null)
-  const pathRetryCount = useRef(0)
-  const MAX_PATH_RETRIES = 3
-
-  // Helper to compute a path from current position to a world target
-  const computePath = useCallback((fromWorldX: number, fromWorldZ: number, toWorldX: number, toWorldZ: number) => {
-    if (!gridData || !roomBounds) return false
-    const { blueprint, walkableMask } = gridData
-    const { cellSize, gridWidth, gridDepth } = blueprint
-
-    // Convert world coords (relative to room center) to grid coords
-    const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
-    const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
-
-    let startGrid = worldToGrid(fromWorldX - roomCenterX, fromWorldZ - roomCenterZ, cellSize, gridWidth, gridDepth)
-    let endGrid = worldToGrid(toWorldX - roomCenterX, toWorldZ - roomCenterZ, cellSize, gridWidth, gridDepth)
-
-    // Snap start/end to nearest walkable cell if they're on non-walkable cells
-    if (!walkableMask[startGrid.z]?.[startGrid.x]) {
-      const snapped = findNearestWalkable(walkableMask, startGrid)
-      if (!snapped) return false
-      startGrid = snapped
-    }
-    if (!walkableMask[endGrid.z]?.[endGrid.x]) {
-      const snapped = findNearestWalkable(walkableMask, endGrid)
-      if (!snapped) return false
-      endGrid = snapped
-    }
-
-    const rawPath = findPath(walkableMask, startGrid, endGrid)
-    if (rawPath && rawPath.length > 1) {
-      const path = simplifyPath(rawPath)
-      pathRef.current = path
-      pathIndexRef.current = 1 // Skip start node (we're already there)
-      // Set first waypoint target in world space
-      const [wx, , wz] = gridToWorld(path[1].x, path[1].z, cellSize, gridWidth, gridDepth)
-      pathTargetWorld.current = { x: roomCenterX + wx, z: roomCenterZ + wz }
-      pathRetryCount.current = 0 // Reset retry counter on success
-      return true
-    }
-    // Path not found — never fall back to direct movement
-    return false
-  }, [gridData, roomBounds])
 
   // Update base position when session key changes (bot reassigned to a new spot)
   useEffect(() => {
@@ -168,9 +117,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.targetZ = position[2]
       state.waitTimer = 3 + Math.random() * 3
       state.sessionKey = newKey
-      pathRef.current = []
-      pathIndexRef.current = 0
-      pathTargetWorld.current = null
+      state.stepsRemaining = 0
+      state.cellProgress = 0
     }
   }, [session?.key, position])
 
@@ -306,232 +254,206 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       return
     }
 
-    // Pick random wander target within safe walkable zone (circular area in room center)
-    const wc = walkableCenter
-    const pickWanderTarget = () => {
-      if (wc) {
-        const angle = Math.random() * Math.PI * 2
-        const r = Math.sqrt(Math.random()) * wc.radius // sqrt for uniform area distribution
-        return { x: wc.x + Math.cos(angle) * r, z: wc.z + Math.sin(angle) * r }
+    const speed = anim.walkSpeed || 0.5
+    const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
+    const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
+
+    // Helper: check if a world position is walkable on the grid
+    const isWalkableAt = (wx: number, wz: number): boolean => {
+      if (!gridData) return true // No grid = open area, always walkable
+      const { cellSize, gridWidth, gridDepth } = gridData.blueprint
+      const g = worldToGrid(wx - roomCenterX, wz - roomCenterZ, cellSize, gridWidth, gridDepth)
+      return !!gridData.walkableMask[g.z]?.[g.x]
+    }
+
+    // Helper: pick a random walkable direction from current position
+    const pickWalkableDir = (): { x: number; z: number } | null => {
+      const cellSize = gridData ? gridData.blueprint.cellSize : 1.0
+      const shuffled = [...DIRECTIONS].sort(() => Math.random() - 0.5)
+      for (const d of shuffled) {
+        if (isWalkableAt(state.currentX + d.x * cellSize, state.currentZ + d.z * cellSize)) {
+          return d
+        }
       }
-      // Fallback: center of room bounds
-      return {
-        x: (roomBounds.minX + roomBounds.maxX) / 2,
-        z: (roomBounds.minZ + roomBounds.maxZ) / 2,
-      }
+      return null // Completely boxed in (shouldn't happen)
     }
 
     if (anim.resetWanderTarget) {
-      const target = pickWanderTarget()
-      state.targetX = target.x
-      state.targetZ = target.z
-      // Try to pathfind to the wander target
-      computePath(state.currentX, state.currentZ, target.x, target.z)
+      state.stepsRemaining = 0
       state.waitTimer = 0.5
       anim.resetWanderTarget = false
     }
 
     // Override wander target from animation system (desk, coffee, sleep)
-    if (anim.targetX !== null && anim.targetZ !== null) {
-      const prevTargetX = state.targetX
-      const prevTargetZ = state.targetZ
-      state.targetX = anim.targetX
-      state.targetZ = anim.targetZ
-
-      // When animation target changes, clear stale path and recompute immediately
-      const targetChanged = Math.abs(prevTargetX - anim.targetX) > 0.5 || Math.abs(prevTargetZ - anim.targetZ) > 0.5
-      if (targetChanged) {
-        pathRef.current = []
-        pathIndexRef.current = 0
-        pathTargetWorld.current = null
-        computePath(state.currentX, state.currentZ, anim.targetX, anim.targetZ)
-      }
+    const hasAnimTarget = anim.targetX !== null && anim.targetZ !== null
+    if (hasAnimTarget) {
+      state.targetX = anim.targetX!
+      state.targetZ = anim.targetZ!
     }
 
-    // ─── Path following ─────────────────────────────────────────
-    // If we have a computed path, follow waypoints instead of beelining
-    const hasPath = pathRef.current.length > 0 && pathIndexRef.current < pathRef.current.length
-    const speed = anim.walkSpeed || 0.5
-
-    if (hasPath && pathTargetWorld.current) {
-      const waypointX = pathTargetWorld.current.x
-      const waypointZ = pathTargetWorld.current.z
-      const dx = waypointX - state.currentX
-      const dz = waypointZ - state.currentZ
-      const dist = Math.sqrt(dx * dx + dz * dz)
-
-      if (dist < 0.15) {
-        // Arrived at waypoint — advance to next (no stopping)
-        pathIndexRef.current++
-        if (pathIndexRef.current < pathRef.current.length && gridData && roomBounds) {
-          const nextNode = pathRef.current[pathIndexRef.current]
-          const { cellSize, gridWidth, gridDepth } = gridData.blueprint
-          const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
-          const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
-          const [wx, , wz] = gridToWorld(nextNode.x, nextNode.z, cellSize, gridWidth, gridDepth)
-          pathTargetWorld.current = { x: roomCenterX + wx, z: roomCenterZ + wz }
-        } else {
-          // Path complete
-          pathRef.current = []
-          pathIndexRef.current = 0
-          pathTargetWorld.current = null
-
-          // Check if this was a targeted animation move
-          if (anim.targetX !== null && anim.targetZ !== null && !anim.arrived) {
-            anim.arrived = true
-            if (anim.freezeWhenArrived) {
-              groupRef.current.position.x = state.currentX
-              groupRef.current.position.z = state.currentZ
-              if (session?.key) {
-                botPositionRegistry.set(session.key, {
-                  x: state.currentX,
-                  y: groupRef.current.position.y,
-                  z: state.currentZ,
-                })
-              }
-              return
-            }
-          }
-        }
-      } else {
-        // Smooth speed: constant along path, ease out near final destination
-        const isNearEnd = pathIndexRef.current >= pathRef.current.length - 2
-        const effectiveSpeed = isNearEnd ? speed * Math.min(1, dist / 0.5) : speed
-        const step = Math.min(effectiveSpeed * delta, dist)
-        state.currentX += (dx / dist) * step
-        state.currentZ += (dz / dist) * step
-
-        // Look-ahead rotation: face 2 waypoints ahead for smoother turning
-        let lookDx = dx
-        let lookDz = dz
-        if (gridData && roomBounds) {
-          const lookAheadIndex = Math.min(pathIndexRef.current + 2, pathRef.current.length - 1)
-          if (lookAheadIndex > pathIndexRef.current) {
-            const lookNode = pathRef.current[lookAheadIndex]
-            const { cellSize, gridWidth, gridDepth } = gridData.blueprint
-            const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
-            const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
-            const [lwx, , lwz] = gridToWorld(lookNode.x, lookNode.z, cellSize, gridWidth, gridDepth)
-            lookDx = (roomCenterX + lwx) - state.currentX
-            lookDz = (roomCenterZ + lwz) - state.currentZ
-          }
-        }
-        const targetRotY = Math.atan2(lookDx, lookDz)
-        const currentRotY = groupRef.current.rotation.y
-        let angleDiff = targetRotY - currentRotY
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        groupRef.current.rotation.y = currentRotY + angleDiff * 0.25
-      }
-    } else if (!gridData) {
-      // No grid data (parking bots or rooms without blueprints) — use direct circular wander
-      // This is safe because there are no walls/furniture to walk through
+    if (!gridData) {
+      // ─── No grid (parking bots) — direct circular wander ────
+      const wc = walkableCenter
       const dx = state.targetX - state.currentX
       const dz = state.targetZ - state.currentZ
       const dist = Math.sqrt(dx * dx + dz * dz)
 
       if (dist < 0.3) {
-        // Arrived — check animation targets
-        if (anim.targetX !== null && anim.targetZ !== null && !anim.arrived) {
+        if (hasAnimTarget && !anim.arrived) {
           anim.arrived = true
           if (anim.freezeWhenArrived) {
             groupRef.current.position.x = state.currentX
             groupRef.current.position.z = state.currentZ
             if (session?.key) {
               botPositionRegistry.set(session.key, {
-                x: state.currentX,
-                y: groupRef.current.position.y,
-                z: state.currentZ,
+                x: state.currentX, y: groupRef.current.position.y, z: state.currentZ,
               })
             }
             return
           }
         }
-
-        // Random wandering: wait then pick new target
         state.waitTimer -= delta
-        if (state.waitTimer <= 0 && anim.targetX === null) {
-          const target = pickWanderTarget()
-          state.targetX = target.x
-          state.targetZ = target.z
+        if (state.waitTimer <= 0 && !hasAnimTarget) {
+          if (wc) {
+            const angle = Math.random() * Math.PI * 2
+            const r = Math.sqrt(Math.random()) * wc.radius
+            state.targetX = wc.x + Math.cos(angle) * r
+            state.targetZ = wc.z + Math.sin(angle) * r
+          } else {
+            state.targetX = roomCenterX + (Math.random() - 0.5) * 2
+            state.targetZ = roomCenterZ + (Math.random() - 0.5) * 2
+          }
           state.waitTimer = 4 + Math.random() * 4
         }
       } else {
-        // Walk directly toward target (no walls in parking/open areas)
         const easedSpeed = speed * Math.min(1, dist / 0.5)
         const step = Math.min(easedSpeed * delta, dist)
         state.currentX += (dx / dist) * step
         state.currentZ += (dz / dist) * step
-
-        // Smooth rotation (faster lerp)
         const targetRotY = Math.atan2(dx, dz)
         const currentRotY = groupRef.current.rotation.y
         let angleDiff = targetRotY - currentRotY
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        groupRef.current.rotation.y = currentRotY + angleDiff * 0.25
+        groupRef.current.rotation.y = currentRotY + angleDiff * 0.2
       }
-    } else {
-      // Has grid but no path — stay in place and retry with a different target
+    } else if (hasAnimTarget && !anim.arrived) {
+      // ─── Walking toward animation target (desk/coffee/sleep) ──
       const dx = state.targetX - state.currentX
       const dz = state.targetZ - state.currentZ
       const dist = Math.sqrt(dx * dx + dz * dz)
 
       if (dist < 0.3) {
-        // Already at or very near target
-        if (anim.targetX !== null && anim.targetZ !== null && !anim.arrived) {
-          anim.arrived = true
-          if (anim.freezeWhenArrived) {
-            groupRef.current.position.x = state.currentX
-            groupRef.current.position.z = state.currentZ
-            if (session?.key) {
-              botPositionRegistry.set(session.key, {
-                x: state.currentX,
-                y: groupRef.current.position.y,
-                z: state.currentZ,
-              })
-            }
-            return
+        anim.arrived = true
+        if (anim.freezeWhenArrived) {
+          groupRef.current.position.x = state.currentX
+          groupRef.current.position.z = state.currentZ
+          if (session?.key) {
+            botPositionRegistry.set(session.key, {
+              x: state.currentX, y: groupRef.current.position.y, z: state.currentZ,
+            })
+          }
+          return
+        }
+      } else {
+        // Determine best walkable direction toward the target
+        const cellSize = gridData.blueprint.cellSize
+        const ndx = dx / dist
+        const ndz = dz / dist
+
+        // Score each direction by dot product with target direction, pick best walkable
+        let bestDir: { x: number; z: number } | null = null
+        let bestScore = -Infinity
+        for (const d of DIRECTIONS) {
+          const nextX = state.currentX + d.x * cellSize
+          const nextZ = state.currentZ + d.z * cellSize
+          if (!isWalkableAt(nextX, nextZ)) continue
+          const score = d.x * ndx + d.z * ndz // dot product
+          if (score > bestScore) {
+            bestScore = score
+            bestDir = d
           }
         }
 
-        // Random wandering: wait then pick new target within walkable zone
+        if (bestDir) {
+          const easedSpeed = speed * Math.min(1, dist / 0.5)
+          const step = Math.min(easedSpeed * delta, dist)
+          state.currentX += bestDir.x * step
+          state.currentZ += bestDir.z * step
+        }
+
+        // Smooth rotation toward target
+        const targetRotY = Math.atan2(dx, dz)
+        const currentRotY = groupRef.current.rotation.y
+        let angleDiff = targetRotY - currentRotY
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+        groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
+      }
+    } else {
+      // ─── Random walk with obstacle avoidance ───────────────
+      const cellSize = gridData.blueprint.cellSize
+
+      // Wait phase
+      if (state.waitTimer > 0) {
         state.waitTimer -= delta
-        if (state.waitTimer <= 0 && anim.targetX === null) {
-          const target = pickWanderTarget()
-          state.targetX = target.x
-          state.targetZ = target.z
-          computePath(state.currentX, state.currentZ, target.x, target.z)
-          state.waitTimer = 4 + Math.random() * 4
+        // Still rotate toward current direction while waiting
+        if (state.stepsRemaining > 0) {
+          const targetRotY = Math.atan2(state.dirX, state.dirZ)
+          const currentRotY = groupRef.current.rotation.y
+          let angleDiff = targetRotY - currentRotY
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+          groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
+        }
+      } else if (state.stepsRemaining <= 0) {
+        // Pick a new random direction and number of steps
+        const dir = pickWalkableDir()
+        if (dir) {
+          state.dirX = dir.x
+          state.dirZ = dir.z
+          state.stepsRemaining = 3 + Math.floor(Math.random() * 6) // 3-8 cells
+          state.cellProgress = 0
+          state.waitTimer = 1 + Math.random() * 2 // pause 1-3s before walking
+        } else {
+          state.waitTimer = 1 // boxed in, wait and retry
         }
       } else {
-        // Target is far but pathfinding failed — retry with a different target or stay put
-        if (pathRetryCount.current < MAX_PATH_RETRIES) {
-          pathRetryCount.current++
-          if (anim.targetX !== null && anim.targetZ !== null) {
-            // Retry pathfinding to the animation target (grid snapping may differ slightly)
-            const found = computePath(state.currentX, state.currentZ, anim.targetX, anim.targetZ)
-            if (!found) {
-              // Try a walkable target near the intended destination
-              const target = pickWanderTarget()
-              state.targetX = target.x
-              state.targetZ = target.z
-              computePath(state.currentX, state.currentZ, target.x, target.z)
-            }
-          } else {
-            // Wander target unreachable — pick a different one
-            const target = pickWanderTarget()
-            state.targetX = target.x
-            state.targetZ = target.z
-            computePath(state.currentX, state.currentZ, target.x, target.z)
+        // Walking phase — move forward one cell at a time
+        const nextWorldX = state.currentX + state.dirX * cellSize
+        const nextWorldZ = state.currentZ + state.dirZ * cellSize
+
+        if (!isWalkableAt(nextWorldX, nextWorldZ)) {
+          // Obstacle ahead — pick a new walkable direction
+          const dir = pickWalkableDir()
+          if (dir) {
+            state.dirX = dir.x
+            state.dirZ = dir.z
+            state.stepsRemaining = 2 + Math.floor(Math.random() * 4) // 2-5 cells
+            state.cellProgress = 0
           }
-          state.waitTimer = 0.5 + Math.random() * 1.0
+          state.waitTimer = 0.5 // brief pause after redirect
         } else {
-          // Max retries exhausted — stay put and wait, then reset
-          state.targetX = state.currentX
-          state.targetZ = state.currentZ
-          state.waitTimer = 4 + Math.random() * 3 // Wait 4-7s before trying again
-          pathRetryCount.current = 0
+          // Move toward next cell center
+          const step = speed * delta
+          state.cellProgress += step / cellSize
+
+          state.currentX += state.dirX * step
+          state.currentZ += state.dirZ * step
+
+          // When we've traversed one cell width, count it
+          if (state.cellProgress >= 1) {
+            state.stepsRemaining--
+            state.cellProgress = 0
+          }
+
+          // Smooth rotation toward movement direction
+          const targetRotY = Math.atan2(state.dirX, state.dirZ)
+          const currentRotY = groupRef.current.rotation.y
+          let angleDiff = targetRotY - currentRotY
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+          groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
         }
       }
     }
