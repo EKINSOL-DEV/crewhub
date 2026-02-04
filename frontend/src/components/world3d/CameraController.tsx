@@ -105,6 +105,33 @@ function getBotCamera(botPos: { x: number; y: number; z: number }) {
   }
 }
 
+// ─── WASD keyboard state for overview/room camera movement ─────
+
+const _wasdKeys = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false,
+  rotateLeft: false,
+  rotateRight: false,
+  fast: false,
+}
+
+const WASD_SPEED = 15        // units per second (base)
+const WASD_FAST_MULT = 2.5   // shift multiplier
+const WASD_ROTATE_SPEED = 1.2 // radians per second
+const WASD_SMOOTHING = 0.12  // lerp factor for velocity smoothing
+
+/** Returns true if an interactive input element is focused */
+function isInputFocused(): boolean {
+  const el = document.activeElement
+  if (!el) return false
+  const tag = el.tagName.toLowerCase()
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true
+  if ((el as HTMLElement).isContentEditable) return true
+  return false
+}
+
 export function CameraController({ roomPositions }: CameraControllerProps) {
   const controlsRef = useRef<CameraControlsImpl>(null)
   const { state } = useWorldFocus()
@@ -117,6 +144,10 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const followTarget = useRef(new THREE.Vector3())
   const isFollowing = useRef(false)
 
+  // Smooth velocity for WASD movement
+  const wasdVelocity = useRef(new THREE.Vector3())
+  const wasdRotVelocity = useRef(0)
+
   // ─── Disable camera controls during drag ──────────────────────
 
   useEffect(() => {
@@ -124,6 +155,63 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     if (!controls) return
     controls.enabled = !isDragging
   }, [isDragging])
+
+  // ─── WASD keyboard listeners (overview + room only) ───────────
+
+  const wasdEnabled = state.level === 'overview' || state.level === 'room'
+
+  useEffect(() => {
+    if (!wasdEnabled) {
+      // Reset keys when leaving overview/room
+      _wasdKeys.forward = false
+      _wasdKeys.backward = false
+      _wasdKeys.left = false
+      _wasdKeys.right = false
+      _wasdKeys.rotateLeft = false
+      _wasdKeys.rotateRight = false
+      _wasdKeys.fast = false
+      return
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInputFocused()) return
+      switch (e.code) {
+        case 'KeyW': case 'ArrowUp':    _wasdKeys.forward = true; break
+        case 'KeyS': case 'ArrowDown':  _wasdKeys.backward = true; break
+        case 'KeyA': case 'ArrowLeft':  _wasdKeys.left = true; break
+        case 'KeyD': case 'ArrowRight': _wasdKeys.right = true; break
+        case 'KeyQ':                    _wasdKeys.rotateLeft = true; break
+        case 'KeyE':                    _wasdKeys.rotateRight = true; break
+        case 'ShiftLeft': case 'ShiftRight': _wasdKeys.fast = true; break
+      }
+    }
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      switch (e.code) {
+        case 'KeyW': case 'ArrowUp':    _wasdKeys.forward = false; break
+        case 'KeyS': case 'ArrowDown':  _wasdKeys.backward = false; break
+        case 'KeyA': case 'ArrowLeft':  _wasdKeys.left = false; break
+        case 'KeyD': case 'ArrowRight': _wasdKeys.right = false; break
+        case 'KeyQ':                    _wasdKeys.rotateLeft = false; break
+        case 'KeyE':                    _wasdKeys.rotateRight = false; break
+        case 'ShiftLeft': case 'ShiftRight': _wasdKeys.fast = false; break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      _wasdKeys.forward = false
+      _wasdKeys.backward = false
+      _wasdKeys.left = false
+      _wasdKeys.right = false
+      _wasdKeys.rotateLeft = false
+      _wasdKeys.rotateRight = false
+      _wasdKeys.fast = false
+    }
+  }, [wasdEnabled])
 
   // ─── Transition on focus change ──────────────────────────────
 
@@ -196,13 +284,53 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   // preserving the user's azimuth, polar angle, and distance.
   // This enables free orbital rotation around the focused bot.
 
-  useFrame(() => {
-    if (!isFollowing.current || state.level !== 'bot' || !state.focusedBotKey || !controlsRef.current) return
+  useFrame((_, delta) => {
+    const controls = controlsRef.current
+    if (!controls) return
+
+    // ─── WASD movement (overview + room) ──────────────────────
+    if (wasdEnabled) {
+      // Build desired velocity from key state
+      const targetVel = new THREE.Vector3()
+      const speed = _wasdKeys.fast ? WASD_SPEED * WASD_FAST_MULT : WASD_SPEED
+
+      if (_wasdKeys.forward)  targetVel.z -= speed
+      if (_wasdKeys.backward) targetVel.z += speed
+      if (_wasdKeys.left)     targetVel.x -= speed
+      if (_wasdKeys.right)    targetVel.x += speed
+
+      // Smooth velocity (lerp toward target)
+      wasdVelocity.current.lerp(targetVel, WASD_SMOOTHING)
+
+      // Zero out tiny residual velocity
+      if (wasdVelocity.current.lengthSq() < 0.001) {
+        wasdVelocity.current.set(0, 0, 0)
+      }
+
+      // Apply truck (strafe left/right) and forward (in/out) relative to camera orientation
+      if (wasdVelocity.current.lengthSq() > 0) {
+        const dt = Math.min(delta, 0.05) // cap to avoid jumps on tab refocus
+        controls.truck(wasdVelocity.current.x * dt, 0, false)
+        controls.forward(-wasdVelocity.current.z * dt, false)
+      }
+
+      // Q/E rotation
+      let targetRot = 0
+      if (_wasdKeys.rotateLeft)  targetRot += WASD_ROTATE_SPEED
+      if (_wasdKeys.rotateRight) targetRot -= WASD_ROTATE_SPEED
+      wasdRotVelocity.current += (targetRot - wasdRotVelocity.current) * WASD_SMOOTHING
+      if (Math.abs(wasdRotVelocity.current) < 0.001) wasdRotVelocity.current = 0
+      if (wasdRotVelocity.current !== 0) {
+        const dt = Math.min(delta, 0.05)
+        controls.rotate(wasdRotVelocity.current * dt, 0, false)
+      }
+    }
+
+    // ─── Bot orbital follow ───────────────────────────────────
+    if (!isFollowing.current || state.level !== 'bot' || !state.focusedBotKey) return
 
     const botPos = botPositionRegistry.get(state.focusedBotKey)
     if (!botPos) return
-
-    const controls = controlsRef.current
 
     // Smoothly lerp orbit center toward bot's current position
     _desiredTarget.set(botPos.x, 0.5, botPos.z)
