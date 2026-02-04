@@ -71,7 +71,12 @@ class OpenClawDetector(BaseDetector):
     """Detect local OpenClaw Gateway instances."""
 
     DEFAULT_PORT = 18789
-    CONFIG_PATH = Path.home() / ".openclaw" / "config.json"
+    # OpenClaw config files in priority order
+    CONFIG_PATHS = [
+        Path.home() / ".openclaw" / "openclaw.json",
+        Path.home() / ".openclaw" / "clawdbot.json",
+        Path.home() / ".openclaw" / "config.json",
+    ]
 
     async def detect(self) -> list[DiscoveryCandidate]:
         candidates: list[DiscoveryCandidate] = []
@@ -80,16 +85,25 @@ class OpenClawDetector(BaseDetector):
         config_port = self.DEFAULT_PORT
         config_token: Optional[str] = None
         config_found = False
+        config_path_used: Optional[Path] = None
 
-        try:
-            if self.CONFIG_PATH.exists():
-                config_found = True
-                raw = json.loads(self.CONFIG_PATH.read_text())
-                gateway = raw.get("gateway", raw)
-                config_port = gateway.get("port", self.DEFAULT_PORT)
-                config_token = gateway.get("token") or gateway.get("auth", {}).get("token")
-        except Exception as e:
-            logger.debug(f"Error reading OpenClaw config: {e}")
+        for config_path in self.CONFIG_PATHS:
+            try:
+                if config_path.exists():
+                    config_found = True
+                    config_path_used = config_path
+                    raw = json.loads(config_path.read_text())
+                    gateway = raw.get("gateway", {})
+                    config_port = gateway.get("port", self.DEFAULT_PORT)
+                    # Token can be at gateway.auth.token or gateway.token
+                    config_token = (
+                        gateway.get("auth", {}).get("token")
+                        or gateway.get("token")
+                    )
+                    if config_token:
+                        break  # Found token, stop searching
+            except Exception as e:
+                logger.debug(f"Error reading OpenClaw config {config_path}: {e}")
 
         # 2. Check for running process
         process_running = await self._check_process()
@@ -110,13 +124,13 @@ class OpenClawDetector(BaseDetector):
             },
             auth={
                 "required": bool(config_token),
-                "token_hint": f"~/.openclaw/config.json" if config_token else None,
+                "token_hint": str(config_path_used) if config_token else None,
                 "has_token": bool(config_token),
             },
         )
 
         if config_found:
-            candidate.evidence.append(f"Config file found at {self.CONFIG_PATH}")
+            candidate.evidence.append(f"Config file found at {config_path_used}")
 
         if process_running:
             candidate.evidence.append("OpenClaw process detected running")
@@ -195,7 +209,7 @@ class OpenClawDetector(BaseDetector):
                         "minProtocol": 3,
                         "maxProtocol": 3,
                         "client": {
-                            "id": "crewhub-discovery",
+                            "id": "cli",
                             "version": "1.0.0",
                             "platform": "python",
                             "mode": "cli",
