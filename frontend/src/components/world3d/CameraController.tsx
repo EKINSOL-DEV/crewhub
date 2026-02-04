@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
@@ -16,86 +16,12 @@ interface CameraControllerProps {
   roomPositions: RoomPosition[]
 }
 
-// ─── Overview Camera Presets ───────────────────────────────────
-
-export interface CameraPreset {
-  name: string
-  icon: string
-  /** Polar angle from Y axis (radians). Lower = more overhead. */
-  polarAngle: number
-  /** Azimuth angle around Y axis (radians). */
-  azimuthAngle: number
-  /** Camera distance from target. */
-  distance: number
-}
-
-export const CAMERA_PRESETS: CameraPreset[] = [
-  {
-    name: 'Isometric',
-    icon: '🏗️',
-    polarAngle: 1.0,           // ~57° from Y axis ≈ 33° elevation
-    azimuthAngle: Math.PI / 4, // 45°
-    distance: 75,
-  },
-  {
-    name: 'Management Sim',
-    icon: '🏛️',
-    polarAngle: 0.55,          // ~31.5° from Y axis ≈ 58.5° elevation (more overhead)
-    azimuthAngle: Math.PI / 4, // 45°
-    distance: 90,              // Slightly further out to see more of the world
-  },
-]
-
-// ─── Preset Store (module-level, persisted to localStorage) ────
-
-const PRESET_STORAGE_KEY = 'crewhub-camera-preset'
-const PRESET_CYCLE_EVENT = 'crewhub:camera-preset-cycle'
-
-function loadPresetIndex(): number {
-  try {
-    const stored = localStorage.getItem(PRESET_STORAGE_KEY)
-    if (stored !== null) {
-      const idx = parseInt(stored, 10)
-      if (idx >= 0 && idx < CAMERA_PRESETS.length) return idx
-    }
-  } catch { /* ignore */ }
-  return 0
-}
-
-function savePresetIndex(index: number) {
-  try { localStorage.setItem(PRESET_STORAGE_KEY, String(index)) } catch { /* ignore */ }
-}
-
-/** Get current preset index (for reading outside React) */
-export function getCurrentPresetIndex(): number {
-  return loadPresetIndex()
-}
-
-/** Get current preset (for reading outside React) */
-export function getCurrentPreset(): CameraPreset {
-  return CAMERA_PRESETS[loadPresetIndex()] || CAMERA_PRESETS[0]
-}
-
-/** Cycle to next preset — dispatches event for CameraController to handle */
-export function cyclePreset() {
-  window.dispatchEvent(new CustomEvent(PRESET_CYCLE_EVENT))
-}
-
-// ─── Helpers ───────────────────────────────────────────────────
-
-/** Convert a preset's spherical coordinates to a camera look-at position (target at origin). */
-function presetToLookAt(preset: CameraPreset) {
-  return {
-    posX: preset.distance * Math.sin(preset.polarAngle) * Math.sin(preset.azimuthAngle),
-    posY: preset.distance * Math.cos(preset.polarAngle),
-    posZ: preset.distance * Math.sin(preset.polarAngle) * Math.cos(preset.azimuthAngle),
-    targetX: 0,
-    targetY: 0,
-    targetZ: 0,
-  }
-}
-
 // ─── Camera presets per focus level ────────────────────────────
+
+const OVERVIEW_CAMERA = {
+  posX: 45, posY: 40, posZ: 45,
+  targetX: 0, targetY: 0, targetZ: 0,
+}
 
 function getRoomCamera(roomPos: [number, number, number]) {
   return {
@@ -222,49 +148,6 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const wasdVelocity = useRef(new THREE.Vector3())
   const wasdRotVelocity = useRef(0)
 
-  // ─── Camera preset state (overview mode only) ─────────────────
-  const [presetIndex, setPresetIndex] = useState(loadPresetIndex)
-
-  // Helper to cycle and animate to next preset
-  const doCyclePreset = useCallback(() => {
-    const controls = controlsRef.current
-    if (!controls || state.level !== 'overview') return
-
-    const newIndex = (presetIndex + 1) % CAMERA_PRESETS.length
-    setPresetIndex(newIndex)
-    savePresetIndex(newIndex)
-
-    const preset = CAMERA_PRESETS[newIndex]
-    if (preset) {
-      controls.rotateTo(preset.azimuthAngle, preset.polarAngle, true)
-      controls.dollyTo(preset.distance, true)
-    }
-  }, [presetIndex, state.level])
-
-  // ─── Listen for preset cycle events (from WorldNavigation button) ─
-
-  useEffect(() => {
-    const handleCycleEvent = () => doCyclePreset()
-    window.addEventListener(PRESET_CYCLE_EVENT, handleCycleEvent)
-    return () => window.removeEventListener(PRESET_CYCLE_EVENT, handleCycleEvent)
-  }, [doCyclePreset])
-
-  // ─── 'C' key: cycle camera presets (overview only) ────────────
-
-  useEffect(() => {
-    if (state.level !== 'overview') return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isInputFocused()) return
-      if (e.code === 'KeyC') {
-        doCyclePreset()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [state.level, doCyclePreset])
-
   // ─── Disable camera controls during drag ──────────────────────
 
   useEffect(() => {
@@ -366,8 +249,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
 
     if (state.level === 'overview') {
       isFollowing.current = false
-      const preset = CAMERA_PRESETS[presetIndex] || CAMERA_PRESETS[0]
-      const c = presetToLookAt(preset)
+      const c = OVERVIEW_CAMERA
       controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, true)
     } else if (state.level === 'room' && state.focusedRoomId) {
       isFollowing.current = false
@@ -394,7 +276,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
         isFollowing.current = true
       }, 850)
     }
-  }, [state.level, state.focusedRoomId, state.focusedBotKey, roomPositions, presetIndex])
+  }, [state.level, state.focusedRoomId, state.focusedBotKey, roomPositions])
 
   // ─── Orbital bot follow (useFrame) ───────────────────────────
   // Only updates the orbit TARGET (look-at / orbit center).
