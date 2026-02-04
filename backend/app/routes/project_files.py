@@ -235,33 +235,48 @@ async def get_project_image(
     return FileResponse(str(target), media_type=mime)
 
 
-# ── Synology Drive Project Folder Discovery ─────────────────────
+# ── Project Folder Discovery ─────────────────────────────────────
 # NOTE: This endpoint is exposed via a separate router to avoid
 # conflicts with the /{project_id} catch-all in projects.py.
 
-# Well-known Synology Drive projects base path
-SYNOLOGY_PROJECTS_BASE = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects"
+# Default projects base path (configurable via settings)
+DEFAULT_PROJECTS_BASE_PATH = "~/Projects"
 
 discover_router = APIRouter()
 
 
+async def _get_projects_base_path() -> str:
+    """Get the configured projects base path from settings, with fallback to default."""
+    try:
+        db = await get_db()
+        try:
+            async with db.execute(
+                "SELECT value FROM settings WHERE key = 'projects_base_path'"
+            ) as cursor:
+                row = await cursor.fetchone()
+                if row:
+                    return row[0] if isinstance(row, tuple) else row["value"]
+        finally:
+            await db.close()
+    except Exception:
+        pass
+    return DEFAULT_PROJECTS_BASE_PATH
+
+
 @discover_router.get("/project-folders/discover")
 async def discover_project_folders():
-    """Discover available project folders in the Synology Drive projects directory.
+    """Discover available project folders in the configured projects base directory.
     
-    Returns folders found in ~/SynologyDrive/ekinbot/01-Projects/
+    Returns folders found in the configured projects base path
     that could be linked to CrewHub projects.
     """
     folders: List[dict] = []
     
-    # Resolve through FileProvider symlinks
-    base = SYNOLOGY_PROJECTS_BASE
-    if not base.exists():
-        # Try the expanded path
-        base = Path(os.path.expanduser("~/SynologyDrive/ekinbot/01-Projects"))
+    base_path_str = await _get_projects_base_path()
+    base = Path(os.path.expanduser(base_path_str))
     
     if not base.exists():
-        return {"base_path": str(SYNOLOGY_PROJECTS_BASE), "folders": []}
+        return {"base_path": base_path_str, "folders": []}
     
     resolved_base = base.resolve()
     
@@ -285,7 +300,7 @@ async def discover_project_folders():
                 
                 folders.append({
                     'name': entry.name,
-                    'path': f"~/SynologyDrive/ekinbot/01-Projects/{entry.name}",
+                    'path': f"{base_path_str}/{entry.name}",
                     'resolved_path': str(entry),
                     'file_count': file_count,
                     'has_readme': has_readme,
@@ -295,7 +310,7 @@ async def discover_project_folders():
         pass
     
     return {
-        "base_path": str(SYNOLOGY_PROJECTS_BASE),
+        "base_path": base_path_str,
         "resolved_path": str(resolved_base),
         "folders": folders,
     }

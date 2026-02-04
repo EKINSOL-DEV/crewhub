@@ -37,7 +37,7 @@ import {
   Sun, Moon, Monitor, X, Plus, Trash2, Edit2, Check,
   ChevronUp, ChevronDown, ChevronRight,
   AlertCircle, Download, Upload, Database, Loader2, Clock,
-  HardDrive, RefreshCw,
+  HardDrive, RefreshCw, FolderOpen,
   Palette, LayoutGrid, SlidersHorizontal, Wrench,
 } from "lucide-react"
 import {
@@ -46,6 +46,8 @@ import {
   createBackup,
   listBackups,
   type BackupInfo,
+  getSettings as apiGetSettings,
+  updateSetting as apiUpdateSetting,
 } from "@/lib/api"
 import { useRooms, type Room } from "@/hooks/useRooms"
 import { useRoomAssignmentRules, type RoomAssignmentRule } from "@/hooks/useRoomAssignmentRules"
@@ -857,7 +859,8 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
 
             {/* ═══ Tab: Data ═══ */}
             {selectedTab === "data" && (
-              <div className="max-w-2xl">
+              <div className="max-w-2xl space-y-6">
+                <ProjectsBasePathSection />
                 <BackupSection />
               </div>
             )}
@@ -1134,6 +1137,111 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+// ─── Projects Base Path Section ──────────────────────────────────────────────
+
+function ProjectsBasePathSection() {
+  const [basePath, setBasePath] = useState("")
+  const [savedPath, setSavedPath] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const settings = await apiGetSettings()
+        const val = settings["projects_base_path"] || "~/Projects"
+        setBasePath(val)
+        setSavedPath(val)
+      } catch {
+        setBasePath("~/Projects")
+        setSavedPath("~/Projects")
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const handleSave = async () => {
+    const trimmed = basePath.trim()
+    if (!trimmed) {
+      setError("Path cannot be empty")
+      return
+    }
+    // Basic path validation
+    if (!trimmed.startsWith("/") && !trimmed.startsWith("~")) {
+      setError("Path must start with / or ~")
+      return
+    }
+    setSaving(true)
+    setError(null)
+    setSuccess(false)
+    try {
+      await apiUpdateSetting("projects_base_path", trimmed)
+      setSavedPath(trimmed)
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch {
+      setError("Failed to save setting")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const isDirty = basePath.trim() !== savedPath
+
+  return (
+    <Section title="📂 Projects Base Path">
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="projects-base-path" className="text-sm font-medium">
+            Base folder for project files
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            New projects will auto-generate folder paths under this directory.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <FolderOpen className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="projects-base-path"
+              value={basePath}
+              onChange={(e) => { setBasePath(e.target.value); setError(null); setSuccess(false) }}
+              placeholder="~/Projects"
+              className="pl-9 font-mono text-sm"
+              disabled={loading}
+              onKeyDown={(e) => { if (e.key === "Enter" && isDirty) handleSave() }}
+            />
+          </div>
+          <Button
+            onClick={handleSave}
+            disabled={!isDirty || saving || loading}
+            size="sm"
+            className="h-10 px-4"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+          </Button>
+        </div>
+        {error && (
+          <div className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+            <AlertCircle className="h-3.5 w-3.5" />
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+            <Check className="h-3.5 w-3.5" />
+            Projects base path saved
+          </div>
+        )}
+      </div>
+    </Section>
   )
 }
 

@@ -8,6 +8,9 @@ from app.db.database import get_db
 from app.db.models import ProjectCreate, ProjectUpdate, ProjectResponse, generate_id
 from app.routes.sse import broadcast
 
+# Default projects base path (configurable via settings)
+DEFAULT_PROJECTS_BASE_PATH = "~/Projects"
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -144,8 +147,19 @@ async def create_project(project: ProjectCreate):
             # Auto-generate folder_path from name if not provided
             folder_path = project.folder_path
             if not folder_path:
+                # Get configurable base path from settings
+                base_path = DEFAULT_PROJECTS_BASE_PATH
+                try:
+                    async with db.execute(
+                        "SELECT value FROM settings WHERE key = 'projects_base_path'"
+                    ) as cursor:
+                        row = await cursor.fetchone()
+                        if row:
+                            base_path = row[0] if isinstance(row, tuple) else row["value"]
+                except Exception:
+                    pass  # Use default on any error
                 slug = re.sub(r'[^a-zA-Z0-9]+', '-', project.name).strip('-')
-                folder_path = f"~/SynologyDrive/ekinbot/01-Projects/{slug}"
+                folder_path = f"{base_path}/{slug}"
 
             await db.execute(
                 """INSERT INTO projects (id, name, description, icon, color, folder_path, status, created_at, updated_at)

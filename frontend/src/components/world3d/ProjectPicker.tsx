@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import type { Project } from '@/hooks/useProjects'
-import { SYNOLOGY_PROJECTS_BASE } from '@/hooks/useProjects'
 import { API_BASE } from '@/lib/api'
+
+/** Default projects base path (overridden by settings) */
+const DEFAULT_PROJECTS_BASE = "~/Projects"
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -38,8 +40,19 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [discoveredFolders, setDiscoveredFolders] = useState<{ name: string; path: string; file_count: number; has_readme: boolean; has_docs: boolean }[]>([])
+  const [projectsBasePath, setProjectsBasePath] = useState(DEFAULT_PROJECTS_BASE)
 
-  // Fetch available Synology Drive folders when showing create form
+  // Fetch configured projects base path from settings
+  useEffect(() => {
+    fetch(`${API_BASE}/settings/projects_base_path`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.value) setProjectsBasePath(data.value)
+      })
+      .catch(() => {})
+  }, [])
+
+  // Fetch available project folders when showing create form
   useEffect(() => {
     if (!showCreate) return
     fetch(`${API_BASE}/project-folders/discover`)
@@ -100,8 +113,8 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
   const autoFolderPath = useMemo(() => {
     if (!newName.trim()) return ''
     const slug = newName.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '')
-    return `${SYNOLOGY_PROJECTS_BASE}/${slug}`
-  }, [newName])
+    return `${projectsBasePath}/${slug}`
+  }, [newName, projectsBasePath])
 
   const handleCreate = useCallback(async () => {
     if (!newName.trim()) return
@@ -432,7 +445,7 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
             </label>
             <input
               type="text"
-              placeholder={autoFolderPath || `${SYNOLOGY_PROJECTS_BASE}/MyProject`}
+              placeholder={autoFolderPath || `${projectsBasePath}/MyProject`}
               value={newFolderPath}
               onChange={e => setNewFolderPath(e.target.value)}
               style={{
@@ -454,7 +467,7 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                 Auto-generated: {autoFolderPath}
               </div>
             )}
-            {/* Quick-link suggestions from Synology Drive */}
+            {/* Quick-link suggestions from discovered project folders */}
             {discoveredFolders.length > 0 && !newFolderPath && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
                 {discoveredFolders
