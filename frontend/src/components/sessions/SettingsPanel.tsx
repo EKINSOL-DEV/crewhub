@@ -21,6 +21,15 @@ import {
 } from "@/components/ui/dialog"
 import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
 import { useGridDebug } from "@/hooks/useGridDebug"
+import { useSessionConfig } from "@/hooks/useSessionConfig"
+import {
+  SESSION_CONFIG_DEFAULTS,
+  updateConfig,
+  resetConfig,
+  isOverridden,
+  getOverrideCount,
+  type SessionConfigKey,
+} from "@/lib/sessionConfig"
 import {
   Sun, Moon, Monitor, X, Plus, Trash2, Edit2, Check,
   ChevronUp, ChevronDown, ChevronRight,
@@ -139,6 +148,8 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
   const { toast } = useToast()
   const [gridDebugEnabled, toggleGridDebug] = useGridDebug()
+  const sessionConfig = useSessionConfig()
+  const overrideCount = getOverrideCount()
 
   // ─── Room management state ───
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false)
@@ -703,6 +714,14 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                   </div>
                 </Section>
 
+                <CollapsibleSection
+                  title="⏱️ Thresholds & Timing"
+                  badge={overrideCount > 0 ? `${overrideCount} custom` : undefined}
+                  defaultOpen={false}
+                >
+                  <ThresholdsTimingSection config={sessionConfig} />
+                </CollapsibleSection>
+
                 <Section title="🔧 Developer">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="grid-debug" className="flex flex-col gap-1">
@@ -974,6 +993,258 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+// ─── Thresholds & Timing Section ─────────────────────────────────────────────
+
+interface ConfigFieldProps {
+  label: string
+  description?: string
+  configKey: SessionConfigKey
+  value: number
+  /** Display unit for the UI. We store ms internally. */
+  unit: "seconds" | "minutes" | "count" | "speed" | "ms"
+  min?: number
+  max?: number
+  step?: number
+}
+
+function ConfigField({ label, description, configKey, value, unit, min = 0, max, step }: ConfigFieldProps) {
+  const overridden = isOverridden(configKey)
+  const defaultVal = SESSION_CONFIG_DEFAULTS[configKey]
+
+  // Convert stored ms to display unit
+  const toDisplay = (v: number) => {
+    if (unit === "seconds") return v / 1000
+    if (unit === "minutes") return v / 60_000
+    return v
+  }
+  // Convert display unit back to stored ms
+  const fromDisplay = (v: number) => {
+    if (unit === "seconds") return v * 1000
+    if (unit === "minutes") return v * 60_000
+    return v
+  }
+
+  const displayValue = toDisplay(value)
+  const displayDefault = toDisplay(defaultVal)
+  const displayStep = step ?? (unit === "minutes" ? 0.5 : unit === "seconds" ? 5 : unit === "speed" ? 0.1 : 1)
+  const displayMax = max ? toDisplay(max) : undefined
+
+  const unitLabel = unit === "seconds" ? "s" : unit === "minutes" ? "min" : unit === "ms" ? "ms" : unit === "speed" ? "×" : ""
+
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium">{label}</span>
+          {overridden && (
+            <button
+              onClick={() => updateConfig(configKey, defaultVal)}
+              className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+              title={`Reset to default (${displayDefault}${unitLabel})`}
+            >
+              ↻
+            </button>
+          )}
+        </div>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Input
+          type="number"
+          value={displayValue}
+          onChange={(e) => {
+            const num = parseFloat(e.target.value)
+            if (!isNaN(num) && num >= min) {
+              updateConfig(configKey, fromDisplay(num))
+            }
+          }}
+          className="w-20 h-8 text-sm text-right font-mono"
+          min={min}
+          max={displayMax}
+          step={displayStep}
+        />
+        <span className="text-xs text-muted-foreground w-6">{unitLabel}</span>
+      </div>
+    </div>
+  )
+}
+
+function ThresholdsTimingSection({ config }: { config: Record<string, number> }) {
+  return (
+    <div className="space-y-5">
+      {/* Status Thresholds */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Session Status</h3>
+        <ConfigField
+          label="Active → Idle"
+          description="Time before a session is considered idle"
+          configKey="statusActiveThresholdMs"
+          value={config.statusActiveThresholdMs}
+          unit="minutes"
+          min={0}
+        />
+        <ConfigField
+          label="Idle → Sleeping"
+          description="Time before a session is considered sleeping"
+          configKey="statusSleepingThresholdMs"
+          value={config.statusSleepingThresholdMs}
+          unit="minutes"
+          min={0}
+        />
+      </div>
+
+      {/* 3D Bot Status */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">3D Bot Status</h3>
+        <ConfigField
+          label="Bot Idle Threshold"
+          description="Time before a bot appears idle in the 3D world"
+          configKey="botIdleThresholdMs"
+          value={config.botIdleThresholdMs}
+          unit="seconds"
+          min={0}
+        />
+        <ConfigField
+          label="Bot Offline Threshold"
+          description="Time before a bot goes offline in the 3D world"
+          configKey="botSleepingThresholdMs"
+          value={config.botSleepingThresholdMs}
+          unit="minutes"
+          min={0}
+        />
+      </div>
+
+      {/* Activity Detection */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Activity Detection</h3>
+        <ConfigField
+          label="Token Change Window"
+          description="Recent token changes within this window = actively running"
+          configKey="tokenChangeThresholdMs"
+          value={config.tokenChangeThresholdMs}
+          unit="seconds"
+          min={0}
+        />
+        <ConfigField
+          label="Updated-At Active"
+          description="updatedAt within this window = actively running"
+          configKey="updatedAtActiveMs"
+          value={config.updatedAtActiveMs}
+          unit="seconds"
+          min={0}
+        />
+      </div>
+
+      {/* Parking */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Parking / Break Area</h3>
+        <ConfigField
+          label="Parking Expiry"
+          description="Hide parked sessions after this time"
+          configKey="parkingExpiryMs"
+          value={config.parkingExpiryMs}
+          unit="minutes"
+          min={0}
+        />
+        <ConfigField
+          label="Max Visible Sessions"
+          description="Sessions beyond this are overflow to parking"
+          configKey="parkingMaxVisible"
+          value={config.parkingMaxVisible}
+          unit="count"
+          min={1}
+          step={1}
+        />
+        <ConfigField
+          label="Max Bots Per Room"
+          description="Limit rendered bots per room in 3D view"
+          configKey="maxVisibleBotsPerRoom"
+          value={config.maxVisibleBotsPerRoom}
+          unit="count"
+          min={1}
+          step={1}
+        />
+      </div>
+
+      {/* Bot Movement */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">3D Bot Movement</h3>
+        <ConfigField
+          label="Active Walk Speed"
+          configKey="botWalkSpeedActive"
+          value={config.botWalkSpeedActive}
+          unit="speed"
+          min={0.1}
+          step={0.1}
+        />
+        <ConfigField
+          label="Idle Wander Speed"
+          configKey="botWalkSpeedIdle"
+          value={config.botWalkSpeedIdle}
+          unit="speed"
+          min={0.1}
+          step={0.1}
+        />
+        <ConfigField
+          label="Wander Min Wait"
+          description="Min seconds between random wander moves"
+          configKey="wanderMinWaitS"
+          value={config.wanderMinWaitS}
+          unit="seconds"
+          min={0}
+        />
+        <ConfigField
+          label="Wander Max Wait"
+          description="Max seconds between random wander moves"
+          configKey="wanderMaxWaitS"
+          value={config.wanderMaxWaitS}
+          unit="seconds"
+          min={0}
+        />
+      </div>
+
+      {/* Polling */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Polling Intervals</h3>
+        <ConfigField
+          label="Log Viewer Refresh"
+          configKey="logViewerPollMs"
+          value={config.logViewerPollMs}
+          unit="seconds"
+          min={0}
+        />
+        <ConfigField
+          label="Cron View Refresh"
+          configKey="cronViewPollMs"
+          value={config.cronViewPollMs}
+          unit="seconds"
+          min={0}
+        />
+      </div>
+
+      {/* Reset All */}
+      <div className="pt-2 border-t">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-2"
+          onClick={() => {
+            resetConfig()
+          }}
+          disabled={getOverrideCount() === 0}
+        >
+          ↻ Reset All to Defaults
+          {getOverrideCount() > 0 && (
+            <Badge variant="secondary" className="text-[10px]">
+              {getOverrideCount()} custom
+            </Badge>
+          )}
+        </Button>
+      </div>
+    </div>
   )
 }
 

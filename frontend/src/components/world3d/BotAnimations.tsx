@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { getBlueprintForRoom, gridToWorld, findInteractionCells } from '@/lib/grid'
+import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import type { BotStatus } from './Bot3D'
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -189,14 +190,14 @@ export function useBotAnimation(
           s.phase = 'walking-to-desk'
           s.targetX = interactionPoints.deskPosition[0] + j.x
           s.targetZ = interactionPoints.deskPosition[2] + j.z
-          s.walkSpeed = 1.2
+          s.walkSpeed = SESSION_CONFIG.botWalkSpeedActive
           s.freezeWhenArrived = true
           s.arrived = false
         } else {
           s.phase = 'idle-wandering'
           s.targetX = null
           s.targetZ = null
-          s.walkSpeed = 1.2
+          s.walkSpeed = SESSION_CONFIG.botWalkSpeedActive
           s.freezeWhenArrived = false
           s.arrived = false
           s.resetWanderTarget = true
@@ -219,15 +220,15 @@ export function useBotAnimation(
           s.phase = 'getting-coffee'
           s.targetX = interactionPoints.coffeePosition[0] + j.x * 0.5
           s.targetZ = interactionPoints.coffeePosition[2] + j.z * 0.5
-          s.walkSpeed = 0.6
+          s.walkSpeed = SESSION_CONFIG.botWalkSpeedCoffee
           s.freezeWhenArrived = true
           s.arrived = false
-          s.coffeeTimer = 5 + Math.random() * 5
+          s.coffeeTimer = SESSION_CONFIG.coffeeMinTimeS + Math.random() * (SESSION_CONFIG.coffeeMaxTimeS - SESSION_CONFIG.coffeeMinTimeS)
         } else {
           s.phase = 'idle-wandering'
           s.targetX = null
           s.targetZ = null
-          s.walkSpeed = 0.3
+          s.walkSpeed = SESSION_CONFIG.botWalkSpeedIdle
           s.freezeWhenArrived = false
           s.arrived = false
           s.resetWanderTarget = true
@@ -246,7 +247,7 @@ export function useBotAnimation(
           s.phase = 'sleeping-walking'
           s.targetX = interactionPoints.sleepCorner[0] + j.x * 0.3
           s.targetZ = interactionPoints.sleepCorner[2] + j.z * 0.3
-          s.walkSpeed = 0.4
+          s.walkSpeed = SESSION_CONFIG.botWalkSpeedSleepWalk
           s.freezeWhenArrived = true
           s.arrived = false
         } else {
@@ -312,7 +313,7 @@ export function tickAnimState(s: AnimState, delta: number): void {
           s.phase = 'idle-wandering'
           s.targetX = null
           s.targetZ = null
-          s.walkSpeed = 0.3
+          s.walkSpeed = SESSION_CONFIG.botWalkSpeedIdle
           s.freezeWhenArrived = false
           s.arrived = false
           s.resetWanderTarget = true

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react'
 import type { CrewSession } from '@/lib/api'
+import { SESSION_CONFIG } from '@/lib/sessionConfig'
 
 /**
  * Shared hook that tracks token changes to detect actively running sessions.
@@ -30,11 +31,11 @@ export function useSessionActivity(sessions: CrewSession[]) {
   const isActivelyRunning = useCallback((sessionKey: string): boolean => {
     const tracked = tokenTrackingRef.current.get(sessionKey)
     if (!tracked) return false
-    // Token count changed in last 30s → actively generating
-    if (Date.now() - tracked.lastChangeTime < 30000) return true
+    // Token count changed recently → actively generating
+    if (Date.now() - tracked.lastChangeTime < SESSION_CONFIG.tokenChangeThresholdMs) return true
     // Also check updatedAt — catches tool work that doesn't generate tokens
     const session = sessions.find(s => s.key === sessionKey)
-    if (session && (Date.now() - session.updatedAt) < 30000) return true
+    if (session && (Date.now() - session.updatedAt) < SESSION_CONFIG.updatedAtActiveMs) return true
     return false
   }, [sessions])
 

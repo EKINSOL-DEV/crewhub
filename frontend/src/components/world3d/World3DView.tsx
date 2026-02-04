@@ -21,6 +21,7 @@ import { getBotConfigFromSession, isSubagent } from './utils/botVariants'
 import { getSessionDisplayName } from '@/lib/minionUtils'
 import { getDefaultRoomForSession } from '@/lib/roomsConfig'
 import { splitSessionsForDisplay } from '@/lib/sessionFiltering'
+import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { CameraController } from './CameraController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
@@ -43,7 +44,7 @@ const HALLWAY_WIDTH = 4
 const GRID_SPACING = ROOM_SIZE + HALLWAY_WIDTH // 16
 const MAX_COLS = 3
 const BUILDING_PADDING = 3 // padding inside building walls around the grid
-const MAX_VISIBLE_BOTS_PER_ROOM = 8 // limit rendered bots; remainder shown as "+N more"
+// MAX_VISIBLE_BOTS_PER_ROOM read from SESSION_CONFIG at render time
 const PARKING_WIDTH = 9 // width of parking/break area (compact break room)
 const PARKING_DEPTH_MIN = ROOM_SIZE // minimum depth (≈ 1 room tall)
 
@@ -219,9 +220,9 @@ function LoadingFallback() {
 
 function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatus {
   if (isActive) return 'active'
-  const idleSeconds = (Date.now() - session.updatedAt) / 1000
-  if (idleSeconds < 120) return 'idle'
-  if (idleSeconds < 1800) return 'sleeping'  // 30 min before offline (was 10 min)
+  const idleMs = Date.now() - session.updatedAt
+  if (idleMs < SESSION_CONFIG.botIdleThresholdMs) return 'idle'
+  if (idleMs < SESSION_CONFIG.botSleepingThresholdMs) return 'sleeping'
   return 'offline'
 }
 
@@ -546,7 +547,7 @@ function SceneContent({
       {/* Rooms in grid layout */}
       {roomPositions.map(({ room, position }) => {
         const botsInRoom = roomBots.get(room.id) || []
-        const visibleBots = botsInRoom.slice(0, MAX_VISIBLE_BOTS_PER_ROOM)
+        const visibleBots = botsInRoom.slice(0, SESSION_CONFIG.maxVisibleBotsPerRoom)
         const overflowCount = botsInRoom.length - visibleBots.length
         const botPositions = getBotPositionsInRoom(position, ROOM_SIZE, visibleBots.length)
         const bounds = getRoomBounds(position, ROOM_SIZE)

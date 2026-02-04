@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { SESSION_CONFIG } from "@/lib/sessionConfig"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -86,7 +87,7 @@ export function CronView() {
   useEffect(() => {
     fetchJobs()
     // Poll every 30 seconds
-    const interval = setInterval(fetchJobs, 30000)
+    const interval = setInterval(fetchJobs, SESSION_CONFIG.cronViewPollMs)
     return () => clearInterval(interval)
   }, [])
 

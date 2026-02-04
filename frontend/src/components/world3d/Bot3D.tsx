@@ -2,6 +2,7 @@ import { useRef, useEffect, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
+import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { BotBody } from './BotBody'
 import { BotFace } from './BotFace'
 import { BotAccessory } from './BotAccessory'
@@ -93,7 +94,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     targetZ: position[2],
     currentX: position[0],
     currentZ: position[2],
-    waitTimer: 3 + Math.random() * 4,
+    waitTimer: SESSION_CONFIG.wanderMinWaitS + Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS),
     baseX: position[0],
     baseZ: position[2],
     sessionKey: session?.key || '',
@@ -115,7 +116,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.currentZ = position[2]
       state.targetX = position[0]
       state.targetZ = position[2]
-      state.waitTimer = 3 + Math.random() * 3
+      state.waitTimer = SESSION_CONFIG.wanderMinWaitS + Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
       state.sessionKey = newKey
       state.stepsRemaining = 0
       state.cellProgress = 0
@@ -323,7 +324,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
             state.targetX = roomCenterX + (Math.random() - 0.5) * 2
             state.targetZ = roomCenterZ + (Math.random() - 0.5) * 2
           }
-          state.waitTimer = 4 + Math.random() * 4
+          state.waitTimer = SESSION_CONFIG.wanderMinWaitS + Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
         }
       } else {
         const easedSpeed = speed * Math.min(1, dist / 0.5)
@@ -412,7 +413,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         if (dir) {
           state.dirX = dir.x
           state.dirZ = dir.z
-          state.stepsRemaining = 3 + Math.floor(Math.random() * 6) // 3-8 cells
+          state.stepsRemaining = SESSION_CONFIG.wanderMinSteps + Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1))
           state.cellProgress = 0
           state.waitTimer = 1 + Math.random() * 2 // pause 1-3s before walking
         } else {
@@ -429,7 +430,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           if (dir) {
             state.dirX = dir.x
             state.dirZ = dir.z
-            state.stepsRemaining = 2 + Math.floor(Math.random() * 4) // 2-5 cells
+            state.stepsRemaining = Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) + Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps))
             state.cellProgress = 0
           }
           state.waitTimer = 0.5 // brief pause after redirect

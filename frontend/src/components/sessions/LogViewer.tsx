@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { SESSION_CONFIG } from "@/lib/sessionConfig"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,7 +35,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
 
   useEffect(() => {
     if (!open || !session) return
-    const interval = setInterval(() => fetchMessages(true), 3000)
+    const interval = setInterval(() => fetchMessages(true), SESSION_CONFIG.logViewerPollMs)
     return () => clearInterval(interval)
   }, [open, session])
 

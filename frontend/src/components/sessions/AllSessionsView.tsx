@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react"
 import { type MinionSession } from "@/lib/api"
+import { SESSION_CONFIG } from "@/lib/sessionConfig"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -35,8 +36,8 @@ function getSessionStatus(session: MinionSession): { label: string; variant: "de
   if (session.abortedLastRun) return { label: "Aborted", variant: "destructive" }
   const now = Date.now()
   const lastUpdate = session.updatedAt
-  if (now - lastUpdate < 30000) return { label: "Active", variant: "default" }
-  if (now - lastUpdate < 300000) return { label: "Idle", variant: "secondary" }
+  if (now - lastUpdate < SESSION_CONFIG.tableActiveThresholdMs) return { label: "Active", variant: "default" }
+  if (now - lastUpdate < SESSION_CONFIG.tableIdleThresholdMs) return { label: "Idle", variant: "secondary" }
   return { label: "Stale", variant: "outline" }
 }
 

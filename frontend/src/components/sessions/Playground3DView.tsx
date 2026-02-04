@@ -1,5 +1,6 @@
 
 import { useState, useRef, useMemo, useCallback, Suspense, useEffect } from "react"
+import { SESSION_CONFIG } from "@/lib/sessionConfig"
 import { Canvas, useFrame, ThreeEvent } from "@react-three/fiber"
 import { OrbitControls, Text, RoundedBox, Float, Html, Sparkles } from "@react-three/drei"
 import * as THREE from "three"
@@ -483,7 +484,7 @@ function Scene({
   const isActivelyRunning = useCallback((sessionKey: string): boolean => {
     const tracked = tokenTrackingRef.current.get(sessionKey)
     if (!tracked) return false
-    return Date.now() - tracked.lastChangeTime < 30000
+    return Date.now() - tracked.lastChangeTime < SESSION_CONFIG.tokenChangeThresholdMs
   }, [tokenTrackingRef])
 
   return (
@@ -663,9 +664,9 @@ export function Playground3DView({ sessions, onAliasChanged: _onAliasChanged, se
   const isActivelyRunning = useCallback((sessionKey: string): boolean => {
     const tracked = tokenTrackingRef.current.get(sessionKey)
     if (!tracked) return false
-    if (Date.now() - tracked.lastChangeTime < 30000) return true
+    if (Date.now() - tracked.lastChangeTime < SESSION_CONFIG.tokenChangeThresholdMs) return true
     const session = sessions.find(s => s.key === sessionKey)
-    if (session && (Date.now() - session.updatedAt) < 30000) return true
+    if (session && (Date.now() - session.updatedAt) < SESSION_CONFIG.updatedAtActiveMs) return true
     return false
   }, [sessions])
   

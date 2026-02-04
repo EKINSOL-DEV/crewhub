@@ -4,6 +4,7 @@ import type { CrewSession, SessionContentBlock } from "./api"
 type MinionSession = CrewSession
 type MinionContentBlock = SessionContentBlock
 import { getTaskEmoji, generateFriendlyName } from "./friendlyNames"
+import { SESSION_CONFIG } from "./sessionConfig"
 
 export type SessionStatus = "active" | "idle" | "sleeping"
 
@@ -17,8 +18,8 @@ export interface ActivityEvent {
 
 export function getSessionStatus(session: MinionSession): SessionStatus {
   const timeSinceUpdate = Date.now() - session.updatedAt
-  if (timeSinceUpdate < 5 * 60 * 1000) return "active"
-  if (timeSinceUpdate < 30 * 60 * 1000) return "idle"
+  if (timeSinceUpdate < SESSION_CONFIG.statusActiveThresholdMs) return "active"
+  if (timeSinceUpdate < SESSION_CONFIG.statusSleepingThresholdMs) return "idle"
   return "sleeping"
 }
 
@@ -233,8 +234,8 @@ export function getIdleOpacity(idleSeconds: number): number {
   return 0
 }
 
-/** Default parking idle threshold in seconds */
-export const DEFAULT_PARKING_IDLE_THRESHOLD = 120
+/** Default parking idle threshold in seconds (reads from centralized config) */
+export const DEFAULT_PARKING_IDLE_THRESHOLD = SESSION_CONFIG.parkingIdleThresholdS
 
 export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?: boolean, idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD): boolean {
   // Fixed agents (agent:*:main) always stay in their room

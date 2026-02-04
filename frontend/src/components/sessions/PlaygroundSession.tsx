@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, forwardRef } from "react"
+import { SESSION_CONFIG } from "@/lib/sessionConfig"
 import { useDraggable } from "@dnd-kit/core"
 import { SessionSVGWithIcon } from "./SessionSVGWithIcon"
 import type { MinionSession } from "@/lib/api"
@@ -129,7 +130,7 @@ export const PlaygroundMinion = forwardRef<HTMLDivElement, PlaygroundMinionProps
     if (status === "sleeping") return
     if (containerWidth === 0 || containerHeight === 0) return
     const margin = minionSize / 2 + 10
-    const targetUpdateInterval = (status === "active" ? 2000 : 4000) / speedMultiplier
+    const targetUpdateInterval = (status === "active" ? SESSION_CONFIG.targetUpdateActiveMs : SESSION_CONFIG.targetUpdateIdleMs) / speedMultiplier
     
     const animate = () => {
       if (isDragging) {
