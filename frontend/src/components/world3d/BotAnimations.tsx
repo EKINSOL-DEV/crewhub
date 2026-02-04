@@ -175,8 +175,8 @@ export function useBotAnimation(
 
   // Per-bot random offsets so multiple bots don't stack on the same furniture
   const jitter = useRef({
-    x: (Math.random() - 0.5) * 0.8,
-    z: (Math.random() - 0.5) * 0.8,
+    x: (Math.random() - 0.5) * 0.3,
+    z: (Math.random() - 0.5) * 0.3,
   })
 
   // Track previous status to avoid unnecessary resets

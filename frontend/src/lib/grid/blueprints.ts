@@ -21,7 +21,7 @@ const GRID_D = 20
 const CELL_SIZE = 0.6
 
 // ─── Headquarters ───────────────────────────────────────────────
-// Large desk + monitor (back-left), chair, plant (back-right corner),
+// Large desk + monitor (back-left), plant (back-right corner),
 // notice board (back wall), coffee machine (front-right), water cooler (front-left)
 
 function createHeadquarters(): RoomBlueprint {
@@ -31,7 +31,6 @@ function createHeadquarters(): RoomBlueprint {
   placeOnGrid(grid, 4, 16, 'desk-with-monitor', { span: { w: 2, d: 2 } })
 
   // Chair — in front of desk (world ~(-2.5, +2.5) → grid (6, 14))
-  placeOnGrid(grid, 6, 14, 'chair')
 
   // Work interaction point — at desk
   placeOnGrid(grid, 6, 15, 'work-point', { type: 'interaction', interactionType: 'work' })
@@ -82,12 +81,10 @@ function createDevRoom(): RoomBlueprint {
 
   // Desk 1 with dual monitors — left-back (world ~(-3.5, +3.5) → grid (4, 16))
   placeOnGrid(grid, 4, 16, 'desk-with-dual-monitors', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 5, 14, 'chair')
   placeOnGrid(grid, 5, 15, 'work-point-1', { type: 'interaction', interactionType: 'work' })
 
   // Desk 2 with dual monitors — right-back (world ~(+3.5, +3.5) → grid (16, 16))
   placeOnGrid(grid, 16, 16, 'desk-with-dual-monitors', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 15, 14, 'chair')
   placeOnGrid(grid, 15, 15, 'work-point-2', { type: 'interaction', interactionType: 'work' })
 
   // Server rack — back-right corner (world ~(+4.8, +5.0) → grid (18, 18))
@@ -136,7 +133,6 @@ function createCreativeRoom(): RoomBlueprint {
 
   // Desk with monitor + drawing tablet — right-back (world ~(+3.5, +3.5) → grid (16, 16))
   placeOnGrid(grid, 16, 16, 'desk-with-monitor-tablet', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 17, 15, 'chair')
   placeOnGrid(grid, 17, 14, 'work-point', { type: 'interaction', interactionType: 'work' })
 
   // Color palette — near easel (world ~(-2.5, +0.3) → grid (6, 10))
@@ -175,7 +171,7 @@ function createCreativeRoom(): RoomBlueprint {
 
 // ─── Marketing Room ─────────────────────────────────────────────
 // Standing desk + monitor (left-back), presentation screen (back wall),
-// bar chart (right-center), plant, guest chair
+// bar chart (right-center), plant, 
 
 function createMarketingRoom(): RoomBlueprint {
   const grid = createEmptyGrid(GRID_W, GRID_D)
@@ -194,7 +190,6 @@ function createMarketingRoom(): RoomBlueprint {
   placeOnGrid(grid, 18, 18, 'plant', { type: 'decoration' })
 
   // Guest chair — right-back-ish (world ~(+3.5, +3) → grid (16, 15))
-  placeOnGrid(grid, 16, 15, 'chair')
 
   // Sleep corner — front-left
   placeOnGrid(grid, 2, 2, 'sleep-corner', { type: 'interaction', interactionType: 'sleep' })
@@ -345,7 +340,6 @@ function createCommsRoom(): RoomBlueprint {
 
   // Desk with monitor + headset — front-right (world ~(+3.5, -3.5) → grid (16, 4))
   placeOnGrid(grid, 16, 4, 'desk-with-monitor-headset', { span: { w: 2, d: 2 } })
-  placeOnGrid(grid, 15, 5, 'chair')
   placeOnGrid(grid, 15, 4, 'work-point', { type: 'interaction', interactionType: 'work' })
 
   // Signal waves — near antenna (wall-mounted)
@@ -377,7 +371,7 @@ function createCommsRoom(): RoomBlueprint {
 
 // ─── Ops Room ───────────────────────────────────────────────────
 // Round table (center), 5 monitors (back wall), status lights (right wall),
-// filing cabinets (back-left), fire extinguisher (front-right), 3 chairs
+// filing cabinets (back-left), fire extinguisher (front-right),
 
 function createOpsRoom(): RoomBlueprint {
   const grid = createEmptyGrid(GRID_W, GRID_D)
@@ -405,9 +399,6 @@ function createOpsRoom(): RoomBlueprint {
   placeOnGrid(grid, 18, 2, 'fire-extinguisher', { type: 'decoration' })
 
   // Chairs around table (outside the 4×4 span at 8,8-11,11)
-  placeOnGrid(grid, 7, 10, 'chair')
-  placeOnGrid(grid, 12, 10, 'chair')
-  placeOnGrid(grid, 10, 7, 'chair')
 
   // Work point — near the table (avoid overwriting the table span)
   placeOnGrid(grid, 10, 13, 'work-point', { type: 'interaction', interactionType: 'work' })
@@ -437,7 +428,7 @@ function createOpsRoom(): RoomBlueprint {
 }
 
 // ─── Default Room ───────────────────────────────────────────────
-// Simple: desk + monitor, chair, lamp, plant
+// Simple: desk + monitor, lamp, plant
 
 function createDefaultRoom(): RoomBlueprint {
   const grid = createEmptyGrid(GRID_W, GRID_D)
@@ -446,7 +437,6 @@ function createDefaultRoom(): RoomBlueprint {
   placeOnGrid(grid, 4, 16, 'desk-with-monitor', { span: { w: 2, d: 2 } })
 
   // Chair
-  placeOnGrid(grid, 6, 14, 'chair')
 
   // Work point
   placeOnGrid(grid, 6, 15, 'work-point', { type: 'interaction', interactionType: 'work' })
