@@ -15,7 +15,7 @@ import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
 import { getOnboardingStatus } from './lib/api'
-import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable, Globe } from 'lucide-react'
+import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
 import { Button } from './components/ui/button'
 
 // Simple path-based routing for dev pages
@@ -55,12 +55,6 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingChecked, setOnboardingChecked] = useState(false)
   const onboardingCheckRef = useRef(false)
-  type ViewMode = 'world' | 'cards'
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    const stored = localStorage.getItem('crewhub-view-mode')
-    if (stored === 'cards') return 'cards'
-    return 'world'
-  })
   const [settings, setSettings] = useState<SessionsSettings>(() => {
     const stored = localStorage.getItem('crewhub-settings')
     if (stored) {
@@ -135,15 +129,6 @@ function AppContent() {
     setShowOnboarding(false)
   }, [])
 
-  // Toggle between World and Cards
-  const cycleViewMode = useCallback(() => {
-    setViewMode(prev => {
-      const next: ViewMode = prev === 'world' ? 'cards' : 'world'
-      localStorage.setItem('crewhub-view-mode', next)
-      return next
-    })
-  }, [])
-  
   const handleSettingsChange = useCallback((newSettings: SessionsSettings) => {
     setSettings(newSettings)
     localStorage.setItem('crewhub-settings', JSON.stringify(newSettings))
@@ -187,28 +172,6 @@ function AppContent() {
                 </>
               )}
             </div>
-            
-            {activeTab === 'active' && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={cycleViewMode}
-                className="gap-2"
-                title={viewMode === 'world' ? 'Switch to Cards view' : 'Switch to World view'}
-              >
-                {viewMode === 'world' ? (
-                  <>
-                    <Globe className="h-4 w-4" />
-                    <span className="text-xs">World</span>
-                  </>
-                ) : (
-                  <>
-                    <Grid3X3 className="h-4 w-4" />
-                    <span className="text-xs">Cards</span>
-                  </>
-                )}
-              </Button>
-            )}
             
             <Button variant="ghost" size="sm" onClick={refresh} disabled={loading}>
               <RefreshCw className={refreshClass} />
@@ -254,15 +217,11 @@ function AppContent() {
           <ErrorBoundary>
             <div className="flex-1 overflow-hidden">
               {activeTab === 'active' && (
-                viewMode === 'world' ? (
-                  <World3DView
-                    sessions={sessions}
-                    settings={settings}
-                    onAliasChanged={handleAliasChanged}
-                  />
-                ) : (
-                  <CardsView sessions={sessions} />
-                )
+                <World3DView
+                  sessions={sessions}
+                  settings={settings}
+                  onAliasChanged={handleAliasChanged}
+                />
               )}
               {activeTab === 'cards' && (
                 <CardsView sessions={sessions} />
