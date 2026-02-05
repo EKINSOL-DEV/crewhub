@@ -23,7 +23,7 @@ import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/cont
 import { useGridDebug } from "@/hooks/useGridDebug"
 import { useDebugBots } from "@/hooks/useDebugBots"
 import { useLightingPanelVisibility } from "@/hooks/useLightingConfig"
-import { useEnvironment, type EnvironmentType } from "@/components/world3d/environments"
+import { useEnvironment, useEnvironmentList } from "@/components/world3d/environments"
 import { useSessionConfig } from "@/hooks/useSessionConfig"
 import {
   SESSION_CONFIG_DEFAULTS,
@@ -187,6 +187,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   const { debugBotsEnabled, setDebugBotsEnabled } = useDebugBots()
   const { visible: lightingPanelVisible, setVisible: setLightingPanelVisible } = useLightingPanelVisibility()
   const [environment, setEnvironment] = useEnvironment()
+  const environmentEntries = useEnvironmentList()
   const sessionConfig = useSessionConfig()
   const overrideCount = getOverrideCount()
 
@@ -481,27 +482,23 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Environment Style</Label>
                     <div className="space-y-2">
-                      {([
-                        { value: 'grass' as EnvironmentType, label: '🌿 Classic Grass', desc: 'Flat grass field with tufts and rocks' },
-                        { value: 'island' as EnvironmentType, label: '🏝️ Floating Island', desc: 'Monument Valley-style floating island' },
-                        { value: 'floating' as EnvironmentType, label: '✨ Sky Platform', desc: 'Futuristic hexagonal floating platform' },
-                      ]).map(option => (
+                      {environmentEntries.map(entry => (
                         <button
-                          key={option.value}
-                          onClick={() => setEnvironment(option.value)}
+                          key={entry.id}
+                          onClick={() => setEnvironment(entry.id)}
                           className={`
                             w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-left
-                            ${environment === option.value
+                            ${environment === entry.id
                               ? "border-primary bg-primary/10 shadow-sm"
                               : "border-border bg-background hover:bg-muted"
                             }
                           `}
                         >
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium">{option.label}</div>
-                            <div className="text-xs text-muted-foreground">{option.desc}</div>
+                            <div className="text-sm font-medium">{entry.data.name}</div>
+                            <div className="text-xs text-muted-foreground">{entry.data.description}</div>
                           </div>
-                          {environment === option.value && (
+                          {environment === entry.id && (
                             <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
                           )}
                         </button>

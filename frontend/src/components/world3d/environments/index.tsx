@@ -1,19 +1,21 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
 import { GrassEnvironment } from './GrassEnvironment'
 import { IslandEnvironment } from './IslandEnvironment'
 import { FloatingEnvironment } from './FloatingEnvironment'
+import { environmentRegistry } from '@/lib/modding/registries'
 
 // ─── Environment Types ───────────────────────────────────────────
+// EnvironmentType is now a plain string — any registered id is valid.
 
-export type EnvironmentType = 'grass' | 'island' | 'floating'
+export type EnvironmentType = string
 
 const STORAGE_KEY = 'crewhub-environment'
-const DEFAULT_ENVIRONMENT: EnvironmentType = 'grass'
+const DEFAULT_ENVIRONMENT = 'grass'
 
 export function getStoredEnvironment(): EnvironmentType {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === 'grass' || stored === 'island' || stored === 'floating') return stored
+    if (stored && environmentRegistry.has(stored)) return stored
   } catch {
     // localStorage unavailable
   }
@@ -53,6 +55,16 @@ export function useEnvironment(): [EnvironmentType, (env: EnvironmentType) => vo
   return [environment, handleChange]
 }
 
+// ─── Hook for reading available environments from the registry ───
+
+export function useEnvironmentList() {
+  return useSyncExternalStore(
+    environmentRegistry.subscribe.bind(environmentRegistry),
+    environmentRegistry.getSnapshot,
+    environmentRegistry.getSnapshot,
+  )
+}
+
 // ─── Environment Switcher Component ──────────────────────────────
 
 interface EnvironmentSwitcherProps {
@@ -63,13 +75,42 @@ interface EnvironmentSwitcherProps {
 export function EnvironmentSwitcher({ buildingWidth, buildingDepth }: EnvironmentSwitcherProps) {
   const [environment] = useEnvironment()
 
-  switch (environment) {
-    case 'island':
-      return <IslandEnvironment buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
-    case 'floating':
-      return <FloatingEnvironment buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
-    case 'grass':
-    default:
-      return <GrassEnvironment buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
+  // Look up the component from the registry
+  const config = environmentRegistry.get(environment)
+  if (!config) {
+    // Fallback to default if the stored id isn't registered (e.g. mod was removed)
+    const fallback = environmentRegistry.get(DEFAULT_ENVIRONMENT)
+    if (!fallback) return null
+    const Fallback = fallback.component
+    return <Fallback buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
   }
+
+  const EnvComponent = config.component
+  return <EnvComponent buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
 }
+
+// ─── Built-in Environment Registration ───────────────────────────
+// Registers the 3 built-in environments. Called once at module load.
+
+function registerBuiltinEnvironments(): void {
+  environmentRegistry.register('grass', {
+    name: '🌿 Classic Grass',
+    description: 'Flat grass field with tufts and rocks',
+    component: GrassEnvironment,
+  }, 'builtin')
+
+  environmentRegistry.register('island', {
+    name: '🏝️ Floating Island',
+    description: 'Monument Valley-style floating island',
+    component: IslandEnvironment,
+  }, 'builtin')
+
+  environmentRegistry.register('floating', {
+    name: '✨ Sky Platform',
+    description: 'Futuristic hexagonal floating platform',
+    component: FloatingEnvironment,
+  }, 'builtin')
+}
+
+// Self-register on module load (same pattern as PropRegistry)
+registerBuiltinEnvironments()
