@@ -2,10 +2,13 @@
 // Renders all props in a room from its RoomBlueprint grid data.
 // Replaces the hardcoded RoomProps.tsx per-room components.
 
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback } from 'react'
+import { Html } from '@react-three/drei'
 import { gridToWorld } from '@/lib/grid'
 import type { RoomBlueprint } from '@/lib/grid'
 import { getPropEntry } from './PropRegistry'
+import { useGridDebug } from '@/hooks/useGridDebug'
+import type { ThreeEvent } from '@react-three/fiber'
 
 interface GridRoomRendererProps {
   blueprint: RoomBlueprint
@@ -104,6 +107,41 @@ function clampToRoomBounds(
   return [x, z]
 }
 
+// ─── Debug hover label ──────────────────────────────────────────
+
+const LABEL_STYLE: React.CSSProperties = {
+  fontSize: '11px',
+  fontFamily: 'monospace',
+  fontWeight: 600,
+  color: '#fff',
+  background: 'rgba(0, 0, 0, 0.80)',
+  padding: '2px 8px',
+  borderRadius: '10px',
+  whiteSpace: 'nowrap',
+  userSelect: 'none',
+  pointerEvents: 'none',
+  lineHeight: '18px',
+  letterSpacing: '0.02em',
+}
+
+function PropDebugLabel({ propId, position }: { propId: string; position: [number, number, number] }) {
+  // Position label above the prop (Y + 1.2 units above placement)
+  const labelPos: [number, number, number] = [position[0], position[1] + 1.2, position[2]]
+
+  return (
+    <Html
+      position={labelPos}
+      center
+      zIndexRange={[10, 20]}
+      style={{ pointerEvents: 'none' }}
+    >
+      <span style={LABEL_STYLE}>
+        {propId}
+      </span>
+    </Html>
+  )
+}
+
 // ─── Renderer ───────────────────────────────────────────────────
 
 /**
@@ -118,6 +156,26 @@ function clampToRoomBounds(
  */
 export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: GridRoomRendererProps) {
   const { cells, cellSize, gridWidth, gridDepth } = blueprint
+  const [gridDebugEnabled] = useGridDebug()
+  const [hoveredPropKey, setHoveredPropKey] = useState<string | null>(null)
+
+  // Stable callbacks — key is passed via event.object.userData
+  const handlePointerEnter = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    // Walk up to find the group with our debug userData
+    let obj = e.eventObject
+    if (obj?.userData?.debugPropKey) {
+      setHoveredPropKey(obj.userData.debugPropKey)
+    }
+  }, [])
+
+  const handlePointerLeave = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    let obj = e.eventObject
+    if (obj?.userData?.debugPropKey) {
+      setHoveredPropKey((prev) => prev === obj.userData.debugPropKey ? null : prev)
+    }
+  }, [])
 
   // Build list of prop instances from grid (memoized per blueprint)
   const propInstances = useMemo(() => {
@@ -195,15 +253,27 @@ export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: Gri
         }
 
         const worldPos: [number, number, number] = [worldX, yPos, worldZ]
+        const isHovered = hoveredPropKey === key
 
         return (
-          <Component
+          <group
             key={key}
-            position={worldPos}
-            rotation={finalRotation}
-            cellSize={cellSize}
-            span={span}
-          />
+            {...(gridDebugEnabled ? {
+              onPointerEnter: handlePointerEnter,
+              onPointerLeave: handlePointerLeave,
+              userData: { debugPropKey: key },
+            } : {})}
+          >
+            <Component
+              position={worldPos}
+              rotation={finalRotation}
+              cellSize={cellSize}
+              span={span}
+            />
+            {gridDebugEnabled && isHovered && (
+              <PropDebugLabel propId={propId} position={worldPos} />
+            )}
+          </group>
         )
       })}
     </group>
