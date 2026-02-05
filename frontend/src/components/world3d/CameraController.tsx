@@ -223,14 +223,40 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     if (!controls) return
 
     // Disable orbital controls in first person mode
+    // IMPORTANT: CameraControls.update() unconditionally sets camera.position
+    // and camera.lookAt every frame, even when enabled=false. We must patch
+    // update() to a no-op to prevent it from overriding PointerLockControls.
     if (state.level === 'firstperson') {
       controls.enabled = false
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(controls as any).__originalUpdate = controls.update
+      controls.update = () => false
       prevLevelRef.current = state.level
       return
     }
 
     // Re-enable when exiting first person
     if ((prevLevelRef.current as string) === 'firstperson') {
+      // Restore the original update method
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const orig = (controls as any).__originalUpdate
+      if (orig) {
+        controls.update = orig
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (controls as any).__originalUpdate
+      }
+      // Sync CameraControls internal state from actual camera position
+      // (camera was moved by FirstPersonController). This ensures the
+      // exit-transition animates FROM the FP position, not the old orbital pos.
+      const cam = controls.camera
+      const lookDir = new THREE.Vector3()
+      cam.getWorldDirection(lookDir)
+      const target = lookDir.multiplyScalar(5).add(cam.position.clone())
+      controls.setLookAt(
+        cam.position.x, cam.position.y, cam.position.z,
+        target.x, target.y, target.z,
+        false, // instant — update both current and end
+      )
       controls.enabled = true
     }
 

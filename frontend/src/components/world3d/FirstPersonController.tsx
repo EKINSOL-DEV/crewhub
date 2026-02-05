@@ -34,6 +34,8 @@ interface FirstPersonControllerProps {
   onEnterRoom?: (roomName: string) => void
   /** Callback when leaving a room */
   onLeaveRoom?: () => void
+  /** Callback when pointer lock state changes */
+  onLockChange?: (locked: boolean) => void
 }
 
 // ─── Constants ─────────────────────────────────────────────────
@@ -61,6 +63,7 @@ export function FirstPersonController({
   buildingDepth,
   onEnterRoom,
   onLeaveRoom,
+  onLockChange,
 }: FirstPersonControllerProps) {
   const { state, exitFirstPerson } = useWorldFocus()
   const { camera } = useThree()
@@ -196,18 +199,18 @@ export function FirstPersonController({
     }
   }, [enabled])
 
-  // ─── Lock pointer when entering first person ────────────────
+  // ─── Position camera when entering first person ───────────────
+  // NOTE: We do NOT programmatically call lock() — it requires a user gesture.
+  // drei's PointerLockControls adds a click handler to `document` that
+  // triggers lock() on the next click. The HUD prompts the user to click.
 
   useEffect(() => {
     if (enabled && !hasEnteredRef.current) {
       hasEnteredRef.current = true
       // Position camera at building entrance or center
       camera.position.set(0, EYE_HEIGHT, 0)
-      // Small delay to let React settle, then lock
-      const timer = setTimeout(() => {
-        controlsRef.current?.lock()
-      }, 100)
-      return () => clearTimeout(timer)
+      // Reset camera rotation to look forward (+Z)
+      camera.rotation.set(0, 0, 0)
     }
     if (!enabled) {
       hasEnteredRef.current = false
@@ -219,15 +222,17 @@ export function FirstPersonController({
 
   const handleLock = useCallback(() => {
     isLocked.current = true
-  }, [])
+    onLockChange?.(true)
+  }, [onLockChange])
 
   const handleUnlock = useCallback(() => {
     isLocked.current = false
+    onLockChange?.(false)
     // When pointer is unlocked (e.g. user pressed ESC), exit first person
     if (enabled) {
       exitFirstPerson()
     }
-  }, [enabled, exitFirstPerson])
+  }, [enabled, exitFirstPerson, onLockChange])
 
   // ─── Movement loop ──────────────────────────────────────────
 
