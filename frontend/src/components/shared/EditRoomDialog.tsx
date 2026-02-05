@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useDemoMode } from "@/contexts/DemoContext"
 import type { Room, FloorStyle, WallStyle } from "@/hooks/useRooms"
 
 // ── Constants ──────────────────────────────────────────────────
@@ -69,6 +70,7 @@ interface EditRoomDialogProps {
 // ── Component ──────────────────────────────────────────────────
 
 export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDialogProps) {
+  const { isDemoMode } = useDemoMode()
   const [form, setForm] = useState<EditRoomForm | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -118,6 +120,22 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
             Update room settings, floor texture, and wall style
           </DialogDescription>
         </DialogHeader>
+
+        {isDemoMode && (
+          <Alert className="border-amber-300 bg-amber-50">
+            <AlertDescription className="text-amber-800 text-sm">
+              🎮 <strong>Demo Mode</strong> — Changes won't be saved. Feel free to explore!
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Demo mode warning */}
+        {isDemoMode && (
+          <div className="rounded-lg border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 p-3 text-sm text-amber-800 flex items-center gap-2">
+            <span>🎮</span>
+            <span><strong>Demo Mode</strong> — Changes won't be saved. Feel free to explore the options!</span>
+          </div>
+        )}
 
         {form && (
           <div className="grid grid-cols-2 gap-6 py-4 px-1 max-h-[70vh] overflow-y-auto">

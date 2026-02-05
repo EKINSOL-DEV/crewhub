@@ -85,6 +85,9 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   const { startDrag, endDrag } = useDragActions()
   const [hovered, setHovered] = useState(false)
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  
+  // Demo mode: disable drag functionality
+  const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
   // 30% size increase for all bots
   const effectiveScale = scale * 1.3
@@ -671,7 +674,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       onPointerOver={() => {
         if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null }
         setHovered(true)
-        if (session && onClick) document.body.style.cursor = 'pointer'
+        // Don't show grab cursor in demo mode (drag doesn't work properly)
+        if (session && onClick && !isDemoMode) document.body.style.cursor = 'pointer'
       }}
       onPointerOut={() => {
         // Delay unhover so user can reach the drag handle
@@ -743,8 +747,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           </Html>
         )}
 
-        {/* Drag handle (visible on hover) */}
-        {session && roomId && (
+        {/* Drag handle (visible on hover, hidden in demo mode) */}
+        {session && roomId && !isDemoMode && (
           <Html
             position={[0, 0.95, 0]}
             center

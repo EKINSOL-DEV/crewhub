@@ -479,6 +479,365 @@ const MOCK_CHAT_HISTORY = [
   },
 ]
 
+// ─── Mock Session History (for LogViewer) ──────────────────────
+
+function createMockSessionHistory(sessionKey: string) {
+  const now = Date.now()
+
+  // Dev main agent - coding/debugging session
+  if (sessionKey === 'agent:dev:main') {
+    return [
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'The SSE connection keeps dropping after 30 seconds. Can you investigate?' }],
+        timestamp: now - 3600000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'SSE timeout issues could be nginx proxy timeout, keep-alive settings, or client-side EventSource reconnection...' },
+          { type: 'text', text: 'I\'ll check the SSE implementation. Let me look at the connection handling.' },
+        ],
+        timestamp: now - 3590000,
+        usage: { totalTokens: 842, cost: { total: 0.0126 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', name: 'Read', input: { path: 'backend/sse/manager.py' } },
+        ],
+        timestamp: now - 3580000,
+        usage: { totalTokens: 156, cost: { total: 0.0023 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_result' },
+          { type: 'text', text: 'Found it! The keep-alive ping interval is set to 45s, but nginx has a 30s proxy_read_timeout. I\'ll fix both.' },
+        ],
+        timestamp: now - 3570000,
+        usage: { totalTokens: 1240, cost: { total: 0.0186 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', name: 'Edit', input: { path: 'backend/sse/manager.py' } },
+        ],
+        timestamp: now - 3560000,
+        usage: { totalTokens: 892, cost: { total: 0.0134 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '✅ Fixed! Changed keep-alive to 15s and updated nginx config. The connection should stay stable now.' },
+        ],
+        timestamp: now - 3550000,
+        usage: { totalTokens: 324, cost: { total: 0.0049 } },
+      },
+    ]
+  }
+
+  // Reviewer agent - code review session
+  if (sessionKey === 'agent:reviewer:main') {
+    return [
+      {
+        role: 'system',
+        content: [{ type: 'text', text: 'Review PR #132: Add room assignment drag-and-drop' }],
+        timestamp: now - 1800000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'PR #132 adds drag-and-drop for room assignments. Need to check: accessibility, state management, error handling, performance with many sessions...' },
+          { type: 'text', text: 'Starting review of PR #132. I\'ll check the implementation quality and suggest improvements.' },
+        ],
+        timestamp: now - 1790000,
+        usage: { totalTokens: 567, cost: { total: 0.0085 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '## PR #132 Review Summary\n\n**✅ Strengths:**\n- Clean drag-and-drop implementation using @dnd-kit\n- Proper optimistic updates with rollback\n- Good TypeScript types\n\n**⚠️ Suggestions:**\n1. Add `aria-label` to draggable items for screen readers\n2. Consider debouncing the API call on drop (currently fires immediately)\n3. Missing loading state when assignment is in progress\n\n**Overall:** Approve with minor suggestions.' },
+        ],
+        timestamp: now - 1750000,
+        usage: { totalTokens: 1876, cost: { total: 0.0281 } },
+      },
+    ]
+  }
+
+  // Flowy agent - marketing/content session
+  if (sessionKey === 'agent:flowy:main') {
+    return [
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'Write a tweet announcing CrewHub v0.8 with the new 3D room system' }],
+        timestamp: now - 7200000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'CrewHub v0.8 key features: 3D rooms, agent visualization, real-time updates. Tweet should be punchy, show excitement, include emoji...' },
+          { type: 'text', text: '🚀 CrewHub v0.8 is here!\n\nNow with a fully immersive 3D world where your AI agents come to life:\n\n🏢 Themed rooms for different projects\n🤖 Watch agents work in real-time\n✨ Drag-and-drop organization\n\nManage your AI crew like never before.\n\n#AI #AgentOps #CrewHub' },
+        ],
+        timestamp: now - 7190000,
+        usage: { totalTokens: 423, cost: { total: 0.0063 } },
+      },
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'Nice! Now a longer blog post intro paragraph' }],
+        timestamp: now - 7100000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: 'Managing multiple AI agents used to mean endless terminal tabs and mental context-switching. With CrewHub v0.8, we\'re changing that entirely. Picture this: a 3D virtual office where each of your agents has a home — developers in the lab, reviewers in the thinking room, writers in the creative studio. You can see who\'s busy, what they\'re working on, and drag them between projects with a click. It\'s not just visualization; it\'s a new way to orchestrate AI teams that finally feels intuitive.' },
+        ],
+        timestamp: now - 7050000,
+        usage: { totalTokens: 892, cost: { total: 0.0134 } },
+      },
+    ]
+  }
+
+  // Main/Assistent agent - coordination session
+  if (sessionKey === 'agent:main:main') {
+    return [
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'What\'s the status of the CrewHub launch?' }],
+        timestamp: now - 900000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: 'Here\'s the current status:\n\n**Dev Team:**\n- ✅ SSE stability fix deployed\n- 🔄 Room lighting PR in review\n- ⏳ Unit test coverage at 78% (target: 85%)\n\n**Marketing:**\n- ✅ Launch tweet ready\n- 🔄 Blog post in draft\n\n**Blockers:** None currently. We\'re on track for Friday launch.' },
+        ],
+        timestamp: now - 890000,
+        usage: { totalTokens: 645, cost: { total: 0.0097 } },
+      },
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'Great. Remind me to check emails in 30 minutes' }],
+        timestamp: now - 800000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', name: 'cron_create', input: { schedule: 'in 30 minutes', message: 'Check emails' } },
+        ],
+        timestamp: now - 795000,
+        usage: { totalTokens: 234, cost: { total: 0.0035 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '⏰ Done! I\'ll ping you in 30 minutes to check emails.' },
+        ],
+        timestamp: now - 790000,
+        usage: { totalTokens: 87, cost: { total: 0.0013 } },
+      },
+    ]
+  }
+
+  // Game Dev agent - 3D/shader work
+  if (sessionKey === 'agent:gamedev:main') {
+    return [
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'The room floor reflections are too intense. Can you tone them down?' }],
+        timestamp: now - 5400000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'Floor reflections in Three.js... likely using MeshReflectorMaterial from drei. Need to adjust roughness, blur, and mirror intensity...' },
+          { type: 'text', text: 'I\'ll adjust the reflector settings. The current mirror=1 is giving that intense reflection.' },
+        ],
+        timestamp: now - 5390000,
+        usage: { totalTokens: 412, cost: { total: 0.0062 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', name: 'Edit', input: { path: 'frontend/src/components/3d/RoomFloor.tsx' } },
+        ],
+        timestamp: now - 5380000,
+        usage: { totalTokens: 678, cost: { total: 0.0102 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '✨ Updated! Changed:\n- `mirror={0.4}` (was 1.0)\n- `blur={[300, 100]}` for softer edges\n- `mixBlur={8}` for blend\n\nThe floor now has a subtle, professional reflection instead of a mirror finish.' },
+        ],
+        timestamp: now - 5370000,
+        usage: { totalTokens: 534, cost: { total: 0.0080 } },
+      },
+    ]
+  }
+
+  // Subagent sessions - shorter, focused tasks
+  if (sessionKey.includes('subagent:fix-auth-middleware')) {
+    return [
+      {
+        role: 'system',
+        content: [{ type: 'text', text: 'Fix JWT validation in auth middleware - tokens are not being refreshed correctly' }],
+        timestamp: now - 1200000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', name: 'Read', input: { path: 'backend/middleware/auth.py' } },
+        ],
+        timestamp: now - 1190000,
+        usage: { totalTokens: 234, cost: { total: 0.0035 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: 'Found the issue: the refresh check is comparing timestamps in different timezones. Fixing now...' },
+          { type: 'tool_use', name: 'Edit', input: { path: 'backend/middleware/auth.py' } },
+        ],
+        timestamp: now - 1180000,
+        usage: { totalTokens: 567, cost: { total: 0.0085 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '✅ Fixed. Now using UTC consistently for all JWT timestamp comparisons.' },
+        ],
+        timestamp: now - 1170000,
+        usage: { totalTokens: 123, cost: { total: 0.0018 } },
+      },
+    ]
+  }
+
+  if (sessionKey.includes('subagent:database-migration')) {
+    return [
+      {
+        role: 'system',
+        content: [{ type: 'text', text: 'Create migration for new room_assignments table with proper indexes' }],
+        timestamp: now - 3600000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', name: 'exec', input: { command: 'alembic revision --autogenerate -m "add_room_assignments"' } },
+        ],
+        timestamp: now - 3590000,
+        usage: { totalTokens: 189, cost: { total: 0.0028 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: 'Migration created. Adding composite index on (session_key, room_id) for fast lookups...' },
+          { type: 'tool_use', name: 'Edit', input: { path: 'backend/migrations/versions/abc123_add_room_assignments.py' } },
+        ],
+        timestamp: now - 3580000,
+        usage: { totalTokens: 456, cost: { total: 0.0068 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '✅ Migration ready:\n- Table: `room_assignments`\n- Columns: id, session_key, room_id, assigned_at\n- Indexes: composite on (session_key, room_id)\n\nRun `alembic upgrade head` to apply.' },
+        ],
+        timestamp: now - 3570000,
+        usage: { totalTokens: 234, cost: { total: 0.0035 } },
+      },
+    ]
+  }
+
+  if (sessionKey.includes('subagent:unit-test')) {
+    return [
+      {
+        role: 'system',
+        content: [{ type: 'text', text: 'Increase test coverage for RoomsContext from 65% to 85%' }],
+        timestamp: now - 600000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', name: 'exec', input: { command: 'npm run test:coverage -- --testPathPattern=RoomsContext' } },
+        ],
+        timestamp: now - 590000,
+        usage: { totalTokens: 145, cost: { total: 0.0022 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'Missing coverage: error handling paths, edge cases for empty rooms, concurrent assignment updates...' },
+          { type: 'text', text: 'Current coverage: 65%. Missing tests for:\n1. Error states when API fails\n2. Empty room list handling\n3. Optimistic update rollbacks\n\nAdding tests now...' },
+        ],
+        timestamp: now - 580000,
+        usage: { totalTokens: 678, cost: { total: 0.0102 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', name: 'Write', input: { path: 'frontend/src/contexts/__tests__/RoomsContext.test.tsx' } },
+        ],
+        timestamp: now - 500000,
+        usage: { totalTokens: 1456, cost: { total: 0.0218 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '✅ Coverage increased to 87%! Added 12 new test cases covering error handling and edge cases.' },
+        ],
+        timestamp: now - 480000,
+        usage: { totalTokens: 234, cost: { total: 0.0035 } },
+      },
+    ]
+  }
+
+  if (sessionKey.includes('subagent:social-media')) {
+    return [
+      {
+        role: 'system',
+        content: [{ type: 'text', text: 'Create a social media campaign for CrewHub launch - 5 tweets over 3 days' }],
+        timestamp: now - 1800000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'Campaign strategy: Day 1 - teaser, Day 2 - feature highlights, Day 3 - launch + demo video. Mix of emoji, hashtags, thread format...' },
+          { type: 'text', text: '## CrewHub Launch Campaign\n\n**Day 1 (Teaser):**\n🧵 "What if managing AI agents felt like... managing a team in a video game? Something exciting is coming. #AI #DevTools"\n\n**Day 2 (Features):**\n🧵 "Sneak peek: Your AI agents, visualized in 3D. Watch them work, assign tasks with drag-and-drop, see activity in real-time. This is CrewHub. 🤖🏢"\n\n**Day 3 (Launch):**\n🧵 "🚀 CrewHub is LIVE! The future of AI agent orchestration is here. Try the demo → [link] #CrewHub #AIAgents"' },
+        ],
+        timestamp: now - 1780000,
+        usage: { totalTokens: 892, cost: { total: 0.0134 } },
+      },
+    ]
+  }
+
+  if (sessionKey.includes('subagent:design-landing')) {
+    return [
+      {
+        role: 'system',
+        content: [{ type: 'text', text: 'Design the hero section for CrewHub landing page' }],
+        timestamp: now - 2400000,
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: 'Creating hero section with:\n- Headline: "Your AI Crew, Visualized"\n- Subheadline: "Orchestrate multiple AI agents in a 3D world"\n- CTA: "Try Demo" + "View Docs"\n- Background: Subtle 3D room preview with agents' },
+          { type: 'tool_use', name: 'Write', input: { path: 'frontend/src/components/landing/Hero.tsx' } },
+        ],
+        timestamp: now - 2380000,
+        usage: { totalTokens: 1234, cost: { total: 0.0185 } },
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: '✅ Hero section complete with responsive layout and animated background.' },
+        ],
+        timestamp: now - 2350000,
+        usage: { totalTokens: 156, cost: { total: 0.0023 } },
+      },
+    ]
+  }
+
+  // Default empty history for unknown sessions
+  return []
+}
+
 // ─── Rotating session labels for liveliness ────────────────────
 
 const SESSION_LABELS = {
@@ -973,8 +1332,12 @@ function handleMockRequest(pathname: string, method: string, _body?: BodyInit | 
 
   // GET /api/sessions/:key/history
   if (pathname.match(/^\/api\/sessions\/.*\/history/) && method === 'GET') {
-    console.log('[MockAPI] GET /api/sessions/:key/history → 200')
-    return jsonResponse({ messages: [] })
+    // Extract session key from URL: /api/sessions/{encoded-key}/history
+    const match = pathname.match(/^\/api\/sessions\/(.+)\/history/)
+    const sessionKey = match ? decodeURIComponent(match[1]) : ''
+    const messages = createMockSessionHistory(sessionKey)
+    console.log(`[MockAPI] GET /api/sessions/${sessionKey}/history → 200 (${messages.length} messages)`)
+    return jsonResponse({ messages })
   }
 
   // GET /api/chat/:key/history
