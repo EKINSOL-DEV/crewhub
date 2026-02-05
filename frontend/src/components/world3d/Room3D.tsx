@@ -24,7 +24,7 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
   const { drag, dropOnRoom } = useDragDrop()
   const [isDropTarget, setIsDropTarget] = useState(false)
 
-  // Only show drop zone when dragging and not hovering over source room
+  // Only render when dragging
   if (!drag.isDragging) return null
 
   const isSourceRoom = drag.sourceRoomId === roomId
@@ -33,53 +33,83 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
     <Html
       position={[0, 0.5, 0]}
       center
-      zIndexRange={[5, 10]}
+      zIndexRange={[50, 60]}
       style={{ pointerEvents: 'auto' }}
     >
       <div
         onDragOver={(e) => {
           e.preventDefault()
+          e.stopPropagation()
           e.dataTransfer.dropEffect = 'move'
           if (!isSourceRoom) setIsDropTarget(true)
         }}
-        onDragLeave={() => setIsDropTarget(false)}
+        onDragEnter={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (!isSourceRoom) setIsDropTarget(true)
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault()
+          // Only unset if actually leaving the element (not entering a child)
+          const rect = e.currentTarget.getBoundingClientRect()
+          const { clientX, clientY } = e
+          if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) {
+            setIsDropTarget(false)
+          }
+        }}
         onDrop={(e) => {
           e.preventDefault()
+          e.stopPropagation()
           setIsDropTarget(false)
           if (!isSourceRoom) {
             dropOnRoom(roomId)
           }
         }}
         style={{
-          width: `${size * 14}px`,
-          height: `${size * 14}px`,
+          // Use a generous fixed size that covers the room area at most zoom levels
+          width: `${Math.max(size * 18, 200)}px`,
+          height: `${Math.max(size * 18, 200)}px`,
           background: isDropTarget
-            ? 'rgba(255, 165, 0, 0.25)'
+            ? 'rgba(255, 165, 0, 0.3)'
             : isSourceRoom
-              ? 'rgba(100, 100, 100, 0.1)'
-              : 'rgba(79, 70, 229, 0.08)',
-          borderRadius: '16px',
+              ? 'rgba(100, 100, 100, 0.08)'
+              : 'rgba(79, 70, 229, 0.1)',
+          borderRadius: '20px',
           border: isDropTarget
-            ? '3px dashed rgba(255, 165, 0, 0.8)'
+            ? '3px dashed rgba(255, 165, 0, 0.9)'
             : isSourceRoom
-              ? '2px dashed rgba(100, 100, 100, 0.3)'
-              : '2px dashed rgba(79, 70, 229, 0.3)',
-          transition: 'all 0.2s ease',
+              ? '2px dashed rgba(100, 100, 100, 0.25)'
+              : '2px dashed rgba(79, 70, 229, 0.35)',
+          transition: 'all 0.15s ease',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           pointerEvents: 'auto',
+          boxShadow: isDropTarget ? '0 0 30px rgba(255, 165, 0, 0.3)' : 'none',
         }}
       >
         {isDropTarget && (
           <div style={{
-            color: 'rgba(255, 165, 0, 0.9)',
-            fontSize: '18px',
+            color: 'rgba(255, 165, 0, 0.95)',
+            fontSize: '16px',
             fontWeight: 700,
             fontFamily: 'system-ui, sans-serif',
-            textShadow: '0 1px 4px rgba(0,0,0,0.2)',
+            textShadow: '0 1px 4px rgba(0,0,0,0.3)',
+            background: 'rgba(0,0,0,0.4)',
+            padding: '6px 14px',
+            borderRadius: '10px',
           }}>
-            Drop here
+            📥 Drop here
+          </div>
+        )}
+        {isSourceRoom && (
+          <div style={{
+            color: 'rgba(100, 100, 100, 0.6)',
+            fontSize: '12px',
+            fontWeight: 500,
+            fontFamily: 'system-ui, sans-serif',
+          }}>
+            (current room)
           </div>
         )}
       </div>

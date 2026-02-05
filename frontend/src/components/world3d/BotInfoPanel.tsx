@@ -9,6 +9,7 @@ interface BotInfoPanelProps {
   displayName: string
   botConfig: BotVariantConfig
   status: BotStatus
+  bio?: string | null
   onClose: () => void
   onOpenLog: (session: CrewSession) => void
 }
@@ -78,7 +79,7 @@ function getLastAssistantMessage(session: CrewSession): string | null {
 
 // ── Component ──────────────────────────────────────────────────
 
-export function BotInfoPanel({ session, displayName, botConfig, status, onClose, onOpenLog }: BotInfoPanelProps) {
+export function BotInfoPanel({ session, displayName, botConfig, status, bio, onClose, onOpenLog }: BotInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const canChat = session ? isFixedAgent(session.key) : false
   const { openChat } = useChatContext()
@@ -227,6 +228,22 @@ export function BotInfoPanel({ session, displayName, botConfig, status, onClose,
         flexDirection: 'column',
         gap: 14,
       }}>
+        {/* Bio */}
+        {bio && (
+          <div style={{
+            fontSize: 13,
+            color: '#6b7280',
+            lineHeight: 1.5,
+            fontStyle: 'italic',
+            padding: '8px 12px',
+            background: `${botConfig.color}08`,
+            borderRadius: 10,
+            borderLeft: `3px solid ${botConfig.color}40`,
+          }}>
+            {bio}
+          </div>
+        )}
+
         <InfoRow label="Type">
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{

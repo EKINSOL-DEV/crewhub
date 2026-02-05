@@ -13,6 +13,7 @@ export interface Agent {
   sort_order: number
   is_pinned: boolean
   auto_spawn: boolean
+  bio: string | null
   created_at: number
   updated_at: number
 }

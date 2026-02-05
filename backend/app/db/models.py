@@ -116,6 +116,7 @@ class Agent(BaseModel):
     sort_order: int = 0
     is_pinned: bool = False
     auto_spawn: bool = True
+    bio: Optional[str] = None
     created_at: int
     updated_at: int
 
@@ -133,6 +134,7 @@ class AgentCreate(BaseModel):
     sort_order: int = 0
     is_pinned: bool = False
     auto_spawn: bool = True
+    bio: Optional[str] = None
 
 
 class AgentUpdate(BaseModel):
@@ -147,6 +149,7 @@ class AgentUpdate(BaseModel):
     sort_order: Optional[int] = None
     is_pinned: Optional[bool] = None
     auto_spawn: Optional[bool] = None
+    bio: Optional[str] = None
 
 
 # ========================================

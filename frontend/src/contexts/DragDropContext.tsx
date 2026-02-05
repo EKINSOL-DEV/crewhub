@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from 'react'
 import { API_BASE } from '@/lib/api'
 
 // ─── Types ─────────────────────────────────────────────────────
@@ -15,6 +15,7 @@ interface DragActions {
   startDrag: (sessionKey: string, sessionName: string, sourceRoomId: string) => void
   endDrag: () => void
   dropOnRoom: (targetRoomId: string) => Promise<void>
+  dropOnParking: () => Promise<void>
   clearError: () => void
 }
 
@@ -32,6 +33,7 @@ const DragActionsContext = createContext<DragActions>({
   startDrag: () => {},
   endDrag: () => {},
   dropOnRoom: async () => {},
+  dropOnParking: async () => {},
   clearError: () => {},
 })
 
@@ -45,6 +47,12 @@ interface DragDropProviderProps {
 
 export function DragDropProvider({ children, onAssignmentChanged }: DragDropProviderProps) {
   const [drag, setDrag] = useState<DragState>(defaultDrag)
+  // Use ref for current drag state so callbacks don't need to depend on `drag`
+  const dragRef = useRef<DragState>(defaultDrag)
+  dragRef.current = drag
+
+  const onAssignmentChangedRef = useRef(onAssignmentChanged)
+  onAssignmentChangedRef.current = onAssignmentChanged
 
   const startDrag = useCallback((sessionKey: string, sessionName: string, sourceRoomId: string) => {
     setDrag({
@@ -64,8 +72,14 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
     setDrag(prev => ({ ...prev, error: null }))
   }, [])
 
+  const setErrorWithAutoClear = useCallback((message: string) => {
+    setDrag({ ...defaultDrag, error: message })
+    setTimeout(() => setDrag(s => s.error === message ? { ...s, error: null } : s), 4000)
+  }, [])
+
   const dropOnRoom = useCallback(async (targetRoomId: string) => {
-    const { sessionKey, sourceRoomId } = drag
+    // Read from ref to avoid stale closures
+    const { sessionKey, sourceRoomId } = dragRef.current
     if (!sessionKey || targetRoomId === sourceRoomId) {
       endDrag()
       return
@@ -85,29 +99,71 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
         const err = await response.json().catch(() => ({}))
         const message = err?.detail || err?.message || 'Failed to move bot. Please try again.'
         console.error('Failed to assign bot to room:', err)
-        setDrag({ ...defaultDrag, error: message })
-        // Auto-clear error after 4 seconds
-        setTimeout(() => setDrag(s => s.error === message ? { ...s, error: null } : s), 4000)
+        setErrorWithAutoClear(message)
       } else {
-        // Refresh assignments so the view updates
-        onAssignmentChanged?.()
+        onAssignmentChangedRef.current?.()
         setDrag(defaultDrag)
       }
     } catch (err) {
       const message = 'Network error — couldn\'t move bot. Please retry.'
       console.error('Failed to assign bot to room:', err)
-      setDrag({ ...defaultDrag, error: message })
-      // Auto-clear error after 4 seconds
-      setTimeout(() => setDrag(s => s.error === message ? { ...s, error: null } : s), 4000)
+      setErrorWithAutoClear(message)
     }
-  }, [drag, endDrag, onAssignmentChanged])
+  }, [endDrag, setErrorWithAutoClear])
 
+  const dropOnParking = useCallback(async () => {
+    // Read from ref to avoid stale closures
+    const { sessionKey, sourceRoomId } = dragRef.current
+    if (!sessionKey || sourceRoomId === 'parking') {
+      endDrag()
+      return
+    }
+
+    try {
+      // DELETE the assignment to unassign from room (moves to parking)
+      const response = await fetch(`${API_BASE}/session-room-assignments/${encodeURIComponent(sessionKey)}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok && response.status !== 404) {
+        const err = await response.json().catch(() => ({}))
+        const message = err?.detail || err?.message || 'Failed to unassign bot. Please try again.'
+        console.error('Failed to unassign bot from room:', err)
+        setErrorWithAutoClear(message)
+      } else {
+        onAssignmentChangedRef.current?.()
+        setDrag(defaultDrag)
+      }
+    } catch (err) {
+      const message = 'Network error — couldn\'t unassign bot. Please retry.'
+      console.error('Failed to unassign bot from room:', err)
+      setErrorWithAutoClear(message)
+    }
+  }, [endDrag, setErrorWithAutoClear])
+
+  // Escape key cancels drag
+  useEffect(() => {
+    if (!drag.isDragging) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        endDrag()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [drag.isDragging, endDrag])
+
+  // Actions are now truly stable (no dependency on `drag` state)
   const actions = useMemo<DragActions>(() => ({
     startDrag,
     endDrag,
     dropOnRoom,
+    dropOnParking,
     clearError,
-  }), [startDrag, endDrag, dropOnRoom, clearError])
+  }), [startDrag, endDrag, dropOnRoom, dropOnParking, clearError])
 
   return (
     <DragStateContext.Provider value={drag}>
@@ -141,6 +197,28 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
             <span>⚠️</span>
             <span>{drag.error}</span>
           </div>
+        )}
+        {/* Full-screen drag overlay (captures drops on outdoor/parking areas) */}
+        {drag.isDragging && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 40,
+              cursor: 'grabbing',
+              // Transparent overlay — doesn't block room drop zones which have higher z-index
+            }}
+            onDragOver={(e) => {
+              e.preventDefault()
+              e.dataTransfer.dropEffect = 'move'
+            }}
+            onDrop={(e) => {
+              e.preventDefault()
+              // If we get here, the drop was NOT on a room drop zone
+              // → treat as "drop on outdoor/parking" = unassign
+              dropOnParking()
+            }}
+          />
         )}
       </DragActionsContext.Provider>
     </DragStateContext.Provider>

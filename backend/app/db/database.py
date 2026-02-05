@@ -11,7 +11,7 @@ DB_DIR = Path.home() / ".crewhub"
 DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 7  # v7: Added floor_style and wall_style to rooms
+SCHEMA_VERSION = 8  # v8: Added bio to agents
 
 
 async def init_database():
@@ -245,6 +245,27 @@ async def init_database():
             except Exception:
                 pass  # Column already exists
             
+            # v8: Add bio to agents
+            try:
+                await db.execute("ALTER TABLE agents ADD COLUMN bio TEXT")
+            except Exception:
+                pass  # Column already exists
+            
+            # v8: Seed bios for known agents (only if bio is NULL)
+            agent_bios = {
+                'main': 'Director of Bots. Keeps the crew running, manages schedules, and always has an answer. Runs on coffee and Sonnet.',
+                'dev': 'Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus.',
+                'gamedev': '3D world architect. Builds rooms, animates bots, and makes pixels dance. Three.js whisperer on Opus.',
+                'flowy': 'Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2.',
+                'reviewer': 'Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions.',
+                'wtl': 'Waterleau knowledge specialist. Industrial data pipelines, wastewater treatment, and SCADA systems. The domain expert on Sonnet.',
+            }
+            for agent_id, bio in agent_bios.items():
+                await db.execute(
+                    "UPDATE agents SET bio = ? WHERE id = ? AND bio IS NULL",
+                    (bio, agent_id),
+                )
+            
             # v7: Add floor_style and wall_style to rooms
             try:
                 await db.execute("ALTER TABLE rooms ADD COLUMN floor_style TEXT DEFAULT 'default'")
@@ -327,22 +348,22 @@ async def seed_default_data():
                 "UPDATE rooms SET is_hq = 1 WHERE id = 'headquarters'"
             )
             
-            # Create default agents
+            # Create default agents (with bios)
             default_agents = [
-                ('main', 'Main', '🤖', '#3b82f6', 'agent:main:main', 'anthropic/claude-sonnet-4-5', 'headquarters', 0, True, True, now, now),
-                ('dev', 'Dev', '💻', '#10b981', 'agent:dev:main', None, 'dev-room', 1, False, True, now, now),
-                ('flowy', 'Flowy', '🌊', '#8b5cf6', 'agent:flowy:main', None, 'headquarters', 2, False, True, now, now),
-                ('creator', 'Creator', '🎨', '#f59e0b', 'agent:creator:main', None, 'creative-room', 3, False, True, now, now),
-                ('reviewer', 'Reviewer', '🔍', '#ef4444', 'agent:reviewer:main', None, 'headquarters', 4, False, True, now, now),
+                ('main', 'Main', '🤖', '#3b82f6', 'agent:main:main', 'anthropic/claude-sonnet-4-5', 'headquarters', 0, True, True, now, now, 'Director of Bots. Keeps the crew running, manages schedules, and always has an answer. Runs on coffee and Sonnet.'),
+                ('dev', 'Dev', '💻', '#10b981', 'agent:dev:main', None, 'dev-room', 1, False, True, now, now, 'Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus.'),
+                ('flowy', 'Flowy', '🌊', '#8b5cf6', 'agent:flowy:main', None, 'headquarters', 2, False, True, now, now, 'Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2.'),
+                ('creator', 'Creator', '🎨', '#f59e0b', 'agent:creator:main', None, 'creative-room', 3, False, True, now, now, 'A hardworking crew member.'),
+                ('reviewer', 'Reviewer', '🔍', '#ef4444', 'agent:reviewer:main', None, 'headquarters', 4, False, True, now, now, 'Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions.'),
             ]
             
             await db.executemany("""
                 INSERT OR IGNORE INTO agents (
                     id, name, icon, color, agent_session_key, 
                     default_model, default_room_id, sort_order, 
-                    is_pinned, auto_spawn, created_at, updated_at
+                    is_pinned, auto_spawn, created_at, updated_at, bio
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, default_agents)
             
             # Create default settings

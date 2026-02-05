@@ -36,16 +36,19 @@ class AgentUpdate(BaseModel):
     sort_order: Optional[int] = None
     is_pinned: Optional[bool] = None
     auto_spawn: Optional[bool] = None
+    bio: Optional[str] = None
 
 
 # ── Default metadata for well-known agents ────────────────────────────
 
 _AGENT_DEFAULTS = {
-    "main": {"name": "Main", "icon": "🤖", "color": "#3b82f6", "session_key": "agent:main:main", "sort": 0},
-    "dev": {"name": "Dev", "icon": "💻", "color": "#10b981", "session_key": "agent:dev:main", "sort": 1},
-    "flowy": {"name": "Flowy", "icon": "🌊", "color": "#8b5cf6", "session_key": "agent:flowy:main", "sort": 2},
-    "creator": {"name": "Creator", "icon": "🎨", "color": "#f59e0b", "session_key": "agent:creator:main", "sort": 3},
-    "reviewer": {"name": "Reviewer", "icon": "🔍", "color": "#ef4444", "session_key": "agent:reviewer:main", "sort": 4},
+    "main": {"name": "Main", "icon": "🤖", "color": "#3b82f6", "session_key": "agent:main:main", "sort": 0, "bio": "Director of Bots. Keeps the crew running, manages schedules, and always has an answer. Runs on coffee and Sonnet."},
+    "dev": {"name": "Dev", "icon": "💻", "color": "#10b981", "session_key": "agent:dev:main", "sort": 1, "bio": "Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus."},
+    "gamedev": {"name": "Game Dev", "icon": "🎮", "color": "#f97316", "session_key": "agent:gamedev:main", "sort": 2, "bio": "3D world architect. Builds rooms, animates bots, and makes pixels dance. Three.js whisperer on Opus."},
+    "flowy": {"name": "Flowy", "icon": "🌊", "color": "#8b5cf6", "session_key": "agent:flowy:main", "sort": 3, "bio": "Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2."},
+    "creator": {"name": "Creator", "icon": "🎨", "color": "#f59e0b", "session_key": "agent:creator:main", "sort": 4, "bio": "A hardworking crew member."},
+    "reviewer": {"name": "Reviewer", "icon": "🔍", "color": "#ef4444", "session_key": "agent:reviewer:main", "sort": 5, "bio": "Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions."},
+    "wtl": {"name": "WTL", "icon": "💧", "color": "#06b6d4", "session_key": "agent:wtl:main", "sort": 6, "bio": "Waterleau knowledge specialist. Industrial data pipelines, wastewater treatment, and SCADA systems. The domain expert on Sonnet."},
 }
 
 
@@ -90,16 +93,18 @@ async def sync_agents_from_gateway() -> int:
                 session_key = defaults.get("session_key", f"agent:{agent_id}:main")
                 sort_order = defaults.get("sort", 99)
 
+                bio = defaults.get("bio", "A hardworking crew member.")
+
                 # INSERT OR IGNORE — won't overwrite user customisations
                 await db.execute(
                     """
                     INSERT OR IGNORE INTO agents
                         (id, name, icon, color, agent_session_key,
                          default_model, default_room_id, sort_order,
-                         is_pinned, auto_spawn, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, NULL, 'headquarters', ?, FALSE, TRUE, ?, ?)
+                         is_pinned, auto_spawn, bio, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, NULL, 'headquarters', ?, FALSE, TRUE, ?, ?, ?)
                     """,
-                    (agent_id, name, icon, color, session_key, sort_order, now, now),
+                    (agent_id, name, icon, color, session_key, sort_order, bio, now, now),
                 )
                 upserted += db.total_changes  # counts only actual inserts
 
@@ -149,6 +154,7 @@ async def list_agents():
                 "sort_order": row["sort_order"],
                 "is_pinned": bool(row["is_pinned"]),
                 "auto_spawn": bool(row["auto_spawn"]),
+                "bio": row["bio"] if "bio" in row.keys() else None,
                 "created_at": row["created_at"],
                 "updated_at": row["updated_at"],
             })
@@ -184,6 +190,7 @@ async def get_agent(agent_id: str):
             "sort_order": row["sort_order"],
             "is_pinned": bool(row["is_pinned"]),
             "auto_spawn": bool(row["auto_spawn"]),
+            "bio": row["bio"] if "bio" in row.keys() else None,
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
         }

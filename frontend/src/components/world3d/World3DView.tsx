@@ -54,6 +54,7 @@ import { Hallway } from './Hallway'
 import { HallwayFloorLines } from './HallwayFloorLines'
 import { EntranceLobby } from './EntranceLobby'
 import { ParkingArea3D } from './ParkingArea3D'
+import { WanderingBots3D } from './WanderingBots3D'
 import { Room3D } from './Room3D'
 import { Bot3D, type BotStatus } from './Bot3D'
 import { BotInfoPanel } from './BotInfoPanel'
@@ -79,8 +80,9 @@ import { CameraController } from './CameraController'
 import { FirstPersonController, FirstPersonHUD } from './FirstPersonController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
+import { BossHudButton } from './BossHudButton'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
-import { DragDropProvider } from '@/contexts/DragDropContext'
+import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
 import { LightingDebugPanel } from './LightingDebugPanel'
@@ -770,7 +772,62 @@ function SceneContent({
           />
         ))
       })()}
+
+      {/* Wandering outdoor bots (sleeping sessions roaming on the grass) */}
+      <WanderingBots3D
+        sleepingSessions={parkingSessions}
+        displayNames={displayNames}
+        buildingWidth={buildingWidth}
+        buildingDepth={buildingDepth}
+        onBotClick={onBotClick}
+      />
     </>
+  )
+}
+
+// ─── Drag Status Indicator ──────────────────────────────────────
+
+function DragStatusIndicator() {
+  const drag = useDragState()
+  if (!drag.isDragging) return null
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 12,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 60,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 18px',
+        borderRadius: 14,
+        background: 'rgba(0, 0, 0, 0.75)',
+        backdropFilter: 'blur(12px)',
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: 600,
+        fontFamily: 'system-ui, sans-serif',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+        border: '1px solid rgba(255,255,255,0.15)',
+        animation: 'fadeInDown 0.2s ease-out',
+        pointerEvents: 'none',
+      }}
+    >
+      <span style={{ fontSize: 16 }}>🤖</span>
+      <span>Moving <strong>{drag.sessionName}</strong></span>
+      <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
+        Drop on room or outside to unassign · Esc to cancel
+      </span>
+      <style>{`
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+      `}</style>
+    </div>
   )
 }
 
@@ -920,6 +977,18 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key))
   }, [focusedSession, isActivelyRunning])
 
+  // Get bio for focused bot from agents registry
+  const { agents: agentRuntimesForPanel } = useAgentsRegistry(allSessions)
+  const focusedBotBio = useMemo(() => {
+    if (!focusedSession) return null
+    const runtime = agentRuntimesForPanel.find(
+      r => r.agent.agent_session_key === focusedSession.key
+        || r.session?.key === focusedSession.key
+        || r.childSessions.some(c => c.key === focusedSession.key)
+    )
+    return runtime?.agent.bio ?? null
+  }, [focusedSession, agentRuntimesForPanel])
+
   // ─── Room Info Panel: compute sessions in focused room ────────
   const focusedRoom = useMemo(() => {
     if (!focusState.focusedRoomId) return null
@@ -1036,6 +1105,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             displayName={displayNames.get(focusState.focusedBotKey) || getSessionDisplayName(focusedSession, null)}
             botConfig={focusedBotConfig}
             status={focusedBotStatus}
+            bio={focusedBotBio}
             onClose={() => goBack()}
             onOpenLog={(session) => {
               setSelectedSession(session)
@@ -1043,6 +1113,18 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             }}
           />
         )}
+
+        {/* Boss HUD Button (bottom-right, above tabs) */}
+        <BossHudButton
+          sessions={allSessions}
+          getBotConfig={getBotConfigFromSession}
+          getRoomForSession={getRoomForSession}
+          defaultRoomId={rooms[0]?.id}
+          isActivelyRunning={isActivelyRunning}
+        />
+
+        {/* Drag status indicator */}
+        <DragStatusIndicator />
 
         {/* Room tabs bar (bottom, hidden in first person) */}
         {focusState.level !== 'firstperson' && (
