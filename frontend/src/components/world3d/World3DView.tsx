@@ -222,7 +222,7 @@ function getBotPositionsInRoom(
   botCount: number,
 ): [number, number, number][] {
   const positions: [number, number, number][] = []
-  const floorY = roomPos[1] + 0.35
+  const floorY = roomPos[1] + 0.02
   const margin = 2.5
 
   if (botCount === 0) return positions

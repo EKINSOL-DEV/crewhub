@@ -7,6 +7,8 @@ import { useToonMaterialProps } from './utils/toonMaterials'
 interface BotBodyProps {
   color: string
   status: 'active' | 'idle' | 'sleeping' | 'offline'
+  /** Mutable ref for walk animation phase; >0 when walking, 0 when stopped */
+  walkPhaseRef?: React.MutableRefObject<number>
 }
 
 /**
@@ -29,15 +31,60 @@ function darkenColor(hex: string, factor: number = 0.6): string {
  *   Arms:       center y=0.00,  capsule on each side
  *   Feet:       center y=-0.30, small dark boxes
  */
-export function BotBody({ color, status }: BotBodyProps) {
+export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
   const bodyGroupRef = useRef<THREE.Group>(null)
+  const leftFootRef = useRef<THREE.Mesh>(null)
+  const rightFootRef = useRef<THREE.Mesh>(null)
+  const leftArmRef = useRef<THREE.Mesh>(null)
+  const rightArmRef = useRef<THREE.Mesh>(null)
   const toonProps = useToonMaterialProps(color)
   const darkBodyToon = useToonMaterialProps(darkenColor(color, 0.65))
   const darkToon = useToonMaterialProps('#2a2a2a')
 
-  // Breathing animation for sleeping
+  // Walking + breathing animation
   useFrame(({ clock }) => {
     if (!bodyGroupRef.current) return
+
+    // Walking animation — feet step and arms swing
+    const walkPhase = walkPhaseRef?.current ?? 0
+    if (walkPhase > 0) {
+      const sin = Math.sin(walkPhase)
+      const sinOpp = Math.sin(walkPhase + Math.PI)
+
+      // Feet: alternate forward/backward with lift
+      if (leftFootRef.current) {
+        leftFootRef.current.position.z = 0.03 + sin * 0.06
+        leftFootRef.current.position.y = -0.30 + Math.max(0, sin) * 0.04
+      }
+      if (rightFootRef.current) {
+        rightFootRef.current.position.z = 0.03 + sinOpp * 0.06
+        rightFootRef.current.position.y = -0.30 + Math.max(0, sinOpp) * 0.04
+      }
+
+      // Arms: counter-swing
+      if (leftArmRef.current) {
+        leftArmRef.current.rotation.x = sinOpp * 0.35
+      }
+      if (rightArmRef.current) {
+        rightArmRef.current.rotation.x = sin * 0.35
+      }
+    } else {
+      // Reset to rest positions
+      if (leftFootRef.current) {
+        leftFootRef.current.position.set(-0.09, -0.30, 0.03)
+      }
+      if (rightFootRef.current) {
+        rightFootRef.current.position.set(0.09, -0.30, 0.03)
+      }
+      if (leftArmRef.current) {
+        leftArmRef.current.rotation.x = 0
+      }
+      if (rightArmRef.current) {
+        rightArmRef.current.rotation.x = 0
+      }
+    }
+
+    // Breathing animation for sleeping
     if (status === 'sleeping') {
       const t = clock.getElapsedTime()
       const breathe = 1 + Math.sin(t * 1.2) * 0.015
@@ -83,25 +130,25 @@ export function BotBody({ color, status }: BotBodyProps) {
       </RoundedBox>
 
       {/* ─── Left arm (stubby capsule) ─── */}
-      <mesh position={[-0.26, 0.0, 0]} rotation={[0, 0, 0.2]} castShadow>
+      <mesh ref={leftArmRef} position={[-0.26, 0.0, 0]} rotation={[0, 0, 0.2]} castShadow>
         <capsuleGeometry args={[0.04, 0.12, 6, 8]} />
         <meshToonMaterial {...toonProps} />
       </mesh>
 
       {/* ─── Right arm (stubby capsule) ─── */}
-      <mesh position={[0.26, 0.0, 0]} rotation={[0, 0, -0.2]} castShadow>
+      <mesh ref={rightArmRef} position={[0.26, 0.0, 0]} rotation={[0, 0, -0.2]} castShadow>
         <capsuleGeometry args={[0.04, 0.12, 6, 8]} />
         <meshToonMaterial {...toonProps} />
       </mesh>
 
       {/* ─── Left foot ─── */}
-      <mesh position={[-0.09, -0.30, 0.03]} castShadow>
+      <mesh ref={leftFootRef} position={[-0.09, -0.30, 0.03]} castShadow>
         <boxGeometry args={[0.10, 0.06, 0.13]} />
         <meshToonMaterial {...darkToon} />
       </mesh>
 
       {/* ─── Right foot ─── */}
-      <mesh position={[0.09, -0.30, 0.03]} castShadow>
+      <mesh ref={rightFootRef} position={[0.09, -0.30, 0.03]} castShadow>
         <boxGeometry args={[0.10, 0.06, 0.13]} />
         <meshToonMaterial {...darkToon} />
       </mesh>

@@ -73,9 +73,14 @@ interface Bot3DProps {
  */
 export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId, roomName }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
+  const walkPhaseRef = useRef(0)
+  const wasMovingRef = useRef(false)
   const { state: focusState, focusBot } = useWorldFocus()
   const { startDrag, endDrag } = useDragActions()
   const [hovered, setHovered] = useState(false)
+
+  // 30% size increase for all bots
+  const effectiveScale = scale * 1.3
 
   // Is THIS bot the one being focused on?
   const isFocused = focusState.level === 'bot' && focusState.focusedBotKey === session?.key
@@ -107,9 +112,6 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     dirZ: -1,
     stepsRemaining: 0,
     cellProgress: 0, // 0..1 progress toward next cell center
-    // Previous position for actual movement delta (Fix 4)
-    prevX: position[0],
-    prevZ: position[2],
   })
 
   // Update base position when session key changes (bot reassigned to a new spot)
@@ -159,8 +161,6 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.sessionKey = newKey
       state.stepsRemaining = 0
       state.cellProgress = 0
-      state.prevX = spawnX
-      state.prevZ = spawnZ
     }
   }, [session?.key, position, roomBounds, gridData])
 
@@ -212,7 +212,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     if (!hasInitialized.current) {
       hasInitialized.current = true
       groupRef.current.position.set(state.currentX, position[1], state.currentZ)
-      groupRef.current.scale.setScalar(scale)
+      groupRef.current.scale.setScalar(effectiveScale)
       groupRef.current.rotation.set(0, 0, 0)
       if (session?.key) {
         botPositionRegistry.set(session.key, {
@@ -231,12 +231,13 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     groupRef.current.rotation.z = anim.sleepRotZ
     groupRef.current.rotation.x = anim.bodyTilt
 
+    // ─── Save position at frame start (for movement detection after movement) ──
+    const frameStartX = state.currentX
+    const frameStartZ = state.currentZ
+
     // ─── Y position: base + animation offset + bounce ─────────
-    // Only bounce when actually moving (actual frame delta)
-    const actualDeltaX = state.currentX - state.prevX
-    const actualDeltaZ = state.currentZ - state.prevZ
-    const moveDelta = Math.sqrt(actualDeltaX * actualDeltaX + actualDeltaZ * actualDeltaZ)
-    const isMoving = moveDelta > 0.001
+    // Uses wasMovingRef from previous frame (one-frame delay is visually imperceptible)
+    const isMovingForBounce = wasMovingRef.current
     let bounceY = 0
     switch (anim.phase) {
       case 'working':
@@ -246,10 +247,10 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       case 'walking-to-desk':
       case 'getting-coffee':
       case 'sleeping-walking':
-        bounceY = isMoving ? Math.sin(t * 4) * 0.03 : 0
+        bounceY = isMovingForBounce ? Math.sin(t * 4) * 0.03 : 0
         break
       case 'idle-wandering':
-        bounceY = isMoving ? Math.sin(t * 3) * 0.02 : 0
+        bounceY = isMovingForBounce ? Math.sin(t * 3) * 0.02 : 0
         break
       case 'sleeping':
         // No position bounce — breathing handled via scale below
@@ -264,10 +265,10 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     // Breathing effect via scale (sleeping: very slow gentle breathing)
     if (anim.phase === 'sleeping') {
       const breathe = 1 + Math.sin(t * 0.8) * 0.006
-      groupRef.current.scale.setScalar(scale)
-      groupRef.current.scale.y = scale * breathe
+      groupRef.current.scale.setScalar(effectiveScale)
+      groupRef.current.scale.y = effectiveScale * breathe
     } else {
-      groupRef.current.scale.setScalar(scale)
+      groupRef.current.scale.setScalar(effectiveScale)
     }
 
     // ─── Apply opacity (only on change, with cloned materials) ─
@@ -303,6 +304,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       // No bounds — stay at base position
       groupRef.current.position.x = state.baseX
       groupRef.current.position.z = state.baseZ
+      wasMovingRef.current = false
+      walkPhaseRef.current = 0
       return
     }
 
@@ -331,6 +334,9 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           groupRef.current.rotation.y = Math.atan2(faceDx, faceDz)
         }
       }
+
+      wasMovingRef.current = false
+      walkPhaseRef.current = 0
 
       if (session?.key) {
         botPositionRegistry.set(session.key, {
@@ -590,9 +596,18 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.currentZ = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, state.currentZ))
     }
 
-    // Update previous position for next frame's movement delta calculation
-    state.prevX = state.currentX
-    state.prevZ = state.currentZ
+    // ─── Detect actual movement this frame (for walk animation) ──
+    const actualDX = state.currentX - frameStartX
+    const actualDZ = state.currentZ - frameStartZ
+    const isMovingThisFrame = Math.sqrt(actualDX * actualDX + actualDZ * actualDZ) > 0.001
+    wasMovingRef.current = isMovingThisFrame
+
+    // Update walk phase for foot/arm animation in BotBody
+    if (isMovingThisFrame) {
+      walkPhaseRef.current += delta * 10
+    } else {
+      walkPhaseRef.current = 0
+    }
 
     groupRef.current.position.x = state.currentX
     groupRef.current.position.z = state.currentZ
@@ -617,7 +632,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   })
 
   // Offset y so bot feet rest on the floor
-  const yOffset = 0.36
+  // Bot feet bottom at y=-0.33 in body space; offset of 0.33 puts feet at group origin
+  const yOffset = 0.33
 
   return (
     <group
@@ -644,7 +660,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         <BotStatusGlow status={status} />
 
         {/* Body (head + body rounded boxes + arms + feet) */}
-        <BotBody color={config.color} status={status} />
+        <BotBody color={config.color} status={status} walkPhaseRef={walkPhaseRef} />
 
         {/* Face (eyes + mouth on the head) */}
         <BotFace status={status} expression={config.expression} />
