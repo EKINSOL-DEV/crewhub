@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
+  <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
   <img src="https://img.shields.io/badge/Docs-Coming%20Soon-lightgrey?style=flat&logo=readthedocs&logoColor=white" alt="Docs">
   <img src="https://img.shields.io/badge/version-v0.7.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
@@ -24,7 +25,7 @@
 
 CrewHub is an open-source dashboard for monitoring and managing AI coding agents. It connects to [OpenClaw](https://openclaw.dev), Claude Code, and Codex CLI — giving you a live overview of every session, room, and agent in one place. Its standout feature is a fully interactive **3D world** where your agents come alive as animated characters.
 
-> 🎮 **Demo Mode coming soon**
+> 🎮 **[Try the Live Demo →](https://demo.crewhub.dev)**
 
 ---
 
