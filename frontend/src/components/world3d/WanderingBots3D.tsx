@@ -47,6 +47,8 @@ interface WanderingBots3DProps {
   /** Building dimensions to determine outdoor area */
   buildingWidth: number
   buildingDepth: number
+  /** Room obstacles to avoid (rooms + parking area) */
+  roomObstacles?: RoomObstacle[]
   /** On bot click handler */
   onBotClick?: (session: CrewSession) => void
 }
@@ -56,16 +58,22 @@ interface WanderingBots3DProps {
 /** Campus bounds: bots stay within the building compound (corridors/pathways between rooms) */
 const CAMPUS_MARGIN = 3 // padding inside building walls
 
-/** Get a random point within the campus/building area (corridors between rooms) */
-function getRandomCampusPosition(buildingWidth: number, buildingDepth: number): [number, number] {
+/** Get a random point within the campus/building area, avoiding rooms */
+function getRandomCampusPosition(buildingWidth: number, buildingDepth: number, obstacles?: RoomObstacle[]): [number, number] {
   const halfBW = buildingWidth / 2
   const halfBD = buildingDepth / 2
+  const maxAttempts = 30
 
-  // Stay within building bounds with margin
-  const x = -halfBW + CAMPUS_MARGIN + Math.random() * (buildingWidth - CAMPUS_MARGIN * 2)
-  const z = -halfBD + CAMPUS_MARGIN + Math.random() * (buildingDepth - CAMPUS_MARGIN * 2)
+  for (let i = 0; i < maxAttempts; i++) {
+    const x = -halfBW + CAMPUS_MARGIN + Math.random() * (buildingWidth - CAMPUS_MARGIN * 2)
+    const z = -halfBD + CAMPUS_MARGIN + Math.random() * (buildingDepth - CAMPUS_MARGIN * 2)
+    if (!obstacles || obstacles.length === 0 || !isInsideAnyRoom(x, z, obstacles)) {
+      return [x, z]
+    }
+  }
 
-  return [x, z]
+  // Fallback: position near building edge (guaranteed outside rooms)
+  return [-halfBW + CAMPUS_MARGIN + 1, -halfBD + CAMPUS_MARGIN + 1]
 }
 
 /** Clamp a position to campus bounds */
@@ -78,6 +86,65 @@ function clampToCampus(x: number, z: number, buildingWidth: number, buildingDept
   ]
 }
 
+// ─── Room Obstacle Avoidance ─────────────────────────────────────
+
+/** Obstacle rectangle: center + half-extents */
+export interface RoomObstacle {
+  cx: number
+  cz: number
+  halfW: number
+  halfD: number
+}
+
+/** Margin around rooms so bots don't clip walls (WALL_THICKNESS=0.3 + extra) */
+const ROOM_AVOIDANCE_MARGIN = 0.8
+
+/** Check if a point is inside any room obstacle (including avoidance margin) */
+function isInsideAnyRoom(x: number, z: number, obstacles: RoomObstacle[]): boolean {
+  for (const obs of obstacles) {
+    const hw = obs.halfW + ROOM_AVOIDANCE_MARGIN
+    const hd = obs.halfD + ROOM_AVOIDANCE_MARGIN
+    if (x >= obs.cx - hw && x <= obs.cx + hw && z >= obs.cz - hd && z <= obs.cz + hd) {
+      return true
+    }
+  }
+  return false
+}
+
+/** Check if a straight-line path crosses through any room obstacle */
+function doesPathCrossRoom(x1: number, z1: number, x2: number, z2: number, obstacles: RoomObstacle[]): boolean {
+  const dx = x2 - x1
+  const dz = z2 - z1
+  const dist = Math.sqrt(dx * dx + dz * dz)
+  if (dist < 0.1) return false
+  const steps = Math.ceil(dist / 1.5) // sample every ~1.5 units
+  for (let i = 1; i < steps; i++) {
+    const t = i / steps
+    if (isInsideAnyRoom(x1 + dx * t, z1 + dz * t, obstacles)) return true
+  }
+  return false
+}
+
+/** Push a point outside the nearest room boundary */
+function pushOutsideRooms(x: number, z: number, obstacles: RoomObstacle[]): [number, number] {
+  for (const obs of obstacles) {
+    const hw = obs.halfW + ROOM_AVOIDANCE_MARGIN
+    const hd = obs.halfD + ROOM_AVOIDANCE_MARGIN
+    if (x >= obs.cx - hw && x <= obs.cx + hw && z >= obs.cz - hd && z <= obs.cz + hd) {
+      const toLeft = x - (obs.cx - hw)
+      const toRight = (obs.cx + hw) - x
+      const toFront = z - (obs.cz - hd)
+      const toBack = (obs.cz + hd) - z
+      const min = Math.min(toLeft, toRight, toFront, toBack)
+      if (min === toLeft) return [obs.cx - hw - 0.2, z]
+      if (min === toRight) return [obs.cx + hw + 0.2, z]
+      if (min === toFront) return [x, obs.cz - hd - 0.2]
+      return [x, obs.cz + hd + 0.2]
+    }
+  }
+  return [x, z]
+}
+
 // ─── Single Wandering Bot Component ──────────────────────────────
 
 interface OutdoorBotProps {
@@ -88,10 +155,11 @@ interface OutdoorBotProps {
   initialZ: number
   buildingWidth: number
   buildingDepth: number
+  roomObstacles?: RoomObstacle[]
   onBotClick?: (session: CrewSession) => void
 }
 
-function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, buildingDepth, onBotClick }: OutdoorBotProps) {
+function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, buildingDepth, roomObstacles, onBotClick }: OutdoorBotProps) {
   const groupRef = useRef<THREE.Group>(null)
   const walkPhaseRef = useRef(0)
   const { focusBot } = useWorldFocus()
@@ -140,14 +208,20 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
       // Arrived at target — wait, then pick a new target
       state.waitTimer -= delta
       if (state.waitTimer <= 0) {
-        const [nx, nz] = getRandomCampusPosition(buildingWidth, buildingDepth)
+        const [nx, nz] = getRandomCampusPosition(buildingWidth, buildingDepth, roomObstacles)
         // Bias toward staying somewhat close to current position
         const rawX = state.currentX + (nx - state.currentX) * 0.4
         const rawZ = state.currentZ + (nz - state.currentZ) * 0.4
         const [cx, cz] = clampToCampus(rawX, rawZ, buildingWidth, buildingDepth)
-        state.targetX = cx
-        state.targetZ = cz
-        state.waitTimer = PAUSE_MIN_S + Math.random() * (PAUSE_MAX_S - PAUSE_MIN_S)
+
+        // Reject target if inside a room or path crosses through a room
+        if (roomObstacles && (isInsideAnyRoom(cx, cz, roomObstacles) || doesPathCrossRoom(state.currentX, state.currentZ, cx, cz, roomObstacles))) {
+          state.waitTimer = 0.1 // retry quickly next frame
+        } else {
+          state.targetX = cx
+          state.targetZ = cz
+          state.waitTimer = PAUSE_MIN_S + Math.random() * (PAUSE_MAX_S - PAUSE_MIN_S)
+        }
       }
 
       // Idle breathing
@@ -157,8 +231,19 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
       // Walk toward target
       const speed = OUTDOOR_WALK_SPEED
       const step = Math.min(speed * delta, dist)
-      state.currentX += (dx / dist) * step
-      state.currentZ += (dz / dist) * step
+      const nextX = state.currentX + (dx / dist) * step
+      const nextZ = state.currentZ + (dz / dist) * step
+
+      // Check if next step would enter a room
+      if (roomObstacles && isInsideAnyRoom(nextX, nextZ, roomObstacles)) {
+        // Stop and pick a new target immediately
+        state.targetX = state.currentX
+        state.targetZ = state.currentZ
+        state.waitTimer = 0
+      } else {
+        state.currentX = nextX
+        state.currentZ = nextZ
+      }
 
       // Smooth rotation
       const targetRotY = Math.atan2(dx, dz)
@@ -175,6 +260,16 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
     const [clampedX, clampedZ] = clampToCampus(state.currentX, state.currentZ, buildingWidth, buildingDepth)
     state.currentX = clampedX
     state.currentZ = clampedZ
+
+    // Safety net: if somehow inside a room, push outside
+    if (roomObstacles && isInsideAnyRoom(state.currentX, state.currentZ, roomObstacles)) {
+      const [safeX, safeZ] = pushOutsideRooms(state.currentX, state.currentZ, roomObstacles)
+      state.currentX = safeX
+      state.currentZ = safeZ
+      state.targetX = safeX
+      state.targetZ = safeZ
+      state.waitTimer = 0
+    }
 
     // Apply position
     groupRef.current.position.x = state.currentX
@@ -247,6 +342,7 @@ export function WanderingBots3D({
   displayNames,
   buildingWidth,
   buildingDepth,
+  roomObstacles,
   onBotClick,
 }: WanderingBots3DProps) {
   const lastRefreshRef = useRef(0)
@@ -294,7 +390,7 @@ export function WanderingBots3D({
       if (!session) return null
       const config = getBotConfigFromSession(session.key, session.label)
       const name = getSessionDisplayName(session, displayNames.get(session.key))
-      const [x, z] = getRandomCampusPosition(buildingWidth, buildingDepth)
+      const [x, z] = getRandomCampusPosition(buildingWidth, buildingDepth, roomObstacles)
       return { session, config, name, x, z }
     }).filter(Boolean) as { session: CrewSession; config: BotVariantConfig; name: string; x: number; z: number }[]
     // We intentionally use wanderers as the primary dep, not sleepingSessions
@@ -315,6 +411,7 @@ export function WanderingBots3D({
           initialZ={bot.z}
           buildingWidth={buildingWidth}
           buildingDepth={buildingDepth}
+          roomObstacles={roomObstacles}
           onBotClick={onBotClick}
         />
       ))}

@@ -54,7 +54,7 @@ import { Hallway } from './Hallway'
 import { HallwayFloorLines } from './HallwayFloorLines'
 import { EntranceLobby } from './EntranceLobby'
 import { ParkingArea3D } from './ParkingArea3D'
-import { WanderingBots3D } from './WanderingBots3D'
+import { WanderingBots3D, type RoomObstacle } from './WanderingBots3D'
 import { Room3D } from './Room3D'
 import { Bot3D, type BotStatus } from './Bot3D'
 import { BotInfoPanel } from './BotInfoPanel'
@@ -524,6 +524,24 @@ function SceneContent({
     return getParkingBounds(parkingArea.x, parkingArea.z, parkingArea.width, parkingArea.depth)
   }, [layout])
 
+  // Room obstacles for wandering bots to avoid (rooms + parking area)
+  const roomObstacles = useMemo<RoomObstacle[]>(() => {
+    if (!layout) return []
+    const obstacles: RoomObstacle[] = layout.roomPositions.map(({ position }) => ({
+      cx: position[0],
+      cz: position[2],
+      halfW: ROOM_SIZE / 2,
+      halfD: ROOM_SIZE / 2,
+    }))
+    obstacles.push({
+      cx: layout.parkingArea.x,
+      cz: layout.parkingArea.z,
+      halfW: layout.parkingArea.width / 2,
+      halfD: layout.parkingArea.depth / 2,
+    })
+    return obstacles
+  }, [layout])
+
   // ─── Bot placement logic ──────────────────────────────────────
 
   const buildBotPlacement = (session: CrewSession, _runtime?: AgentRuntime): BotPlacement => {
@@ -779,6 +797,7 @@ function SceneContent({
         displayNames={displayNames}
         buildingWidth={buildingWidth}
         buildingDepth={buildingDepth}
+        roomObstacles={roomObstacles}
         onBotClick={onBotClick}
       />
     </>
