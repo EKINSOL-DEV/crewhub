@@ -13,6 +13,8 @@ import logging
 import time
 from typing import Any, Callable, Optional
 
+from ...routes.sse import broadcast
+
 from .base import (
     AgentConnection,
     ConnectionStatus,
@@ -615,6 +617,20 @@ class ConnectionManager:
                 callback(connection.connection_id, status)
             except Exception as e:
                 logger.error(f"Status callback error: {e}")
+
+        # Broadcast status change via SSE to all connected clients
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(broadcast("connection-status", {
+                "id": connection.connection_id,
+                "name": connection.name,
+                "type": connection.connection_type.value,
+                "status": status.value,
+                "error": connection.error_message,
+            }))
+        except RuntimeError:
+            # No running event loop (shouldn't happen in normal operation)
+            logger.debug("No event loop for SSE broadcast of connection status")
 
 
 # Convenience function

@@ -36,6 +36,7 @@ import {
   Terminal,
   Bot,
 } from "lucide-react"
+import { sseManager } from "@/lib/sseManager"
 
 // ============================================================================
 // Types
@@ -390,9 +391,27 @@ export function ConnectionsView() {
 
   useEffect(() => {
     fetchConnections()
-    // Poll every 10 seconds for status updates
-    const interval = setInterval(fetchConnections, 10000)
-    return () => clearInterval(interval)
+
+    // SSE real-time updates for connection status changes
+    const unsub = sseManager.subscribe("connection-status", (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        setConnections((prev) =>
+          prev.map((c) => (c.id === data.id ? { ...c, ...data } : c))
+        )
+      } catch {
+        // Fallback: refetch all on parse error
+        fetchConnections()
+      }
+    })
+
+    // Fallback polling at reduced interval (SSE handles real-time)
+    const interval = setInterval(fetchConnections, 30000)
+
+    return () => {
+      unsub()
+      clearInterval(interval)
+    }
   }, [fetchConnections])
 
   // Create or update connection
