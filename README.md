@@ -123,6 +123,8 @@ make up
 
 The dashboard will be available at **http://localhost:5180**
 
+> 💡 **First time?** Open `http://localhost:5180?onboarding=true` to launch the setup wizard.
+
 ### Option 2: Local Development
 
 ```bash
