@@ -345,14 +345,18 @@ function AgentPickerDropdown({ fixedAgents, recentSubagents, pinnedKey, onSelect
   return (
     <div
       ref={dropdownRef}
+      className="agent-picker-dropdown"
       style={{
         position: 'absolute',
         top: '100%',
-        right: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
         marginTop: 8,
         width: 280,
         maxHeight: 420,
         overflowY: 'auto',
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(255,255,255,0.15) transparent',
         background: 'rgba(15, 15, 20, 0.88)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
@@ -770,9 +774,12 @@ export function AgentTopBar({
           50% { transform: scale(1.2); opacity: 0.8; }
         }
         @keyframes agentPickerSlideIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
+        .agent-picker-dropdown::-webkit-scrollbar { width: 4px; }
+        .agent-picker-dropdown::-webkit-scrollbar-track { background: transparent; }
+        .agent-picker-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
       `}</style>
     </div>
   )
