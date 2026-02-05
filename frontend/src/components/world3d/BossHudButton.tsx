@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
+import { useChatContext } from '@/contexts/ChatContext'
 import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
 
@@ -26,6 +27,7 @@ const BOSS_SESSION_KEY = 'agent:main:main'
  */
 export function BossHudButton({ sessions, getBotConfig, getRoomForSession, defaultRoomId, isActivelyRunning }: BossHudButtonProps) {
   const { state, focusBot } = useWorldFocus()
+  const { openChat } = useChatContext()
 
   const bossSession = useMemo(
     () => sessions.find(s => s.key === BOSS_SESSION_KEY),
@@ -58,6 +60,7 @@ export function BossHudButton({ sessions, getBotConfig, getRoomForSession, defau
     if (bossRoomId) {
       focusBot(BOSS_SESSION_KEY, bossRoomId)
     }
+    openChat(BOSS_SESSION_KEY, 'Assistent', bossConfig.emoji, bossConfig.color)
   }
 
   return (
