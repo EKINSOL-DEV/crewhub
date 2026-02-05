@@ -13,6 +13,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { ChatProvider } from './contexts/ChatContext'
 import { RoomsProvider } from './contexts/RoomsContext'
 import { DemoProvider, DemoModeIndicator, useDemoMode } from './contexts/DemoContext'
+import { MobileWarning } from './components/MobileWarning'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
@@ -342,6 +343,7 @@ function AppContent() {
       )}
 
       <DemoModeIndicator />
+      <MobileWarning />
     </div>
   )
 }
