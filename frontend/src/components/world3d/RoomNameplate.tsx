@@ -22,11 +22,11 @@ const NAMEPLATE_Y_OFFSET = 1.2 // how far above the wall top the nameplate float
 /**
  * Floating HTML nameplate above each room.
  *
- * Uses drei's <Html> for crisp, always-camera-facing text with a
- * semi-transparent dark background panel. Includes:
- * - Room emoji + name
- * - Project/HQ subtitle
- * - Hover → fades to low opacity (get out of the way)
+ * Uses drei's <Html> (screen-space, no distanceFactor) for crisp,
+ * always-camera-facing text at a consistent size regardless of zoom.
+ * Includes:
+ * - Room emoji + name (always visible)
+ * - Project/HQ subtitle (revealed on hover with smooth transition)
  * - Hidden at room-level zoom (level !== 'overview')
  */
 export function RoomNameplate({
@@ -68,15 +68,12 @@ export function RoomNameplate({
       center
       zIndexRange={[10, 20]}
       style={{ pointerEvents: 'auto' }}
-      // distanceFactor scales the label with distance so it stays readable
-      distanceFactor={14}
+      // No distanceFactor → screen-space sized, consistent at any zoom level
     >
       <div
         onPointerEnter={() => setLabelHovered(true)}
         onPointerLeave={() => setLabelHovered(false)}
         style={{
-          opacity: labelHovered ? 0.2 : 1,
-          transition: 'opacity 0.25s ease',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -120,7 +117,7 @@ export function RoomNameplate({
           </span>
         </div>
 
-        {/* ── Subtitle (project / HQ / general) ── */}
+        {/* ── Subtitle (project / HQ / general) — hidden by default, revealed on hover ── */}
         <div
           style={{
             background: 'rgba(15, 15, 25, 0.55)',
@@ -128,6 +125,10 @@ export function RoomNameplate({
             WebkitBackdropFilter: 'blur(4px)',
             padding: '1px 8px',
             borderRadius: '5px',
+            opacity: labelHovered ? 0.85 : 0,
+            transform: labelHovered ? 'translateY(0)' : 'translateY(-4px)',
+            transition: 'opacity 0.25s ease, transform 0.25s ease',
+            pointerEvents: labelHovered ? 'auto' : 'none',
           }}
         >
           <span
@@ -137,7 +138,6 @@ export function RoomNameplate({
               fontWeight: 600,
               fontFamily: 'system-ui, -apple-system, sans-serif',
               letterSpacing: '0.4px',
-              opacity: 0.85,
               whiteSpace: 'nowrap',
             }}
           >
