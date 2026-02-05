@@ -11,7 +11,7 @@ import { environmentRegistry } from '@/lib/modding/registries'
 export type EnvironmentType = string
 
 const STORAGE_KEY = 'crewhub-environment'
-const DEFAULT_ENVIRONMENT = 'grass'
+const DEFAULT_ENVIRONMENT = 'desert'
 
 export function getStoredEnvironment(): EnvironmentType {
   try {
