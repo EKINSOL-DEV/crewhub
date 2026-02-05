@@ -338,3 +338,4 @@ class CustomBlueprintResponse(BaseModel):
     source: str
     created_at: int
     updated_at: int
+    warnings: Optional[list[str]] = None
