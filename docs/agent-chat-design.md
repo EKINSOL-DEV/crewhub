@@ -204,5 +204,5 @@ A session is a "fixed agent" (chatworthy) if:
 - Planner gateway: `~/ekinapps/ekinbot_planner/backend/app/services/gateway.py`
 - Planner chat route: `~/ekinapps/ekinbot_planner/backend/app/routes/chat.py`
 - CrewHub backend: `~/ekinapps/crewhub/backend/`
-- Gateway token: `REDACTED_TOKEN`
+- Gateway token: `your_gateway_token_here`
 - Gateway WebSocket: `ws://localhost:18789`
