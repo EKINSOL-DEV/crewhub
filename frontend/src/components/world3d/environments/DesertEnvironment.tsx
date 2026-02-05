@@ -224,8 +224,11 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
 
         const dist = Math.sqrt(wx * wx + wz * wz)
 
+        // Skip decorations inside the building footprint (with 2-unit padding)
+        const inBuildingZone = Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2
+
         // Scatter cacti (saguaro) — sparse, further out
-        if (s > 0.92 && dist > 15) {
+        if (s > 0.92 && dist > 15 && !inBuildingZone) {
           d.push({
             type: 'saguaro',
             pos: [wx + s * 2 - 1, -0.1, wz + (1 - s) * 2 - 1],
@@ -233,7 +236,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
           })
         }
         // Barrel cacti — more common
-        if (s > 0.82 && s <= 0.92 && dist > 10) {
+        if (s > 0.82 && s <= 0.92 && dist > 10 && !inBuildingZone) {
           d.push({
             type: 'barrel',
             pos: [wx + s * 1.5 - 0.75, -0.1, wz - s * 1.2 + 0.6],
@@ -241,7 +244,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
           })
         }
         // Prickly pear — medium rarity
-        if (s > 0.76 && s <= 0.82 && dist > 12) {
+        if (s > 0.76 && s <= 0.82 && dist > 12 && !inBuildingZone) {
           d.push({
             type: 'prickly',
             pos: [wx + (1 - s) * 2, -0.1, wz + s * 1.8 - 0.9],
@@ -249,7 +252,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
           })
         }
         // Rocks — scattered everywhere
-        if (s > 0.68 && s <= 0.76) {
+        if (s > 0.68 && s <= 0.76 && !inBuildingZone) {
           d.push({
             type: 'rock',
             pos: [wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75],
@@ -259,7 +262,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
         }
 
         // Sand dunes — large, distant, sparse
-        if (s > 0.95 && dist > 25) {
+        if (s > 0.95 && dist > 25 && !inBuildingZone) {
           duneList.push({
             pos: [wx, -0.15, wz],
             scaleXZ: 3 + s * 4,
@@ -268,7 +271,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
         }
 
         // Tumbleweeds — rare
-        if (s > 0.97 && dist > 12 && twList.length < 6) {
+        if (s > 0.97 && dist > 12 && !inBuildingZone && twList.length < 6) {
           twList.push({
             pos: [wx + s * 3, 0.15, wz - s * 2],
             phase: s * Math.PI * 4,
@@ -285,7 +288,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
       dunes: duneList,
       tumbleweeds: twList,
     }
-  }, [halfBW, halfBD])
+  }, [halfBW, halfBD, buildingWidth, buildingDepth])
 
   // ── Apply instanced mesh data ──────────────────────────────────
 

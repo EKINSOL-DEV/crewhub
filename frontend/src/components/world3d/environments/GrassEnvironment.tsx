@@ -71,12 +71,15 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
         const b = 0.32 + s * 0.04
         cList.push(new THREE.Color(r, g, b))
 
-        if (s > 0.75) d.push({ type: 'tuft', pos: [wx + s * 1.5 - 0.75, -0.1, wz + (1 - s) * 1.5 - 0.75] })
-        if (s > 0.88) d.push({ type: 'rock', pos: [wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75], scale: 0.5 + s * 0.8 })
+        // Skip decorations inside the building footprint (with 2-unit padding)
+        const inBuildingZone = Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2
+
+        if (s > 0.75 && !inBuildingZone) d.push({ type: 'tuft', pos: [wx + s * 1.5 - 0.75, -0.1, wz + (1 - s) * 1.5 - 0.75] })
+        if (s > 0.88 && !inBuildingZone) d.push({ type: 'rock', pos: [wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75], scale: 0.5 + s * 0.8 })
       }
     }
     return { count: mList.length, matrices: mList, colors: cList, decorations: d }
-  }, [halfBW, halfBD])
+  }, [halfBW, halfBD, buildingWidth, buildingDepth])
 
   useEffect(() => {
     const mesh = instanceRef.current
