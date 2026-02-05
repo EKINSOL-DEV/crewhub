@@ -141,10 +141,15 @@ export function RoomInfoPanel({
     }
   }, [room.is_hq, fetchOverview])
 
-  // Close on outside click
+  // Close on outside click (but not when clicking inside a portaled dialog)
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        // Radix Dialog portals its content outside the panel DOM tree.
+        // Don't close the panel when the user clicks inside a dialog.
+        const target = e.target as HTMLElement
+        if (target.closest?.('[data-radix-portal]')) return
+
         setTimeout(() => onClose(), 50)
       }
     }
