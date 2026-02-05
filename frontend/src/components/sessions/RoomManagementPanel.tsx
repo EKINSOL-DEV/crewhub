@@ -18,36 +18,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { useRooms, type Room, type FloorStyle, type WallStyle } from "@/hooks/useRooms"
+import { useRooms, type Room } from "@/hooks/useRooms"
 import { useToast } from "@/hooks/use-toast"
 import { Plus, Trash2, GripVertical, Edit2, Check, X } from "lucide-react"
-
-const FLOOR_STYLES: { value: FloorStyle; label: string; icon: string }[] = [
-  { value: 'default', label: 'Default', icon: '⬜' },
-  { value: 'tiles', label: 'Tiles', icon: '🔲' },
-  { value: 'wood', label: 'Wood', icon: '🪵' },
-  { value: 'concrete', label: 'Concrete', icon: '🧱' },
-  { value: 'carpet', label: 'Carpet', icon: '🟫' },
-  { value: 'lab', label: 'Lab', icon: '🔬' },
-]
-
-const WALL_STYLES: { value: WallStyle; label: string; icon: string }[] = [
-  { value: 'default', label: 'Default', icon: '⬜' },
-  { value: 'accent-band', label: 'Accent Band', icon: '🟰' },
-  { value: 'two-tone', label: 'Two-Tone', icon: '🔳' },
-  { value: 'wainscoting', label: 'Wainscoting', icon: '📏' },
-]
+import { EditRoomDialog, ROOM_ICONS, ROOM_COLORS } from "@/components/shared/EditRoomDialog"
 
 interface RoomManagementPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
-
-const ROOM_ICONS = ["🏛️", "💻", "🎨", "🧠", "⚙️", "📡", "🛠️", "📢", "🚀", "📊", "🔬", "📝", "🎯", "💡", "🔧", "📦"]
-const ROOM_COLORS = [
-  "#4f46e5", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#14b8a6", "#f97316", "#ec4899",
-  "#3b82f6", "#ef4444", "#84cc16", "#a855f7", "#0ea5e9", "#f43f5e", "#22c55e", "#6366f1"
-]
 
 export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelProps) {
   const { rooms, createRoom, updateRoom, deleteRoom, reorderRooms, isLoading } = useRooms()
@@ -56,10 +35,6 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [showEditDialog, setShowEditDialog] = useState(false)
-  const [editFormRoom, setEditFormRoom] = useState<{
-    name: string; icon: string | null; color: string | null
-    floor_style: FloorStyle; wall_style: WallStyle
-  } | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   
   // New room form state
@@ -112,34 +87,21 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
     }
   }
 
-  const handleUpdateRoomStyles = async () => {
-    if (!editingRoom || !editFormRoom) return
-    const result = await updateRoom(editingRoom.id, {
-      name: editFormRoom.name,
-      icon: editFormRoom.icon || undefined,
-      color: editFormRoom.color || undefined,
-      floor_style: editFormRoom.floor_style,
-      wall_style: editFormRoom.wall_style,
-    })
+  const handleEditRoomSave = async (roomId: string, updates: {
+    name?: string; icon?: string; color?: string; floor_style?: string; wall_style?: string
+  }) => {
+    const result = await updateRoom(roomId, updates)
     if (result.success) {
-      toast({ title: "Room Updated!", description: `${editFormRoom.icon} ${editFormRoom.name} saved` })
-      setShowEditDialog(false)
+      toast({ title: "Room Updated!", description: `${updates.icon || '🏠'} ${updates.name || ''} saved` })
       setEditingRoom(null)
-      setEditFormRoom(null)
     } else {
       toast({ title: "Failed to update room", description: result.error, variant: "destructive" })
     }
+    return result
   }
 
   const openEditDialog = (room: Room) => {
     setEditingRoom(room)
-    setEditFormRoom({
-      name: room.name,
-      icon: room.icon,
-      color: room.color,
-      floor_style: room.floor_style || 'default',
-      wall_style: room.wall_style || 'default',
-    })
     setShowEditDialog(true)
   }
 
@@ -369,114 +331,13 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
         </DialogContent>
       </Dialog>
 
-      {/* Edit Room Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) { setEditingRoom(null); setEditFormRoom(null) } }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Room</DialogTitle>
-            <DialogDescription>
-              Update room settings, floor texture, and wall style
-            </DialogDescription>
-          </DialogHeader>
-
-          {editFormRoom && (
-            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-              <div className="space-y-2">
-                <Label htmlFor="edit-room-name">Room Name</Label>
-                <Input
-                  id="edit-room-name"
-                  value={editFormRoom.name}
-                  onChange={(e) => setEditFormRoom({ ...editFormRoom, name: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Icon</Label>
-                <div className="flex flex-wrap gap-2">
-                  {ROOM_ICONS.map(icon => (
-                    <button
-                      key={icon}
-                      onClick={() => setEditFormRoom({ ...editFormRoom, icon })}
-                      className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
-                        editFormRoom.icon === icon
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-muted-foreground"
-                      }`}
-                    >
-                      {icon}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Color</Label>
-                <div className="flex flex-wrap gap-2">
-                  {ROOM_COLORS.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setEditFormRoom({ ...editFormRoom, color: c })}
-                      className={`w-8 h-8 rounded-full transition-all ${
-                        editFormRoom.color === c
-                          ? "ring-2 ring-offset-2 ring-primary"
-                          : "hover:scale-110"
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label>Floor Texture</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {FLOOR_STYLES.map((fs) => (
-                    <button
-                      key={fs.value}
-                      onClick={() => setEditFormRoom({ ...editFormRoom, floor_style: fs.value })}
-                      className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
-                        editFormRoom.floor_style === fs.value
-                          ? "border-primary bg-primary/10 font-medium"
-                          : "border-border hover:border-muted-foreground"
-                      }`}
-                    >
-                      <span className="text-lg">{fs.icon}</span>
-                      <span>{fs.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Wall Style</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {WALL_STYLES.map((ws) => (
-                    <button
-                      key={ws.value}
-                      onClick={() => setEditFormRoom({ ...editFormRoom, wall_style: ws.value })}
-                      className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
-                        editFormRoom.wall_style === ws.value
-                          ? "border-primary bg-primary/10 font-medium"
-                          : "border-border hover:border-muted-foreground"
-                      }`}
-                    >
-                      <span className="text-lg">{ws.icon}</span>
-                      <span>{ws.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowEditDialog(false); setEditingRoom(null); setEditFormRoom(null) }}>Cancel</Button>
-            <Button onClick={handleUpdateRoomStyles}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Edit Room Dialog (shared component) */}
+      <EditRoomDialog
+        room={editingRoom}
+        open={showEditDialog}
+        onOpenChange={(open) => { setShowEditDialog(open); if (!open) setEditingRoom(null) }}
+        onSave={handleEditRoomSave}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>

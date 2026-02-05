@@ -1,9 +1,11 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import type { CrewSession } from '@/lib/api'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
-import type { Room } from '@/hooks/useRooms'
+import { useRooms, type Room } from '@/hooks/useRooms'
 import { useProjects, type ProjectOverview } from '@/hooks/useProjects'
+import { useToast } from '@/hooks/use-toast'
 import { ProjectPicker } from './ProjectPicker'
+import { EditRoomDialog } from '@/components/shared/EditRoomDialog'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -100,6 +102,10 @@ export function RoomInfoPanel({
   const panelRef = useRef<HTMLDivElement>(null)
   const roomColor = room.color || '#4f46e5'
 
+  // Rooms hook (for updating)
+  const { updateRoom } = useRooms()
+  const { toast } = useToast()
+
   // Projects hook
   const {
     projects,
@@ -110,6 +116,7 @@ export function RoomInfoPanel({
   } = useProjects()
 
   // UI state
+  const [showEditDialog, setShowEditDialog] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'change' | 'clear' | null>(null)
   const [hqOverview, setHqOverview] = useState<ProjectOverview[]>([])
@@ -205,6 +212,18 @@ export function RoomInfoPanel({
     }
   }, [confirmAction, handleClearProject])
 
+  const handleEditRoomSave = useCallback(async (roomId: string, updates: {
+    name?: string; icon?: string; color?: string; floor_style?: string; wall_style?: string
+  }) => {
+    const result = await updateRoom(roomId, updates)
+    if (result.success) {
+      toast({ title: 'Room Updated!', description: `${updates.icon || room.icon} ${updates.name || room.name} saved` })
+    } else {
+      toast({ title: 'Failed to update room', description: result.error, variant: 'destructive' })
+    }
+    return result
+  }, [updateRoom, toast, room.icon, room.name])
+
   return (
     <div
       ref={panelRef}
@@ -228,6 +247,14 @@ export function RoomInfoPanel({
         animation: 'roomPanelSlideIn 0.3s ease-out',
       }}
     >
+      {/* Edit Room Dialog */}
+      <EditRoomDialog
+        room={room}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSave={handleEditRoomSave}
+      />
+
       {/* Project Picker overlay */}
       {showPicker && (
         <ProjectPicker
@@ -311,30 +338,55 @@ export function RoomInfoPanel({
           </div>
         </div>
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 8,
-            border: 'none',
-            background: 'rgba(0, 0, 0, 0.05)',
-            color: '#6b7280',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 14,
-            fontWeight: 700,
-            flexShrink: 0,
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)' }}
-        >
-          ✕
-        </button>
+        {/* Edit & Close buttons */}
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          <button
+            onClick={() => setShowEditDialog(true)}
+            title="Edit Room"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              border: 'none',
+              background: 'rgba(0, 0, 0, 0.05)',
+              color: '#6b7280',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 13,
+              flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)' }}
+          >
+            ✏️
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              border: 'none',
+              background: 'rgba(0, 0, 0, 0.05)',
+              color: '#6b7280',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 14,
+              fontWeight: 700,
+              flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)' }}
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {/* Separator */}
