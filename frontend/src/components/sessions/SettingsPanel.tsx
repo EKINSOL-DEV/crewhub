@@ -37,7 +37,7 @@ import {
   Sun, Moon, Monitor, X, Plus, Trash2, Edit2, Check,
   ChevronUp, ChevronDown, ChevronRight,
   AlertCircle, Download, Upload, Database, Loader2, Clock,
-  HardDrive, RefreshCw, FolderOpen, Eye,
+  HardDrive, RefreshCw, FolderOpen, Eye, GripVertical,
   Palette, LayoutGrid, SlidersHorizontal, Wrench, FolderKanban, Archive, ArchiveRestore,
 } from "lucide-react"
 import {
@@ -475,6 +475,40 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
   const getRuleTypeLabel = (type: string) =>
     RULE_TYPES.find(t => t.value === type)?.label || type
 
+  // ─── DnD sensors for rule reordering ───
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    // Get the current sorted order
+    const currentOrder = [...rules].sort((a, b) => b.priority - a.priority)
+    const oldIndex = currentOrder.findIndex(r => r.id === active.id)
+    const newIndex = currentOrder.findIndex(r => r.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    // Reorder the array
+    const reordered = [...currentOrder]
+    const [moved] = reordered.splice(oldIndex, 1)
+    reordered.splice(newIndex, 0, moved)
+
+    // Recalculate priorities: highest position = highest priority
+    const maxPriority = reordered.length * 10
+    const updates = reordered.map((rule, index) => ({
+      id: rule.id,
+      priority: maxPriority - (index * 10),
+    }))
+
+    // Update all rules
+    for (const update of updates) {
+      await updateRule(update.id, { priority: update.priority })
+    }
+  }, [rules, updateRule])
+
   const sortedRooms = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
   const sortedRules = [...rules].sort((a, b) => b.priority - a.priority)
 
@@ -879,73 +913,29 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
                       No rules yet. Sessions will use default routing.
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {sortedRules.map(rule => {
-                        const room = rooms.find(r => r.id === rule.room_id)
-                        return (
-                          <div
-                            key={rule.id}
-                            className="p-3 rounded-lg border bg-background hover:bg-accent/20 transition-colors"
-                          >
-                            <div className="flex items-start gap-2.5">
-                              {/* Priority controls */}
-                              <div className="flex flex-col items-center gap-0.5 shrink-0">
-                                <button
-                                  onClick={() => adjustPriority(rule.id, 10)}
-                                  className="p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
-                                >
-                                  <ChevronUp className="h-3.5 w-3.5" />
-                                </button>
-                                <Badge variant="secondary" className="text-[10px] font-mono px-1.5">
-                                  {rule.priority}
-                                </Badge>
-                                <button
-                                  onClick={() => adjustPriority(rule.id, -10)}
-                                  className="p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
-                                >
-                                  <ChevronDown className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-
-                              {/* Rule info */}
-                              <div className="flex-1 min-w-0 space-y-1.5">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <Badge variant="outline" className="text-[10px]">
-                                    {getRuleTypeLabel(rule.rule_type)}
-                                  </Badge>
-                                  <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
-                                    {rule.rule_value}
-                                  </code>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <span>→</span>
-                                  {room && (
-                                    <span
-                                      className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                                      style={{
-                                        backgroundColor: `${room.color || "#4f46e5"}20`,
-                                        color: room.color || "#4f46e5",
-                                        border: `1px solid ${room.color || "#4f46e5"}40`,
-                                      }}
-                                    >
-                                      {room.icon} {room.name}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Delete */}
-                              <button
-                                onClick={() => setDeleteRuleConfirm(rule.id)}
-                                className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600 shrink-0"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
+                    <DndContext
+                      sensors={dndSensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={sortedRules.map(r => r.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-2">
+                          {sortedRules.map(rule => (
+                            <SortableRuleItem
+                              key={rule.id}
+                              rule={rule}
+                              room={rooms.find(r => r.id === rule.room_id)}
+                              onAdjustPriority={adjustPriority}
+                              onDelete={(id) => setDeleteRuleConfirm(id)}
+                              getRuleTypeLabel={getRuleTypeLabel}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
                   )}
                 </CollapsibleSection>
               </div>

@@ -3,6 +3,9 @@
 import pytest
 from unittest.mock import MagicMock
 
+# Import through main app to resolve circular imports
+import app.main  # noqa: F401
+
 from app.services.connections.base import (
     AgentConnection,
     ConnectionStatus,

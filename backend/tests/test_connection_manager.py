@@ -4,6 +4,9 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
+# Import through main app to resolve circular imports
+import app.main  # noqa: F401
+
 from app.services.connections.base import (
     AgentConnection,
     ConnectionStatus,
@@ -128,7 +131,6 @@ async def test_list_connections(manager):
 @pytest.mark.asyncio
 async def test_get_all_sessions(manager):
     """Test aggregating sessions from all connected sources."""
-    # We can't easily test with real connections, but we can test the method
     sessions = await manager.get_all_sessions()
     assert sessions == []  # No connected sources
 
@@ -197,3 +199,38 @@ async def test_send_message_no_connections(manager):
     """Test send_message returns None when no connections exist."""
     result = await manager.send_message("some-key", "hello")
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_connections_dict(manager):
+    """Test get_connections returns a dict copy."""
+    await manager.add_connection("gc1", "openclaw", {})
+    conns = manager.get_connections()
+    assert isinstance(conns, dict)
+    assert "gc1" in conns
+
+
+@pytest.mark.asyncio
+async def test_connect_all(manager):
+    """Test connect_all attempts to connect all connections."""
+    await manager.add_connection("ca1", "codex", {})
+    await manager.add_connection("ca2", "codex", {})
+    results = await manager.connect_all()
+    assert isinstance(results, dict)
+    assert "ca1" in results
+    assert "ca2" in results
+
+
+@pytest.mark.asyncio
+async def test_disconnect_all(manager):
+    """Test disconnect_all disconnects all connections."""
+    await manager.add_connection("da1", "codex", {})
+    await manager.disconnect_all()
+    # Should not raise
+
+
+@pytest.mark.asyncio
+async def test_reconnect_nonexistent(manager):
+    """Test reconnect for non-existent connection returns False."""
+    result = await manager.reconnect("nonexistent")
+    assert result is False
