@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
 import { GrassEnvironment } from './GrassEnvironment'
 import { IslandEnvironment } from './IslandEnvironment'
 import { FloatingEnvironment } from './FloatingEnvironment'
+import { DesertEnvironment } from './DesertEnvironment'
 import { environmentRegistry } from '@/lib/modding/registries'
 
 // ─── Environment Types ───────────────────────────────────────────
@@ -119,6 +120,15 @@ function registerBuiltinEnvironments(): void {
         name: '✨ Sky Platform',
         description: 'Futuristic hexagonal floating platform',
         component: FloatingEnvironment,
+      },
+      source: 'builtin',
+    },
+    {
+      id: 'builtin:desert',
+      data: {
+        name: '🏜️ Desert',
+        description: 'Sandy desert with cacti, rocks and dunes',
+        component: DesertEnvironment,
       },
       source: 'builtin',
     },
