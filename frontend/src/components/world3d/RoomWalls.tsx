@@ -117,6 +117,76 @@ const WAINSCOTING_FRAGMENT = /* glsl */ `
   }
 `
 
+// ─── Light wall shader: clean white/cream solid ──────────────────────
+const LIGHT_WALL_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING}
+  uniform vec3 uWallColor;
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    // Subtle vertical gradient: slightly warmer at bottom
+    vec3 col = mix(uWallColor * 0.96, uWallColor, vUv.y);
+
+    gl_FragColor = vec4(col * toon, 1.0);
+  }
+`
+
+// ─── Pastel Band shader: light wall with soft pastel accent stripe ───
+const PASTEL_BAND_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING}
+  uniform vec3 uWallColor;
+  uniform vec3 uAccentColor;
+  uniform float uBandCenter;
+  uniform float uBandWidth;
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    float dist = abs(vUv.y - uBandCenter);
+    float band = 1.0 - smoothstep(uBandWidth - 0.015, uBandWidth, dist);
+    // Use a pastel (whitened) version of the accent
+    vec3 pastel = mix(uAccentColor, vec3(1.0), 0.55);
+    vec3 col = mix(uWallColor, pastel, band);
+
+    gl_FragColor = vec4(col * toon, 1.0);
+  }
+`
+
+// ─── Glass shader: light blue translucent tinted wall ────────────────
+const GLASS_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING}
+  uniform vec3 uBaseColor;
+  uniform vec3 uTintColor;
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    // Fresnel-like edge brightening for glass feel
+    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 1.5);
+    vec3 col = mix(uBaseColor, uTintColor, 0.15 + fresnel * 0.2);
+
+    // Subtle horizontal bands to suggest glass panels
+    float panelLine = smoothstep(0.48, 0.5, fract(vUv.y * 4.0)) *
+                      (1.0 - smoothstep(0.5, 0.52, fract(vUv.y * 4.0)));
+    col = mix(col, col * 0.88, panelLine);
+
+    gl_FragColor = vec4(col * toon, 1.0);
+  }
+`
+
 function createWallShaderMaterial(
   style: WallStyle,
   wallColor: string,
@@ -172,6 +242,40 @@ function createWallShaderMaterial(
         },
       })
     }
+
+    case 'light':
+      return new THREE.ShaderMaterial({
+        vertexShader: WALL_VERTEX,
+        fragmentShader: LIGHT_WALL_FRAGMENT,
+        uniforms: {
+          uWallColor: { value: new THREE.Color('#F5F0EA') },  // warm white/cream
+          uLightDir: { value: lightDir },
+        },
+      })
+
+    case 'pastel-band':
+      return new THREE.ShaderMaterial({
+        vertexShader: WALL_VERTEX,
+        fragmentShader: PASTEL_BAND_FRAGMENT,
+        uniforms: {
+          uWallColor: { value: new THREE.Color('#F2EDE7') },  // light cream base
+          uAccentColor: { value: ac },
+          uBandCenter: { value: 0.35 },
+          uBandWidth: { value: 0.07 },
+          uLightDir: { value: lightDir },
+        },
+      })
+
+    case 'glass':
+      return new THREE.ShaderMaterial({
+        vertexShader: WALL_VERTEX,
+        fragmentShader: GLASS_FRAGMENT,
+        uniforms: {
+          uBaseColor: { value: new THREE.Color('#E8F0F8') },  // very light blue-white
+          uTintColor: { value: new THREE.Color('#B8D4E8') },  // soft sky blue
+          uLightDir: { value: lightDir },
+        },
+      })
 
     default:
       return null

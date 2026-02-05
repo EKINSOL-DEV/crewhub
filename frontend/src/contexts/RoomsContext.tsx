@@ -2,8 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, ty
 import { API_BASE } from "@/lib/api"
 import { sseManager } from "@/lib/sseManager"
 
-export type FloorStyle = 'default' | 'tiles' | 'wood' | 'concrete' | 'carpet' | 'lab'
-export type WallStyle = 'default' | 'accent-band' | 'two-tone' | 'wainscoting'
+export type FloorStyle = 'default' | 'tiles' | 'wood' | 'concrete' | 'carpet' | 'lab' | 'marble' | 'light-wood' | 'light-tiles' | 'sand'
+export type WallStyle = 'default' | 'accent-band' | 'two-tone' | 'wainscoting' | 'light' | 'pastel-band' | 'glass'
 
 export interface Room {
   id: string

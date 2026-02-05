@@ -22,6 +22,10 @@ const FLOOR_STYLES: { value: FloorStyle; label: string; icon: string }[] = [
   { value: 'concrete', label: 'Concrete', icon: '🧱' },
   { value: 'carpet', label: 'Carpet', icon: '🟫' },
   { value: 'lab', label: 'Lab', icon: '🔬' },
+  { value: 'marble', label: 'Marble', icon: '🤍' },
+  { value: 'light-wood', label: 'Light Wood', icon: '🌾' },
+  { value: 'light-tiles', label: 'Light Tiles', icon: '🏳️' },
+  { value: 'sand', label: 'Sand', icon: '🏖️' },
 ]
 
 const WALL_STYLES: { value: WallStyle; label: string; icon: string }[] = [
@@ -29,6 +33,9 @@ const WALL_STYLES: { value: WallStyle; label: string; icon: string }[] = [
   { value: 'accent-band', label: 'Accent Band', icon: '🟰' },
   { value: 'two-tone', label: 'Two-Tone', icon: '🔳' },
   { value: 'wainscoting', label: 'Wainscoting', icon: '📏' },
+  { value: 'light', label: 'Light', icon: '☁️' },
+  { value: 'pastel-band', label: 'Pastel Band', icon: '🌸' },
+  { value: 'glass', label: 'Glass', icon: '🧊' },
 ]
 
 const ROOM_ICONS = ["🏛️", "💻", "🎨", "🧠", "⚙️", "📡", "🛠️", "📢", "🚀", "📊", "🔬", "📝", "🎯", "💡", "🔧", "📦"]

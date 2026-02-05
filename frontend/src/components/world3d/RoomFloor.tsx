@@ -8,6 +8,10 @@ import {
   createConcreteFloorMaterial,
   createCarpetFloorMaterial,
   createLabFloorMaterial,
+  createMarbleFloorMaterial,
+  createLightWoodFloorMaterial,
+  createLightTilesFloorMaterial,
+  createSandFloorMaterial,
 } from './shaders/floorShaders'
 import type { FloorStyle } from '@/contexts/RoomsContext'
 
@@ -60,6 +64,14 @@ export function RoomFloor({
         return createCarpetFloorMaterial(baseColor)
       case 'lab':
         return createLabFloorMaterial()
+      case 'marble':
+        return createMarbleFloorMaterial()
+      case 'light-wood':
+        return createLightWoodFloorMaterial()
+      case 'light-tiles':
+        return createLightTilesFloorMaterial()
+      case 'sand':
+        return createSandFloorMaterial()
       default:
         return null
     }

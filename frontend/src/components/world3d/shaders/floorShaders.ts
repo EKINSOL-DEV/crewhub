@@ -256,3 +256,202 @@ export function createLabFloorMaterial(): THREE.ShaderMaterial {
     uScale: { value: 16.0 },
   })
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MARBLE — white/light grey with subtle veining (Scandinavian style)
+// ═══════════════════════════════════════════════════════════════════════
+const MARBLE_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING_PARS}
+  uniform vec3 uBaseColor;
+  uniform vec3 uVeinColor;
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+  }
+
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+  }
+
+  float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    vec2 shift = vec2(100.0);
+    for (int i = 0; i < 4; i++) {
+      v += a * noise(p);
+      p = p * 2.0 + shift;
+      a *= 0.5;
+    }
+    return v;
+  }
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    // Marble veining: warped noise for organic streaks
+    vec2 uv = vUv * 8.0;
+    float warp = fbm(uv * 2.0);
+    float vein = fbm(uv + warp * 1.5);
+    // Sharpen veins into thin streaks
+    vein = smoothstep(0.35, 0.55, vein);
+
+    vec3 baseColor = mix(uBaseColor, uVeinColor, vein * 0.35);
+    // Subtle surface variation
+    float surf = noise(vUv * 30.0) * 0.03;
+    baseColor += surf;
+
+    gl_FragColor = vec4(baseColor * toon, 1.0);
+  }
+`
+
+export function createMarbleFloorMaterial(): THREE.ShaderMaterial {
+  return makeFloorMaterial(MARBLE_FRAGMENT, {
+    uBaseColor: { value: new THREE.Color('#F5F2EE') },  // warm white
+    uVeinColor: { value: new THREE.Color('#C8C0B8') },  // light warm grey
+  })
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LIGHT WOOD — birch/pine blonde planks (Scandinavian)
+// ═══════════════════════════════════════════════════════════════════════
+const LIGHT_WOOD_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING_PARS}
+  uniform vec3 uColor1;
+  uniform vec3 uColor2;
+  uniform float uScale;
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+  }
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    // Horizontal planks
+    float plankY = floor(vUv.y * uScale);
+    float plankF = fract(vUv.y * uScale);
+
+    // Each plank gets a slightly different shade
+    float plankVariation = hash(vec2(plankY, 0.0)) * 0.1;
+    vec3 plankColor = mix(uColor1, uColor2, 0.5 + plankVariation - 0.05);
+
+    // Subtle grain lines along X
+    float grain = hash(vec2(floor(vUv.x * uScale * 8.0), plankY));
+    plankColor *= (0.97 + grain * 0.03);
+
+    // Gap between planks (narrower, lighter gap for light wood)
+    float gap = 1.0 - smoothstep(0.0, 0.03, plankF) * smoothstep(0.0, 0.03, 1.0 - plankF);
+    vec3 gapColor = plankColor * 0.82;
+    vec3 baseColor = mix(plankColor, gapColor, gap);
+
+    gl_FragColor = vec4(baseColor * toon, 1.0);
+  }
+`
+
+export function createLightWoodFloorMaterial(): THREE.ShaderMaterial {
+  return makeFloorMaterial(LIGHT_WOOD_FRAGMENT, {
+    uColor1: { value: new THREE.Color('#E2D3B8') },  // light birch
+    uColor2: { value: new THREE.Color('#D4C4A0') },  // warm pine
+    uScale: { value: 10.0 },
+  })
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LIGHT TILES — white/cream checkerboard (modern office)
+// ═══════════════════════════════════════════════════════════════════════
+const LIGHT_TILES_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING_PARS}
+  uniform vec3 uColor1;
+  uniform vec3 uColor2;
+  uniform vec3 uGroutColor;
+  uniform float uScale;
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    // Checkerboard
+    vec2 grid = floor(vUv * uScale);
+    float checker = mod(grid.x + grid.y, 2.0);
+
+    // Grout lines
+    vec2 f = fract(vUv * uScale);
+    float grout = 1.0 - step(0.025, f.x) * step(0.025, f.y) *
+                  step(f.x, 0.975) * step(f.y, 0.975);
+
+    vec3 tileColor = mix(uColor1, uColor2, checker);
+    vec3 baseColor = mix(tileColor, uGroutColor, grout);
+
+    gl_FragColor = vec4(baseColor * toon, 1.0);
+  }
+`
+
+export function createLightTilesFloorMaterial(): THREE.ShaderMaterial {
+  return makeFloorMaterial(LIGHT_TILES_FRAGMENT, {
+    uColor1: { value: new THREE.Color('#F7F4F0') },  // near white
+    uColor2: { value: new THREE.Color('#EDE8E0') },  // cream
+    uGroutColor: { value: new THREE.Color('#D0CBC4') },  // light warm grey grout
+    uScale: { value: 12.0 },
+  })
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SAND — warm beige with subtle grain texture
+// ═══════════════════════════════════════════════════════════════════════
+const SAND_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING_PARS}
+  uniform vec3 uBaseColor;
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+  }
+
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+  }
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    // Soft multi-scale noise for natural sand look
+    float n = noise(vUv * 15.0) * 0.4 + noise(vUv * 35.0) * 0.35 + noise(vUv * 70.0) * 0.25;
+    vec3 baseColor = uBaseColor * (0.95 + n * 0.08);
+
+    gl_FragColor = vec4(baseColor * toon, 1.0);
+  }
+`
+
+export function createSandFloorMaterial(): THREE.ShaderMaterial {
+  return makeFloorMaterial(SAND_FRAGMENT, {
+    uBaseColor: { value: new THREE.Color('#E8DCC8') },  // warm beige
+  })
+}
