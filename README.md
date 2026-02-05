@@ -24,7 +24,7 @@
 
 CrewHub is an open-source dashboard for monitoring and managing AI coding agents. It connects to [OpenClaw](https://openclaw.dev), Claude Code, and Codex CLI — giving you a live overview of every session, room, and agent in one place. Its standout feature is a fully interactive **3D world** where your agents come alive as animated characters.
 
-> 🌐 **See it in action at [crewhub.dev](https://crewhub.dev)**
+> 🎮 **Demo Mode coming soon**
 
 ---
 
@@ -36,7 +36,7 @@ CrewHub is an open-source dashboard for monitoring and managing AI coding agents
 
 CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 
-- **Toon-shaded rooms** on a 20×20 grid with floor & wall textures (6 floor styles, 4 wall styles, procedural GLSL shaders)
+- **Toon-shaded rooms** on a 20×20 grid with floor & wall textures
 - **3 zoom levels** — Overview → Room focus → Bot close-up with camera orbit
 - **4 environments** — Grass, Island, Sky, and Desert — each with unique props and atmosphere
 - **Animated bots** — Working agents type on laptops; idle agents wander the campus
@@ -70,11 +70,10 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 ### 🎨 Customization
 - **Dark/light theme** with customizable accent colors
 - **5 bot personalities** — Worker 🟠, Thinker 🔵, Cron 🟢, Comms 🟣, Dev 🔴
-- **Agent Design Lab** for custom bot SVGs
 - **Settings UI** with backup & restore
-- **Onboarding wizard** with auto-discovery
+- **Onboarding wizard** with auto-discovery _(in testing)_
 
-### 🧩 Extensibility
+### 🧩 Extensibility _(in testing)_
 - **Modding support** — add custom props, environments, blueprints, and room layouts
 - **Namespaced IDs** (`core:desk`, `desert:cactus`) to avoid conflicts
 - **JSON blueprints** with schema validation for shareable room designs
