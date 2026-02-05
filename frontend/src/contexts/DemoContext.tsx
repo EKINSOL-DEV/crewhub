@@ -90,18 +90,6 @@ function createDemoSessions(): CrewSession[] {
       totalTokens: 15_800,
       contextTokens: 4_200,
     },
-    {
-      key: 'agent:wtl:main',
-      kind: 'agent',
-      channel: 'internal',
-      displayName: 'WTL',
-      label: 'Analyzing water quality data',
-      updatedAt: now - 6_000,        // 6s ago — active
-      sessionId: 'demo-wtl',
-      model: 'claude-sonnet-4-20250514',
-      totalTokens: 62_100,
-      contextTokens: 18_700,
-    },
     // Subagent sessions
     {
       key: 'agent:dev:subagent:fix-auth-middleware',
@@ -151,6 +139,18 @@ function createDemoSessions(): CrewSession[] {
       totalTokens: 55_700,
       contextTokens: 14_800,
     },
+    {
+      key: 'agent:flowy:subagent:social-media-campaign',
+      kind: 'subagent',
+      channel: 'internal',
+      displayName: undefined,
+      label: 'social-media-campaign',
+      updatedAt: now - 6_000,        // 6s ago — active
+      sessionId: 'demo-sub-social',
+      model: 'claude-sonnet-4-20250514',
+      totalTokens: 22_100,
+      contextTokens: 6_200,
+    },
   ]
 }
 
@@ -162,11 +162,11 @@ function createDemoRoomAssignments(): Map<string, string> {
     ['agent:gamedev:main', 'dev-room'],
     ['agent:flowy:main', 'marketing-room'],
     ['agent:reviewer:main', 'thinking-room'],
-    ['agent:wtl:main', 'ops-room'],
     ['agent:dev:subagent:fix-auth-middleware', 'dev-room'],
     ['agent:dev:subagent:design-landing-page', 'creative-room'],
     ['agent:dev:subagent:database-migration-v3', 'ops-room'],
     ['agent:dev:subagent:unit-test-coverage', 'dev-room'],
+    ['agent:flowy:subagent:social-media-campaign', 'marketing-room'],
   ])
 }
 
@@ -234,8 +234,12 @@ function isInputFocused(): boolean {
 
 // ─── Provider ───────────────────────────────────────────────────
 
+const isPublicDemo = import.meta.env.VITE_DEMO_MODE === 'true'
+
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [isDemoMode, setIsDemoMode] = useState(() => {
+    // Always on for public demo builds
+    if (isPublicDemo) return true
     try {
       return localStorage.getItem(STORAGE_KEY) === 'true'
     } catch {
@@ -338,6 +342,58 @@ export function useDemoMode() {
 
 export function DemoModeIndicator() {
   const { isDemoMode } = useDemoMode()
+  if (!isDemoMode && !isPublicDemo) return null
+
+  // Public demo: show a banner with GitHub link
+  if (isPublicDemo) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '16px',
+          right: '16px',
+          padding: '8px 16px',
+          borderRadius: '10px',
+          background: 'rgba(99, 102, 241, 0.92)',
+          color: '#fff',
+          fontSize: '12px',
+          fontWeight: '600',
+          fontFamily: 'system-ui, sans-serif',
+          zIndex: 99998,
+          pointerEvents: 'auto',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}
+      >
+        <span>🚀</span>
+        <span>Live Demo — no real agents running</span>
+        <a
+          href="https://github.com/ekinsolbot/crewhub"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#fff',
+            textDecoration: 'none',
+            padding: '3px 10px',
+            borderRadius: '6px',
+            background: 'rgba(255,255,255,0.2)',
+            fontSize: '11px',
+            fontWeight: '700',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)' }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)' }}
+        >
+          View on GitHub →
+        </a>
+      </div>
+    )
+  }
+
+  // Internal demo mode: show the existing indicator
   if (!isDemoMode) return null
 
   return (
