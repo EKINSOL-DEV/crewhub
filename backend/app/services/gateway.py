@@ -49,7 +49,7 @@ class GatewayClient:
     
     @property
     def uri(self) -> str:
-        return getattr(self._conn, "uri", "ws://localhost:18789") if self._conn else "ws://localhost:18789"
+        return getattr(self._conn, "uri", "ws://127.0.0.1:18789") if self._conn else "ws://127.0.0.1:18789"
     
     async def connect(self) -> bool:
         conn = await self._get_conn()

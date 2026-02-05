@@ -10,7 +10,7 @@ async def test_gateway_status(client):
     with patch('app.routes.gateway_status.get_gateway') as mock_get_gateway:
         mock_gateway = AsyncMock()
         mock_gateway.connected = True
-        mock_gateway.uri = "ws://localhost:18789"
+        mock_gateway.uri = "ws://127.0.0.1:18789"
         mock_get_gateway.return_value = mock_gateway
         
         response = await client.get("/api/gateway/status")
@@ -19,7 +19,7 @@ async def test_gateway_status(client):
         assert "connected" in data
         assert "uri" in data
         assert data["connected"] is True
-        assert data["uri"] == "ws://localhost:18789"
+        assert data["uri"] == "ws://127.0.0.1:18789"
 
 
 @pytest.mark.asyncio
@@ -28,7 +28,7 @@ async def test_gateway_status_disconnected(client):
     with patch('app.routes.gateway_status.get_gateway') as mock_get_gateway:
         mock_gateway = AsyncMock()
         mock_gateway.connected = False
-        mock_gateway.uri = "ws://localhost:18789"
+        mock_gateway.uri = "ws://127.0.0.1:18789"
         mock_get_gateway.return_value = mock_gateway
         
         response = await client.get("/api/gateway/status")
@@ -43,7 +43,7 @@ async def test_gateway_full_status(client):
     with patch('app.routes.gateway_status.get_gateway') as mock_get_gateway:
         mock_gateway = AsyncMock()
         mock_gateway.connected = True
-        mock_gateway.uri = "ws://localhost:18789"
+        mock_gateway.uri = "ws://127.0.0.1:18789"
         mock_gateway.get_status.return_value = {
             "version": "1.0.0",
             "uptime": 12345

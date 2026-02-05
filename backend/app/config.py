@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment."""
 
     # OpenClaw Gateway
-    openclaw_gateway_url: str = "ws://localhost:18789"
+    openclaw_gateway_url: str = "ws://127.0.0.1:18789"
     openclaw_gateway_token: str = ""
 
     # Server

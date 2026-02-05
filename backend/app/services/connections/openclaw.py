@@ -46,7 +46,7 @@ class OpenClawConnection(AgentConnection):
     Provides access to sessions, history, and agent communication.
     
     Config options:
-        url: Gateway WebSocket URL (default: ws://localhost:18789)
+        url: Gateway WebSocket URL (default: ws://127.0.0.1:18789)
         token: Authentication token (optional)
         auto_reconnect: Enable auto-reconnect (default: True)
         reconnect_delay: Initial reconnect delay in seconds (default: 1.0)
@@ -77,7 +77,7 @@ class OpenClawConnection(AgentConnection):
         
         # Connection settings
         self.uri = config.get("url") or os.getenv(
-            "OPENCLAW_GATEWAY_URL", "ws://localhost:18789"
+            "OPENCLAW_GATEWAY_URL", "ws://127.0.0.1:18789"
         )
         self.token = config.get("token") or os.getenv("OPENCLAW_GATEWAY_TOKEN", "")
         

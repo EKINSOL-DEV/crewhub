@@ -380,7 +380,7 @@ async def seed_default_data():
                     'OpenClaw Gateway',
                     'openclaw',
                     json_module.dumps({
-                        'url': 'ws://localhost:18789',
+                        'url': 'ws://127.0.0.1:18789',
                         'auto_reconnect': True,
                         'reconnect_delay': 1.0,
                         'max_reconnect_delay': 60.0,

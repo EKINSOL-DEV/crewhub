@@ -109,7 +109,7 @@ class OpenClawDetector(BaseDetector):
         process_running = await self._check_process()
 
         # 3. Probe WebSocket
-        url = f"ws://localhost:{config_port}"
+        url = f"ws://127.0.0.1:{config_port}"
         probe_result = await self._probe_websocket(url, config_token)
 
         # Build candidate
@@ -118,7 +118,7 @@ class OpenClawDetector(BaseDetector):
             discovery_method="port_probe",
             target={
                 "url": url,
-                "host": "localhost",
+                "host": "127.0.0.1",
                 "port": config_port,
                 "transport": "websocket",
             },
