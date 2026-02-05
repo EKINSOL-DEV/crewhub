@@ -40,7 +40,7 @@ interface GrassEnvironmentProps {
 export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironmentProps) {
   const seed = (x: number, z: number) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1
   const tileSize = 4
-  const gridRange = 20
+  const gridRange = 40
   const halfBW = buildingWidth / 2 + 0.5
   const halfBD = buildingDepth / 2 + 0.5
   const toonProps = useToonMaterialProps('#6B8F52')

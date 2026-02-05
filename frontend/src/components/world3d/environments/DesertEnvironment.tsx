@@ -180,7 +180,7 @@ interface DesertEnvironmentProps {
 
 export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnvironmentProps) {
   const tileSize = 4
-  const gridRange = 20
+  const gridRange = 40
   const halfBW = buildingWidth / 2 + 0.5
   const halfBD = buildingDepth / 2 + 0.5
   const sandToonProps = useToonMaterialProps('#D2B48C')
