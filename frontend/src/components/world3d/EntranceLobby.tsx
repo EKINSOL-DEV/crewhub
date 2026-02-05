@@ -29,7 +29,7 @@ export function EntranceLobby({
   return (
     <group>
       {/* Welcome mat just outside the entrance */}
-      <group position={[entranceX, 0.02, lobbyZ]}>
+      <group position={[entranceX, 0.15, lobbyZ]}>
         {/* Mat border */}
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <boxGeometry args={[3, 1.8, 0.03]} />
@@ -69,7 +69,7 @@ export function EntranceLobby({
         <mesh
           key={`path-${i}`}
           rotation={[-Math.PI / 2, 0, 0]}
-          position={[entranceX, -0.08, lobbyZ - 2 - i * 1.8]}
+          position={[entranceX, 0.05, lobbyZ - 2 - i * 1.8]}
           receiveShadow
         >
           <boxGeometry args={[entranceWidth * 0.6 - i * 0.3, 1.5, 0.06]} />
@@ -89,12 +89,12 @@ export function EntranceLobby({
 
       {/* Additional plants flanking the path */}
       <Plant
-        position={[entranceX - 2.5, -0.1, lobbyZ - 3]}
+        position={[entranceX - 2.5, 0.03, lobbyZ - 3]}
         scale={0.9}
         potColor="#6B4F12"
       />
       <Plant
-        position={[entranceX + 2.5, -0.1, lobbyZ - 3]}
+        position={[entranceX + 2.5, 0.03, lobbyZ - 3]}
         scale={0.9}
         potColor="#6B4F12"
       />

@@ -180,7 +180,7 @@ interface DesertEnvironmentProps {
 
 export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnvironmentProps) {
   const tileSize = 4
-  const gridRange = 40
+  const gridRange = 60
   const halfBW = buildingWidth / 2 + 0.5
   const halfBD = buildingDepth / 2 + 0.5
   const sandToonProps = useToonMaterialProps('#D2B48C')
@@ -299,6 +299,10 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
   }, [count, matrices, colors])
 
+  // Shift terrain up so tile top surface sits flush with building wall base (y ≈ 0).
+  // Tiles were at y = -0.15 with ~0.10 thickness → top was at y ≈ -0.10.
+  // Offset of 0.13 puts top at y ≈ 0.03, slightly overlapping wall base to prevent seam.
+  // Lights stay at world origin (not offset) to preserve shadow/lighting direction.
   return (
     <group>
       {/* Warm desert lighting override */}
@@ -322,47 +326,50 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
         intensity={0.4}
       />
 
-      {/* Sand ground tiles (instanced) */}
-      <instancedMesh
-        ref={instanceRef}
-        args={[undefined, undefined, count]}
-        receiveShadow
-        frustumCulled={false}
-      >
-        <boxGeometry args={[tileSize, tileSize, 0.1]} />
-        <meshToonMaterial {...sandToonProps} />
-      </instancedMesh>
+      {/* Terrain group — shifted up to eliminate gap with building base */}
+      <group position={[0, 0.13, 0]}>
+        {/* Sand ground tiles (instanced) */}
+        <instancedMesh
+          ref={instanceRef}
+          args={[undefined, undefined, count]}
+          receiveShadow
+          frustumCulled={false}
+        >
+          <boxGeometry args={[tileSize, tileSize, 0.1]} />
+          <meshToonMaterial {...sandToonProps} />
+        </instancedMesh>
 
-      {/* Sand dunes */}
-      {dunes.map((dune, i) => (
-        <SandDune
-          key={`dune-${i}`}
-          position={dune.pos}
-          scaleXZ={dune.scaleXZ}
-          height={dune.height}
-        />
-      ))}
+        {/* Sand dunes */}
+        {dunes.map((dune, i) => (
+          <SandDune
+            key={`dune-${i}`}
+            position={dune.pos}
+            scaleXZ={dune.scaleXZ}
+            height={dune.height}
+          />
+        ))}
 
-      {/* Decorations: cacti and rocks */}
-      {decorations.map((dec, i) => {
-        switch (dec.type) {
-          case 'saguaro':
-            return <SaguaroCactus key={`d${i}`} position={dec.pos} scale={dec.scale} />
-          case 'barrel':
-            return <BarrelCactus key={`d${i}`} position={dec.pos} scale={dec.scale} />
-          case 'prickly':
-            return <PricklyCactus key={`d${i}`} position={dec.pos} scale={dec.scale} />
-          case 'rock':
-            return <DesertRock key={`d${i}`} position={dec.pos} scale={dec.scale} variant={dec.variant} />
-          default:
-            return null
-        }
-      })}
+        {/* Decorations: cacti and rocks */}
+        {decorations.map((dec, i) => {
+          switch (dec.type) {
+            case 'saguaro':
+              return <SaguaroCactus key={`d${i}`} position={dec.pos} scale={dec.scale} />
+            case 'barrel':
+              return <BarrelCactus key={`d${i}`} position={dec.pos} scale={dec.scale} />
+            case 'prickly':
+              return <PricklyCactus key={`d${i}`} position={dec.pos} scale={dec.scale} />
+            case 'rock':
+              return <DesertRock key={`d${i}`} position={dec.pos} scale={dec.scale} variant={dec.variant} />
+            default:
+              return null
+          }
+        })}
 
-      {/* Tumbleweeds */}
-      {tumbleweeds.map((tw, i) => (
-        <Tumbleweed key={`tw-${i}`} position={tw.pos} phase={tw.phase} />
-      ))}
+        {/* Tumbleweeds */}
+        {tumbleweeds.map((tw, i) => (
+          <Tumbleweed key={`tw-${i}`} position={tw.pos} phase={tw.phase} />
+        ))}
+      </group>
     </group>
   )
 }

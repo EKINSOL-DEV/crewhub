@@ -40,7 +40,7 @@ interface GrassEnvironmentProps {
 export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironmentProps) {
   const seed = (x: number, z: number) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1
   const tileSize = 4
-  const gridRange = 40
+  const gridRange = 60
   const halfBW = buildingWidth / 2 + 0.5
   const halfBD = buildingDepth / 2 + 0.5
   const toonProps = useToonMaterialProps('#6B8F52')
@@ -88,8 +88,11 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
   }, [count, matrices, colors])
 
+  // Shift terrain up so tile top surface sits flush with building wall base (y ≈ 0).
+  // Tiles were at y = -0.15 with ~0.10 thickness → top was at y ≈ -0.10.
+  // Offset of 0.13 puts top at y ≈ 0.03, slightly overlapping wall base to prevent seam.
   return (
-    <group>
+    <group position={[0, 0.13, 0]}>
       <instancedMesh ref={instanceRef} args={[undefined, undefined, count]} receiveShadow frustumCulled={false}>
         <boxGeometry args={[tileSize, tileSize, 0.1]} />
         <meshToonMaterial {...toonProps} />
