@@ -152,9 +152,7 @@ VITE_API_URL=http://localhost:8090
 
 ### Getting Your Gateway Token
 
-```bash
-openclaw gateway token
-```
+Your token is stored in `~/.openclaw/openclaw.json` under `gateway.auth.token`. You can also set it via the `OPENCLAW_GATEWAY_TOKEN` environment variable.
 
 ### Docker Network Notes
 
