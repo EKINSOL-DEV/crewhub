@@ -24,10 +24,12 @@ const OVERVIEW_CAMERA = {
 }
 
 function getRoomCamera(roomPos: [number, number, number]) {
+  // Offset in the same direction as OVERVIEW_CAMERA (-X, -Z quadrant)
+  // so zooming in from overview to room keeps the same viewing angle.
   return {
-    posX: roomPos[0] + 10,
+    posX: roomPos[0] - 10,
     posY: 18,
-    posZ: roomPos[2] + 10,
+    posZ: roomPos[2] - 10,
     targetX: roomPos[0],
     targetY: 0,
     targetZ: roomPos[2],
