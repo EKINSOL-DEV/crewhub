@@ -140,10 +140,10 @@ function ExpressionMouth({ expression }: { expression: BotExpression }) {
       )
 
     case 'serious':
-      // Slight frown — arc curving down
+      // Neutral/slight smile — small arc curving up
       return (
-        <mesh>
-          <torusGeometry args={[0.03, 0.008, 6, 10, Math.PI]} />
+        <mesh rotation={[0, 0, Math.PI]}>
+          <torusGeometry args={[0.025, 0.008, 6, 10, Math.PI * 0.6]} />
           <meshStandardMaterial color="#333" />
         </mesh>
       )
