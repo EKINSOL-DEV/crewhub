@@ -1,8 +1,6 @@
-import { useRef, useMemo } from 'react'
-import { Text, Center, Text3D } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { useState, useMemo } from 'react'
+import { Html } from '@react-three/drei'
+import { useWorldFocus } from '@/contexts/WorldFocusContext'
 
 interface RoomNameplateProps {
   name: string
@@ -17,134 +15,135 @@ interface RoomNameplateProps {
 
 // ─── Constants ─────────────────────────────────────────────────
 
-const FONT_URL = '/fonts/helvetiker_bold.typeface.json'
 const FLOOR_TOP = 0.16
 const WALL_HEIGHT = 1.5
-const EXTRUSION_DEPTH = 0.12   // how far letters protrude from wall
-const ROOM_NAME_SIZE = 0.36    // font size for room name
-const SUBTITLE_SIZE = 0.17     // font size for project subtitle
+const NAMEPLATE_Y_OFFSET = 1.2 // how far above the wall top the nameplate floats
 
 /**
- * 3D wall text mounted directly on the front exterior wall of each room.
+ * Floating HTML nameplate above each room.
  *
- * Renders the room name as extruded 3D letters (Text3D) on the front wall,
- * styled like "Hospital" signage in Two Point Hospital — bold embossed letters
- * in the room's accent color with toon cel-shading.
- *
- * Layout (top to bottom):
- *   [emoji icon]
- *   [ROOM NAME]    ← 3D extruded, toon-shaded
- *   [subtitle]     ← project badge / COMMAND CENTER / GENERAL
- *
- * On hover: smooth 6% scale bump.
+ * Uses drei's <Html> for crisp, always-camera-facing text with a
+ * semi-transparent dark background panel. Includes:
+ * - Room emoji + name
+ * - Project/HQ subtitle
+ * - Hover → fades to low opacity (get out of the way)
+ * - Hidden at room-level zoom (level !== 'overview')
  */
 export function RoomNameplate({
   name,
   icon,
   color,
-  size = 12,
-  hovered = false,
+  size: _size = 12,
+  hovered: _roomHovered = false,
   projectName,
   projectColor,
   isHQ = false,
 }: RoomNameplateProps) {
   const accentColor = color || '#4f46e5'
-  const accentToon = useToonMaterialProps(accentColor)
-  const halfSize = size / 2
-  const groupRef = useRef<THREE.Group>(null)
+  const { state } = useWorldFocus()
+  const [labelHovered, setLabelHovered] = useState(false)
+
+  // ─── Hide when zoomed into a room (level !== overview) ──────
+  const isOverview = state.level === 'overview'
+  if (!isOverview) return null
 
   // ─── Subtitle logic ──────────────────────────────────────────
-
-  const hasProject = !!projectName
-
-  const { subtitleText, subtitleColor, subtitleOpacity } = useMemo(() => {
+  const { subtitleText, subtitleColor } = useMemo(() => {
     if (isHQ) {
-      return { subtitleText: '★ COMMAND CENTER', subtitleColor: '#FFD700', subtitleOpacity: 0.9 }
+      return { subtitleText: '★ COMMAND CENTER', subtitleColor: '#FFD700' }
     }
-    if (hasProject) {
-      return {
-        subtitleText: `● ${projectName}`,
-        subtitleColor: projectColor || '#6b7280',
-        subtitleOpacity: 0.85,
-      }
+    if (projectName) {
+      return { subtitleText: `● ${projectName}`, subtitleColor: projectColor || '#94a3b8' }
     }
-    return { subtitleText: 'GENERAL', subtitleColor: '#9ca3af', subtitleOpacity: 0.5 }
-  }, [isHQ, hasProject, projectName, projectColor])
+    return { subtitleText: 'GENERAL', subtitleColor: '#94a3b8' }
+  }, [isHQ, projectName, projectColor])
 
-  // ─── Positioning on front wall exterior ──────────────────────
-  //
-  // Front wall exterior face sits at Z = -halfSize.
-  // TextGeometry: front face at z=0 faces -Z (toward camera), extrusion toward +Z.
-  // Place text so back of extrusion is flush with wall → z = -halfSize - extrusionDepth.
-
-  const wallZ = -halfSize - EXTRUSION_DEPTH
-  const wallMidY = FLOOR_TOP + WALL_HEIGHT * 0.55  // slightly above center, eye-level
-
-  // Vertical layout offsets from wallMidY
-  const emojiY = wallMidY + 0.5
-  const nameY = wallMidY
-  const subtitleY = wallMidY - 0.4
-
-  // Fit text within room width (leave margins for wall thickness + padding)
-  const maxTextWidth = size - 2.5
-
-  // ─── Hover animation ────────────────────────────────────────
-
-  useFrame(() => {
-    if (!groupRef.current) return
-    const target = hovered ? 1.06 : 1.0
-    const current = groupRef.current.scale.x
-    groupRef.current.scale.setScalar(current + (target - current) * 0.12)
-  })
+  // ─── Position: floating above the room center ───────────────
+  const posY = FLOOR_TOP + WALL_HEIGHT + NAMEPLATE_Y_OFFSET
 
   return (
-    <group ref={groupRef}>
-      {/* ── Emoji icon above room name ── */}
-      {/* SDF Text (troika) supports emoji glyphs; Text3D does not */}
-      {icon && (
-        <Text
-          position={[0, emojiY, wallZ - 0.02]}
-          fontSize={0.44}
-          anchorX="center"
-          anchorY="middle"
+    <Html
+      position={[0, posY, 0]}
+      center
+      zIndexRange={[10, 20]}
+      style={{ pointerEvents: 'auto' }}
+      // distanceFactor scales the label with distance so it stays readable
+      distanceFactor={14}
+    >
+      <div
+        onPointerEnter={() => setLabelHovered(true)}
+        onPointerLeave={() => setLabelHovered(false)}
+        style={{
+          opacity: labelHovered ? 0.2 : 1,
+          transition: 'opacity 0.25s ease',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '2px',
+          userSelect: 'none',
+          cursor: 'default',
+          // Prevent the HTML overlay from capturing room clicks
+          pointerEvents: 'auto',
+        }}
+      >
+        {/* ── Main label (emoji + name) ── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(15, 15, 25, 0.75)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            padding: '4px 12px',
+            borderRadius: '8px',
+            border: `1.5px solid ${accentColor}55`,
+            boxShadow: `0 2px 12px rgba(0,0,0,0.35), inset 0 0 8px ${accentColor}18`,
+          }}
         >
-          {icon}
-        </Text>
-      )}
-
-      {/* ── 3D extruded room name (embossed on wall) ── */}
-      <group position={[0, nameY, wallZ]}>
-        <Center>
-          <Text3D
-            font={FONT_URL}
-            size={ROOM_NAME_SIZE}
-            height={EXTRUSION_DEPTH}
-            bevelEnabled
-            bevelThickness={0.018}
-            bevelSize={0.012}
-            bevelSegments={3}
-            curveSegments={8}
-            castShadow
+          {icon && (
+            <span style={{ fontSize: '14px', lineHeight: 1 }}>{icon}</span>
+          )}
+          <span
+            style={{
+              color: '#f1f5f9',
+              fontSize: '13px',
+              fontWeight: 700,
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              letterSpacing: '0.5px',
+              textShadow: `0 1px 3px rgba(0,0,0,0.5), 0 0 8px ${accentColor}40`,
+              whiteSpace: 'nowrap',
+            }}
           >
             {name.toUpperCase()}
-            <meshToonMaterial {...accentToon} />
-          </Text3D>
-        </Center>
-      </group>
+          </span>
+        </div>
 
-      {/* ── Subtitle line (project / HQ / general) ── */}
-      <Text
-        position={[0, subtitleY, wallZ - 0.02]}
-        fontSize={SUBTITLE_SIZE}
-        color={subtitleColor}
-        anchorX="center"
-        anchorY="middle"
-        maxWidth={maxTextWidth}
-        fillOpacity={subtitleOpacity}
-        fontWeight={700}
-      >
-        {subtitleText}
-      </Text>
-    </group>
+        {/* ── Subtitle (project / HQ / general) ── */}
+        <div
+          style={{
+            background: 'rgba(15, 15, 25, 0.55)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            padding: '1px 8px',
+            borderRadius: '5px',
+          }}
+        >
+          <span
+            style={{
+              color: subtitleColor,
+              fontSize: '9px',
+              fontWeight: 600,
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              letterSpacing: '0.4px',
+              opacity: 0.85,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {subtitleText}
+          </span>
+        </div>
+      </div>
+    </Html>
   )
 }
