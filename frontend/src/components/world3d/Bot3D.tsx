@@ -9,6 +9,7 @@ import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
+import { BotLaptop } from './BotLaptop'
 import { SleepingZs, useBotAnimation, tickAnimState, getRoomInteractionPoints, getWalkableCenter } from './BotAnimations'
 import { getBlueprintForRoom, getWalkableMask, worldToGrid } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
@@ -68,7 +69,7 @@ interface Bot3DProps {
 
 /**
  * Complete 3D bot character — two-primitive stacked design (head + body).
- * Includes body, face, accessory, chest display, status glow,
+ * Includes body, face, accessory, chest display, status glow, laptop (when active),
  * animations, wandering, and floating name tag.
  */
 export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId, roomName }: Bot3DProps) {
@@ -240,17 +241,17 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     const isMovingForBounce = wasMovingRef.current
     let bounceY = 0
     switch (anim.phase) {
-      case 'working':
-        // Almost imperceptible head bob when working
-        bounceY = anim.headBob ? Math.sin(t * 2) * 0.004 : 0
-        break
-      case 'walking-to-desk':
       case 'getting-coffee':
       case 'sleeping-walking':
         bounceY = isMovingForBounce ? Math.sin(t * 4) * 0.03 : 0
         break
       case 'idle-wandering':
-        bounceY = isMovingForBounce ? Math.sin(t * 3) * 0.02 : 0
+        // Active bots with laptop get a slightly different bounce
+        if (anim.isActiveWalking && !anim.typingPause) {
+          bounceY = isMovingForBounce ? Math.sin(t * 3.5) * 0.025 : 0
+        } else {
+          bounceY = isMovingForBounce ? Math.sin(t * 3) * 0.02 : 0
+        }
         break
       case 'sleeping':
         // No position bounce — breathing handled via scale below
@@ -309,24 +310,13 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       return
     }
 
-    // Frozen states (working at desk, sleeping in corner, offline)
+    // Frozen states (sleeping in corner, coffee break, offline)
     if (anim.freezeWhenArrived && anim.arrived) {
       groupRef.current.position.x = state.currentX
       groupRef.current.position.z = state.currentZ
 
-      // Face toward the desk/target when frozen at work position
-      // The bot is at the work-point (in front of desk), facing toward the desk (behind/above)
-      if (anim.phase === 'working' && roomBounds) {
-        // Desk is toward the back wall — face from bot toward nearest wall
-        const roomCX = (roomBounds.minX + roomBounds.maxX) / 2
-        const roomCZ = (roomBounds.minZ + roomBounds.maxZ) / 2
-        // Direction from room center toward the bot's position indicates which wall the desk is near
-        // Bot should face AWAY from center (toward the wall the desk is against)
-        const toCenterDx = roomCX - state.currentX
-        const toCenterDz = roomCZ - state.currentZ
-        // Face away from center = toward the nearest wall (where desk is)
-        groupRef.current.rotation.y = Math.atan2(-toCenterDx, -toCenterDz)
-      } else if (anim.targetX !== null && anim.targetZ !== null) {
+      // Face toward the target when frozen (coffee machine, sleep corner)
+      if (anim.targetX !== null && anim.targetZ !== null) {
         const faceDx = anim.targetX - state.currentX
         const faceDz = anim.targetZ - state.currentZ
         const faceDist = Math.sqrt(faceDx * faceDx + faceDz * faceDz)
@@ -335,9 +325,6 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         }
       }
 
-      wasMovingRef.current = false
-      walkPhaseRef.current = 0
-
       if (session?.key) {
         botPositionRegistry.set(session.key, {
           x: state.currentX,
@@ -345,6 +332,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           z: state.currentZ,
         })
       }
+      wasMovingRef.current = false
+      walkPhaseRef.current = 0
       return
     }
 
@@ -382,7 +371,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       anim.resetWanderTarget = false
     }
 
-    // Override wander target from animation system (desk, coffee, sleep)
+    // Override wander target from animation system (coffee, sleep)
     const hasAnimTarget = anim.targetX !== null && anim.targetZ !== null
     if (hasAnimTarget) {
       state.targetX = anim.targetX!
@@ -424,10 +413,13 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           state.waitTimer = SESSION_CONFIG.wanderMinWaitS + Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
         }
       } else {
-        const easedSpeed = speed * Math.min(1, dist / 0.5)
-        const step = Math.min(easedSpeed * delta, dist)
-        state.currentX += (dx / dist) * step
-        state.currentZ += (dz / dist) * step
+        // Skip movement if in typing pause
+        if (!anim.typingPause) {
+          const easedSpeed = speed * Math.min(1, dist / 0.5)
+          const step = Math.min(easedSpeed * delta, dist)
+          state.currentX += (dx / dist) * step
+          state.currentZ += (dz / dist) * step
+        }
         const targetRotY = Math.atan2(dx, dz)
         const currentRotY = groupRef.current.rotation.y
         let angleDiff = targetRotY - currentRotY
@@ -441,7 +433,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         }
       }
     } else if (hasAnimTarget && !anim.arrived) {
-      // ─── Walking toward animation target (desk/coffee/sleep) ──
+      // ─── Walking toward animation target (coffee/sleep) ──
       const dx = state.targetX - state.currentX
       const dz = state.targetZ - state.currentZ
       const dist = Math.sqrt(dx * dx + dz * dz)
@@ -510,81 +502,99 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       }
     } else {
       // ─── Random walk with obstacle avoidance ───────────────
-      const cellSize = gridData.blueprint.cellSize
-
-      // Wait phase
-      if (state.waitTimer > 0) {
-        state.waitTimer -= delta
-        // Still rotate toward current direction while waiting
+      // Typing pause — active bot pauses briefly as if typing on laptop
+      if (anim.typingPause) {
+        // Stay in place, don't modify currentX/currentZ
+        // Still rotate toward current direction while paused
         if (state.stepsRemaining > 0) {
           const targetRotY = Math.atan2(state.dirX, state.dirZ)
           const currentRotY = groupRef.current.rotation.y
           let angleDiff = targetRotY - currentRotY
           while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
           while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-          // Rotation dead-zone snap [Fix 6]
           if (Math.abs(angleDiff) < 0.01) {
             groupRef.current.rotation.y = targetRotY
           } else {
             groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
           }
         }
-      } else if (state.stepsRemaining <= 0) {
-        // Pick a new random direction and number of steps
-        const dir = pickWalkableDir()
-        if (dir) {
-          state.dirX = dir.x
-          state.dirZ = dir.z
-          state.stepsRemaining = SESSION_CONFIG.wanderMinSteps + Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1))
-          state.cellProgress = 0
-          state.waitTimer = 1 + Math.random() * 2 // pause 1-3s before walking
-        } else {
-          state.waitTimer = 1 // boxed in, wait and retry
-        }
       } else {
-        // Walking phase — move forward one cell at a time
-        const nextWorldX = state.currentX + state.dirX * cellSize
-        const nextWorldZ = state.currentZ + state.dirZ * cellSize
+        const cellSize = gridData.blueprint.cellSize
 
-        if (!isWalkableAt(nextWorldX, nextWorldZ)) {
-          // Obstacle ahead — pick a new walkable direction
+        // Wait phase
+        if (state.waitTimer > 0) {
+          state.waitTimer -= delta
+          // Still rotate toward current direction while waiting
+          if (state.stepsRemaining > 0) {
+            const targetRotY = Math.atan2(state.dirX, state.dirZ)
+            const currentRotY = groupRef.current.rotation.y
+            let angleDiff = targetRotY - currentRotY
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+            // Rotation dead-zone snap [Fix 6]
+            if (Math.abs(angleDiff) < 0.01) {
+              groupRef.current.rotation.y = targetRotY
+            } else {
+              groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
+            }
+          }
+        } else if (state.stepsRemaining <= 0) {
+          // Pick a new random direction and number of steps
           const dir = pickWalkableDir()
           if (dir) {
             state.dirX = dir.x
             state.dirZ = dir.z
-            state.stepsRemaining = Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) + Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps))
+            state.stepsRemaining = SESSION_CONFIG.wanderMinSteps + Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1))
             state.cellProgress = 0
-          }
-          state.waitTimer = 0.5 // brief pause after redirect
-        } else {
-          // Move toward next cell center
-          const step = speed * delta
-          state.cellProgress += step / cellSize
-
-          // Normalize diagonal movement vectors [Fix 5]
-          const dirMag = Math.sqrt(state.dirX * state.dirX + state.dirZ * state.dirZ)
-          if (dirMag > 0) {
-            state.currentX += (state.dirX / dirMag) * step
-            state.currentZ += (state.dirZ / dirMag) * step
-          }
-
-          // When we've traversed one cell width, count it
-          if (state.cellProgress >= 1) {
-            state.stepsRemaining--
-            state.cellProgress = 0
-          }
-
-          // Smooth rotation toward movement direction
-          const targetRotY = Math.atan2(state.dirX, state.dirZ)
-          const currentRotY = groupRef.current.rotation.y
-          let angleDiff = targetRotY - currentRotY
-          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-          // Rotation dead-zone snap [Fix 6]
-          if (Math.abs(angleDiff) < 0.01) {
-            groupRef.current.rotation.y = targetRotY
+            state.waitTimer = 1 + Math.random() * 2 // pause 1-3s before walking
           } else {
-            groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
+            state.waitTimer = 1 // boxed in, wait and retry
+          }
+        } else {
+          // Walking phase — move forward one cell at a time
+          const nextWorldX = state.currentX + state.dirX * cellSize
+          const nextWorldZ = state.currentZ + state.dirZ * cellSize
+
+          if (!isWalkableAt(nextWorldX, nextWorldZ)) {
+            // Obstacle ahead — pick a new walkable direction
+            const dir = pickWalkableDir()
+            if (dir) {
+              state.dirX = dir.x
+              state.dirZ = dir.z
+              state.stepsRemaining = Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) + Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps))
+              state.cellProgress = 0
+            }
+            state.waitTimer = 0.5 // brief pause after redirect
+          } else {
+            // Move toward next cell center
+            const step = speed * delta
+            state.cellProgress += step / cellSize
+
+            // Normalize diagonal movement vectors [Fix 5]
+            const dirMag = Math.sqrt(state.dirX * state.dirX + state.dirZ * state.dirZ)
+            if (dirMag > 0) {
+              state.currentX += (state.dirX / dirMag) * step
+              state.currentZ += (state.dirZ / dirMag) * step
+            }
+
+            // When we've traversed one cell width, count it
+            if (state.cellProgress >= 1) {
+              state.stepsRemaining--
+              state.cellProgress = 0
+            }
+
+            // Smooth rotation toward movement direction
+            const targetRotY = Math.atan2(state.dirX, state.dirZ)
+            const currentRotY = groupRef.current.rotation.y
+            let angleDiff = targetRotY - currentRotY
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+            // Rotation dead-zone snap [Fix 6]
+            if (Math.abs(angleDiff) < 0.01) {
+              groupRef.current.rotation.y = targetRotY
+            } else {
+              groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
+            }
           }
         }
       }
@@ -596,17 +606,20 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       state.currentZ = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, state.currentZ))
     }
 
-    // ─── Detect actual movement this frame (for walk animation) ──
-    const actualDX = state.currentX - frameStartX
-    const actualDZ = state.currentZ - frameStartZ
-    const isMovingThisFrame = Math.sqrt(actualDX * actualDX + actualDZ * actualDZ) > 0.001
-    wasMovingRef.current = isMovingThisFrame
+    // ─── Detect movement for walk animation ──────────────────────
+    const frameDx = state.currentX - frameStartX
+    const frameDz = state.currentZ - frameStartZ
+    const frameDist = Math.sqrt(frameDx * frameDx + frameDz * frameDz)
+    const isMovingNow = frameDist > 0.001
+    wasMovingRef.current = isMovingNow
 
-    // Update walk phase for foot/arm animation in BotBody
-    if (isMovingThisFrame) {
-      walkPhaseRef.current += delta * 10
+    // Update walk phase for foot/arm animation
+    if (isMovingNow) {
+      walkPhaseRef.current += delta * 8 // walk cycle speed
     } else {
-      walkPhaseRef.current = 0
+      // Smoothly decay walk phase to 0 (legs return to rest)
+      walkPhaseRef.current *= 0.85
+      if (Math.abs(walkPhaseRef.current) < 0.01) walkPhaseRef.current = 0
     }
 
     groupRef.current.position.x = state.currentX
@@ -614,10 +627,12 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
 
     // ─── Prevent tilt: lock rotation to Y-axis only ───────────
     // Animation may set rotation.x (bodyTilt) and rotation.z (sleepRotZ)
-    // but during non-sleep phases these must stay 0 to prevent visual tilt
-    // (especially noticeable when camera orbits the bot).
-    if (anim.phase !== 'sleeping') {
-      groupRef.current.rotation.x = 0
+    // Allow bodyTilt during typing pauses (looking at laptop) and sleeping.
+    if (anim.phase === 'sleeping') {
+      // Sleep: both bodyTilt and sleepRotZ are applied (set by animation)
+    } else {
+      // Allow intentional body tilt (e.g., typing pause looking at laptop)
+      groupRef.current.rotation.x = anim.bodyTilt || 0
       groupRef.current.rotation.z = 0
     }
 
@@ -632,8 +647,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   })
 
   // Offset y so bot feet rest on the floor
-  // Bot feet bottom at y=-0.33 in body space; offset of 0.33 puts feet at group origin
-  const yOffset = 0.33
+  const yOffset = 0.36
 
   return (
     <group
@@ -670,6 +684,9 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
 
         {/* Accessory (per-type, on top of head) */}
         <BotAccessory type={config.accessory} color={config.color} />
+
+        {/* Floating laptop (visible when bot is actively working) */}
+        <BotLaptop visible={status === 'active'} />
 
         {/* Sleeping ZZZ (visibility controlled by animRef.showZzz, not raw status) */}
         {status === 'sleeping' && <SleepingZs animRef={animRef} />}
@@ -761,4 +778,3 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
 }
 
 // SleepingZs moved to BotAnimations.tsx
-

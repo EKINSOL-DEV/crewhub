@@ -8,8 +8,6 @@ import type { BotStatus } from './Bot3D'
 // ─── Types ──────────────────────────────────────────────────────
 
 export type BotAnimState =
-  | 'walking-to-desk'
-  | 'working'
   | 'idle-wandering'
   | 'getting-coffee'
   | 'sleeping-walking'
@@ -31,6 +29,12 @@ export interface AnimState {
   sleepRotZ: number            // sideways lean when sleeping
   coffeeTimer: number          // seconds remaining at coffee machine
   resetWanderTarget: boolean   // signal Bot3D to pick new random target
+
+  // ── Active walking (laptop) state ──
+  isActiveWalking: boolean     // true when bot is walking with laptop (active status)
+  typingPause: boolean         // bot is paused briefly as if "typing"
+  typingPauseTimer: number     // remaining seconds of current typing pause
+  nextTypingPauseTimer: number // seconds until next typing pause
 }
 
 export interface RoomInteractionPoints {
@@ -52,6 +56,9 @@ interface RoomBounds {
 /**
  * Get world-space positions for room furniture that bots interact with.
  * Uses grid blueprint interaction points instead of hardcoded positions.
+ *
+ * Note: deskPosition is kept for reference but bots no longer pathfind to desks.
+ * Coffee and sleep positions are still used.
  */
 export function getRoomInteractionPoints(
   roomName: string,
@@ -153,6 +160,11 @@ function createDefaultAnimState(): AnimState {
     sleepRotZ: 0,
     coffeeTimer: 0,
     resetWanderTarget: false,
+    // Active walking (laptop)
+    isActiveWalking: false,
+    typingPause: false,
+    typingPauseTimer: 0,
+    nextTypingPauseTimer: 0,
   }
 }
 
@@ -161,7 +173,7 @@ function createDefaultAnimState(): AnimState {
  * Returns a mutable ref read by Bot3D's useFrame for zero-overhead integration.
  *
  * State transitions:
- *   active  → walking-to-desk → working (tilt, head bob)
+ *   active  → idle-wandering (with laptop, typing pauses)
  *   idle    → getting-coffee (if available, 50%) | idle-wandering (slow)
  *   sleeping → sleeping-walking → sleeping (crouch, ZZZ)
  *   offline → frozen, faded
@@ -191,52 +203,44 @@ export function useBotAnimation(
     // Check if current animation phase is already compatible with the new status.
     // If so, skip the reset entirely — prevents jitter from status flickering.
     const phaseCompatible: Record<string, string[]> = {
-      active: ['walking-to-desk', 'working'],
-      idle: ['idle-wandering', 'getting-coffee', 'walking-to-desk', 'working'],
+      active: [], // Always reinitialize for active (need typing pause setup)
+      idle: ['idle-wandering', 'getting-coffee'],
       sleeping: ['sleeping-walking', 'sleeping'],
       offline: ['offline'],
     }
     const compatible = phaseCompatible[status] || []
-    if (compatible.includes(s.phase)) {
-      // Current phase already matches what this status would set up — no reset needed.
-      // Exception: if idle and currently working, let them eventually wander
-      // (but don't reset — the tick function handles the working→coffee transition)
+
+    // Special handling: if already actively walking with laptop and staying active, skip reset
+    if (status === 'active' && s.isActiveWalking && s.phase === 'idle-wandering') {
       return
     }
 
-    // Special case: active and currently wandering → redirect to desk
-    if (status === 'active' && (s.phase === 'idle-wandering' || s.phase === 'getting-coffee') && interactionPoints) {
-      s.phase = 'walking-to-desk'
-      s.targetX = interactionPoints.deskPosition[0] + j.x
-      s.targetZ = interactionPoints.deskPosition[2] + j.z
-      s.walkSpeed = SESSION_CONFIG.botWalkSpeedActive
-      s.freezeWhenArrived = true
-      s.arrived = false
+    // Special handling: active→idle transition needs speed/flag update even if phase matches
+    if (status === 'idle' && s.isActiveWalking) {
+      s.isActiveWalking = false
+      s.typingPause = false
+      s.typingPauseTimer = 0
+      s.nextTypingPauseTimer = 0
       s.bodyTilt = 0
-      s.headBob = false
-      s.showZzz = false
-      s.sleepRotZ = 0
+      s.walkSpeed = SESSION_CONFIG.botWalkSpeedIdle
+      // Phase is already idle-wandering, so no need to reset everything else
+      return
+    }
+
+    if (compatible.includes(s.phase)) {
       return
     }
 
     switch (status) {
       case 'active': {
-        if (interactionPoints) {
-          s.phase = 'walking-to-desk'
-          s.targetX = interactionPoints.deskPosition[0] + j.x
-          s.targetZ = interactionPoints.deskPosition[2] + j.z
-          s.walkSpeed = SESSION_CONFIG.botWalkSpeedActive
-          s.freezeWhenArrived = true
-          s.arrived = false
-        } else {
-          s.phase = 'idle-wandering'
-          s.targetX = null
-          s.targetZ = null
-          s.walkSpeed = SESSION_CONFIG.botWalkSpeedActive
-          s.freezeWhenArrived = false
-          s.arrived = false
-          s.resetWanderTarget = true
-        }
+        // Active bots wander around the room WITH a laptop (no desk targeting)
+        s.phase = 'idle-wandering'
+        s.targetX = null
+        s.targetZ = null
+        s.walkSpeed = 0.5 // moderate walk speed — purposeful but relaxed
+        s.freezeWhenArrived = false
+        s.arrived = false
+        s.resetWanderTarget = true
         s.bodyTilt = 0
         s.headBob = false
         s.opacity = 1
@@ -244,6 +248,11 @@ export function useBotAnimation(
         s.showZzz = false
         s.sleepRotZ = 0
         s.coffeeTimer = 0
+        // Typing pause setup
+        s.isActiveWalking = true
+        s.typingPause = false
+        s.typingPauseTimer = 0
+        s.nextTypingPauseTimer = 5 + Math.random() * 10 // first pause in 5-15s
         break
       }
 
@@ -274,6 +283,11 @@ export function useBotAnimation(
         s.yOffset = 0
         s.showZzz = false
         s.sleepRotZ = 0
+        // Clear active walking state
+        s.isActiveWalking = false
+        s.typingPause = false
+        s.typingPauseTimer = 0
+        s.nextTypingPauseTimer = 0
         break
       }
 
@@ -301,6 +315,11 @@ export function useBotAnimation(
         s.headBob = false
         s.opacity = 1
         s.coffeeTimer = 0
+        // Clear active walking state
+        s.isActiveWalking = false
+        s.typingPause = false
+        s.typingPauseTimer = 0
+        s.nextTypingPauseTimer = 0
         break
       }
 
@@ -318,6 +337,11 @@ export function useBotAnimation(
         s.showZzz = false
         s.sleepRotZ = 0
         s.coffeeTimer = 0
+        // Clear active walking state
+        s.isActiveWalking = false
+        s.typingPause = false
+        s.typingPauseTimer = 0
+        s.nextTypingPauseTimer = 0
         break
       }
     }
@@ -331,16 +355,6 @@ export function useBotAnimation(
 
 export function tickAnimState(s: AnimState, delta: number): void {
   switch (s.phase) {
-    case 'walking-to-desk': {
-      if (s.arrived) {
-        s.phase = 'working'
-        s.bodyTilt = 0.06
-        s.headBob = true
-        s.walkSpeed = 0
-      }
-      break
-    }
-
     case 'getting-coffee': {
       if (s.arrived) {
         s.coffeeTimer -= delta
@@ -367,6 +381,29 @@ export function tickAnimState(s: AnimState, delta: number): void {
         s.walkSpeed = 0
       }
       break
+    }
+  }
+
+  // ─── Typing pause management (active walking bots with laptop) ──
+  if (s.isActiveWalking && s.phase === 'idle-wandering') {
+    if (s.typingPause) {
+      // Currently paused — count down pause duration
+      s.typingPauseTimer -= delta
+      if (s.typingPauseTimer <= 0) {
+        // Resume walking
+        s.typingPause = false
+        s.bodyTilt = 0
+        s.nextTypingPauseTimer = 5 + Math.random() * 10 // next pause in 5-15s
+      }
+    } else {
+      // Walking — count down to next pause
+      s.nextTypingPauseTimer -= delta
+      if (s.nextTypingPauseTimer <= 0) {
+        // Start a typing pause
+        s.typingPause = true
+        s.typingPauseTimer = 1.0 + Math.random() * 1.0 // pause for 1-2s
+        s.bodyTilt = 0.04 // slight forward lean (looking at laptop)
+      }
     }
   }
 }
