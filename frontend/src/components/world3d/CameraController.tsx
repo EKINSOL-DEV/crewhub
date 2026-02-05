@@ -19,7 +19,7 @@ interface CameraControllerProps {
 // ─── Camera presets per focus level ────────────────────────────
 
 const OVERVIEW_CAMERA = {
-  posX: 45, posY: 40, posZ: 45,
+  posX: -45, posY: 40, posZ: -45,
   targetX: 0, targetY: 0, targetZ: 0,
 }
 
