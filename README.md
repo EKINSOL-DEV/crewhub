@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.7.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.7.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/react-19-61dafb" alt="React">
@@ -48,7 +48,7 @@
 - 📥 **Blueprint Import/Export API** — Full CRUD with validation
 - 📚 **Documentation Site** — Starlight/Astro docs at [docs.crewhub.dev](https://docs.crewhub.dev)
 - 🔒 **AGPL-3.0 License**
-- 🔢 **Version Display** — Always know what you're running (v0.7.0)
+- 🔢 **Version Display** — Always know what you're running (v0.7.1)
 
 ## 📸 Screenshots
 
@@ -76,7 +76,7 @@ CrewHub ships with 5 distinct bot personalities, each with a custom SVG design:
 
 Design your agents in the **Agent Design Lab** and watch them come alive in the **3D Bot Playground**.
 
-## 🆕 What's New in v0.7.0
+## 🆕 What's New in v0.7.1
 
 - 🏠 **Room floor & wall textures** — 6 floor styles + 4 wall styles with procedural GLSL shaders
 - 🏜️ **Desert environment** — New theme with sand dunes, cacti, rocks, and tumbleweeds

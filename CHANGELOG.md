@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.7.1 (2026-02-05)
+
+### Added
+- **Website screenshots** — Full screenshot showcase on crewhub.dev with 17 new images across features, hero, and gallery sections
+- **Desert as default environment** — Desert theme is now the default 3D world environment
+- **Light room textures** — 4 new floor styles (marble, light-wood, light-tiles, sand) and 3 new wall styles (light, pastel-band, glass) for Scandinavian/modern office vibes
+- **Edit Room in focus panel** — Edit room name, icon, color, floor and wall style directly from the room focus view
+- **Room nameplate redesign** — Subtle fixed-orientation nameplates above room entrances
+- **Wandering bot collision** — Sleeping agents now avoid walking through rooms
+- **Drag handle improvements** — Delayed unhover prevents handle from disappearing while reaching for it
+
+### Fixed
+- Edit Room dialog left-side clipping on scrollable area
+- Dialog click propagation through Radix portals
+- Agent Top Bar z-index layering with Settings overlay
+- Chat windows opening for non-fixed agents
+- Double render on load (fingerprint-based dedup)
+- Nameplate size consistency across zoom levels
+
 ## [0.7.0] - 2026-02-05
 
 ### 🌟 New Features
