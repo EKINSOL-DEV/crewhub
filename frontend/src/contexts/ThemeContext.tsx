@@ -17,7 +17,7 @@ interface ThemeContextValue {
 const STORAGE_KEY = "crewhub-theme"
 
 const defaultTheme: ThemeConfig = {
-  mode: "dark",
+  mode: "light",
   accentColor: "purple",
 }
 
