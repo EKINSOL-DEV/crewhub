@@ -350,8 +350,9 @@ export function DemoModeIndicator() {
       <div
         style={{
           position: 'fixed',
-          bottom: '16px',
-          right: '16px',
+          top: '12px',
+          left: '50%',
+          transform: 'translateX(-50%)',
           padding: '8px 16px',
           borderRadius: '10px',
           background: 'rgba(99, 102, 241, 0.92)',
@@ -371,7 +372,7 @@ export function DemoModeIndicator() {
         <span>🚀</span>
         <span>Live Demo — no real agents running</span>
         <a
-          href="https://github.com/ekinsolbot/crewhub"
+          href="https://github.com/EKINSOL-DEV/crewhub"
           target="_blank"
           rel="noopener noreferrer"
           style={{
