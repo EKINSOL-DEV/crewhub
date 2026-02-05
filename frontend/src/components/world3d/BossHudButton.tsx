@@ -60,7 +60,7 @@ export function BossHudButton({ sessions, getBotConfig, getRoomForSession, defau
     if (bossRoomId) {
       focusBot(BOSS_SESSION_KEY, bossRoomId)
     }
-    openChat(BOSS_SESSION_KEY, 'Assistent', bossConfig.emoji, bossConfig.color)
+    openChat(BOSS_SESSION_KEY, 'Assistent', bossConfig.icon, bossConfig.color)
   }
 
   return (

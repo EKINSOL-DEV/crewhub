@@ -27,7 +27,7 @@ export function RoomNameplate({
   name,
   icon,
   color,
-  size = 12,
+  size: _size = 12,
   hovered: _roomHovered = false,
   projectName,
   projectColor,
