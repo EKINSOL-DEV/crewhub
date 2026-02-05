@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import type { Project } from '@/hooks/useProjects'
 import { API_BASE } from '@/lib/api'
+import { useDemoMode } from '@/contexts/DemoContext'
 
 /** Default projects base path (overridden by settings) */
 const DEFAULT_PROJECTS_BASE = "~/Projects"
@@ -31,6 +32,7 @@ const ICON_PRESETS = [
 // ── Component ──────────────────────────────────────────────────
 
 export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, onClose }: ProjectPickerProps) {
+  const { isDemoMode } = useDemoMode()
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
@@ -162,6 +164,23 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
         animation: 'pickerFadeIn 0.2s ease-out',
       }}
     >
+      {/* Demo mode warning */}
+      {isDemoMode && (
+        <div style={{
+          padding: '8px 16px',
+          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+          borderBottom: '1px solid #fcd34d',
+          fontSize: 12,
+          color: '#92400e',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}>
+          <span>🎮</span>
+          <span><strong>Demo Mode</strong> — Changes won't persist. Two rooms already have projects linked for you to explore!</span>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{
         padding: '16px 20px 12px',
