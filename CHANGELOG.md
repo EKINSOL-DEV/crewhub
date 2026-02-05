@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-05
+
+### 🌟 New Features
+- **Modding foundation: Registry\<T\> pattern** — Generic registry with namespaced IDs (`namespace:id`), batch registration, and Zod validation
+- **Data-driven props** — Props defined as JSON data instead of hardcoded components, with PropRegistry split into 5 focused modules
+- **Blueprint system** — Room blueprints as JSON with import/export API and validation
+- **Data-driven environments** — Environment configurations loaded from data files
+- **Blueprint import/export API** — Full API for sharing and validating blueprints
+- **Starlight documentation site** — Dedicated docs site for CrewHub modding and architecture
+
+### ⚡ Performance
+- **Centralized SSE** — Single Server-Sent Events connection shared across components
+- **RoomsContext** — Shared room state to prevent redundant fetches
+- **AbortController** — Proper request cancellation on unmount
+
+### 📦 Other
+- Batch registration support for registries
+- Zod schema validation for all registry entries
+- PropRegistry refactored from monolith into 5 modules
+
 ## [0.3.0] - 2026-02-04
 
 ### 🌟 New Features
