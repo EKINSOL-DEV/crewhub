@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-02-05
+
+### 🌟 New Features
+- **Room floor & wall textures** — 6 floor styles + 4 wall styles with procedural GLSL shaders, per-room selectable
+- **Desert environment** — New environment theme with sand dunes, cacti, rocks, and tumbleweeds
+- **Agent bios** — Bio field for agents with pre-filled descriptions for fixed crew (schema v8)
+- **Agent Top Bar** — Boss button (center) + pinned agent (left) + agent picker dropdown (right)
+- **Wandering bots** — Sleeping agents walk around campus between rooms
+- **Activity bubbles** — Show humanized task summaries from session labels above bots
+- **Boss HUD button** — Quick access to main agent, opens chat on click
+- **Room nameplates v2** — Floating HTML billboards above rooms with hover fade
+- **Drag & drop in 3D** — Drag bots between rooms with status indicator and Escape to cancel
+- **Working bots carry laptops** — Animated laptop with typing micro-pauses
+- **Bot walk animation** — Foot stepping + arm swinging during movement
+- **Debug prop hover labels** — F2 debug mode shows prop registry ID on hover
+- **Comprehensive test suite** — 138 backend + 133 frontend + 7 E2E tests
+- **Agent onboarding masterplan** — 1300+ line design document for agent self-onboarding
+
+### 🔧 Fixes
+- **Double render on load** — Fingerprint-based deduplication prevents visible flash on page load
+- **Chat windows for non-fixed bots** — Chat only opens for fixed agents (agent:*:main)
+- **Camera initial position** — Correct position on mount without animation
+- **Bot fixed Y height** — BOT_FIXED_Y = 0.35 constant, never influenced by geometry
+- **Wandering bounds** — Campus-only with 3-unit margin and clampToCampus() safety net
+- **Room click crash** — React hooks violation in RoomNameplate.tsx fixed
+- **Wall-grid alignment** — WALL_THICKNESS = 0.3 matching RoomWalls.tsx
+- **Camera zoom-2 angle** — No 180° rotation on room focus
+- **Agent picker scrollbar** — Dropdown centering and scroll fixes
+
+### ⚡ Performance
+- **Environment optimization** — Instanced meshes, distance culling, larger tiles
+- **Double render prevention** — Fingerprint dedup in useSessionsStream, RoomsContext, useAgentsRegistry, useProjects
+
+### 📦 Other
+- Database schema v8 (floor_style, wall_style, agent bio)
+- Bot scale increased 30%
+- 3D room nameplates redesigned from Text3D to floating HTML billboards
+
 ## [0.6.0] - 2026-02-05
 
 ### 🌟 New Features
@@ -112,6 +150,8 @@ First public beta release of CrewHub - a real-time dashboard for monitoring AI a
 - **Frontend**: React 18 with TypeScript, Vite, and Tailwind CSS
 - **Real-time**: Server-Sent Events for live updates
 
+[0.7.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.7.0
+[0.6.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.6.0
 [0.3.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.2.0
 [0.1.0-beta]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.1.0-beta

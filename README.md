@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.6.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.7.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/react-19-61dafb" alt="React">
@@ -48,7 +48,7 @@
 - 📥 **Blueprint Import/Export API** — Full CRUD with validation
 - 📚 **Documentation Site** — Starlight/Astro docs at [docs.crewhub.dev](https://docs.crewhub.dev)
 - 🔒 **AGPL-3.0 License**
-- 🔢 **Version Display** — Always know what you're running (v0.6.0)
+- 🔢 **Version Display** — Always know what you're running (v0.7.0)
 
 ## 📸 Screenshots
 
@@ -76,18 +76,18 @@ CrewHub ships with 5 distinct bot personalities, each with a custom SVG design:
 
 Design your agents in the **Agent Design Lab** and watch them come alive in the **3D Bot Playground**.
 
-## 🆕 What's New in v0.6.0
+## 🆕 What's New in v0.7.0
 
-- 🧩 **Modding Foundation** — Registry\<T\> pattern with namespaced IDs and batch registration
-- 📐 **JSON Blueprints** — Data-driven room layouts with full Zod validation
-- 🌍 **Data-driven Environments** — 3 themes (default, forest, neon), registry-based, extensible
-- 📥 **Blueprint Import/Export API** — Full CRUD endpoints with validation
-- 📚 **Documentation Site** — Starlight/Astro docs live at [docs.crewhub.dev](https://docs.crewhub.dev)
-- ⚡ **Centralized SSE** — Single connection manager with fan-out to all consumers
-- 🏠 **Room Context** — Deduplicated data fetching, cleaner component tree
-- 🔒 **AGPL-3.0 License** — Switched from MIT to AGPL-3.0
-- ⬆️ **React 19** — Upgraded from React 18
-- 🐛 **Many Bug Fixes** — Pathfinding, prop positioning, routing, and more
+- 🏠 **Room floor & wall textures** — 6 floor styles + 4 wall styles with procedural GLSL shaders
+- 🏜️ **Desert environment** — New theme with sand dunes, cacti, rocks, and tumbleweeds
+- 🤖 **Agent bios** — Bio field for agents with pre-filled descriptions (schema v8)
+- 🎯 **Agent Top Bar** — Boss button + pinned agent + agent picker dropdown
+- 🚶 **Wandering bots** — Sleeping agents walk around campus between rooms
+- 💬 **Activity bubbles** — Humanized task summaries from session labels above bots
+- 🖱️ **Drag & drop in 3D** — Drag bots between rooms with status indicator
+- 💻 **Working bots carry laptops** — Animated laptop with typing micro-pauses
+- 🧪 **Comprehensive test suite** — 138 backend + 133 frontend + 7 E2E tests
+- 🐛 **Many Bug Fixes** — Double render, camera, wandering bounds, and more
 
 ## 🔗 Compatibility
 
@@ -209,7 +209,7 @@ CrewHub includes **CrewBar**, a reusable floating chat component for AI agents. 
 
 ## 🧩 Modding
 
-CrewHub v0.6.0 introduces a **modding foundation** designed for extensibility:
+CrewHub v0.6.0 introduced a **modding foundation** designed for extensibility:
 
 - **Registry\<T\> pattern** — A generic, type-safe registry for props, environments, blueprints, and more
 - **Namespaced IDs** — All content uses `namespace:name` IDs (e.g. `core:desk`, `forest:tree`) to avoid conflicts
