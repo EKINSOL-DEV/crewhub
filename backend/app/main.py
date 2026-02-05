@@ -81,22 +81,29 @@ async def load_connections_from_db():
         logger.error(f"Failed to load connections from database: {e}")
     
     # Backward compat: if no OpenClaw connections loaded, create one from env
+    # Only if BOTH url and token are provided (skip when token is empty/missing
+    # so that fresh installs with empty .env show 0 connections → onboarding wizard)
     if not manager.get_default_openclaw():
-        url = os.getenv("OPENCLAW_GATEWAY_URL", "ws://127.0.0.1:18789")
-        token = os.getenv("OPENCLAW_GATEWAY_TOKEN", "")
-        logger.info(
-            f"No OpenClaw connections in DB — creating default from env: {url}"
-        )
-        try:
-            await manager.add_connection(
-                connection_id="default-openclaw",
-                connection_type="openclaw",
-                config={"url": url, "token": token},
-                name="OpenClaw (default)",
-                auto_connect=True,
+        url = os.getenv("OPENCLAW_GATEWAY_URL", "").strip()
+        token = os.getenv("OPENCLAW_GATEWAY_TOKEN", "").strip()
+        if url and token:
+            logger.info(
+                f"No OpenClaw connections in DB — creating default from env: {url}"
             )
-        except Exception as e:
-            logger.error(f"Failed to create default OpenClaw connection: {e}")
+            try:
+                await manager.add_connection(
+                    connection_id="default-openclaw",
+                    connection_type="openclaw",
+                    config={"url": url, "token": token},
+                    name="OpenClaw (default)",
+                    auto_connect=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to create default OpenClaw connection: {e}")
+        else:
+            logger.info(
+                "No OpenClaw connections in DB and no env credentials — skipping default connection"
+            )
 
 
 @asynccontextmanager

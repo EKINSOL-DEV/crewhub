@@ -50,6 +50,78 @@ const tabs: Tab[] = [
   { id: 'connections', label: 'Connections', icon: <Cable className="h-4 w-4" /> },
 ]
 
+/**
+ * Lightweight placeholder shown instead of GPU-heavy 3D world or data-dependent
+ * Cards view when there are no sessions to display (backend unreachable or no
+ * gateway connection configured).
+ */
+function NoConnectionView({
+  connected,
+  loading,
+  error,
+  onRetry,
+  onOpenConnections,
+}: {
+  connected: boolean
+  loading: boolean
+  error: string | null
+  onRetry: () => void
+  onOpenConnections: () => void
+}) {
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+          <p className="text-sm text-muted-foreground mt-4">Connecting…</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center max-w-md">
+        {error ? (
+          <>
+            <WifiOff className="h-12 w-12 mx-auto text-red-400 mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Connection Error</h2>
+            <p className="text-muted-foreground mb-6">{error}</p>
+          </>
+        ) : connected ? (
+          <>
+            <div className="text-5xl mb-4">📡</div>
+            <h2 className="text-xl font-semibold mb-2">No Active Sessions</h2>
+            <p className="text-muted-foreground mb-6">
+              CrewHub is connected but no agent sessions are running.
+              Configure a gateway connection or start an agent to see the 3D world.
+            </p>
+          </>
+        ) : (
+          <>
+            <WifiOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold mb-2">No Connection</h2>
+            <p className="text-muted-foreground mb-6">
+              Unable to reach the CrewHub backend.
+              Make sure the server is running and try again.
+            </p>
+          </>
+        )}
+        <div className="flex gap-3 justify-center">
+          <Button variant="outline" onClick={onRetry}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+          <Button onClick={onOpenConnections}>
+            <Cable className="h-4 w-4 mr-2" />
+            Connections
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AppContent() {
   const { sessions: realSessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
   const { isDemoMode, demoSessions } = useDemoMode()
@@ -118,7 +190,8 @@ function AppContent() {
           const resp = await fetch('/api/connections')
           if (resp.ok) {
             const data = await resp.json()
-            if (data.connections && data.connections.length > 0) {
+            const connCount = data.connections?.length ?? 0
+            if (connCount > 0) {
               localStorage.setItem('crewhub-onboarded', 'true')
               setOnboardingChecked(true)
               return
@@ -219,43 +292,36 @@ function AppContent() {
       </header>
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        {error ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4">❌</div>
-              <h2 className="text-xl font-semibold mb-2">Connection Error</h2>
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <Button onClick={refresh}>Retry</Button>
-            </div>
+        <ErrorBoundary>
+          <div className="flex-1 overflow-hidden">
+            {activeTab === 'active' && (
+              sessions.length === 0
+                ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={() => setActiveTab('connections')} />
+                : <World3DView
+                    sessions={sessions}
+                    settings={settings}
+                    onAliasChanged={handleAliasChanged}
+                  />
+            )}
+            {activeTab === 'cards' && (
+              sessions.length === 0
+                ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={() => setActiveTab('connections')} />
+                : <CardsView sessions={sessions} />
+            )}
+            {activeTab === 'all' && (
+              <AllSessionsView sessions={sessions} />
+            )}
+            {activeTab === 'cron' && (
+              <CronView />
+            )}
+            {activeTab === 'history' && (
+              <HistoryView />
+            )}
+            {activeTab === 'connections' && (
+              <ConnectionsView />
+            )}
           </div>
-        ) : (
-          <ErrorBoundary>
-            <div className="flex-1 overflow-hidden">
-              {activeTab === 'active' && (
-                <World3DView
-                  sessions={sessions}
-                  settings={settings}
-                  onAliasChanged={handleAliasChanged}
-                />
-              )}
-              {activeTab === 'cards' && (
-                <CardsView sessions={sessions} />
-              )}
-              {activeTab === 'all' && (
-                <AllSessionsView sessions={sessions} />
-              )}
-              {activeTab === 'cron' && (
-                <CronView />
-              )}
-              {activeTab === 'history' && (
-                <HistoryView />
-              )}
-              {activeTab === 'connections' && (
-                <ConnectionsView />
-              )}
-            </div>
-          </ErrorBoundary>
-        )}
+        </ErrorBoundary>
       </main>
 
       <SettingsPanel

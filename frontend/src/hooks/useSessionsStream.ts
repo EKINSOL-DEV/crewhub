@@ -38,7 +38,9 @@ export function useSessionsStream(enabled: boolean = true) {
     reconnecting: false,
   })
   
-  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pollingActiveRef = useRef(false)
+  const consecutiveFailsRef = useRef(0)
   const enabledRef = useRef(enabled)
   enabledRef.current = enabled
 
@@ -66,22 +68,55 @@ export function useSessionsStream(enabled: boolean = true) {
       return true
     } catch (err) {
       console.error("Failed to fetch crew:", err)
-      setState(prev => ({ ...prev, error: "Failed to load crew", loading: false }))
+      // Avoid unnecessary re-renders when error is already set
+      setState(prev => {
+        if (prev.error && !prev.loading) return prev
+        return { ...prev, error: "Failed to load crew", loading: false }
+      })
       return false
     }
   }, [])
   
   const stopPolling = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current)
-      pollingIntervalRef.current = null
+    pollingActiveRef.current = false
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current)
+      pollingTimeoutRef.current = null
     }
+    consecutiveFailsRef.current = 0
   }, [])
   
   const startPolling = useCallback(() => {
     stopPolling()
-    fetchSessions()
-    pollingIntervalRef.current = setInterval(fetchSessions, POLLING_INTERVAL_MS)
+    pollingActiveRef.current = true
+    consecutiveFailsRef.current = 0
+    
+    // Use setTimeout chain with progressive backoff on consecutive failures.
+    // Normal: 5s intervals. After failures: 10s, 20s, 40s, up to 60s.
+    const schedulePoll = (immediate: boolean) => {
+      if (!pollingActiveRef.current) return
+      
+      const fails = consecutiveFailsRef.current
+      const delay = immediate ? 0 : (
+        fails === 0
+          ? POLLING_INTERVAL_MS
+          : Math.min(POLLING_INTERVAL_MS * Math.pow(2, Math.min(fails, 4)), 60_000)
+      )
+      
+      pollingTimeoutRef.current = setTimeout(async () => {
+        if (!pollingActiveRef.current) return
+        pollingTimeoutRef.current = null
+        const success = await fetchSessions()
+        if (success) {
+          consecutiveFailsRef.current = 0
+        } else {
+          consecutiveFailsRef.current++
+        }
+        schedulePoll(false)
+      }, delay)
+    }
+    
+    schedulePoll(true)
   }, [fetchSessions, stopPolling])
 
   // Handle SSE connection state changes
