@@ -981,70 +981,85 @@ function NullProp(_props: PropProps) {
   return null
 }
 
-// ─── Prop Registry ──────────────────────────────────────────────
+// ─── Prop Registry (dynamic, powered by Registry<T>) ────────────
+// Built-in props register through the same API that mods will use.
 
-const PROP_REGISTRY: Record<string, PropEntry> = {
-  // ─── Floor props (sit on room floor, geometry builds upward from yOffset) ──
-  'desk':                       { component: DeskProp,                    mountType: 'floor', yOffset: 0.16 },
-  'monitor':                    { component: MonitorProp,                 mountType: 'floor', yOffset: 0.16 },
-  'chair':                      { component: ChairProp,                   mountType: 'floor', yOffset: 0.16 },
-  'lamp':                       { component: LampProp,                    mountType: 'floor', yOffset: 0.16 },
-  'plant':                      { component: PlantProp,                   mountType: 'floor', yOffset: 0.16 },
-  'coffee-machine':             { component: CoffeeMachineProp,           mountType: 'floor', yOffset: 0.16 },
-  'water-cooler':               { component: WaterCoolerProp,             mountType: 'floor', yOffset: 0.16 },
-  'bench':                      { component: BenchProp,                   mountType: 'floor', yOffset: 0.16 },
-  'server-rack':                { component: ServerRackProp,              mountType: 'floor', yOffset: 0.16 },
-  'desk-lamp':                  { component: DeskLampProp,                mountType: 'floor', yOffset: 0.16 },
-  'cable-mess':                 { component: CableMessProp,               mountType: 'floor', yOffset: 0.16 },
-  'easel':                      { component: EaselProp,                   mountType: 'floor', yOffset: 0.16 },
-  'color-palette':              { component: ColorPaletteProp,            mountType: 'floor', yOffset: 0.16 },
-  'bar-chart':                  { component: BarChartProp,                mountType: 'floor', yOffset: 0.16 },
-  'megaphone':                  { component: MegaphoneProp,               mountType: 'floor', yOffset: 0.16 },
-  'standing-desk':              { component: StandingDeskProp,            mountType: 'floor', yOffset: 0.16 },
-  'round-table':                { component: RoundTableProp,              mountType: 'floor', yOffset: 0.16 },
-  'bean-bag':                   { component: BeanBagProp,                 mountType: 'floor', yOffset: 0.16 },
-  'bookshelf':                  { component: BookshelfProp,               mountType: 'floor', yOffset: 0.16 },
-  'conveyor-belt':              { component: ConveyorBeltProp,            mountType: 'floor', yOffset: 0.16 },
-  'control-panel':              { component: ControlPanelProp,            mountType: 'floor', yOffset: 0.16 },
-  'antenna-tower':              { component: AntennaTowerProp,            mountType: 'floor', yOffset: 0.16 },
-  'headset':                    { component: HeadsetProp,                 mountType: 'floor', yOffset: 0.16 },
-  'filing-cabinet':             { component: FilingCabinetProp,           mountType: 'floor', yOffset: 0.16 },
-  'fire-extinguisher':          { component: FireExtinguisherProp,        mountType: 'floor', yOffset: 0.16 },
-  'drawing-tablet':             { component: DrawingTabletProp,           mountType: 'floor', yOffset: 0.16 },
+import { propRegistry } from '@/lib/modding/registries'
 
-  // ─── Wall props (mounted on walls; yOffset = mount height from room base) ──
-  'notice-board':               { component: NoticeBoardProp,             mountType: 'wall', yOffset: 1.3 },
-  'whiteboard':                 { component: WhiteboardProp,              mountType: 'wall', yOffset: 1.2 },
-  'mood-board':                 { component: MoodBoardProp,               mountType: 'wall', yOffset: 1.2 },
-  'presentation-screen':        { component: PresentationScreenProp,      mountType: 'wall', yOffset: 1.5 },
-  'wall-clock':                 { component: WallClockProp,               mountType: 'wall', yOffset: 2.2 },
-  'small-screen':               { component: SmallScreenProp,             mountType: 'wall', yOffset: 1.5 },
-  'gear-mechanism':             { component: GearMechanismProp,           mountType: 'wall', yOffset: 1.2 },
-  'satellite-dish':             { component: SatelliteDishProp,           mountType: 'wall', yOffset: 2.0 },
-  'signal-waves':               { component: SignalWavesProp,             mountType: 'wall', yOffset: 2.0 },
-  'status-lights':              { component: StatusLightsProp,            mountType: 'wall', yOffset: 1.3 },
+/** Register all built-in props. Called once at module load. */
+function registerBuiltinProps(): void {
+  const builtins: Record<string, PropEntry> = {
+    // ─── Floor props (sit on room floor, geometry builds upward from yOffset) ──
+    'desk':                       { component: DeskProp,                    mountType: 'floor', yOffset: 0.16 },
+    'monitor':                    { component: MonitorProp,                 mountType: 'floor', yOffset: 0.16 },
+    'chair':                      { component: ChairProp,                   mountType: 'floor', yOffset: 0.16 },
+    'lamp':                       { component: LampProp,                    mountType: 'floor', yOffset: 0.16 },
+    'plant':                      { component: PlantProp,                   mountType: 'floor', yOffset: 0.16 },
+    'coffee-machine':             { component: CoffeeMachineProp,           mountType: 'floor', yOffset: 0.16 },
+    'water-cooler':               { component: WaterCoolerProp,             mountType: 'floor', yOffset: 0.16 },
+    'bench':                      { component: BenchProp,                   mountType: 'floor', yOffset: 0.16 },
+    'server-rack':                { component: ServerRackProp,              mountType: 'floor', yOffset: 0.16 },
+    'desk-lamp':                  { component: DeskLampProp,                mountType: 'floor', yOffset: 0.16 },
+    'cable-mess':                 { component: CableMessProp,               mountType: 'floor', yOffset: 0.16 },
+    'easel':                      { component: EaselProp,                   mountType: 'floor', yOffset: 0.16 },
+    'color-palette':              { component: ColorPaletteProp,            mountType: 'floor', yOffset: 0.16 },
+    'bar-chart':                  { component: BarChartProp,                mountType: 'floor', yOffset: 0.16 },
+    'megaphone':                  { component: MegaphoneProp,               mountType: 'floor', yOffset: 0.16 },
+    'standing-desk':              { component: StandingDeskProp,            mountType: 'floor', yOffset: 0.16 },
+    'round-table':                { component: RoundTableProp,              mountType: 'floor', yOffset: 0.16 },
+    'bean-bag':                   { component: BeanBagProp,                 mountType: 'floor', yOffset: 0.16 },
+    'bookshelf':                  { component: BookshelfProp,               mountType: 'floor', yOffset: 0.16 },
+    'conveyor-belt':              { component: ConveyorBeltProp,            mountType: 'floor', yOffset: 0.16 },
+    'control-panel':              { component: ControlPanelProp,            mountType: 'floor', yOffset: 0.16 },
+    'antenna-tower':              { component: AntennaTowerProp,            mountType: 'floor', yOffset: 0.16 },
+    'headset':                    { component: HeadsetProp,                 mountType: 'floor', yOffset: 0.16 },
+    'filing-cabinet':             { component: FilingCabinetProp,           mountType: 'floor', yOffset: 0.16 },
+    'fire-extinguisher':          { component: FireExtinguisherProp,        mountType: 'floor', yOffset: 0.16 },
+    'drawing-tablet':             { component: DrawingTabletProp,           mountType: 'floor', yOffset: 0.16 },
 
-  // ─── Composite props (desk + accessory combos) ───────────────
-  'desk-with-monitor':          { component: DeskWithMonitorProp,         mountType: 'floor', yOffset: 0.16 },
-  'desk-with-dual-monitors':    { component: DeskWithDualMonitorsProp,    mountType: 'floor', yOffset: 0.16 },
-  'standing-desk-with-monitor': { component: StandingDeskWithMonitorProp, mountType: 'floor', yOffset: 0.16 },
-  'desk-with-monitor-headset':  { component: DeskWithMonitorHeadsetProp,  mountType: 'floor', yOffset: 0.16 },
-  'desk-with-monitor-tablet':   { component: DeskWithMonitorTabletProp,   mountType: 'floor', yOffset: 0.16 },
+    // ─── Wall props (mounted on walls; yOffset = mount height from room base) ──
+    'notice-board':               { component: NoticeBoardProp,             mountType: 'wall', yOffset: 1.3 },
+    'whiteboard':                 { component: WhiteboardProp,              mountType: 'wall', yOffset: 1.2 },
+    'mood-board':                 { component: MoodBoardProp,               mountType: 'wall', yOffset: 1.2 },
+    'presentation-screen':        { component: PresentationScreenProp,      mountType: 'wall', yOffset: 1.5 },
+    'wall-clock':                 { component: WallClockProp,               mountType: 'wall', yOffset: 2.2 },
+    'small-screen':               { component: SmallScreenProp,             mountType: 'wall', yOffset: 1.5 },
+    'gear-mechanism':             { component: GearMechanismProp,           mountType: 'wall', yOffset: 1.2 },
+    'satellite-dish':             { component: SatelliteDishProp,           mountType: 'wall', yOffset: 2.0 },
+    'signal-waves':               { component: SignalWavesProp,             mountType: 'wall', yOffset: 2.0 },
+    'status-lights':              { component: StatusLightsProp,            mountType: 'wall', yOffset: 1.3 },
 
-  // ─── Interaction-only (no visual) ────────────────────────────
-  'work-point':                 { component: NullProp,                    mountType: 'floor', yOffset: 0 },
-  'work-point-1':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
-  'work-point-2':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
-  'coffee-point':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
-  'sleep-corner':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
+    // ─── Composite props (desk + accessory combos) ───────────────
+    'desk-with-monitor':          { component: DeskWithMonitorProp,         mountType: 'floor', yOffset: 0.16 },
+    'desk-with-dual-monitors':    { component: DeskWithDualMonitorsProp,    mountType: 'floor', yOffset: 0.16 },
+    'standing-desk-with-monitor': { component: StandingDeskWithMonitorProp, mountType: 'floor', yOffset: 0.16 },
+    'desk-with-monitor-headset':  { component: DeskWithMonitorHeadsetProp,  mountType: 'floor', yOffset: 0.16 },
+    'desk-with-monitor-tablet':   { component: DeskWithMonitorTabletProp,   mountType: 'floor', yOffset: 0.16 },
+
+    // ─── Interaction-only (no visual) ────────────────────────────
+    'work-point':                 { component: NullProp,                    mountType: 'floor', yOffset: 0 },
+    'work-point-1':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
+    'work-point-2':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
+    'coffee-point':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
+    'sleep-corner':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
+  }
+
+  for (const [id, entry] of Object.entries(builtins)) {
+    propRegistry.register(id, entry, 'builtin')
+  }
 }
+
+// Self-register all built-in props on module load
+registerBuiltinProps()
+
+// ─── Public API (delegates to propRegistry) ─────────────────────
 
 /**
  * Get the prop component for a given propId.
  * Returns null if not found (unknown props are silently skipped).
  */
 export function getPropComponent(propId: string): React.FC<PropProps> | null {
-  return PROP_REGISTRY[propId]?.component ?? null
+  return propRegistry.get(propId)?.component ?? null
 }
 
 /**
@@ -1052,7 +1067,7 @@ export function getPropComponent(propId: string): React.FC<PropProps> | null {
  * Returns null if not found.
  */
 export function getPropEntry(propId: string): PropEntry | null {
-  return PROP_REGISTRY[propId] ?? null
+  return propRegistry.get(propId)
 }
 
 /**
@@ -1060,7 +1075,7 @@ export function getPropEntry(propId: string): PropEntry | null {
  * Floor props default to 0.16 (floor surface); wall props default to 1.2.
  */
 export function getPropYOffset(propId: string): number {
-  const entry = PROP_REGISTRY[propId]
+  const entry = propRegistry.get(propId)
   if (!entry) return 0.16 // default: floor surface
   return entry.yOffset
 }
@@ -1070,5 +1085,13 @@ export function getPropYOffset(propId: string): number {
  * Returns 'floor' as default for unknown props.
  */
 export function getPropMountType(propId: string): MountType {
-  return PROP_REGISTRY[propId]?.mountType ?? 'floor'
+  return propRegistry.get(propId)?.mountType ?? 'floor'
+}
+
+/**
+ * Get all registered prop IDs.
+ * Useful for editor prop palettes and debugging.
+ */
+export function getAllPropIds(): string[] {
+  return propRegistry.list().map((e) => e.id)
 }
