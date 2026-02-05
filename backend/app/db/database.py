@@ -329,13 +329,7 @@ async def seed_default_data():
             # Create default rooms
             default_rooms = [
                 ('headquarters', 'Headquarters', '🏛️', '#4f46e5', 0, now, now),
-                ('marketing-room', 'Marketing', '📢', '#ec4899', 1, now, now),
-                ('dev-room', 'Dev Room', '💻', '#10b981', 2, now, now),
-                ('creative-room', 'Creative Room', '🎨', '#f59e0b', 3, now, now),
-                ('thinking-room', 'Thinking Room', '🧠', '#8b5cf6', 4, now, now),
-                ('automation-room', 'Automation Room', '⚙️', '#06b6d4', 5, now, now),
-                ('comms-room', 'Comms Room', '📡', '#14b8a6', 6, now, now),
-                ('ops-room', 'Ops Room', '🛠️', '#f97316', 7, now, now),
+                ('dev-room', 'Dev Room', '💻', '#10b981', 1, now, now),
             ]
             
             await db.executemany("""
@@ -383,20 +377,10 @@ async def seed_default_data():
             
             # Create default room assignment rules (fixed IDs to prevent duplicates on restart)
             default_rules = [
-                # Session type based rules (highest priority)
-                ('rule-cron-automation', 'automation-room', 'session_key_contains', ':cron:', 100, now),
+                # Basic rules to get started
                 ('rule-subagent-dev', 'dev-room', 'session_key_contains', ':subagent:', 90, now),
                 ('rule-spawn-dev', 'dev-room', 'session_key_contains', ':spawn:', 90, now),
                 ('rule-main-hq', 'headquarters', 'session_type', 'main', 80, now),
-                # Channel based rules
-                ('rule-slack-comms', 'comms-room', 'session_key_contains', 'slack', 70, now),
-                ('rule-whatsapp-comms', 'comms-room', 'session_key_contains', 'whatsapp', 70, now),
-                ('rule-telegram-comms', 'comms-room', 'session_key_contains', 'telegram', 70, now),
-                ('rule-discord-comms', 'comms-room', 'session_key_contains', 'discord', 70, now),
-                # Model based rules
-                ('rule-opus-dev', 'dev-room', 'model', 'opus', 50, now),
-                ('rule-gpt5-thinking', 'thinking-room', 'model', 'gpt5', 50, now),
-                ('rule-gpt5v2-thinking', 'thinking-room', 'model', 'gpt-5', 50, now),
             ]
             
             await db.executemany("""
