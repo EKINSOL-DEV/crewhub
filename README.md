@@ -107,7 +107,7 @@ Works with:
 
 - [Docker](https://docker.com) and Docker Compose (recommended)
 - OR Node.js 18+ and Python 3.11+
-- Access to an OpenClaw Gateway
+- OpenClaw running on the same machine (auto-discovery reads your local config)
 
 ### Option 1: Docker (Recommended)
 
