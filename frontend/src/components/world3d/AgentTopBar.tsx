@@ -682,6 +682,7 @@ export function AgentTopBar({
   const handlePinnedClick = useCallback(() => {
     if (!pinnedSession || !pinnedRoomId || !pinnedConfig) return
     focusBot(pinnedSession.key, pinnedRoomId)
+    // openChat is guarded by isFixedAgent internally, safe to call
     openChat(pinnedSession.key, pinnedName, pinnedConfig.icon, pinnedConfig.color)
   }, [pinnedSession, pinnedRoomId, pinnedConfig, pinnedName, focusBot, openChat])
 

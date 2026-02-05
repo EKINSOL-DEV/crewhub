@@ -81,6 +81,12 @@ function saveStoredWindows(windows: ChatWindowState[]): void {
 
 // ── Helpers ────────────────────────────────────────────────────
 
+const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
+
+function isFixedAgent(key: string): boolean {
+  return FIXED_AGENT_RE.test(key)
+}
+
 let nextZIndex = 1000
 
 function getNextZIndex(): number {
@@ -101,13 +107,16 @@ function getDefaultPosition(index: number): { x: number; y: number } {
 
 function getInitialWindows(): ChatWindowState[] {
   const stored = loadStoredWindows()
-  return stored.map((w, i) => ({
-    ...w,
-    zIndex: getNextZIndex(),
-    isMinimized: w.isMinimized ?? false,
-    position: w.position ?? getDefaultPosition(i),
-    size: w.size ?? DEFAULT_SIZE,
-  }))
+  // Only restore chat windows for fixed agents (agent:*:main)
+  return stored
+    .filter(w => isFixedAgent(w.sessionKey))
+    .map((w, i) => ({
+      ...w,
+      zIndex: getNextZIndex(),
+      isMinimized: w.isMinimized ?? false,
+      position: w.position ?? getDefaultPosition(i),
+      size: w.size ?? DEFAULT_SIZE,
+    }))
 }
 
 // ── Context ────────────────────────────────────────────────────
@@ -133,6 +142,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const openChat = useCallback(
     (sessionKey: string, agentName: string, agentIcon?: string, agentColor?: string) => {
+      // Only allow chat for fixed agents (agent:*:main)
+      if (!isFixedAgent(sessionKey)) return
+
       setWindows(prev => {
         const existing = prev.find(w => w.sessionKey === sessionKey)
         if (existing) {
