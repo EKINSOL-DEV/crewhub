@@ -181,8 +181,9 @@ interface DesertEnvironmentProps {
 export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnvironmentProps) {
   const tileSize = 4
   const gridRange = 60
-  const halfBW = buildingWidth / 2 + 0.5
-  const halfBD = buildingDepth / 2 + 0.5
+  // No cutout — tiles render under the building too, preventing any visible gap
+  const halfBW = 0
+  const halfBD = 0
   const sandToonProps = useToonMaterialProps('#D2B48C')
   const instanceRef = useRef<THREE.InstancedMesh>(null)
 

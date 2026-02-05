@@ -41,8 +41,9 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
   const seed = (x: number, z: number) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1
   const tileSize = 4
   const gridRange = 60
-  const halfBW = buildingWidth / 2 + 0.5
-  const halfBD = buildingDepth / 2 + 0.5
+  // No cutout — tiles render under the building too, preventing any visible gap
+  const halfBW = 0
+  const halfBD = 0
   const toonProps = useToonMaterialProps('#6B8F52')
   const instanceRef = useRef<THREE.InstancedMesh>(null)
 
