@@ -141,14 +141,16 @@ export function RoomInfoPanel({
     }
   }, [room.is_hq, fetchOverview])
 
-  // Close on outside click (but not when clicking inside a portaled dialog)
+  // Close on outside click (but not when a dialog/picker is open)
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
+      // Don't close panel when Edit Room dialog, Project Picker, or confirmation dialog is open
+      if (showEditDialog || showPicker || confirmAction) return
+
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        // Radix Dialog portals its content outside the panel DOM tree.
-        // Don't close the panel when the user clicks inside a dialog.
+        // Also check if click is inside any Radix dialog overlay/content (role="dialog")
         const target = e.target as HTMLElement
-        if (target.closest?.('[data-radix-portal]')) return
+        if (target.closest?.('[role="dialog"]') || target.closest?.('[data-radix-dialog-overlay]')) return
 
         setTimeout(() => onClose(), 50)
       }
@@ -160,7 +162,7 @@ export function RoomInfoPanel({
       clearTimeout(timer)
       document.removeEventListener('mousedown', handleClick)
     }
-  }, [onClose])
+  }, [onClose, showEditDialog, showPicker, confirmAction])
 
   // Compute bot statuses
   const botData = useMemo(() => {
