@@ -11,7 +11,7 @@ DB_DIR = Path.home() / ".crewhub"
 DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 5  # v5: Added projects.folder_path for project docs
+SCHEMA_VERSION = 6  # v6: Added custom_blueprints table for modding
 
 
 async def init_database():
@@ -144,6 +144,32 @@ async def init_database():
                     created_at INTEGER NOT NULL,
                     updated_at INTEGER NOT NULL
                 )
+            """)
+            
+            # ========================================
+            # CUSTOM BLUEPRINTS (modding)
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS custom_blueprints (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    room_id TEXT,
+                    blueprint_json TEXT NOT NULL,
+                    source TEXT NOT NULL DEFAULT 'user',
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    FOREIGN KEY (room_id) REFERENCES rooms(id)
+                )
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_custom_blueprints_room_id
+                ON custom_blueprints(room_id)
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_custom_blueprints_source
+                ON custom_blueprints(source)
             """)
             
             # ========================================

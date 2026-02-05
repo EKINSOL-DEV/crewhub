@@ -256,3 +256,85 @@ class ConnectionUpdate(BaseModel):
     name: Optional[str] = None
     config: Optional[dict] = None
     enabled: Optional[bool] = None
+
+
+# ========================================
+# CUSTOM BLUEPRINTS (modding)
+# ========================================
+
+class BlueprintPlacementSpan(BaseModel):
+    """Span dimensions for a blueprint placement."""
+    w: int = 1
+    d: int = 1
+
+
+class BlueprintPlacement(BaseModel):
+    """A single prop placement in a blueprint."""
+    propId: str
+    x: int
+    z: int
+    type: Optional[str] = None
+    interactionType: Optional[str] = None
+    span: Optional[BlueprintPlacementSpan] = None
+
+
+class BlueprintDoor(BaseModel):
+    """Door position in a blueprint."""
+    x: int
+    z: int
+    facing: Optional[str] = None
+
+
+class BlueprintPoint(BaseModel):
+    """A point on the grid (x, z)."""
+    x: int
+    z: int
+
+
+class BlueprintInteractionPoints(BaseModel):
+    """Interaction points grouped by type."""
+    work: List[BlueprintPoint] = []
+    coffee: List[BlueprintPoint] = []
+    sleep: List[BlueprintPoint] = []
+
+
+class BlueprintJson(BaseModel):
+    """The full blueprint JSON structure."""
+    id: str
+    name: str
+    gridWidth: int
+    gridDepth: int
+    cellSize: float = 0.6
+    placements: List[BlueprintPlacement] = []
+    doors: List[BlueprintDoor] = []
+    doorPositions: List[BlueprintDoor] = []
+    walkableCenter: BlueprintPoint
+    interactionPoints: Optional[BlueprintInteractionPoints] = None
+    metadata: Optional[dict] = None
+
+
+class CustomBlueprintCreate(BaseModel):
+    """Request model for creating a custom blueprint."""
+    name: str
+    room_id: Optional[str] = None
+    blueprint: BlueprintJson
+    source: str = "user"
+
+
+class CustomBlueprintUpdate(BaseModel):
+    """Request model for updating a custom blueprint."""
+    name: Optional[str] = None
+    room_id: Optional[str] = None
+    blueprint: Optional[BlueprintJson] = None
+    source: Optional[str] = None
+
+
+class CustomBlueprintResponse(BaseModel):
+    """Response model for a custom blueprint."""
+    id: str
+    name: str
+    room_id: Optional[str] = None
+    blueprint: dict
+    source: str
+    created_at: int
+    updated_at: int

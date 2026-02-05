@@ -1,0 +1,511 @@
+"""
+API routes for custom blueprint management (modding).
+
+Provides CRUD endpoints for custom room blueprints,
+plus import/export functionality for sharing blueprints as JSON files.
+"""
+
+import json
+import logging
+import time
+from typing import Optional
+
+from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import Response
+from pydantic import BaseModel
+
+from ..db.database import get_db
+from ..db.models import (
+    BlueprintJson,
+    CustomBlueprintCreate,
+    CustomBlueprintUpdate,
+    CustomBlueprintResponse,
+    generate_id,
+)
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/blueprints", tags=["blueprints"])
+
+# =============================================================================
+# Constants
+# =============================================================================
+
+MAX_GRID_SIZE = 40
+MIN_GRID_SIZE = 4
+
+# Known prop IDs from the built-in registry (Phase 1c).
+# This list is used for validation; unknown propIds trigger a warning, not a hard error,
+# since custom props may be added by mods.
+KNOWN_PROP_IDS = {
+    # Furniture
+    "desk-with-monitor", "desk-with-dual-monitors", "desk-small", "desk-large",
+    "conference-table", "round-table", "chair", "office-chair", "couch", "couch-l-shaped",
+    "bookshelf", "bookshelf-tall", "filing-cabinet", "locker", "wardrobe",
+    "bed", "bunk-bed", "workbench", "standing-desk",
+    # Tech
+    "server-rack", "monitor-wall", "projector-screen", "cable-mess",
+    "satellite-dish", "antenna", "router-hub",
+    # Decoration
+    "plant", "plant-large", "plant-hanging", "flower-pot",
+    "lamp", "lamp-floor", "lamp-desk", "ceiling-light",
+    "rug", "rug-large", "painting", "notice-board", "whiteboard",
+    "clock", "trophy", "globe",
+    # Kitchen / break
+    "coffee-machine", "water-cooler", "vending-machine", "fridge", "microwave",
+    # Interaction markers
+    "work-point", "work-point-1", "work-point-2", "work-point-3", "work-point-4",
+    "coffee-point", "sleep-corner",
+}
+
+VALID_INTERACTION_TYPES = {"work", "coffee", "sleep"}
+
+
+# =============================================================================
+# Validation
+# =============================================================================
+
+def validate_blueprint(bp: BlueprintJson) -> list[str]:
+    """
+    Validate a blueprint JSON structure.
+    
+    Returns a list of error messages. Empty list = valid.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Grid dimensions
+    if bp.gridWidth < MIN_GRID_SIZE or bp.gridWidth > MAX_GRID_SIZE:
+        errors.append(
+            f"gridWidth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridWidth}"
+        )
+    if bp.gridDepth < MIN_GRID_SIZE or bp.gridDepth > MAX_GRID_SIZE:
+        errors.append(
+            f"gridDepth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridDepth}"
+        )
+
+    # Must have at least one door
+    if not bp.doors and not bp.doorPositions:
+        errors.append("Blueprint must have at least one door")
+
+    # Validate walkable center is within grid
+    if bp.walkableCenter:
+        if bp.walkableCenter.x < 0 or bp.walkableCenter.x >= bp.gridWidth:
+            errors.append(
+                f"walkableCenter.x ({bp.walkableCenter.x}) out of grid bounds (0-{bp.gridWidth - 1})"
+            )
+        if bp.walkableCenter.z < 0 or bp.walkableCenter.z >= bp.gridDepth:
+            errors.append(
+                f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})"
+            )
+
+    # Validate placements
+    occupied: dict[tuple[int, int], str] = {}
+    for i, p in enumerate(bp.placements):
+        # Check bounds
+        if p.x < 0 or p.x >= bp.gridWidth or p.z < 0 or p.z >= bp.gridDepth:
+            errors.append(
+                f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds"
+            )
+            continue
+
+        # Check span bounds
+        span_w = p.span.w if p.span else 1
+        span_d = p.span.d if p.span else 1
+        if p.x + span_w > bp.gridWidth:
+            errors.append(
+                f"Placement [{i}] propId='{p.propId}' span exceeds grid width at x={p.x}, span.w={span_w}"
+            )
+        if p.z + span_d > bp.gridDepth:
+            errors.append(
+                f"Placement [{i}] propId='{p.propId}' span exceeds grid depth at z={p.z}, span.d={span_d}"
+            )
+
+        # Check for overlap (only for non-interaction props)
+        if p.type != "interaction":
+            for dx in range(span_w):
+                for dz in range(span_d):
+                    cell = (p.x + dx, p.z + dz)
+                    if cell in occupied:
+                        errors.append(
+                            f"Placement [{i}] propId='{p.propId}' overlaps with '{occupied[cell]}' at cell {cell}"
+                        )
+                    else:
+                        occupied[cell] = p.propId
+
+        # Warn on unknown propIds (not a hard error — mods can add custom props)
+        if p.propId not in KNOWN_PROP_IDS:
+            warnings.append(f"Unknown propId '{p.propId}' in placement [{i}] (may be from a mod)")
+
+        # Validate interaction type if present
+        if p.interactionType and p.interactionType not in VALID_INTERACTION_TYPES:
+            errors.append(
+                f"Placement [{i}] has unknown interactionType '{p.interactionType}'. "
+                f"Valid: {VALID_INTERACTION_TYPES}"
+            )
+
+    # Validate doors are on wall edges
+    for i, door in enumerate(bp.doors):
+        on_edge = (
+            door.x == 0
+            or door.x == bp.gridWidth - 1
+            or door.z == 0
+            or door.z == bp.gridDepth - 1
+        )
+        if not on_edge:
+            errors.append(
+                f"Door [{i}] at ({door.x},{door.z}) must be on a wall edge (x=0, x={bp.gridWidth-1}, z=0, or z={bp.gridDepth-1})"
+            )
+
+    return errors
+
+
+# =============================================================================
+# Helper
+# =============================================================================
+
+def row_to_response(row: dict) -> dict:
+    """Convert a database row to a response dict."""
+    bp_json = json.loads(row["blueprint_json"]) if isinstance(row["blueprint_json"], str) else row["blueprint_json"]
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "room_id": row.get("room_id"),
+        "blueprint": bp_json,
+        "source": row["source"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
+
+
+# =============================================================================
+# Routes
+# =============================================================================
+
+@router.get("")
+async def list_blueprints(
+    source: Optional[str] = None,
+    room_id: Optional[str] = None,
+) -> list[CustomBlueprintResponse]:
+    """
+    List all custom blueprints.
+    
+    Optional filters:
+    - source: filter by source ('user', 'import', 'mod')
+    - room_id: filter by associated room
+    """
+    db = await get_db()
+    try:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+
+        query = "SELECT * FROM custom_blueprints WHERE 1=1"
+        params: list = []
+
+        if source:
+            query += " AND source = ?"
+            params.append(source)
+        if room_id:
+            query += " AND room_id = ?"
+            params.append(room_id)
+
+        query += " ORDER BY updated_at DESC"
+
+        async with db.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+    finally:
+        await db.close()
+
+    return [row_to_response(row) for row in rows]
+
+
+@router.get("/export/{blueprint_id}")
+async def export_blueprint(blueprint_id: str):
+    """
+    Export a blueprint as a downloadable JSON file.
+    
+    Returns the blueprint JSON with Content-Disposition header for download.
+    """
+    db = await get_db()
+    try:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        async with db.execute(
+            "SELECT * FROM custom_blueprints WHERE id = ?",
+            (blueprint_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+    finally:
+        await db.close()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Blueprint not found: {blueprint_id}",
+        )
+
+    bp_json = json.loads(row["blueprint_json"]) if isinstance(row["blueprint_json"], str) else row["blueprint_json"]
+    
+    # Pretty-print JSON for readable export
+    content = json.dumps(bp_json, indent=2, ensure_ascii=False)
+    safe_name = row["name"].replace(" ", "-").lower()
+
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="{safe_name}.json"',
+        },
+    )
+
+
+@router.get("/{blueprint_id}", response_model=CustomBlueprintResponse)
+async def get_blueprint(blueprint_id: str):
+    """Get a single custom blueprint by ID."""
+    db = await get_db()
+    try:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        async with db.execute(
+            "SELECT * FROM custom_blueprints WHERE id = ?",
+            (blueprint_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+    finally:
+        await db.close()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Blueprint not found: {blueprint_id}",
+        )
+
+    return row_to_response(row)
+
+
+@router.post("", response_model=CustomBlueprintResponse, status_code=status.HTTP_201_CREATED)
+async def create_blueprint(body: CustomBlueprintCreate):
+    """
+    Create a new custom blueprint.
+    
+    Validates the blueprint JSON structure before storing.
+    """
+    # Validate blueprint
+    errors = validate_blueprint(body.blueprint)
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"message": "Blueprint validation failed", "errors": errors},
+        )
+
+    blueprint_id = body.blueprint.id or generate_id()
+    now = int(time.time() * 1000)
+    blueprint_json = body.blueprint.model_dump()
+
+    # Ensure the stored blueprint has the correct ID
+    blueprint_json["id"] = blueprint_id
+
+    db = await get_db()
+    try:
+        # Check for duplicate ID
+        async with db.execute(
+            "SELECT id FROM custom_blueprints WHERE id = ?",
+            (blueprint_id,),
+        ) as cursor:
+            existing = await cursor.fetchone()
+
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Blueprint with id '{blueprint_id}' already exists",
+            )
+
+        await db.execute(
+            """
+            INSERT INTO custom_blueprints (id, name, room_id, blueprint_json, source, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                blueprint_id,
+                body.name,
+                body.room_id,
+                json.dumps(blueprint_json),
+                body.source,
+                now,
+                now,
+            ),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+    logger.info(f"Blueprint created: {blueprint_id} ({body.name})")
+
+    return {
+        "id": blueprint_id,
+        "name": body.name,
+        "room_id": body.room_id,
+        "blueprint": blueprint_json,
+        "source": body.source,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+
+@router.post("/import", response_model=CustomBlueprintResponse, status_code=status.HTTP_201_CREATED)
+async def import_blueprint(body: BlueprintJson):
+    """
+    Import a blueprint from a raw JSON blueprint file.
+    
+    Accepts the blueprint JSON directly (as exported by /export/{id}).
+    Sets source to 'import'.
+    """
+    # Validate
+    errors = validate_blueprint(body)
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"message": "Blueprint validation failed", "errors": errors},
+        )
+
+    blueprint_id = body.id or generate_id()
+    now = int(time.time() * 1000)
+    blueprint_json = body.model_dump()
+    blueprint_json["id"] = blueprint_id
+
+    db = await get_db()
+    try:
+        # Check for duplicate — on import, generate a new ID if collision
+        async with db.execute(
+            "SELECT id FROM custom_blueprints WHERE id = ?",
+            (blueprint_id,),
+        ) as cursor:
+            existing = await cursor.fetchone()
+
+        if existing:
+            blueprint_id = generate_id()
+            blueprint_json["id"] = blueprint_id
+
+        await db.execute(
+            """
+            INSERT INTO custom_blueprints (id, name, room_id, blueprint_json, source, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                blueprint_id,
+                body.name,
+                None,
+                json.dumps(blueprint_json),
+                "import",
+                now,
+                now,
+            ),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+    logger.info(f"Blueprint imported: {blueprint_id} ({body.name})")
+
+    return {
+        "id": blueprint_id,
+        "name": body.name,
+        "room_id": None,
+        "blueprint": blueprint_json,
+        "source": "import",
+        "created_at": now,
+        "updated_at": now,
+    }
+
+
+@router.put("/{blueprint_id}", response_model=CustomBlueprintResponse)
+async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
+    """
+    Update an existing custom blueprint.
+    
+    Only provided fields are updated (partial update).
+    """
+    db = await get_db()
+    try:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        async with db.execute(
+            "SELECT * FROM custom_blueprints WHERE id = ?",
+            (blueprint_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Blueprint not found: {blueprint_id}",
+            )
+
+        # Build update
+        now = int(time.time() * 1000)
+        name = body.name if body.name is not None else row["name"]
+        room_id = body.room_id if body.room_id is not None else row.get("room_id")
+        source = body.source if body.source is not None else row["source"]
+
+        if body.blueprint is not None:
+            # Validate the new blueprint
+            errors = validate_blueprint(body.blueprint)
+            if errors:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail={"message": "Blueprint validation failed", "errors": errors},
+                )
+            bp_json = body.blueprint.model_dump()
+            bp_json["id"] = blueprint_id
+            blueprint_json_str = json.dumps(bp_json)
+        else:
+            blueprint_json_str = row["blueprint_json"]
+            bp_json = json.loads(blueprint_json_str) if isinstance(blueprint_json_str, str) else blueprint_json_str
+
+        await db.execute(
+            """
+            UPDATE custom_blueprints 
+            SET name = ?, room_id = ?, blueprint_json = ?, source = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (name, room_id, blueprint_json_str, source, now, blueprint_id),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+    logger.info(f"Blueprint updated: {blueprint_id}")
+
+    return {
+        "id": blueprint_id,
+        "name": name,
+        "room_id": room_id,
+        "blueprint": bp_json,
+        "source": source,
+        "created_at": row["created_at"],
+        "updated_at": now,
+    }
+
+
+@router.delete("/{blueprint_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_blueprint(blueprint_id: str):
+    """Delete a custom blueprint by ID."""
+    db = await get_db()
+    try:
+        cursor = await db.execute(
+            "DELETE FROM custom_blueprints WHERE id = ?",
+            (blueprint_id,),
+        )
+        await db.commit()
+        if cursor.rowcount == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Blueprint not found: {blueprint_id}",
+            )
+    finally:
+        await db.close()
+
+    logger.info(f"Blueprint deleted: {blueprint_id}")

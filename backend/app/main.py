@@ -8,7 +8,7 @@ import asyncio
 import os
 
 from app.config import settings
-from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections, projects
+from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections, projects, blueprints
 from app.routes import project_files
 from app.routes.project_files import discover_router as project_discover_router
 from app.routes.chat import router as chat_router
@@ -181,6 +181,9 @@ app.include_router(discovery.router, prefix="/api", tags=["discovery"])
 app.include_router(settings_routes.router, prefix="/api", tags=["settings"])
 app.include_router(backup.router, prefix="/api", tags=["backup"])
 app.include_router(onboarding.router, prefix="/api", tags=["onboarding"])
+
+# Phase 2a: Blueprint import/export (modding)
+app.include_router(blueprints.router, prefix="/api", tags=["blueprints"])
 
 
 @app.get("/")
