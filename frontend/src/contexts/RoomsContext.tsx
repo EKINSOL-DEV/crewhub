@@ -2,12 +2,17 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, ty
 import { API_BASE } from "@/lib/api"
 import { sseManager } from "@/lib/sseManager"
 
+export type FloorStyle = 'default' | 'tiles' | 'wood' | 'concrete' | 'carpet' | 'lab'
+export type WallStyle = 'default' | 'accent-band' | 'two-tone' | 'wainscoting'
+
 export interface Room {
   id: string
   name: string
   icon: string | null
   color: string | null
   sort_order: number
+  floor_style: FloorStyle
+  wall_style: WallStyle
   project_id: string | null
   project_name: string | null
   project_color: string | null
@@ -70,6 +75,8 @@ interface RoomsContextValue {
     icon?: string
     color?: string
     sort_order?: number
+    floor_style?: string
+    wall_style?: string
   }) => Promise<{ success: boolean; error?: string }>
   deleteRoom: (roomId: string) => Promise<{ success: boolean; error?: string }>
   reorderRooms: (roomIds: string[]) => Promise<{ success: boolean; error?: string }>
@@ -263,6 +270,8 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
     icon?: string
     color?: string
     sort_order?: number
+    floor_style?: string
+    wall_style?: string
   }) => {
     try {
       const response = await fetch(`${API_BASE}/rooms/${roomId}`, {

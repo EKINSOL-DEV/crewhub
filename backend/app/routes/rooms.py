@@ -22,6 +22,8 @@ def _row_to_room(row: dict) -> Room:
         sort_order=row.get("sort_order", 0),
         default_model=row.get("default_model"),
         speed_multiplier=row.get("speed_multiplier", 1.0),
+        floor_style=row.get("floor_style", "default"),
+        wall_style=row.get("wall_style", "default"),
         project_id=row.get("project_id"),
         project_name=row.get("project_name"),
         project_color=row.get("project_color"),
@@ -101,11 +103,12 @@ async def create_room(room: RoomCreate):
                     raise HTTPException(status_code=400, detail="Room ID already exists")
             
             await db.execute("""
-                INSERT INTO rooms (id, name, icon, color, sort_order, default_model, speed_multiplier, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO rooms (id, name, icon, color, sort_order, default_model, speed_multiplier, floor_style, wall_style, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 room.id, room.name, room.icon, room.color, 
                 room.sort_order, room.default_model, room.speed_multiplier,
+                room.floor_style, room.wall_style,
                 now, now
             ))
             await db.commit()

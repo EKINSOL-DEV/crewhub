@@ -2,12 +2,14 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
+import type { WallStyle } from '@/contexts/RoomsContext'
 
 interface RoomWallsProps {
   color?: string   // accent color strip
   size?: number    // room size in units (default 12)
   wallHeight?: number // default 1.5
   hovered?: boolean
+  wallStyle?: WallStyle
 }
 
 type WallSegment = {
@@ -15,6 +17,165 @@ type WallSegment = {
   position: [number, number, number]
   size: [number, number, number]
   isAccent?: boolean
+  /** For styled walls: 'lower' | 'upper' | 'trim' */
+  zone?: 'lower' | 'upper' | 'trim'
+}
+
+// ─── Toon lighting GLSL chunk ────────────────────────────────────────
+const TOON_LIGHTING = /* glsl */ `
+  float toonStep(float NdotL) {
+    if (NdotL > 0.6) return 1.0;
+    if (NdotL > 0.25) return 0.7;
+    return 0.45;
+  }
+`
+
+const WALL_VERTEX = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  varying vec3 vWorldPos;
+
+  void main() {
+    vUv = uv;
+    vNormal = normalize(normalMatrix * normal);
+    vec4 wp = modelMatrix * vec4(position, 1.0);
+    vWorldPos = wp.xyz;
+    gl_Position = projectionMatrix * viewMatrix * wp;
+  }
+`
+
+// ─── Accent Band shader: horizontal stripe at ~30% height ────────────
+const ACCENT_BAND_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING}
+  uniform vec3 uWallColor;
+  uniform vec3 uAccentColor;
+  uniform float uBandCenter;  // 0–1 normalized height
+  uniform float uBandWidth;   // half-width
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    float dist = abs(vUv.y - uBandCenter);
+    float band = 1.0 - smoothstep(uBandWidth - 0.01, uBandWidth, dist);
+    vec3 col = mix(uWallColor, uAccentColor, band);
+
+    gl_FragColor = vec4(col * toon, 1.0);
+  }
+`
+
+// ─── Two-Tone shader: bottom darker, top lighter ─────────────────────
+const TWO_TONE_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING}
+  uniform vec3 uLowerColor;
+  uniform vec3 uUpperColor;
+  uniform float uSplit;       // 0–1 split height
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    float blend = smoothstep(uSplit - 0.02, uSplit + 0.02, vUv.y);
+    vec3 col = mix(uLowerColor, uUpperColor, blend);
+
+    gl_FragColor = vec4(col * toon, 1.0);
+  }
+`
+
+// ─── Wainscoting shader: darker bottom third + thin trim line ────────
+const WAINSCOTING_FRAGMENT = /* glsl */ `
+  ${TOON_LIGHTING}
+  uniform vec3 uLowerColor;
+  uniform vec3 uUpperColor;
+  uniform vec3 uTrimColor;
+  uniform float uTrimHeight;  // 0–1 where trim sits
+  uniform float uTrimWidth;   // half-width of trim line
+  uniform vec3 uLightDir;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    float NdotL = dot(vNormal, uLightDir);
+    float toon = toonStep(NdotL);
+
+    // Base: lower vs upper
+    float isUpper = step(uTrimHeight, vUv.y);
+    vec3 col = mix(uLowerColor, uUpperColor, isUpper);
+
+    // Trim line
+    float trimDist = abs(vUv.y - uTrimHeight);
+    float isTrim = 1.0 - smoothstep(uTrimWidth - 0.005, uTrimWidth, trimDist);
+    col = mix(col, uTrimColor, isTrim);
+
+    gl_FragColor = vec4(col * toon, 1.0);
+  }
+`
+
+function createWallShaderMaterial(
+  style: WallStyle,
+  wallColor: string,
+  accentColor: string,
+): THREE.ShaderMaterial | null {
+  const lightDir = new THREE.Vector3(0.5, 1.0, 0.3).normalize()
+  const wc = new THREE.Color(wallColor)
+  const ac = new THREE.Color(accentColor)
+
+  switch (style) {
+    case 'accent-band':
+      return new THREE.ShaderMaterial({
+        vertexShader: WALL_VERTEX,
+        fragmentShader: ACCENT_BAND_FRAGMENT,
+        uniforms: {
+          uWallColor: { value: wc },
+          uAccentColor: { value: ac },
+          uBandCenter: { value: 0.3 },
+          uBandWidth: { value: 0.06 },
+          uLightDir: { value: lightDir },
+        },
+      })
+
+    case 'two-tone': {
+      const lower = wc.clone().multiplyScalar(0.7)
+      const upper = wc.clone().lerp(new THREE.Color('#ffffff'), 0.15)
+      return new THREE.ShaderMaterial({
+        vertexShader: WALL_VERTEX,
+        fragmentShader: TWO_TONE_FRAGMENT,
+        uniforms: {
+          uLowerColor: { value: lower },
+          uUpperColor: { value: upper },
+          uSplit: { value: 0.5 },
+          uLightDir: { value: lightDir },
+        },
+      })
+    }
+
+    case 'wainscoting': {
+      const lower = wc.clone().multiplyScalar(0.65)
+      const upper = wc.clone().lerp(new THREE.Color('#ffffff'), 0.1)
+      const trim = wc.clone().multiplyScalar(0.45)
+      return new THREE.ShaderMaterial({
+        vertexShader: WALL_VERTEX,
+        fragmentShader: WAINSCOTING_FRAGMENT,
+        uniforms: {
+          uLowerColor: { value: lower },
+          uUpperColor: { value: upper },
+          uTrimColor: { value: trim },
+          uTrimHeight: { value: 0.33 },
+          uTrimWidth: { value: 0.02 },
+          uLightDir: { value: lightDir },
+        },
+      })
+    }
+
+    default:
+      return null
+  }
 }
 
 /**
@@ -22,10 +183,17 @@ type WallSegment = {
  * - Gap/opening on one side (front, facing camera from isometric view)
  * - Color accent strip at top matching room color
  * - Rounded cap cylinders on top
+ * - Multiple wall styles: default, accent-band, two-tone, wainscoting
  *
  * On hover: subtle emissive glow (intensity ~0.05) on wall segments.
  */
-export function RoomWalls({ color, size = 12, wallHeight = 1.5, hovered = false }: RoomWallsProps) {
+export function RoomWalls({
+  color,
+  size = 12,
+  wallHeight = 1.5,
+  hovered = false,
+  wallStyle = 'default',
+}: RoomWallsProps) {
   const accentColor = color || '#4f46e5'
   const wallColor = WARM_COLORS.stone
   const wallToon = useToonMaterialProps(wallColor)
@@ -40,10 +208,16 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5, hovered = false 
   const halfSize = size / 2
   const gapWidth = 3 // opening width for "door"
 
-  // Pre-compute wall segment data
   // Floor top surface offset — walls sit on top of the room floor overlay
   const floorTop = 0.16
 
+  // Shader material for styled walls (non-default)
+  const wallShaderMat = useMemo(() => {
+    if (wallStyle === 'default') return null
+    return createWallShaderMaterial(wallStyle, wallColor, accentColor)
+  }, [wallStyle, wallColor, accentColor])
+
+  // Pre-compute wall segment data
   const { segments, caps } = useMemo(() => {
     const segs: WallSegment[] = []
     const capPositions: Array<{ key: string; position: [number, number, number] }> = []
@@ -142,8 +316,10 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5, hovered = false 
     else wallIndices.push(i)
   })
 
-  // Smooth emissive transition for walls
+  // Smooth emissive transition for walls (default style only)
   useFrame(() => {
+    if (wallStyle !== 'default') return
+
     const wallTarget = hovered ? 0.05 : 0
     const accentTarget = hovered ? 0.05 : 0
 
@@ -174,12 +350,19 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5, hovered = false 
   wallMatRefs.current.length = wallIndices.length
   accentMatRefs.current.length = accentIndices.length
 
+  const isDefault = wallStyle === 'default'
+
   return (
     <group>
       {/* Wall segments */}
       {segments.map((seg) => {
         const isAccent = !!seg.isAccent
         const refIdx = isAccent ? accentRefIdx++ : wallRefIdx++
+
+        // For non-default styles, apply shader material to wall bodies
+        // Accent strips always use toon accent material
+        const useShader = !isDefault && !isAccent && wallShaderMat
+
         return (
           <mesh
             key={seg.key}
@@ -188,15 +371,19 @@ export function RoomWalls({ color, size = 12, wallHeight = 1.5, hovered = false 
             receiveShadow
           >
             <boxGeometry args={seg.size} />
-            <meshToonMaterial
-              ref={(el) => {
-                if (isAccent) accentMatRefs.current[refIdx] = el
-                else wallMatRefs.current[refIdx] = el
-              }}
-              {...(isAccent ? accentToon : wallToon)}
-              emissive="#000000"
-              emissiveIntensity={0}
-            />
+            {useShader ? (
+              <primitive object={wallShaderMat!.clone()} attach="material" />
+            ) : (
+              <meshToonMaterial
+                ref={(el) => {
+                  if (isAccent) accentMatRefs.current[refIdx] = el
+                  else wallMatRefs.current[refIdx] = el
+                }}
+                {...(isAccent ? accentToon : wallToon)}
+                emissive="#000000"
+                emissiveIntensity={0}
+              />
+            )}
           </mesh>
         )
       })}

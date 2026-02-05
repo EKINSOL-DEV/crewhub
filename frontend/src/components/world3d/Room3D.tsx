@@ -158,10 +158,16 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
         hovered={hovered}
         projectColor={room.project_color}
         isHQ={room.is_hq}
+        floorStyle={room.floor_style || 'default'}
       />
 
       {/* Perimeter walls */}
-      <RoomWalls color={roomColor} size={size} hovered={hovered} />
+      <RoomWalls
+        color={roomColor}
+        size={size}
+        hovered={hovered}
+        wallStyle={room.wall_style || 'default'}
+      />
 
       {/* Floating nameplate above entrance */}
       <RoomNameplate

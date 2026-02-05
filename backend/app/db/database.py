@@ -11,7 +11,7 @@ DB_DIR = Path.home() / ".crewhub"
 DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 6  # v6: Added custom_blueprints table for modding
+SCHEMA_VERSION = 7  # v7: Added floor_style and wall_style to rooms
 
 
 async def init_database():
@@ -242,6 +242,17 @@ async def init_database():
             # v5: Add folder_path to projects
             try:
                 await db.execute("ALTER TABLE projects ADD COLUMN folder_path TEXT")
+            except Exception:
+                pass  # Column already exists
+            
+            # v7: Add floor_style and wall_style to rooms
+            try:
+                await db.execute("ALTER TABLE rooms ADD COLUMN floor_style TEXT DEFAULT 'default'")
+            except Exception:
+                pass  # Column already exists
+            
+            try:
+                await db.execute("ALTER TABLE rooms ADD COLUMN wall_style TEXT DEFAULT 'default'")
             except Exception:
                 pass  # Column already exists
             

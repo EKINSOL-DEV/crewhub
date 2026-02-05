@@ -64,6 +64,8 @@ class Room(BaseModel):
     sort_order: int = 0
     default_model: Optional[str] = None
     speed_multiplier: float = 1.0
+    floor_style: str = "default"
+    wall_style: str = "default"
     project_id: Optional[str] = None
     project_name: Optional[str] = None
     project_color: Optional[str] = None
@@ -81,6 +83,8 @@ class RoomCreate(BaseModel):
     sort_order: int = 0
     default_model: Optional[str] = None
     speed_multiplier: float = 1.0
+    floor_style: str = "default"
+    wall_style: str = "default"
 
 
 class RoomUpdate(BaseModel):
@@ -91,6 +95,8 @@ class RoomUpdate(BaseModel):
     sort_order: Optional[int] = None
     default_model: Optional[str] = None
     speed_multiplier: Optional[float] = None
+    floor_style: Optional[str] = None
+    wall_style: Optional[str] = None
 
 
 # ========================================

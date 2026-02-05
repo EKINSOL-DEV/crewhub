@@ -7,7 +7,7 @@
 import { useRoomsContext } from "@/contexts/RoomsContext"
 
 // Re-export types from context for backwards compatibility
-export type { Room, SessionRoomAssignment, RoomAssignmentRule } from "@/contexts/RoomsContext"
+export type { Room, SessionRoomAssignment, RoomAssignmentRule, FloorStyle, WallStyle } from "@/contexts/RoomsContext"
 
 export function useRooms() {
   return useRoomsContext()
