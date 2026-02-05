@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect, useCallback } from 'react'
+import { useRef, useMemo, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -7,7 +7,7 @@ import { BotFace } from './BotFace'
 import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
-import { SleepingZs } from './BotAnimations'
+import { SleepingZs, type AnimState } from './BotAnimations'
 import { getBotConfigFromSession } from './utils/botVariants'
 import { getSessionDisplayName } from '@/lib/minionUtils'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
@@ -36,13 +36,6 @@ interface WanderState {
   targetZ: number
   waitTimer: number
   rotY: number
-}
-
-interface WanderingBot {
-  session: CrewSession
-  config: BotVariantConfig
-  name: string
-  wanderState: WanderState
 }
 
 interface WanderingBots3DProps {
@@ -120,8 +113,27 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
     rotY: Math.random() * Math.PI * 2,
   })
 
-  // Stable ref for animation (SleepingZs needs this shape)
-  const animRef = useRef({ showZzz: true })
+  // Stable ref for animation (SleepingZs reads animRef.current.showZzz)
+  const animRef = useRef<AnimState>({
+    phase: 'sleeping',
+    targetX: null,
+    targetZ: null,
+    walkSpeed: OUTDOOR_WALK_SPEED,
+    freezeWhenArrived: false,
+    arrived: false,
+    bodyTilt: 0,
+    headBob: false,
+    opacity: 1,
+    yOffset: 0,
+    showZzz: true,
+    sleepRotZ: 0,
+    coffeeTimer: 0,
+    resetWanderTarget: false,
+    isActiveWalking: false,
+    typingPause: false,
+    typingPauseTimer: 0,
+    nextTypingPauseTimer: 0,
+  })
 
   useFrame(({ clock }, delta) => {
     if (!groupRef.current) return
