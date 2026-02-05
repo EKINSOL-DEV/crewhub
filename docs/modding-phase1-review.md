@@ -292,3 +292,62 @@ Good parts:
 ## Notes / small nits
 - Consider adding `clear()` or `unregisterByModId(modId)` to `Registry<T>` for uninstalling mods cleanly.
 - Consider ordering `Registry.list()` deterministically (e.g., insertion order is OK, but explicit sort can help stable UIs).
+
+---
+
+## Review Round 2 (after fixes)
+
+Reviewed files:
+- `frontend/src/lib/modding/Registry.ts`
+- `frontend/src/lib/grid/blueprints.ts`
+- `frontend/src/lib/grid/blueprintLoader.ts` + `frontend/src/lib/grid/blueprints/*.json`
+- `frontend/src/components/world3d/environments/index.tsx`
+- `backend/app/routes/blueprints.py`
+- `backend/app/db/models.py`
+- `~/ekinapps/crewhub-docs/src/content/docs/modding/overview.md`
+
+### ✅ Confirmed fixes
+
+#### 1) `Registry<T>`
+- **Snapshot immutability:** `list()` now rebuilds snapshot on mutation and returns `Object.freeze([...values])` → prevents accidental consumer mutation of the cached snapshot.
+- **Listener isolation:** `notify()` wraps each listener in `try/catch`, so one crashing subscriber won’t block others.
+- **`useSyncExternalStore` stability:** `subscribe` and `getSnapshot` are **arrow fields**, so identity is stable and no `.bind()` is needed.
+- **`clear()` / `unregisterByModId()` behavior:**
+  - `clear()` is no-op when already empty and notifies only on actual change.
+  - `unregisterByModId()` deletes matching entries, returns count, notifies once when `removed > 0`.
+
+#### 2) Blueprints
+- **Doors duplication:** Built-in JSON files now use **only `doorPositions`**. Loader treats `doorPositions` as canonical and keeps `doors` only as deprecated optional input.
+- **Live record:** `getRoomBlueprintsRecord()` is now a function that builds from `blueprintRegistry.list()` at call time (so it reflects registry changes).
+- **Fuzzy matching:** matcher order now correctly maps **"devops" → `ops-room`** before generic `dev` matching.
+
+#### 3) Environment registry
+- `useEnvironmentList()` now passes `environmentRegistry.subscribe` directly (stable identity because `subscribe` is an arrow field). This resolves the prior “`.bind()` each render” issue.
+
+#### 4) Backend
+- **`BlueprintJson.id` optional:** now `Optional[str] = None`, matching route behavior that generates an id when absent.
+- **Filename sanitization:** export now strictly whitelists `[a-z0-9-_]` and strips separators; much safer for `Content-Disposition`.
+- **Warnings:** `validate_blueprint()` returns `(errors, warnings)` and routes now include warnings in the HTTPException `detail` and attempt to include warnings in success responses.
+- **`source` typing:** `CustomBlueprintCreate.source` is now `Literal["user", "import", "mod"]`.
+
+### ⚠️ New / remaining issues found in Round 2
+
+1. **Backend: warnings likely NOT returned due to `response_model` filtering (P0)**
+   - `create_blueprint()` / `import_blueprint()` / `update_blueprint()` add `response["warnings"] = ...`, **but** these routes set `response_model=CustomBlueprintResponse`.
+   - `CustomBlueprintResponse` in `models.py` does **not** define a `warnings` field, so FastAPI/Pydantic will typically **drop** it from the response.
+   - Fix options:
+     - Add `warnings: Optional[list[str]] = None` to `CustomBlueprintResponse`, or
+     - Introduce a separate response model for endpoints that may return warnings.
+
+2. **Docs still drift on door field (P1)**
+   - `crewhub-docs/.../overview.md` blueprint example still uses `"doors"`, while the frontend canonical field is now `"doorPositions"` (and built-in JSONs don’t include `doors`).
+   - Recommendation: update docs example to match current canonical schema (`doorPositions`) and include `interactionPoints` if required by backend import.
+
+3. **Frontend loader: door placement can go out-of-bounds for malformed JSON (P2)**
+   - `loadBlueprintFromJSON()` places a second door cell at `x+1` or `z+1` based on facing without bounds checks.
+   - Built-ins are fine, but for user/mod JSON this could cause errors if a doorPosition is placed at the far edge incorrectly (e.g. `x = gridWidth-1` with `facing: south`).
+   - Consider validating `doorPositions` in the loader (dev) or in backend validation rules.
+
+### Round 2 conclusion
+- The main Round 1 issues around **registry snapshot mutability**, **subscribe identity**, **blueprint door duplication**, **ROOM_BLUEPRINTS “live” behavior**, **backend `id` optionality**, and **export sanitization** look correctly addressed.
+- The standout remaining gap is **backend warnings not actually reaching clients** due to response-model filtering, and **docs still not matching canonical blueprint JSON**.

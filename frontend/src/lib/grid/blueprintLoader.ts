@@ -5,40 +5,15 @@
 // JSON blueprints use a declarative "placements" array instead of
 // imperative placeOnGrid() calls. The loader rebuilds the grid
 // cells from these placements, producing identical output.
+//
+// All JSON is validated via Zod schema. Invalid blueprints are
+// logged and skipped (graceful degradation).
 
 import type { RoomBlueprint, CellType, InteractionType, Direction } from './types'
+// CellType and InteractionType used for type assertions in loadBlueprintFromJSON
 import { createEmptyGrid, placeOnGrid, placeDoor } from './blueprintUtils'
 import { blueprintRegistry } from '@/lib/modding/registries'
-
-// ─── JSON Schema Types ──────────────────────────────────────────
-
-interface BlueprintPlacement {
-  propId: string
-  x: number
-  z: number
-  type?: CellType          // defaults to 'furniture'
-  interactionType?: InteractionType
-  rotation?: 0 | 90 | 180 | 270
-  span?: { w: number; d: number }
-}
-
-interface BlueprintJSON {
-  id: string
-  name: string
-  gridWidth: number
-  gridDepth: number
-  cellSize: number
-  placements: BlueprintPlacement[]
-  doorPositions: { x: number; z: number; facing: Direction }[]
-  /** @deprecated Use doorPositions instead. Kept for backward compat with old JSON files. */
-  doors?: { x: number; z: number }[]
-  walkableCenter: { x: number; z: number }
-  interactionPoints: {
-    work: { x: number; z: number }[]
-    coffee: { x: number; z: number }[]
-    sleep: { x: number; z: number }[]
-  }
-}
+import { blueprintJSONSchema, type BlueprintJSON } from './blueprintSchema'
 
 // ─── Loader ─────────────────────────────────────────────────────
 
@@ -53,17 +28,14 @@ export function loadBlueprintFromJSON(json: BlueprintJSON): RoomBlueprint {
   // Replay all prop placements
   for (const p of json.placements) {
     placeOnGrid(grid, p.x, p.z, p.propId, {
-      type: p.type,
-      interactionType: p.interactionType,
+      type: p.type as CellType | undefined,
+      interactionType: p.interactionType as InteractionType | undefined,
       rotation: p.rotation,
       span: p.span,
     })
   }
 
   // Place doors — derived from doorPositions (canonical source).
-  // Each doorPosition marks the left cell of a 2-wide door opening.
-  // We place door cells at (x, z) and (x+1, z) for south/north facing,
-  // or (x, z) and (x, z+1) for east/west facing.
   for (const dp of json.doorPositions) {
     placeDoor(grid, dp.x, dp.z)
     if (dp.facing === 'south' || dp.facing === 'north') {
@@ -80,10 +52,27 @@ export function loadBlueprintFromJSON(json: BlueprintJSON): RoomBlueprint {
     gridDepth: json.gridDepth,
     cellSize: json.cellSize,
     cells: grid,
-    doorPositions: json.doorPositions,
+    doorPositions: json.doorPositions as { x: number; z: number; facing: Direction }[],
     walkableCenter: json.walkableCenter,
-    interactionPoints: json.interactionPoints,
+    interactionPoints: json.interactionPoints as RoomBlueprint['interactionPoints'],
   }
+}
+
+/**
+ * Validate and load a blueprint from raw JSON data.
+ * Returns null if validation fails (with console warning).
+ */
+export function validateAndLoadBlueprint(raw: unknown): RoomBlueprint | null {
+  const result = blueprintJSONSchema.safeParse(raw)
+  if (!result.success) {
+    const id = (raw as Record<string, unknown>)?.id ?? 'unknown'
+    console.warn(
+      `[blueprintLoader] Skipping invalid blueprint "${id}":`,
+      result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')
+    )
+    return null
+  }
+  return loadBlueprintFromJSON(result.data)
 }
 
 // ─── Built-in Registration ──────────────────────────────────────
@@ -99,34 +88,30 @@ import commsRoomJSON from './blueprints/comms-room.json'
 import opsRoomJSON from './blueprints/ops-room.json'
 import defaultJSON from './blueprints/default.json'
 
-const BUILTIN_BLUEPRINTS: BlueprintJSON[] = [
-  headquartersJSON as BlueprintJSON,
-  devRoomJSON as BlueprintJSON,
-  creativeRoomJSON as BlueprintJSON,
-  marketingRoomJSON as BlueprintJSON,
-  thinkingRoomJSON as BlueprintJSON,
-  automationRoomJSON as BlueprintJSON,
-  commsRoomJSON as BlueprintJSON,
-  opsRoomJSON as BlueprintJSON,
-  defaultJSON as BlueprintJSON,
+const BUILTIN_BLUEPRINT_DATA: unknown[] = [
+  headquartersJSON,
+  devRoomJSON,
+  creativeRoomJSON,
+  marketingRoomJSON,
+  thinkingRoomJSON,
+  automationRoomJSON,
+  commsRoomJSON,
+  opsRoomJSON,
+  defaultJSON,
 ]
 
 /**
  * Register all built-in blueprints via blueprintRegistry.
  * Called once at module load, similar to registerBuiltinProps().
- * Uses batch registration — 1 notification for all blueprints.
+ * Invalid blueprints are logged and skipped.
  */
 export function registerBuiltinBlueprints(): void {
-  blueprintRegistry.registerBatch(
-    BUILTIN_BLUEPRINTS.map((json) => {
-      const blueprint = loadBlueprintFromJSON(json)
-      return {
-        id: `builtin:${blueprint.id}`,
-        data: blueprint,
-        source: 'builtin' as const,
-      }
-    }),
-  )
+  for (const raw of BUILTIN_BLUEPRINT_DATA) {
+    const blueprint = validateAndLoadBlueprint(raw)
+    if (blueprint) {
+      blueprintRegistry.register(blueprint.id, blueprint, 'builtin')
+    }
+  }
 }
 
 // Self-register on module load
