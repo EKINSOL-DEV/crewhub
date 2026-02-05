@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -37,7 +37,7 @@ import {
   Sun, Moon, Monitor, X, Plus, Trash2, Edit2, Check,
   ChevronUp, ChevronDown, ChevronRight,
   AlertCircle, Download, Upload, Database, Loader2, Clock,
-  HardDrive, RefreshCw, FolderOpen,
+  HardDrive, RefreshCw, FolderOpen, Eye,
   Palette, LayoutGrid, SlidersHorizontal, Wrench, FolderKanban, Archive, ArchiveRestore,
 } from "lucide-react"
 import {
@@ -49,6 +49,22 @@ import {
   getSettings as apiGetSettings,
   updateSetting as apiUpdateSetting,
 } from "@/lib/api"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { useRooms, type Room } from "@/hooks/useRooms"
 import { useRoomAssignmentRules, type RoomAssignmentRule } from "@/hooks/useRoomAssignmentRules"
 import { useProjects, type Project } from "@/hooks/useProjects"
@@ -85,6 +101,8 @@ interface SettingsPanelProps {
   onOpenChange: (open: boolean) => void
   settings: SessionsSettings
   onSettingsChange: (settings: SessionsSettings) => void
+  /** Active sessions for testing routing rules */
+  sessions?: import("@/lib/api").CrewSession[]
 }
 
 // ─── Constants for room management ───────────────────────────────────────────
@@ -170,9 +188,117 @@ function CollapsibleSection({
   )
 }
 
+// ─── Sortable Rule Item (for drag & drop reordering) ─────────────────────────
+
+function SortableRuleItem({
+  rule,
+  room,
+  onAdjustPriority,
+  onDelete,
+  getRuleTypeLabel,
+}: {
+  rule: RoomAssignmentRule
+  room: Room | undefined
+  onAdjustPriority: (ruleId: string, delta: number) => void
+  onDelete: (ruleId: string) => void
+  getRuleTypeLabel: (type: string) => string
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: rule.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-3 rounded-lg border bg-background hover:bg-accent/20 transition-colors ${isDragging ? "shadow-lg ring-2 ring-primary/20" : ""}`}
+    >
+      <div className="flex items-start gap-2.5">
+        {/* Drag handle */}
+        <button
+          className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing shrink-0 mt-1"
+          {...attributes}
+          {...listeners}
+          title="Drag to reorder"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+
+        {/* Priority controls (kept as fallback for accessibility) */}
+        <div className="flex flex-col items-center gap-0.5 shrink-0">
+          <button
+            onClick={() => onAdjustPriority(rule.id, 10)}
+            className="p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+            title="Increase priority"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <Badge variant="secondary" className="text-[10px] font-mono px-1.5">
+            {rule.priority}
+          </Badge>
+          <button
+            onClick={() => onAdjustPriority(rule.id, -10)}
+            className="p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+            title="Decrease priority"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Rule info */}
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Badge variant="outline" className="text-[10px]">
+              {getRuleTypeLabel(rule.rule_type)}
+            </Badge>
+            <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+              {rule.rule_value}
+            </code>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>→</span>
+            {room && (
+              <span
+                className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                style={{
+                  backgroundColor: `${room.color || "#4f46e5"}20`,
+                  color: room.color || "#4f46e5",
+                  border: `1px solid ${room.color || "#4f46e5"}40`,
+                }}
+              >
+                {room.icon} {room.name}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Delete */}
+        <button
+          onClick={() => onDelete(rule.id)}
+          className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600 shrink-0"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }: SettingsPanelProps) {
+export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, sessions: activeSessions }: SettingsPanelProps) {
   const { theme, setTheme, resolvedMode } = useTheme()
   const { rooms, createRoom, updateRoom, deleteRoom, reorderRooms, isLoading: roomsLoading } = useRooms()
   const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
@@ -212,6 +338,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
   // ─── Routing rules state ───
   const [showCreateRuleDialog, setShowCreateRuleDialog] = useState(false)
   const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string | null>(null)
+  const [showTestRulesDialog, setShowTestRulesDialog] = useState(false)
   const [newRule, setNewRule] = useState({
     rule_type: "session_key_contains" as RoomAssignmentRule["rule_type"],
     rule_value: "",
@@ -350,6 +477,40 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
 
   const sortedRooms = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
   const sortedRules = [...rules].sort((a, b) => b.priority - a.priority)
+
+  // ─── Test Rules: preview routing for active sessions ───
+  const { getRoomFromRules } = useRooms()
+  const testRulesResults = useMemo((): { session: import("@/lib/api").CrewSession; matchedRoom: string; matchedRule: string | null }[] => {
+    if (!showTestRulesDialog || !activeSessions?.length) return []
+    return activeSessions.map(session => {
+      const matchedRoomId = getRoomFromRules(session.key, {
+        label: session.label,
+        model: session.model,
+        channel: (session as unknown as Record<string, unknown>).lastChannel as string || session.channel,
+      })
+      const matchedRoom = matchedRoomId ? rooms.find(r => r.id === matchedRoomId) : null
+      // Find which rule matched
+      const matchedRule = rules.find(rule => {
+        switch (rule.rule_type) {
+          case "session_key_contains": return session.key.includes(rule.rule_value)
+          case "keyword": return session.label?.toLowerCase().includes(rule.rule_value.toLowerCase())
+          case "model": return session.model?.toLowerCase().includes(rule.rule_value.toLowerCase())
+          case "label_pattern": try { return new RegExp(rule.rule_value, "i").test(session.label || "") || new RegExp(rule.rule_value, "i").test(session.key) } catch { return false }
+          case "session_type":
+            if (rule.rule_value === "cron") return session.key.includes(":cron:")
+            if (rule.rule_value === "subagent") return session.key.includes(":subagent:") || session.key.includes(":spawn:")
+            if (rule.rule_value === "main") return session.key === "agent:main:main"
+            return session.key.includes(rule.rule_value) || session.channel === rule.rule_value
+          default: return false
+        }
+      })
+      return {
+        session,
+        matchedRoom: matchedRoom ? `${matchedRoom.icon || ""} ${matchedRoom.name}`.trim() : "No match (default)",
+        matchedRule: matchedRule ? `${getRuleTypeLabel(matchedRule.rule_type)}: ${matchedRule.rule_value}` : null,
+      }
+    })
+  }, [showTestRulesDialog, activeSessions, getRoomFromRules, rooms, rules])
 
   const themeModeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
     { value: "light", label: "Light", icon: <Sun className="h-4 w-4" /> },
@@ -679,17 +840,30 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
                   title="🔀 Routing Rules"
                   badge={`${rules.length} rules`}
                 >
-                  <Button
-                    onClick={() => {
-                      setNewRule(r => ({ ...r, room_id: rooms[0]?.id || "" }))
-                      setShowCreateRuleDialog(true)
-                    }}
-                    size="sm"
-                    className="w-full gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Rule
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        setNewRule(r => ({ ...r, room_id: rooms[0]?.id || "" }))
+                        setShowCreateRuleDialog(true)
+                      }}
+                      size="sm"
+                      className="flex-1 gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Rule
+                    </Button>
+                    {activeSessions && activeSessions.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowTestRulesDialog(true)}
+                        className="gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Test Rules
+                      </Button>
+                    )}
+                  </div>
 
                   <div className="p-3 rounded-lg bg-muted/50 text-xs flex items-start gap-2">
                     <AlertCircle className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
@@ -1185,6 +1359,45 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange }
             <Button variant="destructive" onClick={() => deleteRuleConfirm && handleDeleteRule(deleteRuleConfirm)}>
               Delete Rule
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Test Rules Preview Dialog ─── */}
+      <Dialog open={showTestRulesDialog} onOpenChange={setShowTestRulesDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>🧪 Test Routing Rules</DialogTitle>
+            <DialogDescription>
+              Preview how current rules would route your {activeSessions?.length || 0} active session{(activeSessions?.length || 0) !== 1 ? "s" : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto space-y-2">
+            {testRulesResults.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">No active sessions to test</p>
+            ) : (
+              testRulesResults.map(({ session, matchedRoom, matchedRule }) => (
+                <div key={session.key} className="p-3 rounded-lg border bg-card">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-mono text-sm truncate">{session.key}</div>
+                      {session.label && (
+                        <div className="text-xs text-muted-foreground truncate">{session.label}</div>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-medium">{matchedRoom}</div>
+                      {matchedRule && (
+                        <div className="text-xs text-muted-foreground">{matchedRule}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowTestRulesDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
