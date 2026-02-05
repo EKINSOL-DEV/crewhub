@@ -140,7 +140,7 @@ Copy `.env.example` to `.env` and configure:
 ```bash
 # Required: OpenClaw Gateway connection
 OPENCLAW_GATEWAY_URL=ws://localhost:18789
-OPENCLAW_GATEWAY_TOKEN=your_token_here  # Get from: openclaw gateway token
+OPENCLAW_GATEWAY_TOKEN=your_token_here  # Found in ~/.openclaw/openclaw.json → gateway.auth.token
 
 # Optional: Backend settings
 BACKEND_PORT=8090
