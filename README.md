@@ -128,6 +128,20 @@ cd crewhub
 make dev
 ```
 
+### Option 3: Demo Mode (No OpenClaw needed)
+
+Want to explore CrewHub without setting up OpenClaw? Run in demo mode with simulated agents:
+
+```bash
+git clone https://github.com/EKINSOL-DEV/crewhub.git
+cd crewhub
+docker compose -f docker-compose.demo.yml up
+```
+
+Open **http://localhost:3000** — you'll see a fully interactive 3D world with mock agents, rooms, and activity. Perfect for exploring the UI or demoing to your team.
+
+> 💡 Or try it online at **[demo.crewhub.dev](https://demo.crewhub.dev)**
+
 ## ⚙️ Configuration
 
 Copy `.env.example` to `.env`:
