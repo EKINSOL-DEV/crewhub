@@ -6,88 +6,83 @@
 
 <p align="center">
   <strong>Your AI crew, one dashboard.</strong><br>
-  Real-time monitoring, room management, and visual playground for AI agent sessions.
+  A real-time monitoring dashboard and interactive 3D world for your AI agent sessions.
 </p>
 
 <p align="center">
+  <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
+  <a href="https://docs.crewhub.dev"><img src="https://img.shields.io/badge/Docs-docs.crewhub.dev-4A90D9?style=flat&logo=readthedocs&logoColor=white" alt="Docs"></a>
   <img src="https://img.shields.io/badge/version-v0.7.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
-  <img src="https://img.shields.io/badge/react-19-61dafb" alt="React">
-  <img src="https://img.shields.io/badge/fastapi-0.100+-009688" alt="FastAPI">
-  <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="Docker">
+  <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
 </p>
+
+---
+
+## What is CrewHub?
+
+CrewHub is an open-source dashboard for monitoring and managing AI coding agents. It connects to [OpenClaw](https://openclaw.dev), Claude Code, and Codex CLI — giving you a live overview of every session, room, and agent in one place. Its standout feature is a fully interactive **3D world** where your agents come alive as animated characters.
+
+> 🌐 **See it in action at [crewhub.dev](https://crewhub.dev)**
+
+---
+
+## 🌍 3D World View — The Hero Feature
+
+<p align="center">
+  <em>Watch your agents roam a toon-shaded campus, carry laptops while coding, and wander between rooms when idle.</em>
+</p>
+
+CrewHub's 3D World turns your agent fleet into a living, breathing campus:
+
+- **Toon-shaded rooms** on a 20×20 grid with floor & wall textures (6 floor styles, 4 wall styles, procedural GLSL shaders)
+- **3 zoom levels** — Overview → Room focus → Bot close-up with camera orbit
+- **4 environments** — Grass, Island, Sky, and Desert — each with unique props and atmosphere
+- **Animated bots** — Working agents type on laptops; idle agents wander the campus
+- **Drag & drop in 3D** — Move bots between rooms with visual status indicators
+- **Activity bubbles** — See what each agent is doing at a glance
+- **Blueprints** — JSON-defined room layouts you can create, share, and import
 
 ---
 
 ## ✨ Features
 
-- 🔴 **Real-time Monitoring** — Live session updates via Server-Sent Events (SSE)
-- ⚡ **Centralized SSE** — Single connection manager with fan-out
-- 🏠 **Rooms System** — Organize agents into workspaces with drag & drop
-- 🏠 **Room Context** — Deduplicated data fetching
-- 🃏 **Cards View** — Filter agents by status: Active, Idle, Working, Error, and more
-- 📜 **Log Viewer** — Search, browse, and export chat history
-- 🔗 **Connections Manager** — Configure OpenClaw, Claude Code, and Codex integrations
-- 🎨 **Agent Design Lab** — 5 custom bot SVGs with unique personalities
-- 🌐 **3D Bot Playground** — Three.js isometric view of your agent fleet
-- 🔍 **Click-to-Detail Panels** — Inspect any agent's info, stats, and activity
-- 🏷️ **Custom Display Names** — Name your agents and set room routing rules
-- ⏰ **Cron Jobs View** — Monitor scheduled and recurring agent tasks
-- 📊 **Session History** — Full archive with search and filtering
-- 🌙 **Dark/Light Theme** — Plus customizable accent colors
-- 🗺️ **Grid System** — 20×20 grid per room with blueprints, prop registry, and debug overlay
-- 🤖 **Smart Bot Movement** — Natural random walk with obstacle avoidance
-- 🎥 **Camera Orbit** — Rotate around focused bot in zoom level 3
-- 💬 **Planner-style Chat** — Draggable/resizable chat windows with minimize bar
-- ⚙️ **Settings Consolidation** — All thresholds configurable via Settings UI
-- 🔄 **Live Room Refresh** — New rooms appear instantly without page reload
-- 🧩 **Modding Foundation** — Registry\<T\> pattern, namespaced IDs, batch registration
-- 📐 **JSON Blueprints** — Data-driven room layouts with Zod validation
-- 🌍 **Data-driven Environments** — 3 themes, registry-based, extensible
-- 📥 **Blueprint Import/Export API** — Full CRUD with validation
-- 📚 **Documentation Site** — Starlight/Astro docs at [docs.crewhub.dev](https://docs.crewhub.dev)
-- 🔒 **AGPL-3.0 License**
-- 🔢 **Version Display** — Always know what you're running (v0.7.1)
+### 📡 Monitoring
+- **Real-time updates** via Server-Sent Events (SSE) — no polling, no delays
+- **Cards view** with status filtering (Active, Idle, Working, Error, and more)
+- **Session history** with full search and filtering
+- **Cron jobs view** for scheduled and recurring agent tasks
+- **Log viewer** with search, browse, and export
 
-## 📸 Screenshots
+### 🏠 Rooms & Organization
+- **Room management** with drag & drop agent assignment
+- **Custom display names** and room routing rules
+- **Live room refresh** — new rooms appear instantly, no reload needed
+- **Connections manager** for OpenClaw, Claude Code, and Codex integrations
 
-> _Screenshots coming soon — the dashboard looks better than we can describe._
+### 💬 Chat & Interaction
+- **Planner-style chat windows** — draggable, resizable, and minimizable
+- **Click-to-detail panels** — inspect any agent's info, stats, and activity
+- **Agent bios** with pre-filled personality descriptions
+- **Agent Top Bar** with boss button, pinned agent, and agent picker
 
-<!--
-<p align="center">
-  <img src="docs/screenshots/dashboard.png" width="800" alt="CrewHub Dashboard">
-  <img src="docs/screenshots/rooms.png" width="800" alt="Rooms View">
-  <img src="docs/screenshots/playground.png" width="800" alt="3D Playground">
-</p>
--->
+### 🎨 Customization
+- **Dark/light theme** with customizable accent colors
+- **5 bot personalities** — Worker 🟠, Thinker 🔵, Cron 🟢, Comms 🟣, Dev 🔴
+- **Agent Design Lab** for custom bot SVGs
+- **Settings UI** with backup & restore
+- **Onboarding wizard** with auto-discovery
 
-## 🤖 Agent Types
+### 🧩 Extensibility
+- **Modding support** — add custom props, environments, blueprints, and room layouts
+- **Namespaced IDs** (`core:desk`, `desert:cactus`) to avoid conflicts
+- **JSON blueprints** with schema validation for shareable room designs
+- **Data-driven environments** — register your own themes without modifying core code
 
-CrewHub ships with 5 distinct bot personalities, each with a custom SVG design:
+> 📖 Deep-dive into architecture and modding at **[docs.crewhub.dev](https://docs.crewhub.dev)**
 
-| Bot | Color | Role |
-|-----|-------|------|
-| 🔧 **Worker Bot** | 🟠 Orange | General task execution |
-| 🧠 **Thinker Bot** | 🔵 Blue | Deep analysis & reasoning |
-| ⏰ **Cron Bot** | 🟢 Green | Scheduled & recurring tasks |
-| 💬 **Comms Bot** | 🟣 Purple | Communication & coordination |
-| 💻 **Dev Bot** | 🔴 Red | Software development & coding |
-
-Design your agents in the **Agent Design Lab** and watch them come alive in the **3D Bot Playground**.
-
-## 🆕 What's New in v0.7.1
-
-- 🏠 **Room floor & wall textures** — 6 floor styles + 4 wall styles with procedural GLSL shaders
-- 🏜️ **Desert environment** — New theme with sand dunes, cacti, rocks, and tumbleweeds
-- 🤖 **Agent bios** — Bio field for agents with pre-filled descriptions (schema v8)
-- 🎯 **Agent Top Bar** — Boss button + pinned agent + agent picker dropdown
-- 🚶 **Wandering bots** — Sleeping agents walk around campus between rooms
-- 💬 **Activity bubbles** — Humanized task summaries from session labels above bots
-- 🖱️ **Drag & drop in 3D** — Drag bots between rooms with status indicator
-- 💻 **Working bots carry laptops** — Animated laptop with typing micro-pauses
-- 🧪 **Comprehensive test suite** — 138 backend + 133 frontend + 7 E2E tests
-- 🐛 **Many Bug Fixes** — Double render, camera, wandering bounds, and more
+---
 
 ## 🔗 Compatibility
 
@@ -100,10 +95,12 @@ Works with:
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React, TypeScript, Tailwind CSS, Three.js |
+| Frontend | React 19, TypeScript, Tailwind CSS, Three.js |
 | Backend | FastAPI (Python), SQLite |
 | Real-time | Server-Sent Events (SSE) |
 | Deployment | Docker, Docker Compose |
+
+---
 
 ## 🚀 Quick Start
 
@@ -116,7 +113,7 @@ Works with:
 ### Option 1: Docker (Recommended)
 
 ```bash
-git clone https://github.com/ekinsolbot/crewhub.git
+git clone https://github.com/EKINSOL-DEV/crewhub.git
 cd crewhub
 
 cp .env.example .env
@@ -130,7 +127,7 @@ The dashboard will be available at **http://localhost:5180**
 ### Option 2: Local Development
 
 ```bash
-git clone https://github.com/ekinsolbot/crewhub.git
+git clone https://github.com/EKINSOL-DEV/crewhub.git
 cd crewhub
 cp .env.example .env
 
@@ -173,6 +170,8 @@ When running in Docker, use these Gateway URLs:
 | Frontend | 5180 | React dashboard UI |
 | Backend  | 8090 | FastAPI server |
 
+---
+
 ## 🧑‍💻 Development
 
 ```bash
@@ -203,29 +202,19 @@ crewhub/
 └── docker-compose.yml
 ```
 
-## 🎯 CrewBar
-
-CrewHub includes **CrewBar**, a reusable floating chat component for AI agents. It provides draggable, resizable chat windows with status indicators — embeddable in any React app. See the `frontend/src/components/crewbar/` directory for details.
-
-## 🧩 Modding
-
-CrewHub v0.6.0 introduced a **modding foundation** designed for extensibility:
-
-- **Registry\<T\> pattern** — A generic, type-safe registry for props, environments, blueprints, and more
-- **Namespaced IDs** — All content uses `namespace:name` IDs (e.g. `core:desk`, `forest:tree`) to avoid conflicts
-- **Batch registration** — Register multiple items at once via `registerAll()`
-- **JSON Blueprints** — Room layouts are defined as JSON with Zod schema validation, making them easy to create, share, and import
-- **Data-driven Environments** — Themes (default, forest, neon) are registry entries, not hardcoded — add your own by registering new environment configs
-
-This foundation makes it possible to extend CrewHub with custom props, room layouts, and visual themes without modifying core code.
+---
 
 ## 💬 Community
 
-Join the CrewHub community on **[Discord](https://discord.gg/Bfupkmvp)** — chat with the team, get early access, and help shape the roadmap.
+Join us on **[Discord](https://discord.gg/Bfupkmvp)** — chat with the team, get early access, and help shape the roadmap.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+> **Note:** This project uses a Contributor License Agreement (CLA). You'll be asked to sign it when opening your first pull request.
+
+CrewHub is licensed under **AGPL-3.0**, which means any modified version that's served over a network must also be open-sourced under the same license. Keep this in mind when building on top of CrewHub.
 
 ## 📄 License
 
@@ -233,4 +222,4 @@ AGPL-3.0 — see [LICENSE](LICENSE)
 
 ---
 
-<p align="center"><strong>Made with 🦀 by the OpenClaw community</strong></p>
+<p align="center"><strong>Made by <a href="https://ekinsol.be">EKINSOL</a></strong></p>
