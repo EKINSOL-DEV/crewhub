@@ -1,0 +1,28 @@
+{
+  "id": "headquarters",
+  "name": "Headquarters",
+  "gridWidth": 20,
+  "gridDepth": 20,
+  "cellSize": 0.6,
+  "placements": [
+    { "propId": "desk-with-monitor", "x": 4, "z": 16, "span": { "w": 2, "d": 2 } },
+    { "propId": "work-point", "x": 4, "z": 15, "type": "interaction", "interactionType": "work" },
+    { "propId": "plant", "x": 18, "z": 18, "type": "decoration" },
+    { "propId": "notice-board", "x": 10, "z": 18, "type": "decoration" },
+    { "propId": "coffee-machine", "x": 18, "z": 3 },
+    { "propId": "coffee-point", "x": 17, "z": 3, "type": "interaction", "interactionType": "coffee" },
+    { "propId": "water-cooler", "x": 2, "z": 3 },
+    { "propId": "sleep-corner", "x": 2, "z": 18, "type": "interaction", "interactionType": "sleep" }
+  ],
+  "doors": [
+    { "x": 9, "z": 19 },
+    { "x": 10, "z": 19 }
+  ],
+  "doorPositions": [{ "x": 9, "z": 19, "facing": "south" }],
+  "walkableCenter": { "x": 10, "z": 10 },
+  "interactionPoints": {
+    "work": [{ "x": 4, "z": 15 }],
+    "coffee": [{ "x": 17, "z": 3 }],
+    "sleep": [{ "x": 2, "z": 18 }]
+  }
+}

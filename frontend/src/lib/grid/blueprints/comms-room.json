@@ -1,0 +1,29 @@
+{
+  "id": "comms-room",
+  "name": "Comms Room",
+  "gridWidth": 20,
+  "gridDepth": 20,
+  "cellSize": 0.6,
+  "placements": [
+    { "propId": "satellite-dish", "x": 18, "z": 18, "type": "decoration" },
+    { "propId": "antenna-tower", "x": 2, "z": 17, "span": { "w": 2, "d": 2 } },
+    { "propId": "small-screen", "x": 9, "z": 18, "type": "decoration" },
+    { "propId": "small-screen", "x": 11, "z": 18, "type": "decoration" },
+    { "propId": "small-screen", "x": 10, "z": 17, "type": "decoration" },
+    { "propId": "desk-with-monitor-headset", "x": 16, "z": 4, "span": { "w": 2, "d": 2 } },
+    { "propId": "work-point", "x": 15, "z": 4, "type": "interaction", "interactionType": "work" },
+    { "propId": "signal-waves", "x": 4, "z": 18, "type": "decoration" },
+    { "propId": "sleep-corner", "x": 2, "z": 2, "type": "interaction", "interactionType": "sleep" }
+  ],
+  "doors": [
+    { "x": 9, "z": 19 },
+    { "x": 10, "z": 19 }
+  ],
+  "doorPositions": [{ "x": 9, "z": 19, "facing": "south" }],
+  "walkableCenter": { "x": 10, "z": 10 },
+  "interactionPoints": {
+    "work": [{ "x": 15, "z": 4 }],
+    "coffee": [],
+    "sleep": [{ "x": 2, "z": 2 }]
+  }
+}

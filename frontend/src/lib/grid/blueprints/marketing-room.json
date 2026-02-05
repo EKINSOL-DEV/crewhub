@@ -1,0 +1,26 @@
+{
+  "id": "marketing-room",
+  "name": "Marketing Room",
+  "gridWidth": 20,
+  "gridDepth": 20,
+  "cellSize": 0.6,
+  "placements": [
+    { "propId": "standing-desk-with-monitor", "x": 5, "z": 16, "span": { "w": 3, "d": 2 } },
+    { "propId": "work-point", "x": 6, "z": 15, "type": "interaction", "interactionType": "work" },
+    { "propId": "presentation-screen", "x": 10, "z": 18, "type": "decoration" },
+    { "propId": "bar-chart", "x": 16, "z": 10, "span": { "w": 2, "d": 2 } },
+    { "propId": "plant", "x": 18, "z": 18, "type": "decoration" },
+    { "propId": "sleep-corner", "x": 2, "z": 2, "type": "interaction", "interactionType": "sleep" }
+  ],
+  "doors": [
+    { "x": 9, "z": 19 },
+    { "x": 10, "z": 19 }
+  ],
+  "doorPositions": [{ "x": 9, "z": 19, "facing": "south" }],
+  "walkableCenter": { "x": 10, "z": 10 },
+  "interactionPoints": {
+    "work": [{ "x": 6, "z": 15 }],
+    "coffee": [],
+    "sleep": [{ "x": 2, "z": 2 }]
+  }
+}

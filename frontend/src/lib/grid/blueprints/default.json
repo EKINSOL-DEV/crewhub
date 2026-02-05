@@ -1,0 +1,25 @@
+{
+  "id": "default",
+  "name": "Default Room",
+  "gridWidth": 20,
+  "gridDepth": 20,
+  "cellSize": 0.6,
+  "placements": [
+    { "propId": "desk-with-monitor", "x": 4, "z": 16, "span": { "w": 2, "d": 2 } },
+    { "propId": "work-point", "x": 4, "z": 15, "type": "interaction", "interactionType": "work" },
+    { "propId": "lamp", "x": 18, "z": 3, "type": "decoration" },
+    { "propId": "plant", "x": 18, "z": 18, "type": "decoration" },
+    { "propId": "sleep-corner", "x": 2, "z": 2, "type": "interaction", "interactionType": "sleep" }
+  ],
+  "doors": [
+    { "x": 9, "z": 19 },
+    { "x": 10, "z": 19 }
+  ],
+  "doorPositions": [{ "x": 9, "z": 19, "facing": "south" }],
+  "walkableCenter": { "x": 10, "z": 10 },
+  "interactionPoints": {
+    "work": [{ "x": 4, "z": 15 }],
+    "coffee": [],
+    "sleep": [{ "x": 2, "z": 2 }]
+  }
+}
