@@ -749,6 +749,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           >
             <div
               draggable
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               onDragStart={(e) => {
                 e.dataTransfer.setData('text/plain', session.key)
                 e.dataTransfer.effectAllowed = 'move'
