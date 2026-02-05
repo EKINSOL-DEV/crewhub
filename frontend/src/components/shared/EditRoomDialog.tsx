@@ -105,7 +105,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" onPointerDownCapture={(e) => e.stopPropagation()} onWheelCapture={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>Edit Room</DialogTitle>
           <DialogDescription>
