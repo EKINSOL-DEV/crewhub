@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
-  <a href="https://docs.crewhub.dev"><img src="https://img.shields.io/badge/Docs-docs.crewhub.dev-4A90D9?style=flat&logo=readthedocs&logoColor=white" alt="Docs"></a>
+  <img src="https://img.shields.io/badge/Docs-Coming%20Soon-lightgrey?style=flat&logo=readthedocs&logoColor=white" alt="Docs">
   <img src="https://img.shields.io/badge/version-v0.7.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
@@ -79,7 +79,7 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **JSON blueprints** with schema validation for shareable room designs
 - **Data-driven environments** — register your own themes without modifying core code
 
-> 📖 Deep-dive into architecture and modding at **[docs.crewhub.dev](https://docs.crewhub.dev)**
+> 📖 Documentation coming soon at **docs.crewhub.dev**
 
 ---
 
