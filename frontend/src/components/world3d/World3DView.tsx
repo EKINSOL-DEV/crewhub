@@ -83,6 +83,7 @@ import { WorldNavigation } from './WorldNavigation'
 import { AgentTopBar } from './AgentTopBar'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
+import { useDemoMode } from '@/contexts/DemoContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
 import { LightingDebugPanel } from './LightingDebugPanel'
@@ -884,15 +885,30 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     return [...realVisibleSessions, ...debugSessions]
   }, [realVisibleSessions, debugBots, debugBotsEnabled])
 
-  // Map debug session keys to their assigned rooms
+  // Demo mode: merge demo room assignments into the room override map
+  const { isDemoMode, demoRoomAssignments } = useDemoMode()
+
+  // Map debug/demo session keys to their assigned rooms
   const debugRoomMap = useMemo(() => {
-    if (!debugBotsEnabled || debugBots.length === 0) return undefined
+    const hasDebugBots = debugBotsEnabled && debugBots.length > 0
+    const hasDemoAssignments = isDemoMode && demoRoomAssignments.size > 0
+    if (!hasDebugBots && !hasDemoAssignments) return undefined
+
     const map = new Map<string, string>()
-    for (const bot of debugBots) {
-      map.set(`debug:${bot.id}`, bot.roomId)
+    // Debug bots
+    if (hasDebugBots) {
+      for (const bot of debugBots) {
+        map.set(`debug:${bot.id}`, bot.roomId)
+      }
+    }
+    // Demo mode room assignments
+    if (hasDemoAssignments) {
+      for (const [key, roomId] of demoRoomAssignments) {
+        map.set(key, roomId)
+      }
     }
     return map
-  }, [debugBots, debugBotsEnabled])
+  }, [debugBots, debugBotsEnabled, isDemoMode, demoRoomAssignments])
 
   // Display names
   const sessionKeys = useMemo(() => sessions.map(s => s.key), [sessions])

@@ -40,7 +40,7 @@ interface FirstPersonControllerProps {
 
 // ─── Constants ─────────────────────────────────────────────────
 
-const EYE_HEIGHT = 0.7
+const EYE_HEIGHT = 1.6
 const WALK_SPEED = 3
 const RUN_SPEED = 6
 
@@ -105,8 +105,15 @@ export function FirstPersonController({
       if (dx >= -hs && dx <= hs && dz >= -hs && dz <= hs) {
         // Inside this room's bounds — use walkable mask
         const gridPos = worldToGrid(dx, dz, room.cellSize, room.gridWidth, room.gridDepth)
-        // Check the cell and adjacent cells for the player radius
-        return room.walkableMask[gridPos.z]?.[gridPos.x] ?? false
+        const isWalkable = room.walkableMask[gridPos.z]?.[gridPos.x] ?? false
+        if (isWalkable) return true
+        // Check nearby cells (3x3) — makes doors easier to find
+        for (let oz = -1; oz <= 1; oz++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            if (room.walkableMask[gridPos.z + oz]?.[gridPos.x + ox]) return true
+          }
+        }
+        return false
       }
     }
 

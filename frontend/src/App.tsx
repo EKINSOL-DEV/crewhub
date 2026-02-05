@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { World3DView } from './components/world3d/World3DView'
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
@@ -12,6 +12,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ChatProvider } from './contexts/ChatContext'
 import { RoomsProvider } from './contexts/RoomsContext'
+import { DemoProvider, DemoModeIndicator, useDemoMode } from './contexts/DemoContext'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
@@ -50,7 +51,20 @@ const tabs: Tab[] = [
 ]
 
 function AppContent() {
-  const { sessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
+  const { sessions: realSessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
+  const { isDemoMode, demoSessions } = useDemoMode()
+
+  // When demo mode is active, replace real sessions with demo data.
+  // Demo sessions completely replace real ones so the 3D world looks
+  // consistently populated regardless of actual backend state.
+  const sessions = useMemo(() => {
+    if (!isDemoMode || demoSessions.length === 0) return realSessions
+    // Build a set of demo keys to replace any matching real sessions
+    const demoKeys = new Set(demoSessions.map(s => s.key))
+    const nonOverlapping = realSessions.filter(s => !demoKeys.has(s.key))
+    return [...demoSessions, ...nonOverlapping]
+  }, [isDemoMode, demoSessions, realSessions])
+
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('active')
   const [showOnboarding, setShowOnboarding] = useState(false)
@@ -260,6 +274,8 @@ function AppContent() {
           onSkip={handleOnboardingSkip}
         />
       )}
+
+      <DemoModeIndicator />
     </div>
   )
 }
@@ -273,11 +289,13 @@ function App() {
   
   return (
     <ThemeProvider>
-      <RoomsProvider>
-        <ChatProvider>
-          <AppContent />
-        </ChatProvider>
-      </RoomsProvider>
+      <DemoProvider>
+        <RoomsProvider>
+          <ChatProvider>
+            <AppContent />
+          </ChatProvider>
+        </RoomsProvider>
+      </DemoProvider>
     </ThemeProvider>
   )
 }
