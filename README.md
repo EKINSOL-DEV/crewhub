@@ -135,28 +135,22 @@ make dev
 
 ## ⚙️ Configuration
 
-Copy `.env.example` to `.env` and configure:
+Copy `.env.example` to `.env`:
 
 ```bash
-# Required: OpenClaw Gateway connection
+# Optional: Override default Gateway URL (default: ws://localhost:18789)
 OPENCLAW_GATEWAY_URL=ws://localhost:18789
-OPENCLAW_GATEWAY_TOKEN=your_token_here  # Found in ~/.openclaw/openclaw.json → gateway.auth.token
 
 # Optional: Backend settings
 BACKEND_PORT=8090
 DEBUG=false
-
-# Optional: Frontend API URL
-VITE_API_URL=http://localhost:8090
 ```
 
-### Getting Your Gateway Token
-
-Your token is stored in `~/.openclaw/openclaw.json` under `gateway.auth.token`. You can also set it via the `OPENCLAW_GATEWAY_TOKEN` environment variable.
+On first launch, the **onboarding wizard** will auto-detect your OpenClaw installation and configure the connection — including the gateway token. No manual token setup needed.
 
 ### Docker Network Notes
 
-When running in Docker, use these Gateway URLs:
+When running in Docker, set the Gateway URL to reach your host:
 - **macOS/Windows**: `ws://host.docker.internal:18789`
 - **Linux**: `ws://172.17.0.1:18789` (or your host IP)
 
