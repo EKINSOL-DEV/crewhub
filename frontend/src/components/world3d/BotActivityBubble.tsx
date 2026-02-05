@@ -14,45 +14,65 @@ interface BotActivityBubbleProps {
 }
 
 /** Max characters before truncating with ellipsis */
-const MAX_CHARS = 30
+const MAX_CHARS = 40
 
 function truncate(text: string, max: number): string {
   if (text.length <= max) return text
-  return text.slice(0, max - 1) + '…'
+  // Try to break at a word boundary
+  const trimmed = text.slice(0, max - 1)
+  const lastSpace = trimmed.lastIndexOf(' ')
+  if (lastSpace > max * 0.6) {
+    return trimmed.slice(0, lastSpace) + '…'
+  }
+  return trimmed + '…'
+}
+
+/** Dynamic font size: shorter text gets larger font, longer text shrinks */
+function getFontSize(textLength: number): string {
+  if (textLength <= 15) return '10px'
+  if (textLength <= 25) return '9.5px'
+  return '9px'
 }
 
 /**
  * Floating activity/status bubble above a bot's head.
- * Shows what the bot is currently doing (tool calls, thinking, label, idle).
+ * Shows what the bot is currently doing — task summary, tool calls, thinking, or idle.
  * Uses Html from drei so it renders as a DOM overlay scaled with distance.
  */
 export function BotActivityBubble({ activity, status, isActive }: BotActivityBubbleProps) {
   const groupRef = useRef<THREE.Group>(null)
   const [visible, setVisible] = useState(false)
   const [displayText, setDisplayText] = useState(activity)
+  const [textOpacity, setTextOpacity] = useState(1)
 
-  // Fade in on mount, update text with brief fade
+  // Fade in on mount
   useEffect(() => {
-    // Small delay before showing to allow fade-in
     const timer = setTimeout(() => setVisible(true), 50)
     return () => clearTimeout(timer)
   }, [])
 
-  // When activity text changes, update display
+  // When activity text changes, animate with a subtle fade
   useEffect(() => {
-    setDisplayText(activity)
-  }, [activity])
+    if (activity === displayText) return
+    // Fade out → swap text → fade in
+    setTextOpacity(0)
+    const timer = setTimeout(() => {
+      setDisplayText(activity)
+      setTextOpacity(1)
+    }, 150)
+    return () => clearTimeout(timer)
+  }, [activity, displayText])
 
   // Subtle float animation (slower than the bot's own bob)
   useFrame(({ clock }) => {
     if (!groupRef.current) return
     const t = clock.getElapsedTime()
-    // Gentle oscillation: ~0.02 units amplitude, slow period
     groupRef.current.position.y = 0.88 + Math.sin(t * 1.8) * 0.02
   })
 
   const isIdle = status === 'idle' && !isActive
   const label = truncate(displayText, MAX_CHARS)
+  const fontSize = getFontSize(label.length)
 
   return (
     <group ref={groupRef} position={[0, 0.88, 0]}>
@@ -84,14 +104,15 @@ export function BotActivityBubble({ activity, status, isActive }: BotActivityBub
               boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
               whiteSpace: 'nowrap',
               fontFamily: 'system-ui, -apple-system, sans-serif',
-              fontSize: '10px',
+              fontSize,
               fontWeight: isIdle ? 400 : 500,
               color: isIdle ? '#9ca3af' : '#374151',
               lineHeight: '1.3',
-              maxWidth: '180px',
+              maxWidth: '200px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              opacity: isIdle ? 0.7 : 1,
+              opacity: isIdle ? 0.7 : textOpacity,
+              transition: 'opacity 0.15s ease-in-out, font-size 0.2s ease',
             }}
           >
             {label}

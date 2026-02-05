@@ -187,30 +187,129 @@ function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatu
 
 // ─── Activity Text for Bubbles ──────────────────────────────────
 
-function getActivityText(session: CrewSession, isActive: boolean): string {
-  if (isActive) {
-    // Prefer session label (e.g. "review-chat-design")
-    if (session.label) return session.label
-    // Check last tool call from messages
-    if (session.messages && session.messages.length > 0) {
-      const recentMessages = session.messages.slice(-3)
-      for (let i = recentMessages.length - 1; i >= 0; i--) {
-        const msg = recentMessages[i]
-        if (Array.isArray(msg.content)) {
-          for (const block of msg.content) {
-            if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
-              return `🔧 ${block.name}`
-            }
-            if (block.type === 'thinking') {
-              return '💭 Thinking...'
-            }
-          }
-        }
+/**
+ * Convert a kebab-case or snake_case label into a human-readable summary.
+ * e.g. "fix-wall-alignment" → "Fixing wall alignment"
+ *      "review-pr-42" → "Reviewing PR 42"
+ *      "writing-desert-env" → "Writing desert env"
+ */
+function humanizeLabel(label: string): string {
+  // Replace separators with spaces
+  let text = label.replace(/[-_]+/g, ' ').trim()
+  if (!text) return ''
+
+  // Common prefixes that indicate ongoing action — convert to gerund
+  const gerundMap: Record<string, string> = {
+    'fix': 'Fixing',
+    'review': 'Reviewing',
+    'write': 'Writing',
+    'build': 'Building',
+    'add': 'Adding',
+    'update': 'Updating',
+    'debug': 'Debugging',
+    'test': 'Testing',
+    'refactor': 'Refactoring',
+    'deploy': 'Deploying',
+    'check': 'Checking',
+    'create': 'Creating',
+    'implement': 'Implementing',
+    'remove': 'Removing',
+    'delete': 'Deleting',
+    'move': 'Moving',
+    'merge': 'Merging',
+    'setup': 'Setting up',
+    'clean': 'Cleaning',
+    'analyze': 'Analyzing',
+    'design': 'Designing',
+    'optimize': 'Optimizing',
+    'migrate': 'Migrating',
+    'scan': 'Scanning',
+    'fetch': 'Fetching',
+    'parse': 'Parsing',
+    'monitor': 'Monitoring',
+    'install': 'Installing',
+    'configure': 'Configuring',
+    'research': 'Researching',
+  }
+
+  const words = text.split(' ')
+  const firstWord = words[0].toLowerCase()
+  if (gerundMap[firstWord]) {
+    words[0] = gerundMap[firstWord]
+  } else {
+    // Capitalize first word
+    words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1)
+  }
+
+  // Uppercase common acronyms
+  const acronyms = new Set(['pr', 'ui', 'ux', 'api', 'css', 'html', 'db', 'ci', 'cd', 'ssr', 'seo', 'jwt', 'sdk'])
+  for (let i = 1; i < words.length; i++) {
+    if (acronyms.has(words[i].toLowerCase())) {
+      words[i] = words[i].toUpperCase()
+    }
+  }
+
+  return words.join(' ')
+}
+
+/**
+ * Extract a short task summary from the last few messages.
+ * Looks for the last user message text to understand what the bot is working on.
+ */
+function extractTaskSummary(messages: CrewSession['messages']): string | null {
+  if (!messages || messages.length === 0) return null
+
+  // Scan recent messages backwards looking for useful context
+  const recent = messages.slice(-5)
+  let lastToolCall: string | null = null
+  let isThinking = false
+
+  for (let i = recent.length - 1; i >= 0; i--) {
+    const msg = recent[i]
+    if (!Array.isArray(msg.content)) continue
+
+    for (const block of msg.content) {
+      // Track latest tool call
+      if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name && !lastToolCall) {
+        lastToolCall = block.name
+      }
+      // Track thinking
+      if (block.type === 'thinking' && !isThinking) {
+        isThinking = true
       }
     }
-    return 'Working...'
   }
-  // Idle
+
+  if (isThinking && !lastToolCall) return '💭 Thinking…'
+  if (lastToolCall) return `🔧 ${lastToolCall}`
+  return null
+}
+
+function getActivityText(session: CrewSession, isActive: boolean): string {
+  if (isActive) {
+    // 1. Prefer session label — humanize it into a task summary
+    if (session.label) {
+      const humanized = humanizeLabel(session.label)
+      if (humanized) {
+        // Append "..." to indicate it's ongoing
+        return humanized.endsWith('…') ? humanized : humanized + '…'
+      }
+    }
+
+    // 2. Extract context from recent messages (tool calls, thinking)
+    const messageSummary = extractTaskSummary(session.messages)
+    if (messageSummary) return messageSummary
+
+    // 3. Generic fallback
+    return 'Working…'
+  }
+
+  // Idle — check if there's a label to show what was last worked on
+  if (session.label) {
+    const humanized = humanizeLabel(session.label)
+    if (humanized) return `✅ ${humanized}`
+  }
+
   return '💤 Idle'
 }
 
