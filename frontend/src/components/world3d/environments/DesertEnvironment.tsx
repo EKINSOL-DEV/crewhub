@@ -212,7 +212,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
 
         const thickness = 0.08 + s * 0.04
         const scaleVec = new THREE.Vector3(1, 1, thickness / 0.1)
-        mat4.compose(new THREE.Vector3(wx, -0.15, wz), quat, scaleVec)
+        mat4.compose(new THREE.Vector3(wx, -0.02, wz), quat, scaleVec)
         mList.push(mat4.clone())
 
         // Sandy color variations: tan → warm beige → light orange
