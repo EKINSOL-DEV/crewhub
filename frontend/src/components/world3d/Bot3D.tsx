@@ -84,6 +84,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   const { state: focusState, focusBot } = useWorldFocus()
   const { startDrag, endDrag } = useDragActions()
   const [hovered, setHovered] = useState(false)
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // 30% size increase for all bots
   const effectiveScale = scale * 1.3
@@ -668,12 +669,16 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         if (onClick && session) onClick(session)
       }}
       onPointerOver={() => {
+        if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null }
         setHovered(true)
         if (session && onClick) document.body.style.cursor = 'pointer'
       }}
       onPointerOut={() => {
-        setHovered(false)
-        document.body.style.cursor = 'auto'
+        // Delay unhover so user can reach the drag handle
+        hoverTimeoutRef.current = setTimeout(() => {
+          setHovered(false)
+          document.body.style.cursor = 'auto'
+        }, 400)
       }}
     >
       {/* Offset group to put feet on the floor */}
@@ -751,6 +756,16 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
               draggable
               onPointerDown={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
+              onMouseEnter={() => {
+                if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null }
+                setHovered(true)
+              }}
+              onMouseLeave={() => {
+                hoverTimeoutRef.current = setTimeout(() => {
+                  setHovered(false)
+                  document.body.style.cursor = 'auto'
+                }, 300)
+              }}
               onDragStart={(e) => {
                 e.dataTransfer.setData('text/plain', session.key)
                 e.dataTransfer.effectAllowed = 'move'
