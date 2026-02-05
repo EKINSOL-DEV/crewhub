@@ -8,6 +8,7 @@ import { BotAccessory } from './BotAccessory'
 import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { SleepingZs, type AnimState } from './BotAnimations'
+import { BOT_FIXED_Y } from './Bot3D'
 import { getBotConfigFromSession } from './utils/botVariants'
 import { getSessionDisplayName } from '@/lib/minionUtils'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
@@ -52,38 +53,29 @@ interface WanderingBots3DProps {
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
-/** Get a random point in the outdoor area (outside the building, on the grass) */
-function getRandomOutdoorPosition(buildingWidth: number, buildingDepth: number): [number, number] {
+/** Campus bounds: bots stay within the building compound (corridors/pathways between rooms) */
+const CAMPUS_MARGIN = 3 // padding inside building walls
+
+/** Get a random point within the campus/building area (corridors between rooms) */
+function getRandomCampusPosition(buildingWidth: number, buildingDepth: number): [number, number] {
   const halfBW = buildingWidth / 2
   const halfBD = buildingDepth / 2
-  const margin = 3 // Stay away from building walls
-  const outerRange = 25 // How far out from building bots can roam
 
-  // Pick a random zone: front, back, left, or right of building
-  const zone = Math.floor(Math.random() * 4)
-  let x: number, z: number
-
-  switch (zone) {
-    case 0: // Front (negative Z)
-      x = (Math.random() - 0.5) * (buildingWidth + outerRange * 2)
-      z = -halfBD - margin - Math.random() * outerRange
-      break
-    case 1: // Back (positive Z)
-      x = (Math.random() - 0.5) * (buildingWidth + outerRange * 2)
-      z = halfBD + margin + Math.random() * outerRange
-      break
-    case 2: // Left (negative X)
-      x = -halfBW - margin - Math.random() * outerRange
-      z = (Math.random() - 0.5) * (buildingDepth + outerRange * 2)
-      break
-    case 3: // Right (positive X)
-    default:
-      x = halfBW + margin + Math.random() * outerRange
-      z = (Math.random() - 0.5) * (buildingDepth + outerRange * 2)
-      break
-  }
+  // Stay within building bounds with margin
+  const x = -halfBW + CAMPUS_MARGIN + Math.random() * (buildingWidth - CAMPUS_MARGIN * 2)
+  const z = -halfBD + CAMPUS_MARGIN + Math.random() * (buildingDepth - CAMPUS_MARGIN * 2)
 
   return [x, z]
+}
+
+/** Clamp a position to campus bounds */
+function clampToCampus(x: number, z: number, buildingWidth: number, buildingDepth: number): [number, number] {
+  const halfBW = buildingWidth / 2
+  const halfBD = buildingDepth / 2
+  return [
+    Math.max(-halfBW + CAMPUS_MARGIN, Math.min(halfBW - CAMPUS_MARGIN, x)),
+    Math.max(-halfBD + CAMPUS_MARGIN, Math.min(halfBD - CAMPUS_MARGIN, z)),
+  ]
 }
 
 // ─── Single Wandering Bot Component ──────────────────────────────
@@ -148,10 +140,13 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
       // Arrived at target — wait, then pick a new target
       state.waitTimer -= delta
       if (state.waitTimer <= 0) {
-        const [nx, nz] = getRandomOutdoorPosition(buildingWidth, buildingDepth)
+        const [nx, nz] = getRandomCampusPosition(buildingWidth, buildingDepth)
         // Bias toward staying somewhat close to current position
-        state.targetX = state.currentX + (nx - state.currentX) * 0.4
-        state.targetZ = state.currentZ + (nz - state.currentZ) * 0.4
+        const rawX = state.currentX + (nx - state.currentX) * 0.4
+        const rawZ = state.currentZ + (nz - state.currentZ) * 0.4
+        const [cx, cz] = clampToCampus(rawX, rawZ, buildingWidth, buildingDepth)
+        state.targetX = cx
+        state.targetZ = cz
         state.waitTimer = PAUSE_MIN_S + Math.random() * (PAUSE_MAX_S - PAUSE_MIN_S)
       }
 
@@ -176,10 +171,15 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
       walkPhaseRef.current += delta * 6
     }
 
+    // Clamp to campus bounds (safety net)
+    const [clampedX, clampedZ] = clampToCampus(state.currentX, state.currentZ, buildingWidth, buildingDepth)
+    state.currentX = clampedX
+    state.currentZ = clampedZ
+
     // Apply position
     groupRef.current.position.x = state.currentX
     groupRef.current.position.z = state.currentZ
-    groupRef.current.position.y = 0.16 // ground level
+    groupRef.current.position.y = BOT_FIXED_Y // fixed height for all bots
     groupRef.current.rotation.y = state.rotY
 
     // Gentle breathing scale
@@ -294,7 +294,7 @@ export function WanderingBots3D({
       if (!session) return null
       const config = getBotConfigFromSession(session.key, session.label)
       const name = getSessionDisplayName(session, displayNames.get(session.key))
-      const [x, z] = getRandomOutdoorPosition(buildingWidth, buildingDepth)
+      const [x, z] = getRandomCampusPosition(buildingWidth, buildingDepth)
       return { session, config, name, x, z }
     }).filter(Boolean) as { session: CrewSession; config: BotVariantConfig; name: string; x: number; z: number }[]
     // We intentionally use wanderers as the primary dep, not sleepingSessions

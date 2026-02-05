@@ -30,6 +30,11 @@ const DIRECTIONS = [
   { x: -1, z: -1 }, // NW
 ]
 
+// ─── Fixed Y height for ALL bots ─────────────────────────────────
+// Single constant — never calculated from floor geometry or raycasting.
+// Feet rest visibly ON TOP of the floor surface (floor top ≈ 0.16).
+export const BOT_FIXED_Y = 0.35
+
 // ─── Global bot position registry (module-level, no React state) ──
 // CameraController reads from this to follow bots smoothly.
 export const botPositionRegistry = new Map<string, { x: number; y: number; z: number }>()
@@ -212,13 +217,13 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     // ─── First frame: snap to position without interpolation ──
     if (!hasInitialized.current) {
       hasInitialized.current = true
-      groupRef.current.position.set(state.currentX, position[1], state.currentZ)
+      groupRef.current.position.set(state.currentX, BOT_FIXED_Y, state.currentZ)
       groupRef.current.scale.setScalar(effectiveScale)
       groupRef.current.rotation.set(0, 0, 0)
       if (session?.key) {
         botPositionRegistry.set(session.key, {
           x: state.currentX,
-          y: position[1],
+          y: BOT_FIXED_Y,
           z: state.currentZ,
         })
       }
@@ -261,7 +266,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         bounceY = 0
         break
     }
-    groupRef.current.position.y = position[1] + anim.yOffset + bounceY
+    groupRef.current.position.y = BOT_FIXED_Y + anim.yOffset + bounceY
 
     // Breathing effect via scale (sleeping: very slow gentle breathing)
     if (anim.phase === 'sleeping') {
@@ -648,8 +653,8 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
 
   // Offset y so bot feet rest on the floor.
   // Bot feet bottom is at y=-0.33 in body space; offset of 0.33 puts feet
-  // at the group origin.  Combined with position[1] = floorY (0.16),
-  // this ensures feet touch the floor surface regardless of scale.
+  // at the group origin.  Combined with BOT_FIXED_Y (0.35), the fixed
+  // constant height, this ensures feet sit visibly on top of the floor surface.
   const yOffset = 0.33
 
   return (
