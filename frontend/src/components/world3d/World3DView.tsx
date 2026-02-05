@@ -80,7 +80,7 @@ import { CameraController } from './CameraController'
 import { FirstPersonController, FirstPersonHUD } from './FirstPersonController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
-import { BossHudButton } from './BossHudButton'
+import { AgentTopBar } from './AgentTopBar'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useChatContext } from '@/contexts/ChatContext'
@@ -1026,7 +1026,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         <CanvasErrorBoundary>
           <Canvas
             shadows
-            camera={{ position: [45, 40, 45], fov: 40, near: 0.1, far: 300 }}
+            camera={{ position: [-45, 40, -45], fov: 40, near: 0.1, far: 300 }}
             style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)' }}
           >
             <Suspense fallback={<LoadingFallback />}>
@@ -1114,13 +1114,15 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           />
         )}
 
-        {/* Boss HUD Button (bottom-right, above tabs) */}
-        <BossHudButton
+        {/* Agent Top Bar (centered top, with pinned agent + assistent + picker) */}
+        <AgentTopBar
           sessions={allSessions}
           getBotConfig={getBotConfigFromSession}
           getRoomForSession={getRoomForSession}
           defaultRoomId={rooms[0]?.id}
           isActivelyRunning={isActivelyRunning}
+          displayNames={displayNames}
+          rooms={rooms}
         />
 
         {/* Drag status indicator */}

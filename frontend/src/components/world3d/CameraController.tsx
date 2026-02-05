@@ -141,6 +141,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const prevLevelRef = useRef<FocusLevel | null>(null)
   const prevRoomIdRef = useRef<string | null>(null)
   const prevBotKeyRef = useRef<string | null>(null)
+  const isInitialMount = useRef(true)
 
   // Lerp target for smooth orbital following (orbit center tracks bot)
   const followTarget = useRef(new THREE.Vector3())
@@ -242,6 +243,12 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       return
     }
 
+    // On initial mount, skip transition animation — jump to position instantly
+    const enableTransition = !isInitialMount.current
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+    }
+
     prevLevelRef.current = state.level
     prevRoomIdRef.current = state.focusedRoomId
     prevBotKeyRef.current = state.focusedBotKey
@@ -252,13 +259,13 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     if (state.level === 'overview') {
       isFollowing.current = false
       const c = OVERVIEW_CAMERA
-      controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, true)
+      controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
     } else if (state.level === 'room' && state.focusedRoomId) {
       isFollowing.current = false
       const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
       if (roomEntry) {
         const c = getRoomCamera(roomEntry.position)
-        controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, true)
+        controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
       }
     } else if (state.level === 'bot' && state.focusedBotKey) {
       // Fly-to the bot's initial orbital position
