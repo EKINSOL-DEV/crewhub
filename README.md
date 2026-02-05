@@ -12,6 +12,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-v0.6.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
+  <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/react-19-61dafb" alt="React">
   <img src="https://img.shields.io/badge/fastapi-0.100+-009688" alt="FastAPI">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="Docker">
@@ -217,6 +218,10 @@ CrewHub v0.6.0 introduces a **modding foundation** designed for extensibility:
 - **Data-driven Environments** — Themes (default, forest, neon) are registry entries, not hardcoded — add your own by registering new environment configs
 
 This foundation makes it possible to extend CrewHub with custom props, room layouts, and visual themes without modifying core code.
+
+## 💬 Community
+
+Join the CrewHub community on **[Discord](https://discord.gg/Bfupkmvp)** — chat with the team, get early access, and help shape the roadmap.
 
 ## 🤝 Contributing
 
