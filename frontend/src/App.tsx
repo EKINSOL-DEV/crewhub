@@ -249,6 +249,7 @@ function AppContent() {
         onOpenChange={setSettingsOpen}
         settings={settings}
         onSettingsChange={handleSettingsChange}
+        sessions={sessions}
       />
 
       <ChatWindowManager />

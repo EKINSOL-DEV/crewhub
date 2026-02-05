@@ -5,8 +5,9 @@ import { LogViewer } from "./LogViewer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, SlidersHorizontal } from "lucide-react"
+import { Search, SlidersHorizontal, ChevronRight, Layers } from "lucide-react"
 import { getSessionStatus, type SessionStatus } from "@/lib/minionUtils"
+import { useRooms } from "@/hooks/useRooms"
 import { cn } from "@/lib/utils"
 
 interface CardsViewProps {
@@ -51,12 +52,60 @@ const statusOrder: Record<SessionStatus, number> = {
   sleeping: 2,
 }
 
+/** Collapsible room group header */
+function RoomGroupHeader({
+  name,
+  icon,
+  color,
+  count,
+  expanded,
+  onToggle,
+}: {
+  name: string
+  icon: string | null
+  color: string | null
+  count: number
+  expanded: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-card/80 hover:bg-accent/30 transition-colors text-left"
+    >
+      <ChevronRight
+        className={cn(
+          "h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0",
+          expanded && "rotate-90"
+        )}
+      />
+      <div
+        className="w-8 h-8 rounded-md flex items-center justify-center text-base shrink-0"
+        style={{
+          backgroundColor: `${color || "#6b7280"}15`,
+          border: `2px solid ${color || "#6b7280"}60`,
+        }}
+      >
+        {icon || "📦"}
+      </div>
+      <span className="font-medium text-sm flex-1">{name}</span>
+      <span className="text-xs text-muted-foreground tabular-nums">
+        {count} session{count !== 1 ? "s" : ""}
+      </span>
+    </button>
+  )
+}
+
 export function CardsView({ sessions }: CardsViewProps) {
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState<SortOption>("recent")
   const [activeFilters, setActiveFilters] = useState<Set<StatusFilter>>(new Set(DEFAULT_FILTERS))
   const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
+  const [groupByRoom, setGroupByRoom] = useState(true)
+  const [collapsedRooms, setCollapsedRooms] = useState<Set<string>>(new Set())
+
+  const { rooms, getRoomForSession } = useRooms()
 
   const allSelected = activeFilters.size === ALL_STATUSES.length
 
@@ -76,6 +125,18 @@ export function CardsView({ sessions }: CardsViewProps) {
     setActiveFilters((prev) =>
       prev.size === ALL_STATUSES.length ? new Set<StatusFilter>() : new Set(ALL_STATUSES)
     )
+  }, [])
+
+  const toggleRoomCollapse = useCallback((roomId: string) => {
+    setCollapsedRooms((prev) => {
+      const next = new Set(prev)
+      if (next.has(roomId)) {
+        next.delete(roomId)
+      } else {
+        next.add(roomId)
+      }
+      return next
+    })
   }, [])
 
   const filteredAndSortedSessions = useMemo(() => {
@@ -118,6 +179,66 @@ export function CardsView({ sessions }: CardsViewProps) {
 
     return result
   }, [sessions, search, sortBy, activeFilters])
+
+  // Group sessions by room when groupByRoom is enabled
+  const groupedSessions = useMemo(() => {
+    if (!groupByRoom) return null
+
+    const groups = new Map<string, { room: { id: string; name: string; icon: string | null; color: string | null; sort_order: number } | null; sessions: CrewSession[] }>()
+
+    // Create a group for each known room in sort order
+    const sortedRooms = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
+    for (const room of sortedRooms) {
+      groups.set(room.id, { room, sessions: [] })
+    }
+
+    // Place sessions into their room groups
+    for (const session of filteredAndSortedSessions) {
+      const roomId = getRoomForSession(session.key, {
+        label: session.label,
+        model: session.model,
+        channel: session.lastChannel || session.channel,
+      })
+
+      if (roomId && groups.has(roomId)) {
+        groups.get(roomId)!.sessions.push(session)
+      } else {
+        // Unassigned group
+        if (!groups.has("__unassigned__")) {
+          groups.set("__unassigned__", { room: null, sessions: [] })
+        }
+        groups.get("__unassigned__")!.sessions.push(session)
+      }
+    }
+
+    // Convert to array, filter out empty groups, put unassigned last
+    const result: { groupId: string; name: string; icon: string | null; color: string | null; sessions: CrewSession[] }[] = []
+    for (const [groupId, { room, sessions: groupSessions }] of groups) {
+      if (groupSessions.length === 0) continue
+      if (groupId === "__unassigned__") continue // Add last
+      result.push({
+        groupId,
+        name: room?.name || groupId,
+        icon: room?.icon || null,
+        color: room?.color || null,
+        sessions: groupSessions,
+      })
+    }
+
+    // Add unassigned at the end
+    const unassigned = groups.get("__unassigned__")
+    if (unassigned && unassigned.sessions.length > 0) {
+      result.push({
+        groupId: "__unassigned__",
+        name: "Unassigned",
+        icon: "📦",
+        color: "#6b7280",
+        sessions: unassigned.sessions,
+      })
+    }
+
+    return result
+  }, [groupByRoom, filteredAndSortedSessions, rooms, getRoomForSession])
 
   const handleViewLogs = (session: CrewSession) => {
     setSelectedSession(session)
@@ -186,7 +307,24 @@ export function CardsView({ sessions }: CardsViewProps) {
 
             <div className="hidden sm:block w-px h-5 bg-border mx-1" />
 
-            {/* Sort select - kept as dropdown */}
+            {/* Group by Room toggle */}
+            <button
+              type="button"
+              onClick={() => setGroupByRoom((prev) => !prev)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                "border cursor-pointer select-none",
+                groupByRoom
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+              )}
+              title="Group sessions by room"
+            >
+              <Layers className="h-3 w-3" />
+              Rooms
+            </button>
+
+            {/* Sort select */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -224,7 +362,38 @@ export function CardsView({ sessions }: CardsViewProps) {
                 </Button>
               )}
             </div>
+          ) : groupByRoom && groupedSessions ? (
+            // Grouped by room view
+            <div className="space-y-4">
+              {groupedSessions.map((group) => {
+                const isCollapsed = collapsedRooms.has(group.groupId)
+                return (
+                  <div key={group.groupId}>
+                    <RoomGroupHeader
+                      name={group.name}
+                      icon={group.icon}
+                      color={group.color}
+                      count={group.sessions.length}
+                      expanded={!isCollapsed}
+                      onToggle={() => toggleRoomCollapse(group.groupId)}
+                    />
+                    {!isCollapsed && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-3 ml-1 pl-4 border-l-2" style={{ borderColor: `${group.color || "#6b7280"}40` }}>
+                        {group.sessions.map((session) => (
+                          <SessionCard
+                            key={session.key}
+                            session={session}
+                            onViewLogs={() => handleViewLogs(session)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           ) : (
+            // Flat view (no grouping)
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredAndSortedSessions.map((session) => (
                 <SessionCard
