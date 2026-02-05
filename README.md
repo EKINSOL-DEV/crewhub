@@ -114,24 +114,16 @@ Works with:
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git
 cd crewhub
-
-cp .env.example .env
-# Edit .env with your Gateway URL and token (see Configuration below)
-
 make up
 ```
 
-The dashboard will be available at **http://localhost:5180**
-
-> 💡 **First time?** Open `http://localhost:5180?onboarding=true` to launch the setup wizard.
+The dashboard will be available at **http://localhost:5180**. The onboarding wizard will guide you through connecting to your gateway.
 
 ### Option 2: Local Development
 
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git
 cd crewhub
-cp .env.example .env
-
 make dev
 ```
 
