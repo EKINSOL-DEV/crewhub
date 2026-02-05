@@ -136,7 +136,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const controlsRef = useRef<CameraControlsImpl>(null)
   const { state } = useWorldFocus()
   const { isDragging } = useDragState()
-  const prevLevelRef = useRef<FocusLevel>('overview')
+  const prevLevelRef = useRef<FocusLevel | null>(null)
   const prevRoomIdRef = useRef<string | null>(null)
   const prevBotKeyRef = useRef<string | null>(null)
 
