@@ -114,12 +114,19 @@ const BUILTIN_BLUEPRINTS: BlueprintJSON[] = [
 /**
  * Register all built-in blueprints via blueprintRegistry.
  * Called once at module load, similar to registerBuiltinProps().
+ * Uses batch registration — 1 notification for all blueprints.
  */
 export function registerBuiltinBlueprints(): void {
-  for (const json of BUILTIN_BLUEPRINTS) {
-    const blueprint = loadBlueprintFromJSON(json)
-    blueprintRegistry.register(blueprint.id, blueprint, 'builtin')
-  }
+  blueprintRegistry.registerBatch(
+    BUILTIN_BLUEPRINTS.map((json) => {
+      const blueprint = loadBlueprintFromJSON(json)
+      return {
+        id: `builtin:${blueprint.id}`,
+        data: blueprint,
+        source: 'builtin' as const,
+      }
+    }),
+  )
 }
 
 // Self-register on module load

@@ -983,6 +983,7 @@ function NullProp(_props: PropProps) {
 
 // ─── Prop Registry (dynamic, powered by Registry<T>) ────────────
 // Built-in props register through the same API that mods will use.
+// All builtin IDs use the "builtin:" namespace prefix.
 
 import { propRegistry } from '@/lib/modding/registries'
 
@@ -1044,9 +1045,14 @@ function registerBuiltinProps(): void {
     'sleep-corner':               { component: NullProp,                    mountType: 'floor', yOffset: 0 },
   }
 
-  for (const [id, entry] of Object.entries(builtins)) {
-    propRegistry.register(id, entry, 'builtin')
-  }
+  // Batch register all builtins — 1 notification instead of 46
+  propRegistry.registerBatch(
+    Object.entries(builtins).map(([id, data]) => ({
+      id: `builtin:${id}`,
+      data,
+      source: 'builtin' as const,
+    })),
+  )
 }
 
 // Self-register all built-in props on module load

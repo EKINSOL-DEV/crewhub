@@ -93,23 +93,36 @@ export function EnvironmentSwitcher({ buildingWidth, buildingDepth }: Environmen
 // Registers the 3 built-in environments. Called once at module load.
 
 function registerBuiltinEnvironments(): void {
-  environmentRegistry.register('grass', {
-    name: '🌿 Classic Grass',
-    description: 'Flat grass field with tufts and rocks',
-    component: GrassEnvironment,
-  }, 'builtin')
-
-  environmentRegistry.register('island', {
-    name: '🏝️ Floating Island',
-    description: 'Monument Valley-style floating island',
-    component: IslandEnvironment,
-  }, 'builtin')
-
-  environmentRegistry.register('floating', {
-    name: '✨ Sky Platform',
-    description: 'Futuristic hexagonal floating platform',
-    component: FloatingEnvironment,
-  }, 'builtin')
+  // Batch register all builtins — 1 notification instead of 3
+  environmentRegistry.registerBatch([
+    {
+      id: 'builtin:grass',
+      data: {
+        name: '🌿 Classic Grass',
+        description: 'Flat grass field with tufts and rocks',
+        component: GrassEnvironment,
+      },
+      source: 'builtin',
+    },
+    {
+      id: 'builtin:island',
+      data: {
+        name: '🏝️ Floating Island',
+        description: 'Monument Valley-style floating island',
+        component: IslandEnvironment,
+      },
+      source: 'builtin',
+    },
+    {
+      id: 'builtin:floating',
+      data: {
+        name: '✨ Sky Platform',
+        description: 'Futuristic hexagonal floating platform',
+        component: FloatingEnvironment,
+      },
+      source: 'builtin',
+    },
+  ])
 }
 
 // Self-register on module load (same pattern as PropRegistry)
