@@ -33,6 +33,8 @@ export function useProjects() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  // Data deduplication
+  const projectsFingerprintRef = useRef<string>("")
 
   const fetchProjects = useCallback(async () => {
     // Cancel any in-flight request
@@ -46,7 +48,13 @@ export function useProjects() {
       const response = await fetch(`${API_BASE}/projects`, { signal })
       if (!response.ok) throw new Error("Failed to fetch projects")
       const data: ProjectsResponse = await response.json()
-      setProjects(data.projects || [])
+      const newProjects = data.projects || []
+      // Deduplicate: only update state if projects actually changed
+      const fingerprint = JSON.stringify(newProjects.map(p => `${p.id}:${p.updated_at}:${p.status}`))
+      if (fingerprint !== projectsFingerprintRef.current) {
+        projectsFingerprintRef.current = fingerprint
+        setProjects(newProjects)
+      }
       setError(null)
     } catch (err) {
       // Ignore abort errors

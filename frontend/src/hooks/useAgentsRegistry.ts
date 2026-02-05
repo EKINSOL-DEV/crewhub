@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { API_BASE, type CrewSession } from "@/lib/api"
 
 export interface Agent {
@@ -35,13 +35,21 @@ export function useAgentsRegistry(sessions: CrewSession[]) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Data deduplication: avoid re-renders when agent data hasn't changed
+  const agentsFingerprintRef = useRef<string>("")
   
   const fetchAgents = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/agents`)
       if (!response.ok) throw new Error("Failed to fetch agents")
       const data: AgentsResponse = await response.json()
-      setAgents(data.agents || [])
+      const newAgents = data.agents || []
+      // Deduplicate: only update state if agents actually changed
+      const fingerprint = JSON.stringify(newAgents.map(a => `${a.id}:${a.updated_at}:${a.is_pinned}:${a.default_room_id}`))
+      if (fingerprint !== agentsFingerprintRef.current) {
+        agentsFingerprintRef.current = fingerprint
+        setAgents(newAgents)
+      }
       setError(null)
     } catch (err) {
       console.error("Failed to fetch agents:", err)

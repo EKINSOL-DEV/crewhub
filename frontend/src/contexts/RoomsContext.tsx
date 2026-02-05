@@ -93,6 +93,11 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
   const abortControllerRef = useRef<AbortController | null>(null)
   const hasFetchedRef = useRef(false)
 
+  // Data deduplication: track fingerprints to avoid re-renders with identical data
+  const roomsFingerprintRef = useRef<string>("")
+  const assignmentsFingerprintRef = useRef<string>("")
+  const rulesFingerprintRef = useRef<string>("")
+
   const fetchRooms = useCallback(async () => {
     // Cancel any in-flight request
     if (abortControllerRef.current) {
@@ -111,20 +116,38 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
       if (!roomsResponse.ok) throw new Error("Failed to fetch rooms")
       
       const roomsData: RoomsResponse = await roomsResponse.json()
-      setRooms(roomsData.rooms || [])
+      const newRooms = roomsData.rooms || []
+      // Deduplicate: only update state if rooms actually changed
+      const roomsFingerprint = JSON.stringify(newRooms.map(r => `${r.id}:${r.updated_at}:${r.sort_order}`))
+      if (roomsFingerprint !== roomsFingerprintRef.current) {
+        roomsFingerprintRef.current = roomsFingerprint
+        setRooms(newRooms)
+      }
       
       if (assignmentsResponse.ok) {
         const assignmentsData: AssignmentsResponse = await assignmentsResponse.json()
-        const assignmentsMap = new Map<string, string>()
-        for (const assignment of assignmentsData.assignments || []) {
-          assignmentsMap.set(assignment.session_key, assignment.room_id)
+        const assignments = assignmentsData.assignments || []
+        // Deduplicate assignments
+        const assignmentsFingerprint = JSON.stringify(assignments.map(a => `${a.session_key}:${a.room_id}`).sort())
+        if (assignmentsFingerprint !== assignmentsFingerprintRef.current) {
+          assignmentsFingerprintRef.current = assignmentsFingerprint
+          const assignmentsMap = new Map<string, string>()
+          for (const assignment of assignments) {
+            assignmentsMap.set(assignment.session_key, assignment.room_id)
+          }
+          setSessionAssignments(assignmentsMap)
         }
-        setSessionAssignments(assignmentsMap)
       }
       
       if (rulesResponse.ok) {
         const rulesData: RulesResponse = await rulesResponse.json()
-        setRules(rulesData.rules || [])
+        const newRules = rulesData.rules || []
+        // Deduplicate rules
+        const rulesFingerprint = JSON.stringify(newRules.map(r => `${r.id}:${r.priority}:${r.rule_value}`))
+        if (rulesFingerprint !== rulesFingerprintRef.current) {
+          rulesFingerprintRef.current = rulesFingerprint
+          setRules(newRules)
+        }
       }
       
       setError(null)
