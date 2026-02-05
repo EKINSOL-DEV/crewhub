@@ -62,7 +62,7 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
 
         const thickness = 0.08 + s * 0.04
         const scaleVec = new THREE.Vector3(1, 1, thickness / 0.1)
-        mat4.compose(new THREE.Vector3(wx, -0.02, wz), quat, scaleVec)
+        mat4.compose(new THREE.Vector3(wx, -0.08, wz), quat, scaleVec)
         mList.push(mat4.clone())
 
         const r = 0.38 + s * 0.06
@@ -92,7 +92,7 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
   // Tiles were at y = -0.15 with ~0.10 thickness → top was at y ≈ -0.10.
   // Offset of 0.13 puts top at y ≈ 0.03, slightly overlapping wall base to prevent seam.
   return (
-    <group position={[0, 0.13, 0]}>
+    <group position={[0, 0.08, 0]}>
       <instancedMesh ref={instanceRef} args={[undefined, undefined, count]} receiveShadow frustumCulled={false}>
         <boxGeometry args={[tileSize, tileSize, 0.1]} />
         <meshToonMaterial {...toonProps} />

@@ -669,7 +669,7 @@ function SceneContent({
       <ParkingAreaFloor x={parkingArea.x} z={parkingArea.z} width={parkingArea.width} depth={parkingArea.depth} />
       <ParkingArea3D position={[parkingArea.x, 0, parkingArea.z]} width={parkingArea.width} depth={parkingArea.depth} />
       <HallwayFloorLines roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
-      <EntranceLobby entranceX={entranceX} buildingFrontZ={-buildingDepth / 2} entranceWidth={5} />
+      {/* EntranceLobby removed — will be redesigned later */}
       <Hallway roomPositions={roomPositions} roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
 
       {/* CameraController (inside Canvas, manages camera animation + constraints) */}

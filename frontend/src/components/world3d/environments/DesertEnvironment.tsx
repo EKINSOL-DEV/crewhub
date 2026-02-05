@@ -212,7 +212,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
 
         const thickness = 0.08 + s * 0.04
         const scaleVec = new THREE.Vector3(1, 1, thickness / 0.1)
-        mat4.compose(new THREE.Vector3(wx, -0.02, wz), quat, scaleVec)
+        mat4.compose(new THREE.Vector3(wx, -0.08, wz), quat, scaleVec)
         mList.push(mat4.clone())
 
         // Sandy color variations: tan → warm beige → light orange
@@ -327,7 +327,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
       />
 
       {/* Terrain group — shifted up to eliminate gap with building base */}
-      <group position={[0, 0.13, 0]}>
+      <group position={[0, 0.08, 0]}>
         {/* Sand ground tiles (instanced) */}
         <instancedMesh
           ref={instanceRef}
