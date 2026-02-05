@@ -64,8 +64,9 @@ export function BossHudButton({ sessions, getBotConfig, getRoomForSession, defau
     <div
       style={{
         position: 'absolute',
-        bottom: 80, // above RoomTabsBar
-        right: 20,
+        top: 16,
+        left: '50%',
+        transform: 'translateX(-50%)',
         zIndex: 55,
         display: 'flex',
         flexDirection: 'column',
