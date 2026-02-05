@@ -283,7 +283,7 @@ const MOCK_CONNECTIONS = [
 const MOCK_SETTINGS: Record<string, string> = {
   'crewhub-theme': 'dark',
   'crewhub-accent': 'indigo',
-  'crewhub-environment': 'floating',
+  'crewhub-environment': 'desert',
   'crewhub-view-mode': 'world',
   'crewhub-lighting': 'ambient',
   'crewhub-idle-threshold': '300000',
