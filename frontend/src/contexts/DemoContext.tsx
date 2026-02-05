@@ -372,6 +372,25 @@ export function DemoModeIndicator() {
         <span>🚀</span>
         <span>Live Demo — no real agents running</span>
         <a
+          href="https://crewhub.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#fff',
+            textDecoration: 'none',
+            padding: '3px 10px',
+            borderRadius: '6px',
+            background: 'rgba(255,255,255,0.2)',
+            fontSize: '11px',
+            fontWeight: '700',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)' }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)' }}
+        >
+          Website →
+        </a>
+        <a
           href="https://github.com/EKINSOL-DEV/crewhub"
           target="_blank"
           rel="noopener noreferrer"
@@ -388,7 +407,7 @@ export function DemoModeIndicator() {
           onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)' }}
           onMouseLeave={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)' }}
         >
-          View on GitHub →
+          GitHub →
         </a>
       </div>
     )
