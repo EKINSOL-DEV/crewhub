@@ -404,30 +404,7 @@ async def seed_default_data():
                 VALUES (?, ?, ?, ?, ?, ?)
             """, default_rules)
             
-            # Create default connections
-            import json as json_module
-            default_connections = [
-                (
-                    'default-openclaw',
-                    'OpenClaw Gateway',
-                    'openclaw',
-                    json_module.dumps({
-                        'url': 'ws://127.0.0.1:18789',
-                        'auto_reconnect': True,
-                        'reconnect_delay': 1.0,
-                        'max_reconnect_delay': 60.0,
-                    }),
-                    True,
-                    now,
-                    now,
-                ),
-            ]
-            
-            await db.executemany("""
-                INSERT OR IGNORE INTO connections (id, name, type, config, enabled, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, default_connections)
-            
+            # No default connections — onboarding wizard handles setup
             await db.commit()
             logger.info("Default seed data inserted successfully")
             return True
