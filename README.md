@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.3.0-blue" alt="Version">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <img src="https://img.shields.io/badge/react-18-61dafb" alt="React">
+  <img src="https://img.shields.io/badge/version-v0.6.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
+  <img src="https://img.shields.io/badge/react-19-61dafb" alt="React">
   <img src="https://img.shields.io/badge/fastapi-0.100+-009688" alt="FastAPI">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="Docker">
 </p>
@@ -22,7 +22,9 @@
 ## ✨ Features
 
 - 🔴 **Real-time Monitoring** — Live session updates via Server-Sent Events (SSE)
+- ⚡ **Centralized SSE** — Single connection manager with fan-out
 - 🏠 **Rooms System** — Organize agents into workspaces with drag & drop
+- 🏠 **Room Context** — Deduplicated data fetching
 - 🃏 **Cards View** — Filter agents by status: Active, Idle, Working, Error, and more
 - 📜 **Log Viewer** — Search, browse, and export chat history
 - 🔗 **Connections Manager** — Configure OpenClaw, Claude Code, and Codex integrations
@@ -39,7 +41,13 @@
 - 💬 **Planner-style Chat** — Draggable/resizable chat windows with minimize bar
 - ⚙️ **Settings Consolidation** — All thresholds configurable via Settings UI
 - 🔄 **Live Room Refresh** — New rooms appear instantly without page reload
-- 🔢 **Version Display** — Always know what you're running (v0.3.0)
+- 🧩 **Modding Foundation** — Registry\<T\> pattern, namespaced IDs, batch registration
+- 📐 **JSON Blueprints** — Data-driven room layouts with Zod validation
+- 🌍 **Data-driven Environments** — 3 themes, registry-based, extensible
+- 📥 **Blueprint Import/Export API** — Full CRUD with validation
+- 📚 **Documentation Site** — Starlight/Astro docs at [docs.crewhub.dev](https://docs.crewhub.dev)
+- 🔒 **AGPL-3.0 License**
+- 🔢 **Version Display** — Always know what you're running (v0.6.0)
 
 ## 📸 Screenshots
 
@@ -67,17 +75,18 @@ CrewHub ships with 5 distinct bot personalities, each with a custom SVG design:
 
 Design your agents in the **Agent Design Lab** and watch them come alive in the **3D Bot Playground**.
 
-## 🆕 What's New in v0.3.0
+## 🆕 What's New in v0.6.0
 
-- 🗺️ **Grid System** — 20×20 grid per room with data model, blueprints, and prop registry
-- 🧱 **Grid-based Prop Rendering** — Rooms built from blueprints instead of hardcoded positions
-- 🔍 **Grid Debug Overlay** — Visual grid with color-coded cells (toggle in Settings)
-- 🤖 **Simplified Bot Movement** — Natural random walk with obstacle avoidance
-- 🎥 **Camera Orbit** — Orbital rotation around focused bot
-- 💬 **Planner-style Chat Windows** — Individual draggable/resizable windows with minimize bar
-- ⚙️ **Settings Consolidation** — All thresholds configurable via Settings UI
-- 🔄 **Live Room Refresh** — New rooms appear instantly without page reload
-- 🐛 **Many Bug Fixes** — Pathfinding alignment, prop positioning, routing duplication, and more
+- 🧩 **Modding Foundation** — Registry\<T\> pattern with namespaced IDs and batch registration
+- 📐 **JSON Blueprints** — Data-driven room layouts with full Zod validation
+- 🌍 **Data-driven Environments** — 3 themes (default, forest, neon), registry-based, extensible
+- 📥 **Blueprint Import/Export API** — Full CRUD endpoints with validation
+- 📚 **Documentation Site** — Starlight/Astro docs live at [docs.crewhub.dev](https://docs.crewhub.dev)
+- ⚡ **Centralized SSE** — Single connection manager with fan-out to all consumers
+- 🏠 **Room Context** — Deduplicated data fetching, cleaner component tree
+- 🔒 **AGPL-3.0 License** — Switched from MIT to AGPL-3.0
+- ⬆️ **React 19** — Upgraded from React 18
+- 🐛 **Many Bug Fixes** — Pathfinding, prop positioning, routing, and more
 
 ## 🔗 Compatibility
 
@@ -197,13 +206,25 @@ crewhub/
 
 CrewHub includes **CrewBar**, a reusable floating chat component for AI agents. It provides draggable, resizable chat windows with status indicators — embeddable in any React app. See the `frontend/src/components/crewbar/` directory for details.
 
+## 🧩 Modding
+
+CrewHub v0.6.0 introduces a **modding foundation** designed for extensibility:
+
+- **Registry\<T\> pattern** — A generic, type-safe registry for props, environments, blueprints, and more
+- **Namespaced IDs** — All content uses `namespace:name` IDs (e.g. `core:desk`, `forest:tree`) to avoid conflicts
+- **Batch registration** — Register multiple items at once via `registerAll()`
+- **JSON Blueprints** — Room layouts are defined as JSON with Zod schema validation, making them easy to create, share, and import
+- **Data-driven Environments** — Themes (default, forest, neon) are registry entries, not hardcoded — add your own by registering new environment configs
+
+This foundation makes it possible to extend CrewHub with custom props, room layouts, and visual themes without modifying core code.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE)
+AGPL-3.0 — see [LICENSE](LICENSE)
 
 ---
 
