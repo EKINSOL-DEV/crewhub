@@ -1104,7 +1104,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
               <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
               <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast</div>
-              <div className="text-gray-400">🐛 F2: Grid · F3: Lighting · F4: Debug Bots</div>
+              <div className="text-gray-400">🐛 F2: Grid · F3: Lighting · F4: Debug Bots · F5: Demo</div>
             </div>
           </div>
         )}
