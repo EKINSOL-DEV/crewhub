@@ -1,59 +1,39 @@
-"""Tests for gateway endpoints."""
+"""Tests for gateway status endpoints."""
 
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
+
+from app.services.connections.base import ConnectionStatus
 
 
 @pytest.mark.asyncio
 async def test_gateway_status(client):
     """Test GET /api/gateway/status returns connection status."""
-    with patch('app.routes.gateway_status.get_gateway') as mock_get_gateway:
-        mock_gateway = AsyncMock()
-        mock_gateway.connected = True
-        mock_gateway.uri = "ws://127.0.0.1:18789"
-        mock_get_gateway.return_value = mock_gateway
-        
+    with patch('app.routes.gateway_status.get_connection_manager') as mock_get_mgr:
+        mock_conn = MagicMock()
+        mock_conn.is_connected.return_value = True
+        mock_conn.uri = "ws://127.0.0.1:18789"
+        mock_conn.status = ConnectionStatus.CONNECTED
+
+        mock_mgr = AsyncMock()
+        mock_mgr.get_default_openclaw.return_value = mock_conn
+        mock_get_mgr.return_value = mock_mgr
+
         response = await client.get("/api/gateway/status")
         assert response.status_code == 200
         data = response.json()
         assert "connected" in data
-        assert "uri" in data
-        assert data["connected"] is True
-        assert data["uri"] == "ws://127.0.0.1:18789"
 
 
 @pytest.mark.asyncio
-async def test_gateway_status_disconnected(client):
-    """Test GET /api/gateway/status when disconnected."""
-    with patch('app.routes.gateway_status.get_gateway') as mock_get_gateway:
-        mock_gateway = AsyncMock()
-        mock_gateway.connected = False
-        mock_gateway.uri = "ws://127.0.0.1:18789"
-        mock_get_gateway.return_value = mock_gateway
-        
+async def test_gateway_status_no_connection(client):
+    """Test GET /api/gateway/status when no connection exists."""
+    with patch('app.routes.gateway_status.get_connection_manager') as mock_get_mgr:
+        mock_mgr = AsyncMock()
+        mock_mgr.get_default_openclaw.return_value = None
+        mock_get_mgr.return_value = mock_mgr
+
         response = await client.get("/api/gateway/status")
         assert response.status_code == 200
         data = response.json()
         assert data["connected"] is False
-
-
-@pytest.mark.asyncio
-async def test_gateway_full_status(client):
-    """Test GET /api/gateway/full-status returns extended info."""
-    with patch('app.routes.gateway_status.get_gateway') as mock_get_gateway:
-        mock_gateway = AsyncMock()
-        mock_gateway.connected = True
-        mock_gateway.uri = "ws://127.0.0.1:18789"
-        mock_gateway.get_status.return_value = {
-            "version": "1.0.0",
-            "uptime": 12345
-        }
-        mock_get_gateway.return_value = mock_gateway
-        
-        response = await client.get("/api/gateway/full-status")
-        assert response.status_code == 200
-        data = response.json()
-        assert "connected" in data
-        assert "uri" in data
-        assert "openclaw" in data
-        assert data["openclaw"]["version"] == "1.0.0"

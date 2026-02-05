@@ -67,7 +67,12 @@ import { useToonMaterialProps } from './utils/toonMaterials'
 import { EnvironmentSwitcher } from './environments'
 import { getBotConfigFromSession, isSubagent } from './utils/botVariants'
 import { getSessionDisplayName } from '@/lib/minionUtils'
-import { getDefaultRoomForSession } from '@/lib/roomsConfig'
+// Fallback chain for room assignment:
+//   1. Explicit assignment (session-room-assignments API)
+//   2. Rules-based routing (room-assignment-rules API, via getRoomForSession)
+//   3. Agent default_room_id
+//   4. First room in the list
+// getDefaultRoomForSession from roomsConfig.ts is deprecated and no longer used here.
 import { splitSessionsForDisplay } from '@/lib/sessionFiltering'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { CameraController } from './CameraController'
@@ -443,14 +448,13 @@ function SceneContent({
     for (const runtime of agentRuntimes) {
       // Main agent session
       if (runtime.session && visibleKeys.has(runtime.session.key)) {
-        // Priority: explicit assignment > agent default_room_id > rules > fallback
+        // Fallback chain: explicit assignment → rules → agent default → first room
         const roomId = getRoomForSession(runtime.session.key, {
             label: runtime.session.label,
             model: runtime.session.model,
             channel: runtime.session.lastChannel || runtime.session.channel,
           })
           || runtime.agent.default_room_id
-          || getDefaultRoomForSession(runtime.session.key)
           || rooms[0]?.id || 'headquarters'
         const placement = buildBotPlacement(runtime.session, runtime)
         if (roomBots.has(roomId)) {
@@ -466,12 +470,12 @@ function SceneContent({
       // Child sessions (subagents) — only from visible sessions
       for (const child of runtime.childSessions) {
         if (placedKeys.has(child.key) || !visibleKeys.has(child.key)) continue
+        // Fallback chain: explicit assignment → rules → agent default → first room
         const roomId = getRoomForSession(child.key, {
           label: child.label,
           model: child.model,
           channel: child.lastChannel || child.channel,
         })
-          || getDefaultRoomForSession(child.key)
           || runtime.agent.default_room_id
           || rooms[0]?.id || 'headquarters'
 
@@ -492,13 +496,13 @@ function SceneContent({
 
       // Debug bots use their assigned room from the debug room map
       const debugRoom = debugRoomMap?.get(session.key)
+      // Fallback chain: debug override → explicit assignment → rules → first room
       const roomId = debugRoom
         || getRoomForSession(session.key, {
           label: session.label,
           model: session.model,
           channel: session.lastChannel || session.channel,
         })
-        || getDefaultRoomForSession(session.key)
         || rooms[0]?.id || 'headquarters'
 
       const placement = buildBotPlacement(session)
@@ -752,12 +756,12 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     if (!session) return
 
     // Determine room using same logic as SceneContent
+    // Fallback chain: explicit assignment → rules → first room
     const roomId = getRoomForSession(session.key, {
       label: session.label,
       model: session.model,
       channel: session.lastChannel || session.channel,
     })
-      || getDefaultRoomForSession(session.key)
       || rooms[0]?.id
       || 'headquarters'
 
@@ -825,13 +829,13 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     const targetRoomId = focusState.focusedRoomId
     return visibleSessions.filter(s => {
       const debugRoom = debugRoomMap?.get(s.key)
+      // Fallback chain: debug override → explicit assignment → rules → first room
       const roomId = debugRoom
         || getRoomForSession(s.key, {
           label: s.label,
           model: s.model,
           channel: s.lastChannel || s.channel,
         })
-        || getDefaultRoomForSession(s.key)
         || rooms[0]?.id
         || 'headquarters'
       return roomId === targetRoomId

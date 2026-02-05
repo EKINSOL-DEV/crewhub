@@ -88,9 +88,15 @@ const PERSONA_ROOM_DEFAULTS: Record<string, string> = {
 }
 
 /**
- * Simple static defaults for session routing.
- * This is a fallback when no API rules match.
- * Returns undefined if no default applies (should go to first room).
+ * @deprecated TRULY DEPRECATED — Do not use in new code.
+ * 
+ * This function duplicates logic that now lives in the API-based routing rules system.
+ * Use `useRooms().getRoomForSession()` (which checks: explicit assignment → API rules).
+ * When getRoomForSession returns undefined, use the first room as fallback.
+ * 
+ * Fallback chain: explicit assignment → API rules → first room
+ * 
+ * Kept only for backwards compatibility during migration.
  */
 export function getDefaultRoomForSession(sessionKey: string): string | undefined {
   // Cron sessions always go to automation
