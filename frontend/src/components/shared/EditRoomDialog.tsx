@@ -112,7 +112,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-2xl" style={{ zIndex: 100 }}>
         <DialogHeader>
           <DialogTitle>Edit Room</DialogTitle>
           <DialogDescription>
