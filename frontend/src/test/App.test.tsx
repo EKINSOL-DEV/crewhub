@@ -40,9 +40,22 @@ vi.mock('../hooks/useRooms', () => ({
   }),
 }))
 
+vi.mock('../contexts/ChatContext', () => ({
+  ChatProvider: ({ children }: { children: React.ReactNode }) => children,
+  useChatContext: () => ({
+    windows: [],
+    openChat: vi.fn(),
+    closeChat: vi.fn(),
+    toggleMinimize: vi.fn(),
+    togglePin: vi.fn(),
+    moveWindow: vi.fn(),
+    resizeWindow: vi.fn(),
+    bringToFront: vi.fn(),
+  }),
+}))
+
 describe('App', () => {
   beforeEach(() => {
-    // Clear localStorage before each test
     localStorage.clear()
   })
 

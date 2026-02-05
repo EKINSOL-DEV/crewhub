@@ -12,6 +12,20 @@ vi.mock('../hooks/useSessionDisplayNames', () => ({
   }),
 }))
 
+// Mock ChatContext
+vi.mock('../contexts/ChatContext', () => ({
+  useChatContext: () => ({
+    windows: [],
+    openChat: vi.fn(),
+    closeChat: vi.fn(),
+    toggleMinimize: vi.fn(),
+    togglePin: vi.fn(),
+    moveWindow: vi.fn(),
+    resizeWindow: vi.fn(),
+    bringToFront: vi.fn(),
+  }),
+}))
+
 const createMockSession = (overrides: Partial<CrewSession> = {}): CrewSession => ({
   key: 'agent:main:main',
   kind: 'agent',
@@ -40,15 +54,13 @@ describe('SessionCard', () => {
   it('shows active status for recent session', () => {
     const session = createMockSession({ updatedAt: Date.now() })
     render(<SessionCard session={session} />)
-    // Status indicator shows in multiple places, verify at least one exists
     const elements = screen.getAllByText(/🟢/)
     expect(elements.length).toBeGreaterThan(0)
   })
 
   it('shows sleeping status for old session', () => {
-    const session = createMockSession({ updatedAt: Date.now() - 60 * 60 * 1000 }) // 1 hour ago
+    const session = createMockSession({ updatedAt: Date.now() - 60 * 60 * 1000 })
     render(<SessionCard session={session} />)
-    // Sleeping emoji shows in multiple places, verify at least one exists
     const elements = screen.getAllByText(/💤/)
     expect(elements.length).toBeGreaterThan(0)
   })

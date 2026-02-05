@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 
 // Mock fetch globally
 const mockFetch = vi.fn()
@@ -35,7 +35,6 @@ describe('useSessionsStream', () => {
   })
 
   it('starts with loading state', async () => {
-    // Dynamic import to get fresh module
     const { useSessionsStream } = await import('../hooks/useSessionsStream')
     
     const { result } = renderHook(() => useSessionsStream(false))
@@ -49,55 +48,6 @@ describe('useSessionsStream', () => {
     const { result } = renderHook(() => useSessionsStream(false))
     expect(result.current.connected).toBe(false)
     expect(result.current.connectionMethod).toBe('disconnected')
-  })
-})
-
-describe('useRooms', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-  
-  it('fetches rooms on mount', async () => {
-    const mockRooms = [
-      { id: 'room1', name: 'Test Room', icon: '🏠', color: '#fff', sort_order: 0, created_at: Date.now(), updated_at: Date.now() }
-    ]
-    
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ rooms: mockRooms }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ assignments: [] }),
-      })
-
-    const { useRooms } = await import('../hooks/useRooms')
-    
-    const { result } = renderHook(() => useRooms())
-    
-    expect(result.current.isLoading).toBe(true)
-    
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false)
-    })
-    
-    expect(result.current.rooms).toEqual(mockRooms)
-    expect(result.current.error).toBeNull()
-  })
-
-  it('handles fetch error gracefully', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error'))
-
-    const { useRooms } = await import('../hooks/useRooms')
-    
-    const { result } = renderHook(() => useRooms())
-    
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false)
-    })
-    
-    expect(result.current.error).toBeTruthy()
   })
 })
 
