@@ -43,11 +43,7 @@ export function RoomNameplate({
   const { state } = useWorldFocus()
   const [labelHovered, setLabelHovered] = useState(false)
 
-  // ─── Hide when zoomed into a room (level !== overview) ──────
-  const isOverview = state.level === 'overview'
-  if (!isOverview) return null
-
-  // ─── Subtitle logic ──────────────────────────────────────────
+  // ─── Subtitle logic (hooks MUST be called before any early return) ──
   const { subtitleText, subtitleColor } = useMemo(() => {
     if (isHQ) {
       return { subtitleText: '★ COMMAND CENTER', subtitleColor: '#FFD700' }
@@ -57,6 +53,11 @@ export function RoomNameplate({
     }
     return { subtitleText: 'GENERAL', subtitleColor: '#94a3b8' }
   }, [isHQ, projectName, projectColor])
+
+  // ─── Hide when zoomed into a room (level !== overview) ──────
+  // (after all hooks to respect Rules of Hooks)
+  const isOverview = state.level === 'overview'
+  if (!isOverview) return null
 
   // ─── Position: floating above the room center ───────────────
   const posY = FLOOR_TOP + WALL_HEIGHT + NAMEPLATE_Y_OFFSET
