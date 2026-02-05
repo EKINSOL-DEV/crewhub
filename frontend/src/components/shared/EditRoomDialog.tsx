@@ -121,7 +121,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
         </DialogHeader>
 
         {form && (
-          <div className="grid grid-cols-2 gap-6 py-4 max-h-[70vh] overflow-y-auto">
+          <div className="grid grid-cols-2 gap-6 py-4 px-1 max-h-[70vh] overflow-y-auto">
             {/* Left column: Name, Icon, Color */}
             <div className="space-y-4">
               <div className="space-y-2">
