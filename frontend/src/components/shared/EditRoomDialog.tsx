@@ -112,7 +112,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Edit Room</DialogTitle>
           <DialogDescription>
@@ -121,78 +121,81 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
         </DialogHeader>
 
         {form && (
-          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-            <div className="space-y-2">
-              <Label htmlFor="edit-room-name">Room Name</Label>
-              <Input
-                id="edit-room-name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-6 py-4 max-h-[70vh] overflow-y-auto">
+            {/* Left column: Name, Icon, Color */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-room-name">Room Name</Label>
+                <Input
+                  id="edit-room-name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Icon</Label>
-              <div className="flex flex-wrap gap-2">
-                {ROOM_ICONS.map(icon => (
-                  <button
-                    key={icon}
-                    onClick={() => setForm({ ...form, icon })}
-                    className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
-                      form.icon === icon
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-muted-foreground"
-                    }`}
-                  >
-                    {icon}
-                  </button>
-                ))}
+              <div className="space-y-2">
+                <Label>Icon</Label>
+                <div className="flex flex-wrap gap-2">
+                  {ROOM_ICONS.map(icon => (
+                    <button
+                      key={icon}
+                      onClick={() => setForm({ ...form, icon })}
+                      className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
+                        form.icon === icon
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-muted-foreground"
+                      }`}
+                    >
+                      {icon}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Color</Label>
+                <div className="flex flex-wrap gap-2">
+                  {ROOM_COLORS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setForm({ ...form, color: c })}
+                      className={`w-8 h-8 rounded-full transition-all ${
+                        form.color === c
+                          ? "ring-2 ring-offset-2 ring-primary"
+                          : "hover:scale-110"
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Color</Label>
-              <div className="flex flex-wrap gap-2">
-                {ROOM_COLORS.map(c => (
-                  <button
-                    key={c}
-                    onClick={() => setForm({ ...form, color: c })}
-                    className={`w-8 h-8 rounded-full transition-all ${
-                      form.color === c
-                        ? "ring-2 ring-offset-2 ring-primary"
-                        : "hover:scale-110"
-                    }`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
+            {/* Right column: Floor Texture, Wall Style */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Floor Texture</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {FLOOR_STYLES.map((fs) => (
+                    <button
+                      key={fs.value}
+                      onClick={() => setForm({ ...form, floor_style: fs.value })}
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
+                        form.floor_style === fs.value
+                          ? "border-primary bg-primary/10 font-medium"
+                          : "border-border hover:border-muted-foreground"
+                      }`}
+                    >
+                      <span className="text-lg">{fs.icon}</span>
+                      <span>{fs.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <Separator />
-
-            <div className="space-y-2">
-              <Label>Floor Texture</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {FLOOR_STYLES.map((fs) => (
-                  <button
-                    key={fs.value}
-                    onClick={() => setForm({ ...form, floor_style: fs.value })}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
-                      form.floor_style === fs.value
-                        ? "border-primary bg-primary/10 font-medium"
-                        : "border-border hover:border-muted-foreground"
-                    }`}
-                  >
-                    <span className="text-lg">{fs.icon}</span>
-                    <span>{fs.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Wall Style</Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <Label>Wall Style</Label>
+                <div className="grid grid-cols-2 gap-2">
                 {WALL_STYLES.map((ws) => (
                   <button
                     key={ws.value}
@@ -208,6 +211,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
                   </button>
                 ))}
               </div>
+            </div>
             </div>
           </div>
         )}
