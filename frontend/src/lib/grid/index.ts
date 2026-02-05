@@ -26,6 +26,7 @@ export {
 // Room blueprints
 export {
   ROOM_BLUEPRINTS,
+  getRoomBlueprintsRecord,
   getBlueprintForRoom,
 } from './blueprints'
 

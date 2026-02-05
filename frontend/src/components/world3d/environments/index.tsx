@@ -59,7 +59,7 @@ export function useEnvironment(): [EnvironmentType, (env: EnvironmentType) => vo
 
 export function useEnvironmentList() {
   return useSyncExternalStore(
-    environmentRegistry.subscribe.bind(environmentRegistry),
+    environmentRegistry.subscribe,
     environmentRegistry.getSnapshot,
     environmentRegistry.getSnapshot,
   )

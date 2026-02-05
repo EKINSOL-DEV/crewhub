@@ -29,8 +29,9 @@ interface BlueprintJSON {
   gridDepth: number
   cellSize: number
   placements: BlueprintPlacement[]
-  doors: { x: number; z: number }[]
   doorPositions: { x: number; z: number; facing: Direction }[]
+  /** @deprecated Use doorPositions instead. Kept for backward compat with old JSON files. */
+  doors?: { x: number; z: number }[]
   walkableCenter: { x: number; z: number }
   interactionPoints: {
     work: { x: number; z: number }[]
@@ -59,9 +60,17 @@ export function loadBlueprintFromJSON(json: BlueprintJSON): RoomBlueprint {
     })
   }
 
-  // Place doors
-  for (const d of json.doors) {
-    placeDoor(grid, d.x, d.z)
+  // Place doors — derived from doorPositions (canonical source).
+  // Each doorPosition marks the left cell of a 2-wide door opening.
+  // We place door cells at (x, z) and (x+1, z) for south/north facing,
+  // or (x, z) and (x, z+1) for east/west facing.
+  for (const dp of json.doorPositions) {
+    placeDoor(grid, dp.x, dp.z)
+    if (dp.facing === 'south' || dp.facing === 'north') {
+      placeDoor(grid, dp.x + 1, dp.z)
+    } else {
+      placeDoor(grid, dp.x, dp.z + 1)
+    }
   }
 
   return {

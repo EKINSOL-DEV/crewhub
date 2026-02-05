@@ -1,6 +1,6 @@
 """Pydantic models for CrewHub database entities."""
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Literal, Optional, List
 import uuid
 
 
@@ -300,7 +300,7 @@ class BlueprintInteractionPoints(BaseModel):
 
 class BlueprintJson(BaseModel):
     """The full blueprint JSON structure."""
-    id: str
+    id: Optional[str] = None
     name: str
     gridWidth: int
     gridDepth: int
@@ -318,7 +318,7 @@ class CustomBlueprintCreate(BaseModel):
     name: str
     room_id: Optional[str] = None
     blueprint: BlueprintJson
-    source: str = "user"
+    source: Literal["user", "import", "mod"] = "user"
 
 
 class CustomBlueprintUpdate(BaseModel):
@@ -326,7 +326,7 @@ class CustomBlueprintUpdate(BaseModel):
     name: Optional[str] = None
     room_id: Optional[str] = None
     blueprint: Optional[BlueprintJson] = None
-    source: Optional[str] = None
+    source: Optional[Literal["user", "import", "mod"]] = None
 
 
 class CustomBlueprintResponse(BaseModel):

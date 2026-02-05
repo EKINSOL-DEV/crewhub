@@ -7,6 +7,7 @@ plus import/export functionality for sharing blueprints as JSON files.
 
 import json
 import logging
+import re
 import time
 from typing import Optional
 
@@ -64,11 +65,12 @@ VALID_INTERACTION_TYPES = {"work", "coffee", "sleep"}
 # Validation
 # =============================================================================
 
-def validate_blueprint(bp: BlueprintJson) -> list[str]:
+def validate_blueprint(bp: BlueprintJson) -> tuple[list[str], list[str]]:
     """
     Validate a blueprint JSON structure.
     
-    Returns a list of error messages. Empty list = valid.
+    Returns a tuple of (errors, warnings).
+    Empty errors list = valid. Warnings are informational.
     """
     errors: list[str] = []
     warnings: list[str] = []
@@ -87,16 +89,15 @@ def validate_blueprint(bp: BlueprintJson) -> list[str]:
     if not bp.doors and not bp.doorPositions:
         errors.append("Blueprint must have at least one door")
 
-    # Validate walkable center is within grid
-    if bp.walkableCenter:
-        if bp.walkableCenter.x < 0 or bp.walkableCenter.x >= bp.gridWidth:
-            errors.append(
-                f"walkableCenter.x ({bp.walkableCenter.x}) out of grid bounds (0-{bp.gridWidth - 1})"
-            )
-        if bp.walkableCenter.z < 0 or bp.walkableCenter.z >= bp.gridDepth:
-            errors.append(
-                f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})"
-            )
+    # Validate walkable center unconditionally (it's a required field)
+    if bp.walkableCenter.x < 0 or bp.walkableCenter.x >= bp.gridWidth:
+        errors.append(
+            f"walkableCenter.x ({bp.walkableCenter.x}) out of grid bounds (0-{bp.gridWidth - 1})"
+        )
+    if bp.walkableCenter.z < 0 or bp.walkableCenter.z >= bp.gridDepth:
+        errors.append(
+            f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})"
+        )
 
     # Validate placements
     occupied: dict[tuple[int, int], str] = {}
@@ -143,20 +144,33 @@ def validate_blueprint(bp: BlueprintJson) -> list[str]:
                 f"Valid: {VALID_INTERACTION_TYPES}"
             )
 
-    # Validate doors are on wall edges
-    for i, door in enumerate(bp.doors):
-        on_edge = (
-            door.x == 0
-            or door.x == bp.gridWidth - 1
-            or door.z == 0
-            or door.z == bp.gridDepth - 1
-        )
-        if not on_edge:
-            errors.append(
-                f"Door [{i}] at ({door.x},{door.z}) must be on a wall edge (x=0, x={bp.gridWidth-1}, z=0, or z={bp.gridDepth-1})"
+    # Helper to validate doors are on wall edges
+    def _validate_doors(door_list: list, label: str):
+        for i, door in enumerate(door_list):
+            on_edge = (
+                door.x == 0
+                or door.x == bp.gridWidth - 1
+                or door.z == 0
+                or door.z == bp.gridDepth - 1
             )
+            if not on_edge:
+                errors.append(
+                    f"{label}[{i}] at ({door.x},{door.z}) must be on a wall edge "
+                    f"(x=0, x={bp.gridWidth-1}, z=0, or z={bp.gridDepth-1})"
+                )
 
-    return errors
+    # Validate both door fields
+    _validate_doors(bp.doors, "doors")
+    _validate_doors(bp.doorPositions, "doorPositions")
+
+    # Warn if both door fields are present and counts differ
+    if bp.doors and bp.doorPositions and len(bp.doors) != len(bp.doorPositions):
+        warnings.append(
+            f"doors ({len(bp.doors)} entries) and doorPositions ({len(bp.doorPositions)} entries) "
+            f"have different counts — consider using a single canonical field"
+        )
+
+    return errors, warnings
 
 
 # =============================================================================
@@ -249,7 +263,11 @@ async def export_blueprint(blueprint_id: str):
     
     # Pretty-print JSON for readable export
     content = json.dumps(bp_json, indent=2, ensure_ascii=False)
-    safe_name = row["name"].replace(" ", "-").lower()
+    # Strict sanitize: only allow [a-z0-9-_], strip everything else
+    safe_name = re.sub(r"[^a-z0-9\-_]", "", row["name"].replace(" ", "-").lower())
+    safe_name = safe_name.strip("-_")
+    if not safe_name:
+        safe_name = "blueprint"
 
     return Response(
         content=content,
@@ -293,11 +311,11 @@ async def create_blueprint(body: CustomBlueprintCreate):
     Validates the blueprint JSON structure before storing.
     """
     # Validate blueprint
-    errors = validate_blueprint(body.blueprint)
+    errors, warnings = validate_blueprint(body.blueprint)
     if errors:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"message": "Blueprint validation failed", "errors": errors},
+            detail={"message": "Blueprint validation failed", "errors": errors, "warnings": warnings},
         )
 
     blueprint_id = body.blueprint.id or generate_id()
@@ -343,7 +361,7 @@ async def create_blueprint(body: CustomBlueprintCreate):
 
     logger.info(f"Blueprint created: {blueprint_id} ({body.name})")
 
-    return {
+    response = {
         "id": blueprint_id,
         "name": body.name,
         "room_id": body.room_id,
@@ -352,6 +370,9 @@ async def create_blueprint(body: CustomBlueprintCreate):
         "created_at": now,
         "updated_at": now,
     }
+    if warnings:
+        response["warnings"] = warnings
+    return response
 
 
 @router.post("/import", response_model=CustomBlueprintResponse, status_code=status.HTTP_201_CREATED)
@@ -363,11 +384,11 @@ async def import_blueprint(body: BlueprintJson):
     Sets source to 'import'.
     """
     # Validate
-    errors = validate_blueprint(body)
+    errors, warnings = validate_blueprint(body)
     if errors:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"message": "Blueprint validation failed", "errors": errors},
+            detail={"message": "Blueprint validation failed", "errors": errors, "warnings": warnings},
         )
 
     blueprint_id = body.id or generate_id()
@@ -409,7 +430,7 @@ async def import_blueprint(body: BlueprintJson):
 
     logger.info(f"Blueprint imported: {blueprint_id} ({body.name})")
 
-    return {
+    response = {
         "id": blueprint_id,
         "name": body.name,
         "room_id": None,
@@ -418,6 +439,9 @@ async def import_blueprint(body: BlueprintJson):
         "created_at": now,
         "updated_at": now,
     }
+    if warnings:
+        response["warnings"] = warnings
+    return response
 
 
 @router.put("/{blueprint_id}", response_model=CustomBlueprintResponse)
@@ -450,13 +474,14 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
         room_id = body.room_id if body.room_id is not None else row.get("room_id")
         source = body.source if body.source is not None else row["source"]
 
+        update_warnings: list[str] = []
         if body.blueprint is not None:
             # Validate the new blueprint
-            errors = validate_blueprint(body.blueprint)
+            errors, update_warnings = validate_blueprint(body.blueprint)
             if errors:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail={"message": "Blueprint validation failed", "errors": errors},
+                    detail={"message": "Blueprint validation failed", "errors": errors, "warnings": update_warnings},
                 )
             bp_json = body.blueprint.model_dump()
             bp_json["id"] = blueprint_id
@@ -479,7 +504,7 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
 
     logger.info(f"Blueprint updated: {blueprint_id}")
 
-    return {
+    response = {
         "id": blueprint_id,
         "name": name,
         "room_id": room_id,
@@ -488,6 +513,9 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
         "created_at": row["created_at"],
         "updated_at": now,
     }
+    if update_warnings:
+        response["warnings"] = update_warnings
+    return response
 
 
 @router.delete("/{blueprint_id}", status_code=status.HTTP_204_NO_CONTENT)

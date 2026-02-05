@@ -13,7 +13,7 @@ export interface RegistryEntry<T> {
 export class Registry<T> {
   private entries = new Map<string, RegistryEntry<T>>()
   private listeners = new Set<() => void>()
-  private snapshot: RegistryEntry<T>[] = []
+  private snapshot: readonly RegistryEntry<T>[] = []
   private snapshotDirty = true
 
   /** Register a new entry. Overwrites if id already exists. */
@@ -27,6 +27,26 @@ export class Registry<T> {
     const existed = this.entries.delete(id)
     if (existed) this.notify()
     return existed
+  }
+
+  /** Remove all entries registered by a specific mod. Returns number of entries removed. */
+  unregisterByModId(modId: string): number {
+    let removed = 0
+    for (const [id, entry] of this.entries) {
+      if (entry.modId === modId) {
+        this.entries.delete(id)
+        removed++
+      }
+    }
+    if (removed > 0) this.notify()
+    return removed
+  }
+
+  /** Remove all entries from the registry. */
+  clear(): void {
+    if (this.entries.size === 0) return
+    this.entries.clear()
+    this.notify()
   }
 
   /** Get entry data by id, or null if not found. */
@@ -44,23 +64,24 @@ export class Registry<T> {
     return this.entries.has(id)
   }
 
-  /** List all entries. Returns a stable snapshot (changes only on mutation). */
-  list(): RegistryEntry<T>[] {
+  /** List all entries. Returns a frozen snapshot (changes only on mutation). */
+  list(): readonly RegistryEntry<T>[] {
     if (this.snapshotDirty) {
-      this.snapshot = Array.from(this.entries.values())
+      this.snapshot = Object.freeze([...this.entries.values()]) as readonly RegistryEntry<T>[]
       this.snapshotDirty = false
     }
     return this.snapshot
   }
 
   /** List entries filtered by source. */
-  listBySource(source: 'builtin' | 'mod'): RegistryEntry<T>[] {
+  listBySource(source: 'builtin' | 'mod'): readonly RegistryEntry<T>[] {
     return this.list().filter((e) => e.source === source)
   }
 
   /** Subscribe to changes. Returns an unsubscribe function.
-   *  Compatible with React's useSyncExternalStore. */
-  subscribe(listener: () => void): () => void {
+   *  Compatible with React's useSyncExternalStore.
+   *  Arrow field ensures stable identity (no .bind() needed). */
+  subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener)
     return () => {
       this.listeners.delete(listener)
@@ -68,7 +89,7 @@ export class Registry<T> {
   }
 
   /** Get the current snapshot reference (for useSyncExternalStore getSnapshot). */
-  getSnapshot = (): RegistryEntry<T>[] => {
+  getSnapshot = (): readonly RegistryEntry<T>[] => {
     return this.list()
   }
 
@@ -80,7 +101,11 @@ export class Registry<T> {
   private notify(): void {
     this.snapshotDirty = true
     for (const listener of this.listeners) {
-      listener()
+      try {
+        listener()
+      } catch (err) {
+        console.error('[Registry] Listener threw during notification:', err)
+      }
     }
   }
 }

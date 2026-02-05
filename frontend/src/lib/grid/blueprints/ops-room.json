@@ -5,29 +5,120 @@
   "gridDepth": 20,
   "cellSize": 0.6,
   "placements": [
-    { "propId": "round-table", "x": 8, "z": 8, "span": { "w": 4, "d": 4 } },
-    { "propId": "small-screen", "x": 8, "z": 18, "type": "decoration" },
-    { "propId": "small-screen", "x": 10, "z": 18, "type": "decoration" },
-    { "propId": "small-screen", "x": 12, "z": 18, "type": "decoration" },
-    { "propId": "small-screen", "x": 9, "z": 17, "type": "decoration" },
-    { "propId": "small-screen", "x": 11, "z": 17, "type": "decoration" },
-    { "propId": "status-lights", "x": 18, "z": 10, "type": "decoration" },
-    { "propId": "status-lights", "x": 18, "z": 12, "type": "decoration" },
-    { "propId": "filing-cabinet", "x": 2, "z": 17, "span": { "w": 1, "d": 2 } },
-    { "propId": "filing-cabinet", "x": 2, "z": 15, "span": { "w": 1, "d": 2 } },
-    { "propId": "fire-extinguisher", "x": 18, "z": 2, "type": "decoration" },
-    { "propId": "work-point", "x": 10, "z": 13, "type": "interaction", "interactionType": "work" },
-    { "propId": "sleep-corner", "x": 2, "z": 2, "type": "interaction", "interactionType": "sleep" }
+    {
+      "propId": "round-table",
+      "x": 8,
+      "z": 8,
+      "span": {
+        "w": 4,
+        "d": 4
+      }
+    },
+    {
+      "propId": "small-screen",
+      "x": 8,
+      "z": 18,
+      "type": "decoration"
+    },
+    {
+      "propId": "small-screen",
+      "x": 10,
+      "z": 18,
+      "type": "decoration"
+    },
+    {
+      "propId": "small-screen",
+      "x": 12,
+      "z": 18,
+      "type": "decoration"
+    },
+    {
+      "propId": "small-screen",
+      "x": 9,
+      "z": 17,
+      "type": "decoration"
+    },
+    {
+      "propId": "small-screen",
+      "x": 11,
+      "z": 17,
+      "type": "decoration"
+    },
+    {
+      "propId": "status-lights",
+      "x": 18,
+      "z": 10,
+      "type": "decoration"
+    },
+    {
+      "propId": "status-lights",
+      "x": 18,
+      "z": 12,
+      "type": "decoration"
+    },
+    {
+      "propId": "filing-cabinet",
+      "x": 2,
+      "z": 17,
+      "span": {
+        "w": 1,
+        "d": 2
+      }
+    },
+    {
+      "propId": "filing-cabinet",
+      "x": 2,
+      "z": 15,
+      "span": {
+        "w": 1,
+        "d": 2
+      }
+    },
+    {
+      "propId": "fire-extinguisher",
+      "x": 18,
+      "z": 2,
+      "type": "decoration"
+    },
+    {
+      "propId": "work-point",
+      "x": 10,
+      "z": 13,
+      "type": "interaction",
+      "interactionType": "work"
+    },
+    {
+      "propId": "sleep-corner",
+      "x": 2,
+      "z": 2,
+      "type": "interaction",
+      "interactionType": "sleep"
+    }
   ],
-  "doors": [
-    { "x": 9, "z": 19 },
-    { "x": 10, "z": 19 }
+  "doorPositions": [
+    {
+      "x": 9,
+      "z": 19,
+      "facing": "south"
+    }
   ],
-  "doorPositions": [{ "x": 9, "z": 19, "facing": "south" }],
-  "walkableCenter": { "x": 10, "z": 10 },
+  "walkableCenter": {
+    "x": 10,
+    "z": 10
+  },
   "interactionPoints": {
-    "work": [{ "x": 10, "z": 13 }],
+    "work": [
+      {
+        "x": 10,
+        "z": 13
+      }
+    ],
     "coffee": [],
-    "sleep": [{ "x": 2, "z": 2 }]
+    "sleep": [
+      {
+        "x": 2,
+        "z": 2
+      }
+    ]
   }
 }

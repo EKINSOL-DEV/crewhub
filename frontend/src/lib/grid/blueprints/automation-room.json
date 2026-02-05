@@ -5,26 +5,99 @@
   "gridDepth": 20,
   "cellSize": 0.6,
   "placements": [
-    { "propId": "wall-clock", "x": 10, "z": 18, "type": "decoration" },
-    { "propId": "small-screen", "x": 8, "z": 18, "type": "decoration" },
-    { "propId": "small-screen", "x": 12, "z": 18, "type": "decoration" },
-    { "propId": "small-screen", "x": 8, "z": 17, "type": "decoration" },
-    { "propId": "small-screen", "x": 12, "z": 17, "type": "decoration" },
-    { "propId": "conveyor-belt", "x": 6, "z": 9, "span": { "w": 8, "d": 2 } },
-    { "propId": "gear-mechanism", "x": 18, "z": 10, "type": "decoration" },
-    { "propId": "control-panel", "x": 3, "z": 3, "span": { "w": 2, "d": 2 } },
-    { "propId": "work-point", "x": 4, "z": 5, "type": "interaction", "interactionType": "work" },
-    { "propId": "sleep-corner", "x": 18, "z": 2, "type": "interaction", "interactionType": "sleep" }
+    {
+      "propId": "wall-clock",
+      "x": 10,
+      "z": 18,
+      "type": "decoration"
+    },
+    {
+      "propId": "small-screen",
+      "x": 8,
+      "z": 18,
+      "type": "decoration"
+    },
+    {
+      "propId": "small-screen",
+      "x": 12,
+      "z": 18,
+      "type": "decoration"
+    },
+    {
+      "propId": "small-screen",
+      "x": 8,
+      "z": 17,
+      "type": "decoration"
+    },
+    {
+      "propId": "small-screen",
+      "x": 12,
+      "z": 17,
+      "type": "decoration"
+    },
+    {
+      "propId": "conveyor-belt",
+      "x": 6,
+      "z": 9,
+      "span": {
+        "w": 8,
+        "d": 2
+      }
+    },
+    {
+      "propId": "gear-mechanism",
+      "x": 18,
+      "z": 10,
+      "type": "decoration"
+    },
+    {
+      "propId": "control-panel",
+      "x": 3,
+      "z": 3,
+      "span": {
+        "w": 2,
+        "d": 2
+      }
+    },
+    {
+      "propId": "work-point",
+      "x": 4,
+      "z": 5,
+      "type": "interaction",
+      "interactionType": "work"
+    },
+    {
+      "propId": "sleep-corner",
+      "x": 18,
+      "z": 2,
+      "type": "interaction",
+      "interactionType": "sleep"
+    }
   ],
-  "doors": [
-    { "x": 9, "z": 19 },
-    { "x": 10, "z": 19 }
+  "doorPositions": [
+    {
+      "x": 9,
+      "z": 19,
+      "facing": "south"
+    }
   ],
-  "doorPositions": [{ "x": 9, "z": 19, "facing": "south" }],
-  "walkableCenter": { "x": 10, "z": 10 },
+  "walkableCenter": {
+    "x": 10,
+    "z": 10
+  },
   "interactionPoints": {
-    "work": [{ "x": 4, "z": 5 }],
+    "work": [
+      {
+        "x": 4,
+        "z": 5
+      }
+    ],
     "coffee": [],
-    "sleep": [{ "x": 18, "z": 2 }]
+    "sleep": [
+      {
+        "x": 18,
+        "z": 2
+      }
+    ]
   }
 }
