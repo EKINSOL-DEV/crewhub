@@ -56,11 +56,14 @@ function getWallPlacement(
   // Small gap from wall surface to prevent z-fighting
   const WALL_GAP = 0.05
 
-  // Wall inner face positions (inner edge of the wall cell)
-  const northFace = -halfD + cellSize
-  const southFace = halfD - cellSize
-  const westFace = -halfW + cellSize
-  const eastFace = halfW - cellSize
+  // Wall inner face positions — must match the actual 3D wall geometry
+  // from RoomWalls.tsx (wallThickness = 0.3, walls at ±halfSize).
+  // Inner face = ±(halfSize - wallThickness).
+  const WALL_THICKNESS = 0.3
+  const northFace = -halfD + WALL_THICKNESS
+  const southFace = halfD - WALL_THICKNESS
+  const westFace = -halfW + WALL_THICKNESS
+  const eastFace = halfW - WALL_THICKNESS
 
   // Snap to nearest wall and set rotation to face into room.
   // Default geometry faces +Z, so:
@@ -93,16 +96,18 @@ function clampToRoomBounds(
 ): [number, number] {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
+  // Wall inner face matches RoomWalls.tsx wallThickness (0.3)
+  const WALL_THICKNESS = 0.3
   const INWARD = 0.15 // small inward offset to avoid wall clipping
 
   let x = worldX
   let z = worldZ
 
-  // Clamp near walls (grid cells 1 and gridSize-2 are just inside the wall)
-  if (gridX <= 1) x = Math.max(x, -halfW + cellSize + INWARD)
-  if (gridX >= gridWidth - 2) x = Math.min(x, halfW - cellSize - INWARD)
-  if (gridZ <= 1) z = Math.max(z, -halfD + cellSize + INWARD)
-  if (gridZ >= gridDepth - 2) z = Math.min(z, halfD - cellSize - INWARD)
+  // Clamp near walls — use actual wall face position (halfSize - wallThickness)
+  if (gridX <= 1) x = Math.max(x, -halfW + WALL_THICKNESS + INWARD)
+  if (gridX >= gridWidth - 2) x = Math.min(x, halfW - WALL_THICKNESS - INWARD)
+  if (gridZ <= 1) z = Math.max(z, -halfD + WALL_THICKNESS + INWARD)
+  if (gridZ >= gridDepth - 2) z = Math.min(z, halfD - WALL_THICKNESS - INWARD)
 
   return [x, z]
 }

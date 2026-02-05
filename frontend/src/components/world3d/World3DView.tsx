@@ -222,7 +222,9 @@ function getBotPositionsInRoom(
   botCount: number,
 ): [number, number, number][] {
   const positions: [number, number, number][] = []
-  const floorY = roomPos[1] + 0.02
+  // Floor top surface is at roomPos[1] + 0.16 (box center 0.08 + half-height 0.08).
+  // Place bots at floor level so feet (at group origin with yOffset=0.33) touch the surface.
+  const floorY = roomPos[1] + 0.16
   const margin = 2.5
 
   if (botCount === 0) return positions
@@ -255,7 +257,8 @@ function getBotPositionsInParking(
   botCount: number,
 ): [number, number, number][] {
   const positions: [number, number, number][] = []
-  const floorY = 0.02
+  // Parking floor: box center at y=0.08, thickness 0.12 (rotated), top surface at 0.14
+  const floorY = 0.14
   const margin = 2
 
   if (botCount === 0) return positions
@@ -652,7 +655,7 @@ function SceneContent({
         return parkingBots.map((bot, i) => (
           <Bot3D
             key={bot.key}
-            position={positions[i] || [parkingArea.x, 0.02, parkingArea.z]}
+            position={positions[i] || [parkingArea.x, 0.14, parkingArea.z]}
             config={bot.config}
             status={bot.status}
             name={bot.name}

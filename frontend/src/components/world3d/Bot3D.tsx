@@ -646,8 +646,11 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     }
   })
 
-  // Offset y so bot feet rest on the floor
-  const yOffset = 0.36
+  // Offset y so bot feet rest on the floor.
+  // Bot feet bottom is at y=-0.33 in body space; offset of 0.33 puts feet
+  // at the group origin.  Combined with position[1] = floorY (0.16),
+  // this ensures feet touch the floor surface regardless of scale.
+  const yOffset = 0.33
 
   return (
     <group
