@@ -80,6 +80,7 @@ import { CameraController } from './CameraController'
 import { FirstPersonController, FirstPersonHUD } from './FirstPersonController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
+import { TaskTicker } from './TaskTicker'
 import { AgentTopBar } from './AgentTopBar'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
@@ -1133,6 +1134,20 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
         {/* Back button / navigation (top-left) */}
         <WorldNavigation rooms={rooms} />
+
+        {/* Task Ticker (active subagent tasks, below navigation) */}
+        {focusState.level !== 'firstperson' && (
+          <TaskTicker
+            sessions={allSessions}
+            getRoomForSession={(key) => getRoomForSession(key, {
+              label: allSessions.find(s => s.key === key)?.label,
+              model: allSessions.find(s => s.key === key)?.model,
+              channel: allSessions.find(s => s.key === key)?.lastChannel,
+            })}
+            defaultRoomId={rooms[0]?.id}
+            visible={focusState.level === 'overview' || focusState.level === 'room'}
+          />
+        )}
 
         {/* Fullscreen toggle button */}
         <button

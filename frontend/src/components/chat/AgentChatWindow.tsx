@@ -492,14 +492,6 @@ export function AgentChatWindow({
             >
               🧠
             </HeaderBtn>
-            <HeaderBtn
-              onClick={() => togglePin(sessionKey)}
-              title={isPinned ? 'Unpin' : 'Pin (persist on reload)'}
-              active={isPinned}
-              activeColor={accentColor}
-            >
-              📌
-            </HeaderBtn>
             <HeaderBtn onClick={() => minimizeChat(sessionKey)} title="Minimize">
               ─
             </HeaderBtn>

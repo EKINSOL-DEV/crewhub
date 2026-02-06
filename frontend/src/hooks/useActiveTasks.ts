@@ -1,0 +1,242 @@
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import type { CrewSession } from '@/lib/api'
+import { sseManager } from '@/lib/sseManager'
+
+// ── Types ──────────────────────────────────────────────────────
+
+export interface ActiveTask {
+  id: string
+  title: string
+  sessionKey: string | null
+  agentName: string | null
+  status: 'running' | 'done'
+  /** Timestamp when status changed to 'done' (for fade-out timing) */
+  doneAt: number | null
+  /** Source of this task: 'session' (subagent) or 'task' (planner task) */
+  source: 'session' | 'task'
+}
+
+interface UseActiveTasksOptions {
+  /** Sessions to scan for active subagents */
+  sessions: CrewSession[]
+  /** Duration in ms before removing done tasks (default: 30000) */
+  fadeOutDuration?: number
+  /** Whether the hook is enabled */
+  enabled?: boolean
+}
+
+// ── Constants ──────────────────────────────────────────────────
+
+const DEFAULT_FADE_OUT_DURATION = 30000
+
+// ── Hook ───────────────────────────────────────────────────────
+
+export function useActiveTasks(options: UseActiveTasksOptions) {
+  const { sessions, fadeOutDuration = DEFAULT_FADE_OUT_DURATION, enabled = true } = options
+  
+  const [tasks, setTasks] = useState<ActiveTask[]>([])
+  const previousSessionKeysRef = useRef<Set<string>>(new Set())
+  const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Main effect: Track sessions and detect completions ───────
+  
+  useEffect(() => {
+    if (!enabled) {
+      setTasks([])
+      return
+    }
+
+    const currentKeys = new Set(
+      sessions.filter(s => isSubagentSession(s.key)).map(s => s.key)
+    )
+    const previousKeys = previousSessionKeysRef.current
+
+    setTasks(prevTasks => {
+      const newTasks: ActiveTask[] = []
+      const seenIds = new Set<string>()
+
+      // 1. Keep existing running tasks that are still active
+      // 2. Mark tasks as done if their session disappeared
+      for (const task of prevTasks) {
+        if (task.source !== 'session') continue
+        
+        const sessionKey = task.sessionKey
+        if (!sessionKey) continue
+
+        if (currentKeys.has(sessionKey)) {
+          // Still running
+          newTasks.push(task)
+          seenIds.add(task.id)
+        } else if (task.status === 'running' && previousKeys.has(sessionKey)) {
+          // Session just disappeared → mark as done
+          newTasks.push({
+            ...task,
+            status: 'done',
+            doneAt: Date.now(),
+          })
+          seenIds.add(task.id)
+        } else if (task.status === 'done') {
+          // Keep done tasks (they fade out via timer)
+          newTasks.push(task)
+          seenIds.add(task.id)
+        }
+      }
+
+      // 3. Add new sessions that weren't tracked before
+      for (const session of sessions) {
+        if (!isSubagentSession(session.key)) continue
+        const taskId = `session:${session.key}`
+        if (seenIds.has(taskId)) continue
+
+        newTasks.push({
+          id: taskId,
+          title: extractTaskTitle(session),
+          sessionKey: session.key,
+          agentName: extractAgentName(session.key),
+          status: 'running',
+          doneAt: null,
+          source: 'session',
+        })
+      }
+
+      previousSessionKeysRef.current = currentKeys
+      return newTasks
+    })
+  }, [sessions, enabled])
+
+  // ── Cleanup timer: Remove done tasks after fadeOutDuration ───
+  
+  useEffect(() => {
+    if (!enabled) return
+
+    const scheduleCleanup = () => {
+      if (cleanupTimerRef.current) {
+        clearTimeout(cleanupTimerRef.current)
+      }
+
+      cleanupTimerRef.current = setTimeout(() => {
+        const now = Date.now()
+        setTasks(prevTasks => 
+          prevTasks.filter(task => 
+            task.status !== 'done' || 
+            !task.doneAt || 
+            (now - task.doneAt) < fadeOutDuration
+          )
+        )
+        scheduleCleanup() // Reschedule
+      }, 1000) // Check every second
+    }
+
+    scheduleCleanup()
+
+    return () => {
+      if (cleanupTimerRef.current) {
+        clearTimeout(cleanupTimerRef.current)
+      }
+    }
+  }, [enabled, fadeOutDuration])
+
+  // ── SSE: Listen for session removal events ───────────────────
+  
+  useEffect(() => {
+    if (!enabled) return
+
+    const handleSessionRemoved = (event: MessageEvent) => {
+      try {
+        const { key } = JSON.parse(event.data)
+        if (!isSubagentSession(key)) return
+
+        setTasks(prevTasks =>
+          prevTasks.map(task =>
+            task.sessionKey === key && task.status === 'running'
+              ? { ...task, status: 'done', doneAt: Date.now() }
+              : task
+          )
+        )
+      } catch {
+        // Ignore parse errors
+      }
+    }
+
+    const unsub = sseManager.subscribe('session-removed', handleSessionRemoved)
+    return () => unsub()
+  }, [enabled])
+
+  // ── Computed values ──────────────────────────────────────────
+
+  const runningTasks = useMemo(
+    () => tasks.filter(t => t.status === 'running'),
+    [tasks]
+  )
+
+  const doneTasks = useMemo(
+    () => tasks.filter(t => t.status === 'done'),
+    [tasks]
+  )
+
+  const getTaskOpacity = useCallback((task: ActiveTask): number => {
+    if (task.status !== 'done' || !task.doneAt) return 1
+    const elapsed = Date.now() - task.doneAt
+    const progress = Math.min(elapsed / fadeOutDuration, 1)
+    return 1 - progress
+  }, [fadeOutDuration])
+
+  return {
+    tasks,
+    runningTasks,
+    doneTasks,
+    getTaskOpacity,
+    fadeOutDuration,
+  }
+}
+
+// ── Helper Functions ───────────────────────────────────────────
+
+/**
+ * Check if a session key represents a subagent/spawned session
+ */
+function isSubagentSession(key: string): boolean {
+  return key.includes(':subagent:') || key.includes(':spawn:')
+}
+
+/**
+ * Extract a readable task title from a session
+ */
+function extractTaskTitle(session: CrewSession): string {
+  // Prefer label if it exists and is meaningful
+  if (session.label) {
+    // Clean up common patterns
+    const cleanLabel = session.label
+      .replace(/parent=[^\s]+/g, '')
+      .replace(/model=[^\s]+/g, '')
+      .replace(/^(subagent|spawn):?\s*/i, '')
+      .trim()
+    
+    if (cleanLabel && cleanLabel.length > 0) {
+      return cleanLabel
+    }
+  }
+
+  // Fall back to extracting from session key
+  const parts = session.key.split(':')
+  // agent:name:subagent:task-id → task-id
+  const lastPart = parts[parts.length - 1]
+  if (lastPart && lastPart.length > 4) {
+    return lastPart.replace(/-/g, ' ')
+  }
+
+  return 'Working...'
+}
+
+/**
+ * Extract agent name from session key
+ */
+function extractAgentName(sessionKey: string): string {
+  // agent:main:subagent:xxx → main
+  // agent:dev:spawn:xxx → dev
+  const parts = sessionKey.split(':')
+  if (parts.length >= 2 && parts[0] === 'agent') {
+    return parts[1]
+  }
+  return 'agent'
+}
