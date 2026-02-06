@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { CrewSession } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
+import { getSessionStatus } from '@/lib/minionUtils'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -47,29 +48,49 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
       return
     }
 
-    const currentKeys = new Set(
-      sessions.filter(s => isSubagentSession(s.key)).map(s => s.key)
-    )
+    // Build a map for quick lookup of session by key
+    const sessionMap = new Map<string, CrewSession>()
+    for (const s of sessions) {
+      if (isSubagentSession(s.key)) {
+        sessionMap.set(s.key, s)
+      }
+    }
+    
+    const currentKeys = new Set(sessionMap.keys())
     const previousKeys = previousSessionKeysRef.current
+
+    /**
+     * Check if a session is still actively running (not sleeping/parked).
+     * A session is considered "done" when:
+     * - Its key disappears from the sessions list, OR
+     * - Its status becomes "sleeping" (parked after 30min inactivity)
+     */
+    const isSessionStillRunning = (sessionKey: string): boolean => {
+      const session = sessionMap.get(sessionKey)
+      if (!session) return false
+      const status = getSessionStatus(session)
+      // "sleeping" means parked/completed - treat as done
+      return status !== 'sleeping'
+    }
 
     setTasks(prevTasks => {
       const newTasks: ActiveTask[] = []
       const seenIds = new Set<string>()
 
       // 1. Keep existing running tasks that are still active
-      // 2. Mark tasks as done if their session disappeared
+      // 2. Mark tasks as done if their session disappeared OR became sleeping
       for (const task of prevTasks) {
         if (task.source !== 'session') continue
         
         const sessionKey = task.sessionKey
         if (!sessionKey) continue
 
-        if (currentKeys.has(sessionKey)) {
-          // Still running
+        if (currentKeys.has(sessionKey) && isSessionStillRunning(sessionKey)) {
+          // Still running (exists and not sleeping)
           newTasks.push(task)
           seenIds.add(task.id)
-        } else if (task.status === 'running' && previousKeys.has(sessionKey)) {
-          // Session just disappeared → mark as done
+        } else if (task.status === 'running' && (previousKeys.has(sessionKey) || currentKeys.has(sessionKey))) {
+          // Session disappeared OR became sleeping → mark as done
           newTasks.push({
             ...task,
             status: 'done',
@@ -83,11 +104,15 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
         }
       }
 
-      // 3. Add new sessions that weren't tracked before
+      // 3. Add new sessions that weren't tracked before (only if not sleeping)
       for (const session of sessions) {
         if (!isSubagentSession(session.key)) continue
         const taskId = `session:${session.key}`
         if (seenIds.has(taskId)) continue
+        
+        // Don't add already-sleeping sessions as new tasks
+        const status = getSessionStatus(session)
+        if (status === 'sleeping') continue
 
         newTasks.push({
           id: taskId,
