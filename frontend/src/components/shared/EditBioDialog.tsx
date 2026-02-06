@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,16 @@ interface EditBioDialogProps {
   onSaved?: () => void
 }
 
+/**
+ * EditBioDialog - Dialog for editing agent bios
+ * 
+ * IMPORTANT: This component uses conditional rendering (only renders when open)
+ * to work around a Radix UI bug with React 19 where compose-refs can cause
+ * infinite update loops. See: https://github.com/radix-ui/primitives/issues/3799
+ * 
+ * The inner content is extracted to EditBioDialogContent which initializes
+ * state from props on mount, avoiding useEffect-based state syncing.
+ */
 export function EditBioDialog({
   agentId,
   agentName,
@@ -31,27 +41,41 @@ export function EditBioDialog({
   onOpenChange,
   onSaved,
 }: EditBioDialogProps) {
+  // Only render the dialog when open - this avoids the Radix/React 19 
+  // compose-refs infinite loop bug by ensuring the dialog mounts fresh
+  // each time it opens, rather than trying to sync state via useEffect
+  if (!open) return null
+
+  return (
+    <EditBioDialogContent
+      agentId={agentId}
+      agentName={agentName}
+      currentBio={currentBio}
+      onOpenChange={onOpenChange}
+      onSaved={onSaved}
+    />
+  )
+}
+
+/**
+ * Inner dialog content - only mounted when dialog is open
+ * Initializes state from props on mount, no useEffect needed
+ */
+function EditBioDialogContent({
+  agentId,
+  agentName,
+  currentBio,
+  onOpenChange,
+  onSaved,
+}: Omit<EditBioDialogProps, 'open'>) {
   const { isDemoMode } = useDemoMode()
-  const [bio, setBio] = useState("")
+  // Initialize state directly from props - component only mounts when dialog opens
+  const [bio, setBio] = useState(currentBio ?? "")
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isCreating = !currentBio
-
-  // Track previous open state to detect open transitions
-  const wasOpen = useRef(open)
-
-  // Reset form only when dialog opens (transition from closed to open)
-  // This prevents infinite loops when currentBio changes while dialog is open
-  useEffect(() => {
-    if (open && !wasOpen.current) {
-      // Dialog just opened - reset form with current bio
-      setBio(currentBio ?? "")
-      setError(null)
-    }
-    wasOpen.current = open
-  }, [open, currentBio])
 
   const handleGenerate = async () => {
     if (!agentId || isDemoMode) return
@@ -118,7 +142,7 @@ export function EditBioDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={true} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md" style={{ zIndex: 100 }}>
         <DialogHeader>
           <DialogTitle>
