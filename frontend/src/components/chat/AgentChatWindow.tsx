@@ -481,23 +481,23 @@ export function AgentChatWindow({
             {onFocusAgent && (
               <HeaderBtn
                 onClick={() => onFocusAgent(sessionKey)}
-                title="Focus agent"
+                tooltip="Focus agent"
               >
                 🎯
               </HeaderBtn>
             )}
             <HeaderBtn
               onClick={() => toggleInternals(sessionKey)}
-              title={showInternals ? 'Hide thinking & tools' : 'Show thinking & tools'}
+              tooltip={showInternals ? 'Hide thinking & tools' : 'Show thinking & tools'}
               active={showInternals}
               activeColor="#9333ea"
             >
               🧠
             </HeaderBtn>
-            <HeaderBtn onClick={() => minimizeChat(sessionKey)} title="Minimize">
+            <HeaderBtn onClick={() => minimizeChat(sessionKey)} tooltip="Minimize">
               ─
             </HeaderBtn>
-            <HeaderBtn onClick={() => closeChat(sessionKey)} title="Close">
+            <HeaderBtn onClick={() => closeChat(sessionKey)} tooltip="Close">
               ✕
             </HeaderBtn>
           </div>
@@ -665,6 +665,20 @@ export function AgentChatWindow({
             ➤
           </button>
         </div>
+
+        {/* Tooltip fade-in animation */}
+        <style>{`
+          @keyframes chatTooltipFadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(-50%) translateX(4px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(-50%) translateX(0);
+            }
+          }
+        `}</style>
       </div>
     </Rnd>
   )
@@ -674,52 +688,92 @@ export function AgentChatWindow({
 
 function HeaderBtn({
   onClick,
-  title,
+  tooltip,
   active,
   activeColor,
   children,
 }: {
   onClick: () => void
-  title: string
+  tooltip: string
   active?: boolean
   activeColor?: string
   children: React.ReactNode
 }) {
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
-    <button
-      onClick={e => {
-        e.stopPropagation()
-        onClick()
-      }}
-      title={title}
-      style={{
-        width: 26,
-        height: 26,
-        borderRadius: 7,
-        border: 'none',
-        background: active
-          ? (activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)')
-          : 'rgba(0,0,0,0.04)',
-        color: active ? (activeColor || '#374151') : '#6b7280',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 12,
-        fontWeight: 700,
-        flexShrink: 0,
-        transition: 'background 0.15s, color 0.15s',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = active
-          ? (activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)')
-          : 'rgba(0,0,0,0.04)'
-      }}
-    >
-      {children}
-    </button>
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={e => {
+          e.stopPropagation()
+          onClick()
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: 7,
+          border: 'none',
+          background: active
+            ? (activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)')
+            : isHovered
+              ? 'rgba(0, 0, 0, 0.1)'
+              : 'rgba(0,0,0,0.04)',
+          color: active ? (activeColor || '#374151') : '#6b7280',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 12,
+          fontWeight: 700,
+          flexShrink: 0,
+          transition: 'background 0.15s, color 0.15s',
+        }}
+      >
+        {children}
+      </button>
+
+      {/* Tooltip (appears on hover, to the left of the button) */}
+      {isHovered && (
+        <div
+          style={{
+            position: 'absolute',
+            right: '100%',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            marginRight: 8,
+            padding: '6px 10px',
+            borderRadius: 6,
+            background: 'rgba(0, 0, 0, 0.85)',
+            color: '#fff',
+            fontSize: 12,
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 100,
+            fontFamily: 'system-ui, sans-serif',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            animation: 'chatTooltipFadeIn 0.15s ease-out',
+          }}
+        >
+          {tooltip}
+          {/* Tooltip arrow (pointing right) */}
+          <div
+            style={{
+              position: 'absolute',
+              right: -4,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 0,
+              height: 0,
+              borderTop: '4px solid transparent',
+              borderBottom: '4px solid transparent',
+              borderLeft: '4px solid rgba(0, 0, 0, 0.85)',
+            }}
+          />
+        </div>
+      )}
+    </div>
   )
 }
