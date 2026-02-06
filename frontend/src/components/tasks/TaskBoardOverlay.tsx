@@ -207,7 +207,7 @@ export function TaskBoardOverlay({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mr-8">
             <button
               onClick={() => setShowCreateForm(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
