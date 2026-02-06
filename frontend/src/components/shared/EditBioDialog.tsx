@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Dialog,
   DialogContent,
@@ -39,12 +39,18 @@ export function EditBioDialog({
 
   const isCreating = !currentBio
 
-  // Reset form when dialog opens
+  // Track previous open state to detect open transitions
+  const wasOpen = useRef(open)
+
+  // Reset form only when dialog opens (transition from closed to open)
+  // This prevents infinite loops when currentBio changes while dialog is open
   useEffect(() => {
-    if (open) {
-      setBio(currentBio || "")
+    if (open && !wasOpen.current) {
+      // Dialog just opened - reset form with current bio
+      setBio(currentBio ?? "")
       setError(null)
     }
+    wasOpen.current = open
   }, [open, currentBio])
 
   const handleGenerate = async () => {
