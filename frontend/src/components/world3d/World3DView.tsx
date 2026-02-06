@@ -1,4 +1,5 @@
 import { Suspense, useMemo, useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Maximize2, Minimize2 } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
@@ -1070,12 +1071,12 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     }
   }, [focusBot, focusState.focusedRoomId])
 
-  return (
-    <DragDropProvider onAssignmentChanged={refreshRooms}>
-      <div 
-        className={`relative w-full h-full ${isFullscreen ? 'fixed inset-0 z-[100] bg-background' : ''}`}
-        style={{ minHeight: isFullscreen ? undefined : '600px' }}
-      >
+  // Content to render (same whether fullscreen or not, just styled differently)
+  const worldContent = (
+    <div 
+      className={`relative w-full h-full ${isFullscreen ? 'fixed inset-0 z-[9999] bg-background' : ''}`}
+      style={{ minHeight: isFullscreen ? undefined : '600px' }}
+    >
         <CanvasErrorBoundary>
           <Canvas
             shadows
@@ -1210,6 +1211,12 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
       </div>
+  )
+
+  // Use Portal when fullscreen to escape any overflow:hidden containers
+  return (
+    <DragDropProvider onAssignmentChanged={refreshRooms}>
+      {isFullscreen ? createPortal(worldContent, document.body) : worldContent}
     </DragDropProvider>
   )
 }
