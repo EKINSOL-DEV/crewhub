@@ -9,6 +9,7 @@ export interface ChatWindowState {
   agentColor: string | null
   isMinimized: boolean
   isPinned: boolean
+  showInternals: boolean  // Show thinking blocks & tool details
   position: { x: number; y: number }
   size: { width: number; height: number }
   zIndex: number

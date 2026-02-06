@@ -56,7 +56,7 @@ export function RoomNameplate({
         // Screen-space: stays same size regardless of zoom
         // No distanceFactor = fixed pixel size on screen
         zIndexRange={[1, 5]}
-        style={{ pointerEvents: 'auto' }}
+        style={{ pointerEvents: 'none' }}
       >
         <div
           onPointerEnter={() => setLabelHovered(true)}
