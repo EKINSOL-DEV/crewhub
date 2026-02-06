@@ -30,13 +30,15 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
 
   return (
     <>
-      {/* Back button (top-left) */}
+      {/* Back button (bottom-center, above RoomTabsBar) */}
       <div
         style={{
           position: 'absolute',
-          top: 16,
-          left: 16,
+          bottom: 80,
+          left: '50%',
+          transform: 'translateX(-50%)',
           zIndex: 50,
+          textAlign: 'center',
         }}
       >
         <button
@@ -75,7 +77,6 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
             marginTop: 4,
             fontSize: 11,
             color: 'rgba(0,0,0,0.4)',
-            paddingLeft: 4,
             fontFamily: 'system-ui, sans-serif',
           }}
         >
