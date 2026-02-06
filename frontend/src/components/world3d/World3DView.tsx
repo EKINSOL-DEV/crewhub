@@ -86,6 +86,7 @@ import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
+import { TaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
 import { useDebugBots, type DebugBot } from '@/hooks/useDebugBots'
@@ -984,6 +985,14 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const [logViewerOpen, setLogViewerOpen] = useState(false)
   const [docsPanel, setDocsPanel] = useState<{ projectId: string; projectName: string; projectColor?: string } | null>(null)
 
+  // TaskBoard overlay state
+  const [taskBoardOpen, setTaskBoardOpen] = useState(false)
+  const [taskBoardContext, setTaskBoardContext] = useState<{
+    projectId: string
+    roomId?: string
+    agents?: Array<{ session_key: string; display_name: string }>
+  } | null>(null)
+
   // Fullscreen mode (native browser API)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -1152,6 +1161,10 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             onBotClick={handleRoomPanelBotClick}
             onFocusRoom={focusRoom}
             onOpenDocs={(projectId, projectName, projectColor) => setDocsPanel({ projectId, projectName, projectColor })}
+            onOpenTaskBoard={(projectId, roomId, agents) => {
+              setTaskBoardContext({ projectId, roomId, agents })
+              setTaskBoardOpen(true)
+            }}
           />
         )}
 
@@ -1214,6 +1227,17 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
+
+        {/* TaskBoardOverlay (outside Canvas) */}
+        {taskBoardContext && (
+          <TaskBoardOverlay
+            open={taskBoardOpen}
+            onOpenChange={setTaskBoardOpen}
+            projectId={taskBoardContext.projectId}
+            roomId={taskBoardContext.roomId}
+            agents={taskBoardContext.agents}
+          />
+        )}
       </div>
   )
 

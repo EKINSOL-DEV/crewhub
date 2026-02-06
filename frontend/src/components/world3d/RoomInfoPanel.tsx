@@ -7,7 +7,6 @@ import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
 import { useToast } from '@/hooks/use-toast'
 import { ProjectPicker } from './ProjectPicker'
 import { EditRoomDialog } from '@/components/shared/EditRoomDialog'
-import { TaskBoard } from '@/components/tasks'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -22,6 +21,7 @@ interface RoomInfoPanelProps {
   onBotClick?: (session: CrewSession) => void
   onFocusRoom?: (roomId: string) => void
   onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void
+  onOpenTaskBoard?: (projectId: string, roomId: string, agents: Array<{ session_key: string; display_name: string }>) => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -100,6 +100,7 @@ export function RoomInfoPanel({
   onBotClick,
   onFocusRoom,
   onOpenDocs,
+  onOpenTaskBoard,
 }: RoomInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const roomColor = room.color || '#4f46e5'
@@ -620,6 +621,7 @@ export function RoomInfoPanel({
               session_key: s.key,
               display_name: displayNames.get(s.key) || s.displayName || s.key.split(':')[1] || s.key,
             }))}
+            onOpenFullBoard={onOpenTaskBoard}
           />
         )}
 
@@ -739,18 +741,23 @@ function TasksSection({
   projectId,
   roomId,
   agents,
+  onOpenFullBoard,
 }: {
   projectId: string
   roomId: string
   agents: Array<{ session_key: string; display_name: string }>
+  onOpenFullBoard?: (projectId: string, roomId: string, agents: Array<{ session_key: string; display_name: string }>) => void
 }) {
-  const [showFullBoard, setShowFullBoard] = useState(false)
   const { tasks, taskCounts, updateTask } = useTasks({ projectId, roomId })
 
   // Quick status change handler
   const handleStatusChange = useCallback(async (task: Task, newStatus: TaskStatus) => {
     await updateTask(task.id, { status: newStatus })
   }, [updateTask])
+
+  const handleOpenBoard = useCallback(() => {
+    onOpenFullBoard?.(projectId, roomId, agents)
+  }, [onOpenFullBoard, projectId, roomId, agents])
 
   // Active tasks (not done)
   const activeTasks = tasks.filter(t => t.status !== 'done').slice(0, 5)
@@ -761,7 +768,7 @@ function TasksSection({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <SectionHeader>📋 Tasks</SectionHeader>
         <button
-          onClick={() => setShowFullBoard(true)}
+          onClick={handleOpenBoard}
           style={{
             padding: '3px 8px',
             fontSize: 10,
@@ -802,7 +809,7 @@ function TasksSection({
           ))}
           {totalActive > 5 && (
             <button
-              onClick={() => setShowFullBoard(true)}
+              onClick={handleOpenBoard}
               style={{
                 padding: '6px 12px',
                 fontSize: 11,
@@ -829,73 +836,6 @@ function TasksSection({
           textAlign: 'center',
         }}>
           No active tasks
-        </div>
-      )}
-
-      {/* Full Task Board Modal */}
-      {showFullBoard && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setShowFullBoard(false)}
-        >
-          <div
-            style={{
-              background: '#fff',
-              borderRadius: 16,
-              padding: 24,
-              width: '90%',
-              maxWidth: 900,
-              height: '80vh',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 16,
-            }}>
-              <h2 style={{ margin: 0, fontSize: 18, color: '#1f2937' }}>
-                📋 Task Board
-              </h2>
-              <button
-                onClick={() => setShowFullBoard(false)}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  border: 'none',
-                  background: 'rgba(0,0,0,0.05)',
-                  color: '#6b7280',
-                  cursor: 'pointer',
-                  fontSize: 16,
-                }}
-              >
-                ✕
-              </button>
-            </div>
-            <div style={{ flex: 1, overflow: 'auto' }}>
-              <TaskBoard
-                projectId={projectId}
-                roomId={roomId}
-                agents={agents}
-              />
-            </div>
-          </div>
         </div>
       )}
     </div>
