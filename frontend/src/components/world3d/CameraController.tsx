@@ -26,12 +26,13 @@ const OVERVIEW_CAMERA = {
 function getRoomCamera(roomPos: [number, number, number]) {
   // Offset in the same direction as OVERVIEW_CAMERA (-X, -Z quadrant)
   // so zooming in from overview to room keeps the same viewing angle.
+  // Tuned by Nicky for good task board visibility
   return {
-    posX: roomPos[0] - 10,
-    posY: 18,
-    posZ: roomPos[2] - 10,
-    targetX: roomPos[0],
-    targetY: 0,
+    posX: roomPos[0] - 7,
+    posY: 6.7,
+    posZ: roomPos[2] - 12,
+    targetX: roomPos[0] - 2,
+    targetY: 1.5,
     targetZ: roomPos[2],
   }
 }
@@ -40,13 +41,15 @@ function getRoomCamera(roomPos: [number, number, number]) {
 function getBoardCamera(roomPos: [number, number, number], roomSize: number = 12) {
   // Board is at front wall: z = roomPos[2] + roomSize/2 - 1
   const boardZ = roomPos[2] + roomSize / 2 - 1
+  // Tuned by Nicky for perfect board view
+  // Tiny X offset to prevent 360° spin while staying mostly centered
   return {
-    posX: roomPos[0],        // centered on board
-    posY: 2,                 // eye level
-    posZ: roomPos[2] - 1,    // stand back in room (looking toward +Z at board)
+    posX: roomPos[0] - 0.5,
+    posY: 4.2,
+    posZ: roomPos[2] - 2,
     targetX: roomPos[0],
-    targetY: 1.8,            // board center height
-    targetZ: boardZ,         // look at the board
+    targetY: 2.5,
+    targetZ: boardZ,
   }
 }
 
@@ -165,7 +168,7 @@ function isInputFocused(): boolean {
 export function CameraController({ roomPositions }: CameraControllerProps) {
   const controlsRef = useRef<CameraControlsImpl>(null)
   const { state } = useWorldFocus()
-  const { isDragging } = useDragState()
+  const { isDragging, isInteractingWithUI } = useDragState()
   const prevLevelRef = useRef<FocusLevel | null>(null)
   const prevRoomIdRef = useRef<string | null>(null)
   const prevBotKeyRef = useRef<string | null>(null)
@@ -184,8 +187,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   useEffect(() => {
     const controls = controlsRef.current
     if (!controls) return
-    controls.enabled = !isDragging
-  }, [isDragging])
+    controls.enabled = !isDragging && !isInteractingWithUI
+  }, [isDragging, isInteractingWithUI])
 
   // ─── WASD keyboard listeners (overview + room only) ───────────
 

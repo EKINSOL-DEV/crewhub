@@ -5,6 +5,7 @@ import { API_BASE } from '@/lib/api'
 
 export interface DragState {
   isDragging: boolean
+  isInteractingWithUI: boolean  // Blocks camera when user interacts with UI overlays
   sessionKey: string | null
   sessionName: string | null
   sourceRoomId: string | null
@@ -17,10 +18,12 @@ interface DragActions {
   dropOnRoom: (targetRoomId: string) => Promise<void>
   dropOnParking: () => Promise<void>
   clearError: () => void
+  setInteractingWithUI: (value: boolean) => void
 }
 
 const defaultDrag: DragState = {
   isDragging: false,
+  isInteractingWithUI: false,
   sessionKey: null,
   sessionName: null,
   sourceRoomId: null,
@@ -35,6 +38,7 @@ const DragActionsContext = createContext<DragActions>({
   dropOnRoom: async () => {},
   dropOnParking: async () => {},
   clearError: () => {},
+  setInteractingWithUI: () => {},
 })
 
 // ─── Provider ──────────────────────────────────────────────────
@@ -57,6 +61,7 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
   const startDrag = useCallback((sessionKey: string, sessionName: string, sourceRoomId: string) => {
     setDrag({
       isDragging: true,
+      isInteractingWithUI: false,
       sessionKey,
       sessionName,
       sourceRoomId,
@@ -70,6 +75,10 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
 
   const clearError = useCallback(() => {
     setDrag(prev => ({ ...prev, error: null }))
+  }, [])
+
+  const setInteractingWithUI = useCallback((value: boolean) => {
+    setDrag(prev => ({ ...prev, isInteractingWithUI: value }))
   }, [])
 
   const setErrorWithAutoClear = useCallback((message: string) => {
@@ -163,7 +172,8 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
     dropOnRoom,
     dropOnParking,
     clearError,
-  }), [startDrag, endDrag, dropOnRoom, dropOnParking, clearError])
+    setInteractingWithUI,
+  }), [startDrag, endDrag, dropOnRoom, dropOnParking, clearError, setInteractingWithUI])
 
   return (
     <DragStateContext.Provider value={drag}>

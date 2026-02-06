@@ -10,7 +10,6 @@ import { getBlueprintForRoom } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragDrop } from '@/contexts/DragDropContext'
 import { useGridDebug } from '@/hooks/useGridDebug'
-import { useTasks } from '@/hooks/useTasks'
 import type { Room } from '@/hooks/useRooms'
 import type { ThreeEvent } from '@react-three/fiber'
 
@@ -135,13 +134,6 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const { state, focusRoom, goBack } = useWorldFocus()
   const isRoomFocused = state.focusedRoomId === room.id && state.level === 'room'
 
-  // Tasks for Task Wall (only fetch if room has a project)
-  const { tasks } = useTasks({ 
-    projectId: room.project_id || undefined,
-    roomId: room.id,
-    autoFetch: !!room.project_id,
-  })
-
   // ─── Hover state with 80ms debounce/hysteresis ──────────────
   const [hovered, setHovered] = useState(false)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -234,15 +226,16 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
         </>
       )}
 
-      {/* ─── Task Wall (3D whiteboard with active tasks) ───────────── */}
-      {room.project_id && tasks.length > 0 && (
+      {/* ─── Task Wall (3D whiteboard with embedded TaskBoard) ─────── */}
+      {/* Only visible when zoomed into a room (not in overview) */}
+      {room.project_id && state.level !== 'overview' && (
         <TaskWall3D
-          tasks={tasks}
+          projectId={room.project_id}
           roomId={room.id}
-          position={[0, 1.8, size / 2 - 1.0]}  // Front wall, one unit forward into room
-          rotation={[0, Math.PI, 0]}  // Face into the room (toward -Z)
-          width={Math.min(size * 0.6, 5)}
-          height={2}
+          position={[0, 2.8, size / 2 - 1.0]}
+          rotation={[0, Math.PI, 0]}
+          width={Math.min(size * 0.94, 7.8)}
+          height={3.1}
         />
       )}
     </group>
