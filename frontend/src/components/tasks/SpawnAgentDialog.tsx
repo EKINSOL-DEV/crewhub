@@ -13,14 +13,16 @@ interface SpawnAgentDialogProps {
   isOpen: boolean
   onClose: () => void
   onSpawn: (agentId: string, sessionKey: string) => void
+  onRun?: (agentId: string, sessionKey: string) => void
 }
 
-export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn }: SpawnAgentDialogProps) {
+export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn, onRun }: SpawnAgentDialogProps) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [selectedAgentId, setSelectedAgentId] = useState<string>('')
   const [extraInstructions, setExtraInstructions] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSpawning, setIsSpawning] = useState(false)
+  const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Fetch agents when dialog opens
@@ -46,6 +48,40 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn }: SpawnAgentD
       setError(err instanceof Error ? err.message : 'Failed to load agents')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleRun = async () => {
+    if (!selectedAgentId) {
+      setError('Please select an agent')
+      return
+    }
+
+    setIsRunning(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_id: selectedAgentId,
+          extra_instructions: extraInstructions.trim() || undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.detail || 'Failed to send to agent')
+      }
+
+      const data = await response.json()
+      onRun?.(selectedAgentId, data.session_key)
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send to agent')
+    } finally {
+      setIsRunning(false)
     }
   }
 
@@ -241,8 +277,35 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn }: SpawnAgentD
             Cancel
           </button>
           <button
+            onClick={handleRun}
+            disabled={isRunning || isSpawning || !selectedAgentId}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 8,
+              border: '1px solid #10b981',
+              background: isRunning || !selectedAgentId ? '#9ca3af' : '#ecfdf5',
+              color: isRunning || !selectedAgentId ? '#fff' : '#059669',
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: isRunning || isSpawning || !selectedAgentId ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+            title="Send task to agent's main session"
+          >
+            {isRunning ? (
+              <>
+                <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                Sending...
+              </>
+            ) : (
+              <>▶️ Run</>
+            )}
+          </button>
+          <button
             onClick={handleSpawn}
-            disabled={isSpawning || !selectedAgentId}
+            disabled={isSpawning || isRunning || !selectedAgentId}
             style={{
               padding: '10px 20px',
               borderRadius: 8,
@@ -251,11 +314,12 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn }: SpawnAgentD
               color: '#fff',
               fontSize: 14,
               fontWeight: 500,
-              cursor: isSpawning || !selectedAgentId ? 'not-allowed' : 'pointer',
+              cursor: isSpawning || isRunning || !selectedAgentId ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
             }}
+            title="Spawn a dedicated subagent for this task"
           >
             {isSpawning ? (
               <>
@@ -263,7 +327,7 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn }: SpawnAgentD
                 Spawning...
               </>
             ) : (
-              <>🚀 Spawn Agent</>
+              <>🚀 Spawn</>
             )}
           </button>
         </div>

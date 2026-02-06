@@ -6,6 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from app.db.database import get_db
+from app.services.connections import get_connection_manager
 from app.db.models import generate_id
 from app.db.task_models import (
     TaskCreate, TaskUpdate, TaskResponse, TaskListResponse,
@@ -579,4 +580,132 @@ async def spawn_agent_for_task(task_id: str, body: SpawnRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to spawn agent for task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class RunRequest(BaseModel):
+    """Request body for running a task with an agent's main session."""
+    agent_id: str
+    extra_instructions: Optional[str] = None
+
+
+class RunResponse(BaseModel):
+    """Response from running a task with an agent."""
+    success: bool
+    session_key: str
+    task_id: str
+    agent_id: str
+
+
+@router.post("/{task_id}/run", response_model=RunResponse)
+async def run_task_with_agent(task_id: str, body: RunRequest):
+    """
+    Send a task to an agent's main session (not spawning a subagent).
+    
+    1. Fetches the task details
+    2. Builds a prompt from task title + description + extra instructions
+    3. Sends the message to the agent's main session
+    4. Updates task status to in_progress
+    5. Returns the session key
+    """
+    try:
+        db = await get_db()
+        try:
+            db.row_factory = lambda cursor, row: dict(
+                zip([col[0] for col in cursor.description], row)
+            )
+            
+            # 1. Get the task
+            async with db.execute(
+                "SELECT * FROM tasks WHERE id = ?", (task_id,)
+            ) as cursor:
+                task = await cursor.fetchone()
+            
+            if not task:
+                raise HTTPException(status_code=404, detail="Task not found")
+            
+            # 2. Get agent info
+            async with db.execute(
+                "SELECT * FROM agents WHERE id = ?", (body.agent_id,)
+            ) as cursor:
+                agent = await cursor.fetchone()
+            
+            if not agent:
+                raise HTTPException(status_code=404, detail="Agent not found")
+            
+            # 3. Build prompt
+            prompt_parts = [
+                f"**Task from Planner:** {task['title']}",
+            ]
+            if task.get("description"):
+                prompt_parts.append(f"\n{task['description']}")
+            if body.extra_instructions:
+                prompt_parts.append(f"\n**Additional Instructions:** {body.extra_instructions}")
+            
+            prompt = "\n".join(prompt_parts)
+            
+            # 4. Send to agent's main session via OpenClaw
+            manager = await get_connection_manager()
+            conn = manager.get_default_openclaw()
+            
+            session_key = f"agent:{agent['name'].lower()}:main"
+            
+            if conn:
+                try:
+                    result = await conn.send_message(
+                        session_key=session_key,
+                        message=prompt,
+                        timeout=90.0,
+                    )
+                    logger.info(f"Sent task to {session_key}: {result}")
+                except Exception as e:
+                    logger.warning(f"Failed to send to {session_key}: {e}")
+                    # Continue anyway - task is still assigned
+            else:
+                logger.warning("No OpenClaw connection available")
+            
+            # 5. Update task status to in_progress
+            now = int(time.time() * 1000)
+            await db.execute(
+                "UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?",
+                ("in_progress", now, task_id)
+            )
+            
+            # Add history event
+            await _add_history_event(
+                db,
+                task["project_id"],
+                "task_sent_to_agent",
+                task_id,
+                session_key,
+                {
+                    "agent_id": body.agent_id,
+                    "agent_name": agent["name"],
+                    "session_key": session_key,
+                    "prompt_preview": prompt[:200],
+                }
+            )
+            
+            await db.commit()
+            
+            # Broadcast SSE event
+            await broadcast("task-updated", {
+                "task_id": task_id,
+                "project_id": task["project_id"],
+                "room_id": task["room_id"],
+                "changes": {"status": {"old": task["status"], "new": "in_progress"}},
+            })
+            
+            return RunResponse(
+                success=True,
+                session_key=session_key,
+                task_id=task_id,
+                agent_id=body.agent_id,
+            )
+        finally:
+            await db.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to run task {task_id} with agent: {e}")
         raise HTTPException(status_code=500, detail=str(e))
