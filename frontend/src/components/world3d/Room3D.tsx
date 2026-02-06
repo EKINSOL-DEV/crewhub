@@ -239,8 +239,8 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
         <TaskWall3D
           tasks={tasks}
           roomId={room.id}
-          position={[0, 1.8, -size / 2 + 0.3]}  // Back wall, slightly in front
-          rotation={[0, 0, 0]}  // Face toward +Z (into the room)
+          position={[0, 1.8, size / 2 - 0.3]}  // Front wall (near hallway/entrance)
+          rotation={[0, Math.PI, 0]}  // Face into the room (toward -Z)
           width={Math.min(size * 0.6, 5)}
           height={2}
         />
