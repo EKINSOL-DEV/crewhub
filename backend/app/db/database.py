@@ -11,7 +11,7 @@ DB_DIR = Path.home() / ".crewhub"
 DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 8  # v8: Added bio to agents
+SCHEMA_VERSION = 9  # v9: Added tasks and project_history tables
 
 
 async def init_database():
@@ -276,6 +276,60 @@ async def init_database():
                 await db.execute("ALTER TABLE rooms ADD COLUMN wall_style TEXT DEFAULT 'default'")
             except Exception:
                 pass  # Column already exists
+            
+            # ========================================
+            # v9: Tasks and Project History
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL REFERENCES projects(id),
+                    room_id TEXT REFERENCES rooms(id),
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    status TEXT DEFAULT 'todo' CHECK(status IN ('todo', 'in_progress', 'review', 'done', 'blocked')),
+                    priority TEXT DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high', 'urgent')),
+                    assigned_session_key TEXT,
+                    created_by TEXT,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_tasks_room ON tasks(room_id)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_session_key)
+            """)
+            
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS project_history (
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT NOT NULL REFERENCES projects(id),
+                    task_id TEXT REFERENCES tasks(id),
+                    event_type TEXT NOT NULL,
+                    actor_session_key TEXT,
+                    payload_json TEXT,
+                    created_at INTEGER NOT NULL
+                )
+            """)
+            
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_project_history_project ON project_history(project_id)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_project_history_task ON project_history(task_id)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_project_history_created ON project_history(created_at DESC)
+            """)
             
             # Set initial version if not exists
             await db.execute("""

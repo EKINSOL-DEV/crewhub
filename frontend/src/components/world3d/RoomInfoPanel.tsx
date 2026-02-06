@@ -3,9 +3,11 @@ import type { CrewSession } from '@/lib/api'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { useRooms, type Room } from '@/hooks/useRooms'
 import { useProjects, type ProjectOverview } from '@/hooks/useProjects'
+import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
 import { useToast } from '@/hooks/use-toast'
 import { ProjectPicker } from './ProjectPicker'
 import { EditRoomDialog } from '@/components/shared/EditRoomDialog'
+import { TaskBoard } from '@/components/tasks'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -609,6 +611,18 @@ export function RoomInfoPanel({
           />
         )}
 
+        {/* Tasks Section - only when project is assigned */}
+        {currentProject && (
+          <TasksSection
+            projectId={currentProject.id}
+            roomId={room.id}
+            agents={sessions.map(s => ({
+              session_key: s.key,
+              display_name: displayNames.get(s.key) || s.displayName || s.key.split(':')[1] || s.key,
+            }))}
+          />
+        )}
+
         {/* Room Stats */}
         <div>
           <SectionHeader>📊 Room Stats</SectionHeader>
@@ -715,6 +729,281 @@ export function RoomInfoPanel({
           to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
+    </div>
+  )
+}
+
+// ── Tasks Section ──────────────────────────────────────────────
+
+function TasksSection({
+  projectId,
+  roomId,
+  agents,
+}: {
+  projectId: string
+  roomId: string
+  agents: Array<{ session_key: string; display_name: string }>
+}) {
+  const [showFullBoard, setShowFullBoard] = useState(false)
+  const { tasks, taskCounts, updateTask } = useTasks({ projectId, roomId })
+
+  // Quick status change handler
+  const handleStatusChange = useCallback(async (task: Task, newStatus: TaskStatus) => {
+    await updateTask(task.id, { status: newStatus })
+  }, [updateTask])
+
+  // Active tasks (not done)
+  const activeTasks = tasks.filter(t => t.status !== 'done').slice(0, 5)
+  const totalActive = tasks.filter(t => t.status !== 'done').length
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <SectionHeader>📋 Tasks</SectionHeader>
+        <button
+          onClick={() => setShowFullBoard(true)}
+          style={{
+            padding: '3px 8px',
+            fontSize: 10,
+            fontWeight: 600,
+            background: '#eff6ff',
+            color: '#2563eb',
+            border: 'none',
+            borderRadius: 4,
+            cursor: 'pointer',
+          }}
+        >
+          View Board →
+        </button>
+      </div>
+
+      {/* Task Summary Counts */}
+      <div style={{
+        display: 'flex',
+        gap: 8,
+        marginTop: 8,
+        flexWrap: 'wrap',
+      }}>
+        <TaskCountBadge count={taskCounts.todo} label="To Do" color="#6b7280" />
+        <TaskCountBadge count={taskCounts.in_progress} label="In Progress" color="#2563eb" />
+        <TaskCountBadge count={taskCounts.blocked} label="Blocked" color="#dc2626" />
+        <TaskCountBadge count={taskCounts.done} label="Done" color="#15803d" />
+      </div>
+
+      {/* Active Tasks Preview */}
+      {activeTasks.length > 0 ? (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {activeTasks.map(task => (
+            <MiniTaskCard
+              key={task.id}
+              task={task}
+              onStatusChange={handleStatusChange}
+            />
+          ))}
+          {totalActive > 5 && (
+            <button
+              onClick={() => setShowFullBoard(true)}
+              style={{
+                padding: '6px 12px',
+                fontSize: 11,
+                color: '#6b7280',
+                background: 'rgba(0,0,0,0.03)',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              +{totalActive - 5} more tasks
+            </button>
+          )}
+        </div>
+      ) : (
+        <div style={{
+          marginTop: 10,
+          padding: '12px',
+          background: 'rgba(0,0,0,0.02)',
+          borderRadius: 8,
+          fontSize: 12,
+          color: '#9ca3af',
+          textAlign: 'center',
+        }}>
+          No active tasks
+        </div>
+      )}
+
+      {/* Full Task Board Modal */}
+      {showFullBoard && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowFullBoard(false)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 16,
+              padding: 24,
+              width: '90%',
+              maxWidth: 900,
+              height: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 16,
+            }}>
+              <h2 style={{ margin: 0, fontSize: 18, color: '#1f2937' }}>
+                📋 Task Board
+              </h2>
+              <button
+                onClick={() => setShowFullBoard(false)}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  border: 'none',
+                  background: 'rgba(0,0,0,0.05)',
+                  color: '#6b7280',
+                  cursor: 'pointer',
+                  fontSize: 16,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <TaskBoard
+                projectId={projectId}
+                roomId={roomId}
+                agents={agents}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TaskCountBadge({ count, label, color }: { count: number; label: string; color: string }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 4,
+      padding: '4px 8px',
+      background: color + '10',
+      borderRadius: 6,
+    }}>
+      <span style={{ fontSize: 12, fontWeight: 700, color }}>{count}</span>
+      <span style={{ fontSize: 10, color: '#6b7280' }}>{label}</span>
+    </div>
+  )
+}
+
+function MiniTaskCard({
+  task,
+  onStatusChange,
+}: {
+  task: Task
+  onStatusChange: (task: Task, status: TaskStatus) => void
+}) {
+  const priorityColors: Record<string, string> = {
+    urgent: '#dc2626',
+    high: '#ea580c',
+    medium: '#2563eb',
+    low: '#6b7280',
+  }
+  const statusColors: Record<string, string> = {
+    todo: '#6b7280',
+    in_progress: '#2563eb',
+    review: '#7c3aed',
+    blocked: '#dc2626',
+  }
+
+  return (
+    <div style={{
+      padding: '8px 10px',
+      background: '#fff',
+      borderRadius: 6,
+      borderLeft: `3px solid ${priorityColors[task.priority]}`,
+      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+    }}>
+      <span style={{
+        flex: 1,
+        fontSize: 12,
+        color: '#1f2937',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
+        {task.title}
+      </span>
+
+      {/* Status dot */}
+      <span style={{
+        width: 6,
+        height: 6,
+        borderRadius: '50%',
+        background: statusColors[task.status],
+        flexShrink: 0,
+      }} />
+
+      {/* Quick actions */}
+      {task.status === 'todo' && (
+        <button
+          onClick={() => onStatusChange(task, 'in_progress')}
+          title="Start"
+          style={{
+            padding: '2px 6px',
+            fontSize: 10,
+            background: '#eff6ff',
+            color: '#2563eb',
+            border: 'none',
+            borderRadius: 4,
+            cursor: 'pointer',
+          }}
+        >
+          ▶
+        </button>
+      )}
+      {(task.status === 'in_progress' || task.status === 'review') && (
+        <button
+          onClick={() => onStatusChange(task, 'done')}
+          title="Done"
+          style={{
+            padding: '2px 6px',
+            fontSize: 10,
+            background: '#dcfce7',
+            color: '#15803d',
+            border: 'none',
+            borderRadius: 4,
+            cursor: 'pointer',
+          }}
+        >
+          ✓
+        </button>
+      )}
     </div>
   )
 }
