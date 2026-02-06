@@ -227,8 +227,8 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
       )}
 
       {/* ─── Task Wall (3D whiteboard with embedded TaskBoard) ─────── */}
-      {/* Only visible when zoomed into a room (not in overview), hidden for Dev Room */}
-      {room.project_id && state.level !== 'overview' && !room.name.toLowerCase().includes('dev') && (
+      {/* Only visible when zoomed into a room (not in overview) */}
+      {room.project_id && state.level !== 'overview' && (
         <TaskWall3D
           projectId={room.project_id}
           roomId={room.id}
