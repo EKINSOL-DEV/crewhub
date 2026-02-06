@@ -57,7 +57,7 @@ export function TaskBoardOverlay({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [formLoading, setFormLoading] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [_isRefreshing, setIsRefreshing] = useState(false)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null)
 

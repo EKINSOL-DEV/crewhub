@@ -96,7 +96,8 @@ const BOT_CAM_LERP_FACTOR = 0.05 // smooth orbit-target follow
 // Reusable vector to avoid GC pressure in useFrame
 const _desiredTarget = new THREE.Vector3()
 
-function getBotCamera(botPos: { x: number; y: number; z: number }) {
+// Reserved for future use (bot-specific camera positioning)
+export function getBotCamera(botPos: { x: number; y: number; z: number }) {
   return {
     posX: botPos.x + BOT_CAM_OFFSET.x,
     posY: BOT_CAM_OFFSET.y,

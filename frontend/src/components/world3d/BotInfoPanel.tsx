@@ -6,6 +6,7 @@ import type { BotStatus } from './Bot3D'
 import { useChatContext } from '@/contexts/ChatContext'
 import { useRooms } from '@/hooks/useRooms'
 import { useDemoMode } from '@/contexts/DemoContext'
+import { EditBioDialog } from '@/components/shared/EditBioDialog'
 
 interface BotInfoPanelProps {
   session: CrewSession | null
@@ -13,10 +14,12 @@ interface BotInfoPanelProps {
   botConfig: BotVariantConfig
   status: BotStatus
   bio?: string | null
+  agentId?: string | null
   currentRoomId?: string | null
   onClose: () => void
   onOpenLog: (session: CrewSession) => void
   onAssignmentChanged?: () => void
+  onBioUpdated?: () => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -84,7 +87,7 @@ function getLastAssistantMessage(session: CrewSession): string | null {
 
 // ── Component ──────────────────────────────────────────────────
 
-export function BotInfoPanel({ session, displayName, botConfig, status, bio, currentRoomId, onClose, onOpenLog, onAssignmentChanged }: BotInfoPanelProps) {
+export function BotInfoPanel({ session, displayName, botConfig, status, bio, agentId, currentRoomId, onClose, onOpenLog, onAssignmentChanged, onBioUpdated }: BotInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const canChat = session ? isFixedAgent(session.key) : false
   const { openChat } = useChatContext()
@@ -92,6 +95,7 @@ export function BotInfoPanel({ session, displayName, botConfig, status, bio, cur
   const { isDemoMode } = useDemoMode()
   const [isMoving, setIsMoving] = useState(false)
   const [moveError, setMoveError] = useState<string | null>(null)
+  const [bioDialogOpen, setBioDialogOpen] = useState(false)
 
   // Handle room move
   const handleMoveToRoom = async (targetRoomId: string) => {
@@ -283,20 +287,55 @@ export function BotInfoPanel({ session, displayName, botConfig, status, bio, cur
         gap: 14,
       }}>
         {/* Bio */}
-        {bio && (
-          <div style={{
-            fontSize: 13,
-            color: '#6b7280',
-            lineHeight: 1.5,
-            fontStyle: 'italic',
-            padding: '8px 12px',
-            background: `${botConfig.color}08`,
-            borderRadius: 10,
-            borderLeft: `3px solid ${botConfig.color}40`,
-          }}>
-            {bio}
-          </div>
-        )}
+        <div>
+          {bio ? (
+            <div style={{
+              fontSize: 13,
+              color: '#6b7280',
+              lineHeight: 1.5,
+              fontStyle: 'italic',
+              padding: '8px 12px',
+              background: `${botConfig.color}08`,
+              borderRadius: 10,
+              borderLeft: `3px solid ${botConfig.color}40`,
+              marginBottom: 8,
+            }}>
+              {bio}
+            </div>
+          ) : null}
+          
+          {/* Bio edit button */}
+          {agentId && (
+            <button
+              onClick={() => setBioDialogOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 12px',
+                fontSize: 12,
+                fontWeight: 500,
+                color: '#6b7280',
+                background: 'rgba(0, 0, 0, 0.04)',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontFamily: 'system-ui, sans-serif',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.08)'
+                e.currentTarget.style.color = '#374151'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.04)'
+                e.currentTarget.style.color = '#6b7280'
+              }}
+            >
+              {bio ? '✏️ Update Bio' : '✨ Create Bio'}
+            </button>
+          )}
+        </div>
 
         <InfoRow label="Type">
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -509,6 +548,16 @@ export function BotInfoPanel({ session, displayName, botConfig, status, bio, cur
           to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
+
+      {/* Bio Edit Dialog */}
+      <EditBioDialog
+        agentId={agentId || null}
+        agentName={displayName}
+        currentBio={bio || null}
+        open={bioDialogOpen}
+        onOpenChange={setBioDialogOpen}
+        onSaved={onBioUpdated}
+      />
     </div>
   )
 }

@@ -1044,17 +1044,18 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key))
   }, [focusedSession, isActivelyRunning])
 
-  // Get bio for focused bot from agents registry
-  const { agents: agentRuntimesForPanel } = useAgentsRegistry(allSessions)
-  const focusedBotBio = useMemo(() => {
+  // Get bio and agentId for focused bot from agents registry
+  const { agents: agentRuntimesForPanel, refresh: refreshAgents } = useAgentsRegistry(allSessions)
+  const focusedBotRuntime = useMemo(() => {
     if (!focusedSession) return null
-    const runtime = agentRuntimesForPanel.find(
+    return agentRuntimesForPanel.find(
       r => r.agent.agent_session_key === focusedSession.key
         || r.session?.key === focusedSession.key
         || r.childSessions.some(c => c.key === focusedSession.key)
-    )
-    return runtime?.agent.bio ?? null
+    ) ?? null
   }, [focusedSession, agentRuntimesForPanel])
+  const focusedBotBio = focusedBotRuntime?.agent.bio ?? null
+  const focusedAgentId = focusedBotRuntime?.agent.id ?? null
 
   // ─── Room Info Panel: compute sessions in focused room ────────
   const focusedRoom = useMemo(() => {
@@ -1190,6 +1191,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             botConfig={focusedBotConfig}
             status={focusedBotStatus}
             bio={focusedBotBio}
+            agentId={focusedAgentId}
             currentRoomId={getRoomForSession(focusedSession.key, { label: focusedSession.label, model: focusedSession.model, channel: focusedSession.lastChannel })}
             onClose={() => goBack()}
             onOpenLog={(session) => {
@@ -1197,6 +1199,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               setLogViewerOpen(true)
             }}
             onAssignmentChanged={refreshRooms}
+            onBioUpdated={refreshAgents}
           />
         )}
 
