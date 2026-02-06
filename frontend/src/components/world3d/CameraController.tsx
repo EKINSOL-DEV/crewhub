@@ -37,15 +37,16 @@ function getRoomCamera(roomPos: [number, number, number]) {
 }
 
 // Board is on back wall at z+5.5 from room center, facing -Z
-function getBoardCamera(roomPos: [number, number, number]) {
-  const boardZ = roomPos[2] + 5.5
+function getBoardCamera(roomPos: [number, number, number], roomSize: number = 12) {
+  // Board is at front wall: z = roomPos[2] + roomSize/2 - 1
+  const boardZ = roomPos[2] + roomSize / 2 - 1
   return {
     posX: roomPos[0],        // centered on board
     posY: 2,                 // eye level
-    posZ: roomPos[2] + 1,    // in front of board (looking toward +Z)
+    posZ: roomPos[2] - 1,    // stand back in room (looking toward +Z at board)
     targetX: roomPos[0],
     targetY: 1.8,            // board center height
-    targetZ: boardZ,
+    targetZ: boardZ,         // look at the board
   }
 }
 
