@@ -42,8 +42,8 @@ export class Registry<T> {
    * Overwrites if id already exists.
    */
   register(id: string, data: T, source: 'builtin' | 'mod' = 'builtin', modId?: string): void {
-    // Auto-qualify non-namespaced IDs (common for builtins)
     if (!isNamespacedId(id)) {
+      console.warn(`[Registry] ID '${id}' is not namespaced (expected 'namespace:id'). Auto-qualifying as '${BUILTIN_NS}:${id}'.`)
       id = `${BUILTIN_NS}:${id}`
     }
     this.entries.set(id, { id, data, source, modId })
@@ -65,8 +65,8 @@ export class Registry<T> {
     for (const entry of entries) {
       let id = entry.id
       const source = entry.source ?? 'builtin'
-      // Auto-qualify non-namespaced IDs (common for builtins)
       if (!isNamespacedId(id)) {
+        console.warn(`[Registry] ID '${id}' is not namespaced (expected 'namespace:id'). Auto-qualifying as '${BUILTIN_NS}:${id}'.`)
         id = `${BUILTIN_NS}:${id}`
       }
       this.entries.set(id, { id, data: entry.data, source, modId: entry.modId })

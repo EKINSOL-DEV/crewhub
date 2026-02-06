@@ -114,7 +114,9 @@ function registerBuiltinProps(): void {
   }
 
   for (const [id, entry] of Object.entries(builtins)) {
-    propRegistry.register(id, entry, 'builtin')
+    // Ensure proper namespace prefix for builtin props
+    const namespacedId = id.includes(':') ? id : `builtin:${id}`
+    propRegistry.register(namespacedId, entry, 'builtin')
   }
 }
 
