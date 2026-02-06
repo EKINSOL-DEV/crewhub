@@ -1,13 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { API_BASE } from '@/lib/api'
 
+export interface ToolCallData {
+  name: string
+  status: string
+  input?: Record<string, unknown>
+  result?: string
+}
+
 export interface ChatMessageData {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
   timestamp: number
   tokens?: number
-  tools?: { name: string; status: string }[]
+  tools?: ToolCallData[]
+  thinking?: string[]  // Thinking blocks when raw mode enabled
 }
 
 export interface UseAgentChatReturn {
@@ -26,7 +34,7 @@ interface HistoryResponse {
   oldestTimestamp: number | null
 }
 
-export function useAgentChat(sessionKey: string): UseAgentChatReturn {
+export function useAgentChat(sessionKey: string, raw: boolean = false): UseAgentChatReturn {
   const [messages, setMessages] = useState<ChatMessageData[]>([])
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -36,9 +44,14 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
   const historyAbortRef = useRef<AbortController | null>(null)
   const sendAbortRef = useRef<AbortController | null>(null)
 
-  // Load initial history on mount
+  // Load initial history on mount or when raw mode changes
   useEffect(() => {
-    if (!sessionKey || initialLoadDone.current) return
+    if (!sessionKey) return
+    
+    // Reset on raw mode change
+    if (initialLoadDone.current) {
+      // Re-fetch when raw mode changes
+    }
     initialLoadDone.current = true
 
     // Cancel any in-flight history request
@@ -51,8 +64,9 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
       setIsLoadingHistory(true)
       setError(null)
       try {
+        const rawParam = raw ? '&raw=true' : ''
         const resp = await fetch(
-          `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?limit=30`,
+          `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?limit=30${rawParam}`,
           { signal: historyAbortRef.current?.signal }
         )
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
@@ -68,7 +82,7 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
       }
     }
     loadInitial()
-  }, [sessionKey])
+  }, [sessionKey, raw])
 
   // Reset and cleanup when session changes
   useEffect(() => {
@@ -165,8 +179,9 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
 
     setIsLoadingHistory(true)
     try {
+      const rawParam = raw ? '&raw=true' : ''
       const resp = await fetch(
-        `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?limit=30&before=${oldest}`,
+        `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?limit=30&before=${oldest}${rawParam}`,
         { signal: historyAbortRef.current.signal }
       )
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
@@ -180,7 +195,7 @@ export function useAgentChat(sessionKey: string): UseAgentChatReturn {
     } finally {
       setIsLoadingHistory(false)
     }
-  }, [sessionKey, isLoadingHistory, hasMore, messages])
+  }, [sessionKey, raw, isLoadingHistory, hasMore, messages])
 
   return {
     messages,
