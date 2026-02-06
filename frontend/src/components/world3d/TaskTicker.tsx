@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useActiveTasks, type ActiveTask } from '@/hooks/useActiveTasks'
 import type { CrewSession } from '@/lib/api'
@@ -11,15 +11,16 @@ interface TaskTickerProps {
   getRoomForSession: (sessionKey: string) => string | undefined
   /** Default room ID if none found */
   defaultRoomId?: string
-  /** Whether the ticker is visible */
-  visible?: boolean
 }
 
 // ── Constants ──────────────────────────────────────────────────
 
-const MAX_VISIBLE_ITEMS = 5
-const ITEM_HEIGHT = 32
-const TICKER_WIDTH = 250
+const MIN_WIDTH = 200
+const MAX_WIDTH = 400
+const DEFAULT_WIDTH = 280
+const MIN_HEIGHT = 100
+const MAX_HEIGHT = 400
+const DEFAULT_HEIGHT = 200
 const FADE_OUT_DURATION = 30000
 
 // ── Component ──────────────────────────────────────────────────
@@ -28,22 +29,27 @@ export function TaskTicker({
   sessions,
   getRoomForSession,
   defaultRoomId,
-  visible = true,
 }: TaskTickerProps) {
   const { focusBot } = useWorldFocus()
+  const [isOpen, setIsOpen] = useState(false)
+  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  const [height, setHeight] = useState(DEFAULT_HEIGHT)
+  const resizingRef = useRef<'width' | 'height' | 'both' | null>(null)
+  const startPosRef = useRef({ x: 0, y: 0, width: 0, height: 0 })
+
   const { tasks, getTaskOpacity } = useActiveTasks({
     sessions,
     fadeOutDuration: FADE_OUT_DURATION,
-    enabled: visible,
+    enabled: true,
   })
 
   // Force re-render every second to update fade-out opacity
   const [, setTick] = useState(0)
   useEffect(() => {
-    if (!visible) return
+    if (!isOpen) return
     const interval = setInterval(() => setTick(t => t + 1), 500)
     return () => clearInterval(interval)
-  }, [visible])
+  }, [isOpen])
 
   // Click handler → focus on the bot
   const handleTaskClick = useCallback((task: ActiveTask) => {
@@ -55,10 +61,8 @@ export function TaskTicker({
   // Sort: running first, then done (sorted by doneAt desc)
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {
-      // Running tasks come first
       if (a.status === 'running' && b.status !== 'running') return -1
       if (a.status !== 'running' && b.status === 'running') return 1
-      // Among done tasks, most recently done first
       if (a.status === 'done' && b.status === 'done') {
         return (b.doneAt || 0) - (a.doneAt || 0)
       }
@@ -66,58 +70,168 @@ export function TaskTicker({
     })
   }, [tasks])
 
-  if (!visible || sortedTasks.length === 0) {
-    return null
-  }
+  const runningCount = sortedTasks.filter(t => t.status === 'running').length
+  const totalCount = sortedTasks.length
 
-  const hasOverflow = sortedTasks.length > MAX_VISIBLE_ITEMS
+  // Resize handlers
+  const handleResizeStart = useCallback((e: React.MouseEvent, direction: 'width' | 'height' | 'both') => {
+    e.preventDefault()
+    e.stopPropagation()
+    resizingRef.current = direction
+    startPosRef.current = { x: e.clientX, y: e.clientY, width, height }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizingRef.current) return
+      const dx = e.clientX - startPosRef.current.x
+      const dy = e.clientY - startPosRef.current.y
+
+      if (resizingRef.current === 'width' || resizingRef.current === 'both') {
+        setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startPosRef.current.width + dx)))
+      }
+      if (resizingRef.current === 'height' || resizingRef.current === 'both') {
+        setHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, startPosRef.current.height + dy)))
+      }
+    }
+
+    const handleMouseUp = () => {
+      resizingRef.current = null
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+  }, [width, height])
 
   return (
     <div
       style={{
         position: 'absolute',
-        top: 56, // Same level as Walk Around button (right side)
+        top: 56,
         left: 16,
         zIndex: 45,
-        width: TICKER_WIDTH,
-        maxHeight: MAX_VISIBLE_ITEMS * ITEM_HEIGHT + 16,
-        overflowY: hasOverflow ? 'auto' : 'hidden',
-        overflowX: 'hidden',
-        borderRadius: 12,
-        background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-        border: '1px solid rgba(255, 255, 255, 0.5)',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
-      {/* Header */}
-      <div
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
         style={{
-          padding: '8px 12px 4px',
-          fontSize: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '8px 12px',
+          borderRadius: 10,
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: 13,
           fontWeight: 600,
-          color: 'rgba(0, 0, 0, 0.4)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+          color: runningCount > 0 ? '#1d4ed8' : '#374151',
+          background: runningCount > 0 ? 'rgba(219, 234, 254, 0.9)' : 'rgba(255, 255, 255, 0.75)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.2s ease',
+          fontFamily: 'system-ui, sans-serif',
         }}
+        title={isOpen ? 'Hide active tasks' : 'Show active tasks'}
       >
-        Active Tasks ({sortedTasks.filter(t => t.status === 'running').length})
-      </div>
+        {runningCount > 0 ? (
+          <>
+            <span style={{ animation: 'pulse 2s infinite' }}>⚡</span>
+            {runningCount} running
+          </>
+        ) : totalCount > 0 ? (
+          <>📋 {totalCount} tasks</>
+        ) : (
+          <>📋 Tasks</>
+        )}
+        <span style={{ fontSize: 10, opacity: 0.6 }}>{isOpen ? '▲' : '▼'}</span>
+      </button>
 
-      {/* Task list */}
-      <div style={{ padding: 4 }}>
-        {sortedTasks.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            opacity={getTaskOpacity(task)}
-            onClick={() => handleTaskClick(task)}
+      {/* Expanded Panel */}
+      {isOpen && (
+        <div
+          style={{
+            marginTop: 8,
+            width,
+            height: totalCount === 0 ? 'auto' : height,
+            minHeight: 60,
+            borderRadius: 12,
+            background: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.6)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              padding: '10px 12px 8px',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'rgba(0, 0, 0, 0.5)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+              flexShrink: 0,
+            }}
+          >
+            Active Tasks {runningCount > 0 && `(${runningCount} running)`}
+          </div>
+
+          {/* Task list */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
+            {sortedTasks.length === 0 ? (
+              <div style={{ 
+                padding: 16, 
+                textAlign: 'center', 
+                color: 'rgba(0,0,0,0.4)',
+                fontSize: 12,
+              }}>
+                No active tasks
+              </div>
+            ) : (
+              sortedTasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  opacity={getTaskOpacity(task)}
+                  onClick={() => handleTaskClick(task)}
+                />
+              ))
+            )}
+          </div>
+
+          {/* Resize handle (bottom-right corner) */}
+          <div
+            onMouseDown={(e) => handleResizeStart(e, 'both')}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: 16,
+              height: 16,
+              cursor: 'nwse-resize',
+              background: 'linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.1) 50%)',
+              borderRadius: '0 0 12px 0',
+            }}
           />
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Pulse animation style */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
     </div>
   )
 }
@@ -133,9 +247,8 @@ interface TaskItemProps {
 function TaskItem({ task, opacity, onClick }: TaskItemProps) {
   const isRunning = task.status === 'running'
   
-  // Truncate title to ~30 chars
-  const displayTitle = task.title.length > 30
-    ? task.title.slice(0, 28) + '…'
+  const displayTitle = task.title.length > 35
+    ? task.title.slice(0, 33) + '…'
     : task.title
 
   return (
@@ -146,113 +259,63 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
         alignItems: 'center',
         gap: 8,
         width: '100%',
-        padding: '6px 8px',
-        borderRadius: 8,
+        padding: '8px 10px',
         border: 'none',
-        background: 'transparent',
+        borderRadius: 8,
+        background: isRunning ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
         cursor: 'pointer',
         textAlign: 'left',
         opacity,
-        transition: 'background 0.15s ease, opacity 0.3s ease',
+        transition: 'opacity 0.5s ease, background 0.2s ease',
+        fontFamily: 'inherit',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
+        e.currentTarget.style.background = isRunning 
+          ? 'rgba(59, 130, 246, 0.2)' 
+          : 'rgba(0, 0, 0, 0.05)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.background = isRunning 
+          ? 'rgba(59, 130, 246, 0.1)' 
+          : 'transparent'
       }}
-      title={`${task.title}\nAgent: ${task.agentName}\nClick to focus`}
+      title={`Click to focus on ${task.agentName || 'agent'}`}
     >
       {/* Status indicator */}
-      <span
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 16,
-          height: 16,
-          fontSize: 12,
-          flexShrink: 0,
-        }}
-      >
+      <span style={{ fontSize: 14, flexShrink: 0 }}>
         {isRunning ? (
-          <SpinnerIcon />
+          <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⚙️</span>
         ) : (
-          <span style={{ color: '#22c55e' }}>✓</span>
+          '✅'
         )}
       </span>
 
-      {/* Task title */}
-      <span
-        style={{
-          flex: 1,
-          fontSize: 12,
-          fontWeight: 500,
-          color: isRunning ? '#374151' : '#9ca3af',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {displayTitle}
-      </span>
-
-      {/* Agent badge */}
-      {task.agentName && (
-        <span
+      {/* Task info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
           style={{
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: 500,
-            color: '#6b7280',
-            background: 'rgba(0, 0, 0, 0.05)',
-            padding: '2px 6px',
-            borderRadius: 4,
-            flexShrink: 0,
+            color: isRunning ? '#1e40af' : '#059669',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}
         >
-          {task.agentName}
-        </span>
-      )}
+          {displayTitle}
+        </div>
+        {task.agentName && (
+          <div
+            style={{
+              fontSize: 10,
+              color: 'rgba(0, 0, 0, 0.4)',
+              marginTop: 1,
+            }}
+          >
+            {task.agentIcon} {task.agentName}
+          </div>
+        )}
+      </div>
     </button>
-  )
-}
-
-// ── Spinner Icon ───────────────────────────────────────────────
-
-function SpinnerIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      style={{
-        animation: 'spin 1s linear infinite',
-      }}
-    >
-      <style>
-        {`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}
-      </style>
-      <circle
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="#e5e7eb"
-        strokeWidth="3"
-        fill="none"
-      />
-      <path
-        d="M12 2a10 10 0 0 1 10 10"
-        stroke="#6366f1"
-        strokeWidth="3"
-        strokeLinecap="round"
-        fill="none"
-      />
-    </svg>
   )
 }

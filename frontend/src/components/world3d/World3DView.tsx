@@ -1135,7 +1135,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Back button / navigation (top-left) */}
         <WorldNavigation rooms={rooms} />
 
-        {/* Task Ticker (active subagent tasks, below navigation) */}
+        {/* Task Ticker (active subagent tasks, toggle button + collapsible panel) */}
         {focusState.level !== 'firstperson' && (
           <TaskTicker
             sessions={allSessions}
@@ -1145,7 +1145,6 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               channel: allSessions.find(s => s.key === key)?.lastChannel,
             })}
             defaultRoomId={rooms[0]?.id}
-            visible={focusState.level === 'overview' || focusState.level === 'room'}
           />
         )}
 
