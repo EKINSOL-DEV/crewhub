@@ -61,13 +61,39 @@ function formatModel(model?: string): string {
 }
 
 function getDisplayName(session: CrewSession, aliasName: string | null | undefined): string {
+  // Priority: custom alias > session label > display name > friendly name > agent ID
   if (aliasName) return aliasName
-  if (session.displayName) return session.displayName
+  if (session.label) return session.label
+  if (session.displayName && !session.displayName.includes(':')) return session.displayName
+  
+  // For subagents, use the label or generate friendly name
+  if (session.key.includes(':subagent:') || session.key.includes(':spawn:')) {
+    if (session.label) return session.label
+    // Extract agent type from key (e.g., "agent:dev:subagent:xxx" -> "Dev")
+    const parts = session.key.split(':')
+    if (parts.length >= 2) {
+      const agentId = parts[1]
+      return agentId.charAt(0).toUpperCase() + agentId.slice(1) + ' (subagent)'
+    }
+  }
+  
+  // For phone numbers (WhatsApp), show a friendly label
+  if (session.key.includes('+')) {
+    const phoneMatch = session.key.match(/\+\d+/)
+    if (phoneMatch) {
+      // Known numbers
+      if (phoneMatch[0] === '+32494330227') return 'Nicky'
+      return 'User'
+    }
+  }
+  
+  // Extract agent name from key pattern "agent:name:..."
   const parts = session.key.split(':')
-  if (parts.length >= 2) {
+  if (parts.length >= 2 && parts[0] === 'agent') {
     const name = parts[1]
     return name.charAt(0).toUpperCase() + name.slice(1)
   }
+  
   return session.key
 }
 

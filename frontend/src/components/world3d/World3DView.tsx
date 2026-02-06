@@ -80,8 +80,10 @@ import { CameraController } from './CameraController'
 import { FirstPersonController, FirstPersonHUD } from './FirstPersonController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
-import { TaskTicker } from './TaskTicker'
+import { ActionBar } from './ActionBar'
+import { TasksWindow } from './TasksWindow'
 import { AgentTopBar } from './AgentTopBar'
+import { useActiveTasks } from '@/hooks/useActiveTasks'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
@@ -997,6 +999,25 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   // HQ TaskBoard overlay state (cross-project overview)
   const [hqBoardOpen, setHqBoardOpen] = useState(false)
 
+  // Tasks window state (ActionBar toggle)
+  const [tasksWindowOpen, setTasksWindowOpen] = useState(false)
+
+  // Active tasks for ActionBar badge and TasksWindow
+  const { tasks: activeTasks, getTaskOpacity, runningTasks } = useActiveTasks({
+    sessions: allSessions,
+    enabled: focusState.level !== 'firstperson',
+  })
+
+  // Helper to get room for session (for TasksWindow)
+  const getTaskRoomForSession = useCallback((sessionKey: string) => {
+    const session = allSessions.find(s => s.key === sessionKey)
+    return getRoomForSession(sessionKey, {
+      label: session?.label,
+      model: session?.model,
+      channel: session?.lastChannel,
+    })
+  }, [allSessions, getRoomForSession])
+
   // Fullscreen mode (native browser API)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -1135,16 +1156,24 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Back button / navigation (top-left) */}
         <WorldNavigation rooms={rooms} />
 
-        {/* Task Ticker (active subagent tasks, toggle button + collapsible panel) */}
+        {/* Action Bar (left side, vertical - Photoshop-style toolbar) */}
         {focusState.level !== 'firstperson' && (
-          <TaskTicker
-            sessions={allSessions}
-            getRoomForSession={(key) => getRoomForSession(key, {
-              label: allSessions.find(s => s.key === key)?.label,
-              model: allSessions.find(s => s.key === key)?.model,
-              channel: allSessions.find(s => s.key === key)?.lastChannel,
-            })}
+          <ActionBar
+            runningTaskCount={runningTasks.length}
+            totalTaskCount={activeTasks.length}
+            tasksWindowOpen={tasksWindowOpen}
+            onToggleTasksWindow={() => setTasksWindowOpen(prev => !prev)}
+          />
+        )}
+
+        {/* Tasks Window (draggable, toggled via ActionBar) */}
+        {focusState.level !== 'firstperson' && tasksWindowOpen && (
+          <TasksWindow
+            tasks={activeTasks}
+            getTaskOpacity={getTaskOpacity}
+            getRoomForSession={getTaskRoomForSession}
             defaultRoomId={rooms[0]?.id}
+            onClose={() => setTasksWindowOpen(false)}
           />
         )}
 
