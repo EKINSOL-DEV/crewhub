@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import {
   Sheet,
   SheetContent,
@@ -6,14 +6,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -64,6 +56,11 @@ export function RoomRoutingRulesPanel({ open, onOpenChange, testSessions = [] }:
   const [showPreviewDialog, setShowPreviewDialog] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   
+  // Native dialog refs
+  const createDialogRef = useRef<HTMLDialogElement>(null)
+  const previewDialogRef = useRef<HTMLDialogElement>(null)
+  const deleteDialogRef = useRef<HTMLDialogElement>(null)
+  
   // New rule form state
   const [newRule, setNewRule] = useState({
     rule_type: "session_key_contains" as RoomAssignmentRule["rule_type"],
@@ -71,6 +68,39 @@ export function RoomRoutingRulesPanel({ open, onOpenChange, testSessions = [] }:
     room_id: rooms[0]?.id || "",
     priority: 50
   })
+
+  // Sync create dialog
+  useEffect(() => {
+    const dialog = createDialogRef.current
+    if (!dialog) return
+    if (showCreateDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [showCreateDialog])
+
+  // Sync preview dialog
+  useEffect(() => {
+    const dialog = previewDialogRef.current
+    if (!dialog) return
+    if (showPreviewDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [showPreviewDialog])
+
+  // Sync delete dialog
+  useEffect(() => {
+    const dialog = deleteDialogRef.current
+    if (!dialog) return
+    if (deleteConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [deleteConfirm])
 
   const handleCreateRule = async () => {
     if (!newRule.rule_value.trim()) {
@@ -288,16 +318,25 @@ export function RoomRoutingRulesPanel({ open, onOpenChange, testSessions = [] }:
       </Sheet>
 
       {/* Create Rule Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Routing Rule</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={createDialogRef}
+        onClose={() => setShowCreateDialog(false)}
+        onClick={(e) => e.target === e.currentTarget && setShowCreateDialog(false)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Create Routing Rule</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               Define a condition to automatically route sessions to a room
-            </DialogDescription>
-          </DialogHeader>
+            </p>
+          </div>
           
-          <div className="space-y-4 py-4">
+          <div className="px-6 pb-4 space-y-4">
             <div className="space-y-2">
               <Label>Rule Type</Label>
               <Select
@@ -400,24 +439,34 @@ export function RoomRoutingRulesPanel({ open, onOpenChange, testSessions = [] }:
             </div>
           </div>
           
-          <DialogFooter>
+          {/* Footer */}
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
             <Button onClick={handleCreateRule}>Create Rule</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
 
       {/* Preview Dialog */}
-      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Rule Preview</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={previewDialogRef}
+        onClose={() => setShowPreviewDialog(false)}
+        onClick={(e) => e.target === e.currentTarget && setShowPreviewDialog(false)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
+        >
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Rule Preview</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               See which room each active session would be assigned to
-            </DialogDescription>
-          </DialogHeader>
+            </p>
+          </div>
           
-          <div className="max-h-96 overflow-y-auto space-y-2">
+          <div className="px-6 pb-4 max-h-96 overflow-y-auto space-y-2">
             {previewResults.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">No sessions to preview</p>
             ) : (
@@ -442,29 +491,41 @@ export function RoomRoutingRulesPanel({ open, onOpenChange, testSessions = [] }:
             )}
           </div>
           
-          <DialogFooter>
+          {/* Footer */}
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button onClick={() => setShowPreviewDialog(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Rule?</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={deleteDialogRef}
+        onClose={() => setDeleteConfirm(null)}
+        onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Delete Rule?</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               This rule will be permanently removed. Sessions may be routed differently.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </p>
+          </div>
+          
+          {/* Footer */}
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteConfirm && handleDeleteRule(deleteConfirm)}>
               Delete Rule
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
     </>
   )
 }
