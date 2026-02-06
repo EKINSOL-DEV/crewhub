@@ -9,6 +9,7 @@ export interface ActiveTask {
   title: string
   sessionKey: string | null
   agentName: string | null
+  agentIcon: string | null
   status: 'running' | 'done'
   /** Timestamp when status changed to 'done' (for fade-out timing) */
   doneAt: number | null
@@ -93,6 +94,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
           title: extractTaskTitle(session),
           sessionKey: session.key,
           agentName: extractAgentName(session.key),
+          agentIcon: extractAgentIcon(session.key),
           status: 'running',
           doneAt: null,
           source: 'session',
@@ -239,4 +241,21 @@ function extractAgentName(sessionKey: string): string {
     return parts[1]
   }
   return 'agent'
+}
+
+/**
+ * Extract agent icon from session key
+ */
+function extractAgentIcon(sessionKey: string): string {
+  const agentName = extractAgentName(sessionKey)
+  // Common agent icons
+  const iconMap: Record<string, string> = {
+    'main': '🤖',
+    'dev': '👨‍💻',
+    'assistant': '🧑‍💼',
+    'ops': '⚙️',
+    'data': '📊',
+    'test': '🧪',
+  }
+  return iconMap[agentName.toLowerCase()] || '🤖'
 }

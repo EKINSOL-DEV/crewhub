@@ -6,8 +6,6 @@ import { useWorldFocus } from '@/contexts/WorldFocusContext'
 interface ActionBarProps {
   /** Number of running tasks (for badge display) */
   runningTaskCount: number
-  /** Total task count */
-  totalTaskCount: number
   /** Whether the tasks window is currently open */
   tasksWindowOpen: boolean
   /** Callback to toggle the tasks window */
@@ -130,7 +128,6 @@ function ActionButton({ icon, label, onClick, isActive, badge, badgeColor = '#3b
 
 export function ActionBar({
   runningTaskCount,
-  totalTaskCount,
   tasksWindowOpen,
   onToggleTasksWindow,
 }: ActionBarProps) {

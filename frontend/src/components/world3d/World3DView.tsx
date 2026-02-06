@@ -1002,22 +1002,6 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   // Tasks window state (ActionBar toggle)
   const [tasksWindowOpen, setTasksWindowOpen] = useState(false)
 
-  // Active tasks for ActionBar badge and TasksWindow
-  const { tasks: activeTasks, getTaskOpacity, runningTasks } = useActiveTasks({
-    sessions: allSessions,
-    enabled: focusState.level !== 'firstperson',
-  })
-
-  // Helper to get room for session (for TasksWindow)
-  const getTaskRoomForSession = useCallback((sessionKey: string) => {
-    const session = allSessions.find(s => s.key === sessionKey)
-    return getRoomForSession(sessionKey, {
-      label: session?.label,
-      model: session?.model,
-      channel: session?.lastChannel,
-    })
-  }, [allSessions, getRoomForSession])
-
   // Fullscreen mode (native browser API)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -1050,6 +1034,22 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     () => [...visibleSessions, ...parkingSessions],
     [visibleSessions, parkingSessions],
   )
+
+  // Active tasks for ActionBar badge and TasksWindow
+  const { tasks: activeTasks, getTaskOpacity, runningTasks } = useActiveTasks({
+    sessions: allSessions,
+    enabled: focusState.level !== 'firstperson',
+  })
+
+  // Helper to get room for session (for TasksWindow)
+  const getTaskRoomForSession = useCallback((sessionKey: string) => {
+    const session = allSessions.find(s => s.key === sessionKey)
+    return getRoomForSession(sessionKey, {
+      label: session?.label,
+      model: session?.model,
+      channel: session?.lastChannel,
+    })
+  }, [allSessions, getRoomForSession])
 
   const focusedSession = useMemo(() => {
     if (!focusState.focusedBotKey) return null
@@ -1160,7 +1160,6 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {focusState.level !== 'firstperson' && (
           <ActionBar
             runningTaskCount={runningTasks.length}
-            totalTaskCount={activeTasks.length}
             tasksWindowOpen={tasksWindowOpen}
             onToggleTasksWindow={() => setTasksWindowOpen(prev => !prev)}
           />
