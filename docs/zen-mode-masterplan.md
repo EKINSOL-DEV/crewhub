@@ -58,6 +58,10 @@ src/contexts/                # (if needed) Add ZenModeContext
 - [ ] **Shortcut: `Ctrl+Shift+Z`** (toggle Zen Mode)
   - Note: Reviewed for conflicts - this is safe (not standard redo in browsers)
 - [ ] **Shortcut: `Escape`** (exit Zen Mode when active)
+- [ ] **UI Button:** Add "🧘 Zen" button in bottom-left corner of normal app
+  - Location: Near the room tabs bar or as floating button
+  - Tooltip: "Enter Zen Mode (Ctrl+Shift+Z)"
+  - Style: Subtle, compact, matches existing UI
 - [ ] Conditional render: `{zenMode.isActive ? <ZenMode /> : <World3DView />}`
 - [ ] **Mode-level input router:** disable 3D input handlers when Zen active
   - Set `aria-hidden` on 3D world container
@@ -128,7 +132,7 @@ export const tokyoNight = {
 
 | Criteria | Test |
 |----------|------|
-| Toggle works | Press `Ctrl+Shift+Z` → Zen Mode appears fullscreen |
+| Toggle works | Press `Ctrl+Shift+Z` OR click "🧘 Zen" button → Zen Mode appears fullscreen |
 | Exit works | Press `Escape` → returns to 3D world |
 | Chat functional | Can send message, see response streaming |
 | 3D input disabled | No WASD movement or mouse look while in Zen |
