@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useTasks, type Task, type TaskStatus, type TaskCreate, type TaskUpdate } from '@/hooks/useTasks'
 import { TaskCard } from './TaskCard'
 import { TaskForm } from './TaskForm'
-import { X, Plus, RefreshCw, Loader2, Maximize2 } from 'lucide-react'
+import { Plus, Loader2, Maximize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ── Column Config ──────────────────────────────────────────────
@@ -214,19 +214,6 @@ export function TaskBoardOverlay({
             >
               <Plus className="w-4 h-4" />
               Add Task
-            </button>
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
-            >
-              <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
-            </button>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
-            >
-              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
