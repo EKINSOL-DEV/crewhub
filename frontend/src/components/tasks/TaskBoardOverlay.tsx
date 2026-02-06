@@ -1,5 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useTasks, type Task, type TaskStatus, type TaskCreate, type TaskUpdate } from '@/hooks/useTasks'
 import { TaskCard } from './TaskCard'
 import { TaskForm } from './TaskForm'
@@ -220,24 +219,59 @@ export function TaskBoardOverlay({
     refresh()
   }
 
-  // Keyboard shortcut
+  // Native dialog ref
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  // Sync dialog open state with native dialog
   useEffect(() => {
-    if (!open) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !showCreateForm && !editingTask && !showRunOrSelfDialog && !showSpawnDialogForDrop) {
-        onOpenChange(false)
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (open) {
+      if (!dialog.open) {
+        dialog.showModal()
+      }
+    } else {
+      if (dialog.open) {
+        dialog.close()
       }
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, onOpenChange, showCreateForm, editingTask, showRunOrSelfDialog, showSpawnDialogForDrop])
+  }, [open])
+
+  // Handle native dialog close (ESC key)
+  const handleDialogClose = useCallback(() => {
+    if (!showCreateForm && !editingTask && !showRunOrSelfDialog && !showSpawnDialogForDrop) {
+      onOpenChange(false)
+    }
+  }, [onOpenChange, showCreateForm, editingTask, showRunOrSelfDialog, showSpawnDialogForDrop])
+
+  // Handle backdrop click
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === e.currentTarget && !showCreateForm && !editingTask && !showRunOrSelfDialog && !showSpawnDialogForDrop) {
+      onOpenChange(false)
+    }
+  }, [onOpenChange, showCreateForm, editingTask, showRunOrSelfDialog, showSpawnDialogForDrop])
 
   const totalTasks = tasks.length
   const activeTasks = taskCounts.todo + taskCounts.in_progress + taskCounts.review
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-3rem)] max-w-[1600px] h-[calc(100vh-3rem)] max-h-[900px] flex flex-col p-0 gap-0">
+    <dialog
+      ref={dialogRef}
+      onClose={handleDialogClose}
+      onClick={handleBackdropClick}
+      className="
+        fixed inset-0 z-[100] m-0 h-screen w-screen max-h-none max-w-none
+        bg-transparent p-0
+        backdrop:bg-black/80 backdrop:backdrop-blur-none
+        open:flex open:items-center open:justify-center
+      "
+    >
+      {/* Dialog content panel */}
+      <div 
+        className="w-[calc(100vw-3rem)] max-w-[1600px] h-[calc(100vh-3rem)] max-h-[900px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
           <div className="flex items-center gap-3">
@@ -481,8 +515,8 @@ export function TaskBoardOverlay({
             onSpawn={handleSpawnFromDrop}
           />
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </dialog>
   )
 }
 
