@@ -76,7 +76,7 @@ export function TaskTicker({
     <div
       style={{
         position: 'absolute',
-        top: 100, // Below the back button / walk around button
+        top: 56, // Same level as Walk Around button (right side)
         left: 16,
         zIndex: 45,
         width: TICKER_WIDTH,

@@ -300,7 +300,7 @@ export function AgentChatWindow({
   const {
     closeChat,
     minimizeChat,
-    togglePin,
+    togglePin: _togglePin,
     toggleInternals,
     focusChat,
     updatePosition,
@@ -308,9 +308,11 @@ export function AgentChatWindow({
     onFocusAgent,
     windows,
   } = useChatContext()
+  void _togglePin // Reserved for future use
 
   const windowState = windows.find(w => w.sessionKey === sessionKey)
-  const isPinned = windowState?.isPinned ?? false
+  const _isPinned = windowState?.isPinned ?? false
+  void _isPinned // Reserved for future use
   const showInternals = windowState?.showInternals ?? false
   const accentColor = agentColor || '#8b5cf6'
   const icon = agentIcon || '🤖'

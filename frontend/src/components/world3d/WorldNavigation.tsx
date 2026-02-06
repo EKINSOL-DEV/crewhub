@@ -23,14 +23,14 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
   // Hide navigation in first person mode (HUD takes over)
   if (state.level === 'firstperson') return null
 
-  // Show first person button in overview mode
+  // Show first person button in overview mode (top-right, below fullscreen)
   if (state.level === 'overview') {
     return (
       <div
         style={{
           position: 'absolute',
-          top: 16,
-          left: 16,
+          top: 56,
+          right: 16,
           zIndex: 50,
         }}
       >

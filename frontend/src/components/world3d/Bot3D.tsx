@@ -82,8 +82,10 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   const walkPhaseRef = useRef(0)
   const wasMovingRef = useRef(false)
   const { state: focusState, focusBot } = useWorldFocus()
-  const { startDrag, endDrag } = useDragActions()
-  const [hovered, setHovered] = useState(false)
+  const { startDrag: _startDrag, endDrag: _endDrag } = useDragActions()
+  void _startDrag; void _endDrag // Reserved for drag functionality
+  const [_hovered, setHovered] = useState(false)
+  void _hovered // Used only via setHovered for hover state
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   // Demo mode: disable drag functionality
