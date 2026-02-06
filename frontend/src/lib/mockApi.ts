@@ -264,6 +264,277 @@ const MOCK_PROJECTS: MockProject[] = [
     updated_at: Date.now(),
     rooms: ['creative-room'],
   },
+  {
+    id: 'proj-api',
+    name: 'REST API v2',
+    description: 'Next-generation REST API with improved performance and caching',
+    icon: '⚡',
+    color: '#22c55e',
+    folder_path: '/home/user/projects/api-v2',
+    status: 'active',
+    created_at: Date.now() - 86400000 * 10,
+    updated_at: Date.now(),
+    rooms: ['dev-room', 'ops-room'],
+  },
+  {
+    id: 'proj-mobile',
+    name: 'Mobile App',
+    description: 'React Native companion app for CrewHub on iOS and Android',
+    icon: '📱',
+    color: '#a855f7',
+    folder_path: '/home/user/projects/mobile',
+    status: 'active',
+    created_at: Date.now() - 86400000 * 5,
+    updated_at: Date.now(),
+    rooms: ['dev-room'],
+  },
+  {
+    id: 'proj-docs',
+    name: 'Documentation',
+    description: 'User guides, API docs, and tutorials for CrewHub',
+    icon: '📚',
+    color: '#06b6d4',
+    folder_path: '/home/user/projects/docs',
+    status: 'active',
+    created_at: Date.now() - 86400000 * 3,
+    updated_at: Date.now(),
+    rooms: ['marketing-room'],
+  },
+]
+
+// ── Mock Tasks ─────────────────────────────────────────────────
+
+interface MockTask {
+  id: string
+  project_id: string
+  room_id: string | null
+  title: string
+  description: string | null
+  status: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked'
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  assigned_session_key: string | null
+  assigned_display_name: string | null
+  created_by: string | null
+  created_at: number
+  updated_at: number
+}
+
+const MOCK_TASKS: MockTask[] = [
+  // CrewHub project tasks
+  {
+    id: 'task-1',
+    project_id: 'proj-crewhub',
+    room_id: 'dev-room',
+    title: 'Fix SSE reconnection on network change',
+    description: 'SSE connections drop when laptop switches from WiFi to Ethernet. Need to implement automatic reconnection with exponential backoff.',
+    status: 'in_progress',
+    priority: 'high',
+    assigned_session_key: 'agent:dev:main',
+    assigned_display_name: 'Dev',
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 2,
+    updated_at: Date.now() - 3600000,
+  },
+  {
+    id: 'task-2',
+    project_id: 'proj-crewhub',
+    room_id: 'dev-room',
+    title: 'Add room drag-and-drop reordering',
+    description: 'Allow users to drag rooms in the sidebar to reorder them.',
+    status: 'todo',
+    priority: 'medium',
+    assigned_session_key: null,
+    assigned_display_name: null,
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 3,
+    updated_at: Date.now() - 86400000 * 3,
+  },
+  {
+    id: 'task-3',
+    project_id: 'proj-crewhub',
+    room_id: 'dev-room',
+    title: 'Implement dark mode toggle',
+    description: 'Add a theme switcher in settings that persists user preference.',
+    status: 'done',
+    priority: 'low',
+    assigned_session_key: 'agent:dev:main',
+    assigned_display_name: 'Dev',
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 5,
+    updated_at: Date.now() - 86400000 * 1,
+  },
+  {
+    id: 'task-4',
+    project_id: 'proj-crewhub',
+    room_id: 'thinking-room',
+    title: 'Review authentication flow security',
+    description: 'Audit the JWT token refresh mechanism and session management.',
+    status: 'review',
+    priority: 'urgent',
+    assigned_session_key: 'agent:reviewer:main',
+    assigned_display_name: 'Reviewer',
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 1,
+    updated_at: Date.now() - 7200000,
+  },
+  // Website Redesign tasks
+  {
+    id: 'task-5',
+    project_id: 'proj-website',
+    room_id: 'creative-room',
+    title: 'Design new hero section',
+    description: 'Create a compelling hero section with animated 3D preview of CrewHub.',
+    status: 'in_progress',
+    priority: 'high',
+    assigned_session_key: 'agent:flowy:main',
+    assigned_display_name: 'Flowy',
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 4,
+    updated_at: Date.now() - 1800000,
+  },
+  {
+    id: 'task-6',
+    project_id: 'proj-website',
+    room_id: 'marketing-room',
+    title: 'Write launch blog post',
+    description: 'Announce CrewHub v0.8 with feature highlights and screenshots.',
+    status: 'todo',
+    priority: 'medium',
+    assigned_session_key: 'agent:flowy:main',
+    assigned_display_name: 'Flowy',
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 2,
+    updated_at: Date.now() - 86400000 * 2,
+  },
+  {
+    id: 'task-7',
+    project_id: 'proj-website',
+    room_id: 'creative-room',
+    title: 'Create pricing page',
+    description: 'Design and implement the pricing comparison table.',
+    status: 'done',
+    priority: 'medium',
+    assigned_session_key: null,
+    assigned_display_name: null,
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 6,
+    updated_at: Date.now() - 86400000 * 2,
+  },
+  // REST API v2 tasks
+  {
+    id: 'task-8',
+    project_id: 'proj-api',
+    room_id: 'dev-room',
+    title: 'Implement rate limiting middleware',
+    description: 'Add configurable rate limiting per API key with Redis backend.',
+    status: 'in_progress',
+    priority: 'high',
+    assigned_session_key: 'agent:dev:main',
+    assigned_display_name: 'Dev',
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 3,
+    updated_at: Date.now() - 5400000,
+  },
+  {
+    id: 'task-9',
+    project_id: 'proj-api',
+    room_id: 'ops-room',
+    title: 'Set up CI/CD pipeline',
+    description: 'Configure GitHub Actions for automated testing and deployment.',
+    status: 'blocked',
+    priority: 'urgent',
+    assigned_session_key: null,
+    assigned_display_name: null,
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 2,
+    updated_at: Date.now() - 86400000 * 1,
+  },
+  {
+    id: 'task-10',
+    project_id: 'proj-api',
+    room_id: 'dev-room',
+    title: 'Add response caching layer',
+    description: 'Implement intelligent caching for GET endpoints.',
+    status: 'todo',
+    priority: 'medium',
+    assigned_session_key: null,
+    assigned_display_name: null,
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 4,
+    updated_at: Date.now() - 86400000 * 4,
+  },
+  // Mobile App tasks
+  {
+    id: 'task-11',
+    project_id: 'proj-mobile',
+    room_id: 'dev-room',
+    title: 'Set up React Native project',
+    description: 'Initialize the mobile app with navigation and theming.',
+    status: 'done',
+    priority: 'high',
+    assigned_session_key: 'agent:dev:main',
+    assigned_display_name: 'Dev',
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 4,
+    updated_at: Date.now() - 86400000 * 2,
+  },
+  {
+    id: 'task-12',
+    project_id: 'proj-mobile',
+    room_id: 'dev-room',
+    title: 'Implement push notifications',
+    description: 'Add support for Firebase Cloud Messaging on both platforms.',
+    status: 'todo',
+    priority: 'medium',
+    assigned_session_key: null,
+    assigned_display_name: null,
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 1,
+    updated_at: Date.now() - 86400000 * 1,
+  },
+  // Documentation tasks
+  {
+    id: 'task-13',
+    project_id: 'proj-docs',
+    room_id: 'marketing-room',
+    title: 'Write getting started guide',
+    description: 'Create a step-by-step tutorial for new users.',
+    status: 'in_progress',
+    priority: 'high',
+    assigned_session_key: 'agent:flowy:main',
+    assigned_display_name: 'Flowy',
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 2,
+    updated_at: Date.now() - 3600000,
+  },
+  {
+    id: 'task-14',
+    project_id: 'proj-docs',
+    room_id: 'marketing-room',
+    title: 'Create API reference docs',
+    description: 'Document all REST API endpoints with examples.',
+    status: 'todo',
+    priority: 'medium',
+    assigned_session_key: null,
+    assigned_display_name: null,
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 3,
+    updated_at: Date.now() - 86400000 * 3,
+  },
+  {
+    id: 'task-15',
+    project_id: 'proj-docs',
+    room_id: 'marketing-room',
+    title: 'Record video walkthrough',
+    description: 'Create a 5-minute video demo of the main features.',
+    status: 'todo',
+    priority: 'low',
+    assigned_session_key: null,
+    assigned_display_name: null,
+    created_by: 'user',
+    created_at: Date.now() - 86400000 * 1,
+    updated_at: Date.now() - 86400000 * 1,
+  },
 ]
 
 const MOCK_CONNECTIONS = [
@@ -1241,6 +1512,26 @@ function handleMockRequest(pathname: string, method: string, _body?: BodyInit | 
     return jsonResponse({ projects: overview })
   }
 
+  // GET /api/tasks
+  if (pathname === '/api/tasks' && method === 'GET') {
+    const tasks = lsGet('tasks', MOCK_TASKS)
+    console.log(`[MockAPI] GET /api/tasks → 200 (${tasks.length} tasks)`)
+    return jsonResponse({ tasks, total: tasks.length })
+  }
+
+  // GET /api/tasks/:id
+  if (pathname.match(/^\/api\/tasks\/[\w-]+$/) && method === 'GET') {
+    const taskId = decodeURIComponent(pathname.split('/').pop()!)
+    const tasks = lsGet('tasks', MOCK_TASKS)
+    const task = tasks.find((t: MockTask) => t.id === taskId)
+    if (task) {
+      console.log(`[MockAPI] GET /api/tasks/${taskId} → 200`)
+      return jsonResponse(task)
+    }
+    console.log(`[MockAPI] GET /api/tasks/${taskId} → 404`)
+    return new Response(JSON.stringify({ detail: 'Task not found' }), { status: 404 })
+  }
+
   // GET /api/session-display-names
   if (pathname === '/api/session-display-names' && method === 'GET') {
     console.log('[MockAPI] GET /api/session-display-names → 200')
@@ -1428,6 +1719,40 @@ function handleMockRequest(pathname: string, method: string, _body?: BodyInit | 
         rooms: [],
       })
     }
+    return okResponse()
+  }
+
+  // POST /api/tasks
+  if (pathname === '/api/tasks' && method === 'POST') {
+    console.log('[MockAPI] POST /api/tasks → 200')
+    return jsonResponse({
+      id: 'task-new-' + Date.now(),
+      project_id: 'proj-crewhub',
+      room_id: null,
+      title: 'New Task',
+      description: null,
+      status: 'todo',
+      priority: 'medium',
+      assigned_session_key: null,
+      assigned_display_name: null,
+      created_by: 'user',
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    })
+  }
+
+  // PATCH /api/tasks/:id
+  if (pathname.match(/^\/api\/tasks\/[\w-]+$/) && method === 'PATCH') {
+    const taskId = decodeURIComponent(pathname.split('/').pop()!)
+    const tasks = lsGet('tasks', MOCK_TASKS)
+    const task = tasks.find((t: MockTask) => t.id === taskId)
+    console.log(`[MockAPI] PATCH /api/tasks/${taskId} → 200`)
+    return jsonResponse(task || { id: taskId, updated_at: Date.now() })
+  }
+
+  // DELETE /api/tasks/:id
+  if (pathname.match(/^\/api\/tasks\/[\w-]+$/) && method === 'DELETE') {
+    console.log(`[MockAPI] DELETE /api/tasks/:id → 200`)
     return okResponse()
   }
 
