@@ -42,7 +42,6 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **3 zoom levels** — Overview → Room focus → Bot close-up with camera orbit
 - **4 environments** — Grass, Island, Sky, and Desert — each with unique props and atmosphere
 - **Animated bots** — Working agents type on laptops; idle agents wander the campus
-- **Drag & drop in 3D** — Move bots between rooms with visual status indicators
 - **Activity bubbles** — See what each agent is doing at a glance
 - **Blueprints** — JSON-defined room layouts you can create, share, and import
 
@@ -68,6 +67,13 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **Click-to-detail panels** — inspect any agent's info, stats, and activity
 - **Agent bios** with pre-filled personality descriptions
 - **Agent Top Bar** with boss button, pinned agent, and agent picker
+
+### 📋 Task Board
+- **Kanban-style board** in the HQ room with columns: To Do, In Progress, Review, Done, Blocked
+- **Project-linked tasks** — create tasks tied to projects and assignable to agents
+- **Embedded 3D TaskBoard** — full task board rendered on room whiteboards
+- **"Run with Agent" action** — execute tasks directly with an assigned agent
+- **"Spawn Agent" action** — spawn a new agent session to work on a task
 
 ### 🎨 Customization
 - **Dark/light theme** with customizable accent colors
