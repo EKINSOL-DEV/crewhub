@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -26,12 +26,8 @@ interface EditBioDialogProps {
 /**
  * EditBioDialog - Dialog for editing agent bios
  * 
- * IMPORTANT: This component uses conditional rendering (only renders when open)
- * to work around a Radix UI bug with React 19 where compose-refs can cause
- * infinite update loops. See: https://github.com/radix-ui/primitives/issues/3799
- * 
- * The inner content is extracted to EditBioDialogContent which initializes
- * state from props on mount, avoiding useEffect-based state syncing.
+ * Uses the native dialog-based Dialog component which is compatible with React 19.
+ * See: src/components/ui/dialog.tsx for the React 19 compatibility fix.
  */
 export function EditBioDialog({
   agentId,
@@ -41,41 +37,23 @@ export function EditBioDialog({
   onOpenChange,
   onSaved,
 }: EditBioDialogProps) {
-  // Only render the dialog when open - this avoids the Radix/React 19 
-  // compose-refs infinite loop bug by ensuring the dialog mounts fresh
-  // each time it opens, rather than trying to sync state via useEffect
-  if (!open) return null
-
-  return (
-    <EditBioDialogContent
-      agentId={agentId}
-      agentName={agentName}
-      currentBio={currentBio}
-      onOpenChange={onOpenChange}
-      onSaved={onSaved}
-    />
-  )
-}
-
-/**
- * Inner dialog content - only mounted when dialog is open
- * Initializes state from props on mount, no useEffect needed
- */
-function EditBioDialogContent({
-  agentId,
-  agentName,
-  currentBio,
-  onOpenChange,
-  onSaved,
-}: Omit<EditBioDialogProps, 'open'>) {
   const { isDemoMode } = useDemoMode()
-  // Initialize state directly from props - component only mounts when dialog opens
   const [bio, setBio] = useState(currentBio ?? "")
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isCreating = !currentBio
+
+  // Sync bio when dialog opens with new data
+  useEffect(() => {
+    if (open) {
+      setBio(currentBio ?? "")
+      setError(null)
+      setSaving(false)
+      setGenerating(false)
+    }
+  }, [open, currentBio])
 
   const handleGenerate = async () => {
     if (!agentId || isDemoMode) return
@@ -142,8 +120,8 @@ function EditBioDialogContent({
   }
 
   return (
-    <Dialog open={true} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md" style={{ zIndex: 100 }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
             {isCreating ? "✨ Create Bio" : "✏️ Update Bio"}

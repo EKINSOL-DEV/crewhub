@@ -75,7 +75,7 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
               userSelect: 'none',
               pointerEvents: 'none',
             }}>
-              ☕ Break Room
+              🤖 Another AI took my job zone
             </span>
           </Html>
 
