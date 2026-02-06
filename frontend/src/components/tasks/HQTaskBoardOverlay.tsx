@@ -5,7 +5,7 @@ import { HQTaskBoard } from './HQTaskBoard'
 import { TaskForm } from './TaskForm'
 import { Building2, Loader2, Filter, ArrowUpDown, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { formatSessionKeyAsName } from '@/lib/friendlyNames'
+import { formatSessionKeyAsName, isFixedAgent } from '@/lib/friendlyNames'
 
 // ── Props ──────────────────────────────────────────────────────
 
@@ -63,11 +63,12 @@ export function HQTaskBoardOverlay({
   }, [tasks, selectedProjects])
 
   // Build agents list from task assignments (for the assignee dropdown)
+  // Only include fixed/permanent agents, not temporary subagents
   const agents = useMemo(() => {
     const agentMap = new Map<string, string>()
     
     for (const task of tasks) {
-      if (task.assigned_session_key) {
+      if (task.assigned_session_key && isFixedAgent(task.assigned_session_key)) {
         // Use assigned_display_name if available, otherwise format the session key
         const displayName = task.assigned_display_name || formatSessionKeyAsName(task.assigned_session_key)
         agentMap.set(task.assigned_session_key, displayName)

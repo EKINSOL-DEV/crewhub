@@ -52,6 +52,65 @@ export function getDisplayName(session: {key: string, label?: string}): string {
  * - +32494330227 → "Nicky" (known number) or "User (+32...)"
  * - etc.
  */
+/**
+ * Check if a session key represents a fixed/permanent agent.
+ * Fixed agents are persistent and should appear in dropdowns.
+ * Temporary subagents should be excluded.
+ */
+export function isFixedAgent(sessionKey: string): boolean {
+  // Known owner phone numbers - always include
+  if (sessionKey.includes('+32494330227') || sessionKey.includes('+32469774873')) {
+    return true
+  }
+
+  // Agent session keys: agent:name:type:uuid
+  if (sessionKey.startsWith('agent:')) {
+    const parts = sessionKey.split(':')
+    // Exclude subagent and spawn sessions
+    if (parts.includes('subagent') || parts.includes('spawn')) {
+      return false
+    }
+    // Include main sessions (agent:dev:main, agent:main:main, etc.)
+    if (parts.includes('main')) {
+      return true
+    }
+    // If it's just agent:name format (no subagent/spawn), include it
+    if (parts.length === 2) {
+      return true
+    }
+    return false
+  }
+
+  // WhatsApp session keys
+  if (sessionKey.startsWith('whatsapp:')) {
+    const payload = sessionKey.slice('whatsapp:'.length)
+    
+    // Exclude subagent patterns
+    if (payload.includes('-subagent-') || payload.includes('-spawn-')) {
+      return false
+    }
+    
+    // Include known phone numbers
+    if (payload.includes('+32494330227') || payload.includes('+32469774873')) {
+      return true
+    }
+    
+    // Include g-agent-{name}-main patterns
+    if (payload.match(/^g-agent-\w+-main/)) {
+      return true
+    }
+    
+    return false
+  }
+
+  // Plain phone numbers - include known ones
+  if (sessionKey.match(/^\+\d+$/)) {
+    return sessionKey === '+32494330227' || sessionKey === '+32469774873'
+  }
+
+  return false
+}
+
 export function formatSessionKeyAsName(sessionKey: string, label?: string): string {
   // Priority 1: If we have a label, use it
   if (label) return label
