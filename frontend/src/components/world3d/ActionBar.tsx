@@ -152,8 +152,7 @@ export function ActionBar({
         style={{
           position: 'absolute',
           left: 16,
-          top: '50%',
-          transform: 'translateY(-50%)',
+          top: 16,
           zIndex: 55,
           display: 'flex',
           flexDirection: 'column',

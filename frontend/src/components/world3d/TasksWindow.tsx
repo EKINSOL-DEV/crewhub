@@ -20,11 +20,11 @@ interface Position {
 // ── Constants ──────────────────────────────────────────────────
 
 const MIN_WIDTH = 220
-const MAX_WIDTH = 450
-const DEFAULT_WIDTH = 300
+const MAX_WIDTH = 500
+const DEFAULT_WIDTH = 380
 const MIN_HEIGHT = 150
-const MAX_HEIGHT = 500
-const DEFAULT_HEIGHT = 280
+const MAX_HEIGHT = 550
+const DEFAULT_HEIGHT = 350
 
 // ── Main Component ─────────────────────────────────────────────
 
@@ -149,18 +149,18 @@ export function TasksWindow({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '10px 12px',
+          padding: '6px 10px',
           background: 'rgba(0, 0, 0, 0.03)',
           borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
           cursor: isDragging ? 'grabbing' : 'grab',
           flexShrink: 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14 }}>📋</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 12 }}>📋</span>
           <span
             style={{
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 600,
               color: '#1f2937',
             }}
@@ -170,12 +170,12 @@ export function TasksWindow({
           {runningCount > 0 && (
             <span
               style={{
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 600,
                 color: '#3b82f6',
                 background: 'rgba(59, 130, 246, 0.12)',
-                padding: '2px 6px',
-                borderRadius: 6,
+                padding: '1px 5px',
+                borderRadius: 4,
               }}
             >
               {runningCount} running
@@ -190,9 +190,9 @@ export function TasksWindow({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 24,
-            height: 24,
-            borderRadius: 6,
+            width: 20,
+            height: 20,
+            borderRadius: 5,
             border: 'none',
             cursor: 'pointer',
             background: 'transparent',
@@ -215,7 +215,7 @@ export function TasksWindow({
       </div>
 
       {/* Task list */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
         {sortedTasks.length === 0 ? (
           <div
             style={{
@@ -287,18 +287,18 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        gap: 8,
         width: '100%',
-        padding: '10px 12px',
+        padding: '6px 10px',
         border: 'none',
-        borderRadius: 10,
+        borderRadius: 8,
         background: isRunning ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
         cursor: 'pointer',
         textAlign: 'left',
         opacity,
         transition: 'opacity 0.5s ease, background 0.15s ease',
         fontFamily: 'inherit',
-        marginBottom: 4,
+        marginBottom: 2,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = isRunning
@@ -313,7 +313,7 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
       title={`Click to focus on ${task.agentName || 'agent'}`}
     >
       {/* Status indicator */}
-      <span style={{ fontSize: 16, flexShrink: 0 }}>
+      <span style={{ fontSize: 14, flexShrink: 0 }}>
         {isRunning ? (
           <span
             style={{
@@ -332,7 +332,7 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 500,
             color: isRunning ? '#1e40af' : '#059669',
             whiteSpace: 'nowrap',
@@ -345,12 +345,12 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
         {task.agentName && (
           <div
             style={{
-              fontSize: 11,
+              fontSize: 10,
               color: 'rgba(0, 0, 0, 0.45)',
-              marginTop: 2,
+              marginTop: 1,
               display: 'flex',
               alignItems: 'center',
-              gap: 4,
+              gap: 3,
             }}
           >
             <span>{task.agentIcon}</span>
