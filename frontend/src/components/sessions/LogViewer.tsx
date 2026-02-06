@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { SESSION_CONFIG } from "@/lib/sessionConfig"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Download, Search, X, ArrowDown, Loader2, FileText, RefreshCw } from "lucide-react"
 import { api } from "@/lib/api"
 import type { MinionSession, MinionMessage } from "@/lib/api"
@@ -18,6 +16,13 @@ interface LogViewerProps {
   onOpenChange: (open: boolean) => void
 }
 
+/**
+ * LogViewer - Full session log viewer dialog
+ * 
+ * Uses native <dialog> element to avoid React 19 compatibility issues
+ * with @radix-ui/react-compose-refs (infinite update loops).
+ * See: https://github.com/radix-ui/primitives/issues/3799
+ */
 export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
   const [messages, setMessages] = useState<MinionMessage[]>([])
   const [loading, setLoading] = useState(false)
@@ -28,6 +33,35 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const lastMessageCountRef = useRef(0)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  // Sync open state with native dialog
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (open) {
+      if (!dialog.open) {
+        dialog.showModal()
+      }
+    } else {
+      if (dialog.open) {
+        dialog.close()
+      }
+    }
+  }, [open])
+
+  // Handle native dialog close (ESC key)
+  const handleDialogClose = useCallback(() => {
+    onOpenChange(false)
+  }, [onOpenChange])
+
+  // Handle backdrop click
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === e.currentTarget) {
+      onOpenChange(false)
+    }
+  }, [onOpenChange])
 
   useEffect(() => {
     if (open && session) fetchMessages()
@@ -98,22 +132,40 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
   const displayName = getSessionDisplayName(session)
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-4xl h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+    <dialog
+      ref={dialogRef}
+      onClose={handleDialogClose}
+      onClick={handleBackdropClick}
+      className="fixed inset-0 z-[100] m-0 h-screen w-screen max-h-none max-w-none bg-transparent p-0 overflow-y-auto backdrop:bg-black/80 open:flex open:items-center open:justify-center"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-[calc(100vw-2rem)] sm:max-w-4xl h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col border bg-background shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95 duration-200"
+      >
+        {/* Close button */}
+        <button 
+          onClick={() => onOpenChange(false)}
+          className="absolute right-4 top-4 z-10 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </button>
+
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b shrink-0">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl border-2 shrink-0" style={{ backgroundColor: `${minionType.color}20`, borderColor: minionType.color }}>
               {minionType.emoji}
             </div>
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-lg flex items-center gap-2">
+              <h2 className="text-lg font-semibold leading-none tracking-tight flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Logs: <EditableSessionName 
                   sessionKey={session.key} 
                   fallbackName={displayName} 
                   showEditIcon={true}
                 />
-              </DialogTitle>
+              </h2>
               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
                 <Badge variant="outline" className="text-[10px]">{minionType.type}</Badge>
                 {session.model && <><span>·</span><span>{formatModel(session.model)}</span></>}
@@ -122,22 +174,25 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
               </div>
             </div>
           </div>
-        </DialogHeader>
+        </div>
 
+        {/* Toolbar */}
         <div className="px-6 py-3 border-b bg-muted/30 shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Button size="sm" variant={autoScroll ? "default" : "outline"} onClick={() => setAutoScroll(!autoScroll)} className="h-8">
               <ArrowDown className={cn("h-3.5 w-3.5 mr-1.5", autoScroll && "animate-bounce")} />Auto-scroll {autoScroll ? "ON" : "OFF"}
             </Button>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="assistant">Assistant</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Native select to avoid Radix React 19 bug */}
+            <select 
+              value={roleFilter} 
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="h-8 w-[140px] rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="all">All Roles</option>
+              <option value="user">User</option>
+              <option value="assistant">Assistant</option>
+              <option value="system">System</option>
+            </select>
             <div className="relative flex-1 max-w-xs">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input placeholder="Search messages..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-8 pl-8 pr-8" />
@@ -149,6 +204,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
           {searchQuery && <div className="text-xs text-muted-foreground mt-2">Found {filteredMessages.length} message{filteredMessages.length !== 1 ? "s" : ""}</div>}
         </div>
 
+        {/* Content */}
         <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-6 py-4">
           {loading ? <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           : error ? <div className="flex flex-col items-center justify-center h-full gap-3"><p className="text-sm text-muted-foreground">{error}</p><Button size="sm" onClick={() => fetchMessages()}>Retry</Button></div>
@@ -179,6 +235,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
             </div>}
         </div>
 
+        {/* Footer */}
         <div className="px-6 py-3 border-t bg-muted/30 text-xs text-muted-foreground shrink-0">
           <div className="flex items-center gap-4 justify-between flex-wrap">
             <div className="flex items-center gap-4">
@@ -188,7 +245,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
             <div className="text-[10px]">Session: <code className="bg-black/10 dark:bg-white/10 px-1 rounded">{session.key}</code></div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </dialog>
   )
 }
