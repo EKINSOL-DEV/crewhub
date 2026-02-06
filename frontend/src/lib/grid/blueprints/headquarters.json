@@ -9,6 +9,7 @@
       "propId": "desk-with-monitor",
       "x": 4,
       "z": 16,
+      "rotation": 180,
       "span": {
         "w": 2,
         "d": 2

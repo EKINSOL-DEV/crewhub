@@ -42,6 +42,7 @@
       "propId": "desk-with-monitor-headset",
       "x": 16,
       "z": 4,
+      "rotation": 180,
       "span": {
         "w": 2,
         "d": 2
