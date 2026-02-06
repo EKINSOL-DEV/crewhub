@@ -725,7 +725,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
             position={[0, -0.55, 0]}
             center
             distanceFactor={15}
-            zIndexRange={[1, 5]}
+            zIndexRange={[0, 0]}
             style={{ pointerEvents: 'none' }}
           >
             <div
