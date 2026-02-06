@@ -79,7 +79,7 @@ export function BotActivityBubble({ activity, status, isActive }: BotActivityBub
       <Html
         center
         distanceFactor={15}
-        zIndexRange={[1, 5]}
+        zIndexRange={[0, 0]}
         style={{
           pointerEvents: 'none',
           opacity: visible ? 1 : 0,
