@@ -1,5 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useTasks, type Task, type TaskStatus, type TaskUpdate } from '@/hooks/useTasks'
 import { useProjects } from '@/hooks/useProjects'
 import { HQTaskBoard } from './HQTaskBoard'
@@ -157,17 +156,38 @@ export function HQTaskBoardOverlay({
     setTimeout(() => setIsRefreshing(false), 500)
   }, [refreshTasks, refreshProjects])
 
-  // Keyboard shortcut for escape
+  // Native dialog ref
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  // Sync dialog open state with native dialog
   useEffect(() => {
-    if (!open) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !editingTask) {
-        onOpenChange(false)
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (open) {
+      if (!dialog.open) {
+        dialog.showModal()
+      }
+    } else {
+      if (dialog.open) {
+        dialog.close()
       }
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, onOpenChange, editingTask])
+  }, [open])
+
+  // Handle native dialog close (ESC key)
+  const handleDialogClose = useCallback(() => {
+    if (!editingTask) {
+      onOpenChange(false)
+    }
+  }, [onOpenChange, editingTask])
+
+  // Handle backdrop click
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === e.currentTarget && !editingTask) {
+      onOpenChange(false)
+    }
+  }, [onOpenChange, editingTask])
 
   // Stats
   const totalTasks = filteredTasks.length
@@ -179,8 +199,22 @@ export function HQTaskBoardOverlay({
   const error = tasksError || projectsError
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-[1800px] h-[calc(100vh-2rem)] max-h-[1000px] flex flex-col p-0 gap-0">
+    <dialog
+      ref={dialogRef}
+      onClose={handleDialogClose}
+      onClick={handleBackdropClick}
+      className="
+        fixed inset-0 z-[100] m-0 h-screen w-screen max-h-none max-w-none
+        bg-transparent p-0
+        backdrop:bg-black/80 backdrop:backdrop-blur-none
+        open:flex open:items-center open:justify-center
+      "
+    >
+      {/* Dialog content panel */}
+      <div 
+        className="w-[calc(100vw-2rem)] max-w-[1800px] h-[calc(100vh-2rem)] max-h-[1000px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
           <div className="flex items-center gap-3">
@@ -397,7 +431,7 @@ export function HQTaskBoardOverlay({
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </dialog>
   )
 }
