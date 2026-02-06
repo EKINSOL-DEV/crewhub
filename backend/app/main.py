@@ -9,7 +9,7 @@ import os
 
 from app.config import settings
 from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections, projects, blueprints
-from app.routes import project_files, tasks, project_history
+from app.routes import project_files, tasks, project_history, context
 from app.routes.project_files import discover_router as project_discover_router
 from app.routes.chat import router as chat_router
 from app.routes import discovery, settings as settings_routes, backup, onboarding
@@ -195,6 +195,9 @@ app.include_router(blueprints.router, prefix="/api", tags=["blueprints"])
 # Phase 3: Task Management
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(project_history.router, prefix="/api/projects", tags=["project-history"])
+
+# Phase 4: Bot Context Injection
+app.include_router(context.router, prefix="/api/sessions", tags=["context"])
 
 
 @app.get("/")
