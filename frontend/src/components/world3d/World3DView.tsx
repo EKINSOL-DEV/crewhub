@@ -86,7 +86,7 @@ import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
-import { TaskBoardOverlay } from '@/components/tasks'
+import { TaskBoardOverlay, HQTaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
 import { useDebugBots, type DebugBot } from '@/hooks/useDebugBots'
@@ -993,6 +993,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     agents?: Array<{ session_key: string; display_name: string }>
   } | null>(null)
 
+  // HQ TaskBoard overlay state (cross-project overview)
+  const [hqBoardOpen, setHqBoardOpen] = useState(false)
+
   // Fullscreen mode (native browser API)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -1165,6 +1168,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               setTaskBoardContext({ projectId, roomId, agents })
               setTaskBoardOpen(true)
             }}
+            onOpenHQBoard={() => setHqBoardOpen(true)}
           />
         )}
 
@@ -1238,6 +1242,12 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             agents={taskBoardContext.agents}
           />
         )}
+
+        {/* HQ TaskBoardOverlay (cross-project overview, for Headquarters room) */}
+        <HQTaskBoardOverlay
+          open={hqBoardOpen}
+          onOpenChange={setHqBoardOpen}
+        />
       </div>
   )
 

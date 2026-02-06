@@ -22,6 +22,7 @@ interface RoomInfoPanelProps {
   onFocusRoom?: (roomId: string) => void
   onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void
   onOpenTaskBoard?: (projectId: string, roomId: string, agents: Array<{ session_key: string; display_name: string }>) => void
+  onOpenHQBoard?: () => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -101,6 +102,7 @@ export function RoomInfoPanel({
   onFocusRoom,
   onOpenDocs,
   onOpenTaskBoard,
+  onOpenHQBoard,
 }: RoomInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const roomColor = room.color || '#4f46e5'
@@ -609,6 +611,7 @@ export function RoomInfoPanel({
             overview={hqOverview}
             loading={hqLoading}
             onProjectClick={onFocusRoom}
+            onOpenHQBoard={onOpenHQBoard}
           />
         )}
 
@@ -954,14 +957,48 @@ function HQDashboard({
   overview,
   loading,
   onProjectClick,
+  onOpenHQBoard,
 }: {
   overview: ProjectOverview[]
   loading: boolean
   onProjectClick?: (roomId: string) => void
+  onOpenHQBoard?: () => void
 }) {
   return (
     <div>
-      <SectionHeader>🏛️ COMMAND CENTER</SectionHeader>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <SectionHeader>🏛️ COMMAND CENTER</SectionHeader>
+        {onOpenHQBoard && (
+          <button
+            onClick={onOpenHQBoard}
+            style={{
+              padding: '4px 10px',
+              fontSize: 11,
+              fontWeight: 600,
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              boxShadow: '0 2px 4px rgba(245,158,11,0.3)',
+              transition: 'transform 0.15s, box-shadow 0.15s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-1px)'
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(245,158,11,0.4)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(245,158,11,0.3)'
+            }}
+          >
+            📋 HQ Board
+          </button>
+        )}
+      </div>
       {loading ? (
         <div style={{
           marginTop: 8,
