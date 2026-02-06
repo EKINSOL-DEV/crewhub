@@ -8,7 +8,7 @@ import asyncio
 import os
 
 from app.config import settings
-from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections, projects, blueprints
+from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections, projects, blueprints, media
 from app.routes import project_files, tasks, project_history, context
 from app.routes.project_files import discover_router as project_discover_router
 from app.routes.chat import router as chat_router
@@ -198,6 +198,9 @@ app.include_router(project_history.router, prefix="/api/projects", tags=["projec
 
 # Phase 4: Bot Context Injection
 app.include_router(context.router, prefix="/api/sessions", tags=["context"])
+
+# Media serving (images in chat)
+app.include_router(media.router, tags=["media"])
 
 
 @app.get("/")
