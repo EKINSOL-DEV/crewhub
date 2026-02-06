@@ -21,21 +21,6 @@
 
 ---
 
-## 📚 Research Project
-
-This is an **open research project** by [EKINSOL BV](https://ekinsol.be). 
-We're exploring AI-assisted software development and sharing our journey 
-openly — including planning docs, design decisions, and learnings.
-
-**What this means:**
-- 🧪 Code and docs evolve rapidly as we experiment
-- 📖 We share our process, not just polished results
-- 🤝 Feedback and contributions are welcome!
-
-*Licensed under AGPL-3.0*
-
----
-
 ## What is CrewHub?
 
 CrewHub is an open-source dashboard for monitoring and managing AI coding agents. It connects to [OpenClaw](https://openclaw.dev), Claude Code, and Codex CLI — giving you a live overview of every session, room, and agent in one place. Its standout feature is a fully interactive **3D world** where your agents come alive as animated characters.
@@ -230,6 +215,17 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 > **Note:** This project uses a Contributor License Agreement (CLA). You'll be asked to sign it when opening your first pull request.
 
 CrewHub is licensed under **AGPL-3.0**, which means any modified version that's served over a network must also be open-sourced under the same license. Keep this in mind when building on top of CrewHub.
+
+## 📚 Research Project
+
+This is an **open research project** by [EKINSOL BV](https://ekinsol.be). 
+We're exploring AI-assisted software development and sharing our journey 
+openly — including planning docs, design decisions, and learnings.
+
+**What this means:**
+- 🧪 Code and docs evolve rapidly as we experiment
+- 📖 We share our process, not just polished results
+- 🤝 Feedback and contributions are welcome!
 
 ## 📄 License
 
