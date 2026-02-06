@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { Html } from '@react-three/drei'
-import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import type { Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 
 // ── Props ──────────────────────────────────────────────────────
@@ -43,7 +42,6 @@ export function TaskWall3D({
   onTaskClick,
 }: TaskWall3DProps & { rotation?: [number, number, number] }) {
   const [isHovered, setIsHovered] = useState(false)
-  const { focusBoard } = useWorldFocus()
   // Filter to active tasks only (not done)
   const activeTasks = useMemo(() => 
     tasks.filter(t => t.status !== 'done'),
@@ -68,10 +66,6 @@ export function TaskWall3D({
 
   const maxTasksPerColumn = 6
 
-  const handleBoardClick = () => {
-    focusBoard(roomId)
-  }
-
   return (
     <group 
       position={position} 
@@ -79,13 +73,8 @@ export function TaskWall3D({
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
     >
-      {/* Whiteboard backing - clickable */}
-      <mesh 
-        position={[0, 0, 0]}
-        onClick={handleBoardClick}
-        onPointerOver={() => { document.body.style.cursor = 'pointer' }}
-        onPointerOut={() => { document.body.style.cursor = 'auto' }}
-      >
+      {/* Whiteboard backing */}
+      <mesh position={[0, 0, 0]}>
         <planeGeometry args={[width, height]} />
         <meshStandardMaterial 
           color={isHovered ? '#f1f5f9' : '#f8fafc'}
