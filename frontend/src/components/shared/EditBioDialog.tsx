@@ -143,7 +143,11 @@ export function EditBioDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleGenerate}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleGenerate()
+                }}
                 disabled={generating || isDemoMode}
                 className="h-7 gap-1.5 text-xs"
               >
