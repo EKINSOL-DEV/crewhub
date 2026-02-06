@@ -9,6 +9,7 @@
       "propId": "standing-desk-with-monitor",
       "x": 5,
       "z": 16,
+      "rotation": 180,
       "span": {
         "w": 3,
         "d": 2

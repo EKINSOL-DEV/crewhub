@@ -18,6 +18,7 @@
       "propId": "desk-with-monitor-tablet",
       "x": 16,
       "z": 16,
+      "rotation": 180,
       "span": {
         "w": 2,
         "d": 2
