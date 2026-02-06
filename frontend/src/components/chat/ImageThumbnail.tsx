@@ -49,24 +49,9 @@ export function ImageThumbnail({ attachment, maxWidth = 200 }: ImageThumbnailPro
     fontSize: '12px',
   }
 
-  const errorStyle: CSSProperties = {
-    padding: '12px 16px',
-    color: '#9ca3af',
-    fontSize: '12px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-  }
-
+  // Hide failed images completely instead of showing error placeholder
   if (imageError) {
-    return (
-      <div style={{ ...containerStyle, cursor: 'default' }}>
-        <div style={errorStyle}>
-          <span>🖼️</span>
-          <span>Image unavailable</span>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (
