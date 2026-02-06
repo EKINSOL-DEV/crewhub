@@ -200,6 +200,8 @@ export function useSessionsStream(enabled: boolean = true) {
   }, [enabled, fetchSessions, startPolling, stopPolling])
 
   // Subscribe to session events via central SSE manager
+  // Uses queueMicrotask to defer state updates out of the SSE message handler,
+  // avoiding Chrome's "message handler took Xms" violations (threshold: 50ms).
   useEffect(() => {
     if (!enabled) return
 
@@ -207,11 +209,13 @@ export function useSessionsStream(enabled: boolean = true) {
       try {
         const { sessions } = JSON.parse(event.data)
         const newSessions = sessions || []
-        // Deduplicate: skip state update if data hasn't changed
-        const fingerprint = computeSessionsFingerprint(newSessions)
-        if (fingerprint === sessionsFingerprintRef.current) return
-        sessionsFingerprintRef.current = fingerprint
-        setState(prev => ({ ...prev, sessions: newSessions, loading: false, error: null }))
+        // Defer state update to avoid blocking the message handler
+        queueMicrotask(() => {
+          const fingerprint = computeSessionsFingerprint(newSessions)
+          if (fingerprint === sessionsFingerprintRef.current) return
+          sessionsFingerprintRef.current = fingerprint
+          setState(prev => ({ ...prev, sessions: newSessions, loading: false, error: null }))
+        })
       } catch (error) {
         console.error("Failed to parse sessions-refresh event:", error)
       }
@@ -220,12 +224,15 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionCreated = (event: MessageEvent) => {
       try {
         const session: CrewSession = JSON.parse(event.data)
-        setState(prev => {
-          // Avoid duplicates
-          if (prev.sessions.some(s => s.key === session.key)) return prev
-          const newSessions = [...prev.sessions, session]
-          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-          return { ...prev, sessions: newSessions }
+        // Defer state update to avoid blocking the message handler
+        queueMicrotask(() => {
+          setState(prev => {
+            // Avoid duplicates
+            if (prev.sessions.some(s => s.key === session.key)) return prev
+            const newSessions = [...prev.sessions, session]
+            sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
+            return { ...prev, sessions: newSessions }
+          })
         })
       } catch (error) {
         console.error("Failed to parse session-created event:", error)
@@ -235,17 +242,22 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionUpdated = (event: MessageEvent) => {
       try {
         const updatedSession: CrewSession = JSON.parse(event.data)
-        setState(prev => {
-          const idx = prev.sessions.findIndex(s => s.key === updatedSession.key)
-          if (idx === -1) return prev // Session not found, skip
-          // Quick check: if updatedAt hasn't changed, skip
-          const existing = prev.sessions[idx]
-          if (existing.updatedAt === updatedSession.updatedAt && existing.totalTokens === updatedSession.totalTokens) {
-            return prev
-          }
-          const newSessions = prev.sessions.map(s => s.key === updatedSession.key ? updatedSession : s)
-          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-          return { ...prev, sessions: newSessions }
+        // Defer state update to avoid blocking the message handler
+        queueMicrotask(() => {
+          setState(prev => {
+            const idx = prev.sessions.findIndex(s => s.key === updatedSession.key)
+            if (idx === -1) return prev // Session not found, skip
+            // Quick check: if updatedAt hasn't changed, skip
+            const existing = prev.sessions[idx]
+            if (existing.updatedAt === updatedSession.updatedAt && existing.totalTokens === updatedSession.totalTokens) {
+              return prev
+            }
+            // Use splice for O(1) update instead of map for O(n)
+            const newSessions = [...prev.sessions]
+            newSessions[idx] = updatedSession
+            sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
+            return { ...prev, sessions: newSessions }
+          })
         })
       } catch (error) {
         console.error("Failed to parse session-updated event:", error)
@@ -255,11 +267,14 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionRemoved = (event: MessageEvent) => {
       try {
         const { key } = JSON.parse(event.data)
-        setState(prev => {
-          if (!prev.sessions.some(s => s.key === key)) return prev // Already gone
-          const newSessions = prev.sessions.filter(s => s.key !== key)
-          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-          return { ...prev, sessions: newSessions }
+        // Defer state update to avoid blocking the message handler
+        queueMicrotask(() => {
+          setState(prev => {
+            if (!prev.sessions.some(s => s.key === key)) return prev // Already gone
+            const newSessions = prev.sessions.filter(s => s.key !== key)
+            sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
+            return { ...prev, sessions: newSessions }
+          })
         })
       } catch (error) {
         console.error("Failed to parse session-removed event:", error)

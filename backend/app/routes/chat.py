@@ -78,8 +78,13 @@ async def get_chat_history(
     session_key: str,
     limit: int = Query(default=30, ge=1, le=100),
     before: Optional[int] = Query(default=None),
+    raw: bool = Query(default=False),
 ):
-    """Get chat history for a session with pagination."""
+    """Get chat history for a session with pagination.
+    
+    Args:
+        raw: If True, include thinking blocks and detailed tool calls in response.
+    """
     _validate_session_key(session_key)
 
     manager = await get_connection_manager()
@@ -118,6 +123,7 @@ async def get_chat_history(
         # Extract text content from the nested message
         content_parts: list[str] = []
         tools: list[dict] = []
+        thinking_blocks: list[str] = []
         raw_content = msg.get("content", []) if msg else entry.get("content", [])
         if isinstance(raw_content, str):
             content_parts.append(raw_content)
@@ -129,18 +135,32 @@ async def get_chat_history(
                     btype = block.get("type", "")
                     if btype == "text" and block.get("text"):
                         content_parts.append(block["text"])
+                    elif btype == "thinking" and block.get("thinking"):
+                        # Capture thinking blocks when raw mode enabled
+                        thinking_blocks.append(block["thinking"])
                     elif btype == "tool_use":
-                        tools.append({
+                        tool_info = {
                             "name": block.get("name", "unknown"),
                             "status": "called",
-                        })
+                        }
+                        if raw:
+                            # Include input parameters in raw mode
+                            tool_info["input"] = block.get("input", {})
+                        tools.append(tool_info)
                     elif btype == "tool_result":
                         tool_name = block.get("toolName") or block.get("name") or "tool"
                         is_error = block.get("isError", False)
-                        tools.append({
+                        tool_info = {
                             "name": tool_name,
                             "status": "error" if is_error else "done",
-                        })
+                        }
+                        if raw:
+                            # Include result content in raw mode (truncated)
+                            result_content = block.get("content", "")
+                            if isinstance(result_content, str) and len(result_content) > 500:
+                                result_content = result_content[:500] + "..."
+                            tool_info["result"] = result_content
+                        tools.append(tool_info)
 
         content = "\n".join(content_parts).strip()
         if not content and not tools:
@@ -150,14 +170,20 @@ async def get_chat_history(
         usage = entry.get("usage") or msg.get("usage") or {}
         tokens = usage.get("totalTokens", 0) if isinstance(usage, dict) else 0
 
-        messages.append({
+        message_data = {
             "id": f"msg-{idx}",
             "role": role,
             "content": content,
             "timestamp": timestamp,
             "tokens": tokens,
             "tools": tools if tools else [],
-        })
+        }
+        
+        # Include thinking blocks in raw mode
+        if raw and thinking_blocks:
+            message_data["thinking"] = thinking_blocks
+
+        messages.append(message_data)
 
     # Apply cursor-based pagination
     if before is not None:

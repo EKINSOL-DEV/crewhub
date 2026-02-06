@@ -1,6 +1,8 @@
 import { useRef, useEffect, useState, type KeyboardEvent, type CSSProperties } from 'react'
 import { useAgentChat, type ChatMessageData } from '@/hooks/useAgentChat'
 import type { BotVariantConfig } from './utils/botVariants'
+import { parseMediaAttachments } from '@/utils/mediaParser'
+import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
 
 interface AgentChatPanelProps {
   sessionKey: string
@@ -75,6 +77,10 @@ function ChatBubble({
     )
   }
 
+  // Parse media attachments from content
+  const { text, attachments } = parseMediaAttachments(msg.content || '')
+  const imageAttachments = attachments.filter(a => a.type === 'image')
+
   const bubbleStyle: CSSProperties = isUser
     ? {
         background: accentColor + 'dd',
@@ -124,8 +130,8 @@ function ChatBubble({
           </div>
         ))}
 
-      {/* Bubble */}
-      {msg.content && (
+      {/* Text content */}
+      {text && (
         <div
           style={{
             padding: '8px 12px',
@@ -135,8 +141,25 @@ function ChatBubble({
             maxWidth: '100%',
             ...bubbleStyle,
           }}
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }}
         />
+      )}
+
+      {/* Image attachments */}
+      {imageAttachments.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '6px',
+            maxWidth: '100%',
+            ...(isUser ? { marginLeft: 48 } : { marginRight: 48 }),
+          }}
+        >
+          {imageAttachments.map((attachment, i) => (
+            <ImageThumbnail key={i} attachment={attachment} maxWidth={200} />
+          ))}
+        </div>
       )}
 
       {/* Timestamp */}

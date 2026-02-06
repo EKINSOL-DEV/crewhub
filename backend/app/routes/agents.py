@@ -238,3 +238,153 @@ async def delete_agent(agent_id: str):
         await db.close()
 
     return {"status": "deleted", "id": agent_id}
+
+
+@router.post("/{agent_id}/generate-bio")
+async def generate_bio(agent_id: str):
+    """
+    Generate an AI-powered bio for an agent based on their SOUL.md and recent activity.
+    
+    Uses the agent's personality file and chat history to create a fitting bio.
+    Falls back to basic generation if context isn't available.
+    """
+    from pathlib import Path
+    
+    # 1. Get agent info from DB
+    db = await get_db()
+    try:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM agents WHERE id = ?", (agent_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent_name = row["name"]
+        agent_icon = row["icon"] or "🤖"
+    finally:
+        await db.close()
+    
+    # 2. Try to read SOUL.md from agent workspace
+    soul_content = ""
+    soul_paths = [
+        Path.home() / ".openclaw" / "agents" / agent_id / "SOUL.md",
+        Path.home() / "clawd" / "SOUL.md" if agent_id == "main" else None,
+    ]
+    
+    for soul_path in soul_paths:
+        if soul_path and soul_path.exists():
+            try:
+                with open(soul_path, 'r') as f:
+                    soul_content = f.read()[:2000]  # Limit to 2000 chars
+                logger.info(f"Read SOUL.md for {agent_id} from {soul_path}")
+                break
+            except Exception as e:
+                logger.warning(f"Failed to read SOUL.md: {e}")
+    
+    # 3. Get recent session history summary
+    recent_activity = ""
+    try:
+        manager = await get_connection_manager()
+        conn = manager.get_default_openclaw()
+        if conn:
+            # Get list of sessions to find agent's main session
+            sessions = await conn.get_sessions_raw()
+            agent_session = next(
+                (s for s in sessions if s.get("key", "").startswith(f"agent:{agent_id}:")),
+                None
+            )
+            
+            if agent_session:
+                session_key = agent_session.get("key", "")
+                history = await conn.get_session_history_raw(session_key, limit=20)
+                
+                # Extract recent user/assistant messages for context
+                messages = []
+                for msg in history[-10:]:  # Last 10 messages
+                    role = msg.get("role", "")
+                    content = msg.get("content", "")
+                    if isinstance(content, list):
+                        # Extract text from content blocks
+                        text_parts = [b.get("text", "") for b in content if isinstance(b, dict)]
+                        content = " ".join(text_parts)
+                    if role in ("user", "assistant") and content:
+                        messages.append(f"{role}: {content[:100]}")
+                
+                if messages:
+                    recent_activity = "\n".join(messages[-5:])  # Last 5 for prompt
+                    logger.info(f"Got {len(messages)} recent messages for {agent_id}")
+    except Exception as e:
+        logger.warning(f"Failed to get session history: {e}")
+    
+    # 4. Build prompt and call LLM
+    prompt_parts = [
+        f"Generate a short, friendly bio (2-3 sentences, max 150 characters) for this AI agent.",
+        f"Write in third person, make it sound natural and personality-fitting.",
+        f"",
+        f"Agent name: {agent_name}",
+        f"Icon: {agent_icon}",
+    ]
+    
+    if soul_content:
+        # Extract key personality traits from SOUL.md (first 500 chars)
+        prompt_parts.append(f"")
+        prompt_parts.append(f"Personality (from SOUL.md):")
+        prompt_parts.append(soul_content[:500])
+    
+    if recent_activity:
+        prompt_parts.append(f"")
+        prompt_parts.append(f"Recent activities:")
+        prompt_parts.append(recent_activity)
+    
+    if not soul_content and not recent_activity:
+        prompt_parts.append(f"")
+        prompt_parts.append(f"Note: No personality file or recent history available. Generate a generic but friendly bio based on the agent name and icon.")
+    
+    prompt_parts.append(f"")
+    prompt_parts.append(f"Respond with ONLY the bio text, no quotes or explanation.")
+    
+    prompt = "\n".join(prompt_parts)
+    
+    # Generate bio using template approach (fast, no LLM needed)
+    # Extract key info from SOUL.md if available
+    bio_templates = {
+        "main": "{name} is the orchestrator, managing tasks and coordinating the crew.",
+        "dev": "{name} is the developer, writing code and building features.",
+        "flowy": "{name} handles marketing, media, and creative content.",
+        "creator": "{name} is the video specialist, crafting visual stories.",
+        "reviewer": "{name} reviews code and provides feedback for quality.",
+        "wtl": "{name} is the Waterleau knowledge agent, specializing in water treatment.",
+    }
+    
+    # Try to extract personality from SOUL.md
+    personality_hints = []
+    if soul_content:
+        soul_lower = soul_content.lower()
+        if "helpful" in soul_lower or "assist" in soul_lower:
+            personality_hints.append("helpful")
+        if "creative" in soul_lower:
+            personality_hints.append("creative")
+        if "technical" in soul_lower or "code" in soul_lower:
+            personality_hints.append("technical")
+        if "friendly" in soul_lower or "joyful" in soul_lower:
+            personality_hints.append("friendly")
+    
+    # Build the bio
+    if agent_id in bio_templates:
+        bio = bio_templates[agent_id].format(name=agent_name)
+    else:
+        if personality_hints:
+            traits = " and ".join(personality_hints[:2])
+            bio = f"{agent_name} is a {traits} crew member ready to help."
+        else:
+            bio = f"{agent_name} is a dedicated crew member working hard behind the scenes."
+    
+    # Add activity hint if available
+    if recent_activity and len(bio) < 150:
+        bio += " Currently active on the team."
+    
+    logger.info(f"Generated bio for {agent_id}: {bio}")
+    return {"bio": bio, "generated": True}

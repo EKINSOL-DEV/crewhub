@@ -96,7 +96,8 @@ const BOT_CAM_LERP_FACTOR = 0.05 // smooth orbit-target follow
 // Reusable vector to avoid GC pressure in useFrame
 const _desiredTarget = new THREE.Vector3()
 
-function getBotCamera(botPos: { x: number; y: number; z: number }) {
+// Reserved for future use (bot-specific camera positioning)
+export function getBotCamera(botPos: { x: number; y: number; z: number }) {
   return {
     posX: botPos.x + BOT_CAM_OFFSET.x,
     posY: BOT_CAM_OFFSET.y,
@@ -294,12 +295,20 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
         controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
       }
     } else if (state.level === 'bot' && state.focusedBotKey) {
-      // Fly-to the bot's initial orbital position
+      // Fly-to the bot's orbital position, preserving current camera azimuth
       const botPos = botPositionRegistry.get(state.focusedBotKey)
       if (botPos) {
-        const c = getBotCamera(botPos)
-        controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, true)
-        followTarget.current.set(c.targetX, c.targetY, c.targetZ)
+        // Get current azimuth to preserve viewing angle
+        const currentAzimuth = controls.azimuthAngle
+        const distance = 7 // orbital distance from bot
+        const height = BOT_CAM_OFFSET.y
+        
+        // Calculate camera position using current azimuth (no 180° flip)
+        const camX = botPos.x + Math.sin(currentAzimuth) * distance
+        const camZ = botPos.z + Math.cos(currentAzimuth) * distance
+        
+        controls.setLookAt(camX, height, camZ, botPos.x, 0.5, botPos.z, true)
+        followTarget.current.set(botPos.x, 0.5, botPos.z)
       }
       // After fly-to transition completes, enable orbital following
       setTimeout(() => {

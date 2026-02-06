@@ -1,38 +1,38 @@
 # CrewHub Performance & Stability Review
 
-**Datum:** 2026-02-04
+**Date:** 2026-02-04
 **Reviewer:** Claude Opus (subagent)
-**Status:** ⚠️ KRITIEK - Meerdere ernstige issues gevonden
+**Status:** ⚠️ CRITICAL - Multiple serious issues found
 
 ---
 
 ## Executive Summary
 
-Na grondige analyse van de CrewHub frontend codebase zijn **meerdere ernstige performance problemen** geïdentificeerd die direct de stabiliteit van de applicatie beïnvloeden:
+After thorough analysis of the CrewHub frontend codebase, **multiple serious performance issues** have been identified that directly affect the stability of the application:
 
-1. **Meerdere dubbele SSE EventSource connections** - 3 hooks openen elk hun eigen SSE verbinding
-2. **Potentiële infinite re-render loops** door unstable dependencies
-3. **Module-level state met race conditions** in display name caching
-4. **Fetch calls zonder proper timeout/abort** in kritieke paths
-5. **Zware computations in render cycles** zonder adequate memoization
+1. **Multiple duplicate SSE EventSource connections** - 3 hooks each open their own SSE connection
+2. **Potential infinite re-render loops** due to unstable dependencies
+3. **Module-level state with race conditions** in display name caching
+4. **Fetch calls without proper timeout/abort** in critical paths
+5. **Heavy computations in render cycles** without adequate memoization
 
 ---
 
 ## 🔴 CRITICAL Issues
 
-### Issue 1: Meerdere SSE EventSource Connections (CRITICAL)
+### Issue 1: Multiple SSE EventSource Connections (CRITICAL)
 
 **Files:**
-- `src/hooks/useSessionsStream.ts:72` - SSE voor sessions
-- `src/hooks/useRooms.ts:96` - SSE voor rooms-refresh
-- `src/hooks/useProjects.ts:60` - SSE voor rooms-refresh (projects)
+- `src/hooks/useSessionsStream.ts:72` - SSE for sessions
+- `src/hooks/useRooms.ts:96` - SSE for rooms-refresh
+- `src/hooks/useProjects.ts:60` - SSE for rooms-refresh (projects)
 
-**Probleem:**
-Drie verschillende hooks openen elk hun eigen `EventSource` connection naar `/api/events`. Dit betekent:
-- 3 gelijktijdige HTTP connections naar dezelfde endpoint
-- Browser connection limit kan bereikt worden (Chrome: 6 per domain)
-- Server moet 3x dezelfde events versturen per client
-- Memory overhead van 3 event handlers per component tree
+**Problem:**
+Three different hooks each open their own `EventSource` connection to `/api/events`. This means:
+- 3 simultaneous HTTP connections to the same endpoint
+- Browser connection limit can be reached (Chrome: 6 per domain)
+- Server must send the same events 3x per client
+- Memory overhead of 3 event handlers per component tree
 
 ```typescript
 // useSessionsStream.ts:72
@@ -46,16 +46,16 @@ const es = new EventSource(sseUrl)
 ```
 
 **Root Cause:**
-Geen centrale SSE manager. Elke hook beheert z'n eigen connection onafhankelijk.
+No central SSE manager. Each hook manages its own connection independently.
 
-**Impact:** HOOG
-- Chrome kan requests blokkeren/vertragen als connection limit bereikt is
-- Dit verklaart waarom fetch calls "hangen" - ze wachten op vrije connections
-- Server belasting 3x hoger dan nodig
+**Impact:** HIGH
+- Chrome can block/delay requests if connection limit is reached
+- This explains why fetch calls "hang" - they're waiting for free connections
+- Server load 3x higher than necessary
 
 **Fix:**
 ```typescript
-// Maak centrale SSEManager singleton
+// Create central SSEManager singleton
 // src/lib/sseManager.ts
 class SSEManager {
   private eventSource: EventSource | null = null;
@@ -85,8 +85,8 @@ export const sseManager = new SSEManager();
 
 **File:** `src/components/world3d/World3DView.tsx:406-416`
 
-**Probleem:**
-De `handleFocusAgentRef` pattern is correct, maar `isActivelyRunning` wordt steeds opnieuw gecreëerd:
+**Problem:**
+The `handleFocusAgentRef` pattern is correct, but `isActivelyRunning` is recreated every time:
 
 ```typescript
 // World3DView.tsx:387-393
@@ -101,11 +101,11 @@ const isActivelyRunning = useCallback((key: string): boolean => {
 ```
 
 **Root Cause:**
-`debugBots` is een array die elke render nieuw is (tenzij gememoized). Dit zorgt dat `isActivelyRunning` callback elke render verandert, wat cascade re-renders veroorzaakt.
+`debugBots` is an array that is new every render (unless memoized). This causes the `isActivelyRunning` callback to change every render, which causes cascade re-renders.
 
-**Impact:** HOOG
-- Alle componenten die `isActivelyRunning` gebruiken re-renderen constant
-- Heavy `useMemo` computations (`roomBots`, `botData`) worden elke render opnieuw berekend
+**Impact:** HIGH
+- All components using `isActivelyRunning` re-render constantly
+- Heavy `useMemo` computations (`roomBots`, `botData`) are recalculated every render
 
 **Fix:**
 ```typescript
@@ -115,7 +115,7 @@ const debugBots = useMemo(() => {
   return bots;
 }, [/* stable dependencies */]);
 
-// OF in World3DView - stabilize met JSON comparison:
+// OR in World3DView - stabilize with JSON comparison:
 const debugBotsStable = useMemo(() => debugBots, 
   [JSON.stringify(debugBots)]);
 ```
@@ -126,7 +126,7 @@ const debugBotsStable = useMemo(() => debugBots,
 
 **File:** `src/hooks/useSessionDisplayNames.ts:4-9`
 
-**Probleem:**
+**Problem:**
 ```typescript
 const displayNameCache = new Map<string, string | null>()
 type Subscriber = () => void
@@ -136,19 +136,19 @@ let bulkFetchPromise: Promise<void> | null = null
 let bulkFetchDone = false
 ```
 
-Module-level mutable state zonder synchronization:
-1. `bulkFetchPromise` kan overschreven worden als 2 components gelijktijdig renderen
-2. `bulkFetchDone` kan true worden voordat alle subscribers notified zijn
-3. Race condition: fetch start → component unmount → fetch complete → notify dead subscriber
+Module-level mutable state without synchronization:
+1. `bulkFetchPromise` can be overwritten if 2 components render simultaneously
+2. `bulkFetchDone` can become true before all subscribers are notified
+3. Race condition: fetch starts → component unmounts → fetch completes → notify dead subscriber
 
-**Impact:** HOOG
-- Display names kunnen missen of incorrect zijn
-- Memory leaks door dead subscribers in Set
-- Inconsistent state tussen component instances
+**Impact:** HIGH
+- Display names can be missing or incorrect
+- Memory leaks from dead subscribers in Set
+- Inconsistent state between component instances
 
 **Fix:**
 ```typescript
-// Gebruik stabiele singleton met cleanup tracking:
+// Use stable singleton with cleanup tracking:
 class DisplayNameService {
   private cache = new Map<string, string | null>();
   private subscribers = new Map<number, Subscriber>();
@@ -175,11 +175,11 @@ export const displayNameService = new DisplayNameService();
 ### Issue 4: Missing AbortController in Critical Fetch Calls
 
 **Files:**
-- `src/hooks/useRooms.ts:55-57` - Promise.all zonder abort
-- `src/hooks/useAgentsRegistry.ts:40` - fetch zonder timeout
-- `src/hooks/useSessionDisplayNames.ts:23` - bulk fetch zonder abort
+- `src/hooks/useRooms.ts:55-57` - Promise.all without abort
+- `src/hooks/useAgentsRegistry.ts:40` - fetch without timeout
+- `src/hooks/useSessionDisplayNames.ts:23` - bulk fetch without abort
 
-**Probleem:**
+**Problem:**
 ```typescript
 // useRooms.ts:52-58
 const fetchRooms = useCallback(async () => {
@@ -191,12 +191,12 @@ const fetchRooms = useCallback(async () => {
     ])
 ```
 
-Als een van deze requests hangt:
-- Component unmount → fetch blijft lopen → memory leak
-- User navigeert weg → state update op unmounted component
-- Browser connection slots blijven bezet
+If one of these requests hangs:
+- Component unmount → fetch keeps running → memory leak
+- User navigates away → state update on unmounted component
+- Browser connection slots remain occupied
 
-**Opmerking:** `useProjects.ts:81-99` heeft WEL een AbortController - dit is het correcte pattern.
+**Note:** `useProjects.ts:81-99` DOES have an AbortController - this is the correct pattern.
 
 **Fix:**
 ```typescript
@@ -226,7 +226,7 @@ const fetchRooms = useCallback(async () => {
 
 **File:** `src/components/world3d/World3DView.tsx:278-358` (SceneContent roomBots computation)
 
-**Probleem:**
+**Problem:**
 ```typescript
 const { roomBots, parkingBots } = useMemo(() => {
   const roomBots = new Map<string, BotPlacement[]>()
@@ -240,20 +240,20 @@ const { roomBots, parkingBots } = useMemo(() => {
 }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames, debugRoomMap])
 ```
 
-Dependencies analyse:
-- `visibleSessions` - array, nieuw elke render tenzij gememoized
-- `agentRuntimes` - computed in useAgentsRegistry, niet gememoized
-- `getRoomForSession` - useCallback met `sessionAssignments` Map als dep
-- `displayNames` - Map, nieuw elke render
+Dependencies analysis:
+- `visibleSessions` - array, new every render unless memoized
+- `agentRuntimes` - computed in useAgentsRegistry, not memoized
+- `getRoomForSession` - useCallback with `sessionAssignments` Map as dep
+- `displayNames` - Map, new every render
 
 **Impact:** MEDIUM-HIGH
-- 80+ lijnen computation worden herhaald bij elke re-render
-- O(n²) complexity in sommige loops
-- Dit veroorzaakt UI lag/jank
+- 80+ lines of computation are repeated on every re-render
+- O(n²) complexity in some loops
+- This causes UI lag/jank
 
 **Fix:**
 ```typescript
-// Stabilize alle Map/Array dependencies:
+// Stabilize all Map/Array dependencies:
 const visibleSessionsStable = useMemo(() => visibleSessions, 
   [sessions.map(s => s.key).join(',')]);
 
@@ -267,7 +267,7 @@ const displayNamesStable = useMemo(() => displayNames,
 
 **File:** `src/components/world3d/World3DView.tsx` (via useRooms/useProjects SSE setup)
 
-**Probleem:**
+**Problem:**
 ```typescript
 // useRooms.ts:93-94, useProjects.ts:55-57
 useEffect(() => {
@@ -276,15 +276,15 @@ useEffect(() => {
   const es = new EventSource(sseUrl)
 ```
 
-`localStorage.getItem()` is synchroon en blokkeert de main thread. In elk van de 3 SSE hooks wordt dit uitgevoerd.
+`localStorage.getItem()` is synchronous and blocks the main thread. This is executed in each of the 3 SSE hooks.
 
 **Impact:** LOW-MEDIUM
-- Kleine delay per hook op initial mount
-- Cumulatief met 3 hooks: merkbare startup lag
+- Small delay per hook on initial mount
+- Cumulative with 3 hooks: noticeable startup lag
 
 **Fix:**
 ```typescript
-// Cache token buiten render cycle:
+// Cache token outside render cycle:
 const getAuthToken = (() => {
   let cached: string | null = null;
   return () => {
@@ -317,7 +317,7 @@ useEffect(() => {
 }, [fetchAgents])  // ⚠️ fetchAgents changes → interval recreated
 ```
 
-Als `fetchAgents` dependency verandert (nieuwe functie reference), wordt het interval opnieuw aangemaakt. Dit kan tot dubbele polls leiden tijdens de transition.
+If `fetchAgents` dependency changes (new function reference), the interval is recreated. This can lead to double polls during the transition.
 
 ---
 
@@ -336,9 +336,9 @@ export function useSessionDisplayNames(sessionKeys: string[]) {
 ```
 
 **Issues:**
-1. `sort()` mutates the original array - dit kan upstream bugs veroorzaken
-2. `keysString` wordt elke render opnieuw berekend
-3. Effect splits de string weer - dubbel werk
+1. `sort()` mutates the original array - this can cause upstream bugs
+2. `keysString` is recalculated every render
+3. Effect splits the string again - double work
 
 **Fix:**
 ```typescript
@@ -361,7 +361,7 @@ const setFocusHandler = useCallback((handler: ((sessionKey: string) => void) | n
 }, [])
 ```
 
-Dit pattern forceert een re-render van alle ChatContext consumers wanneer de focus handler verandert, ook al verandert de daadwerkelijke context value niet.
+This pattern forces a re-render of all ChatContext consumers when the focus handler changes, even though the actual context value doesn't change.
 
 ---
 
@@ -383,21 +383,21 @@ Dit pattern forceert een re-render van alle ChatContext consumers wanneer de foc
 
 ## 🛠️ Recommended Fix Order
 
-1. **SSE Consolidation (CRITICAL)** - Maak single SSE manager, elimineer 2 van de 3 connections
-2. **AbortController toevoegen** - Alle fetch calls moeten abortable zijn
-3. **Stabilize dependencies** - useMemo voor arrays/Maps die als deps gebruikt worden
-4. **Display name service refactor** - Singleton met proper cleanup
-5. **localStorage caching** - Token cachen buiten render cycle
+1. **SSE Consolidation (CRITICAL)** - Create single SSE manager, eliminate 2 of the 3 connections
+2. **Add AbortController** - All fetch calls must be abortable
+3. **Stabilize dependencies** - useMemo for arrays/Maps used as deps
+4. **Display name service refactor** - Singleton with proper cleanup
+5. **localStorage caching** - Cache token outside render cycle
 
 ---
 
 ## 🔍 Verification Steps
 
-Na fixes, verify met:
+After fixes, verify with:
 
 ```bash
 # Chrome DevTools → Network tab
-# Filter op "events" - zou maar 1 SSE connection moeten zijn
+# Filter on "events" - should only be 1 SSE connection
 
 # React DevTools Profiler
 # Check for components rendering >2x per user action

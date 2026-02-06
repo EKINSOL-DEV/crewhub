@@ -109,7 +109,9 @@ export function registerBuiltinBlueprints(): void {
   for (const raw of BUILTIN_BLUEPRINT_DATA) {
     const blueprint = validateAndLoadBlueprint(raw)
     if (blueprint) {
-      blueprintRegistry.register(blueprint.id, blueprint, 'builtin')
+      // Ensure proper namespace prefix for builtin blueprints
+      const namespacedId = blueprint.id.includes(':') ? blueprint.id : `builtin:${blueprint.id}`
+      blueprintRegistry.register(namespacedId, blueprint, 'builtin')
     }
   }
 }

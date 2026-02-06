@@ -1,6 +1,5 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 import type { BotChestType } from './utils/botVariants'
 
@@ -76,7 +75,62 @@ function ThreeDotsIcon({ color }: { color: string }) {
 
 // ─── Cron: Digital clock display "12:00" ───────────────────────
 
+/**
+ * Simple 7-segment style digit using boxes.
+ * Much lighter than Troika Text and avoids shader injection issues.
+ */
+function SevenSegmentDigit({ digit, position, color }: { digit: string; position: [number, number, number]; color: string }) {
+  // Segment configuration for each digit (top, top-left, top-right, middle, bottom-left, bottom-right, bottom)
+  const segments: Record<string, boolean[]> = {
+    '0': [true, true, true, false, true, true, true],
+    '1': [false, false, true, false, false, true, false],
+    '2': [true, false, true, true, true, false, true],
+    ':': [], // Special case: colon
+  }
+  const seg = segments[digit] || segments['0']
+  const s = 0.012 // segment thickness
+  const w = 0.018 // segment width
+  const h = 0.022 // segment height (half)
+
+  if (digit === ':') {
+    return (
+      <group position={position}>
+        <mesh position={[0, h * 0.5, 0]}>
+          <boxGeometry args={[s, s, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+        <mesh position={[0, -h * 0.5, 0]}>
+          <boxGeometry args={[s, s, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      </group>
+    )
+  }
+
+  return (
+    <group position={position}>
+      {/* Top horizontal */}
+      {seg[0] && <mesh position={[0, h, 0]}><boxGeometry args={[w, s, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {/* Top-left vertical */}
+      {seg[1] && <mesh position={[-w/2 - s/4, h/2, 0]}><boxGeometry args={[s, h, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {/* Top-right vertical */}
+      {seg[2] && <mesh position={[w/2 + s/4, h/2, 0]}><boxGeometry args={[s, h, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {/* Middle horizontal */}
+      {seg[3] && <mesh position={[0, 0, 0]}><boxGeometry args={[w, s, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {/* Bottom-left vertical */}
+      {seg[4] && <mesh position={[-w/2 - s/4, -h/2, 0]}><boxGeometry args={[s, h, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {/* Bottom-right vertical */}
+      {seg[5] && <mesh position={[w/2 + s/4, -h/2, 0]}><boxGeometry args={[s, h, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {/* Bottom horizontal */}
+      {seg[6] && <mesh position={[0, -h, 0]}><boxGeometry args={[w, s, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+    </group>
+  )
+}
+
 function ClockDisplay() {
+  const color = '#7fff00'
+  const spacing = 0.032
+
   return (
     <group>
       {/* Dark background panel */}
@@ -89,17 +143,14 @@ function ClockDisplay() {
         <planeGeometry args={[0.20, 0.11]} />
         <meshStandardMaterial color="#4a6a1a" />
       </mesh>
-      {/* "12:00" text */}
-      <Text
-        position={[0, 0, 0.001]}
-        fontSize={0.055}
-        color="#7fff00"
-        anchorX="center"
-        anchorY="middle"
-        font={undefined}
-      >
-        12:00
-      </Text>
+      {/* "12:00" using 7-segment style digits */}
+      <group position={[0, 0, 0.001]}>
+        <SevenSegmentDigit digit="1" position={[-spacing * 1.7, 0, 0]} color={color} />
+        <SevenSegmentDigit digit="2" position={[-spacing * 0.5, 0, 0]} color={color} />
+        <SevenSegmentDigit digit=":" position={[spacing * 0.4, 0, 0]} color={color} />
+        <SevenSegmentDigit digit="0" position={[spacing * 1.2, 0, 0]} color={color} />
+        <SevenSegmentDigit digit="0" position={[spacing * 2.4, 0, 0]} color={color} />
+      </group>
     </group>
   )
 }
@@ -136,6 +187,50 @@ function AnimatedDot({ x, delay }: { x: number; delay: number }) {
 
 // ─── Dev: Code display "</>" ───────────────────────────────────
 
+/**
+ * Simple code bracket icon using line segments.
+ * Displays "</>" symbol without Troika Text to avoid shader issues.
+ */
+function CodeBrackets({ color }: { color: string }) {
+  const t = 0.008 // line thickness
+  const h = 0.04  // bracket height
+  const w = 0.015 // bracket width
+
+  return (
+    <group>
+      {/* Left angle bracket "<" */}
+      <group position={[-0.04, 0, 0]}>
+        <mesh position={[-w/4, h/4, 0]} rotation={[0, 0, -0.5]}>
+          <boxGeometry args={[w * 1.2, t, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+        <mesh position={[-w/4, -h/4, 0]} rotation={[0, 0, 0.5]}>
+          <boxGeometry args={[w * 1.2, t, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      </group>
+
+      {/* Slash "/" */}
+      <mesh position={[0, 0, 0]} rotation={[0, 0, -0.3]}>
+        <boxGeometry args={[t, h * 1.1, 0.002]} />
+        <meshBasicMaterial color={color} />
+      </mesh>
+
+      {/* Right angle bracket ">" */}
+      <group position={[0.04, 0, 0]}>
+        <mesh position={[w/4, h/4, 0]} rotation={[0, 0, 0.5]}>
+          <boxGeometry args={[w * 1.2, t, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+        <mesh position={[w/4, -h/4, 0]} rotation={[0, 0, -0.5]}>
+          <boxGeometry args={[w * 1.2, t, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      </group>
+    </group>
+  )
+}
+
 function CodeDisplay() {
   return (
     <group>
@@ -149,17 +244,10 @@ function CodeDisplay() {
         <planeGeometry args={[0.22, 0.11]} />
         <meshStandardMaterial color="#5a1a1a" />
       </mesh>
-      {/* "</> {}" text */}
-      <Text
-        position={[0, 0, 0.001]}
-        fontSize={0.042}
-        color="#ff6b6b"
-        anchorX="center"
-        anchorY="middle"
-        font={undefined}
-      >
-        {'</> {}'}
-      </Text>
+      {/* "</>" code brackets */}
+      <group position={[0, 0, 0.001]}>
+        <CodeBrackets color="#ff6b6b" />
+      </group>
     </group>
   )
 }

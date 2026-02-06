@@ -11,14 +11,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
 import { useGridDebug } from "@/hooks/useGridDebug"
 import { useDebugBots } from "@/hooks/useDebugBots"
@@ -345,6 +337,64 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
     room_id: "",
     priority: 50,
   })
+
+  // ─── Native dialog refs ───
+  const createRoomDialogRef = useRef<HTMLDialogElement>(null)
+  const deleteRoomDialogRef = useRef<HTMLDialogElement>(null)
+  const createRuleDialogRef = useRef<HTMLDialogElement>(null)
+  const deleteRuleDialogRef = useRef<HTMLDialogElement>(null)
+  const testRulesDialogRef = useRef<HTMLDialogElement>(null)
+
+  // ─── Sync native dialogs ───
+  useEffect(() => {
+    const dialog = createRoomDialogRef.current
+    if (!dialog) return
+    if (showCreateRoomDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [showCreateRoomDialog])
+
+  useEffect(() => {
+    const dialog = deleteRoomDialogRef.current
+    if (!dialog) return
+    if (deleteRoomConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [deleteRoomConfirm])
+
+  useEffect(() => {
+    const dialog = createRuleDialogRef.current
+    if (!dialog) return
+    if (showCreateRuleDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [showCreateRuleDialog])
+
+  useEffect(() => {
+    const dialog = deleteRuleDialogRef.current
+    if (!dialog) return
+    if (deleteRuleConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [deleteRuleConfirm])
+
+  useEffect(() => {
+    const dialog = testRulesDialogRef.current
+    if (!dialog) return
+    if (showTestRulesDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [showTestRulesDialog])
 
   // ─── Escape key ───
   useEffect(() => {
@@ -1128,15 +1178,23 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
       </div>
 
       {/* ─── Create Room Dialog ─── */}
-      <Dialog open={showCreateRoomDialog} onOpenChange={setShowCreateRoomDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Room</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={createRoomDialogRef}
+        onClose={() => setShowCreateRoomDialog(false)}
+        onClick={(e) => e.target === e.currentTarget && setShowCreateRoomDialog(false)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Create New Room</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               Add a new workspace room for organizing your agents and sessions
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+            </p>
+          </div>
+          <div className="px-6 pb-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="room-name">Room Name</Label>
               <Input
@@ -1203,41 +1261,57 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setShowCreateRoomDialog(false)}>Cancel</Button>
             <Button onClick={handleCreateRoom}>Create Room</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
 
       {/* ─── Delete Room Dialog ─── */}
-      <Dialog open={!!deleteRoomConfirm} onOpenChange={() => setDeleteRoomConfirm(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Room?</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={deleteRoomDialogRef}
+        onClose={() => setDeleteRoomConfirm(null)}
+        onClick={(e) => e.target === e.currentTarget && setDeleteRoomConfirm(null)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Delete Room?</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               This will remove the room and unassign any sessions from it. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </p>
+          </div>
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setDeleteRoomConfirm(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteRoomConfirm && handleDeleteRoom(deleteRoomConfirm)}>
               Delete Room
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
 
       {/* ─── Create Rule Dialog ─── */}
-      <Dialog open={showCreateRuleDialog} onOpenChange={setShowCreateRuleDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Routing Rule</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={createRuleDialogRef}
+        onClose={() => setShowCreateRuleDialog(false)}
+        onClick={(e) => e.target === e.currentTarget && setShowCreateRuleDialog(false)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Create Routing Rule</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               Define a condition to automatically route sessions to a room
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+            </p>
+          </div>
+          <div className="px-6 pb-4 space-y-4">
             <div className="space-y-2">
               <Label>Rule Type</Label>
               <Select
@@ -1328,41 +1402,57 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
               </p>
             </div>
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setShowCreateRuleDialog(false)}>Cancel</Button>
             <Button onClick={handleCreateRule}>Create Rule</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
 
       {/* ─── Delete Rule Dialog ─── */}
-      <Dialog open={!!deleteRuleConfirm} onOpenChange={() => setDeleteRuleConfirm(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Rule?</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={deleteRuleDialogRef}
+        onClose={() => setDeleteRuleConfirm(null)}
+        onClick={(e) => e.target === e.currentTarget && setDeleteRuleConfirm(null)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Delete Rule?</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               This rule will be permanently removed. Sessions may be routed differently.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </p>
+          </div>
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setDeleteRuleConfirm(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteRuleConfirm && handleDeleteRule(deleteRuleConfirm)}>
               Delete Rule
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
 
       {/* ─── Test Rules Preview Dialog ─── */}
-      <Dialog open={showTestRulesDialog} onOpenChange={setShowTestRulesDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>🧪 Test Routing Rules</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={testRulesDialogRef}
+        onClose={() => setShowTestRulesDialog(false)}
+        onClick={(e) => e.target === e.currentTarget && setShowTestRulesDialog(false)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
+        >
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">🧪 Test Routing Rules</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               Preview how current rules would route your {activeSessions?.length || 0} active session{(activeSessions?.length || 0) !== 1 ? "s" : ""}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-96 overflow-y-auto space-y-2">
+            </p>
+          </div>
+          <div className="px-6 pb-4 max-h-96 overflow-y-auto space-y-2">
             {testRulesResults.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">No active sessions to test</p>
             ) : (
@@ -1386,11 +1476,11 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
               ))
             )}
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button onClick={() => setShowTestRulesDialog(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
     </>
   )
 }
@@ -1418,6 +1508,20 @@ function ProjectsSettingsSection({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
   const [archiveError, setArchiveError] = useState<string | null>(null)
+  
+  // Native dialog ref
+  const deleteDialogRef = useRef<HTMLDialogElement>(null)
+
+  // Sync delete dialog
+  useEffect(() => {
+    const dialog = deleteDialogRef.current
+    if (!dialog) return
+    if (deleteConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [deleteConfirm])
 
   // Sort: active first, then archived
   const sortedProjects = [...projects].sort((a, b) => {
@@ -1633,17 +1737,26 @@ function ProjectsSettingsSection({
       </CollapsibleSection>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Project?</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={deleteDialogRef}
+        onClose={() => setDeleteConfirm(null)}
+        onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Delete Project?</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               Delete project <strong>"{projectToDelete?.name}"</strong>? This action cannot be undone.
-              <br /><br />
-              <span className="text-muted-foreground">This will NOT delete any files on disk.</span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              This will NOT delete any files on disk.
+            </p>
+          </div>
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
             <Button
               variant="destructive"
@@ -1656,9 +1769,9 @@ function ProjectsSettingsSection({
             >
               Delete Project
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
     </>
   )
 }
@@ -1780,6 +1893,20 @@ function BackupSection() {
   const [showImportConfirm, setShowImportConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingFileRef = useRef<File | null>(null)
+  
+  // Native dialog ref
+  const importDialogRef = useRef<HTMLDialogElement>(null)
+
+  // Sync import dialog
+  useEffect(() => {
+    const dialog = importDialogRef.current
+    if (!dialog) return
+    if (showImportConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [showImportConfirm])
 
   const loadBackups = useCallback(async () => {
     setLoading(true)
@@ -2011,30 +2138,38 @@ function BackupSection() {
       </CollapsibleSection>
 
       {/* Import confirmation dialog */}
-      <Dialog open={showImportConfirm} onOpenChange={setShowImportConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Import Backup?</DialogTitle>
-            <DialogDescription>
-              <span className="flex items-start gap-2 mt-2">
-                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                <span>
-                  <strong className="text-foreground">Warning:</strong> This will replace all current data
-                  including connections, rooms, routing rules, and settings.
-                  This action cannot be undone.
-                </span>
-              </span>
-            </DialogDescription>
-          </DialogHeader>
+      <dialog
+        ref={importDialogRef}
+        onClose={() => setShowImportConfirm(false)}
+        onClick={(e) => e.target === e.currentTarget && setShowImportConfirm(false)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Import Backup?</h2>
+            <div className="flex items-start gap-2 mt-2">
+              <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Warning:</strong> This will replace all current data
+                including connections, rooms, routing rules, and settings.
+                This action cannot be undone.
+              </p>
+            </div>
+          </div>
           {pendingFileRef.current && (
-            <div className="p-3 rounded-lg bg-muted/50 text-sm">
-              File: <span className="font-mono">{pendingFileRef.current.name}</span>
-              <span className="text-muted-foreground ml-2">
-                ({formatSize(pendingFileRef.current.size)})
-              </span>
+            <div className="px-6 pb-4">
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                File: <span className="font-mono">{pendingFileRef.current.name}</span>
+                <span className="text-muted-foreground ml-2">
+                  ({formatSize(pendingFileRef.current.size)})
+                </span>
+              </div>
             </div>
           )}
-          <DialogFooter>
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button
               variant="outline"
               onClick={() => {
@@ -2047,9 +2182,9 @@ function BackupSection() {
             <Button variant="destructive" onClick={handleImportConfirmed}>
               Replace & Import
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
     </>
   )
 }

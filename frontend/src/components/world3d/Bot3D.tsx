@@ -82,8 +82,10 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
   const walkPhaseRef = useRef(0)
   const wasMovingRef = useRef(false)
   const { state: focusState, focusBot } = useWorldFocus()
-  const { startDrag, endDrag } = useDragActions()
-  const [hovered, setHovered] = useState(false)
+  const { startDrag: _startDrag, endDrag: _endDrag } = useDragActions()
+  void _startDrag; void _endDrag // Reserved for drag functionality
+  const [_hovered, setHovered] = useState(false)
+  void _hovered // Used only via setHovered for hover state
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   // Demo mode: disable drag functionality
@@ -747,77 +749,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
           </Html>
         )}
 
-        {/* Drag handle (visible on hover, hidden in demo mode) */}
-        {session && roomId && !isDemoMode && (
-          <Html
-            position={[0, 0.95, 0]}
-            center
-            distanceFactor={15}
-            zIndexRange={[10, 20]}
-            style={{ pointerEvents: hovered ? 'auto' : 'none' }}
-          >
-            <div
-              draggable
-              onPointerDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onMouseEnter={() => {
-                if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null }
-                setHovered(true)
-              }}
-              onMouseLeave={() => {
-                hoverTimeoutRef.current = setTimeout(() => {
-                  setHovered(false)
-                  document.body.style.cursor = 'auto'
-                }, 300)
-              }}
-              onDragStart={(e) => {
-                e.dataTransfer.setData('text/plain', session.key)
-                e.dataTransfer.effectAllowed = 'move'
-                // Create a styled drag ghost
-                const ghost = document.createElement('div')
-                ghost.textContent = `🤖 ${name}`
-                ghost.style.cssText = `
-                  position: fixed; top: -200px; left: -200px;
-                  background: linear-gradient(135deg, ${config.color}dd, ${config.color}99);
-                  color: #fff; padding: 6px 14px; border-radius: 10px;
-                  font-size: 13px; font-family: system-ui, sans-serif;
-                  font-weight: 600; white-space: nowrap;
-                  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-                  border: 2px solid rgba(255,255,255,0.3);
-                `
-                document.body.appendChild(ghost)
-                e.dataTransfer.setDragImage(ghost, 40, 16)
-                // Clean up ghost after drag starts
-                requestAnimationFrame(() => {
-                  setTimeout(() => {
-                    if (document.body.contains(ghost)) document.body.removeChild(ghost)
-                  }, 100)
-                })
-                startDrag(session.key, name, roomId)
-              }}
-              onDragEnd={() => endDrag()}
-              style={{
-                cursor: 'grab',
-                padding: '3px 8px',
-                fontSize: '13px',
-                background: 'rgba(0,0,0,0.6)',
-                borderRadius: '8px',
-                opacity: hovered ? 1 : 0,
-                transition: 'opacity 0.2s ease',
-                userSelect: 'none',
-                lineHeight: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                backdropFilter: 'blur(4px)',
-              }}
-              title="Drag to move to another room"
-            >
-              <span style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}>✋</span>
-              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.8)', fontFamily: 'system-ui, sans-serif' }}>move</span>
-            </div>
-          </Html>
-        )}
+        {/* Drag handle removed - using "Move to room" button in BotInfoPanel instead */}
       </group>
     </group>
   )

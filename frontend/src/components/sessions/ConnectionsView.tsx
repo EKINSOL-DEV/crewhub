@@ -1,18 +1,10 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -211,6 +203,18 @@ function ConnectionDialog({
     config: {},
     enabled: true,
   })
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  // Sync dialog open state with native dialog
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (open) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [open])
 
   useEffect(() => {
     if (connection) {
@@ -258,20 +262,29 @@ function ConnectionDialog({
   const typeConfig = CONNECTION_TYPE_CONFIG[formData.type]
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
+    <dialog
+      ref={dialogRef}
+      onClose={() => onOpenChange(false)}
+      onClick={(e) => e.target === e.currentTarget && onOpenChange(false)}
+      className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-background border rounded-lg shadow-lg w-full max-w-[500px] mx-4 overflow-hidden"
+      >
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4">
+          <h2 className="text-lg font-semibold">
             {isEdit ? "Edit Connection" : "Add Connection"}
-          </DialogTitle>
-          <DialogDescription>
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
             {isEdit
               ? "Update connection configuration"
               : "Configure a new agent connection"}
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
 
-        <div className="space-y-4 py-4">
+        <div className="px-6 pb-4 space-y-4">
           {/* Name */}
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
@@ -343,7 +356,8 @@ function ConnectionDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        {/* Footer */}
+        <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
@@ -351,9 +365,9 @@ function ConnectionDialog({
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEdit ? "Save Changes" : "Add Connection"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </dialog>
   )
 }
 

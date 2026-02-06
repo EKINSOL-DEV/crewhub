@@ -1,103 +1,103 @@
 # CrewHub Deployment Plan
 
-> **Doel:** `crewhub.dev` (marketing site) en `docs.crewhub.dev` (Starlight docs) deployen via Coolify  
-> **Datum:** 2026-02-05  
-> **Status:** Plan - klaar om uit te voeren
+> **Goal:** Deploy `crewhub.dev` (marketing site) and `docs.crewhub.dev` (Starlight docs) via Coolify  
+> **Date:** 2026-02-05  
+> **Status:** Plan - ready to execute
 
 ---
 
-## Overzicht
+## Overview
 
-| Site | Repo | Domein | Stack |
+| Site | Repo | Domain | Stack |
 |------|------|--------|-------|
 | Marketing website | `ekinsolbot/crewhub-web` | `crewhub.dev` | Astro 5 + Tailwind CSS 4 |
-| Documentatie | `ekinsolbot/crewhub-docs` | `docs.crewhub.dev` | Astro 5 + Starlight |
+| Documentation | `ekinsolbot/crewhub-docs` | `docs.crewhub.dev` | Astro 5 + Starlight |
 
-Beide sites zijn **statische sites** (geen SSR). Astro genereert HTML/CSS/JS naar een `/dist` folder.
-
----
-
-## 1. Aanbevolen Deployment Approach
-
-### Optie A: Nixpacks (✅ AANBEVOLEN)
-
-Coolify's Nixpacks detecteert automatisch een Node.js project, runt `npm ci` + `npm run build`, en serveert de `/dist` folder via Nginx. Dit is de simpelste en best ondersteunde methode.
-
-**Waarom Nixpacks:**
-- Zero config nodig — Coolify leest `package.json` en doet de rest
-- Automatische Node.js versie detectie
-- Static site checkbox → serveert `/dist` via Nginx op port 80
-- Geen Dockerfile onderhoud nodig
-- Goed gedocumenteerd door Coolify
-
-**Waarom NIET Dockerfile:**
-- `crewhub-docs` heeft al een Dockerfile, maar die luistert op port 4321 (custom) — dat werkt prima maar is meer onderhoud
-- Nixpacks doet exact hetzelfde met minder configuratie
-- Bij Nixpacks krijg je automatisch de "Static" optimalisaties van Coolify
-
-### Optie B: Dockerfile (alternatief)
-
-`crewhub-docs` heeft al een werkende Dockerfile + nginx.conf. Dit kan ook, maar vereist dat je:
-- Port correct instelt (4321 i.p.v. 80)
-- Nginx config zelf onderhoudt
-- Build pack op "Dockerfile" zet i.p.v. Nixpacks
-
-**Verdict:** Gebruik **Nixpacks + Static** voor beide sites. Simpeler, minder onderhoud, native Coolify support.
+Both sites are **static sites** (no SSR). Astro generates HTML/CSS/JS to a `/dist` folder.
 
 ---
 
-## 2. DNS Configuratie
+## 1. Recommended Deployment Approach
 
-### Wat je nodig hebt
+### Option A: Nixpacks (✅ RECOMMENDED)
 
-Stel: je Coolify server heeft IP `<SERVER_IP>` (dit is het IP van de VPS waar Coolify op draait).
+Coolify's Nixpacks automatically detects a Node.js project, runs `npm ci` + `npm run build`, and serves the `/dist` folder via Nginx. This is the simplest and best supported method.
 
-| Type | Naam | Waarde | TTL |
+**Why Nixpacks:**
+- Zero config needed — Coolify reads `package.json` and does the rest
+- Automatic Node.js version detection
+- Static site checkbox → serves `/dist` via Nginx on port 80
+- No Dockerfile maintenance needed
+- Well documented by Coolify
+
+**Why NOT Dockerfile:**
+- `crewhub-docs` already has a Dockerfile, but it listens on port 4321 (custom) — that works fine but is more maintenance
+- Nixpacks does exactly the same with less configuration
+- With Nixpacks you automatically get the "Static" optimizations from Coolify
+
+### Option B: Dockerfile (alternative)
+
+`crewhub-docs` already has a working Dockerfile + nginx.conf. This can also be used, but requires that you:
+- Set port correctly (4321 instead of 80)
+- Maintain Nginx config yourself
+- Set build pack to "Dockerfile" instead of Nixpacks
+
+**Verdict:** Use **Nixpacks + Static** for both sites. Simpler, less maintenance, native Coolify support.
+
+---
+
+## 2. DNS Configuration
+
+### What you need
+
+Assuming: your Coolify server has IP `<SERVER_IP>` (this is the IP of the VPS where Coolify is running).
+
+| Type | Name | Value | TTL |
 |------|------|--------|-----|
-| A | `crewhub.dev` | `<SERVER_IP>` | 300 (of 3600) |
-| A | `docs.crewhub.dev` | `<SERVER_IP>` | 300 (of 3600) |
+| A | `crewhub.dev` | `<SERVER_IP>` | 300 (or 3600) |
+| A | `docs.crewhub.dev` | `<SERVER_IP>` | 300 (or 3600) |
 
-**Optioneel (wildcard):**
+**Optional (wildcard):**
 
-| Type | Naam | Waarde | TTL |
+| Type | Name | Value | TTL |
 |------|------|--------|-----|
 | A | `*.crewhub.dev` | `<SERVER_IP>` | 300 |
 
-> Een wildcard record is handig als je later meer subdomeinen wilt (`api.crewhub.dev`, `app.crewhub.dev`, etc.). Maar voor nu zijn 2 A records voldoende.
+> A wildcard record is useful if you want more subdomains later (`api.crewhub.dev`, `app.crewhub.dev`, etc.). But for now 2 A records are sufficient.
 
-### Waar in te stellen
+### Where to set up
 
-Bij je domain registrar (waar je `crewhub.dev` hebt gekocht). Ga naar DNS management en voeg de A records toe.
+At your domain registrar (where you purchased `crewhub.dev`). Go to DNS management and add the A records.
 
-> **Tip:** Zet TTL eerst op 300 seconden (5 min) zodat changes snel propageren. Later kun je dit verhogen naar 3600.
+> **Tip:** Set TTL to 300 seconds (5 min) first so changes propagate quickly. Later you can increase this to 3600.
 
-### SSL/TLS Certificaten
+### SSL/TLS Certificates
 
-Coolify regelt dit **automatisch** via Let's Encrypt:
-- Gebruik `https://crewhub.dev` als domein in Coolify (met `https://` prefix)
-- Coolify's reverse proxy (Traefik of Caddy) vraagt automatisch een Let's Encrypt certificaat aan
-- Certificaten worden automatisch vernieuwd (elke 90 dagen)
-- **Je hoeft NIETS te configureren voor SSL** — het werkt out of the box
+Coolify handles this **automatically** via Let's Encrypt:
+- Use `https://crewhub.dev` as domain in Coolify (with `https://` prefix)
+- Coolify's reverse proxy (Traefik or Caddy) automatically requests a Let's Encrypt certificate
+- Certificates are automatically renewed (every 90 days)
+- **You don't need to configure ANYTHING for SSL** — it works out of the box
 
 ---
 
-## 3. Stap-voor-Stap: Coolify Setup
+## 3. Step-by-Step: Coolify Setup
 
 ### Pre-requisites
 
-- [ ] DNS records aangemaakt (zie sectie 2)
-- [ ] GitHub repos bestaan en zijn up-to-date:
-  - `ekinsolbot/crewhub-web` ✅ (bestaat al)
-  - `ekinsolbot/crewhub-docs` ⚠️ (moet nog remote toevoegen + pushen)
-- [ ] Coolify draait en je bent ingelogd
+- [ ] DNS records created (see section 2)
+- [ ] GitHub repos exist and are up-to-date:
+  - `ekinsolbot/crewhub-web` ✅ (already exists)
+  - `ekinsolbot/crewhub-docs` ⚠️ (still needs to add remote + push)
+- [ ] Coolify is running and you are logged in
 
-### Stap 0: crewhub-docs repo klaarzetten
+### Step 0: Prepare crewhub-docs repo
 
-De docs repo heeft nog geen GitHub remote. Eerst aanmaken:
+The docs repo doesn't have a GitHub remote yet. First create one:
 
 ```bash
-# Op GitHub: maak repo ekinsolbot/crewhub-docs (private)
-# Dan lokaal:
+# On GitHub: create repo ekinsolbot/crewhub-docs (private)
+# Then locally:
 cd ~/ekinapps/crewhub-docs
 git remote add origin https://github.com/ekinsolbot/crewhub-docs.git
 git add -A
@@ -105,45 +105,45 @@ git commit -m "Initial commit: CrewHub documentation"
 git push -u origin main
 ```
 
-### Stap 1: GitHub App configureren in Coolify (eenmalig)
+### Step 1: Configure GitHub App in Coolify (one-time)
 
-> Als je al een GitHub App hebt geconfigureerd in Coolify, sla deze stap over.
+> If you already have a GitHub App configured in Coolify, skip this step.
 
 1. In Coolify dashboard → **Sources** (sidebar) → **+ Add**
-2. Kies "GitHub App"
-3. Vul een naam in (bijv. "CrewHub GitHub")
-4. Laat organization leeg (persoonlijk account)
-5. Klik **Continue**
-6. Selecteer Webhook Endpoint (je Coolify dashboard URL)
-7. Klik **Register Now** → je wordt naar GitHub gestuurd
-8. Maak de GitHub App aan op GitHub
-9. Geef toegang tot `crewhub-web` en `crewhub-docs` repos
-10. Klik **Install** → je wordt teruggestuurd naar Coolify
+2. Choose "GitHub App"
+3. Fill in a name (e.g., "CrewHub GitHub")
+4. Leave organization empty (personal account)
+5. Click **Continue**
+6. Select Webhook Endpoint (your Coolify dashboard URL)
+7. Click **Register Now** → you will be redirected to GitHub
+8. Create the GitHub App on GitHub
+9. Give access to `crewhub-web` and `crewhub-docs` repos
+10. Click **Install** → you will be redirected back to Coolify
 
-### Stap 2: Project aanmaken in Coolify
+### Step 2: Create Project in Coolify
 
 1. In Coolify dashboard → **Projects** → **+ Add**
-2. Naam: **CrewHub**
-3. Project opent automatisch → je ziet "Production" environment
+2. Name: **CrewHub**
+3. Project opens automatically → you see "Production" environment
 
-### Stap 3: crewhub.dev deployen (marketing site)
+### Step 3: Deploy crewhub.dev (marketing site)
 
-1. In het CrewHub project → Production → **+ New Resource**
-2. Kies **Private Repository (with Github App)** (of Public Repository als de repo public is)
-3. Selecteer je server
-4. Selecteer de GitHub App uit stap 1
-5. Kies repository: **crewhub-web**
+1. In the CrewHub project → Production → **+ New Resource**
+2. Choose **Private Repository (with Github App)** (or Public Repository if the repo is public)
+3. Select your server
+4. Select the GitHub App from step 1
+5. Choose repository: **crewhub-web**
 6. Branch: **main**
-7. Build pack: klik op dropdown → kies **Nixpacks**
-8. **Vink aan: "Is it a static site?"** ✅
-   - Dit zet automatisch:
+7. Build pack: click on dropdown → choose **Nixpacks**
+8. **Check: "Is it a static site?"** ✅
+   - This automatically sets:
      - Port → 80
      - Publish directory → `/dist`
-9. Klik **Continue**
+9. Click **Continue**
 
-**Op het configuratiescherm:**
+**On the configuration screen:**
 
-| Instelling | Waarde |
+| Setting | Value |
 |-----------|--------|
 | **Domain** | `https://crewhub.dev` |
 | **Branch** | `main` |
@@ -152,17 +152,17 @@ git push -u origin main
 | **Publish directory** | `/dist` |
 | **Port** | `80` |
 
-10. Klik **Deploy**
+10. Click **Deploy**
 
-### Stap 4: docs.crewhub.dev deployen (documentatie)
+### Step 4: Deploy docs.crewhub.dev (documentation)
 
-Herhaal stap 3 maar met deze instellingen:
+Repeat step 3 but with these settings:
 
-1. In het CrewHub project → Production → **+ New Resource**
+1. In the CrewHub project → Production → **+ New Resource**
 2. Repository: **crewhub-docs**
 3. Build pack: **Nixpacks** + **"Is it a static site?"** ✅
 
-| Instelling | Waarde |
+| Setting | Value |
 |-----------|--------|
 | **Domain** | `https://docs.crewhub.dev` |
 | **Branch** | `main` |
@@ -171,41 +171,41 @@ Herhaal stap 3 maar met deze instellingen:
 | **Publish directory** | `/dist` |
 | **Port** | `80` |
 
-4. Klik **Deploy**
+4. Click **Deploy**
 
-### Stap 5: Verifiëren
+### Step 5: Verify
 
-1. Wacht tot beide deployments groen zijn (check Deployment Logs)
-2. Bezoek `https://crewhub.dev` → marketing site
-3. Bezoek `https://docs.crewhub.dev` → documentatie
-4. Check SSL: slotje moet groen zijn in de browser
+1. Wait until both deployments are green (check Deployment Logs)
+2. Visit `https://crewhub.dev` → marketing site
+3. Visit `https://docs.crewhub.dev` → documentation
+4. Check SSL: lock icon should be green in the browser
 
 ---
 
-## 4. CI/CD: Auto-Deploy bij Git Push
+## 4. CI/CD: Auto-Deploy on Git Push
 
-### Methode A: GitHub App (✅ AANBEVOLEN)
+### Method A: GitHub App (✅ RECOMMENDED)
 
-Als je de GitHub App hebt geconfigureerd (stap 1), is auto-deploy **standaard ingeschakeld**. Elke push naar `main` triggert automatisch een nieuwe deployment.
+If you have configured the GitHub App (step 1), auto-deploy is **enabled by default**. Every push to `main` automatically triggers a new deployment.
 
-Controleer:
-1. Open je app in Coolify → **Advanced** tab
-2. Zorg dat **"Auto Deploy"** aan staat
+Verify:
+1. Open your app in Coolify → **Advanced** tab
+2. Ensure **"Auto Deploy"** is on
 
-### Methode B: Webhooks (alternatief, als je geen GitHub App gebruikt)
+### Method B: Webhooks (alternative, if you don't use GitHub App)
 
-1. In Coolify → je app → **Advanced** → zet **Auto Deploy** aan
-2. Vul een **GitHub Webhook Secret** in (random string)
-3. Kopieer de webhook URL die Coolify genereert
+1. In Coolify → your app → **Advanced** → enable **Auto Deploy**
+2. Fill in a **GitHub Webhook Secret** (random string)
+3. Copy the webhook URL that Coolify generates
 4. In GitHub → repo → **Settings** → **Webhooks** → **Add webhook**
-   - Payload URL: de Coolify webhook URL
-   - Secret: de webhook secret uit Coolify
+   - Payload URL: the Coolify webhook URL
+   - Secret: the webhook secret from Coolify
    - Events: "Just the push event"
    - Active: ✅
 
-### Methode C: GitHub Actions (voor meer controle)
+### Method C: GitHub Actions (for more control)
 
-Als je meer controle wilt (bijv. tests runnen vóór deploy):
+If you want more control (e.g., run tests before deploy):
 
 ```yaml
 # .github/workflows/deploy.yml
@@ -227,23 +227,23 @@ jobs:
           bearerToken: ${{ secrets.COOLIFY_API_TOKEN }}
 ```
 
-> Voor nu is **Methode A (GitHub App)** het simpelst en voldoende.
+> For now **Method A (GitHub App)** is the simplest and sufficient.
 
 ### Preview Deployments
 
-Coolify ondersteunt preview deployments voor pull requests:
-- Wordt automatisch geactiveerd als je de GitHub App gebruikt
-- Elke PR krijgt een tijdelijke URL (bijv. `pr-123.crewhub.dev`)
-- Vereist wildcard DNS (`*.crewhub.dev`)
-- Configureerbaar in de app → **Preview Deployments** tab
+Coolify supports preview deployments for pull requests:
+- Automatically activated if you use the GitHub App
+- Each PR gets a temporary URL (e.g., `pr-123.crewhub.dev`)
+- Requires wildcard DNS (`*.crewhub.dev`)
+- Configurable in the app → **Preview Deployments** tab
 
 ---
 
-## 5. Astro Config Aanpassingen
+## 5. Astro Config Adjustments
 
 ### crewhub-web/astro.config.mjs
 
-Voeg `site` property toe (belangrijk voor SEO/sitemap):
+Add `site` property (important for SEO/sitemap):
 
 ```javascript
 // @ts-check
@@ -258,16 +258,16 @@ export default defineConfig({
 });
 ```
 
-> Verwijder de `server.allowedHosts` — die is alleen voor lokale dev.
+> Remove the `server.allowedHosts` — that's only for local dev.
 
 ### crewhub-docs/astro.config.mjs
 
-Ziet er al goed uit. `site: 'https://docs.crewhub.dev'` is al geconfigureerd. Verwijder ook hier de `allowedHosts`:
+Already looks good. `site: 'https://docs.crewhub.dev'` is already configured. Remove the `allowedHosts` here too:
 
 ```javascript
 export default defineConfig({
   site: 'https://docs.crewhub.dev',
-  // vite.server.allowedHosts niet nodig in productie
+  // vite.server.allowedHosts not needed in production
   integrations: [
     starlight({ /* ... */ }),
   ],
@@ -276,102 +276,102 @@ export default defineConfig({
 
 ---
 
-## 6. Vercel vs. Coolify Vergelijking
+## 6. Vercel vs. Coolify Comparison
 
 | Aspect | Coolify (self-hosted) | Vercel |
 |--------|----------------------|--------|
-| **Kosten** | Gratis (je betaalt alleen je VPS) | Gratis tier beschikbaar, Pro = $20/maand |
-| **Setup** | Meer werk, maar eenmalig | Zero-config, 2 minuten |
-| **Performance** | Afhankelijk van je server + locatie | Global CDN, edge network |
-| **SSL** | Automatisch (Let's Encrypt) | Automatisch |
-| **CI/CD** | GitHub App of webhooks | Native GitHub integratie |
-| **Preview deploys** | Ja, via GitHub App | Ja, automatisch per PR |
-| **Custom domain** | Ja, onbeperkt | Ja, maar beperkt op free tier |
-| **Analytics** | Zelf opzetten (Plausible, etc.) | Ingebouwd (Pro) |
-| **Controle** | Vol: je server, je data | Beperkt: hun platform |
-| **Vendor lock-in** | Geen | Enige (Vercel-specifieke features) |
-| **Bandwidth** | Onbeperkt (je VPS) | 100GB/maand (free), daarna betalen |
-| **Complexiteit** | Medium | Laag |
+| **Cost** | Free (you only pay for your VPS) | Free tier available, Pro = $20/month |
+| **Setup** | More work, but one-time | Zero-config, 2 minutes |
+| **Performance** | Depends on your server + location | Global CDN, edge network |
+| **SSL** | Automatic (Let's Encrypt) | Automatic |
+| **CI/CD** | GitHub App or webhooks | Native GitHub integration |
+| **Preview deploys** | Yes, via GitHub App | Yes, automatic per PR |
+| **Custom domain** | Yes, unlimited | Yes, but limited on free tier |
+| **Analytics** | Set up yourself (Plausible, etc.) | Built-in (Pro) |
+| **Control** | Full: your server, your data | Limited: their platform |
+| **Vendor lock-in** | None | Some (Vercel-specific features) |
+| **Bandwidth** | Unlimited (your VPS) | 100GB/month (free), then pay |
+| **Complexity** | Medium | Low |
 
 ### Verdict
 
-**Coolify is de betere keuze voor jullie use case omdat:**
+**Coolify is the better choice for your use case because:**
 
-1. ✅ Je hebt Coolify al draaien met andere projecten
-2. ✅ Geen extra kosten (VPS draait al)
-3. ✅ Volledige controle over je infrastructure
-4. ✅ Geen vendor lock-in
-5. ✅ Onbeperkte bandwidth/builds
-6. ✅ Alle CrewHub services (web, docs, en later API/app) op één plek
+1. ✅ You already have Coolify running with other projects
+2. ✅ No extra costs (VPS is already running)
+3. ✅ Full control over your infrastructure
+4. ✅ No vendor lock-in
+5. ✅ Unlimited bandwidth/builds
+6. ✅ All CrewHub services (web, docs, and later API/app) in one place
 
-**Vercel zou beter zijn als:**
-- Je geen Coolify had en snel iets online wilt
-- Je global CDN nodig hebt (kan ook met Cloudflare proxy)
-- Je niet zelf servers wilt beheren
+**Vercel would be better if:**
+- You didn't have Coolify and want something online quickly
+- You need global CDN (can also do with Cloudflare proxy)
+- You don't want to manage servers yourself
 
 ---
 
 ## 7. Post-Deploy Checklist
 
-- [ ] `crewhub.dev` laadt correct met HTTPS
-- [ ] `docs.crewhub.dev` laadt correct met HTTPS
-- [ ] SSL certificaten zijn geldig (check via browser)
-- [ ] Auto-deploy werkt: push een kleine change en verifieer
-- [ ] 404 pagina werkt correct
-- [ ] Alle links tussen sites werken (docs verwijst naar crewhub.dev en vice versa)
-- [ ] Favicon/meta tags kloppen
-- [ ] Google Search Console instellen voor beide domeinen
-- [ ] robots.txt en sitemap.xml checken
+- [ ] `crewhub.dev` loads correctly with HTTPS
+- [ ] `docs.crewhub.dev` loads correctly with HTTPS
+- [ ] SSL certificates are valid (check via browser)
+- [ ] Auto-deploy works: push a small change and verify
+- [ ] 404 page works correctly
+- [ ] All links between sites work (docs refers to crewhub.dev and vice versa)
+- [ ] Favicon/meta tags are correct
+- [ ] Set up Google Search Console for both domains
+- [ ] Check robots.txt and sitemap.xml
 
 ---
 
-## 8. Optioneel: Cloudflare als DNS Proxy
+## 8. Optional: Cloudflare as DNS Proxy
 
-Als je Cloudflare wilt gebruiken voor extra performance (CDN + DDoS protection):
+If you want to use Cloudflare for extra performance (CDN + DDoS protection):
 
-1. Verplaats nameservers van `crewhub.dev` naar Cloudflare
-2. Maak dezelfde A records aan in Cloudflare
-3. Zet Proxy status op **"Proxied"** (oranje wolk)
-4. **Belangrijk:** In Cloudflare SSL/TLS → zet op **"Full (strict)"**
-5. Coolify blijft de origin server, Cloudflare zit ervoor als CDN
+1. Move nameservers of `crewhub.dev` to Cloudflare
+2. Create the same A records in Cloudflare
+3. Set Proxy status to **"Proxied"** (orange cloud)
+4. **Important:** In Cloudflare SSL/TLS → set to **"Full (strict)"**
+5. Coolify remains the origin server, Cloudflare sits in front as CDN
 
-> Dit is optioneel maar aanbevolen voor productie. Cloudflare free tier is gratis.
+> This is optional but recommended for production. Cloudflare free tier is free.
 
 ---
 
 ## 9. Troubleshooting
 
-### Build faalt
+### Build fails
 - Check Deployment Logs in Coolify
-- Meest voorkomend: Node versie mismatch → stel in via `.node-version` file of Nixpacks config
-- `sharp` package (in crewhub-docs) kan build issues geven op Linux → Nixpacks handelt dit normaal goed af
+- Most common: Node version mismatch → set via `.node-version` file or Nixpacks config
+- `sharp` package (in crewhub-docs) can cause build issues on Linux → Nixpacks normally handles this well
 
-### SSL certificaat werkt niet
-- DNS moet correct wijzen naar je server (check met `dig crewhub.dev`)
-- Poort 80 en 443 moeten open zijn op je server
-- Wacht 5-10 minuten na DNS change voor Let's Encrypt validatie
+### SSL certificate doesn't work
+- DNS must correctly point to your server (check with `dig crewhub.dev`)
+- Port 80 and 443 must be open on your server
+- Wait 5-10 minutes after DNS change for Let's Encrypt validation
 
-### Site laadt niet
-- Check of de container draait in Coolify
+### Site doesn't load
+- Check if the container is running in Coolify
 - Check Traefik/Caddy logs
-- Verifieer dat domein correct is ingevuld (met `https://` prefix)
+- Verify that domain is correctly filled in (with `https://` prefix)
 
 ---
 
-## Samenvatting: Actieplan
+## Summary: Action Plan
 
-| # | Actie | Wie | Geschatte tijd |
+| # | Action | Who | Estimated time |
 |---|-------|-----|---------------|
-| 1 | DNS records aanmaken bij registrar | Nicky | 5 min |
-| 2 | `crewhub-docs` repo aanmaken op GitHub + pushen | Ekinbot | 5 min |
-| 3 | GitHub App configureren in Coolify (als nog niet gedaan) | Nicky | 10 min |
-| 4 | CrewHub project aanmaken in Coolify | Nicky | 2 min |
-| 5 | `crewhub-web` deployen (Nixpacks + Static) | Nicky | 5 min |
-| 6 | `docs.crewhub.dev` deployen (Nixpacks + Static) | Nicky | 5 min |
-| 7 | Verifiëren: sites, SSL, auto-deploy | Nicky | 10 min |
-| 8 | Astro configs updaten (`site` property) | Ekinbot | 5 min |
-| **Totaal** | | | **~45 min** |
+| 1 | Create DNS records at registrar | Nicky | 5 min |
+| 2 | Create `crewhub-docs` repo on GitHub + push | Ekinbot | 5 min |
+| 3 | Configure GitHub App in Coolify (if not done yet) | Nicky | 10 min |
+| 4 | Create CrewHub project in Coolify | Nicky | 2 min |
+| 5 | Deploy `crewhub-web` (Nixpacks + Static) | Nicky | 5 min |
+| 6 | Deploy `docs.crewhub.dev` (Nixpacks + Static) | Nicky | 5 min |
+| 7 | Verify: sites, SSL, auto-deploy | Nicky | 10 min |
+| 8 | Update Astro configs (`site` property) | Ekinbot | 5 min |
+| **Total** | | | **~45 min** |
 
 ---
 
-*Dit plan is gebaseerd op Coolify v4 documentatie (feb 2026) en de bestaande project configuraties.*
+*This plan is based on Coolify v4 documentation (Feb 2026) and the existing project configurations.*

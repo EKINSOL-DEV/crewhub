@@ -1,7 +1,9 @@
 import { useRef, useEffect, useState, useCallback, type KeyboardEvent, type CSSProperties } from 'react'
 import { Rnd } from 'react-rnd'
 import { useChatContext, MIN_SIZE } from '@/contexts/ChatContext'
-import { useAgentChat, type ChatMessageData } from '@/hooks/useAgentChat'
+import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
+import { parseMediaAttachments } from '@/utils/mediaParser'
+import { ImageThumbnail } from './ImageThumbnail'
 
 // ── Lightweight markdown ────────────────────────────────────────
 
@@ -37,12 +39,145 @@ function formatTimestamp(ts: number): string {
 
 // ── Message Bubble ─────────────────────────────────────────────
 
+// ── Tool Call Block ────────────────────────────────────────────
+
+function ToolCallBlock({ tool, showDetails }: { tool: ToolCallData; showDetails: boolean }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasDetails = showDetails && (tool.input || tool.result)
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        padding: '4px 8px',
+        borderRadius: 6,
+        fontSize: 11,
+        background: 'rgba(251, 191, 36, 0.1)',
+        border: '1px solid rgba(251, 191, 36, 0.2)',
+        alignSelf: 'flex-start',
+        maxWidth: '100%',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          fontWeight: 500,
+          color: '#b45309',
+          cursor: hasDetails ? 'pointer' : 'default',
+        }}
+        onClick={() => hasDetails && setExpanded(!expanded)}
+      >
+        🔧 {tool.name}{' '}
+        {tool.status === 'done' || tool.status === 'called' ? '✓' : '✗'}
+        {hasDetails && (
+          <span style={{ fontSize: 10, marginLeft: 'auto' }}>
+            {expanded ? '▼' : '▶'}
+          </span>
+        )}
+      </div>
+      {expanded && tool.input && (
+        <pre
+          style={{
+            margin: 0,
+            padding: '4px 6px',
+            borderRadius: 4,
+            background: 'rgba(0,0,0,0.04)',
+            fontSize: 10,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
+            maxHeight: 100,
+            overflow: 'auto',
+            color: '#4b5563',
+          }}
+        >
+          {JSON.stringify(tool.input, null, 2).slice(0, 500)}
+        </pre>
+      )}
+      {expanded && tool.result && (
+        <pre
+          style={{
+            margin: 0,
+            padding: '4px 6px',
+            borderRadius: 4,
+            background: 'rgba(0,0,0,0.04)',
+            fontSize: 10,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
+            maxHeight: 80,
+            overflow: 'auto',
+            color: '#6b7280',
+          }}
+        >
+          → {tool.result}
+        </pre>
+      )}
+    </div>
+  )
+}
+
+// ── Thinking Block ─────────────────────────────────────────────
+
+function ThinkingBlock({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = text.length > 200
+  const displayText = expanded ? text : text.slice(0, 200)
+
+  return (
+    <div
+      style={{
+        padding: '6px 10px',
+        borderRadius: 8,
+        fontSize: 11,
+        background: 'rgba(147, 51, 234, 0.08)',
+        border: '1px solid rgba(147, 51, 234, 0.15)',
+        color: '#7c3aed',
+        alignSelf: 'flex-start',
+        maxWidth: '100%',
+        fontStyle: 'italic',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+        <span>💭</span>
+        <div style={{ flex: 1, wordBreak: 'break-word' }}>
+          {displayText}
+          {isLong && !expanded && '...'}
+          {isLong && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              style={{
+                marginLeft: 6,
+                padding: '1px 6px',
+                borderRadius: 4,
+                border: 'none',
+                background: 'rgba(147, 51, 234, 0.15)',
+                color: '#7c3aed',
+                fontSize: 10,
+                cursor: 'pointer',
+              }}
+            >
+              {expanded ? 'less' : 'more'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Chat Bubble ────────────────────────────────────────────────
+
 function ChatBubble({
   msg,
   accentColor,
+  showInternals,
 }: {
   msg: ChatMessageData
   accentColor: string
+  showInternals: boolean
 }) {
   const isUser = msg.role === 'user'
   const isSystem = msg.role === 'system'
@@ -54,6 +189,10 @@ function ChatBubble({
       </div>
     )
   }
+
+  // Parse media attachments from content
+  const { text, attachments } = parseMediaAttachments(msg.content || '')
+  const imageAttachments = attachments.filter(a => a.type === 'image')
 
   const bubbleStyle: CSSProperties = isUser
     ? {
@@ -77,33 +216,29 @@ function ChatBubble({
         display: 'flex',
         flexDirection: 'column',
         ...({ alignItems: isUser ? 'flex-end' : 'flex-start' } as CSSProperties),
-        gap: 2,
+        gap: 4,
       }}
     >
-      {msg.tools &&
-        msg.tools.length > 0 &&
-        msg.tools.map((tool, i) => (
-          <div
-            key={i}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '3px 8px',
-              borderRadius: 6,
-              fontSize: 11,
-              fontWeight: 500,
-              background: 'rgba(0,0,0,0.04)',
-              color: '#6b7280',
-              alignSelf: 'flex-start',
-            }}
-          >
-            🔧 {tool.name}{' '}
-            {tool.status === 'done' || tool.status === 'called' ? '✓' : '✗'}
-          </div>
-        ))}
+      {/* Thinking blocks (when showInternals is on) */}
+      {showInternals && msg.thinking && msg.thinking.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '100%' }}>
+          {msg.thinking.map((thought, i) => (
+            <ThinkingBlock key={i} text={thought} />
+          ))}
+        </div>
+      )}
 
-      {msg.content && (
+      {/* Tool calls */}
+      {msg.tools && msg.tools.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: '100%' }}>
+          {msg.tools.map((tool, i) => (
+            <ToolCallBlock key={i} tool={tool} showDetails={showInternals} />
+          ))}
+        </div>
+      )}
+
+      {/* Text content */}
+      {text && (
         <div
           style={{
             padding: '8px 12px',
@@ -113,8 +248,25 @@ function ChatBubble({
             maxWidth: '100%',
             ...bubbleStyle,
           }}
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }}
         />
+      )}
+
+      {/* Image attachments */}
+      {imageAttachments.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '6px',
+            maxWidth: '100%',
+            ...(isUser ? { marginLeft: 48 } : { marginRight: 48 }),
+          }}
+        >
+          {imageAttachments.map((attachment, i) => (
+            <ImageThumbnail key={i} attachment={attachment} maxWidth={200} />
+          ))}
+        </div>
       )}
 
       <div style={{ fontSize: 10, color: '#9ca3af', padding: '0 4px' }}>
@@ -148,15 +300,20 @@ export function AgentChatWindow({
   const {
     closeChat,
     minimizeChat,
-    togglePin,
+    togglePin: _togglePin,
+    toggleInternals,
     focusChat,
     updatePosition,
     updateSize,
     onFocusAgent,
     windows,
   } = useChatContext()
+  void _togglePin // Reserved for future use
 
-  const isPinned = windows.find(w => w.sessionKey === sessionKey)?.isPinned ?? false
+  const windowState = windows.find(w => w.sessionKey === sessionKey)
+  const _isPinned = windowState?.isPinned ?? false
+  void _isPinned // Reserved for future use
+  const showInternals = windowState?.showInternals ?? false
   const accentColor = agentColor || '#8b5cf6'
   const icon = agentIcon || '🤖'
 
@@ -168,7 +325,7 @@ export function AgentChatWindow({
     loadOlderMessages,
     hasMore,
     isLoadingHistory,
-  } = useAgentChat(sessionKey)
+  } = useAgentChat(sessionKey, showInternals)
 
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -324,23 +481,23 @@ export function AgentChatWindow({
             {onFocusAgent && (
               <HeaderBtn
                 onClick={() => onFocusAgent(sessionKey)}
-                title="Focus agent"
+                tooltip="Focus agent"
               >
                 🎯
               </HeaderBtn>
             )}
             <HeaderBtn
-              onClick={() => togglePin(sessionKey)}
-              title={isPinned ? 'Unpin' : 'Pin (persist on reload)'}
-              active={isPinned}
-              activeColor={accentColor}
+              onClick={() => toggleInternals(sessionKey)}
+              tooltip={showInternals ? 'Hide thinking & tools' : 'Show thinking & tools'}
+              active={showInternals}
+              activeColor="#9333ea"
             >
-              📌
+              🧠
             </HeaderBtn>
-            <HeaderBtn onClick={() => minimizeChat(sessionKey)} title="Minimize">
+            <HeaderBtn onClick={() => minimizeChat(sessionKey)} tooltip="Minimize">
               ─
             </HeaderBtn>
-            <HeaderBtn onClick={() => closeChat(sessionKey)} title="Close">
+            <HeaderBtn onClick={() => closeChat(sessionKey)} tooltip="Close">
               ✕
             </HeaderBtn>
           </div>
@@ -408,7 +565,7 @@ export function AgentChatWindow({
           )}
 
           {messages.map(msg => (
-            <ChatBubble key={msg.id} msg={msg} accentColor={accentColor} />
+            <ChatBubble key={msg.id} msg={msg} accentColor={accentColor} showInternals={showInternals} />
           ))}
 
           {isSending && (
@@ -508,6 +665,20 @@ export function AgentChatWindow({
             ➤
           </button>
         </div>
+
+        {/* Tooltip fade-in animation */}
+        <style>{`
+          @keyframes chatTooltipFadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(-50%) translateX(4px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(-50%) translateX(0);
+            }
+          }
+        `}</style>
       </div>
     </Rnd>
   )
@@ -517,52 +688,92 @@ export function AgentChatWindow({
 
 function HeaderBtn({
   onClick,
-  title,
+  tooltip,
   active,
   activeColor,
   children,
 }: {
   onClick: () => void
-  title: string
+  tooltip: string
   active?: boolean
   activeColor?: string
   children: React.ReactNode
 }) {
+  const [isHovered, setIsHovered] = useState(false)
+
   return (
-    <button
-      onClick={e => {
-        e.stopPropagation()
-        onClick()
-      }}
-      title={title}
-      style={{
-        width: 26,
-        height: 26,
-        borderRadius: 7,
-        border: 'none',
-        background: active
-          ? (activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)')
-          : 'rgba(0,0,0,0.04)',
-        color: active ? (activeColor || '#374151') : '#6b7280',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 12,
-        fontWeight: 700,
-        flexShrink: 0,
-        transition: 'background 0.15s, color 0.15s',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = active
-          ? (activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)')
-          : 'rgba(0,0,0,0.04)'
-      }}
-    >
-      {children}
-    </button>
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={e => {
+          e.stopPropagation()
+          onClick()
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: 7,
+          border: 'none',
+          background: active
+            ? (activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)')
+            : isHovered
+              ? 'rgba(0, 0, 0, 0.1)'
+              : 'rgba(0,0,0,0.04)',
+          color: active ? (activeColor || '#374151') : '#6b7280',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 12,
+          fontWeight: 700,
+          flexShrink: 0,
+          transition: 'background 0.15s, color 0.15s',
+        }}
+      >
+        {children}
+      </button>
+
+      {/* Tooltip (appears on hover, to the left of the button) */}
+      {isHovered && (
+        <div
+          style={{
+            position: 'absolute',
+            right: '100%',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            marginRight: 8,
+            padding: '6px 10px',
+            borderRadius: 6,
+            background: 'rgba(0, 0, 0, 0.85)',
+            color: '#fff',
+            fontSize: 12,
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 100,
+            fontFamily: 'system-ui, sans-serif',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            animation: 'chatTooltipFadeIn 0.15s ease-out',
+          }}
+        >
+          {tooltip}
+          {/* Tooltip arrow (pointing right) */}
+          <div
+            style={{
+              position: 'absolute',
+              right: -4,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 0,
+              height: 0,
+              borderTop: '4px solid transparent',
+              borderBottom: '4px solid transparent',
+              borderLeft: '4px solid rgba(0, 0, 0, 0.85)',
+            }}
+          />
+        </div>
+      )}
+    </div>
   )
 }

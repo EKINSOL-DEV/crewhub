@@ -9,6 +9,7 @@ export interface ChatWindowState {
   agentColor: string | null
   isMinimized: boolean
   isPinned: boolean
+  showInternals: boolean  // Show thinking blocks & tool details
   position: { x: number; y: number }
   size: { width: number; height: number }
   zIndex: number
@@ -21,6 +22,7 @@ export interface ChatContextValue {
   minimizeChat: (sessionKey: string) => void
   restoreChat: (sessionKey: string) => void
   togglePin: (sessionKey: string) => void
+  toggleInternals: (sessionKey: string) => void
   focusChat: (sessionKey: string) => void
   updatePosition: (sessionKey: string, pos: { x: number; y: number }) => void
   updateSize: (sessionKey: string, size: { width: number; height: number }) => void
@@ -45,6 +47,7 @@ interface StoredWindow {
   agentColor: string | null
   isMinimized: boolean
   isPinned: boolean
+  showInternals: boolean
   position: { x: number; y: number }
   size: { width: number; height: number }
 }
@@ -70,6 +73,7 @@ function saveStoredWindows(windows: ChatWindowState[]): void {
       agentColor: w.agentColor,
       isMinimized: w.isMinimized,
       isPinned: w.isPinned,
+      showInternals: w.showInternals,
       position: w.position,
       size: w.size,
     }))
@@ -114,6 +118,7 @@ function getInitialWindows(): ChatWindowState[] {
       ...w,
       zIndex: getNextZIndex(),
       isMinimized: w.isMinimized ?? false,
+      showInternals: w.showInternals ?? false,
       position: w.position ?? getDefaultPosition(i),
       size: w.size ?? DEFAULT_SIZE,
     }))
@@ -163,6 +168,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           agentColor: agentColor ?? null,
           isMinimized: false,
           isPinned: false,
+          showInternals: false,
           position: getDefaultPosition(prev.length),
           size: { ...DEFAULT_SIZE },
           zIndex: getNextZIndex(),
@@ -199,6 +205,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setWindows(prev =>
       prev.map(w =>
         w.sessionKey === sessionKey ? { ...w, isPinned: !w.isPinned } : w
+      )
+    )
+  }, [])
+
+  const toggleInternals = useCallback((sessionKey: string) => {
+    setWindows(prev =>
+      prev.map(w =>
+        w.sessionKey === sessionKey ? { ...w, showInternals: !w.showInternals } : w
       )
     )
   }, [])
@@ -244,6 +258,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         minimizeChat,
         restoreChat,
         togglePin,
+        toggleInternals,
         focusChat,
         updatePosition,
         updateSize,

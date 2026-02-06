@@ -80,12 +80,16 @@ import { CameraController } from './CameraController'
 import { FirstPersonController, FirstPersonHUD } from './FirstPersonController'
 import { RoomTabsBar } from './RoomTabsBar'
 import { WorldNavigation } from './WorldNavigation'
+import { ActionBar } from './ActionBar'
+import { TasksWindow } from './TasksWindow'
 import { AgentTopBar } from './AgentTopBar'
+import { useActiveTasks } from '@/hooks/useActiveTasks'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
+import { TaskBoardOverlay, HQTaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
 import { useDebugBots, type DebugBot } from '@/hooks/useDebugBots'
@@ -984,6 +988,20 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const [logViewerOpen, setLogViewerOpen] = useState(false)
   const [docsPanel, setDocsPanel] = useState<{ projectId: string; projectName: string; projectColor?: string } | null>(null)
 
+  // TaskBoard overlay state
+  const [taskBoardOpen, setTaskBoardOpen] = useState(false)
+  const [taskBoardContext, setTaskBoardContext] = useState<{
+    projectId: string
+    roomId?: string
+    agents?: Array<{ session_key: string; display_name: string }>
+  } | null>(null)
+
+  // HQ TaskBoard overlay state (cross-project overview)
+  const [hqBoardOpen, setHqBoardOpen] = useState(false)
+
+  // Tasks window state (ActionBar toggle)
+  const [tasksWindowOpen, setTasksWindowOpen] = useState(false)
+
   // Fullscreen mode (native browser API)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -1017,6 +1035,22 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     [visibleSessions, parkingSessions],
   )
 
+  // Active tasks for ActionBar badge and TasksWindow
+  const { tasks: activeTasks, getTaskOpacity, runningTasks } = useActiveTasks({
+    sessions: allSessions,
+    enabled: focusState.level !== 'firstperson',
+  })
+
+  // Helper to get room for session (for TasksWindow)
+  const getTaskRoomForSession = useCallback((sessionKey: string) => {
+    const session = allSessions.find(s => s.key === sessionKey)
+    return getRoomForSession(sessionKey, {
+      label: session?.label,
+      model: session?.model,
+      channel: session?.lastChannel,
+    })
+  }, [allSessions, getRoomForSession])
+
   const focusedSession = useMemo(() => {
     if (!focusState.focusedBotKey) return null
     return allSessions.find(s => s.key === focusState.focusedBotKey) ?? null
@@ -1032,17 +1066,18 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key))
   }, [focusedSession, isActivelyRunning])
 
-  // Get bio for focused bot from agents registry
-  const { agents: agentRuntimesForPanel } = useAgentsRegistry(allSessions)
-  const focusedBotBio = useMemo(() => {
+  // Get bio and agentId for focused bot from agents registry
+  const { agents: agentRuntimesForPanel, refresh: refreshAgents } = useAgentsRegistry(allSessions)
+  const focusedBotRuntime = useMemo(() => {
     if (!focusedSession) return null
-    const runtime = agentRuntimesForPanel.find(
+    return agentRuntimesForPanel.find(
       r => r.agent.agent_session_key === focusedSession.key
         || r.session?.key === focusedSession.key
         || r.childSessions.some(c => c.key === focusedSession.key)
-    )
-    return runtime?.agent.bio ?? null
+    ) ?? null
   }, [focusedSession, agentRuntimesForPanel])
+  const focusedBotBio = focusedBotRuntime?.agent.bio ?? null
+  const focusedAgentId = focusedBotRuntime?.agent.id ?? null
 
   // ─── Room Info Panel: compute sessions in focused room ────────
   const focusedRoom = useMemo(() => {
@@ -1121,6 +1156,26 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Back button / navigation (top-left) */}
         <WorldNavigation rooms={rooms} />
 
+        {/* Action Bar (left side, vertical - Photoshop-style toolbar) */}
+        {focusState.level !== 'firstperson' && (
+          <ActionBar
+            runningTaskCount={runningTasks.length}
+            tasksWindowOpen={tasksWindowOpen}
+            onToggleTasksWindow={() => setTasksWindowOpen(prev => !prev)}
+          />
+        )}
+
+        {/* Tasks Window (draggable, toggled via ActionBar) */}
+        {focusState.level !== 'firstperson' && tasksWindowOpen && (
+          <TasksWindow
+            tasks={activeTasks}
+            getTaskOpacity={getTaskOpacity}
+            getRoomForSession={getTaskRoomForSession}
+            defaultRoomId={rooms[0]?.id}
+            onClose={() => setTasksWindowOpen(false)}
+          />
+        )}
+
         {/* Fullscreen toggle button */}
         <button
           onClick={toggleFullscreen}
@@ -1152,6 +1207,11 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             onBotClick={handleRoomPanelBotClick}
             onFocusRoom={focusRoom}
             onOpenDocs={(projectId, projectName, projectColor) => setDocsPanel({ projectId, projectName, projectColor })}
+            onOpenTaskBoard={(projectId, roomId, agents) => {
+              setTaskBoardContext({ projectId, roomId, agents })
+              setTaskBoardOpen(true)
+            }}
+            onOpenHQBoard={() => setHqBoardOpen(true)}
           />
         )}
 
@@ -1173,6 +1233,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             botConfig={focusedBotConfig}
             status={focusedBotStatus}
             bio={focusedBotBio}
+            agentId={focusedAgentId}
             currentRoomId={getRoomForSession(focusedSession.key, { label: focusedSession.label, model: focusedSession.model, channel: focusedSession.lastChannel })}
             onClose={() => goBack()}
             onOpenLog={(session) => {
@@ -1180,6 +1241,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               setLogViewerOpen(true)
             }}
             onAssignmentChanged={refreshRooms}
+            onBioUpdated={refreshAgents}
           />
         )}
 
@@ -1214,6 +1276,23 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
+
+        {/* TaskBoardOverlay (outside Canvas) */}
+        {taskBoardContext && (
+          <TaskBoardOverlay
+            open={taskBoardOpen}
+            onOpenChange={setTaskBoardOpen}
+            projectId={taskBoardContext.projectId}
+            roomId={taskBoardContext.roomId}
+            agents={taskBoardContext.agents}
+          />
+        )}
+
+        {/* HQ TaskBoardOverlay (cross-project overview, for Headquarters room) */}
+        <HQTaskBoardOverlay
+          open={hqBoardOpen}
+          onOpenChange={setHqBoardOpen}
+        />
       </div>
   )
 

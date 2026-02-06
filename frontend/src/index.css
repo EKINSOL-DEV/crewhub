@@ -77,6 +77,16 @@
   }
 }
 
+/* Native dialog overrides for React 19 compatibility */
+/* Replaces Radix Dialog to avoid compose-refs infinite loop bug */
+dialog[open] {
+  display: flex;
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
 /* Theme-aware playground styles */
 .playground-bg {
   background: linear-gradient(

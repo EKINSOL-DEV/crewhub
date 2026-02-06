@@ -3,12 +3,14 @@ import { Html } from '@react-three/drei'
 import { RoomFloor } from './RoomFloor'
 import { RoomWalls } from './RoomWalls'
 import { RoomNameplate } from './RoomNameplate'
+import { TaskWall3D } from './TaskWall3D'
 import { GridRoomRenderer } from './grid/GridRoomRenderer'
 import { GridDebugOverlay, GridDebugLabels } from './grid/GridDebugOverlay'
 import { getBlueprintForRoom } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragDrop } from '@/contexts/DragDropContext'
 import { useGridDebug } from '@/hooks/useGridDebug'
+import { useTasks } from '@/hooks/useTasks'
 import type { Room } from '@/hooks/useRooms'
 import type { ThreeEvent } from '@react-three/fiber'
 
@@ -133,6 +135,13 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const { state, focusRoom, goBack } = useWorldFocus()
   const isRoomFocused = state.focusedRoomId === room.id && state.level === 'room'
 
+  // Tasks for Task Wall (only fetch if room has a project)
+  const { tasks } = useTasks({ 
+    projectId: room.project_id || undefined,
+    roomId: room.id,
+    autoFetch: !!room.project_id,
+  })
+
   // ─── Hover state with 80ms debounce/hysteresis ──────────────
   const [hovered, setHovered] = useState(false)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -223,6 +232,17 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
           <GridDebugOverlay blueprint={blueprint} />
           <GridDebugLabels blueprint={blueprint} showLabels={isRoomFocused} />
         </>
+      )}
+
+      {/* ─── Task Wall (3D whiteboard with active tasks) ───────────── */}
+      {room.project_id && tasks.length > 0 && (
+        <TaskWall3D
+          tasks={tasks}
+          roomId={room.id}
+          position={[0, 2.2, -size / 2 + 0.15]}  // Back wall, slightly in front
+          width={Math.min(size * 0.5, 6)}
+          height={2.5}
+        />
       )}
     </group>
   )

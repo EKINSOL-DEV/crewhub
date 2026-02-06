@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   Sheet,
   SheetContent,
@@ -6,14 +6,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -37,12 +29,38 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   
+  // Native dialog refs
+  const createDialogRef = useRef<HTMLDialogElement>(null)
+  const deleteDialogRef = useRef<HTMLDialogElement>(null)
+  
   // New room form state
   const [newRoom, setNewRoom] = useState({
     name: "",
     icon: "🏛️",
     color: "#4f46e5"
   })
+
+  // Sync create dialog
+  useEffect(() => {
+    const dialog = createDialogRef.current
+    if (!dialog) return
+    if (showCreateDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [showCreateDialog])
+
+  // Sync delete dialog
+  useEffect(() => {
+    const dialog = deleteDialogRef.current
+    if (!dialog) return
+    if (deleteConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
+  }, [deleteConfirm])
 
   const generateRoomId = (name: string) => {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-room"
@@ -243,16 +261,25 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
       </Sheet>
 
       {/* Create Room Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Room</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={createDialogRef}
+        onClose={() => setShowCreateDialog(false)}
+        onClick={(e) => e.target === e.currentTarget && setShowCreateDialog(false)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Create New Room</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               Add a new workspace room for organizing your agents and sessions
-            </DialogDescription>
-          </DialogHeader>
+            </p>
+          </div>
           
-          <div className="space-y-4 py-4">
+          <div className="px-6 pb-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="room-name">Room Name</Label>
               <Input
@@ -324,12 +351,13 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
             </div>
           </div>
           
-          <DialogFooter>
+          {/* Footer */}
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
             <Button onClick={handleCreateRoom}>Create Room</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
 
       {/* Edit Room Dialog (shared component) */}
       <EditRoomDialog
@@ -340,22 +368,33 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
       />
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Room?</DialogTitle>
-            <DialogDescription>
+      <dialog
+        ref={deleteDialogRef}
+        onClose={() => setDeleteConfirm(null)}
+        onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        >
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="text-lg font-semibold">Delete Room?</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               This will remove the room and unassign any sessions from it. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </p>
+          </div>
+          
+          {/* Footer */}
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteConfirm && handleDeleteRoom(deleteConfirm)}>
               Delete Room
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </dialog>
     </>
   )
 }
