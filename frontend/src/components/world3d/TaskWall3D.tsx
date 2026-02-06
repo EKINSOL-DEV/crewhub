@@ -35,11 +35,12 @@ const statusConfig: Record<TaskStatus, { label: string; icon: string; bg: string
 export function TaskWall3D({
   tasks,
   roomId: _roomId,  // Reserved for future use
-  position = [0, 2.2, -5.8],  // Back wall position
-  width = 6,
-  height = 2.5,
+  position = [0, 1.8, 2.8],  // Front wall position (inside room)
+  rotation = [0, Math.PI, 0],  // Face into the room
+  width = 4,
+  height = 2,
   onTaskClick,
-}: TaskWall3DProps) {
+}: TaskWall3DProps & { rotation?: [number, number, number] }) {
   // Filter to active tasks only (not done)
   const activeTasks = useMemo(() => 
     tasks.filter(t => t.status !== 'done'),
@@ -65,7 +66,7 @@ export function TaskWall3D({
   const maxTasksPerColumn = 4
 
   return (
-    <group position={position}>
+    <group position={position} rotation={rotation}>
       {/* Whiteboard backing */}
       <mesh position={[0, 0, 0]}>
         <planeGeometry args={[width, height]} />
@@ -90,10 +91,10 @@ export function TaskWall3D({
         position={[0, 0, 0.01]}
         center
         transform
-        scale={0.1}
+        scale={0.25}
         style={{
-          width: `${width * 10}px`,
-          height: `${height * 10}px`,
+          width: `${width * 100}px`,
+          height: `${height * 100}px`,
           pointerEvents: 'auto',
         }}
       >
@@ -113,12 +114,12 @@ export function TaskWall3D({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px',
-            marginBottom: '12px',
+            gap: '12px',
+            marginBottom: '16px',
           }}>
-            <span style={{ fontSize: '14px' }}>📋</span>
+            <span style={{ fontSize: '24px' }}>📋</span>
             <span style={{
-              fontSize: '12px',
+              fontSize: '20px',
               fontWeight: 700,
               color: '#1e293b',
               textTransform: 'uppercase',
@@ -127,11 +128,11 @@ export function TaskWall3D({
               Task Board
             </span>
             <span style={{
-              fontSize: '10px',
+              fontSize: '14px',
               color: '#64748b',
               background: '#e2e8f0',
-              padding: '2px 6px',
-              borderRadius: '4px',
+              padding: '4px 10px',
+              borderRadius: '6px',
             }}>
               {activeTasks.length} active
             </span>
@@ -165,25 +166,25 @@ export function TaskWall3D({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '4px',
-                    padding: '4px 6px',
+                    gap: '6px',
+                    padding: '8px 10px',
                     background: config.bg,
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                   }}>
-                    <span style={{ fontSize: '10px' }}>{config.icon}</span>
+                    <span style={{ fontSize: '16px' }}>{config.icon}</span>
                     <span style={{
-                      fontSize: '9px',
+                      fontSize: '14px',
                       fontWeight: 700,
                       color: '#374151',
                     }}>
                       {config.label}
                     </span>
                     <span style={{
-                      fontSize: '8px',
+                      fontSize: '12px',
                       color: '#6b7280',
                       background: 'rgba(255,255,255,0.7)',
-                      padding: '1px 4px',
-                      borderRadius: '6px',
+                      padding: '2px 6px',
+                      borderRadius: '8px',
                     }}>
                       {columnTasks.length}
                     </span>
@@ -207,10 +208,10 @@ export function TaskWall3D({
 
                     {hiddenCount > 0 && (
                       <div style={{
-                        fontSize: '8px',
+                        fontSize: '12px',
                         color: '#6b7280',
                         textAlign: 'center',
-                        padding: '4px',
+                        padding: '6px',
                       }}>
                         +{hiddenCount} more
                       </div>
@@ -218,10 +219,10 @@ export function TaskWall3D({
 
                     {columnTasks.length === 0 && (
                       <div style={{
-                        fontSize: '8px',
+                        fontSize: '12px',
                         color: '#9ca3af',
                         textAlign: 'center',
-                        padding: '8px 4px',
+                        padding: '12px 6px',
                         fontStyle: 'italic',
                       }}>
                         —
@@ -260,10 +261,10 @@ function StickyNote({
       onClick={onClick}
       style={{
         background: '#fef9c3',  // Yellow sticky note
-        padding: '6px 8px',
-        borderRadius: '2px',
-        borderLeft: `3px solid ${priorityColor}`,
-        boxShadow: '1px 2px 4px rgba(0,0,0,0.15)',
+        padding: '10px 12px',
+        borderRadius: '4px',
+        borderLeft: `4px solid ${priorityColor}`,
+        boxShadow: '2px 3px 6px rgba(0,0,0,0.15)',
         cursor: onClick ? 'pointer' : 'default',
         transform: `rotate(${rotation}deg)`,
         transition: 'transform 0.15s, box-shadow 0.15s',
@@ -271,17 +272,17 @@ function StickyNote({
       onMouseEnter={(e) => {
         if (onClick) {
           e.currentTarget.style.transform = `rotate(0deg) scale(1.02)`
-          e.currentTarget.style.boxShadow = '2px 4px 8px rgba(0,0,0,0.2)'
+          e.currentTarget.style.boxShadow = '3px 5px 10px rgba(0,0,0,0.2)'
         }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = `rotate(${rotation}deg)`
-        e.currentTarget.style.boxShadow = '1px 2px 4px rgba(0,0,0,0.15)'
+        e.currentTarget.style.boxShadow = '2px 3px 6px rgba(0,0,0,0.15)'
       }}
     >
       {/* Title */}
       <div style={{
-        fontSize: '9px',
+        fontSize: '13px',
         fontWeight: 600,
         color: '#1f2937',
         lineHeight: 1.3,
@@ -297,12 +298,12 @@ function StickyNote({
       {/* Assignee */}
       {task.assigned_display_name && (
         <div style={{
-          marginTop: '4px',
-          fontSize: '7px',
+          marginTop: '6px',
+          fontSize: '11px',
           color: '#6b7280',
           display: 'flex',
           alignItems: 'center',
-          gap: '3px',
+          gap: '4px',
         }}>
           <span>👤</span>
           <span style={{
