@@ -1,5 +1,4 @@
 import { Suspense, useMemo, useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
 import { Maximize2, Minimize2 } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
@@ -985,20 +984,25 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const [logViewerOpen, setLogViewerOpen] = useState(false)
   const [docsPanel, setDocsPanel] = useState<{ projectId: string; projectName: string; projectColor?: string } | null>(null)
 
-  // Fullscreen mode
+  // Fullscreen mode (native browser API)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  // Escape key to exit fullscreen
+  // Listen for fullscreen changes (user can exit via Escape)
   useEffect(() => {
-    if (!isFullscreen) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsFullscreen(false)
-      }
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isFullscreen])
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen()
+    } else {
+      await document.exitFullscreen()
+    }
+  }
 
   // Bot click no longer opens LogViewer directly — focusBot is triggered inside Bot3D
   const handleBotClick = (_session: CrewSession) => {
@@ -1071,11 +1075,11 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     }
   }, [focusBot, focusState.focusedRoomId])
 
-  // Content to render (same whether fullscreen or not, just styled differently)
+  // Content to render
   const worldContent = (
     <div 
-      className={`relative w-full h-full ${isFullscreen ? 'fixed inset-0 z-[9999] bg-background' : ''}`}
-      style={{ minHeight: isFullscreen ? undefined : '600px' }}
+      className="relative w-full h-full"
+      style={{ minHeight: '600px' }}
     >
         <CanvasErrorBoundary>
           <Canvas
@@ -1119,7 +1123,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
         {/* Fullscreen toggle button */}
         <button
-          onClick={() => setIsFullscreen(!isFullscreen)}
+          onClick={toggleFullscreen}
           className="absolute top-4 right-4 z-[60] p-2 rounded-lg backdrop-blur-md bg-white/60 hover:bg-white/80 border border-gray-200/50 shadow-sm text-gray-600 hover:text-gray-900 transition-all opacity-60 hover:opacity-100"
           title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
         >
@@ -1213,10 +1217,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
       </div>
   )
 
-  // Use Portal when fullscreen to escape any overflow:hidden containers
   return (
     <DragDropProvider onAssignmentChanged={refreshRooms}>
-      {isFullscreen ? createPortal(worldContent, document.body) : worldContent}
+      {worldContent}
     </DragDropProvider>
   )
 }
