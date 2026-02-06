@@ -63,7 +63,7 @@ export function TaskWall3D({
   // Don't render if no active tasks
   if (activeTasks.length === 0) return null
 
-  const maxTasksPerColumn = 4
+  const maxTasksPerColumn = 6
 
   return (
     <group position={position} rotation={rotation}>
@@ -86,15 +86,53 @@ export function TaskWall3D({
         />
       </mesh>
 
-      {/* HTML overlay for task cards */}
+      {/* Title label above the board */}
+      <Html
+        position={[0, height / 2 + 0.2, 0.01]}
+        center
+        transform
+        scale={0.15}
+      >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: 'rgba(30, 41, 59, 0.9)',
+          padding: '6px 16px',
+          borderRadius: '8px',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+        }}>
+          <span style={{ fontSize: '18px' }}>📋</span>
+          <span style={{
+            fontSize: '16px',
+            fontWeight: 700,
+            color: '#fff',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}>
+            Task Board
+          </span>
+          <span style={{
+            fontSize: '12px',
+            color: '#94a3b8',
+            background: 'rgba(255,255,255,0.15)',
+            padding: '2px 8px',
+            borderRadius: '4px',
+          }}>
+            {activeTasks.length}
+          </span>
+        </div>
+      </Html>
+
+      {/* HTML overlay for task cards - full board space */}
       <Html
         position={[0, 0, 0.01]}
         center
         transform
-        scale={0.25}
+        scale={0.22}
         style={{
-          width: `${width * 100}px`,
-          height: `${height * 100}px`,
+          width: `${width * 120}px`,
+          height: `${height * 120}px`,
           pointerEvents: 'auto',
         }}
       >
@@ -104,44 +142,15 @@ export function TaskWall3D({
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            padding: '16px',
+            padding: '8px',
             fontFamily: 'system-ui, -apple-system, sans-serif',
             background: 'transparent',
           }}
         >
-          {/* Header */}
+          {/* Columns - full height */}
           <div style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            marginBottom: '16px',
-          }}>
-            <span style={{ fontSize: '24px' }}>📋</span>
-            <span style={{
-              fontSize: '20px',
-              fontWeight: 700,
-              color: '#1e293b',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}>
-              Task Board
-            </span>
-            <span style={{
-              fontSize: '14px',
-              color: '#64748b',
-              background: '#e2e8f0',
-              padding: '4px 10px',
-              borderRadius: '6px',
-            }}>
-              {activeTasks.length} active
-            </span>
-          </div>
-
-          {/* Columns */}
-          <div style={{
-            display: 'flex',
-            gap: '10px',
+            gap: '8px',
             flex: 1,
             minHeight: 0,
           }}>
