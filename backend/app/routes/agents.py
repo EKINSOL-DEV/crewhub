@@ -348,34 +348,43 @@ async def generate_bio(agent_id: str):
     
     prompt = "\n".join(prompt_parts)
     
-    # Call LLM via gateway
-    try:
-        manager = await get_connection_manager()
-        conn = manager.get_default_openclaw()
-        if not conn:
-            raise HTTPException(status_code=503, detail="Gateway not connected")
-        
-        # Use send_chat to get a response
-        result = await conn.send_chat(
-            message=prompt,
-            agent_id="main",  # Use main agent for generation
-            timeout=30.0,
-        )
-        
-        if result:
-            # Clean up the result (remove quotes, trim)
-            bio = result.strip().strip('"\'')
-            # Ensure it's not too long
-            if len(bio) > 200:
-                bio = bio[:197] + "..."
-            
-            logger.info(f"Generated bio for {agent_id}: {bio}")
-            return {"bio": bio, "generated": True}
+    # Generate bio using template approach (fast, no LLM needed)
+    # Extract key info from SOUL.md if available
+    bio_templates = {
+        "main": "{name} is the orchestrator, managing tasks and coordinating the crew.",
+        "dev": "{name} is the developer, writing code and building features.",
+        "flowy": "{name} handles marketing, media, and creative content.",
+        "creator": "{name} is the video specialist, crafting visual stories.",
+        "reviewer": "{name} reviews code and provides feedback for quality.",
+        "wtl": "{name} is the Waterleau knowledge agent, specializing in water treatment.",
+    }
+    
+    # Try to extract personality from SOUL.md
+    personality_hints = []
+    if soul_content:
+        soul_lower = soul_content.lower()
+        if "helpful" in soul_lower or "assist" in soul_lower:
+            personality_hints.append("helpful")
+        if "creative" in soul_lower:
+            personality_hints.append("creative")
+        if "technical" in soul_lower or "code" in soul_lower:
+            personality_hints.append("technical")
+        if "friendly" in soul_lower or "joyful" in soul_lower:
+            personality_hints.append("friendly")
+    
+    # Build the bio
+    if agent_id in bio_templates:
+        bio = bio_templates[agent_id].format(name=agent_name)
+    else:
+        if personality_hints:
+            traits = " and ".join(personality_hints[:2])
+            bio = f"{agent_name} is a {traits} crew member ready to help."
         else:
-            raise HTTPException(status_code=500, detail="Failed to generate bio")
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error generating bio: {e}")
-        raise HTTPException(status_code=500, detail=f"Bio generation failed: {str(e)}")
+            bio = f"{agent_name} is a dedicated crew member working hard behind the scenes."
+    
+    # Add activity hint if available
+    if recent_activity and len(bio) < 150:
+        bio += " Currently active on the team."
+    
+    logger.info(f"Generated bio for {agent_id}: {bio}")
+    return {"bio": bio, "generated": True}
