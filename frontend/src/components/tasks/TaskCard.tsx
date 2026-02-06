@@ -1,5 +1,6 @@
-import { memo } from 'react'
+import { memo, useState, useRef, useEffect } from 'react'
 import type { Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
+import { SpawnAgentDialog } from './SpawnAgentDialog'
 
 // ── Priority Colors ────────────────────────────────────────────
 
@@ -28,6 +29,7 @@ interface TaskCardProps {
   showStatus?: boolean
   onClick?: (task: Task) => void
   onStatusChange?: (task: Task, newStatus: TaskStatus) => void
+  onSpawnAgent?: (task: Task, agentId: string, sessionKey: string) => void
 }
 
 // ── Component ──────────────────────────────────────────────────
@@ -38,12 +40,35 @@ export const TaskCard = memo(function TaskCard({
   showStatus = false,
   onClick,
   onStatusChange,
+  onSpawnAgent,
 }: TaskCardProps) {
   const priority = priorityConfig[task.priority]
   const status = statusConfig[task.status]
+  
+  // Dropdown state
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [spawnDialogOpen, setSpawnDialogOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showDropdown])
 
   const handleClick = () => {
     onClick?.(task)
+  }
+
+  const handleSpawn = (agentId: string, sessionKey: string) => {
+    onSpawnAgent?.(task, agentId, sessionKey)
   }
 
   // Quick status change buttons
@@ -52,201 +77,366 @@ export const TaskCard = memo(function TaskCard({
   const canMoveToBlocked = task.status === 'in_progress'
 
   return (
-    <div
-      onClick={handleClick}
-      style={{
-        background: '#ffffff',
-        borderRadius: 8,
-        padding: compact ? '8px 10px' : '12px 14px',
-        borderLeft: `3px solid ${priority.color}`,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'box-shadow 0.15s, transform 0.15s',
-      }}
-      onMouseEnter={(e) => {
-        if (onClick) {
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'
-          e.currentTarget.style.transform = 'translateY(-1px)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'
-        e.currentTarget.style.transform = 'translateY(0)'
-      }}
-    >
-      {/* Header: Title + Priority Badge */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-        <span
-          style={{
-            flex: 1,
-            fontSize: compact ? 13 : 14,
-            fontWeight: 500,
-            color: '#1f2937',
-            lineHeight: 1.4,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: compact ? 1 : 2,
-            WebkitBoxOrient: 'vertical',
-          }}
-        >
-          {task.title}
-        </span>
-        
-        {/* Priority Badge */}
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            color: priority.color,
-            background: priority.bg,
-            padding: '2px 6px',
-            borderRadius: 4,
-            textTransform: 'uppercase',
-            letterSpacing: '0.02em',
-            flexShrink: 0,
-          }}
-        >
-          {task.priority === 'medium' ? 'MED' : task.priority.slice(0, 3).toUpperCase()}
-        </span>
-      </div>
-
-      {/* Description (if not compact and exists) */}
-      {!compact && task.description && (
-        <p
-          style={{
-            fontSize: 12,
-            color: '#6b7280',
-            marginTop: 6,
-            lineHeight: 1.4,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-          }}
-        >
-          {task.description}
-        </p>
-      )}
-
-      {/* Footer: Assignee + Status */}
+    <>
       <div
+        onClick={handleClick}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginTop: compact ? 6 : 10,
-          gap: 8,
+          background: '#ffffff',
+          borderRadius: 8,
+          padding: compact ? '8px 10px' : '12px 14px',
+          borderLeft: `3px solid ${priority.color}`,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          cursor: onClick ? 'pointer' : 'default',
+          transition: 'box-shadow 0.15s, transform 0.15s',
+          position: 'relative',
+        }}
+        onMouseEnter={(e) => {
+          if (onClick) {
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'
+            e.currentTarget.style.transform = 'translateY(-1px)'
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'
+          e.currentTarget.style.transform = 'translateY(0)'
         }}
       >
-        {/* Assignee */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-          {task.assigned_display_name ? (
-            <>
-              <span style={{ fontSize: 12 }}>👤</span>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: '#4b5563',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {task.assigned_display_name}
-              </span>
-            </>
-          ) : (
-            <span style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>
-              Unassigned
-            </span>
-          )}
-        </div>
-
-        {/* Status Badge (optional) */}
-        {showStatus && (
+        {/* Header: Title + Priority Badge + Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <span
+            style={{
+              flex: 1,
+              fontSize: compact ? 13 : 14,
+              fontWeight: 500,
+              color: '#1f2937',
+              lineHeight: 1.4,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: compact ? 1 : 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {task.title}
+          </span>
+          
+          {/* Priority Badge */}
           <span
             style={{
               fontSize: 10,
-              fontWeight: 500,
-              color: status.color,
-              background: status.bg,
+              fontWeight: 600,
+              color: priority.color,
+              background: priority.bg,
               padding: '2px 6px',
               borderRadius: 4,
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
               flexShrink: 0,
             }}
           >
-            {status.label}
+            {task.priority === 'medium' ? 'MED' : task.priority.slice(0, 3).toUpperCase()}
           </span>
-        )}
 
-        {/* Quick Actions (if onStatusChange provided) */}
-        {onStatusChange && !compact && (
-          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-            {canMoveToInProgress && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onStatusChange(task, 'in_progress')
-                }}
+          {/* Dropdown Menu Button */}
+          <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowDropdown(!showDropdown)
+              }}
+              style={{
+                background: showDropdown ? '#f3f4f6' : 'transparent',
+                border: 'none',
+                borderRadius: 4,
+                padding: '2px 6px',
+                cursor: 'pointer',
+                fontSize: 14,
+                color: '#6b7280',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              title="More actions"
+            >
+              ⋮
+            </button>
+
+            {/* Dropdown Menu */}
+            {showDropdown && (
+              <div
                 style={{
-                  fontSize: 10,
-                  padding: '2px 6px',
-                  border: '1px solid #dbeafe',
-                  borderRadius: 4,
-                  background: '#eff6ff',
-                  color: '#2563eb',
-                  cursor: 'pointer',
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: 4,
+                  background: '#fff',
+                  borderRadius: 8,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                  border: '1px solid #e5e7eb',
+                  minWidth: 160,
+                  zIndex: 100,
+                  overflow: 'hidden',
                 }}
-                title="Start working"
               >
-                ▶
-              </button>
-            )}
-            {canMoveToDone && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onStatusChange(task, 'done')
-                }}
-                style={{
-                  fontSize: 10,
-                  padding: '2px 6px',
-                  border: '1px solid #dcfce7',
-                  borderRadius: 4,
-                  background: '#f0fdf4',
-                  color: '#15803d',
-                  cursor: 'pointer',
-                }}
-                title="Mark as done"
-              >
-                ✓
-              </button>
-            )}
-            {canMoveToBlocked && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onStatusChange(task, 'blocked')
-                }}
-                style={{
-                  fontSize: 10,
-                  padding: '2px 6px',
-                  border: '1px solid #fef2f2',
-                  borderRadius: 4,
-                  background: '#fef2f2',
-                  color: '#dc2626',
-                  cursor: 'pointer',
-                }}
-                title="Mark as blocked"
-              >
-                ⚠
-              </button>
+                {/* Run with Agent option */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowDropdown(false)
+                    setSpawnDialogOpen(true)
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: 'transparent',
+                    border: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    color: '#1f2937',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  🚀 Run with Agent
+                </button>
+
+                {/* Divider */}
+                <div style={{ borderTop: '1px solid #e5e7eb' }} />
+
+                {/* Status change options */}
+                {canMoveToInProgress && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowDropdown(false)
+                      onStatusChange?.(task, 'in_progress')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'transparent',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      color: '#1f2937',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    ▶️ Start Working
+                  </button>
+                )}
+
+                {canMoveToDone && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowDropdown(false)
+                      onStatusChange?.(task, 'done')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'transparent',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      color: '#1f2937',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    ✅ Mark as Done
+                  </button>
+                )}
+
+                {canMoveToBlocked && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowDropdown(false)
+                      onStatusChange?.(task, 'blocked')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'transparent',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      color: '#dc2626',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    ⚠️ Mark as Blocked
+                  </button>
+                )}
+              </div>
             )}
           </div>
+        </div>
+
+        {/* Description (if not compact and exists) */}
+        {!compact && task.description && (
+          <p
+            style={{
+              fontSize: 12,
+              color: '#6b7280',
+              marginTop: 6,
+              lineHeight: 1.4,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {task.description}
+          </p>
         )}
+
+        {/* Footer: Assignee + Status */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: compact ? 6 : 10,
+            gap: 8,
+          }}
+        >
+          {/* Assignee */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+            {task.assigned_display_name ? (
+              <>
+                <span style={{ fontSize: 12 }}>👤</span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: '#4b5563',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {task.assigned_display_name}
+                </span>
+              </>
+            ) : (
+              <span style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>
+                Unassigned
+              </span>
+            )}
+          </div>
+
+          {/* Status Badge (optional) */}
+          {showStatus && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 500,
+                color: status.color,
+                background: status.bg,
+                padding: '2px 6px',
+                borderRadius: 4,
+                flexShrink: 0,
+              }}
+            >
+              {status.label}
+            </span>
+          )}
+
+          {/* Quick Actions (if onStatusChange provided) - keep for backward compat but smaller */}
+          {onStatusChange && !compact && !showDropdown && (
+            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              {canMoveToInProgress && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onStatusChange(task, 'in_progress')
+                  }}
+                  style={{
+                    fontSize: 10,
+                    padding: '2px 6px',
+                    border: '1px solid #dbeafe',
+                    borderRadius: 4,
+                    background: '#eff6ff',
+                    color: '#2563eb',
+                    cursor: 'pointer',
+                  }}
+                  title="Start working"
+                >
+                  ▶
+                </button>
+              )}
+              {canMoveToDone && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onStatusChange(task, 'done')
+                  }}
+                  style={{
+                    fontSize: 10,
+                    padding: '2px 6px',
+                    border: '1px solid #dcfce7',
+                    borderRadius: 4,
+                    background: '#f0fdf4',
+                    color: '#15803d',
+                    cursor: 'pointer',
+                  }}
+                  title="Mark as done"
+                >
+                  ✓
+                </button>
+              )}
+              {canMoveToBlocked && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onStatusChange(task, 'blocked')
+                  }}
+                  style={{
+                    fontSize: 10,
+                    padding: '2px 6px',
+                    border: '1px solid #fef2f2',
+                    borderRadius: 4,
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    cursor: 'pointer',
+                  }}
+                  title="Mark as blocked"
+                >
+                  ⚠
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Spawn Agent Dialog */}
+      <SpawnAgentDialog
+        task={task}
+        isOpen={spawnDialogOpen}
+        onClose={() => setSpawnDialogOpen(false)}
+        onSpawn={handleSpawn}
+      />
+    </>
   )
 })
