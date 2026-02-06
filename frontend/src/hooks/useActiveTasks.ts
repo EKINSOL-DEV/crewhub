@@ -30,6 +30,8 @@ interface UseActiveTasksOptions {
 // ── Constants ──────────────────────────────────────────────────
 
 const DEFAULT_FADE_OUT_DURATION = 30000
+/** How long since last update before considering a session "done" (60 seconds) */
+const IDLE_THRESHOLD_MS = 60_000
 
 // ── Hook ───────────────────────────────────────────────────────
 
@@ -60,17 +62,27 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
     const previousKeys = previousSessionKeysRef.current
 
     /**
-     * Check if a session is still actively running (not sleeping/parked).
+     * Check if a session is still actively running.
      * A session is considered "done" when:
      * - Its key disappears from the sessions list, OR
-     * - Its status becomes "sleeping" (parked after 30min inactivity)
+     * - Its status becomes "sleeping" (parked after 30min inactivity), OR
+     * - Its updatedAt is older than IDLE_THRESHOLD_MS (60s) — means it stopped working
      */
     const isSessionStillRunning = (sessionKey: string): boolean => {
       const session = sessionMap.get(sessionKey)
       if (!session) return false
+      
+      // Check 1: If sleeping, it's definitely done
       const status = getSessionStatus(session)
-      // "sleeping" means parked/completed - treat as done
-      return status !== 'sleeping'
+      if (status === 'sleeping') return false
+      
+      // Check 2: If updatedAt is stale (>60s ago), consider done
+      // This catches subagents that finished but haven't been parked yet
+      const now = Date.now()
+      const lastUpdate = session.updatedAt
+      if (now - lastUpdate > IDLE_THRESHOLD_MS) return false
+      
+      return true
     }
 
     setTasks(prevTasks => {
@@ -104,15 +116,14 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
         }
       }
 
-      // 3. Add new sessions that weren't tracked before (only if not sleeping)
+      // 3. Add new sessions that weren't tracked before (only if actively running)
       for (const session of sessions) {
         if (!isSubagentSession(session.key)) continue
         const taskId = `session:${session.key}`
         if (seenIds.has(taskId)) continue
         
-        // Don't add already-sleeping sessions as new tasks
-        const status = getSessionStatus(session)
-        if (status === 'sleeping') continue
+        // Don't add sessions that aren't actively running
+        if (!isSessionStillRunning(session.key)) continue
 
         newTasks.push({
           id: taskId,
