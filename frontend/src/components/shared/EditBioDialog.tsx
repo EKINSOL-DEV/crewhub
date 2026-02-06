@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useDemoMode } from "@/contexts/DemoContext"
 import { API_BASE } from "@/lib/api"
+import { Sparkles, Loader2 } from "lucide-react"
 
 interface EditBioDialogProps {
   agentId: string | null
@@ -33,6 +34,7 @@ export function EditBioDialog({
   const { isDemoMode } = useDemoMode()
   const [bio, setBio] = useState("")
   const [saving, setSaving] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isCreating = !currentBio
@@ -44,6 +46,35 @@ export function EditBioDialog({
       setError(null)
     }
   }, [open, currentBio])
+
+  const handleGenerate = async () => {
+    if (!agentId || isDemoMode) return
+
+    setGenerating(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${API_BASE}/agents/${agentId}/generate-bio`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.detail || "Failed to generate bio")
+      }
+
+      const data = await response.json()
+      if (data.bio) {
+        setBio(data.bio)
+      }
+    } catch (err) {
+      console.error("Failed to generate bio:", err)
+      setError(err instanceof Error ? err.message : "Failed to generate bio")
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const handleSave = async () => {
     if (!agentId || isDemoMode) return
@@ -106,7 +137,29 @@ export function EditBioDialog({
 
         <div className="py-4">
           <div className="space-y-2">
-            <Label htmlFor="bio-textarea">Bio</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="bio-textarea">Bio</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGenerate}
+                disabled={generating || isDemoMode}
+                className="h-7 gap-1.5 text-xs"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3 w-3" />
+                    Generate
+                  </>
+                )}
+              </Button>
+            </div>
             <Textarea
               id="bio-textarea"
               value={bio}
@@ -115,6 +168,7 @@ export function EditBioDialog({
               rows={4}
               className="resize-none"
               maxLength={500}
+              disabled={generating}
             />
             <div className="text-xs text-muted-foreground text-right">
               {bio.length}/500

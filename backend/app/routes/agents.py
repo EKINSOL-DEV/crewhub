@@ -238,3 +238,144 @@ async def delete_agent(agent_id: str):
         await db.close()
 
     return {"status": "deleted", "id": agent_id}
+
+
+@router.post("/{agent_id}/generate-bio")
+async def generate_bio(agent_id: str):
+    """
+    Generate an AI-powered bio for an agent based on their SOUL.md and recent activity.
+    
+    Uses the agent's personality file and chat history to create a fitting bio.
+    Falls back to basic generation if context isn't available.
+    """
+    from pathlib import Path
+    
+    # 1. Get agent info from DB
+    db = await get_db()
+    try:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM agents WHERE id = ?", (agent_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent_name = row["name"]
+        agent_icon = row["icon"] or "🤖"
+    finally:
+        await db.close()
+    
+    # 2. Try to read SOUL.md from agent workspace
+    soul_content = ""
+    soul_paths = [
+        Path.home() / ".openclaw" / "agents" / agent_id / "SOUL.md",
+        Path.home() / "clawd" / "SOUL.md" if agent_id == "main" else None,
+    ]
+    
+    for soul_path in soul_paths:
+        if soul_path and soul_path.exists():
+            try:
+                with open(soul_path, 'r') as f:
+                    soul_content = f.read()[:2000]  # Limit to 2000 chars
+                logger.info(f"Read SOUL.md for {agent_id} from {soul_path}")
+                break
+            except Exception as e:
+                logger.warning(f"Failed to read SOUL.md: {e}")
+    
+    # 3. Get recent session history summary
+    recent_activity = ""
+    try:
+        manager = await get_connection_manager()
+        conn = manager.get_default_openclaw()
+        if conn:
+            # Get list of sessions to find agent's main session
+            sessions = await conn.get_sessions_raw()
+            agent_session = next(
+                (s for s in sessions if s.get("key", "").startswith(f"agent:{agent_id}:")),
+                None
+            )
+            
+            if agent_session:
+                session_key = agent_session.get("key", "")
+                history = await conn.get_session_history_raw(session_key, limit=20)
+                
+                # Extract recent user/assistant messages for context
+                messages = []
+                for msg in history[-10:]:  # Last 10 messages
+                    role = msg.get("role", "")
+                    content = msg.get("content", "")
+                    if isinstance(content, list):
+                        # Extract text from content blocks
+                        text_parts = [b.get("text", "") for b in content if isinstance(b, dict)]
+                        content = " ".join(text_parts)
+                    if role in ("user", "assistant") and content:
+                        messages.append(f"{role}: {content[:100]}")
+                
+                if messages:
+                    recent_activity = "\n".join(messages[-5:])  # Last 5 for prompt
+                    logger.info(f"Got {len(messages)} recent messages for {agent_id}")
+    except Exception as e:
+        logger.warning(f"Failed to get session history: {e}")
+    
+    # 4. Build prompt and call LLM
+    prompt_parts = [
+        f"Generate a short, friendly bio (2-3 sentences, max 150 characters) for this AI agent.",
+        f"Write in third person, make it sound natural and personality-fitting.",
+        f"",
+        f"Agent name: {agent_name}",
+        f"Icon: {agent_icon}",
+    ]
+    
+    if soul_content:
+        # Extract key personality traits from SOUL.md (first 500 chars)
+        prompt_parts.append(f"")
+        prompt_parts.append(f"Personality (from SOUL.md):")
+        prompt_parts.append(soul_content[:500])
+    
+    if recent_activity:
+        prompt_parts.append(f"")
+        prompt_parts.append(f"Recent activities:")
+        prompt_parts.append(recent_activity)
+    
+    if not soul_content and not recent_activity:
+        prompt_parts.append(f"")
+        prompt_parts.append(f"Note: No personality file or recent history available. Generate a generic but friendly bio based on the agent name and icon.")
+    
+    prompt_parts.append(f"")
+    prompt_parts.append(f"Respond with ONLY the bio text, no quotes or explanation.")
+    
+    prompt = "\n".join(prompt_parts)
+    
+    # Call LLM via gateway
+    try:
+        manager = await get_connection_manager()
+        conn = manager.get_default_openclaw()
+        if not conn:
+            raise HTTPException(status_code=503, detail="Gateway not connected")
+        
+        # Use send_chat to get a response
+        result = await conn.send_chat(
+            message=prompt,
+            agent_id="main",  # Use main agent for generation
+            timeout=30.0,
+        )
+        
+        if result:
+            # Clean up the result (remove quotes, trim)
+            bio = result.strip().strip('"\'')
+            # Ensure it's not too long
+            if len(bio) > 200:
+                bio = bio[:197] + "..."
+            
+            logger.info(f"Generated bio for {agent_id}: {bio}")
+            return {"bio": bio, "generated": True}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to generate bio")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating bio: {e}")
+        raise HTTPException(status_code=500, detail=f"Bio generation failed: {str(e)}")
