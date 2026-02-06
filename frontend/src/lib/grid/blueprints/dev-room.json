@@ -47,12 +47,6 @@
       }
     },
     {
-      "propId": "whiteboard",
-      "x": 10,
-      "z": 18,
-      "type": "decoration"
-    },
-    {
       "propId": "cable-mess",
       "x": 10,
       "z": 15,
