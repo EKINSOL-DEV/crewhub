@@ -28,12 +28,6 @@
       "type": "decoration"
     },
     {
-      "propId": "notice-board",
-      "x": 10,
-      "z": 18,
-      "type": "decoration"
-    },
-    {
       "propId": "coffee-machine",
       "x": 18,
       "z": 3

@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useRef, type ReactNod
 
 // ─── Types ─────────────────────────────────────────────────────
 
-export type FocusLevel = 'overview' | 'room' | 'bot' | 'firstperson'
+export type FocusLevel = 'overview' | 'room' | 'board' | 'bot' | 'firstperson'
 
 export interface WorldFocusState {
   level: FocusLevel
@@ -16,6 +16,7 @@ export interface WorldFocusState {
 interface WorldFocusContextValue {
   state: WorldFocusState
   focusRoom: (roomId: string) => void
+  focusBoard: (roomId: string) => void
   focusBot: (botKey: string, roomId: string) => void
   goBack: () => void
   goOverview: () => void
@@ -33,6 +34,7 @@ const defaultState: WorldFocusState = {
 const WorldFocusContext = createContext<WorldFocusContextValue>({
   state: defaultState,
   focusRoom: () => {},
+  focusBoard: () => {},
   focusBot: () => {},
   goBack: () => {},
   goOverview: () => {},
@@ -71,6 +73,15 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
     })
   }, [setWithAnimation])
 
+  const focusBoard = useCallback((roomId: string) => {
+    setWithAnimation(() => ({
+      level: 'board',
+      focusedRoomId: roomId,
+      focusedBotKey: null,
+      isAnimating: false,
+    }))
+  }, [setWithAnimation])
+
   const focusBot = useCallback((botKey: string, roomId: string) => {
     setWithAnimation(() => ({
       level: 'bot',
@@ -91,7 +102,7 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
           isAnimating: false,
         }
       }
-      if (prev.level === 'bot') {
+      if (prev.level === 'bot' || prev.level === 'board') {
         return {
           level: 'room',
           focusedRoomId: prev.focusedRoomId,
@@ -136,7 +147,7 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <WorldFocusContext.Provider value={{ state, focusRoom, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson }}>
+    <WorldFocusContext.Provider value={{ state, focusRoom, focusBoard, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson }}>
       {children}
     </WorldFocusContext.Provider>
   )

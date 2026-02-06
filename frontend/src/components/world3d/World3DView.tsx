@@ -88,12 +88,15 @@ import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/W
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { useChatContext } from '@/contexts/ChatContext'
+import { TaskBoardProvider } from '@/contexts/TaskBoardContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
 import { TaskBoardOverlay, HQTaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
+import { CameraDebugTracker, CameraDebugHUD } from './CameraDebugOverlay'
 import { useDebugBots, type DebugBot } from '@/hooks/useDebugBots'
 import { useDebugKeyboardShortcuts } from '@/hooks/useDebugKeyboardShortcuts'
+import { useGridDebug } from '@/hooks/useGridDebug'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
@@ -861,6 +864,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   // Debug keyboard shortcuts (F2=Grid, F3=Lighting, F4=Bots)
   useDebugKeyboardShortcuts()
 
+  // Grid debug state (F2) - used for camera debug overlay
+  const [gridDebugEnabled] = useGridDebug()
+
   // Debug bots
   const { debugBots, debugBotsEnabled } = useDebugBots()
 
@@ -1124,6 +1130,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           >
             <Suspense fallback={<LoadingFallback />}>
               <WorldLighting />
+              <CameraDebugTracker enabled={gridDebugEnabled} />
               <SceneContent
               visibleSessions={visibleSessions}
               parkingSessions={parkingSessions}
@@ -1144,6 +1151,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             </Suspense>
           </Canvas>
         </CanvasErrorBoundary>
+
+        {/* Camera Debug HUD (F2) */}
+        <CameraDebugHUD visible={gridDebugEnabled} />
 
         {/* First Person HUD (rendered on top of everything when in FP mode) */}
         {focusState.level === 'firstperson' && (
@@ -1297,9 +1307,11 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   )
 
   return (
-    <DragDropProvider onAssignmentChanged={refreshRooms}>
-      {worldContent}
-    </DragDropProvider>
+    <TaskBoardProvider onOpen={() => setTaskBoardOpen(true)}>
+      <DragDropProvider onAssignmentChanged={refreshRooms}>
+        {worldContent}
+      </DragDropProvider>
+    </TaskBoardProvider>
   )
 }
 

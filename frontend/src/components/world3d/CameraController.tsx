@@ -26,13 +26,30 @@ const OVERVIEW_CAMERA = {
 function getRoomCamera(roomPos: [number, number, number]) {
   // Offset in the same direction as OVERVIEW_CAMERA (-X, -Z quadrant)
   // so zooming in from overview to room keeps the same viewing angle.
+  // Tuned by Nicky for good task board visibility
   return {
-    posX: roomPos[0] - 10,
-    posY: 18,
-    posZ: roomPos[2] - 10,
-    targetX: roomPos[0],
-    targetY: 0,
+    posX: roomPos[0] - 7,
+    posY: 6.7,
+    posZ: roomPos[2] - 12,
+    targetX: roomPos[0] - 2,
+    targetY: 1.5,
     targetZ: roomPos[2],
+  }
+}
+
+// Board is on back wall at z+5.5 from room center, facing -Z
+function getBoardCamera(roomPos: [number, number, number], roomSize: number = 12) {
+  // Board is at front wall: z = roomPos[2] + roomSize/2 - 1
+  const boardZ = roomPos[2] + roomSize / 2 - 1
+  // Tuned by Nicky for perfect board view
+  // Tiny X offset to prevent 360° spin while staying mostly centered
+  return {
+    posX: roomPos[0] - 0.5,
+    posY: 4.2,
+    posZ: roomPos[2] - 2,
+    targetX: roomPos[0],
+    targetY: 2.5,
+    targetZ: boardZ,
   }
 }
 
@@ -69,6 +86,19 @@ function applyConstraints(controls: CameraControlsImpl, level: FocusLevel) {
       controls.touches.one = ACTION.TOUCH_ROTATE
       controls.touches.two = ACTION.TOUCH_DOLLY_TRUCK
       controls.touches.three = ACTION.TOUCH_TRUCK
+      break
+    case 'board':
+      controls.minDistance = 2
+      controls.maxDistance = 8
+      controls.minPolarAngle = Math.PI / 4
+      controls.maxPolarAngle = Math.PI / 2.2
+      // Zoom only, minimal rotation (viewing board)
+      controls.mouseButtons.left = ACTION.ROTATE
+      controls.mouseButtons.right = ACTION.NONE
+      controls.mouseButtons.wheel = ACTION.DOLLY
+      controls.touches.one = ACTION.TOUCH_ROTATE
+      controls.touches.two = ACTION.TOUCH_DOLLY
+      controls.touches.three = ACTION.NONE
       break
     case 'bot':
       controls.minDistance = 2
@@ -138,7 +168,7 @@ function isInputFocused(): boolean {
 export function CameraController({ roomPositions }: CameraControllerProps) {
   const controlsRef = useRef<CameraControlsImpl>(null)
   const { state } = useWorldFocus()
-  const { isDragging } = useDragState()
+  const { isDragging, isInteractingWithUI } = useDragState()
   const prevLevelRef = useRef<FocusLevel | null>(null)
   const prevRoomIdRef = useRef<string | null>(null)
   const prevBotKeyRef = useRef<string | null>(null)
@@ -157,8 +187,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   useEffect(() => {
     const controls = controlsRef.current
     if (!controls) return
-    controls.enabled = !isDragging
-  }, [isDragging])
+    controls.enabled = !isDragging && !isInteractingWithUI
+  }, [isDragging, isInteractingWithUI])
 
   // ─── WASD keyboard listeners (overview + room only) ───────────
 
@@ -292,6 +322,13 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
       if (roomEntry) {
         const c = getRoomCamera(roomEntry.position)
+        controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
+      }
+    } else if (state.level === 'board' && state.focusedRoomId) {
+      isFollowing.current = false
+      const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
+      if (roomEntry) {
+        const c = getBoardCamera(roomEntry.position)
         controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
       }
     } else if (state.level === 'bot' && state.focusedBotKey) {
