@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CrewSession } from '@/lib/api'
+import { API_BASE } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { BotStatus } from './Bot3D'
 import { useChatContext } from '@/contexts/ChatContext'
+import { useRooms } from '@/hooks/useRooms'
+import { useDemoMode } from '@/contexts/DemoContext'
 
 interface BotInfoPanelProps {
   session: CrewSession | null
@@ -10,8 +13,10 @@ interface BotInfoPanelProps {
   botConfig: BotVariantConfig
   status: BotStatus
   bio?: string | null
+  currentRoomId?: string | null
   onClose: () => void
   onOpenLog: (session: CrewSession) => void
+  onAssignmentChanged?: () => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -79,10 +84,59 @@ function getLastAssistantMessage(session: CrewSession): string | null {
 
 // ── Component ──────────────────────────────────────────────────
 
-export function BotInfoPanel({ session, displayName, botConfig, status, bio, onClose, onOpenLog }: BotInfoPanelProps) {
+export function BotInfoPanel({ session, displayName, botConfig, status, bio, currentRoomId, onClose, onOpenLog, onAssignmentChanged }: BotInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const canChat = session ? isFixedAgent(session.key) : false
   const { openChat } = useChatContext()
+  const { rooms, refresh: refreshRooms } = useRooms()
+  const { isDemoMode } = useDemoMode()
+  const [isMoving, setIsMoving] = useState(false)
+  const [moveError, setMoveError] = useState<string | null>(null)
+
+  // Handle room move
+  const handleMoveToRoom = async (targetRoomId: string) => {
+    if (!session || isDemoMode) return
+    
+    setIsMoving(true)
+    setMoveError(null)
+    
+    try {
+      if (targetRoomId === 'parking') {
+        // Unassign: DELETE the assignment
+        const response = await fetch(`${API_BASE}/session-room-assignments/${encodeURIComponent(session.key)}`, {
+          method: 'DELETE',
+        })
+        if (!response.ok && response.status !== 404) {
+          const err = await response.json().catch(() => ({}))
+          throw new Error(err.detail || 'Failed to unassign bot')
+        }
+      } else {
+        // Assign to room: POST the assignment
+        const response = await fetch(`${API_BASE}/session-room-assignments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_key: session.key,
+            room_id: targetRoomId,
+          }),
+        })
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}))
+          throw new Error(err.detail || 'Failed to move bot')
+        }
+      }
+      
+      // Refresh data
+      await refreshRooms()
+      onAssignmentChanged?.()
+    } catch (err) {
+      console.error('Failed to move bot:', err)
+      setMoveError(err instanceof Error ? err.message : 'Failed to move bot')
+      setTimeout(() => setMoveError(null), 3000)
+    } finally {
+      setIsMoving(false)
+    }
+  }
 
   // Close on outside click
   useEffect(() => {
@@ -274,6 +328,98 @@ export function BotInfoPanel({ session, displayName, botConfig, status, bio, onC
             {session.lastChannel}
           </InfoRow>
         )}
+
+        {/* Move to room dropdown */}
+        <div style={{ marginTop: 6 }}>
+          <div style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: '#9ca3af',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.05em',
+            marginBottom: 6,
+          }}>
+            Move to room
+          </div>
+          <div style={{ position: 'relative' }}>
+            <select
+              value={currentRoomId || 'parking'}
+              onChange={(e) => handleMoveToRoom(e.target.value)}
+              disabled={isDemoMode || isMoving}
+              style={{
+                width: '100%',
+                padding: '8px 32px 8px 10px',
+                fontSize: 13,
+                fontWeight: 500,
+                color: isDemoMode ? '#9ca3af' : '#374151',
+                background: isDemoMode ? 'rgba(0, 0, 0, 0.02)' : 'rgba(0, 0, 0, 0.04)',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                borderRadius: 8,
+                cursor: isDemoMode ? 'not-allowed' : isMoving ? 'wait' : 'pointer',
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                fontFamily: 'system-ui, sans-serif',
+                transition: 'background 0.15s, border-color 0.15s',
+                outline: 'none',
+              }}
+              onMouseEnter={e => {
+                if (!isDemoMode && !isMoving) {
+                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.06)'
+                  e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)'
+                }
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = isDemoMode ? 'rgba(0, 0, 0, 0.02)' : 'rgba(0, 0, 0, 0.04)'
+                e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.08)'
+              }}
+              onFocus={e => {
+                e.currentTarget.style.borderColor = botConfig.color + '80'
+              }}
+              onBlur={e => {
+                e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.08)'
+              }}
+            >
+              <option value="parking">🅿️ Parking (unassigned)</option>
+              {rooms.map(room => (
+                <option key={room.id} value={room.id}>
+                  {room.icon || '📦'} {room.name}
+                </option>
+              ))}
+            </select>
+            {/* Dropdown arrow */}
+            <div style={{
+              position: 'absolute',
+              right: 10,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+              fontSize: 10,
+              color: '#9ca3af',
+            }}>
+              {isMoving ? '⏳' : '▼'}
+            </div>
+          </div>
+          {moveError && (
+            <div style={{
+              marginTop: 4,
+              fontSize: 11,
+              color: '#dc2626',
+              fontWeight: 500,
+            }}>
+              {moveError}
+            </div>
+          )}
+          {isDemoMode && (
+            <div style={{
+              marginTop: 4,
+              fontSize: 11,
+              color: '#9ca3af',
+              fontStyle: 'italic',
+            }}>
+              Disabled in demo mode
+            </div>
+          )}
+        </div>
 
         {lastMessage && (
           <div>

@@ -1,4 +1,5 @@
 import { Suspense, useMemo, useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react'
+import { Maximize2, Minimize2 } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 
@@ -983,6 +984,21 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const [logViewerOpen, setLogViewerOpen] = useState(false)
   const [docsPanel, setDocsPanel] = useState<{ projectId: string; projectName: string; projectColor?: string } | null>(null)
 
+  // Fullscreen mode
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  // Escape key to exit fullscreen
+  useEffect(() => {
+    if (!isFullscreen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsFullscreen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isFullscreen])
+
   // Bot click no longer opens LogViewer directly — focusBot is triggered inside Bot3D
   const handleBotClick = (_session: CrewSession) => {
     // Intentionally empty: Bot3D now calls focusBot() directly via context.
@@ -1056,7 +1072,10 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
   return (
     <DragDropProvider onAssignmentChanged={refreshRooms}>
-      <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
+      <div 
+        className={`relative w-full h-full ${isFullscreen ? 'fixed inset-0 z-[100] bg-background' : ''}`}
+        style={{ minHeight: isFullscreen ? undefined : '600px' }}
+      >
         <CanvasErrorBoundary>
           <Canvas
             shadows
@@ -1097,9 +1116,18 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Back button / navigation (top-left) */}
         <WorldNavigation rooms={rooms} />
 
+        {/* Fullscreen toggle button */}
+        <button
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="absolute top-4 right-4 z-[60] p-2 rounded-lg backdrop-blur-md bg-white/60 hover:bg-white/80 border border-gray-200/50 shadow-sm text-gray-600 hover:text-gray-900 transition-all opacity-60 hover:opacity-100"
+          title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
+        >
+          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+        </button>
+
         {/* Overlay controls hint (hide when any panel is showing or in first person) */}
-        {focusState.level !== 'bot' && focusState.level !== 'room' && focusState.level !== 'firstperson' && (
-          <div className="absolute top-4 right-4 z-50">
+        {focusState.level !== 'bot' && focusState.level !== 'room' && focusState.level !== 'firstperson' && !isFullscreen && (
+          <div className="absolute top-4 right-16 z-50">
             <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
               <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
               <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast</div>
@@ -1140,11 +1168,13 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             botConfig={focusedBotConfig}
             status={focusedBotStatus}
             bio={focusedBotBio}
+            currentRoomId={getRoomForSession(focusedSession.key, { label: focusedSession.label, model: focusedSession.model, channel: focusedSession.lastChannel })}
             onClose={() => goBack()}
             onOpenLog={(session) => {
               setSelectedSession(session)
               setLogViewerOpen(true)
             }}
+            onAssignmentChanged={refreshRooms}
           />
         )}
 
