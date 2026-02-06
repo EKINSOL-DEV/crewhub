@@ -24,7 +24,7 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
   if (state.level === 'firstperson' || state.level === 'overview') return null
 
   const focusedRoom = rooms.find(r => r.id === state.focusedRoomId)
-  const label = state.level === 'bot' && focusedRoom
+  const label = (state.level === 'bot' || state.level === 'board') && focusedRoom
     ? `← ${focusedRoom.icon || '📦'} ${focusedRoom.name}`
     : '← Overview'
 

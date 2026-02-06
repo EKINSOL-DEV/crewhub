@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Html } from '@react-three/drei'
+import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import type { Task, TaskStatus, TaskPriority } from '@/hooks/useTasks'
 
 // ── Props ──────────────────────────────────────────────────────
@@ -34,13 +35,15 @@ const statusConfig: Record<TaskStatus, { label: string; icon: string; bg: string
 
 export function TaskWall3D({
   tasks,
-  roomId: _roomId,  // Reserved for future use
+  roomId,
   position = [0, 1.8, 5.5],  // Back wall (far from entrance, z+ is back)
   rotation = [0, Math.PI, 0],  // Rotate 180° to face into room (toward -Z)
   width = 4,
   height = 2,
   onTaskClick,
 }: TaskWall3DProps & { rotation?: [number, number, number] }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const { focusBoard } = useWorldFocus()
   // Filter to active tasks only (not done)
   const activeTasks = useMemo(() => 
     tasks.filter(t => t.status !== 'done'),
@@ -65,13 +68,27 @@ export function TaskWall3D({
 
   const maxTasksPerColumn = 6
 
+  const handleBoardClick = () => {
+    focusBoard(roomId)
+  }
+
   return (
-    <group position={position} rotation={rotation}>
-      {/* Whiteboard backing */}
-      <mesh position={[0, 0, 0]}>
+    <group 
+      position={position} 
+      rotation={rotation}
+      onPointerEnter={() => setIsHovered(true)}
+      onPointerLeave={() => setIsHovered(false)}
+    >
+      {/* Whiteboard backing - clickable */}
+      <mesh 
+        position={[0, 0, 0]}
+        onClick={handleBoardClick}
+        onPointerOver={() => { document.body.style.cursor = 'pointer' }}
+        onPointerOut={() => { document.body.style.cursor = 'auto' }}
+      >
         <planeGeometry args={[width, height]} />
         <meshStandardMaterial 
-          color="#f8fafc" 
+          color={isHovered ? '#f1f5f9' : '#f8fafc'}
           roughness={0.9}
           metalness={0}
         />
@@ -81,17 +98,22 @@ export function TaskWall3D({
       <mesh position={[0, 0, -0.02]}>
         <planeGeometry args={[width + 0.1, height + 0.1]} />
         <meshStandardMaterial 
-          color="#475569" 
+          color={isHovered ? '#334155' : '#475569'}
           roughness={0.5}
         />
       </mesh>
 
-      {/* Title label above the board */}
+      {/* Title label above the board - only visible on hover */}
       <Html
         position={[0, height / 2 + 0.2, 0.01]}
         center
         transform
         scale={0.15}
+        style={{
+          opacity: isHovered ? 1 : 0,
+          transition: 'opacity 0.2s ease-in-out',
+          pointerEvents: 'none',
+        }}
       >
         <div style={{
           display: 'flex',

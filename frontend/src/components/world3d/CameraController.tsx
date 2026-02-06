@@ -36,6 +36,19 @@ function getRoomCamera(roomPos: [number, number, number]) {
   }
 }
 
+// Board is on back wall at z+5.5 from room center, facing -Z
+function getBoardCamera(roomPos: [number, number, number]) {
+  const boardZ = roomPos[2] + 5.5
+  return {
+    posX: roomPos[0],        // centered on board
+    posY: 2,                 // eye level
+    posZ: roomPos[2] + 1,    // in front of board (looking toward +Z)
+    targetX: roomPos[0],
+    targetY: 1.8,            // board center height
+    targetZ: boardZ,
+  }
+}
+
 // ─── Mouse / touch actions ─────────────────────────────────────
 
 const ACTION = CameraControlsImpl.ACTION
@@ -69,6 +82,19 @@ function applyConstraints(controls: CameraControlsImpl, level: FocusLevel) {
       controls.touches.one = ACTION.TOUCH_ROTATE
       controls.touches.two = ACTION.TOUCH_DOLLY_TRUCK
       controls.touches.three = ACTION.TOUCH_TRUCK
+      break
+    case 'board':
+      controls.minDistance = 2
+      controls.maxDistance = 8
+      controls.minPolarAngle = Math.PI / 4
+      controls.maxPolarAngle = Math.PI / 2.2
+      // Zoom only, minimal rotation (viewing board)
+      controls.mouseButtons.left = ACTION.ROTATE
+      controls.mouseButtons.right = ACTION.NONE
+      controls.mouseButtons.wheel = ACTION.DOLLY
+      controls.touches.one = ACTION.TOUCH_ROTATE
+      controls.touches.two = ACTION.TOUCH_DOLLY
+      controls.touches.three = ACTION.NONE
       break
     case 'bot':
       controls.minDistance = 2
@@ -292,6 +318,13 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
       if (roomEntry) {
         const c = getRoomCamera(roomEntry.position)
+        controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
+      }
+    } else if (state.level === 'board' && state.focusedRoomId) {
+      isFollowing.current = false
+      const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
+      if (roomEntry) {
+        const c = getBoardCamera(roomEntry.position)
         controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
       }
     } else if (state.level === 'bot' && state.focusedBotKey) {
