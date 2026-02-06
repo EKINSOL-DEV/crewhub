@@ -7,6 +7,7 @@ Supports images from OpenClaw media folder.
 import os
 import logging
 from pathlib import Path
+from typing import Optional
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
@@ -48,7 +49,7 @@ def is_path_allowed(file_path: Path) -> bool:
         return False
 
 
-def get_mime_type(file_path: Path) -> str | None:
+def get_mime_type(file_path: Path) -> Optional[str]:
     """Get MIME type for a file based on extension."""
     ext = file_path.suffix.lower()
     return IMAGE_MIME_TYPES.get(ext)
