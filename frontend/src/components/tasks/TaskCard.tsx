@@ -27,6 +27,7 @@ interface TaskCardProps {
   task: Task
   compact?: boolean
   showStatus?: boolean
+  hideRunWithAgent?: boolean
   onClick?: (task: Task) => void
   onStatusChange?: (task: Task, newStatus: TaskStatus) => void
   onSpawnAgent?: (task: Task, agentId: string, sessionKey: string) => void
@@ -38,6 +39,7 @@ export const TaskCard = memo(function TaskCard({
   task,
   compact = false,
   showStatus = false,
+  hideRunWithAgent = false,
   onClick,
   onStatusChange,
   onSpawnAgent,
@@ -72,9 +74,11 @@ export const TaskCard = memo(function TaskCard({
   }
 
   // Quick status change buttons
-  const canMoveToInProgress = task.status === 'todo' || task.status === 'blocked'
   const canMoveToDone = task.status === 'in_progress' || task.status === 'review'
   const canMoveToBlocked = task.status === 'in_progress'
+
+  // Show Run with Agent button for todo/blocked tasks (not already in progress or done)
+  const showRunWithAgentButton = !hideRunWithAgent && (task.status === 'todo' || task.status === 'blocked')
 
   return (
     <>
@@ -177,63 +181,7 @@ export const TaskCard = memo(function TaskCard({
                   overflow: 'hidden',
                 }}
               >
-                {/* Run with Agent option */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setShowDropdown(false)
-                    setSpawnDialogOpen(true)
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    background: 'transparent',
-                    border: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: 13,
-                    color: '#1f2937',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  🚀 Run with Agent
-                </button>
-
-                {/* Divider */}
-                <div style={{ borderTop: '1px solid #e5e7eb' }} />
-
                 {/* Status change options */}
-                {canMoveToInProgress && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowDropdown(false)
-                      onStatusChange?.(task, 'in_progress')
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      background: 'transparent',
-                      border: 'none',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      fontSize: 13,
-                      color: '#1f2937',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    ▶️ Start Working
-                  </button>
-                )}
-
                 {canMoveToDone && (
                   <button
                     onClick={(e) => {
@@ -287,6 +235,92 @@ export const TaskCard = memo(function TaskCard({
                     ⚠️ Mark as Blocked
                   </button>
                 )}
+
+                {(canMoveToDone || canMoveToBlocked) && (
+                  <div style={{ borderTop: '1px solid #e5e7eb' }} />
+                )}
+
+                {/* Move to other status options */}
+                {task.status !== 'todo' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowDropdown(false)
+                      onStatusChange?.(task, 'todo')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'transparent',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      color: '#6b7280',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    📋 Move to To Do
+                  </button>
+                )}
+
+                {task.status !== 'in_progress' && task.status !== 'done' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowDropdown(false)
+                      onStatusChange?.(task, 'in_progress')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'transparent',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      color: '#1f2937',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    🔄 Move to In Progress
+                  </button>
+                )}
+
+                {task.status !== 'review' && task.status !== 'done' && task.status !== 'todo' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowDropdown(false)
+                      onStatusChange?.(task, 'review')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'transparent',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      color: '#1f2937',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    👀 Move to Review
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -309,6 +343,43 @@ export const TaskCard = memo(function TaskCard({
           >
             {task.description}
           </p>
+        )}
+
+        {/* Run with Agent Button - Direct on card */}
+        {showRunWithAgentButton && !compact && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setSpawnDialogOpen(true)
+            }}
+            style={{
+              width: '100%',
+              marginTop: 10,
+              padding: '8px 12px',
+              borderRadius: 6,
+              border: '1px solid #dbeafe',
+              background: '#eff6ff',
+              color: '#2563eb',
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#dbeafe'
+              e.currentTarget.style.borderColor = '#2563eb'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#eff6ff'
+              e.currentTarget.style.borderColor = '#dbeafe'
+            }}
+          >
+            🚀 Run with Agent
+          </button>
         )}
 
         {/* Footer: Assignee + Status */}
@@ -362,29 +433,9 @@ export const TaskCard = memo(function TaskCard({
             </span>
           )}
 
-          {/* Quick Actions (if onStatusChange provided) - keep for backward compat but smaller */}
+          {/* Quick Actions - only Done and Blocked buttons now, no play button */}
           {onStatusChange && !compact && !showDropdown && (
             <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-              {canMoveToInProgress && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onStatusChange(task, 'in_progress')
-                  }}
-                  style={{
-                    fontSize: 10,
-                    padding: '2px 6px',
-                    border: '1px solid #dbeafe',
-                    borderRadius: 4,
-                    background: '#eff6ff',
-                    color: '#2563eb',
-                    cursor: 'pointer',
-                  }}
-                  title="Start working"
-                >
-                  ▶
-                </button>
-              )}
               {canMoveToDone && (
                 <button
                   onClick={(e) => {

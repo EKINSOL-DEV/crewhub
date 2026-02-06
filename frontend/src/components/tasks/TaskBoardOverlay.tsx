@@ -3,6 +3,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useTasks, type Task, type TaskStatus, type TaskCreate, type TaskUpdate } from '@/hooks/useTasks'
 import { TaskCard } from './TaskCard'
 import { TaskForm } from './TaskForm'
+import { RunOrSelfDialog } from './RunOrSelfDialog'
+import { SpawnAgentDialog } from './SpawnAgentDialog'
 import { Plus, Loader2, Maximize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -60,6 +62,11 @@ export function TaskBoardOverlay({
   const [_isRefreshing, setIsRefreshing] = useState(false)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null)
+  
+  // State for the "Run or Self" dialog when dragging todo → in_progress
+  const [pendingDropTask, setPendingDropTask] = useState<Task | null>(null)
+  const [showRunOrSelfDialog, setShowRunOrSelfDialog] = useState(false)
+  const [showSpawnDialogForDrop, setShowSpawnDialogForDrop] = useState(false)
 
   // Group tasks by status
   const tasksByStatus = useMemo(() => {
@@ -162,9 +169,21 @@ export function TaskBoardOverlay({
     e.preventDefault()
     setDragOverColumn(null)
     
-    if (draggedTask && draggedTask.status !== newStatus) {
-      await handleStatusChange(draggedTask, newStatus)
+    if (!draggedTask || draggedTask.status === newStatus) {
+      setDraggedTask(null)
+      return
     }
+
+    // Special case: todo → in_progress shows the choice dialog
+    if (draggedTask.status === 'todo' && newStatus === 'in_progress') {
+      setPendingDropTask(draggedTask)
+      setShowRunOrSelfDialog(true)
+      setDraggedTask(null)
+      return
+    }
+
+    // Normal status change
+    await handleStatusChange(draggedTask, newStatus)
     setDraggedTask(null)
   }
 
@@ -173,17 +192,45 @@ export function TaskBoardOverlay({
     setDragOverColumn(null)
   }
 
+  // RunOrSelf dialog handlers
+  const handleRunOrSelfClose = () => {
+    setShowRunOrSelfDialog(false)
+    setPendingDropTask(null)
+  }
+
+  const handleRunWithAgent = () => {
+    setShowRunOrSelfDialog(false)
+    setShowSpawnDialogForDrop(true)
+  }
+
+  const handleDoItMyself = async () => {
+    if (pendingDropTask) {
+      await handleStatusChange(pendingDropTask, 'in_progress')
+    }
+    setShowRunOrSelfDialog(false)
+    setPendingDropTask(null)
+  }
+
+  const handleSpawnFromDrop = (_agentId: string, _sessionKey: string) => {
+    // After spawning, the task status is updated by the backend
+    // Just close the dialogs
+    setShowSpawnDialogForDrop(false)
+    setPendingDropTask(null)
+    // Refresh to get the updated task status
+    refresh()
+  }
+
   // Keyboard shortcut
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !showCreateForm && !editingTask) {
+      if (e.key === 'Escape' && !showCreateForm && !editingTask && !showRunOrSelfDialog && !showSpawnDialogForDrop) {
         onOpenChange(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, onOpenChange, showCreateForm, editingTask])
+  }, [open, onOpenChange, showCreateForm, editingTask, showRunOrSelfDialog, showSpawnDialogForDrop])
 
   const totalTasks = tasks.length
   const activeTasks = taskCounts.todo + taskCounts.in_progress + taskCounts.review
@@ -409,6 +456,30 @@ export function TaskBoardOverlay({
               />
             </div>
           </div>
+        )}
+
+        {/* Run or Self Dialog - shown when dragging todo → in_progress */}
+        {pendingDropTask && (
+          <RunOrSelfDialog
+            task={pendingDropTask}
+            isOpen={showRunOrSelfDialog}
+            onClose={handleRunOrSelfClose}
+            onRunWithAgent={handleRunWithAgent}
+            onDoItMyself={handleDoItMyself}
+          />
+        )}
+
+        {/* Spawn Agent Dialog - shown when choosing "Run with Agent" from drop */}
+        {pendingDropTask && (
+          <SpawnAgentDialog
+            task={pendingDropTask}
+            isOpen={showSpawnDialogForDrop}
+            onClose={() => {
+              setShowSpawnDialogForDrop(false)
+              setPendingDropTask(null)
+            }}
+            onSpawn={handleSpawnFromDrop}
+          />
         )}
       </DialogContent>
     </Dialog>
