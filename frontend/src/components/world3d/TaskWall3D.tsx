@@ -35,8 +35,8 @@ const statusConfig: Record<TaskStatus, { label: string; icon: string; bg: string
 export function TaskWall3D({
   tasks,
   roomId: _roomId,  // Reserved for future use
-  position = [0, 1.8, -2.8],  // Back wall position (inside room)
-  rotation = [0, 0, 0],  // Face into the room (toward +Z)
+  position = [0, 1.8, 5.5],  // Back wall (far from entrance, z+ is back)
+  rotation = [0, Math.PI, 0],  // Rotate 180° to face into room (toward -Z)
   width = 4,
   height = 2,
   onTaskClick,
