@@ -7,6 +7,7 @@ import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
 import { useToast } from '@/hooks/use-toast'
 import { ProjectPicker } from './ProjectPicker'
 import { EditRoomDialog } from '@/components/shared/EditRoomDialog'
+import { formatSessionKeyAsName } from '@/lib/friendlyNames'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -61,40 +62,13 @@ function formatModel(model?: string): string {
 }
 
 function getDisplayName(session: CrewSession, aliasName: string | null | undefined): string {
-  // Priority: custom alias > session label > display name > friendly name > agent ID
+  // Priority: custom alias > session label > display name > formatted session key
   if (aliasName) return aliasName
   if (session.label) return session.label
   if (session.displayName && !session.displayName.includes(':')) return session.displayName
   
-  // For subagents, use the label or generate friendly name
-  if (session.key.includes(':subagent:') || session.key.includes(':spawn:')) {
-    if (session.label) return session.label
-    // Extract agent type from key (e.g., "agent:dev:subagent:xxx" -> "Dev")
-    const parts = session.key.split(':')
-    if (parts.length >= 2) {
-      const agentId = parts[1]
-      return agentId.charAt(0).toUpperCase() + agentId.slice(1) + ' (subagent)'
-    }
-  }
-  
-  // For phone numbers (WhatsApp), show a friendly label
-  if (session.key.includes('+')) {
-    const phoneMatch = session.key.match(/\+\d+/)
-    if (phoneMatch) {
-      // Known numbers
-      if (phoneMatch[0] === '+32494330227') return 'Nicky'
-      return 'User'
-    }
-  }
-  
-  // Extract agent name from key pattern "agent:name:..."
-  const parts = session.key.split(':')
-  if (parts.length >= 2 && parts[0] === 'agent') {
-    const name = parts[1]
-    return name.charAt(0).toUpperCase() + name.slice(1)
-  }
-  
-  return session.key
+  // Use the centralized formatting function
+  return formatSessionKeyAsName(session.key, session.label)
 }
 
 function getRoomActivityStatus(statuses: BotStatus[]): { label: string; color: string } {
@@ -648,7 +622,7 @@ export function RoomInfoPanel({
             roomId={room.id}
             agents={sessions.map(s => ({
               session_key: s.key,
-              display_name: displayNames.get(s.key) || s.displayName || s.key.split(':')[1] || s.key,
+              display_name: displayNames.get(s.key) || formatSessionKeyAsName(s.key, s.label),
             }))}
             onOpenFullBoard={onOpenTaskBoard}
           />
