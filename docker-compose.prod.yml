@@ -1,19 +1,22 @@
+# Production Docker Compose for CrewHub
+# Uses pre-built images, static frontend, and persistent database
+# Branch: main | Backend: 8090 | Frontend (nginx): 8445
+
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: crewhub-backend
     restart: unless-stopped
     ports:
       - "8090:8090"
     environment:
       - OPENCLAW_GATEWAY_URL=${OPENCLAW_GATEWAY_URL:-ws://host.docker.internal:18789}
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:-}
+      - CREWHUB_DB_PATH=/data/crewhub.db
     volumes:
-      - ./backend/app:/app/app
-      - ~/.crewhub:/root/.crewhub
-      - ~/.openclaw/media:/root/.openclaw/media
-      - ~/.openclaw/agents:/root/.openclaw/agents
+      - ~/.crewhub:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -29,6 +32,7 @@ services:
       dockerfile: Dockerfile.prod
       args:
         - VITE_API_URL=http://ekinbot.local:8090
+    container_name: crewhub-frontend
     restart: unless-stopped
     ports:
       - "8446:80"

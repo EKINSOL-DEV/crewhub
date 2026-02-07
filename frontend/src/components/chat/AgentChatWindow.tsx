@@ -4,6 +4,7 @@ import { useChatContext, MIN_SIZE } from '@/contexts/ChatContext'
 import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
 import { ImageThumbnail } from './ImageThumbnail'
+import { VideoThumbnail } from './VideoThumbnail'
 
 // ── Lightweight markdown ────────────────────────────────────────
 
@@ -193,6 +194,7 @@ function ChatBubble({
   // Parse media attachments from content
   const { text, attachments } = parseMediaAttachments(msg.content || '')
   const imageAttachments = attachments.filter(a => a.type === 'image')
+  const videoAttachments = attachments.filter(a => a.type === 'video')
 
   const bubbleStyle: CSSProperties = isUser
     ? {
@@ -265,6 +267,23 @@ function ChatBubble({
         >
           {imageAttachments.map((attachment, i) => (
             <ImageThumbnail key={i} attachment={attachment} maxWidth={200} />
+          ))}
+        </div>
+      )}
+
+      {/* Video attachments */}
+      {videoAttachments.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            maxWidth: '100%',
+            ...(isUser ? { marginLeft: 48 } : { marginRight: 48 }),
+          }}
+        >
+          {videoAttachments.map((attachment, i) => (
+            <VideoThumbnail key={i} attachment={attachment} maxWidth={280} />
           ))}
         </div>
       )}

@@ -13,7 +13,7 @@
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
   <img src="https://img.shields.io/badge/Docs-Coming%20Soon-lightgrey?style=flat&logo=readthedocs&logoColor=white" alt="Docs">
-  <img src="https://img.shields.io/badge/version-v0.8.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.9.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -44,6 +44,15 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **Animated bots** — Working agents type on laptops; idle agents wander the campus
 - **Activity bubbles** — See what each agent is doing at a glance
 - **Blueprints** — JSON-defined room layouts you can create, share, and import
+
+### 🆕 New in v0.9.1
+
+- **Embedded TaskBoard in 3D** — Full TaskBoard component rendered on the whiteboard, not just sticky notes
+- **Focus Board button** — "🔍 Focus Board" button zooms the camera to board focus level
+- **Camera Debug HUD** — Press F2 to show camera position/target values as a fixed overlay
+- **UI interaction blocking** — Extended DragDropContext with `isInteractingWithUI` to disable camera controls when using overlays
+- **Desk rotation fix** — All desks now properly face into the room
+- **Cleaner Dev Room** — Removed whiteboard prop for a tidier workspace
 
 ---
 
@@ -172,23 +181,52 @@ When running in Docker, set the Gateway URL to reach your host:
 
 ## 🌐 Ports
 
-| Service  | Port | Description |
-|----------|------|-------------|
-| Frontend | 5180 | React dashboard UI |
-| Backend  | 8090 | FastAPI server |
+CrewHub supports both **production** (Docker) and **development** (local) environments running simultaneously:
+
+| Environment | Service  | Port | Description |
+|-------------|----------|------|-------------|
+| **Production** | Backend  | 8090 | FastAPI in Docker |
+| **Production** | Frontend | 8446 | Static build (nginx) |
+| **Development** | Backend  | 8091 | Local uvicorn |
+| **Development** | Frontend | 5181 | Vite dev server |
+
+**Databases:**
+- Production: `~/.crewhub/crewhub.db`
+- Development: `~/.crewhub/crewhub-dev.db`
 
 ---
 
 ## 🧑‍💻 Development
 
+### Dual Environment Setup
+
+CrewHub supports running production (stable) and development (hot-reload) simultaneously:
+
 ```bash
-make dev      # Start backend + frontend with hot-reload
-make build    # Build Docker images
-make up       # Start with Docker Compose
-make down     # Stop all services
-make logs     # View container logs
-make test     # Run tests
+# Production (Docker)
+make prod-up       # Start production containers
+make prod-down     # Stop production
+make prod-logs     # View production logs
+make prod-rebuild  # Rebuild and restart
+
+# Development (Local)
+make dev           # Start both backend + frontend (ports 8091/5181)
+make dev-backend   # Backend only (port 8091)
+make dev-frontend  # Frontend only (port 5181)
+
+# Legacy Docker dev (kept for compatibility)
+make up            # Start with docker-compose.yml
+make down          # Stop all services
+make logs          # View container logs
 ```
+
+### Production URLs
+- Frontend: http://ekinbot.local:8446
+- Backend API: http://ekinbot.local:8090
+
+### Development URLs
+- Frontend: http://localhost:5181
+- Backend API: http://localhost:8091
 
 ### Project Structure
 

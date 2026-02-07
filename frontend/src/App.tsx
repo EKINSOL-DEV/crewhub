@@ -10,13 +10,14 @@ import { SettingsPanel, DEFAULT_SETTINGS, type SessionsSettings } from './compon
 import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
-import { ChatProvider } from './contexts/ChatContext'
-import { RoomsProvider } from './contexts/RoomsContext'
+import { ChatProvider, useChatContext } from './contexts/ChatContext'
+import { RoomsProvider, useRoomsContext } from './contexts/RoomsContext'
 import { DemoProvider, DemoModeIndicator, useDemoMode } from './contexts/DemoContext'
 import { MobileWarning } from './components/MobileWarning'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
+import { ZenMode, ZenModeButton, useZenMode, ZenModeProvider } from './components/zen'
 import { getOnboardingStatus } from './lib/api'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
 import { Button } from './components/ui/button'
@@ -126,6 +127,68 @@ function NoConnectionView({
 function AppContent() {
   const { sessions: realSessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
   const { isDemoMode, demoSessions } = useDemoMode()
+  const { windows } = useChatContext()
+  const { rooms, getRoomForSession } = useRoomsContext()
+  
+  // Zen Mode state
+  const zenMode = useZenMode()
+  
+  // Get the last active chat window for Zen Mode context
+  const lastActiveWindow = windows.length > 0 ? windows[windows.length - 1] : null
+  
+  // Get room name for the selected agent
+  const zenRoomName = useMemo(() => {
+    if (!zenMode.selectedAgentId) return undefined
+    const roomId = getRoomForSession(zenMode.selectedAgentId)
+    if (!roomId) return undefined
+    const room = rooms.find(r => r.id === roomId)
+    return room?.name
+  }, [zenMode.selectedAgentId, getRoomForSession, rooms])
+  
+  // Global keyboard listener for Zen Mode toggle (Ctrl+Shift+Z)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+Z to toggle Zen Mode
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        if (zenMode.isActive) {
+          zenMode.exit()
+        } else {
+          // If there's an active chat window, use its agent
+          if (lastActiveWindow) {
+            zenMode.enter(
+              lastActiveWindow.sessionKey,
+              lastActiveWindow.agentName,
+              lastActiveWindow.agentIcon ?? undefined,
+              lastActiveWindow.agentColor ?? undefined
+            )
+          } else {
+            // Enter without a selected agent
+            zenMode.enter()
+          }
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [zenMode, lastActiveWindow])
+  
+  // Handle entering Zen Mode via button
+  const handleEnterZenMode = useCallback(() => {
+    if (lastActiveWindow) {
+      zenMode.enter(
+        lastActiveWindow.sessionKey,
+        lastActiveWindow.agentName,
+        lastActiveWindow.agentIcon ?? undefined,
+        lastActiveWindow.agentColor ?? undefined
+      )
+    } else {
+      zenMode.enter()
+    }
+  }, [zenMode, lastActiveWindow])
 
   // When demo mode is active, replace real sessions with demo data.
   // Demo sessions completely replace real ones so the 3D world looks
@@ -236,13 +299,17 @@ function AppContent() {
     }`
 
   return (
-    <div className="h-dvh bg-background flex flex-col overflow-hidden">
+    <div 
+      className="h-dvh bg-background flex flex-col overflow-hidden"
+      
+      
+    >
       <header className="border-b bg-card shrink-0">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.9.0</span></h1>
+              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.10.0-dev</span></h1>
               <p className="text-xs text-muted-foreground">Multi-agent orchestration</p>
             </div>
           </div>
@@ -344,6 +411,26 @@ function AppContent() {
 
       <DemoModeIndicator />
       <MobileWarning />
+      
+      {/* Zen Mode Entry Button - shown when not in Zen Mode */}
+      {!zenMode.isActive && sessions.length > 0 && (
+        <ZenModeButton onClick={handleEnterZenMode} />
+      )}
+      
+      {/* Zen Mode Overlay - full-screen when active */}
+      {zenMode.isActive && (
+        <ZenMode
+          sessionKey={zenMode.selectedAgentId}
+          agentName={zenMode.selectedAgentName}
+          agentIcon={zenMode.selectedAgentIcon}
+          agentColor={zenMode.selectedAgentColor}
+          roomName={zenRoomName}
+          connected={connected}
+          onExit={zenMode.exit}
+          projectFilter={zenMode.projectFilter}
+          onClearProjectFilter={zenMode.clearProjectFilter}
+        />
+      )}
     </div>
   )
 }
@@ -359,9 +446,11 @@ function App() {
     <ThemeProvider>
       <DemoProvider>
         <RoomsProvider>
-          <ChatProvider>
-            <AppContent />
-          </ChatProvider>
+          <ZenModeProvider>
+            <ChatProvider>
+              <AppContent />
+            </ChatProvider>
+          </ZenModeProvider>
         </RoomsProvider>
       </DemoProvider>
     </ThemeProvider>

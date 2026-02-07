@@ -1,10 +1,10 @@
 /**
  * Media attachment parser for chat messages.
- * Detects and extracts image attachments from message content.
+ * Detects and extracts image and video attachments from message content.
  */
 
 export interface MediaAttachment {
-  type: 'image'
+  type: 'image' | 'video'
   path: string
   mimeType: string
   originalText: string
@@ -23,6 +23,14 @@ const SUPPORTED_IMAGE_TYPES = new Set([
   'image/webp',
 ])
 
+// Supported video MIME types
+const SUPPORTED_VIDEO_TYPES = new Set([
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+  'video/quicktime',
+])
+
 // Pattern for [media attached: <path> (<mime>)]
 const MEDIA_ATTACHED_REGEX = /\[media attached:\s*([^\s]+)\s+\(([^)]+)\)\]/gi
 
@@ -34,6 +42,13 @@ const MEDIA_PREFIX_REGEX = /MEDIA:\s*([^\s]+)/gi
  */
 export function isImageMimeType(mimeType: string): boolean {
   return SUPPORTED_IMAGE_TYPES.has(mimeType.toLowerCase())
+}
+
+/**
+ * Check if a MIME type is a supported video type.
+ */
+export function isVideoMimeType(mimeType: string): boolean {
+  return SUPPORTED_VIDEO_TYPES.has(mimeType.toLowerCase())
 }
 
 /**
@@ -67,7 +82,14 @@ export function parseMediaAttachments(content: string): ParsedMessage {
         mimeType,
         originalText: fullMatch,
       })
-      // Remove the media text from the message
+      text = text.replace(fullMatch, '').trim()
+    } else if (isVideoMimeType(mimeType)) {
+      attachments.push({
+        type: 'video',
+        path,
+        mimeType,
+        originalText: fullMatch,
+      })
       text = text.replace(fullMatch, '').trim()
     }
   }
@@ -81,6 +103,7 @@ export function parseMediaAttachments(content: string): ParsedMessage {
     // Infer MIME type from extension
     const ext = path.split('.').pop()?.toLowerCase()
     let mimeType: string | null = null
+    let mediaType: 'image' | 'video' = 'image'
     
     switch (ext) {
       case 'jpg':
@@ -96,6 +119,18 @@ export function parseMediaAttachments(content: string): ParsedMessage {
       case 'webp':
         mimeType = 'image/webp'
         break
+      case 'mp4':
+        mimeType = 'video/mp4'
+        mediaType = 'video'
+        break
+      case 'webm':
+        mimeType = 'video/webm'
+        mediaType = 'video'
+        break
+      case 'mov':
+        mimeType = 'video/quicktime'
+        mediaType = 'video'
+        break
     }
     
     if (mimeType) {
@@ -103,7 +138,7 @@ export function parseMediaAttachments(content: string): ParsedMessage {
       const alreadyAdded = attachments.some(a => a.path === path)
       if (!alreadyAdded) {
         attachments.push({
-          type: 'image',
+          type: mediaType,
           path,
           mimeType,
           originalText: fullMatch,
@@ -112,6 +147,19 @@ export function parseMediaAttachments(content: string): ParsedMessage {
       }
     }
   }
+
+  // Remove OpenClaw media instruction hint (injected context for AI)
+  const mediaHintPattern = /To send an image back,.*?Keep caption in the text body\.\n?/gs
+  text = text.replace(mediaHintPattern, '')
+  
+  // Remove WhatsApp/channel metadata (timestamp, message_id)
+  // Pattern: [WhatsApp +324... +1m 2026-02-07 11:41 GMT+1]
+  const channelMetaPattern = /\[(WhatsApp|Telegram|Signal|Discord|iMessage|Slack)[^\]]*\]\n?/gi
+  text = text.replace(channelMetaPattern, '')
+  
+  // Pattern: [message_id: ...]
+  const messageIdPattern = /\[message_id:\s*[^\]]+\]\n?/gi
+  text = text.replace(messageIdPattern, '')
 
   // Clean up multiple newlines from removed media
   text = text.replace(/\n{3,}/g, '\n\n').trim()

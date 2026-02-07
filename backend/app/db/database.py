@@ -6,9 +6,14 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Database path - prefer ~/.crewhub/ for persistent storage
-DB_DIR = Path.home() / ".crewhub"
-DB_PATH = DB_DIR / "crewhub.db"
+# Database path - configurable via env var, defaults to ~/.crewhub/crewhub.db
+_db_path_env = os.environ.get("CREWHUB_DB_PATH")
+if _db_path_env:
+    DB_PATH = Path(_db_path_env)
+    DB_DIR = DB_PATH.parent
+else:
+    DB_DIR = Path.home() / ".crewhub"
+    DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
 SCHEMA_VERSION = 9  # v9: Added tasks and project_history tables

@@ -1,0 +1,209 @@
+/**
+ * Pixel Avatar Styles
+ * Retro 8-bit robot avatar for Zen Mode
+ */
+
+/* ─── Container ────────────────────────────────────────────────── */
+
+.pixel-avatar {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.pixel-avatar:hover {
+  transform: scale(1.1);
+}
+
+/* ─── Pixel Grid ───────────────────────────────────────────────── */
+
+.pixel-avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 100%;
+  height: 100%;
+  gap: 0;
+  image-rendering: pixelated;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.pixel-avatar-cell {
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── Animations ───────────────────────────────────────────────── */
+
+/* Idle: gentle breathing pulse */
+.pixel-avatar--idle .pixel-avatar-grid {
+  animation: pixel-breathe 6s ease-in-out infinite;
+}
+
+@keyframes pixel-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.01); opacity: 0.95; }
+}
+
+/* Thinking: subtle glow + bounce */
+.pixel-avatar--thinking .pixel-avatar-grid {
+  animation: pixel-think 1.5s ease-in-out infinite;
+}
+
+@keyframes pixel-think {
+  0%, 100% { 
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+  25% { 
+    transform: scale(1.02) translateY(-1px);
+    filter: brightness(1.1);
+  }
+  50% { 
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+  75% { 
+    transform: scale(1.02) translateY(-1px);
+    filter: brightness(1.1);
+  }
+}
+
+/* Thinking sparkle overlay */
+.pixel-avatar--thinking::after {
+  content: '✨';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 10px;
+  animation: pixel-sparkle 1s ease-in-out infinite;
+}
+
+@keyframes pixel-sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* Typing: active bounce */
+.pixel-avatar--typing .pixel-avatar-grid {
+  animation: pixel-type 0.4s ease-in-out infinite;
+}
+
+@keyframes pixel-type {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.02); }
+}
+
+/* Error: shake */
+.pixel-avatar--error .pixel-avatar-grid {
+  animation: pixel-error 0.5s ease-in-out;
+}
+
+@keyframes pixel-error {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+
+/* ─── Stats Tooltip ────────────────────────────────────────────── */
+
+.pixel-avatar-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  min-width: 160px;
+  padding: 10px 12px;
+  background: var(--zen-bg-tertiary, #1a1a2e);
+  border: 1px solid var(--zen-border, #333);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.pixel-avatar:hover .pixel-avatar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.pixel-avatar-tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--zen-border, #333);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--zen-fg, #fff);
+}
+
+.pixel-avatar-tooltip-icon {
+  font-size: 14px;
+}
+
+.pixel-avatar-tooltip-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 12px;
+}
+
+.pixel-avatar-tooltip-label {
+  color: var(--zen-fg-muted, #888);
+}
+
+.pixel-avatar-tooltip-value {
+  color: var(--zen-fg, #fff);
+  font-family: var(--zen-font-mono, monospace);
+}
+
+/* Status colors */
+.pixel-avatar-tooltip-value--active {
+  color: #4ade80;
+}
+
+.pixel-avatar-tooltip-value--idle {
+  color: #facc15;
+}
+
+.pixel-avatar-tooltip-value--error {
+  color: #f87171;
+}
+
+/* ─── Theme Variations ─────────────────────────────────────────── */
+
+/* Light theme adjustments */
+[data-zen-theme="light"] .pixel-avatar-tooltip {
+  background: #fff;
+  border-color: #ddd;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+[data-zen-theme="light"] .pixel-avatar-tooltip-header {
+  border-color: #eee;
+}
+
+/* Solarized theme */
+[data-zen-theme="solarized"] .pixel-avatar-tooltip {
+  background: #002b36;
+  border-color: #073642;
+}
+
+/* Dracula theme */
+[data-zen-theme="dracula"] .pixel-avatar-tooltip {
+  background: #282a36;
+  border-color: #44475a;
+}

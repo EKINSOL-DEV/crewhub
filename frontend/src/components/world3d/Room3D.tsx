@@ -4,12 +4,14 @@ import { RoomFloor } from './RoomFloor'
 import { RoomWalls } from './RoomWalls'
 import { RoomNameplate } from './RoomNameplate'
 import { TaskWall3D } from './TaskWall3D'
+import { ZenBeeldje } from './ZenBeeldje'
 import { GridRoomRenderer } from './grid/GridRoomRenderer'
 import { GridDebugOverlay, GridDebugLabels } from './grid/GridDebugOverlay'
 import { getBlueprintForRoom } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragDrop } from '@/contexts/DragDropContext'
 import { useGridDebug } from '@/hooks/useGridDebug'
+import { useZenMode } from '@/components/zen'
 import type { Room } from '@/hooks/useRooms'
 import type { ThreeEvent } from '@react-three/fiber'
 
@@ -133,6 +135,18 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const [gridDebugEnabled] = useGridDebug()
   const { state, focusRoom, goBack } = useWorldFocus()
   const isRoomFocused = state.focusedRoomId === room.id && state.level === 'room'
+  const zenMode = useZenMode()
+  
+  // Handler for Zen Beeldje activation
+  const handleZenActivate = useCallback(() => {
+    if (room.project_id && room.project_name) {
+      zenMode.enterWithProject({
+        projectId: room.project_id,
+        projectName: room.project_name,
+        projectColor: room.project_color || undefined,
+      })
+    }
+  }, [room.project_id, room.project_name, room.project_color, zenMode])
 
   // ─── Hover state with 80ms debounce/hysteresis ──────────────
   const [hovered, setHovered] = useState(false)
@@ -236,6 +250,17 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
           rotation={[0, Math.PI, 0]}
           width={Math.min(size * 0.94, 7.8)}
           height={3.1}
+        />
+      )}
+
+      {/* ─── Zen Beeldje (meditation statue for project-focused Zen Mode) ─ */}
+      {/* Only visible when room has a project assigned */}
+      {room.project_id && room.project_name && (
+        <ZenBeeldje
+          position={[-size / 2 + 8.5, 0.3, 4.5]}
+          projectName={room.project_name}
+          projectColor={room.project_color || undefined}
+          onActivate={handleZenActivate}
         />
       )}
     </group>
