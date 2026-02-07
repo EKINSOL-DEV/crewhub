@@ -11,6 +11,7 @@ interface ZenTopBarProps {
   themeName?: string
   onOpenThemePicker?: () => void
   onOpenCommandPalette?: () => void
+  onOpenKeyboardHelp?: () => void
 }
 
 export function ZenTopBar({ 
@@ -21,6 +22,7 @@ export function ZenTopBar({
   themeName,
   onOpenThemePicker,
   onOpenCommandPalette,
+  onOpenKeyboardHelp,
 }: ZenTopBarProps) {
   return (
     <header className="zen-top-bar">
@@ -62,6 +64,17 @@ export function ZenTopBar({
           >
             <span className="zen-btn-theme-icon">🎨</span>
             <span className="zen-btn-theme-name">{themeName}</span>
+          </button>
+        )}
+        
+        {/* Keyboard Help Button */}
+        {onOpenKeyboardHelp && (
+          <button
+            className="zen-btn zen-btn-icon"
+            onClick={onOpenKeyboardHelp}
+            title="Keyboard shortcuts (Ctrl+/)"
+          >
+            ⌨️
           </button>
         )}
         

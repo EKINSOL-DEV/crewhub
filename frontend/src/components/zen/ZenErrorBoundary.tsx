@@ -1,0 +1,235 @@
+/**
+ * Zen Error Boundary
+ * Catches errors in panel components and displays a fallback UI
+ */
+
+import { Component, type ReactNode } from 'react'
+
+interface ZenErrorBoundaryProps {
+  children: ReactNode
+  panelType?: string
+  onReset?: () => void
+}
+
+interface ZenErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+  errorInfo: React.ErrorInfo | null
+}
+
+export class ZenErrorBoundary extends Component<ZenErrorBoundaryProps, ZenErrorBoundaryState> {
+  constructor(props: ZenErrorBoundaryProps) {
+    super(props)
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    }
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<ZenErrorBoundaryState> {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ZenMode Panel Error:', error, errorInfo)
+    this.setState({ errorInfo })
+  }
+
+  handleReset = () => {
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    })
+    this.props.onReset?.()
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="zen-error-boundary">
+          <div className="zen-error-boundary-content">
+            <div className="zen-error-boundary-icon">⚠️</div>
+            <h3 className="zen-error-boundary-title">Something went wrong</h3>
+            <p className="zen-error-boundary-message">
+              {this.props.panelType 
+                ? `The ${this.props.panelType} panel encountered an error.`
+                : 'This panel encountered an error.'}
+            </p>
+            {this.state.error && (
+              <div className="zen-error-boundary-details">
+                <code className="zen-error-boundary-error">
+                  {this.state.error.message}
+                </code>
+              </div>
+            )}
+            <div className="zen-error-boundary-actions">
+              <button 
+                className="zen-btn zen-btn-primary"
+                onClick={this.handleReset}
+              >
+                <span>🔄</span>
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+// ── Loading Skeleton Components ───────────────────────────────────
+
+export function ZenSkeleton({ className = '' }: { className?: string }) {
+  return <div className={`zen-skeleton ${className}`} />
+}
+
+export function ZenSkeletonText({ lines = 3, short = false }: { lines?: number; short?: boolean }) {
+  return (
+    <div className="zen-skeleton-text-container">
+      {Array.from({ length: lines }).map((_, i) => (
+        <div 
+          key={i} 
+          className={`zen-skeleton zen-skeleton-text ${
+            short || i === lines - 1 ? 'zen-skeleton-text-short' : ''
+          }`}
+          style={{ 
+            width: short ? '60%' : i === lines - 1 ? `${50 + Math.random() * 30}%` : '100%' 
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+export function ZenSkeletonAvatar({ size = 32 }: { size?: number }) {
+  return (
+    <div 
+      className="zen-skeleton zen-skeleton-avatar"
+      style={{ width: size, height: size }}
+    />
+  )
+}
+
+export function ZenSkeletonSessionItem() {
+  return (
+    <div className="zen-skeleton-session">
+      <ZenSkeletonAvatar size={24} />
+      <div className="zen-skeleton-session-content">
+        <ZenSkeleton className="zen-skeleton-session-name" />
+        <ZenSkeleton className="zen-skeleton-session-meta" />
+      </div>
+    </div>
+  )
+}
+
+export function ZenSkeletonMessageBubble({ isUser = false }: { isUser?: boolean }) {
+  return (
+    <div className={`zen-skeleton-message ${isUser ? 'zen-skeleton-message-user' : ''}`}>
+      <ZenSkeletonText lines={2} short={isUser} />
+    </div>
+  )
+}
+
+export function ZenSkeletonActivityItem() {
+  return (
+    <div className="zen-skeleton-activity">
+      <ZenSkeleton className="zen-skeleton-activity-time" />
+      <ZenSkeleton className="zen-skeleton-activity-icon" />
+      <div className="zen-skeleton-activity-content">
+        <ZenSkeleton className="zen-skeleton-activity-agent" />
+        <ZenSkeleton className="zen-skeleton-activity-desc" />
+      </div>
+    </div>
+  )
+}
+
+// ── Empty State Components ────────────────────────────────────────
+
+interface ZenEmptyStateProps {
+  icon: string
+  title: string
+  description?: string
+  action?: {
+    label: string
+    onClick: () => void
+  }
+}
+
+export function ZenEmptyState({ icon, title, description, action }: ZenEmptyStateProps) {
+  return (
+    <div className="zen-empty-state">
+      <div className="zen-empty-state-icon">{icon}</div>
+      <h3 className="zen-empty-state-title">{title}</h3>
+      {description && (
+        <p className="zen-empty-state-description">{description}</p>
+      )}
+      {action && (
+        <button 
+          className="zen-btn zen-btn-primary zen-empty-state-action"
+          onClick={action.onClick}
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Loading State Component ───────────────────────────────────────
+
+interface ZenLoadingStateProps {
+  message?: string
+}
+
+export function ZenLoadingState({ message = 'Loading...' }: ZenLoadingStateProps) {
+  return (
+    <div className="zen-loading-state">
+      <div className="zen-spinner zen-spinner-large" />
+      <span className="zen-loading-state-message">{message}</span>
+    </div>
+  )
+}
+
+// ── Connection Status Component ───────────────────────────────────
+
+interface ZenConnectionStatusProps {
+  connected: boolean
+  reconnecting?: boolean
+  lastConnected?: number
+}
+
+export function ZenConnectionStatus({ connected, reconnecting, lastConnected }: ZenConnectionStatusProps) {
+  if (connected && !reconnecting) {
+    return null
+  }
+  
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString()
+  }
+  
+  return (
+    <div className={`zen-connection-status ${reconnecting ? 'zen-connection-reconnecting' : 'zen-connection-disconnected'}`}>
+      <span className="zen-connection-status-icon">
+        {reconnecting ? (
+          <span className="zen-thinking-dots">
+            <span />
+            <span />
+            <span />
+          </span>
+        ) : '⚠️'}
+      </span>
+      <span className="zen-connection-status-text">
+        {reconnecting 
+          ? 'Reconnecting...'
+          : `Disconnected${lastConnected ? ` at ${formatTime(lastConnected)}` : ''}`
+        }
+      </span>
+    </div>
+  )
+}

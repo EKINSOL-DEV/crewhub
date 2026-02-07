@@ -19,6 +19,7 @@ export interface ZenKeyboardActions {
   
   // Layout
   onCycleLayouts?: () => void
+  onSaveLayout?: () => void
   
   // Exit
   onExit?: () => void
@@ -32,6 +33,11 @@ export interface ZenKeyboardActions {
   // Theme & Command Palette
   onOpenThemePicker?: () => void
   onOpenCommandPalette?: () => void
+  onOpenKeyboardHelp?: () => void
+  
+  // Session management
+  onNewChat?: () => void
+  onSpawnSession?: () => void
 }
 
 export interface UseZenKeyboardOptions {
@@ -155,6 +161,34 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
       return
     }
     
+    // Ctrl+Shift+S - Save layout
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
+      e.preventDefault()
+      a.onSaveLayout?.()
+      return
+    }
+    
+    // Ctrl+/ or ? - Keyboard help
+    if ((e.ctrlKey && e.key === '/') || (!isInput && e.key === '?')) {
+      e.preventDefault()
+      a.onOpenKeyboardHelp?.()
+      return
+    }
+    
+    // Ctrl+N - New chat
+    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'n' && !isInput) {
+      e.preventDefault()
+      a.onNewChat?.()
+      return
+    }
+    
+    // Ctrl+Shift+N - Spawn new session
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'n') {
+      e.preventDefault()
+      a.onSpawnSession?.()
+      return
+    }
+    
     // Ctrl+Shift+Arrow - Resize
     if (e.ctrlKey && e.shiftKey && e.key.startsWith('Arrow')) {
       e.preventDefault()
@@ -197,6 +231,7 @@ export const KEYBOARD_SHORTCUTS: ShortcutHint[] = [
   // Global
   { keys: ['Esc'], description: 'Exit Zen Mode', category: 'global' },
   { keys: ['Ctrl', 'K'], description: 'Command palette', category: 'global' },
+  { keys: ['Ctrl', '/'], description: 'Keyboard shortcuts', category: 'global' },
   { keys: ['Tab'], description: 'Focus next panel', category: 'global' },
   { keys: ['Shift', 'Tab'], description: 'Focus previous panel', category: 'global' },
   { keys: ['Ctrl', '1-9'], description: 'Focus panel by number', category: 'global' },
@@ -210,7 +245,12 @@ export const KEYBOARD_SHORTCUTS: ShortcutHint[] = [
   
   // Layout
   { keys: ['Ctrl', 'Shift', 'L'], description: 'Cycle layouts', category: 'layout' },
+  { keys: ['Ctrl', 'Shift', 'S'], description: 'Save layout', category: 'layout' },
   
   // Theme
   { keys: ['Ctrl', 'Shift', 'T'], description: 'Open theme picker', category: 'theme' },
+  
+  // Sessions
+  { keys: ['Ctrl', 'N'], description: 'New chat with agent', category: 'global' },
+  { keys: ['Ctrl', 'Shift', 'N'], description: 'Spawn new session', category: 'global' },
 ]

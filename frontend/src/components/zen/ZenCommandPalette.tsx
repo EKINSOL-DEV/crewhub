@@ -274,6 +274,12 @@ export interface UseCommandRegistryOptions {
   onToggleMaximize: () => void
   themes: Array<{ id: string; name: string }>
   onSetTheme: (themeId: string) => void
+  // Phase 5 additions
+  onOpenKeyboardHelp?: () => void
+  onSaveLayout?: () => void
+  onNewChat?: () => void
+  onSpawnSession?: () => void
+  onAddPanel?: (type: string) => void
 }
 
 export function useCommandRegistry(options: UseCommandRegistryOptions): Command[] {
@@ -289,6 +295,35 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
         category: 'general',
         action: options.onExit,
       },
+      {
+        id: 'zen.keyboard-help',
+        label: 'Keyboard Shortcuts',
+        description: 'Show all keyboard shortcuts',
+        icon: '⌨️',
+        shortcut: 'Ctrl+/',
+        category: 'general',
+        action: options.onOpenKeyboardHelp || (() => {}),
+      },
+      
+      // Navigation
+      {
+        id: 'nav.new-chat',
+        label: 'New Chat',
+        description: 'Open new chat with agent picker',
+        icon: '💬',
+        shortcut: 'Ctrl+N',
+        category: 'navigation',
+        action: options.onNewChat || (() => {}),
+      },
+      {
+        id: 'nav.spawn-session',
+        label: 'Spawn Session',
+        description: 'Start a new agent session',
+        icon: '🚀',
+        shortcut: 'Ctrl+Shift+N',
+        category: 'navigation',
+        action: options.onSpawnSession || (() => {}),
+      },
       
       // Layout
       {
@@ -299,6 +334,15 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
         shortcut: 'Ctrl+Shift+L',
         category: 'layout',
         action: options.onCycleLayouts,
+      },
+      {
+        id: 'layout.save',
+        label: 'Save Layout',
+        description: 'Save current layout as preset',
+        icon: '💾',
+        shortcut: 'Ctrl+Shift+S',
+        category: 'layout',
+        action: options.onSaveLayout || (() => {}),
       },
       {
         id: 'layout.split-vertical',
@@ -328,7 +372,63 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
         action: options.onToggleMaximize,
       },
       
-      // Panel
+      // Panel types
+      {
+        id: 'panel.add.chat',
+        label: 'Add Chat Panel',
+        description: 'Add a new chat panel',
+        icon: '💬',
+        category: 'panel',
+        action: () => options.onAddPanel?.('chat'),
+      },
+      {
+        id: 'panel.add.sessions',
+        label: 'Add Sessions Panel',
+        description: 'Add sessions list panel',
+        icon: '📋',
+        category: 'panel',
+        action: () => options.onAddPanel?.('sessions'),
+      },
+      {
+        id: 'panel.add.activity',
+        label: 'Add Activity Panel',
+        description: 'Add real-time activity feed',
+        icon: '⚡',
+        category: 'panel',
+        action: () => options.onAddPanel?.('activity'),
+      },
+      {
+        id: 'panel.add.rooms',
+        label: 'Add Rooms Panel',
+        description: 'Add room navigation panel',
+        icon: '🏠',
+        category: 'panel',
+        action: () => options.onAddPanel?.('rooms'),
+      },
+      {
+        id: 'panel.add.tasks',
+        label: 'Add Tasks Panel',
+        description: 'Add task board panel',
+        icon: '✅',
+        category: 'panel',
+        action: () => options.onAddPanel?.('tasks'),
+      },
+      {
+        id: 'panel.add.logs',
+        label: 'Add Logs Panel',
+        description: 'Add system logs viewer',
+        icon: '📜',
+        category: 'panel',
+        action: () => options.onAddPanel?.('logs'),
+      },
+      {
+        id: 'panel.add.cron',
+        label: 'Add Cron Panel',
+        description: 'Add scheduled jobs viewer',
+        icon: '⏰',
+        category: 'panel',
+        action: () => options.onAddPanel?.('cron'),
+      },
       {
         id: 'panel.close',
         label: 'Close Panel',

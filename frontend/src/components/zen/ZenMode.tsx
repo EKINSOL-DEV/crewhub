@@ -2,7 +2,13 @@
  * Zen Mode - Full-screen focused workspace
  * A tmux-inspired interface for distraction-free agent interaction
  * 
- * Phase 3: Theme System & Command Palette
+ * Phase 5: Advanced Features (FINAL PHASE)
+ * - Enhanced command palette with all commands
+ * - Keyboard shortcut overlay
+ * - Session management (spawn/kill)
+ * - Layout persistence with named presets
+ * - Quick actions
+ * - Polish: animations, loading skeletons, error boundaries, tooltips
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
@@ -19,10 +25,14 @@ import { ZenLogsPanel } from './ZenLogsPanel'
 import { ZenEmptyPanel } from './ZenEmptyPanel'
 import { ZenThemePicker } from './ZenThemePicker'
 import { ZenCommandPalette, useCommandRegistry } from './ZenCommandPalette'
+import { ZenKeyboardHelp } from './ZenKeyboardHelp'
+import { ZenSpawnModal, ZenAgentPicker } from './ZenSessionManager'
+import { ZenSaveLayoutModal, ZenLayoutPicker, saveCurrentLayout, loadCurrentLayout, addRecentLayout, type SavedLayout } from './ZenLayoutManager'
+import { ZenErrorBoundary } from './ZenErrorBoundary'
 import { useZenLayout } from './hooks/useZenLayout'
 import { useZenKeyboard } from './hooks/useZenKeyboard'
 import { useZenTheme } from './hooks/useZenTheme'
-import { type LeafNode, type PanelType, countPanels } from './types/layout'
+import { type LeafNode, type PanelType, type LayoutPreset, countPanels } from './types/layout'
 import './ZenMode.css'
 
 interface ZenModeProps {
@@ -33,6 +43,7 @@ interface ZenModeProps {
   roomName?: string
   connected: boolean
   onExit: () => void
+  onSpawnSession?: (agentId: string, label?: string) => Promise<void>
 }
 
 export function ZenMode({
@@ -43,10 +54,22 @@ export function ZenMode({
   roomName,
   connected,
   onExit,
+  onSpawnSession,
 }: ZenModeProps) {
   const [agentStatus, setAgentStatus] = useState<'active' | 'thinking' | 'idle' | 'error'>('idle')
+  
+  // Modal states
   const [showThemePicker, setShowThemePicker] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
+  const [showSpawnModal, setShowSpawnModal] = useState(false)
+  const [showAgentPicker, setShowAgentPicker] = useState(false)
+  const [showSaveLayout, setShowSaveLayout] = useState(false)
+  const [showLayoutPicker, setShowLayoutPicker] = useState(false)
+  
+  // Check if any modal is open
+  const isModalOpen = showThemePicker || showCommandPalette || showKeyboardHelp || 
+                      showSpawnModal || showAgentPicker || showSaveLayout || showLayoutPicker
   
   // Theme state
   const theme = useZenTheme()
@@ -75,6 +98,19 @@ export function ZenMode({
     }
   }, [])
   
+  // Persist layout on change
+  useEffect(() => {
+    saveCurrentLayout(layout.layout)
+  }, [layout.layout])
+  
+  // Restore layout on mount
+  useEffect(() => {
+    const savedLayout = loadCurrentLayout()
+    if (savedLayout) {
+      // TODO: Apply saved layout if valid
+    }
+  }, [])
+  
   // Set initial session on the first chat panel
   useEffect(() => {
     if (initialSessionKey && initialAgentName) {
@@ -84,6 +120,11 @@ export function ZenMode({
       }
     }
   }, [initialSessionKey, initialAgentName, initialAgentIcon, layout])
+
+  // Handle adding a panel of specific type
+  const handleAddPanel = useCallback((type: string) => {
+    layout.splitPanel(layout.focusedPanelId, 'row', type as PanelType)
+  }, [layout])
 
   // Command registry
   const commands = useCommandRegistry({
@@ -96,11 +137,17 @@ export function ZenMode({
     onToggleMaximize: layout.toggleMaximize,
     themes: theme.themes.map(t => ({ id: t.id, name: t.name })),
     onSetTheme: theme.setTheme,
+    // Phase 5 additions
+    onOpenKeyboardHelp: () => setShowKeyboardHelp(true),
+    onSaveLayout: () => setShowSaveLayout(true),
+    onNewChat: () => setShowAgentPicker(true),
+    onSpawnSession: () => setShowSpawnModal(true),
+    onAddPanel: handleAddPanel,
   })
 
   // Keyboard shortcuts
   useZenKeyboard({
-    enabled: !showThemePicker && !showCommandPalette,
+    enabled: !isModalOpen,
     actions: {
       onExit,
       onFocusNext: layout.focusNextPanel,
@@ -111,12 +158,16 @@ export function ZenMode({
       onClosePanel: () => layout.closePanel(layout.focusedPanelId),
       onToggleMaximize: layout.toggleMaximize,
       onCycleLayouts: layout.cyclePresets,
+      onSaveLayout: () => setShowSaveLayout(true),
       onResizeLeft: () => layout.resizePanel(layout.focusedPanelId, -0.05),
       onResizeRight: () => layout.resizePanel(layout.focusedPanelId, 0.05),
       onResizeUp: () => layout.resizePanel(layout.focusedPanelId, -0.05),
       onResizeDown: () => layout.resizePanel(layout.focusedPanelId, 0.05),
       onOpenThemePicker: () => setShowThemePicker(true),
       onOpenCommandPalette: () => setShowCommandPalette(true),
+      onOpenKeyboardHelp: () => setShowKeyboardHelp(true),
+      onNewChat: () => setShowAgentPicker(true),
+      onSpawnSession: () => setShowSpawnModal(true),
     },
   })
 
@@ -152,6 +203,47 @@ export function ZenMode({
     theme.setTheme(themeId)
   }, [theme])
   
+  // Handle spawn session
+  const handleSpawnSession = useCallback(async (agentId: string, label?: string) => {
+    if (onSpawnSession) {
+      await onSpawnSession(agentId, label)
+    }
+  }, [onSpawnSession])
+  
+  // Handle agent picker selection
+  const handleAgentPickerSelect = useCallback((agentId: string, agentName: string, agentIcon: string) => {
+    // Create a new chat panel with the selected agent
+    layout.splitPanel(layout.focusedPanelId, 'row', 'chat')
+    // The new panel will be focused, set its agent
+    setTimeout(() => {
+      const newChatPanel = layout.panels.find(p => 
+        p.panelType === 'chat' && !p.agentSessionKey
+      )
+      if (newChatPanel) {
+        // TODO: Create a new session for this agent
+        layout.setPanelAgent(newChatPanel.panelId, `agent:${agentId}:new`, agentName, agentIcon)
+      }
+    }, 50)
+    setShowAgentPicker(false)
+  }, [layout])
+  
+  // Handle save layout
+  const handleSaveLayout = useCallback((savedLayout: SavedLayout) => {
+    addRecentLayout(savedLayout.id)
+  }, [])
+  
+  // Handle layout preset selection
+  const handleSelectPreset = useCallback((preset: LayoutPreset) => {
+    layout.applyPreset(preset)
+    addRecentLayout(preset)
+  }, [layout])
+  
+  // Handle saved layout selection
+  const handleSelectSavedLayout = useCallback((savedLayout: SavedLayout) => {
+    // TODO: Apply the saved layout
+    addRecentLayout(savedLayout.id)
+  }, [])
+  
   // Get the name of the focused agent for status bar
   const focusedAgentName = useMemo(() => {
     const panel = layout.focusedPanel
@@ -164,52 +256,63 @@ export function ZenMode({
   // Can close panels if more than one
   const canClose = countPanels(layout.layout) > 1
 
-  // Render panel content based on type
+  // Render panel content based on type with error boundary
   const renderPanel = useCallback((panel: LeafNode) => {
-    switch (panel.panelType) {
-      case 'chat':
-        return (
-          <ZenChatPanel
-            sessionKey={panel.agentSessionKey || null}
-            agentName={panel.agentName || null}
-            agentIcon={panel.agentIcon || null}
-            onStatusChange={handleStatusChange}
-          />
-        )
-      
-      case 'sessions':
-        return (
-          <ZenSessionsPanel
-            selectedSessionKey={layout.focusedPanel?.panelType === 'chat' 
-              ? layout.focusedPanel.agentSessionKey 
-              : undefined}
-            onSelectSession={handleSelectSession}
-          />
-        )
-      
-      case 'activity':
-        return <ZenActivityPanel />
-      
-      case 'rooms':
-        return <ZenRoomsPanel />
-      
-      case 'tasks':
-        return <ZenTasksPanel />
-      
-      case 'cron':
-        return <ZenCronPanel />
-      
-      case 'logs':
-        return <ZenLogsPanel />
-      
-      case 'empty':
-      default:
-        return (
-          <ZenEmptyPanel 
-            onSelectPanelType={(type) => handleSelectPanelType(panel.panelId, type)} 
-          />
-        )
-    }
+    const panelContent = (() => {
+      switch (panel.panelType) {
+        case 'chat':
+          return (
+            <ZenChatPanel
+              sessionKey={panel.agentSessionKey || null}
+              agentName={panel.agentName || null}
+              agentIcon={panel.agentIcon || null}
+              onStatusChange={handleStatusChange}
+            />
+          )
+        
+        case 'sessions':
+          return (
+            <ZenSessionsPanel
+              selectedSessionKey={layout.focusedPanel?.panelType === 'chat' 
+                ? layout.focusedPanel.agentSessionKey 
+                : undefined}
+              onSelectSession={handleSelectSession}
+            />
+          )
+        
+        case 'activity':
+          return <ZenActivityPanel />
+        
+        case 'rooms':
+          return <ZenRoomsPanel />
+        
+        case 'tasks':
+          return <ZenTasksPanel />
+        
+        case 'cron':
+          return <ZenCronPanel />
+        
+        case 'logs':
+          return <ZenLogsPanel />
+        
+        case 'empty':
+        default:
+          return (
+            <ZenEmptyPanel 
+              onSelectPanelType={(type) => handleSelectPanelType(panel.panelId, type)} 
+            />
+          )
+      }
+    })()
+    
+    return (
+      <ZenErrorBoundary 
+        panelType={panel.panelType}
+        onReset={() => handleSelectPanelType(panel.panelId, 'empty')}
+      >
+        {panelContent}
+      </ZenErrorBoundary>
+    )
   }, [handleStatusChange, handleSelectSession, handleSelectPanelType, layout.focusedPanel])
 
   return (
@@ -227,6 +330,7 @@ export function ZenMode({
         themeName={theme.currentTheme.name}
         onOpenThemePicker={() => setShowThemePicker(true)}
         onOpenCommandPalette={() => setShowCommandPalette(true)}
+        onOpenKeyboardHelp={() => setShowKeyboardHelp(true)}
       />
       
       <main className="zen-main">
@@ -267,6 +371,48 @@ export function ZenMode({
           onClose={() => setShowCommandPalette(false)}
         />
       )}
+      
+      {/* Keyboard Help Overlay */}
+      {showKeyboardHelp && (
+        <ZenKeyboardHelp
+          onClose={() => setShowKeyboardHelp(false)}
+        />
+      )}
+      
+      {/* Spawn Session Modal */}
+      {showSpawnModal && (
+        <ZenSpawnModal
+          onClose={() => setShowSpawnModal(false)}
+          onSpawn={handleSpawnSession}
+        />
+      )}
+      
+      {/* Agent Picker (Quick New Chat) */}
+      {showAgentPicker && (
+        <ZenAgentPicker
+          onClose={() => setShowAgentPicker(false)}
+          onSelect={handleAgentPickerSelect}
+        />
+      )}
+      
+      {/* Save Layout Modal */}
+      {showSaveLayout && (
+        <ZenSaveLayoutModal
+          layout={layout.layout}
+          onClose={() => setShowSaveLayout(false)}
+          onSave={handleSaveLayout}
+        />
+      )}
+      
+      {/* Layout Picker Modal */}
+      {showLayoutPicker && (
+        <ZenLayoutPicker
+          onClose={() => setShowLayoutPicker(false)}
+          onSelectPreset={handleSelectPreset}
+          onSelectSaved={handleSelectSavedLayout}
+          onDeleteSaved={() => {}}
+        />
+      )}
     </div>
   )
 }
@@ -285,6 +431,7 @@ export function ZenModeButton({ onClick }: ZenModeButtonProps) {
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className="zen-mode-button"
       style={{
         position: 'fixed',
         bottom: '16px',

@@ -95,6 +95,7 @@ export interface UseZenLayoutReturn {
   
   applyPreset: (preset: LayoutPreset) => void
   cyclePresets: () => void
+  applyLayout: (layout: LayoutNode) => void
   
   // Panel state
   updatePanelState: (panelId: string, updates: Partial<LeafNode>) => void
@@ -342,14 +343,28 @@ export function useZenLayout(): UseZenLayoutReturn {
   // Persist layout to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('zen-layout', JSON.stringify({
+      localStorage.setItem('zen-layout-current', JSON.stringify({
         root: state.root,
         focusedPanelId: state.focusedPanelId,
+        savedAt: Date.now(),
       }))
     } catch {
       // Ignore storage errors
     }
   }, [state.root, state.focusedPanelId])
+  
+  // Apply a custom layout
+  const applyLayout = useCallback((layout: LayoutNode) => {
+    const panels = getAllPanels(layout)
+    const chatPanel = panels.find(p => p.panelType === 'chat')
+    
+    setState({
+      root: layout,
+      focusedPanelId: chatPanel?.panelId || panels[0]?.panelId || '',
+      maximizedPanelId: null,
+      savedLayout: null,
+    })
+  }, [])
   
   return {
     layout: effectiveLayout,
@@ -375,6 +390,7 @@ export function useZenLayout(): UseZenLayoutReturn {
     
     applyPreset,
     cyclePresets,
+    applyLayout,
     
     updatePanelState,
     setPanelAgent,
