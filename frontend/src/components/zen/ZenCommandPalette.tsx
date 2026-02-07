@@ -423,6 +423,14 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
         action: () => options.onAddPanel?.('tasks'),
       },
       {
+        id: 'panel.add.kanban',
+        label: 'Add Kanban Panel',
+        description: 'Add kanban board view',
+        icon: '📊',
+        category: 'panel',
+        action: () => options.onAddPanel?.('kanban'),
+      },
+      {
         id: 'panel.add.logs',
         label: 'Add Logs Panel',
         description: 'Add system logs viewer',
