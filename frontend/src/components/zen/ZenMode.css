@@ -133,6 +133,33 @@
   color: #fff;
 }
 
+.zen-btn-theme {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-xs);
+  padding: var(--zen-space-xs) var(--zen-space-sm);
+  background: var(--zen-bg);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius);
+  font-size: 11px;
+}
+
+.zen-btn-theme:hover {
+  border-color: var(--zen-accent);
+  color: var(--zen-accent);
+}
+
+.zen-btn-theme-icon {
+  font-size: 12px;
+}
+
+.zen-btn-theme-name {
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Status Bar ────────────────────────────────────────────────── */
 
 .zen-status-bar {
@@ -1014,4 +1041,678 @@
 
 .zen-status-time {
   font-variant-numeric: tabular-nums;
+}
+
+.zen-status-theme {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-xs);
+  color: var(--zen-fg-muted);
+}
+
+.zen-status-theme-icon {
+  font-size: 10px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PHASE 3: Theme System & Polish
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Theme Transitions ─────────────────────────────────────────── */
+
+.zen-mode,
+.zen-mode * {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+/* Disable transitions for resize operations */
+.zen-mode.zen-resizing,
+.zen-mode.zen-resizing * {
+  transition: none !important;
+}
+
+/* ── Theme Picker Modal ────────────────────────────────────────── */
+
+.zen-theme-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: zen-fade-in 0.15s ease-out;
+}
+
+.zen-theme-picker {
+  width: 480px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--zen-bg-panel);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  animation: zen-slide-up 0.2s ease-out;
+}
+
+@keyframes zen-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.zen-theme-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--zen-space-md) var(--zen-space-lg);
+  border-bottom: 1px solid var(--zen-border);
+}
+
+.zen-theme-picker-title {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--zen-fg);
+}
+
+.zen-theme-picker-icon {
+  font-size: 16px;
+}
+
+.zen-theme-picker-hints {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  font-size: 10px;
+  color: var(--zen-fg-muted);
+}
+
+.zen-theme-picker-sep {
+  color: var(--zen-fg-dim);
+}
+
+.zen-theme-picker-sections {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--zen-space-md);
+}
+
+.zen-theme-picker-sections::-webkit-scrollbar {
+  width: 6px;
+}
+
+.zen-theme-picker-sections::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.zen-theme-picker-sections::-webkit-scrollbar-thumb {
+  background: var(--zen-border);
+  border-radius: 3px;
+}
+
+.zen-theme-picker-section {
+  margin-bottom: var(--zen-space-lg);
+}
+
+.zen-theme-picker-section:last-child {
+  margin-bottom: 0;
+}
+
+.zen-theme-picker-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-xs);
+  margin: 0 0 var(--zen-space-sm) 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--zen-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zen-theme-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zen-space-xs);
+}
+
+/* ── Theme Option ──────────────────────────────────────────────── */
+
+.zen-theme-option {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-md);
+  padding: var(--zen-space-sm) var(--zen-space-md);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--zen-radius);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--zen-fg);
+  transition: all 0.15s ease;
+}
+
+.zen-theme-option:hover {
+  background: var(--zen-bg-hover);
+}
+
+.zen-theme-option-selected {
+  background: var(--zen-bg-active);
+  border-color: var(--zen-border-focus);
+}
+
+.zen-theme-option-current .zen-theme-name {
+  color: var(--zen-accent);
+}
+
+.zen-theme-preview {
+  position: relative;
+  width: 48px;
+  height: 32px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.zen-theme-preview-accent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+}
+
+.zen-theme-preview-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--zen-font-mono);
+}
+
+.zen-theme-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.zen-theme-name {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--zen-fg);
+}
+
+.zen-theme-current-badge {
+  padding: 1px 6px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--zen-accent);
+  color: var(--zen-bg);
+  border-radius: 3px;
+}
+
+.zen-theme-description {
+  font-size: 11px;
+  color: var(--zen-fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.zen-theme-colors {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.zen-theme-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--zen-border);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Command Palette
+   ══════════════════════════════════════════════════════════════════ */
+
+.zen-command-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: zen-fade-in 0.1s ease-out;
+}
+
+.zen-command-palette {
+  width: 560px;
+  max-width: 90vw;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--zen-bg-panel);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  animation: zen-slide-up 0.15s ease-out;
+}
+
+.zen-command-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-md) var(--zen-space-lg);
+  border-bottom: 1px solid var(--zen-border);
+}
+
+.zen-command-input-icon {
+  font-size: 16px;
+  color: var(--zen-fg-muted);
+}
+
+.zen-command-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--zen-font-mono);
+  font-size: 14px;
+  color: var(--zen-fg);
+}
+
+.zen-command-input::placeholder {
+  color: var(--zen-fg-muted);
+}
+
+.zen-command-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--zen-bg);
+  border: none;
+  border-radius: 50%;
+  color: var(--zen-fg-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zen-command-clear:hover {
+  background: var(--zen-bg-active);
+  color: var(--zen-fg);
+}
+
+.zen-command-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--zen-space-sm);
+}
+
+.zen-command-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.zen-command-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.zen-command-list::-webkit-scrollbar-thumb {
+  background: var(--zen-border);
+  border-radius: 3px;
+}
+
+.zen-command-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-xl);
+  color: var(--zen-fg-muted);
+}
+
+.zen-command-empty-icon {
+  font-size: 24px;
+  opacity: 0.5;
+}
+
+.zen-command-group {
+  margin-bottom: var(--zen-space-sm);
+}
+
+.zen-command-group:last-child {
+  margin-bottom: 0;
+}
+
+.zen-command-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-xs);
+  padding: var(--zen-space-xs) var(--zen-space-sm);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--zen-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zen-command-item {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  width: 100%;
+  padding: var(--zen-space-sm) var(--zen-space-md);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--zen-radius);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--zen-fg);
+  transition: all 0.1s ease;
+}
+
+.zen-command-item:hover,
+.zen-command-item-selected {
+  background: var(--zen-bg-hover);
+}
+
+.zen-command-item-selected {
+  border-color: var(--zen-border-focus);
+  background: var(--zen-bg-active);
+}
+
+.zen-command-item-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.zen-command-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.zen-command-item-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.zen-command-item-desc {
+  font-size: 11px;
+  color: var(--zen-fg-muted);
+}
+
+.zen-command-item-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.zen-command-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--zen-space-lg);
+  padding: var(--zen-space-sm) var(--zen-space-lg);
+  border-top: 1px solid var(--zen-border);
+  font-size: 10px;
+  color: var(--zen-fg-muted);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Polish & Accessibility
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Focus Rings ───────────────────────────────────────────────── */
+
+.zen-mode *:focus-visible {
+  outline: 2px solid var(--zen-border-focus);
+  outline-offset: 2px;
+}
+
+.zen-mode button:focus-visible,
+.zen-mode input:focus-visible,
+.zen-mode textarea:focus-visible {
+  outline-offset: 0;
+}
+
+/* ── Loading States ────────────────────────────────────────────── */
+
+.zen-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--zen-bg-hover) 25%,
+    var(--zen-bg-active) 50%,
+    var(--zen-bg-hover) 75%
+  );
+  background-size: 200% 100%;
+  animation: zen-skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--zen-radius);
+}
+
+@keyframes zen-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.zen-skeleton-text {
+  height: 12px;
+  width: 80%;
+}
+
+.zen-skeleton-text-short {
+  width: 40%;
+}
+
+.zen-skeleton-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+/* ── Loading Spinner ───────────────────────────────────────────── */
+
+.zen-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--zen-border);
+  border-top-color: var(--zen-accent);
+  border-radius: 50%;
+  animation: zen-spin 0.8s linear infinite;
+}
+
+@keyframes zen-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Error States ──────────────────────────────────────────────── */
+
+.zen-error-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-sm) var(--zen-space-md);
+  background: color-mix(in srgb, var(--zen-error) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--zen-error) 30%, transparent);
+  border-radius: var(--zen-radius);
+  color: var(--zen-error);
+  font-size: 12px;
+}
+
+.zen-error-icon {
+  font-size: 14px;
+}
+
+/* ── New Messages Banner ───────────────────────────────────────── */
+
+.zen-new-messages {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-xs) var(--zen-space-md);
+  background: var(--zen-accent);
+  color: var(--zen-bg);
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: zen-slide-up 0.2s ease-out;
+  z-index: 10;
+}
+
+.zen-new-messages:hover {
+  background: var(--zen-accent-hover);
+}
+
+/* ── Tooltip ───────────────────────────────────────────────────── */
+
+.zen-tooltip {
+  position: absolute;
+  z-index: 10001;
+  padding: var(--zen-space-xs) var(--zen-space-sm);
+  background: var(--zen-bg);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius);
+  font-size: 11px;
+  color: var(--zen-fg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: zen-fade-in 0.1s ease-out;
+}
+
+/* ── Badges ────────────────────────────────────────────────────── */
+
+.zen-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 9px;
+  background: var(--zen-bg-active);
+  color: var(--zen-fg);
+}
+
+.zen-badge-accent {
+  background: var(--zen-accent);
+  color: var(--zen-bg);
+}
+
+.zen-badge-success {
+  background: var(--zen-success);
+  color: var(--zen-bg);
+}
+
+.zen-badge-warning {
+  background: var(--zen-warning);
+  color: var(--zen-bg);
+}
+
+.zen-badge-error {
+  background: var(--zen-error);
+  color: var(--zen-bg);
+}
+
+/* ── Dividers ──────────────────────────────────────────────────── */
+
+.zen-divider {
+  height: 1px;
+  background: var(--zen-border);
+  margin: var(--zen-space-md) 0;
+}
+
+.zen-divider-vertical {
+  width: 1px;
+  height: 100%;
+  background: var(--zen-border);
+  margin: 0 var(--zen-space-md);
+}
+
+/* ── Light Theme Adjustments ───────────────────────────────────── */
+
+[data-zen-theme-type="light"] .zen-theme-picker-backdrop,
+[data-zen-theme-type="light"] .zen-command-backdrop {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+[data-zen-theme-type="light"] .zen-theme-picker,
+[data-zen-theme-type="light"] .zen-command-palette {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+[data-zen-theme-type="light"] .zen-theme-color-dot {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* ── High Contrast Mode Support ────────────────────────────────── */
+
+@media (prefers-contrast: more) {
+  .zen-mode {
+    --zen-border: var(--zen-fg-muted);
+    --zen-border-focus: var(--zen-accent);
+  }
+  
+  .zen-mode button,
+  .zen-mode input,
+  .zen-mode textarea {
+    border-width: 2px;
+  }
+}
+
+/* ── Reduced Motion ────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .zen-mode,
+  .zen-mode * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

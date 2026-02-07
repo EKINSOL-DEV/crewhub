@@ -13,11 +13,14 @@ export { ZenPanelContainer } from './ZenPanelContainer'
 export { ZenSessionsPanel } from './ZenSessionsPanel'
 export { ZenActivityPanel } from './ZenActivityPanel'
 export { ZenEmptyPanel } from './ZenEmptyPanel'
+export { ZenThemePicker } from './ZenThemePicker'
+export { ZenCommandPalette, useCommandRegistry, type Command } from './ZenCommandPalette'
 
 // ── Hooks ─────────────────────────────────────────────────────────
 export { useZenMode, type UseZenModeReturn } from './hooks/useZenMode'
 export { useZenLayout, LAYOUT_PRESETS, type UseZenLayoutReturn } from './hooks/useZenLayout'
 export { useZenKeyboard, KEYBOARD_SHORTCUTS, type ShortcutHint } from './hooks/useZenKeyboard'
+export { useZenTheme, type UseZenThemeReturn } from './hooks/useZenTheme'
 
 // ── Types ─────────────────────────────────────────────────────────
 export {
@@ -42,4 +45,35 @@ export {
 } from './types/layout'
 
 // ── Themes ────────────────────────────────────────────────────────
-export { tokyoNight, themeToCSSVariables, type ZenTheme } from './themes/tokyo-night'
+export {
+  type ZenTheme,
+  themeToCSSVariables,
+  themes,
+  getTheme,
+  getAllThemes,
+  getThemesByType,
+  getDefaultTheme,
+  themeInfo,
+  type ThemeInfo,
+  // Individual themes
+  tokyoNight,
+  dracula,
+  nord,
+  solarizedDark,
+  solarizedLight,
+  gruvboxDark,
+  oneDark,
+  catppuccinMocha,
+  githubLight,
+} from './themes'
+
+// ── Utilities ─────────────────────────────────────────────────────
+export {
+  getContrastRatio,
+  meetsWCAG_AA,
+  meetsWCAG_AA_Large,
+  meetsWCAG_AAA,
+  getContrastLevel,
+  validateThemeContrast,
+  type ContrastIssue,
+} from './utils/contrast'

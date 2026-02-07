@@ -1,6 +1,6 @@
 /**
  * Zen Mode Top Bar
- * Minimal header with title, layout info, and exit button
+ * Minimal header with title, layout info, theme, and action buttons
  */
 
 interface ZenTopBarProps {
@@ -8,9 +8,20 @@ interface ZenTopBarProps {
   isMaximized?: boolean
   onRestore?: () => void
   layoutName?: string
+  themeName?: string
+  onOpenThemePicker?: () => void
+  onOpenCommandPalette?: () => void
 }
 
-export function ZenTopBar({ onExit, isMaximized, onRestore, layoutName }: ZenTopBarProps) {
+export function ZenTopBar({ 
+  onExit, 
+  isMaximized, 
+  onRestore, 
+  layoutName,
+  themeName,
+  onOpenThemePicker,
+  onOpenCommandPalette,
+}: ZenTopBarProps) {
   return (
     <header className="zen-top-bar">
       <div className="zen-top-bar-left">
@@ -30,18 +41,42 @@ export function ZenTopBar({ onExit, isMaximized, onRestore, layoutName }: ZenTop
       <div className="zen-top-bar-center">
         <div className="zen-top-bar-hints">
           <span className="zen-top-bar-hint">
-            <kbd className="zen-kbd">Tab</kbd> switch panels
+            <kbd className="zen-kbd">Ctrl+K</kbd> commands
+          </span>
+          <span className="zen-top-bar-hint">
+            <kbd className="zen-kbd">Tab</kbd> panels
           </span>
           <span className="zen-top-bar-hint">
             <kbd className="zen-kbd">Ctrl+\</kbd> split
-          </span>
-          <span className="zen-top-bar-hint">
-            <kbd className="zen-kbd">Ctrl+Shift+L</kbd> layouts
           </span>
         </div>
       </div>
       
       <div className="zen-top-bar-right">
+        {/* Theme Button */}
+        {themeName && onOpenThemePicker && (
+          <button
+            className="zen-btn zen-btn-theme"
+            onClick={onOpenThemePicker}
+            title="Change theme (Ctrl+Shift+T)"
+          >
+            <span className="zen-btn-theme-icon">🎨</span>
+            <span className="zen-btn-theme-name">{themeName}</span>
+          </button>
+        )}
+        
+        {/* Command Palette Button */}
+        {onOpenCommandPalette && (
+          <button
+            className="zen-btn zen-btn-icon"
+            onClick={onOpenCommandPalette}
+            title="Command palette (Ctrl+K)"
+          >
+            ⌘
+          </button>
+        )}
+        
+        {/* Restore from maximized */}
         {isMaximized && onRestore && (
           <button
             className="zen-btn zen-btn-icon"
@@ -52,6 +87,7 @@ export function ZenTopBar({ onExit, isMaximized, onRestore, layoutName }: ZenTop
           </button>
         )}
         
+        {/* Exit button */}
         <button
           className="zen-btn zen-btn-icon zen-btn-close"
           onClick={onExit}

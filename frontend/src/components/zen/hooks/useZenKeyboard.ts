@@ -28,6 +28,10 @@ export interface ZenKeyboardActions {
   onResizeRight?: () => void
   onResizeUp?: () => void
   onResizeDown?: () => void
+  
+  // Theme & Command Palette
+  onOpenThemePicker?: () => void
+  onOpenCommandPalette?: () => void
 }
 
 export interface UseZenKeyboardOptions {
@@ -40,6 +44,7 @@ export interface UseZenKeyboardOptions {
  * 
  * GLOBAL
  *   Escape           Exit Zen Mode / Close modal
+ *   Ctrl+K           Open command palette
  *   Tab              Focus next panel
  *   Shift+Tab        Focus previous panel
  *   Ctrl+1-9         Focus panel by number
@@ -52,6 +57,9 @@ export interface UseZenKeyboardOptions {
  * 
  * LAYOUT
  *   Ctrl+Shift+L     Cycle layouts
+ * 
+ * THEME
+ *   Ctrl+Shift+T     Open theme picker
  * 
  * RESIZE
  *   Ctrl+Shift+Arrow Resize focused panel
@@ -76,6 +84,22 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
     const isInput = target.tagName === 'INPUT' || 
                    target.tagName === 'TEXTAREA' || 
                    target.isContentEditable
+    
+    // Ctrl+K - Command Palette (works even in inputs)
+    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
+      e.preventDefault()
+      e.stopPropagation()
+      a.onOpenCommandPalette?.()
+      return
+    }
+    
+    // Ctrl+Shift+T - Theme Picker
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
+      e.preventDefault()
+      e.stopPropagation()
+      a.onOpenThemePicker?.()
+      return
+    }
     
     // Tab / Shift+Tab - Focus navigation (unless in input with Tab)
     if (e.key === 'Tab' && !isInput) {
@@ -166,12 +190,13 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
 export interface ShortcutHint {
   keys: string[]
   description: string
-  category: 'global' | 'panels' | 'layout'
+  category: 'global' | 'panels' | 'layout' | 'theme'
 }
 
 export const KEYBOARD_SHORTCUTS: ShortcutHint[] = [
   // Global
   { keys: ['Esc'], description: 'Exit Zen Mode', category: 'global' },
+  { keys: ['Ctrl', 'K'], description: 'Command palette', category: 'global' },
   { keys: ['Tab'], description: 'Focus next panel', category: 'global' },
   { keys: ['Shift', 'Tab'], description: 'Focus previous panel', category: 'global' },
   { keys: ['Ctrl', '1-9'], description: 'Focus panel by number', category: 'global' },
@@ -185,4 +210,7 @@ export const KEYBOARD_SHORTCUTS: ShortcutHint[] = [
   
   // Layout
   { keys: ['Ctrl', 'Shift', 'L'], description: 'Cycle layouts', category: 'layout' },
+  
+  // Theme
+  { keys: ['Ctrl', 'Shift', 'T'], description: 'Open theme picker', category: 'theme' },
 ]

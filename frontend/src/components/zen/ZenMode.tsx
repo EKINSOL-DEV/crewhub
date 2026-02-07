@@ -2,7 +2,7 @@
  * Zen Mode - Full-screen focused workspace
  * A tmux-inspired interface for distraction-free agent interaction
  * 
- * Phase 2: Multi-panel split-tree layout
+ * Phase 3: Theme System & Command Palette
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
@@ -13,9 +13,11 @@ import { ZenChatPanel } from './ZenChatPanel'
 import { ZenSessionsPanel } from './ZenSessionsPanel'
 import { ZenActivityPanel } from './ZenActivityPanel'
 import { ZenEmptyPanel } from './ZenEmptyPanel'
+import { ZenThemePicker } from './ZenThemePicker'
+import { ZenCommandPalette, useCommandRegistry } from './ZenCommandPalette'
 import { useZenLayout } from './hooks/useZenLayout'
 import { useZenKeyboard } from './hooks/useZenKeyboard'
-import { tokyoNight, themeToCSSVariables } from './themes/tokyo-night'
+import { useZenTheme } from './hooks/useZenTheme'
 import { type LeafNode, type PanelType, countPanels } from './types/layout'
 import './ZenMode.css'
 
@@ -39,35 +41,26 @@ export function ZenMode({
   onExit,
 }: ZenModeProps) {
   const [agentStatus, setAgentStatus] = useState<'active' | 'thinking' | 'idle' | 'error'>('idle')
+  const [showThemePicker, setShowThemePicker] = useState(false)
+  const [showCommandPalette, setShowCommandPalette] = useState(false)
+  
+  // Theme state
+  const theme = useZenTheme()
   
   // Layout state
   const layout = useZenLayout()
   
   // Apply theme CSS variables
   useEffect(() => {
-    const root = document.documentElement
-    const vars = themeToCSSVariables(tokyoNight)
+    theme.applyTheme()
     
-    const originalValues: Record<string, string> = {}
-    
-    Object.entries(vars).forEach(([key, value]) => {
-      originalValues[key] = root.style.getPropertyValue(key)
-      root.style.setProperty(key, value)
-    })
-
-    root.setAttribute('data-zen-theme', tokyoNight.id)
-
     return () => {
-      Object.entries(originalValues).forEach(([key, value]) => {
-        if (value) {
-          root.style.setProperty(key, value)
-        } else {
-          root.style.removeProperty(key)
-        }
-      })
+      // Clean up theme on unmount
+      const root = document.documentElement
       root.removeAttribute('data-zen-theme')
+      root.removeAttribute('data-zen-theme-type')
     }
-  }, [])
+  }, [theme])
 
   // Lock body scroll
   useEffect(() => {
@@ -88,9 +81,22 @@ export function ZenMode({
     }
   }, [initialSessionKey, initialAgentName, initialAgentIcon, layout])
 
+  // Command registry
+  const commands = useCommandRegistry({
+    onExit,
+    onOpenThemePicker: () => setShowThemePicker(true),
+    onCycleLayouts: layout.cyclePresets,
+    onSplitVertical: () => layout.splitPanel(layout.focusedPanelId, 'row', 'empty'),
+    onSplitHorizontal: () => layout.splitPanel(layout.focusedPanelId, 'col', 'empty'),
+    onClosePanel: () => layout.closePanel(layout.focusedPanelId),
+    onToggleMaximize: layout.toggleMaximize,
+    themes: theme.themes.map(t => ({ id: t.id, name: t.name })),
+    onSetTheme: theme.setTheme,
+  })
+
   // Keyboard shortcuts
   useZenKeyboard({
-    enabled: true,
+    enabled: !showThemePicker && !showCommandPalette,
     actions: {
       onExit,
       onFocusNext: layout.focusNextPanel,
@@ -105,6 +111,8 @@ export function ZenMode({
       onResizeRight: () => layout.resizePanel(layout.focusedPanelId, 0.05),
       onResizeUp: () => layout.resizePanel(layout.focusedPanelId, -0.05),
       onResizeDown: () => layout.resizePanel(layout.focusedPanelId, 0.05),
+      onOpenThemePicker: () => setShowThemePicker(true),
+      onOpenCommandPalette: () => setShowCommandPalette(true),
     },
   })
 
@@ -134,6 +142,11 @@ export function ZenMode({
   const handleSelectPanelType = useCallback((panelId: string, type: PanelType) => {
     layout.updatePanelState(panelId, { panelType: type })
   }, [layout])
+  
+  // Handle theme selection
+  const handleSelectTheme = useCallback((themeId: string) => {
+    theme.setTheme(themeId)
+  }, [theme])
   
   // Get the name of the focused agent for status bar
   const focusedAgentName = useMemo(() => {
@@ -195,6 +208,9 @@ export function ZenMode({
         isMaximized={layout.isMaximized}
         onRestore={layout.isMaximized ? layout.restoreLayout : undefined}
         layoutName={layout.isMaximized ? 'Maximized' : undefined}
+        themeName={theme.currentTheme.name}
+        onOpenThemePicker={() => setShowThemePicker(true)}
+        onOpenCommandPalette={() => setShowCommandPalette(true)}
       />
       
       <main className="zen-main">
@@ -216,7 +232,25 @@ export function ZenMode({
         connected={connected}
         panelCount={layout.panelCount}
         focusedPanelIndex={layout.panels.findIndex(p => p.panelId === layout.focusedPanelId) + 1}
+        themeName={theme.currentTheme.name}
       />
+      
+      {/* Theme Picker Modal */}
+      {showThemePicker && (
+        <ZenThemePicker
+          currentThemeId={theme.currentTheme.id}
+          onSelectTheme={handleSelectTheme}
+          onClose={() => setShowThemePicker(false)}
+        />
+      )}
+      
+      {/* Command Palette */}
+      {showCommandPalette && (
+        <ZenCommandPalette
+          commands={commands}
+          onClose={() => setShowCommandPalette(false)}
+        />
+      )}
     </div>
   )
 }

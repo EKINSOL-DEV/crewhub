@@ -1,6 +1,6 @@
 /**
  * Zen Mode Status Bar
- * Bottom bar showing agent status, room, panel info, and connection status
+ * Bottom bar showing agent status, room, panel info, theme, and connection status
  */
 
 import { useState, useEffect } from 'react'
@@ -12,6 +12,7 @@ interface ZenStatusBarProps {
   connected: boolean
   panelCount?: number
   focusedPanelIndex?: number
+  themeName?: string
 }
 
 function formatTime(date: Date): string {
@@ -29,6 +30,7 @@ export function ZenStatusBar({
   connected,
   panelCount = 1,
   focusedPanelIndex = 1,
+  themeName,
 }: ZenStatusBarProps) {
   const [currentTime, setCurrentTime] = useState(formatTime(new Date()))
 
@@ -86,6 +88,15 @@ export function ZenStatusBar({
           <span className="zen-status-panels">
             Panel {focusedPanelIndex}/{panelCount}
           </span>
+          {themeName && (
+            <>
+              <span className="zen-status-sep">•</span>
+              <span className="zen-status-theme" title="Current theme">
+                <span className="zen-status-theme-icon">🎨</span>
+                {themeName}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
