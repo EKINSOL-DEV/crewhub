@@ -487,10 +487,17 @@ export function ZenChatPanel({
     prevMessageCount.current = messages.length
   }, [messages.length])
 
-  // Focus input on mount
+  // Focus input and scroll to bottom on mount/session switch
   useEffect(() => {
     if (sessionKey) {
       setTimeout(() => inputRef.current?.focus(), 150)
+      // Scroll to bottom when entering Zen Mode or switching sessions
+      setTimeout(() => {
+        const container = scrollContainerRef.current
+        if (container) {
+          container.scrollTop = container.scrollHeight
+        }
+      }, 200)
     }
   }, [sessionKey])
   
