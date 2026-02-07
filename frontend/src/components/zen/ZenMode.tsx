@@ -507,7 +507,7 @@ export function ZenModeButton({ onClick }: ZenModeButtonProps) {
         background: isHovered ? 'rgba(122, 162, 247, 0.2)' : 'rgba(0, 0, 0, 0.6)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
-        color: isHovered ? '#7aa2f7' : 'rgba(255, 255, 255, 0.8)',
+        color: isHovered ? '#4a6da7' : 'rgba(255, 255, 255, 0.8)',
         fontSize: '13px',
         fontWeight: 500,
         fontFamily: 'system-ui, -apple-system, sans-serif',
