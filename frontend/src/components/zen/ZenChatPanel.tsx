@@ -5,6 +5,8 @@
 
 import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 'react'
 import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
+import { parseMediaAttachments } from '@/utils/mediaParser'
+import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
 
 interface ZenChatPanelProps {
   sessionKey: string | null
@@ -105,6 +107,10 @@ function ToolCall({ tool }: { tool: ToolCallData }) {
 function Message({ msg }: { msg: ChatMessageData }) {
   const isUser = msg.role === 'user'
   const isSystem = msg.role === 'system'
+  
+  // Parse media attachments from content
+  const { text, attachments } = parseMediaAttachments(msg.content || '')
+  const imageAttachments = attachments.filter(a => a.type === 'image')
 
   if (isSystem) {
     return (
@@ -118,7 +124,7 @@ function Message({ msg }: { msg: ChatMessageData }) {
           padding: 'var(--zen-space-sm) 0'
         }}
       >
-        {msg.content}
+        {text}
       </div>
     )
   }
@@ -131,6 +137,20 @@ function Message({ msg }: { msg: ChatMessageData }) {
         </span>
         <span className="zen-message-time">{formatRelativeTime(msg.timestamp)}</span>
       </div>
+      
+      {/* Image attachments */}
+      {imageAttachments.length > 0 && (
+        <div style={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: '8px', 
+          marginBottom: '8px' 
+        }}>
+          {imageAttachments.map((attachment, i) => (
+            <ImageThumbnail key={i} attachment={attachment} maxWidth={200} />
+          ))}
+        </div>
+      )}
       
       {/* Thinking blocks */}
       {msg.thinking && msg.thinking.length > 0 && (
@@ -151,10 +171,10 @@ function Message({ msg }: { msg: ChatMessageData }) {
       )}
       
       {/* Message content */}
-      {msg.content && (
+      {text && (
         <div 
           className="zen-message-content"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }}
         />
       )}
     </div>
