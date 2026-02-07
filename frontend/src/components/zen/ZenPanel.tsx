@@ -162,12 +162,12 @@ export function ZenPanel({
         </div>
         
         <div className="zen-panel-header-right">
-          {/* Split Vertical (side by side) */}
-          {onSplitVertical && (
+          {/* Split Vertical (top/bottom) - calls onSplitHorizontal internally */}
+          {onSplitHorizontal && (
             <button
               type="button"
               className="zen-btn zen-btn-icon zen-panel-split"
-              onClick={(e) => { e.stopPropagation(); onSplitVertical(); }}
+              onClick={(e) => { e.stopPropagation(); onSplitHorizontal(); }}
               title="Split vertical (Ctrl+\)"
               aria-label="Split panel vertically"
             >
@@ -175,12 +175,12 @@ export function ZenPanel({
             </button>
           )}
           
-          {/* Split Horizontal (stacked) */}
-          {onSplitHorizontal && (
+          {/* Split Horizontal (left/right) - calls onSplitVertical internally */}
+          {onSplitVertical && (
             <button
               type="button"
               className="zen-btn zen-btn-icon zen-panel-split"
-              onClick={(e) => { e.stopPropagation(); onSplitHorizontal(); }}
+              onClick={(e) => { e.stopPropagation(); onSplitVertical(); }}
               title="Split horizontal (Ctrl+Shift+\)"
               aria-label="Split panel horizontally"
             >
