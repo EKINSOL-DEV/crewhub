@@ -11,7 +11,7 @@ services:
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:-}
     volumes:
       - ./backend/app:/app/app
-      - ./data:/root/.crewhub
+      - ~/.crewhub:/root/.crewhub
       - ~/.openclaw/media:/root/.openclaw/media
     extra_hosts:
       - "host.docker.internal:host-gateway"
