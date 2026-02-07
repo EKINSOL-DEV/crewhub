@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.2] - 2026-02-07
+
+### 🌟 New Features
+- **Zen Mode Tabs** — Multi-tab workspaces with state persistence, keyboard shortcuts (Ctrl+Alt+T/W/R)
+- **Zen Statue (ZenBeeldje)** — 3D meditation figure in rooms with projects, always-on floating animation with yellow glow
+- **Task detail pane** — Click on task in Tasks panel to see details at bottom (like Kanban)
+- **Activity panel rewrite** — Shows real agent activity with Current/History tabs, same info as 3D bubbles
+- **Kanban in all menus** — Added to context menu and Ctrl+K command palette
+- **Live Demo banner dismiss** — ❌ button to hide the demo banner, persisted in localStorage
+
+### 🔧 Fixes
+- **Split Vertical/Horizontal swap** — Fixed in context menu, command palette, and panel header buttons
+- **Panel type dropdown z-index** — Menu no longer appears behind session items
+- **Context menu height** — Increased to show all 8 panel types without scrolling
+- **New tagline** — "Getting real work done doesn't have to be boring."
+
+### 📦 Other
+- Version display updated to v0.11.2 in UI
+- UUID fallback for http:// contexts (crypto.randomUUID not available)
+
+## [0.11.0] - 2026-02-07
+
+### 🌟 New Features
+- **Zen Mode** — Full-screen tmux-style terminal interface with split panels, themes, and keyboard navigation
+- **Zen Panels** — Chat, Sessions, Activity, Rooms, Tasks, Kanban, Cron, Logs
+- **Zen Themes** — Multiple color schemes including Gruvbox, Monokai, Nord, and more
+- **Project-focused Zen** — Enter Zen Mode filtered to a specific project via ZenBeeldje
+
+## [0.10.0] - 2026-02-06
+
+### 🌟 New Features
+- **Onboarding wizard** — 5-step guided setup for new users
+- **Auto-discovery** — Automatic detection of OpenClaw, Claude Code, and Codex
+- **Settings API** — Database-driven settings with backup/restore
+- **Bot jitter fixes** — 8 root causes identified and fixed
+- **Debug panel** — 🧪 Test bots spawning for development
+- **Settings refactor** — 5 tabs: Look & Feel, Rooms, Behavior, Data, Advanced
+
 ## [0.9.1] - 2026-02-06
 
 ### 🌟 New Features
@@ -221,11 +259,14 @@ First public beta release of CrewHub - a real-time dashboard for monitoring AI a
 - **Frontend**: React 18 with TypeScript, Vite, and Tailwind CSS
 - **Real-time**: Server-Sent Events for live updates
 
-[0.9.1]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.9.1
-[0.9.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.9.0
-[0.8.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.8.0
-[0.7.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.7.0
-[0.6.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.6.0
-[0.3.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.3.0
-[0.2.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.2.0
-[0.1.0-beta]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.1.0-beta
+[0.11.2]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.11.2
+[0.11.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.11.0
+[0.10.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.10.0
+[0.9.1]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.9.1
+[0.9.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.9.0
+[0.8.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.8.0
+[0.7.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.7.0
+[0.6.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.6.0
+[0.3.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.3.0
+[0.2.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.2.0
+[0.1.0-beta]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.1.0-beta
