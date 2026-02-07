@@ -317,6 +317,47 @@
   color: var(--zen-bg) !important;
 }
 
+/* ── Thinking Toggle Button ────────────────────────────────────── */
+
+.zen-btn-thinking {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--zen-border);
+  border-radius: 6px;
+  background: var(--zen-bg-elevated);
+  color: var(--zen-fg-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zen-btn-thinking:hover {
+  background: var(--zen-bg-hover);
+  border-color: var(--zen-accent-muted);
+}
+
+.zen-btn-thinking-active {
+  background: var(--zen-accent);
+  border-color: var(--zen-accent);
+  color: var(--zen-bg);
+}
+
+.zen-btn-thinking-active:hover {
+  background: var(--zen-accent-hover);
+}
+
+.zen-thinking-icon {
+  font-size: 12px;
+}
+
+.zen-thinking-label {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .zen-chat-messages {
   flex: 1;
   overflow-y: auto;

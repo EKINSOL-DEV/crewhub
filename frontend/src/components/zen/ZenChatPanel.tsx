@@ -250,6 +250,18 @@ export function ZenChatPanel({
       setTimeout(() => inputRef.current?.focus(), 150)
     }
   }, [sessionKey])
+  
+  // Keyboard shortcut for thinking toggle (Ctrl+T)
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === 't' && !e.shiftKey && !e.altKey) {
+        e.preventDefault()
+        setShowThinking(prev => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
@@ -305,11 +317,12 @@ export function ZenChatPanel({
         </div>
         <div className="zen-chat-header-right">
           <button
-            className={`zen-btn zen-btn-icon zen-btn-small ${showThinking ? 'zen-btn-active' : ''}`}
+            className={`zen-btn zen-btn-thinking ${showThinking ? 'zen-btn-thinking-active' : ''}`}
             onClick={() => setShowThinking(!showThinking)}
-            title={showThinking ? 'Hide thinking' : 'Show thinking'}
+            title={showThinking ? 'Hide thinking (Ctrl+T)' : 'Show thinking (Ctrl+T)'}
           >
-            🧠
+            <span className="zen-thinking-icon">🧠</span>
+            <span className="zen-thinking-label">{showThinking ? 'On' : 'Off'}</span>
           </button>
         </div>
       </div>
