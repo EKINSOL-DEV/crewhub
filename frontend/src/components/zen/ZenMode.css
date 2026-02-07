@@ -253,6 +253,47 @@
   overflow: hidden;
 }
 
+.zen-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--zen-space-sm) var(--zen-space-md);
+  background: var(--zen-bg-panel);
+  border-bottom: var(--zen-border-width) solid var(--zen-border);
+  min-height: 36px;
+}
+
+.zen-chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+}
+
+.zen-chat-agent-icon {
+  font-size: 16px;
+}
+
+.zen-chat-agent-name {
+  font-weight: 500;
+  color: var(--zen-fg);
+}
+
+.zen-chat-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-xs);
+}
+
+.zen-btn-small {
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.zen-btn-active {
+  background: var(--zen-accent) !important;
+  color: var(--zen-bg) !important;
+}
+
 .zen-chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -365,6 +406,46 @@
   background: var(--zen-bg);
   border-radius: 3px;
   color: var(--zen-accent);
+}
+
+/* ── Thinking Blocks ───────────────────────────────────────────── */
+
+.zen-thinking-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zen-space-xs);
+  margin-bottom: var(--zen-space-sm);
+}
+
+.zen-thinking-block {
+  background: var(--zen-bg);
+  border: 1px solid var(--zen-border);
+  border-left: 3px solid var(--zen-warning);
+  border-radius: var(--zen-radius);
+  overflow: hidden;
+}
+
+.zen-thinking-block-header {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-xs);
+  padding: var(--zen-space-xs) var(--zen-space-sm);
+  background: var(--zen-bg-hover);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--zen-warning);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zen-thinking-block-content {
+  padding: var(--zen-space-sm);
+  font-size: 11px;
+  color: var(--zen-fg-muted);
+  font-style: italic;
+  white-space: pre-wrap;
+  max-height: 150px;
+  overflow-y: auto;
 }
 
 /* ── Tool Calls ────────────────────────────────────────────────── */

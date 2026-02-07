@@ -274,6 +274,7 @@ export function ZenMode({
               agentName={panel.agentName || null}
               agentIcon={panel.agentIcon || null}
               onStatusChange={handleStatusChange}
+              onChangeAgent={() => setShowAgentPicker(true)}
             />
           )
         

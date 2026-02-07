@@ -12,6 +12,7 @@ interface ZenChatPanelProps {
   agentName: string | null
   agentIcon: string | null
   onStatusChange?: (status: 'active' | 'thinking' | 'idle' | 'error') => void
+  onChangeAgent?: () => void  // Callback to open agent picker
 }
 
 // ── Lightweight markdown rendering ─────────────────────────────
@@ -103,6 +104,23 @@ function Message({ msg }: { msg: ChatMessageData }) {
         <span className="zen-message-time">{formatRelativeTime(msg.timestamp)}</span>
       </div>
       
+      {/* Thinking blocks */}
+      {msg.thinking && msg.thinking.length > 0 && (
+        <div className="zen-thinking-blocks">
+          {msg.thinking.map((thought, i) => (
+            <div key={i} className="zen-thinking-block">
+              <div className="zen-thinking-block-header">
+                <span>🧠</span>
+                <span>Thinking</span>
+              </div>
+              <div className="zen-thinking-block-content">
+                {thought.length > 500 ? thought.slice(0, 500) + '...' : thought}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
       {/* Tool calls */}
       {msg.tools && msg.tools.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
@@ -166,8 +184,11 @@ export function ZenChatPanel({
   sessionKey, 
   agentName, 
   agentIcon,
-  onStatusChange 
+  onStatusChange,
+  onChangeAgent,
 }: ZenChatPanelProps) {
+  const [showThinking, setShowThinking] = useState(false)
+  
   const {
     messages,
     isSending,
@@ -176,7 +197,7 @@ export function ZenChatPanel({
     loadOlderMessages,
     hasMore,
     isLoadingHistory,
-  } = useAgentChat(sessionKey || '')
+  } = useAgentChat(sessionKey || '', showThinking)
 
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -262,6 +283,32 @@ export function ZenChatPanel({
 
   return (
     <div className="zen-chat-panel">
+      {/* Chat header with agent info and controls */}
+      <div className="zen-chat-header">
+        <div className="zen-chat-header-left">
+          <span className="zen-chat-agent-icon">{agentIcon || '🤖'}</span>
+          <span className="zen-chat-agent-name">{agentName || 'Agent'}</span>
+          {onChangeAgent && (
+            <button 
+              className="zen-btn zen-btn-icon zen-btn-small"
+              onClick={onChangeAgent}
+              title="Switch agent"
+            >
+              ⌄
+            </button>
+          )}
+        </div>
+        <div className="zen-chat-header-right">
+          <button
+            className={`zen-btn zen-btn-icon zen-btn-small ${showThinking ? 'zen-btn-active' : ''}`}
+            onClick={() => setShowThinking(!showThinking)}
+            title={showThinking ? 'Hide thinking' : 'Show thinking'}
+          >
+            🧠
+          </button>
+        </div>
+      </div>
+      
       {/* Messages area */}
       <div 
         ref={scrollContainerRef}
