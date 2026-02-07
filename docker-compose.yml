@@ -13,6 +13,7 @@ services:
       - ./backend/app:/app/app
       - ~/.crewhub:/root/.crewhub
       - ~/.openclaw/media:/root/.openclaw/media
+      - ~/.openclaw/agents:/root/.openclaw/agents
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -25,19 +26,17 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
+      args:
+        - VITE_API_URL=http://ekinbot.local:8090
     restart: unless-stopped
     ports:
-      - "5180:5180"
-    environment:
-      - VITE_API_URL=http://backend:8090
-    volumes:
-      - ./frontend/src:/app/src
+      - "8446:80"
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5180"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
       interval: 30s
       timeout: 10s
       retries: 3
