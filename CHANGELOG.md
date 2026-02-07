@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-02-06
+
+### 🌟 New Features
+- **Embedded TaskBoard in 3D whiteboard** — Full interactive TaskBoard component rendered on room whiteboards (replaces sticky notes)
+- **Focus Board button** — "🔍 Focus Board" button zooms camera directly to the TaskBoard for easy task management
+- **Camera Debug HUD** — Press F2 to toggle debug overlay showing camera position and target coordinates
+
+### 🔧 Fixes
+- **UI interaction blocking** — DragDropContext with isInteractingWithUI prevents camera controls from interfering with UI elements
+- **Desk rotation fix** — All desks now rotate 180° to face into the room (agents face the room, not walls)
+- **Whiteboard prop removed from Dev Room** — Cleaned up duplicate/conflicting whiteboard prop
+
+## [0.9.0] - 2026-02-06
+
+### 🌟 New Features
+- **Task Board in HQ** — Full Kanban board with columns: To Do, In Progress, Review, Done, Blocked
+- **Run vs Spawn actions** — Task cards now offer "Run with Agent" (existing session) and "Spawn Agent" (new subagent) options
+- **Active Tasks Ticker** — Collapsible ticker showing currently running tasks across all agents
+- **Agent Bios** — Bio field for agents with AI-powered bio generation
+- **TaskWall3D for room whiteboards** — 3D task boards rendered on room walls
+- **Comprehensive mock data** — Demo mode now includes realistic tasks and projects
+
+### 🔧 Fixes
+- **React 19 + Radix Dialog fix** — Migrated all dialogs to native `<dialog>` element to resolve infinite loop crashes
+- **Subagent detection** — Completed subagents now detected using updatedAt timestamp
+- **Friendly names in dropdowns** — Assignee dropdowns show display names instead of raw session keys
+- **Temporary subagent filtering** — Assign To dropdown no longer shows temporary subagents
+
+### 📦 Other
+- Renamed Break Room to "Another AI took my job zone"
+- Python 3.9 compatibility (Optional[str] instead of str | None)
+- SSE performance improvements with queueMicrotask
+
+## [0.8.0] - 2026-02-06
+
+### 🌟 New Features
+- **Demo Mode** — Standalone frontend with mock API for trying CrewHub without backend setup
+- **Mobile warning screen** — Desktop-only message for small screens
+- **Move to room button** — BotInfoPanel now has quick room reassignment
+- **Fullscreen mode** — Native browser Fullscreen API integration
+- **Onboarding wizard** — Guided setup flow for new users with no-connection gating
+
+### 🔧 Fixes
+- **Bot expressions** — All bots now have happy/neutral expressions (no more frowns)
+- **Demo banner** — Centered top banner with GitHub and website links
+
+### 📦 Other
+- Light mode as default theme
+- Desert as default environment in demo mode
+- Minimal seed data (2 rooms + 3 rules)
+- Public launch preparation with security review
+
 ## v0.7.1 (2026-02-05)
 
 ### Added
@@ -169,6 +221,9 @@ First public beta release of CrewHub - a real-time dashboard for monitoring AI a
 - **Frontend**: React 18 with TypeScript, Vite, and Tailwind CSS
 - **Real-time**: Server-Sent Events for live updates
 
+[0.9.1]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.9.1
+[0.9.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.9.0
+[0.8.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.8.0
 [0.7.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.7.0
 [0.6.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.6.0
 [0.3.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.3.0
