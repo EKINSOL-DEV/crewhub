@@ -286,16 +286,21 @@ export function ZenChatPanel({
       {/* Chat header with agent info and controls */}
       <div className="zen-chat-header">
         <div className="zen-chat-header-left">
-          <span className="zen-chat-agent-icon">{agentIcon || '🤖'}</span>
-          <span className="zen-chat-agent-name">{agentName || 'Agent'}</span>
-          {onChangeAgent && (
+          {onChangeAgent ? (
             <button 
-              className="zen-btn zen-btn-icon zen-btn-small"
+              className="zen-chat-agent-selector"
               onClick={onChangeAgent}
-              title="Switch agent"
+              title="Switch agent (click to change)"
             >
-              ⌄
+              <span className="zen-chat-agent-icon">{agentIcon || '🤖'}</span>
+              <span className="zen-chat-agent-name">{agentName || 'Agent'}</span>
+              <span className="zen-chat-agent-chevron">▾</span>
             </button>
+          ) : (
+            <>
+              <span className="zen-chat-agent-icon">{agentIcon || '🤖'}</span>
+              <span className="zen-chat-agent-name">{agentName || 'Agent'}</span>
+            </>
           )}
         </div>
         <div className="zen-chat-header-right">

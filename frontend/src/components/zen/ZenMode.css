@@ -278,6 +278,29 @@
   color: var(--zen-fg);
 }
 
+.zen-chat-agent-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-xs);
+  padding: 4px 8px;
+  border: 1px solid var(--zen-border);
+  border-radius: 6px;
+  background: var(--zen-bg-elevated);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zen-chat-agent-selector:hover {
+  background: var(--zen-bg-hover);
+  border-color: var(--zen-accent);
+}
+
+.zen-chat-agent-chevron {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
 .zen-chat-header-right {
   display: flex;
   align-items: center;
