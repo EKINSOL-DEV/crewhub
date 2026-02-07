@@ -9,7 +9,6 @@ import { sseManager } from '@/lib/sseManager'
 import type { CrewSession } from '@/lib/api'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useDemoMode } from '@/contexts/DemoContext'
-import { splitSessionsForDisplay } from '@/lib/sessionFiltering'
 import { getSessionStatus, type SessionStatus } from '@/lib/minionUtils'
 
 // ── Activity Event Types ──────────────────────────────────────────
@@ -178,10 +177,9 @@ export function ZenActivityPanel() {
   const prevSessionsRef = useRef<Map<string, { label: string; tokens: number }>>(new Map())
   
   // Get active/idle sessions (not sleeping)
-  const { visible } = useMemo(() => splitSessionsForDisplay(sessions), [sessions])
   const activeSessions = useMemo(() => 
-    visible.filter(s => getSessionStatus(s) !== 'sleeping'),
-    [visible]
+    sessions.filter(s => getSessionStatus(s) !== 'sleeping'),
+    [sessions]
   )
   
   // Track session changes and add to history
