@@ -251,12 +251,21 @@ export function ZenChatPanel({
     }
   }, [sessionKey])
   
-  // Keyboard shortcut for thinking toggle (Ctrl+T)
+  // Keyboard shortcut for thinking toggle (Ctrl+.)
+  // Note: Ctrl+T conflicts with browser's "new tab" shortcut
   useEffect(() => {
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
-      if (e.ctrlKey && e.key.toLowerCase() === 't' && !e.shiftKey && !e.altKey) {
+      // Guard: ignore when typing in inputs/textareas
+      const target = e.target as HTMLElement
+      const isInput = target.tagName === 'INPUT' || 
+                     target.tagName === 'TEXTAREA' || 
+                     target.isContentEditable
+      if (isInput) return
+      
+      // Ctrl+. to toggle thinking
+      if (e.ctrlKey && e.key === '.' && !e.shiftKey && !e.altKey) {
         e.preventDefault()
-        setShowThinking(prev => !prev)
+        setShowThinking(v => !v)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -319,7 +328,7 @@ export function ZenChatPanel({
           <button
             className={`zen-btn zen-btn-thinking ${showThinking ? 'zen-btn-thinking-active' : ''}`}
             onClick={() => setShowThinking(!showThinking)}
-            title={showThinking ? 'Hide thinking (Ctrl+T)' : 'Show thinking (Ctrl+T)'}
+            title={showThinking ? 'Hide thinking (Ctrl+.)' : 'Show thinking (Ctrl+.)'}
           >
             <span className="zen-thinking-icon">🧠</span>
             <span className="zen-thinking-label">{showThinking ? 'On' : 'Off'}</span>
