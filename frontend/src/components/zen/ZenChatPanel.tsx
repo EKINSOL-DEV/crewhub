@@ -276,11 +276,10 @@ function AgentDropdown({ currentAgentName, currentAgentIcon, onSelectAgent, onOp
     <div className="zen-agent-dropdown" ref={dropdownRef}>
       <button 
         type="button"
-        className="zen-chat-agent-selector"
+        className="zen-chat-agent-selector zen-chat-agent-selector-minimal"
         onClick={() => setIsOpen(!isOpen)}
         title="Switch agent (click to change)"
       >
-        <span className="zen-chat-agent-icon">{currentAgentIcon || '🤖'}</span>
         <span className="zen-chat-agent-name">{currentAgentName || 'Agent'}</span>
         <span className="zen-chat-agent-chevron">▾</span>
       </button>

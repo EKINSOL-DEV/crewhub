@@ -295,6 +295,17 @@
   border-color: var(--zen-accent);
 }
 
+.zen-chat-agent-selector-minimal {
+  border: none;
+  background: transparent;
+  padding: 4px 6px;
+}
+
+.zen-chat-agent-selector-minimal:hover {
+  background: var(--zen-bg-hover);
+  border: none;
+}
+
 .zen-chat-agent-chevron {
   font-size: 10px;
   opacity: 0.6;
