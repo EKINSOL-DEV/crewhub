@@ -358,6 +358,8 @@ export function ZenMode({
           onFocus={layout.focusPanel}
           onClose={layout.closePanel}
           onResize={layout.resizePanel}
+          onSplit={(panelId, direction) => layout.splitPanel(panelId, direction, 'empty')}
+          onChangePanelType={handleSelectPanelType}
           renderPanel={renderPanel}
         />
       </main>
