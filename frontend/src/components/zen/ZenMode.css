@@ -1702,6 +1702,17 @@
   outline-offset: 0;
 }
 
+/* Enhanced focus styles for interactive elements */
+.zen-session-item:focus-visible,
+.zen-panel-option:focus-visible,
+.zen-theme-option:focus-visible,
+.zen-command-item:focus-visible,
+.zen-activity-item:focus-visible {
+  outline: 2px solid var(--zen-border-focus);
+  outline-offset: -2px;
+  background: var(--zen-bg-active);
+}
+
 /* ── Loading States ────────────────────────────────────────────── */
 
 .zen-skeleton {

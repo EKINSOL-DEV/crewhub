@@ -118,17 +118,21 @@ function CronItem({ job, onToggle, onRun }: CronItemProps) {
       
       <div className="zen-cron-actions">
         <button
+          type="button"
           className="zen-cron-action"
           onClick={(e) => { e.stopPropagation(); onRun() }}
           title="Run now"
           disabled={!isEnabled}
+          aria-label="Run job now"
         >
           ▶
         </button>
         <button
+          type="button"
           className={`zen-cron-action ${isEnabled ? 'zen-cron-action-enabled' : ''}`}
           onClick={(e) => { e.stopPropagation(); onToggle() }}
           title={isEnabled ? 'Disable' : 'Enable'}
+          aria-label={isEnabled ? 'Disable job' : 'Enable job'}
         >
           {isEnabled ? '⏸' : '▶️'}
         </button>
@@ -295,7 +299,7 @@ export function ZenCronPanel() {
         <span className="zen-cron-count">
           {visibleJobs.length} job{visibleJobs.length !== 1 ? 's' : ''}
         </span>
-        <button className="zen-btn zen-btn-small" onClick={fetchJobs}>
+        <button type="button" className="zen-btn zen-btn-small" onClick={fetchJobs}>
           ↻ Refresh
         </button>
       </div>

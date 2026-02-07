@@ -100,6 +100,7 @@ function FilterControls({
           
           return (
             <button
+              type="button"
               key={level}
               className={`zen-logs-level-btn ${isActive ? 'zen-logs-level-active' : ''}`}
               onClick={() => onToggleLevel(level)}
@@ -108,6 +109,7 @@ function FilterControls({
                 color: isActive ? config.color : 'var(--zen-fg-muted)'
               }}
               title={`${isActive ? 'Hide' : 'Show'} ${config.label}`}
+              aria-label={`${isActive ? 'Hide' : 'Show'} ${config.label} logs`}
             >
               {config.icon}
             </button>
@@ -385,7 +387,7 @@ export function ZenLogsPanel() {
           {filteredLogs.length} / {logs.length} entries
         </span>
         {logs.length > 0 && (
-          <button className="zen-btn zen-btn-small" onClick={handleClear}>
+          <button type="button" className="zen-btn zen-btn-small" onClick={handleClear}>
             Clear
           </button>
         )}

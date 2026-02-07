@@ -309,6 +309,7 @@ export function ZenChatPanel({
         <div className="zen-chat-header-left">
           {onChangeAgent ? (
             <button 
+              type="button"
               className="zen-chat-agent-selector"
               onClick={onChangeAgent}
               title="Switch agent (click to change)"
@@ -326,6 +327,7 @@ export function ZenChatPanel({
         </div>
         <div className="zen-chat-header-right">
           <button
+            type="button"
             className={`zen-btn zen-btn-thinking ${showThinking ? 'zen-btn-thinking-active' : ''}`}
             onClick={() => setShowThinking(!showThinking)}
             title={showThinking ? 'Hide thinking (Ctrl+.)' : 'Show thinking (Ctrl+.)'}
@@ -345,6 +347,7 @@ export function ZenChatPanel({
         {/* Load older button */}
         {hasMore && (
           <button
+            type="button"
             onClick={loadOlderMessages}
             disabled={isLoadingHistory}
             className="zen-btn"
@@ -401,9 +404,11 @@ export function ZenChatPanel({
             className="zen-chat-input"
           />
           <button
+            type="button"
             onClick={handleSend}
             disabled={isSending || !inputValue.trim()}
             className="zen-chat-send-btn"
+            aria-label="Send message"
           >
             ➤
           </button>

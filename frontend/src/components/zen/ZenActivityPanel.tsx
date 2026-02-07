@@ -293,6 +293,7 @@ export function ZenActivityPanel() {
         <div className="zen-activity-controls">
           {!autoScroll && events.length > 0 && (
             <button
+              type="button"
               className="zen-btn zen-btn-small"
               onClick={() => {
                 setAutoScroll(true)
@@ -305,6 +306,7 @@ export function ZenActivityPanel() {
           
           {events.length > 0 && (
             <button
+              type="button"
               className="zen-btn zen-btn-small"
               onClick={handleClear}
               title="Clear activity"

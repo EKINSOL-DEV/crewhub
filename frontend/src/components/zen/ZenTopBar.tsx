@@ -94,6 +94,7 @@ export function ZenTopBar({
         {/* Theme Button */}
         {themeName && onOpenThemePicker && (
           <button
+            type="button"
             className="zen-btn zen-btn-theme"
             onClick={onOpenThemePicker}
             title="Change theme (Ctrl+Shift+T)"
@@ -106,9 +107,11 @@ export function ZenTopBar({
         {/* Keyboard Help Button */}
         {onOpenKeyboardHelp && (
           <button
+            type="button"
             className="zen-btn zen-btn-icon"
             onClick={onOpenKeyboardHelp}
             title="Keyboard shortcuts (Ctrl+/)"
+            aria-label="Keyboard shortcuts"
           >
             ⌨️
           </button>
@@ -117,9 +120,11 @@ export function ZenTopBar({
         {/* Command Palette Button */}
         {onOpenCommandPalette && (
           <button
+            type="button"
             className="zen-btn zen-btn-icon"
             onClick={onOpenCommandPalette}
             title="Command palette (Ctrl+K)"
+            aria-label="Open command palette"
           >
             🔍
           </button>
@@ -128,9 +133,11 @@ export function ZenTopBar({
         {/* Restore from maximized */}
         {isMaximized && onRestore && (
           <button
+            type="button"
             className="zen-btn zen-btn-icon"
             onClick={onRestore}
             title="Restore layout (Ctrl+Shift+M)"
+            aria-label="Restore layout"
           >
             ⊡
           </button>
@@ -138,18 +145,22 @@ export function ZenTopBar({
         
         {/* Fullscreen toggle */}
         <button
+          type="button"
           className="zen-btn zen-btn-icon"
           onClick={toggleFullscreen}
           title={isFullscreen ? "Exit fullscreen (F11)" : "Fullscreen (F11)"}
+          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
         >
           {isFullscreen ? '⊙' : '⛶'}
         </button>
         
         {/* Exit button */}
         <button
+          type="button"
           className="zen-btn zen-btn-icon zen-btn-close"
           onClick={onExit}
           title="Exit Zen Mode (Esc)"
+          aria-label="Exit Zen Mode"
         >
           ✕
         </button>

@@ -64,6 +64,7 @@ export function ZenPanel({
         <div className="zen-panel-header-right">
           {canClose && (
             <button
+              type="button"
               className="zen-btn zen-btn-icon zen-panel-close"
               onClick={handleClose}
               title="Close panel (Ctrl+Shift+W)"
