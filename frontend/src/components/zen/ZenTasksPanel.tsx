@@ -9,6 +9,7 @@ import { useTasks, type Task, type TaskStatus, type TaskPriority } from '@/hooks
 interface ZenTasksPanelProps {
   projectId?: string
   roomId?: string
+  roomFocusName?: string  // Name of the focused room's project (for display)
   onTaskClick?: (task: Task) => void
 }
 
@@ -183,8 +184,9 @@ function LoadingState() {
 
 // ── Main Component ───────────────────────────────────────────────
 
-export function ZenTasksPanel({ projectId, roomId, onTaskClick }: ZenTasksPanelProps) {
+export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick }: ZenTasksPanelProps) {
   const { tasks, isLoading, error, updateTask, taskCounts, refresh } = useTasks({ projectId, roomId })
+  const isFiltered = !!projectId || !!roomId
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   
@@ -239,6 +241,16 @@ export function ZenTasksPanel({ projectId, roomId, onTaskClick }: ZenTasksPanelP
   
   return (
     <div className="zen-tasks-panel">
+      {/* Room focus indicator */}
+      {isFiltered && (
+        <div className="zen-tasks-focus-indicator">
+          <span className="zen-tasks-focus-icon">🔍</span>
+          <span className="zen-tasks-focus-label">
+            {roomFocusName ? `Tasks: ${roomFocusName}` : 'Filtered Tasks'}
+          </span>
+        </div>
+      )}
+      
       {/* Search bar */}
       <div className="zen-tasks-filter">
         <input

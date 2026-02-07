@@ -20,9 +20,12 @@ import { ZenSessionsPanel } from './ZenSessionsPanel'
 import { ZenActivityPanel } from './ZenActivityPanel'
 import { ZenRoomsPanel } from './ZenRoomsPanel'
 import { ZenTasksPanel } from './ZenTasksPanel'
+import { ZenKanbanPanel } from './ZenKanbanPanel'
 import { ZenCronPanel } from './ZenCronPanel'
 import { ZenLogsPanel } from './ZenLogsPanel'
 import { ZenEmptyPanel } from './ZenEmptyPanel'
+import { useWorldFocus } from '@/contexts/WorldFocusContext'
+import { useRoomsContext } from '@/contexts/RoomsContext'
 import { ZenThemePicker } from './ZenThemePicker'
 import { ZenCommandPalette, useCommandRegistry } from './ZenCommandPalette'
 import { ZenKeyboardHelp } from './ZenKeyboardHelp'
@@ -61,6 +64,27 @@ export function ZenMode({
   // Room filter state (for filtering sessions by room)
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedRoomName, setSelectedRoomName] = useState<string>('All Rooms')
+  
+  // World focus context for room focus mode
+  const { state: worldFocusState } = useWorldFocus()
+  const { rooms } = useRoomsContext()
+  
+  // Get the focused room's project ID when in room focus mode
+  const focusedRoomProjectId = useMemo(() => {
+    if (worldFocusState.level === 'room' && worldFocusState.focusedRoomId) {
+      const room = rooms.find(r => r.id === worldFocusState.focusedRoomId)
+      return room?.project_id || undefined
+    }
+    return undefined
+  }, [worldFocusState.level, worldFocusState.focusedRoomId, rooms])
+  
+  const focusedRoomName = useMemo(() => {
+    if (worldFocusState.level === 'room' && worldFocusState.focusedRoomId) {
+      const room = rooms.find(r => r.id === worldFocusState.focusedRoomId)
+      return room?.project_name || room?.name || undefined
+    }
+    return undefined
+  }, [worldFocusState.level, worldFocusState.focusedRoomId, rooms])
   
   // Modal states
   const [showThemePicker, setShowThemePicker] = useState(false)
@@ -345,7 +369,20 @@ export function ZenMode({
           )
         
         case 'tasks':
-          return <ZenTasksPanel />
+          return (
+            <ZenTasksPanel 
+              projectId={focusedRoomProjectId}
+              roomFocusName={focusedRoomName}
+            />
+          )
+        
+        case 'kanban':
+          return (
+            <ZenKanbanPanel 
+              projectId={focusedRoomProjectId}
+              roomFocusName={focusedRoomName}
+            />
+          )
         
         case 'cron':
           return <ZenCronPanel />

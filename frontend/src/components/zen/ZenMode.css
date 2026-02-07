@@ -2475,6 +2475,311 @@
   padding: var(--zen-space-xl);
 }
 
+/* Room focus indicator */
+.zen-tasks-focus-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-xs) var(--zen-space-md);
+  background: rgba(122, 162, 247, 0.1);
+  border-bottom: 1px solid var(--zen-accent);
+  font-size: 11px;
+  color: var(--zen-accent);
+}
+
+.zen-tasks-focus-icon {
+  font-size: 12px;
+}
+
+.zen-tasks-focus-label {
+  font-weight: 500;
+}
+
+/* ── Kanban Panel ──────────────────────────────────────────────── */
+
+.zen-kanban-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--zen-bg);
+}
+
+.zen-kanban-board {
+  flex: 1;
+  display: flex;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-sm);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.zen-kanban-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: 280px;
+  flex: 1;
+  background: var(--zen-bg-panel);
+  border-radius: var(--zen-radius);
+  overflow: hidden;
+}
+
+.zen-kanban-column-dragover {
+  box-shadow: inset 0 0 0 2px var(--zen-accent);
+}
+
+.zen-kanban-column-header {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-sm) var(--zen-space-md);
+  border-bottom: 2px solid;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zen-kanban-column-icon {
+  font-size: 12px;
+}
+
+.zen-kanban-column-label {
+  flex: 1;
+}
+
+.zen-kanban-column-count {
+  font-size: 10px;
+  color: var(--zen-fg-muted);
+  background: var(--zen-bg-hover);
+  padding: 2px 6px;
+  border-radius: var(--zen-radius);
+}
+
+.zen-kanban-column-cards {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--zen-space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--zen-space-sm);
+}
+
+.zen-kanban-card {
+  position: relative;
+  background: var(--zen-bg);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius);
+  padding: var(--zen-space-sm);
+  cursor: grab;
+  transition: all 0.15s ease;
+}
+
+.zen-kanban-card:hover {
+  border-color: var(--zen-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.zen-kanban-card:active {
+  cursor: grabbing;
+}
+
+.zen-kanban-card-dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.zen-kanban-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--zen-space-xs);
+}
+
+.zen-kanban-card-priority {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.zen-kanban-card-menu {
+  background: none;
+  border: none;
+  color: var(--zen-fg-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: var(--zen-radius);
+}
+
+.zen-kanban-card-menu:hover {
+  background: var(--zen-bg-hover);
+  color: var(--zen-fg);
+}
+
+.zen-kanban-card-title {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--zen-fg);
+  word-break: break-word;
+}
+
+.zen-kanban-card-assignee {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-xs);
+  margin-top: var(--zen-space-sm);
+  font-size: 10px;
+  color: var(--zen-fg-muted);
+}
+
+.zen-kanban-card-assignee-icon {
+  font-size: 10px;
+}
+
+.zen-kanban-move-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--zen-bg-panel);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius);
+  padding: var(--zen-space-xs);
+  min-width: 120px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.zen-kanban-move-header {
+  font-size: 10px;
+  color: var(--zen-fg-muted);
+  padding: var(--zen-space-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zen-kanban-move-option {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  width: 100%;
+  padding: var(--zen-space-xs) var(--zen-space-sm);
+  background: none;
+  border: none;
+  color: var(--zen-fg);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--zen-radius);
+}
+
+.zen-kanban-move-option:hover {
+  background: var(--zen-bg-hover);
+}
+
+.zen-kanban-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--zen-space-xs);
+  padding: var(--zen-space-lg);
+  color: var(--zen-fg-muted);
+  text-align: center;
+}
+
+.zen-kanban-empty-icon {
+  font-size: 20px;
+  opacity: 0.5;
+}
+
+.zen-kanban-empty-text {
+  font-size: 11px;
+}
+
+.zen-kanban-footer {
+  padding: var(--zen-space-xs) var(--zen-space-md);
+  border-top: 1px solid var(--zen-border);
+  font-size: 11px;
+  color: var(--zen-fg-muted);
+}
+
+.zen-kanban-loading,
+.zen-kanban-error {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--zen-space-md);
+  color: var(--zen-fg-muted);
+  text-align: center;
+  padding: var(--zen-space-xl);
+}
+
+/* Kanban detail modal */
+.zen-kanban-detail {
+  max-width: 400px;
+}
+
+.zen-kanban-detail-content {
+  padding: var(--zen-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--zen-space-md);
+}
+
+.zen-kanban-detail-row {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-md);
+}
+
+.zen-kanban-detail-label {
+  font-size: 11px;
+  color: var(--zen-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 70px;
+}
+
+.zen-kanban-detail-value {
+  font-size: 12px;
+}
+
+.zen-kanban-detail-description {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zen-space-xs);
+}
+
+.zen-kanban-detail-description p {
+  font-size: 12px;
+  color: var(--zen-fg);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.zen-kanban-detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zen-space-sm);
+  padding-top: var(--zen-space-sm);
+  border-top: 1px solid var(--zen-border);
+}
+
+.zen-kanban-detail-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--zen-space-xs);
+}
+
+.zen-kanban-detail-buttons .zen-btn {
+  font-size: 11px;
+}
+
 /* ── Cron Panel ────────────────────────────────────────────────── */
 
 .zen-cron-panel {
