@@ -10,7 +10,7 @@ import type { CrewSession } from '@/lib/api'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { splitSessionsForDisplay } from '@/lib/sessionFiltering'
-import { getSessionStatus, type SessionStatus } from '@/lib/sessionConfig'
+import { getSessionStatus, type SessionStatus } from '@/lib/minionUtils'
 
 // ── Activity Event Types ──────────────────────────────────────────
 
@@ -123,7 +123,7 @@ interface CurrentSessionItemProps {
 }
 
 function CurrentSessionItem({ session }: CurrentSessionItemProps) {
-  const status = getSessionStatus(session.updatedAt)
+  const status = getSessionStatus(session)
   const statusColors: Record<SessionStatus, string> = {
     active: 'var(--zen-success)',
     idle: 'var(--zen-warning)',
@@ -180,7 +180,7 @@ export function ZenActivityPanel() {
   // Get active/idle sessions (not sleeping)
   const { visible } = useMemo(() => splitSessionsForDisplay(sessions), [sessions])
   const activeSessions = useMemo(() => 
-    visible.filter(s => getSessionStatus(s.updatedAt) !== 'sleeping'),
+    visible.filter(s => getSessionStatus(s) !== 'sleeping'),
     [visible]
   )
   
@@ -192,7 +192,7 @@ export function ZenActivityPanel() {
     
     for (const session of sessions) {
       const prev = prevSessionsRef.current.get(session.key)
-      const status = getSessionStatus(session.updatedAt)
+      const status = getSessionStatus(session)
       
       // Only track active sessions
       if (status === 'sleeping') continue
