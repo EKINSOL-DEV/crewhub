@@ -95,38 +95,59 @@ interface SplitContainerProps {
 function SplitContainer({ direction, ratio, onRatioChange, children }: SplitContainerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const ratioRef = useRef(ratio)
+  
+  // Keep ratio ref in sync
+  ratioRef.current = ratio
   
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setIsDragging(true)
     
     const isRow = direction === 'row'
+    const container = containerRef.current
+    if (!container) return
+    
+    // Capture initial state
+    const initialRect = container.getBoundingClientRect()
+    const totalSize = isRow ? initialRect.width : initialRect.height
     
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      // Get fresh rect on each move to avoid stale values
-      const container = containerRef.current
-      if (!container) return
+      moveEvent.preventDefault()
       
+      // Use fresh rect for accurate position
       const rect = container.getBoundingClientRect()
-      const totalSize = isRow ? rect.width : rect.height
+      const currentTotalSize = isRow ? rect.width : rect.height
       
       const pos = isRow 
         ? moveEvent.clientX - rect.left 
         : moveEvent.clientY - rect.top
       
-      // Calculate new ratio, clamped to reasonable bounds
-      let newRatio = pos / totalSize
-      newRatio = Math.max(MIN_PANEL_SIZE / totalSize, newRatio)
-      newRatio = Math.min(1 - MIN_PANEL_SIZE / totalSize, newRatio)
+      // Calculate new ratio with proper clamping
+      const minRatio = MIN_PANEL_SIZE / currentTotalSize
+      const maxRatio = 1 - (MIN_PANEL_SIZE / currentTotalSize)
       
-      onRatioChange(newRatio)
+      let newRatio = pos / currentTotalSize
+      newRatio = Math.max(minRatio, Math.min(maxRatio, newRatio))
+      
+      // Only update if ratio actually changed
+      if (Math.abs(newRatio - ratioRef.current) > 0.001) {
+        onRatioChange(newRatio)
+      }
     }
     
     const handleMouseUp = () => {
       setIsDragging(false)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
     }
+    
+    // Prevent text selection while dragging
+    document.body.style.cursor = isRow ? 'col-resize' : 'row-resize'
+    document.body.style.userSelect = 'none'
     
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
