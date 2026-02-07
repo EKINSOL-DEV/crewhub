@@ -166,7 +166,21 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
           placeholder="Filter rooms..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              setFilter('')
+            }
+          }}
         />
+        <button
+          className="zen-btn zen-btn-icon zen-btn-small"
+          onClick={refresh}
+          title="Refresh rooms"
+          style={{ marginLeft: '4px' }}
+        >
+          🔄
+        </button>
       </div>
       
       {/* All rooms option */}
@@ -174,6 +188,12 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
         <div
           className={`zen-room-item zen-room-item-all ${!selectedRoomId ? 'zen-room-item-selected' : ''}`}
           onClick={() => handleSelect(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleSelect(null)
+            }
+          }}
           role="button"
           tabIndex={0}
         >
