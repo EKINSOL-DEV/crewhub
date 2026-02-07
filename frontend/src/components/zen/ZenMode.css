@@ -4316,3 +4316,89 @@
 .zen-image-preview-remove:hover {
   background: var(--zen-error);
 }
+
+/* ── Markdown Styling ──────────────────────────────────────────── */
+
+.zen-md-h1 {
+  font-size: 1.4em;
+  font-weight: 700;
+  margin: 0.8em 0 0.4em 0;
+  color: var(--zen-fg);
+}
+
+.zen-md-h2 {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin: 0.7em 0 0.3em 0;
+  color: var(--zen-fg);
+}
+
+.zen-md-h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0.6em 0 0.3em 0;
+  color: var(--zen-fg);
+}
+
+.zen-md-codeblock {
+  background: var(--zen-bg-tertiary);
+  border: 1px solid var(--zen-border);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.zen-md-codeblock code {
+  background: none;
+  padding: 0;
+  color: var(--zen-fg);
+}
+
+.zen-md-inline-code {
+  background: var(--zen-bg-tertiary);
+  border: 1px solid var(--zen-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9em;
+  color: var(--zen-accent);
+}
+
+.zen-md-blockquote {
+  border-left: 3px solid var(--zen-accent);
+  margin: 8px 0;
+  padding: 4px 12px;
+  color: var(--zen-fg-muted);
+  background: var(--zen-bg-secondary);
+  border-radius: 0 4px 4px 0;
+}
+
+.zen-md-hr {
+  border: none;
+  border-top: 1px solid var(--zen-border);
+  margin: 12px 0;
+}
+
+.zen-md-link {
+  color: var(--zen-accent);
+  text-decoration: none;
+}
+
+.zen-md-link:hover {
+  text-decoration: underline;
+}
+
+.zen-md-ul,
+.zen-md-ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.zen-md-li,
+.zen-md-li-ordered {
+  margin: 4px 0;
+}

@@ -31,23 +31,66 @@ function escapeHtml(str: string): string {
 }
 
 function renderMarkdown(text: string): string {
-  // Code blocks
-  let html = text.replace(
-    /```(\w*)\n([\s\S]*?)```/g,
-    (_m, _lang, code) =>
-      `<pre><code>${escapeHtml(code.trim())}</code></pre>`
-  )
-  // Inline code
+  let html = text
+  
+  // Code blocks (must be first to protect content)
   html = html.replace(
-    /`([^`]+)`/g,
-    '<code>$1</code>'
+    /```(\w*)\n([\s\S]*?)```/g,
+    (_m, lang, code) =>
+      `<pre class="zen-md-codeblock" data-lang="${lang}"><code>${escapeHtml(code.trim())}</code></pre>`
   )
+  
+  // Inline code (protect from other replacements)
+  const inlineCodePlaceholders: string[] = []
+  html = html.replace(/`([^`]+)`/g, (_m, code) => {
+    const placeholder = `%%INLINE_CODE_${inlineCodePlaceholders.length}%%`
+    inlineCodePlaceholders.push(`<code class="zen-md-inline-code">${escapeHtml(code)}</code>`)
+    return placeholder
+  })
+  
+  // Headers
+  html = html.replace(/^### (.+)$/gm, '<h4 class="zen-md-h3">$1</h4>')
+  html = html.replace(/^## (.+)$/gm, '<h3 class="zen-md-h2">$1</h3>')
+  html = html.replace(/^# (.+)$/gm, '<h2 class="zen-md-h1">$1</h2>')
+  
+  // Blockquotes
+  html = html.replace(/^> (.+)$/gm, '<blockquote class="zen-md-blockquote">$1</blockquote>')
+  
+  // Horizontal rule
+  html = html.replace(/^---$/gm, '<hr class="zen-md-hr" />')
+  
   // Bold
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  
   // Italic
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
-  // Line breaks
+  
+  // Strikethrough
+  html = html.replace(/~~(.+?)~~/g, '<del>$1</del>')
+  
+  // Links [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="zen-md-link">$1</a>')
+  
+  // Unordered lists
+  html = html.replace(/^- (.+)$/gm, '<li class="zen-md-li">$1</li>')
+  html = html.replace(/(<li class="zen-md-li">.*<\/li>\n?)+/g, '<ul class="zen-md-ul">$&</ul>')
+  
+  // Ordered lists
+  html = html.replace(/^\d+\. (.+)$/gm, '<li class="zen-md-li-ordered">$1</li>')
+  html = html.replace(/(<li class="zen-md-li-ordered">.*<\/li>\n?)+/g, '<ol class="zen-md-ol">$&</ol>')
+  
+  // Restore inline code
+  inlineCodePlaceholders.forEach((code, i) => {
+    html = html.replace(`%%INLINE_CODE_${i}%%`, code)
+  })
+  
+  // Line breaks (but not inside lists/blockquotes)
   html = html.replace(/\n/g, '<br/>')
+  
+  // Clean up extra breaks after block elements
+  html = html.replace(/<\/(h[234]|blockquote|ul|ol|pre|hr)><br\/>/g, '</$1>')
+  html = html.replace(/<br\/><(h[234]|blockquote|ul|ol|pre)/g, '<$1')
+  
   return html
 }
 
