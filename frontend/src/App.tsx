@@ -310,7 +310,7 @@ function AppContent() {
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
               <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.11.2</span></h1>
-              <p className="text-xs text-muted-foreground">Multi-agent orchestration</p>
+              <p className="text-xs text-muted-foreground italic">Getting real work done doesn't have to be boring.</p>
             </div>
           </div>
           
