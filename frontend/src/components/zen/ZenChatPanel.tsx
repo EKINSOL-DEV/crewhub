@@ -8,6 +8,7 @@ import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/u
 import { parseMediaAttachments } from '@/utils/mediaParser'
 import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
 import { VideoThumbnail } from '@/components/chat/VideoThumbnail'
+import { PixelAvatar } from './PixelAvatar'
 
 interface ZenChatPanelProps {
   sessionKey: string | null
@@ -256,7 +257,7 @@ function AgentDropdown({ currentAgentName, currentAgentIcon, onSelectAgent, onOp
   useEffect(() => {
     if (!isOpen) return
     
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsOpen(false)
       }
@@ -497,6 +498,15 @@ export function ZenChatPanel({
           />
         </div>
         <div className="zen-chat-header-right">
+          <PixelAvatar 
+            agentName={agentName}
+            status={error ? 'error' : isSending ? 'thinking' : messages.length > 0 ? 'active' : 'idle'}
+            stats={{
+              tokens: undefined, // TODO: get from session
+              uptime: undefined, // TODO: calculate from session start
+              model: undefined,  // TODO: get from session
+            }}
+          />
           <button
             type="button"
             className={`zen-btn zen-btn-thinking ${showThinking ? 'zen-btn-thinking-active' : ''}`}
