@@ -95,13 +95,20 @@ function SessionItem({ session, displayName, isActive, isSelected, onSelect }: S
 
 // ── Empty State ───────────────────────────────────────────────────
 
-function EmptyState() {
+interface EmptyStateProps {
+  isFiltered?: boolean
+}
+
+function EmptyState({ isFiltered }: EmptyStateProps) {
   return (
     <div className="zen-sessions-empty">
-      <div className="zen-empty-icon">📋</div>
-      <div className="zen-empty-title">No sessions</div>
+      <div className="zen-empty-icon">{isFiltered ? '🔍' : '📋'}</div>
+      <div className="zen-empty-title">{isFiltered ? 'No matching sessions' : 'No sessions'}</div>
       <div className="zen-empty-subtitle">
-        Agent sessions will appear here
+        {isFiltered 
+          ? 'No sessions in this room. Select "All Rooms" to see all sessions.'
+          : 'Agent sessions will appear here'
+        }
       </div>
     </div>
   )
@@ -214,11 +221,20 @@ export function ZenSessionsPanel({ selectedSessionKey, onSelectSession, roomFilt
     )
   }
   
-  // Empty state
+  // Empty state (no sessions at all)
   if (sessions.length === 0) {
     return (
       <div className="zen-sessions-panel">
-        <EmptyState />
+        <EmptyState isFiltered={false} />
+      </div>
+    )
+  }
+  
+  // Empty filtered state (sessions exist but none match filter)
+  if (sortedSessions.length === 0) {
+    return (
+      <div className="zen-sessions-panel">
+        <EmptyState isFiltered={!!roomFilter} />
       </div>
     )
   }
@@ -256,7 +272,12 @@ export function ZenSessionsPanel({ selectedSessionKey, onSelectSession, roomFilt
       
       {/* Footer with count */}
       <div className="zen-sessions-footer">
-        <span className="zen-sessions-count">{sessions.length} session{sessions.length !== 1 ? 's' : ''}</span>
+        <span className="zen-sessions-count">
+          {roomFilter 
+            ? `${sortedSessions.length} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''}`
+            : `${sessions.length} session${sessions.length !== 1 ? 's' : ''}`
+          }
+        </span>
       </div>
     </div>
   )
