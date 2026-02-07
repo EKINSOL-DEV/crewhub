@@ -40,12 +40,12 @@
 
 /* Idle: gentle breathing pulse */
 .pixel-avatar--idle .pixel-avatar-grid {
-  animation: pixel-breathe 3s ease-in-out infinite;
+  animation: pixel-breathe 6s ease-in-out infinite;
 }
 
 @keyframes pixel-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.01); opacity: 0.95; }
 }
 
 /* Thinking: subtle glow + bounce */

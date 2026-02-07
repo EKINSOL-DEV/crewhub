@@ -12,7 +12,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5180,
+    port: parseInt(process.env.VITE_DEV_PORT || '5180'),
     allowedHosts: ['ekinbot.local', 'localhost'],
     headers: {
       'Access-Control-Allow-Origin': '*',

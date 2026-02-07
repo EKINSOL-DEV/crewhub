@@ -490,14 +490,6 @@ export function ZenChatPanel({
       {/* Chat header with agent info and controls */}
       <div className="zen-chat-header">
         <div className="zen-chat-header-left">
-          <AgentDropdown
-            currentAgentName={agentName}
-            currentAgentIcon={agentIcon}
-            onSelectAgent={onSelectAgent}
-            onOpenPicker={onChangeAgent}
-          />
-        </div>
-        <div className="zen-chat-header-right">
           <PixelAvatar 
             agentName={agentName}
             status={error ? 'error' : isSending ? 'thinking' : messages.length > 0 ? 'active' : 'idle'}
@@ -507,6 +499,14 @@ export function ZenChatPanel({
               model: undefined,  // TODO: get from session
             }}
           />
+          <AgentDropdown
+            currentAgentName={agentName}
+            currentAgentIcon={agentIcon}
+            onSelectAgent={onSelectAgent}
+            onOpenPicker={onChangeAgent}
+          />
+        </div>
+        <div className="zen-chat-header-right">
           <button
             type="button"
             className={`zen-btn zen-btn-thinking ${showThinking ? 'zen-btn-thinking-active' : ''}`}

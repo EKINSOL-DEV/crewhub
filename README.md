@@ -175,23 +175,52 @@ When running in Docker, set the Gateway URL to reach your host:
 
 ## 🌐 Ports
 
-| Service  | Port | Description |
-|----------|------|-------------|
-| Frontend | 5180 | React dashboard UI |
-| Backend  | 8090 | FastAPI server |
+CrewHub supports both **production** (Docker) and **development** (local) environments running simultaneously:
+
+| Environment | Service  | Port | Description |
+|-------------|----------|------|-------------|
+| **Production** | Backend  | 8090 | FastAPI in Docker |
+| **Production** | Frontend | 8446 | Static build (nginx) |
+| **Development** | Backend  | 8091 | Local uvicorn |
+| **Development** | Frontend | 5181 | Vite dev server |
+
+**Databases:**
+- Production: `~/.crewhub/crewhub.db`
+- Development: `~/.crewhub/crewhub-dev.db`
 
 ---
 
 ## 🧑‍💻 Development
 
+### Dual Environment Setup
+
+CrewHub supports running production (stable) and development (hot-reload) simultaneously:
+
 ```bash
-make dev      # Start backend + frontend with hot-reload
-make build    # Build Docker images
-make up       # Start with Docker Compose
-make down     # Stop all services
-make logs     # View container logs
-make test     # Run tests
+# Production (Docker)
+make prod-up       # Start production containers
+make prod-down     # Stop production
+make prod-logs     # View production logs
+make prod-rebuild  # Rebuild and restart
+
+# Development (Local)
+make dev           # Start both backend + frontend (ports 8091/5181)
+make dev-backend   # Backend only (port 8091)
+make dev-frontend  # Frontend only (port 5181)
+
+# Legacy Docker dev (kept for compatibility)
+make up            # Start with docker-compose.yml
+make down          # Stop all services
+make logs          # View container logs
 ```
+
+### Production URLs
+- Frontend: http://ekinbot.local:8446
+- Backend API: http://ekinbot.local:8090
+
+### Development URLs
+- Frontend: http://localhost:5181
+- Backend API: http://localhost:8091
 
 ### Project Structure
 
