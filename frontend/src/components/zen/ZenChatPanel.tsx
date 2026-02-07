@@ -150,7 +150,9 @@ function NoAgentState() {
       <div className="zen-empty-icon">🧘</div>
       <div className="zen-empty-title">Welcome to Zen Mode</div>
       <div className="zen-empty-subtitle">
-        Select an agent from the 3D world first, then enter Zen Mode to start chatting.
+        Press <kbd className="zen-kbd">Ctrl+N</kbd> to start a new chat
+        <br /><br />
+        Or use <kbd className="zen-kbd">Ctrl+K</kbd> to open command palette
         <br /><br />
         <kbd className="zen-kbd">Esc</kbd> to exit
       </div>

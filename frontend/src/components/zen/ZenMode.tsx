@@ -58,6 +58,10 @@ export function ZenMode({
 }: ZenModeProps) {
   const [agentStatus, setAgentStatus] = useState<'active' | 'thinking' | 'idle' | 'error'>('idle')
   
+  // Room filter state (for filtering sessions by room)
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
+  const [selectedRoomName, setSelectedRoomName] = useState<string>('All Rooms')
+  
   // Modal states
   const [showThemePicker, setShowThemePicker] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
@@ -77,17 +81,19 @@ export function ZenMode({
   // Layout state
   const layout = useZenLayout()
   
-  // Apply theme CSS variables
+  // Apply theme CSS variables when theme changes
   useEffect(() => {
     theme.applyTheme()
-    
+  }, [theme.applyTheme])
+  
+  // Clean up theme on unmount
+  useEffect(() => {
     return () => {
-      // Clean up theme on unmount
       const root = document.documentElement
       root.removeAttribute('data-zen-theme')
       root.removeAttribute('data-zen-theme-type')
     }
-  }, [theme])
+  }, [])
 
   // Lock body scroll
   useEffect(() => {
@@ -140,6 +146,7 @@ export function ZenMode({
     // Phase 5 additions
     onOpenKeyboardHelp: () => setShowKeyboardHelp(true),
     onSaveLayout: () => setShowSaveLayout(true),
+    onLoadLayout: () => setShowLayoutPicker(true),
     onNewChat: () => setShowAgentPicker(true),
     onSpawnSession: () => setShowSpawnModal(true),
     onAddPanel: handleAddPanel,
@@ -201,7 +208,7 @@ export function ZenMode({
   // Handle theme selection
   const handleSelectTheme = useCallback((themeId: string) => {
     theme.setTheme(themeId)
-  }, [theme])
+  }, [theme.setTheme])
   
   // Handle spawn session
   const handleSpawnSession = useCallback(async (agentId: string, label?: string) => {
@@ -220,8 +227,8 @@ export function ZenMode({
         p.panelType === 'chat' && !p.agentSessionKey
       )
       if (newChatPanel) {
-        // TODO: Create a new session for this agent
-        layout.setPanelAgent(newChatPanel.panelId, `agent:${agentId}:new`, agentName, agentIcon)
+        // Use the proper session key format for fixed agents
+        layout.setPanelAgent(newChatPanel.panelId, `agent:${agentId}:main`, agentName, agentIcon)
       }
     }, 50)
     setShowAgentPicker(false)
@@ -277,6 +284,7 @@ export function ZenMode({
                 ? layout.focusedPanel.agentSessionKey 
                 : undefined}
               onSelectSession={handleSelectSession}
+              roomFilter={selectedRoomId}
             />
           )
         
@@ -284,7 +292,15 @@ export function ZenMode({
           return <ZenActivityPanel />
         
         case 'rooms':
-          return <ZenRoomsPanel />
+          return (
+            <ZenRoomsPanel
+              selectedRoomId={selectedRoomId || undefined}
+              onSelectRoom={(roomId, roomName) => {
+                setSelectedRoomId(roomId)
+                setSelectedRoomName(roomName)
+              }}
+            />
+          )
         
         case 'tasks':
           return <ZenTasksPanel />
@@ -348,7 +364,7 @@ export function ZenMode({
       <ZenStatusBar
         agentName={focusedAgentName}
         agentStatus={agentStatus}
-        roomName={roomName}
+        roomName={selectedRoomId ? selectedRoomName : roomName}
         connected={connected}
         panelCount={layout.panelCount}
         focusedPanelIndex={layout.panels.findIndex(p => p.panelId === layout.focusedPanelId) + 1}

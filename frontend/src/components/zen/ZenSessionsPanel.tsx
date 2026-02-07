@@ -6,11 +6,13 @@
 import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useSessionActivity } from '@/hooks/useSessionActivity'
+import { useRoomsContext } from '@/contexts/RoomsContext'
 import type { CrewSession } from '@/lib/api'
 
 interface ZenSessionsPanelProps {
   selectedSessionKey?: string
   onSelectSession: (sessionKey: string, agentName: string, agentIcon?: string) => void
+  roomFilter?: string | null  // Filter sessions by room ID (null = show all)
 }
 
 // ── Agent icon mapping ────────────────────────────────────────────
@@ -122,9 +124,10 @@ function LoadingState() {
 
 // ── Main Component ────────────────────────────────────────────────
 
-export function ZenSessionsPanel({ selectedSessionKey, onSelectSession }: ZenSessionsPanelProps) {
+export function ZenSessionsPanel({ selectedSessionKey, onSelectSession, roomFilter }: ZenSessionsPanelProps) {
   const { sessions, loading, connected } = useSessionsStream(true)
   const { isActivelyRunning } = useSessionActivity(sessions)
+  const { sessionAssignments, getRoomForSession } = useRoomsContext()
   const [focusedIndex, setFocusedIndex] = useState(0)
   const listRef = useRef<HTMLDivElement>(null)
   
@@ -136,16 +139,26 @@ export function ZenSessionsPanel({ selectedSessionKey, onSelectSession }: ZenSes
     return [...sessions]
       .filter(s => {
         // Main sessions are always chattable
-        if (s.key.includes(':main')) return true
+        if (!s.key.includes(':main')) {
+          // Subagent sessions: only show if recently active
+          const age = now - s.updatedAt
+          if (age > SUBAGENT_MAX_AGE_MS) return false
+        }
         
-        // Subagent sessions: only show if recently active
-        const age = now - s.updatedAt
-        if (age > SUBAGENT_MAX_AGE_MS) return false
+        // Apply room filter if set
+        if (roomFilter) {
+          const sessionRoomId = sessionAssignments.get(s.key) || getRoomForSession(s.key, {
+            label: s.label,
+            model: s.model,
+            channel: s.channel,
+          })
+          if (sessionRoomId !== roomFilter) return false
+        }
         
         return true
       })
       .sort((a, b) => b.updatedAt - a.updatedAt)
-  }, [sessions])
+  }, [sessions, roomFilter, sessionAssignments, getRoomForSession])
   
   // Get display name from session object
   const getDisplayName = useCallback((session: CrewSession) => {

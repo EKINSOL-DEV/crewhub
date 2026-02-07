@@ -121,7 +121,7 @@ export function ZenTopBar({
             onClick={onOpenCommandPalette}
             title="Command palette (Ctrl+K)"
           >
-            ⌘
+            ⚡
           </button>
         )}
         

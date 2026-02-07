@@ -100,14 +100,16 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
     e.preventDefault()
     setIsDragging(true)
     
-    const container = containerRef.current
-    if (!container) return
-    
-    const rect = container.getBoundingClientRect()
     const isRow = direction === 'row'
-    const totalSize = isRow ? rect.width : rect.height
     
     const handleMouseMove = (moveEvent: MouseEvent) => {
+      // Get fresh rect on each move to avoid stale values
+      const container = containerRef.current
+      if (!container) return
+      
+      const rect = container.getBoundingClientRect()
+      const totalSize = isRow ? rect.width : rect.height
+      
       const pos = isRow 
         ? moveEvent.clientX - rect.left 
         : moveEvent.clientY - rect.top

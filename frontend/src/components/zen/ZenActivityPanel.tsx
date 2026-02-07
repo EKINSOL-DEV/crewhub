@@ -191,7 +191,7 @@ export function ZenActivityPanel() {
       try {
         const session: CrewSession = JSON.parse(e.data)
         addEvent({
-          id: `created-${++eventIdCounter}`,
+          id: genId(),
           type: 'created',
           timestamp: Date.now(),
           sessionKey: session.key,
@@ -211,7 +211,7 @@ export function ZenActivityPanel() {
         const session: CrewSession = JSON.parse(e.data)
         const tokens = session.totalTokens || 0
         addEvent({
-          id: `updated-${++eventIdCounter}`,
+          id: genId(),
           type: 'updated',
           timestamp: Date.now(),
           sessionKey: session.key,
@@ -230,7 +230,7 @@ export function ZenActivityPanel() {
       try {
         const { key } = JSON.parse(e.data)
         addEvent({
-          id: `removed-${++eventIdCounter}`,
+          id: genId(),
           type: 'removed',
           timestamp: Date.now(),
           sessionKey: key,

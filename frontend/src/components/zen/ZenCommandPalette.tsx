@@ -277,6 +277,7 @@ export interface UseCommandRegistryOptions {
   // Phase 5 additions
   onOpenKeyboardHelp?: () => void
   onSaveLayout?: () => void
+  onLoadLayout?: () => void
   onNewChat?: () => void
   onSpawnSession?: () => void
   onAddPanel?: (type: string) => void
@@ -343,6 +344,14 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
         shortcut: 'Ctrl+Shift+S',
         category: 'layout',
         action: options.onSaveLayout || (() => {}),
+      },
+      {
+        id: 'layout.load',
+        label: 'Load Layout',
+        description: 'Load a saved layout or preset',
+        icon: '📂',
+        category: 'layout',
+        action: options.onLoadLayout || (() => {}),
       },
       {
         id: 'layout.split-vertical',
