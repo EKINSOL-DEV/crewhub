@@ -4285,9 +4285,22 @@
 
 .zen-image-preview-error-badge {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 12px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zen-image-preview-error .zen-image-preview-remove {
+  opacity: 1;
+  background: var(--zen-error, #f87171);
 }
 
 .zen-image-preview-remove {
