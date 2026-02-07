@@ -3,8 +3,7 @@
  * Full chat interface reusing the existing useAgentChat hook
  */
 
-import { useRef, useEffect, useCallback, type KeyboardEvent } from 'react'
-import { useState } from 'react'
+import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 'react'
 import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
 
 interface ZenChatPanelProps {
@@ -169,6 +168,98 @@ const FIXED_AGENTS = [
   { id: 'flowy', name: 'Flowy', icon: '🌊', description: 'Flow and automation tasks' },
   { id: 'reviewer', name: 'Reviewer', icon: '🔍', description: 'Code review and analysis' },
 ]
+
+// ── Agent Dropdown Component ───────────────────────────────────
+
+interface AgentDropdownProps {
+  currentAgentName: string | null
+  currentAgentIcon: string | null
+  onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void
+  onOpenPicker?: () => void
+}
+
+function AgentDropdown({ currentAgentName, currentAgentIcon, onSelectAgent, onOpenPicker }: AgentDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Close on click outside
+  useEffect(() => {
+    if (!isOpen) return
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+  
+  // Close on escape
+  useEffect(() => {
+    if (!isOpen) return
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+    
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen])
+  
+  const handleSelect = useCallback((agent: typeof FIXED_AGENTS[0]) => {
+    onSelectAgent?.(agent.id, agent.name, agent.icon)
+    setIsOpen(false)
+  }, [onSelectAgent])
+  
+  return (
+    <div className="zen-agent-dropdown" ref={dropdownRef}>
+      <button 
+        type="button"
+        className="zen-chat-agent-selector"
+        onClick={() => setIsOpen(!isOpen)}
+        title="Switch agent (click to change)"
+      >
+        <span className="zen-chat-agent-icon">{currentAgentIcon || '🤖'}</span>
+        <span className="zen-chat-agent-name">{currentAgentName || 'Agent'}</span>
+        <span className="zen-chat-agent-chevron">▾</span>
+      </button>
+      
+      {isOpen && (
+        <div className="zen-agent-dropdown-menu">
+          {FIXED_AGENTS.map(agent => (
+            <button
+              key={agent.id}
+              className={`zen-agent-dropdown-item ${currentAgentName === agent.name ? 'active' : ''}`}
+              onClick={() => handleSelect(agent)}
+            >
+              <span className="zen-agent-dropdown-icon">{agent.icon}</span>
+              <span className="zen-agent-dropdown-name">{agent.name}</span>
+            </button>
+          ))}
+          {onOpenPicker && (
+            <>
+              <div className="zen-context-menu-separator" />
+              <button
+                className="zen-agent-dropdown-item"
+                onClick={() => {
+                  setIsOpen(false)
+                  onOpenPicker()
+                }}
+              >
+                <span className="zen-agent-dropdown-icon">➕</span>
+                <span className="zen-agent-dropdown-name">More agents...</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ── No Agent Selected State ────────────────────────────────────
 
@@ -342,23 +433,12 @@ export function ZenChatPanel({
       {/* Chat header with agent info and controls */}
       <div className="zen-chat-header">
         <div className="zen-chat-header-left">
-          {onChangeAgent ? (
-            <button 
-              type="button"
-              className="zen-chat-agent-selector"
-              onClick={onChangeAgent}
-              title="Switch agent (click to change)"
-            >
-              <span className="zen-chat-agent-icon">{agentIcon || '🤖'}</span>
-              <span className="zen-chat-agent-name">{agentName || 'Agent'}</span>
-              <span className="zen-chat-agent-chevron">▾</span>
-            </button>
-          ) : (
-            <>
-              <span className="zen-chat-agent-icon">{agentIcon || '🤖'}</span>
-              <span className="zen-chat-agent-name">{agentName || 'Agent'}</span>
-            </>
-          )}
+          <AgentDropdown
+            currentAgentName={agentName}
+            currentAgentIcon={agentIcon}
+            onSelectAgent={onSelectAgent}
+            onOpenPicker={onChangeAgent}
+          />
         </div>
         <div className="zen-chat-header-right">
           <button
