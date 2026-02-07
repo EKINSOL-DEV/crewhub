@@ -166,13 +166,13 @@ function NoAgentState() {
   return (
     <div className="zen-empty-state">
       <div className="zen-empty-icon">🧘</div>
-      <div className="zen-empty-title">Welcome to Zen Mode</div>
+      <div className="zen-empty-title">Ready to Focus</div>
       <div className="zen-empty-subtitle">
-        Press <kbd className="zen-kbd">Ctrl+N</kbd> to start a new chat
-        <br /><br />
-        Or use <kbd className="zen-kbd">Ctrl+K</kbd> to open command palette
-        <br /><br />
-        <kbd className="zen-kbd">Esc</kbd> to exit
+        <kbd className="zen-kbd">Ctrl+N</kbd> New chat
+        <span style={{ margin: '0 8px', opacity: 0.5 }}>•</span>
+        <kbd className="zen-kbd">Ctrl+K</kbd> Commands
+        <span style={{ margin: '0 8px', opacity: 0.5 }}>•</span>
+        <kbd className="zen-kbd">Esc</kbd> Exit
       </div>
     </div>
   )
