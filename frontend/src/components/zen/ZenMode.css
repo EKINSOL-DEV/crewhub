@@ -779,6 +779,24 @@
   gap: var(--zen-space-xs);
 }
 
+.zen-panel-split {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  padding: 0;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.zen-panel:hover .zen-panel-split {
+  opacity: 0.5;
+}
+
+.zen-panel-split:hover {
+  opacity: 1 !important;
+}
+
 .zen-panel-close {
   width: 20px;
   height: 20px;

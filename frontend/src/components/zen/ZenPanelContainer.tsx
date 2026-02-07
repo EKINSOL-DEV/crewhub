@@ -41,6 +41,8 @@ export function ZenPanelContainer({
         canClose={canClose}
         onFocus={() => onFocus(node.panelId)}
         onClose={() => onClose(node.panelId)}
+        onSplitVertical={_onSplit ? () => _onSplit(node.panelId, 'row') : undefined}
+        onSplitHorizontal={_onSplit ? () => _onSplit(node.panelId, 'col') : undefined}
       >
         {renderPanel(node)}
       </ZenPanel>
@@ -118,17 +120,24 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
       
       // Use fresh rect for accurate position
       const rect = container.getBoundingClientRect()
+      const handleSize = 4 // resize handle width/height in pixels
       const currentTotalSize = isRow ? rect.width : rect.height
+      const availableSize = currentTotalSize - handleSize
       
-      const pos = isRow 
+      // Get mouse position relative to container
+      const mousePos = isRow 
         ? moveEvent.clientX - rect.left 
         : moveEvent.clientY - rect.top
       
-      // Calculate new ratio with proper clamping
-      const minRatio = MIN_PANEL_SIZE / currentTotalSize
-      const maxRatio = 1 - (MIN_PANEL_SIZE / currentTotalSize)
+      // The first panel's size should be mousePos minus half the handle
+      // This makes the handle center follow the mouse
+      const panelSize = mousePos - (handleSize / 2)
       
-      let newRatio = pos / currentTotalSize
+      // Calculate ratio based on available space (excluding handle)
+      const minRatio = MIN_PANEL_SIZE / availableSize
+      const maxRatio = 1 - (MIN_PANEL_SIZE / availableSize)
+      
+      let newRatio = panelSize / availableSize
       newRatio = Math.max(minRatio, Math.min(maxRatio, newRatio))
       
       // Only update if ratio actually changed
@@ -172,10 +181,10 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
         overflow: 'hidden',
       }}
     >
-      {/* First child */}
+      {/* First child - use calc to account for 4px handle */}
       <div 
         style={{ 
-          flex: `0 0 ${ratio * 100}%`,
+          flex: `0 0 calc(${ratio * 100}% - ${4 * ratio}px)`,
           display: 'flex',
           overflow: 'hidden',
           minWidth: isRow ? MIN_PANEL_SIZE : undefined,

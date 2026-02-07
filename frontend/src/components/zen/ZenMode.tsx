@@ -11,7 +11,7 @@
  * - Polish: animations, loading skeletons, error boundaries, tooltips
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { ZenTopBar } from './ZenTopBar'
 import { ZenStatusBar } from './ZenStatusBar'
 import { ZenPanelContainer } from './ZenPanelContainer'
@@ -81,10 +81,47 @@ export function ZenMode({
   // Layout state
   const layout = useZenLayout()
   
+  // Ref for applying theme CSS variables
+  const zenContainerRef = useRef<HTMLDivElement>(null)
+  
   // Apply theme CSS variables when theme changes
   useEffect(() => {
-    theme.applyTheme()
-  }, [theme.currentTheme.id, theme.applyTheme])
+    // Apply to the zen-mode container element directly (not document root)
+    // This is needed because .zen-mode CSS defines its own default variables
+    const container = zenContainerRef.current
+    if (!container) return
+    
+    const vars = {
+      '--zen-bg': theme.currentTheme.colors.bg,
+      '--zen-bg-panel': theme.currentTheme.colors.bgPanel,
+      '--zen-bg-hover': theme.currentTheme.colors.bgHover,
+      '--zen-bg-active': theme.currentTheme.colors.bgActive,
+      '--zen-fg': theme.currentTheme.colors.fg,
+      '--zen-fg-muted': theme.currentTheme.colors.fgMuted,
+      '--zen-fg-dim': theme.currentTheme.colors.fgDim,
+      '--zen-border': theme.currentTheme.colors.border,
+      '--zen-border-focus': theme.currentTheme.colors.borderFocus,
+      '--zen-accent': theme.currentTheme.colors.accent,
+      '--zen-accent-hover': theme.currentTheme.colors.accentHover,
+      '--zen-success': theme.currentTheme.colors.success,
+      '--zen-warning': theme.currentTheme.colors.warning,
+      '--zen-error': theme.currentTheme.colors.error,
+      '--zen-info': theme.currentTheme.colors.info,
+      '--zen-user-bubble': theme.currentTheme.colors.userBubble,
+      '--zen-assistant-bubble': theme.currentTheme.colors.assistantBubble,
+      '--zen-syntax-keyword': theme.currentTheme.colors.syntax.keyword,
+      '--zen-syntax-string': theme.currentTheme.colors.syntax.string,
+      '--zen-syntax-comment': theme.currentTheme.colors.syntax.comment,
+      '--zen-syntax-function': theme.currentTheme.colors.syntax.function,
+      '--zen-syntax-variable': theme.currentTheme.colors.syntax.variable,
+    }
+    Object.entries(vars).forEach(([key, value]) => {
+      container.style.setProperty(key, value)
+    })
+    container.setAttribute('data-zen-theme', theme.currentTheme.id)
+    container.setAttribute('data-zen-theme-type', theme.currentTheme.type)
+    console.log('[Zen] Applied theme:', theme.currentTheme.id, 'to container')
+  }, [theme.currentTheme])
   
   // Clean up theme on unmount
   useEffect(() => {
@@ -334,6 +371,7 @@ export function ZenMode({
 
   return (
     <div 
+      ref={zenContainerRef}
       className="zen-mode zen-fade-in"
       role="dialog"
       aria-modal="true"

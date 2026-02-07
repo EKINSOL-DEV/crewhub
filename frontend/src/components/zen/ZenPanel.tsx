@@ -12,6 +12,8 @@ interface ZenPanelProps {
   children: ReactNode
   onFocus: () => void
   onClose: () => void
+  onSplitVertical?: () => void
+  onSplitHorizontal?: () => void
 }
 
 export function ZenPanel({
@@ -21,6 +23,8 @@ export function ZenPanel({
   children,
   onFocus,
   onClose,
+  onSplitVertical,
+  onSplitHorizontal,
 }: ZenPanelProps) {
   const info = PANEL_INFO[panel.panelType]
   
@@ -62,6 +66,33 @@ export function ZenPanel({
         </div>
         
         <div className="zen-panel-header-right">
+          {/* Split Vertical (side by side) */}
+          {onSplitVertical && (
+            <button
+              type="button"
+              className="zen-btn zen-btn-icon zen-panel-split"
+              onClick={(e) => { e.stopPropagation(); onSplitVertical(); }}
+              title="Split vertical (Ctrl+\)"
+              aria-label="Split panel vertically"
+            >
+              ⬍
+            </button>
+          )}
+          
+          {/* Split Horizontal (stacked) */}
+          {onSplitHorizontal && (
+            <button
+              type="button"
+              className="zen-btn zen-btn-icon zen-panel-split"
+              onClick={(e) => { e.stopPropagation(); onSplitHorizontal(); }}
+              title="Split horizontal (Ctrl+Shift+\)"
+              aria-label="Split panel horizontally"
+            >
+              ⬌
+            </button>
+          )}
+          
+          {/* Close button */}
           {canClose && (
             <button
               type="button"
