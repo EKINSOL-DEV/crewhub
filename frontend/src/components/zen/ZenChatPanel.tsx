@@ -7,6 +7,7 @@ import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 're
 import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
 import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
+import { VideoThumbnail } from '@/components/chat/VideoThumbnail'
 
 interface ZenChatPanelProps {
   sessionKey: string | null
@@ -111,6 +112,7 @@ function Message({ msg }: { msg: ChatMessageData }) {
   // Parse media attachments from content
   const { text, attachments } = parseMediaAttachments(msg.content || '')
   const imageAttachments = attachments.filter(a => a.type === 'image')
+  const videoAttachments = attachments.filter(a => a.type === 'video')
 
   if (isSystem) {
     return (
@@ -148,6 +150,20 @@ function Message({ msg }: { msg: ChatMessageData }) {
         }}>
           {imageAttachments.map((attachment, i) => (
             <ImageThumbnail key={i} attachment={attachment} maxWidth={200} />
+          ))}
+        </div>
+      )}
+      
+      {/* Video attachments */}
+      {videoAttachments.length > 0 && (
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          gap: '8px', 
+          marginBottom: '8px' 
+        }}>
+          {videoAttachments.map((attachment, i) => (
+            <VideoThumbnail key={i} attachment={attachment} maxWidth={300} />
           ))}
         </div>
       )}
