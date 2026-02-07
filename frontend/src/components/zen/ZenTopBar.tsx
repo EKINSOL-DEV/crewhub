@@ -1,3 +1,5 @@
+import { useState, useEffect, useCallback } from 'react'
+
 /**
  * Zen Mode Top Bar
  * Minimal header with title, layout info, theme, and action buttons
@@ -14,6 +16,26 @@ interface ZenTopBarProps {
   onOpenKeyboardHelp?: () => void
 }
 
+function useFullscreen() {
+  const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement)
+  
+  useEffect(() => {
+    const handleChange = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', handleChange)
+    return () => document.removeEventListener('fullscreenchange', handleChange)
+  }, [])
+  
+  const toggle = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      document.documentElement.requestFullscreen()
+    }
+  }, [])
+  
+  return { isFullscreen, toggle }
+}
+
 export function ZenTopBar({ 
   onExit, 
   isMaximized, 
@@ -24,6 +46,20 @@ export function ZenTopBar({
   onOpenCommandPalette,
   onOpenKeyboardHelp,
 }: ZenTopBarProps) {
+  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
+  
+  // Keyboard shortcut for fullscreen (F11 or Ctrl+Shift+F)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F11' || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f')) {
+        e.preventDefault()
+        toggleFullscreen()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [toggleFullscreen])
+  
   return (
     <header className="zen-top-bar">
       <div className="zen-top-bar-left">
@@ -99,6 +135,15 @@ export function ZenTopBar({
             ⊡
           </button>
         )}
+        
+        {/* Fullscreen toggle */}
+        <button
+          className="zen-btn zen-btn-icon"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? "Exit fullscreen (F11)" : "Fullscreen (F11)"}
+        >
+          {isFullscreen ? '⊙' : '⛶'}
+        </button>
         
         {/* Exit button */}
         <button

@@ -14,6 +14,10 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5180,
     allowedHosts: ['ekinbot.local', 'localhost'],
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Private-Network': 'true',
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:8090',

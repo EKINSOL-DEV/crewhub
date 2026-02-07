@@ -156,7 +156,8 @@ export function ZenActivityPanel() {
   
   // Subscribe to SSE events
   useEffect(() => {
-    let eventIdCounter = 0
+    // Use timestamp + random for unique IDs
+    const genId = () => `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     
     // Connection state
     const unsubscribeState = sseManager.onStateChange((state) => {
@@ -164,7 +165,7 @@ export function ZenActivityPanel() {
       
       if (state === 'connected') {
         addEvent({
-          id: `status-${++eventIdCounter}`,
+          id: genId(),
           type: 'status',
           timestamp: Date.now(),
           sessionKey: '',
@@ -174,7 +175,7 @@ export function ZenActivityPanel() {
         })
       } else if (state === 'disconnected') {
         addEvent({
-          id: `status-${++eventIdCounter}`,
+          id: genId(),
           type: 'status',
           timestamp: Date.now(),
           sessionKey: '',

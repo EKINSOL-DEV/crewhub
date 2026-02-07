@@ -301,8 +301,8 @@ function AppContent() {
   return (
     <div 
       className="h-dvh bg-background flex flex-col overflow-hidden"
-      aria-hidden={zenMode.isActive}
-      inert={zenMode.isActive ? true : undefined}
+      
+      
     >
       <header className="border-b bg-card shrink-0">
         <div className="px-4 py-3 flex items-center justify-between">

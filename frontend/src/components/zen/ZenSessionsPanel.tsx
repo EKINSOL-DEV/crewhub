@@ -128,9 +128,23 @@ export function ZenSessionsPanel({ selectedSessionKey, onSelectSession }: ZenSes
   const [focusedIndex, setFocusedIndex] = useState(0)
   const listRef = useRef<HTMLDivElement>(null)
   
-  // Sort sessions by updatedAt (most recent first)
+  // Filter & sort sessions - only show chattable sessions
   const sortedSessions = useMemo(() => {
-    return [...sessions].sort((a, b) => b.updatedAt - a.updatedAt)
+    const now = Date.now()
+    const SUBAGENT_MAX_AGE_MS = 30 * 60 * 1000 // 30 minutes
+    
+    return [...sessions]
+      .filter(s => {
+        // Main sessions are always chattable
+        if (s.key.includes(':main')) return true
+        
+        // Subagent sessions: only show if recently active
+        const age = now - s.updatedAt
+        if (age > SUBAGENT_MAX_AGE_MS) return false
+        
+        return true
+      })
+      .sort((a, b) => b.updatedAt - a.updatedAt)
   }, [sessions])
   
   // Get display name from session object
