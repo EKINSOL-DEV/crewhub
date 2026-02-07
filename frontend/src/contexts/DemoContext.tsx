@@ -340,12 +340,33 @@ export function useDemoMode() {
 
 // ─── Demo Indicator Component ───────────────────────────────────
 
+const DEMO_BANNER_DISMISSED_KEY = 'crewhub-demo-banner-dismissed'
+
 export function DemoModeIndicator() {
   const { isDemoMode } = useDemoMode()
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(DEMO_BANNER_DISMISSED_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const dismissBanner = useCallback(() => {
+    setBannerDismissed(true)
+    try {
+      localStorage.setItem(DEMO_BANNER_DISMISSED_KEY, 'true')
+    } catch {
+      // Ignore storage errors
+    }
+  }, [])
+
   if (!isDemoMode && !isPublicDemo) return null
 
-  // Public demo: show a banner with GitHub link
+  // Public demo: show a banner with GitHub link (unless dismissed)
   if (isPublicDemo) {
+    if (bannerDismissed) return null
+
     return (
       <div
         style={{
@@ -369,6 +390,25 @@ export function DemoModeIndicator() {
           gap: '10px',
         }}
       >
+        <button
+          onClick={dismissBanner}
+          title="Dismiss banner"
+          style={{
+            background: 'rgba(255,255,255,0.15)',
+            border: 'none',
+            borderRadius: '4px',
+            color: '#fff',
+            cursor: 'pointer',
+            padding: '2px 6px',
+            fontSize: '12px',
+            lineHeight: 1,
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.3)' }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.15)' }}
+        >
+          ✕
+        </button>
         <span>🚀</span>
         <span>Live Demo — no real agents running</span>
         <a
