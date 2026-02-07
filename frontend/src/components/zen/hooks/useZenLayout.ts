@@ -23,15 +23,11 @@ import {
 // ── Layout Presets ────────────────────────────────────────────────
 
 const LAYOUT_PRESETS: Record<LayoutPreset, () => LayoutNode> = {
-  // Default: Sessions (25%) | Chat (50%) | Activity (25%)
+  // Default: Chat (60%) | Tasks (40%)
   default: () => createSplit('row',
-    createLeaf('sessions'),
-    createSplit('row',
-      createLeaf('chat'),
-      createLeaf('activity'),
-      0.67  // Chat gets 2/3 of remaining space
-    ),
-    0.25  // Sessions gets 25%
+    createLeaf('chat'),
+    createLeaf('tasks'),
+    0.6  // Chat gets 60%
   ),
   
   // Multi-Chat: Two chat panels side by side
