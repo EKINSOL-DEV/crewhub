@@ -11,6 +11,7 @@ export type PanelType =
   | 'activity'  // Real-time SSE activity feed
   | 'rooms'     // Room navigation
   | 'tasks'     // Task board
+  | 'kanban'    // Kanban board view
   | 'cron'      // Cron jobs viewer
   | 'logs'      // System logs
   | 'details'   // Session details (future)
@@ -100,6 +101,11 @@ export const PANEL_INFO: Record<PanelType, Omit<PanelInfo, 'id'>> = {
     type: 'tasks',
     icon: '✅',
     label: 'Tasks',
+  },
+  kanban: {
+    type: 'kanban',
+    icon: '📊',
+    label: 'Kanban',
   },
   cron: {
     type: 'cron',

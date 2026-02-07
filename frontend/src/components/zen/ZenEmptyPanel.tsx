@@ -37,6 +37,11 @@ const AVAILABLE_TYPES: { type: PanelType; shortcut?: string; description: string
     description: 'Task board overview' 
   },
   { 
+    type: 'kanban', 
+    shortcut: 'k',
+    description: 'Kanban board view' 
+  },
+  { 
     type: 'logs', 
     shortcut: 'l',
     description: 'System logs viewer' 
