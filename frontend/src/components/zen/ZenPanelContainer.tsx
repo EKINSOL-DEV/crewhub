@@ -56,15 +56,15 @@ export function ZenPanelContainer({
       direction={node.dir}
       ratio={node.ratio}
       onRatioChange={(newRatio) => {
-        // Find first panel in 'a' subtree and resize it
+        // Find first panel in 'a' subtree and pass absolute ratio
         const findFirstPanel = (n: LayoutNode): string | null => {
           if (n.kind === 'leaf') return n.panelId
           return findFirstPanel(n.a)
         }
         const panelId = findFirstPanel(node.a)
         if (panelId && onResize) {
-          const delta = newRatio - node.ratio
-          onResize(panelId, delta)
+          // Pass absolute ratio directly (not delta)
+          onResize(panelId, newRatio)
         }
       }}
     >

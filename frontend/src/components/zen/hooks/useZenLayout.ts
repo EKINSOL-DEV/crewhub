@@ -192,33 +192,34 @@ export function useZenLayout(): UseZenLayoutReturn {
   
   // ── Resize Action ───────────────────────────────────────────────
   
-  const resizePanel = useCallback((panelId: string, delta: number) => {
+  const resizePanel = useCallback((panelId: string, absoluteRatio: number) => {
     setState(prev => {
-      // Find the parent split of this panel and adjust its ratio
-      const adjustRatio = (node: LayoutNode): LayoutNode => {
+      // Find the parent split of this panel and set ratio directly
+      const setRatio = (node: LayoutNode): LayoutNode => {
         if (node.kind === 'leaf') return node
         
         const inA = findPanel(node.a, panelId)
         const inB = findPanel(node.b, panelId)
         
         if ((inA && node.a.kind === 'leaf') || (inB && node.b.kind === 'leaf')) {
-          // Direct child, adjust ratio
-          const adjustment = inA ? delta : -delta
-          const newRatio = Math.max(0.15, Math.min(0.85, node.ratio + adjustment))
-          return { ...node, ratio: newRatio }
+          // Direct child, set absolute ratio
+          // If panel is in B, we need to invert (1 - ratio)
+          const newRatio = inA ? absoluteRatio : (1 - absoluteRatio)
+          const clampedRatio = Math.max(0.15, Math.min(0.85, newRatio))
+          return { ...node, ratio: clampedRatio }
         }
         
         if (inA) {
-          return { ...node, a: adjustRatio(node.a) }
+          return { ...node, a: setRatio(node.a) }
         }
         if (inB) {
-          return { ...node, b: adjustRatio(node.b) }
+          return { ...node, b: setRatio(node.b) }
         }
         
         return node
       }
       
-      return { ...prev, root: adjustRatio(prev.root) }
+      return { ...prev, root: setRatio(prev.root) }
     })
   }, [])
   
