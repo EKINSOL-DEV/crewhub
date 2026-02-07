@@ -84,7 +84,7 @@ export function ZenMode({
   // Apply theme CSS variables when theme changes
   useEffect(() => {
     theme.applyTheme()
-  }, [theme.applyTheme])
+  }, [theme.currentTheme.id, theme.applyTheme])
   
   // Clean up theme on unmount
   useEffect(() => {
@@ -208,7 +208,7 @@ export function ZenMode({
   // Handle theme selection
   const handleSelectTheme = useCallback((themeId: string) => {
     theme.setTheme(themeId)
-  }, [theme.setTheme])
+  }, [theme])
   
   // Handle spawn session
   const handleSpawnSession = useCallback(async (agentId: string, label?: string) => {
