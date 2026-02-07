@@ -382,11 +382,20 @@ export function ZenChatPanel({
   } = useAgentChat(sessionKey || '', showThinking)
 
   const [inputValue, setInputValue] = useState('')
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isNearBottomRef = useRef(true)
   const prevMessageCount = useRef(0)
+
+  // Process pending message when agent finishes
+  useEffect(() => {
+    if (!isSending && pendingMessage) {
+      sendMessage(pendingMessage)
+      setPendingMessage(null)
+    }
+  }, [isSending, pendingMessage, sendMessage])
 
   // Notify parent of status changes
   useEffect(() => {
@@ -456,9 +465,15 @@ export function ZenChatPanel({
 
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
-    if (!text || isSending) return
+    if (!text) return
     setInputValue('')
-    await sendMessage(text)
+    
+    if (isSending) {
+      // Queue the message for when agent finishes
+      setPendingMessage(text)
+    } else {
+      await sendMessage(text)
+    }
     // Refocus input after sending
     setTimeout(() => inputRef.current?.focus(), 0)
   }, [inputValue, isSending, sendMessage])
@@ -587,11 +602,12 @@ export function ZenChatPanel({
           <button
             type="button"
             onClick={handleSend}
-            disabled={isSending || !inputValue.trim()}
+            disabled={!inputValue.trim() || pendingMessage !== null}
             className="zen-chat-send-btn"
-            aria-label="Send message"
+            aria-label={isSending ? "Queue message" : "Send message"}
+            title={isSending ? "Message will be sent when agent finishes" : "Send message"}
           >
-            ➤
+            {pendingMessage ? '⏳' : '➤'}
           </button>
         </div>
       </div>
