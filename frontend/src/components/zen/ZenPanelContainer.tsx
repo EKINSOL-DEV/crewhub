@@ -30,7 +30,7 @@ export function ZenPanelContainer({
   onClose,
   onResize,
   onSplit: _onSplit,
-  onChangePanelType: _onChangePanelType,
+  onChangePanelType,
   renderPanel,
 }: ZenPanelContainerProps) {
   if (node.kind === 'leaf') {
@@ -43,6 +43,7 @@ export function ZenPanelContainer({
         onClose={() => onClose(node.panelId)}
         onSplitVertical={_onSplit ? () => _onSplit(node.panelId, 'row') : undefined}
         onSplitHorizontal={_onSplit ? () => _onSplit(node.panelId, 'col') : undefined}
+        onChangePanelType={onChangePanelType ? (type) => onChangePanelType(node.panelId, type) : undefined}
       >
         {renderPanel(node)}
       </ZenPanel>
@@ -74,6 +75,8 @@ export function ZenPanelContainer({
         onFocus={onFocus}
         onClose={onClose}
         onResize={onResize}
+        onSplit={_onSplit}
+        onChangePanelType={onChangePanelType}
         renderPanel={renderPanel}
       />
       <ZenPanelContainer
@@ -83,6 +86,8 @@ export function ZenPanelContainer({
         onFocus={onFocus}
         onClose={onClose}
         onResize={onResize}
+        onSplit={_onSplit}
+        onChangePanelType={onChangePanelType}
         renderPanel={renderPanel}
       />
     </SplitContainer>
