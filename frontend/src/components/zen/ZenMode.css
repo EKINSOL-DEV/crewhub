@@ -4130,3 +4130,17 @@
   background: var(--zen-border);
   margin: var(--zen-space-xs) 0;
 }
+
+.zen-context-menu-label {
+  padding: var(--zen-space-xs) var(--zen-space-md);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--zen-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zen-context-menu-submenu {
+  max-height: 200px;
+  overflow-y: auto;
+}

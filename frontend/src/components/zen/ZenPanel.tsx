@@ -4,6 +4,7 @@
 
 import { type ReactNode, useCallback, useState, useEffect, useRef } from 'react'
 import { type LeafNode, type PanelType, PANEL_INFO } from './types/layout'
+import { ZenContextMenu } from './ZenContextMenu'
 
 // Available panel types for switcher
 const PANEL_TYPES: PanelType[] = ['chat', 'sessions', 'activity', 'rooms', 'tasks', 'cron', 'logs']
@@ -87,6 +88,7 @@ export function ZenPanel({
   onChangePanelType,
 }: ZenPanelProps) {
   const [showTypePicker, setShowTypePicker] = useState(false)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const info = PANEL_INFO[panel.panelType]
   
   // Build the display label
@@ -113,10 +115,18 @@ export function ZenPanel({
     onChangePanelType?.(type)
   }, [onChangePanelType])
   
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({ x: e.clientX, y: e.clientY })
+    onFocus()
+  }, [onFocus])
+  
   return (
     <div 
       className={`zen-panel ${isFocused ? 'zen-panel-focused' : ''}`}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
       role="region"
       aria-label={displayLabel}
       tabIndex={-1}
@@ -197,6 +207,19 @@ export function ZenPanel({
       <div className="zen-panel-content">
         {children}
       </div>
+      
+      {/* Context Menu */}
+      {contextMenu && (
+        <ZenContextMenu
+          position={contextMenu}
+          canClose={canClose}
+          onClose={() => setContextMenu(null)}
+          onSplitVertical={onSplitVertical}
+          onSplitHorizontal={onSplitHorizontal}
+          onChangePanelType={onChangePanelType}
+          onClosePanel={onClose}
+        />
+      )}
     </div>
   )
 }
