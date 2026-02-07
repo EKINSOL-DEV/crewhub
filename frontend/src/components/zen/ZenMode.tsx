@@ -519,6 +519,13 @@ export function ZenModeButton({ onClick }: ZenModeButtonProps) {
     >
       <span style={{ fontSize: '16px' }}>🧘</span>
       <span>Zen</span>
+      <span style={{ 
+        fontSize: '9px', 
+        opacity: 0.7, 
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        marginLeft: '2px',
+      }}>[alpha]</span>
       {isHovered && (
         <span 
           style={{ 
