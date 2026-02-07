@@ -134,15 +134,21 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
       // Only update if ratio actually changed
       if (Math.abs(newRatio - ratioRef.current) > 0.001) {
         onRatioChange(newRatio)
+        ratioRef.current = newRatio
       }
     }
+    
+    // Capture previous body styles to restore later
+    const prevCursor = document.body.style.cursor
+    const prevUserSelect = document.body.style.userSelect
     
     const handleMouseUp = () => {
       setIsDragging(false)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
+      // Restore previous values instead of setting to empty
+      document.body.style.cursor = prevCursor
+      document.body.style.userSelect = prevUserSelect
     }
     
     // Prevent text selection while dragging
