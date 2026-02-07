@@ -899,7 +899,7 @@
   border: 1px solid var(--zen-border);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 10001;
   overflow: hidden;
   isolation: isolate;
 }
