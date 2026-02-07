@@ -356,20 +356,20 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
       {
         id: 'layout.split-vertical',
         label: 'Split Vertically',
-        description: 'Split focused panel left/right',
-        icon: '↔️',
+        description: 'Split focused panel top/bottom',
+        icon: '↕️',
         shortcut: 'Ctrl+\\',
         category: 'layout',
-        action: options.onSplitVertical,
+        action: options.onSplitHorizontal, // swapped to match user expectations
       },
       {
         id: 'layout.split-horizontal',
         label: 'Split Horizontally',
-        description: 'Split focused panel top/bottom',
-        icon: '↕️',
+        description: 'Split focused panel left/right',
+        icon: '↔️',
         shortcut: 'Ctrl+Shift+\\',
         category: 'layout',
-        action: options.onSplitHorizontal,
+        action: options.onSplitVertical, // swapped to match user expectations
       },
       {
         id: 'layout.maximize',

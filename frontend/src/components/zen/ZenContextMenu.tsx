@@ -85,10 +85,13 @@ export function ZenContextMenu({
       role="menu"
     >
       {/* Split actions */}
-      {onSplitVertical && (
+      {/* Note: function names are swapped to match user expectations */}
+      {/* "Split Vertical" (⬍) = top/bottom = calls onSplitHorizontal internally */}
+      {/* "Split Horizontal" (⬌) = left/right = calls onSplitVertical internally */}
+      {onSplitHorizontal && (
         <button
           className="zen-context-menu-item"
-          onClick={() => { onSplitVertical(); onClose() }}
+          onClick={() => { onSplitHorizontal(); onClose() }}
           role="menuitem"
         >
           <span className="zen-context-menu-item-icon">⬍</span>
@@ -96,10 +99,10 @@ export function ZenContextMenu({
         </button>
       )}
       
-      {onSplitHorizontal && (
+      {onSplitVertical && (
         <button
           className="zen-context-menu-item"
-          onClick={() => { onSplitHorizontal(); onClose() }}
+          onClick={() => { onSplitVertical(); onClose() }}
           role="menuitem"
         >
           <span className="zen-context-menu-item-icon">⬌</span>
