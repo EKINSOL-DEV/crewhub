@@ -12,6 +12,7 @@ services:
     volumes:
       - ./backend/app:/app/app
       - ./data:/root/.crewhub
+      - ~/.openclaw/media:/root/.openclaw/media
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
