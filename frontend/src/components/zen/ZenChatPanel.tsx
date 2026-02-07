@@ -459,6 +459,8 @@ export function ZenChatPanel({
     if (!text || isSending) return
     setInputValue('')
     await sendMessage(text)
+    // Refocus input after sending
+    setTimeout(() => inputRef.current?.focus(), 0)
   }, [inputValue, isSending, sendMessage])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
