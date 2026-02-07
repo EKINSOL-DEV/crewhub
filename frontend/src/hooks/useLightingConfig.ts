@@ -33,7 +33,7 @@ export interface LightingConfig {
 // ─── Brighter Defaults ──────────────────────────────────────────
 
 export const DEFAULT_SHADOWS: ShadowConfig = {
-  enabled: true,
+  enabled: false,
   type: 'PCFSoftShadowMap',
   mapSize: 2048,
   bias: -0.001,
@@ -50,7 +50,7 @@ export const DEFAULT_SHADOWS: ShadowConfig = {
 export const DEFAULT_LIGHTING: LightingConfig = {
   ambient: { intensity: 0.8, color: '#ffffff' },
   hemisphere: { skyColor: '#87CEEB', groundColor: '#8B7355', intensity: 0.6 },
-  sun: { intensity: 1.5, color: '#FFF5E6', position: [15, 25, 10], castShadow: true },
+  sun: { intensity: 1.5, color: '#FFF5E6', position: [15, 25, 10], castShadow: false },
   fill: { intensity: 0.4, color: '#E6F0FF', position: [-10, 15, -8] },
   shadows: { ...DEFAULT_SHADOWS },
   toneMapping: 'ACESFilmicToneMapping',

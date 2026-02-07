@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { getBlueprintForRoom } from '@/lib/grid/blueprints'
 import { getWalkableMask, worldToGrid } from '@/lib/grid/blueprintUtils'
+import { getIsPropBeingMoved, getIsPropBeingDragged } from '@/hooks/usePropMovement'
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib'
 
 // ─── Types ─────────────────────────────────────────────────────
@@ -143,6 +144,8 @@ export function FirstPersonController({
     if (!enabled) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't move camera when a prop is selected for movement or being dragged
+      if (getIsPropBeingMoved() || getIsPropBeingDragged()) return
       switch (e.code) {
         case 'KeyW':
         case 'ArrowUp':
