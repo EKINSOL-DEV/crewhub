@@ -30,15 +30,24 @@ const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string }> = 
   low: { label: 'LO', color: 'var(--zen-fg-muted)' },
 }
 
+const COLUMNS: { status: TaskStatus; label: string; icon: string }[] = [
+  { status: 'todo', label: 'To Do', icon: '📋' },
+  { status: 'in_progress', label: 'In Progress', icon: '🔄' },
+  { status: 'review', label: 'Review', icon: '👀' },
+  { status: 'blocked', label: 'Blocked', icon: '⚠️' },
+  { status: 'done', label: 'Done', icon: '✅' },
+]
+
 // ── Task Item Component ──────────────────────────────────────────
 
 interface TaskItemProps {
   task: Task
   onStatusChange: (newStatus: TaskStatus) => void
   onClick?: () => void
+  isSelected?: boolean
 }
 
-function TaskItem({ task, onStatusChange, onClick }: TaskItemProps) {
+function TaskItem({ task, onStatusChange, onClick, isSelected }: TaskItemProps) {
   const status = STATUS_CONFIG[task.status]
   const priority = PRIORITY_CONFIG[task.priority]
   
@@ -54,7 +63,7 @@ function TaskItem({ task, onStatusChange, onClick }: TaskItemProps) {
   
   return (
     <div
-      className={`zen-task-item zen-task-status-${task.status}`}
+      className={`zen-task-item zen-task-status-${task.status}${isSelected ? ' zen-task-item-selected' : ''}`}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -182,6 +191,81 @@ function LoadingState() {
   )
 }
 
+// ── Task Detail Pane ─────────────────────────────────────────────
+
+interface TaskDetailPaneProps {
+  task: Task
+  onClose: () => void
+  onMove: (newStatus: TaskStatus) => void
+}
+
+function TaskDetailPane({ task, onClose, onMove }: TaskDetailPaneProps) {
+  const status = STATUS_CONFIG[task.status]
+  const priority = PRIORITY_CONFIG[task.priority]
+  
+  return (
+    <div className="zen-task-detail-pane">
+      <div className="zen-task-detail-header">
+        <h4 className="zen-task-detail-title">{task.title}</h4>
+        <button 
+          className="zen-task-detail-close" 
+          onClick={onClose}
+          title="Close details"
+        >
+          ✕
+        </button>
+      </div>
+      
+      <div className="zen-task-detail-content">
+        <div className="zen-task-detail-row">
+          <span className="zen-task-detail-label">Status:</span>
+          <span className="zen-task-detail-value" style={{ color: status.color }}>
+            {status.icon} {status.label}
+          </span>
+        </div>
+        
+        <div className="zen-task-detail-row">
+          <span className="zen-task-detail-label">Priority:</span>
+          <span className="zen-task-detail-value" style={{ color: priority.color }}>
+            {priority.label}
+          </span>
+        </div>
+        
+        {task.assigned_display_name && (
+          <div className="zen-task-detail-row">
+            <span className="zen-task-detail-label">Assignee:</span>
+            <span className="zen-task-detail-value">
+              👤 {task.assigned_display_name}
+            </span>
+          </div>
+        )}
+        
+        {task.description && (
+          <div className="zen-task-detail-description">
+            <span className="zen-task-detail-label">Description:</span>
+            <p>{task.description}</p>
+          </div>
+        )}
+        
+        <div className="zen-task-detail-actions">
+          <span className="zen-task-detail-label">Move to:</span>
+          <div className="zen-task-detail-buttons">
+            {COLUMNS.filter(col => col.status !== task.status).map(col => (
+              <button
+                key={col.status}
+                className="zen-btn zen-btn-sm"
+                onClick={() => onMove(col.status)}
+              >
+                {col.icon} {col.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Component ───────────────────────────────────────────────
 
 export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick }: ZenTasksPanelProps) {
@@ -189,6 +273,7 @@ export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick }:
   const isFiltered = !!projectId || !!roomId
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   
   // Filter tasks
   const filteredTasks = useMemo(() => {
@@ -215,7 +300,16 @@ export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick }:
   
   const handleStatusChange = useCallback(async (task: Task, newStatus: TaskStatus) => {
     await updateTask(task.id, { status: newStatus })
-  }, [updateTask])
+    // Update selected task if it was the one that changed
+    if (selectedTask?.id === task.id) {
+      setSelectedTask({ ...task, status: newStatus })
+    }
+  }, [updateTask, selectedTask])
+  
+  const handleTaskClick = useCallback((task: Task) => {
+    setSelectedTask(task)
+    onTaskClick?.(task)
+  }, [onTaskClick])
   
   // Error state
   if (error) {
@@ -279,7 +373,8 @@ export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick }:
               key={task.id}
               task={task}
               onStatusChange={(status) => handleStatusChange(task, status)}
-              onClick={() => onTaskClick?.(task)}
+              onClick={() => handleTaskClick(task)}
+              isSelected={selectedTask?.id === task.id}
             />
           ))}
         </div>
@@ -292,6 +387,18 @@ export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick }:
           {statusFilter !== 'all' && ` (${statusFilter.replace('_', ' ')})`}
         </span>
       </div>
+      
+      {/* Task detail pane (bottom) */}
+      {selectedTask && (
+        <TaskDetailPane
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onMove={(status) => {
+            handleStatusChange(selectedTask, status)
+            setSelectedTask(null)
+          }}
+        />
+      )}
     </div>
   )
 }

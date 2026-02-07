@@ -2364,6 +2364,15 @@
   background: var(--zen-bg-hover);
 }
 
+.zen-task-item-selected {
+  background: var(--zen-accent-bg);
+  border-left-color: var(--zen-accent) !important;
+}
+
+.zen-task-item-selected:hover {
+  background: var(--zen-accent-bg);
+}
+
 .zen-task-status-todo {
   border-left-color: var(--zen-fg-muted);
 }
@@ -2499,6 +2508,95 @@
 
 .zen-tasks-focus-label {
   font-weight: 500;
+}
+
+/* ── Task Detail Pane ──────────────────────────────────────────── */
+
+.zen-task-detail-pane {
+  border-top: 2px solid var(--zen-accent);
+  background: var(--zen-surface);
+  padding: var(--zen-space-md);
+  max-height: 40%;
+  overflow-y: auto;
+}
+
+.zen-task-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--zen-space-md);
+  margin-bottom: var(--zen-space-md);
+}
+
+.zen-task-detail-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--zen-fg);
+  line-height: 1.3;
+}
+
+.zen-task-detail-close {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--zen-fg-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.zen-task-detail-close:hover {
+  background: var(--zen-bg);
+  color: var(--zen-fg);
+}
+
+.zen-task-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zen-space-sm);
+}
+
+.zen-task-detail-row {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  font-size: 12px;
+}
+
+.zen-task-detail-label {
+  color: var(--zen-fg-muted);
+  min-width: 70px;
+}
+
+.zen-task-detail-value {
+  font-weight: 500;
+}
+
+.zen-task-detail-description {
+  margin-top: var(--zen-space-sm);
+  font-size: 12px;
+}
+
+.zen-task-detail-description p {
+  margin: var(--zen-space-xs) 0 0 0;
+  color: var(--zen-fg);
+  line-height: 1.5;
+}
+
+.zen-task-detail-actions {
+  margin-top: var(--zen-space-md);
+  padding-top: var(--zen-space-md);
+  border-top: 1px solid var(--zen-border);
+}
+
+.zen-task-detail-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--zen-space-xs);
+  margin-top: var(--zen-space-sm);
 }
 
 /* ── Kanban Panel ──────────────────────────────────────────────── */
