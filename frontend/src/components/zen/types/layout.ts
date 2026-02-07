@@ -9,9 +9,10 @@ export type PanelType =
   | 'chat'      // Chat interface with an agent
   | 'sessions'  // List of all sessions
   | 'activity'  // Real-time SSE activity feed
-  | 'rooms'     // Room list (future)
-  | 'tasks'     // Task list (future)
-  | 'logs'      // Session transcript viewer (future)
+  | 'rooms'     // Room navigation
+  | 'tasks'     // Task board
+  | 'cron'      // Cron jobs viewer
+  | 'logs'      // System logs
   | 'details'   // Session details (future)
   | 'empty'     // Placeholder panel
 
@@ -99,6 +100,11 @@ export const PANEL_INFO: Record<PanelType, Omit<PanelInfo, 'id'>> = {
     type: 'tasks',
     icon: '✅',
     label: 'Tasks',
+  },
+  cron: {
+    type: 'cron',
+    icon: '⏰',
+    label: 'Cron',
   },
   logs: {
     type: 'logs',

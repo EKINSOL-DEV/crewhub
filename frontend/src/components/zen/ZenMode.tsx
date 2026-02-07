@@ -12,6 +12,10 @@ import { ZenPanelContainer } from './ZenPanelContainer'
 import { ZenChatPanel } from './ZenChatPanel'
 import { ZenSessionsPanel } from './ZenSessionsPanel'
 import { ZenActivityPanel } from './ZenActivityPanel'
+import { ZenRoomsPanel } from './ZenRoomsPanel'
+import { ZenTasksPanel } from './ZenTasksPanel'
+import { ZenCronPanel } from './ZenCronPanel'
+import { ZenLogsPanel } from './ZenLogsPanel'
 import { ZenEmptyPanel } from './ZenEmptyPanel'
 import { ZenThemePicker } from './ZenThemePicker'
 import { ZenCommandPalette, useCommandRegistry } from './ZenCommandPalette'
@@ -185,6 +189,18 @@ export function ZenMode({
       
       case 'activity':
         return <ZenActivityPanel />
+      
+      case 'rooms':
+        return <ZenRoomsPanel />
+      
+      case 'tasks':
+        return <ZenTasksPanel />
+      
+      case 'cron':
+        return <ZenCronPanel />
+      
+      case 'logs':
+        return <ZenLogsPanel />
       
       case 'empty':
       default:
