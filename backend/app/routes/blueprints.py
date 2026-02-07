@@ -23,6 +23,7 @@ from ..db.models import (
     CustomBlueprintResponse,
     generate_id,
 )
+from .sse import broadcast
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/blueprints", tags=["blueprints"])
@@ -537,3 +538,240 @@ async def delete_blueprint(blueprint_id: str):
         await db.close()
 
     logger.info(f"Blueprint deleted: {blueprint_id}")
+
+
+# =============================================================================
+# Prop Movement & Deletion (Interactive Editing)
+# =============================================================================
+
+class MovePropRequest(BaseModel):
+    """Request body for moving a prop within a blueprint."""
+    propId: str
+    fromX: int
+    fromZ: int
+    toX: int
+    toZ: int
+    rotation: Optional[int] = None
+
+
+class DeletePropRequest(BaseModel):
+    """Request body for deleting a prop from a blueprint."""
+    propId: str
+    x: int
+    z: int
+
+
+@router.patch("/{blueprint_id}/move-prop")
+async def move_prop(blueprint_id: str, body: MovePropRequest):
+    """
+    Move a prop to a new position within a blueprint.
+    
+    Updates the placement in the blueprint JSON and broadcasts the change via SSE.
+    Works with both custom blueprints (database) and built-in blueprints (JSON files).
+    """
+    db = await get_db()
+    try:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        
+        # Try to find in custom blueprints first
+        async with db.execute(
+            "SELECT * FROM custom_blueprints WHERE id = ?",
+            (blueprint_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+        
+        if row:
+            # Custom blueprint - update in database
+            bp_json = json.loads(row["blueprint_json"]) if isinstance(row["blueprint_json"], str) else row["blueprint_json"]
+            placements = bp_json.get("placements", [])
+            
+            # Find and update the placement
+            found = False
+            for p in placements:
+                if p.get("propId") == body.propId and p.get("x") == body.fromX and p.get("z") == body.fromZ:
+                    p["x"] = body.toX
+                    p["z"] = body.toZ
+                    if body.rotation is not None:
+                        p["rotation"] = body.rotation
+                    found = True
+                    break
+            
+            if not found:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Prop '{body.propId}' not found at position ({body.fromX}, {body.fromZ})",
+                )
+            
+            # Save updated blueprint
+            now = int(time.time() * 1000)
+            await db.execute(
+                "UPDATE custom_blueprints SET blueprint_json = ?, updated_at = ? WHERE id = ?",
+                (json.dumps(bp_json), now, blueprint_id),
+            )
+            await db.commit()
+            
+            logger.info(f"Prop moved in blueprint {blueprint_id}: {body.propId} from ({body.fromX},{body.fromZ}) to ({body.toX},{body.toZ})")
+        else:
+            # Built-in blueprint - update JSON file
+            import os
+            blueprint_dir = os.path.join(
+                os.path.dirname(__file__),
+                "..", "..", "..", "frontend", "src", "lib", "grid", "blueprints"
+            )
+            blueprint_path = os.path.join(blueprint_dir, f"{blueprint_id}.json")
+            
+            if not os.path.exists(blueprint_path):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Blueprint not found: {blueprint_id}",
+                )
+            
+            with open(blueprint_path, "r") as f:
+                bp_json = json.load(f)
+            
+            placements = bp_json.get("placements", [])
+            
+            # Find and update the placement
+            found = False
+            for p in placements:
+                if p.get("propId") == body.propId and p.get("x") == body.fromX and p.get("z") == body.fromZ:
+                    p["x"] = body.toX
+                    p["z"] = body.toZ
+                    if body.rotation is not None:
+                        p["rotation"] = body.rotation
+                    found = True
+                    break
+            
+            if not found:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Prop '{body.propId}' not found at position ({body.fromX}, {body.fromZ})",
+                )
+            
+            # Save back to file
+            with open(blueprint_path, "w") as f:
+                json.dump(bp_json, f, indent=2)
+            
+            logger.info(f"Prop moved in built-in blueprint {blueprint_id}: {body.propId} from ({body.fromX},{body.fromZ}) to ({body.toX},{body.toZ})")
+    finally:
+        await db.close()
+    
+    # Broadcast update to all clients
+    await broadcast("blueprint-update", {
+        "blueprintId": blueprint_id,
+        "action": "prop-moved",
+        "propId": body.propId,
+        "fromX": body.fromX,
+        "fromZ": body.fromZ,
+        "toX": body.toX,
+        "toZ": body.toZ,
+        "rotation": body.rotation,
+    })
+    
+    return {"success": True, "blueprintId": blueprint_id}
+
+
+@router.delete("/{blueprint_id}/delete-prop")
+async def delete_prop(blueprint_id: str, body: DeletePropRequest):
+    """
+    Delete a prop from a blueprint.
+    
+    Removes the placement from the blueprint JSON and broadcasts the change via SSE.
+    """
+    db = await get_db()
+    try:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        
+        # Try to find in custom blueprints first
+        async with db.execute(
+            "SELECT * FROM custom_blueprints WHERE id = ?",
+            (blueprint_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+        
+        if row:
+            # Custom blueprint - update in database
+            bp_json = json.loads(row["blueprint_json"]) if isinstance(row["blueprint_json"], str) else row["blueprint_json"]
+            placements = bp_json.get("placements", [])
+            
+            # Find and remove the placement
+            original_len = len(placements)
+            placements = [
+                p for p in placements
+                if not (p.get("propId") == body.propId and p.get("x") == body.x and p.get("z") == body.z)
+            ]
+            
+            if len(placements) == original_len:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Prop '{body.propId}' not found at position ({body.x}, {body.z})",
+                )
+            
+            bp_json["placements"] = placements
+            
+            # Save updated blueprint
+            now = int(time.time() * 1000)
+            await db.execute(
+                "UPDATE custom_blueprints SET blueprint_json = ?, updated_at = ? WHERE id = ?",
+                (json.dumps(bp_json), now, blueprint_id),
+            )
+            await db.commit()
+            
+            logger.info(f"Prop deleted from blueprint {blueprint_id}: {body.propId} at ({body.x},{body.z})")
+        else:
+            # Built-in blueprint - update JSON file
+            import os
+            blueprint_dir = os.path.join(
+                os.path.dirname(__file__),
+                "..", "..", "..", "frontend", "src", "lib", "grid", "blueprints"
+            )
+            blueprint_path = os.path.join(blueprint_dir, f"{blueprint_id}.json")
+            
+            if not os.path.exists(blueprint_path):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Blueprint not found: {blueprint_id}",
+                )
+            
+            with open(blueprint_path, "r") as f:
+                bp_json = json.load(f)
+            
+            placements = bp_json.get("placements", [])
+            
+            # Find and remove the placement
+            original_len = len(placements)
+            placements = [
+                p for p in placements
+                if not (p.get("propId") == body.propId and p.get("x") == body.x and p.get("z") == body.z)
+            ]
+            
+            if len(placements) == original_len:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Prop '{body.propId}' not found at position ({body.x}, {body.z})",
+                )
+            
+            bp_json["placements"] = placements
+            
+            # Save back to file
+            with open(blueprint_path, "w") as f:
+                json.dump(bp_json, f, indent=2)
+            
+            logger.info(f"Prop deleted from built-in blueprint {blueprint_id}: {body.propId} at ({body.x},{body.z})")
+    finally:
+        await db.close()
+    
+    # Broadcast update to all clients
+    await broadcast("blueprint-update", {
+        "blueprintId": blueprint_id,
+        "action": "prop-deleted",
+        "propId": body.propId,
+        "x": body.x,
+        "z": body.z,
+    })
+    
+    return {"success": True, "blueprintId": blueprint_id}

@@ -15,6 +15,16 @@ export interface GridCell {
   spanParent?: { x: number; z: number }    // points to top-left cell of multi-cell prop
 }
 
+export interface PropPlacement {
+  propId: string
+  x: number
+  z: number
+  type?: CellType
+  interactionType?: InteractionType
+  rotation?: 0 | 90 | 180 | 270
+  span?: { w: number; d: number }
+}
+
 export interface RoomBlueprint {
   id: string                               // e.g., 'headquarters', 'dev-room'
   name: string                             // display name
@@ -22,6 +32,7 @@ export interface RoomBlueprint {
   gridDepth: number                        // cells (20)
   cellSize: number                         // world units per cell (0.6)
   cells: GridCell[][]                      // [z][x] — row-major
+  placements?: PropPlacement[]             // original placements from JSON (for editing)
   doorPositions: { x: number; z: number; facing: Direction }[]
   walkableCenter: { x: number; z: number } // grid coords of center walkable area
   interactionPoints: {

@@ -1,18 +1,22 @@
 // ─── Grid Room Renderer ─────────────────────────────────────────
 // Renders all props in a room from its RoomBlueprint grid data.
 // Replaces the hardcoded RoomProps.tsx per-room components.
+// Supports long-press to select and move props with arrow keys/WASD.
 
 import { useMemo, useState, useCallback } from 'react'
 import { Html } from '@react-three/drei'
 import { gridToWorld } from '@/lib/grid'
-import type { RoomBlueprint } from '@/lib/grid'
+import type { RoomBlueprint, PropPlacement } from '@/lib/grid'
 import { getPropEntry } from './PropRegistry'
 import { useGridDebug } from '@/hooks/useGridDebug'
+import { usePropMovement } from '@/hooks/usePropMovement'
 import type { ThreeEvent } from '@react-three/fiber'
+import * as THREE from 'three'
 
 interface GridRoomRendererProps {
   blueprint: RoomBlueprint
   roomPosition: [number, number, number]  // world center of room (y = floor level)
+  onBlueprintUpdate?: (placements: PropPlacement[]) => void  // callback when props are moved
 }
 
 interface PropInstance {
@@ -147,6 +151,67 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
   )
 }
 
+// ─── Selection Glow Effect ──────────────────────────────────────
+
+const SELECTION_LABEL_STYLE: React.CSSProperties = {
+  fontSize: '12px',
+  fontFamily: 'system-ui, sans-serif',
+  fontWeight: 600,
+  color: '#fff',
+  background: 'rgba(255, 165, 0, 0.9)',
+  padding: '4px 10px',
+  borderRadius: '8px',
+  whiteSpace: 'nowrap',
+  userSelect: 'none',
+  pointerEvents: 'none',
+  lineHeight: '18px',
+  boxShadow: '0 2px 8px rgba(255, 165, 0, 0.4)',
+}
+
+function SelectionIndicator({ position, isMoving }: { position: [number, number, number]; isMoving: boolean }) {
+  const labelPos: [number, number, number] = [position[0], position[1] + 2.0, position[2]]
+
+  return (
+    <>
+      {/* Pulsing ring on the floor around the prop */}
+      <mesh position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.8, 1.0, 32]} />
+        <meshBasicMaterial 
+          color="#ffa500" 
+          transparent 
+          opacity={0.7}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* Inner glow circle */}
+      <mesh position={[position[0], 0.01, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.85, 32]} />
+        <meshBasicMaterial 
+          color="#ffa500" 
+          transparent 
+          opacity={0.15}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* Floating instruction label */}
+      {isMoving && (
+        <Html
+          position={labelPos}
+          center
+          zIndexRange={[100, 110]}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div style={SELECTION_LABEL_STYLE}>
+            ↑↓←→ Move • R Rotate • Enter Save • Esc Cancel
+          </div>
+        </Html>
+      )}
+    </>
+  )
+}
+
 // ─── Renderer ───────────────────────────────────────────────────
 
 /**
@@ -158,11 +223,55 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
  *  - Floor props: Y = 0.16 (floor surface)
  *  - Wall props: Y = propEntry.yOffset (wall mount height, e.g. 1.2 for whiteboards)
  *    Wall props also get snapped toward the nearest wall and rotated to face inward.
+ *
+ * Long-press (600ms) on a prop to select it for movement.
+ * Use arrow keys / WASD to move, R to rotate, Enter to confirm, Escape to cancel.
  */
-export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: GridRoomRendererProps) {
-  const { cells, cellSize, gridWidth, gridDepth } = blueprint
+export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition, onBlueprintUpdate }: GridRoomRendererProps) {
+  const { cells, cellSize, gridWidth, gridDepth, id: blueprintId, placements: blueprintPlacements } = blueprint
   const [gridDebugEnabled] = useGridDebug()
   const [hoveredPropKey, setHoveredPropKey] = useState<string | null>(null)
+  
+  // Use placements from blueprint if available, otherwise extract from cells
+  const placements = useMemo<PropPlacement[]>(() => {
+    if (blueprintPlacements && blueprintPlacements.length > 0) {
+      return blueprintPlacements
+    }
+    // Fallback: extract from cells (for backwards compatibility)
+    const result: PropPlacement[] = []
+    for (let z = 0; z < cells.length; z++) {
+      for (let x = 0; x < cells[z].length; x++) {
+        const cell = cells[z][x]
+        if (!cell.propId || cell.spanParent) continue
+        result.push({
+          propId: cell.propId,
+          x,
+          z,
+          rotation: cell.rotation,
+          span: cell.span,
+          type: cell.type,
+          interactionType: cell.interactionType,
+        })
+      }
+    }
+    return result
+  }, [blueprintPlacements, cells])
+
+  // Prop movement hook
+  const {
+    selectedProp,
+    isMoving,
+    startLongPress,
+    cancelLongPress,
+    handlePointerUp,
+  } = usePropMovement({
+    blueprintId: blueprintId || 'unknown',
+    gridWidth,
+    gridDepth,
+    cellSize,
+    placements,
+    onUpdate: onBlueprintUpdate || (() => {}),
+  })
 
   // Stable callbacks — key is passed via event.object.userData
   const handlePointerEnter = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -174,13 +283,30 @@ export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: Gri
     }
   }, [])
 
-  const handlePointerLeave = useCallback((e: ThreeEvent<PointerEvent>) => {
+  // Long-press handlers for prop selection
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
+    const obj = e.eventObject
+    if (obj?.userData?.propKey && obj?.userData?.propId !== undefined) {
+      const { propKey, propId, gridX, gridZ, rotation, span } = obj.userData
+      startLongPress(propKey, propId, gridX, gridZ, rotation || 0, span)
+    }
+  }, [startLongPress])
+  
+  const handlePointerUpEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    handlePointerUp()
+  }, [handlePointerUp])
+  
+  const handlePointerLeaveForLongPress = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    cancelLongPress()
+    // Also handle debug hover
     let obj = e.eventObject
     if (obj?.userData?.debugPropKey) {
       setHoveredPropKey((prev) => prev === obj.userData.debugPropKey ? null : prev)
     }
-  }, [])
+  }, [cancelLongPress])
 
   // Build list of prop instances from grid (memoized per blueprint)
   const propInstances = useMemo(() => {
@@ -225,32 +351,51 @@ export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: Gri
         if (!entry) return null
 
         const Component = entry.component
+        
+        // Check if this prop is currently selected and being moved
+        const isSelected = selectedProp?.key === key
+        const isBeingMoved = isSelected && isMoving
+        
+        // Use the selected position if this prop is being moved
+        const effectiveGridX = isBeingMoved ? selectedProp!.gridX : gridX
+        const effectiveGridZ = isBeingMoved ? selectedProp!.gridZ : gridZ
+        const effectiveRotation = isBeingMoved ? selectedProp!.rotation : rotation
+        
+        // Recalculate world position if being moved
+        let worldX: number
+        let worldZ: number
+        if (isBeingMoved) {
+          const [newRelX, , newRelZ] = gridToWorld(effectiveGridX, effectiveGridZ, cellSize, gridWidth, gridDepth)
+          worldX = newRelX
+          worldZ = newRelZ
+        } else {
+          worldX = position[0]
+          worldZ = position[2]
+        }
+        
+        let finalRotation = effectiveRotation
 
         // Y position from prop metadata (room-local space; parent group handles world Y)
         const yPos = entry.yOffset
 
-        let worldX = position[0]
-        let worldZ = position[2]
-        let finalRotation = rotation
-
         if (entry.mountType === 'wall') {
           // Wall-mounted props: snap toward nearest wall + auto-rotate
           const wallPlacement = getWallPlacement(
-            worldX, worldZ, gridX, gridZ,
+            worldX, worldZ, effectiveGridX, effectiveGridZ,
             gridWidth, gridDepth, cellSize,
           )
           if (wallPlacement) {
             worldX = wallPlacement.x
             worldZ = wallPlacement.z
             // Only override rotation if cell didn't specify one explicitly
-            if (rotation === 0) {
+            if (effectiveRotation === 0) {
               finalRotation = wallPlacement.wallRotation
             }
           }
         } else {
           // Floor props: clamp to room bounds to prevent wall clipping
           const [clampedX, clampedZ] = clampToRoomBounds(
-            worldX, worldZ, gridX, gridZ,
+            worldX, worldZ, effectiveGridX, effectiveGridZ,
             gridWidth, gridDepth, cellSize,
           )
           worldX = clampedX
@@ -263,11 +408,22 @@ export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: Gri
         return (
           <group
             key={key}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUpEvent}
+            onPointerLeave={handlePointerLeaveForLongPress}
             {...(gridDebugEnabled ? {
               onPointerEnter: handlePointerEnter,
-              onPointerLeave: handlePointerLeave,
               userData: { debugPropKey: key },
             } : {})}
+            userData={{ 
+              propKey: key, 
+              propId, 
+              gridX, 
+              gridZ, 
+              rotation, 
+              span,
+              ...(gridDebugEnabled ? { debugPropKey: key } : {}),
+            }}
           >
             <Component
               position={worldPos}
@@ -275,6 +431,10 @@ export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: Gri
               cellSize={cellSize}
               span={span}
             />
+            {/* Selection indicator when prop is being moved */}
+            {isSelected && (
+              <SelectionIndicator position={worldPos} isMoving={isMoving} />
+            )}
             {gridDebugEnabled && isHovered && (
               <PropDebugLabel propId={propId} position={worldPos} />
             )}
