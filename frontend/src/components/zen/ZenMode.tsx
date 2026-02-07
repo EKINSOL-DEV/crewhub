@@ -9,6 +9,11 @@
  * - Layout persistence with named presets
  * - Quick actions
  * - Polish: animations, loading skeletons, error boundaries, tooltips
+ * 
+ * Phase 6: Tabs & State Persistence
+ * - Multiple workspace tabs
+ * - Per-tab layout/scroll persistence
+ * - localStorage-backed state
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
@@ -30,12 +35,25 @@ import { ZenThemePicker } from './ZenThemePicker'
 import { ZenCommandPalette, useCommandRegistry } from './ZenCommandPalette'
 import { ZenKeyboardHelp } from './ZenKeyboardHelp'
 import { ZenSpawnModal, ZenAgentPicker } from './ZenSessionManager'
-import { ZenSaveLayoutModal, ZenLayoutPicker, saveCurrentLayout, loadCurrentLayout, addRecentLayout, type SavedLayout } from './ZenLayoutManager'
+import { ZenSaveLayoutModal, ZenLayoutPicker, addRecentLayout, type SavedLayout } from './ZenLayoutManager'
 import { ZenErrorBoundary } from './ZenErrorBoundary'
-import { useZenLayout } from './hooks/useZenLayout'
+import { useZenMode, type ZenProjectFilter } from './hooks/useZenMode'
 import { useZenKeyboard } from './hooks/useZenKeyboard'
 import { useZenTheme } from './hooks/useZenTheme'
-import { type LeafNode, type PanelType, type LayoutPreset, countPanels } from './types/layout'
+import { 
+  type LeafNode, 
+  type LayoutNode,
+  type PanelType, 
+  type LayoutPreset, 
+  countPanels,
+  getAllPanels,
+  findPanel,
+  updatePanel,
+  removePanel,
+  splitPanel as splitPanelInTree,
+  createLeaf,
+  createSplit,
+} from './types/layout'
 import './ZenMode.css'
 
 interface ZenModeProps {
@@ -47,6 +65,16 @@ interface ZenModeProps {
   connected: boolean
   onExit: () => void
   onSpawnSession?: (agentId: string, label?: string) => Promise<void>
+  projectFilter?: ZenProjectFilter | null  // Filter tasks to specific project
+  onClearProjectFilter?: () => void
+}
+
+// ── Layout Presets ────────────────────────────────────────────────
+
+const LAYOUT_PRESETS: Record<LayoutPreset, () => LayoutNode> = {
+  default: () => createSplit('row', createLeaf('chat'), createLeaf('tasks'), 0.6),
+  'multi-chat': () => createSplit('row', createLeaf('chat'), createLeaf('chat'), 0.5),
+  monitor: () => createSplit('row', createLeaf('sessions'), createLeaf('activity'), 0.4),
 }
 
 export function ZenMode({
@@ -58,6 +86,8 @@ export function ZenMode({
   connected,
   onExit,
   onSpawnSession,
+  projectFilter: propProjectFilter,
+  onClearProjectFilter: propClearProjectFilter,
 }: ZenModeProps) {
   const [agentStatus, setAgentStatus] = useState<'active' | 'thinking' | 'idle' | 'error'>('idle')
   
@@ -69,22 +99,52 @@ export function ZenMode({
   const { state: worldFocusState } = useWorldFocus()
   const { rooms } = useRoomsContext()
   
-  // Get the focused room's project ID when in room focus mode
-  const focusedRoomProjectId = useMemo(() => {
+  // Zen Mode tabs context
+  const zenMode = useZenMode()
+  const {
+    tabs,
+    activeTab,
+    activeTabId,
+    canAddTab,
+    closedTabs,
+    createTab,
+    closeTab,
+    switchTab,
+    updateTabLayout,
+    updateTabLabel,
+    reopenClosedTab,
+    setScrollPosition: _setScrollPosition,
+    getScrollPosition: _getScrollPosition,
+    clearProjectFilter: zenClearProjectFilter,
+    projectFilter: zenProjectFilter,
+  } = zenMode
+  
+  // Use project filter from tab or prop
+  const projectFilter = zenProjectFilter || propProjectFilter
+  const clearProjectFilter = zenClearProjectFilter || propClearProjectFilter
+  
+  // Get the project ID for tasks filtering
+  const activeProjectId = useMemo(() => {
+    if (projectFilter?.projectId) {
+      return projectFilter.projectId
+    }
     if (worldFocusState.level === 'room' && worldFocusState.focusedRoomId) {
       const room = rooms.find(r => r.id === worldFocusState.focusedRoomId)
       return room?.project_id || undefined
     }
     return undefined
-  }, [worldFocusState.level, worldFocusState.focusedRoomId, rooms])
+  }, [projectFilter, worldFocusState.level, worldFocusState.focusedRoomId, rooms])
   
-  const focusedRoomName = useMemo(() => {
+  const activeProjectName = useMemo(() => {
+    if (projectFilter?.projectName) {
+      return projectFilter.projectName
+    }
     if (worldFocusState.level === 'room' && worldFocusState.focusedRoomId) {
       const room = rooms.find(r => r.id === worldFocusState.focusedRoomId)
       return room?.project_name || room?.name || undefined
     }
     return undefined
-  }, [worldFocusState.level, worldFocusState.focusedRoomId, rooms])
+  }, [projectFilter, worldFocusState.level, worldFocusState.focusedRoomId, rooms])
   
   // Modal states
   const [showThemePicker, setShowThemePicker] = useState(false)
@@ -102,16 +162,157 @@ export function ZenMode({
   // Theme state
   const theme = useZenTheme()
   
-  // Layout state
-  const layout = useZenLayout()
-  
   // Ref for applying theme CSS variables
   const zenContainerRef = useRef<HTMLDivElement>(null)
   
+  // ── Layout State (derived from active tab) ──────────────────────
+  
+  const layout = activeTab?.layout || LAYOUT_PRESETS.default()
+  const focusedPanelId = activeTab?.focusedPanelId || ''
+  const maximizedPanelId = activeTab?.maximizedPanelId || null
+  
+  const allPanels = useMemo(() => getAllPanels(layout), [layout])
+  const panelCount = allPanels.length
+  const focusedPanel = useMemo(() => findPanel(layout, focusedPanelId), [layout, focusedPanelId])
+  const isMaximized = maximizedPanelId !== null
+  
+  // Effective layout (respects maximize)
+  const effectiveLayout = useMemo(() => {
+    if (maximizedPanelId) {
+      const maximizedPanel = findPanel(layout, maximizedPanelId)
+      return maximizedPanel || layout
+    }
+    return layout
+  }, [layout, maximizedPanelId])
+  
+  // ── Layout Actions ──────────────────────────────────────────────
+  
+  const focusPanel = useCallback((panelId: string) => {
+    if (!activeTab) return
+    updateTabLayout(activeTab.id, layout, panelId, maximizedPanelId)
+  }, [activeTab, layout, maximizedPanelId, updateTabLayout])
+  
+  const focusNextPanel = useCallback(() => {
+    if (!activeTab) return
+    const currentIndex = allPanels.findIndex(p => p.panelId === focusedPanelId)
+    const nextIndex = (currentIndex + 1) % allPanels.length
+    focusPanel(allPanels[nextIndex].panelId)
+  }, [activeTab, allPanels, focusedPanelId, focusPanel])
+  
+  const focusPrevPanel = useCallback(() => {
+    if (!activeTab) return
+    const currentIndex = allPanels.findIndex(p => p.panelId === focusedPanelId)
+    const prevIndex = (currentIndex - 1 + allPanels.length) % allPanels.length
+    focusPanel(allPanels[prevIndex].panelId)
+  }, [activeTab, allPanels, focusedPanelId, focusPanel])
+  
+  const focusPanelByIndex = useCallback((index: number) => {
+    if (!activeTab || index < 0 || index >= allPanels.length) return
+    focusPanel(allPanels[index].panelId)
+  }, [activeTab, allPanels, focusPanel])
+  
+  const splitPanelAction = useCallback((panelId: string, direction: 'row' | 'col', newType: PanelType = 'empty') => {
+    if (!activeTab) return
+    const newLayout = splitPanelInTree(layout, panelId, direction, newType)
+    const newPanels = getAllPanels(newLayout)
+    const newPanel = newPanels.find(p => !allPanels.some(op => op.panelId === p.panelId))
+    updateTabLayout(activeTab.id, newLayout, newPanel?.panelId || focusedPanelId, null)
+  }, [activeTab, layout, allPanels, focusedPanelId, updateTabLayout])
+  
+  const closePanelAction = useCallback((panelId: string) => {
+    if (!activeTab) return
+    if (countPanels(layout) <= 1) return
+    
+    const newLayout = removePanel(layout, panelId)
+    if (!newLayout) return
+    
+    const newPanels = getAllPanels(newLayout)
+    const newFocusedId = panelId === focusedPanelId
+      ? newPanels[0]?.panelId || ''
+      : focusedPanelId
+    
+    updateTabLayout(activeTab.id, newLayout, newFocusedId, null)
+  }, [activeTab, layout, focusedPanelId, updateTabLayout])
+  
+  const resizePanelAction = useCallback((panelId: string, absoluteRatio: number) => {
+    if (!activeTab) return
+    
+    const setRatio = (node: LayoutNode): LayoutNode => {
+      if (node.kind === 'leaf') return node
+      
+      const inA = findPanel(node.a, panelId)
+      const inB = findPanel(node.b, panelId)
+      
+      if ((inA && node.a.kind === 'leaf') || (inB && node.b.kind === 'leaf')) {
+        const newRatio = inA ? absoluteRatio : (1 - absoluteRatio)
+        const clampedRatio = Math.max(0.15, Math.min(0.85, newRatio))
+        return { ...node, ratio: clampedRatio }
+      }
+      
+      if (inA) return { ...node, a: setRatio(node.a) }
+      if (inB) return { ...node, b: setRatio(node.b) }
+      
+      return node
+    }
+    
+    updateTabLayout(activeTab.id, setRatio(layout))
+  }, [activeTab, layout, updateTabLayout])
+  
+  const toggleMaximize = useCallback(() => {
+    if (!activeTab) return
+    if (maximizedPanelId) {
+      updateTabLayout(activeTab.id, layout, focusedPanelId, null)
+    } else {
+      updateTabLayout(activeTab.id, layout, focusedPanelId, focusedPanelId)
+    }
+  }, [activeTab, layout, focusedPanelId, maximizedPanelId, updateTabLayout])
+  
+  const restoreLayout = useCallback(() => {
+    if (!activeTab || !maximizedPanelId) return
+    updateTabLayout(activeTab.id, layout, focusedPanelId, null)
+  }, [activeTab, layout, focusedPanelId, maximizedPanelId, updateTabLayout])
+  
+  const applyPreset = useCallback((preset: LayoutPreset) => {
+    if (!activeTab) return
+    const newLayout = LAYOUT_PRESETS[preset]()
+    const newPanels = getAllPanels(newLayout)
+    const chatPanel = newPanels.find(p => p.panelType === 'chat')
+    updateTabLayout(activeTab.id, newLayout, chatPanel?.panelId || newPanels[0]?.panelId || '', null)
+  }, [activeTab, updateTabLayout])
+  
+  const cyclePresets = useCallback(() => {
+    const presetNames: LayoutPreset[] = ['default', 'multi-chat', 'monitor']
+    const hasActivity = allPanels.some(p => p.panelType === 'activity')
+    const hasSessions = allPanels.some(p => p.panelType === 'sessions')
+    const chatCount = allPanels.filter(p => p.panelType === 'chat').length
+    
+    let currentPreset: LayoutPreset = 'default'
+    if (chatCount === 2 && !hasActivity && !hasSessions) {
+      currentPreset = 'multi-chat'
+    } else if (hasActivity && hasSessions && chatCount === 0) {
+      currentPreset = 'monitor'
+    }
+    
+    const currentIndex = presetNames.indexOf(currentPreset)
+    const nextPreset = presetNames[(currentIndex + 1) % presetNames.length]
+    applyPreset(nextPreset)
+  }, [allPanels, applyPreset])
+  
+  const updatePanelState = useCallback((panelId: string, updates: Partial<LeafNode>) => {
+    if (!activeTab) return
+    updateTabLayout(activeTab.id, updatePanel(layout, panelId, updates))
+  }, [activeTab, layout, updateTabLayout])
+  
+  const setPanelAgent = useCallback((panelId: string, sessionKey: string, agentName: string, agentIcon?: string) => {
+    updatePanelState(panelId, {
+      agentSessionKey: sessionKey,
+      agentName,
+      agentIcon,
+    })
+  }, [updatePanelState])
+  
   // Apply theme CSS variables when theme changes
   useEffect(() => {
-    // Apply to the zen-mode container element directly (not document root)
-    // This is needed because .zen-mode CSS defines its own default variables
     const container = zenContainerRef.current
     if (!container) return
     
@@ -144,7 +345,6 @@ export function ZenMode({
     })
     container.setAttribute('data-zen-theme', theme.currentTheme.id)
     container.setAttribute('data-zen-theme-type', theme.currentTheme.type)
-    console.log('[Zen] Applied theme:', theme.currentTheme.id, 'to container')
   }, [theme.currentTheme])
   
   // Clean up theme on unmount
@@ -165,46 +365,37 @@ export function ZenMode({
     }
   }, [])
   
-  // Persist layout on change
-  useEffect(() => {
-    saveCurrentLayout(layout.layout)
-  }, [layout.layout])
-  
-  // Restore layout on mount
-  useEffect(() => {
-    const savedLayout = loadCurrentLayout()
-    if (savedLayout) {
-      // TODO: Apply saved layout if valid
-    }
-  }, [])
-  
   // Set initial session on the first chat panel
   useEffect(() => {
-    if (initialSessionKey && initialAgentName) {
-      const chatPanel = layout.panels.find(p => p.panelType === 'chat')
+    if (initialSessionKey && initialAgentName && activeTab) {
+      const chatPanel = allPanels.find(p => p.panelType === 'chat')
       if (chatPanel && !chatPanel.agentSessionKey) {
-        layout.setPanelAgent(chatPanel.panelId, initialSessionKey, initialAgentName, initialAgentIcon || undefined)
+        setPanelAgent(chatPanel.panelId, initialSessionKey, initialAgentName, initialAgentIcon || undefined)
       }
     }
-  }, [initialSessionKey, initialAgentName, initialAgentIcon, layout])
+  }, [initialSessionKey, initialAgentName, initialAgentIcon, activeTab, allPanels, setPanelAgent])
 
   // Handle adding a panel of specific type
   const handleAddPanel = useCallback((type: string) => {
-    layout.splitPanel(layout.focusedPanelId, 'row', type as PanelType)
-  }, [layout])
+    splitPanelAction(focusedPanelId, 'row', type as PanelType)
+  }, [focusedPanelId, splitPanelAction])
+  
+  // Handle adding a new tab
+  const handleAddTab = useCallback((filter?: ZenProjectFilter) => {
+    createTab(filter)
+  }, [createTab])
 
   // Command registry
   const commands = useCommandRegistry({
     onExit,
     onOpenThemePicker: () => setShowThemePicker(true),
-    onCycleLayouts: layout.cyclePresets,
-    onSplitVertical: () => layout.splitPanel(layout.focusedPanelId, 'row', 'empty'),
-    onSplitHorizontal: () => layout.splitPanel(layout.focusedPanelId, 'col', 'empty'),
-    onClosePanel: () => layout.closePanel(layout.focusedPanelId),
-    onToggleMaximize: layout.toggleMaximize,
+    onCycleLayouts: cyclePresets,
+    onSplitVertical: () => splitPanelAction(focusedPanelId, 'col', 'empty'),
+    onSplitHorizontal: () => splitPanelAction(focusedPanelId, 'row', 'empty'),
+    onClosePanel: () => closePanelAction(focusedPanelId),
+    onToggleMaximize: toggleMaximize,
     themes: theme.themes.map(t => ({ id: t.id, name: t.name })),
     onSetTheme: theme.setTheme,
-    // Phase 5 additions
     onOpenKeyboardHelp: () => setShowKeyboardHelp(true),
     onSaveLayout: () => setShowSaveLayout(true),
     onLoadLayout: () => setShowLayoutPicker(true),
@@ -218,24 +409,38 @@ export function ZenMode({
     enabled: !isModalOpen,
     actions: {
       onExit,
-      onFocusNext: layout.focusNextPanel,
-      onFocusPrev: layout.focusPrevPanel,
-      onFocusPanelByIndex: layout.focusPanelByIndex,
-      onSplitVertical: () => layout.splitPanel(layout.focusedPanelId, 'row', 'empty'),
-      onSplitHorizontal: () => layout.splitPanel(layout.focusedPanelId, 'col', 'empty'),
-      onClosePanel: () => layout.closePanel(layout.focusedPanelId),
-      onToggleMaximize: layout.toggleMaximize,
-      onCycleLayouts: layout.cyclePresets,
+      onFocusNext: focusNextPanel,
+      onFocusPrev: focusPrevPanel,
+      onFocusPanelByIndex: focusPanelByIndex,
+      onSplitVertical: () => splitPanelAction(focusedPanelId, 'col', 'empty'),
+      onSplitHorizontal: () => splitPanelAction(focusedPanelId, 'row', 'empty'),
+      onClosePanel: () => closePanelAction(focusedPanelId),
+      onToggleMaximize: toggleMaximize,
+      onCycleLayouts: cyclePresets,
       onSaveLayout: () => setShowSaveLayout(true),
-      onResizeLeft: () => layout.resizePanel(layout.focusedPanelId, -0.05),
-      onResizeRight: () => layout.resizePanel(layout.focusedPanelId, 0.05),
-      onResizeUp: () => layout.resizePanel(layout.focusedPanelId, -0.05),
-      onResizeDown: () => layout.resizePanel(layout.focusedPanelId, 0.05),
+      onResizeLeft: () => resizePanelAction(focusedPanelId, -0.05),
+      onResizeRight: () => resizePanelAction(focusedPanelId, 0.05),
+      onResizeUp: () => resizePanelAction(focusedPanelId, -0.05),
+      onResizeDown: () => resizePanelAction(focusedPanelId, 0.05),
       onOpenThemePicker: () => setShowThemePicker(true),
       onOpenCommandPalette: () => setShowCommandPalette(true),
       onOpenKeyboardHelp: () => setShowKeyboardHelp(true),
       onNewChat: () => setShowAgentPicker(true),
       onSpawnSession: () => setShowSpawnModal(true),
+      // Tab shortcuts
+      onNewTab: () => handleAddTab(),
+      onCloseTab: () => closeTab(activeTabId),
+      onNextTab: () => {
+        const currentIndex = tabs.findIndex(t => t.id === activeTabId)
+        const nextIndex = (currentIndex + 1) % tabs.length
+        switchTab(tabs[nextIndex].id)
+      },
+      onPrevTab: () => {
+        const currentIndex = tabs.findIndex(t => t.id === activeTabId)
+        const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length
+        switchTab(tabs[prevIndex].id)
+      },
+      onReopenClosedTab: reopenClosedTab,
     },
   })
 
@@ -245,26 +450,21 @@ export function ZenMode({
   
   // Handle session selection from sessions panel
   const handleSelectSession = useCallback((sessionKey: string, agentName: string, agentIcon?: string) => {
-    // Find focused chat panel, or any chat panel, or create one
-    const focusedPanel = layout.focusedPanel
-    
     if (focusedPanel?.panelType === 'chat') {
-      // Update the focused chat panel
-      layout.setPanelAgent(focusedPanel.panelId, sessionKey, agentName, agentIcon)
+      setPanelAgent(focusedPanel.panelId, sessionKey, agentName, agentIcon)
     } else {
-      // Find first chat panel
-      const chatPanel = layout.panels.find(p => p.panelType === 'chat')
+      const chatPanel = allPanels.find(p => p.panelType === 'chat')
       if (chatPanel) {
-        layout.setPanelAgent(chatPanel.panelId, sessionKey, agentName, agentIcon)
-        layout.focusPanel(chatPanel.panelId)
+        setPanelAgent(chatPanel.panelId, sessionKey, agentName, agentIcon)
+        focusPanel(chatPanel.panelId)
       }
     }
-  }, [layout])
+  }, [focusedPanel, allPanels, setPanelAgent, focusPanel])
   
   // Handle empty panel type selection
   const handleSelectPanelType = useCallback((panelId: string, type: PanelType) => {
-    layout.updatePanelState(panelId, { panelType: type })
-  }, [layout])
+    updatePanelState(panelId, { panelType: type })
+  }, [updatePanelState])
   
   // Handle theme selection
   const handleSelectTheme = useCallback((themeId: string) => {
@@ -280,20 +480,17 @@ export function ZenMode({
   
   // Handle agent picker selection
   const handleAgentPickerSelect = useCallback((agentId: string, agentName: string, agentIcon: string) => {
-    // Create a new chat panel with the selected agent
-    layout.splitPanel(layout.focusedPanelId, 'row', 'chat')
-    // The new panel will be focused, set its agent
+    splitPanelAction(focusedPanelId, 'row', 'chat')
     setTimeout(() => {
-      const newChatPanel = layout.panels.find(p => 
+      const newChatPanel = allPanels.find(p => 
         p.panelType === 'chat' && !p.agentSessionKey
       )
       if (newChatPanel) {
-        // Use the proper session key format for fixed agents
-        layout.setPanelAgent(newChatPanel.panelId, `agent:${agentId}:main`, agentName, agentIcon)
+        setPanelAgent(newChatPanel.panelId, `agent:${agentId}:main`, agentName, agentIcon)
       }
     }, 50)
     setShowAgentPicker(false)
-  }, [layout])
+  }, [focusedPanelId, allPanels, splitPanelAction, setPanelAgent])
   
   // Handle save layout
   const handleSaveLayout = useCallback((savedLayout: SavedLayout) => {
@@ -302,27 +499,25 @@ export function ZenMode({
   
   // Handle layout preset selection
   const handleSelectPreset = useCallback((preset: LayoutPreset) => {
-    layout.applyPreset(preset)
+    applyPreset(preset)
     addRecentLayout(preset)
-  }, [layout])
+  }, [applyPreset])
   
   // Handle saved layout selection
   const handleSelectSavedLayout = useCallback((savedLayout: SavedLayout) => {
-    // TODO: Apply the saved layout
     addRecentLayout(savedLayout.id)
   }, [])
   
   // Get the name of the focused agent for status bar
   const focusedAgentName = useMemo(() => {
-    const panel = layout.focusedPanel
-    if (panel?.panelType === 'chat' && panel.agentName) {
-      return panel.agentName
+    if (focusedPanel?.panelType === 'chat' && focusedPanel.agentName) {
+      return focusedPanel.agentName
     }
     return initialAgentName
-  }, [layout.focusedPanel, initialAgentName])
+  }, [focusedPanel, initialAgentName])
   
   // Can close panels if more than one
-  const canClose = countPanels(layout.layout) > 1
+  const canClose = panelCount > 1
 
   // Render panel content based on type with error boundary
   const renderPanel = useCallback((panel: LeafNode) => {
@@ -337,8 +532,7 @@ export function ZenMode({
               onStatusChange={handleStatusChange}
               onChangeAgent={() => setShowAgentPicker(true)}
               onSelectAgent={(agentId, agentName, agentIcon) => {
-                // Directly set the agent on this panel
-                layout.setPanelAgent(panel.panelId, `agent:${agentId}:main`, agentName, agentIcon)
+                setPanelAgent(panel.panelId, `agent:${agentId}:main`, agentName, agentIcon)
               }}
             />
           )
@@ -346,8 +540,8 @@ export function ZenMode({
         case 'sessions':
           return (
             <ZenSessionsPanel
-              selectedSessionKey={layout.focusedPanel?.panelType === 'chat' 
-                ? layout.focusedPanel.agentSessionKey 
+              selectedSessionKey={focusedPanel?.panelType === 'chat' 
+                ? focusedPanel.agentSessionKey 
                 : undefined}
               onSelectSession={handleSelectSession}
               roomFilter={selectedRoomId}
@@ -371,16 +565,16 @@ export function ZenMode({
         case 'tasks':
           return (
             <ZenTasksPanel 
-              projectId={focusedRoomProjectId}
-              roomFocusName={focusedRoomName}
+              projectId={activeProjectId}
+              roomFocusName={activeProjectName}
             />
           )
         
         case 'kanban':
           return (
             <ZenKanbanPanel 
-              projectId={focusedRoomProjectId}
-              roomFocusName={focusedRoomName}
+              projectId={activeProjectId}
+              roomFocusName={activeProjectName}
             />
           )
         
@@ -408,7 +602,16 @@ export function ZenMode({
         {panelContent}
       </ZenErrorBoundary>
     )
-  }, [handleStatusChange, handleSelectSession, handleSelectPanelType, layout.focusedPanel])
+  }, [
+    handleStatusChange,
+    handleSelectSession,
+    handleSelectPanelType,
+    focusedPanel,
+    setPanelAgent,
+    selectedRoomId,
+    activeProjectId,
+    activeProjectName,
+  ])
 
   return (
     <div 
@@ -420,24 +623,36 @@ export function ZenMode({
     >
       <ZenTopBar 
         onExit={onExit} 
-        isMaximized={layout.isMaximized}
-        onRestore={layout.isMaximized ? layout.restoreLayout : undefined}
-        layoutName={layout.isMaximized ? 'Maximized' : undefined}
+        isMaximized={isMaximized}
+        onRestore={isMaximized ? restoreLayout : undefined}
+        layoutName={isMaximized ? 'Maximized' : undefined}
         themeName={theme.currentTheme.name}
         onOpenThemePicker={() => setShowThemePicker(true)}
         onOpenCommandPalette={() => setShowCommandPalette(true)}
         onOpenKeyboardHelp={() => setShowKeyboardHelp(true)}
+        projectFilter={projectFilter ? { name: projectFilter.projectName, color: projectFilter.projectColor } : undefined}
+        onClearProjectFilter={clearProjectFilter}
+        // Tab bar props
+        tabs={tabs}
+        activeTabId={activeTabId}
+        canAddTab={canAddTab}
+        closedTabsCount={closedTabs.length}
+        onSwitchTab={switchTab}
+        onCloseTab={closeTab}
+        onAddTab={handleAddTab}
+        onReopenClosedTab={reopenClosedTab}
+        onRenameTab={updateTabLabel}
       />
       
       <main className="zen-main">
         <ZenPanelContainer
-          node={layout.layout}
-          focusedPanelId={layout.focusedPanelId}
+          node={effectiveLayout}
+          focusedPanelId={focusedPanelId}
           canClose={canClose}
-          onFocus={layout.focusPanel}
-          onClose={layout.closePanel}
-          onResize={layout.resizePanel}
-          onSplit={(panelId: string, direction: 'row' | 'col') => layout.splitPanel(panelId, direction, 'empty')}
+          onFocus={focusPanel}
+          onClose={closePanelAction}
+          onResize={resizePanelAction}
+          onSplit={(panelId: string, direction: 'row' | 'col') => splitPanelAction(panelId, direction, 'empty')}
           onChangePanelType={handleSelectPanelType}
           renderPanel={renderPanel}
         />
@@ -448,8 +663,8 @@ export function ZenMode({
         agentStatus={agentStatus}
         roomName={selectedRoomId ? selectedRoomName : roomName}
         connected={connected}
-        panelCount={layout.panelCount}
-        focusedPanelIndex={layout.panels.findIndex(p => p.panelId === layout.focusedPanelId) + 1}
+        panelCount={panelCount}
+        focusedPanelIndex={allPanels.findIndex(p => p.panelId === focusedPanelId) + 1}
         themeName={theme.currentTheme.name}
       />
       
@@ -496,7 +711,7 @@ export function ZenMode({
       {/* Save Layout Modal */}
       {showSaveLayout && (
         <ZenSaveLayoutModal
-          layout={layout.layout}
+          layout={layout}
           onClose={() => setShowSaveLayout(false)}
           onSave={handleSaveLayout}
         />

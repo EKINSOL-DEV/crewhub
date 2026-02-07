@@ -17,7 +17,7 @@ import { MobileWarning } from './components/MobileWarning'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
-import { ZenMode, ZenModeButton, useZenMode } from './components/zen'
+import { ZenMode, ZenModeButton, useZenMode, ZenModeProvider } from './components/zen'
 import { getOnboardingStatus } from './lib/api'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
 import { Button } from './components/ui/button'
@@ -427,6 +427,8 @@ function AppContent() {
           roomName={zenRoomName}
           connected={connected}
           onExit={zenMode.exit}
+          projectFilter={zenMode.projectFilter}
+          onClearProjectFilter={zenMode.clearProjectFilter}
         />
       )}
     </div>
@@ -444,9 +446,11 @@ function App() {
     <ThemeProvider>
       <DemoProvider>
         <RoomsProvider>
-          <ChatProvider>
-            <AppContent />
-          </ChatProvider>
+          <ZenModeProvider>
+            <ChatProvider>
+              <AppContent />
+            </ChatProvider>
+          </ZenModeProvider>
         </RoomsProvider>
       </DemoProvider>
     </ThemeProvider>

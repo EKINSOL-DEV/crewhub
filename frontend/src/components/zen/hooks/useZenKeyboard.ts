@@ -38,6 +38,13 @@ export interface ZenKeyboardActions {
   // Session management
   onNewChat?: () => void
   onSpawnSession?: () => void
+  
+  // Tab management
+  onNewTab?: () => void
+  onCloseTab?: () => void
+  onNextTab?: () => void
+  onPrevTab?: () => void
+  onReopenClosedTab?: () => void
 }
 
 export interface UseZenKeyboardOptions {
@@ -61,11 +68,18 @@ export interface UseZenKeyboardOptions {
  *   Ctrl+Shift+W     Close panel (NOT Ctrl+W - that closes browser tab!)
  *   Ctrl+Shift+M     Maximize/restore panel
  * 
+ * TABS
+ *   Ctrl+Alt+T       New tab (Ctrl+T conflicts with browser)
+ *   Ctrl+Alt+W       Close tab
+ *   Ctrl+Alt+Tab     Next tab
+ *   Ctrl+Alt+Shift+Tab  Previous tab
+ *   Ctrl+Alt+R       Reopen closed tab (Ctrl+Shift+T conflicts with browser)
+ * 
  * LAYOUT
  *   Ctrl+Shift+L     Cycle layouts
  * 
  * THEME
- *   Ctrl+Shift+T     Open theme picker
+ *   Ctrl+Shift+Y     Open theme picker
  * 
  * RESIZE
  *   Ctrl+Shift+Arrow Resize focused panel
@@ -92,15 +106,56 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
                    target.isContentEditable
     
     // Ctrl+K - Command Palette (works even in inputs)
-    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
+    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') {
       e.preventDefault()
       e.stopPropagation()
       a.onOpenCommandPalette?.()
       return
     }
     
-    // Ctrl+Shift+T - Theme Picker
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
+    // ── Tab Shortcuts ──────────────────────────────────────────────
+    
+    // Ctrl+Alt+T - New tab
+    if (e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 't') {
+      e.preventDefault()
+      e.stopPropagation()
+      a.onNewTab?.()
+      return
+    }
+    
+    // Ctrl+Alt+W - Close tab
+    if (e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 'w') {
+      e.preventDefault()
+      e.stopPropagation()
+      a.onCloseTab?.()
+      return
+    }
+    
+    // Ctrl+Alt+Tab / Ctrl+Alt+Shift+Tab - Navigate tabs
+    // Note: Ctrl+Tab is reserved by browser, so we use Ctrl+Alt+Tab
+    if (e.ctrlKey && e.altKey && e.key === 'Tab') {
+      e.preventDefault()
+      e.stopPropagation()
+      if (e.shiftKey) {
+        a.onPrevTab?.()
+      } else {
+        a.onNextTab?.()
+      }
+      return
+    }
+    
+    // Ctrl+Alt+R - Reopen closed tab (Ctrl+Shift+T conflicts with browser)
+    if (e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 'r') {
+      e.preventDefault()
+      e.stopPropagation()
+      a.onReopenClosedTab?.()
+      return
+    }
+    
+    // ── Theme Picker ───────────────────────────────────────────────
+    
+    // Ctrl+Shift+Y - Theme Picker (moved from Ctrl+Shift+T to accommodate reopen tab)
+    if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'y') {
       e.preventDefault()
       e.stopPropagation()
       a.onOpenThemePicker?.()
@@ -108,7 +163,7 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
     }
     
     // Tab / Shift+Tab - Focus navigation (unless in input with Tab)
-    if (e.key === 'Tab' && !isInput) {
+    if (e.key === 'Tab' && !isInput && !e.ctrlKey && !e.altKey) {
       e.preventDefault()
       if (e.shiftKey) {
         a.onFocusPrev?.()
@@ -141,7 +196,7 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
     }
     
     // Ctrl+Shift+W - Close panel (NOT Ctrl+W!)
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'w') {
+    if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'w') {
       e.preventDefault()
       a.onClosePanel?.()
       return
@@ -224,7 +279,7 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
 export interface ShortcutHint {
   keys: string[]
   description: string
-  category: 'global' | 'panels' | 'layout' | 'theme'
+  category: 'global' | 'panels' | 'tabs' | 'layout' | 'theme'
 }
 
 export const KEYBOARD_SHORTCUTS: ShortcutHint[] = [
@@ -235,6 +290,13 @@ export const KEYBOARD_SHORTCUTS: ShortcutHint[] = [
   { keys: ['Tab'], description: 'Focus next panel', category: 'global' },
   { keys: ['Shift', 'Tab'], description: 'Focus previous panel', category: 'global' },
   { keys: ['Ctrl', '1-9'], description: 'Focus panel by number', category: 'global' },
+  
+  // Tabs
+  { keys: ['Ctrl', 'Alt', 'T'], description: 'New tab', category: 'tabs' },
+  { keys: ['Ctrl', 'Alt', 'W'], description: 'Close tab', category: 'tabs' },
+  { keys: ['Ctrl', 'Alt', 'Tab'], description: 'Next tab', category: 'tabs' },
+  { keys: ['Ctrl', 'Alt', 'Shift', 'Tab'], description: 'Previous tab', category: 'tabs' },
+  { keys: ['Ctrl', 'Alt', 'R'], description: 'Reopen closed tab', category: 'tabs' },
   
   // Panels
   { keys: ['Ctrl', '\\'], description: 'Split vertical', category: 'panels' },
@@ -248,7 +310,7 @@ export const KEYBOARD_SHORTCUTS: ShortcutHint[] = [
   { keys: ['Ctrl', 'Shift', 'S'], description: 'Save layout', category: 'layout' },
   
   // Theme
-  { keys: ['Ctrl', 'Shift', 'T'], description: 'Open theme picker', category: 'theme' },
+  { keys: ['Ctrl', 'Shift', 'Y'], description: 'Open theme picker', category: 'theme' },
   
   // Sessions
   { keys: ['Ctrl', 'N'], description: 'New chat with agent', category: 'global' },

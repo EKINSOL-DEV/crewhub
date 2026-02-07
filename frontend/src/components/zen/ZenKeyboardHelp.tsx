@@ -27,6 +27,17 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     ],
   },
   {
+    title: 'Tabs',
+    icon: '📑',
+    shortcuts: [
+      { keys: ['Ctrl', 'Alt', 'T'], description: 'New tab' },
+      { keys: ['Ctrl', 'Alt', 'W'], description: 'Close tab' },
+      { keys: ['Ctrl', 'Alt', 'Tab'], description: 'Next tab' },
+      { keys: ['Ctrl', 'Alt', 'Shift', 'Tab'], description: 'Previous tab' },
+      { keys: ['Ctrl', 'Alt', 'R'], description: 'Reopen closed tab' },
+    ],
+  },
+  {
     title: 'Panel Navigation',
     icon: '🧭',
     shortcuts: [
@@ -58,7 +69,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     title: 'Theme',
     icon: '🎨',
     shortcuts: [
-      { keys: ['Ctrl', 'Shift', 'T'], description: 'Open theme picker' },
+      { keys: ['Ctrl', 'Shift', 'Y'], description: 'Open theme picker' },
     ],
   },
   {
