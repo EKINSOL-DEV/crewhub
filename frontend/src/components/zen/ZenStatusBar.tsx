@@ -1,6 +1,6 @@
 /**
  * Zen Mode Status Bar
- * Bottom bar showing agent status, room, and keyboard hints
+ * Bottom bar showing agent status, room, panel info, and connection status
  */
 
 import { useState, useEffect } from 'react'
@@ -10,6 +10,8 @@ interface ZenStatusBarProps {
   agentStatus: 'active' | 'thinking' | 'idle' | 'error'
   roomName?: string
   connected: boolean
+  panelCount?: number
+  focusedPanelIndex?: number
 }
 
 function formatTime(date: Date): string {
@@ -24,7 +26,9 @@ export function ZenStatusBar({
   agentName, 
   agentStatus, 
   roomName,
-  connected 
+  connected,
+  panelCount = 1,
+  focusedPanelIndex = 1,
 }: ZenStatusBarProps) {
   const [currentTime, setCurrentTime] = useState(formatTime(new Date()))
 
@@ -61,22 +65,28 @@ export function ZenStatusBar({
           <div className="zen-status-item">
             <span className={getStatusDotClass()} />
             <span>{agentName}</span>
-            <span style={{ color: 'var(--zen-fg-dim)' }}>•</span>
-            <span style={{ color: 'var(--zen-fg-muted)' }}>{getStatusLabel()}</span>
+            <span className="zen-status-sep">•</span>
+            <span className="zen-status-muted">{getStatusLabel()}</span>
           </div>
         ) : (
-          <div className="zen-status-item" style={{ color: 'var(--zen-fg-muted)' }}>
-            No agent selected
+          <div className="zen-status-item zen-status-muted">
+            Select a session to start chatting
           </div>
         )}
       </div>
 
       <div className="zen-status-bar-center">
-        {roomName ? (
-          <span>{roomName}</span>
-        ) : (
-          <span>—</span>
-        )}
+        <div className="zen-status-item">
+          {roomName && (
+            <>
+              <span className="zen-status-room">{roomName}</span>
+              <span className="zen-status-sep">•</span>
+            </>
+          )}
+          <span className="zen-status-panels">
+            Panel {focusedPanelIndex}/{panelCount}
+          </span>
+        </div>
       </div>
 
       <div className="zen-status-bar-right">
@@ -84,12 +94,8 @@ export function ZenStatusBar({
           <span className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`} />
           <span>{connected ? 'Connected' : 'Disconnected'}</span>
         </div>
-        <span style={{ color: 'var(--zen-fg-dim)' }}>•</span>
-        <span>{currentTime}</span>
-        <span style={{ color: 'var(--zen-fg-dim)' }}>•</span>
-        <span>
-          <kbd className="zen-kbd">Esc</kbd> to exit
-        </span>
+        <span className="zen-status-sep">•</span>
+        <span className="zen-status-time">{currentTime}</span>
       </div>
     </footer>
   )
