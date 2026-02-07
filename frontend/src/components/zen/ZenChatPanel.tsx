@@ -13,6 +13,7 @@ interface ZenChatPanelProps {
   agentIcon: string | null
   onStatusChange?: (status: 'active' | 'thinking' | 'idle' | 'error') => void
   onChangeAgent?: () => void  // Callback to open agent picker
+  onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void  // Direct agent selection
 }
 
 // ── Lightweight markdown rendering ─────────────────────────────
@@ -160,19 +161,52 @@ function EmptyState({ agentName, agentIcon }: { agentName: string | null; agentI
   )
 }
 
+// ── Fixed Agents for Quick Selection ───────────────────────────
+
+const FIXED_AGENTS = [
+  { id: 'main', name: 'Assistent', icon: '🧠', description: 'Primary assistant for general tasks' },
+  { id: 'dev', name: 'Dev', icon: '💻', description: 'Development and coding tasks' },
+  { id: 'flowy', name: 'Flowy', icon: '🌊', description: 'Flow and automation tasks' },
+  { id: 'reviewer', name: 'Reviewer', icon: '🔍', description: 'Code review and analysis' },
+]
+
 // ── No Agent Selected State ────────────────────────────────────
 
-function NoAgentState() {
+interface NoAgentStateProps {
+  onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void
+}
+
+function NoAgentState({ onSelectAgent }: NoAgentStateProps) {
   return (
     <div className="zen-empty-state">
       <div className="zen-empty-icon">🧘</div>
-      <div className="zen-empty-title">Ready to Focus</div>
-      <div className="zen-empty-subtitle">
+      <div className="zen-empty-title">Select an Agent</div>
+      <div className="zen-empty-subtitle" style={{ marginBottom: '16px' }}>
+        Choose an agent to start chatting
+      </div>
+      
+      {onSelectAgent && (
+        <div className="zen-agent-grid">
+          {FIXED_AGENTS.map(agent => (
+            <button
+              key={agent.id}
+              className="zen-agent-option"
+              onClick={() => onSelectAgent(agent.id, agent.name, agent.icon)}
+            >
+              <span className="zen-agent-option-icon">{agent.icon}</span>
+              <div className="zen-agent-option-info">
+                <span className="zen-agent-option-name">{agent.name}</span>
+                <span className="zen-agent-option-desc">{agent.description}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      
+      <div className="zen-empty-subtitle" style={{ marginTop: '16px' }}>
         <kbd className="zen-kbd">Ctrl+N</kbd> New chat
         <span style={{ margin: '0 8px', opacity: 0.5 }}>•</span>
         <kbd className="zen-kbd">Ctrl+K</kbd> Commands
-        <span style={{ margin: '0 8px', opacity: 0.5 }}>•</span>
-        <kbd className="zen-kbd">Esc</kbd> Exit
       </div>
     </div>
   )
@@ -186,6 +220,7 @@ export function ZenChatPanel({
   agentIcon,
   onStatusChange,
   onChangeAgent,
+  onSelectAgent,
 }: ZenChatPanelProps) {
   const [showThinking, setShowThinking] = useState(false)
   
@@ -293,11 +328,11 @@ export function ZenChatPanel({
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 
-  // If no session key, show no agent state
+  // If no session key, show no agent state with agent picker
   if (!sessionKey) {
     return (
       <div className="zen-chat-panel">
-        <NoAgentState />
+        <NoAgentState onSelectAgent={onSelectAgent} />
       </div>
     )
   }

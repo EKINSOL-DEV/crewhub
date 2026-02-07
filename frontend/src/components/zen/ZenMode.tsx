@@ -312,6 +312,10 @@ export function ZenMode({
               agentIcon={panel.agentIcon || null}
               onStatusChange={handleStatusChange}
               onChangeAgent={() => setShowAgentPicker(true)}
+              onSelectAgent={(agentId, agentName, agentIcon) => {
+                // Directly set the agent on this panel
+                layout.setPanelAgent(panel.panelId, `agent:${agentId}:main`, agentName, agentIcon)
+              }}
             />
           )
         

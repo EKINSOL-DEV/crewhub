@@ -3932,3 +3932,169 @@
   background: var(--zen-error);
   color: var(--zen-bg);
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   Agent Selection Grid (Welcome Screen)
+   ══════════════════════════════════════════════════════════════════ */
+
+.zen-agent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--zen-space-sm);
+  width: 100%;
+  max-width: 400px;
+}
+
+.zen-agent-option {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-md);
+  background: var(--zen-bg-panel);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-lg);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  font-family: inherit;
+  color: var(--zen-fg);
+}
+
+.zen-agent-option:hover {
+  background: var(--zen-bg-hover);
+  border-color: var(--zen-accent);
+  transform: translateY(-1px);
+}
+
+.zen-agent-option-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.zen-agent-option-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.zen-agent-option-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--zen-fg);
+}
+
+.zen-agent-option-desc {
+  font-size: 10px;
+  color: var(--zen-fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Agent Dropdown in Chat Header ─────────────────────────────── */
+
+.zen-agent-dropdown {
+  position: relative;
+}
+
+.zen-agent-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 200px;
+  background: var(--zen-bg-panel);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.zen-agent-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  width: 100%;
+  padding: var(--zen-space-sm) var(--zen-space-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--zen-fg);
+  transition: background 0.1s ease;
+  text-align: left;
+}
+
+.zen-agent-dropdown-item:hover {
+  background: var(--zen-bg-hover);
+}
+
+.zen-agent-dropdown-item.active {
+  background: var(--zen-accent);
+  color: var(--zen-bg);
+}
+
+.zen-agent-dropdown-icon {
+  font-size: 16px;
+}
+
+.zen-agent-dropdown-name {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Context Menu ──────────────────────────────────────────────── */
+
+.zen-context-menu {
+  position: fixed;
+  min-width: 160px;
+  background: var(--zen-bg-panel);
+  border: 1px solid var(--zen-border);
+  border-radius: var(--zen-radius-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 10000;
+  overflow: hidden;
+  animation: zen-fade-in 0.1s ease-out;
+}
+
+.zen-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  width: 100%;
+  padding: var(--zen-space-sm) var(--zen-space-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--zen-fg);
+  transition: background 0.1s ease;
+  text-align: left;
+}
+
+.zen-context-menu-item:hover {
+  background: var(--zen-bg-hover);
+}
+
+.zen-context-menu-item-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+
+.zen-context-menu-item-danger {
+  color: var(--zen-error);
+}
+
+.zen-context-menu-item-danger:hover {
+  background: color-mix(in srgb, var(--zen-error) 15%, transparent);
+}
+
+.zen-context-menu-separator {
+  height: 1px;
+  background: var(--zen-border);
+  margin: var(--zen-space-xs) 0;
+}
