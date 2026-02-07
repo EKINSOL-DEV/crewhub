@@ -72,7 +72,7 @@ export function TaskWall3D({
         center
         transform
         scale={0.28}
-        zIndexRange={[0, 10]}
+        zIndexRange={[50, 60]}
         style={{
           width: `${width * 140}px`,
           height: `${height * 140}px`,
@@ -116,7 +116,7 @@ export function TaskWall3D({
           center
           transform
           scale={0.275}
-          zIndexRange={[0, 10]}
+          zIndexRange={[50, 60]}
           style={{ pointerEvents: 'auto' }}
         >
           <button
