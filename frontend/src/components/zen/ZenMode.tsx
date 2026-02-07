@@ -358,7 +358,7 @@ export function ZenMode({
           onFocus={layout.focusPanel}
           onClose={layout.closePanel}
           onResize={layout.resizePanel}
-          onSplit={(panelId, direction) => layout.splitPanel(panelId, direction, 'empty')}
+          onSplit={(panelId: string, direction: 'row' | 'col') => layout.splitPanel(panelId, direction, 'empty')}
           onChangePanelType={handleSelectPanelType}
           renderPanel={renderPanel}
         />

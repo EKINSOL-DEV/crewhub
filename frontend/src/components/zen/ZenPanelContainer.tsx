@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useRef, useState, type ReactNode } from 'react'
-import { type LayoutNode, type LeafNode } from './types/layout'
+import { type LayoutNode, type LeafNode, type PanelType } from './types/layout'
 import { ZenPanel } from './ZenPanel'
 
 interface ZenPanelContainerProps {
@@ -14,6 +14,8 @@ interface ZenPanelContainerProps {
   onFocus: (panelId: string) => void
   onClose: (panelId: string) => void
   onResize?: (panelId: string, delta: number) => void
+  onSplit?: (panelId: string, direction: 'row' | 'col') => void
+  onChangePanelType?: (panelId: string, type: PanelType) => void
   renderPanel: (panel: LeafNode) => ReactNode
 }
 
@@ -27,6 +29,8 @@ export function ZenPanelContainer({
   onFocus,
   onClose,
   onResize,
+  onSplit: _onSplit,
+  onChangePanelType: _onChangePanelType,
   renderPanel,
 }: ZenPanelContainerProps) {
   if (node.kind === 'leaf') {
@@ -108,10 +112,6 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
     const isRow = direction === 'row'
     const container = containerRef.current
     if (!container) return
-    
-    // Capture initial state
-    const initialRect = container.getBoundingClientRect()
-    const totalSize = isRow ? initialRect.width : initialRect.height
     
     const handleMouseMove = (moveEvent: MouseEvent) => {
       moveEvent.preventDefault()
