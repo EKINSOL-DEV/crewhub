@@ -113,6 +113,10 @@ export function parseMediaAttachments(content: string): ParsedMessage {
     }
   }
 
+  // Remove OpenClaw media instruction hint (injected context for AI)
+  const mediaHintPattern = /To send an image back,.*?Keep caption in the text body\.\n?/gs
+  text = text.replace(mediaHintPattern, '')
+
   // Clean up multiple newlines from removed media
   text = text.replace(/\n{3,}/g, '\n\n').trim()
 
