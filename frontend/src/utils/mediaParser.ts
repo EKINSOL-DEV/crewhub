@@ -116,6 +116,15 @@ export function parseMediaAttachments(content: string): ParsedMessage {
   // Remove OpenClaw media instruction hint (injected context for AI)
   const mediaHintPattern = /To send an image back,.*?Keep caption in the text body\.\n?/gs
   text = text.replace(mediaHintPattern, '')
+  
+  // Remove WhatsApp/channel metadata (timestamp, message_id)
+  // Pattern: [WhatsApp +324... +1m 2026-02-07 11:41 GMT+1]
+  const channelMetaPattern = /\[(WhatsApp|Telegram|Signal|Discord|iMessage|Slack)[^\]]*\]\n?/gi
+  text = text.replace(channelMetaPattern, '')
+  
+  // Pattern: [message_id: ...]
+  const messageIdPattern = /\[message_id:\s*[^\]]+\]\n?/gi
+  text = text.replace(messageIdPattern, '')
 
   // Clean up multiple newlines from removed media
   text = text.replace(/\n{3,}/g, '\n\n').trim()
