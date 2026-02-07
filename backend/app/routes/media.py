@@ -1,26 +1,36 @@
-"""Media file serving endpoint.
+"""Media file serving and upload endpoint.
 
 Serves media files from allowed directories with security checks.
 Supports images from OpenClaw media folder.
+Handles image uploads for chat attachments.
 """
 
 import os
+import uuid
 import logging
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# Upload directory for chat images
+UPLOAD_DIR = Path.home() / ".openclaw" / "media" / "uploads"
+
 # Allowed base directories for media files (resolved to absolute paths)
 ALLOWED_MEDIA_DIRS = [
     Path.home() / ".openclaw" / "media",
     Path.home() / ".openclaw" / "media" / "inbound",
+    Path.home() / ".openclaw" / "media" / "uploads",
     Path("/tmp") / "crewhub-media",  # For testing
 ]
+
+# Max upload size: 10MB
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
 # Supported image MIME types
 IMAGE_MIME_TYPES = {
@@ -116,3 +126,80 @@ async def serve_media(file_path: str):
         media_type=mime_type,
         filename=resolved_path.name,
     )
+
+
+# Allowed upload MIME types
+ALLOWED_UPLOAD_TYPES = {
+    "image/jpeg",
+    "image/png", 
+    "image/gif",
+    "image/webp",
+}
+
+# Extension mapping for MIME types
+MIME_TO_EXT = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+}
+
+
+@router.post("/api/media/upload")
+async def upload_media(file: UploadFile = File(...)):
+    """Upload an image file for chat attachment.
+    
+    Accepts: jpeg, png, gif, webp
+    Max size: 10MB
+    
+    Returns:
+        path: Absolute path to the saved file
+        url: URL to access the file via /api/media/
+    """
+    # Validate content type
+    content_type = file.content_type or ""
+    if content_type not in ALLOWED_UPLOAD_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type: {content_type}. Allowed: jpeg, png, gif, webp"
+        )
+    
+    # Read file content (with size check)
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size: {MAX_UPLOAD_SIZE // (1024*1024)}MB"
+        )
+    
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:8]
+    ext = MIME_TO_EXT.get(content_type, ".jpg")
+    filename = f"chat_{timestamp}_{unique_id}{ext}"
+    
+    # Ensure upload directory exists
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Save file
+    file_path = UPLOAD_DIR / filename
+    try:
+        with open(file_path, "wb") as f:
+            f.write(content)
+        logger.info(f"Uploaded media file: {file_path}")
+    except Exception as e:
+        logger.error(f"Failed to save upload: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save file"
+        )
+    
+    # Return path info
+    return {
+        "success": True,
+        "path": str(file_path),
+        "url": f"/api/media/{file_path}",
+        "filename": filename,
+        "mimeType": content_type,
+        "size": len(content),
+    }

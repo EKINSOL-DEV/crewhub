@@ -9,6 +9,7 @@ import { parseMediaAttachments } from '@/utils/mediaParser'
 import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
 import { VideoThumbnail } from '@/components/chat/VideoThumbnail'
 import { PixelAvatar } from './PixelAvatar'
+import { ImageDropZone, ImagePreviews, type PendingImage } from './ImageDropZone'
 
 interface ZenChatPanelProps {
   sessionKey: string | null
@@ -235,7 +236,7 @@ interface AgentDropdownProps {
   onOpenPicker?: () => void
 }
 
-function AgentDropdown({ currentAgentName, currentAgentIcon, onSelectAgent, onOpenPicker }: AgentDropdownProps) {
+function AgentDropdown({ currentAgentName, currentAgentIcon: _currentAgentIcon, onSelectAgent, onOpenPicker }: AgentDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   
@@ -383,6 +384,7 @@ export function ZenChatPanel({
 
   const [inputValue, setInputValue] = useState('')
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -465,18 +467,45 @@ export function ZenChatPanel({
 
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
-    if (!text) return
+    
+    // Check if there are uploaded images
+    const uploadedImages = pendingImages.filter(img => img.uploadedPath && !img.error)
+    const hasImages = uploadedImages.length > 0
+    
+    // Need text or images to send
+    if (!text && !hasImages) return
+    
+    // Build message with image attachments
+    let messageText = text
+    if (hasImages) {
+      // Append media tags for each image
+      const mediaTags = uploadedImages.map(img => 
+        `[media attached: ${img.uploadedPath} (${img.file.type})]`
+      ).join('\n')
+      messageText = text ? `${text}\n\n${mediaTags}` : mediaTags
+    }
+    
+    // Clear inputs
     setInputValue('')
+    
+    // Revoke preview URLs and clear images
+    pendingImages.forEach(img => URL.revokeObjectURL(img.preview))
+    setPendingImages([])
     
     if (isSending) {
       // Queue the message for when agent finishes
-      setPendingMessage(text)
+      setPendingMessage(messageText)
     } else {
-      await sendMessage(text)
+      await sendMessage(messageText)
     }
     // Refocus input after sending
     setTimeout(() => inputRef.current?.focus(), 0)
-  }, [inputValue, isSending, sendMessage])
+  }, [inputValue, isSending, sendMessage, pendingImages])
+  
+  // Remove a pending image
+  const handleRemoveImage = useCallback((id: string) => {
+    setPendingImages(prev => prev.filter(img => img.id !== id))
+  }, [])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -500,6 +529,10 @@ export function ZenChatPanel({
       </div>
     )
   }
+
+  // Check if we can send (has text or uploaded images)
+  const uploadedImages = pendingImages.filter(img => img.uploadedPath && !img.error)
+  const canSend = inputValue.trim() || uploadedImages.length > 0
 
   return (
     <div className="zen-chat-panel">
@@ -535,82 +568,92 @@ export function ZenChatPanel({
         </div>
       </div>
       
-      {/* Messages area */}
-      <div 
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-        className="zen-chat-messages"
+      {/* Wrap messages and input with drop zone for image paste/drop */}
+      <ImageDropZone
+        images={pendingImages}
+        onImagesChange={setPendingImages}
+        disabled={isSending}
       >
-        {/* Load older button */}
-        {hasMore && (
-          <button
-            type="button"
-            onClick={loadOlderMessages}
-            disabled={isLoadingHistory}
-            className="zen-btn"
-            style={{ alignSelf: 'center', marginBottom: 'var(--zen-space-md)' }}
-          >
-            {isLoadingHistory ? 'Loading...' : '↑ Load older messages'}
-          </button>
-        )}
+        {/* Messages area */}
+        <div 
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="zen-chat-messages"
+        >
+          {/* Load older button */}
+          {hasMore && (
+            <button
+              type="button"
+              onClick={loadOlderMessages}
+              disabled={isLoadingHistory}
+              className="zen-btn"
+              style={{ alignSelf: 'center', marginBottom: 'var(--zen-space-md)' }}
+            >
+              {isLoadingHistory ? 'Loading...' : '↑ Load older messages'}
+            </button>
+          )}
 
-        {/* Empty state */}
-        {!isLoadingHistory && messages.length === 0 && (
-          <EmptyState agentName={agentName} agentIcon={agentIcon} />
-        )}
+          {/* Empty state */}
+          {!isLoadingHistory && messages.length === 0 && (
+            <EmptyState agentName={agentName} agentIcon={agentIcon} />
+          )}
 
-        {/* Messages */}
-        {messages.map(msg => (
-          <Message key={msg.id} msg={msg} />
-        ))}
+          {/* Messages */}
+          {messages.map(msg => (
+            <Message key={msg.id} msg={msg} />
+          ))}
 
-        {/* Thinking indicator */}
-        {isSending && (
-          <div className="zen-thinking">
-            <div className="zen-thinking-dots">
-              <span />
-              <span />
-              <span />
+          {/* Thinking indicator */}
+          {isSending && (
+            <div className="zen-thinking">
+              <div className="zen-thinking-dots">
+                <span />
+                <span />
+                <span />
+              </div>
+              <span>{agentName || 'Agent'} is thinking...</span>
             </div>
-            <span>{agentName || 'Agent'} is thinking...</span>
-          </div>
-        )}
+          )}
 
-        {/* Error */}
-        {error && (
-          <div className="zen-error">
-            {error}
-          </div>
-        )}
+          {/* Error */}
+          {error && (
+            <div className="zen-error">
+              {error}
+            </div>
+          )}
 
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input area */}
-      <div className="zen-chat-input-container">
-        <div className="zen-chat-input-wrapper">
-          <textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onInput={handleInput}
-            placeholder={`Message ${agentName || 'agent'}...`}
-            rows={1}
-            className="zen-chat-input"
-          />
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!inputValue.trim() || pendingMessage !== null}
-            className="zen-chat-send-btn"
-            aria-label={isSending ? "Queue message" : "Send message"}
-            title={isSending ? "Message will be sent when agent finishes" : "Send message"}
-          >
-            {pendingMessage ? '⏳' : '➤'}
-          </button>
+          <div ref={messagesEndRef} />
         </div>
-      </div>
+
+        {/* Image previews (above input) */}
+        <ImagePreviews images={pendingImages} onRemove={handleRemoveImage} />
+
+        {/* Input area */}
+        <div className="zen-chat-input-container">
+          <div className="zen-chat-input-wrapper">
+            <textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={e => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onInput={handleInput}
+              placeholder={`Message ${agentName || 'agent'}... (paste or drop images)`}
+              rows={1}
+              className="zen-chat-input"
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!canSend || pendingMessage !== null}
+              className="zen-chat-send-btn"
+              aria-label={isSending ? "Queue message" : "Send message"}
+              title={isSending ? "Message will be sent when agent finishes" : "Send message"}
+            >
+              {pendingMessage ? '⏳' : '➤'}
+            </button>
+          </div>
+        </div>
+      </ImageDropZone>
     </div>
   )
 }
