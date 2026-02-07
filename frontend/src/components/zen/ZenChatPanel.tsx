@@ -56,6 +56,34 @@ function formatRelativeTime(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString()
 }
 
+// ── Thinking Block Component ───────────────────────────────────
+
+function ThinkingBlock({ content }: { content: string }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const isLong = content.length > 500
+  
+  return (
+    <div className="zen-thinking-block">
+      <button
+        type="button"
+        className="zen-thinking-block-header"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span>🧠</span>
+        <span>Thinking</span>
+        {isLong && (
+          <span className="zen-thinking-block-toggle">
+            {isExpanded ? '▾ collapse' : '▸ expand'}
+          </span>
+        )}
+      </button>
+      <div className={`zen-thinking-block-content ${isExpanded ? 'zen-thinking-block-expanded' : ''}`}>
+        {isExpanded || !isLong ? content : content.slice(0, 500) + '...'}
+      </div>
+    </div>
+  )
+}
+
 // ── Tool Call Component ────────────────────────────────────────
 
 function ToolCall({ tool }: { tool: ToolCallData }) {
@@ -108,15 +136,7 @@ function Message({ msg }: { msg: ChatMessageData }) {
       {msg.thinking && msg.thinking.length > 0 && (
         <div className="zen-thinking-blocks">
           {msg.thinking.map((thought, i) => (
-            <div key={i} className="zen-thinking-block">
-              <div className="zen-thinking-block-header">
-                <span>🧠</span>
-                <span>Thinking</span>
-              </div>
-              <div className="zen-thinking-block-content">
-                {thought.length > 500 ? thought.slice(0, 500) + '...' : thought}
-              </div>
-            </div>
+            <ThinkingBlock key={i} content={thought} />
           ))}
         </div>
       )}

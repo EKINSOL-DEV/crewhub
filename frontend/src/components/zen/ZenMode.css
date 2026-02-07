@@ -493,13 +493,31 @@
   display: flex;
   align-items: center;
   gap: var(--zen-space-xs);
+  width: 100%;
   padding: var(--zen-space-xs) var(--zen-space-sm);
   background: var(--zen-bg-hover);
+  border: none;
+  font-family: inherit;
   font-size: 10px;
   font-weight: 600;
   color: var(--zen-warning);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.zen-thinking-block-header:hover {
+  background: var(--zen-bg-active);
+}
+
+.zen-thinking-block-toggle {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.7;
 }
 
 .zen-thinking-block-content {
@@ -510,6 +528,10 @@
   white-space: pre-wrap;
   max-height: 150px;
   overflow-y: auto;
+}
+
+.zen-thinking-block-content.zen-thinking-block-expanded {
+  max-height: none;
 }
 
 /* ── Tool Calls ────────────────────────────────────────────────── */
