@@ -468,14 +468,21 @@ export function ZenChatPanel({
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (messages.length > prevMessageCount.current) {
-      if (prevMessageCount.current === 0) {
-        const container = scrollContainerRef.current
-        if (container) {
-          container.scrollTop = container.scrollHeight
+      // Small delay to allow images to load and get their height
+      const scrollToBottom = () => {
+        if (prevMessageCount.current === 0) {
+          const container = scrollContainerRef.current
+          if (container) {
+            container.scrollTop = container.scrollHeight
+          }
+        } else if (isNearBottomRef.current) {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
         }
-      } else if (isNearBottomRef.current) {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
       }
+      
+      // Immediate scroll + delayed scroll for images
+      scrollToBottom()
+      setTimeout(scrollToBottom, 150)
     }
     prevMessageCount.current = messages.length
   }, [messages.length])
