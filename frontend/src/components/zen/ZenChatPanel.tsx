@@ -581,7 +581,6 @@ export function ZenChatPanel({
             onKeyDown={handleKeyDown}
             onInput={handleInput}
             placeholder={`Message ${agentName || 'agent'}...`}
-            disabled={isSending}
             rows={1}
             className="zen-chat-input"
           />
