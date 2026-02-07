@@ -468,6 +468,13 @@ export function ZenChatPanel({
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
     
+    // Check if images are still uploading
+    const stillUploading = pendingImages.some(img => img.uploading)
+    if (stillUploading) {
+      // Wait for uploads to complete before sending
+      return
+    }
+    
     // Check if there are uploaded images
     const uploadedImages = pendingImages.filter(img => img.uploadedPath && !img.error)
     const hasImages = uploadedImages.length > 0
@@ -530,9 +537,10 @@ export function ZenChatPanel({
     )
   }
 
-  // Check if we can send (has text or uploaded images)
+  // Check if we can send (has text or uploaded images, and nothing uploading)
   const uploadedImages = pendingImages.filter(img => img.uploadedPath && !img.error)
-  const canSend = inputValue.trim() || uploadedImages.length > 0
+  const stillUploading = pendingImages.some(img => img.uploading)
+  const canSend = (inputValue.trim() || uploadedImages.length > 0) && !stillUploading
 
   return (
     <div className="zen-chat-panel">
