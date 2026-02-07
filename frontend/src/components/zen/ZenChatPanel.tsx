@@ -1,0 +1,338 @@
+/**
+ * Zen Mode Chat Panel
+ * Full chat interface reusing the existing useAgentChat hook
+ */
+
+import { useRef, useEffect, useCallback, type KeyboardEvent } from 'react'
+import { useState } from 'react'
+import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
+
+interface ZenChatPanelProps {
+  sessionKey: string | null
+  agentName: string | null
+  agentIcon: string | null
+  onStatusChange?: (status: 'active' | 'thinking' | 'idle' | 'error') => void
+}
+
+// ── Lightweight markdown rendering ─────────────────────────────
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function renderMarkdown(text: string): string {
+  // Code blocks
+  let html = text.replace(
+    /```(\w*)\n([\s\S]*?)```/g,
+    (_m, _lang, code) =>
+      `<pre><code>${escapeHtml(code.trim())}</code></pre>`
+  )
+  // Inline code
+  html = html.replace(
+    /`([^`]+)`/g,
+    '<code>$1</code>'
+  )
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  // Italic
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+  // Line breaks
+  html = html.replace(/\n/g, '<br/>')
+  return html
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now()
+  const diff = now - timestamp
+  
+  if (diff < 60000) return 'just now'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
+  return new Date(timestamp).toLocaleDateString()
+}
+
+// ── Tool Call Component ────────────────────────────────────────
+
+function ToolCall({ tool }: { tool: ToolCallData }) {
+  const isSuccess = tool.status === 'done' || tool.status === 'called'
+  
+  return (
+    <div className="zen-tool-call">
+      <span className="zen-tool-icon">🔧</span>
+      <span className="zen-tool-name">{tool.name}</span>
+      <span className={`zen-tool-status ${isSuccess ? 'zen-tool-status-success' : 'zen-tool-status-error'}`}>
+        {isSuccess ? '✓' : '✗'}
+      </span>
+    </div>
+  )
+}
+
+// ── Message Component ──────────────────────────────────────────
+
+function Message({ msg }: { msg: ChatMessageData }) {
+  const isUser = msg.role === 'user'
+  const isSystem = msg.role === 'system'
+
+  if (isSystem) {
+    return (
+      <div 
+        className="zen-message zen-message-system zen-fade-in"
+        style={{ 
+          alignSelf: 'center', 
+          color: 'var(--zen-fg-muted)', 
+          fontStyle: 'italic',
+          fontSize: '12px',
+          padding: 'var(--zen-space-sm) 0'
+        }}
+      >
+        {msg.content}
+      </div>
+    )
+  }
+
+  return (
+    <div className={`zen-message ${isUser ? 'zen-message-user' : 'zen-message-assistant'} zen-fade-in`}>
+      <div className="zen-message-header">
+        <span className={`zen-message-role ${isUser ? 'zen-message-role-user' : 'zen-message-role-assistant'}`}>
+          {isUser ? 'YOU' : 'ASSISTANT'}
+        </span>
+        <span className="zen-message-time">{formatRelativeTime(msg.timestamp)}</span>
+      </div>
+      
+      {/* Tool calls */}
+      {msg.tools && msg.tools.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
+          {msg.tools.map((tool, i) => (
+            <ToolCall key={i} tool={tool} />
+          ))}
+        </div>
+      )}
+      
+      {/* Message content */}
+      {msg.content && (
+        <div 
+          className="zen-message-content"
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Empty State ────────────────────────────────────────────────
+
+function EmptyState({ agentName, agentIcon }: { agentName: string | null; agentIcon: string | null }) {
+  return (
+    <div className="zen-empty-state">
+      <div className="zen-empty-icon">{agentIcon || '🧘'}</div>
+      <div className="zen-empty-title">
+        {agentName ? `Chat with ${agentName}` : 'Select an agent to start'}
+      </div>
+      <div className="zen-empty-subtitle">
+        {agentName 
+          ? 'Send a message to begin the conversation'
+          : 'Use the sidebar or command palette to select an agent'
+        }
+      </div>
+    </div>
+  )
+}
+
+// ── No Agent Selected State ────────────────────────────────────
+
+function NoAgentState() {
+  return (
+    <div className="zen-empty-state">
+      <div className="zen-empty-icon">🧘</div>
+      <div className="zen-empty-title">Welcome to Zen Mode</div>
+      <div className="zen-empty-subtitle">
+        Select an agent from the 3D world first, then enter Zen Mode to start chatting.
+        <br /><br />
+        <kbd className="zen-kbd">Esc</kbd> to exit
+      </div>
+    </div>
+  )
+}
+
+// ── Main Chat Panel ────────────────────────────────────────────
+
+export function ZenChatPanel({ 
+  sessionKey, 
+  agentName, 
+  agentIcon,
+  onStatusChange 
+}: ZenChatPanelProps) {
+  const {
+    messages,
+    isSending,
+    error,
+    sendMessage,
+    loadOlderMessages,
+    hasMore,
+    isLoadingHistory,
+  } = useAgentChat(sessionKey || '')
+
+  const [inputValue, setInputValue] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const isNearBottomRef = useRef(true)
+  const prevMessageCount = useRef(0)
+
+  // Notify parent of status changes
+  useEffect(() => {
+    if (!onStatusChange) return
+    if (error) {
+      onStatusChange('error')
+    } else if (isSending) {
+      onStatusChange('thinking')
+    } else if (messages.length > 0) {
+      onStatusChange('active')
+    } else {
+      onStatusChange('idle')
+    }
+  }, [isSending, error, messages.length, onStatusChange])
+
+  // Check if near bottom
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const threshold = 100
+    isNearBottomRef.current =
+      container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+  }, [])
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > prevMessageCount.current) {
+      if (prevMessageCount.current === 0) {
+        const container = scrollContainerRef.current
+        if (container) {
+          container.scrollTop = container.scrollHeight
+        }
+      } else if (isNearBottomRef.current) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+    prevMessageCount.current = messages.length
+  }, [messages.length])
+
+  // Focus input on mount
+  useEffect(() => {
+    if (sessionKey) {
+      setTimeout(() => inputRef.current?.focus(), 150)
+    }
+  }, [sessionKey])
+
+  const handleSend = useCallback(async () => {
+    const text = inputValue.trim()
+    if (!text || isSending) return
+    setInputValue('')
+    await sendMessage(text)
+  }, [inputValue, isSending, sendMessage])
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  // Auto-resize textarea
+  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+  }
+
+  // If no session key, show no agent state
+  if (!sessionKey) {
+    return (
+      <div className="zen-chat-panel">
+        <NoAgentState />
+      </div>
+    )
+  }
+
+  return (
+    <div className="zen-chat-panel">
+      {/* Messages area */}
+      <div 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="zen-chat-messages"
+      >
+        {/* Load older button */}
+        {hasMore && (
+          <button
+            onClick={loadOlderMessages}
+            disabled={isLoadingHistory}
+            className="zen-btn"
+            style={{ alignSelf: 'center', marginBottom: 'var(--zen-space-md)' }}
+          >
+            {isLoadingHistory ? 'Loading...' : '↑ Load older messages'}
+          </button>
+        )}
+
+        {/* Empty state */}
+        {!isLoadingHistory && messages.length === 0 && (
+          <EmptyState agentName={agentName} agentIcon={agentIcon} />
+        )}
+
+        {/* Messages */}
+        {messages.map(msg => (
+          <Message key={msg.id} msg={msg} />
+        ))}
+
+        {/* Thinking indicator */}
+        {isSending && (
+          <div className="zen-thinking">
+            <div className="zen-thinking-dots">
+              <span />
+              <span />
+              <span />
+            </div>
+            <span>{agentName || 'Agent'} is thinking...</span>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="zen-error">
+            {error}
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input area */}
+      <div className="zen-chat-input-container">
+        <div className="zen-chat-input-wrapper">
+          <textarea
+            ref={inputRef}
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onInput={handleInput}
+            placeholder={`Message ${agentName || 'agent'}...`}
+            disabled={isSending}
+            rows={1}
+            className="zen-chat-input"
+          />
+          <button
+            onClick={handleSend}
+            disabled={isSending || !inputValue.trim()}
+            className="zen-chat-send-btn"
+          >
+            ➤
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
