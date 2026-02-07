@@ -1,41 +1,50 @@
 /**
  * Zen Activity Panel
- * Real-time SSE activity feed showing session events
+ * Real-time activity feed showing what agents are doing
+ * Shows session labels and status - same as 3D view bubbles
  */
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { sseManager } from '@/lib/sseManager'
 import type { CrewSession } from '@/lib/api'
+import { useSessionsStream } from '@/hooks/useSessionsStream'
+import { useDemoMode } from '@/contexts/DemoContext'
+import { splitSessionsForDisplay } from '@/lib/sessionFiltering'
+import { getSessionStatus, type SessionStatus } from '@/lib/sessionConfig'
 
 // ── Activity Event Types ──────────────────────────────────────────
 
 interface ActivityEvent {
   id: string
-  type: 'created' | 'updated' | 'removed' | 'status'
+  type: 'activity' | 'started' | 'completed' | 'status'
   timestamp: number
   sessionKey: string
-  sessionName: string
-  description: string
+  agentName: string
+  activity: string
   icon: string
-  details?: string
+  status: SessionStatus
+  tokens?: number
 }
 
 // ── Event Formatting ──────────────────────────────────────────────
 
-function getAgentName(session: Partial<CrewSession>): string {
-  return session.displayName || session.label || session.key?.split(':').pop() || 'Agent'
+function getAgentName(session: CrewSession): string {
+  return session.displayName || session.label || session.key?.split(':')[1] || 'Agent'
 }
 
-function getSessionIcon(session: Partial<CrewSession>): string {
-  const kind = session.kind?.toLowerCase() || ''
+function getAgentIcon(session: CrewSession): string {
+  const key = session.key?.toLowerCase() || ''
   const channel = session.channel?.toLowerCase() || ''
   
-  if (kind.includes('dev') || kind.includes('code')) return '💻'
-  if (kind.includes('chat')) return '💬'
-  if (kind.includes('task')) return '📋'
+  if (key.includes('dev')) return '💻'
+  if (key.includes('flowy') || key.includes('marketing')) return '📣'
+  if (key.includes('reviewer')) return '👀'
+  if (key.includes('gamedev')) return '🎮'
+  if (key.includes('creator')) return '🎬'
   if (channel.includes('slack')) return '📢'
   if (channel.includes('discord')) return '🎮'
   if (channel.includes('whatsapp')) return '📱'
+  if (channel.includes('telegram')) return '✈️'
   
   return '🤖'
 }
@@ -50,13 +59,19 @@ function formatEventTime(timestamp: number): string {
   })
 }
 
-// Unused but kept for future use
-// function formatRelativeTime(timestamp: number): string {
-//   const diff = Date.now() - timestamp
-//   if (diff < 60000) return 'just now'
-//   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-//   return formatEventTime(timestamp)
-// }
+function getActivityLabel(session: CrewSession): string {
+  // Use label if available
+  if (session.label && session.label.length > 0) {
+    return session.label
+  }
+  
+  // Fall back to model info
+  if (session.model) {
+    return `Using ${session.model.split('/').pop()}`
+  }
+  
+  return 'Active'
+}
 
 // ── Activity Item Component ───────────────────────────────────────
 
@@ -65,40 +80,70 @@ interface ActivityItemProps {
 }
 
 function ActivityItem({ event }: ActivityItemProps) {
-  const typeColors: Record<string, string> = {
-    created: 'var(--zen-success)',
-    updated: 'var(--zen-info)',
-    removed: 'var(--zen-error)',
-    status: 'var(--zen-warning)',
+  const statusColors: Record<SessionStatus, string> = {
+    active: 'var(--zen-success)',
+    idle: 'var(--zen-warning)',
+    sleeping: 'var(--zen-fg-muted)',
   }
   
-  const typeLabels: Record<string, string> = {
-    created: 'NEW',
-    updated: 'UPD',
-    removed: 'DEL',
-    status: 'STS',
+  const statusLabels: Record<SessionStatus, string> = {
+    active: 'ACT',
+    idle: 'IDL',
+    sleeping: 'SLP',
   }
   
   return (
-    <div className="zen-activity-item zen-fade-in">
+    <div className={`zen-activity-item zen-activity-${event.status} zen-fade-in`}>
       <div className="zen-activity-time">{formatEventTime(event.timestamp)}</div>
       
       <div 
         className="zen-activity-type" 
-        style={{ color: typeColors[event.type] || 'var(--zen-fg-muted)' }}
+        style={{ color: statusColors[event.status] }}
       >
-        {typeLabels[event.type] || event.type.toUpperCase().slice(0, 3)}
+        {statusLabels[event.status]}
       </div>
       
       <div className="zen-activity-icon">{event.icon}</div>
       
       <div className="zen-activity-content">
-        <span className="zen-activity-agent">{event.sessionName}</span>
-        <span className="zen-activity-desc">{event.description}</span>
-        {event.details && (
-          <span className="zen-activity-details">{event.details}</span>
+        <span className="zen-activity-agent">{event.agentName}</span>
+        <span className="zen-activity-desc">{event.activity}</span>
+        {event.tokens !== undefined && event.tokens > 0 && (
+          <span className="zen-activity-details">{event.tokens.toLocaleString()} tokens</span>
         )}
       </div>
+    </div>
+  )
+}
+
+// ── Current Sessions List ─────────────────────────────────────────
+
+interface CurrentSessionItemProps {
+  session: CrewSession
+}
+
+function CurrentSessionItem({ session }: CurrentSessionItemProps) {
+  const status = getSessionStatus(session.updatedAt)
+  const statusColors: Record<SessionStatus, string> = {
+    active: 'var(--zen-success)',
+    idle: 'var(--zen-warning)',
+    sleeping: 'var(--zen-fg-muted)',
+  }
+  
+  return (
+    <div className={`zen-activity-current-item zen-activity-${status}`}>
+      <div 
+        className="zen-activity-status-dot"
+        style={{ background: statusColors[status] }}
+      />
+      <span className="zen-activity-icon">{getAgentIcon(session)}</span>
+      <div className="zen-activity-current-content">
+        <span className="zen-activity-agent">{getAgentName(session)}</span>
+        <span className="zen-activity-desc">{getActivityLabel(session)}</span>
+      </div>
+      {session.totalTokens !== undefined && session.totalTokens > 0 && (
+        <span className="zen-activity-tokens">{session.totalTokens.toLocaleString()}</span>
+      )}
     </div>
   )
 }
@@ -109,9 +154,9 @@ function EmptyState() {
   return (
     <div className="zen-activity-empty">
       <div className="zen-empty-icon">⚡</div>
-      <div className="zen-empty-title">No activity yet</div>
+      <div className="zen-empty-title">No active agents</div>
       <div className="zen-empty-subtitle">
-        Real-time events will appear here
+        Agent activity will appear here
       </div>
     </div>
   )
@@ -119,166 +164,77 @@ function EmptyState() {
 
 // ── Main Component ────────────────────────────────────────────────
 
-const MAX_EVENTS = 100
-const BATCH_DELAY_MS = 100
+const MAX_EVENTS = 50
 
 export function ZenActivityPanel() {
+  const { sessions: realSessions } = useSessionsStream()
+  const { isDemoMode, demoSessions } = useDemoMode()
+  const sessions = isDemoMode ? demoSessions : realSessions
+  
   const [events, setEvents] = useState<ActivityEvent[]>([])
   const [connected, setConnected] = useState(false)
-  const [autoScroll, setAutoScroll] = useState(true)
+  const [viewMode, setViewMode] = useState<'current' | 'history'>('current')
   const listRef = useRef<HTMLDivElement>(null)
-  const batchedEventsRef = useRef<ActivityEvent[]>([])
-  const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevSessionsRef = useRef<Map<string, { label: string; tokens: number }>>(new Map())
   
-  // Flush batched events to state
-  const flushBatch = useCallback(() => {
-    if (batchedEventsRef.current.length === 0) return
-    
-    const newEvents = [...batchedEventsRef.current]
-    batchedEventsRef.current = []
-    
-    setEvents(prev => {
-      const combined = [...newEvents, ...prev]
-      return combined.slice(0, MAX_EVENTS)
-    })
-  }, [])
+  // Get active/idle sessions (not sleeping)
+  const { visible } = useMemo(() => splitSessionsForDisplay(sessions), [sessions])
+  const activeSessions = useMemo(() => 
+    visible.filter(s => getSessionStatus(s.updatedAt) !== 'sleeping'),
+    [visible]
+  )
   
-  // Add event to batch (with 100ms debounce)
-  const addEvent = useCallback((event: ActivityEvent) => {
-    batchedEventsRef.current.push(event)
-    
-    if (batchTimeoutRef.current) {
-      clearTimeout(batchTimeoutRef.current)
-    }
-    
-    batchTimeoutRef.current = setTimeout(flushBatch, BATCH_DELAY_MS)
-  }, [flushBatch])
-  
-  // Subscribe to SSE events
+  // Track session changes and add to history
   useEffect(() => {
-    // Use timestamp + random for unique IDs
     const genId = () => `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const now = Date.now()
+    const newEvents: ActivityEvent[] = []
     
-    // Connection state
-    const unsubscribeState = sseManager.onStateChange((state) => {
-      setConnected(state === 'connected')
+    for (const session of sessions) {
+      const prev = prevSessionsRef.current.get(session.key)
+      const status = getSessionStatus(session.updatedAt)
       
-      if (state === 'connected') {
-        addEvent({
-          id: genId(),
-          type: 'status',
-          timestamp: Date.now(),
-          sessionKey: '',
-          sessionName: 'System',
-          description: 'Connected to activity stream',
-          icon: '🟢',
-        })
-      } else if (state === 'disconnected') {
-        addEvent({
-          id: genId(),
-          type: 'status',
-          timestamp: Date.now(),
-          sessionKey: '',
-          sessionName: 'System',
-          description: 'Disconnected - reconnecting...',
-          icon: '🟡',
-        })
-      }
-    })
-    
-    // Session created
-    const handleCreated = (e: MessageEvent) => {
-      try {
-        const session: CrewSession = JSON.parse(e.data)
-        addEvent({
-          id: genId(),
-          type: 'created',
-          timestamp: Date.now(),
-          sessionKey: session.key,
-          sessionName: getAgentName(session),
-          description: 'Session started',
-          icon: getSessionIcon(session),
-          details: session.channel ? `via ${session.channel}` : undefined,
-        })
-      } catch {
-        // Ignore parse errors
-      }
-    }
-    
-    // Session updated
-    const handleUpdated = (e: MessageEvent) => {
-      try {
-        const session: CrewSession = JSON.parse(e.data)
-        const tokens = session.totalTokens || 0
-        addEvent({
-          id: genId(),
-          type: 'updated',
-          timestamp: Date.now(),
-          sessionKey: session.key,
-          sessionName: getAgentName(session),
-          description: 'Activity',
-          icon: getSessionIcon(session),
-          details: tokens > 0 ? `${tokens.toLocaleString()} tokens` : undefined,
-        })
-      } catch {
-        // Ignore parse errors
-      }
-    }
-    
-    // Session removed
-    const handleRemoved = (e: MessageEvent) => {
-      try {
-        const { key } = JSON.parse(e.data)
-        addEvent({
-          id: genId(),
-          type: 'removed',
-          timestamp: Date.now(),
-          sessionKey: key,
-          sessionName: key.split(':').pop() || 'Agent',
-          description: 'Session ended',
-          icon: '🔴',
-        })
-      } catch {
-        // Ignore parse errors
-      }
-    }
-    
-    const unsubCreated = sseManager.subscribe('session-created', handleCreated)
-    const unsubUpdated = sseManager.subscribe('session-updated', handleUpdated)
-    const unsubRemoved = sseManager.subscribe('session-removed', handleRemoved)
-    
-    return () => {
-      unsubscribeState()
-      unsubCreated()
-      unsubUpdated()
-      unsubRemoved()
+      // Only track active sessions
+      if (status === 'sleeping') continue
       
-      if (batchTimeoutRef.current) {
-        clearTimeout(batchTimeoutRef.current)
+      // New session or label changed
+      if (!prev || prev.label !== session.label) {
+        newEvents.push({
+          id: genId(),
+          type: prev ? 'activity' : 'started',
+          timestamp: now,
+          sessionKey: session.key,
+          agentName: getAgentName(session),
+          activity: getActivityLabel(session),
+          icon: getAgentIcon(session),
+          status,
+          tokens: session.totalTokens,
+        })
       }
+      
+      // Update tracking
+      prevSessionsRef.current.set(session.key, {
+        label: session.label || '',
+        tokens: session.totalTokens || 0,
+      })
     }
-  }, [addEvent])
+    
+    if (newEvents.length > 0) {
+      setEvents(prev => [...newEvents, ...prev].slice(0, MAX_EVENTS))
+    }
+  }, [sessions])
   
-  // Auto-scroll when new events arrive
+  // Subscribe to SSE connection state
   useEffect(() => {
-    if (autoScroll && listRef.current) {
-      listRef.current.scrollTop = 0 // Events are prepended, so scroll to top
-    }
-  }, [events, autoScroll])
-  
-  // Detect when user scrolls away from top
-  const handleScroll = useCallback(() => {
-    const list = listRef.current
-    if (!list) return
-    
-    const isAtTop = list.scrollTop < 50
-    setAutoScroll(isAtTop)
+    const unsubscribe = sseManager.onStateChange((state) => {
+      setConnected(state === 'connected')
+    })
+    return unsubscribe
   }, [])
   
-  // Clear events
+  // Clear history
   const handleClear = useCallback(() => {
     setEvents([])
-    batchedEventsRef.current = []
   }, [])
   
   return (
@@ -290,52 +246,74 @@ export function ZenActivityPanel() {
           <span>{connected ? 'Live' : 'Connecting...'}</span>
         </div>
         
-        <div className="zen-activity-controls">
-          {!autoScroll && events.length > 0 && (
-            <button
-              type="button"
-              className="zen-btn zen-btn-small"
-              onClick={() => {
-                setAutoScroll(true)
-                if (listRef.current) listRef.current.scrollTop = 0
-              }}
-            >
-              ↑ New events
-            </button>
-          )}
-          
-          {events.length > 0 && (
-            <button
-              type="button"
-              className="zen-btn zen-btn-small"
-              onClick={handleClear}
-              title="Clear activity"
-            >
-              Clear
-            </button>
-          )}
+        <div className="zen-activity-tabs">
+          <button
+            type="button"
+            className={`zen-activity-tab ${viewMode === 'current' ? 'zen-activity-tab-active' : ''}`}
+            onClick={() => setViewMode('current')}
+          >
+            Current
+          </button>
+          <button
+            type="button"
+            className={`zen-activity-tab ${viewMode === 'history' ? 'zen-activity-tab-active' : ''}`}
+            onClick={() => setViewMode('history')}
+          >
+            History
+          </button>
         </div>
+        
+        {viewMode === 'history' && events.length > 0 && (
+          <button
+            type="button"
+            className="zen-btn zen-btn-small"
+            onClick={handleClear}
+            title="Clear history"
+          >
+            Clear
+          </button>
+        )}
       </div>
       
-      {/* Events list */}
-      {events.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div 
-          ref={listRef}
-          className="zen-activity-list"
-          onScroll={handleScroll}
-        >
-          {events.map(event => (
-            <ActivityItem key={event.id} event={event} />
-          ))}
-        </div>
+      {/* Current view - active sessions */}
+      {viewMode === 'current' && (
+        activeSessions.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className="zen-activity-current-list">
+            {activeSessions.map(session => (
+              <CurrentSessionItem key={session.key} session={session} />
+            ))}
+          </div>
+        )
+      )}
+      
+      {/* History view - event log */}
+      {viewMode === 'history' && (
+        events.length === 0 ? (
+          <div className="zen-activity-empty">
+            <div className="zen-empty-icon">📜</div>
+            <div className="zen-empty-title">No history yet</div>
+            <div className="zen-empty-subtitle">
+              Activity changes will be logged here
+            </div>
+          </div>
+        ) : (
+          <div ref={listRef} className="zen-activity-list">
+            {events.map(event => (
+              <ActivityItem key={event.id} event={event} />
+            ))}
+          </div>
+        )
       )}
       
       {/* Footer with count */}
       <div className="zen-activity-footer">
         <span className="zen-activity-count">
-          {events.length} event{events.length !== 1 ? 's' : ''}
+          {viewMode === 'current' 
+            ? `${activeSessions.length} active`
+            : `${events.length} event${events.length !== 1 ? 's' : ''}`
+          }
         </span>
       </div>
     </div>
