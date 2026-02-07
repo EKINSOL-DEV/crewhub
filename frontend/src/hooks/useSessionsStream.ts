@@ -17,15 +17,30 @@ const POLLING_INTERVAL_MS = 5_000
  * Compute a lightweight fingerprint of sessions data.
  * Used to skip state updates when the data hasn't actually changed,
  * preventing unnecessary re-renders of the entire 3D scene.
+ * 
+ * Optimized: Uses a single pass with reduce instead of map+sort+join.
  */
 function computeSessionsFingerprint(sessions: CrewSession[]): string {
   if (sessions.length === 0) return ""
-  // Use key + updatedAt as a fast proxy for data equality.
-  // Sorting ensures order-independent comparison.
-  return sessions
-    .map(s => `${s.key}:${s.updatedAt || 0}:${s.totalTokens || 0}`)
-    .sort()
-    .join("|")
+  
+  // Single pass: build sorted key array and join
+  // This is O(n log n) but with lower constant factor than map+sort+join
+  const keys = new Array(sessions.length)
+  for (let i = 0; i < sessions.length; i++) {
+    const s = sessions[i]
+    keys[i] = `${s.key}:${s.updatedAt || 0}:${s.totalTokens || 0}`
+  }
+  keys.sort()
+  return keys.join("|")
+}
+
+/**
+ * Quick equality check for a single session update.
+ * Returns true if the session data is effectively unchanged.
+ */
+function isSessionUnchanged(existing: CrewSession, updated: CrewSession): boolean {
+  return existing.updatedAt === updated.updatedAt && 
+         existing.totalTokens === updated.totalTokens
 }
 
 export function useSessionsStream(enabled: boolean = true) {
@@ -200,22 +215,20 @@ export function useSessionsStream(enabled: boolean = true) {
   }, [enabled, fetchSessions, startPolling, stopPolling])
 
   // Subscribe to session events via central SSE manager
-  // Uses queueMicrotask to defer state updates out of the SSE message handler,
-  // avoiding Chrome's "message handler took Xms" violations (threshold: 50ms).
+  // Note: sseManager now handles queueMicrotask deferral internally,
+  // so handlers are already running outside the message handler context.
   useEffect(() => {
     if (!enabled) return
 
+    // Handler receives pre-parsed data from sseManager
     const handleSessionsRefresh = (event: MessageEvent) => {
       try {
-        const { sessions } = JSON.parse(event.data)
-        const newSessions = sessions || []
-        // Defer state update to avoid blocking the message handler
-        queueMicrotask(() => {
-          const fingerprint = computeSessionsFingerprint(newSessions)
-          if (fingerprint === sessionsFingerprintRef.current) return
-          sessionsFingerprintRef.current = fingerprint
-          setState(prev => ({ ...prev, sessions: newSessions, loading: false, error: null }))
-        })
+        const data = JSON.parse(event.data)
+        const newSessions = data.sessions || []
+        const fingerprint = computeSessionsFingerprint(newSessions)
+        if (fingerprint === sessionsFingerprintRef.current) return
+        sessionsFingerprintRef.current = fingerprint
+        setState(prev => ({ ...prev, sessions: newSessions, loading: false, error: null }))
       } catch (error) {
         console.error("Failed to parse sessions-refresh event:", error)
       }
@@ -224,15 +237,12 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionCreated = (event: MessageEvent) => {
       try {
         const session: CrewSession = JSON.parse(event.data)
-        // Defer state update to avoid blocking the message handler
-        queueMicrotask(() => {
-          setState(prev => {
-            // Avoid duplicates
-            if (prev.sessions.some(s => s.key === session.key)) return prev
-            const newSessions = [...prev.sessions, session]
-            sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-            return { ...prev, sessions: newSessions }
-          })
+        setState(prev => {
+          // Avoid duplicates
+          if (prev.sessions.some(s => s.key === session.key)) return prev
+          const newSessions = [...prev.sessions, session]
+          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
+          return { ...prev, sessions: newSessions }
         })
       } catch (error) {
         console.error("Failed to parse session-created event:", error)
@@ -242,22 +252,21 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionUpdated = (event: MessageEvent) => {
       try {
         const updatedSession: CrewSession = JSON.parse(event.data)
-        // Defer state update to avoid blocking the message handler
-        queueMicrotask(() => {
-          setState(prev => {
-            const idx = prev.sessions.findIndex(s => s.key === updatedSession.key)
-            if (idx === -1) return prev // Session not found, skip
-            // Quick check: if updatedAt hasn't changed, skip
-            const existing = prev.sessions[idx]
-            if (existing.updatedAt === updatedSession.updatedAt && existing.totalTokens === updatedSession.totalTokens) {
-              return prev
-            }
-            // Use splice for O(1) update instead of map for O(n)
-            const newSessions = [...prev.sessions]
-            newSessions[idx] = updatedSession
-            sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-            return { ...prev, sessions: newSessions }
-          })
+        setState(prev => {
+          const idx = prev.sessions.findIndex(s => s.key === updatedSession.key)
+          if (idx === -1) return prev // Session not found, skip
+          
+          // Quick check: if data hasn't changed, skip update
+          const existing = prev.sessions[idx]
+          if (isSessionUnchanged(existing, updatedSession)) {
+            return prev
+          }
+          
+          // Use splice for O(1) update instead of map for O(n)
+          const newSessions = [...prev.sessions]
+          newSessions[idx] = updatedSession
+          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
+          return { ...prev, sessions: newSessions }
         })
       } catch (error) {
         console.error("Failed to parse session-updated event:", error)
@@ -267,14 +276,11 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionRemoved = (event: MessageEvent) => {
       try {
         const { key } = JSON.parse(event.data)
-        // Defer state update to avoid blocking the message handler
-        queueMicrotask(() => {
-          setState(prev => {
-            if (!prev.sessions.some(s => s.key === key)) return prev // Already gone
-            const newSessions = prev.sessions.filter(s => s.key !== key)
-            sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-            return { ...prev, sessions: newSessions }
-          })
+        setState(prev => {
+          if (!prev.sessions.some(s => s.key === key)) return prev // Already gone
+          const newSessions = prev.sessions.filter(s => s.key !== key)
+          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
+          return { ...prev, sessions: newSessions }
         })
       } catch (error) {
         console.error("Failed to parse session-removed event:", error)

@@ -5,6 +5,11 @@
  * a pub/sub interface for components to subscribe to specific event types.
  * 
  * This prevents connection starvation from multiple SSE connections.
+ * 
+ * Performance optimizations:
+ * - All message processing is deferred via queueMicrotask to avoid blocking
+ *   the browser's message handler (fixes Chrome's "message handler took Xms" violations)
+ * - Connection state changes are batched
  */
 
 type EventHandler = (event: MessageEvent) => void
@@ -22,8 +27,18 @@ class SSEManager {
   private connectionState: "disconnected" | "connecting" | "connected" = "disconnected"
   private stateListeners: Set<(state: typeof this.connectionState) => void> = new Set()
 
+  // Track which event types have dispatchers registered
+  private registeredDispatchers: Set<string> = new Set()
+
   /**
    * Subscribe to a specific SSE event type.
+   * 
+   * IMPORTANT: Handlers are called via queueMicrotask, NOT synchronously in the
+   * message handler. This means:
+   * 1. Your handler runs outside the browser's message handler context
+   * 2. Heavy processing (JSON.parse, state updates) won't cause violations
+   * 3. Multiple events may be batched by React's state batching
+   * 
    * Automatically connects if this is the first subscription.
    */
   subscribe(eventType: string, handler: EventHandler): () => void {
@@ -32,9 +47,9 @@ class SSEManager {
     }
     this.subscriptions.get(eventType)!.add(handler)
 
-    // Register listener on EventSource if already connected
+    // Register dispatcher on EventSource if already connected
     if (this.eventSource && this.eventSource.readyState === EventSource.OPEN) {
-      this.eventSource.addEventListener(eventType, handler)
+      this.ensureEventDispatcher(eventType)
     }
 
     // Connect if this is the first subscription
@@ -57,11 +72,6 @@ class SSEManager {
       if (handlers.size === 0) {
         this.subscriptions.delete(eventType)
       }
-    }
-
-    // Remove listener from EventSource
-    if (this.eventSource) {
-      this.eventSource.removeEventListener(eventType, handler)
     }
 
     // Disconnect if no more subscribers
@@ -121,6 +131,43 @@ class SSEManager {
     }
   }
 
+  /**
+   * Create an event dispatcher that defers handler calls to a microtask.
+   * This is the key optimization that prevents "message handler took Xms" violations.
+   */
+  private createDeferredDispatcher(eventType: string): (event: MessageEvent) => void {
+    return (event: MessageEvent) => {
+      // Capture references synchronously (very fast - just object references)
+      const handlers = this.subscriptions.get(eventType)
+      if (!handlers || handlers.size === 0) return
+      
+      // Create a frozen copy of handlers to avoid iteration issues if handlers
+      // unsubscribe during the microtask
+      const handlersCopy = Array.from(handlers)
+      
+      // Defer ALL processing to a microtask.
+      // This moves the work out of the browser's message handler context,
+      // preventing the "[Violation] message handler took Xms" warnings.
+      queueMicrotask(() => {
+        for (const handler of handlersCopy) {
+          try {
+            handler(event)
+          } catch (err) {
+            console.error(`[SSEManager] Handler error for ${eventType}:`, err)
+          }
+        }
+      })
+    }
+  }
+
+  private ensureEventDispatcher(eventType: string): void {
+    if (this.registeredDispatchers.has(eventType) || !this.eventSource) return
+    
+    const dispatcher = this.createDeferredDispatcher(eventType)
+    this.eventSource.addEventListener(eventType, dispatcher)
+    this.registeredDispatchers.add(eventType)
+  }
+
   private connect(): void {
     if (this.isConnecting || this.eventSource) return
     this.isConnecting = true
@@ -138,11 +185,10 @@ class SSEManager {
         this.setConnectionState("connected")
         console.log("[SSEManager] Connected")
 
-        // Register all existing subscriptions
-        for (const [eventType, handlers] of this.subscriptions) {
-          for (const handler of handlers) {
-            eventSource.addEventListener(eventType, handler)
-          }
+        // Register dispatchers for all subscribed event types
+        this.registeredDispatchers.clear()
+        for (const eventType of this.subscriptions.keys()) {
+          this.ensureEventDispatcher(eventType)
         }
       }
 
@@ -164,6 +210,7 @@ class SSEManager {
       this.eventSource = null
     }
 
+    this.registeredDispatchers.clear()
     this.setConnectionState("disconnected")
 
     // Only reconnect if we still have subscribers
@@ -191,6 +238,7 @@ class SSEManager {
       this.eventSource = null
     }
 
+    this.registeredDispatchers.clear()
     this.isConnecting = false
     this.reconnectAttempts = 0
     this.setConnectionState("disconnected")
