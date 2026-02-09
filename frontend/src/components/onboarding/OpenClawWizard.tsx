@@ -455,6 +455,18 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
             </Button>
           </div>
 
+          {/* Help text: How to find token */}
+          {!envInfo?.token_file_path && (
+            <div className="flex items-start gap-2 mt-1.5 p-2 rounded-md bg-muted/50">
+              <Info className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+              <div className="text-[11px] text-muted-foreground space-y-1">
+                <p className="font-medium">How to find your gateway token:</p>
+                <p>Run in terminal: <code className="px-1 py-0.5 rounded bg-muted font-mono text-[10px]">openclaw config get | jq -r '.gateway.auth.token'</code></p>
+                <p className="text-[10px]">Or find it in <code className="font-mono">~/.openclaw/openclaw.json</code> under <code className="font-mono">gateway.auth.token</code></p>
+              </div>
+            </div>
+          )}
+
           {/* Token file hint */}
           {envInfo?.token_file_path && (
             <div className="flex items-start gap-2 mt-1.5 p-2 rounded-md bg-muted/50">
