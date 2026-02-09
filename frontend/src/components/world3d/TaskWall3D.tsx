@@ -94,8 +94,9 @@ export function TaskWall3D({
       >
         <div
           data-world-ui
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation() }}
           onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation() }}
           onPointerMove={(e) => e.stopPropagation()}
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
@@ -137,9 +138,14 @@ export function TaskWall3D({
             data-world-ui
             onClick={(e) => {
               e.stopPropagation()
+              e.nativeEvent.stopImmediatePropagation()
               focusBoard(roomId)
             }}
             onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => {
+              e.stopPropagation()
+              e.nativeEvent.stopImmediatePropagation()
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',

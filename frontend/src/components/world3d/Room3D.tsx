@@ -133,7 +133,7 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const roomColor = room.color || '#4f46e5'
   const blueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
   const [gridDebugEnabled] = useGridDebug()
-  const { state, focusRoom, goBack } = useWorldFocus()
+  const { state, focusRoom } = useWorldFocus()
   const isRoomFocused = state.focusedRoomId === room.id && state.level === 'room'
   const zenMode = useZenMode()
   

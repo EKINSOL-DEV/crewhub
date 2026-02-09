@@ -47,11 +47,24 @@ const WorldFocusContext = createContext<WorldFocusContextValue>({
 export function WorldFocusProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WorldFocusState>(defaultState)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingCallerRef = useRef<string | null>(null)
+
+  // Priority: zoom-in actions should not be overridden by zoom-out actions within the debounce window
+  const ZOOM_IN_CALLERS = new Set(['focusRoom', 'focusBoard', 'focusBot'])
 
   const setWithAnimation = useCallback((updater: (prev: WorldFocusState) => WorldFocusState, _caller?: string) => {
+    // Don't let goBack override a pending zoom-in action (race condition from click-outside handlers)
+    if (debounceRef.current && pendingCallerRef.current && ZOOM_IN_CALLERS.has(pendingCallerRef.current) && _caller === 'goBack') {
+      if (import.meta.env.DEV) {
+        console.log(`[WorldFocus] Blocked goBack — pending ${pendingCallerRef.current} has priority`)
+      }
+      return
+    }
     // Debounce rapid clicks (50ms)
     if (debounceRef.current) clearTimeout(debounceRef.current)
+    pendingCallerRef.current = _caller || null
     debounceRef.current = setTimeout(() => {
+      pendingCallerRef.current = null
       setState(prev => {
         // Guard: don't change state during camera animation to prevent glitches
         if (prev.isAnimating) return prev
