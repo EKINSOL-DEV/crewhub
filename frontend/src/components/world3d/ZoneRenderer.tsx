@@ -24,10 +24,12 @@ export function ZoneRenderer({ sessions, settings, onAliasChanged }: ZoneRendere
   // Transition overlay
   if (isTransitioning) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white relative">
-        <span className="text-gray-400 text-sm">Switching zones…</span>
+      <>
+        <div className="flex-1 flex items-center justify-center bg-white">
+          <span className="text-gray-400 text-sm">Switching zones…</span>
+        </div>
         <ZoneSwitcherBar />
-      </div>
+      </>
     )
   }
 
@@ -44,31 +46,33 @@ export function ZoneRenderer({ sessions, settings, onAliasChanged }: ZoneRendere
       )
     case 'creator-center':
       return (
-        <div className="relative flex-1 flex flex-col overflow-hidden">
-          <CreatorCenterView />
+        <>
+          <CreatorCenterView className="flex-1" />
           <ZoneSwitcherBar />
-        </div>
+        </>
       )
     case 'game-center':
       return (
-        <div className="relative flex-1 flex flex-col overflow-hidden">
-          <GameCenterView />
+        <>
+          <GameCenterView className="flex-1" />
           <ZoneSwitcherBar />
-        </div>
+        </>
       )
     case 'academy':
       return (
-        <div className="relative flex-1 flex flex-col overflow-hidden">
-          <AcademyView />
+        <>
+          <AcademyView className="flex-1" />
           <ZoneSwitcherBar />
-        </div>
+        </>
       )
     default:
       return (
-        <div className="relative flex-1 flex items-center justify-center">
-          <span className="text-red-500">Unknown zone: {activeZone.id}</span>
+        <>
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-red-500">Unknown zone: {activeZone.id}</span>
+          </div>
           <ZoneSwitcherBar />
-        </div>
+        </>
       )
   }
 }
