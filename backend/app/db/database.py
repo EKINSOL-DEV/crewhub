@@ -385,10 +385,9 @@ async def seed_default_data():
             import time
             now = int(time.time() * 1000)
             
-            # Create default rooms
+            # Create default rooms (only HQ — onboarding wizard adds more)
             default_rooms = [
                 ('headquarters', 'Headquarters', '🏛️', '#4f46e5', 0, now, now),
-                ('dev-room', 'Dev Room', '💻', '#10b981', 1, now, now),
             ]
             
             await db.executemany("""
@@ -404,9 +403,9 @@ async def seed_default_data():
             # Create default agents (with bios)
             default_agents = [
                 ('main', 'Main', '🤖', '#3b82f6', 'agent:main:main', 'anthropic/claude-sonnet-4-5', 'headquarters', 0, True, True, now, now, 'Director of Bots. Keeps the crew running, manages schedules, and always has an answer. Runs on coffee and Sonnet.'),
-                ('dev', 'Dev', '💻', '#10b981', 'agent:dev:main', None, 'dev-room', 1, False, True, now, now, 'Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus.'),
+                ('dev', 'Dev', '💻', '#10b981', 'agent:dev:main', None, 'headquarters', 1, False, True, now, now, 'Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus.'),
                 ('flowy', 'Flowy', '🌊', '#8b5cf6', 'agent:flowy:main', None, 'headquarters', 2, False, True, now, now, 'Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2.'),
-                ('creator', 'Creator', '🎨', '#f59e0b', 'agent:creator:main', None, 'creative-room', 3, False, True, now, now, 'A hardworking crew member.'),
+                ('creator', 'Creator', '🎨', '#f59e0b', 'agent:creator:main', None, 'headquarters', 3, False, True, now, now, 'A hardworking crew member.'),
                 ('reviewer', 'Reviewer', '🔍', '#ef4444', 'agent:reviewer:main', None, 'headquarters', 4, False, True, now, now, 'Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions.'),
             ]
             
@@ -437,8 +436,6 @@ async def seed_default_data():
             # Create default room assignment rules (fixed IDs to prevent duplicates on restart)
             default_rules = [
                 # Basic rules to get started
-                ('rule-subagent-dev', 'dev-room', 'session_key_contains', ':subagent:', 90, now),
-                ('rule-spawn-dev', 'dev-room', 'session_key_contains', ':spawn:', 90, now),
                 ('rule-main-hq', 'headquarters', 'session_type', 'main', 80, now),
             ]
             
