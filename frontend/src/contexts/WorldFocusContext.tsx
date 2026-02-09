@@ -49,13 +49,16 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const setWithAnimation = useCallback((updater: (prev: WorldFocusState) => WorldFocusState, _caller?: string) => {
-    // Debounce rapid clicks (200ms)
+    // Debounce rapid clicks (50ms)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       setState(prev => {
+        // Guard: don't change state during camera animation to prevent glitches
+        if (prev.isAnimating) return prev
         const next = { ...updater(prev), isAnimating: true }
-        console.log(`[WorldFocus] ${_caller || '?'}: ${prev.level}→${next.level} room=${next.focusedRoomId} bot=${next.focusedBotKey}`)
-        console.trace(`[WorldFocus] ${_caller} trace`)
+        if (import.meta.env.DEV) {
+          console.log(`[WorldFocus] ${_caller || '?'}: ${prev.level}→${next.level} room=${next.focusedRoomId} bot=${next.focusedBotKey}`)
+        }
         return next
       })
       // Clear animating after camera transition (~900ms)
@@ -65,9 +68,9 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
 
   const focusRoom = useCallback((roomId: string) => {
     setWithAnimation(prev => {
-      // If already focused on this room, go back to overview
+      // Already at room level for this room → no-op (use goOverview to leave)
       if (prev.level === 'room' && prev.focusedRoomId === roomId) {
-        return { ...defaultState }
+        return prev
       }
       return {
         level: 'room',

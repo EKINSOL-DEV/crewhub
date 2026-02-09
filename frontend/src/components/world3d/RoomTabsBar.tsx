@@ -15,7 +15,7 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
   const zones = zoneRegistry.getAll()
 
   const handleTabClick = (roomId: string) => {
-    if (state.focusedRoomId === roomId) {
+    if (state.focusedRoomId === roomId && (state.level === 'room' || state.level === 'bot' || state.level === 'board')) {
       goOverview()
     } else {
       focusRoom(roomId)

@@ -1228,6 +1228,97 @@
   color: var(--zen-fg-muted);
 }
 
+/* ── Active Tasks (Activity Panel) ─────────────────────────────── */
+
+.zen-active-tasks-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--zen-space-xs);
+}
+
+.zen-active-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--zen-space-sm);
+  padding: var(--zen-space-sm);
+  border-radius: var(--zen-radius);
+  transition: background 0.15s ease, opacity 0.3s ease;
+}
+
+.zen-active-task-item:hover {
+  background: var(--zen-bg-hover);
+}
+
+.zen-active-task-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.zen-active-task-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.zen-active-task-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--zen-fg);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zen-active-task-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--zen-space-sm);
+  margin-top: 2px;
+  font-size: 10px;
+}
+
+.zen-active-task-agent {
+  color: var(--zen-fg-muted);
+}
+
+.zen-active-task-status {
+  font-weight: 500;
+}
+
+/* Activity Log Section (collapsible) */
+
+.zen-activity-log-section {
+  border-top: 1px solid var(--zen-border);
+  display: flex;
+  flex-direction: column;
+  max-height: 40%;
+  overflow: hidden;
+}
+
+.zen-activity-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--zen-space-xs) var(--zen-space-sm);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--zen-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.zen-activity-log-empty {
+  padding: var(--zen-space-sm);
+  font-size: 11px;
+  color: var(--zen-fg-dim);
+  text-align: center;
+}
+
+.zen-btn-active {
+  background: var(--zen-bg-active);
+}
+
 /* ── Empty Panel ───────────────────────────────────────────────── */
 
 .zen-empty-panel {

@@ -45,7 +45,7 @@ function LandingScene({ zone, mvpItems, sceneExtras, hideCenterMarker }: { zone:
       )}
 
       {/* Zone label */}
-      <Html position={[0, 5, 0]} center>
+      <Html position={[0, 5, 0]} center zIndexRange={[0, 0]}>
         <div style={{
           background: `${zone.colorPrimary}ee`,
           color: 'white',
@@ -68,7 +68,7 @@ function LandingScene({ zone, mvpItems, sceneExtras, hideCenterMarker }: { zone:
       </Html>
 
       {/* MVP Info Board — positioned to the right */}
-      <Html position={[9, 2.5, 0]} center>
+      <Html position={[9, 2.5, 0]} center zIndexRange={[0, 0]}>
         <div style={{
           background: 'rgba(44, 62, 80, 0.95)',
           color: 'white',
