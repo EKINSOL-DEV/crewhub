@@ -955,16 +955,6 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
       // Save agent display name preference
       if (config.displayName) {
-        try {
-          await fetch("/api/settings/agent-display-name", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ value: config.displayName }),
-          })
-        } catch {}
-
-        // Also try to update the agent directly if it exists
-        // The bot template determines the agent_id
         const templateToAgentId: Record<string, string> = {
           default: "main",
           developer: "dev",
@@ -973,11 +963,32 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         const agentId = config.botTemplate
           ? templateToAgentId[config.botTemplate] || "main"
           : "main"
+        const sessionKey = `agent:${agentId}:main`
+
+        // Save as session display name (this is what the UI actually shows)
+        try {
+          await fetch(`/api/session-display-names/${encodeURIComponent(sessionKey)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ display_name: config.displayName }),
+          })
+        } catch {}
+
+        // Also update the agent name in agents table
         try {
           await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: config.displayName }),
+          })
+        } catch {}
+
+        // Store in settings as fallback for agents that don't exist yet
+        try {
+          await fetch("/api/settings/agent-display-name", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: JSON.stringify({ agentId, sessionKey, displayName: config.displayName }) }),
           })
         } catch {}
       }

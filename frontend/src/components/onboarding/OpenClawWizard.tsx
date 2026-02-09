@@ -478,6 +478,21 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
             </Button>
           </div>
 
+          {/* Security notice */}
+          <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+            <Info className="h-3.5 w-3.5 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
+            <div className="text-[11px] text-amber-900 dark:text-amber-200 space-y-1">
+              <p className="font-semibold">🔒 Security Notice</p>
+              <ul className="list-none space-y-0.5">
+                <li>• Keep this token private — anyone with it can control your agents</li>
+                <li>• For public/remote deployments, use WSS (not WS) and HTTPS</li>
+                <li>• We do NOT recommend running CrewHub publicly accessible yet</li>
+                <li>• Authentication and security hardening are currently in development</li>
+                <li>• See <a href="https://github.com/ekinsolbot/crewhub/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-amber-700 dark:hover:text-amber-300">SECURITY.md</a> for more details</li>
+              </ul>
+            </div>
+          </div>
+
           {/* Help text: How to find token */}
           {!envInfo?.token_file_path && (
             <div className="flex items-start gap-2 mt-1.5 p-2 rounded-md bg-muted/50">
@@ -659,7 +674,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           }`}
         >
           <span className="text-sm text-muted-foreground">
-            Skip — I'll create a bot later
+            Skip — I'll configure agents later (they will appear with default names/colors)
           </span>
         </button>
       </div>
