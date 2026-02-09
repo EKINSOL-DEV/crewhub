@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-CrewHub is deployed on a public VPS (`89.167.47.70:8446`) with no user authentication, no HTTPS, and an open firewall. This plan addresses four security layers: token management, user authentication, transport security, and container hardening. The design preserves the simple `make dev` local workflow while enforcing authentication on remote deployments.
+CrewHub is designed for local development by default and ships with no user authentication. When deployed to a remote server (VPS, cloud instance, etc.), additional security hardening is required. This plan addresses four security layers: token management, user authentication, transport security, and container hardening. The design preserves the simple `make dev` local workflow while enforcing authentication on remote deployments.
 
 ---
 
@@ -143,7 +143,7 @@ def is_auth_required(request: Request) -> bool:
     return host not in ("localhost", "127.0.0.1", "ekinbot.local")
 ```
 
-> **Note:** Auto-detection uses the `Host` header, not the client IP. This is simpler and works behind reverse proxies. Local dev uses `localhost:8091`, production uses `89.167.47.70:8446` or a domain name.
+> **Note:** Auto-detection uses the `Host` header, not the client IP. This is simpler and works behind reverse proxies. Local dev uses `localhost:8091`, remote deployments use a public IP or domain name.
 
 ### Backend Changes
 
@@ -308,10 +308,10 @@ The static frontend files (served by nginx) are always accessible — auth is en
 ```nginx
 server {
     listen 443 ssl http2;
-    server_name crewhub.ekinbot.be;  # or IP-based
+    server_name your-domain.com;  # or use IP-based config
 
-    ssl_certificate /etc/letsencrypt/live/crewhub.ekinbot.be/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/crewhub.ekinbot.be/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
 
@@ -352,7 +352,7 @@ server {
 
 server {
     listen 80;
-    server_name crewhub.ekinbot.be;
+    server_name your-domain.com;
     return 301 https://$server_name$request_uri;
 }
 ```
@@ -363,8 +363,8 @@ server {
 # Install certbot
 apt install certbot python3-certbot-nginx
 
-# Get certificate (requires DNS pointing to VPS)
-certbot --nginx -d crewhub.ekinbot.be
+# Get certificate (requires DNS pointing to your server)
+certbot --nginx -d your-domain.com
 
 # Auto-renewal (certbot adds cron automatically)
 certbot renew --dry-run
@@ -486,7 +486,7 @@ services:
 
 ### Phase 3: HTTPS & Networking (Est. 2-3 hours)
 
-- [ ] Set up DNS record: `crewhub.ekinbot.be` → `89.167.47.70`
+- [ ] Set up DNS record: `your-domain.com` → `your-server-ip`
 - [ ] Install nginx on VPS
 - [ ] Create nginx config (see above)
 - [ ] Run certbot for SSL
@@ -506,11 +506,11 @@ services:
 
 ## Migration Guide
 
-### For Existing VPS Deployment (89.167.47.70)
+### For Remote Deployment
 
 ```bash
-# 1. SSH into VPS
-ssh root@89.167.47.70
+# 1. SSH into your server
+ssh user@your-server.com
 
 # 2. Pull latest code
 cd /path/to/crewhub
@@ -529,7 +529,7 @@ nano .env
 apt install nginx certbot python3-certbot-nginx
 cp docs/nginx/crewhub.conf /etc/nginx/sites-available/crewhub
 ln -s /etc/nginx/sites-available/crewhub /etc/nginx/sites-enabled/
-certbot --nginx -d crewhub.ekinbot.be
+certbot --nginx -d your-domain.com
 nginx -t && systemctl reload nginx
 
 # 6. Configure firewall
@@ -543,8 +543,8 @@ ufw enable
 make prod-rebuild
 
 # 8. Verify
-curl -k https://crewhub.ekinbot.be/health
-curl -k https://crewhub.ekinbot.be/api/auth/status
+curl -k https://your-domain.com/health
+curl -k https://your-domain.com/api/auth/status
 ```
 
 ### For Local Dev (No Changes Needed)
