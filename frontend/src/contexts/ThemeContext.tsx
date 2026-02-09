@@ -84,12 +84,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const accent = accentColors[theme.accentColor]
     root.style.setProperty("--accent-hue", accent.hue.toString())
     root.style.setProperty("--primary", accent.primary)
+    root.style.setProperty("--ring", accent.primary)
     
-    // Update ring color based on accent
+    // Update accent backgrounds derived from the selected color
     if (resolvedMode === "dark") {
-      root.style.setProperty("--ring", accent.primary)
+      root.style.setProperty("--accent", `${accent.hue} 30% 18%`)
+      root.style.setProperty("--accent-foreground", "210 40% 98%")
     } else {
-      root.style.setProperty("--ring", accent.primary)
+      root.style.setProperty("--accent", `${accent.hue} 40% 96%`)
+      root.style.setProperty("--accent-foreground", "222.2 47.4% 11.2%")
     }
   }, [theme, resolvedMode])
 
