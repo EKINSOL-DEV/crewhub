@@ -383,3 +383,28 @@ async def reorder_rooms(room_order: List[str]):
     except Exception as e:
         logger.error(f"Failed to reorder rooms: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{room_id}/context")
+async def get_room_context(room_id: str, channel: str = "crewhub-ui"):
+    """Get the context envelope for a room.
+
+    Returns both the raw envelope and the formatted text block
+    that would be injected into an agent's prompt.
+
+    Args:
+        room_id: Room ID to build context for.
+        channel: Simulated channel for privacy tier (default: crewhub-ui = internal).
+    """
+    from app.services.context_envelope import build_crewhub_context, format_context_block
+
+    envelope = await build_crewhub_context(room_id=room_id, channel=channel)
+    if envelope is None:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    return {
+        "envelope": envelope,
+        "formatted": format_context_block(envelope),
+        "channel": channel,
+        "privacy": envelope.get("privacy", "unknown"),
+    }

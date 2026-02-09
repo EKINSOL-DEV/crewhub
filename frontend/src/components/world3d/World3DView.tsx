@@ -59,6 +59,7 @@ import { Room3D } from './Room3D'
 import { Bot3D, type BotStatus } from './Bot3D'
 import { BotInfoPanel } from './BotInfoPanel'
 import { RoomInfoPanel } from './RoomInfoPanel'
+import { ContextInspector } from './ContextInspector'
 import { ProjectDocsPanel } from './ProjectDocsPanel'
 import { useRooms, type Room } from '@/hooks/useRooms'
 import { useAgentsRegistry, type AgentRuntime } from '@/hooks/useAgentsRegistry'
@@ -993,6 +994,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
   const [docsPanel, setDocsPanel] = useState<{ projectId: string; projectName: string; projectColor?: string } | null>(null)
+  const [contextInspector, setContextInspector] = useState<{ roomId: string; roomName: string } | null>(null)
 
   // TaskBoard overlay state
   const [taskBoardOpen, setTaskBoardOpen] = useState(false)
@@ -1222,6 +1224,16 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               setTaskBoardOpen(true)
             }}
             onOpenHQBoard={() => setHqBoardOpen(true)}
+            onOpenContext={(roomId, roomName) => setContextInspector({ roomId, roomName })}
+          />
+        )}
+
+        {/* Context Inspector */}
+        {contextInspector && (
+          <ContextInspector
+            roomId={contextInspector.roomId}
+            roomName={contextInspector.roomName}
+            onClose={() => setContextInspector(null)}
           />
         )}
 

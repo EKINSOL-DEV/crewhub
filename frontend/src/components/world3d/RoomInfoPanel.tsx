@@ -24,6 +24,7 @@ interface RoomInfoPanelProps {
   onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void
   onOpenTaskBoard?: (projectId: string, roomId: string, agents: Array<{ session_key: string; display_name: string }>) => void
   onOpenHQBoard?: () => void
+  onOpenContext?: (roomId: string, roomName: string) => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -103,6 +104,7 @@ export function RoomInfoPanel({
   onOpenDocs,
   onOpenTaskBoard,
   onOpenHQBoard,
+  onOpenContext,
 }: RoomInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const roomColor = room.color || '#4f46e5'
@@ -374,6 +376,29 @@ export function RoomInfoPanel({
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)' }}
           >
             ✏️
+          </button>
+          <button
+            onClick={() => onOpenContext?.(room.id, room.name)}
+            title="Context Inspector"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              border: 'none',
+              background: 'rgba(0, 0, 0, 0.05)',
+              color: '#6b7280',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 13,
+              flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)' }}
+          >
+            🔍
           </button>
           <button
             onClick={onClose}
