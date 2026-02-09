@@ -13,12 +13,16 @@
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
   <img src="https://img.shields.io/badge/Docs-Coming%20Soon-lightgrey?style=flat&logo=readthedocs&logoColor=white" alt="Docs">
-  <img src="https://img.shields.io/badge/version-v0.9.1-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.12.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/status-research%20project-9333EA?logo=flask&logoColor=white" alt="Research Project">
 </p>
+
+---
+
+> ⚠️ **Security Notice:** CrewHub ships with **no authentication** by default and is designed for local/trusted networks. Public or internet-facing deployment requires enabling auth, HTTPS, and firewall rules. See **[SECURITY.md](SECURITY.md)** for details.
 
 ---
 
@@ -45,14 +49,14 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **Activity bubbles** — See what each agent is doing at a glance
 - **Blueprints** — JSON-defined room layouts you can create, share, and import
 
-### 🆕 New in v0.9.1
+### 🆕 New in v0.12.0
 
-- **Embedded TaskBoard in 3D** — Full TaskBoard component rendered on the whiteboard, not just sticky notes
-- **Focus Board button** — "🔍 Focus Board" button zooms the camera to board focus level
-- **Camera Debug HUD** — Press F2 to show camera position/target values as a fixed overlay
-- **UI interaction blocking** — Extended DragDropContext with `isInteractingWithUI` to disable camera controls when using overlays
-- **Desk rotation fix** — All desks now properly face into the room
-- **Cleaner Dev Room** — Removed whiteboard prop for a tidier workspace
+- **TaskWall3D interaction fix** — Pointer events now only enabled when room is focused, preventing click interception
+- **Simplified room navigation** — Room clicks only work from overview (no accidental zoom-outs)
+- **Zone switcher** — Persistent zone navigation in bottom bar across all zones
+- **Zen Mode activity panel** — Shows active tasks with icons, titles, and agent names
+- **Cleaner zone landing views** — Removed placeholder meshes for consistent, polished scenes
+- **Agent onboarding system** — API key auth, manifest endpoint, self-discovery for zero-config agent integration
 
 ---
 
@@ -128,13 +132,29 @@ Works with:
 
 ### Option 1: Docker (Recommended)
 
+**1. Install Docker**
+
+First, make sure Docker is installed:
+- **macOS/Windows**: Download [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- **Linux**: Install via package manager ([instructions](https://docs.docker.com/engine/install/))
+
+Verify installation:
+```bash
+docker --version
+docker compose version
+```
+
+**2. Clone and Run**
+
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git
 cd crewhub
 make up
 ```
 
-The dashboard will be available at **http://localhost:5180**. The onboarding wizard will guide you through connecting to your gateway.
+The dashboard will be available at **http://localhost:8446** (production build). The onboarding wizard will guide you through connecting to your gateway.
+
+> **Note:** Port 5180 is only used for local development (`make dev`). Docker production uses port 8446.
 
 ### Option 2: Local Development
 
@@ -144,7 +164,106 @@ cd crewhub
 make dev
 ```
 
-### Option 3: Demo Mode (No OpenClaw needed)
+### Option 3: Production without Docker
+
+For production deployments on VPS/cloud without Docker:
+
+**1. Build the frontend:**
+
+```bash
+cd frontend
+npm install
+npm run build
+# Builds to frontend/dist/
+```
+
+**2. Set up a reverse proxy (nginx or Caddy):**
+
+**nginx example:**
+```nginx
+server {
+    listen 8446;
+    server_name your-domain.com;
+
+    # Frontend (static files)
+    location / {
+        root /path/to/crewhub/frontend/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API proxy
+    location /api {
+        proxy_pass http://localhost:8090;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+**Caddy example (simpler):**
+```
+your-domain.com:8446 {
+    handle /api/* {
+        reverse_proxy localhost:8090
+    }
+    handle {
+        root * /path/to/crewhub/frontend/dist
+        file_server
+        try_files {path} /index.html
+    }
+}
+```
+
+**3. Run the backend:**
+
+**Option A: Direct run (development/testing)**
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8090
+```
+
+**Option B: systemd service (production)**
+```ini
+# /etc/systemd/system/crewhub-backend.service
+[Unit]
+Description=CrewHub Backend
+After=network.target
+
+[Service]
+Type=simple
+User=your-user
+WorkingDirectory=/path/to/crewhub/backend
+Environment="PATH=/path/to/crewhub/backend/venv/bin"
+ExecStart=/path/to/crewhub/backend/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8090
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable crewhub-backend
+sudo systemctl start crewhub-backend
+```
+
+**4. Configure OpenClaw Gateway:**
+
+Make sure your gateway is accessible from the machine running CrewHub. The onboarding wizard will detect your local config automatically, or you can manually enter:
+- `ws://localhost:18789` (same machine)
+- `ws://your-server-ip:18789` (remote machine)
+
+**Security:** See [SECURITY.md](SECURITY.md) for production hardening (auth, HTTPS, firewall).
+
+### Option 4: Demo Mode (No OpenClaw needed)
 
 Want to explore CrewHub without setting up OpenClaw? Run in demo mode with simulated agents:
 
@@ -178,6 +297,25 @@ On first launch, the **onboarding wizard** will auto-detect your OpenClaw instal
 When running in Docker, set the Gateway URL to reach your host:
 - **macOS/Windows**: `ws://host.docker.internal:18789`
 - **Linux**: `ws://172.17.0.1:18789` (or your host IP)
+
+**⚠️ Important:** OpenClaw must bind to `lan` instead of `loopback` for Docker to connect:
+
+1. Edit `~/.openclaw/openclaw.json`:
+   ```json
+   {
+     "gateway": {
+       "bind": "lan",  // Change from "loopback"
+       ...
+     }
+   }
+   ```
+
+2. Restart the gateway:
+   ```bash
+   openclaw gateway restart
+   ```
+
+Without this change, you'll get **HTTP 405** errors when testing the connection.
 
 ## 🌐 Ports
 

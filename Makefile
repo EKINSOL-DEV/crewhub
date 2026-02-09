@@ -59,6 +59,12 @@ dev-frontend:
 up:
 	docker compose up -d
 
+# Rebuild and restart (Docker dev)
+rebuild:
+	docker compose down
+	docker compose build
+	docker compose up -d
+
 # Stop all services (Docker dev)
 down:
 	docker compose down

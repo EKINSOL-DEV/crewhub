@@ -366,7 +366,7 @@ function AppContent() {
 
       <main className="flex-1 flex flex-col overflow-hidden">
         <ErrorBoundary>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden flex flex-col">
             {activeTab === 'active' && (
               sessions.length === 0
                 ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={openConnectionsSettings} />

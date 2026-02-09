@@ -21,7 +21,6 @@ import {
   Zap,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Loader2,
   ArrowRight,
   ArrowLeft,
@@ -60,6 +59,7 @@ interface OpenClawWizardProps {
     url: string
     token: string
     botTemplate?: string
+    displayName?: string
   }) => void
   onSkip: () => void
 }
@@ -93,32 +93,75 @@ const BOT_TEMPLATES: BotTemplate[] = [
   },
 ]
 
-const SETUP_MODES = [
+const SETUP_MODES: {
+  id: SetupMode
+  title: string
+  description: string
+  icon: React.ReactNode
+  inlineHelp: { variant: "amber" | "blue" | "gray"; content: React.ReactNode }
+}[] = [
   {
-    id: "same-machine" as SetupMode,
-    title: "Same computer",
-    description: "CrewHub and OpenClaw are on the same machine",
-    icon: <Server className="h-5 w-5" />,
-  },
-  {
-    id: "docker" as SetupMode,
+    id: "docker",
     title: "CrewHub in Docker",
     description: "CrewHub runs in Docker, OpenClaw on the host",
     icon: <Container className="h-5 w-5" />,
+    inlineHelp: {
+      variant: "amber",
+      content: (
+        <>
+          <p>⚠️ Use <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">ws://host.docker.internal:18789</code> or <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">ws://172.17.0.1:18789</code></p>
+          <p>OpenClaw must bind to <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">"lan"</code> mode (not "loopback")</p>
+        </>
+      ),
+    },
   },
   {
-    id: "lan" as SetupMode,
+    id: "same-machine",
+    title: "Same computer",
+    description: "Both running directly on the host (no Docker)",
+    icon: <Server className="h-5 w-5" />,
+    inlineHelp: {
+      variant: "blue",
+      content: (
+        <>
+          <p>ℹ️ Use <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">ws://localhost:18789</code> or <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">ws://127.0.0.1:18789</code></p>
+          <p>Dev mode requires Vite proxy configured for port 8090</p>
+        </>
+      ),
+    },
+  },
+  {
+    id: "lan",
     title: "Another computer (LAN)",
     description: "OpenClaw is on a different machine on your network",
     icon: <Network className="h-5 w-5" />,
+    inlineHelp: {
+      variant: "blue",
+      content: (
+        <>
+          <p>ℹ️ Use <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">ws://your-server-ip:18789</code></p>
+          <p>OpenClaw must be accessible from this machine (firewall/network)</p>
+        </>
+      ),
+    },
   },
   {
-    id: "advanced" as SetupMode,
+    id: "advanced",
     title: "Advanced / Custom",
     description: "Remote server, reverse proxy, or custom setup",
     icon: <Settings2 className="h-5 w-5" />,
+    inlineHelp: {
+      variant: "gray",
+      content: <p>🔧 Manual configuration required</p>,
+    },
   },
 ]
+
+const INLINE_HELP_STYLES = {
+  amber: "border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 text-amber-900 dark:text-amber-200",
+  blue: "border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900 text-blue-900 dark:text-blue-200",
+  gray: "border-border bg-muted/50 text-muted-foreground",
+} as const
 
 // ─── Error Category Styling ─────────────────────────────────────
 
@@ -181,6 +224,9 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("default")
   const [createBot, setCreateBot] = useState(true)
 
+  // Display name
+  const [displayName, setDisplayName] = useState("Assistant")
+
   // Load environment info on mount
   useEffect(() => {
     ;(async () => {
@@ -228,10 +274,6 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
     }
   }, [setupMode, envInfo])
 
-  const isLocalhostInDocker =
-    envInfo?.is_docker &&
-    (url.includes("localhost") || url.includes("127.0.0.1"))
-
   // ─── Test Connection ──────────────────────────────────────────
 
   const handleTest = useCallback(async () => {
@@ -261,8 +303,9 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
       url,
       token,
       botTemplate: createBot ? selectedTemplate : undefined,
+      displayName: displayName.trim() || undefined,
     })
-  }, [connectionName, url, token, createBot, selectedTemplate, onComplete])
+  }, [connectionName, url, token, createBot, selectedTemplate, displayName, onComplete])
 
   // ─── Step 0: Choose setup mode ────────────────────────────────
 
@@ -296,42 +339,57 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
 
       <div className="space-y-2">
         {SETUP_MODES.map((mode) => (
-          <button
-            key={mode.id}
-            onClick={() => setSetupMode(mode.id)}
-            className={`w-full p-4 rounded-xl border transition-all text-left flex items-center gap-4 ${
-              setupMode === mode.id
-                ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
-                : "border-border bg-card hover:bg-accent/30"
-            }`}
-          >
-            <div
-              className={`p-2.5 rounded-lg shrink-0 ${
+          <div key={mode.id} className="space-y-0">
+            <button
+              onClick={() => setSetupMode(mode.id)}
+              className={`w-full p-4 rounded-xl border transition-all text-left flex items-center gap-4 ${
                 setupMode === mode.id
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground"
-              }`}
+                  ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                  : "border-border bg-card hover:bg-accent/30"
+              } ${setupMode === mode.id ? "rounded-b-none" : ""}`}
             >
-              {mode.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium">{mode.title}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                {mode.description}
+              <div
+                className={`p-2.5 rounded-lg shrink-0 ${
+                  setupMode === mode.id
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {mode.icon}
               </div>
-            </div>
-            <div
-              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${
-                setupMode === mode.id
-                  ? "border-primary bg-primary"
-                  : "border-muted-foreground/30"
-              }`}
-            >
-              {setupMode === mode.id && (
-                <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
-              )}
-            </div>
-          </button>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium flex items-center gap-2">
+                  {mode.title}
+                  {mode.id === "docker" && envInfo?.is_docker && (
+                    <Badge variant="secondary" className="text-[10px]">Recommended</Badge>
+                  )}
+                  {mode.id !== "docker" && (
+                    <span className="text-[10px] text-muted-foreground/60 font-normal">(in development)</span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {mode.description}
+                </div>
+              </div>
+              <div
+                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${
+                  setupMode === mode.id
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground/30"
+                }`}
+              >
+                {setupMode === mode.id && (
+                  <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                )}
+              </div>
+            </button>
+            {/* Inline help for selected option */}
+            {setupMode === mode.id && (
+              <div className={`px-4 py-3 border border-t-0 rounded-b-xl text-[11px] space-y-1 ${INLINE_HELP_STYLES[mode.inlineHelp.variant]}`}>
+                {mode.inlineHelp.content}
+              </div>
+            )}
+          </div>
         ))}
       </div>
 
@@ -357,22 +415,6 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           Enter your OpenClaw gateway URL and token.
         </p>
       </div>
-
-      {/* Docker localhost warning */}
-      {isLocalhostInDocker && (
-        <div className="p-3 rounded-lg border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-red-800 dark:text-red-300">
-              ⚠️ localhost won't work in Docker
-            </p>
-            <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">
-              In Docker, <code className="px-1 py-0.5 rounded bg-red-100 dark:bg-red-900/50 font-mono text-[11px]">localhost</code> points
-              to the container itself, not the host machine. Use one of the suggested URLs below.
-            </p>
-          </div>
-        </div>
-      )}
 
       <div className="space-y-4">
         {/* Name */}
@@ -425,6 +467,24 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               </div>
             </div>
           )}
+
+          {/* Docker bind mode help */}
+          {setupMode === "docker" && (
+            <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+              <Info className="h-3.5 w-3.5 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
+              <div className="text-[11px] text-amber-900 dark:text-amber-200 space-y-1.5">
+                <p className="font-semibold">⚠️ OpenClaw Gateway must listen on all interfaces</p>
+                <p>By default, OpenClaw binds to <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">loopback</code> (localhost only).</p>
+                <p>For Docker to connect, change to <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">"bind": "lan"</code> in <code className="font-mono">~/.openclaw/openclaw.json</code>:</p>
+                <div className="mt-1 p-2 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px] space-y-0.5">
+                  <div><span className="text-amber-700 dark:text-amber-400">"gateway"</span>: &#123;</div>
+                  <div className="ml-2"><span className="text-amber-700 dark:text-amber-400">"bind"</span>: <span className="text-green-700 dark:text-green-400">"lan"</span>,  <span className="text-gray-500">// was: "loopback"</span></div>
+                  <div>&#125;</div>
+                </div>
+                <p className="mt-1">Then restart: <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">openclaw gateway restart</code></p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Token */}
@@ -454,6 +514,33 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               )}
             </Button>
           </div>
+
+          {/* Security notice */}
+          <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+            <Info className="h-3.5 w-3.5 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
+            <div className="text-[11px] text-amber-900 dark:text-amber-200 space-y-1">
+              <p className="font-semibold">🔒 Security Notice</p>
+              <ul className="list-none space-y-0.5">
+                <li>• Keep this token private — anyone with it can control your agents</li>
+                <li>• For public/remote deployments, use WSS (not WS) and HTTPS</li>
+                <li>• We do NOT recommend running CrewHub publicly accessible yet</li>
+                <li>• Authentication and security hardening are currently in development</li>
+                <li>• See <a href="https://github.com/ekinsolbot/crewhub/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-amber-700 dark:hover:text-amber-300">SECURITY.md</a> for more details</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Help text: How to find token */}
+          {!envInfo?.token_file_path && (
+            <div className="flex items-start gap-2 mt-1.5 p-2 rounded-md bg-muted/50">
+              <Info className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+              <div className="text-[11px] text-muted-foreground space-y-1">
+                <p className="font-medium">How to find your gateway token:</p>
+                <p>Run in terminal: <code className="px-1 py-0.5 rounded bg-muted font-mono text-[10px]">openclaw config get | jq -r '.gateway.auth.token'</code></p>
+                <p className="text-[10px]">Or find it in <code className="font-mono">~/.openclaw/openclaw.json</code> under <code className="font-mono">gateway.auth.token</code></p>
+              </div>
+            </div>
+          )}
 
           {/* Token file hint */}
           {envInfo?.token_file_path && (
@@ -560,7 +647,21 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         </div>
         <h2 className="text-2xl font-bold">Create Your First Bot</h2>
         <p className="text-muted-foreground">
-          Choose a template to get started quickly.
+          Choose a template and give your agent a name.
+        </p>
+      </div>
+
+      {/* Display Name */}
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium">Agent Display Name</Label>
+        <Input
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          placeholder="e.g. Assistant, Helper Bot, DevBot"
+          className="h-9"
+        />
+        <p className="text-[11px] text-muted-foreground">
+          This is how your agent will appear in CrewHub. You can change it later.
         </p>
       </div>
 
@@ -610,7 +711,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           }`}
         >
           <span className="text-sm text-muted-foreground">
-            Skip — I'll create a bot later
+            Skip — I'll configure agents later (they will appear with default names/colors)
           </span>
         </button>
       </div>

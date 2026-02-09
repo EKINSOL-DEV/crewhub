@@ -68,6 +68,7 @@ def _check_rate_limit(session_key: str) -> None:
 
 class SendMessageBody(BaseModel):
     message: str
+    room_id: Optional[str] = None
 
 
 # ── Routes ──────────────────────────────────────────────────────
@@ -214,6 +215,31 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
     message = message.replace("\x00", "")
 
     agent_id = _get_agent_id(session_key)
+
+    # Build context envelope for agent awareness
+    try:
+        import aiosqlite
+        from app.db.database import DB_PATH
+        from app.services.context_envelope import build_crewhub_context, format_context_block
+
+        # Determine room_id: prefer request body, fall back to agent default
+        ctx_room_id = body.room_id
+        if not ctx_room_id:
+            async with aiosqlite.connect(DB_PATH) as db:
+                db.row_factory = aiosqlite.Row
+                cursor = await db.execute(
+                    "SELECT default_room_id FROM agents WHERE id = ?", (agent_id,)
+                )
+                row = await cursor.fetchone()
+                if row:
+                    ctx_room_id = row["default_room_id"]
+
+        if ctx_room_id:
+            envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key)
+            if envelope:
+                message = format_context_block(envelope) + "\n\n" + message
+    except Exception as e:
+        logger.warning(f"Failed to build context envelope for chat: {e}")
 
     manager = await get_connection_manager()
     conn = manager.get_default_openclaw()

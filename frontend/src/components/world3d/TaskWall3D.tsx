@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Html } from '@react-three/drei'
 import { useDragActions } from '@/contexts/DragDropContext'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
@@ -34,6 +34,13 @@ export function TaskWall3D({
   // Only enable pointer events when this room is focused (prevent other rooms from intercepting clicks)
   const isThisRoomFocused = focusState.focusedRoomId === roomId
   const pointerEventsEnabled = isThisRoomFocused ? 'auto' : 'none'
+  
+  // Clean up interaction flag when room loses focus
+  useEffect(() => {
+    if (!isThisRoomFocused) {
+      setInteractingWithUI(false)
+    }
+  }, [isThisRoomFocused, setInteractingWithUI])
   
   // Block camera controls when interacting with the board
   const handlePointerEnter = useCallback(() => {
@@ -86,8 +93,10 @@ export function TaskWall3D({
         }}
       >
         <div
-          onClick={(e) => e.stopPropagation()}
+          data-world-ui
+          onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation() }}
           onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation() }}
           onPointerMove={(e) => e.stopPropagation()}
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
@@ -126,11 +135,17 @@ export function TaskWall3D({
           style={{ pointerEvents: pointerEventsEnabled }}
         >
           <button
+            data-world-ui
             onClick={(e) => {
               e.stopPropagation()
+              e.nativeEvent.stopImmediatePropagation()
               focusBoard(roomId)
             }}
             onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => {
+              e.stopPropagation()
+              e.nativeEvent.stopImmediatePropagation()
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',

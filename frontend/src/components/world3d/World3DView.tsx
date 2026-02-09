@@ -58,6 +58,7 @@ import { WanderingBots3D, type RoomObstacle } from './WanderingBots3D'
 import { Room3D } from './Room3D'
 import { Bot3D, type BotStatus } from './Bot3D'
 import { BotInfoPanel } from './BotInfoPanel'
+import { BotQuickActions } from './BotQuickActions'
 import { RoomInfoPanel } from './RoomInfoPanel'
 import { ContextInspector } from './ContextInspector'
 import { ProjectDocsPanel } from './ProjectDocsPanel'
@@ -1233,6 +1234,20 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             projectName={docsPanel.projectName}
             projectColor={docsPanel.projectColor}
             onClose={() => setDocsPanel(null)}
+          />
+        )}
+
+        {/* Bot Quick Actions (floating buttons next to BotInfoPanel) */}
+        {focusState.level === 'bot' && focusState.focusedBotKey && focusedSession && focusedBotConfig && (
+          <BotQuickActions
+            session={focusedSession}
+            displayName={displayNames.get(focusState.focusedBotKey) || getSessionDisplayName(focusedSession, null)}
+            botConfig={focusedBotConfig}
+            canChat={/^agent:[a-zA-Z0-9_-]+:main$/.test(focusedSession.key)}
+            onOpenLog={(session) => {
+              setSelectedSession(session)
+              setLogViewerOpen(true)
+            }}
           />
         )}
 

@@ -28,7 +28,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        - VITE_API_URL=http://ekinbot.local:8090
+        # Use window.location.origin in production (auto-detects from browser)
+        # For explicit override, set VITE_API_URL env var when building
+        - VITE_API_URL=${VITE_API_URL:-}
     restart: unless-stopped
     ports:
       - "8446:80"
