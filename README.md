@@ -22,6 +22,10 @@
 
 ---
 
+> ⚠️ **Security Notice:** CrewHub ships with **no authentication** by default and is designed for local/trusted networks. Public or internet-facing deployment requires enabling auth, HTTPS, and firewall rules. See **[SECURITY.md](SECURITY.md)** for details.
+
+---
+
 ## What is CrewHub?
 
 CrewHub is an open-source dashboard for monitoring and managing AI coding agents. It connects to [OpenClaw](https://openclaw.dev), Claude Code, and Codex CLI — giving you a live overview of every session, room, and agent in one place. Its standout feature is a fully interactive **3D world** where your agents come alive as animated characters.

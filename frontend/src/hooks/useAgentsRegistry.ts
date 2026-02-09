@@ -45,7 +45,7 @@ export function useAgentsRegistry(sessions: CrewSession[]) {
       const data: AgentsResponse = await response.json()
       const newAgents = data.agents || []
       // Deduplicate: only update state if agents actually changed
-      const fingerprint = JSON.stringify(newAgents.map(a => `${a.id}:${a.updated_at}:${a.is_pinned}:${a.default_room_id}`))
+      const fingerprint = JSON.stringify(newAgents.map(a => `${a.id}:${a.updated_at}:${a.is_pinned}:${a.default_room_id}:${a.color}`))
       if (fingerprint !== agentsFingerprintRef.current) {
         agentsFingerprintRef.current = fingerprint
         setAgents(newAgents)

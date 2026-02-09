@@ -60,6 +60,7 @@ interface OpenClawWizardProps {
     url: string
     token: string
     botTemplate?: string
+    displayName?: string
   }) => void
   onSkip: () => void
 }
@@ -181,6 +182,9 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("default")
   const [createBot, setCreateBot] = useState(true)
 
+  // Display name
+  const [displayName, setDisplayName] = useState("Assistant")
+
   // Load environment info on mount
   useEffect(() => {
     ;(async () => {
@@ -261,8 +265,9 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
       url,
       token,
       botTemplate: createBot ? selectedTemplate : undefined,
+      displayName: displayName.trim() || undefined,
     })
-  }, [connectionName, url, token, createBot, selectedTemplate, onComplete])
+  }, [connectionName, url, token, createBot, selectedTemplate, displayName, onComplete])
 
   // ─── Step 0: Choose setup mode ────────────────────────────────
 
@@ -590,7 +595,21 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         </div>
         <h2 className="text-2xl font-bold">Create Your First Bot</h2>
         <p className="text-muted-foreground">
-          Choose a template to get started quickly.
+          Choose a template and give your agent a name.
+        </p>
+      </div>
+
+      {/* Display Name */}
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium">Agent Display Name</Label>
+        <Input
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          placeholder="e.g. Assistant, Helper Bot, DevBot"
+          className="h-9"
+        />
+        <p className="text-[11px] text-muted-foreground">
+          This is how your agent will appear in CrewHub. You can change it later.
         </p>
       </div>
 

@@ -933,7 +933,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   }, [onComplete])
 
   const handleOpenClawComplete = useCallback(
-    async (config: { name: string; url: string; token: string; botTemplate?: string }) => {
+    async (config: { name: string; url: string; token: string; botTemplate?: string; displayName?: string }) => {
       // Save the OpenClaw connection via API
       try {
         await fetch("/api/connections", {
@@ -951,6 +951,35 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         })
       } catch {
         // Best-effort
+      }
+
+      // Save agent display name preference
+      if (config.displayName) {
+        try {
+          await fetch("/api/settings/agent-display-name", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: config.displayName }),
+          })
+        } catch {}
+
+        // Also try to update the agent directly if it exists
+        // The bot template determines the agent_id
+        const templateToAgentId: Record<string, string> = {
+          default: "main",
+          developer: "dev",
+          reviewer: "reviewer",
+        }
+        const agentId = config.botTemplate
+          ? templateToAgentId[config.botTemplate] || "main"
+          : "main"
+        try {
+          await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: config.displayName }),
+          })
+        } catch {}
       }
 
       // Mark onboarding complete

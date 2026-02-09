@@ -252,6 +252,7 @@ export function AgentsSettingsTab() {
 
   const handleSave = async (agentId: string, updates: Partial<Agent>) => {
     await updateAgent(agentId, updates)
+    window.dispatchEvent(new CustomEvent("agents-updated"))
     // Update local state immediately
     setAgents(prev => prev.map(a => a.id === agentId ? { ...a, ...updates } : a))
   }
@@ -265,7 +266,7 @@ export function AgentsSettingsTab() {
   }
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="space-y-4">
       <div className="text-sm text-muted-foreground mb-2">
         Manage your crew's appearance and personality. Color changes reflect in the 3D world after save.
       </div>
