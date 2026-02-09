@@ -104,7 +104,7 @@ function gradientForZone(color: string): string {
 
 export function ZoneLandingView({ zone, mvpItems, className, sceneExtras }: ZoneLandingViewProps) {
   return (
-    <div className={className ?? 'relative w-full h-full'} style={{ minHeight: '600px' }}>
+    <div className={`relative w-full h-full ${className ?? ''}`}>
       <Canvas
         shadows
         camera={{ position: [-20, 15, -20], fov: 40, near: 0.1, far: 300 }}
