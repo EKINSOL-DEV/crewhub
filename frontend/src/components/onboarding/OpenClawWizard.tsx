@@ -425,6 +425,24 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               </div>
             </div>
           )}
+
+          {/* Docker bind mode help */}
+          {setupMode === "docker" && (
+            <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+              <Info className="h-3.5 w-3.5 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
+              <div className="text-[11px] text-amber-900 dark:text-amber-200 space-y-1.5">
+                <p className="font-semibold">⚠️ OpenClaw Gateway must listen on all interfaces</p>
+                <p>By default, OpenClaw binds to <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">loopback</code> (localhost only).</p>
+                <p>For Docker to connect, change to <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">"bind": "lan"</code> in <code className="font-mono">~/.openclaw/openclaw.json</code>:</p>
+                <div className="mt-1 p-2 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px] space-y-0.5">
+                  <div><span className="text-amber-700 dark:text-amber-400">"gateway"</span>: &#123;</div>
+                  <div className="ml-2"><span className="text-amber-700 dark:text-amber-400">"bind"</span>: <span className="text-green-700 dark:text-green-400">"lan"</span>,  <span className="text-gray-500">// was: "loopback"</span></div>
+                  <div>&#125;</div>
+                </div>
+                <p className="mt-1">Then restart: <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">openclaw gateway restart</code></p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Token */}
