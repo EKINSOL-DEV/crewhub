@@ -1145,9 +1145,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
 
             {/* ═══ Tab: Connections ═══ */}
             {selectedTab === "connections" && (
-              <div className="max-w-2xl">
-                <ConnectionsView />
-              </div>
+              <ConnectionsView embedded />
             )}
 
             {/* ═══ Tab: Advanced ═══ */}
