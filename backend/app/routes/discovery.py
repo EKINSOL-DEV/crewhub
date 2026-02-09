@@ -146,6 +146,35 @@ class TestConnectionResponse(BaseModel):
 # Routes
 # =============================================================================
 
+@router.get("/manifest")
+async def get_manifest():
+    """
+    Return the CrewHub capabilities manifest.
+
+    Agents use this as the bootstrap entry-point to discover
+    available API surfaces and versions.
+    """
+    return {
+        "name": "CrewHub",
+        "version": "0.1.0",
+        "capabilities": {
+            "auth": {"scopes": ["read", "self", "manage", "admin"]},
+            "discovery": {"scan": True, "test": True, "docs": True},
+            "self": {"identify": True, "display_name": True, "room": True, "heartbeat": True},
+            "chat": {"send": True, "sse": True},
+            "rooms": {"list": True, "create": True, "assign": True},
+        },
+        "docs_topics": sorted(DOCS_BY_TOPIC.keys()),
+        "endpoints": {
+            "self_identify": "POST /api/self/identify",
+            "self_info": "GET /api/self",
+            "discovery_scan": "POST /api/discovery/scan",
+            "discovery_docs": "GET /api/discovery/docs/{topic}",
+            "discovery_manifest": "GET /api/discovery/manifest",
+        },
+    }
+
+
 @router.post("/scan", response_model=ScanResponse)
 async def scan_for_runtimes(body: ScanRequest):
     """

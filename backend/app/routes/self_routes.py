@@ -100,13 +100,13 @@ async def _resolve_agent_id(key: APIKeyInfo) -> Optional[str]:
 
 
 async def _resolve_session_key(key: APIKeyInfo, agent_id: str) -> Optional[str]:
-    """Resolve most recent session_key for an agent from identities table."""
+    """Resolve most recent session_key for an agent, scoped to the calling key."""
     db = await get_db()
     try:
         db.row_factory = aiosqlite.Row
         async with db.execute(
-            "SELECT session_key FROM agent_identities WHERE agent_id = ? ORDER BY last_seen_at DESC LIMIT 1",
-            (agent_id,),
+            "SELECT session_key FROM agent_identities WHERE agent_id = ? AND api_key_id = ? ORDER BY last_seen_at DESC LIMIT 1",
+            (agent_id, key.key_id),
         ) as cursor:
             row = await cursor.fetchone()
             return row["session_key"] if row else None
@@ -232,6 +232,21 @@ async def identify(
             logger.info(f"Auto-created agent '{agent_id}' via identify")
         else:
             created = False
+
+            # ── Rule: Unbound non-manage keys can only claim agent_ids they own ──
+            if not key.agent_id and not key.has_scope("manage"):
+                async with db.execute(
+                    "SELECT api_key_id FROM agent_identities WHERE agent_id = ? LIMIT 1",
+                    (agent_id,),
+                ) as cursor:
+                    existing = await cursor.fetchone()
+                if existing and existing[0] != key.key_id:
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"Agent '{agent_id}' is owned by another key. "
+                               f"Cannot claim.",
+                    )
+
             # Update agent_session_key if session_key provided
             if session_key:
                 await db.execute(
@@ -240,13 +255,26 @@ async def identify(
                 )
                 await db.commit()
 
-        # ── Upsert agent_identity binding ──
+        # ── Insert/update agent_identity binding (ownership-safe) ──
         if session_key:
+            # Check if binding exists with different key (prevent takeover)
+            async with db.execute(
+                "SELECT api_key_id FROM agent_identities WHERE agent_id = ? AND session_key = ?",
+                (agent_id, session_key),
+            ) as cursor:
+                existing_binding = await cursor.fetchone()
+
+            if existing_binding and existing_binding[0] != key.key_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Identity binding (agent_id={agent_id}, session_key={session_key}) "
+                           f"is owned by another key. Cannot overwrite.",
+                )
+
             await db.execute(
                 """INSERT INTO agent_identities (agent_id, session_key, api_key_id, runtime, bound_at, last_seen_at)
                    VALUES (?, ?, ?, ?, ?, ?)
                    ON CONFLICT(agent_id, session_key) DO UPDATE SET
-                       api_key_id = excluded.api_key_id,
                        runtime = excluded.runtime,
                        last_seen_at = excluded.last_seen_at""",
                 (agent_id, session_key, key.key_id, body.runtime, now, now),

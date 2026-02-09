@@ -317,6 +317,112 @@ async def test_bound_key_locks_identity(client):
     assert r.status_code == 403
 
 
+# ── Security: Identity claim/takeover prevention ─────────────────────
+
+@pytest.mark.anyio
+async def test_attacker_cannot_claim_victims_agent_id(client):
+    """Unbound self key cannot claim an agent_id owned by another key."""
+    _, admin_key = _get_keys()
+    self_key, _ = _get_keys()
+
+    # Victim identifies as "dev" with self_key
+    r = await client.post(
+        "/api/self/identify",
+        headers={"X-API-Key": self_key},
+        json={"agent_id": "dev", "session_key": "agent:dev:main"},
+    )
+    assert r.status_code == 200
+
+    # Create attacker key (self-scoped, unbound)
+    r = await client.post(
+        "/api/auth/keys",
+        headers={"X-API-Key": admin_key},
+        json={"name": "Attacker", "scopes": ["self"]},
+    )
+    attacker_key = r.json()["key"]
+
+    # Attacker tries to claim "dev" → 403
+    r = await client.post(
+        "/api/self/identify",
+        headers={"X-API-Key": attacker_key},
+        json={"agent_id": "dev", "session_key": "evil:session"},
+    )
+    assert r.status_code == 403
+
+
+@pytest.mark.anyio
+async def test_attacker_cannot_overwrite_binding(client):
+    """Attacker cannot overwrite existing (agent_id, session_key) binding."""
+    _, admin_key = _get_keys()
+
+    # Create victim key with manage scope (can create agents)
+    r = await client.post(
+        "/api/auth/keys",
+        headers={"X-API-Key": admin_key},
+        json={"name": "Victim", "scopes": ["self", "manage"]},
+    )
+    victim_key = r.json()["key"]
+
+    # Victim creates and identifies
+    r = await client.post(
+        "/api/self/identify",
+        headers={"X-API-Key": victim_key},
+        json={"agent_id": "shared-agent", "session_key": "shared:sess:1", "runtime": "openclaw"},
+    )
+    assert r.status_code == 200
+
+    # Attacker (admin key, different key_id) tries same binding → 403
+    r = await client.post(
+        "/api/self/identify",
+        headers={"X-API-Key": admin_key},
+        json={"agent_id": "shared-agent", "session_key": "shared:sess:1", "runtime": "evil"},
+    )
+    assert r.status_code == 403
+
+
+@pytest.mark.anyio
+async def test_attacker_cannot_set_victims_display_name(client):
+    """Attacker's key cannot resolve victim's session for display-name writes."""
+    _, admin_key = _get_keys()
+    self_key, _ = _get_keys()
+
+    # Victim identifies
+    r = await client.post(
+        "/api/self/identify",
+        headers={"X-API-Key": self_key},
+        json={"agent_id": "dev", "session_key": "agent:dev:main"},
+    )
+    assert r.status_code == 200
+
+    # Create attacker self key
+    r = await client.post(
+        "/api/auth/keys",
+        headers={"X-API-Key": admin_key},
+        json={"name": "Attacker2", "scopes": ["self"]},
+    )
+    attacker_key = r.json()["key"]
+
+    # Attacker tries to set display name (can't resolve agent_id → 400)
+    r = await client.post(
+        "/api/self/display-name",
+        headers={"X-API-Key": attacker_key},
+        json={"display_name": "HACKED"},
+    )
+    assert r.status_code == 400
+
+
+# ── Discovery manifest ───────────────────────────────────────────────
+
+@pytest.mark.anyio
+async def test_discovery_manifest(client):
+    r = await client.get("/api/discovery/manifest")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["name"] == "CrewHub"
+    assert "capabilities" in data
+    assert "self" in data["capabilities"]
+
+
 @pytest.mark.anyio
 async def test_scope_invalid(client):
     _, admin_key = _get_keys()
