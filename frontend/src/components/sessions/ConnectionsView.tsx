@@ -265,7 +265,7 @@ function ConnectionDialog({
       ref={dialogRef}
       onClose={() => onOpenChange(false)}
       onClick={(e) => e.target === e.currentTarget && onOpenChange(false)}
-      className="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg border shadow-lg w-full max-w-[500px] p-0 z-[70]"
+      className="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg border shadow-lg w-full max-w-[500px] p-0 z-[85]"
     >
       <div
         onClick={(e) => e.stopPropagation()}

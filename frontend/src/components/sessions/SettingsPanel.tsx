@@ -1199,7 +1199,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
         ref={createRoomDialogRef}
         onClose={() => setShowCreateRoomDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowCreateRoomDialog(false)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
         <div
           onClick={(e) => e.stopPropagation()}
@@ -1290,7 +1290,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
         ref={deleteRoomDialogRef}
         onClose={() => setDeleteRoomConfirm(null)}
         onClick={(e) => e.target === e.currentTarget && setDeleteRoomConfirm(null)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
         <div
           onClick={(e) => e.stopPropagation()}
@@ -1316,7 +1316,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
         ref={createRuleDialogRef}
         onClose={() => setShowCreateRuleDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowCreateRuleDialog(false)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
         <div
           onClick={(e) => e.stopPropagation()}
@@ -1431,7 +1431,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
         ref={deleteRuleDialogRef}
         onClose={() => setDeleteRuleConfirm(null)}
         onClick={(e) => e.target === e.currentTarget && setDeleteRuleConfirm(null)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
         <div
           onClick={(e) => e.stopPropagation()}
@@ -1457,7 +1457,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
         ref={testRulesDialogRef}
         onClose={() => setShowTestRulesDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowTestRulesDialog(false)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
         <div
           onClick={(e) => e.stopPropagation()}
@@ -1758,7 +1758,7 @@ function ProjectsSettingsSection({
         ref={deleteDialogRef}
         onClose={() => setDeleteConfirm(null)}
         onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
         <div
           onClick={(e) => e.stopPropagation()}
@@ -2159,7 +2159,7 @@ function BackupSection() {
         ref={importDialogRef}
         onClose={() => setShowImportConfirm(false)}
         onClick={(e) => e.target === e.currentTarget && setShowImportConfirm(false)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[60]"
+        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
         <div
           onClick={(e) => e.stopPropagation()}

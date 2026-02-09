@@ -136,7 +136,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
       ref={dialogRef}
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-[100] m-0 h-screen w-screen max-h-none max-w-none bg-transparent p-0 overflow-y-auto backdrop:bg-black/80 open:flex open:items-center open:justify-center"
+      className="fixed inset-0 z-[60] m-0 h-screen w-screen max-h-none max-w-none bg-transparent p-0 overflow-y-auto backdrop:bg-black/80 open:flex open:items-center open:justify-center"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
