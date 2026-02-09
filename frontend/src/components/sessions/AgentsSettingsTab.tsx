@@ -12,6 +12,7 @@ import { Loader2, Edit2, Check, X, Sparkles } from "lucide-react"
 interface Agent {
   id: string
   name: string
+  display_name: string | null
   icon: string | null
   avatar_url: string | null
   color: string | null
@@ -88,7 +89,7 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
     try {
       await onSave(agent.id, { color, bio: bio || null })
       setEditing(false)
-      toast({ title: "Agent Updated", description: `${agent.icon} ${agent.name} saved` })
+      toast({ title: "Agent Updated", description: `${agent.icon} ${agent.display_name || agent.name} saved` })
     } catch {
       toast({ title: "Failed to save", variant: "destructive" })
     } finally {
@@ -131,7 +132,7 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-lg">{agent.icon || "🤖"}</span>
-            <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
+            <h3 className="font-semibold text-sm truncate">{agent.display_name || agent.name}</h3>
             {agent.is_pinned && <Badge variant="secondary" className="text-[10px]">Pinned</Badge>}
           </div>
 

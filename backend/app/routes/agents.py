@@ -140,15 +140,23 @@ async def list_agents():
         ) as cursor:
             rows = await cursor.fetchall()
 
+        # Fetch display names for all agents
+        display_names: dict[str, str] = {}
+        async with db.execute("SELECT session_key, display_name FROM session_display_names") as dn_cursor:
+            async for dn_row in dn_cursor:
+                display_names[dn_row[0]] = dn_row[1]
+
         agents = []
         for row in rows:
+            session_key = row["agent_session_key"]
             agents.append({
                 "id": row["id"],
                 "name": row["name"],
+                "display_name": display_names.get(session_key) if session_key else None,
                 "icon": row["icon"],
                 "avatar_url": row["avatar_url"],
                 "color": row["color"],
-                "agent_session_key": row["agent_session_key"],
+                "agent_session_key": session_key,
                 "default_model": row["default_model"],
                 "default_room_id": row["default_room_id"],
                 "sort_order": row["sort_order"],
@@ -178,13 +186,26 @@ async def get_agent(agent_id: str):
         if not row:
             raise HTTPException(status_code=404, detail="Agent not found")
 
+        # Fetch display name
+        session_key = row["agent_session_key"]
+        display_name = None
+        if session_key:
+            async with db.execute(
+                "SELECT display_name FROM session_display_names WHERE session_key = ?",
+                (session_key,)
+            ) as dn_cursor:
+                dn_row = await dn_cursor.fetchone()
+                if dn_row:
+                    display_name = dn_row[0]
+
         return {
             "id": row["id"],
             "name": row["name"],
+            "display_name": display_name,
             "icon": row["icon"],
             "avatar_url": row["avatar_url"],
             "color": row["color"],
-            "agent_session_key": row["agent_session_key"],
+            "agent_session_key": session_key,
             "default_model": row["default_model"],
             "default_room_id": row["default_room_id"],
             "sort_order": row["sort_order"],

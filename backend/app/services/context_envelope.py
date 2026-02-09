@@ -127,7 +127,7 @@ async def build_crewhub_context(
             if session_key:
                 # Try matching agent by session_key directly
                 async with db.execute(
-                    "SELECT id, name FROM agents WHERE agent_session_key = ?",
+                    "SELECT id, name, agent_session_key FROM agents WHERE agent_session_key = ?",
                     (session_key,),
                 ) as cur:
                     agent_row = await cur.fetchone()
@@ -137,13 +137,33 @@ async def build_crewhub_context(
                     if len(parts) >= 2:
                         base_key = f"agent:{parts[1]}:main"
                         async with db.execute(
-                            "SELECT id, name FROM agents WHERE agent_session_key = ?",
+                            "SELECT id, name, agent_session_key FROM agents WHERE agent_session_key = ?",
                             (base_key,),
                         ) as cur:
                             agent_row = await cur.fetchone()
                 if agent_row:
+                    # Resolve display name: session_display_names > agents.name > agent_id
+                    display_name = agent_row["name"]
+                    # Try to get display name from session_display_names
+                    # Check both the calling session_key and the agent's base session_key
+                    lookup_keys = [session_key]
+                    try:
+                        ask = agent_row["agent_session_key"]
+                        if ask and ask != session_key:
+                            lookup_keys.append(ask)
+                    except (IndexError, KeyError):
+                        pass
+                    for sk in lookup_keys:
+                        async with db.execute(
+                            "SELECT display_name FROM session_display_names WHERE session_key = ?",
+                            (sk,),
+                        ) as cur:
+                            dn_row = await cur.fetchone()
+                        if dn_row and dn_row["display_name"]:
+                            display_name = dn_row["display_name"]
+                            break
                     self_identity = {
-                        "handle": agent_row["name"],
+                        "handle": display_name,
                         "agentId": agent_row["id"],
                         "role": "agent",
                     }
