@@ -158,7 +158,106 @@ cd crewhub
 make dev
 ```
 
-### Option 3: Demo Mode (No OpenClaw needed)
+### Option 3: Production without Docker
+
+For production deployments on VPS/cloud without Docker:
+
+**1. Build the frontend:**
+
+```bash
+cd frontend
+npm install
+npm run build
+# Builds to frontend/dist/
+```
+
+**2. Set up a reverse proxy (nginx or Caddy):**
+
+**nginx example:**
+```nginx
+server {
+    listen 8446;
+    server_name your-domain.com;
+
+    # Frontend (static files)
+    location / {
+        root /path/to/crewhub/frontend/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API proxy
+    location /api {
+        proxy_pass http://localhost:8090;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+**Caddy example (simpler):**
+```
+your-domain.com:8446 {
+    handle /api/* {
+        reverse_proxy localhost:8090
+    }
+    handle {
+        root * /path/to/crewhub/frontend/dist
+        file_server
+        try_files {path} /index.html
+    }
+}
+```
+
+**3. Run the backend:**
+
+**Option A: Direct run (development/testing)**
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8090
+```
+
+**Option B: systemd service (production)**
+```ini
+# /etc/systemd/system/crewhub-backend.service
+[Unit]
+Description=CrewHub Backend
+After=network.target
+
+[Service]
+Type=simple
+User=your-user
+WorkingDirectory=/path/to/crewhub/backend
+Environment="PATH=/path/to/crewhub/backend/venv/bin"
+ExecStart=/path/to/crewhub/backend/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8090
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable crewhub-backend
+sudo systemctl start crewhub-backend
+```
+
+**4. Configure OpenClaw Gateway:**
+
+Make sure your gateway is accessible from the machine running CrewHub. The onboarding wizard will detect your local config automatically, or you can manually enter:
+- `ws://localhost:18789` (same machine)
+- `ws://your-server-ip:18789` (remote machine)
+
+**Security:** See [SECURITY.md](SECURITY.md) for production hardening (auth, HTTPS, firewall).
+
+### Option 4: Demo Mode (No OpenClaw needed)
 
 Want to explore CrewHub without setting up OpenClaw? Run in demo mode with simulated agents:
 
