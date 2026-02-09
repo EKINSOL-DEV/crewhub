@@ -8,6 +8,7 @@ import { World3DView } from './World3DView'
 import { CreatorCenterView } from './CreatorCenterView'
 import { GameCenterView } from './GameCenterView'
 import { AcademyView } from './AcademyView'
+import { ZoneSwitcherBar } from './ZoneSwitcherBar'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
@@ -23,12 +24,15 @@ export function ZoneRenderer({ sessions, settings, onAliasChanged }: ZoneRendere
   // Transition overlay
   if (isTransitioning) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white">
+      <div className="flex-1 flex items-center justify-center bg-white relative">
         <span className="text-gray-400 text-sm">Switching zones…</span>
+        <ZoneSwitcherBar />
       </div>
     )
   }
 
+  // Main Campus renders its own RoomTabsBar (which includes the zone switcher)
+  // Other zones get the standalone ZoneSwitcherBar
   switch (activeZone.id) {
     case 'main-campus':
       return (
@@ -39,15 +43,31 @@ export function ZoneRenderer({ sessions, settings, onAliasChanged }: ZoneRendere
         />
       )
     case 'creator-center':
-      return <CreatorCenterView />
+      return (
+        <div className="relative flex-1 flex flex-col overflow-hidden">
+          <CreatorCenterView />
+          <ZoneSwitcherBar />
+        </div>
+      )
     case 'game-center':
-      return <GameCenterView />
+      return (
+        <div className="relative flex-1 flex flex-col overflow-hidden">
+          <GameCenterView />
+          <ZoneSwitcherBar />
+        </div>
+      )
     case 'academy':
-      return <AcademyView />
+      return (
+        <div className="relative flex-1 flex flex-col overflow-hidden">
+          <AcademyView />
+          <ZoneSwitcherBar />
+        </div>
+      )
     default:
       return (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="relative flex-1 flex items-center justify-center">
           <span className="text-red-500">Unknown zone: {activeZone.id}</span>
+          <ZoneSwitcherBar />
         </div>
       )
   }
