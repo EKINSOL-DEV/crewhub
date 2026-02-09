@@ -349,7 +349,7 @@ async def get_context_envelope(
         envelope = await build_crewhub_context(
             room_id=room_id,
             channel=channel,
-            spawned_from=spawned_from,
+            session_key=session_key,
         )
 
         if not envelope:
@@ -369,13 +369,13 @@ async def get_context_envelope(
 async def get_room_context_envelope(
     room_id: str,
     channel: Optional[str] = Query(None),
-    spawned_from: Optional[str] = Query(None),
+    session_key: Optional[str] = Query(None),
 ):
     """Get context envelope directly by room_id (for spawn flows)."""
     envelope = await build_crewhub_context(
         room_id=room_id,
         channel=channel,
-        spawned_from=spawned_from,
+        session_key=session_key,
     )
 
     if not envelope:

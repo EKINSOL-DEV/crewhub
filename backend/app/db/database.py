@@ -6,6 +6,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# Demo mode - when true, seeds agents + mock data for showcase
+DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+
 # Database path - configurable via env var, defaults to ~/.crewhub/crewhub.db
 _db_path_env = os.environ.get("CREWHUB_DB_PATH")
 if _db_path_env:
@@ -376,7 +379,7 @@ async def get_db():
 
 
 async def seed_default_data():
-    """Seed the database with default rooms and agents.
+    """Seed the database with default rooms and settings.
     
     Safe to call multiple times (uses INSERT OR IGNORE).
     """
@@ -400,27 +403,15 @@ async def seed_default_data():
                 "UPDATE rooms SET is_hq = 1 WHERE id = 'headquarters'"
             )
             
-            # Create default agents (with bios)
-            default_agents = [
-                ('main', 'Main', '🤖', '#3b82f6', 'agent:main:main', 'anthropic/claude-sonnet-4-5', 'headquarters', 0, True, True, now, now, 'Director of Bots. Keeps the crew running, manages schedules, and always has an answer. Runs on coffee and Sonnet.'),
-                ('dev', 'Dev', '💻', '#10b981', 'agent:dev:main', None, 'headquarters', 1, False, True, now, now, 'Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus.'),
-                ('flowy', 'Flowy', '🌊', '#8b5cf6', 'agent:flowy:main', None, 'headquarters', 2, False, True, now, now, 'Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2.'),
-                ('creator', 'Creator', '🎨', '#f59e0b', 'agent:creator:main', None, 'headquarters', 3, False, True, now, now, 'A hardworking crew member.'),
-                ('reviewer', 'Reviewer', '🔍', '#ef4444', 'agent:reviewer:main', None, 'headquarters', 4, False, True, now, now, 'Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions.'),
-            ]
-            
-            await db.executemany("""
-                INSERT OR IGNORE INTO agents (
-                    id, name, icon, color, agent_session_key, 
-                    default_model, default_room_id, sort_order, 
-                    is_pinned, auto_spawn, created_at, updated_at, bio
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, default_agents)
+            # Demo mode: seed agents + mock data for showcase
+            if DEMO_MODE:
+                logger.info("🎭 DEMO MODE enabled — seeding agents and mock data")
+                await _seed_demo_agents(db, now)
+                await _seed_demo_tasks_and_history(db, now)
             
             # Create default settings
             default_settings = [
-                ('active_agent_id', 'main', now),
+                ('active_agent_id', '', now),
                 ('layout_mode', 'grid', now),
                 ('grid_columns', '4', now),
                 ('show_room_labels', 'true', now),
@@ -452,6 +443,103 @@ async def seed_default_data():
     except Exception as e:
         logger.error(f"Failed to seed default data: {e}")
         return False
+
+
+async def _seed_demo_agents(db, now: int):
+    """Seed demo agents for showcase mode."""
+    import json
+    
+    default_agents = [
+        ('main', 'Director', '🎯', None, '#4f46e5', 'agent:main:main', 'sonnet', 'headquarters', 0, True, True, now, now,
+         'Director of Bots. Keeps the crew running, manages schedules, and always has an answer. Runs on coffee and Sonnet.'),
+        ('dev', 'Developer', '💻', None, '#10b981', 'agent:dev:dev', 'opus', 'headquarters', 1, True, True, now, now,
+         'Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus.'),
+        ('gamedev', 'Game Dev', '🎮', None, '#f59e0b', 'agent:gamedev:gamedev', 'opus', 'headquarters', 2, True, True, now, now,
+         '3D world architect. Builds rooms, animates bots, and makes pixels dance. Three.js whisperer on Opus.'),
+        ('flowy', 'Flowy', '🎨', None, '#ec4899', 'agent:flowy:flowy', 'gpt-4o', 'headquarters', 3, True, True, now, now,
+         'Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2.'),
+        ('reviewer', 'Reviewer', '🔍', None, '#8b5cf6', 'agent:reviewer:reviewer', 'gpt-4o', 'headquarters', 4, True, True, now, now,
+         'Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions.'),
+    ]
+
+    await db.executemany("""
+        INSERT OR IGNORE INTO agents (id, name, icon, avatar_url, color, agent_session_key, default_model, default_room_id, sort_order, is_pinned, auto_spawn, created_at, updated_at, bio)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, default_agents)
+
+    # Create extra demo rooms
+    demo_rooms = [
+        ('dev-lab', 'Dev Lab', '🧪', '#10b981', 1, now, now),
+        ('design-studio', 'Design Studio', '🎨', '#ec4899', 2, now, now),
+        ('war-room', 'War Room', '⚔️', '#ef4444', 3, now, now),
+    ]
+    await db.executemany("""
+        INSERT OR IGNORE INTO rooms (id, name, icon, color, sort_order, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, demo_rooms)
+
+    # Room assignment rules for demo agents
+    demo_rules = [
+        ('rule-dev-lab', 'dev-lab', 'session_prefix', 'agent:dev', 70, now),
+        ('rule-gamedev-lab', 'dev-lab', 'session_prefix', 'agent:gamedev', 70, now),
+        ('rule-flowy-design', 'design-studio', 'session_prefix', 'agent:flowy', 70, now),
+        ('rule-reviewer-war', 'war-room', 'session_prefix', 'agent:reviewer', 70, now),
+    ]
+    await db.executemany("""
+        INSERT OR IGNORE INTO room_assignment_rules (id, room_id, rule_type, rule_value, priority, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, demo_rules)
+
+
+async def _seed_demo_tasks_and_history(db, now: int):
+    """Seed mock tasks and activity history for a lively demo."""
+    import json
+    import uuid
+
+    # Create a demo project
+    await db.execute("""
+        INSERT OR IGNORE INTO projects (id, name, description, icon, color, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, ('demo-project', 'CrewHub Launch', 'Ship CrewHub v1.0 to the world 🚀', '🚀', '#4f46e5', 'active', now, now))
+
+    # Link HQ room to project
+    await db.execute("UPDATE rooms SET project_id = 'demo-project' WHERE id = 'headquarters'")
+    await db.execute("UPDATE rooms SET project_id = 'demo-project' WHERE id = 'dev-lab'")
+    await db.execute("UPDATE rooms SET project_id = 'demo-project' WHERE id = 'design-studio'")
+
+    # Demo tasks — a mix of statuses
+    hour = 3_600_000  # 1 hour in ms
+    demo_tasks = [
+        ('task-1', 'demo-project', 'headquarters', 'Set up CI/CD pipeline', 'Configure GitHub Actions for auto-deploy on main branch', 'done', 'high', 'agent:dev:dev', 'agent:main:main', now - 48*hour, now - 12*hour),
+        ('task-2', 'demo-project', 'dev-lab', 'Implement WebSocket reconnect logic', 'Handle dropped connections gracefully with exponential backoff', 'in_progress', 'high', 'agent:dev:dev', 'agent:main:main', now - 24*hour, now - 2*hour),
+        ('task-3', 'demo-project', 'design-studio', 'Design onboarding wizard', 'Create a 3-step wizard for first-time users', 'review', 'medium', 'agent:flowy:flowy', 'agent:main:main', now - 36*hour, now - 4*hour),
+        ('task-4', 'demo-project', 'headquarters', 'Write API documentation', 'Document all REST endpoints with examples', 'todo', 'medium', 'agent:dev:dev', 'agent:main:main', now - 6*hour, now - 6*hour),
+        ('task-5', 'demo-project', 'war-room', 'Code review: auth module', 'Review the JWT auth implementation for security issues', 'in_progress', 'urgent', 'agent:reviewer:reviewer', 'agent:dev:dev', now - 8*hour, now - 1*hour),
+        ('task-6', 'demo-project', 'dev-lab', 'Build 3D room renderer', 'Three.js scene with walls, floor, and agent avatars', 'done', 'high', 'agent:gamedev:gamedev', 'agent:main:main', now - 72*hour, now - 24*hour),
+        ('task-7', 'demo-project', 'design-studio', 'Create marketing landing page', 'Hero section, features, pricing, and CTA', 'todo', 'low', 'agent:flowy:flowy', 'agent:main:main', now - 2*hour, now - 2*hour),
+        ('task-8', 'demo-project', 'headquarters', 'Plan v1.1 roadmap', 'Gather feature requests and prioritize for next sprint', 'todo', 'medium', None, 'agent:main:main', now - 1*hour, now - 1*hour),
+    ]
+
+    await db.executemany("""
+        INSERT OR IGNORE INTO tasks (id, project_id, room_id, title, description, status, priority, assigned_session_key, created_by, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, demo_tasks)
+
+    # Activity history entries
+    demo_history = [
+        (str(uuid.uuid4()), 'demo-project', 'task-6', 'task_completed', 'agent:gamedev:gamedev', json.dumps({"title": "Build 3D room renderer", "message": "Three.js scene is live! Walls, floors, and avatars rendering smoothly 🎮"}), now - 24*hour),
+        (str(uuid.uuid4()), 'demo-project', 'task-1', 'task_completed', 'agent:dev:dev', json.dumps({"title": "Set up CI/CD pipeline", "message": "GitHub Actions configured. Auto-deploy on push to main ✅"}), now - 12*hour),
+        (str(uuid.uuid4()), 'demo-project', 'task-5', 'task_started', 'agent:reviewer:reviewer', json.dumps({"title": "Code review: auth module", "message": "Starting security review of JWT implementation 🔍"}), now - 8*hour),
+        (str(uuid.uuid4()), 'demo-project', 'task-3', 'status_changed', 'agent:flowy:flowy', json.dumps({"title": "Design onboarding wizard", "from": "in_progress", "to": "review", "message": "Wizard designs ready for review! 3 steps: Connect → Configure → Launch 🎨"}), now - 4*hour),
+        (str(uuid.uuid4()), 'demo-project', 'task-2', 'task_started', 'agent:dev:dev', json.dumps({"title": "Implement WebSocket reconnect logic", "message": "Working on exponential backoff with jitter 🔄"}), now - 2*hour),
+        (str(uuid.uuid4()), 'demo-project', None, 'agent_joined', 'agent:main:main', json.dumps({"message": "Director came online and assigned sprint tasks 📋"}), now - 50*hour),
+        (str(uuid.uuid4()), 'demo-project', None, 'project_created', 'agent:main:main', json.dumps({"message": "Project 'CrewHub Launch' created. Let's ship it! 🚀"}), now - 72*hour),
+    ]
+
+    await db.executemany("""
+        INSERT OR IGNORE INTO project_history (id, project_id, task_id, event_type, actor_session_key, payload_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, demo_history)
 
 
 async def check_database_health() -> dict:

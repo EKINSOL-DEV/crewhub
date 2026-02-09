@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8091:8091"
+    environment:
+      - DEMO_MODE=true
+      - CREWHUB_DB_PATH=/data/crewhub.db
+    volumes:
+      - demo-data:/data
+    restart: unless-stopped
+    container_name: crewhub-demo-backend
+
   demo:
     build:
       context: ./frontend
@@ -9,3 +23,8 @@ services:
       - "3000:80"
     restart: unless-stopped
     container_name: crewhub-demo
+    depends_on:
+      - backend
+
+volumes:
+  demo-data:

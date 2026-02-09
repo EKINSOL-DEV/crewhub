@@ -495,9 +495,11 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
 
             context_block = ""
             if ctx_room_id:
+                agent_session_key = agent.get("agent_session_key") if agent else None
                 envelope = await build_crewhub_context(
                     room_id=ctx_room_id,
                     channel="crewhub-ui",
+                    session_key=agent_session_key,
                 )
                 if envelope:
                     context_block = format_context_block(envelope) + "\n\n"

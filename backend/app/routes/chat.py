@@ -235,7 +235,7 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
                     ctx_room_id = row["default_room_id"]
 
         if ctx_room_id:
-            envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui")
+            envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key)
             if envelope:
                 message = format_context_block(envelope) + "\n\n" + message
     except Exception as e:

@@ -38,6 +38,7 @@ async def build_crewhub_context(
     room_id: str,
     channel: Optional[str] = None,
     max_tasks: int = 10,
+    session_key: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
     """
     Build a CrewHub context envelope for injection into agent preambles.
@@ -121,7 +122,33 @@ async def build_crewhub_context(
                             t["assignee"] = row["display_name"]
                         tasks.append(t)
 
-            # 5. Context version — count of mutations (simple: max updated_at across relevant tables)
+            # 5. Self-identity — resolve who the calling agent is
+            self_identity: Optional[dict[str, str]] = None
+            if session_key:
+                # Try matching agent by session_key directly
+                async with db.execute(
+                    "SELECT id, name FROM agents WHERE agent_session_key = ?",
+                    (session_key,),
+                ) as cur:
+                    agent_row = await cur.fetchone()
+                if not agent_row and ":" in session_key:
+                    # For sub-sessions like agent:main:slack:..., try the base key
+                    parts = session_key.split(":")
+                    if len(parts) >= 2:
+                        base_key = f"agent:{parts[1]}:main"
+                        async with db.execute(
+                            "SELECT id, name FROM agents WHERE agent_session_key = ?",
+                            (base_key,),
+                        ) as cur:
+                            agent_row = await cur.fetchone()
+                if agent_row:
+                    self_identity = {
+                        "handle": agent_row["name"],
+                        "agentId": agent_row["id"],
+                        "role": "agent",
+                    }
+
+            # 6. Context version — count of mutations (simple: max updated_at across relevant tables)
             context_version = await _get_context_version(db, room_id, project_id)
 
             # Build envelope
@@ -132,6 +159,9 @@ async def build_crewhub_context(
                 "privacy": privacy,
                 "context_version": context_version,
             }
+
+            if self_identity:
+                envelope["self"] = self_identity
 
             if privacy == "internal":
                 if participants:
@@ -197,4 +227,12 @@ async def _get_context_version(
 def format_context_block(envelope: dict) -> str:
     """Format envelope as a fenced JSON block for injection into preamble."""
     compact = json.dumps(envelope, separators=(",", ":"), ensure_ascii=False)
-    return f"```crewhub-context\n{compact}\n```"
+    block = f"```crewhub-context\n{compact}\n```"
+
+    # Add human-readable identity line
+    self_info = envelope.get("self")
+    if self_info:
+        room_name = envelope.get("room", {}).get("name", "unknown")
+        block += f"\n\n**You are {self_info['handle']}** — an agent in the {room_name} room."
+
+    return block
