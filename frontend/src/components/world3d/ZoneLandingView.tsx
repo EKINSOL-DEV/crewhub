@@ -6,7 +6,7 @@
  */
 import { Canvas } from '@react-three/fiber'
 import { Html, OrbitControls } from '@react-three/drei'
-import { Suspense } from 'react'
+import { Suspense, type ReactNode } from 'react'
 import type { Zone } from '@/lib/zones'
 
 interface MvpBoardItem {
@@ -18,9 +18,11 @@ interface ZoneLandingViewProps {
   zone: Zone
   mvpItems: MvpBoardItem[]
   className?: string
+  /** Extra 3D elements to render inside the scene */
+  sceneExtras?: ReactNode
 }
 
-function LandingScene({ zone, mvpItems }: { zone: Zone; mvpItems: MvpBoardItem[] }) {
+function LandingScene({ zone, mvpItems, sceneExtras }: { zone: Zone; mvpItems: MvpBoardItem[]; sceneExtras?: ReactNode }) {
   return (
     <group>
       <ambientLight intensity={0.6} />
@@ -88,6 +90,9 @@ function LandingScene({ zone, mvpItems }: { zone: Zone; mvpItems: MvpBoardItem[]
           ))}
         </div>
       </Html>
+
+      {/* Extra scene elements (zone-specific) */}
+      {sceneExtras}
     </group>
   )
 }
@@ -97,7 +102,7 @@ function gradientForZone(color: string): string {
   return `linear-gradient(180deg, #1a1a2e 0%, ${color}44 60%, ${color}88 100%)`
 }
 
-export function ZoneLandingView({ zone, mvpItems, className }: ZoneLandingViewProps) {
+export function ZoneLandingView({ zone, mvpItems, className, sceneExtras }: ZoneLandingViewProps) {
   return (
     <div className={className ?? 'relative w-full h-full'} style={{ minHeight: '600px' }}>
       <Canvas
@@ -106,7 +111,7 @@ export function ZoneLandingView({ zone, mvpItems, className }: ZoneLandingViewPr
         style={{ background: gradientForZone(zone.colorPrimary) }}
       >
         <Suspense fallback={null}>
-          <LandingScene zone={zone} mvpItems={mvpItems} />
+          <LandingScene zone={zone} mvpItems={mvpItems} sceneExtras={sceneExtras} />
           <OrbitControls
             enablePan={false}
             minDistance={15}
