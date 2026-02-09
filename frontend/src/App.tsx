@@ -14,7 +14,7 @@ import { ChatProvider, useChatContext } from './contexts/ChatContext'
 import { RoomsProvider, useRoomsContext } from './contexts/RoomsContext'
 import { DemoProvider, DemoModeIndicator, useDemoMode } from './contexts/DemoContext'
 import { ZoneProvider } from './contexts/ZoneContext'
-import { ZoneSwitcher } from './components/navigation/ZoneSwitcher'
+// ZoneSwitcher moved to RoomTabsBar
 import { MobileWarning } from './components/MobileWarning'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
@@ -320,7 +320,6 @@ function AppContent() {
           </div>
           
           <div className="flex items-center gap-4">
-            <ZoneSwitcher />
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {connected ? (
                 <>
