@@ -122,22 +122,22 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
     : "Unknown"
 
   return (
-    <div className="rounded-xl border bg-card/80 p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className="rounded-xl border bg-card/80 p-5 shadow-sm hover:shadow-md transition-shadow min-h-[200px]">
       <div className="flex items-start gap-4">
         {/* Color sphere preview */}
-        <ColorSphere color={editing ? color : (agent.color || "#6b7280")} size={52} />
+        <ColorSphere color={editing ? color : (agent.color || "#6b7280")} size={48} />
 
         {/* Info */}
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-lg">{agent.icon || "🤖"}</span>
-            <h3 className="font-semibold text-sm">{agent.name}</h3>
+            <h3 className="font-semibold text-sm truncate">{agent.name}</h3>
             {agent.is_pinned && <Badge variant="secondary" className="text-[10px]">Pinned</Badge>}
           </div>
 
           {!editing && (
             <>
-              <p className="text-xs text-muted-foreground line-clamp-2">
+              <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
                 {agent.bio || <span className="italic">No bio set</span>}
               </p>
               <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-2">
