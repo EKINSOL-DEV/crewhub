@@ -1,14 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { useWorldFocus } from '@/contexts/WorldFocusContext'
-import type { ActiveTask } from '@/hooks/useActiveTasks'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useTasks, type Task, type TaskStatus, type TaskPriority } from '@/hooks/useTasks'
 
 // ── Types ──────────────────────────────────────────────────────
 
 interface TasksWindowProps {
-  tasks: ActiveTask[]
-  getTaskOpacity: (task: ActiveTask) => number
-  getRoomForSession: (sessionKey: string) => string | undefined
-  defaultRoomId?: string
+  projectId?: string
+  roomId?: string
   onClose: () => void
 }
 
@@ -26,16 +23,37 @@ const MIN_HEIGHT = 150
 const MAX_HEIGHT = 550
 const DEFAULT_HEIGHT = 350
 
+const STATUS_ICONS: Record<TaskStatus, string> = {
+  todo: '📋',
+  in_progress: '🔄',
+  review: '👀',
+  done: '✅',
+  blocked: '⚠️',
+}
+
+const STATUS_COLORS: Record<TaskStatus, string> = {
+  todo: '#6b7280',
+  in_progress: '#3b82f6',
+  review: '#f59e0b',
+  done: '#10b981',
+  blocked: '#ef4444',
+}
+
+const PRIORITY_ORDER: Record<TaskPriority, number> = {
+  urgent: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+}
+
 // ── Main Component ─────────────────────────────────────────────
 
 export function TasksWindow({
-  tasks,
-  getTaskOpacity,
-  getRoomForSession,
-  defaultRoomId,
+  projectId,
+  roomId,
   onClose,
 }: TasksWindowProps) {
-  const { focusBot } = useWorldFocus()
+  const { tasks, isLoading } = useTasks({ projectId, roomId })
   const [position, setPosition] = useState<Position>({ x: 80, y: 120 })
   const [size, setSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT })
   const [isDragging, setIsDragging] = useState(false)
@@ -43,24 +61,19 @@ export function TasksWindow({
   const resizingRef = useRef<'width' | 'height' | 'both' | null>(null)
   const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0 })
 
-  // Sort: running first, then done (sorted by doneAt desc)
-  const sortedTasks = [...tasks].sort((a, b) => {
-    if (a.status === 'running' && b.status !== 'running') return -1
-    if (a.status !== 'running' && b.status === 'running') return 1
-    if (a.status === 'done' && b.status === 'done') {
-      return (b.doneAt || 0) - (a.doneAt || 0)
-    }
-    return 0
-  })
+  // Filter to active tasks (in_progress, review, blocked) and sort by priority
+  const activeTasks = useMemo(() => {
+    const activeStatuses: TaskStatus[] = ['in_progress', 'review', 'blocked']
+    return tasks
+      .filter(t => activeStatuses.includes(t.status))
+      .sort((a, b) => {
+        const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
+        if (priorityDiff !== 0) return priorityDiff
+        return b.updated_at - a.updated_at
+      })
+  }, [tasks])
 
-  const runningCount = sortedTasks.filter(t => t.status === 'running').length
-
-  // Click handler → focus on the bot
-  const handleTaskClick = useCallback((task: ActiveTask) => {
-    if (!task.sessionKey) return
-    const roomId = getRoomForSession(task.sessionKey) || defaultRoomId || 'headquarters'
-    focusBot(task.sessionKey, roomId)
-  }, [focusBot, getRoomForSession, defaultRoomId])
+  const inProgressCount = activeTasks.filter(t => t.status === 'in_progress').length
 
   // Drag handlers
   const handleDragStart = useCallback((e: React.MouseEvent) => {
@@ -128,7 +141,7 @@ export function TasksWindow({
         top: position.y,
         width: size.width,
         height: size.height,
-        zIndex: 50,
+        zIndex: 15,
         borderRadius: 14,
         background: 'rgba(255, 255, 255, 0.92)',
         backdropFilter: 'blur(20px)',
@@ -167,7 +180,7 @@ export function TasksWindow({
           >
             Active Tasks
           </span>
-          {runningCount > 0 && (
+          {inProgressCount > 0 && (
             <span
               style={{
                 fontSize: 10,
@@ -178,7 +191,7 @@ export function TasksWindow({
                 borderRadius: 4,
               }}
             >
-              {runningCount} running
+              {inProgressCount} in progress
             </span>
           )}
         </div>
@@ -216,7 +229,7 @@ export function TasksWindow({
 
       {/* Task list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
-        {sortedTasks.length === 0 ? (
+        {isLoading && activeTasks.length === 0 ? (
           <div
             style={{
               display: 'flex',
@@ -229,20 +242,30 @@ export function TasksWindow({
               textAlign: 'center',
             }}
           >
-            <span style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>📭</span>
+            <span style={{ fontSize: 13 }}>Loading tasks...</span>
+          </div>
+        ) : activeTasks.length === 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              padding: 24,
+              color: 'rgba(0, 0, 0, 0.4)',
+              textAlign: 'center',
+            }}
+          >
+            <span style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>✅</span>
             <span style={{ fontSize: 13 }}>No active tasks</span>
             <span style={{ fontSize: 11, marginTop: 4, opacity: 0.7 }}>
-              Tasks will appear here when agents are working
+              Tasks in progress will appear here
             </span>
           </div>
         ) : (
-          sortedTasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              opacity={getTaskOpacity(task)}
-              onClick={() => handleTaskClick(task)}
-            />
+          activeTasks.map((task) => (
+            <TaskItem key={task.id} task={task} />
           ))
         )}
       </div>
@@ -270,62 +293,33 @@ export function TasksWindow({
 // ── TaskItem Sub-Component ─────────────────────────────────────
 
 interface TaskItemProps {
-  task: ActiveTask
-  opacity: number
-  onClick: () => void
+  task: Task
 }
 
-function TaskItem({ task, opacity, onClick }: TaskItemProps) {
-  const isRunning = task.status === 'running'
+function TaskItem({ task }: TaskItemProps) {
+  const statusIcon = STATUS_ICONS[task.status]
+  const statusColor = STATUS_COLORS[task.status]
 
   const displayTitle =
-    task.title.length > 40 ? task.title.slice(0, 38) + '…' : task.title
+    task.title.length > 50 ? task.title.slice(0, 48) + '…' : task.title
 
   return (
-    <button
-      onClick={onClick}
+    <div
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 8,
         width: '100%',
         padding: '6px 10px',
-        border: 'none',
         borderRadius: 8,
-        background: isRunning ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
-        cursor: 'pointer',
-        textAlign: 'left',
-        opacity,
-        transition: 'opacity 0.5s ease, background 0.15s ease',
-        fontFamily: 'inherit',
+        background: task.status === 'in_progress' ? 'rgba(59, 130, 246, 0.08)' : 
+                    task.status === 'blocked' ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
         marginBottom: 2,
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = isRunning
-          ? 'rgba(59, 130, 246, 0.15)'
-          : 'rgba(0, 0, 0, 0.04)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = isRunning
-          ? 'rgba(59, 130, 246, 0.08)'
-          : 'transparent'
-      }}
-      title={`Click to focus on ${task.agentName || 'agent'}`}
     >
       {/* Status indicator */}
       <span style={{ fontSize: 14, flexShrink: 0 }}>
-        {isRunning ? (
-          <span
-            style={{
-              animation: 'spin 1s linear infinite',
-              display: 'inline-block',
-            }}
-          >
-            ⚙️
-          </span>
-        ) : (
-          '✅'
-        )}
+        {statusIcon}
       </span>
 
       {/* Task info */}
@@ -334,7 +328,7 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
           style={{
             fontSize: 12,
             fontWeight: 500,
-            color: isRunning ? '#1e40af' : '#059669',
+            color: statusColor,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -342,7 +336,7 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
         >
           {displayTitle}
         </div>
-        {task.agentName && (
+        {task.assigned_display_name && (
           <div
             style={{
               fontSize: 10,
@@ -353,22 +347,28 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
               gap: 3,
             }}
           >
-            <span>{task.agentIcon}</span>
-            <span>{task.agentName}</span>
+            <span>👤</span>
+            <span>{task.assigned_display_name}</span>
           </div>
         )}
       </div>
 
-      {/* Arrow indicator */}
-      <span style={{ fontSize: 12, color: 'rgba(0, 0, 0, 0.2)' }}>→</span>
-
-      {/* Spin animation */}
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </button>
+      {/* Priority badge */}
+      {(task.priority === 'urgent' || task.priority === 'high') && (
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 600,
+            color: task.priority === 'urgent' ? '#ef4444' : '#f59e0b',
+            background: task.priority === 'urgent' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+            padding: '1px 4px',
+            borderRadius: 3,
+            flexShrink: 0,
+          }}
+        >
+          {task.priority === 'urgent' ? 'URG' : 'HI'}
+        </span>
+      )}
+    </div>
   )
 }

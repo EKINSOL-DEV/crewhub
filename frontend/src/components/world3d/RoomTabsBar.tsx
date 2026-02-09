@@ -1,5 +1,7 @@
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import type { Room } from '@/hooks/useRooms'
+import { zoneRegistry } from '@/lib/zones'
+import { useZone } from '@/hooks/useZone'
 
 interface RoomTabsBarProps {
   rooms: Room[]
@@ -9,9 +11,11 @@ interface RoomTabsBarProps {
 
 export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsBarProps) {
   const { state, focusRoom, goOverview } = useWorldFocus()
+  const { activeZone, switchZone, isTransitioning } = useZone()
+  const zones = zoneRegistry.getAll()
 
   const handleTabClick = (roomId: string) => {
-    if (state.focusedRoomId === roomId) {
+    if (state.focusedRoomId === roomId && (state.level === 'room' || state.level === 'bot' || state.level === 'board')) {
       goOverview()
     } else {
       focusRoom(roomId)
@@ -25,7 +29,7 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
         bottom: 16,
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 50,
+        zIndex: 15,
         display: 'flex',
         gap: 6,
         padding: '6px 10px',
@@ -128,6 +132,56 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
         >
           🅿️ {parkingBotCount}
         </div>
+      )}
+
+      {/* Zone switcher */}
+      {zones.length > 1 && (
+        <>
+          <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.1)', flexShrink: 0 }} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <select
+              value={activeZone.id}
+              onChange={(e) => switchZone(e.target.value)}
+              disabled={isTransitioning}
+              style={{
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 28px 5px 12px',
+                borderRadius: 10,
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 500,
+                color: '#374151',
+                background: 'rgba(0,0,0,0.04)',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                fontFamily: 'system-ui, sans-serif',
+                opacity: isTransitioning ? 0.5 : 1,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+            >
+              {zones.map(z => (
+                <option key={z.id} value={z.id}>
+                  {z.icon} {z.name}
+                </option>
+              ))}
+            </select>
+            <span style={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: 10,
+              color: '#9ca3af',
+              pointerEvents: 'none',
+            }}>▼</span>
+          </div>
+        </>
       )}
     </div>
   )

@@ -22,7 +22,7 @@ export function RunOrSelfDialog({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 1000,
+        zIndex: 65,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

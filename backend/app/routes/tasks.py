@@ -430,157 +430,10 @@ async def get_project_tasks(
 
 
 # ========================================
-# SPAWN AGENT FOR TASK
+# RUN TASK WITH AGENT
 # ========================================
 
 from pydantic import BaseModel
-
-
-class SpawnRequest(BaseModel):
-    """Request body for spawning an agent on a task."""
-    agent_id: str
-    extra_instructions: Optional[str] = None
-
-
-class SpawnResponse(BaseModel):
-    """Response from spawning an agent."""
-    success: bool
-    session_key: str
-    task_id: str
-    agent_id: str
-
-
-@router.post("/{task_id}/spawn", response_model=SpawnResponse)
-async def spawn_agent_for_task(task_id: str, body: SpawnRequest):
-    """
-    Spawn an agent to work on a task.
-    
-    1. Fetches the task details
-    2. Builds a prompt from task title + description + extra instructions
-    3. Calls the gateway spawn endpoint (or returns mock for now)
-    4. Updates task status to in_progress
-    5. Returns the session key
-    """
-    try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
-            
-            # 1. Get the task
-            async with db.execute(
-                "SELECT * FROM tasks WHERE id = ?", (task_id,)
-            ) as cursor:
-                task = await cursor.fetchone()
-            
-            if not task:
-                raise HTTPException(status_code=404, detail="Task not found")
-            
-            # 2. Get agent info
-            async with db.execute(
-                "SELECT * FROM agents WHERE id = ?", (body.agent_id,)
-            ) as cursor:
-                agent = await cursor.fetchone()
-            
-            if not agent:
-                raise HTTPException(status_code=404, detail="Agent not found")
-            
-            # 3. Build prompt
-            prompt_parts = [
-                f"Task: {task['title']}",
-            ]
-            if task.get("description"):
-                prompt_parts.append(f"\nDescription: {task['description']}")
-            if body.extra_instructions:
-                prompt_parts.append(f"\nAdditional Instructions: {body.extra_instructions}")
-            
-            prompt = "\n".join(prompt_parts)
-            
-            # 4. Try to spawn via gateway (mock for now if gateway unavailable)
-            import aiohttp
-            import os
-            
-            gateway_url = os.environ.get("OPENCLAW_GATEWAY_URL", "http://localhost:3033")
-            session_key = None
-            
-            try:
-                async with aiohttp.ClientSession() as session:
-                    # Call gateway spawn endpoint
-                    spawn_payload = {
-                        "agent": agent["name"],  # e.g., "dev", "main"
-                        "prompt": prompt,
-                        "label": f"task-{task_id}",
-                    }
-                    
-                    async with session.post(
-                        f"{gateway_url}/api/sessions/spawn",
-                        json=spawn_payload,
-                        timeout=aiohttp.ClientTimeout(total=30)
-                    ) as resp:
-                        if resp.status == 200:
-                            data = await resp.json()
-                            session_key = data.get("session_key") or data.get("sessionKey")
-                        else:
-                            # Gateway call failed, generate mock session key
-                            logger.warning(f"Gateway spawn failed with status {resp.status}")
-                            session_key = f"mock:agent:{agent['name']}:task:{task_id}:{int(time.time())}"
-            except Exception as e:
-                # Gateway unavailable, generate mock session key
-                logger.warning(f"Gateway unavailable: {e}")
-                session_key = f"mock:agent:{agent['name']}:task:{task_id}:{int(time.time())}"
-            
-            # 5. Update task status to in_progress
-            now = int(time.time() * 1000)
-            await db.execute(
-                "UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?",
-                ("in_progress", now, task_id)
-            )
-            
-            # Add history event
-            await _add_history_event(
-                db,
-                task["project_id"],
-                "agent_spawned",
-                task_id,
-                f"agent:{agent['name']}",
-                {
-                    "agent_id": body.agent_id,
-                    "agent_name": agent["name"],
-                    "session_key": session_key,
-                    "prompt_preview": prompt[:200],
-                }
-            )
-            
-            await db.commit()
-            
-            # Broadcast SSE event
-            await broadcast("task-updated", {
-                "task_id": task_id,
-                "project_id": task["project_id"],
-                "room_id": task["room_id"],
-                "changes": {"status": {"old": task["status"], "new": "in_progress"}},
-            })
-            
-            await broadcast("agent-spawned", {
-                "task_id": task_id,
-                "agent_id": body.agent_id,
-                "session_key": session_key,
-            })
-            
-            return SpawnResponse(
-                success=True,
-                session_key=session_key,
-                task_id=task_id,
-                agent_id=body.agent_id,
-            )
-        finally:
-            await db.close()
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to spawn agent for task {task_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 class RunRequest(BaseModel):
@@ -633,7 +486,22 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
             if not agent:
                 raise HTTPException(status_code=404, detail="Agent not found")
             
-            # 3. Build prompt
+            # 3. Build prompt (with context envelope)
+            from app.services.context_envelope import build_crewhub_context, format_context_block
+
+            ctx_room_id = task.get("room_id")
+            if not ctx_room_id and agent:
+                ctx_room_id = agent.get("default_room_id")
+
+            context_block = ""
+            if ctx_room_id:
+                envelope = await build_crewhub_context(
+                    room_id=ctx_room_id,
+                    channel="crewhub-ui",
+                )
+                if envelope:
+                    context_block = format_context_block(envelope) + "\n\n"
+
             prompt_parts = [
                 f"**Task from Planner:** {task['title']}",
             ]
@@ -642,7 +510,7 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
             if body.extra_instructions:
                 prompt_parts.append(f"\n**Additional Instructions:** {body.extra_instructions}")
             
-            prompt = "\n".join(prompt_parts)
+            prompt = context_block + "\n".join(prompt_parts)
             
             # 4. Send to agent's main session via OpenClaw
             manager = await get_connection_manager()

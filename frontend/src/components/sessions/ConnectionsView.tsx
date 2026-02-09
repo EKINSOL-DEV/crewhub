@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -266,11 +265,11 @@ function ConnectionDialog({
       ref={dialogRef}
       onClose={() => onOpenChange(false)}
       onClick={(e) => e.target === e.currentTarget && onOpenChange(false)}
-      className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+      className="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg border shadow-lg w-full max-w-[500px] p-0 z-[85]"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-background border rounded-lg shadow-lg w-full max-w-[500px] mx-4 overflow-hidden"
+        className="bg-background rounded-lg overflow-hidden"
       >
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
@@ -375,7 +374,7 @@ function ConnectionDialog({
 // Main Component
 // ============================================================================
 
-export function ConnectionsView() {
+export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
   const [connections, setConnections] = useState<Connection[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -443,18 +442,26 @@ export function ConnectionsView() {
     })
 
     if (!response.ok) {
-      throw new Error("Failed to save connection")
+      const errData = await response.json().catch(() => ({}))
+      throw new Error(errData.detail || "Failed to save connection")
     }
 
+    setError(null)
     await fetchConnections()
   }
 
-  // Delete connection
+  // Delete connection (two-click: first click sets deletingId for confirm, second deletes)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this connection?")) {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id)
+      // Auto-reset after 3 seconds
+      setTimeout(() => setConfirmDeleteId((prev) => prev === id ? null : prev), 3000)
       return
     }
 
+    setConfirmDeleteId(null)
     setDeletingId(id)
     try {
       const response = await fetch(`/api/connections/${id}`, {
@@ -464,6 +471,8 @@ export function ConnectionsView() {
         throw new Error("Failed to delete connection")
       }
       await fetchConnections()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete")
     } finally {
       setDeletingId(null)
     }
@@ -471,19 +480,25 @@ export function ConnectionsView() {
 
   // Toggle enabled
   const handleToggleEnabled = async (connection: Connection) => {
-    const response = await fetch(`/api/connections/${connection.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ enabled: !connection.enabled }),
-    })
-    if (response.ok) {
+    try {
+      const response = await fetch(`/api/connections/${connection.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !connection.enabled }),
+      })
+      if (!response.ok) {
+        throw new Error("Failed to toggle connection")
+      }
       await fetchConnections()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to toggle")
     }
   }
 
   // Test connection
   const handleTestConnection = async (id: string) => {
     setTestingId(id)
+    setError(null)
     try {
       const response = await fetch(`/api/connections/${id}/connect`, {
         method: "POST",
@@ -494,10 +509,10 @@ export function ConnectionsView() {
       await fetchConnections()
       
       if (!data.connected) {
-        alert(`Connection failed: ${data.error || "Unknown error"}`)
+        setError(`Connection failed: ${data.error || "Unknown error"}`)
       }
     } catch (err) {
-      alert(`Test failed: ${err instanceof Error ? err.message : "Unknown error"}`)
+      setError(`Test failed: ${err instanceof Error ? err.message : "Unknown error"}`)
     } finally {
       setTestingId(null)
     }
@@ -516,22 +531,44 @@ export function ConnectionsView() {
   }
 
   return (
-    <div className="h-full flex flex-col view-gradient">
+    <div className={embedded ? "space-y-4" : "h-full flex flex-col view-gradient"}>
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Cable className="h-5 w-5 text-primary" />
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Connections
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Manage agent connections
-              </p>
+      <div className={embedded ? "flex items-center justify-between" : "p-4 border-b border-border"}>
+        {!embedded && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Cable className="h-5 w-5 text-primary" />
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Connections
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Manage agent connections
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchConnections}
+                disabled={loading}
+                className="gap-2"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+              <Button size="sm" onClick={handleAdd} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Connection
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+        )}
+        {embedded && (
+          <div className="flex items-center gap-2 ml-auto">
             <Button
               variant="outline"
               size="sm"
@@ -549,23 +586,34 @@ export function ConnectionsView() {
               Add Connection
             </Button>
           </div>
-        </div>
+        )}
       </div>
 
+      {/* Error banner (dismissible, shown alongside content) */}
+      {error && connections.length > 0 && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span className="flex-1">{error}</span>
+          <Button variant="ghost" size="sm" onClick={() => setError(null)} className="h-6 w-6 p-0">
+            ✕
+          </Button>
+        </div>
+      )}
+
       {/* Content */}
-      <ScrollArea className="flex-1">
+      <div className={embedded ? "" : "flex-1 overflow-auto"}>
         {loading && connections.length === 0 ? (
           <div className="flex items-center justify-center h-64">
             <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : error ? (
+        ) : error && connections.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
             <p className="text-muted-foreground">{error}</p>
             <Button
               variant="outline"
               className="mt-4"
-              onClick={fetchConnections}
+              onClick={() => { setError(null); fetchConnections() }}
             >
               Try Again
             </Button>
@@ -673,11 +721,15 @@ export function ConnectionsView() {
                         size="sm"
                         onClick={() => handleDelete(connection.id)}
                         disabled={deletingId === connection.id}
-                        title="Delete connection"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                        title={confirmDeleteId === connection.id ? "Click again to confirm" : "Delete connection"}
+                        className={confirmDeleteId === connection.id 
+                          ? "bg-red-500 text-white hover:bg-red-600" 
+                          : "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}
                       >
                         {deletingId === connection.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : confirmDeleteId === connection.id ? (
+                          <span className="text-xs px-1">Confirm?</span>
                         ) : (
                           <Trash2 className="h-4 w-4" />
                         )}
@@ -695,7 +747,7 @@ export function ConnectionsView() {
             ))}
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       {/* Add/Edit Dialog */}
       <ConnectionDialog

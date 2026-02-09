@@ -160,7 +160,7 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        zIndex: 70,
+        zIndex: 30,
         animation: 'pickerFadeIn 0.2s ease-out',
       }}
     >

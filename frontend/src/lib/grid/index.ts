@@ -10,6 +10,7 @@ export type {
   GridCell,
   RoomBlueprint,
   BuildingLayout,
+  PropPlacement,
 } from './types'
 
 // Blueprint utilities

@@ -1,317 +1,283 @@
 /**
  * Zen Activity Panel
- * Real-time activity feed showing what agents are doing
- * Shows session labels and status - same as 3D view bubbles
+ * Shows active tasks (running subagents) prominently,
+ * with a collapsible SSE event log below.
  */
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { sseManager } from '@/lib/sseManager'
-import type { CrewSession } from '@/lib/api'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
-import { useDemoMode } from '@/contexts/DemoContext'
-import { getSessionStatus, type SessionStatus } from '@/lib/minionUtils'
+import { useActiveTasks, type ActiveTask } from '@/hooks/useActiveTasks'
+import type { CrewSession } from '@/lib/api'
 
-// ── Activity Event Types ──────────────────────────────────────────
+// ── Activity Event Types (for event log) ──────────────────────
 
 interface ActivityEvent {
   id: string
-  type: 'activity' | 'started' | 'completed' | 'status'
+  type: 'created' | 'updated' | 'removed' | 'status'
   timestamp: number
   sessionKey: string
-  agentName: string
-  activity: string
+  sessionName: string
+  description: string
   icon: string
-  status: SessionStatus
-  tokens?: number
+  details?: string
 }
 
-// ── Event Formatting ──────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────
 
-function getAgentName(session: CrewSession): string {
-  return session.displayName || session.label || session.key?.split(':')[1] || 'Agent'
+function getAgentName(session: Partial<CrewSession>): string {
+  return session.displayName || session.label || session.key?.split(':').pop() || 'Agent'
 }
 
-function getAgentIcon(session: CrewSession): string {
-  const key = session.key?.toLowerCase() || ''
+function getSessionIcon(session: Partial<CrewSession>): string {
+  const kind = session.kind?.toLowerCase() || ''
   const channel = session.channel?.toLowerCase() || ''
-  
-  if (key.includes('dev')) return '💻'
-  if (key.includes('flowy') || key.includes('marketing')) return '📣'
-  if (key.includes('reviewer')) return '👀'
-  if (key.includes('gamedev')) return '🎮'
-  if (key.includes('creator')) return '🎬'
+  if (kind.includes('dev') || kind.includes('code')) return '💻'
+  if (kind.includes('chat')) return '💬'
+  if (kind.includes('task')) return '📋'
   if (channel.includes('slack')) return '📢'
   if (channel.includes('discord')) return '🎮'
   if (channel.includes('whatsapp')) return '📱'
-  if (channel.includes('telegram')) return '✈️'
-  
   return '🤖'
 }
 
 function formatEventTime(timestamp: number): string {
-  const date = new Date(timestamp)
-  return date.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    second: '2-digit',
-    hour12: false 
+  return new Date(timestamp).toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   })
 }
 
-function getActivityLabel(session: CrewSession): string {
-  // Use label if available
-  if (session.label && session.label.length > 0) {
-    return session.label
+function getStatusColor(status: string): string {
+  switch (status) {
+    case 'running': return 'var(--zen-success)'
+    case 'done': return 'var(--zen-fg-dim)'
+    default: return 'var(--zen-fg-muted)'
   }
-  
-  // Fall back to model info
-  if (session.model) {
-    return `Using ${session.model.split('/').pop()}`
-  }
-  
-  return 'Active'
 }
 
-// ── Activity Item Component ───────────────────────────────────────
-
-interface ActivityItemProps {
-  event: ActivityEvent
+function getStatusLabel(status: string): string {
+  switch (status) {
+    case 'running': return '● Running'
+    case 'done': return '✓ Done'
+    default: return status
+  }
 }
 
-function ActivityItem({ event }: ActivityItemProps) {
-  const statusColors: Record<SessionStatus, string> = {
-    active: 'var(--zen-success)',
-    idle: 'var(--zen-warning)',
-    sleeping: 'var(--zen-fg-muted)',
-  }
-  
-  const statusLabels: Record<SessionStatus, string> = {
-    active: 'ACT',
-    idle: 'IDL',
-    sleeping: 'SLP',
-  }
-  
+// ── Active Task Item ──────────────────────────────────────────
+
+function ActiveTaskItem({ task, opacity }: { task: ActiveTask; opacity: number }) {
   return (
-    <div className={`zen-activity-item zen-activity-${event.status} zen-fade-in`}>
+    <div
+      className="zen-active-task-item zen-fade-in"
+      style={{ opacity }}
+    >
+      <div className="zen-active-task-icon">
+        {task.agentIcon || '🤖'}
+      </div>
+      <div className="zen-active-task-content">
+        <div className="zen-active-task-title">{task.title}</div>
+        <div className="zen-active-task-meta">
+          {task.agentName && (
+            <span className="zen-active-task-agent">{task.agentName}</span>
+          )}
+          <span
+            className="zen-active-task-status"
+            style={{ color: getStatusColor(task.status) }}
+          >
+            {getStatusLabel(task.status)}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Event Log Item ────────────────────────────────────────────
+
+function EventLogItem({ event }: { event: ActivityEvent }) {
+  const typeColors: Record<string, string> = {
+    created: 'var(--zen-success)',
+    updated: 'var(--zen-info)',
+    removed: 'var(--zen-error)',
+    status: 'var(--zen-warning)',
+  }
+
+  return (
+    <div className="zen-activity-item">
       <div className="zen-activity-time">{formatEventTime(event.timestamp)}</div>
-      
-      <div 
-        className="zen-activity-type" 
-        style={{ color: statusColors[event.status] }}
-      >
-        {statusLabels[event.status]}
+      <div className="zen-activity-type" style={{ color: typeColors[event.type] || 'var(--zen-fg-muted)' }}>
+        {event.type.toUpperCase().slice(0, 3)}
       </div>
-      
       <div className="zen-activity-icon">{event.icon}</div>
-      
       <div className="zen-activity-content">
-        <span className="zen-activity-agent">{event.agentName}</span>
-        <span className="zen-activity-desc">{event.activity}</span>
-        {event.tokens !== undefined && event.tokens > 0 && (
-          <span className="zen-activity-details">{event.tokens.toLocaleString()} tokens</span>
-        )}
+        <span className="zen-activity-agent">{event.sessionName}</span>
+        <span className="zen-activity-desc">{event.description}</span>
+        {event.details && <span className="zen-activity-details">{event.details}</span>}
       </div>
     </div>
   )
 }
 
-// ── Current Sessions List ─────────────────────────────────────────
-
-interface CurrentSessionItemProps {
-  session: CrewSession
-}
-
-function CurrentSessionItem({ session }: CurrentSessionItemProps) {
-  const status = getSessionStatus(session)
-  const statusColors: Record<SessionStatus, string> = {
-    active: 'var(--zen-success)',
-    idle: 'var(--zen-warning)',
-    sleeping: 'var(--zen-fg-muted)',
-  }
-  
-  return (
-    <div className={`zen-activity-current-item zen-activity-${status}`}>
-      <div 
-        className="zen-activity-status-dot"
-        style={{ background: statusColors[status] }}
-      />
-      <span className="zen-activity-icon">{getAgentIcon(session)}</span>
-      <div className="zen-activity-current-content">
-        <span className="zen-activity-agent">{getAgentName(session)}</span>
-        <span className="zen-activity-desc">{getActivityLabel(session)}</span>
-      </div>
-      {session.totalTokens !== undefined && session.totalTokens > 0 && (
-        <span className="zen-activity-tokens">{session.totalTokens.toLocaleString()}</span>
-      )}
-    </div>
-  )
-}
-
-// ── Empty State ───────────────────────────────────────────────────
+// ── Empty State ───────────────────────────────────────────────
 
 function EmptyState() {
   return (
     <div className="zen-activity-empty">
-      <div className="zen-empty-icon">⚡</div>
-      <div className="zen-empty-title">No active agents</div>
+      <div className="zen-empty-icon">✨</div>
+      <div className="zen-empty-title">No active tasks</div>
       <div className="zen-empty-subtitle">
-        Agent activity will appear here
+        Running subagents and tasks will appear here
       </div>
     </div>
   )
 }
 
-// ── Main Component ────────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────
 
 const MAX_EVENTS = 50
+const BATCH_DELAY_MS = 100
 
 export function ZenActivityPanel() {
-  const { sessions: realSessions } = useSessionsStream()
-  const { isDemoMode, demoSessions } = useDemoMode()
-  const sessions = isDemoMode ? demoSessions : realSessions
-  
+  // Active tasks from sessions
+  const { sessions, connected } = useSessionsStream(true)
+  const { tasks, runningTasks, getTaskOpacity } = useActiveTasks({
+    sessions,
+    enabled: true,
+  })
+
+  // SSE event log (collapsed by default)
   const [events, setEvents] = useState<ActivityEvent[]>([])
-  const [connected, setConnected] = useState(false)
-  const [viewMode, setViewMode] = useState<'current' | 'history'>('current')
-  const listRef = useRef<HTMLDivElement>(null)
-  const prevSessionsRef = useRef<Map<string, { label: string; tokens: number }>>(new Map())
-  
-  // Get active/idle sessions (not sleeping)
-  const activeSessions = useMemo(() => 
-    sessions.filter(s => getSessionStatus(s) !== 'sleeping'),
-    [sessions]
-  )
-  
-  // Track session changes and add to history
+  const [showLog, setShowLog] = useState(false)
+  const batchedEventsRef = useRef<ActivityEvent[]>([])
+  const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flushBatch = useCallback(() => {
+    if (batchedEventsRef.current.length === 0) return
+    const newEvents = [...batchedEventsRef.current]
+    batchedEventsRef.current = []
+    setEvents(prev => [...newEvents, ...prev].slice(0, MAX_EVENTS))
+  }, [])
+
+  const addEvent = useCallback((event: ActivityEvent) => {
+    batchedEventsRef.current.push(event)
+    if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current)
+    batchTimeoutRef.current = setTimeout(flushBatch, BATCH_DELAY_MS)
+  }, [flushBatch])
+
+  // Subscribe to SSE events for the log
   useEffect(() => {
     const genId = () => `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const now = Date.now()
-    const newEvents: ActivityEvent[] = []
-    
-    for (const session of sessions) {
-      const prev = prevSessionsRef.current.get(session.key)
-      const status = getSessionStatus(session)
-      
-      // Only track active sessions
-      if (status === 'sleeping') continue
-      
-      // New session or label changed
-      if (!prev || prev.label !== session.label) {
-        newEvents.push({
-          id: genId(),
-          type: prev ? 'activity' : 'started',
-          timestamp: now,
-          sessionKey: session.key,
-          agentName: getAgentName(session),
-          activity: getActivityLabel(session),
-          icon: getAgentIcon(session),
-          status,
-          tokens: session.totalTokens,
+
+    const handleCreated = (e: MessageEvent) => {
+      try {
+        const session: CrewSession = JSON.parse(e.data)
+        addEvent({
+          id: genId(), type: 'created', timestamp: Date.now(),
+          sessionKey: session.key, sessionName: getAgentName(session),
+          description: 'Session started', icon: getSessionIcon(session),
+          details: session.channel ? `via ${session.channel}` : undefined,
         })
-      }
-      
-      // Update tracking
-      prevSessionsRef.current.set(session.key, {
-        label: session.label || '',
-        tokens: session.totalTokens || 0,
-      })
+      } catch { /* ignore */ }
     }
-    
-    if (newEvents.length > 0) {
-      setEvents(prev => [...newEvents, ...prev].slice(0, MAX_EVENTS))
+
+    const handleUpdated = (e: MessageEvent) => {
+      try {
+        const session: CrewSession = JSON.parse(e.data)
+        addEvent({
+          id: genId(), type: 'updated', timestamp: Date.now(),
+          sessionKey: session.key, sessionName: getAgentName(session),
+          description: 'Activity', icon: getSessionIcon(session),
+          details: session.totalTokens ? `${session.totalTokens.toLocaleString()} tokens` : undefined,
+        })
+      } catch { /* ignore */ }
     }
-  }, [sessions])
-  
-  // Subscribe to SSE connection state
-  useEffect(() => {
-    const unsubscribe = sseManager.onStateChange((state) => {
-      setConnected(state === 'connected')
-    })
-    return unsubscribe
-  }, [])
-  
-  // Clear history
-  const handleClear = useCallback(() => {
-    setEvents([])
-  }, [])
-  
+
+    const handleRemoved = (e: MessageEvent) => {
+      try {
+        const { key } = JSON.parse(e.data)
+        addEvent({
+          id: genId(), type: 'removed', timestamp: Date.now(),
+          sessionKey: key, sessionName: key.split(':').pop() || 'Agent',
+          description: 'Session ended', icon: '🔴',
+        })
+      } catch { /* ignore */ }
+    }
+
+    const unsub1 = sseManager.subscribe('session-created', handleCreated)
+    const unsub2 = sseManager.subscribe('session-updated', handleUpdated)
+    const unsub3 = sseManager.subscribe('session-removed', handleRemoved)
+
+    return () => {
+      unsub1(); unsub2(); unsub3()
+      if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current)
+    }
+  }, [addEvent])
+
   return (
     <div className="zen-activity-panel">
-      {/* Header with controls */}
+      {/* Header */}
       <div className="zen-activity-header">
         <div className="zen-activity-status">
           <span className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`} />
-          <span>{connected ? 'Live' : 'Connecting...'}</span>
+          <span>{runningTasks.length} active task{runningTasks.length !== 1 ? 's' : ''}</span>
         </div>
-        
-        <div className="zen-activity-tabs">
+        <div className="zen-activity-controls">
           <button
             type="button"
-            className={`zen-activity-tab ${viewMode === 'current' ? 'zen-activity-tab-active' : ''}`}
-            onClick={() => setViewMode('current')}
+            className={`zen-btn zen-btn-small ${showLog ? 'zen-btn-active' : ''}`}
+            onClick={() => setShowLog(v => !v)}
+            title="Toggle event log"
           >
-            Current
-          </button>
-          <button
-            type="button"
-            className={`zen-activity-tab ${viewMode === 'history' ? 'zen-activity-tab-active' : ''}`}
-            onClick={() => setViewMode('history')}
-          >
-            History
+            Log {showLog ? '▾' : '▸'}
           </button>
         </div>
-        
-        {viewMode === 'history' && events.length > 0 && (
-          <button
-            type="button"
-            className="zen-btn zen-btn-small"
-            onClick={handleClear}
-            title="Clear history"
-          >
-            Clear
-          </button>
-        )}
       </div>
-      
-      {/* Current view - active sessions */}
-      {viewMode === 'current' && (
-        activeSessions.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="zen-activity-current-list">
-            {activeSessions.map(session => (
-              <CurrentSessionItem key={session.key} session={session} />
-            ))}
-          </div>
-        )
+
+      {/* Active Tasks */}
+      {tasks.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="zen-active-tasks-list">
+          {tasks.map(task => (
+            <ActiveTaskItem
+              key={task.id}
+              task={task}
+              opacity={getTaskOpacity(task)}
+            />
+          ))}
+        </div>
       )}
-      
-      {/* History view - event log */}
-      {viewMode === 'history' && (
-        events.length === 0 ? (
-          <div className="zen-activity-empty">
-            <div className="zen-empty-icon">📜</div>
-            <div className="zen-empty-title">No history yet</div>
-            <div className="zen-empty-subtitle">
-              Activity changes will be logged here
-            </div>
+
+      {/* Collapsible Event Log */}
+      {showLog && (
+        <div className="zen-activity-log-section">
+          <div className="zen-activity-log-header">
+            <span>Event Log</span>
+            {events.length > 0 && (
+              <button
+                type="button"
+                className="zen-btn zen-btn-small"
+                onClick={() => { setEvents([]); batchedEventsRef.current = [] }}
+              >
+                Clear
+              </button>
+            )}
           </div>
-        ) : (
-          <div ref={listRef} className="zen-activity-list">
-            {events.map(event => (
-              <ActivityItem key={event.id} event={event} />
-            ))}
+          <div className="zen-activity-list">
+            {events.length === 0 ? (
+              <div className="zen-activity-log-empty">No events yet</div>
+            ) : (
+              events.map(event => <EventLogItem key={event.id} event={event} />)
+            )}
           </div>
-        )
+        </div>
       )}
-      
-      {/* Footer with count */}
+
+      {/* Footer */}
       <div className="zen-activity-footer">
         <span className="zen-activity-count">
-          {viewMode === 'current' 
-            ? `${activeSessions.length} active`
-            : `${events.length} event${events.length !== 1 ? 's' : ''}`
-          }
+          {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+          {events.length > 0 && ` · ${events.length} event${events.length !== 1 ? 's' : ''}`}
         </span>
       </div>
     </div>

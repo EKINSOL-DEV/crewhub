@@ -13,7 +13,10 @@ from app.routes import project_files, tasks, project_history, context
 from app.routes.project_files import discover_router as project_discover_router
 from app.routes.chat import router as chat_router
 from app.routes import discovery, settings as settings_routes, backup, onboarding
+from app.routes.self_routes import router as self_router
+from app.routes.auth_routes import router as auth_router
 from app.db.database import init_database, check_database_health
+from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
 from app.routes.sse import broadcast
 
@@ -114,6 +117,11 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Initializing database...")
     await init_database()
+    
+    # Initialize API keys table and generate default keys
+    logger.info("Initializing API keys...")
+    await init_api_keys()
+    
     health_info = await check_database_health()
     logger.info(f"Database health: {health_info}")
     
@@ -201,6 +209,10 @@ app.include_router(context.router, prefix="/api/sessions", tags=["context"])
 
 # Media serving (images in chat)
 app.include_router(media.router, tags=["media"])
+
+# Phase 1: Auth + Self-service endpoints
+app.include_router(self_router)
+app.include_router(auth_router)
 
 
 @app.get("/")

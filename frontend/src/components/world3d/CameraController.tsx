@@ -4,6 +4,7 @@ import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { useDragState } from '@/contexts/DragDropContext'
 import { botPositionRegistry } from './Bot3D'
+import { getIsPropBeingMoved, getIsPropBeingDragged } from '@/hooks/usePropMovement'
 import CameraControlsImpl from 'camera-controls'
 import * as THREE from 'three'
 
@@ -183,12 +184,26 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const wasdRotVelocity = useRef(0)
 
   // ─── Disable camera controls during drag ──────────────────────
+  // Tracks both bot drag (DragDropContext) and prop drag (usePropMovement)
 
   useEffect(() => {
     const controls = controlsRef.current
     if (!controls) return
     controls.enabled = !isDragging && !isInteractingWithUI
   }, [isDragging, isInteractingWithUI])
+
+  // Also disable when prop is being dragged (polled each frame)
+  useFrame(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+    const propDragging = getIsPropBeingDragged()
+    // Only update if changed to avoid unnecessary work
+    if (propDragging && controls.enabled) {
+      controls.enabled = false
+    } else if (!propDragging && !isDragging && !isInteractingWithUI && !controls.enabled) {
+      controls.enabled = true
+    }
+  })
 
   // ─── WASD keyboard listeners (overview + room only) ───────────
 
@@ -209,6 +224,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return
+      // Don't move camera when a prop is selected for movement or being dragged
+      if (getIsPropBeingMoved() || getIsPropBeingDragged()) return
       switch (e.code) {
         case 'KeyW': case 'ArrowUp':    _wasdKeys.forward = true; break
         case 'KeyS': case 'ArrowDown':  _wasdKeys.backward = true; break

@@ -263,7 +263,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         className="
-          fixed inset-0 z-[100] m-0 h-screen w-screen max-h-none max-w-none
+          fixed inset-0 z-[60] m-0 h-screen w-screen max-h-none max-w-none
           bg-transparent p-0 overflow-y-auto
           backdrop:bg-black/80
           open:flex open:items-center open:justify-center

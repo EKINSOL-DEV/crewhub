@@ -499,7 +499,7 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
       right: 16,
       bottom: 80,
       width: 420,
-      zIndex: 60,
+      zIndex: 30,
       background: 'rgba(255, 255, 255, 0.92)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',

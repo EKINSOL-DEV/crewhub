@@ -59,6 +59,7 @@ import { Room3D } from './Room3D'
 import { Bot3D, type BotStatus } from './Bot3D'
 import { BotInfoPanel } from './BotInfoPanel'
 import { RoomInfoPanel } from './RoomInfoPanel'
+import { ContextInspector } from './ContextInspector'
 import { ProjectDocsPanel } from './ProjectDocsPanel'
 import { useRooms, type Room } from '@/hooks/useRooms'
 import { useAgentsRegistry, type AgentRuntime } from '@/hooks/useAgentsRegistry'
@@ -83,7 +84,7 @@ import { WorldNavigation } from './WorldNavigation'
 import { ActionBar } from './ActionBar'
 import { TasksWindow } from './TasksWindow'
 import { AgentTopBar } from './AgentTopBar'
-import { useActiveTasks } from '@/hooks/useActiveTasks'
+import { useTasks } from '@/hooks/useTasks'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
@@ -825,7 +826,7 @@ function DragStatusIndicator() {
         top: 12,
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 60,
+        zIndex: 25,
         display: 'flex',
         alignItems: 'center',
         gap: 8,
@@ -993,6 +994,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
   const [docsPanel, setDocsPanel] = useState<{ projectId: string; projectName: string; projectColor?: string } | null>(null)
+  const [contextInspector, setContextInspector] = useState<{ roomId: string; roomName: string } | null>(null)
 
   // TaskBoard overlay state
   const [taskBoardOpen, setTaskBoardOpen] = useState(false)
@@ -1041,21 +1043,14 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     [visibleSessions, parkingSessions],
   )
 
-  // Active tasks for ActionBar badge and TasksWindow
-  const { tasks: activeTasks, getTaskOpacity, runningTasks } = useActiveTasks({
-    sessions: allSessions,
-    enabled: focusState.level !== 'firstperson',
+  // Active tasks from task board for ActionBar badge and TasksWindow
+  const { tasks: boardTasks } = useTasks({
+    autoFetch: focusState.level !== 'firstperson',
   })
-
-  // Helper to get room for session (for TasksWindow)
-  const getTaskRoomForSession = useCallback((sessionKey: string) => {
-    const session = allSessions.find(s => s.key === sessionKey)
-    return getRoomForSession(sessionKey, {
-      label: session?.label,
-      model: session?.model,
-      channel: session?.lastChannel,
-    })
-  }, [allSessions, getRoomForSession])
+  const activeTaskCount = useMemo(() => 
+    boardTasks.filter(t => t.status === 'in_progress' || t.status === 'review').length,
+    [boardTasks]
+  )
 
   const focusedSession = useMemo(() => {
     if (!focusState.focusedBotKey) return null
@@ -1169,7 +1164,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Action Bar (left side, vertical - Photoshop-style toolbar) */}
         {focusState.level !== 'firstperson' && (
           <ActionBar
-            runningTaskCount={runningTasks.length}
+            runningTaskCount={activeTaskCount}
             tasksWindowOpen={tasksWindowOpen}
             onToggleTasksWindow={() => setTasksWindowOpen(prev => !prev)}
           />
@@ -1178,10 +1173,6 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Tasks Window (draggable, toggled via ActionBar) */}
         {focusState.level !== 'firstperson' && tasksWindowOpen && (
           <TasksWindow
-            tasks={activeTasks}
-            getTaskOpacity={getTaskOpacity}
-            getRoomForSession={getTaskRoomForSession}
-            defaultRoomId={rooms[0]?.id}
             onClose={() => setTasksWindowOpen(false)}
           />
         )}
@@ -1189,7 +1180,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Fullscreen toggle button */}
         <button
           onClick={toggleFullscreen}
-          className="absolute top-4 right-4 z-[60] p-2 rounded-lg backdrop-blur-md bg-white/60 hover:bg-white/80 border border-gray-200/50 shadow-sm text-gray-600 hover:text-gray-900 transition-all opacity-60 hover:opacity-100"
+          className="absolute top-4 right-4 z-[25] p-2 rounded-lg backdrop-blur-md bg-white/60 hover:bg-white/80 border border-gray-200/50 shadow-sm text-gray-600 hover:text-gray-900 transition-all opacity-60 hover:opacity-100"
           title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
         >
           {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
@@ -1197,7 +1188,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
         {/* Overlay controls hint (hide when any panel is showing or in first person) */}
         {focusState.level !== 'bot' && focusState.level !== 'room' && focusState.level !== 'firstperson' && !isFullscreen && (
-          <div className="absolute top-4 right-16 z-50">
+          <div className="absolute top-4 right-16 z-20">
             <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
               <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
               <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast</div>
@@ -1222,6 +1213,16 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               setTaskBoardOpen(true)
             }}
             onOpenHQBoard={() => setHqBoardOpen(true)}
+            onOpenContext={(roomId, roomName) => setContextInspector({ roomId, roomName })}
+          />
+        )}
+
+        {/* Context Inspector */}
+        {contextInspector && (
+          <ContextInspector
+            roomId={contextInspector.roomId}
+            roomName={contextInspector.roomName}
+            onClose={() => setContextInspector(null)}
           />
         )}
 

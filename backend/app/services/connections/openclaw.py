@@ -837,18 +837,6 @@ class OpenClawConnection(AgentConnection):
         result = await self.call("session.status", params)
         return result is not None
     
-    async def spawn_session(
-        self,
-        task: str,
-        model: str = "sonnet",
-        label: Optional[str] = None,
-    ) -> Optional[dict[str, Any]]:
-        """Spawn a new sub-agent session."""
-        params: dict[str, Any] = {"task": task, "model": model}
-        if label:
-            params["label"] = label
-        return await self.call("sessions.spawn", params, timeout=120.0)
-    
     # ── Cron management ─────────────────────────────────────────────
     
     async def list_cron_jobs(self, all_jobs: bool = True) -> list[dict[str, Any]]:

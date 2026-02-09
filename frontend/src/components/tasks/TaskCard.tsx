@@ -177,7 +177,7 @@ export const TaskCard = memo(function TaskCard({
                   boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
                   border: '1px solid #e5e7eb',
                   minWidth: 160,
-                  zIndex: 100,
+                  zIndex: 10,
                   overflow: 'hidden',
                 }}
               >

@@ -36,7 +36,7 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
     <Html
       position={[0, 0.5, 0]}
       center
-      zIndexRange={[50, 60]}
+      zIndexRange={[10, 15]}
       style={{ pointerEvents: 'auto' }}
     >
       <div

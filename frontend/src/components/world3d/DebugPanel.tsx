@@ -93,7 +93,7 @@ export function DebugPanel() {
 
   return (
     <div
-      className="fixed z-[60] select-none"
+      className="fixed z-[25] select-none"
       style={{
         left: pos.x,
         top: pos.y,

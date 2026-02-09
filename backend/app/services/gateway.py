@@ -82,10 +82,6 @@ class GatewayClient:
         conn = await self._get_conn()
         return await conn.patch_session(session_id, model) if conn else False
     
-    async def spawn_session(self, task: str, model: str = "sonnet", label=None):
-        conn = await self._get_conn()
-        return await conn.spawn_session(task, model, label) if conn else None
-    
     async def list_cron_jobs(self, all_jobs: bool = True):
         conn = await self._get_conn()
         return await conn.list_cron_jobs(all_jobs) if conn else []

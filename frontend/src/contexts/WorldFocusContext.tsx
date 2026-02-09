@@ -48,11 +48,19 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WorldFocusState>(defaultState)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const setWithAnimation = useCallback((updater: (prev: WorldFocusState) => WorldFocusState) => {
-    // Debounce rapid clicks (200ms)
+  const setWithAnimation = useCallback((updater: (prev: WorldFocusState) => WorldFocusState, _caller?: string) => {
+    // Debounce rapid clicks (50ms)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      setState(prev => ({ ...updater(prev), isAnimating: true }))
+      setState(prev => {
+        // Guard: don't change state during camera animation to prevent glitches
+        if (prev.isAnimating) return prev
+        const next = { ...updater(prev), isAnimating: true }
+        if (import.meta.env.DEV) {
+          console.log(`[WorldFocus] ${_caller || '?'}: ${prev.level}→${next.level} room=${next.focusedRoomId} bot=${next.focusedBotKey}`)
+        }
+        return next
+      })
       // Clear animating after camera transition (~900ms)
       setTimeout(() => setState(prev => ({ ...prev, isAnimating: false })), 900)
     }, 50)
@@ -60,9 +68,9 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
 
   const focusRoom = useCallback((roomId: string) => {
     setWithAnimation(prev => {
-      // If already focused on this room, go back to overview
+      // Already at room level for this room → no-op (use goOverview to leave)
       if (prev.level === 'room' && prev.focusedRoomId === roomId) {
-        return { ...defaultState }
+        return prev
       }
       return {
         level: 'room',
@@ -70,7 +78,7 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
         focusedBotKey: null,
         isAnimating: false,
       }
-    })
+    }, 'focusRoom')
   }, [setWithAnimation])
 
   const focusBoard = useCallback((roomId: string) => {
@@ -79,7 +87,7 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
       focusedRoomId: roomId,
       focusedBotKey: null,
       isAnimating: false,
-    }))
+    }), 'focusBoard')
   }, [setWithAnimation])
 
   const focusBot = useCallback((botKey: string, roomId: string) => {
@@ -88,7 +96,7 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
       focusedRoomId: roomId,
       focusedBotKey: botKey,
       isAnimating: false,
-    }))
+    }), 'focusBot')
   }, [setWithAnimation])
 
   const goBack = useCallback(() => {
@@ -111,11 +119,11 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
         }
       }
       return { ...defaultState }
-    })
+    }, 'goBack')
   }, [setWithAnimation])
 
   const goOverview = useCallback(() => {
-    setWithAnimation(() => ({ ...defaultState }))
+    setWithAnimation(() => ({ ...defaultState }), 'goOverview')
   }, [setWithAnimation])
 
   const enterFirstPerson = useCallback(() => {

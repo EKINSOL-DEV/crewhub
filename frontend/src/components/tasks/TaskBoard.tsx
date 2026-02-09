@@ -332,7 +332,7 @@ export function TaskBoard({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
+            zIndex: 65,
           }}
           onClick={() => setShowCreateForm(false)}
         >
@@ -377,7 +377,7 @@ export function TaskBoard({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
+            zIndex: 65,
           }}
           onClick={() => setEditingTask(null)}
         >

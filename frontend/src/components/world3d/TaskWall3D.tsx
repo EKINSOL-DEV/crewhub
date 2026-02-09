@@ -31,14 +31,20 @@ export function TaskWall3D({
   const { setInteractingWithUI } = useDragActions()
   const { state: focusState, focusBoard } = useWorldFocus()
   
+  // Only enable pointer events when this room is focused (prevent other rooms from intercepting clicks)
+  const isThisRoomFocused = focusState.focusedRoomId === roomId
+  const pointerEventsEnabled = isThisRoomFocused ? 'auto' : 'none'
+  
   // Block camera controls when interacting with the board
   const handlePointerEnter = useCallback(() => {
+    if (!isThisRoomFocused) return
     setInteractingWithUI(true)
-  }, [setInteractingWithUI])
+  }, [isThisRoomFocused, setInteractingWithUI])
   
   const handlePointerLeave = useCallback(() => {
+    if (!isThisRoomFocused) return
     setInteractingWithUI(false)
-  }, [setInteractingWithUI])
+  }, [isThisRoomFocused, setInteractingWithUI])
 
   return (
     <group 
@@ -72,11 +78,11 @@ export function TaskWall3D({
         center
         transform
         scale={0.28}
-        zIndexRange={[50, 60]}
+        zIndexRange={[10, 20]}
         style={{
           width: `${width * 140}px`,
           height: `${height * 140}px`,
-          pointerEvents: 'auto',
+          pointerEvents: pointerEventsEnabled,
         }}
       >
         <div
@@ -116,8 +122,8 @@ export function TaskWall3D({
           center
           transform
           scale={0.275}
-          zIndexRange={[50, 60]}
-          style={{ pointerEvents: 'auto' }}
+          zIndexRange={[10, 20]}
+          style={{ pointerEvents: pointerEventsEnabled }}
         >
           <button
             onClick={(e) => {

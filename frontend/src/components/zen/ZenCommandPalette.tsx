@@ -279,7 +279,6 @@ export interface UseCommandRegistryOptions {
   onSaveLayout?: () => void
   onLoadLayout?: () => void
   onNewChat?: () => void
-  onSpawnSession?: () => void
   onAddPanel?: (type: string) => void
 }
 
@@ -315,15 +314,6 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
         shortcut: 'Ctrl+N',
         category: 'navigation',
         action: options.onNewChat || (() => {}),
-      },
-      {
-        id: 'nav.spawn-session',
-        label: 'Spawn Session',
-        description: 'Start a new agent session',
-        icon: '🚀',
-        shortcut: 'Ctrl+Shift+N',
-        category: 'navigation',
-        action: options.onSpawnSession || (() => {}),
       },
       
       // Layout

@@ -1,6 +1,6 @@
 """
 Session management routes.
-Handles listing, viewing, spawning, and killing agent sessions.
+Handles listing, viewing, and killing agent sessions.
 
 Uses ConnectionManager to aggregate sessions from all agent connections.
 """
@@ -15,12 +15,6 @@ router = APIRouter()
 
 class SessionPatch(BaseModel):
     model: Optional[str] = None
-
-
-class SessionSpawn(BaseModel):
-    task: str
-    model: str = "sonnet"
-    label: Optional[str] = None
 
 
 @router.get("")
@@ -103,27 +97,3 @@ async def kill_session(session_key: str):
         raise HTTPException(status_code=500, detail="Failed to kill session")
     
     return {"success": True, "sessionKey": session_key}
-
-
-@router.post("/spawn")
-async def spawn_session(spawn: SessionSpawn):
-    """Spawn a new sub-agent session.
-    
-    Args:
-        spawn: Task description, model, and optional label
-    """
-    manager = await get_connection_manager()
-    conn = manager.get_default_openclaw()
-    if not conn:
-        raise HTTPException(status_code=503, detail="No OpenClaw connection available")
-    
-    result = await conn.spawn_session(
-        task=spawn.task,
-        model=spawn.model,
-        label=spawn.label,
-    )
-    
-    if not result:
-        raise HTTPException(status_code=500, detail="Failed to spawn session")
-    
-    return result

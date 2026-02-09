@@ -1,19 +1,27 @@
 // ─── Grid Room Renderer ─────────────────────────────────────────
 // Renders all props in a room from its RoomBlueprint grid data.
 // Replaces the hardcoded RoomProps.tsx per-room components.
+// Supports long-press to select and move props with arrow keys/WASD.
 
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useRef } from 'react'
 import { Html } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import { gridToWorld } from '@/lib/grid'
-import type { RoomBlueprint } from '@/lib/grid'
+import type { RoomBlueprint, PropPlacement } from '@/lib/grid'
 import { getPropEntry } from './PropRegistry'
 import { useGridDebug } from '@/hooks/useGridDebug'
+import { usePropMovement } from '@/hooks/usePropMovement'
 import type { ThreeEvent } from '@react-three/fiber'
+import * as THREE from 'three'
 
 interface GridRoomRendererProps {
   blueprint: RoomBlueprint
   roomPosition: [number, number, number]  // world center of room (y = floor level)
+  onBlueprintUpdate?: (placements: PropPlacement[]) => void  // callback when props are moved
 }
+
+// Minimum movement threshold to start drag (in pixels, to avoid accidental drags)
+const DRAG_THRESHOLD = 5
 
 interface PropInstance {
   key: string
@@ -147,6 +155,168 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
   )
 }
 
+// ─── Selection Glow Effect ──────────────────────────────────────
+
+// ─── HUD Button Styles ──────────────────────────────────────────
+
+const HUD_CONTAINER_STYLE: React.CSSProperties = {
+  display: 'flex',
+  gap: '8px',
+  alignItems: 'center',
+}
+
+const HUD_BUTTON_STYLE: React.CSSProperties = {
+  width: '40px',
+  height: '40px',
+  borderRadius: '50%',
+  border: 'none',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '18px',
+  fontWeight: 'bold',
+  transition: 'transform 0.1s, box-shadow 0.1s',
+  userSelect: 'none',
+}
+
+const HUD_SAVE_STYLE: React.CSSProperties = {
+  ...HUD_BUTTON_STYLE,
+  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+  color: '#fff',
+  boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
+}
+
+const HUD_ROTATE_STYLE: React.CSSProperties = {
+  ...HUD_BUTTON_STYLE,
+  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+  color: '#fff',
+  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
+}
+
+const HUD_DELETE_STYLE: React.CSSProperties = {
+  ...HUD_BUTTON_STYLE,
+  background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+  color: '#fff',
+  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
+}
+
+const HUD_CANCEL_STYLE: React.CSSProperties = {
+  ...HUD_BUTTON_STYLE,
+  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+  color: '#fff',
+  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
+}
+
+const HUD_HINT_STYLE: React.CSSProperties = {
+  fontSize: '11px',
+  fontFamily: 'system-ui, sans-serif',
+  color: 'rgba(255, 255, 255, 0.8)',
+  background: 'rgba(0, 0, 0, 0.6)',
+  padding: '4px 10px',
+  borderRadius: '12px',
+  whiteSpace: 'nowrap',
+  marginTop: '8px',
+}
+
+interface SelectionIndicatorProps {
+  position: [number, number, number]
+  isMoving: boolean
+  isDragging: boolean
+  onSave: () => void
+  onRotate: () => void
+  onCancel: () => void
+  onDelete: () => void
+}
+
+function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, onCancel, onDelete }: SelectionIndicatorProps) {
+  const hudPos: [number, number, number] = [position[0], position[1] + 1.8, position[2]]
+
+  return (
+    <>
+      {/* Pulsing ring on the floor around the prop */}
+      <mesh position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.8, 1.0, 32]} />
+        <meshBasicMaterial 
+          color={isDragging ? '#00ff88' : '#ffa500'} 
+          transparent 
+          opacity={0.7}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* Inner glow circle */}
+      <mesh position={[position[0], 0.01, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.85, 32]} />
+        <meshBasicMaterial 
+          color={isDragging ? '#00ff88' : '#ffa500'} 
+          transparent 
+          opacity={0.15}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* HUD Buttons floating above the prop */}
+      {isMoving && (
+        <Html
+          position={hudPos}
+          center
+          zIndexRange={[100, 110]}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={HUD_CONTAINER_STYLE}>
+              {/* Save Button */}
+              <button
+                style={HUD_SAVE_STYLE}
+                onClick={(e) => { e.stopPropagation(); onSave(); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                title="Save position"
+              >
+                ✓
+              </button>
+              
+              {/* Rotate Button */}
+              <button
+                style={HUD_ROTATE_STYLE}
+                onClick={(e) => { e.stopPropagation(); onRotate(); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                title="Rotate 90°"
+              >
+                🔄
+              </button>
+              
+              {/* Delete Button */}
+              <button
+                style={HUD_DELETE_STYLE}
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                title="Delete prop"
+              >
+                🗑️
+              </button>
+              
+              {/* Cancel Button */}
+              <button
+                style={HUD_CANCEL_STYLE}
+                onClick={(e) => { e.stopPropagation(); onCancel(); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                title="Cancel"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Hint text */}
+            <div style={HUD_HINT_STYLE}>
+              {isDragging ? 'Release to drop' : 'Drag to move • Arrows/WASD'}
+            </div>
+          </div>
+        </Html>
+      )}
+    </>
+  )
+}
+
 // ─── Renderer ───────────────────────────────────────────────────
 
 /**
@@ -158,11 +328,90 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
  *  - Floor props: Y = 0.16 (floor surface)
  *  - Wall props: Y = propEntry.yOffset (wall mount height, e.g. 1.2 for whiteboards)
  *    Wall props also get snapped toward the nearest wall and rotated to face inward.
+ *
+ * Long-press (600ms) on a prop to select it for movement.
+ * Use arrow keys / WASD to move, R to rotate, Enter to confirm, Escape to cancel.
  */
-export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: GridRoomRendererProps) {
-  const { cells, cellSize, gridWidth, gridDepth } = blueprint
+// ─── Lifted/Bobbing Animation Constants ─────────────────────────
+const LIFT_HEIGHT = 0.4        // How high the prop lifts when selected
+const BOB_AMPLITUDE = 0.05    // Subtle bobbing amplitude
+const BOB_SPEED = 2           // Bobbing speed multiplier
+
+/** Wrapper that animates Y position via ref (no re-renders). */
+function BobbingWrapper({ children, active, baseY }: { children: React.ReactNode; active: boolean; baseY: number }) {
+  const groupRef = useRef<THREE.Group>(null!)
+  
+  useFrame((state) => {
+    if (!groupRef.current) return
+    if (active) {
+      const bob = Math.sin(state.clock.getElapsedTime() * BOB_SPEED) * BOB_AMPLITUDE
+      groupRef.current.position.y = baseY + LIFT_HEIGHT + bob
+    } else {
+      groupRef.current.position.y = baseY
+    }
+  })
+  
+  return <group ref={groupRef} position={[0, baseY, 0]}>{children}</group>
+}
+
+export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }: GridRoomRendererProps) {
+  const { cells, cellSize, gridWidth, gridDepth, id: blueprintId, placements: blueprintPlacements } = blueprint
   const [gridDebugEnabled] = useGridDebug()
   const [hoveredPropKey, setHoveredPropKey] = useState<string | null>(null)
+  
+  // Track pointer position for drag threshold detection
+  const pointerStartPos = useRef<{ x: number; y: number } | null>(null)
+  const hasDragStarted = useRef(false)
+  
+  // Use placements from blueprint if available, otherwise extract from cells
+  const placements = useMemo<PropPlacement[]>(() => {
+    if (blueprintPlacements && blueprintPlacements.length > 0) {
+      return blueprintPlacements
+    }
+    // Fallback: extract from cells (for backwards compatibility)
+    const result: PropPlacement[] = []
+    for (let z = 0; z < cells.length; z++) {
+      for (let x = 0; x < cells[z].length; x++) {
+        const cell = cells[z][x]
+        if (!cell.propId || cell.spanParent) continue
+        result.push({
+          propId: cell.propId,
+          x,
+          z,
+          rotation: cell.rotation,
+          span: cell.span,
+          type: cell.type,
+          interactionType: cell.interactionType,
+        })
+      }
+    }
+    return result
+  }, [blueprintPlacements, cells])
+
+  // Prop movement hook (with room position for raycasting)
+  const {
+    selectedProp,
+    isMoving,
+    isDragging,
+    startLongPress,
+    cancelLongPress,
+    handlePointerUp,
+    handleDragMove,
+    startDrag,
+    endDrag,
+    rotateProp,
+    confirmMovement,
+    cancelMovement,
+    deleteProp,
+  } = usePropMovement({
+    blueprintId: blueprintId || 'unknown',
+    gridWidth,
+    gridDepth,
+    cellSize,
+    placements,
+    onUpdate: onBlueprintUpdate || (() => {}),
+    roomPosition,
+  })
 
   // Stable callbacks — key is passed via event.object.userData
   const handlePointerEnter = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -174,13 +423,63 @@ export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: Gri
     }
   }, [])
 
-  const handlePointerLeave = useCallback((e: ThreeEvent<PointerEvent>) => {
+  // Long-press handlers for prop selection and mouse drag
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    let obj = e.eventObject
+    const obj = e.eventObject
+    if (obj?.userData?.propKey && obj?.userData?.propId !== undefined) {
+      const { propKey, propId, gridX, gridZ, rotation, span } = obj.userData
+      startLongPress(propKey, propId, gridX, gridZ, rotation || 0, span)
+      // Store pointer position for drag threshold detection
+      pointerStartPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
+      hasDragStarted.current = false
+    }
+  }, [startLongPress])
+  
+  const handlePointerMoveEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
+    // Only process if a prop is selected for moving
+    if (!isMoving) return
+    
+    // Check drag threshold before starting drag
+    if (!hasDragStarted.current && pointerStartPos.current) {
+      const dx = e.nativeEvent.clientX - pointerStartPos.current.x
+      const dy = e.nativeEvent.clientY - pointerStartPos.current.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      if (distance >= DRAG_THRESHOLD) {
+        hasDragStarted.current = true
+        startDrag(e)
+      }
+    }
+    
+    // If dragging, update position
+    if (isDragging) {
+      handleDragMove(e)
+    }
+  }, [isMoving, isDragging, startDrag, handleDragMove])
+  
+  const handlePointerUpEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    handlePointerUp()
+    // End drag if we were dragging
+    if (isDragging) {
+      endDrag()
+    }
+    pointerStartPos.current = null
+    hasDragStarted.current = false
+  }, [handlePointerUp, isDragging, endDrag])
+  
+  const handlePointerLeaveForLongPress = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    // Don't cancel if we're dragging - the user might move outside the prop temporarily
+    if (!isDragging) {
+      cancelLongPress()
+    }
+    // Also handle debug hover
+    const obj = e.eventObject
     if (obj?.userData?.debugPropKey) {
       setHoveredPropKey((prev) => prev === obj.userData.debugPropKey ? null : prev)
     }
-  }, [])
+  }, [cancelLongPress, isDragging])
 
   // Build list of prop instances from grid (memoized per blueprint)
   const propInstances = useMemo(() => {
@@ -218,39 +517,87 @@ export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: Gri
     return instances
   }, [cells, cellSize, gridWidth, gridDepth])
 
+  // Global drag handler for when mouse moves outside the prop
+  const handleGlobalPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (isDragging) {
+      handleDragMove(e)
+    }
+  }, [isDragging, handleDragMove])
+
+  const handleGlobalPointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
+    if (isDragging) {
+      e.stopPropagation()
+      endDrag()
+      pointerStartPos.current = null
+      hasDragStarted.current = false
+    }
+  }, [isDragging, endDrag])
+
   return (
     <group>
+      {/* Invisible drag capture plane - only visible during drag */}
+      {isDragging && (
+        <mesh
+          position={[0, 0.2, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          onPointerMove={handleGlobalPointerMove}
+          onPointerUp={handleGlobalPointerUp}
+        >
+          <planeGeometry args={[100, 100]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      )}
+      
       {propInstances.map(({ key, propId, gridX, gridZ, position, rotation, span }) => {
         const entry = getPropEntry(propId)
         if (!entry) return null
 
         const Component = entry.component
+        
+        // Check if this prop is currently selected and being moved
+        const isSelected = selectedProp?.key === key
+        const isBeingMoved = isSelected && isMoving
+        
+        // Use the selected position if this prop is being moved
+        const effectiveGridX = isBeingMoved ? selectedProp!.gridX : gridX
+        const effectiveGridZ = isBeingMoved ? selectedProp!.gridZ : gridZ
+        const effectiveRotation = isBeingMoved ? selectedProp!.rotation : rotation
+        
+        // Recalculate world position if being moved
+        let worldX: number
+        let worldZ: number
+        if (isBeingMoved) {
+          const [newRelX, , newRelZ] = gridToWorld(effectiveGridX, effectiveGridZ, cellSize, gridWidth, gridDepth)
+          worldX = newRelX
+          worldZ = newRelZ
+        } else {
+          worldX = position[0]
+          worldZ = position[2]
+        }
+        
+        let finalRotation = effectiveRotation
 
         // Y position from prop metadata (room-local space; parent group handles world Y)
-        const yPos = entry.yOffset
-
-        let worldX = position[0]
-        let worldZ = position[2]
-        let finalRotation = rotation
+        let yPos = entry.yOffset
 
         if (entry.mountType === 'wall') {
           // Wall-mounted props: snap toward nearest wall + auto-rotate
           const wallPlacement = getWallPlacement(
-            worldX, worldZ, gridX, gridZ,
+            worldX, worldZ, effectiveGridX, effectiveGridZ,
             gridWidth, gridDepth, cellSize,
           )
           if (wallPlacement) {
             worldX = wallPlacement.x
             worldZ = wallPlacement.z
             // Only override rotation if cell didn't specify one explicitly
-            if (rotation === 0) {
+            if (effectiveRotation === 0) {
               finalRotation = wallPlacement.wallRotation
             }
           }
         } else {
           // Floor props: clamp to room bounds to prevent wall clipping
           const [clampedX, clampedZ] = clampToRoomBounds(
-            worldX, worldZ, gridX, gridZ,
+            worldX, worldZ, effectiveGridX, effectiveGridZ,
             gridWidth, gridDepth, cellSize,
           )
           worldX = clampedX
@@ -263,18 +610,44 @@ export function GridRoomRenderer({ blueprint, roomPosition: _roomPosition }: Gri
         return (
           <group
             key={key}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMoveEvent}
+            onPointerUp={handlePointerUpEvent}
+            onPointerLeave={handlePointerLeaveForLongPress}
             {...(gridDebugEnabled ? {
               onPointerEnter: handlePointerEnter,
-              onPointerLeave: handlePointerLeave,
               userData: { debugPropKey: key },
             } : {})}
+            userData={{ 
+              propKey: key, 
+              propId, 
+              gridX, 
+              gridZ, 
+              rotation, 
+              span,
+              ...(gridDebugEnabled ? { debugPropKey: key } : {}),
+            }}
           >
-            <Component
-              position={worldPos}
-              rotation={finalRotation}
-              cellSize={cellSize}
-              span={span}
-            />
+            <BobbingWrapper active={isBeingMoved} baseY={yPos}>
+              <Component
+                position={[worldPos[0], 0, worldPos[2]]}
+                rotation={finalRotation}
+                cellSize={cellSize}
+                span={span}
+              />
+            </BobbingWrapper>
+            {/* Selection indicator when prop is being moved */}
+            {isSelected && (
+              <SelectionIndicator 
+                position={worldPos} 
+                isMoving={isMoving} 
+                isDragging={isDragging}
+                onSave={confirmMovement}
+                onRotate={rotateProp}
+                onCancel={cancelMovement}
+                onDelete={deleteProp}
+              />
+            )}
             {gridDebugEnabled && isHovered && (
               <PropDebugLabel propId={propId} position={worldPos} />
             )}

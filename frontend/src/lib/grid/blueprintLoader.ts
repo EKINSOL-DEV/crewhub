@@ -9,7 +9,7 @@
 // All JSON is validated via Zod schema. Invalid blueprints are
 // logged and skipped (graceful degradation).
 
-import type { RoomBlueprint, CellType, InteractionType, Direction } from './types'
+import type { RoomBlueprint, CellType, InteractionType, Direction, PropPlacement } from './types'
 // CellType and InteractionType used for type assertions in loadBlueprintFromJSON
 import { createEmptyGrid, placeOnGrid, placeDoor } from './blueprintUtils'
 import { blueprintRegistry } from '@/lib/modding/registries'
@@ -45,6 +45,17 @@ export function loadBlueprintFromJSON(json: BlueprintJSON): RoomBlueprint {
     }
   }
 
+  // Convert placements to PropPlacement type
+  const placements: PropPlacement[] = json.placements.map(p => ({
+    propId: p.propId,
+    x: p.x,
+    z: p.z,
+    type: p.type as CellType | undefined,
+    interactionType: p.interactionType as InteractionType | undefined,
+    rotation: p.rotation,
+    span: p.span,
+  }))
+
   return {
     id: json.id,
     name: json.name,
@@ -52,6 +63,7 @@ export function loadBlueprintFromJSON(json: BlueprintJSON): RoomBlueprint {
     gridDepth: json.gridDepth,
     cellSize: json.cellSize,
     cells: grid,
+    placements,
     doorPositions: json.doorPositions as { x: number; z: number; facing: Direction }[],
     walkableCenter: json.walkableCenter,
     interactionPoints: json.interactionPoints as RoomBlueprint['interactionPoints'],

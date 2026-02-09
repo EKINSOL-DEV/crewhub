@@ -109,7 +109,7 @@ export function TaskTicker({
         position: 'absolute',
         top: 56,
         left: 16,
-        zIndex: 45,
+        zIndex: 30,
       }}
     >
       {/* Toggle Button */}

@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import { World3DView } from './components/world3d/World3DView'
+import { ZoneRenderer } from './components/world3d/ZoneRenderer'
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
 import { CronView } from './components/sessions/CronView'
 import { HistoryView } from './components/sessions/HistoryView'
-import { ConnectionsView } from './components/sessions/ConnectionsView'
+// ConnectionsView is now inside Settings > Connections tab
 import { StatsHeader } from './components/sessions/StatsHeader'
 import { SettingsPanel, DEFAULT_SETTINGS, type SessionsSettings } from './components/sessions/SettingsPanel'
 import { useSessionsStream } from './hooks/useSessionsStream'
@@ -13,6 +13,8 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { ChatProvider, useChatContext } from './contexts/ChatContext'
 import { RoomsProvider, useRoomsContext } from './contexts/RoomsContext'
 import { DemoProvider, DemoModeIndicator, useDemoMode } from './contexts/DemoContext'
+import { ZoneProvider } from './contexts/ZoneContext'
+// ZoneSwitcher moved to RoomTabsBar
 import { MobileWarning } from './components/MobileWarning'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
@@ -35,7 +37,7 @@ function useRoute() {
   return path
 }
 
-type TabId = 'active' | 'cards' | 'all' | 'cron' | 'history' | 'connections'
+type TabId = 'active' | 'cards' | 'all' | 'cron' | 'history'
 
 interface Tab {
   id: TabId
@@ -49,7 +51,6 @@ const tabs: Tab[] = [
   { id: 'all', label: 'All', icon: <List className="h-4 w-4" /> },
   { id: 'cron', label: 'Cron', icon: <Clock className="h-4 w-4" /> },
   { id: 'history', label: 'History', icon: <History className="h-4 w-4" /> },
-  { id: 'connections', label: 'Connections', icon: <Cable className="h-4 w-4" /> },
 ]
 
 /**
@@ -202,6 +203,10 @@ function AppContent() {
   }, [isDemoMode, demoSessions, realSessions])
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const openConnectionsSettings = useCallback(() => {
+    localStorage.setItem('crewhub-settings-tab', 'connections')
+    setSettingsOpen(true)
+  }, [])
   const [activeTab, setActiveTab] = useState<TabId>('active')
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingChecked, setOnboardingChecked] = useState(false)
@@ -309,8 +314,8 @@ function AppContent() {
           <div className="flex items-center gap-3">
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.11.2</span></h1>
-              <p className="text-xs text-muted-foreground italic">Getting real work done doesn't have to be boring.</p>
+              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.12.0</span></h1>
+              <p className="text-xs text-muted-foreground">Multi-agent orchestration</p>
             </div>
           </div>
           
@@ -364,8 +369,8 @@ function AppContent() {
           <div className="flex-1 overflow-hidden">
             {activeTab === 'active' && (
               sessions.length === 0
-                ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={() => setActiveTab('connections')} />
-                : <World3DView
+                ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={openConnectionsSettings} />
+                : <ZoneRenderer
                     sessions={sessions}
                     settings={settings}
                     onAliasChanged={handleAliasChanged}
@@ -373,7 +378,7 @@ function AppContent() {
             )}
             {activeTab === 'cards' && (
               sessions.length === 0
-                ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={() => setActiveTab('connections')} />
+                ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={openConnectionsSettings} />
                 : <CardsView sessions={sessions} />
             )}
             {activeTab === 'all' && (
@@ -384,9 +389,6 @@ function AppContent() {
             )}
             {activeTab === 'history' && (
               <HistoryView />
-            )}
-            {activeTab === 'connections' && (
-              <ConnectionsView />
             )}
           </div>
         </ErrorBoundary>
@@ -445,13 +447,15 @@ function App() {
   return (
     <ThemeProvider>
       <DemoProvider>
-        <RoomsProvider>
-          <ZenModeProvider>
-            <ChatProvider>
-              <AppContent />
-            </ChatProvider>
-          </ZenModeProvider>
-        </RoomsProvider>
+        <ZoneProvider>
+          <RoomsProvider>
+            <ZenModeProvider>
+              <ChatProvider>
+                <AppContent />
+              </ChatProvider>
+            </ZenModeProvider>
+          </RoomsProvider>
+        </ZoneProvider>
       </DemoProvider>
     </ThemeProvider>
   )

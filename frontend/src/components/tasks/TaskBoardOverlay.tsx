@@ -261,7 +261,7 @@ export function TaskBoardOverlay({
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
       className="
-        fixed inset-0 z-[100] m-0 h-screen w-screen max-h-none max-w-none
+        fixed inset-0 z-[60] m-0 h-screen w-screen max-h-none max-w-none
         bg-transparent p-0
         backdrop:bg-black/80 backdrop:backdrop-blur-none
         open:flex open:items-center open:justify-center
@@ -438,7 +438,7 @@ export function TaskBoardOverlay({
         {/* Create Task Modal */}
         {showCreateForm && (
           <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
             onClick={() => setShowCreateForm(false)}
           >
             <div
@@ -462,7 +462,7 @@ export function TaskBoardOverlay({
         {/* Edit Task Modal */}
         {editingTask && (
           <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
             onClick={() => setEditingTask(null)}
           >
             <div
