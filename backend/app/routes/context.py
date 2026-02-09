@@ -2,10 +2,11 @@
 import json
 import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app.db.database import get_db
+from app.services.context_envelope import build_crewhub_context, format_context_block
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -290,3 +291,97 @@ async def get_session_context_prompt(session_key: str):
         lines.append(f"- Todo: {context.tasks.todo_count}, Done: {context.tasks.done_count}")
     
     return {"prompt": "\n".join(lines)}
+
+
+# ── Context Envelope (v2) ──────────────────────────────────────
+
+@router.get("/{session_key}/context/envelope", response_model=dict)
+async def get_context_envelope(
+    session_key: str,
+    channel: Optional[str] = Query(None, description="Origin channel (whatsapp, slack, crewhub-ui, ...)"),
+    spawned_from: Optional[str] = Query(None, description="Parent session key"),
+):
+    """
+    Get a CrewHub context envelope for a session.
+
+    Returns a compact JSON envelope (≤2KB) suitable for injection into
+    agent system prompts. Respects privacy tiers: external channels
+    (whatsapp, slack, discord) strip participants and tasks.
+
+    The response includes:
+    - envelope: the raw JSON object
+    - block: a fenced code block ready for preamble injection
+    """
+    try:
+        db = await get_db()
+        try:
+            db.row_factory = lambda cursor, row: dict(
+                zip([col[0] for col in cursor.description], row)
+            )
+
+            # Resolve room_id from session key
+            room_id = None
+
+            # Check explicit assignment
+            async with db.execute(
+                "SELECT room_id FROM session_room_assignments WHERE session_key = ?",
+                (session_key,),
+            ) as cursor:
+                row = await cursor.fetchone()
+                if row:
+                    room_id = row["room_id"]
+
+            # Fallback: agent default room
+            if not room_id:
+                async with db.execute(
+                    "SELECT default_room_id FROM agents WHERE agent_session_key = ?",
+                    (session_key,),
+                ) as cursor:
+                    row = await cursor.fetchone()
+                    if row and row.get("default_room_id"):
+                        room_id = row["default_room_id"]
+
+            if not room_id:
+                return {"envelope": None, "block": ""}
+        finally:
+            await db.close()
+
+        envelope = await build_crewhub_context(
+            room_id=room_id,
+            channel=channel,
+            spawned_from=spawned_from,
+        )
+
+        if not envelope:
+            return {"envelope": None, "block": ""}
+
+        return {
+            "envelope": envelope,
+            "block": format_context_block(envelope),
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get context envelope for {session_key}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/rooms/{room_id}/context-envelope", response_model=dict)
+async def get_room_context_envelope(
+    room_id: str,
+    channel: Optional[str] = Query(None),
+    spawned_from: Optional[str] = Query(None),
+):
+    """Get context envelope directly by room_id (for spawn flows)."""
+    envelope = await build_crewhub_context(
+        room_id=room_id,
+        channel=channel,
+        spawned_from=spawned_from,
+    )
+
+    if not envelope:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    return {
+        "envelope": envelope,
+        "block": format_context_block(envelope),
+    }

@@ -85,6 +85,7 @@ export function usePropMovement({
   const [selectedProp, setSelectedProp] = useState<SelectedProp | null>(null)
   const [isMoving, setIsMoving] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [pendingClear, setPendingClear] = useState(false)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingSelect = useRef<{
     key: string
@@ -212,6 +213,9 @@ export function usePropMovement({
 
     const { propId, gridX, gridZ, originalX, originalZ, rotation } = selectedProp
     
+    // Stop dragging first
+    setIsDragging(false)
+    
     // Update placements array
     const updatedPlacements = placements.map(p => {
       if (p.propId === propId && p.x === originalX && p.z === originalZ) {
@@ -242,22 +246,49 @@ export function usePropMovement({
         console.error('Failed to save prop movement:', await response.text())
         // Revert on failure
         onUpdate(placements)
+        setSelectedProp(null)
+        setIsMoving(false)
+        setPendingClear(false)
+        return
       }
     } catch (err) {
       console.error('Failed to save prop movement:', err)
       // Revert on failure
       onUpdate(placements)
+      setSelectedProp(null)
+      setIsMoving(false)
+      setPendingClear(false)
+      return
     }
 
-    setSelectedProp(null)
-    setIsMoving(false)
+    // Success - mark for clearing once placements update
+    setPendingClear(true)
   }, [selectedProp, placements, onUpdate, apiBaseUrl, blueprintId])
+
+  // Clear selection once placements have the new position
+  useEffect(() => {
+    if (!pendingClear || !selectedProp) return
+    
+    // Check if placements now has the updated position
+    const hasUpdated = placements.some(p => 
+      p.propId === selectedProp.propId && 
+      p.x === selectedProp.gridX && 
+      p.z === selectedProp.gridZ
+    )
+    
+    if (hasUpdated) {
+      setSelectedProp(null)
+      setIsMoving(false)
+      setPendingClear(false)
+    }
+  }, [pendingClear, selectedProp, placements])
 
   // Cancel movement and restore original position
   const cancelMovement = useCallback(() => {
     setSelectedProp(null)
     setIsMoving(false)
     setIsDragging(false)
+    setPendingClear(false)
   }, [])
 
   // ─── Mouse Drag Handlers ──────────────────────────────────────
@@ -368,6 +399,7 @@ export function usePropMovement({
 
     setSelectedProp(null)
     setIsMoving(false)
+    setPendingClear(false)
   }, [selectedProp, placements, onUpdate, apiBaseUrl, blueprintId])
 
   // Keyboard event handler

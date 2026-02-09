@@ -7,8 +7,8 @@
   "placements": [
     {
       "propId": "standing-desk-with-monitor",
-      "x": 3,
-      "z": 7,
+      "x": 2,
+      "z": 8,
       "rotation": 90,
       "span": {
         "w": 2,
@@ -24,9 +24,9 @@
     },
     {
       "propId": "standing-desk-with-monitor",
-      "x": 16,
-      "z": 16,
-      "rotation": 180,
+      "x": 17,
+      "z": 10,
+      "rotation": 270,
       "span": {
         "w": 2,
         "d": 2
@@ -47,12 +47,6 @@
         "w": 2,
         "d": 1
       }
-    },
-    {
-      "propId": "cable-mess",
-      "x": 10,
-      "z": 15,
-      "type": "decoration"
     },
     {
       "propId": "sleep-corner",
