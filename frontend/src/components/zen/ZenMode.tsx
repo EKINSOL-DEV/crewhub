@@ -34,7 +34,7 @@ import { useRoomsContext } from '@/contexts/RoomsContext'
 import { ZenThemePicker } from './ZenThemePicker'
 import { ZenCommandPalette, useCommandRegistry } from './ZenCommandPalette'
 import { ZenKeyboardHelp } from './ZenKeyboardHelp'
-import { ZenSpawnModal, ZenAgentPicker } from './ZenSessionManager'
+import { ZenAgentPicker } from './ZenSessionManager'
 import { ZenSaveLayoutModal, ZenLayoutPicker, addRecentLayout, type SavedLayout } from './ZenLayoutManager'
 import { ZenErrorBoundary } from './ZenErrorBoundary'
 import { useZenMode, type ZenProjectFilter } from './hooks/useZenMode'
@@ -64,7 +64,6 @@ interface ZenModeProps {
   roomName?: string
   connected: boolean
   onExit: () => void
-  onSpawnSession?: (agentId: string, label?: string) => Promise<void>
   projectFilter?: ZenProjectFilter | null  // Filter tasks to specific project
   onClearProjectFilter?: () => void
 }
@@ -85,7 +84,6 @@ export function ZenMode({
   roomName,
   connected,
   onExit,
-  onSpawnSession,
   projectFilter: propProjectFilter,
   onClearProjectFilter: propClearProjectFilter,
 }: ZenModeProps) {
@@ -150,14 +148,13 @@ export function ZenMode({
   const [showThemePicker, setShowThemePicker] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
-  const [showSpawnModal, setShowSpawnModal] = useState(false)
   const [showAgentPicker, setShowAgentPicker] = useState(false)
   const [showSaveLayout, setShowSaveLayout] = useState(false)
   const [showLayoutPicker, setShowLayoutPicker] = useState(false)
   
   // Check if any modal is open
   const isModalOpen = showThemePicker || showCommandPalette || showKeyboardHelp || 
-                      showSpawnModal || showAgentPicker || showSaveLayout || showLayoutPicker
+                      showAgentPicker || showSaveLayout || showLayoutPicker
   
   // Theme state
   const theme = useZenTheme()
@@ -400,7 +397,6 @@ export function ZenMode({
     onSaveLayout: () => setShowSaveLayout(true),
     onLoadLayout: () => setShowLayoutPicker(true),
     onNewChat: () => setShowAgentPicker(true),
-    onSpawnSession: () => setShowSpawnModal(true),
     onAddPanel: handleAddPanel,
   })
 
@@ -426,7 +422,6 @@ export function ZenMode({
       onOpenCommandPalette: () => setShowCommandPalette(true),
       onOpenKeyboardHelp: () => setShowKeyboardHelp(true),
       onNewChat: () => setShowAgentPicker(true),
-      onSpawnSession: () => setShowSpawnModal(true),
       // Tab shortcuts
       onNewTab: () => handleAddTab(),
       onCloseTab: () => closeTab(activeTabId),
@@ -470,13 +465,6 @@ export function ZenMode({
   const handleSelectTheme = useCallback((themeId: string) => {
     theme.setTheme(themeId)
   }, [theme])
-  
-  // Handle spawn session
-  const handleSpawnSession = useCallback(async (agentId: string, label?: string) => {
-    if (onSpawnSession) {
-      await onSpawnSession(agentId, label)
-    }
-  }, [onSpawnSession])
   
   // Handle agent picker selection
   const handleAgentPickerSelect = useCallback((agentId: string, agentName: string, agentIcon: string) => {
@@ -689,14 +677,6 @@ export function ZenMode({
       {showKeyboardHelp && (
         <ZenKeyboardHelp
           onClose={() => setShowKeyboardHelp(false)}
-        />
-      )}
-      
-      {/* Spawn Session Modal */}
-      {showSpawnModal && (
-        <ZenSpawnModal
-          onClose={() => setShowSpawnModal(false)}
-          onSpawn={handleSpawnSession}
         />
       )}
       

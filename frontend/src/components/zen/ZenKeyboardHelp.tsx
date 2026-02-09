@@ -77,7 +77,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     icon: '🤖',
     shortcuts: [
       { keys: ['Ctrl', 'N'], description: 'New chat with agent picker' },
-      { keys: ['Ctrl', 'Shift', 'N'], description: 'Spawn new agent session' },
+      { keys: ['Ctrl', 'N'], description: 'New chat with agent' },
     ],
   },
   {

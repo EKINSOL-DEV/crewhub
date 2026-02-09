@@ -37,7 +37,6 @@ export interface ZenKeyboardActions {
   
   // Session management
   onNewChat?: () => void
-  onSpawnSession?: () => void
   
   // Tab management
   onNewTab?: () => void
@@ -237,13 +236,6 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
       return
     }
     
-    // Ctrl+Shift+N - Spawn new session
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'n') {
-      e.preventDefault()
-      a.onSpawnSession?.()
-      return
-    }
-    
     // Ctrl+Shift+Arrow - Resize
     if (e.ctrlKey && e.shiftKey && e.key.startsWith('Arrow')) {
       e.preventDefault()
@@ -314,5 +306,4 @@ export const KEYBOARD_SHORTCUTS: ShortcutHint[] = [
   
   // Sessions
   { keys: ['Ctrl', 'N'], description: 'New chat with agent', category: 'global' },
-  { keys: ['Ctrl', 'Shift', 'N'], description: 'Spawn new session', category: 'global' },
 ]

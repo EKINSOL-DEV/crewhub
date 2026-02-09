@@ -1,6 +1,6 @@
 /**
  * Zen Session Manager
- * Modal for spawning new agent sessions and managing existing ones
+ * Agent picker and session details for Zen Mode.
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
@@ -15,7 +15,7 @@ interface AgentOption {
   model?: string
 }
 
-// Available agents to spawn
+// Available agents
 const AVAILABLE_AGENTS: AgentOption[] = [
   {
     id: 'main',
@@ -46,168 +46,6 @@ const AVAILABLE_AGENTS: AgentOption[] = [
     model: 'claude-sonnet',
   },
 ]
-
-// ── Spawn Modal ───────────────────────────────────────────────────
-
-interface ZenSpawnModalProps {
-  onClose: () => void
-  onSpawn: (agentId: string, label?: string) => void
-}
-
-export function ZenSpawnModal({ onClose, onSpawn }: ZenSpawnModalProps) {
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
-  const [label, setLabel] = useState('')
-  const [isSpawning, setIsSpawning] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  
-  // Focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-  
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        e.stopPropagation()
-        onClose()
-        return
-      }
-      
-      if (e.key === 'Enter' && selectedAgent) {
-        e.preventDefault()
-        handleSpawn()
-      }
-      
-      // Number keys to select agent
-      const num = parseInt(e.key)
-      if (num >= 1 && num <= AVAILABLE_AGENTS.length) {
-        e.preventDefault()
-        setSelectedAgent(AVAILABLE_AGENTS[num - 1].id)
-      }
-    }
-    
-    window.addEventListener('keydown', handleKeyDown, true)
-    return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [selectedAgent, onClose])
-  
-  const handleSpawn = useCallback(async () => {
-    if (!selectedAgent) return
-    
-    setIsSpawning(true)
-    try {
-      await onSpawn(selectedAgent, label || undefined)
-      onClose()
-    } finally {
-      setIsSpawning(false)
-    }
-  }, [selectedAgent, label, onSpawn, onClose])
-  
-  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }, [onClose])
-  
-  return (
-    <div 
-      className="zen-spawn-backdrop"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Spawn New Agent"
-    >
-      <div className="zen-spawn-modal">
-        <header className="zen-spawn-header">
-          <h2 className="zen-spawn-title">
-            <span className="zen-spawn-title-icon">🚀</span>
-            Spawn New Agent Session
-          </h2>
-          <button
-            className="zen-btn zen-btn-icon zen-btn-close"
-            onClick={onClose}
-            title="Close"
-          >
-            ✕
-          </button>
-        </header>
-        
-        <div className="zen-spawn-content">
-          {/* Agent Selection */}
-          <div className="zen-spawn-section">
-            <label className="zen-spawn-label">Select Agent</label>
-            <div className="zen-spawn-agents">
-              {AVAILABLE_AGENTS.map((agent, index) => (
-                <button
-                  key={agent.id}
-                  className={`zen-spawn-agent ${selectedAgent === agent.id ? 'zen-spawn-agent-selected' : ''}`}
-                  onClick={() => setSelectedAgent(agent.id)}
-                >
-                  <span className="zen-spawn-agent-icon">{agent.icon}</span>
-                  <div className="zen-spawn-agent-info">
-                    <span className="zen-spawn-agent-name">{agent.name}</span>
-                    <span className="zen-spawn-agent-desc">{agent.description}</span>
-                  </div>
-                  <kbd className="zen-kbd zen-spawn-agent-kbd">{index + 1}</kbd>
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Optional Label */}
-          <div className="zen-spawn-section">
-            <label className="zen-spawn-label" htmlFor="spawn-label">
-              Session Label <span className="zen-spawn-optional">(optional)</span>
-            </label>
-            <input
-              ref={inputRef}
-              id="spawn-label"
-              type="text"
-              className="zen-spawn-input"
-              placeholder="e.g., 'Fix login bug' or 'Research competitors'"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-            />
-          </div>
-        </div>
-        
-        <footer className="zen-spawn-footer">
-          <div className="zen-spawn-hints">
-            <span><kbd className="zen-kbd">1-4</kbd> select agent</span>
-            <span><kbd className="zen-kbd">Enter</kbd> spawn</span>
-            <span><kbd className="zen-kbd">Esc</kbd> cancel</span>
-          </div>
-          <div className="zen-spawn-actions">
-            <button
-              className="zen-btn zen-spawn-btn-cancel"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              className="zen-btn zen-spawn-btn-spawn"
-              onClick={handleSpawn}
-              disabled={!selectedAgent || isSpawning}
-            >
-              {isSpawning ? (
-                <>
-                  <span className="zen-spinner" />
-                  Spawning...
-                </>
-              ) : (
-                <>
-                  <span>🚀</span>
-                  Spawn Session
-                </>
-              )}
-            </button>
-          </div>
-        </footer>
-      </div>
-    </div>
-  )
-}
 
 // ── Session Details Panel ─────────────────────────────────────────
 

@@ -1,0 +1,200 @@
+"""
+CrewHub Context Envelope - lightweight JSON context for sub-agents.
+
+Builds a ≤2KB JSON envelope with room/project/participants/tasks info,
+respecting privacy tiers (internal vs external channels).
+"""
+
+import hashlib
+import json
+import logging
+import time
+from typing import Any, Optional
+
+import aiosqlite
+
+from app.db.database import DB_PATH
+
+logger = logging.getLogger(__name__)
+
+# External channels where participants/tasks should be redacted
+EXTERNAL_CHANNELS = {"whatsapp", "slack", "discord", "telegram", "sms", "email"}
+
+SCHEMA_VERSION = 1
+
+
+def _canonical_json(obj: dict) -> str:
+    """Deterministic JSON for hashing (sorted keys, no whitespace)."""
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _compute_hash(envelope: dict) -> str:
+    """SHA-256 of canonical JSON (excluding the hash field itself)."""
+    hashable = {k: v for k, v in envelope.items() if k != "context_hash"}
+    return hashlib.sha256(_canonical_json(hashable).encode()).hexdigest()[:16]
+
+
+async def build_crewhub_context(
+    room_id: str,
+    channel: Optional[str] = None,
+    max_tasks: int = 10,
+) -> Optional[dict[str, Any]]:
+    """
+    Build a CrewHub context envelope for injection into agent preambles.
+
+    Args:
+        room_id: The room ID to build context for.
+        channel: Origin channel (e.g. 'whatsapp', 'crewhub-ui').
+        max_tasks: Maximum number of tasks to include.
+
+    Returns:
+        Context envelope dict, or None if room not found.
+    """
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            db.row_factory = aiosqlite.Row
+
+            # Determine privacy tier
+            privacy = "external" if channel and channel.lower() in EXTERNAL_CHANNELS else "internal"
+
+            # 1. Room
+            async with db.execute(
+                "SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?",
+                (room_id,),
+            ) as cur:
+                room_row = await cur.fetchone()
+
+            if not room_row:
+                return None
+
+            room = {
+                "id": room_row["id"],
+                "name": room_row["name"],
+                "type": "hq" if room_row["is_hq"] else "standard",
+            }
+
+            # 2. Projects linked to this room
+            project_id = room_row["project_id"]
+            projects: list[dict] = []
+            if project_id:
+                async with db.execute(
+                    "SELECT id, name, folder_path FROM projects WHERE id = ?",
+                    (project_id,),
+                ) as cur:
+                    proj_row = await cur.fetchone()
+                if proj_row:
+                    p: dict[str, Any] = {"id": proj_row["id"], "name": proj_row["name"]}
+                    if proj_row["folder_path"]:
+                        p["repo"] = proj_row["folder_path"]
+                    projects.append(p)
+
+            # 3. Participants (agents assigned to this room) — internal only
+            participants: list[dict] = []
+            if privacy == "internal":
+                async with db.execute(
+                    "SELECT id, name FROM agents WHERE default_room_id = ?",
+                    (room_id,),
+                ) as cur:
+                    async for row in cur:
+                        participants.append({"role": "agent", "handle": row["name"]})
+
+            # 4. Tasks — internal only
+            tasks: list[dict] = []
+            if privacy == "internal" and project_id:
+                async with db.execute(
+                    """SELECT t.id, t.title, t.status, d.display_name
+                       FROM tasks t
+                       LEFT JOIN session_display_names d ON t.assigned_session_key = d.session_key
+                       WHERE t.project_id = ? AND t.status != 'done'
+                       ORDER BY CASE t.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
+                               t.updated_at DESC
+                       LIMIT ?""",
+                    (project_id, max_tasks),
+                ) as cur:
+                    async for row in cur:
+                        t: dict[str, Any] = {
+                            "id": row["id"],
+                            "title": row["title"],
+                            "status": row["status"],
+                        }
+                        if row["display_name"]:
+                            t["assignee"] = row["display_name"]
+                        tasks.append(t)
+
+            # 5. Context version — count of mutations (simple: max updated_at across relevant tables)
+            context_version = await _get_context_version(db, room_id, project_id)
+
+            # Build envelope
+            envelope: dict[str, Any] = {
+                "v": SCHEMA_VERSION,
+                "room": room,
+                "projects": projects,
+                "privacy": privacy,
+                "context_version": context_version,
+            }
+
+            if privacy == "internal":
+                if participants:
+                    envelope["participants"] = participants
+                if tasks:
+                    envelope["tasks"] = tasks
+
+            # Add integrity hash
+            envelope["context_hash"] = _compute_hash(envelope)
+
+            return envelope
+
+    except Exception as e:
+        logger.error(f"Failed to build context envelope for room {room_id}: {e}")
+        return None
+
+
+async def _get_context_version(
+    db: aiosqlite.Connection,
+    room_id: str,
+    project_id: Optional[str],
+) -> int:
+    """
+    Compute a context_version as max(updated_at) across room, project, tasks, agents.
+    This increments whenever any relevant entity is mutated.
+    """
+    candidates = []
+
+    async with db.execute(
+        "SELECT updated_at FROM rooms WHERE id = ?", (room_id,)
+    ) as cur:
+        row = await cur.fetchone()
+        if row:
+            candidates.append(row["updated_at"])
+
+    if project_id:
+        async with db.execute(
+            "SELECT updated_at FROM projects WHERE id = ?", (project_id,)
+        ) as cur:
+            row = await cur.fetchone()
+            if row:
+                candidates.append(row["updated_at"])
+
+        async with db.execute(
+            "SELECT MAX(updated_at) as m FROM tasks WHERE project_id = ?",
+            (project_id,),
+        ) as cur:
+            row = await cur.fetchone()
+            if row and row["m"]:
+                candidates.append(row["m"])
+
+    async with db.execute(
+        "SELECT MAX(updated_at) as m FROM agents WHERE default_room_id = ?",
+        (room_id,),
+    ) as cur:
+        row = await cur.fetchone()
+        if row and row["m"]:
+            candidates.append(row["m"])
+
+    return max(candidates) if candidates else 0
+
+
+def format_context_block(envelope: dict) -> str:
+    """Format envelope as a fenced JSON block for injection into preamble."""
+    compact = json.dumps(envelope, separators=(",", ":"), ensure_ascii=False)
+    return f"```crewhub-context\n{compact}\n```"

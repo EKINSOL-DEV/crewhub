@@ -16,12 +16,11 @@ interface SpawnAgentDialogProps {
   onRun?: (agentId: string, sessionKey: string) => void
 }
 
-export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn, onRun }: SpawnAgentDialogProps) {
+export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: SpawnAgentDialogProps) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [selectedAgentId, setSelectedAgentId] = useState<string>('')
   const [extraInstructions, setExtraInstructions] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
-  const [isSpawning, setIsSpawning] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,46 +75,14 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn, onRun }: Spaw
       }
 
       const data = await response.json()
-      onRun?.(selectedAgentId, data.session_key)
+      // Use onRun if provided, otherwise fall back to onSpawn for backward compat
+      const callback = onRun || onSpawn
+      callback(selectedAgentId, data.session_key)
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send to agent')
     } finally {
       setIsRunning(false)
-    }
-  }
-
-  const handleSpawn = async () => {
-    if (!selectedAgentId) {
-      setError('Please select an agent')
-      return
-    }
-
-    setIsSpawning(true)
-    setError(null)
-
-    try {
-      const response = await fetch(`/api/tasks/${task.id}/spawn`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agent_id: selectedAgentId,
-          extra_instructions: extraInstructions.trim() || undefined,
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Failed to spawn agent')
-      }
-
-      const data = await response.json()
-      onSpawn(selectedAgentId, data.session_key)
-      onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to spawn agent')
-    } finally {
-      setIsSpawning(false)
     }
   }
 
@@ -278,16 +245,16 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn, onRun }: Spaw
           </button>
           <button
             onClick={handleRun}
-            disabled={isRunning || isSpawning || !selectedAgentId}
+            disabled={isRunning || !selectedAgentId}
             style={{
               padding: '10px 20px',
               borderRadius: 8,
-              border: '1px solid #10b981',
-              background: isRunning || !selectedAgentId ? '#9ca3af' : '#ecfdf5',
-              color: isRunning || !selectedAgentId ? '#fff' : '#059669',
+              border: 'none',
+              background: isRunning || !selectedAgentId ? '#9ca3af' : '#2563eb',
+              color: '#fff',
               fontSize: 14,
               fontWeight: 500,
-              cursor: isRunning || isSpawning || !selectedAgentId ? 'not-allowed' : 'pointer',
+              cursor: isRunning || !selectedAgentId ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
@@ -300,34 +267,7 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onSpawn, onRun }: Spaw
                 Sending...
               </>
             ) : (
-              <>▶️ Run</>
-            )}
-          </button>
-          <button
-            onClick={handleSpawn}
-            disabled={isSpawning || isRunning || !selectedAgentId}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: 'none',
-              background: isSpawning || !selectedAgentId ? '#9ca3af' : '#2563eb',
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: isSpawning || isRunning || !selectedAgentId ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-            title="Spawn a dedicated subagent for this task"
-          >
-            {isSpawning ? (
-              <>
-                <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
-                Spawning...
-              </>
-            ) : (
-              <>🚀 Spawn</>
+              <>▶️ Run with Agent</>
             )}
           </button>
         </div>
