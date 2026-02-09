@@ -172,7 +172,7 @@ export function BotInfoPanel({ session, displayName, botConfig, status, bio, age
         right: 16,
         bottom: 80,
         width: 320,
-        zIndex: 60,
+        zIndex: 25,
         background: 'rgba(255, 255, 255, 0.85)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',

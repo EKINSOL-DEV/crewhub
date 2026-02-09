@@ -70,7 +70,7 @@ export function BossHudButton({ sessions, getBotConfig, getRoomForSession, defau
         top: 16,
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 55,
+        zIndex: 35,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

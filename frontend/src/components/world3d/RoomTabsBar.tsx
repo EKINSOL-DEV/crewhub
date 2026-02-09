@@ -25,7 +25,7 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
         bottom: 16,
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 50,
+        zIndex: 15,
         display: 'flex',
         gap: 6,
         padding: '6px 10px',

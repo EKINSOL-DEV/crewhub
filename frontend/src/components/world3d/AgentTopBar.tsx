@@ -364,7 +364,7 @@ function AgentPickerDropdown({ fixedAgents, recentSubagents, pinnedKey, onSelect
         border: '1px solid rgba(255,255,255,0.12)',
         boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
         padding: '8px 0',
-        zIndex: 100,
+        zIndex: 40,
         animation: 'agentPickerSlideIn 0.15s ease-out',
       }}
     >

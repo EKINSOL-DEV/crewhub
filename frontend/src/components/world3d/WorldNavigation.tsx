@@ -37,7 +37,7 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
           bottom: 80,
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 50,
+          zIndex: 35,
           textAlign: 'center',
         }}
       >

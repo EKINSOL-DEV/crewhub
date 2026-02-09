@@ -331,7 +331,7 @@ export function FirstPersonHUD({ currentRoom, showRoomLabel }: FirstPersonHUDPro
         position: 'absolute',
         inset: 0,
         pointerEvents: 'none',
-        zIndex: 60,
+        zIndex: 25,
       }}
     >
       {/* Crosshair */}

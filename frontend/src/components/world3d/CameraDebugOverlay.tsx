@@ -91,7 +91,7 @@ export function CameraDebugHUD({ visible }: CameraDebugHUDProps) {
         border: '1px solid rgba(100, 116, 139, 0.3)',
         color: '#e2e8f0',
         pointerEvents: 'none',
-        zIndex: 100,
+        zIndex: 40,
         minWidth: 140,
         fontFamily: 'monospace',
         fontSize: 11,

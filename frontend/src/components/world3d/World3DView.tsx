@@ -825,7 +825,7 @@ function DragStatusIndicator() {
         top: 12,
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 60,
+        zIndex: 25,
         display: 'flex',
         alignItems: 'center',
         gap: 8,
@@ -1189,7 +1189,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Fullscreen toggle button */}
         <button
           onClick={toggleFullscreen}
-          className="absolute top-4 right-4 z-[60] p-2 rounded-lg backdrop-blur-md bg-white/60 hover:bg-white/80 border border-gray-200/50 shadow-sm text-gray-600 hover:text-gray-900 transition-all opacity-60 hover:opacity-100"
+          className="absolute top-4 right-4 z-[25] p-2 rounded-lg backdrop-blur-md bg-white/60 hover:bg-white/80 border border-gray-200/50 shadow-sm text-gray-600 hover:text-gray-900 transition-all opacity-60 hover:opacity-100"
           title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}
         >
           {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
@@ -1197,7 +1197,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
         {/* Overlay controls hint (hide when any panel is showing or in first person) */}
         {focusState.level !== 'bot' && focusState.level !== 'room' && focusState.level !== 'firstperson' && !isFullscreen && (
-          <div className="absolute top-4 right-16 z-50">
+          <div className="absolute top-4 right-16 z-20">
             <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
               <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
               <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast</div>

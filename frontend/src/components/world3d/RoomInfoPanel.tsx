@@ -245,7 +245,7 @@ export function RoomInfoPanel({
         right: 16,
         bottom: 80,
         width: 360,
-        zIndex: 60,
+        zIndex: 25,
         background: 'rgba(255, 255, 255, 0.85)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
@@ -1142,7 +1142,7 @@ function ConfirmDialog({
       alignItems: 'center',
       justifyContent: 'center',
       padding: 32,
-      zIndex: 70,
+      zIndex: 30,
       animation: 'pickerFadeIn 0.15s ease-out',
     }}>
       <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>

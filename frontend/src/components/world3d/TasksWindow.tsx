@@ -128,7 +128,7 @@ export function TasksWindow({
         top: position.y,
         width: size.width,
         height: size.height,
-        zIndex: 50,
+        zIndex: 15,
         borderRadius: 14,
         background: 'rgba(255, 255, 255, 0.92)',
         backdropFilter: 'blur(20px)',
