@@ -189,6 +189,25 @@ When running in Docker, set the Gateway URL to reach your host:
 - **macOS/Windows**: `ws://host.docker.internal:18789`
 - **Linux**: `ws://172.17.0.1:18789` (or your host IP)
 
+**⚠️ Important:** OpenClaw must bind to `lan` instead of `loopback` for Docker to connect:
+
+1. Edit `~/.openclaw/openclaw.json`:
+   ```json
+   {
+     "gateway": {
+       "bind": "lan",  // Change from "loopback"
+       ...
+     }
+   }
+   ```
+
+2. Restart the gateway:
+   ```bash
+   openclaw gateway restart
+   ```
+
+Without this change, you'll get **HTTP 405** errors when testing the connection.
+
 ## 🌐 Ports
 
 CrewHub supports both **production** (Docker) and **development** (local) environments running simultaneously:
