@@ -136,6 +136,25 @@ export interface OnboardingStatus {
   has_active_connection: boolean
 }
 
+export interface EnvironmentInfo {
+  is_docker: boolean
+  lan_ip: string | null
+  hostname: string
+  platform: string
+  docker_host_internal_reachable: boolean
+  suggested_urls: string[]
+  token_file_path: string | null
+  token_available: boolean
+}
+
+export interface TestOpenClawResult {
+  ok: boolean
+  category: 'dns' | 'tcp' | 'ws' | 'auth' | 'protocol' | 'timeout' | null
+  message: string
+  hints: string[]
+  sessions: number | null
+}
+
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${url}`, {
     ...options,
@@ -242,6 +261,20 @@ export async function listBackups(): Promise<BackupInfo[]> {
 
 export async function getOnboardingStatus(): Promise<OnboardingStatus> {
   return fetchJSON<OnboardingStatus>('/onboarding/status')
+}
+
+export async function getEnvironmentInfo(): Promise<EnvironmentInfo> {
+  return fetchJSON<EnvironmentInfo>('/onboarding/environment')
+}
+
+export async function testOpenClawConnection(
+  url: string,
+  token?: string
+): Promise<TestOpenClawResult> {
+  return fetchJSON<TestOpenClawResult>('/onboarding/test-openclaw', {
+    method: 'POST',
+    body: JSON.stringify({ url, token: token || null }),
+  })
 }
 
 // Session Display Names API

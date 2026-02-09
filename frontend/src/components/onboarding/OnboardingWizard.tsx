@@ -41,6 +41,7 @@ import {
   ExternalLink,
   Plus,
 } from "lucide-react"
+import { OpenClawWizard } from "./OpenClawWizard"
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -160,10 +161,12 @@ function StepWelcome({
   onScan,
   onDemo,
   onManual,
+  onOpenClawWizard,
 }: {
   onScan: () => void
   onDemo: () => void
   onManual: () => void
+  onOpenClawWizard: () => void
 }) {
   return (
     <div className="flex flex-col items-center text-center max-w-lg mx-auto space-y-8">
@@ -187,29 +190,40 @@ function StepWelcome({
         <Button
           size="lg"
           className="w-full gap-3 h-14 text-lg"
-          onClick={onScan}
+          onClick={onOpenClawWizard}
         >
-          <Search className="h-5 w-5" />
-          Let's find your agents
+          <Zap className="h-5 w-5" />
+          Connect to OpenClaw
         </Button>
         <Button
           variant="outline"
           size="lg"
           className="w-full gap-3 h-12"
-          onClick={onDemo}
+          onClick={onScan}
         >
-          <Sparkles className="h-5 w-5" />
-          Use demo data
+          <Search className="h-5 w-5" />
+          Auto-scan for agents
         </Button>
-        <Button
-          variant="ghost"
-          size="lg"
-          className="w-full gap-3 h-10 text-muted-foreground"
-          onClick={onManual}
-        >
-          <Cable className="h-4 w-4" />
-          I'll configure manually
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="lg"
+            className="flex-1 gap-2 h-10 text-muted-foreground"
+            onClick={onDemo}
+          >
+            <Sparkles className="h-4 w-4" />
+            Demo mode
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="flex-1 gap-2 h-10 text-muted-foreground"
+            onClick={onManual}
+          >
+            <Cable className="h-4 w-4" />
+            Manual setup
+          </Button>
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground max-w-sm">
@@ -788,6 +802,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
 
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>(1)
+  const [showOpenClawWizard, setShowOpenClawWizard] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
@@ -1058,6 +1073,42 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
     onComplete()
   }, [onComplete])
 
+  const handleOpenClawComplete = useCallback(
+    async (config: { name: string; url: string; token: string; botTemplate?: string }) => {
+      // Save the OpenClaw connection via API
+      try {
+        await fetch("/api/connections", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: config.name,
+            type: "openclaw",
+            config: {
+              gateway_url: config.url,
+              token: config.token,
+            },
+            enabled: true,
+          }),
+        })
+      } catch {
+        // Best-effort
+      }
+
+      // Mark onboarding complete
+      localStorage.setItem("crewhub-onboarded", "true")
+      try {
+        await fetch("/api/settings/crewhub-onboarded", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value: "true" }),
+        })
+      } catch {}
+
+      onComplete()
+    },
+    [onComplete]
+  )
+
   // ─── Render ───────────────────────────────────────────────────
 
   return (
@@ -1088,7 +1139,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-10">
-          {step === 1 && (
+          {step === 1 && !showOpenClawWizard && (
             <StepWelcome
               onScan={() => {
                 setStep(2)
@@ -1096,6 +1147,13 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               }}
               onDemo={handleDemo}
               onManual={handleSkip}
+              onOpenClawWizard={() => setShowOpenClawWizard(true)}
+            />
+          )}
+          {step === 1 && showOpenClawWizard && (
+            <OpenClawWizard
+              onComplete={handleOpenClawComplete}
+              onSkip={() => setShowOpenClawWizard(false)}
             />
           )}
           {step === 2 && (
