@@ -720,33 +720,36 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         )}
 
         {/* Name tag (conditionally shown based on focus level, always shown when focused) */}
-        {(showLabel || isFocused) && (
-          <Html
-            position={[0, -0.55, 0]}
-            center
-            distanceFactor={15}
-            zIndexRange={[0, 0]}
-            style={{ pointerEvents: 'none' }}
-          >
-            <div
-              style={{
-                background: 'rgba(0,0,0,0.6)',
-                color: '#fff',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                fontFamily: 'system-ui, sans-serif',
-                textAlign: 'center',
-                maxWidth: '120px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
+        {/* Hidden for spawned agents (subagents) — activity bubble already shows their task */}
+        {(showLabel || isFocused) && !session?.key?.includes(':subagent:') && (
+          <>
+            <Html
+              position={[0, -0.55, 0]}
+              center
+              distanceFactor={15}
+              zIndexRange={[0, 0]}
+              style={{ pointerEvents: 'none' }}
             >
-              {name}
-            </div>
-          </Html>
+              <div
+                style={{
+                  background: 'rgba(0,0,0,0.6)',
+                  color: '#fff',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  fontFamily: 'system-ui, sans-serif',
+                  textAlign: 'center',
+                  maxWidth: '120px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {name}
+              </div>
+            </Html>
+          </>
         )}
 
         {/* Drag handle removed - using "Move to room" button in BotInfoPanel instead */}

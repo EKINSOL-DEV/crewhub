@@ -14,7 +14,7 @@ interface BotActivityBubbleProps {
 }
 
 /** Max characters before truncating with ellipsis */
-const MAX_CHARS = 40
+const MAX_CHARS = 120
 
 function truncate(text: string, max: number): string {
   if (text.length <= max) return text
@@ -67,7 +67,7 @@ export function BotActivityBubble({ activity, status, isActive }: BotActivityBub
   useFrame(({ clock }) => {
     if (!groupRef.current) return
     const t = clock.getElapsedTime()
-    groupRef.current.position.y = 0.88 + Math.sin(t * 1.8) * 0.02
+    groupRef.current.position.y = 1.08 + Math.sin(t * 1.8) * 0.02
   })
 
   const isIdle = status === 'idle' && !isActive
@@ -75,7 +75,7 @@ export function BotActivityBubble({ activity, status, isActive }: BotActivityBub
   const fontSize = getFontSize(label.length)
 
   return (
-    <group ref={groupRef} position={[0, 0.88, 0]}>
+    <group ref={groupRef} position={[0, 1.08, 0]}>
       <Html
         center
         distanceFactor={15}
@@ -102,14 +102,19 @@ export function BotActivityBubble({ activity, status, isActive }: BotActivityBub
               borderRadius: '6px',
               padding: '3px 8px',
               boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
-              whiteSpace: 'nowrap',
+              whiteSpace: 'normal',
+              overflowWrap: 'break-word',
               fontFamily: 'system-ui, -apple-system, sans-serif',
               fontSize,
               fontWeight: isIdle ? 400 : 500,
               color: isIdle ? '#9ca3af' : '#374151',
-              lineHeight: '1.3',
-              maxWidth: '200px',
+              lineHeight: '1.4',
+              maxWidth: '280px',
+              minWidth: '120px',
               overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: 'vertical' as const,
               textOverflow: 'ellipsis',
               opacity: isIdle ? 0.7 : textOpacity,
               transition: 'opacity 0.15s ease-in-out, font-size 0.2s ease',

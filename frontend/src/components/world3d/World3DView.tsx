@@ -84,7 +84,7 @@ import { WorldNavigation } from './WorldNavigation'
 import { ActionBar } from './ActionBar'
 import { TasksWindow } from './TasksWindow'
 import { AgentTopBar } from './AgentTopBar'
-import { useActiveTasks } from '@/hooks/useActiveTasks'
+import { useTasks } from '@/hooks/useTasks'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
@@ -1043,21 +1043,14 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     [visibleSessions, parkingSessions],
   )
 
-  // Active tasks for ActionBar badge and TasksWindow
-  const { tasks: activeTasks, getTaskOpacity, runningTasks } = useActiveTasks({
-    sessions: allSessions,
-    enabled: focusState.level !== 'firstperson',
+  // Active tasks from task board for ActionBar badge and TasksWindow
+  const { tasks: boardTasks } = useTasks({
+    autoFetch: focusState.level !== 'firstperson',
   })
-
-  // Helper to get room for session (for TasksWindow)
-  const getTaskRoomForSession = useCallback((sessionKey: string) => {
-    const session = allSessions.find(s => s.key === sessionKey)
-    return getRoomForSession(sessionKey, {
-      label: session?.label,
-      model: session?.model,
-      channel: session?.lastChannel,
-    })
-  }, [allSessions, getRoomForSession])
+  const activeTaskCount = useMemo(() => 
+    boardTasks.filter(t => t.status === 'in_progress' || t.status === 'review').length,
+    [boardTasks]
+  )
 
   const focusedSession = useMemo(() => {
     if (!focusState.focusedBotKey) return null
@@ -1171,7 +1164,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Action Bar (left side, vertical - Photoshop-style toolbar) */}
         {focusState.level !== 'firstperson' && (
           <ActionBar
-            runningTaskCount={runningTasks.length}
+            runningTaskCount={activeTaskCount}
             tasksWindowOpen={tasksWindowOpen}
             onToggleTasksWindow={() => setTasksWindowOpen(prev => !prev)}
           />
@@ -1180,10 +1173,6 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* Tasks Window (draggable, toggled via ActionBar) */}
         {focusState.level !== 'firstperson' && tasksWindowOpen && (
           <TasksWindow
-            tasks={activeTasks}
-            getTaskOpacity={getTaskOpacity}
-            getRoomForSession={getTaskRoomForSession}
-            defaultRoomId={rooms[0]?.id}
             onClose={() => setTasksWindowOpen(false)}
           />
         )}
