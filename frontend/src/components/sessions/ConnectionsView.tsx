@@ -265,11 +265,11 @@ function ConnectionDialog({
       ref={dialogRef}
       onClose={() => onOpenChange(false)}
       onClick={(e) => e.target === e.currentTarget && onOpenChange(false)}
-      className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[70]"
+      className="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg border shadow-lg w-full max-w-[500px] p-0 z-[70]"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-background border rounded-lg shadow-lg w-full max-w-[500px] mx-4 overflow-hidden"
+        className="bg-background rounded-lg overflow-hidden"
       >
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
