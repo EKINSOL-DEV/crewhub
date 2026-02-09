@@ -20,9 +20,11 @@ interface ZoneLandingViewProps {
   className?: string
   /** Extra 3D elements to render inside the scene */
   sceneExtras?: ReactNode
+  /** Hide the center marker box */
+  hideCenterMarker?: boolean
 }
 
-function LandingScene({ zone, mvpItems, sceneExtras }: { zone: Zone; mvpItems: MvpBoardItem[]; sceneExtras?: ReactNode }) {
+function LandingScene({ zone, mvpItems, sceneExtras, hideCenterMarker }: { zone: Zone; mvpItems: MvpBoardItem[]; sceneExtras?: ReactNode; hideCenterMarker?: boolean }) {
   return (
     <group>
       <ambientLight intensity={0.6} />
@@ -35,10 +37,12 @@ function LandingScene({ zone, mvpItems, sceneExtras }: { zone: Zone; mvpItems: M
       </mesh>
 
       {/* Center marker */}
-      <mesh position={[0, 1.5, 0]}>
-        <boxGeometry args={[2, 3, 0.3]} />
-        <meshStandardMaterial color="#ffffff" opacity={0.9} transparent />
-      </mesh>
+      {!hideCenterMarker && (
+        <mesh position={[0, 1.5, 0]}>
+          <boxGeometry args={[2, 3, 0.3]} />
+          <meshStandardMaterial color="#ffffff" opacity={0.9} transparent />
+        </mesh>
+      )}
 
       {/* Zone label */}
       <Html position={[0, 5, 0]} center>
@@ -64,11 +68,6 @@ function LandingScene({ zone, mvpItems, sceneExtras }: { zone: Zone; mvpItems: M
       </Html>
 
       {/* MVP Info Board — positioned to the right */}
-      <mesh position={[8, 2, 0]} rotation={[0, -0.3, 0]}>
-        <boxGeometry args={[0.2, 4, 3]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-
       <Html position={[9, 2.5, 0]} center>
         <div style={{
           background: 'rgba(44, 62, 80, 0.95)',
@@ -102,7 +101,7 @@ function gradientForZone(color: string): string {
   return `linear-gradient(180deg, #1a1a2e 0%, ${color}44 60%, ${color}88 100%)`
 }
 
-export function ZoneLandingView({ zone, mvpItems, className, sceneExtras }: ZoneLandingViewProps) {
+export function ZoneLandingView({ zone, mvpItems, className, sceneExtras, hideCenterMarker }: ZoneLandingViewProps) {
   return (
     <div className={`relative w-full h-full ${className ?? ''}`}>
       <Canvas
@@ -111,7 +110,7 @@ export function ZoneLandingView({ zone, mvpItems, className, sceneExtras }: Zone
         style={{ background: gradientForZone(zone.colorPrimary) }}
       >
         <Suspense fallback={null}>
-          <LandingScene zone={zone} mvpItems={mvpItems} sceneExtras={sceneExtras} />
+          <LandingScene zone={zone} mvpItems={mvpItems} sceneExtras={sceneExtras} hideCenterMarker={hideCenterMarker} />
           <OrbitControls
             enablePan={false}
             minDistance={15}
