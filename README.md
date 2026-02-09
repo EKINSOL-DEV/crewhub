@@ -142,7 +142,9 @@ cd crewhub
 make up
 ```
 
-The dashboard will be available at **http://localhost:5180**. The onboarding wizard will guide you through connecting to your gateway.
+The dashboard will be available at **http://localhost:8446** (production build). The onboarding wizard will guide you through connecting to your gateway.
+
+> **Note:** Port 5180 is only used for local development (`make dev`). Docker production uses port 8446.
 
 ### Option 2: Local Development
 
