@@ -10,7 +10,8 @@ This is intentional for ease of development and local use, but it means **CrewHu
 
 If you discover a security vulnerability, please report it responsibly:
 
-- **Email:** [security@crewhub.dev](mailto:security@crewhub.dev)
+- **Email:** [security@ekinsol.be](mailto:security@ekinsol.be)
+- **GitHub:** Contact [@ch-ekinsol](https://github.com/ch-ekinsol) via a private security advisory or direct message
 - **Do not** open a public GitHub issue for security vulnerabilities
 - We aim to acknowledge reports within 48 hours
 
