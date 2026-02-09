@@ -9,6 +9,7 @@
   /* Tokyo Night (default) */
   --zen-bg: #1a1b26;
   --zen-bg-panel: #24283b;
+  --zen-bg-elevated: #2a2e42;
   --zen-bg-hover: #2f3549;
   --zen-bg-active: #3d4560;
   --zen-fg: #c0caf5;
@@ -764,7 +765,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: hidden;
+  overflow: visible;
   background: var(--zen-bg);
   border: 1px solid transparent;
   transition: border-color 0.15s ease;
@@ -777,6 +778,7 @@
 /* ── Panel Header ──────────────────────────────────────────────── */
 
 .zen-panel-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -785,6 +787,8 @@
   background: var(--zen-bg-panel);
   border-bottom: 1px solid var(--zen-border);
   flex-shrink: 0;
+  z-index: 10;
+  overflow: visible;
 }
 
 .zen-panel-header-left {
@@ -899,7 +903,7 @@
   border: 1px solid var(--zen-border);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 10002;
   overflow: hidden;
   isolation: isolate;
 }
