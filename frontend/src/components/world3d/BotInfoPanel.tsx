@@ -49,6 +49,9 @@ export function BotInfoPanel({ session, displayName, botConfig, status, bio, age
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        // Don't close when clicking on the 3D canvas (camera rotation/pan starts with mousedown)
+        const target = e.target as HTMLElement
+        if (target.closest?.('canvas') || target.tagName === 'CANVAS') return
         setTimeout(() => onClose(), 50)
       }
     }

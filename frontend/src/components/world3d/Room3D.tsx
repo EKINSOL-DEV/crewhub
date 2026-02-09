@@ -151,6 +151,9 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   // ─── Hover state with 80ms debounce/hysteresis ──────────────
   const [hovered, setHovered] = useState(false)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  
+  // Track pointer down position to detect drag vs click
+  const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
 
   const handlePointerOver = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
@@ -171,29 +174,42 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
       hoverTimerRef.current = null
     }, 80)
   }, [])
+  
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
+    pointerDownPos.current = { x: e.clientX, y: e.clientY }
+  }, [])
 
   // ─── Click handler (focus-level aware) ──────────────────────
   const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
+    
+    // Ignore clicks that were actually drags (camera rotation)
+    if (pointerDownPos.current) {
+      const dx = Math.abs(e.clientX - pointerDownPos.current.x)
+      const dy = Math.abs(e.clientY - pointerDownPos.current.y)
+      const dragThreshold = 5 // pixels
+      
+      if (dx > dragThreshold || dy > dragThreshold) {
+        // This was a drag, not a click - ignore
+        pointerDownPos.current = null
+        return
+      }
+    }
+    pointerDownPos.current = null
 
+    // Only allow room clicks from overview or firstperson to zoom in
+    // At room/board/bot level: no click action (use back button or Escape to navigate)
     if (state.level === 'overview' || state.level === 'firstperson') {
-      // Overview: zoom into room
-      focusRoom(room.id)
-    } else if (state.level === 'bot' && state.focusedRoomId === room.id) {
-      // Bot level, same room: go back to room level (re-open Room HUD)
-      goBack()
-    } else if (state.focusedRoomId !== room.id) {
-      // Different room: switch to it
       focusRoom(room.id)
     }
-    // Room level, same room: no-op — Room HUD stays open
-  }, [state.level, state.focusedRoomId, room.id, focusRoom, goBack])
+  }, [state.level, room.id, focusRoom])
 
   return (
     <group
       position={position}
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
+      onPointerDown={handlePointerDown}
       onClick={handleClick}
     >
       {/* Floor tiles */}

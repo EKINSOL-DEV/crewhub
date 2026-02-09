@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Html } from '@react-three/drei'
 import { useDragActions } from '@/contexts/DragDropContext'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
@@ -34,6 +34,13 @@ export function TaskWall3D({
   // Only enable pointer events when this room is focused (prevent other rooms from intercepting clicks)
   const isThisRoomFocused = focusState.focusedRoomId === roomId
   const pointerEventsEnabled = isThisRoomFocused ? 'auto' : 'none'
+  
+  // Clean up interaction flag when room loses focus
+  useEffect(() => {
+    if (!isThisRoomFocused) {
+      setInteractingWithUI(false)
+    }
+  }, [isThisRoomFocused, setInteractingWithUI])
   
   // Block camera controls when interacting with the board
   const handlePointerEnter = useCallback(() => {

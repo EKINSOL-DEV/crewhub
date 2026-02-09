@@ -13,7 +13,7 @@
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
   <img src="https://img.shields.io/badge/Docs-Coming%20Soon-lightgrey?style=flat&logo=readthedocs&logoColor=white" alt="Docs">
-  <img src="https://img.shields.io/badge/version-v0.9.1-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.12.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -121,6 +121,20 @@ Works with:
 - OpenClaw running on the same machine (auto-discovery reads your local config)
 
 ### Option 1: Docker (Recommended)
+
+**1. Install Docker**
+
+First, make sure Docker is installed:
+- **macOS/Windows**: Download [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- **Linux**: Install via package manager ([instructions](https://docs.docker.com/engine/install/))
+
+Verify installation:
+```bash
+docker --version
+docker compose version
+```
+
+**2. Clone and Run**
 
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git

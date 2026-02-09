@@ -159,6 +159,9 @@ export function RoomInfoPanel({
         const target = e.target as HTMLElement
         if (target.closest?.('[role="dialog"]') || target.closest?.('[data-radix-dialog-overlay]')) return
 
+        // Don't close when clicking on the 3D canvas (camera rotation/pan starts with mousedown)
+        if (target.closest?.('canvas') || target.tagName === 'CANVAS') return
+
         setTimeout(() => onClose(), 50)
       }
     }
