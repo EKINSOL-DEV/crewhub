@@ -46,14 +46,14 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **Activity bubbles** — See what each agent is doing at a glance
 - **Blueprints** — JSON-defined room layouts you can create, share, and import
 
-### 🆕 New in v0.9.1
+### 🆕 New in v0.12.0
 
-- **Embedded TaskBoard in 3D** — Full TaskBoard component rendered on the whiteboard, not just sticky notes
-- **Focus Board button** — "🔍 Focus Board" button zooms the camera to board focus level
-- **Camera Debug HUD** — Press F2 to show camera position/target values as a fixed overlay
-- **UI interaction blocking** — Extended DragDropContext with `isInteractingWithUI` to disable camera controls when using overlays
-- **Desk rotation fix** — All desks now properly face into the room
-- **Cleaner Dev Room** — Removed whiteboard prop for a tidier workspace
+- **TaskWall3D interaction fix** — Pointer events now only enabled when room is focused, preventing click interception
+- **Simplified room navigation** — Room clicks only work from overview (no accidental zoom-outs)
+- **Zone switcher** — Persistent zone navigation in bottom bar across all zones
+- **Zen Mode activity panel** — Shows active tasks with icons, titles, and agent names
+- **Cleaner zone landing views** — Removed placeholder meshes for consistent, polished scenes
+- **Agent onboarding system** — API key auth, manifest endpoint, self-discovery for zero-config agent integration
 
 ---
 
