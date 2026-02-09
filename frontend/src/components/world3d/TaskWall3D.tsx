@@ -93,6 +93,7 @@ export function TaskWall3D({
         }}
       >
         <div
+          data-world-ui
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
           onPointerMove={(e) => e.stopPropagation()}
@@ -133,6 +134,7 @@ export function TaskWall3D({
           style={{ pointerEvents: pointerEventsEnabled }}
         >
           <button
+            data-world-ui
             onClick={(e) => {
               e.stopPropagation()
               focusBoard(roomId)
