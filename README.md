@@ -81,6 +81,7 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **Click-to-detail panels** — inspect any agent's info, stats, and activity
 - **Agent bios** with pre-filled personality descriptions
 - **Agent Top Bar** with boss button, pinned agent, and agent picker
+- **Persona tuning** — customize agent behavior with presets (Executor, Advisor, Explorer) or fine-tune individual traits
 
 ### 🎨 Customization
 - **Dark/light theme** with customizable accent colors
