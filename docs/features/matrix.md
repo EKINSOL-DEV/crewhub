@@ -71,6 +71,7 @@ Research:     ████                                          9% (2)
 ### v0.14.0
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
 - 📋 Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
+- 📋 Improving and Reviewing Skills usage during onboarding
 
 ### v0.15.0
 - 📋 HQ visual redesign (design TBD)
