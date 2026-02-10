@@ -61,6 +61,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { useRooms, type Room } from "@/hooks/useRooms"
 import { useRoomAssignmentRules, type RoomAssignmentRule } from "@/hooks/useRoomAssignmentRules"
 import { AgentsSettingsTab } from "./AgentsSettingsTab"
+import { PersonasTab } from "@/components/persona/PersonasTab"
 import { useProjects, type Project } from "@/hooks/useProjects"
 import { useToast } from "@/hooks/use-toast"
 
@@ -127,13 +128,14 @@ const SESSION_TYPES = [
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 
-type SettingsTab = "look" | "rooms" | "projects" | "agents" | "behavior" | "data" | "connections" | "advanced"
+type SettingsTab = "look" | "rooms" | "projects" | "agents" | "personas" | "behavior" | "data" | "connections" | "advanced"
 
 const SETTINGS_TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "look", label: "Look & Feel", icon: <Palette className="h-4 w-4" /> },
   { id: "rooms", label: "Rooms", icon: <LayoutGrid className="h-4 w-4" /> },
   { id: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> },
   { id: "agents", label: "Agents", icon: <Bot className="h-4 w-4" /> },
+  { id: "personas", label: "Personas", icon: <SlidersHorizontal className="h-4 w-4" /> },
   { id: "behavior", label: "Behavior", icon: <SlidersHorizontal className="h-4 w-4" /> },
   { id: "data", label: "Data", icon: <Database className="h-4 w-4" /> },
   { id: "connections", label: "Connections", icon: <Cable className="h-4 w-4" /> },
@@ -1055,6 +1057,11 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
             {/* ═══ Tab: Agents ═══ */}
             {selectedTab === "agents" && (
               <AgentsSettingsTab />
+            )}
+
+            {/* ═══ Tab: Personas ═══ */}
+            {selectedTab === "personas" && (
+              <PersonasTab />
             )}
 
             {/* ═══ Tab: Behavior ═══ */}

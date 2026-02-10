@@ -43,10 +43,13 @@ import {
 } from "lucide-react"
 import { OpenClawWizard } from "./OpenClawWizard"
 import { RoomSetupStep } from "./RoomSetupStep"
+import { PersonaStep } from "./PersonaStep"
+import type { PersonaConfig } from "@/lib/personaTypes"
+import { updatePersona } from "@/lib/personaApi"
 
 // ─── Types ──────────────────────────────────────────────────────
 
-type WizardStep = 1 | 2 | 3 | 4 | 5
+type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 
 interface ConnectionConfig {
   id: string
@@ -914,7 +917,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   // ─── Navigation ───────────────────────────────────────────────
 
   const goNext = useCallback(() => {
-    setStep((s) => Math.min(s + 1, 5) as WizardStep)
+    setStep((s) => Math.min(s + 1, 6) as WizardStep)
   }, [])
 
   const goBack = useCallback(() => {
@@ -1031,7 +1034,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
           )}
         </div>
         <div className="max-w-3xl mx-auto px-6 pb-4">
-          <StepProgress step={step} total={5} />
+          <StepProgress step={step} total={6} />
         </div>
       </div>
 
@@ -1079,6 +1082,25 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             <RoomSetupStep onComplete={goNext} />
           )}
           {step === 5 && (
+            <PersonaStep
+              onComplete={async (config: PersonaConfig) => {
+                // Save persona for the first agent (best-effort)
+                try {
+                  const agentsRes = await fetch("/api/agents")
+                  const agentsData = await agentsRes.json()
+                  const agentList = agentsData.agents || agentsData || []
+                  if (agentList.length > 0) {
+                    await updatePersona(String(agentList[0].id), config)
+                  }
+                } catch {
+                  // Best-effort — user can configure later
+                }
+                goNext()
+              }}
+              onSkip={goNext}
+            />
+          )}
+          {step === 6 && (
             <StepReady
               connections={connections}
               onGoDashboard={completeOnboarding}
