@@ -813,7 +813,7 @@
 }
 
 .zen-panel-focused .zen-panel-title {
-  color: #ffffff;
+  color: var(--zen-fg);
 }
 
 .zen-panel-header-right {
@@ -879,7 +879,7 @@
 }
 
 .zen-panel-focused .zen-panel-title-btn {
-  color: #ffffff;
+  color: var(--zen-fg);
 }
 
 .zen-panel-title-btn:hover,
