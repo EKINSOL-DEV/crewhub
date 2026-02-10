@@ -184,6 +184,10 @@ export function RoomInfoPanel({
   return (
     <div
       ref={panelRef}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
       style={{
         position: 'absolute',
         top: 16,
