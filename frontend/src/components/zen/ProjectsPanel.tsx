@@ -33,7 +33,7 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
         {/* Header with filter */}
         <div style={{
           padding: '8px 12px',
-          borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+          borderBottom: '1px solid var(--zen-border, var(--zen-border))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -41,7 +41,7 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 14 }}>📂</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--zen-fg, var(--zen-fg))' }}>
               Projects
             </span>
           </div>
@@ -64,7 +64,7 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
               alignItems: 'center',
               justifyContent: 'center',
               height: '100%',
-              color: 'hsl(var(--muted-foreground))',
+              color: 'var(--zen-fg-muted)',
               fontSize: 13,
               gap: 8,
             }}>
@@ -93,7 +93,7 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
       {/* Header with filter */}
       <div style={{
         padding: '8px 12px',
-        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+        borderBottom: '1px solid var(--zen-border, var(--zen-border))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -101,7 +101,7 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 14 }}>📂</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--zen-fg, var(--zen-fg))' }}>
             {projectName || 'Project'}
           </span>
         </div>
@@ -118,7 +118,7 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
       {/* Tab bar */}
       <div style={{
         display: 'flex',
-        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+        borderBottom: '1px solid var(--zen-border, var(--zen-border))',
         padding: '0 12px',
         flexShrink: 0,
       }}>
@@ -155,7 +155,7 @@ function TabButton({ active, onClick, label }: { active: boolean; onClick: () =>
         padding: '8px 12px',
         fontSize: 12,
         fontWeight: 600,
-        color: active ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+        color: active ? 'var(--zen-accent)' : 'var(--zen-fg-muted)',
         background: 'none',
         border: 'none',
         borderBottom: `2px solid ${active ? 'var(--zen-accent, #3b82f6)' : 'transparent'}`,
@@ -179,16 +179,16 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
         gap: 10,
         padding: '12px 14px',
         borderRadius: 10,
-        border: '1px solid hsl(var(--border))',
-        background: 'hsl(var(--secondary))',
+        border: '1px solid var(--zen-border)',
+        background: 'var(--zen-bg-hover)',
         cursor: 'pointer',
         fontFamily: 'inherit',
         textAlign: 'left',
         width: '100%',
         transition: 'background 0.15s, border-color 0.15s',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'hsl(var(--secondary))' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--zen-bg-elevated)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'var(--zen-bg-hover)' }}
     >
       <span style={{
         width: 10,
@@ -202,7 +202,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
         <div style={{
           fontSize: 13,
           fontWeight: 600,
-          color: 'hsl(var(--foreground))',
+          color: 'var(--zen-fg)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -212,7 +212,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
         {project.description && (
           <div style={{
             fontSize: 11,
-            color: 'hsl(var(--muted-foreground))',
+            color: 'var(--zen-fg-muted)',
             marginTop: 2,
             overflow: 'hidden',
             textOverflow: 'ellipsis',

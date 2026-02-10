@@ -42,15 +42,15 @@ export function ProjectFilesSection({ projectId, projectName, projectColor }: Pr
         flex: 1,
         overflow: 'auto',
         borderRadius: 8,
-        border: '1px solid hsl(var(--border))',
-        background: 'hsl(var(--background))',
+        border: '1px solid var(--zen-border, hsl(var(--border)))',
+        background: 'var(--zen-bg, hsl(var(--background)))',
       }}>
         {loading ? (
-          <div style={{ padding: 12, fontSize: 12, color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
+          <div style={{ padding: 12, fontSize: 12, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', textAlign: 'center' }}>
             Loading files…
           </div>
         ) : files.length === 0 ? (
-          <div style={{ padding: 12, fontSize: 12, color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
+          <div style={{ padding: 12, fontSize: 12, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', textAlign: 'center' }}>
             No files found
           </div>
         ) : (
@@ -122,12 +122,12 @@ function FileTreeNode({
           cursor: 'pointer',
           fontSize: 12,
           fontFamily: 'inherit',
-          color: isSelected ? accentColor : 'hsl(var(--foreground))',
+          color: isSelected ? accentColor : 'var(--zen-fg, hsl(var(--foreground)))',
           fontWeight: isSelected ? 600 : 400,
           textAlign: 'left',
           transition: 'background 0.1s',
         }}
-        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'hsl(var(--secondary))' }}
+        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--zen-bg-hover, hsl(var(--secondary)))' }}
         onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
       >
         <span style={{ fontSize: 11, width: 14, textAlign: 'center', flexShrink: 0 }}>
