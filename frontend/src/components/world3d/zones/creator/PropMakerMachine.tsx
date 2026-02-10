@@ -29,6 +29,16 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
   const [generatedProps, setGeneratedProps] = useState<GeneratedProp[]>([])
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showExamples, setShowExamples] = useState(false)
+
+  const examplePrompts = [
+    'A glowing mushroom lamp',
+    'A steampunk gear clock',
+    'A floating crystal orb',
+    'A retro arcade cabinet',
+    'A neon "OPEN" sign',
+    'A tiny robot figurine',
+  ]
   const coreRef = useRef<THREE.Mesh>(null)
   const ringRef = useRef<THREE.Mesh>(null)
 
@@ -237,6 +247,46 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
               Describe the prop you want to create. The AI fabricator will generate a 3D object for your world.
             </p>
 
+            {/* Example prompts toggle */}
+            <div style={{ marginBottom: '10px' }}>
+              <button
+                onClick={() => setShowExamples(!showExamples)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#00ffcc',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  padding: 0,
+                  textDecoration: 'underline',
+                  opacity: 0.8,
+                }}
+              >
+                {showExamples ? 'Hide examples ▴' : 'Show example prompts ▾'}
+              </button>
+              {showExamples && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                  {examplePrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      onClick={() => { setInputText(prompt); setShowExamples(false) }}
+                      style={{
+                        background: 'rgba(0, 255, 204, 0.1)',
+                        border: '1px solid rgba(0, 255, 204, 0.25)',
+                        borderRadius: '12px',
+                        padding: '4px 10px',
+                        color: '#aaa',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Input row */}
             <div style={{ display: 'flex', gap: '8px' }}>
               <input
@@ -281,8 +331,13 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
 
             {/* Status messages */}
             {isGenerating && (
-              <div style={{ marginTop: '10px', fontSize: '12px', color: '#ffd700', textAlign: 'center' }}>
-                ⚙️ Fabricating prop...
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#ffd700', textAlign: 'center', animation: 'pulse 1.5s ease-in-out infinite' }}>
+                <div style={{ display: 'inline-block', animation: 'spin 2s linear infinite' }}>⚙️</div>
+                {' '}Fabricating prop...
+                <style>{`
+                  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+                  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                `}</style>
               </div>
             )}
             {successMessage && !isGenerating && (

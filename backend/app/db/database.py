@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 9  # v9: Added tasks and project_history tables
+SCHEMA_VERSION = 10  # v10: Added agent_personas table
 
 
 async def init_database():

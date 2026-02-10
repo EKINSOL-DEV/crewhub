@@ -99,14 +99,11 @@ export function useProjects() {
       color?: string
       folder_path?: string
     }): Promise<{ success: true; project: Project } | { success: false; error: string }> => {
-      console.log('[useProjects] createProject CALLED with:', project)
-      
       // Use AbortController for timeout (Vite proxy can sometimes hang)
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000)
       
       try {
-        console.log('[useProjects] About to fetch POST /projects')
         const response = await fetch(`${API_BASE}/projects`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -114,7 +111,6 @@ export function useProjects() {
           signal: controller.signal,
         })
         clearTimeout(timeoutId)
-        console.log('[useProjects] fetch completed, status:', response.status)
         
         if (!response.ok) {
           const err = await response.json().catch(() => ({}))
@@ -122,16 +118,13 @@ export function useProjects() {
         }
         
         const created: Project = await response.json()
-        console.log('[useProjects] project created:', created)
         await fetchProjects()
         return { success: true as const, project: created }
       } catch (err) {
         clearTimeout(timeoutId)
-        console.log('[useProjects] createProject error:', err)
         
         // If aborted due to timeout, check if project was actually created
         if (err instanceof Error && err.name === 'AbortError') {
-          console.log('[useProjects] Request timed out, checking if project was created...')
           // Refresh projects and look for the new one
           await fetchProjects()
           // Wait a moment for state to update, then check
@@ -144,7 +137,6 @@ export function useProjects() {
             const data = await refreshResponse.json()
             const found = data.projects?.find((p: Project) => p.name === project.name)
             if (found) {
-              console.log('[useProjects] Found project after timeout:', found)
               return { success: true as const, project: found }
             }
           }
