@@ -22,6 +22,22 @@ EXTERNAL_CHANNELS = {"whatsapp", "slack", "discord", "telegram", "sms", "email"}
 
 SCHEMA_VERSION = 1
 
+# Map common hex colors to friendly names
+COLOR_NAMES = {
+    "#3b82f6": "blue",
+    "#f97316": "orange",
+    "#8b5cf6": "purple",
+    "#ec4899": "pink",
+    "#10b981": "green",
+    "#ef4444": "red",
+    "#f59e0b": "amber",
+    "#06b6d4": "cyan",
+    "#84cc16": "lime",
+    "#6366f1": "indigo",
+    "#14b8a6": "teal",
+    "#f43f5e": "rose",
+}
+
 
 def _canonical_json(obj: dict) -> str:
     """Deterministic JSON for hashing (sorted keys, no whitespace)."""
@@ -93,11 +109,16 @@ async def build_crewhub_context(
             participants: list[dict] = []
             if privacy == "internal":
                 async with db.execute(
-                    "SELECT id, name FROM agents WHERE default_room_id = ?",
+                    """SELECT a.id, a.name, a.agent_session_key,
+                              d.display_name
+                       FROM agents a
+                       LEFT JOIN session_display_names d ON a.agent_session_key = d.session_key
+                       WHERE a.default_room_id = ?""",
                     (room_id,),
                 ) as cur:
                     async for row in cur:
-                        participants.append({"role": "agent", "handle": row["name"]})
+                        handle = row["display_name"] or row["name"] or row["id"]
+                        participants.append({"role": "agent", "handle": handle})
 
             # 4. Tasks — internal only
             tasks: list[dict] = []
@@ -127,7 +148,7 @@ async def build_crewhub_context(
             if session_key:
                 # Try matching agent by session_key directly
                 async with db.execute(
-                    "SELECT id, name, agent_session_key FROM agents WHERE agent_session_key = ?",
+                    "SELECT id, name, color, agent_session_key FROM agents WHERE agent_session_key = ?",
                     (session_key,),
                 ) as cur:
                     agent_row = await cur.fetchone()
@@ -137,7 +158,7 @@ async def build_crewhub_context(
                     if len(parts) >= 2:
                         base_key = f"agent:{parts[1]}:main"
                         async with db.execute(
-                            "SELECT id, name, agent_session_key FROM agents WHERE agent_session_key = ?",
+                            "SELECT id, name, color, agent_session_key FROM agents WHERE agent_session_key = ?",
                             (base_key,),
                         ) as cur:
                             agent_row = await cur.fetchone()
@@ -167,6 +188,8 @@ async def build_crewhub_context(
                         "agentId": agent_row["id"],
                         "role": "agent",
                     }
+                    if agent_row["color"]:
+                        self_identity["color"] = agent_row["color"]
 
             # 6. Context version — count of mutations (simple: max updated_at across relevant tables)
             context_version = await _get_context_version(db, room_id, project_id)
@@ -249,10 +272,28 @@ def format_context_block(envelope: dict) -> str:
     compact = json.dumps(envelope, separators=(",", ":"), ensure_ascii=False)
     block = f"```crewhub-context\n{compact}\n```"
 
-    # Add human-readable identity line
+    # Add human-readable identity line + visual appearance
     self_info = envelope.get("self")
     if self_info:
-        room_name = envelope.get("room", {}).get("name", "unknown")
-        block += f"\n\n**You are {self_info['handle']}** — an agent in the {room_name} room."
+        handle = self_info["handle"]
+        block += f"\n\n**You are {handle}** — your display name in CrewHub."
+
+        # Visual appearance in 3D world
+        color_hex = self_info.get("color")
+        if color_hex:
+            color_name = COLOR_NAMES.get(color_hex.lower(), color_hex)
+        else:
+            color_name = "unknown"
+
+        block += f"""
+
+**Visual appearance in 3D world:**
+- Color: {color_name}
+- You appear as a bot character made of two stacked rounded boxes
+- When active: you carry a laptop and work at a desk
+- When idle: you wander around the campus between rooms
+- Environment: toon-shaded office building on a grid
+
+(You may have a different personal identity in your workspace files.)"""
 
     return block
