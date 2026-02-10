@@ -18,6 +18,78 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 
 ---
 
+## 📊 Summary by Category
+
+| Category | Total Features | Released | In Progress | Planned | Research | Total Docs |
+|----------|----------------|----------|-------------|---------|----------|------------|
+| **Core** | 4 | 4 | 0 | 0 | 0 | 13 |
+| **3D World** | 5 | 1 | 1 | 2 | 1 | 12 |
+| **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
+| **Productivity** | 3 | 1 | 0 | 2 | 0 | 10 |
+| **Creative** | 3 | 1 | 1 | 0 | 1 | 6 |
+| **Meta** | 1 | 1 | 0 | 0 | 0 | 2 |
+| **TOTAL** | **23** | **14** | **2** | **5** | **2** | **54** |
+
+---
+
+## 📈 Status Distribution
+
+```
+Released:     ███████████████████████████                  61% (14)
+In Progress:  ████                                          9% (2)
+Planned:      ██████████                                   22% (5)
+Research:     ████                                          9% (2)
+```
+
+---
+
+## 📅 Release Timeline
+
+| Version | Date | Features Added |
+|---------|------|----------------|
+| **v0.12.0** | 2026-02-10 | Agent Persona Tuning, Creator Zone MVP |
+| **v0.11.0** | 2026-02-07 | Zen Mode Tabs, Zen Statue, Activity Panel |
+| **v0.9.0** | 2026-02-06 | Task Board, TaskWall3D, Agent Bios |
+| **v0.7.0** | 2026-02-05 | 4 Environments, Wandering Bots, Room Textures |
+| **v0.6.0** | 2026-02-05 | Modding System (Registry<T>, blueprints) |
+| **v0.5.0** | 2026-02-04 | Room Projects, HQ command center |
+| **v0.4.0** | 2026-02-04 | Onboarding wizard, Settings API, Debug panel |
+| **v0.3.0** | 2026-02-04 | Grid system, Room Focus Mode, Bot movement |
+| **v0.2.0** | 2026-02-04 | 3D World View (toon shading, zoom levels) |
+| **v0.1.0** | 2026-02-02 | Initial beta (Cards view, SSE monitoring) |
+
+---
+
+## 🗓️ Upcoming Roadmap
+
+### v0.13.0 (Next)
+- 📋 Markdown viewer Phase 1 (agent files + fullscreen)
+- 📋 Markdown editor (CodeMirror 6, auto-save)
+- 🚧 Creator Zone MVP (prop maker, AI generation, live preview) ← Built overnight
+- ✅ Prop drag & drop fixes (edge cases, camera orbit disabled) ← Built overnight
+
+### v0.14.0
+- 🔬 Spatial awareness (vision, proximity, pathfinding)
+- 📋 Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
+
+### v0.15.0
+- 📋 HQ visual redesign (design TBD)
+
+### v0.16.0
+- 🚧 Zones system (Creator Center, Academy, Game Center)
+- 📋 Academy Zone (Knowledge Tree, flying books)
+
+### v0.17.0+
+- Voice chat in first person mode
+- Agent Teams support (Anthropic extended context)
+
+### Research (no version assigned)
+- 🔬 Pixel avatars alternative aesthetic
+- Steam/desktop app distribution
+- Multi-world architecture
+
+---
+
 ## 🏗️ Core Platform Features
 
 | Feature | Status | Version | Docs | Description |
@@ -92,78 +164,6 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **Demo Site** | ✅ | live @ demo.crewhub.dev | 2 | Public demo with mock API, no OpenClaw dependency |
 
 **Total:** 1 feature • 2 docs • 1 released
-
----
-
-## 📊 Summary by Category
-
-| Category | Total Features | Released | In Progress | Planned | Research | Total Docs |
-|----------|----------------|----------|-------------|---------|----------|------------|
-| **Core** | 4 | 4 | 0 | 0 | 0 | 13 |
-| **3D World** | 5 | 1 | 1 | 2 | 1 | 12 |
-| **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
-| **Productivity** | 3 | 1 | 0 | 2 | 0 | 10 |
-| **Creative** | 3 | 1 | 1 | 0 | 1 | 6 |
-| **Meta** | 1 | 1 | 0 | 0 | 0 | 2 |
-| **TOTAL** | **23** | **14** | **2** | **5** | **2** | **54** |
-
----
-
-## 📈 Status Distribution
-
-```
-Released:     ███████████████████████████                  61% (14)
-In Progress:  ████                                          9% (2)
-Planned:      ██████████                                   22% (5)
-Research:     ████                                          9% (2)
-```
-
----
-
-## 📅 Release Timeline
-
-| Version | Date | Features Added |
-|---------|------|----------------|
-| **v0.12.0** | 2026-02-10 | Agent Persona Tuning, Creator Zone MVP |
-| **v0.11.0** | 2026-02-07 | Zen Mode Tabs, Zen Statue, Activity Panel |
-| **v0.9.0** | 2026-02-06 | Task Board, TaskWall3D, Agent Bios |
-| **v0.7.0** | 2026-02-05 | 4 Environments, Wandering Bots, Room Textures |
-| **v0.6.0** | 2026-02-05 | Modding System (Registry<T>, blueprints) |
-| **v0.5.0** | 2026-02-04 | Room Projects, HQ command center |
-| **v0.4.0** | 2026-02-04 | Onboarding wizard, Settings API, Debug panel |
-| **v0.3.0** | 2026-02-04 | Grid system, Room Focus Mode, Bot movement |
-| **v0.2.0** | 2026-02-04 | 3D World View (toon shading, zoom levels) |
-| **v0.1.0** | 2026-02-02 | Initial beta (Cards view, SSE monitoring) |
-
----
-
-## 🗓️ Upcoming Roadmap
-
-### v0.13.0 (Next)
-- 📋 Markdown viewer Phase 1 (agent files + fullscreen)
-- 📋 Markdown editor (CodeMirror 6, auto-save)
-- 🚧 Creator Zone MVP (prop maker, AI generation, live preview) ← Built overnight
-- ✅ Prop drag & drop fixes (edge cases, camera orbit disabled) ← Built overnight
-
-### v0.14.0
-- 🔬 Spatial awareness (vision, proximity, pathfinding)
-- 📋 Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
-
-### v0.15.0
-- 📋 HQ visual redesign (design TBD)
-
-### v0.16.0
-- 🚧 Zones system (Creator Center, Academy, Game Center)
-- 📋 Academy Zone (Knowledge Tree, flying books)
-
-### v0.17.0+
-- Voice chat in first person mode
-- Agent Teams support (Anthropic extended context)
-
-### Research (no version assigned)
-- 🔬 Pixel avatars alternative aesthetic
-- Steam/desktop app distribution
-- Multi-world architecture
 
 ---
 
