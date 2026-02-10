@@ -273,7 +273,7 @@ async def _get_context_version(
     return max(candidates) if candidates else 0
 
 
-async def get_persona_prompt(agent_id: str) -> str | None:
+async def get_persona_prompt(agent_id: str) -> Optional[str]:
     """Build persona prompt fragment for an agent, or None if no persona configured."""
     from app.services.personas import build_persona_prompt
 
