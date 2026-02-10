@@ -9,15 +9,26 @@ interface PropMakerMachineProps {
   rotation?: number
 }
 
+interface GeneratedProp {
+  name: string
+  filename: string
+  timestamp: number
+}
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8091'
+
 /**
  * Futuristic prop fabricator machine — a glowing sci-fi console
- * that will eventually open a chat dialog for AI-powered prop creation.
- * 
- * Visual: cylindrical base + holographic ring + floating core crystal.
+ * that opens a chat dialog for AI-powered prop creation.
  */
 export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMakerMachineProps) {
   const [hovered, setHovered] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [inputText, setInputText] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedProps, setGeneratedProps] = useState<GeneratedProp[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const coreRef = useRef<THREE.Mesh>(null)
   const ringRef = useRef<THREE.Mesh>(null)
 
@@ -41,6 +52,45 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
 
   const handleClick = () => {
     setDialogOpen(!dialogOpen)
+  }
+
+  const handleGenerate = async () => {
+    if (!inputText.trim() || isGenerating) return
+
+    setIsGenerating(true)
+    setError(null)
+    setSuccessMessage(null)
+
+    try {
+      const res = await fetch(`${API_BASE}/api/creator/generate-prop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: inputText.trim() }),
+      })
+
+      if (!res.ok) {
+        throw new Error(`Generation failed (${res.status})`)
+      }
+
+      const data = await res.json()
+      setGeneratedProps((prev) => [
+        { name: data.name, filename: data.filename, timestamp: Date.now() },
+        ...prev,
+      ].slice(0, 10))
+      setSuccessMessage(`✅ Created "${data.name}"`)
+      setInputText('')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Generation failed')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleGenerate()
+    }
   }
 
   return (
@@ -84,9 +134,9 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
         <mesh position={[0, 0, 0.021]}>
           <boxGeometry args={[0.42, 0.22, 0.01]} />
           <meshStandardMaterial
-            color={hovered ? '#00ffcc' : '#e94560'}
-            emissive={hovered ? '#00ffcc' : '#e94560'}
-            emissiveIntensity={hovered ? 1.5 : 0.6}
+            color={isGenerating ? '#ffd700' : hovered ? '#00ffcc' : '#e94560'}
+            emissive={isGenerating ? '#ffd700' : hovered ? '#00ffcc' : '#e94560'}
+            emissiveIntensity={isGenerating ? 2 : hovered ? 1.5 : 0.6}
             toneMapped={false}
           />
         </mesh>
@@ -149,7 +199,7 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
         decay={2}
       />
 
-      {/* Chat dialog (placeholder) */}
+      {/* Chat dialog */}
       {dialogOpen && (
         <Html position={[0, 2.5, 0]} center zIndexRange={[100, 110]}>
           <div
@@ -186,10 +236,16 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
             <p style={{ fontSize: '13px', color: '#aaa', margin: '0 0 16px 0', lineHeight: 1.5 }}>
               Describe the prop you want to create. The AI fabricator will generate a 3D object for your world.
             </p>
+
+            {/* Input row */}
             <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="text"
                 placeholder="e.g. A glowing mushroom lamp..."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isGenerating}
                 style={{
                   flex: 1,
                   background: 'rgba(255,255,255,0.08)',
@@ -199,25 +255,69 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
                   color: '#fff',
                   fontSize: '13px',
                   outline: 'none',
+                  opacity: isGenerating ? 0.5 : 1,
                 }}
               />
               <button
+                onClick={handleGenerate}
+                disabled={isGenerating || !inputText.trim()}
                 style={{
-                  background: 'linear-gradient(135deg, #00ffcc, #0f3460)',
+                  background: isGenerating
+                    ? 'linear-gradient(135deg, #666, #444)'
+                    : 'linear-gradient(135deg, #00ffcc, #0f3460)',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '8px 14px',
                   color: '#fff',
                   fontWeight: 600,
-                  cursor: 'pointer',
+                  cursor: isGenerating ? 'wait' : 'pointer',
                   fontSize: '13px',
+                  minWidth: '70px',
                 }}
               >
-                Create
+                {isGenerating ? '⏳' : 'Create'}
               </button>
             </div>
+
+            {/* Status messages */}
+            {isGenerating && (
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#ffd700', textAlign: 'center' }}>
+                ⚙️ Fabricating prop...
+              </div>
+            )}
+            {successMessage && !isGenerating && (
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#00ffcc', textAlign: 'center' }}>
+                {successMessage}
+              </div>
+            )}
+            {error && !isGenerating && (
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#e94560', textAlign: 'center' }}>
+                ❌ {error}
+              </div>
+            )}
+
+            {/* History */}
+            {generatedProps.length > 0 && (
+              <div style={{ marginTop: '14px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px' }}>
+                <div style={{ fontSize: '11px', color: '#666', marginBottom: '6px' }}>Recent props:</div>
+                {generatedProps.map((prop, i) => (
+                  <div
+                    key={`${prop.filename}-${prop.timestamp}`}
+                    style={{
+                      fontSize: '12px',
+                      color: '#aaa',
+                      padding: '3px 0',
+                      opacity: 1 - i * 0.1,
+                    }}
+                  >
+                    📦 {prop.name} <span style={{ color: '#555', fontSize: '10px' }}>({prop.filename})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div style={{ marginTop: '12px', fontSize: '11px', color: '#666', textAlign: 'center' }}>
-              ⚡ AI subagent integration coming soon
+              ⚡ Powered by AI subagent
             </div>
           </div>
         </Html>
