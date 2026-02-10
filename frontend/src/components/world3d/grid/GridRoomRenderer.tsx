@@ -3,7 +3,7 @@
 // Replaces the hardcoded RoomProps.tsx per-room components.
 // Supports long-press to select and move props with arrow keys/WASD.
 
-import { useMemo, useState, useCallback, useRef } from 'react'
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { gridToWorld } from '@/lib/grid'
@@ -152,6 +152,25 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
         {propId}
       </span>
     </Html>
+  )
+}
+
+// ─── Hover Glow Effect ──────────────────────────────────────────
+
+function HoverGlow({ position }: { position: [number, number, number] }) {
+  const ref = useRef<THREE.Mesh>(null!)
+  
+  useFrame((state) => {
+    if (!ref.current) return
+    const mat = ref.current.material as THREE.MeshBasicMaterial
+    mat.opacity = 0.08 + Math.sin(state.clock.getElapsedTime() * 3) * 0.04
+  })
+  
+  return (
+    <mesh ref={ref} position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+      <circleGeometry args={[0.7, 32]} />
+      <meshBasicMaterial color="#60a5fa" transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
+    </mesh>
   )
 }
 
@@ -416,9 +435,11 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   // Stable callbacks — key is passed via event.object.userData
   const handlePointerEnter = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    // Walk up to find the group with our debug userData
-    let obj = e.eventObject
-    if (obj?.userData?.debugPropKey) {
+    const obj = e.eventObject
+    if (obj?.userData?.propKey) {
+      setHoveredPropKey(obj.userData.propKey)
+      document.body.style.cursor = 'pointer'
+    } else if (obj?.userData?.debugPropKey) {
       setHoveredPropKey(obj.userData.debugPropKey)
     }
   }, [])
@@ -448,6 +469,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
       if (distance >= DRAG_THRESHOLD) {
         hasDragStarted.current = true
         startDrag(e)
+        document.body.style.cursor = 'grabbing'
       }
     }
     
@@ -463,21 +485,24 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     // End drag if we were dragging
     if (isDragging) {
       endDrag()
+      document.body.style.cursor = isMoving ? 'grab' : 'auto'
     }
     pointerStartPos.current = null
     hasDragStarted.current = false
-  }, [handlePointerUp, isDragging, endDrag])
+  }, [handlePointerUp, isDragging, isMoving, endDrag])
   
   const handlePointerLeaveForLongPress = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     // Don't cancel if we're dragging - the user might move outside the prop temporarily
     if (!isDragging) {
       cancelLongPress()
+      document.body.style.cursor = 'auto'
     }
-    // Also handle debug hover
+    // Clear hover
     const obj = e.eventObject
-    if (obj?.userData?.debugPropKey) {
-      setHoveredPropKey((prev) => prev === obj.userData.debugPropKey ? null : prev)
+    const key = obj?.userData?.propKey || obj?.userData?.debugPropKey
+    if (key) {
+      setHoveredPropKey((prev) => prev === key ? null : prev)
     }
   }, [cancelLongPress, isDragging])
 
@@ -532,6 +557,13 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
       hasDragStarted.current = false
     }
   }, [isDragging, endDrag])
+
+  // Reset cursor when movement ends
+  useEffect(() => {
+    if (!isMoving) {
+      document.body.style.cursor = 'auto'
+    }
+  }, [isMoving])
 
   return (
     <group>
@@ -613,11 +645,8 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMoveEvent}
             onPointerUp={handlePointerUpEvent}
+            onPointerEnter={handlePointerEnter}
             onPointerLeave={handlePointerLeaveForLongPress}
-            {...(gridDebugEnabled ? {
-              onPointerEnter: handlePointerEnter,
-              userData: { debugPropKey: key },
-            } : {})}
             userData={{ 
               propKey: key, 
               propId, 
@@ -647,6 +676,10 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
                 onCancel={cancelMovement}
                 onDelete={deleteProp}
               />
+            )}
+            {/* Hover glow when not selected */}
+            {isHovered && !isSelected && (
+              <HoverGlow position={worldPos} />
             )}
             {gridDebugEnabled && isHovered && (
               <PropDebugLabel propId={propId} position={worldPos} />
