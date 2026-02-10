@@ -5,9 +5,8 @@ import type { BotStatus } from './Bot3D'
 import { ActivityLogStream } from './ActivityLogStream'
 import { InfoTab } from './InfoTab'
 import { ActionsTab } from './ActionsTab'
-import { FilesTab } from '../files/FilesTab'
 
-type TabId = 'activity' | 'info' | 'files' | 'actions'
+type TabId = 'activity' | 'info' | 'actions'
 
 interface BotInfoTabsProps {
   session: CrewSession
@@ -26,7 +25,6 @@ interface BotInfoTabsProps {
 const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'activity', label: 'Activity', icon: '💬' },
   { id: 'info', label: 'Info', icon: '📋' },
-  { id: 'files', label: 'Files', icon: '📁' },
   { id: 'actions', label: 'Actions', icon: '⚙️' },
 ]
 
@@ -113,9 +111,6 @@ export function BotInfoTabs({
             displayName={displayName}
             onBioUpdated={onBioUpdated}
           />
-        )}
-        {activeTab === 'files' && agentId && (
-          <FilesTab agentId={agentId} agentName={displayName} />
         )}
         {activeTab === 'actions' && (
           <ActionsTab

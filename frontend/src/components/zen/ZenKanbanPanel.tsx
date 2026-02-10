@@ -5,12 +5,14 @@
 
 import { useCallback, useState, useMemo } from 'react'
 import { useTasks, type Task, type TaskStatus, type TaskPriority } from '@/hooks/useTasks'
+import { ProjectFilterSelect } from './ProjectFilterSelect'
 
 interface ZenKanbanPanelProps {
   projectId?: string
   roomId?: string
   roomFocusName?: string
   onTaskClick?: (task: Task) => void
+  onProjectFilterChange?: (projectId: string | null, projectName: string, projectColor?: string) => void
 }
 
 // ── Column Configuration ─────────────────────────────────────────
@@ -293,11 +295,10 @@ function LoadingState() {
 
 // ── Main Component ───────────────────────────────────────────────
 
-export function ZenKanbanPanel({ projectId, roomId, roomFocusName, onTaskClick }: ZenKanbanPanelProps) {
+export function ZenKanbanPanel({ projectId, roomId, roomFocusName, onTaskClick, onProjectFilterChange }: ZenKanbanPanelProps) {
   const { tasks, isLoading, error, updateTask, refresh } = useTasks({ projectId, roomId })
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
   const [expandedTask, setExpandedTask] = useState<Task | null>(null)
-  const isFiltered = !!projectId || !!roomId
   
   // Group tasks by status, sorted by priority
   const tasksByStatus = useMemo(() => {
@@ -372,13 +373,15 @@ export function ZenKanbanPanel({ projectId, roomId, roomFocusName, onTaskClick }
   
   return (
     <div className="zen-kanban-panel">
-      {/* Room focus indicator */}
-      {isFiltered && (
-        <div className="zen-tasks-focus-indicator">
-          <span className="zen-tasks-focus-icon">🔍</span>
-          <span className="zen-tasks-focus-label">
-            {roomFocusName ? `Kanban: ${roomFocusName}` : 'Filtered Tasks'}
-          </span>
+      {/* Project filter */}
+      {onProjectFilterChange && (
+        <div className="zen-tasks-focus-indicator" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ProjectFilterSelect
+            currentProjectId={projectId}
+            currentProjectName={roomFocusName}
+            onSelect={onProjectFilterChange}
+            compact
+          />
         </div>
       )}
       

@@ -28,7 +28,7 @@ import { ZenTasksPanel } from './ZenTasksPanel'
 import { ZenKanbanPanel } from './ZenKanbanPanel'
 import { ZenCronPanel } from './ZenCronPanel'
 import { ZenLogsPanel } from './ZenLogsPanel'
-import { ZenDocumentsPanel } from './ZenDocumentsPanel'
+import { ProjectsPanel } from './ProjectsPanel'
 import { ZenEmptyPanel } from './ZenEmptyPanel'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useRoomsContext } from '@/contexts/RoomsContext'
@@ -115,6 +115,7 @@ export function ZenMode({
     setScrollPosition: _setScrollPosition,
     getScrollPosition: _getScrollPosition,
     clearProjectFilter: zenClearProjectFilter,
+    setProjectFilter: zenSetProjectFilter,
     projectFilter: zenProjectFilter,
   } = zenMode
   
@@ -144,6 +145,15 @@ export function ZenMode({
     }
     return undefined
   }, [projectFilter, worldFocusState.level, worldFocusState.focusedRoomId, rooms])
+  
+  // Project filter change handler (shared across panels)
+  const handleProjectFilterChange = useCallback((projectId: string | null, projectName: string, projectColor?: string) => {
+    if (projectId) {
+      zenSetProjectFilter({ projectId, projectName, projectColor })
+    } else {
+      zenClearProjectFilter?.()
+    }
+  }, [zenSetProjectFilter, zenClearProjectFilter])
   
   // Modal states
   const [showThemePicker, setShowThemePicker] = useState(false)
@@ -556,6 +566,7 @@ export function ZenMode({
             <ZenTasksPanel 
               projectId={activeProjectId}
               roomFocusName={activeProjectName}
+              onProjectFilterChange={handleProjectFilterChange}
             />
           )
         
@@ -564,6 +575,7 @@ export function ZenMode({
             <ZenKanbanPanel 
               projectId={activeProjectId}
               roomFocusName={activeProjectName}
+              onProjectFilterChange={handleProjectFilterChange}
             />
           )
         
@@ -573,11 +585,13 @@ export function ZenMode({
         case 'logs':
           return <ZenLogsPanel />
         
+        case 'projects':
         case 'documents':
           return (
-            <ZenDocumentsPanel
+            <ProjectsPanel
               projectId={activeProjectId ?? null}
               projectName={activeProjectName ?? null}
+              onProjectFilterChange={handleProjectFilterChange}
             />
           )
         
@@ -608,6 +622,7 @@ export function ZenMode({
     selectedRoomId,
     activeProjectId,
     activeProjectName,
+    handleProjectFilterChange,
   ])
 
   return (

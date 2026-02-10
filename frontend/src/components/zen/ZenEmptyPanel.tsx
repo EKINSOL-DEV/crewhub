@@ -55,8 +55,8 @@ const ADDITIONAL_TYPES: { type: PanelType; description: string }[] = [
     description: 'Scheduled cron jobs'
   },
   {
-    type: 'documents' as PanelType,
-    description: 'Browse project documents'
+    type: 'projects' as PanelType,
+    description: 'Projects overview & documents'
   },
 ]
 

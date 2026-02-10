@@ -5,12 +5,14 @@
 
 import { useCallback, useState, useMemo } from 'react'
 import { useTasks, type Task, type TaskStatus, type TaskPriority } from '@/hooks/useTasks'
+import { ProjectFilterSelect } from './ProjectFilterSelect'
 
 interface ZenTasksPanelProps {
   projectId?: string
   roomId?: string
   roomFocusName?: string  // Name of the focused room's project (for display)
   onTaskClick?: (task: Task) => void
+  onProjectFilterChange?: (projectId: string | null, projectName: string, projectColor?: string) => void
 }
 
 // ── Status Configuration ─────────────────────────────────────────
@@ -184,9 +186,8 @@ function LoadingState() {
 
 // ── Main Component ───────────────────────────────────────────────
 
-export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick }: ZenTasksPanelProps) {
+export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick, onProjectFilterChange }: ZenTasksPanelProps) {
   const { tasks, isLoading, error, updateTask, taskCounts, refresh } = useTasks({ projectId, roomId })
-  const isFiltered = !!projectId || !!roomId
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   
@@ -241,13 +242,15 @@ export function ZenTasksPanel({ projectId, roomId, roomFocusName, onTaskClick }:
   
   return (
     <div className="zen-tasks-panel">
-      {/* Room focus indicator */}
-      {isFiltered && (
-        <div className="zen-tasks-focus-indicator">
-          <span className="zen-tasks-focus-icon">🔍</span>
-          <span className="zen-tasks-focus-label">
-            {roomFocusName ? `Tasks: ${roomFocusName}` : 'Filtered Tasks'}
-          </span>
+      {/* Project filter */}
+      {onProjectFilterChange && (
+        <div className="zen-tasks-focus-indicator" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ProjectFilterSelect
+            currentProjectId={projectId}
+            currentProjectName={roomFocusName}
+            onSelect={onProjectFilterChange}
+            compact
+          />
         </div>
       )}
       

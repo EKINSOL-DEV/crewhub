@@ -14,7 +14,8 @@ export type PanelType =
   | 'kanban'    // Kanban board view
   | 'cron'      // Cron jobs viewer
   | 'logs'      // System logs
-  | 'documents' // Project documents browser
+  | 'projects'  // Projects panel (overview + documents)
+  | 'documents' // Legacy alias for projects
   | 'details'   // Session details (future)
   | 'empty'     // Placeholder panel
 
@@ -118,10 +119,15 @@ export const PANEL_INFO: Record<PanelType, Omit<PanelInfo, 'id'>> = {
     icon: '📜',
     label: 'Logs',
   },
+  projects: {
+    type: 'projects',
+    icon: '📂',
+    label: 'Projects',
+  },
   documents: {
     type: 'documents',
     icon: '📂',
-    label: 'Documents',
+    label: 'Projects',
   },
   details: {
     type: 'details',
