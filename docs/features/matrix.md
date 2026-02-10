@@ -65,7 +65,7 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
 | **Markdown Viewer/Editor** | 📋 | v0.13.0 | 4 | Phase 1: View docs, fullscreen + TOC. Phase 2: Edit with CodeMirror 6 |
-| **Stand-Up Meetings** | 📋 | v0.13.0 | 4 | Automated meetings in 3D (bots walk, take turns, summaries) |
+| **Stand-Up Meetings** | 📋 | v0.14.0 | 4 | Automated meetings in 3D (bots walk, take turns, summaries) |
 | **Task Management** | ✅ | v0.9.0 | 2 | Visual task board, TaskWall3D, Run with Agent |
 
 **Total:** 3 features • 10 docs • 1 released, 2 planned
@@ -76,7 +76,7 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
-| **Creator Zone** | 🚧 | v0.12.0+ | 1 | In-app prop maker, AI generation, live preview |
+| **Creator Zone** | 🚧 | v0.13.0 | 1 | In-app prop maker, AI generation, live preview (built overnight) |
 | **Modding System** | ✅ | v0.6.0 | 4 | Data-driven modding with Registry<T>, JSON blueprints |
 | **Pixel Avatars** | 🔬 | TBD | 1 | Pixel art bots as alternative to 3D geometric style |
 
@@ -140,11 +140,13 @@ Research:     ████                                          9% (2)
 
 ### v0.13.0 (Next)
 - 📋 Markdown viewer Phase 1 (agent files + fullscreen)
-- 📋 Stand-up meetings Phase 1 (UX + backend)
 - 📋 Markdown editor (CodeMirror 6, auto-save)
+- 🚧 Creator Zone MVP (prop maker, AI generation, live preview) ← Built overnight
+- ✅ Prop drag & drop fixes (edge cases, camera orbit disabled) ← Built overnight
 
 ### v0.14.0
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
+- 📋 Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
 
 ### v0.15.0
 - 🚧 Zones system (Creator Center, Academy, Game Center)

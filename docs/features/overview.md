@@ -203,7 +203,7 @@ Features that help teams work more effectively.
 ---
 
 ### Stand-Up Meetings
-**Status:** 📋 Planned (v0.13.0)  
+**Status:** 📋 Planned (v0.14.0)  
 **Description:** Automated stand-up meetings in the 3D world. Bots walk to meeting room, form circle, take turns speaking, and generate meeting summaries. Integrates with project task boards.
 
 **Docs:**
@@ -229,7 +229,7 @@ Features that help teams work more effectively.
 Tools for creating and modding CrewHub.
 
 ### Creator Zone
-**Status:** 🚧 In Progress (v0.12.0+)  
+**Status:** 🚧 In Progress (v0.13.0)  
 **Description:** In-app prop maker with AI-powered generation. PropMakerRoom with PropMakerMachine, chat-based prop requests ("make me a coffee mug"), live preview, and save to registry. Supports ultra-focused subagent prompts.
 
 **Docs:**
@@ -294,11 +294,13 @@ Deployment, demos, and platform-level features.
 
 **v0.13.0 (Next):**
 - Markdown viewer Phase 1 (agent file viewing + fullscreen)
-- Stand-up meetings Phase 1 (UX + backend)
 - Markdown editor (CodeMirror 6, auto-save)
+- Creator Zone MVP (prop maker, AI generation, live preview) ← Built overnight
+- Prop drag & drop fixes (edge cases, camera orbit) ← Built overnight
 
 **v0.14.0:**
 - Spatial awareness (vision, proximity, pathfinding)
+- Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
 
 **v0.15.0:**
 - Zones system (Creator Center, Academy, Game Center)
