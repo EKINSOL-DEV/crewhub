@@ -1,30 +1,29 @@
 import { useState, useCallback } from 'react'
 import { useProjectDocuments, useProjectDocumentContent, type DocFileNode } from '@/hooks/useProjectDocuments'
-import { MarkdownViewer } from '../markdown/MarkdownViewer'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 
 interface ProjectFilesSectionProps {
   projectId: string
   projectName: string
   projectColor?: string
-  onOpenFullscreen?: () => void
 }
 
 /**
  * Compact project files browser for the Room Info Panel.
  * Shows a collapsible file tree with inline preview.
  */
-export function ProjectFilesSection({ projectId, projectName, projectColor, onOpenFullscreen }: ProjectFilesSectionProps) {
+export function ProjectFilesSection({ projectId, projectName, projectColor }: ProjectFilesSectionProps) {
   const { files, loading, error } = useProjectDocuments(projectId)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [fullscreenOpen, setFullscreenOpen] = useState(false)
-  const { content, metadata, loading: contentLoading } = useProjectDocumentContent(projectId, selectedPath)
+  const { content, metadata } = useProjectDocumentContent(projectId, selectedPath)
 
   const accentColor = projectColor || '#4f46e5'
 
   const handleFileClick = useCallback((file: DocFileNode) => {
     if (file.type === 'file') {
       setSelectedPath(file.path)
+      setFullscreenOpen(true) // Open fullscreen immediately
     }
   }, [])
 
@@ -38,36 +37,7 @@ export function ProjectFilesSection({ projectId, projectName, projectColor, onOp
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Toolbar */}
-      {onOpenFullscreen && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          padding: '4px 8px',
-          marginBottom: 4,
-        }}>
-          <button
-            onClick={onOpenFullscreen}
-            title="Open fullscreen docs panel"
-            style={{
-              background: accentColor + '12',
-              border: 'none',
-              borderRadius: 6,
-              padding: '4px 10px',
-              fontSize: 11,
-              cursor: 'pointer',
-              color: accentColor,
-              fontWeight: 600,
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = accentColor + '20' }}
-            onMouseLeave={e => { e.currentTarget.style.background = accentColor + '12' }}
-          >
-            ⤢ Fullscreen
-          </button>
-        </div>
-      )}
-      {/* File tree - always visible, full height */}
+      {/* File tree - full height */}
       <div style={{
         flex: 1,
         overflow: 'auto',
@@ -95,54 +65,6 @@ export function ProjectFilesSection({ projectId, projectName, projectColor, onOp
                 accentColor={accentColor}
               />
             ))}
-          </div>
-        )}
-
-        {/* Inline preview */}
-        {selectedPath && (
-          <div style={{
-            borderTop: '1px solid rgba(0,0,0,0.06)',
-            padding: '8px 10px',
-            maxHeight: 200,
-            overflow: 'auto',
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 6,
-            }}>
-              <span style={{
-                fontSize: 10,
-                color: '#9ca3af',
-                fontFamily: "'JetBrains Mono', monospace",
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}>
-                {selectedPath}
-              </span>
-              <button
-                onClick={() => setFullscreenOpen(true)}
-                title="Fullscreen"
-                style={{
-                  background: 'rgba(0,0,0,0.05)',
-                  border: 'none',
-                  borderRadius: 4,
-                  padding: '2px 6px',
-                  fontSize: 10,
-                  cursor: 'pointer',
-                  color: '#6b7280',
-                }}
-              >
-                ⤢
-              </button>
-            </div>
-            {contentLoading ? (
-              <div style={{ fontSize: 11, color: '#9ca3af' }}>Loading…</div>
-            ) : content ? (
-              <MarkdownViewer content={content} maxHeight="none" />
-            ) : null}
           </div>
         )}
       </div>

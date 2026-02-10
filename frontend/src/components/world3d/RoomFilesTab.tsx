@@ -9,10 +9,9 @@ import type { Room } from '@/hooks/useRooms'
 
 interface RoomFilesTabProps {
   room: Room
-  onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void
 }
 
-export function RoomFilesTab({ room, onOpenDocs }: RoomFilesTabProps) {
+export function RoomFilesTab({ room }: RoomFilesTabProps) {
   const { projects } = useProjects()
 
   const currentProject = useMemo(() => {
@@ -50,7 +49,6 @@ export function RoomFilesTab({ room, onOpenDocs }: RoomFilesTabProps) {
         projectId={currentProject.id}
         projectName={currentProject.name}
         projectColor={currentProject.color || undefined}
-        onOpenFullscreen={() => onOpenDocs?.(currentProject.id, currentProject.name, currentProject.color || undefined)}
       />
     </div>
   )

@@ -25,7 +25,6 @@ interface RoomInfoPanelProps {
   onClose: () => void
   onBotClick?: (session: CrewSession) => void
   onFocusRoom?: (roomId: string) => void
-  onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void
   onOpenTaskBoard?: (projectId: string, roomId: string, agents: Array<{ session_key: string; display_name: string }>) => void
   onOpenHQBoard?: () => void
   onOpenContext?: (roomId: string, roomName: string) => void
@@ -82,7 +81,6 @@ export function RoomInfoPanel({
   onClose,
   onBotClick,
   onFocusRoom,
-  onOpenDocs,
   onOpenTaskBoard,
   onOpenHQBoard,
   onOpenContext,
@@ -415,14 +413,12 @@ export function RoomInfoPanel({
               displayNames={displayNames}
               isActivelyRunning={isActivelyRunning}
               onOpenTaskBoard={onOpenTaskBoard}
-              onOpenDocs={onOpenDocs}
             />
           )
         )}
         {activeInfoTab === 'files' && (
           <RoomFilesTab
             room={room}
-            onOpenDocs={onOpenDocs}
           />
         )}
       </div>

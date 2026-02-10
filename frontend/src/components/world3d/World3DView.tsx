@@ -1208,7 +1208,6 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             onClose={() => goBack()}
             onBotClick={handleRoomPanelBotClick}
             onFocusRoom={focusRoom}
-            onOpenDocs={(projectId, projectName, projectColor) => setDocsPanel({ projectId, projectName, projectColor })}
             onOpenTaskBoard={(projectId, roomId, agents) => {
               setTaskBoardContext({ projectId, roomId, agents })
               setTaskBoardOpen(true)
