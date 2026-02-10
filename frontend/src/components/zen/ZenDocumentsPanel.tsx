@@ -26,13 +26,13 @@ function Breadcrumbs({ path, onNavigate }: { path: string | null; onNavigate: (p
       gap: 4,
       padding: '6px 12px',
       fontSize: 11,
-      color: 'hsl(var(--muted-foreground))',
-      borderBottom: '1px solid hsl(var(--border))',
+      color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+      borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
       flexWrap: 'wrap',
     }}>
       <span
         onClick={() => onNavigate(null)}
-        style={{ cursor: 'pointer', color: 'hsl(var(--primary))' }}
+        style={{ cursor: 'pointer', color: 'var(--zen-accent, hsl(var(--primary)))' }}
       >
         📁 Root
       </span>
@@ -95,7 +95,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',
-        color: 'hsl(var(--muted-foreground))',
+        color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
         fontSize: 13,
         flexDirection: 'column',
         gap: 8,
@@ -117,7 +117,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
             style={{
               padding: '4px 12px',
               borderRadius: 6,
-              border: '1px solid hsl(var(--border))',
+              border: '1px solid var(--zen-border, hsl(var(--border)))',
               background: 'transparent',
               cursor: 'pointer',
               fontSize: 11,
@@ -135,7 +135,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
       {/* Header */}
       <div style={{
         padding: '8px 12px',
-        borderBottom: '1px solid hsl(var(--border))',
+        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -143,7 +143,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 14 }}>📂</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>
             {displayName} — Documents
           </span>
         </div>
@@ -155,7 +155,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
             border: 'none',
             cursor: 'pointer',
             fontSize: 13,
-            color: 'hsl(var(--muted-foreground))',
+            color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
             padding: '2px 6px',
             borderRadius: 4,
           }}
@@ -192,7 +192,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
             alignItems: 'center',
             marginBottom: 8,
           }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>
               {selectedPath.split('/').pop()}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
@@ -201,12 +201,12 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
                 title="Fullscreen"
                 style={{
                   background: 'none',
-                  border: '1px solid hsl(var(--border))',
+                  border: '1px solid var(--zen-border, hsl(var(--border)))',
                   borderRadius: 4,
                   cursor: 'pointer',
                   fontSize: 11,
                   padding: '2px 8px',
-                  color: 'hsl(var(--muted-foreground))',
+                  color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
                 }}
               >
                 ⤢ Fullscreen
@@ -216,12 +216,12 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
                 title="Close preview"
                 style={{
                   background: 'none',
-                  border: '1px solid hsl(var(--border))',
+                  border: '1px solid var(--zen-border, hsl(var(--border)))',
                   borderRadius: 4,
                   cursor: 'pointer',
                   fontSize: 11,
                   padding: '2px 8px',
-                  color: 'hsl(var(--muted-foreground))',
+                  color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
                 }}
               >
                 ✕
@@ -230,7 +230,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
           </div>
 
           {contentLoading && (
-            <div style={{ padding: 12, fontSize: 12, color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
+            <div style={{ padding: 12, fontSize: 12, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', textAlign: 'center' }}>
               Loading…
             </div>
           )}

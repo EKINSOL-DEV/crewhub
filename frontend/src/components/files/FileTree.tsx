@@ -60,21 +60,21 @@ function TreeNode({
           cursor: 'pointer',
           fontSize: 12,
           fontFamily: 'system-ui, sans-serif',
-          color: isSelected ? 'hsl(var(--primary))' : 'hsl(var(--foreground))',
-          background: isSelected ? 'hsl(var(--primary) / 0.1)' : 'transparent',
+          color: isSelected ? 'var(--zen-accent, hsl(var(--primary)))' : 'var(--zen-fg, hsl(var(--foreground)))',
+          background: isSelected ? 'var(--zen-bg-active, hsl(var(--primary) / 0.1))' : 'transparent',
           borderRadius: 4,
           transition: 'background 0.1s',
           userSelect: 'none',
         }}
         onMouseEnter={e => {
-          if (!isSelected) e.currentTarget.style.background = 'hsl(var(--secondary))'
+          if (!isSelected) e.currentTarget.style.background = 'var(--zen-bg-hover, hsl(var(--secondary)))'
         }}
         onMouseLeave={e => {
           if (!isSelected) e.currentTarget.style.background = 'transparent'
         }}
       >
         {isDir && (
-          <span style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))', width: 10, textAlign: 'center' }}>
+          <span style={{ fontSize: 10, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', width: 10, textAlign: 'center' }}>
             {expanded ? '▼' : '▶'}
           </span>
         )}
@@ -84,7 +84,7 @@ function TreeNode({
           {node.name}
         </span>
         {!isDir && node.size != null && (
-          <span style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))' }}>
+          <span style={{ fontSize: 10, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))' }}>
             {formatSize(node.size)}
           </span>
         )}
@@ -100,7 +100,7 @@ function TreeNode({
               border: 'none',
               cursor: 'pointer',
               fontSize: 11,
-              color: 'hsl(var(--muted-foreground))',
+              color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
               padding: '0 2px',
               opacity: 0.6,
             }}
@@ -128,7 +128,7 @@ function TreeNode({
 export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: FileTreeProps) {
   if (loading) {
     return (
-      <div style={{ padding: 16, fontSize: 12, color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
+      <div style={{ padding: 16, fontSize: 12, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', textAlign: 'center' }}>
         Loading files…
       </div>
     )
@@ -136,7 +136,7 @@ export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: F
 
   if (files.length === 0) {
     return (
-      <div style={{ padding: 16, fontSize: 12, color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
+      <div style={{ padding: 16, fontSize: 12, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', textAlign: 'center' }}>
         No files found
       </div>
     )
