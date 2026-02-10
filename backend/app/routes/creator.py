@@ -1,7 +1,14 @@
 """Creator Zone routes — AI prop generation endpoints."""
 
+from __future__ import annotations
+
 import re
+import os
+import json
 import logging
+import asyncio
+import subprocess
+from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -9,30 +16,236 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/creator", tags=["creator"])
 
+# Path to prompt template
+PROMPT_TEMPLATE_PATH = Path(__file__).parent.parent.parent.parent / "docs" / "creator-zone-prompt.md"
+
+# OpenClaw gateway config
+OPENCLAW_GATEWAY_TOKEN = "ee6e3282bca98c6452a7e2132944c551280ad7776d0969ea"
+
 
 class GeneratePropRequest(BaseModel):
     prompt: str
+    use_ai: bool = True  # Set to False to use template fallback
 
 
 class GeneratePropResponse(BaseModel):
     name: str
     filename: str
     code: str
+    method: str  # "ai" or "template"
 
 
 def _prompt_to_filename(prompt: str) -> tuple[str, str]:
     """Derive a PascalCase component name and filename from a prompt."""
-    # Take first few meaningful words
     words = re.sub(r'[^a-zA-Z0-9\s]', '', prompt).split()[:4]
     pascal = ''.join(w.capitalize() for w in words) if words else 'CustomProp'
     return pascal, f"{pascal}.tsx"
 
 
-# TODO: Replace mock with actual subagent integration.
-# The subagent should receive the prompt + the template from docs/creator-zone-prompt.md,
-# generate real R3F code, and return it here. For now we return a simple template.
+def _load_prompt_template() -> str:
+    """Load the system prompt template from docs/creator-zone-prompt.md."""
+    try:
+        return PROMPT_TEMPLATE_PATH.read_text()
+    except FileNotFoundError:
+        logger.warning(f"Prompt template not found at {PROMPT_TEMPLATE_PATH}")
+        return ""
 
-MOCK_TEMPLATE = '''import {{ useToonMaterialProps }} from '../utils/toonMaterials'
+
+# ─── Smart Template Fallback ────────────────────────────────────
+# Generates real prop code by analyzing prompt keywords and selecting
+# appropriate geometries, colors, and structures.
+
+COLOR_KEYWORDS = {
+    "red": "#CC3333", "blue": "#3366CC", "green": "#338833", "yellow": "#CCAA33",
+    "purple": "#8833AA", "pink": "#CC6699", "orange": "#CC6633", "white": "#EEEEEE",
+    "black": "#333333", "brown": "#8B6238", "gold": "#DAA520", "silver": "#C0C0C0",
+    "wooden": "#A0724A", "wood": "#A0724A", "metal": "#888888", "metallic": "#AAAAAA",
+    "neon": "#00FF88", "glowing": "#FFDD44", "dark": "#444444", "bright": "#FFCC00",
+    "stone": "#888877", "crystal": "#88CCEE", "rusty": "#8B4513", "copper": "#B87333",
+}
+
+SHAPE_TEMPLATES = {
+    "barrel": {
+        "parts": [
+            ("cylinder", [0, 0.3, 0], [0.25, 0.25, 0.6, 12], "main"),
+            ("cylinder", [0, 0.05, 0], [0.27, 0.27, 0.04, 12], "accent"),
+            ("cylinder", [0, 0.55, 0], [0.27, 0.27, 0.04, 12], "accent"),
+            ("cylinder", [0, 0.3, 0], [0.27, 0.27, 0.04, 12], "accent"),
+        ],
+        "main_color": "#A0724A",
+        "accent_color": "#777777",
+    },
+    "mushroom": {
+        "parts": [
+            ("cylinder", [0, 0.15, 0], [0.06, 0.08, 0.3, 8], "accent"),  # stem
+            ("sphere", [0, 0.38, 0], [0.2, 12, 12, 0, 6.28, 0, 1.57], "main"),  # cap
+            ("cylinder", [0, 0.01, 0], [0.12, 0.14, 0.02, 10], "accent"),  # base
+        ],
+        "main_color": "#CC4444",
+        "accent_color": "#EEDDCC",
+    },
+    "lamp": {
+        "parts": [
+            ("cylinder", [0, 0.04, 0], [0.18, 0.22, 0.08, 16], "accent"),  # base
+            ("cylinder", [0, 0.5, 0], [0.03, 0.03, 0.9, 8], "accent"),  # pole
+            ("sphere", [0, 1.0, 0], [0.15, 12, 12], "emissive"),  # bulb
+        ],
+        "main_color": "#FFDD44",
+        "accent_color": "#777777",
+    },
+    "table": {
+        "parts": [
+            ("box", [0, 0.4, 0], [0.8, 0.06, 0.5], "main"),  # top
+            ("box", [-0.35, 0.18, -0.2], [0.05, 0.36, 0.05], "accent"),  # legs
+            ("box", [0.35, 0.18, -0.2], [0.05, 0.36, 0.05], "accent"),
+            ("box", [-0.35, 0.18, 0.2], [0.05, 0.36, 0.05], "accent"),
+            ("box", [0.35, 0.18, 0.2], [0.05, 0.36, 0.05], "accent"),
+        ],
+        "main_color": "#A0724A",
+        "accent_color": "#8B6238",
+    },
+    "sign": {
+        "parts": [
+            ("box", [0, 0.6, 0], [0.7, 0.35, 0.04], "emissive"),  # sign face
+            ("cylinder", [0, 0.3, 0], [0.03, 0.03, 0.6, 8], "accent"),  # pole
+            ("cylinder", [0, 0.01, 0], [0.12, 0.14, 0.02, 10], "accent"),  # base
+        ],
+        "main_color": "#FF4488",
+        "accent_color": "#555555",
+    },
+    "box": {
+        "parts": [
+            ("box", [0, 0.2, 0], [0.4, 0.4, 0.4], "main"),
+            ("box", [0, 0.41, 0], [0.42, 0.02, 0.42], "accent"),  # lid
+        ],
+        "main_color": "#B8956A",
+        "accent_color": "#8B6238",
+    },
+    "crystal": {
+        "parts": [
+            ("cone", [0, 0.3, 0], [0.15, 0.6, 6], "emissive"),
+            ("cone", [0.12, 0.2, 0.05], [0.08, 0.35, 6], "emissive"),
+            ("cone", [-0.08, 0.18, -0.06], [0.06, 0.3, 6], "emissive"),
+            ("cylinder", [0, 0.02, 0], [0.2, 0.22, 0.04, 8], "accent"),  # base
+        ],
+        "main_color": "#88CCEE",
+        "accent_color": "#666666",
+    },
+    "chair": {
+        "parts": [
+            ("box", [0, 0.25, 0], [0.4, 0.06, 0.4], "main"),  # seat
+            ("box", [0, 0.5, -0.18], [0.4, 0.5, 0.04], "main"),  # back
+            ("box", [-0.17, 0.11, -0.17], [0.04, 0.22, 0.04], "accent"),  # legs
+            ("box", [0.17, 0.11, -0.17], [0.04, 0.22, 0.04], "accent"),
+            ("box", [-0.17, 0.11, 0.17], [0.04, 0.22, 0.04], "accent"),
+            ("box", [0.17, 0.11, 0.17], [0.04, 0.22, 0.04], "accent"),
+        ],
+        "main_color": "#6688AA",
+        "accent_color": "#555555",
+    },
+    "tree": {
+        "parts": [
+            ("cylinder", [0, 0.3, 0], [0.08, 0.1, 0.6, 8], "accent"),  # trunk
+            ("cone", [0, 0.8, 0], [0.35, 0.5, 8], "main"),  # foliage
+            ("cone", [0, 1.05, 0], [0.25, 0.4, 8], "main"),
+        ],
+        "main_color": "#338833",
+        "accent_color": "#8B6238",
+    },
+}
+
+# Default fallback
+DEFAULT_SHAPE = "box"
+
+SHAPE_KEYWORD_MAP = {
+    "barrel": ["barrel", "keg", "cask", "drum"],
+    "mushroom": ["mushroom", "fungus", "toadstool", "shroom"],
+    "lamp": ["lamp", "light", "lantern", "torch", "candle", "chandelier"],
+    "table": ["table", "desk", "workbench", "counter", "shelf"],
+    "sign": ["sign", "neon", "billboard", "poster", "banner", "placard"],
+    "box": ["box", "crate", "chest", "trunk", "package", "cube"],
+    "crystal": ["crystal", "gem", "diamond", "jewel", "prism", "shard", "obelisk"],
+    "chair": ["chair", "stool", "seat", "throne", "bench", "sofa"],
+    "tree": ["tree", "bush", "shrub", "bonsai", "pine", "oak"],
+    "mushroom": ["mushroom", "fungus", "toadstool", "shroom"],
+}
+
+
+def _detect_shape(prompt: str) -> str:
+    lower = prompt.lower()
+    for shape, keywords in SHAPE_KEYWORD_MAP.items():
+        for kw in keywords:
+            if kw in lower:
+                return shape
+    return DEFAULT_SHAPE
+
+
+def _detect_color(prompt: str, default: str) -> str:
+    lower = prompt.lower()
+    for kw, color in COLOR_KEYWORDS.items():
+        if kw in lower:
+            return color
+    return default
+
+
+def _generate_template_code(name: str, prompt: str) -> str:
+    """Generate prop code using smart templates based on prompt keywords."""
+    shape_key = _detect_shape(prompt)
+    shape = SHAPE_TEMPLATES[shape_key]
+    
+    main_color = _detect_color(prompt, shape["main_color"])
+    accent_color = shape["accent_color"]
+    
+    # Build mesh lines
+    hooks = []
+    meshes = []
+    hook_names = {}
+    
+    for i, (geo_type, pos, args, color_role) in enumerate(shape["parts"]):
+        if color_role == "main":
+            color = main_color
+        elif color_role == "accent":
+            color = accent_color
+        elif color_role == "emissive":
+            color = main_color
+        else:
+            color = main_color
+        
+        hook_name = f"toon{i}"
+        if color not in hook_names:
+            hook_names[color] = hook_name
+            hooks.append(f"  const {hook_name} = useToonMaterialProps('{color}')")
+        else:
+            hook_name = hook_names[color]
+        
+        pos_str = f"[{pos[0]}, {pos[1]}, {pos[2]}]"
+        args_str = ", ".join(str(a) for a in args)
+        
+        geo_map = {
+            "box": "boxGeometry",
+            "cylinder": "cylinderGeometry",
+            "sphere": "sphereGeometry",
+            "cone": "coneGeometry",
+            "torus": "torusGeometry",
+        }
+        geo_name = geo_map.get(geo_type, "boxGeometry")
+        
+        if color_role == "emissive":
+            mat_line = f'        <meshStandardMaterial color="{color}" emissive="{color}" emissiveIntensity={{0.5}} />'
+        else:
+            mat_line = f"        <meshToonMaterial {{...{hook_name}}} />"
+        
+        meshes.append(
+            f"      <mesh position={{{pos_str}}} castShadow>\n"
+            f"        <{geo_name} args={{[{args_str}]}} />\n"
+            f"{mat_line}\n"
+            f"      </mesh>"
+        )
+    
+    hooks_str = "\n".join(hooks)
+    meshes_str = "\n\n".join(meshes)
+    
+    return f"""import {{ useToonMaterialProps }} from '../../utils/toonMaterials'
 
 interface {name}Props {{
   position?: [number, number, number]
@@ -40,33 +253,91 @@ interface {name}Props {{
 }}
 
 export function {name}({{ position = [0, 0, 0], scale = 1 }}: {name}Props) {{
-  const mainToon = useToonMaterialProps('#6a8caf')
+{hooks_str}
 
   return (
     <group position={{position}} scale={{scale}}>
-      <mesh position={{[0, 0.25, 0]}} castShadow>
-        <boxGeometry args={{[0.4, 0.5, 0.4]}} />
-        <meshToonMaterial {{...mainToon}} />
-      </mesh>
+{meshes_str}
     </group>
   )
 }}
-'''
+"""
+
+
+# ─── OpenClaw AI Generation ─────────────────────────────────────
+
+async def _generate_with_openclaw(name: str, prompt: str) -> str | None:
+    """Try to generate prop code using OpenClaw CLI subprocess."""
+    template = _load_prompt_template()
+    if not template:
+        return None
+    
+    full_prompt = f"{template}\n\n{prompt}\n\nThe component should be named `{name}`. Output ONLY the code, nothing else."
+    
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "openclaw", "run",
+            "--model", "sonnet",
+            "--system", "You are a React Three Fiber prop generator. Output ONLY valid TSX code. No markdown, no explanations.",
+            "--message", full_prompt,
+            "--no-tools",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env={**os.environ, "OPENCLAW_GATEWAY_TOKEN": OPENCLAW_GATEWAY_TOKEN},
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+        
+        if proc.returncode == 0 and stdout:
+            code = stdout.decode().strip()
+            # Strip markdown fences if present
+            code = re.sub(r'^```\w*\n', '', code)
+            code = re.sub(r'\n```$', '', code)
+            # Basic validation
+            if 'useToonMaterialProps' in code and 'export function' in code:
+                logger.info(f"AI generated prop: {name}")
+                return code
+            else:
+                logger.warning(f"AI output didn't pass validation for {name}")
+                return None
+        else:
+            logger.warning(f"openclaw run failed: {stderr.decode()[:200]}")
+            return None
+    except FileNotFoundError:
+        logger.warning("openclaw CLI not found in PATH")
+        return None
+    except asyncio.TimeoutError:
+        logger.warning("openclaw run timed out after 60s")
+        return None
+    except Exception as e:
+        logger.warning(f"openclaw run error: {e}")
+        return None
 
 
 @router.post("/generate-prop", response_model=GeneratePropResponse)
 async def generate_prop(req: GeneratePropRequest):
     """Generate a 3D prop component from a text prompt.
     
-    Currently returns a mock/template response.
-    TODO: Wire up to CrewHub subagent for real AI generation.
+    Tries OpenClaw AI first, falls back to smart template generation.
     """
     if not req.prompt.strip():
         raise HTTPException(status_code=400, detail="Prompt cannot be empty")
 
     name, filename = _prompt_to_filename(req.prompt)
-    code = MOCK_TEMPLATE.format(name=name)
+    
+    # Try AI generation first
+    method = "template"
+    code = None
+    
+    if req.use_ai:
+        code = await _generate_with_openclaw(name, req.prompt)
+        if code:
+            method = "ai"
+    
+    # Fallback to smart template
+    if not code:
+        code = _generate_template_code(name, req.prompt)
+        method = "template"
 
-    logger.info(f"Generated mock prop: {name} from prompt: {req.prompt[:80]}")
+    logger.info(f"Generated prop ({method}): {name} from prompt: {req.prompt[:80]}")
 
-    return GeneratePropResponse(name=name, filename=filename, code=code)
+    return GeneratePropResponse(name=name, filename=filename, code=code, method=method)

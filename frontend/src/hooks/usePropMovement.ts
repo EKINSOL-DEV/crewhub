@@ -86,6 +86,8 @@ export function usePropMovement({
   const [isMoving, setIsMoving] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [pendingClear, setPendingClear] = useState(false)
+  const placementsRef = useRef(placements)
+  placementsRef.current = placements // Always keep ref in sync (avoids stale closures)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingSelect = useRef<{
     key: string
@@ -216,8 +218,11 @@ export function usePropMovement({
     // Stop dragging first
     setIsDragging(false)
     
+    // Use ref to get latest placements (avoids stale closure if placements changed during drag)
+    const currentPlacements = placementsRef.current
+
     // Update placements array
-    const updatedPlacements = placements.map(p => {
+    const updatedPlacements = currentPlacements.map(p => {
       if (p.propId === propId && p.x === originalX && p.z === originalZ) {
         return { ...p, x: gridX, z: gridZ, rotation: rotation as 0 | 90 | 180 | 270 }
       }
@@ -245,7 +250,7 @@ export function usePropMovement({
       if (!response.ok) {
         console.error('Failed to save prop movement:', await response.text())
         // Revert on failure
-        onUpdate(placements)
+        onUpdate(currentPlacements)
         setSelectedProp(null)
         setIsMoving(false)
         setPendingClear(false)
@@ -254,7 +259,7 @@ export function usePropMovement({
     } catch (err) {
       console.error('Failed to save prop movement:', err)
       // Revert on failure
-      onUpdate(placements)
+      onUpdate(currentPlacements)
       setSelectedProp(null)
       setIsMoving(false)
       setPendingClear(false)
@@ -263,7 +268,7 @@ export function usePropMovement({
 
     // Success - mark for clearing once placements update
     setPendingClear(true)
-  }, [selectedProp, placements, onUpdate, apiBaseUrl, blueprintId])
+  }, [selectedProp, onUpdate, apiBaseUrl, blueprintId])
 
   // Clear selection once placements have the new position
   useEffect(() => {
@@ -365,9 +370,10 @@ export function usePropMovement({
     if (!selectedProp) return
 
     const { propId, originalX, originalZ } = selectedProp
+    const currentPlacements = placementsRef.current
     
     // Remove from placements
-    const updatedPlacements = placements.filter(p => 
+    const updatedPlacements = currentPlacements.filter(p => 
       !(p.propId === propId && p.x === originalX && p.z === originalZ)
     )
 
@@ -389,18 +395,18 @@ export function usePropMovement({
       if (!response.ok) {
         console.error('Failed to delete prop:', await response.text())
         // Revert on failure
-        onUpdate(placements)
+        onUpdate(currentPlacements)
       }
     } catch (err) {
       console.error('Failed to delete prop:', err)
       // Revert on failure
-      onUpdate(placements)
+      onUpdate(currentPlacements)
     }
 
     setSelectedProp(null)
     setIsMoving(false)
     setPendingClear(false)
-  }, [selectedProp, placements, onUpdate, apiBaseUrl, blueprintId])
+  }, [selectedProp, onUpdate, apiBaseUrl, blueprintId])
 
   // Keyboard event handler
   useEffect(() => {
