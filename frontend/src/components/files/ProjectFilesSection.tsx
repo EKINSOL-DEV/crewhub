@@ -42,15 +42,15 @@ export function ProjectFilesSection({ projectId, projectName, projectColor }: Pr
         flex: 1,
         overflow: 'auto',
         borderRadius: 8,
-        border: '1px solid rgba(0,0,0,0.06)',
-        background: 'rgba(255,255,255,0.6)',
+        border: '1px solid hsl(var(--border))',
+        background: 'hsl(var(--background))',
       }}>
         {loading ? (
-          <div style={{ padding: 12, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
+          <div style={{ padding: 12, fontSize: 12, color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
             Loading files…
           </div>
         ) : files.length === 0 ? (
-          <div style={{ padding: 12, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
+          <div style={{ padding: 12, fontSize: 12, color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
             No files found
           </div>
         ) : (
@@ -122,12 +122,12 @@ function FileTreeNode({
           cursor: 'pointer',
           fontSize: 12,
           fontFamily: 'inherit',
-          color: isSelected ? accentColor : '#374151',
+          color: isSelected ? accentColor : 'hsl(var(--foreground))',
           fontWeight: isSelected ? 600 : 400,
           textAlign: 'left',
           transition: 'background 0.1s',
         }}
-        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(0,0,0,0.03)' }}
+        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'hsl(var(--secondary))' }}
         onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
       >
         <span style={{ fontSize: 11, width: 14, textAlign: 'center', flexShrink: 0 }}>

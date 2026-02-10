@@ -64,7 +64,7 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
               alignItems: 'center',
               justifyContent: 'center',
               height: '100%',
-              color: 'var(--zen-fg-muted, #9ca3af)',
+              color: 'hsl(var(--muted-foreground))',
               fontSize: 13,
               gap: 8,
             }}>
@@ -155,7 +155,7 @@ function TabButton({ active, onClick, label }: { active: boolean; onClick: () =>
         padding: '8px 12px',
         fontSize: 12,
         fontWeight: 600,
-        color: active ? 'var(--zen-accent, #3b82f6)' : 'var(--zen-fg-muted, #9ca3af)',
+        color: active ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
         background: 'none',
         border: 'none',
         borderBottom: `2px solid ${active ? 'var(--zen-accent, #3b82f6)' : 'transparent'}`,
@@ -179,16 +179,16 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
         gap: 10,
         padding: '12px 14px',
         borderRadius: 10,
-        border: '1px solid var(--zen-border, rgba(0,0,0,0.06))',
-        background: 'var(--zen-bg-hover, rgba(0,0,0,0.02))',
+        border: '1px solid hsl(var(--border))',
+        background: 'hsl(var(--secondary))',
         cursor: 'pointer',
         fontFamily: 'inherit',
         textAlign: 'left',
         width: '100%',
         transition: 'background 0.15s, border-color 0.15s',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--zen-bg-active, rgba(0,0,0,0.05))' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.02))' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'hsl(var(--muted))' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'hsl(var(--secondary))' }}
     >
       <span style={{
         width: 10,
@@ -202,7 +202,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
         <div style={{
           fontSize: 13,
           fontWeight: 600,
-          color: 'var(--zen-fg, #1f2937)',
+          color: 'hsl(var(--foreground))',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -212,7 +212,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
         {project.description && (
           <div style={{
             fontSize: 11,
-            color: 'var(--zen-fg-muted, #9ca3af)',
+            color: 'hsl(var(--muted-foreground))',
             marginTop: 2,
             overflow: 'hidden',
             textOverflow: 'ellipsis',

@@ -101,6 +101,7 @@ export function MarkdownViewer({ content, className, maxHeight }: MarkdownViewer
         fontSize: 14,
         lineHeight: 1.7,
         maxWidth: 720,
+        color: 'hsl(var(--foreground))',
       }}
     >
       <ReactMarkdown

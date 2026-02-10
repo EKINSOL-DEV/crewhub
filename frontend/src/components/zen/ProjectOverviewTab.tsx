@@ -32,7 +32,7 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
 
   if (loading) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', color: 'var(--zen-fg-muted, #9ca3af)', fontSize: 13 }}>
+      <div style={{ padding: 24, textAlign: 'center', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
         Loading project overview...
       </div>
     )
@@ -40,7 +40,7 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
 
   if (!project) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', color: 'var(--zen-fg-muted, #9ca3af)', fontSize: 13 }}>
+      <div style={{ padding: 24, textAlign: 'center', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>❌</div>
         Project not found
       </div>
@@ -71,7 +71,7 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
           <span style={{
             fontSize: 16,
             fontWeight: 700,
-            color: 'var(--zen-fg, #1f2937)',
+            color: 'hsl(var(--foreground))',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -82,7 +82,7 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
         {project.description && (
           <div style={{
             fontSize: 13,
-            color: 'var(--zen-fg-muted, #6b7280)',
+            color: 'hsl(var(--muted-foreground))',
             marginTop: 8,
             lineHeight: 1.5,
           }}>
@@ -112,7 +112,7 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
 
       {/* Task Status Breakdown */}
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--zen-fg-muted, #6b7280)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
           Task Status
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -127,7 +127,7 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
       {/* Active Tasks Preview */}
       {activeTasks.length > 0 && (
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--zen-fg-muted, #6b7280)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
             Active Tasks
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -137,7 +137,7 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
                 background: 'var(--zen-bg-hover, rgba(0,0,0,0.03))',
                 borderRadius: 6,
                 fontSize: 12,
-                color: 'var(--zen-fg, #1f2937)',
+                color: 'hsl(var(--foreground))',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
@@ -174,7 +174,7 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
             borderRadius: 8,
             border: '1px solid var(--zen-border, rgba(0,0,0,0.1))',
             background: 'var(--zen-bg-hover, transparent)',
-            color: 'var(--zen-accent, #3b82f6)',
+            color: 'hsl(var(--primary))',
             fontSize: 13,
             fontWeight: 600,
             cursor: 'pointer',
@@ -198,8 +198,8 @@ function StatCard({ label, value, icon }: { label: string; value: number; icon: 
       textAlign: 'center',
     }}>
       <div style={{ fontSize: 16, marginBottom: 4 }}>{icon}</div>
-      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--zen-fg, #1f2937)' }}>{value}</div>
-      <div style={{ fontSize: 11, color: 'var(--zen-fg-muted, #9ca3af)', fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'hsl(var(--foreground))' }}>{value}</div>
+      <div style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', fontWeight: 500 }}>{label}</div>
     </div>
   )
 }
@@ -215,7 +215,7 @@ function TaskBadge({ count, label, color }: { count: number; label: string; colo
       borderRadius: 6,
     }}>
       <span style={{ fontSize: 12, fontWeight: 700, color }}>{count}</span>
-      <span style={{ fontSize: 10, color: 'var(--zen-fg-muted, #6b7280)' }}>{label}</span>
+      <span style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))' }}>{label}</span>
     </div>
   )
 }
