@@ -3,7 +3,6 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import { CodeBlock } from './CodeBlock'
-import 'highlight.js/styles/github-dark.css'
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '')

@@ -77,10 +77,14 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
         background: 'rgba(0, 0, 0, 0.85)',
         backdropFilter: 'blur(4px)',
         animation: 'fadeIn 0.2s ease-out',
+        pointerEvents: 'all', // Block all pointer events to layers below
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
+      onPointerDown={(e) => e.stopPropagation()} // Block 3D camera drag
+      onPointerMove={(e) => e.stopPropagation()} // Block 3D camera orbit
+      onWheel={(e) => e.stopPropagation()} // Block 3D camera zoom
     >
       {/* Header */}
       <div style={{

@@ -50,18 +50,20 @@
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     
     /* Playground gradients for dark mode */
-    --playground-from: 248 47% 12%;
-    --playground-to: 249 46% 22%;
-    --playground-dots: 0 0% 100%;
+    --playground-from: 222 47% 11%;
+    --playground-to: 262 47% 11%;
+    --playground-dots: 215 20% 65%;
     
     /* Panel backgrounds for dark mode */
-    --panel-bg: 222.2 47% 6%;
+    --panel-bg: 217.2 32.6% 12%;
     --panel-border: 217.2 32.6% 20%;
   }
 }
@@ -75,197 +77,166 @@
   }
 }
 
-/* Native dialog overrides for React 19 compatibility */
-/* Replaces Radix Dialog to avoid compose-refs infinite loop bug */
-dialog[open] {
+/* Theme colors */
+:root[data-theme-hue="200"] {
+  --accent-hue: 200;
+}
+:root[data-theme-hue="150"] {
+  --accent-hue: 150;
+}
+:root[data-theme-hue="30"] {
+  --accent-hue: 30;
+}
+
+/* Zen Mode global panel shadow (Canvas panels) */
+.zen-panel-shadow {
+  box-shadow:
+    0 10px 38px -10px rgba(0, 0, 0, 0.35),
+    0 10px 20px -15px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+/* Zen Mode shared panel header styles (Canvas) */
+.zen-panel-header {
   display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
-dialog::backdrop {
-  background-color: rgba(0, 0, 0, 0.8);
+.zen-panel-header-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
-/* Theme-aware playground styles */
-.playground-bg {
-  background: linear-gradient(
-    135deg,
-    hsl(var(--playground-from)) 0%,
-    hsl(var(--playground-to)) 100%
-  );
+.zen-panel-header-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
 }
 
-.playground-overlay {
-  background-image: linear-gradient(
-    135deg,
-    hsl(var(--playground-from)) 0%,
-    hsl(var(--playground-to)) 100%
-  ),
-  repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 10px,
-    hsl(var(--foreground) / 0.03) 10px,
-    hsl(var(--foreground) / 0.03) 20px
-  );
+.zen-panel-header-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #6b7280;
+  transition: all 0.15s;
 }
 
-.playground-dots {
-  fill: hsl(var(--playground-dots));
+.zen-panel-header-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #111827;
 }
 
-/* Theme-aware view backgrounds */
-.view-gradient {
-  background: linear-gradient(to bottom right, hsl(var(--panel-bg)), hsl(var(--background)));
-}
-
-/* Light mode specific adjustments */
-.light .playground-bg,
-.light .playground-overlay {
-  background: linear-gradient(
-    135deg,
-    hsl(226 71% 96%) 0%,
-    hsl(262 77% 95%) 100%
-  );
-}
-
-.light .view-gradient {
-  background: linear-gradient(to bottom right, hsl(220 14% 96%), hsl(0 0% 100%));
-}
-
-/* Dark mode specific adjustments */
-.dark .playground-bg,
-.dark .playground-overlay {
-  background: linear-gradient(
-    135deg,
-    hsl(248 47% 12%) 0%,
-    hsl(249 46% 22%) 100%
-  );
-}
-
-.dark .view-gradient {
-  background: linear-gradient(to bottom right, hsl(222 47% 8%), hsl(222 84% 5%));
-}
-
-/* Minion animations */
-@keyframes minionBob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-@keyframes wiggle {
-  0%, 100% { transform: rotate(-3deg); }
-  50% { transform: rotate(3deg); }
-}
-
-@keyframes activity-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.7; }
-}
-
-@keyframes thinking-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes sleeping-sway {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
-}
-
-@keyframes confetti-burst {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-@keyframes shake-animation {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-@keyframes dance-animation {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-10px) rotate(-5deg); }
-  50% { transform: translateY(0) rotate(0deg); }
-  75% { transform: translateY(-10px) rotate(5deg); }
-}
-
-@keyframes slide-in-up {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes bubblePop {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(0px) scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-10px) scale(1);
-  }
-}
-
-.minion-wiggle {
-  animation: wiggle 0.5s ease-in-out infinite;
-}
-
-.activity-pulse {
-  animation: activity-pulse 2s ease-in-out infinite;
-}
-
-.thinking-pulse {
-  animation: thinking-pulse 1.5s ease-in-out infinite;
-}
-
-.sleeping-sway {
-  animation: sleeping-sway 3s ease-in-out infinite;
-}
-
-.confetti-burst {
-  animation: confetti-burst 0.5s ease-out;
-}
-
-.shake-animation {
-  animation: shake-animation 0.5s ease-in-out;
-}
-
-.dance-animation {
-  animation: dance-animation 0.5s ease-in-out 4;
-}
-
-.slide-in-up {
-  animation: slide-in-up 0.3s ease-out;
-}
-
-/* Screen reader only */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+/* Shared kbd style for Zen Mode panels */
+.zen-kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
   white-space: nowrap;
-  border-width: 0;
 }
 
-/* Theme transition */
-*, *::before, *::after {
-  transition-property: background-color, border-color, color;
-  transition-duration: 150ms;
-  transition-timing-function: ease;
+/* Context Menu shared styles (Zen Mode panels) */
+.zen-context-menu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  padding: 6px;
+  animation: contextMenuSlideIn 0.15s ease-out;
 }
 
-/* Exclude elements that shouldn't animate */
+@keyframes contextMenuSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.zen-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: #374151;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.zen-context-menu-item:hover {
+  background: rgba(79, 70, 229, 0.08);
+}
+
+.zen-context-menu-item-icon {
+  font-size: 14px;
+  line-height: 1;
+  width: 16px;
+  text-align: center;
+}
+
+.zen-context-menu-item-danger {
+  color: #dc2626;
+}
+
+.zen-context-menu-item-danger:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.zen-context-menu-separator {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 4px 0;
+}
+
+.zen-context-menu-submenu {
+  padding-top: 4px;
+}
+
+.zen-context-menu-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 12px 4px;
+}
+
+/* Disable instant theme transitions when changing themes */
 .no-theme-transition,
 .no-theme-transition *,
 svg,
@@ -282,4 +253,112 @@ svg * {
 @keyframes pulse-highlight {
   0% { box-shadow: 0 0 0 4px rgba(255, 165, 0, 0.8); }
   100% { box-shadow: 0 0 0 0 rgba(255, 165, 0, 0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Syntax Highlighting (theme-aware, respects CSS variables)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Code blocks */
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  background: hsl(var(--secondary));
+  color: hsl(var(--foreground));
+  border-radius: 8px;
+}
+
+/* Comments */
+.hljs-comment,
+.hljs-quote {
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+/* Keywords, selectors, operators */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-type,
+.hljs-tag {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+/* Strings, symbols */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+  color: hsl(150 70% 45%); /* Green-ish for strings */
+}
+
+/* Numbers, literals */
+.hljs-number,
+.hljs-literal,
+.hljs-meta .hljs-string {
+  color: hsl(30 90% 55%); /* Orange for numbers */
+}
+
+/* Functions, class names */
+.hljs-title,
+.hljs-class .hljs-title,
+.hljs-function .hljs-title {
+  color: hsl(200 80% 50%); /* Blue for functions */
+  font-weight: 600;
+}
+
+/* Attributes, properties */
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable {
+  color: hsl(var(--foreground));
+}
+
+/* Built-ins, params */
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-params {
+  color: hsl(280 70% 60%); /* Purple for built-ins */
+}
+
+/* Meta, doctags */
+.hljs-meta,
+.hljs-doctag {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Sections, names */
+.hljs-section,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: hsl(200 80% 50%); /* Blue */
+}
+
+/* Emphasis */
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}
+
+/* Deletion */
+.hljs-deletion {
+  color: hsl(0 70% 50%); /* Red */
+}
+
+/* Formula */
+.hljs-formula {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+/* Regexp */
+.hljs-regexp,
+.hljs-link {
+  color: hsl(150 70% 45%); /* Green */
 }
