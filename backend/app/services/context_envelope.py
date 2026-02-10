@@ -46,7 +46,7 @@ def _canonical_json(obj: dict) -> str:
 
 def _compute_hash(envelope: dict) -> str:
     """SHA-256 of canonical JSON (excluding the hash field itself)."""
-    hashable = {k: v for k, v in envelope.items() if k != "context_hash"}
+    hashable = {k: v for k, v in envelope.items() if k != "context_hash" and not k.startswith("_")}
     return hashlib.sha256(_canonical_json(hashable).encode()).hexdigest()[:16]
 
 
@@ -212,7 +212,13 @@ async def build_crewhub_context(
                 if tasks:
                     envelope["tasks"] = tasks
 
-            # Add integrity hash
+            # Attach persona prompt (not included in hash, stripped before serialization)
+            if self_identity and self_identity.get("agentId"):
+                persona_prompt = await get_persona_prompt(self_identity["agentId"])
+                if persona_prompt:
+                    envelope["_persona_prompt"] = persona_prompt
+
+            # Add integrity hash (excludes _persona_prompt since it starts with _)
             envelope["context_hash"] = _compute_hash(envelope)
 
             return envelope
@@ -267,6 +273,31 @@ async def _get_context_version(
     return max(candidates) if candidates else 0
 
 
+async def get_persona_prompt(agent_id: str) -> str | None:
+    """Build persona prompt fragment for an agent, or None if no persona configured."""
+    from app.services.personas import build_persona_prompt
+
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT * FROM agent_personas WHERE agent_id = ?", (agent_id,)
+            ) as cur:
+                row = await cur.fetchone()
+            if not row:
+                return None
+            return build_persona_prompt(
+                start_behavior=row["start_behavior"],
+                checkin_frequency=row["checkin_frequency"],
+                response_detail=row["response_detail"],
+                approach_style=row["approach_style"],
+                custom_instructions=row["custom_instructions"] or "",
+            )
+    except Exception as e:
+        logger.error(f"Failed to get persona prompt for agent {agent_id}: {e}")
+        return None
+
+
 def format_context_block(envelope: dict) -> str:
     """Format envelope as a fenced JSON block for injection into preamble."""
     compact = json.dumps(envelope, separators=(",", ":"), ensure_ascii=False)
@@ -295,5 +326,10 @@ def format_context_block(envelope: dict) -> str:
 - Environment: toon-shaded office building on a grid
 
 (You may have a different personal identity in your workspace files.)"""
+
+    # Persona behavior guidelines (injected if available)
+    persona_prompt = envelope.get("_persona_prompt")
+    if persona_prompt:
+        block += f"\n\n## Behavior Guidelines\n{persona_prompt}"
 
     return block
