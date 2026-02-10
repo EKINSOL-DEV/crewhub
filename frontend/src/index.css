@@ -269,10 +269,30 @@ svg * {
   border-radius: 8px;
 }
 
+/* Light mode (default) */
+:root {
+  --code-comment: 150 10% 45%;
+  --code-keyword: var(--primary);
+  --code-string: 150 70% 40%;
+  --code-number: 30 90% 50%;
+  --code-function: 200 80% 45%;
+  --code-builtin: 280 70% 55%;
+}
+
+/* Dark mode - brighter colors for better contrast */
+.dark {
+  --code-comment: 215 20% 60%;
+  --code-keyword: var(--primary);
+  --code-string: 150 60% 60%; /* Brighter green */
+  --code-number: 30 90% 65%; /* Brighter orange */
+  --code-function: 200 70% 65%; /* Brighter blue */
+  --code-builtin: 280 60% 70%; /* Brighter purple */
+}
+
 /* Comments */
 .hljs-comment,
 .hljs-quote {
-  color: hsl(var(--muted-foreground));
+  color: hsl(var(--code-comment));
   font-style: italic;
 }
 
@@ -281,7 +301,7 @@ svg * {
 .hljs-selector-tag,
 .hljs-type,
 .hljs-tag {
-  color: hsl(var(--primary));
+  color: hsl(var(--code-keyword));
   font-weight: 600;
 }
 
@@ -290,21 +310,21 @@ svg * {
 .hljs-symbol,
 .hljs-bullet,
 .hljs-addition {
-  color: hsl(150 70% 45%); /* Green-ish for strings */
+  color: hsl(var(--code-string));
 }
 
 /* Numbers, literals */
 .hljs-number,
 .hljs-literal,
 .hljs-meta .hljs-string {
-  color: hsl(30 90% 55%); /* Orange for numbers */
+  color: hsl(var(--code-number));
 }
 
 /* Functions, class names */
 .hljs-title,
 .hljs-class .hljs-title,
 .hljs-function .hljs-title {
-  color: hsl(200 80% 50%); /* Blue for functions */
+  color: hsl(var(--code-function));
   font-weight: 600;
 }
 
@@ -320,7 +340,7 @@ svg * {
 .hljs-built_in,
 .hljs-builtin-name,
 .hljs-params {
-  color: hsl(280 70% 60%); /* Purple for built-ins */
+  color: hsl(var(--code-builtin));
 }
 
 /* Meta, doctags */
@@ -334,7 +354,7 @@ svg * {
 .hljs-name,
 .hljs-selector-id,
 .hljs-selector-class {
-  color: hsl(200 80% 50%); /* Blue */
+  color: hsl(var(--code-function));
 }
 
 /* Emphasis */
@@ -348,7 +368,7 @@ svg * {
 
 /* Deletion */
 .hljs-deletion {
-  color: hsl(0 70% 50%); /* Red */
+  color: hsl(0 70% 60%);
 }
 
 /* Formula */
@@ -360,5 +380,5 @@ svg * {
 /* Regexp */
 .hljs-regexp,
 .hljs-link {
-  color: hsl(150 70% 45%); /* Green */
+  color: hsl(var(--code-string));
 }
