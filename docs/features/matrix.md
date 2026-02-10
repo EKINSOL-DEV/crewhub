@@ -25,20 +25,20 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **Core** | 4 | 4 | 0 | 0 | 0 | 13 |
 | **3D World** | 5 | 1 | 1 | 2 | 1 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
-| **Productivity** | 3 | 1 | 0 | 2 | 0 | 10 |
+| **Productivity** | 4 | 1 | 0 | 3 | 0 | 11 |
 | **Creative** | 3 | 1 | 1 | 0 | 1 | 6 |
 | **Meta** | 1 | 1 | 0 | 0 | 0 | 2 |
-| **TOTAL** | **23** | **14** | **2** | **5** | **2** | **54** |
+| **TOTAL** | **24** | **14** | **2** | **6** | **2** | **55** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ███████████████████████████                  61% (14)
-In Progress:  ████                                          9% (2)
-Planned:      ██████████                                   22% (5)
-Research:     ████                                          9% (2)
+Released:     ██████████████████████████                   58% (14)
+In Progress:  ███                                           8% (2)
+Planned:      ███████████                                  25% (6)
+Research:     ███                                           8% (2)
 ```
 
 ---
@@ -69,6 +69,7 @@ Research:     ████                                          9% (2)
 - ✅ Prop drag & drop fixes (edge cases, camera orbit disabled) ← Built overnight
 
 ### v0.14.0
+- 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
 - 📋 Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
 - 📋 Improving and Reviewing Skills usage during onboarding
@@ -139,10 +140,11 @@ Research:     ████                                          9% (2)
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
 | **Markdown Viewer/Editor** | 📋 | v0.13.0 | 4 | Phase 1: View docs, fullscreen + TOC. Phase 2: Edit with CodeMirror 6 |
+| **Zen Mode Panel Registry** | 📋 | v0.14.0 | 1 | Single source of truth for all panels (Ctrl+K, context menu, layouts) |
 | **Stand-Up Meetings** | 📋 | v0.14.0 | 4 | Automated meetings in 3D (bots walk, take turns, summaries) |
 | **Task Management** | ✅ | v0.9.0 | 2 | Visual task board, TaskWall3D, Run with Agent |
 
-**Total:** 3 features • 10 docs • 1 released, 2 planned
+**Total:** 4 features • 11 docs • 1 released, 3 planned
 
 ---
 

@@ -16,7 +16,6 @@ interface ProjectFilesSectionProps {
  */
 export function ProjectFilesSection({ projectId, projectName, projectColor, onOpenFullscreen }: ProjectFilesSectionProps) {
   const { files, loading, error } = useProjectDocuments(projectId)
-  const [expanded, setExpanded] = useState(false)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [fullscreenOpen, setFullscreenOpen] = useState(false)
   const { content, metadata, loading: contentLoading } = useProjectDocumentContent(projectId, selectedPath)
@@ -38,125 +37,115 @@ export function ProjectFilesSection({ projectId, projectName, projectColor, onOp
   }
 
   return (
-    <div>
-      {/* Header / toggle */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          width: '100%',
-          padding: '10px 14px',
-          borderRadius: 8,
-          border: 'none',
-          background: accentColor + '12',
-          color: accentColor,
-          cursor: 'pointer',
-          fontSize: 13,
-          fontWeight: 600,
-          fontFamily: 'inherit',
-          transition: 'background 0.15s',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = accentColor + '20' }}
-        onMouseLeave={e => { e.currentTarget.style.background = accentColor + '12' }}
-      >
-        <span>{expanded ? '📂' : '📁'}</span>
-        <span style={{ flex: 1, textAlign: 'left' }}>Project Files</span>
-        {onOpenFullscreen && (
-          <span
-            onClick={e => { e.stopPropagation(); onOpenFullscreen() }}
-            title="Open fullscreen docs panel"
-            style={{ fontSize: 11, opacity: 0.7 }}
-          >
-            ⤢
-          </span>
-        )}
-        <span style={{ fontSize: 10, opacity: 0.6 }}>{expanded ? '▾' : '▸'}</span>
-      </button>
-
-      {/* Expanded file tree */}
-      {expanded && (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Toolbar */}
+      {onOpenFullscreen && (
         <div style={{
-          marginTop: 4,
-          maxHeight: 300,
-          overflow: 'auto',
-          borderRadius: 8,
-          border: '1px solid rgba(0,0,0,0.06)',
-          background: 'rgba(255,255,255,0.6)',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          padding: '4px 8px',
+          marginBottom: 4,
         }}>
-          {loading ? (
-            <div style={{ padding: 12, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
-              Loading files…
-            </div>
-          ) : files.length === 0 ? (
-            <div style={{ padding: 12, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
-              No files found
-            </div>
-          ) : (
-            <div style={{ padding: '6px 0' }}>
-              {files.map(file => (
-                <FileTreeNode
-                  key={file.path}
-                  node={file}
-                  depth={0}
-                  selectedPath={selectedPath}
-                  onSelect={handleFileClick}
-                  accentColor={accentColor}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Inline preview */}
-          {selectedPath && (
-            <div style={{
-              borderTop: '1px solid rgba(0,0,0,0.06)',
-              padding: '8px 10px',
-              maxHeight: 200,
-              overflow: 'auto',
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 6,
-              }}>
-                <span style={{
-                  fontSize: 10,
-                  color: '#9ca3af',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {selectedPath}
-                </span>
-                <button
-                  onClick={() => setFullscreenOpen(true)}
-                  title="Fullscreen"
-                  style={{
-                    background: 'rgba(0,0,0,0.05)',
-                    border: 'none',
-                    borderRadius: 4,
-                    padding: '2px 6px',
-                    fontSize: 10,
-                    cursor: 'pointer',
-                    color: '#6b7280',
-                  }}
-                >
-                  ⤢
-                </button>
-              </div>
-              {contentLoading ? (
-                <div style={{ fontSize: 11, color: '#9ca3af' }}>Loading…</div>
-              ) : content ? (
-                <MarkdownViewer content={content} maxHeight="none" />
-              ) : null}
-            </div>
-          )}
+          <button
+            onClick={onOpenFullscreen}
+            title="Open fullscreen docs panel"
+            style={{
+              background: accentColor + '12',
+              border: 'none',
+              borderRadius: 6,
+              padding: '4px 10px',
+              fontSize: 11,
+              cursor: 'pointer',
+              color: accentColor,
+              fontWeight: 600,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = accentColor + '20' }}
+            onMouseLeave={e => { e.currentTarget.style.background = accentColor + '12' }}
+          >
+            ⤢ Fullscreen
+          </button>
         </div>
       )}
+      {/* File tree - always visible, full height */}
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        borderRadius: 8,
+        border: '1px solid rgba(0,0,0,0.06)',
+        background: 'rgba(255,255,255,0.6)',
+      }}>
+        {loading ? (
+          <div style={{ padding: 12, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
+            Loading files…
+          </div>
+        ) : files.length === 0 ? (
+          <div style={{ padding: 12, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
+            No files found
+          </div>
+        ) : (
+          <div style={{ padding: '6px 0' }}>
+            {files.map(file => (
+              <FileTreeNode
+                key={file.path}
+                node={file}
+                depth={0}
+                selectedPath={selectedPath}
+                onSelect={handleFileClick}
+                accentColor={accentColor}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Inline preview */}
+        {selectedPath && (
+          <div style={{
+            borderTop: '1px solid rgba(0,0,0,0.06)',
+            padding: '8px 10px',
+            maxHeight: 200,
+            overflow: 'auto',
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 6,
+            }}>
+              <span style={{
+                fontSize: 10,
+                color: '#9ca3af',
+                fontFamily: "'JetBrains Mono', monospace",
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {selectedPath}
+              </span>
+              <button
+                onClick={() => setFullscreenOpen(true)}
+                title="Fullscreen"
+                style={{
+                  background: 'rgba(0,0,0,0.05)',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '2px 6px',
+                  fontSize: 10,
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                }}
+              >
+                ⤢
+              </button>
+            </div>
+            {contentLoading ? (
+              <div style={{ fontSize: 11, color: '#9ca3af' }}>Loading…</div>
+            ) : content ? (
+              <MarkdownViewer content={content} maxHeight="none" />
+            ) : null}
+          </div>
+        )}
+      </div>
 
       {/* Fullscreen overlay */}
       {content && metadata && (
