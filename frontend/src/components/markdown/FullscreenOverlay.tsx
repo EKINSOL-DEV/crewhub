@@ -56,7 +56,7 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  // Lock body scroll and disable Three.js canvas pointer events
+  // Lock body scroll, disable canvas pointer events, AND block camera-controls document listeners
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
@@ -70,11 +70,34 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
       canvas.style.pointerEvents = 'none'
     })
 
+    // Notify CameraController to disable controls
+    window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: true } }))
+
+    // Block camera-controls' document-level pointermove/pointerup listeners
+    // camera-controls adds these on document in bubble phase, so we capture first
+    const overlayEl = document.querySelector('[data-fullscreen-overlay]') as HTMLElement | null
+    const blockIfOutsideOverlay = (e: Event) => {
+      // Allow events inside the overlay to propagate normally
+      if (overlayEl && overlayEl.contains(e.target as Node)) return
+      // Block everything else (prevents camera rotation/zoom)
+      e.stopPropagation()
+    }
+    // Capture phase on document - runs before camera-controls' bubble listeners
+    document.addEventListener('pointermove', blockIfOutsideOverlay, { capture: true })
+    document.addEventListener('pointerup', blockIfOutsideOverlay, { capture: true })
+    document.addEventListener('pointerdown', blockIfOutsideOverlay, { capture: true })
+    document.addEventListener('wheel', blockIfOutsideOverlay, { capture: true })
+
     return () => {
       document.body.style.overflow = prev
       canvases.forEach((canvas, i) => {
         canvas.style.pointerEvents = prevPointerEvents[i]
       })
+      window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: false } }))
+      document.removeEventListener('pointermove', blockIfOutsideOverlay, { capture: true })
+      document.removeEventListener('pointerup', blockIfOutsideOverlay, { capture: true })
+      document.removeEventListener('pointerdown', blockIfOutsideOverlay, { capture: true })
+      document.removeEventListener('wheel', blockIfOutsideOverlay, { capture: true })
     }
   }, [open])
 
@@ -82,6 +105,7 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
 
   const overlay = (
     <div
+      data-fullscreen-overlay
       style={{
         position: 'fixed',
         inset: 0,
@@ -91,15 +115,11 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
         background: 'rgba(0, 0, 0, 0.85)',
         backdropFilter: 'blur(4px)',
         animation: 'fadeIn 0.2s ease-out',
-        pointerEvents: 'all', // Block all pointer events to layers below
+        pointerEvents: 'all',
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-      onPointerMove={(e) => e.stopPropagation()}
-      onWheel={(e) => e.stopPropagation()}
     >
       {/* Header */}
       <div style={{

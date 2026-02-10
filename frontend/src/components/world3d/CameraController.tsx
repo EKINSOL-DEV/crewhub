@@ -183,6 +183,23 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const wasdVelocity = useRef(new THREE.Vector3())
   const wasdRotVelocity = useRef(0)
 
+  // ─── Disable camera controls when fullscreen overlay is open ──
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const controls = controlsRef.current
+      if (!controls) return
+      const detail = (e as CustomEvent).detail
+      if (detail?.open) {
+        controls.enabled = false
+      } else {
+        // Re-enable only if not otherwise disabled
+        controls.enabled = !isDragging && !isInteractingWithUI
+      }
+    }
+    window.addEventListener('fullscreen-overlay', handler)
+    return () => window.removeEventListener('fullscreen-overlay', handler)
+  }, [isDragging, isInteractingWithUI])
+
   // ─── Disable camera controls during drag ──────────────────────
   // Tracks both bot drag (DragDropContext) and prop drag (usePropMovement)
 
