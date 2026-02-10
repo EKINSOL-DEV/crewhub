@@ -56,12 +56,26 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  // Lock body scroll
+  // Lock body scroll and disable Three.js canvas pointer events
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+
+    // Disable pointer events on all Three.js canvases to prevent camera interference
+    const canvases = document.querySelectorAll('canvas')
+    const prevPointerEvents: string[] = []
+    canvases.forEach((canvas, i) => {
+      prevPointerEvents[i] = canvas.style.pointerEvents
+      canvas.style.pointerEvents = 'none'
+    })
+
+    return () => {
+      document.body.style.overflow = prev
+      canvases.forEach((canvas, i) => {
+        canvas.style.pointerEvents = prevPointerEvents[i]
+      })
+    }
   }, [open])
 
   if (!open) return null
@@ -82,9 +96,10 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
-      onPointerDown={(e) => e.stopPropagation()} // Block 3D camera drag
-      onPointerMove={(e) => e.stopPropagation()} // Block 3D camera orbit
-      onWheel={(e) => e.stopPropagation()} // Block 3D camera zoom
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
     >
       {/* Header */}
       <div style={{
