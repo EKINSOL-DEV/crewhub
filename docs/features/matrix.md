@@ -22,22 +22,22 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 
 | Category | Total Features | Released | In Progress | Planned | Research | Total Docs |
 |----------|----------------|----------|-------------|---------|----------|------------|
-| **Core** | 4 | 4 | 0 | 0 | 0 | 13 |
+| **Core** | 5 | 4 | 0 | 1 | 0 | 14 |
 | **3D World** | 5 | 1 | 1 | 2 | 1 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 4 | 1 | 0 | 3 | 0 | 11 |
 | **Creative** | 3 | 1 | 1 | 0 | 1 | 6 |
 | **Meta** | 1 | 1 | 0 | 0 | 0 | 2 |
-| **TOTAL** | **24** | **14** | **2** | **6** | **2** | **55** |
+| **TOTAL** | **25** | **14** | **2** | **7** | **2** | **56** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ██████████████████████████                   58% (14)
+Released:     ██████████████████████████                   56% (14)
 In Progress:  ███                                           8% (2)
-Planned:      ███████████                                  25% (6)
+Planned:      █████████████                                28% (7)
 Research:     ███                                           8% (2)
 ```
 
@@ -70,6 +70,7 @@ Research:     ███                                           8% (2)
 
 ### v0.14.0
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
+- 📋 Backend watchdog & auto-restart (Docker-based, crash logging, healthcheck)
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
 - 📋 Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
 - 📋 Improving and Reviewing Skills usage during onboarding
@@ -100,8 +101,9 @@ Research:     ███                                           8% (2)
 | **Onboarding** | ✅ | v0.4.0 | 4 | Auto-discovery setup wizard for OpenClaw/Claude/Codex |
 | **Settings** | ✅ | v0.4.0 | 2 | 5-tab configuration UI with backup/restore |
 | **Room Projects** | ✅ | v0.5.0 | 3 | Organize agents by project, HQ command center |
+| **Backend Watchdog** | 📋 | v0.14.0 | 1 | Auto-restart on crash, healthcheck, logging |
 
-**Total:** 4 features • 13 docs • 4 released
+**Total:** 5 features • 14 docs • 4 released, 1 planned
 
 ---
 
