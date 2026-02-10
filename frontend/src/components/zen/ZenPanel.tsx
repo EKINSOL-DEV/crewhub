@@ -7,7 +7,7 @@ import { type LeafNode, type PanelType, PANEL_INFO } from './types/layout'
 import { ZenContextMenu } from './ZenContextMenu'
 
 // Available panel types for switcher
-const PANEL_TYPES: PanelType[] = ['chat', 'sessions', 'activity', 'rooms', 'tasks', 'cron', 'logs']
+const PANEL_TYPES: PanelType[] = ['chat', 'sessions', 'activity', 'rooms', 'tasks', 'kanban', 'projects', 'cron', 'logs']
 
 // ── Panel Type Picker Component ────────────────────────────────
 
