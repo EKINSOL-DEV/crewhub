@@ -54,6 +54,10 @@ const ADDITIONAL_TYPES: { type: PanelType; description: string }[] = [
     type: 'cron' as PanelType, 
     description: 'Scheduled cron jobs'
   },
+  {
+    type: 'documents' as PanelType,
+    description: 'Browse project documents'
+  },
 ]
 
 export function ZenEmptyPanel({ onSelectPanelType }: ZenEmptyPanelProps) {

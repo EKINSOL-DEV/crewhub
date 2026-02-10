@@ -9,11 +9,14 @@ services:
     environment:
       - OPENCLAW_GATEWAY_URL=${OPENCLAW_GATEWAY_URL:-ws://host.docker.internal:18789}
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:-}
+      - PROJECT_DATA_PATH=${PROJECT_DATA_PATH:-/mnt/project-data}
     volumes:
       - ./backend/app:/app/app
       - ~/.crewhub:/root/.crewhub
       - ~/.openclaw/media:/root/.openclaw/media
       - ~/.openclaw/agents:/root/.openclaw/agents
+      # Project documents (read-only mount for Phase 2 markdown viewer)
+      # - /path/to/your/project-data:/mnt/project-data:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:

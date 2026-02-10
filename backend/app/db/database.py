@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 10  # v10: Added agent_personas table
+SCHEMA_VERSION = 11  # v11: Added docs_path to projects
 
 
 async def init_database():
@@ -355,6 +355,14 @@ async def init_database():
                     updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
                 )
             """)
+
+            # ========================================
+            # v11: Add docs_path to projects
+            # ========================================
+            try:
+                await db.execute("ALTER TABLE projects ADD COLUMN docs_path TEXT")
+            except Exception:
+                pass  # Column already exists
 
             # Set initial version if not exists
             await db.execute("""

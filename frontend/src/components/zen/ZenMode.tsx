@@ -28,6 +28,7 @@ import { ZenTasksPanel } from './ZenTasksPanel'
 import { ZenKanbanPanel } from './ZenKanbanPanel'
 import { ZenCronPanel } from './ZenCronPanel'
 import { ZenLogsPanel } from './ZenLogsPanel'
+import { ZenDocumentsPanel } from './ZenDocumentsPanel'
 import { ZenEmptyPanel } from './ZenEmptyPanel'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useRoomsContext } from '@/contexts/RoomsContext'
@@ -571,6 +572,14 @@ export function ZenMode({
         
         case 'logs':
           return <ZenLogsPanel />
+        
+        case 'documents':
+          return (
+            <ZenDocumentsPanel
+              projectId={activeProjectId ?? null}
+              projectName={activeProjectName ?? null}
+            />
+          )
         
         case 'empty':
         default:

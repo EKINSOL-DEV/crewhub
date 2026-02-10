@@ -40,6 +40,7 @@ class ProjectResponse(BaseModel):
     icon: Optional[str] = None
     color: Optional[str] = None
     folder_path: Optional[str] = None
+    docs_path: Optional[str] = None
     status: str = "active"
     created_at: int
     updated_at: int
