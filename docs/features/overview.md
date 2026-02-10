@@ -83,7 +83,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Zones
-**Status:** 🚧 In Progress (v0.15.0)  
+**Status:** 🚧 In Progress (v0.16.0)  
 **Description:** Thematic campus areas with specialized props, environments, and activities. Three zones planned: Creator Center (film studio), Academy (Hogwarts meets MIT), Game Center (arcade meets indie studio). Each zone includes unique props, interactive elements, and Easter eggs.
 
 **Docs:**
@@ -97,7 +97,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Academy Zone
-**Status:** 📋 Planned (v0.15.0)  
+**Status:** 📋 Planned (v0.16.0)  
 **Description:** Learning-focused zone with Great Library, Research Lab, Lecture Hall, Sandbox, Study Pods, and Map Room. Features: Knowledge Tree (grows with agent learning), flying books, owl mascot, scholar ranking system.
 
 **Docs:**
@@ -115,7 +115,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Multi-Zone System
-**Status:** 📋 Planned (v0.15.0)  
+**Status:** 📋 Planned (v0.16.0)  
 **Description:** Architecture for supporting multiple themed zones on the campus. Includes zone switcher UI, persistent navigation, and zone-specific environments/props.
 
 **Docs:**
@@ -183,6 +183,15 @@ UI elements and interaction patterns.
 - `zen-mode/zen-mode-masterplan.md` — Implementation masterplan
 - `zen-mode/zen-mode-review.md` — Design review
 - `zen-mode/zen-mode-keyboard-shortcuts.md` — Keyboard shortcuts spec
+
+---
+
+### HQ Visual Redesign
+**Status:** 📋 Planned (v0.15.0)  
+**Description:** Visual redesign of the HQ command center room. Design to be determined — potential directions include: elevated platform, holographic displays, mission control aesthetic, wall-mounted dashboards, or central strategy table.
+
+**Docs:**
+- Design TBD
 
 ---
 
@@ -303,10 +312,13 @@ Deployment, demos, and platform-level features.
 - Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
 
 **v0.15.0:**
+- HQ visual redesign (design TBD)
+
+**v0.16.0:**
 - Zones system (Creator Center, Academy, Game Center)
 - Academy Zone (Knowledge Tree, flying books)
 
-**v0.16.0+:**
+**v0.17.0+:**
 - Voice chat in first person mode
 - Agent Teams support (Anthropic extended context)
 

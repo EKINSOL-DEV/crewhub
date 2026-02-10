@@ -36,10 +36,10 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
 | **3D World Core** | ✅ | v0.3.0 | 3 | Toon-shaded campus, 3 zoom levels, animated bots |
-| **Zones** | 🚧 | v0.15.0 | 6 | Thematic areas: Creator Center, Academy, Game Center |
-| **Academy Zone** | 📋 | v0.15.0 | 1 | Learning-focused zone with Knowledge Tree |
+| **Zones** | 🚧 | v0.16.0 | 6 | Thematic areas: Creator Center, Academy, Game Center |
+| **Academy Zone** | 📋 | v0.16.0 | 1 | Learning-focused zone with Knowledge Tree |
 | **Spatial Awareness** | 🔬 | v0.14.0 | 1 | Agent vision, proximity, pathfinding |
-| **Multi-Zone System** | 📋 | v0.15.0 | 1 | Architecture for multiple themed zones |
+| **Multi-Zone System** | 📋 | v0.16.0 | 1 | Architecture for multiple themed zones |
 
 **Total:** 5 features • 12 docs • 1 released, 1 in progress, 2 planned, 1 research
 
@@ -55,8 +55,9 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **Room Focus Mode** | ✅ | v0.3.0 | 1 | Zoom into rooms, camera fly-to, TaskWall3D |
 | **Agent Chat** | ✅ | v0.7.0 | 1 | Direct messaging with agents (Planner-style windows) |
 | **Zen Mode** | ✅ | v0.11.0 | 4 | Distraction-free multi-tab workspaces, Zen Statue |
+| **HQ Visual Redesign** | 📋 | v0.15.0 | 0 | Visual redesign of HQ command center (design TBD) |
 
-**Total:** 6 features • 11 docs • 6 released
+**Total:** 7 features • 11 docs • 6 released, 1 planned
 
 ---
 
@@ -100,20 +101,20 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 |----------|----------------|----------|-------------|---------|----------|------------|
 | **Core** | 4 | 4 | 0 | 0 | 0 | 13 |
 | **3D World** | 5 | 1 | 1 | 2 | 1 | 12 |
-| **UI** | 6 | 6 | 0 | 0 | 0 | 11 |
+| **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 3 | 1 | 0 | 2 | 0 | 10 |
 | **Creative** | 3 | 1 | 1 | 0 | 1 | 6 |
 | **Meta** | 1 | 1 | 0 | 0 | 0 | 2 |
-| **TOTAL** | **22** | **14** | **2** | **4** | **2** | **54** |
+| **TOTAL** | **23** | **14** | **2** | **5** | **2** | **54** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ████████████████████████████████████████████ 64% (14)
+Released:     ███████████████████████████                  61% (14)
 In Progress:  ████                                          9% (2)
-Planned:      █████████                                    18% (4)
+Planned:      ██████████                                   22% (5)
 Research:     ████                                          9% (2)
 ```
 
@@ -149,10 +150,13 @@ Research:     ████                                          9% (2)
 - 📋 Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
 
 ### v0.15.0
+- 📋 HQ visual redesign (design TBD)
+
+### v0.16.0
 - 🚧 Zones system (Creator Center, Academy, Game Center)
 - 📋 Academy Zone (Knowledge Tree, flying books)
 
-### v0.16.0+
+### v0.17.0+
 - Voice chat in first person mode
 - Agent Teams support (Anthropic extended context)
 
@@ -172,4 +176,4 @@ Research:     ████                                          9% (2)
 
 ---
 
-*Generated from: 6 categories × 22 features × 54 documentation files*
+*Generated from: 6 categories × 23 features × 54 documentation files*
