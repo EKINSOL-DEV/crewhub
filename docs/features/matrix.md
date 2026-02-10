@@ -27,17 +27,17 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 4 | 1 | 0 | 3 | 0 | 11 |
 | **Creative** | 3 | 1 | 1 | 0 | 1 | 6 |
-| **Meta** | 1 | 1 | 0 | 0 | 0 | 2 |
-| **TOTAL** | **25** | **14** | **2** | **7** | **2** | **56** |
+| **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
+| **TOTAL** | **26** | **14** | **2** | **8** | **2** | **57** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ██████████████████████████                   56% (14)
+Released:     ██████████████████████████                   54% (14)
 In Progress:  ███                                           8% (2)
-Planned:      █████████████                                28% (7)
+Planned:      ██████████████                               31% (8)
 Research:     ███                                           8% (2)
 ```
 
@@ -71,6 +71,7 @@ Research:     ███                                           8% (2)
 ### v0.14.0
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
 - 📋 Backend watchdog & auto-restart (Docker-based, crash logging, healthcheck)
+- 📋 Agent Identity Pattern (single identity, multiple surfaces - prevent personality drift)
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
 - 📋 Stand-up meetings Phase 1 (UX + backend) ← Moved from v0.13.0
 - 📋 Improving and Reviewing Skills usage during onboarding
@@ -167,8 +168,9 @@ Research:     ███                                           8% (2)
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
 | **Demo Site** | ✅ | live @ demo.crewhub.dev | 2 | Public demo with mock API, no OpenClaw dependency |
+| **Agent Identity Pattern** | 📋 | v0.14.0 | 1 | Single identity, multiple surfaces pattern (prevents personality drift) |
 
-**Total:** 1 feature • 2 docs • 1 released
+**Total:** 2 features • 3 docs • 1 released, 1 planned
 
 ---
 
