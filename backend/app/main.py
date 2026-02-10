@@ -17,6 +17,7 @@ from app.routes.self_routes import router as self_router
 from app.routes.auth_routes import router as auth_router
 from app.routes.creator import router as creator_router
 from app.routes.personas import router as personas_router
+from app.routes import agent_files
 from app.db.database import init_database, check_database_health
 from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
@@ -176,6 +177,7 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router, tags=["health"])
 app.include_router(agents.router, prefix="/api/agents", tags=["agents"])
+app.include_router(agent_files.router, prefix="/api/agents", tags=["agent-files"])
 app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
 app.include_router(sse.router, prefix="/api", tags=["sse"])
 app.include_router(gateway_status.router, prefix="/api/gateway", tags=["gateway"])
