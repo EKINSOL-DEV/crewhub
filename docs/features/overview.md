@@ -83,7 +83,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Zones
-**Status:** 🚧 In Progress (v0.13.0+)  
+**Status:** 🚧 In Progress (v0.15.0)  
 **Description:** Thematic campus areas with specialized props, environments, and activities. Three zones planned: Creator Center (film studio), Academy (Hogwarts meets MIT), Game Center (arcade meets indie studio). Each zone includes unique props, interactive elements, and Easter eggs.
 
 **Docs:**
@@ -97,7 +97,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Academy Zone
-**Status:** 📋 Planned (v0.14.0+)  
+**Status:** 📋 Planned (v0.15.0)  
 **Description:** Learning-focused zone with Great Library, Research Lab, Lecture Hall, Sandbox, Study Pods, and Map Room. Features: Knowledge Tree (grows with agent learning), flying books, owl mascot, scholar ranking system.
 
 **Docs:**
@@ -106,7 +106,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Spatial Awareness
-**Status:** 🔬 Research  
+**Status:** 🔬 Research (v0.14.0)  
 **Description:** Agent awareness of their surroundings in the 3D world. Includes vision system (what agents "see"), proximity detection, pathfinding around obstacles, and context-aware behavior (agents mention nearby bots in conversation).
 
 **Docs:**
@@ -115,7 +115,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Multi-Zone System
-**Status:** 📋 Planned (v0.13.0+)  
+**Status:** 📋 Planned (v0.15.0)  
 **Description:** Architecture for supporting multiple themed zones on the campus. Includes zone switcher UI, persistent navigation, and zone-specific environments/props.
 
 **Docs:**
@@ -191,8 +191,8 @@ UI elements and interaction patterns.
 Features that help teams work more effectively.
 
 ### Markdown Viewer/Editor
-**Status:** 📋 Planned (v0.13.0+)  
-**Description:** View and edit markdown files from agent workspaces and project directories. Features: Files tab in bot panel, fullscreen viewer with TOC, side-by-side view, live editing with CodeMirror 6, and auto-save.
+**Status:** 📋 Planned (v0.13.0)  
+**Description:** View and edit markdown files from agent workspaces and project directories. Phase 1: Files tab in bot panel, fullscreen viewer with TOC. Phase 2: Live editing with CodeMirror 6, auto-save, side-by-side view.
 
 **Docs:**
 - `markdown-viewer/ux-design.md` — UX wireframes and flows
@@ -203,7 +203,7 @@ Features that help teams work more effectively.
 ---
 
 ### Stand-Up Meetings
-**Status:** 📋 Planned (v0.13.0+)  
+**Status:** 📋 Planned (v0.13.0)  
 **Description:** Automated stand-up meetings in the 3D world. Bots walk to meeting room, form circle, take turns speaking, and generate meeting summaries. Integrates with project task boards.
 
 **Docs:**
@@ -292,18 +292,23 @@ Deployment, demos, and platform-level features.
 
 ## 🗺️ Roadmap Priorities
 
-**Next (v0.13.0):**
-- Zones system (Creator Center, Academy, Game Center)
+**v0.13.0 (Next):**
 - Markdown viewer Phase 1 (agent file viewing + fullscreen)
 - Stand-up meetings Phase 1 (UX + backend)
-
-**Future (v0.14.0+):**
-- Spatial awareness (vision, proximity, pathfinding)
 - Markdown editor (CodeMirror 6, auto-save)
+
+**v0.14.0:**
+- Spatial awareness (vision, proximity, pathfinding)
+
+**v0.15.0:**
+- Zones system (Creator Center, Academy, Game Center)
+- Academy Zone (Knowledge Tree, flying books)
+
+**v0.16.0+:**
 - Voice chat in first person mode
 - Agent Teams support (Anthropic extended context)
 
-**Research:**
+**Research (no version assigned):**
 - Pixel avatars alternative aesthetic
 - Steam/desktop app distribution
 - Multi-world architecture (multiple campuses)

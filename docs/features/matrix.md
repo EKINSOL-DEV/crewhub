@@ -36,10 +36,10 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
 | **3D World Core** | ✅ | v0.3.0 | 3 | Toon-shaded campus, 3 zoom levels, animated bots |
-| **Zones** | 🚧 | v0.13.0+ | 6 | Thematic areas: Creator Center, Academy, Game Center |
-| **Academy Zone** | 📋 | v0.14.0+ | 1 | Learning-focused zone with Knowledge Tree |
-| **Spatial Awareness** | 🔬 | TBD | 1 | Agent vision, proximity, pathfinding |
-| **Multi-Zone System** | 📋 | v0.13.0+ | 1 | Architecture for multiple themed zones |
+| **Zones** | 🚧 | v0.15.0 | 6 | Thematic areas: Creator Center, Academy, Game Center |
+| **Academy Zone** | 📋 | v0.15.0 | 1 | Learning-focused zone with Knowledge Tree |
+| **Spatial Awareness** | 🔬 | v0.14.0 | 1 | Agent vision, proximity, pathfinding |
+| **Multi-Zone System** | 📋 | v0.15.0 | 1 | Architecture for multiple themed zones |
 
 **Total:** 5 features • 12 docs • 1 released, 1 in progress, 2 planned, 1 research
 
@@ -64,8 +64,8 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
-| **Markdown Viewer/Editor** | 📋 | v0.13.0+ | 4 | View/edit docs from agent workspaces, fullscreen + TOC |
-| **Stand-Up Meetings** | 📋 | v0.13.0+ | 4 | Automated meetings in 3D (bots walk, take turns, summaries) |
+| **Markdown Viewer/Editor** | 📋 | v0.13.0 | 4 | Phase 1: View docs, fullscreen + TOC. Phase 2: Edit with CodeMirror 6 |
+| **Stand-Up Meetings** | 📋 | v0.13.0 | 4 | Automated meetings in 3D (bots walk, take turns, summaries) |
 | **Task Management** | ✅ | v0.9.0 | 2 | Visual task board, TaskWall3D, Run with Agent |
 
 **Total:** 3 features • 10 docs • 1 released, 2 planned
@@ -139,18 +139,22 @@ Research:     ████                                          9% (2)
 ## 🗓️ Upcoming Roadmap
 
 ### v0.13.0 (Next)
-- 🚧 Zones system (Creator Center, Academy, Game Center)
 - 📋 Markdown viewer Phase 1 (agent files + fullscreen)
 - 📋 Stand-up meetings Phase 1 (UX + backend)
-
-### v0.14.0+ (Future)
-- 🔬 Spatial awareness (vision, proximity, pathfinding)
-- 📋 Academy Zone (Knowledge Tree, flying books)
 - 📋 Markdown editor (CodeMirror 6, auto-save)
+
+### v0.14.0
+- 🔬 Spatial awareness (vision, proximity, pathfinding)
+
+### v0.15.0
+- 🚧 Zones system (Creator Center, Academy, Game Center)
+- 📋 Academy Zone (Knowledge Tree, flying books)
+
+### v0.16.0+
 - Voice chat in first person mode
 - Agent Teams support (Anthropic extended context)
 
-### Research
+### Research (no version assigned)
 - 🔬 Pixel avatars alternative aesthetic
 - Steam/desktop app distribution
 - Multi-world architecture
