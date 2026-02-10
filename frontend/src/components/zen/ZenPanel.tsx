@@ -141,8 +141,8 @@ export function ZenPanel({
             <div className="zen-panel-type-picker">
               <button
                 type="button"
-                className="zen-panel-title zen-panel-title-btn"
-                onClick={(e) => { e.stopPropagation(); setShowTypePicker(!showTypePicker) }}
+                className={`zen-panel-title zen-panel-title-btn ${showTypePicker ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setShowTypePicker(!showTypePicker); if (showTypePicker) (e.currentTarget as HTMLButtonElement).blur() }}
                 title="Change panel type"
               >
                 {displayLabel}
@@ -152,7 +152,7 @@ export function ZenPanel({
                 <PanelTypePicker
                   currentType={panel.panelType}
                   onSelect={handleChangeType}
-                  onClose={() => setShowTypePicker(false)}
+                  onClose={() => { setShowTypePicker(false); document.activeElement instanceof HTMLElement && document.activeElement.blur() }}
                 />
               )}
             </div>

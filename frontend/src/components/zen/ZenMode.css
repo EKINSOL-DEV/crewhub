@@ -882,9 +882,14 @@
   color: var(--zen-fg);
 }
 
-.zen-panel-title-btn:hover {
+.zen-panel-title-btn:hover,
+.zen-panel-title-btn.active {
   background: var(--zen-bg-hover);
   border-color: var(--zen-border);
+}
+
+.zen-panel-title-btn:focus {
+  outline: none;
 }
 
 .zen-panel-title-chevron {
