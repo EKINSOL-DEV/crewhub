@@ -192,15 +192,17 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     controls.enabled = !isDragging && !isInteractingWithUI
   }, [isDragging, isInteractingWithUI])
 
-  // Also disable when prop is being dragged (polled each frame)
+  // Also disable when prop is being moved or dragged (polled each frame)
   useFrame(() => {
     const controls = controlsRef.current
     if (!controls) return
+    const propMoving = getIsPropBeingMoved()
     const propDragging = getIsPropBeingDragged()
+    const shouldDisable = propMoving || propDragging
     // Only update if changed to avoid unnecessary work
-    if (propDragging && controls.enabled) {
+    if (shouldDisable && controls.enabled) {
       controls.enabled = false
-    } else if (!propDragging && !isDragging && !isInteractingWithUI && !controls.enabled) {
+    } else if (!shouldDisable && !isDragging && !isInteractingWithUI && !controls.enabled) {
       controls.enabled = true
     }
   })
