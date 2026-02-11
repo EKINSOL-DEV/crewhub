@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useCallback, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MarkdownViewer } from './MarkdownViewer'
+import { MarkdownEditor } from './MarkdownEditor'
 import { TOCSidebar, extractHeadings, useActiveHeading } from './TOCSidebar'
 
 interface FullscreenOverlayProps {
@@ -14,6 +15,8 @@ interface FullscreenOverlayProps {
     modified: string
     lines: number
   }
+  editable?: boolean
+  onSave?: (content: string) => Promise<void>
 }
 
 function formatBytes(bytes: number): string {
@@ -31,9 +34,17 @@ function formatDate(iso: string): string {
   } catch { return iso }
 }
 
-export function FullscreenOverlay({ open, onClose, title, subtitle, content, metadata }: FullscreenOverlayProps) {
-  const [tocCollapsed, setTocCollapsed] = useState(false)
-  const headings = useMemo(() => extractHeadings(content), [content])
+export function FullscreenOverlay({ open, onClose, title, subtitle, content, metadata, editable, onSave }: FullscreenOverlayProps) {
+  const [editing, setEditing] = useState(false)
+  const [currentContent, setCurrentContent] = useState(content)
+  const [dirty, setDirty] = useState(false)
+
+  // Sync content when prop changes
+  useEffect(() => { setCurrentContent(content) }, [content])
+  // Reset edit mode when overlay closes
+  useEffect(() => { if (!open) { setEditing(false); setDirty(false) } }, [open])
+
+  const headings = useMemo(() => extractHeadings(currentContent), [currentContent])
   const activeId = useActiveHeading(headings)
 
   const handleTOCSelect = useCallback((id: string) => {
@@ -46,11 +57,6 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
     if (!open) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
-      if (e.key === 't' || e.key === 'T') {
-        if (!(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
-          setTocCollapsed(prev => !prev)
-        }
-      }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
@@ -74,15 +80,11 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
     window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: true } }))
 
     // Block camera-controls' document-level pointermove/pointerup listeners
-    // camera-controls adds these on document in bubble phase, so we capture first
     const overlayEl = document.querySelector('[data-fullscreen-overlay]') as HTMLElement | null
     const blockIfOutsideOverlay = (e: Event) => {
-      // Allow events inside the overlay to propagate normally
       if (overlayEl && overlayEl.contains(e.target as Node)) return
-      // Block everything else (prevents camera rotation/zoom)
       e.stopPropagation()
     }
-    // Capture phase on document - runs before camera-controls' bubble listeners
     document.addEventListener('pointermove', blockIfOutsideOverlay, { capture: true })
     document.addEventListener('pointerup', blockIfOutsideOverlay, { capture: true })
     document.addEventListener('pointerdown', blockIfOutsideOverlay, { capture: true })
@@ -139,65 +141,90 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
             <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>{subtitle}</span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {editable && !editing && (
           <button
-            onClick={() => setTocCollapsed(prev => !prev)}
-            title="Toggle TOC (T)"
+            onClick={() => setEditing(true)}
             style={{
-              background: 'hsl(var(--secondary))',
-              border: '1px solid hsl(var(--border))',
+              background: 'hsl(var(--primary))',
+              border: 'none',
               borderRadius: 6,
-              padding: '4px 10px',
+              padding: '6px 14px',
               fontSize: 12,
               cursor: 'pointer',
-              color: 'hsl(var(--foreground))',
+              color: 'hsl(var(--primary-foreground))',
+              fontWeight: 500,
             }}
           >
-            📑 TOC
+            ✏️ Edit
           </button>
-          <button
-            onClick={onClose}
-            title="Close (Esc)"
-            style={{
-              background: 'hsl(var(--secondary))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: 6,
-              width: 32,
-              height: 32,
-              fontSize: 16,
-              cursor: 'pointer',
-              color: 'hsl(var(--foreground))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            ✕
-          </button>
-        </div>
+        )}
+        {editing && dirty && (
+          <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>● Unsaved changes</span>
+        )}
+        <button
+          onClick={() => {
+            if (editing && dirty && !confirm('You have unsaved changes. Discard?')) return
+            onClose()
+          }}
+          title="Close (Esc)"
+          style={{
+            background: 'hsl(var(--secondary))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 6,
+            width: 32,
+            height: 32,
+            fontSize: 16,
+            cursor: 'pointer',
+            color: 'hsl(var(--foreground))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          ✕
+        </button>
       </div>
 
-      {/* Body: TOC + Content */}
+      {/* Body: TOC + Content or Editor */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {headings.length > 0 && (
-          <TOCSidebar
-            headings={headings}
-            activeId={activeId}
-            onSelect={handleTOCSelect}
-            collapsed={tocCollapsed}
-            onToggle={() => setTocCollapsed(prev => !prev)}
-          />
-        )}
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: '24px 32px',
-          background: 'hsl(var(--background))',
-        }}>
-          <div style={{ maxWidth: 720, margin: '0 auto' }}>
-            <MarkdownViewer content={content} />
+        {editing && onSave ? (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <MarkdownEditor
+              initialContent={currentContent}
+              onSave={async (newContent) => {
+                await onSave(newContent)
+                setCurrentContent(newContent)
+                setDirty(false)
+              }}
+              onCancel={() => {
+                if (dirty && !confirm('You have unsaved changes. Discard?')) return
+                setEditing(false)
+                setDirty(false)
+              }}
+              onDirtyChange={setDirty}
+            />
           </div>
-        </div>
+        ) : (
+          <>
+            {headings.length > 0 && (
+              <TOCSidebar
+                headings={headings}
+                activeId={activeId}
+                onSelect={handleTOCSelect}
+              />
+            )}
+            <div style={{
+              flex: 1,
+              overflow: 'auto',
+              padding: '24px 32px',
+              background: 'hsl(var(--background))',
+            }}>
+              <div style={{ maxWidth: 720, margin: '0 auto' }}>
+                <MarkdownViewer content={currentContent} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Footer */}

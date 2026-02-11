@@ -4,13 +4,13 @@
 
 @layer base {
   :root {
+    /* ── Fallback values (overridden by ThemeProvider from Zen theme system) ── */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    /* --primary, --accent, --ring set dynamically by ThemeProvider */
     --primary: 262 83% 58%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
@@ -75,17 +75,6 @@
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* Theme colors */
-:root[data-theme-hue="200"] {
-  --accent-hue: 200;
-}
-:root[data-theme-hue="150"] {
-  --accent-hue: 150;
-}
-:root[data-theme-hue="30"] {
-  --accent-hue: 30;
 }
 
 /* Zen Mode global panel shadow (Canvas panels) */
@@ -269,24 +258,15 @@ svg * {
   border-radius: 8px;
 }
 
-/* Light mode (default) */
+/* Code syntax colors — set dynamically by ThemeProvider from the active Zen theme.
+   Fallback values below match a neutral dark palette. */
 :root {
-  --code-comment: 150 10% 45%;
-  --code-keyword: var(--primary);
-  --code-string: 150 70% 40%;
-  --code-number: 30 90% 50%;
-  --code-function: 200 80% 45%;
-  --code-builtin: 280 70% 55%;
-}
-
-/* Dark mode - brighter colors for better contrast */
-.dark {
   --code-comment: 215 20% 60%;
   --code-keyword: var(--primary);
-  --code-string: 150 60% 60%; /* Brighter green */
-  --code-number: 30 90% 65%; /* Brighter orange */
-  --code-function: 200 70% 65%; /* Brighter blue */
-  --code-builtin: 280 60% 70%; /* Brighter purple */
+  --code-string: 150 60% 60%;
+  --code-number: 30 90% 65%;
+  --code-function: 200 70% 65%;
+  --code-builtin: 280 60% 70%;
 }
 
 /* Comments */

@@ -650,9 +650,9 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
             userData={{ 
               propKey: key, 
               propId, 
-              gridX, 
-              gridZ, 
-              rotation, 
+              gridX: effectiveGridX, 
+              gridZ: effectiveGridZ, 
+              rotation: effectiveRotation, 
               span,
               ...(gridDebugEnabled ? { debugPropKey: key } : {}),
             }}

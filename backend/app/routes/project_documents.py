@@ -164,6 +164,54 @@ async def list_project_documents(
     }
 
 
+@router.put("/{project_id}/documents/{file_path:path}")
+async def save_project_document(project_id: str, file_path: str, body: dict):
+    """Save/update a document in a project's data directory."""
+    if '..' in file_path:
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    content = body.get("content")
+    if content is None:
+        raise HTTPException(status_code=400, detail="Missing 'content' field")
+
+    docs_dir, _ = await _get_project_docs_path(project_id)
+    target = (docs_dir / file_path).resolve()
+
+    if not _is_safe_path(docs_dir, target):
+        raise HTTPException(status_code=403, detail="Path outside project folder")
+
+    if not target.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
+
+    if not target.is_file():
+        raise HTTPException(status_code=400, detail="Path is not a file")
+
+    if target.suffix.lower() not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"File type not allowed: {target.suffix}")
+
+    # Create backup
+    try:
+        bak = target.with_suffix(target.suffix + '.bak')
+        bak.write_text(target.read_text(errors='replace'))
+    except Exception as e:
+        logger.warning(f"Failed to create backup for {file_path}: {e}")
+
+    # Write file
+    try:
+        target.write_text(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to write file: {e}")
+
+    stat = target.stat()
+    return {
+        "path": file_path,
+        "size": stat.st_size,
+        "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        "lines": content.count('\n') + 1 if content else 0,
+        "status": "saved",
+    }
+
+
 @router.get("/{project_id}/documents/{file_path:path}")
 async def read_project_document(project_id: str, file_path: str):
     """Read a single document from a project's data directory."""

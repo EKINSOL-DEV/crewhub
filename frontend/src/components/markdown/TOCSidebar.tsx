@@ -10,8 +10,6 @@ interface TOCSidebarProps {
   headings: TOCHeading[]
   activeId?: string
   onSelect: (id: string) => void
-  collapsed?: boolean
-  onToggle?: () => void
 }
 
 export function extractHeadings(content: string): TOCHeading[] {
@@ -37,7 +35,6 @@ export function useActiveHeading(headings: TOCHeading[]): string | undefined {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // Find the first visible heading
         const visible = entries.filter(e => e.isIntersecting)
         if (visible.length > 0) {
           setActiveId(visible[0].target.id)
@@ -57,31 +54,7 @@ export function useActiveHeading(headings: TOCHeading[]): string | undefined {
   return activeId
 }
 
-export function TOCSidebar({ headings, activeId, onSelect, collapsed, onToggle }: TOCSidebarProps) {
-  if (collapsed) {
-    return (
-      <button
-        onClick={onToggle}
-        title="Show Table of Contents (T)"
-        style={{
-          position: 'absolute',
-          left: 8,
-          top: 60,
-          background: 'hsl(var(--secondary))',
-          border: '1px solid hsl(var(--border))',
-          borderRadius: 6,
-          padding: '6px 10px',
-          cursor: 'pointer',
-          fontSize: 14,
-          color: 'hsl(var(--foreground))',
-          zIndex: 2,
-        }}
-      >
-        📑
-      </button>
-    )
-  }
-
+export function TOCSidebar({ headings, activeId, onSelect }: TOCSidebarProps) {
   return (
     <div style={{
       width: 240,
@@ -92,9 +65,6 @@ export function TOCSidebar({ headings, activeId, onSelect, collapsed, onToggle }
       background: 'hsl(var(--card))',
     }}>
       <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         padding: '0 12px 8px',
         borderBottom: '1px solid hsl(var(--border))',
         marginBottom: 8,
@@ -102,14 +72,6 @@ export function TOCSidebar({ headings, activeId, onSelect, collapsed, onToggle }
         <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--muted-foreground))' }}>
           Contents
         </span>
-        {onToggle && (
-          <button
-            onClick={onToggle}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'hsl(var(--muted-foreground))' }}
-          >
-            ✕
-          </button>
-        )}
       </div>
       {headings.map((h, i) => {
         const isActive = h.id === activeId

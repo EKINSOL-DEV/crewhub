@@ -330,10 +330,11 @@ export function usePropMovement({
     if (!isMoving || !selectedProp) return
     
     // Set up drag plane at prop's current Y height (floor level = 0.16)
+    // Use roomPosition Y so the plane is in world space where the raycaster operates
     const propY = 0.16
     dragPlane.current.setFromNormalAndCoplanarPoint(
       new THREE.Vector3(0, 1, 0),
-      new THREE.Vector3(0, roomPosition[1] + propY, 0)
+      new THREE.Vector3(roomPosition[0], roomPosition[1] + propY, roomPosition[2])
     )
     
     setIsDragging(true)
@@ -345,6 +346,13 @@ export function usePropMovement({
     
     // Get mouse position in normalized device coordinates
     const pointer = e.pointer
+    
+    // Re-align drag plane to camera each frame to handle camera movement during drag
+    const propY = 0.16
+    dragPlane.current.setFromNormalAndCoplanarPoint(
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(roomPosition[0], roomPosition[1] + propY, roomPosition[2])
+    )
     
     // Update raycaster
     raycaster.current.setFromCamera(pointer, e.camera)

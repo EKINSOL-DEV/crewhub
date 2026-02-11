@@ -90,5 +90,18 @@ export function useProjectDocumentContent(projectId: string | null | undefined, 
     return () => { cancelled = true }
   }, [projectId, path])
 
-  return { content, metadata, loading, error }
+  return { content, metadata, loading, error, setContent }
+}
+
+export async function saveProjectDocument(projectId: string, path: string, content: string) {
+  const res = await fetch(`${API_BASE}/projects/${projectId}/documents/${encodeURIComponent(path)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  })
+  if (!res.ok) {
+    const detail = await res.text()
+    throw new Error(`Save failed (${res.status}): ${detail}`)
+  }
+  return res.json()
 }

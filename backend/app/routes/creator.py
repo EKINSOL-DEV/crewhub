@@ -331,51 +331,82 @@ export function {name}({{ position = [0, 0, 0], scale = 1 }}: {name}Props) {{
 
 # ─── OpenClaw AI Generation ─────────────────────────────────────
 
-async def _generate_with_openclaw(name: str, prompt: str) -> str | None:
-    """Try to generate prop code using OpenClaw CLI subprocess."""
+def _parse_ai_parts(raw: str) -> list[dict] | None:
+    """Extract PARTS_DATA JSON block from AI output."""
+    match = re.search(r'/\*\s*PARTS_DATA\s*\n(.*?)\nPARTS_DATA\s*\*/', raw, re.DOTALL)
+    if not match:
+        return None
+    try:
+        parts = json.loads(match.group(1).strip())
+        if isinstance(parts, list) and len(parts) > 0:
+            return parts
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return None
+
+
+def _strip_parts_block(code: str) -> str:
+    """Remove the PARTS_DATA comment block from code."""
+    return re.sub(r'/\*\s*PARTS_DATA\s*\n.*?\nPARTS_DATA\s*\*/', '', code, flags=re.DOTALL).strip()
+
+
+# ─── Generation status tracking (simple in-memory) ──────────────
+_generation_status: dict[str, dict] = {}
+
+
+async def _generate_with_openclaw(name: str, prompt: str) -> tuple[str | None, list[dict] | None]:
+    """Try to generate prop code using OpenClaw CLI subprocess.
+    
+    Returns (code, parts) tuple. Parts may be None if not parseable.
+    """
     template = _load_prompt_template()
     if not template:
-        return None
+        return None, None
     
-    full_prompt = f"{template}\n\n{prompt}\n\nThe component should be named `{name}`. Output ONLY the code, nothing else."
+    full_prompt = f"{template}\n\nGenerate a prop for: {prompt}\n\nThe component should be named `{name}`. Output ONLY the code followed by the PARTS_DATA block."
     
     try:
         proc = await asyncio.create_subprocess_exec(
             "openclaw", "run",
             "--model", "sonnet",
-            "--system", "You are a React Three Fiber prop generator. Output ONLY valid TSX code. No markdown, no explanations.",
+            "--system", "You are a React Three Fiber prop generator. Output ONLY valid TSX code followed by a PARTS_DATA comment block. No markdown fences, no explanations.",
             "--message", full_prompt,
             "--no-tools",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             env={**os.environ, "OPENCLAW_GATEWAY_TOKEN": OPENCLAW_GATEWAY_TOKEN},
         )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=90)
         
         if proc.returncode == 0 and stdout:
-            code = stdout.decode().strip()
+            raw = stdout.decode().strip()
             # Strip markdown fences if present
-            code = re.sub(r'^```\w*\n', '', code)
-            code = re.sub(r'\n```$', '', code)
+            raw = re.sub(r'^```\w*\n', '', raw)
+            raw = re.sub(r'\n```\s*$', '', raw)
+            
+            # Extract parts from AI output
+            ai_parts = _parse_ai_parts(raw)
+            code = _strip_parts_block(raw)
+            
             # Basic validation
             if 'useToonMaterialProps' in code and 'export function' in code:
-                logger.info(f"AI generated prop: {name}")
-                return code
+                logger.info(f"AI generated prop: {name} (parts: {len(ai_parts) if ai_parts else 0})")
+                return code, ai_parts
             else:
                 logger.warning(f"AI output didn't pass validation for {name}")
-                return None
+                return None, None
         else:
             logger.warning(f"openclaw run failed: {stderr.decode()[:200]}")
-            return None
+            return None, None
     except FileNotFoundError:
         logger.warning("openclaw CLI not found in PATH")
-        return None
+        return None, None
     except asyncio.TimeoutError:
-        logger.warning("openclaw run timed out after 60s")
-        return None
+        logger.warning("openclaw run timed out after 90s")
+        return None, None
     except Exception as e:
         logger.warning(f"openclaw run error: {e}")
-        return None
+        return None, None
 
 
 @router.post("/generate-prop", response_model=GeneratePropResponse)
@@ -392,9 +423,15 @@ async def generate_prop(req: GeneratePropRequest):
     # Try AI generation first
     method = "template"
     code = None
+    ai_parts = None
+    
+    # Track generation status
+    import uuid as _uuid
+    gen_id = str(_uuid.uuid4())[:8]
+    _generation_status[gen_id] = {"status": "generating", "prompt": req.prompt[:80], "method": "pending"}
     
     if req.use_ai:
-        code = await _generate_with_openclaw(name, req.prompt)
+        code, ai_parts = await _generate_with_openclaw(name, req.prompt)
         if code:
             method = "ai"
     
@@ -405,13 +442,24 @@ async def generate_prop(req: GeneratePropRequest):
 
     logger.info(f"Generated prop ({method}): {name} from prompt: {req.prompt[:80]}")
 
-    # Extract structured parts for runtime rendering
-    parts = _extract_parts(req.prompt)
+    # Use AI-extracted parts if available, otherwise fall back to template parts
+    if ai_parts:
+        parts = ai_parts
+    else:
+        parts = _extract_parts(req.prompt)
+    
+    _generation_status[gen_id] = {"status": "complete", "prompt": req.prompt[:80], "method": method, "name": name}
 
     return GeneratePropResponse(
         name=name, filename=filename, code=code, method=method,
         parts=[PropPart(**p) for p in parts],
     )
+
+
+@router.get("/generate-prop-status")
+async def generate_prop_status():
+    """Return current/recent generation status for polling."""
+    return {"generations": _generation_status}
 
 
 @router.post("/save-prop", response_model=SavedPropResponse)

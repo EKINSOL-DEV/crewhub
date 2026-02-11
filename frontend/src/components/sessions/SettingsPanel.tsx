@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { useTheme, accentColors, type ThemeMode, type AccentColor } from "@/contexts/ThemeContext"
+import { useTheme } from "@/contexts/ThemeContext"
 import { useGridDebug } from "@/hooks/useGridDebug"
 import { useDebugBots } from "@/hooks/useDebugBots"
 import { useLightingPanelVisibility } from "@/hooks/useLightingConfig"
@@ -26,7 +26,7 @@ import {
   type SessionConfigKey,
 } from "@/lib/sessionConfig"
 import {
-  Sun, Moon, Monitor, X, Plus, Trash2, Edit2, Check,
+  Sun, Moon, X, Plus, Trash2, Edit2, Check,
   ChevronUp, ChevronDown, ChevronRight,
   AlertCircle, Download, Upload, Database, Loader2, Clock,
   HardDrive, RefreshCw, FolderOpen, Eye, GripVertical,
@@ -297,7 +297,7 @@ function SortableRuleItem({
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, sessions: activeSessions }: SettingsPanelProps) {
-  const { theme, setTheme, resolvedMode } = useTheme()
+  const { zen, themeInfo: availableThemes } = useTheme()
   const { rooms, createRoom, updateRoom, deleteRoom, reorderRooms, isLoading: roomsLoading } = useRooms()
   const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
   const {
@@ -612,11 +612,9 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
     })
   }, [showTestRulesDialog, activeSessions, getRoomFromRules, rooms, rules])
 
-  const themeModeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-    { value: "light", label: "Light", icon: <Sun className="h-4 w-4" /> },
-    { value: "dark", label: "Dark", icon: <Moon className="h-4 w-4" /> },
-    { value: "system", label: "System", icon: <Monitor className="h-4 w-4" /> },
-  ]
+  // Theme data for the picker
+  const darkThemes = availableThemes.filter(t => t.type === 'dark')
+  const lightThemes = availableThemes.filter(t => t.type === 'light')
 
   // ─── Early return ───
   if (!open) return null
@@ -682,61 +680,82 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
             {/* ═══ Tab: Look & Feel ═══ */}
             {selectedTab === "look" && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                <Section title="🎨 Appearance">
-                  {/* Theme Mode */}
+                <Section title="🎨 Theme">
+                  {/* Dark Themes */}
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Theme</Label>
-                    <div className="flex gap-2">
-                      {themeModeOptions.map(option => (
+                    <Label className="text-sm font-medium flex items-center gap-1.5">
+                      <Moon className="h-3.5 w-3.5" /> Dark Themes
+                    </Label>
+                    <div className="space-y-1.5">
+                      {darkThemes.map(t => (
                         <button
-                          key={option.value}
-                          onClick={() => setTheme({ mode: option.value })}
+                          key={t.id}
+                          onClick={() => zen.setTheme(t.id)}
                           className={`
-                            flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all flex-1 justify-center
-                            ${theme.mode === option.value
-                              ? "border-primary bg-primary/10 text-primary shadow-sm"
+                            w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-left
+                            ${zen.currentTheme.id === t.id
+                              ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30"
                               : "border-border bg-background hover:bg-muted"
                             }
                           `}
                         >
-                          {option.icon}
-                          <span className="text-sm font-medium">{option.label}</span>
+                          {/* Color preview dots */}
+                          <div className="flex gap-1 shrink-0">
+                            <div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ background: t.preview.bg }} />
+                            <div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ background: t.preview.accent }} />
+                            <div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ background: t.preview.fg }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{t.name}</div>
+                            <div className="text-xs text-muted-foreground truncate">{t.description}</div>
+                          </div>
+                          {zen.currentTheme.id === t.id && (
+                            <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                          )}
                         </button>
                       ))}
                     </div>
-                    {theme.mode === "system" && (
-                      <p className="text-xs text-muted-foreground">
-                        Currently using {resolvedMode} mode based on your system preference
-                      </p>
-                    )}
                   </div>
 
-                  {/* Accent Color — bigger swatches */}
+                  {/* Light Themes */}
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Accent Color</Label>
-                    <div className="grid grid-cols-4 gap-3">
-                      {(Object.entries(accentColors) as [AccentColor, typeof accentColors[AccentColor]][]).map(([key, config]) => (
+                    <Label className="text-sm font-medium flex items-center gap-1.5">
+                      <Sun className="h-3.5 w-3.5" /> Light Themes
+                    </Label>
+                    <div className="space-y-1.5">
+                      {lightThemes.map(t => (
                         <button
-                          key={key}
-                          onClick={() => setTheme({ accentColor: key })}
+                          key={t.id}
+                          onClick={() => zen.setTheme(t.id)}
                           className={`
-                            flex flex-col items-center gap-2 p-3 rounded-xl border transition-all
-                            ${theme.accentColor === key
-                              ? "border-2 border-primary bg-primary/5 shadow-sm"
-                              : "border-border hover:border-muted-foreground/50 hover:bg-muted/50"
+                            w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-left
+                            ${zen.currentTheme.id === t.id
+                              ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30"
+                              : "border-border bg-background hover:bg-muted"
                             }
                           `}
-                          title={config.name}
                         >
-                          <div
-                            className="w-10 h-10 rounded-full shadow-md ring-2 ring-white/20"
-                            style={{ backgroundColor: config.preview }}
-                          />
-                          <span className="text-xs text-muted-foreground font-medium">{config.name}</span>
+                          <div className="flex gap-1 shrink-0">
+                            <div className="w-5 h-5 rounded-full shadow-sm border border-black/10" style={{ background: t.preview.bg }} />
+                            <div className="w-5 h-5 rounded-full shadow-sm border border-black/10" style={{ background: t.preview.accent }} />
+                            <div className="w-5 h-5 rounded-full shadow-sm border border-black/10" style={{ background: t.preview.fg }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{t.name}</div>
+                            <div className="text-xs text-muted-foreground truncate">{t.description}</div>
+                          </div>
+                          {zen.currentTheme.id === t.id && (
+                            <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                          )}
                         </button>
                       ))}
                     </div>
                   </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    Theme applies to entire app — 3D world, panels, and Zen Mode.
+                    Use <span className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">Ctrl+Shift+T</span> to cycle themes.
+                  </p>
                 </Section>
 
                 <Section title="🌍 World Environment">

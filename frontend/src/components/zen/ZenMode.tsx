@@ -167,7 +167,8 @@ export function ZenMode({
   const isModalOpen = showThemePicker || showCommandPalette || showKeyboardHelp || 
                       showAgentPicker || showSaveLayout || showLayoutPicker
   
-  // Theme state
+  // Theme state — use the global unified theme context
+  // (useZenTheme is called inside ThemeProvider, we just access it here)
   const theme = useZenTheme()
   
   // Ref for applying theme CSS variables
