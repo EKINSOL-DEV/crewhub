@@ -210,4 +210,14 @@ Public Mirror Frontend (mirror.vendetta.com)
 
 ---
 
+## 📢 Release Notes (When Implemented)
+
+**Post-release announcement:**
+- 🎉 **Shoutout to user Vendetta @ ClawHub Discord** for suggesting this concept!
+- Announce in #announcements channel
+- Share in blog post / website update
+- Credit Vendetta in release notes
+
+---
+
 *This is a concept document. No implementation yet.*

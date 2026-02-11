@@ -39,7 +39,7 @@
   /* Spacing */
   --zen-space-xs: 4px;
   --zen-space-sm: 8px;
-  --zen-space-md: 12px;
+  --zen-space-md: 16px;
   --zen-space-lg: 16px;
   --zen-space-xl: 24px;
 
@@ -1350,7 +1350,7 @@
 .zen-sd-message {
   border-radius: var(--zen-radius);
   padding: var(--zen-space-sm) var(--zen-space-sm);
-  margin-bottom: var(--zen-space-sm);
+  margin-bottom: var(--zen-space-md);
   font-size: 12px;
 }
 
