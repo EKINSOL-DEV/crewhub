@@ -32,7 +32,7 @@ export function SteamParticles({
   const groupRef = useRef<THREE.Group>(null)
 
   const particles = useMemo(() =>
-    Array.from({ length: count }, (_, i) => ({
+    Array.from({ length: count }, () => ({
       x: (Math.random() - 0.5) * spread,
       z: (Math.random() - 0.5) * spread,
       offset: Math.random() * Math.PI * 2,

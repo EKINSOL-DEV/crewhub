@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.0] - 2026-02-11
 
+### 🚀 PropMaker Quality Phase 3 — Advanced Features
+
+- **Iteration System** — Refine props with natural language feedback ("make it more colorful", "add blinking lights"). Supports 5 feedback types: color, size, detail, animation, style. Includes version history with rollback.
+- **Style Transfer** — Apply visual styles from 10 showcase props to any generated prop. Transfers color palette, material approach, animation patterns, and detail density.
+- **Hybrid Generation** — New generation mode combining AI creativity with template quality. Template-based starts from showcase prop; enhanced AI injects quality requirements.
+- **Prop Genetics (Experimental)** — Crossbreed two props to create unique hybrids inheriting traits from both parents.
+- **Quality Scorer** — Objective quality analysis (0-100) with breakdown: composition, color, animation, detail, style consistency. Actionable improvement suggestions.
+- **Advanced UI** — New tabs for iteration, style transfer, quality scores with visual bar charts, and generation mode selector.
+
+### 🎯 PropMaker Quality Phase 2
+
+- **Component Library** — 7 reusable animated components: LED, SteamParticles, GlowOrb, Cable, DataStream, Screen, RotatingPart
+- **Multi-Pass Generation** — 4-pass enhancement pipeline: base → detail injection → polish → validation
+- **Visual Refinement UI** — Color picker, material presets, animation presets, component injection panel in PropMaker
+- **Refine API** — New `/api/creator/props/refine` endpoint for applying user refinements to generated props
+- **Keyword-Based Component Injection** — Auto-adds relevant components (e.g., "coffee" → steam, "computer" → screen)
+- **Component Library Docs** — Full documentation with usage examples and best practices
+
 ### 🎯 PropMaker Quality Phase 1
 
 - **Material Strategy Fix** — Switched from meshToonMaterial to meshStandardMaterial + flatShading (matches showcase quality)

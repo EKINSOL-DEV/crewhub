@@ -842,6 +842,18 @@ async def _stream_prop_generation(request: Request, prompt: str, name: str, mode
             for diag in diagnostics_collected:
                 yield sse_event("correction", {"message": diag})
 
+            # Phase 2: Multi-pass enhancement (component injection + polish)
+            try:
+                from ..services.multi_pass_generator import MultiPassGenerator
+                mp_gen = MultiPassGenerator()
+                code, mp_diags = await mp_gen.generate_prop(prompt, code)
+                for d in mp_diags:
+                    diagnostics_collected.append(d)
+                    yield sse_event("correction", {"message": d})
+            except Exception as mp_err:
+                logger.warning(f"[PropGen:{gen_id}] Multi-pass error (non-fatal): {mp_err}")
+                diagnostics_collected.append("⚠️ Multi-pass enhancement skipped")
+
             # Re-parse parts from potentially modified code
             ai_parts_new = _parse_ai_parts(code)
             if ai_parts_new:
@@ -862,6 +874,12 @@ async def _stream_prop_generation(request: Request, prompt: str, name: str, mode
                 "qualityScore": pp_result.quality_score, "validation": validation,
             })
             
+            # Get refinement options for the UI
+            try:
+                refinement_options = mp_gen.get_refinement_options(prompt)
+            except Exception:
+                refinement_options = {}
+
             yield sse_event("complete", {
                 "name": name,
                 "filename": f"{name}.tsx",
@@ -873,6 +891,7 @@ async def _stream_prop_generation(request: Request, prompt: str, name: str, mode
                 "generationId": gen_id,
                 "qualityScore": pp_result.quality_score,
                 "validation": validation,
+                "refinementOptions": refinement_options,
             })
         else:
             logger.warning(f"AI output invalid for {name}, using template fallback")

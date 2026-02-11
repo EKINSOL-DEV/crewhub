@@ -26,18 +26,18 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **3D World** | 6 | 1 | 1 | 3 | 1 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
-| **Creative** | 11 | 5 | 0 | 5 | 1 | 8 |
+| **Creative** | 12 | 6 | 0 | 5 | 1 | 8 |
 | **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **37** | **19** | **1** | **15** | **2** | **60** |
+| **TOTAL** | **38** | **20** | **1** | **15** | **2** | **60** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ████████████████████████████████             51% (19)
+Released:     █████████████████████████████████            53% (20)
 In Progress:  █                                             3% (1)
-Planned:      ████████████████████                         41% (15)
+Planned:      ███████████████████                          39% (15)
 Research:     ██                                            5% (2)
 ```
 
@@ -67,12 +67,13 @@ Research:     ██                                            5% (2)
 - ✅ Backend watchdog & auto-restart (Docker-based, crash logging, healthcheck)
 - ✅ Markdown viewer Phase 1-3 (view docs, fullscreen, TOC, editor with CodeMirror 6)
 - ✅ PropCreator Design Showcase (71 props across 7 categories with tab navigation)
+- ✅ PropMaker Quality Phase 1 (AI prompt rewrite, post-processor, showcase library API, flatShading materials)
 - 📋 Markdown viewer Phase 4 (Polish - search, bookmarks, breadcrumbs, favorites, light theme)
 
 ### v0.14.0
 - 📋 Zen Mode Standalone (separate app sharing code/DB/API with CrewHub - monorepo architecture)
 - 📋 Prop Delete (delete props from history with cascade warning for room placements)
-- 📋 PropMaker Quality Improvements (Phases 1-3: material fix, component library, iteration system, style transfer)
+- 📋 PropMaker Quality Improvements Phase 2-3 (component library, multi-pass, iteration system, style transfer, hybrid generation)
 
 ### v0.15.0
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
@@ -181,7 +182,8 @@ Research:     ██                                            5% (2)
 | **Prop Library** | 📋 | v0.17.0 | 0 | RAG-based baseline library with 50-100+ templates, semantic search, learns from approved props |
 | **External 3D APIs** | 📋 | v0.18.0 | 0 | Integration with Meshy.ai and similar services for alternative/fallback 3D generation |
 | **Prop Library with Ratings** | 📋 | v0.18.0 | 0 | Evolved design showcase - categorized props (70+), user ratings, favorites, search & filter |
-| **PropMaker Quality** | 📋 | v0.14.0 | 3 | Phases 1-3: material fix, component library, multi-pass generation, iteration system, style transfer, hybrid generation |
+| **PropMaker Quality Phase 1** | ✅ | v0.13.0 | 3 | AI prompt rewrite, post-processor, showcase library API, flatShading materials, quality scoring |
+| **PropMaker Quality Phase 2-3** | 📋 | v0.14.0 | 0 | Component library, multi-pass generation, iteration system, style transfer, hybrid generation |
 | **Prop Editor** | 📋 | v0.20.0 | 0 | Manual editing UI for generated props (position, rotation, scale, colors, mesh tweaks) |
 | **Modding System** | ✅ | v0.6.0 | 4 | Data-driven modding with Registry<T>, JSON blueprints |
 | **Pixel Avatars** | 🔬 | TBD | 1 | Pixel art bots as alternative to 3D geometric style |
@@ -210,4 +212,4 @@ Research:     ██                                            5% (2)
 
 ---
 
-*Generated from: 6 categories × 37 features × 60 documentation files*
+*Generated from: 6 categories × 38 features × 60 documentation files*

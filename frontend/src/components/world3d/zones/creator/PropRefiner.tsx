@@ -59,7 +59,7 @@ const INJECTABLE_COMPONENTS = [
 
 export function PropRefiner({
   propName,
-  propId,
+  propId: _propId,
   currentCode,
   refinementOptions,
   onApplyChanges,
@@ -67,7 +67,6 @@ export function PropRefiner({
   disabled = false,
 }: PropRefinerProps) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
-  const [replaceColor, setReplaceColor] = useState<string>('')
   const [colorChanges, setColorChanges] = useState<Record<string, string>>({})
   const [addedComponents, setAddedComponents] = useState<string[]>([])
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null)
@@ -109,7 +108,6 @@ export function PropRefiner({
     setSelectedMaterial(null)
     setSelectedAnimation(null)
     setSelectedColor(null)
-    setReplaceColor('')
     onReset()
   }, [onReset])
 
