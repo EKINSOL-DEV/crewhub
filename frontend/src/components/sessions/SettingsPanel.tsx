@@ -337,6 +337,9 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
     localStorage.setItem(SETTINGS_TAB_STORAGE_KEY, tab)
   }, [])
 
+  // ─── Zen auto-launch state (local for instant toggle) ───
+  const [zenAutoLaunch, setZenAutoLaunch] = useState(() => localStorage.getItem("crewhub-zen-auto-launch") === "true")
+
   // ─── Room management state ───
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
@@ -1155,6 +1158,27 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
                       <span>🐌 Slow</span>
                       <span>⚡ Fast</span>
                     </div>
+                  </div>
+                </Section>
+
+                <Section title="🧘 Zen Mode">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="zen-auto-launch" className="flex flex-col gap-1">
+                      <span className="text-sm">Launch in Zen Mode</span>
+                      <span className="text-xs text-muted-foreground font-normal">Open Zen Mode automatically on startup instead of 3D world</span>
+                    </Label>
+                    <Switch
+                      id="zen-auto-launch"
+                      checked={zenAutoLaunch}
+                      onCheckedChange={(checked) => {
+                        setZenAutoLaunch(checked)
+                        localStorage.setItem("crewhub-zen-auto-launch", String(checked))
+                        toast({
+                          title: checked ? "Zen Mode Auto-Launch Enabled" : "Zen Mode Auto-Launch Disabled",
+                          description: checked ? "App will open in Zen Mode on next load" : "App will open in 3D world on next load",
+                        })
+                      }}
+                    />
                   </div>
                 </Section>
 

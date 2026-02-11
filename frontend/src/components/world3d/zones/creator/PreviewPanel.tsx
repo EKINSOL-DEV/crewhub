@@ -44,18 +44,18 @@ class PropErrorBoundary extends React.Component<
 const PANEL_STYLE: React.CSSProperties = {
   width: '100%',
   maxWidth: '500px',
-  background: 'rgba(10, 10, 30, 0.95)',
-  border: '1px solid rgba(0, 255, 204, 0.3)',
+  background: 'hsl(var(--card))',
+  border: '1px solid hsl(var(--border))',
   borderRadius: '16px',
   overflow: 'hidden',
   fontFamily: 'system-ui, sans-serif',
-  color: '#fff',
+  color: 'hsl(var(--foreground))',
 }
 
 const CANVAS_CONTAINER: React.CSSProperties = {
   width: '100%',
   height: '300px',
-  background: '#0a0a1e',
+  background: 'hsl(var(--panel-bg, var(--secondary)))',
   position: 'relative',
 }
 
@@ -76,32 +76,32 @@ const APPROVE_BTN: React.CSSProperties = {
   padding: '10px 24px',
   borderRadius: '10px',
   border: 'none',
-  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-  color: '#fff',
+  background: 'hsl(var(--primary))',
+  color: 'hsl(var(--primary-foreground))',
   fontWeight: 700,
   fontSize: '14px',
   cursor: 'pointer',
-  boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
+  boxShadow: '0 4px 12px hsl(var(--primary) / 0.3)',
 }
 
 const REGEN_BTN: React.CSSProperties = {
   padding: '10px 24px',
   borderRadius: '10px',
-  border: '1px solid rgba(0, 255, 204, 0.3)',
+  border: '1px solid hsl(var(--border))',
   background: 'transparent',
-  color: '#00ffcc',
+  color: 'hsl(var(--primary))',
   fontWeight: 600,
   fontSize: '14px',
   cursor: 'pointer',
 }
 
 const ERROR_BOX: React.CSSProperties = {
-  background: 'rgba(239, 68, 68, 0.15)',
-  border: '1px solid rgba(239, 68, 68, 0.4)',
+  background: 'hsl(var(--destructive) / 0.15)',
+  border: '1px solid hsl(var(--destructive) / 0.4)',
   borderRadius: '8px',
   padding: '10px 14px',
   fontSize: '12px',
-  color: '#fca5a5',
+  color: 'hsl(var(--destructive))',
   fontFamily: 'monospace',
   maxHeight: '120px',
   overflow: 'auto',
@@ -112,9 +112,9 @@ const ERROR_BOX: React.CSSProperties = {
 const RETRY_BTN: React.CSSProperties = {
   padding: '6px 16px',
   borderRadius: '8px',
-  border: '1px solid rgba(239, 68, 68, 0.4)',
-  background: 'rgba(239, 68, 68, 0.2)',
-  color: '#fca5a5',
+  border: '1px solid hsl(var(--destructive) / 0.4)',
+  background: 'hsl(var(--destructive) / 0.2)',
+  color: 'hsl(var(--destructive))',
   fontWeight: 600,
   fontSize: '13px',
   cursor: 'pointer',
@@ -175,8 +175,8 @@ export function PreviewPanel({
   return (
     <div style={PANEL_STYLE}>
       {/* Header */}
-      <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <span style={{ fontSize: '14px', fontWeight: 700, color: '#00ffcc' }}>
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid hsl(var(--border))' }}>
+        <span style={{ fontSize: '14px', fontWeight: 700, color: 'hsl(var(--primary))' }}>
           🔍 Preview: {componentName}
         </span>
       </div>
@@ -186,12 +186,12 @@ export function PreviewPanel({
         {isGenerating ? (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', color: '#ffd700', fontSize: '14px',
+            height: '100%', color: 'hsl(45 93% 58%)', fontSize: '14px',
           }}>
             ⚙️ Generating prop...
           </div>
         ) : canPreview && PreviewWrapper ? (
-          <Canvas camera={{ position: [3, 2, 3], fov: 45 }}>
+          <Canvas camera={{ position: [2, 1.5, 2], fov: 45 }}>
             <PropErrorBoundary onError={handleRuntimeError}>
               <Suspense fallback={null}>
                 <Stage adjustCamera={false} environment="city" intensity={0.5}>
@@ -214,7 +214,7 @@ export function PreviewPanel({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             height: '100%', padding: '20px',
           }}>
-            <div style={{ textAlign: 'center', color: '#ef4444' }}>
+            <div style={{ textAlign: 'center', color: 'hsl(var(--destructive))' }}>
               <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚠️</div>
               <div style={{ fontSize: '13px' }}>Render failed</div>
             </div>
@@ -222,7 +222,7 @@ export function PreviewPanel({
         ) : (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', color: '#555', fontSize: '13px',
+            height: '100%', color: 'hsl(var(--muted-foreground))', fontSize: '13px',
           }}>
             No preview available
           </div>

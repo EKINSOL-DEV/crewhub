@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  frontend-watchdog:
+    build: .
+    container_name: crewhub-frontend-watchdog
+    restart: unless-stopped
+    ports:
+      - "5180:5180"
+    volumes:
+      - ../frontend:/app/frontend:cached
+      - ../frontend/node_modules:/app/frontend/node_modules
+      - watchdog-logs:/root/.crewhub
+    environment:
+      - FRONTEND_PORT=5180
+      - HEALTH_CHECK_INTERVAL=30
+      - MAX_RESTARTS=10
+      - RESTART_WINDOW=3600
+    profiles:
+      - watchdog
+
+volumes:
+  watchdog-logs:

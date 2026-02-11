@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type RefObject } from 'react'
 
 export interface TOCHeading {
   id: string
@@ -27,11 +27,12 @@ export function extractHeadings(content: string): TOCHeading[] {
   return headings
 }
 
-export function useActiveHeading(headings: TOCHeading[]): string | undefined {
+export function useActiveHeading(headings: TOCHeading[], containerRef?: RefObject<HTMLElement | null>): string | undefined {
   const [activeId, setActiveId] = useState<string | undefined>()
 
   useEffect(() => {
     if (headings.length === 0) return
+    const root = containerRef?.current ?? null
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -40,7 +41,7 @@ export function useActiveHeading(headings: TOCHeading[]): string | undefined {
           setActiveId(visible[0].target.id)
         }
       },
-      { rootMargin: '-20% 0px -70% 0px' }
+      { root, rootMargin: '-20% 0px -70% 0px' }
     )
 
     for (const h of headings) {
@@ -49,7 +50,7 @@ export function useActiveHeading(headings: TOCHeading[]): string | undefined {
     }
 
     return () => observer.disconnect()
-  }, [headings])
+  }, [headings, containerRef])
 
   return activeId
 }

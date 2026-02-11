@@ -3,11 +3,9 @@
  */
 
 import { type ReactNode, useCallback, useState, useEffect, useRef } from 'react'
-import { type LeafNode, type PanelType, PANEL_INFO } from './types/layout'
+import { type LeafNode, type PanelType } from './types/layout'
+import { getSelectablePanelIds, getPanelDef, PANEL_INFO } from './registry'
 import { ZenContextMenu } from './ZenContextMenu'
-
-// Available panel types for switcher
-const PANEL_TYPES: PanelType[] = ['chat', 'sessions', 'activity', 'rooms', 'tasks', 'kanban', 'projects', 'cron', 'logs']
 
 // ── Panel Type Picker Component ────────────────────────────────
 
@@ -42,19 +40,19 @@ function PanelTypePicker({ currentType, onSelect, onClose }: PanelTypePickerProp
   
   return (
     <div className="zen-panel-type-menu" ref={menuRef}>
-      {PANEL_TYPES.map(type => {
-        const info = PANEL_INFO[type]
+      {getSelectablePanelIds().map(panelId => {
+        const def = getPanelDef(panelId)
         return (
           <button
-            key={type}
-            className={`zen-panel-type-option ${type === currentType ? 'active' : ''}`}
+            key={panelId}
+            className={`zen-panel-type-option ${panelId === currentType ? 'active' : ''}`}
             onClick={() => {
-              onSelect(type)
+              onSelect(panelId as PanelType)
               onClose()
             }}
           >
-            <span>{info.icon}</span>
-            <span>{info.label}</span>
+            <span>{def.icon}</span>
+            <span>{def.label}</span>
           </button>
         )
       })}

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useProjectDocuments, useProjectDocumentContent, type DocFileNode } from '@/hooks/useProjectDocuments'
+import { useProjectDocuments, useProjectDocumentContent, saveProjectDocument, type DocFileNode } from '@/hooks/useProjectDocuments'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 
 interface ProjectFilesSectionProps {
@@ -13,10 +13,10 @@ interface ProjectFilesSectionProps {
  * Shows a collapsible file tree with inline preview.
  */
 export function ProjectFilesSection({ projectId, projectName, projectColor }: ProjectFilesSectionProps) {
-  const { files, loading, error } = useProjectDocuments(projectId)
+  const { files, loading, error, refresh } = useProjectDocuments(projectId)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [fullscreenOpen, setFullscreenOpen] = useState(false)
-  const { content, metadata } = useProjectDocumentContent(projectId, selectedPath)
+  const { content, metadata, setContent } = useProjectDocumentContent(projectId, selectedPath)
 
   const accentColor = projectColor || '#4f46e5'
 
@@ -78,6 +78,13 @@ export function ProjectFilesSection({ projectId, projectName, projectColor }: Pr
           subtitle={projectName}
           content={content}
           metadata={metadata}
+          editable={selectedPath?.endsWith('.md') || selectedPath?.endsWith('.txt')}
+          onSave={async (newContent: string) => {
+            if (!selectedPath) return
+            await saveProjectDocument(projectId, selectedPath, newContent)
+            setContent(newContent)
+            refresh()
+          }}
         />
       )}
     </div>

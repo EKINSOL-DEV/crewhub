@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useAgentFiles, type FileNode } from '@/hooks/useAgentFiles'
-import { useFileContent } from '@/hooks/useFileContent'
+import { useFileContent, saveAgentFile } from '@/hooks/useFileContent'
 import { FileTree } from './FileTree'
 import { MarkdownViewer } from '../markdown/MarkdownViewer'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
@@ -11,10 +11,10 @@ interface FilesTabProps {
 }
 
 export function FilesTab({ agentId, agentName }: FilesTabProps) {
-  const { files, loading: filesLoading, error: filesError } = useAgentFiles(agentId)
+  const { files, loading: filesLoading, error: filesError, refresh } = useAgentFiles(agentId)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [fullscreenOpen, setFullscreenOpen] = useState(false)
-  const { content, metadata, loading: contentLoading } = useFileContent(agentId, selectedPath)
+  const { content, metadata, loading: contentLoading, setContent } = useFileContent(agentId, selectedPath)
 
   const handleSelect = useCallback((file: FileNode) => {
     if (file.type === 'file') {
@@ -102,6 +102,13 @@ export function FilesTab({ agentId, agentName }: FilesTabProps) {
           subtitle={agentName || agentId}
           content={content}
           metadata={metadata}
+          editable={selectedPath?.endsWith('.md') || selectedPath?.endsWith('.txt')}
+          onSave={async (newContent: string) => {
+            if (!selectedPath) return
+            await saveAgentFile(agentId, selectedPath, newContent)
+            setContent(newContent)
+            refresh()
+          }}
         />
       )}
     </div>

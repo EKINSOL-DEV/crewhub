@@ -246,15 +246,24 @@ export function ZenTopBar({
             {isFullscreen ? '⊙' : '⛶'}
           </button>
           
-          {/* Exit button */}
+          {/* World button (exit Zen Mode) */}
           <button
             type="button"
-            className="zen-btn zen-btn-icon zen-btn-close"
+            className="zen-btn zen-btn-world"
             onClick={onExit}
-            title="Exit Zen Mode (Esc)"
-            aria-label="Exit Zen Mode"
+            title="Go to 3D World (Esc)"
+            aria-label="Go to 3D World"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px',
+              fontSize: '13px',
+              fontWeight: 500,
+            }}
           >
-            ✕
+            <span>🌍</span>
+            <span>World</span>
           </button>
         </div>
       </header>

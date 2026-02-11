@@ -9,7 +9,7 @@ interface CreatorCenterViewProps {
 
 export function CreatorCenterView({ className }: CreatorCenterViewProps) {
   return (
-    <div className={className} style={{ width: '100%', height: '100%', background: '#0a0a1e', position: 'relative' }}>
+    <div className={className} style={{ width: '100%', height: '100%', background: '#1a1a2e', position: 'relative' }}>
       {/* MVP Feature Banner */}
       <div style={{
         position: 'absolute',
@@ -60,21 +60,29 @@ export function CreatorCenterView({ className }: CreatorCenterViewProps) {
       </div>
       <Canvas
         shadows
-        camera={{ position: [6, 5, 6], fov: 50 }}
+        camera={{ position: [8, 7, 8], fov: 50 }}
         style={{ width: '100%', height: '100%' }}
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={1.0} />
-          <hemisphereLight args={['#b388ff', '#1a1a3e', 0.6]} />
-          <directionalLight position={[5, 8, 5]} intensity={1.8} castShadow />
-          <pointLight position={[0, 3, 0]} intensity={1.5} color="#e0d0ff" distance={12} />
-          <pointLight position={[-3, 2, 2]} intensity={0.8} color="#80cbc4" distance={8} />
-          <pointLight position={[3, 2, -2]} intensity={0.8} color="#ce93d8" distance={8} />
+          {/* Lighting — matches campus WorldLighting style */}
+          <ambientLight intensity={0.8} />
+          <hemisphereLight args={['#b0c4de', '#2a1a3e', 0.5]} />
+          <directionalLight
+            position={[5, 8, 5]}
+            intensity={1.5}
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+          />
+          {/* Subtle creator zone accent lighting */}
+          <pointLight position={[0, 4, 0]} intensity={0.8} color="#e0d0ff" distance={15} />
+
           <PropMakerRoom position={[0, 0, 0]} />
+
           <OrbitControls
             target={[0, 1, 0]}
-            minDistance={3}
-            maxDistance={15}
+            minDistance={4}
+            maxDistance={18}
             maxPolarAngle={Math.PI / 2.1}
           />
         </Suspense>

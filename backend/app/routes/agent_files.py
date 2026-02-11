@@ -155,6 +155,64 @@ async def list_agent_files(
     }
 
 
+@router.put("/{agent_id}/files/{file_path:path}")
+async def save_agent_file(agent_id: str, file_path: str, body: dict):
+    """Save/update a file in an agent's workspace."""
+    if '..' in file_path:
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    content = body.get("content")
+    if content is None:
+        raise HTTPException(status_code=400, detail="Missing 'content' field")
+
+    workspace = await _get_agent_workspace(agent_id)
+    target = (workspace / file_path).resolve()
+
+    if not _is_safe_path(workspace, target):
+        raise HTTPException(status_code=403, detail="Path outside workspace")
+
+    if not target.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
+
+    if not target.is_file():
+        raise HTTPException(status_code=400, detail="Path is not a file")
+
+    if target.suffix.lower() not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"File type not allowed: {target.suffix}")
+
+    # Optimistic concurrency check
+    expected_modified = body.get("expected_modified")
+    if expected_modified:
+        current_mtime = datetime.fromtimestamp(target.stat().st_mtime, tz=timezone.utc).isoformat()
+        if current_mtime != expected_modified:
+            raise HTTPException(
+                status_code=409,
+                detail="File was modified by another process. Refresh and try again.",
+            )
+
+    # Create backup
+    try:
+        bak = target.with_suffix(target.suffix + '.bak')
+        bak.write_text(target.read_text(errors='replace'))
+    except Exception as e:
+        logger.warning(f"Failed to create backup for {file_path}: {e}")
+
+    # Write file
+    try:
+        target.write_text(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to write file: {e}")
+
+    stat = target.stat()
+    return {
+        "path": file_path,
+        "size": stat.st_size,
+        "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        "lines": content.count('\n') + 1 if content else 0,
+        "status": "saved",
+    }
+
+
 @router.get("/{agent_id}/files/{file_path:path}")
 async def read_agent_file(agent_id: str, file_path: str):
     """Read a single file from an agent's workspace."""

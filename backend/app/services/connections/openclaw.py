@@ -791,6 +791,7 @@ class OpenClawConnection(AgentConnection):
         agent_id: str = "main",
         session_id: Optional[str] = None,
         timeout: float = 90.0,
+        model: Optional[str] = None,
     ) -> Optional[str]:
         """Send a chat message to an agent and return the assistant text."""
         params: dict[str, Any] = {
@@ -801,6 +802,8 @@ class OpenClawConnection(AgentConnection):
         }
         if session_id:
             params["sessionId"] = session_id
+        if model:
+            params["model"] = model
 
         result = await self.call(
             "agent",

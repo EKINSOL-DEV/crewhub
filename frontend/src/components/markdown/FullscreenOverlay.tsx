@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback, useState } from 'react'
+import { useEffect, useMemo, useCallback, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { MarkdownViewer } from './MarkdownViewer'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -44,12 +44,17 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
   // Reset edit mode when overlay closes
   useEffect(() => { if (!open) { setEditing(false); setDirty(false) } }, [open])
 
+  const contentScrollRef = useRef<HTMLDivElement>(null)
   const headings = useMemo(() => extractHeadings(currentContent), [currentContent])
-  const activeId = useActiveHeading(headings)
+  const activeId = useActiveHeading(headings, contentScrollRef)
 
   const handleTOCSelect = useCallback((id: string) => {
+    const container = contentScrollRef.current
     const el = document.getElementById(id)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (el && container) {
+      const top = el.offsetTop - container.offsetTop
+      container.scrollTo({ top, behavior: 'smooth' })
+    }
   }, [])
 
   // Keyboard shortcuts
@@ -213,7 +218,7 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
                 onSelect={handleTOCSelect}
               />
             )}
-            <div style={{
+            <div ref={contentScrollRef} style={{
               flex: 1,
               overflow: 'auto',
               padding: '24px 32px',

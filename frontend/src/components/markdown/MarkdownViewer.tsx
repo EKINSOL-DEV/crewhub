@@ -8,6 +8,14 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '')
 }
 
+function extractText(node: any): string {
+  if (typeof node === 'string') return node
+  if (typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(extractText).join('')
+  if (node?.props?.children) return extractText(node.props.children)
+  return ''
+}
+
 interface MarkdownViewerProps {
   content: string
   className?: string
@@ -17,22 +25,22 @@ interface MarkdownViewerProps {
 export function MarkdownViewer({ content, className, maxHeight }: MarkdownViewerProps) {
   const components = useMemo(() => ({
     h1: ({ children, ...props }: any) => {
-      const text = String(children)
+      const text = extractText(children)
       const id = slugify(text)
       return <h1 id={id} {...props} style={{ fontSize: 24, fontWeight: 700, marginTop: 24, marginBottom: 12, color: 'var(--zen-fg, hsl(var(--foreground)))', borderBottom: '1px solid var(--zen-border, hsl(var(--border)))', paddingBottom: 8 }}>{children}</h1>
     },
     h2: ({ children, ...props }: any) => {
-      const text = String(children)
+      const text = extractText(children)
       const id = slugify(text)
       return <h2 id={id} {...props} style={{ fontSize: 20, fontWeight: 600, marginTop: 20, marginBottom: 10, color: 'var(--zen-fg, hsl(var(--foreground)))', borderBottom: '1px solid var(--zen-border, hsl(var(--border)))', paddingBottom: 6 }}>{children}</h2>
     },
     h3: ({ children, ...props }: any) => {
-      const text = String(children)
+      const text = extractText(children)
       const id = slugify(text)
       return <h3 id={id} {...props} style={{ fontSize: 16, fontWeight: 600, marginTop: 16, marginBottom: 8, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>{children}</h3>
     },
     h4: ({ children, ...props }: any) => {
-      const text = String(children)
+      const text = extractText(children)
       const id = slugify(text)
       return <h4 id={id} {...props} style={{ fontSize: 14, fontWeight: 600, marginTop: 14, marginBottom: 6, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>{children}</h4>
     },

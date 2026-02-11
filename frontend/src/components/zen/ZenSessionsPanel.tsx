@@ -7,6 +7,7 @@ import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useSessionActivity } from '@/hooks/useSessionActivity'
 import { useRoomsContext } from '@/contexts/RoomsContext'
+import { ZenSessionDetailPanel } from './ZenSessionDetailPanel'
 import type { CrewSession } from '@/lib/api'
 
 interface ZenSessionsPanelProps {
@@ -131,11 +132,13 @@ function LoadingState() {
 
 // ── Main Component ────────────────────────────────────────────────
 
-export function ZenSessionsPanel({ selectedSessionKey, onSelectSession, roomFilter }: ZenSessionsPanelProps) {
+export function ZenSessionsPanel({ selectedSessionKey: _selectedSessionKey, onSelectSession, roomFilter }: ZenSessionsPanelProps) {
+  void _selectedSessionKey // kept for API compat
   const { sessions, loading, connected } = useSessionsStream(true)
   const { isActivelyRunning } = useSessionActivity(sessions)
   const { sessionAssignments, getRoomForSession } = useRoomsContext()
   const [focusedIndex, setFocusedIndex] = useState(0)
+  const [detailSessionKey, setDetailSessionKey] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   
   // Filter & sort sessions - only show chattable sessions
@@ -208,77 +211,72 @@ export function ZenSessionsPanel({ selectedSessionKey, onSelectSession, roomFilt
     }
   }, [focusedIndex])
   
-  const handleSelect = useCallback((session: CrewSession) => {
-    onSelectSession(session.key, getDisplayName(session), getAgentIcon(session))
-  }, [getDisplayName, onSelectSession])
+  const handleDetailSelect = useCallback((session: CrewSession) => {
+    setDetailSessionKey(prev => prev === session.key ? null : session.key)
+  }, [])
+
+  const detailSession = useMemo(() => {
+    if (!detailSessionKey) return null
+    return sessions.find(s => s.key === detailSessionKey) || null
+  }, [detailSessionKey, sessions])
   
-  // Loading state
+  // Build the list content
+  let listContent: React.ReactNode
+
   if (loading && sessions.length === 0) {
-    return (
-      <div className="zen-sessions-panel">
-        <LoadingState />
-      </div>
-    )
-  }
-  
-  // Empty state (no sessions at all)
-  if (sessions.length === 0) {
-    return (
-      <div className="zen-sessions-panel">
-        <EmptyState isFiltered={false} />
-      </div>
-    )
-  }
-  
-  // Empty filtered state (sessions exist but none match filter)
-  if (sortedSessions.length === 0) {
-    return (
-      <div className="zen-sessions-panel">
-        <EmptyState isFiltered={!!roomFilter} />
-      </div>
-    )
-  }
-  
-  return (
-    <div className="zen-sessions-panel">
-      {/* Connection status */}
-      {!connected && (
-        <div className="zen-sessions-reconnecting">
-          <span className="zen-thinking-dots">
-            <span />
-            <span />
-            <span />
-          </span>
-          Reconnecting...
+    listContent = <LoadingState />
+  } else if (sessions.length === 0) {
+    listContent = <EmptyState isFiltered={false} />
+  } else if (sortedSessions.length === 0) {
+    listContent = <EmptyState isFiltered={!!roomFilter} />
+  } else {
+    listContent = (
+      <>
+        {!connected && (
+          <div className="zen-sessions-reconnecting">
+            <span className="zen-thinking-dots"><span /><span /><span /></span>
+            Reconnecting...
+          </div>
+        )}
+        <div ref={listRef} className="zen-sessions-list" role="listbox" aria-label="Sessions">
+          {sortedSessions.map((session, index) => (
+            <SessionItem
+              key={session.key}
+              session={session}
+              displayName={getDisplayName(session)}
+              isActive={isActivelyRunning(session.key)}
+              isSelected={session.key === detailSessionKey}
+              onSelect={() => {
+                setFocusedIndex(index)
+                handleDetailSelect(session)
+              }}
+            />
+          ))}
         </div>
+        <div className="zen-sessions-footer">
+          <span className="zen-sessions-count">
+            {roomFilter 
+              ? `${sortedSessions.length} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''}`
+              : `${sessions.length} session${sessions.length !== 1 ? 's' : ''}`
+            }
+          </span>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <div className={`zen-sessions-split ${detailSession ? 'zen-sessions-split-open' : ''}`}>
+      <div className="zen-sessions-panel">
+        {listContent}
+      </div>
+      {detailSession && (
+        <ZenSessionDetailPanel
+          session={detailSession}
+          onClose={() => setDetailSessionKey(null)}
+          onOpenChat={(key, name) => onSelectSession(key, name)}
+        />
       )}
-      
-      {/* Sessions list */}
-      <div ref={listRef} className="zen-sessions-list" role="listbox" aria-label="Sessions">
-        {sortedSessions.map((session, index) => (
-          <SessionItem
-            key={session.key}
-            session={session}
-            displayName={getDisplayName(session)}
-            isActive={isActivelyRunning(session.key)}
-            isSelected={session.key === selectedSessionKey}
-            onSelect={() => {
-              setFocusedIndex(index)
-              handleSelect(session)
-            }}
-          />
-        ))}
-      </div>
-      
-      {/* Footer with count */}
-      <div className="zen-sessions-footer">
-        <span className="zen-sessions-count">
-          {roomFilter 
-            ? `${sortedSessions.length} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''}`
-            : `${sessions.length} session${sessions.length !== 1 ? 's' : ''}`
-          }
-        </span>
-      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { API_BASE } from '@/lib/api'
 
 export interface FileMetadata {
@@ -52,5 +52,22 @@ export function useFileContent(agentId: string | null | undefined, path: string 
     return () => { cancelled = true }
   }, [agentId, path])
 
-  return { content, metadata, loading, error }
+  const setContentManual = useCallback((newContent: string) => {
+    setContent(newContent)
+  }, [])
+
+  return { content, metadata, loading, error, setContent: setContentManual }
+}
+
+export async function saveAgentFile(agentId: string, path: string, content: string) {
+  const res = await fetch(`${API_BASE}/agents/${agentId}/files/${path}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Save failed' }))
+    throw new Error(err.detail || 'Save failed')
+  }
+  return res.json()
 }

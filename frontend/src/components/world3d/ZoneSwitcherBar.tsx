@@ -58,11 +58,16 @@ export function ZoneSwitcherBar() {
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.08)' }}
           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
         >
-          {zones.map(z => (
-            <option key={z.id} value={z.id}>
-              {z.icon} {z.name}
-            </option>
-          ))}
+          {zones.map(z => {
+            let label = ''
+            if (z.id === 'creator-center') label = ' [ALPHA PREVIEW]'
+            if (z.id === 'game-center' || z.id === 'academy') label = ' [PLANNED]'
+            return (
+              <option key={z.id} value={z.id}>
+                {z.icon} {z.name}{label}
+              </option>
+            )
+          })}
         </select>
         <span style={{
           position: 'absolute',

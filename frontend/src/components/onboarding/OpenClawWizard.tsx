@@ -125,7 +125,7 @@ const SETUP_MODES: {
       content: (
         <>
           <p>ℹ️ Use <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">ws://localhost:18789</code> or <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">ws://127.0.0.1:18789</code></p>
-          <p>Dev mode requires Vite proxy configured for port 8090</p>
+          <p>Dev mode requires Vite proxy configured for the backend port</p>
         </>
       ),
     },

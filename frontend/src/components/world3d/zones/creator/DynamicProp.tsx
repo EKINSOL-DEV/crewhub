@@ -3,6 +3,7 @@ import { useToonMaterialProps } from '../../utils/toonMaterials'
 export interface PropPart {
   type: string // "box" | "cylinder" | "sphere" | "cone" | "torus"
   position: [number, number, number]
+  rotation?: [number, number, number]
   args: number[]
   color: string
   emissive?: boolean
@@ -29,8 +30,12 @@ function DynamicMesh({ part }: { part: PropPart }) {
     }
   })()
 
+  const rotation = part.rotation && (part.rotation[0] !== 0 || part.rotation[1] !== 0 || part.rotation[2] !== 0)
+    ? part.rotation as [number, number, number]
+    : undefined
+
   return (
-    <mesh position={part.position} castShadow>
+    <mesh position={part.position} rotation={rotation} castShadow>
       {geometry}
       {part.emissive ? (
         <meshStandardMaterial
