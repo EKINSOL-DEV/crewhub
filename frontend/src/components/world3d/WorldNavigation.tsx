@@ -13,6 +13,8 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && state.level !== 'overview' && state.level !== 'firstperson') {
+        // Don't goBack if a fullscreen overlay is open (it handles its own Escape)
+        if (document.querySelector('[data-fullscreen-overlay]')) return
         goBack()
       }
     }

@@ -90,8 +90,9 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const a = actionsRef.current
     
-    // Escape - Exit (always works)
+    // Escape - Exit (but NOT if a fullscreen overlay is open — it handles its own Escape)
     if (e.key === 'Escape') {
+      if (document.querySelector('[data-fullscreen-overlay]')) return
       e.preventDefault()
       e.stopPropagation()
       a.onExit?.()

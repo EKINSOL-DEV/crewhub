@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     openclaw_gateway_url: str = "ws://127.0.0.1:18789"
     openclaw_gateway_token: str = ""
 
+    # Project data
+    project_data_path: str = "/mnt/project-data"
+
     # Server
     debug: bool = False
     host: str = "0.0.0.0"

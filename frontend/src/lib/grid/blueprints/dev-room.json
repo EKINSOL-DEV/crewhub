@@ -24,8 +24,8 @@
     },
     {
       "propId": "standing-desk-with-monitor",
-      "x": 17,
-      "z": 10,
+      "x": 16,
+      "z": 5,
       "rotation": 270,
       "span": {
         "w": 2,
@@ -42,11 +42,12 @@
     {
       "propId": "server-rack",
       "x": 17,
-      "z": 18,
+      "z": 12,
       "span": {
         "w": 2,
         "d": 1
-      }
+      },
+      "rotation": 270
     },
     {
       "propId": "sleep-corner",

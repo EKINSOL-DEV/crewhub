@@ -14,6 +14,8 @@ export type PanelType =
   | 'kanban'    // Kanban board view
   | 'cron'      // Cron jobs viewer
   | 'logs'      // System logs
+  | 'projects'  // Projects panel (overview + documents)
+  | 'documents' // Legacy alias for projects
   | 'details'   // Session details (future)
   | 'empty'     // Placeholder panel
 
@@ -68,6 +70,7 @@ export interface LayoutPresetConfig {
 }
 
 // ── Panel Info ────────────────────────────────────────────────────
+// Re-exported from the panel registry (single source of truth)
 
 export interface PanelInfo {
   id: string
@@ -76,58 +79,9 @@ export interface PanelInfo {
   label: string
 }
 
-export const PANEL_INFO: Record<PanelType, Omit<PanelInfo, 'id'>> = {
-  chat: {
-    type: 'chat',
-    icon: '💬',
-    label: 'Chat',
-  },
-  sessions: {
-    type: 'sessions',
-    icon: '📋',
-    label: 'Sessions',
-  },
-  activity: {
-    type: 'activity',
-    icon: '⚡',
-    label: 'Activity',
-  },
-  rooms: {
-    type: 'rooms',
-    icon: '🏠',
-    label: 'Rooms',
-  },
-  tasks: {
-    type: 'tasks',
-    icon: '✅',
-    label: 'Tasks',
-  },
-  kanban: {
-    type: 'kanban',
-    icon: '📊',
-    label: 'Kanban',
-  },
-  cron: {
-    type: 'cron',
-    icon: '⏰',
-    label: 'Cron',
-  },
-  logs: {
-    type: 'logs',
-    icon: '📜',
-    label: 'Logs',
-  },
-  details: {
-    type: 'details',
-    icon: '🔍',
-    label: 'Details',
-  },
-  empty: {
-    type: 'empty',
-    icon: '◻️',
-    label: 'Empty',
-  },
-}
+// PANEL_INFO is now derived from the registry.
+// This re-export maintains backwards compatibility for all existing imports.
+export { PANEL_INFO } from '../registry/PanelRegistry'
 
 // ── Helper Functions ──────────────────────────────────────────────
 

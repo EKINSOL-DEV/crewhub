@@ -105,6 +105,20 @@ function loadPersistedState(): ZenTabsState | null {
       return null
     }
     
+    // Migrate 'documents' → 'projects' panel type in all tabs
+    function migrateLayoutNode(node: LayoutNode): LayoutNode {
+      if (node.kind === 'leaf') {
+        return (node as any).panelType === 'documents'
+          ? { ...node, panelType: 'projects' as any }
+          : node
+      }
+      return { ...node, a: migrateLayoutNode(node.a), b: migrateLayoutNode(node.b) }
+    }
+    parsed.tabs = parsed.tabs.map(tab => ({
+      ...tab,
+      layout: migrateLayoutNode(tab.layout),
+    }))
+    
     // Validate tabs array
     if (!Array.isArray(parsed.tabs) || parsed.tabs.length === 0) {
       return null
@@ -235,6 +249,7 @@ export interface UseZenModeReturn {
   enterWithProject: (projectFilter: ZenProjectFilter, agentId?: string, agentName?: string, agentIcon?: string, agentColor?: string) => void
   exit: () => void
   selectAgent: (agentId: string, agentName: string, agentIcon?: string, agentColor?: string) => void
+  setProjectFilter: (filter: ZenProjectFilter | null) => void
   clearProjectFilter: () => void
 }
 
@@ -531,16 +546,20 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
     setIsActive(false)
   }, [])
   
-  const clearProjectFilter = useCallback(() => {
+  const setProjectFilter = useCallback((filter: ZenProjectFilter | null) => {
     setTabsState(prev => ({
       ...prev,
       tabs: prev.tabs.map(tab =>
         tab.id === prev.activeTabId
-          ? { ...tab, projectFilter: null, label: 'Zen Mode' }
+          ? { ...tab, projectFilter: filter, label: filter?.projectName || 'Zen Mode' }
           : tab
       ),
     }))
   }, [])
+  
+  const clearProjectFilter = useCallback(() => {
+    setProjectFilter(null)
+  }, [setProjectFilter])
 
   const selectAgent = useCallback((
     agentId: string,
@@ -622,6 +641,7 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
     enterWithProject,
     exit,
     selectAgent,
+    setProjectFilter,
     clearProjectFilter,
   }
 

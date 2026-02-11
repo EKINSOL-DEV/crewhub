@@ -3,10 +3,8 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { type PanelType, PANEL_INFO } from './types/layout'
-
-// Available panel types for the submenu
-const PANEL_TYPES: PanelType[] = ['chat', 'sessions', 'activity', 'rooms', 'tasks', 'kanban', 'cron', 'logs']
+import { type PanelType } from './types/layout'
+import { getSelectablePanelIds, getPanelDef } from './registry'
 
 interface ContextMenuPosition {
   x: number
@@ -85,13 +83,10 @@ export function ZenContextMenu({
       role="menu"
     >
       {/* Split actions */}
-      {/* Note: function names are swapped to match user expectations */}
-      {/* "Split Vertical" (⬍) = top/bottom = calls onSplitHorizontal internally */}
-      {/* "Split Horizontal" (⬌) = left/right = calls onSplitVertical internally */}
-      {onSplitHorizontal && (
+      {onSplitVertical && (
         <button
           className="zen-context-menu-item"
-          onClick={() => { onSplitHorizontal(); onClose() }}
+          onClick={() => { onSplitVertical(); onClose() }}
           role="menuitem"
         >
           <span className="zen-context-menu-item-icon">⬍</span>
@@ -99,10 +94,10 @@ export function ZenContextMenu({
         </button>
       )}
       
-      {onSplitVertical && (
+      {onSplitHorizontal && (
         <button
           className="zen-context-menu-item"
-          onClick={() => { onSplitVertical(); onClose() }}
+          onClick={() => { onSplitHorizontal(); onClose() }}
           role="menuitem"
         >
           <span className="zen-context-menu-item-icon">⬌</span>
@@ -116,17 +111,17 @@ export function ZenContextMenu({
           <div className="zen-context-menu-separator" />
           <div className="zen-context-menu-submenu">
             <div className="zen-context-menu-label">Change Panel Type</div>
-            {PANEL_TYPES.map(type => {
-              const info = PANEL_INFO[type]
+            {getSelectablePanelIds().map(panelId => {
+              const def = getPanelDef(panelId)
               return (
                 <button
-                  key={type}
+                  key={panelId}
                   className="zen-context-menu-item"
-                  onClick={() => { onChangePanelType(type); onClose() }}
+                  onClick={() => { onChangePanelType(panelId as PanelType); onClose() }}
                   role="menuitem"
                 >
-                  <span className="zen-context-menu-item-icon">{info.icon}</span>
-                  <span>{info.label}</span>
+                  <span className="zen-context-menu-item-icon">{def.icon}</span>
+                  <span>{def.label}</span>
                 </button>
               )
             })}

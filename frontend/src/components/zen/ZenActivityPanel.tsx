@@ -4,10 +4,11 @@
  * with a collapsible SSE event log below.
  */
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { sseManager } from '@/lib/sseManager'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useActiveTasks, type ActiveTask } from '@/hooks/useActiveTasks'
+import { ZenActivityDetailPanel } from './ZenActivityDetailPanel'
 import type { CrewSession } from '@/lib/api'
 
 // ── Activity Event Types (for event log) ──────────────────────
@@ -65,11 +66,15 @@ function getStatusLabel(status: string): string {
 
 // ── Active Task Item ──────────────────────────────────────────
 
-function ActiveTaskItem({ task, opacity }: { task: ActiveTask; opacity: number }) {
+function ActiveTaskItem({ task, opacity, isSelected, onSelect }: { task: ActiveTask; opacity: number; isSelected: boolean; onSelect: () => void }) {
   return (
     <div
-      className="zen-active-task-item zen-fade-in"
-      style={{ opacity }}
+      className={`zen-active-task-item zen-fade-in ${isSelected ? 'zen-active-task-item-selected' : ''}`}
+      style={{ opacity, cursor: 'pointer' }}
+      onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
     >
       <div className="zen-active-task-icon">
         {task.agentIcon || '🤖'}
@@ -145,6 +150,9 @@ export function ZenActivityPanel() {
     enabled: true,
   })
 
+  // Detail panel state
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+
   // SSE event log (collapsed by default)
   const [events, setEvents] = useState<ActivityEvent[]>([])
   const [showLog, setShowLog] = useState(false)
@@ -213,73 +221,101 @@ export function ZenActivityPanel() {
     }
   }, [addEvent])
 
+  const selectedTask = useMemo(() => {
+    if (!selectedTaskId) return null
+    return tasks.find(t => t.id === selectedTaskId) || null
+  }, [selectedTaskId, tasks])
+
+  const selectedSession = useMemo(() => {
+    if (!selectedTask?.sessionKey) return null
+    return sessions.find(s => s.key === selectedTask.sessionKey) || null
+  }, [selectedTask, sessions])
+
+  const handleTaskSelect = useCallback((task: ActiveTask) => {
+    setSelectedTaskId(prev => prev === task.id ? null : task.id)
+  }, [])
+
   return (
-    <div className="zen-activity-panel">
-      {/* Header */}
-      <div className="zen-activity-header">
-        <div className="zen-activity-status">
-          <span className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`} />
-          <span>{runningTasks.length} active task{runningTasks.length !== 1 ? 's' : ''}</span>
+    <div className={`zen-activity-split ${selectedTask ? 'zen-activity-split-open' : ''}`}>
+      <div className="zen-activity-panel">
+        {/* Header */}
+        <div className="zen-activity-header">
+          <div className="zen-activity-status">
+            <span className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`} />
+            <span>{runningTasks.length} active task{runningTasks.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="zen-activity-controls">
+            <button
+              type="button"
+              className={`zen-btn zen-btn-small ${showLog ? 'zen-btn-active' : ''}`}
+              onClick={() => setShowLog(v => !v)}
+              title="Toggle event log"
+            >
+              Log {showLog ? '▾' : '▸'}
+            </button>
+          </div>
         </div>
-        <div className="zen-activity-controls">
-          <button
-            type="button"
-            className={`zen-btn zen-btn-small ${showLog ? 'zen-btn-active' : ''}`}
-            onClick={() => setShowLog(v => !v)}
-            title="Toggle event log"
-          >
-            Log {showLog ? '▾' : '▸'}
-          </button>
+
+        {/* Active Tasks */}
+        {tasks.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className="zen-active-tasks-list">
+            {tasks.map(task => (
+              <ActiveTaskItem
+                key={task.id}
+                task={task}
+                opacity={getTaskOpacity(task)}
+                isSelected={task.id === selectedTaskId}
+                onSelect={() => handleTaskSelect(task)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Collapsible Event Log */}
+        {showLog && (
+          <div className="zen-activity-log-section">
+            <div className="zen-activity-log-header">
+              <span>Event Log</span>
+              {events.length > 0 && (
+                <button
+                  type="button"
+                  className="zen-btn zen-btn-small"
+                  onClick={() => { setEvents([]); batchedEventsRef.current = [] }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="zen-activity-list">
+              {events.length === 0 ? (
+                <div className="zen-activity-log-empty">No events yet</div>
+              ) : (
+                events.map(event => <EventLogItem key={event.id} event={event} />)
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="zen-activity-footer">
+          <span className="zen-activity-count">
+            {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+            {events.length > 0 && ` · ${events.length} event${events.length !== 1 ? 's' : ''}`}
+          </span>
         </div>
       </div>
 
-      {/* Active Tasks */}
-      {tasks.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="zen-active-tasks-list">
-          {tasks.map(task => (
-            <ActiveTaskItem
-              key={task.id}
-              task={task}
-              opacity={getTaskOpacity(task)}
-            />
-          ))}
-        </div>
+      {/* Detail Panel */}
+      {selectedTask && (
+        <ZenActivityDetailPanel
+          task={selectedTask}
+          session={selectedSession}
+          events={events}
+          onClose={() => setSelectedTaskId(null)}
+        />
       )}
-
-      {/* Collapsible Event Log */}
-      {showLog && (
-        <div className="zen-activity-log-section">
-          <div className="zen-activity-log-header">
-            <span>Event Log</span>
-            {events.length > 0 && (
-              <button
-                type="button"
-                className="zen-btn zen-btn-small"
-                onClick={() => { setEvents([]); batchedEventsRef.current = [] }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <div className="zen-activity-list">
-            {events.length === 0 ? (
-              <div className="zen-activity-log-empty">No events yet</div>
-            ) : (
-              events.map(event => <EventLogItem key={event.id} event={event} />)
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="zen-activity-footer">
-        <span className="zen-activity-count">
-          {tasks.length} task{tasks.length !== 1 ? 's' : ''}
-          {events.length > 0 && ` · ${events.length} event${events.length !== 1 ? 's' : ''}`}
-        </span>
-      </div>
     </div>
   )
 }

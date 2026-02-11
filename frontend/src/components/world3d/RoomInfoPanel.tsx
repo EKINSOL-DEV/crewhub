@@ -3,11 +3,16 @@ import type { CrewSession } from '@/lib/api'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { useRooms, type Room } from '@/hooks/useRooms'
 import { useProjects, type ProjectOverview } from '@/hooks/useProjects'
-import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
+// useTasks moved to RoomProjectTab
 import { useToast } from '@/hooks/use-toast'
-import { ProjectPicker } from './ProjectPicker'
+// ProjectPicker moved to RoomProjectTab
 import { EditRoomDialog } from '@/components/shared/EditRoomDialog'
 import { formatSessionKeyAsName } from '@/lib/friendlyNames'
+// ProjectFilesSection used in RoomFilesTab
+import { RoomInfoTab } from './RoomInfoTab'
+import { RoomProjectTab } from './RoomProjectTab'
+import { RoomFilesTab } from './RoomFilesTab'
+import { OrgChartTab } from './OrgChartTab'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -21,7 +26,6 @@ interface RoomInfoPanelProps {
   onClose: () => void
   onBotClick?: (session: CrewSession) => void
   onFocusRoom?: (roomId: string) => void
-  onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void
   onOpenTaskBoard?: (projectId: string, roomId: string, agents: Array<{ session_key: string; display_name: string }>) => void
   onOpenHQBoard?: () => void
   onOpenContext?: (roomId: string, roomName: string) => void
@@ -37,30 +41,7 @@ function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatu
   return 'offline'
 }
 
-function getStatusBadge(status: BotStatus): { label: string; color: string; bg: string; dot: string } {
-  switch (status) {
-    case 'active':
-      return { label: 'Active', color: '#15803d', bg: '#dcfce7', dot: '#22c55e' }
-    case 'idle':
-      return { label: 'Idle', color: '#a16207', bg: '#fef9c3', dot: '#eab308' }
-    case 'sleeping':
-      return { label: 'Sleeping', color: '#6b7280', bg: '#f3f4f6', dot: '#9ca3af' }
-    case 'offline':
-      return { label: 'Offline', color: '#991b1b', bg: '#fecaca', dot: '#ef4444' }
-  }
-}
-
-function formatModel(model?: string): string {
-  if (!model) return '—'
-  if (model.includes('sonnet')) return 'Sonnet'
-  if (model.includes('opus')) return 'Opus'
-  if (model.includes('haiku')) return 'Haiku'
-  if (model.includes('gpt-4o')) return 'GPT-4o'
-  if (model.includes('gpt-4')) return 'GPT-4'
-  if (model.includes('gpt-5')) return 'GPT-5'
-  const parts = model.split('/')
-  return parts[parts.length - 1].slice(0, 16)
-}
+// getStatusBadge, formatModel, getDisplayName moved to RoomInfoTab.tsx
 
 function getDisplayName(session: CrewSession, aliasName: string | null | undefined): string {
   // Priority: custom alias > session label > display name > formatted session key
@@ -101,7 +82,6 @@ export function RoomInfoPanel({
   onClose,
   onBotClick,
   onFocusRoom,
-  onOpenDocs,
   onOpenTaskBoard,
   onOpenHQBoard,
   onOpenContext,
@@ -116,16 +96,13 @@ export function RoomInfoPanel({
   // Projects hook
   const {
     projects,
-    assignProjectToRoom,
-    clearRoomProject,
-    createProject,
     fetchOverview,
   } = useProjects()
 
   // UI state
+  const [activeInfoTab, setActiveInfoTab] = useState<'room' | 'project' | 'files' | 'org'>('room')
   const [showEditDialog, setShowEditDialog] = useState(false)
-  const [showPicker, setShowPicker] = useState(false)
-  const [confirmAction, setConfirmAction] = useState<'change' | 'clear' | null>(null)
+  // Note: showPicker/confirmAction moved to RoomProjectTab, but we keep references for outside-click guard
   const [hqOverview, setHqOverview] = useState<ProjectOverview[]>([])
   const [hqLoading, setHqLoading] = useState(false)
 
@@ -152,12 +129,15 @@ export function RoomInfoPanel({
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       // Don't close panel when Edit Room dialog, Project Picker, or confirmation dialog is open
-      if (showEditDialog || showPicker || confirmAction) return
+      if (showEditDialog) return
 
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         // Also check if click is inside any Radix dialog overlay/content (role="dialog")
         const target = e.target as HTMLElement
         if (target.closest?.('[role="dialog"]') || target.closest?.('[data-radix-dialog-overlay]')) return
+
+        // Don't close when clicking inside fullscreen overlay (portaled to document.body)
+        if (target.closest?.('[data-fullscreen-overlay]')) return
 
         // Don't close when clicking on the 3D canvas (camera rotation/pan starts with mousedown)
         // or on 3D world UI overlays (e.g. Focus Board button rendered via drei Html)
@@ -174,7 +154,7 @@ export function RoomInfoPanel({
       clearTimeout(timer)
       document.removeEventListener('mousedown', handleClick)
     }
-  }, [onClose, showEditDialog, showPicker, confirmAction])
+  }, [onClose, showEditDialog])
 
   // Compute bot statuses
   const botData = useMemo(() => {
@@ -190,47 +170,9 @@ export function RoomInfoPanel({
   }, [sessions, isActivelyRunning, displayNames])
 
   const statuses = botData.map(b => b.status)
-  const activeCount = statuses.filter(s => s === 'active').length
-  const idleCount = statuses.filter(s => s === 'idle').length
-  const sleepingCount = statuses.filter(s => s === 'sleeping' || s === 'offline').length
   const activityStatus = getRoomActivityStatus(statuses)
 
   // Handlers
-  const handleAssignProject = useCallback(async (projectId: string) => {
-    await assignProjectToRoom(room.id, projectId)
-    setShowPicker(false)
-  }, [assignProjectToRoom, room.id])
-
-  const handleClearProject = useCallback(async () => {
-    await clearRoomProject(room.id)
-    setConfirmAction(null)
-  }, [clearRoomProject, room.id])
-
-  const handleChangeClick = useCallback(() => {
-    if (activeCount > 0) {
-      setConfirmAction('change')
-    } else {
-      setShowPicker(true)
-    }
-  }, [activeCount])
-
-  const handleClearClick = useCallback(() => {
-    if (activeCount > 0) {
-      setConfirmAction('clear')
-    } else {
-      handleClearProject()
-    }
-  }, [activeCount, handleClearProject])
-
-  const handleConfirm = useCallback(() => {
-    if (confirmAction === 'change') {
-      setConfirmAction(null)
-      setShowPicker(true)
-    } else if (confirmAction === 'clear') {
-      handleClearProject()
-    }
-  }, [confirmAction, handleClearProject])
-
   const handleEditRoomSave = useCallback(async (roomId: string, updates: {
     name?: string; icon?: string; color?: string; floor_style?: string; wall_style?: string
   }) => {
@@ -246,6 +188,10 @@ export function RoomInfoPanel({
   return (
     <div
       ref={panelRef}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
       style={{
         position: 'absolute',
         top: 16,
@@ -273,27 +219,6 @@ export function RoomInfoPanel({
         onOpenChange={setShowEditDialog}
         onSave={handleEditRoomSave}
       />
-
-      {/* Project Picker overlay */}
-      {showPicker && (
-        <ProjectPicker
-          projects={projects}
-          currentProjectId={room.project_id}
-          onSelect={handleAssignProject}
-          onCreate={createProject}
-          onClose={() => setShowPicker(false)}
-        />
-      )}
-
-      {/* Confirmation Dialog overlay */}
-      {confirmAction && (
-        <ConfirmDialog
-          activeCount={activeCount}
-          action={confirmAction}
-          onConfirm={handleConfirm}
-          onCancel={() => setConfirmAction(null)}
-        />
-      )}
 
       {/* Header */}
       <div style={{
@@ -431,330 +356,83 @@ export function RoomInfoPanel({
         </div>
       </div>
 
-      {/* Separator */}
-      <div style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.06)', margin: '16px 0 0' }} />
-
-      {/* Info Body */}
+      {/* Tab Bar */}
       <div style={{
-        flex: 1,
-        overflow: 'auto',
-        padding: '16px 20px',
         display: 'flex',
-        flexDirection: 'column',
-        gap: 20,
+        borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+        padding: '0 16px',
+        marginTop: 16,
+        gap: 0,
+        flexShrink: 0,
       }}>
-        {/* Project Section */}
-        <div>
-          <SectionHeader>📋 Project</SectionHeader>
-          {currentProject ? (
-            /* Has project assigned */
-            <div style={{ marginTop: 8 }}>
-              <div style={{
-                padding: '12px 14px',
-                background: (currentProject.color || '#6b7280') + '10',
-                borderRadius: 10,
-                border: `1px solid ${(currentProject.color || '#6b7280')}20`,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: currentProject.color || '#6b7280',
-                    flexShrink: 0,
-                  }} />
-                  <span style={{ fontSize: 16, flexShrink: 0 }}>
-                    {currentProject.icon || '📋'}
-                  </span>
-                  <span style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: '#1f2937',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: 1,
-                  }}>
-                    {currentProject.name}
-                  </span>
-                </div>
+        {([
+          { id: 'room' as const, label: '🏠 Room', always: true },
+          { id: 'project' as const, label: room.is_hq ? '🏛️ HQ' : '📋 Project', always: true },
+          { id: 'files' as const, label: '📂 Files', always: !!(currentProject?.folder_path) },
+          { id: 'org' as const, label: '🏢 Org Chart', always: !!room.is_hq },
+        ]).filter(t => t.always).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveInfoTab(tab.id)}
+            style={{
+              padding: '8px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: activeInfoTab === tab.id ? '#374151' : '#9ca3af',
+              borderBottom: `2px solid ${activeInfoTab === tab.id ? '#3b82f6' : 'transparent'}`,
+              background: 'none',
+              border: 'none',
+              borderBottomWidth: 2,
+              borderBottomStyle: 'solid',
+              borderBottomColor: activeInfoTab === tab.id ? '#3b82f6' : 'transparent',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'all 0.15s',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-                {currentProject.description && (
-                  <div style={{
-                    fontSize: 12,
-                    color: '#6b7280',
-                    marginTop: 6,
-                    lineHeight: 1.4,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical' as const,
-                    overflow: 'hidden',
-                  }}>
-                    {currentProject.description}
-                  </div>
-                )}
-
-                <div style={{ marginTop: 8 }}>
-                  {(() => {
-                    const badge = getProjectStatusBadge(currentProject.status)
-                    return (
-                      <span style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: badge.color,
-                        background: badge.bg,
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                      }}>
-                        {badge.label}
-                      </span>
-                    )
-                  })()}
-                </div>
-              </div>
-
-              {/* Browse Docs button (only when folder_path is set) */}
-              {currentProject?.folder_path ? (
-                <button
-                  onClick={() => onOpenDocs?.(currentProject.id, currentProject.name, currentProject.color || undefined)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    width: '100%',
-                    padding: '10px 16px',
-                    marginTop: 8,
-                    borderRadius: 8,
-                    border: 'none',
-                    background: (currentProject.color || roomColor) + '15',
-                    color: currentProject.color || roomColor,
-                    cursor: 'pointer',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    fontFamily: 'inherit',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = (currentProject.color || roomColor) + '25' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = (currentProject.color || roomColor) + '15' }}
-                >
-                  📂 Browse Project Docs
-                </button>
-              ) : (
-                <div style={{
-                  marginTop: 8,
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  background: 'rgba(0, 0, 0, 0.03)',
-                  fontSize: 11,
-                  color: '#9ca3af',
-                  textAlign: 'center',
-                }}>
-                  No folder configured — docs browser unavailable
-                </div>
-              )}
-
-              {/* Action buttons */}
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button
-                  onClick={handleChangeClick}
-                  style={{
-                    flex: 1,
-                    padding: '7px 12px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    background: 'white',
-                    color: '#374151',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.03)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'white' }}
-                >
-                  Change Project
-                </button>
-                <button
-                  onClick={handleClearClick}
-                  style={{
-                    padding: '7px 12px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(239,68,68,0.2)',
-                    background: 'white',
-                    color: '#ef4444',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'white' }}
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* No project — General Room */
-            <div style={{ marginTop: 8 }}>
-              <div style={{
-                padding: '12px 14px',
-                background: 'rgba(0, 0, 0, 0.03)',
-                borderRadius: 10,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
-                  {room.is_hq ? '🏛️ Command Center' : 'General Room'}
-                </span>
-                <button
-                  onClick={() => setShowPicker(true)}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(59,130,246,0.3)',
-                    background: 'rgba(59,130,246,0.05)',
-                    color: '#3b82f6',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.05)' }}
-                >
-                  Assign Project
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* HQ Command Center — All Projects Dashboard */}
-        {room.is_hq && (
-          <HQDashboard
-            overview={hqOverview}
-            loading={hqLoading}
-            onProjectClick={onFocusRoom}
-            onOpenHQBoard={onOpenHQBoard}
+      {/* Tab Content */}
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {activeInfoTab === 'room' && (
+          <RoomInfoTab
+            sessions={sessions}
+            isActivelyRunning={isActivelyRunning}
+            displayNames={displayNames}
+            onBotClick={onBotClick}
           />
         )}
-
-        {/* Tasks Section - only when project is assigned */}
-        {currentProject && (
-          <TasksSection
-            projectId={currentProject.id}
-            roomId={room.id}
-            agents={sessions.map(s => ({
-              session_key: s.key,
-              display_name: displayNames.get(s.key) || formatSessionKeyAsName(s.key, s.label),
-            }))}
-            onOpenFullBoard={onOpenTaskBoard}
-          />
-        )}
-
-        {/* Room Stats */}
-        <div>
-          <SectionHeader>📊 Room Stats</SectionHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-            <InfoRow label="Total Agents">{sessions.length}</InfoRow>
-            <InfoRow label="Active">
-              <span style={{ color: '#15803d', fontWeight: 600 }}>{activeCount}</span>
-            </InfoRow>
-            <InfoRow label="Idle">
-              <span style={{ color: '#a16207', fontWeight: 600 }}>{idleCount}</span>
-            </InfoRow>
-            <InfoRow label="Sleeping">
-              <span style={{ color: '#6b7280', fontWeight: 600 }}>{sleepingCount}</span>
-            </InfoRow>
-          </div>
-        </div>
-
-        {/* Agent List */}
-        <div>
-          <SectionHeader>🤖 Agents in Room</SectionHeader>
-          {botData.length === 0 ? (
-            <div style={{
-              marginTop: 8,
-              padding: '12px 14px',
-              background: 'rgba(0, 0, 0, 0.03)',
-              borderRadius: 10,
-              fontSize: 13,
-              color: '#9ca3af',
-              textAlign: 'center',
-            }}>
-              No agents in this room
+        {activeInfoTab === 'project' && (
+          room.is_hq ? (
+            <div style={{ padding: '16px 20px', overflow: 'auto', flex: 1 }}>
+              <HQDashboard
+                overview={hqOverview}
+                loading={hqLoading}
+                onProjectClick={onFocusRoom}
+                onOpenHQBoard={onOpenHQBoard}
+              />
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
-              {botData.map(({ session, status, name }) => {
-                const badge = getStatusBadge(status)
-                return (
-                  <button
-                    key={session.key}
-                    onClick={() => onBotClick?.(session)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '8px 10px',
-                      borderRadius: 10,
-                      border: 'none',
-                      background: 'rgba(0, 0, 0, 0.02)',
-                      cursor: onBotClick ? 'pointer' : 'default',
-                      transition: 'background 0.15s',
-                      width: '100%',
-                      textAlign: 'left',
-                      fontFamily: 'inherit',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.06)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.02)' }}
-                  >
-                    <span style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: badge.dot,
-                      flexShrink: 0,
-                    }} />
-                    <span style={{
-                      flex: 1,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: '#374151',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {name}
-                    </span>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 500,
-                      color: badge.color,
-                    }}>
-                      {badge.label}
-                    </span>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 500,
-                      color: '#9ca3af',
-                      minWidth: 45,
-                      textAlign: 'right',
-                    }}>
-                      {formatModel(session.model)}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
+            <RoomProjectTab
+              room={room}
+              sessions={sessions}
+              displayNames={displayNames}
+              isActivelyRunning={isActivelyRunning}
+              onOpenTaskBoard={onOpenTaskBoard}
+            />
+          )
+        )}
+        {activeInfoTab === 'files' && (
+          <RoomFilesTab
+            room={room}
+          />
+        )}
+        {activeInfoTab === 'org' && (
+          <OrgChartTab />
+        )}
       </div>
 
       {/* Slide-in animation */}
@@ -768,218 +446,7 @@ export function RoomInfoPanel({
   )
 }
 
-// ── Tasks Section ──────────────────────────────────────────────
-
-function TasksSection({
-  projectId,
-  roomId,
-  agents,
-  onOpenFullBoard,
-}: {
-  projectId: string
-  roomId: string
-  agents: Array<{ session_key: string; display_name: string }>
-  onOpenFullBoard?: (projectId: string, roomId: string, agents: Array<{ session_key: string; display_name: string }>) => void
-}) {
-  const { tasks, taskCounts, updateTask } = useTasks({ projectId, roomId })
-
-  // Quick status change handler
-  const handleStatusChange = useCallback(async (task: Task, newStatus: TaskStatus) => {
-    await updateTask(task.id, { status: newStatus })
-  }, [updateTask])
-
-  const handleOpenBoard = useCallback(() => {
-    onOpenFullBoard?.(projectId, roomId, agents)
-  }, [onOpenFullBoard, projectId, roomId, agents])
-
-  // Active tasks (not done)
-  const activeTasks = tasks.filter(t => t.status !== 'done').slice(0, 5)
-  const totalActive = tasks.filter(t => t.status !== 'done').length
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <SectionHeader>📋 Tasks</SectionHeader>
-        <button
-          onClick={handleOpenBoard}
-          style={{
-            padding: '3px 8px',
-            fontSize: 10,
-            fontWeight: 600,
-            background: '#eff6ff',
-            color: '#2563eb',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-          }}
-        >
-          View Board →
-        </button>
-      </div>
-
-      {/* Task Summary Counts */}
-      <div style={{
-        display: 'flex',
-        gap: 8,
-        marginTop: 8,
-        flexWrap: 'wrap',
-      }}>
-        <TaskCountBadge count={taskCounts.todo} label="To Do" color="#6b7280" />
-        <TaskCountBadge count={taskCounts.in_progress} label="In Progress" color="#2563eb" />
-        <TaskCountBadge count={taskCounts.blocked} label="Blocked" color="#dc2626" />
-        <TaskCountBadge count={taskCounts.done} label="Done" color="#15803d" />
-      </div>
-
-      {/* Active Tasks Preview */}
-      {activeTasks.length > 0 ? (
-        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {activeTasks.map(task => (
-            <MiniTaskCard
-              key={task.id}
-              task={task}
-              onStatusChange={handleStatusChange}
-            />
-          ))}
-          {totalActive > 5 && (
-            <button
-              onClick={handleOpenBoard}
-              style={{
-                padding: '6px 12px',
-                fontSize: 11,
-                color: '#6b7280',
-                background: 'rgba(0,0,0,0.03)',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
-            >
-              +{totalActive - 5} more tasks
-            </button>
-          )}
-        </div>
-      ) : (
-        <div style={{
-          marginTop: 10,
-          padding: '12px',
-          background: 'rgba(0,0,0,0.02)',
-          borderRadius: 8,
-          fontSize: 12,
-          color: '#9ca3af',
-          textAlign: 'center',
-        }}>
-          No active tasks
-        </div>
-      )}
-    </div>
-  )
-}
-
-function TaskCountBadge({ count, label, color }: { count: number; label: string; color: string }) {
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 4,
-      padding: '4px 8px',
-      background: color + '10',
-      borderRadius: 6,
-    }}>
-      <span style={{ fontSize: 12, fontWeight: 700, color }}>{count}</span>
-      <span style={{ fontSize: 10, color: '#6b7280' }}>{label}</span>
-    </div>
-  )
-}
-
-function MiniTaskCard({
-  task,
-  onStatusChange,
-}: {
-  task: Task
-  onStatusChange: (task: Task, status: TaskStatus) => void
-}) {
-  const priorityColors: Record<string, string> = {
-    urgent: '#dc2626',
-    high: '#ea580c',
-    medium: '#2563eb',
-    low: '#6b7280',
-  }
-  const statusColors: Record<string, string> = {
-    todo: '#6b7280',
-    in_progress: '#2563eb',
-    review: '#7c3aed',
-    blocked: '#dc2626',
-  }
-
-  return (
-    <div style={{
-      padding: '8px 10px',
-      background: '#fff',
-      borderRadius: 6,
-      borderLeft: `3px solid ${priorityColors[task.priority]}`,
-      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-    }}>
-      <span style={{
-        flex: 1,
-        fontSize: 12,
-        color: '#1f2937',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}>
-        {task.title}
-      </span>
-
-      {/* Status dot */}
-      <span style={{
-        width: 6,
-        height: 6,
-        borderRadius: '50%',
-        background: statusColors[task.status],
-        flexShrink: 0,
-      }} />
-
-      {/* Quick actions */}
-      {task.status === 'todo' && (
-        <button
-          onClick={() => onStatusChange(task, 'in_progress')}
-          title="Start"
-          style={{
-            padding: '2px 6px',
-            fontSize: 10,
-            background: '#eff6ff',
-            color: '#2563eb',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-          }}
-        >
-          ▶
-        </button>
-      )}
-      {(task.status === 'in_progress' || task.status === 'review') && (
-        <button
-          onClick={() => onStatusChange(task, 'done')}
-          title="Done"
-          style={{
-            padding: '2px 6px',
-            fontSize: 10,
-            background: '#dcfce7',
-            color: '#15803d',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-          }}
-        >
-          ✓
-        </button>
-      )}
-    </div>
-  )
-}
+// TasksSection, TaskCountBadge, MiniTaskCard moved to RoomProjectTab.tsx
 
 // ── HQ Dashboard ───────────────────────────────────────────────
 
@@ -1143,105 +610,7 @@ function HQDashboard({
   )
 }
 
-// ── Confirmation Dialog ────────────────────────────────────────
-
-function ConfirmDialog({
-  activeCount,
-  action,
-  onConfirm,
-  onCancel,
-}: {
-  activeCount: number
-  action: 'change' | 'clear'
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  return (
-    <div style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(255, 255, 255, 0.95)',
-      backdropFilter: 'blur(8px)',
-      WebkitBackdropFilter: 'blur(8px)',
-      borderRadius: 16,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 32,
-      zIndex: 30,
-      animation: 'pickerFadeIn 0.15s ease-out',
-    }}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
-      <div style={{
-        fontSize: 15,
-        fontWeight: 700,
-        color: '#1f2937',
-        textAlign: 'center',
-        marginBottom: 8,
-      }}>
-        {action === 'change' ? 'Change room project?' : 'Clear room project?'}
-      </div>
-      <div style={{
-        fontSize: 13,
-        color: '#6b7280',
-        textAlign: 'center',
-        lineHeight: 1.5,
-        marginBottom: 20,
-        maxWidth: 260,
-      }}>
-        This room has <strong>{activeCount}</strong> active agent{activeCount !== 1 ? 's' : ''}.
-        {action === 'change'
-          ? ' Changing the project will update their context.'
-          : ' Clearing the project will remove their project context.'}
-      </div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button
-          onClick={onCancel}
-          style={{
-            padding: '8px 20px',
-            borderRadius: 8,
-            border: '1px solid rgba(0,0,0,0.1)',
-            background: 'white',
-            color: '#6b7280',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onConfirm}
-          style={{
-            padding: '8px 20px',
-            borderRadius: 8,
-            border: 'none',
-            background: action === 'clear' ? '#ef4444' : '#3b82f6',
-            color: 'white',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          {action === 'change' ? 'Change Project' : 'Clear Project'}
-        </button>
-      </div>
-
-      <style>{`
-        @keyframes pickerFadeIn {
-          from { opacity: 0; transform: scale(0.97); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
-    </div>
-  )
-}
+// ConfirmDialog moved to RoomProjectTab.tsx
 
 // ── Reusable components ────────────────────────────────────────
 
@@ -1255,31 +624,6 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
       letterSpacing: '0.06em',
     }}>
       {children}
-    </div>
-  )
-}
-
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    }}>
-      <span style={{
-        fontSize: 13,
-        color: '#9ca3af',
-        fontWeight: 500,
-      }}>
-        {label}
-      </span>
-      <span style={{
-        fontSize: 13,
-        color: '#374151',
-        fontWeight: 600,
-      }}>
-        {children}
-      </span>
     </div>
   )
 }

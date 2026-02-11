@@ -13,6 +13,7 @@ const LONG_PRESS_MS = 600 // 600ms for long-press detection
 // Used by camera controllers to block WASD/mouse look when a prop is selected/dragged
 let _isPropBeingMoved = false
 let _isPropBeingDragged = false
+let _isLongPressPending = false
 
 /** Returns true if a prop is currently selected for movement */
 export function getIsPropBeingMoved(): boolean {
@@ -22,6 +23,11 @@ export function getIsPropBeingMoved(): boolean {
 /** Returns true if a prop is currently being dragged with the mouse */
 export function getIsPropBeingDragged(): boolean {
   return _isPropBeingDragged
+}
+
+/** Returns true if a long-press is pending (user holding down on a prop) */
+export function getIsLongPressPending(): boolean {
+  return _isLongPressPending
 }
 
 export type { PropPlacement }
@@ -86,6 +92,8 @@ export function usePropMovement({
   const [isMoving, setIsMoving] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [pendingClear, setPendingClear] = useState(false)
+  const placementsRef = useRef(placements)
+  placementsRef.current = placements // Always keep ref in sync (avoids stale closures)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingSelect = useRef<{
     key: string
@@ -108,6 +116,7 @@ export function usePropMovement({
       longPressTimer.current = null
     }
     pendingSelect.current = null
+    _isLongPressPending = false
   }, [])
 
   // Start long-press detection
@@ -122,8 +131,10 @@ export function usePropMovement({
     cancelLongPress()
     
     pendingSelect.current = { key, propId, gridX, gridZ, rotation, span }
+    _isLongPressPending = true
     
     longPressTimer.current = setTimeout(() => {
+      _isLongPressPending = false
       if (pendingSelect.current) {
         const { key, propId, gridX, gridZ, rotation, span } = pendingSelect.current
         setSelectedProp({
@@ -216,8 +227,11 @@ export function usePropMovement({
     // Stop dragging first
     setIsDragging(false)
     
+    // Use ref to get latest placements (avoids stale closure if placements changed during drag)
+    const currentPlacements = placementsRef.current
+
     // Update placements array
-    const updatedPlacements = placements.map(p => {
+    const updatedPlacements = currentPlacements.map(p => {
       if (p.propId === propId && p.x === originalX && p.z === originalZ) {
         return { ...p, x: gridX, z: gridZ, rotation: rotation as 0 | 90 | 180 | 270 }
       }
@@ -245,7 +259,7 @@ export function usePropMovement({
       if (!response.ok) {
         console.error('Failed to save prop movement:', await response.text())
         // Revert on failure
-        onUpdate(placements)
+        onUpdate(currentPlacements)
         setSelectedProp(null)
         setIsMoving(false)
         setPendingClear(false)
@@ -254,7 +268,7 @@ export function usePropMovement({
     } catch (err) {
       console.error('Failed to save prop movement:', err)
       // Revert on failure
-      onUpdate(placements)
+      onUpdate(currentPlacements)
       setSelectedProp(null)
       setIsMoving(false)
       setPendingClear(false)
@@ -263,7 +277,7 @@ export function usePropMovement({
 
     // Success - mark for clearing once placements update
     setPendingClear(true)
-  }, [selectedProp, placements, onUpdate, apiBaseUrl, blueprintId])
+  }, [selectedProp, onUpdate, apiBaseUrl, blueprintId])
 
   // Clear selection once placements have the new position
   useEffect(() => {
@@ -304,9 +318,10 @@ export function usePropMovement({
     const localX = worldX + halfGridWidth
     const localZ = worldZ + halfGridDepth
     
-    // Snap to grid
-    const gridX = Math.round(localX / cellSize)
-    const gridZ = Math.round(localZ / cellSize)
+    // Snap to grid — use Math.floor because gridToWorld places cell centers at
+    // gridX * cellSize + cellSize/2, so the cell boundary is at gridX * cellSize.
+    const gridX = Math.max(0, Math.min(gridWidth - 1, Math.floor(localX / cellSize)))
+    const gridZ = Math.max(0, Math.min(gridDepth - 1, Math.floor(localZ / cellSize)))
     
     return { gridX, gridZ }
   }, [gridWidth, gridDepth, cellSize])
@@ -316,10 +331,11 @@ export function usePropMovement({
     if (!isMoving || !selectedProp) return
     
     // Set up drag plane at prop's current Y height (floor level = 0.16)
+    // Use roomPosition Y so the plane is in world space where the raycaster operates
     const propY = 0.16
     dragPlane.current.setFromNormalAndCoplanarPoint(
       new THREE.Vector3(0, 1, 0),
-      new THREE.Vector3(0, roomPosition[1] + propY, 0)
+      new THREE.Vector3(roomPosition[0], roomPosition[1] + propY, roomPosition[2])
     )
     
     setIsDragging(true)
@@ -331,6 +347,13 @@ export function usePropMovement({
     
     // Get mouse position in normalized device coordinates
     const pointer = e.pointer
+    
+    // Re-align drag plane to camera each frame to handle camera movement during drag
+    const propY = 0.16
+    dragPlane.current.setFromNormalAndCoplanarPoint(
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(roomPosition[0], roomPosition[1] + propY, roomPosition[2])
+    )
     
     // Update raycaster
     raycaster.current.setFromCamera(pointer, e.camera)
@@ -365,9 +388,10 @@ export function usePropMovement({
     if (!selectedProp) return
 
     const { propId, originalX, originalZ } = selectedProp
+    const currentPlacements = placementsRef.current
     
     // Remove from placements
-    const updatedPlacements = placements.filter(p => 
+    const updatedPlacements = currentPlacements.filter(p => 
       !(p.propId === propId && p.x === originalX && p.z === originalZ)
     )
 
@@ -389,18 +413,18 @@ export function usePropMovement({
       if (!response.ok) {
         console.error('Failed to delete prop:', await response.text())
         // Revert on failure
-        onUpdate(placements)
+        onUpdate(currentPlacements)
       }
     } catch (err) {
       console.error('Failed to delete prop:', err)
       // Revert on failure
-      onUpdate(placements)
+      onUpdate(currentPlacements)
     }
 
     setSelectedProp(null)
     setIsMoving(false)
     setPendingClear(false)
-  }, [selectedProp, placements, onUpdate, apiBaseUrl, blueprintId])
+  }, [selectedProp, onUpdate, apiBaseUrl, blueprintId])
 
   // Keyboard event handler
   useEffect(() => {

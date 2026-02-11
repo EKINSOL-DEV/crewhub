@@ -125,9 +125,7 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
     
     try {
       const folderPath = newFolderPath.trim() || undefined
-      console.log('[ProjectPicker] handleCreate calling onCreate...')
       const result = await onCreate({ name: newName.trim(), icon: newIcon, color: newColor, folder_path: folderPath })
-      console.log('[ProjectPicker] onCreate returned:', result)
       
       setIsCreating(false)
       if (result && result.success && result.project) {

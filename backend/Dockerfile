@@ -13,6 +13,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY . .
 
+# Version: injected via build arg or mount version.json at runtime
+ARG CREWHUB_VERSION=0.12.0
+ENV CREWHUB_VERSION=${CREWHUB_VERSION}
+
 EXPOSE 8090
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8090"]

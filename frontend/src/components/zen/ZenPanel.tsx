@@ -3,11 +3,9 @@
  */
 
 import { type ReactNode, useCallback, useState, useEffect, useRef } from 'react'
-import { type LeafNode, type PanelType, PANEL_INFO } from './types/layout'
+import { type LeafNode, type PanelType } from './types/layout'
+import { getSelectablePanelIds, getPanelDef, PANEL_INFO } from './registry'
 import { ZenContextMenu } from './ZenContextMenu'
-
-// Available panel types for switcher
-const PANEL_TYPES: PanelType[] = ['chat', 'sessions', 'activity', 'rooms', 'tasks', 'cron', 'logs']
 
 // ── Panel Type Picker Component ────────────────────────────────
 
@@ -42,19 +40,19 @@ function PanelTypePicker({ currentType, onSelect, onClose }: PanelTypePickerProp
   
   return (
     <div className="zen-panel-type-menu" ref={menuRef}>
-      {PANEL_TYPES.map(type => {
-        const info = PANEL_INFO[type]
+      {getSelectablePanelIds().map(panelId => {
+        const def = getPanelDef(panelId)
         return (
           <button
-            key={type}
-            className={`zen-panel-type-option ${type === currentType ? 'active' : ''}`}
+            key={panelId}
+            className={`zen-panel-type-option ${panelId === currentType ? 'active' : ''}`}
             onClick={() => {
-              onSelect(type)
+              onSelect(panelId as PanelType)
               onClose()
             }}
           >
-            <span>{info.icon}</span>
-            <span>{info.label}</span>
+            <span>{def.icon}</span>
+            <span>{def.label}</span>
           </button>
         )
       })}
@@ -141,8 +139,8 @@ export function ZenPanel({
             <div className="zen-panel-type-picker">
               <button
                 type="button"
-                className="zen-panel-title zen-panel-title-btn"
-                onClick={(e) => { e.stopPropagation(); setShowTypePicker(!showTypePicker) }}
+                className={`zen-panel-title zen-panel-title-btn ${showTypePicker ? 'active' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setShowTypePicker(!showTypePicker); if (showTypePicker) (e.currentTarget as HTMLButtonElement).blur() }}
                 title="Change panel type"
               >
                 {displayLabel}
@@ -152,7 +150,7 @@ export function ZenPanel({
                 <PanelTypePicker
                   currentType={panel.panelType}
                   onSelect={handleChangeType}
-                  onClose={() => setShowTypePicker(false)}
+                  onClose={() => { setShowTypePicker(false); document.activeElement instanceof HTMLElement && document.activeElement.blur() }}
                 />
               )}
             </div>

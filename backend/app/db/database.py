@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 9  # v9: Added tasks and project_history tables
+SCHEMA_VERSION = 11  # v11: Added docs_path to projects
 
 
 async def init_database():
@@ -339,6 +339,31 @@ async def init_database():
                 CREATE INDEX IF NOT EXISTS idx_project_history_created ON project_history(created_at DESC)
             """)
             
+            # ========================================
+            # v10: Agent Personas
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS agent_personas (
+                    agent_id TEXT PRIMARY KEY REFERENCES agents(id) ON DELETE CASCADE,
+                    preset TEXT,
+                    start_behavior INTEGER NOT NULL DEFAULT 1,
+                    checkin_frequency INTEGER NOT NULL DEFAULT 4,
+                    response_detail INTEGER NOT NULL DEFAULT 2,
+                    approach_style INTEGER NOT NULL DEFAULT 3,
+                    custom_instructions TEXT DEFAULT '',
+                    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+                    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+                )
+            """)
+
+            # ========================================
+            # v11: Add docs_path to projects
+            # ========================================
+            try:
+                await db.execute("ALTER TABLE projects ADD COLUMN docs_path TEXT")
+            except Exception:
+                pass  # Column already exists
+
             # Set initial version if not exists
             await db.execute("""
                 INSERT OR IGNORE INTO schema_version (version) 

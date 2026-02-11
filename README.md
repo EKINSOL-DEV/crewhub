@@ -13,7 +13,7 @@
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
   <img src="https://img.shields.io/badge/Docs-Coming%20Soon-lightgrey?style=flat&logo=readthedocs&logoColor=white" alt="Docs">
-  <img src="https://img.shields.io/badge/version-v0.12.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.13.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -49,14 +49,14 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **Activity bubbles** — See what each agent is doing at a glance
 - **Blueprints** — JSON-defined room layouts you can create, share, and import
 
-### 🆕 New in v0.12.0
+### 🆕 New in v0.13.0
 
-- **TaskWall3D interaction fix** — Pointer events now only enabled when room is focused, preventing click interception
-- **Simplified room navigation** — Room clicks only work from overview (no accidental zoom-outs)
-- **Zone switcher** — Persistent zone navigation in bottom bar across all zones
-- **Zen Mode activity panel** — Shows active tasks with icons, titles, and agent names
-- **Cleaner zone landing views** — Removed placeholder meshes for consistent, polished scenes
-- **Agent onboarding system** — API key auth, manifest endpoint, self-discovery for zero-config agent integration
+- **Fullscreen Detail Views** — Activity and Sessions panels with 30/70 split, filter, sort, and autoscroll
+- **Fullscreen PropMaker** — Click bot → instant fullscreen workspace (50/50 split, thinking + 3D preview)
+- **Markdown Viewer/Editor** — CodeMirror 6 editor with split pane, auto-save, and project documents
+- **Org Chart** — New HQ tab showing team hierarchy with color-coded model badges
+- **Agent Persona Tuning** — Customize agent behavior with presets or fine-tune individual traits
+- **Creator Zone MVP** — Prop gallery, AI generation pipeline, and prompt templates
 
 ---
 
@@ -80,6 +80,7 @@ CrewHub's 3D World turns your agent fleet into a living, breathing campus:
 - **Click-to-detail panels** — inspect any agent's info, stats, and activity
 - **Agent bios** with pre-filled personality descriptions
 - **Agent Top Bar** with boss button, pinned agent, and agent picker
+- **Persona tuning** — customize agent behavior with presets (Executor, Advisor, Explorer) or fine-tune individual traits
 
 ### 📋 Task Board
 - **Kanban-style board** in the HQ room with columns: To Do, In Progress, Review, Done, Blocked

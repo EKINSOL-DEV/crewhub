@@ -4,7 +4,7 @@ import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { useDragState } from '@/contexts/DragDropContext'
 import { botPositionRegistry } from './Bot3D'
-import { getIsPropBeingMoved, getIsPropBeingDragged } from '@/hooks/usePropMovement'
+import { getIsPropBeingMoved, getIsPropBeingDragged, getIsLongPressPending } from '@/hooks/usePropMovement'
 import CameraControlsImpl from 'camera-controls'
 import * as THREE from 'three'
 
@@ -183,6 +183,23 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   const wasdVelocity = useRef(new THREE.Vector3())
   const wasdRotVelocity = useRef(0)
 
+  // ─── Disable camera controls when fullscreen overlay is open ──
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const controls = controlsRef.current
+      if (!controls) return
+      const detail = (e as CustomEvent).detail
+      if (detail?.open) {
+        controls.enabled = false
+      } else {
+        // Re-enable only if not otherwise disabled
+        controls.enabled = !isDragging && !isInteractingWithUI
+      }
+    }
+    window.addEventListener('fullscreen-overlay', handler)
+    return () => window.removeEventListener('fullscreen-overlay', handler)
+  }, [isDragging, isInteractingWithUI])
+
   // ─── Disable camera controls during drag ──────────────────────
   // Tracks both bot drag (DragDropContext) and prop drag (usePropMovement)
 
@@ -192,15 +209,18 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     controls.enabled = !isDragging && !isInteractingWithUI
   }, [isDragging, isInteractingWithUI])
 
-  // Also disable when prop is being dragged (polled each frame)
+  // Also disable when prop is being moved or dragged (polled each frame)
   useFrame(() => {
     const controls = controlsRef.current
     if (!controls) return
+    const propMoving = getIsPropBeingMoved()
     const propDragging = getIsPropBeingDragged()
+    const longPressPending = getIsLongPressPending()
+    const shouldDisable = propMoving || propDragging || longPressPending
     // Only update if changed to avoid unnecessary work
-    if (propDragging && controls.enabled) {
+    if (shouldDisable && controls.enabled) {
       controls.enabled = false
-    } else if (!propDragging && !isDragging && !isInteractingWithUI && !controls.enabled) {
+    } else if (!shouldDisable && !isDragging && !isInteractingWithUI && !controls.enabled) {
       controls.enabled = true
     }
   })
@@ -224,8 +244,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return
-      // Don't move camera when a prop is selected for movement or being dragged
-      if (getIsPropBeingMoved() || getIsPropBeingDragged()) return
+      // Don't move camera when a prop is selected for movement, being dragged, or long-press pending
+      if (getIsPropBeingMoved() || getIsPropBeingDragged() || getIsLongPressPending()) return
       switch (e.code) {
         case 'KeyW': case 'ArrowUp':    _wasdKeys.forward = true; break
         case 'KeyS': case 'ArrowDown':  _wasdKeys.backward = true; break

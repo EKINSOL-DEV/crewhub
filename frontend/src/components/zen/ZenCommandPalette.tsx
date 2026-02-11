@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { getPanelCommands } from './registry'
 
 // ── Command Types ─────────────────────────────────────────────────
 
@@ -346,20 +347,20 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
       {
         id: 'layout.split-vertical',
         label: 'Split Vertically',
-        description: 'Split focused panel top/bottom',
-        icon: '↕️',
+        description: 'Split focused panel left/right',
+        icon: '↔️',
         shortcut: 'Ctrl+\\',
         category: 'layout',
-        action: options.onSplitHorizontal, // swapped to match user expectations
+        action: options.onSplitVertical,
       },
       {
         id: 'layout.split-horizontal',
         label: 'Split Horizontally',
-        description: 'Split focused panel left/right',
-        icon: '↔️',
+        description: 'Split focused panel top/bottom',
+        icon: '↕️',
         shortcut: 'Ctrl+Shift+\\',
         category: 'layout',
-        action: options.onSplitVertical, // swapped to match user expectations
+        action: options.onSplitHorizontal,
       },
       {
         id: 'layout.maximize',
@@ -371,71 +372,8 @@ export function useCommandRegistry(options: UseCommandRegistryOptions): Command[
         action: options.onToggleMaximize,
       },
       
-      // Panel types
-      {
-        id: 'panel.add.chat',
-        label: 'Add Chat Panel',
-        description: 'Add a new chat panel',
-        icon: '💬',
-        category: 'panel',
-        action: () => options.onAddPanel?.('chat'),
-      },
-      {
-        id: 'panel.add.sessions',
-        label: 'Add Sessions Panel',
-        description: 'Add sessions list panel',
-        icon: '📋',
-        category: 'panel',
-        action: () => options.onAddPanel?.('sessions'),
-      },
-      {
-        id: 'panel.add.activity',
-        label: 'Add Activity Panel',
-        description: 'Add real-time activity feed',
-        icon: '⚡',
-        category: 'panel',
-        action: () => options.onAddPanel?.('activity'),
-      },
-      {
-        id: 'panel.add.rooms',
-        label: 'Add Rooms Panel',
-        description: 'Add room navigation panel',
-        icon: '🏠',
-        category: 'panel',
-        action: () => options.onAddPanel?.('rooms'),
-      },
-      {
-        id: 'panel.add.tasks',
-        label: 'Add Tasks Panel',
-        description: 'Add task board panel',
-        icon: '✅',
-        category: 'panel',
-        action: () => options.onAddPanel?.('tasks'),
-      },
-      {
-        id: 'panel.add.kanban',
-        label: 'Add Kanban Panel',
-        description: 'Add kanban board view',
-        icon: '📊',
-        category: 'panel',
-        action: () => options.onAddPanel?.('kanban'),
-      },
-      {
-        id: 'panel.add.logs',
-        label: 'Add Logs Panel',
-        description: 'Add system logs viewer',
-        icon: '📜',
-        category: 'panel',
-        action: () => options.onAddPanel?.('logs'),
-      },
-      {
-        id: 'panel.add.cron',
-        label: 'Add Cron Panel',
-        description: 'Add scheduled jobs viewer',
-        icon: '⏰',
-        category: 'panel',
-        action: () => options.onAddPanel?.('cron'),
-      },
+      // Panel types — auto-generated from registry
+      ...(options.onAddPanel ? getPanelCommands(options.onAddPanel) : []),
       {
         id: 'panel.close',
         label: 'Close Panel',

@@ -5,22 +5,47 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import asyncio
+import json
 import os
+from pathlib import Path
 
 from app.config import settings
 from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections, projects, blueprints, media
-from app.routes import project_files, tasks, project_history, context
+from app.routes import project_files, project_documents, tasks, project_history, context
 from app.routes.project_files import discover_router as project_discover_router
 from app.routes.chat import router as chat_router
 from app.routes import discovery, settings as settings_routes, backup, onboarding
 from app.routes.self_routes import router as self_router
 from app.routes.auth_routes import router as auth_router
+from app.routes.creator import router as creator_router
+from app.routes.personas import router as personas_router
+from app.routes import agent_files
 from app.db.database import init_database, check_database_health
 from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
 from app.routes.sse import broadcast
 
 logger = logging.getLogger(__name__)
+
+
+def _get_version() -> str:
+    """Read version from version.json (repo root) or CREWHUB_VERSION env var."""
+    env_ver = os.getenv("CREWHUB_VERSION")
+    if env_ver:
+        return env_ver
+    # Try version.json next to backend/ (repo root) or in /app (Docker)
+    for candidate in [
+        Path(__file__).resolve().parent.parent.parent / "version.json",
+        Path("/app/version.json"),
+    ]:
+        try:
+            return json.loads(candidate.read_text())["version"]
+        except (FileNotFoundError, KeyError, json.JSONDecodeError):
+            continue
+    return "0.0.0-unknown"
+
+
+APP_VERSION = _get_version()
 
 # Background task handle
 _polling_task = None
@@ -158,7 +183,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="CrewHub API",
     description="Multi-agent orchestration platform",
-    version="0.3.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
@@ -174,6 +199,7 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router, tags=["health"])
 app.include_router(agents.router, prefix="/api/agents", tags=["agents"])
+app.include_router(agent_files.router, prefix="/api/agents", tags=["agent-files"])
 app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
 app.include_router(sse.router, prefix="/api", tags=["sse"])
 app.include_router(gateway_status.router, prefix="/api/gateway", tags=["gateway"])
@@ -181,6 +207,7 @@ app.include_router(gateway_status.router, prefix="/api/gateway", tags=["gateway"
 # New database-backed routes
 app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
 app.include_router(project_files.router, prefix="/api/projects", tags=["project-files"])
+app.include_router(project_documents.router, prefix="/api/projects", tags=["project-documents"])
 app.include_router(project_discover_router, prefix="/api", tags=["project-discovery"])
 app.include_router(rooms.router, prefix="/api/rooms", tags=["rooms"])
 app.include_router(assignments.router, prefix="/api/session-room-assignments", tags=["assignments"])
@@ -214,12 +241,18 @@ app.include_router(media.router, tags=["media"])
 app.include_router(self_router)
 app.include_router(auth_router)
 
+# Creator Zone: AI prop generation
+app.include_router(creator_router)
+
+# Phase 5: Agent Persona Tuning
+app.include_router(personas_router, prefix="/api", tags=["personas"])
+
 
 @app.get("/")
 async def root():
     """Root endpoint."""
     return {
         "name": "CrewHub API",
-        "version": "0.3.0",
+        "version": APP_VERSION,
         "status": "running",
     }

@@ -5,43 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.11.2] - 2026-02-07
+## [0.13.0] - 2026-02-11
 
-### 🌟 New Features
-- **Zen Mode Tabs** — Multi-tab workspaces with state persistence, keyboard shortcuts (Ctrl+Alt+T/W/R)
-- **Zen Statue (ZenBeeldje)** — 3D meditation figure in rooms with projects, always-on floating animation with yellow glow
-- **Task detail pane** — Click on task in Tasks panel to see details at bottom (like Kanban)
-- **Activity panel rewrite** — Shows real agent activity with Current/History tabs, same info as 3D bubbles
-- **Kanban in all menus** — Added to context menu and Ctrl+K command palette
-- **Live Demo banner dismiss** — ❌ button to hide the demo banner, persisted in localStorage
+### ✨ Major Features
 
-### 🔧 Fixes
-- **Split Vertical/Horizontal swap** — Fixed in context menu, command palette, and panel header buttons
-- **Panel type dropdown z-index** — Menu no longer appears behind session items
-- **Context menu height** — Increased to show all 8 panel types without scrolling
-- **New tagline** — "Getting real work done doesn't have to be boring."
+- **Fullscreen Detail Views** — Activity and Sessions panels now have fullscreen mode (30/70 split) with history controls (filter, sort, autoscroll, up to 500 messages)
+- **Fullscreen PropMaker** — PropMaker opens fullscreen by default (50/50 split, thinking process + 3D preview), removed in-scene dialog
+- **Markdown Viewer/Editor** — Phase 1-3 complete: CodeMirror 6 editor, auto-save (2.5s debounce), split pane (edit | preview), project documents support
+- **Org Chart** — New HQ tab showing team hierarchy with color-coded model badges (Opus/Sonnet/GPT-5.2)
+- **Demo Content** — 5 demo tasks, 11 PropMaker history items, 4 demo markdown docs
+- **Agent Persona Tuning** — Customize agent behavior with presets (Executor, Advisor, Explorer) or fine-tune individual traits
+- **Creator Zone MVP** — Prop gallery showcase, AI prompt templates, generation pipeline with SSE streaming
+- **Prop Movement** — Drag props in 3D with hover glow, cursor changes, and edge case handling
 
-### 📦 Other
-- Version display updated to v0.11.2 in UI
-- UUID fallback for http:// contexts (crypto.randomUUID not available)
+### 🎨 UI/UX Improvements
 
-## [0.11.0] - 2026-02-07
+- Simplified PropMaker UX (click bot → fullscreen, no more in-scene panels)
+- Fixed Escape navigation (fullscreen views return to Zen Mode, not World)
+- Improved spacing throughout (grid gaps, message margins, padding)
+- Theme color consistency (memory toggle, prop labels, panel titles)
+- Sessions/Activity detail panels (bottom layout, 50/50 split, timestamps)
+- Zen Mode CSS variable cleanup (replaced all hardcoded colors)
+- Brighter markdown syntax colors for dark themes
+- Direct fullscreen on file click in Documents panel
+- Projects & Kanban added to Zen Mode panel registry
 
-### 🌟 New Features
-- **Zen Mode** — Full-screen tmux-style terminal interface with split panels, themes, and keyboard navigation
-- **Zen Panels** — Chat, Sessions, Activity, Rooms, Tasks, Kanban, Cron, Logs
-- **Zen Themes** — Multiple color schemes including Gruvbox, Monokai, Nord, and more
-- **Project-focused Zen** — Enter Zen Mode filtered to a specific project via ZenBeeldje
+### 🐛 Bug Fixes
 
-## [0.10.0] - 2026-02-06
+- Fixed fullscreen Escape handler (capture phase + stopPropagation)
+- Fixed memory toggle colors (now uses standard theme)
+- Fixed prop preview label (theme colors instead of hardcoded)
+- Fixed 3D camera interference with fullscreen overlays and panels
+- Fixed panel title readability when focused in Zen Mode
+- Blocked camera controls during prop movement and long-press drag
+- Fixed Kanban and Projects panel fallbacks for Zen Mode compatibility
+- Python 3.9 compatibility (Optional[str] instead of str | None)
 
-### 🌟 New Features
-- **Onboarding wizard** — 5-step guided setup for new users
-- **Auto-discovery** — Automatic detection of OpenClaw, Claude Code, and Codex
-- **Settings API** — Database-driven settings with backup/restore
-- **Bot jitter fixes** — 8 root causes identified and fixed
-- **Debug panel** — 🧪 Test bots spawning for development
-- **Settings refactor** — 5 tabs: Look & Feel, Rooms, Behavior, Data, Advanced
+### 🔧 Infrastructure
+
+- Backend watchdog (auto-restart, crash logging, healthcheck endpoint)
+- Frontend watchdog (monitoring script for dev)
+- Crash analysis complete (memory pressure from multiple dev servers)
+- Version centralization (version.json as single source of truth)
+- Agent identity in context envelopes with display names
+- Clean slate onboarding and demo mode improvements
+
+### 📝 Documentation
+
+- Comprehensive features matrix with category files and daily auto-sync
+- Agent Identity Pattern and Agent Visibility documentation
+- Creator Zone MVP documentation and prop-maker guide
+- Persona system documentation with migration guide
+- Design documents for markdown viewer, meetings, and spatial awareness
+- Reorganized documentation structure
+
+### 📋 Known Issues
+
+- Theme inconsistencies between World and Zen Mode
+- Prop movement not optimal yet
+- Saving prop movement triggers canvas refresh
+- Watchdog scripts exist but not enabled for local dev
+
+### 🙏 Community
+
+- Live Mirror concept (v0.21.0+) suggested by Vendetta
 
 ## [0.9.1] - 2026-02-06
 
@@ -259,14 +286,12 @@ First public beta release of CrewHub - a real-time dashboard for monitoring AI a
 - **Frontend**: React 18 with TypeScript, Vite, and Tailwind CSS
 - **Real-time**: Server-Sent Events for live updates
 
-[0.11.2]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.11.2
-[0.11.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.11.0
-[0.10.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.10.0
-[0.9.1]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.9.1
-[0.9.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.9.0
-[0.8.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.8.0
-[0.7.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.7.0
-[0.6.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.6.0
-[0.3.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.3.0
-[0.2.0]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.2.0
-[0.1.0-beta]: https://github.com/EKINSOL-DEV/crewhub/releases/tag/v0.1.0-beta
+[0.13.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.13.0
+[0.9.1]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.9.1
+[0.9.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.9.0
+[0.8.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.8.0
+[0.7.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.7.0
+[0.6.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.6.0
+[0.3.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.3.0
+[0.2.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.2.0
+[0.1.0-beta]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.1.0-beta
