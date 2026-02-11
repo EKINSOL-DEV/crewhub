@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { useToonMaterialProps } from '../../utils/toonMaterials'
-import type { PropPart } from './DynamicProp'
+import { PreviewPanel } from './PreviewPanel'
+import { DynamicProp, type PropPart } from './DynamicProp'
 import * as THREE from 'three'
 
 export interface GeneratedPropData {
@@ -24,21 +25,39 @@ interface GeneratedProp {
   timestamp: number
 }
 
-// API calls use relative URLs - Vite proxy handles routing to backend
+// ─── Dynamic Preview Component Factory ──────────────────────────
+// Creates a React FC from parts data for the PreviewPanel
+
+function createPartsPreviewComponent(parts: PropPart[]): React.FC<any> {
+  return function PartsPreview({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+    return <DynamicProp parts={parts} position={position} scale={1} />
+  }
+}
 
 /**
  * Futuristic prop fabricator machine — a glowing sci-fi console
  * that opens a chat dialog for AI-powered prop creation.
+ * Includes live preview panel with approve/regenerate flow.
  */
 export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGenerated }: PropMakerMachineProps) {
   const [hovered, setHovered] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [inputText, setInputText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [generatedProps, setGeneratedProps] = useState<GeneratedProp[]>([])
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showExamples, setShowExamples] = useState(false)
+
+  // Preview state
+  const [previewParts, setPreviewParts] = useState<PropPart[] | null>(null)
+  const [previewName, setPreviewName] = useState('')
+  const [previewFilename, setPreviewFilename] = useState('')
+  const [previewCode, setPreviewCode] = useState('')
+  const [previewMethod, setPreviewMethod] = useState<'ai' | 'template'>('template')
+  const [renderError, setRenderError] = useState<string | null>(null)
+  const [lastPrompt, setLastPrompt] = useState('')
 
   const examplePrompts = [
     'A glowing mushroom lamp',
@@ -73,48 +92,133 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGen
     setDialogOpen(!dialogOpen)
   }
 
-  const handleGenerate = async () => {
-    if (!inputText.trim() || isGenerating) return
+  const handleGenerate = async (prompt?: string) => {
+    const text = (prompt || inputText).trim()
+    if (!text || isGenerating) return
 
     setIsGenerating(true)
     setError(null)
     setSuccessMessage(null)
+    setRenderError(null)
+    setPreviewParts(null)
+    setLastPrompt(text)
 
     try {
       const res = await fetch('/api/creator/generate-prop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: inputText.trim() }),
+        body: JSON.stringify({ prompt: text }),
       })
 
       if (!res.ok) {
-        throw new Error(`Generation failed (${res.status})`)
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData?.detail || `Generation failed (${res.status})`)
       }
 
       const data = await res.json()
-      const now = Date.now()
-      setGeneratedProps((prev) => [
-        { name: data.name, filename: data.filename, timestamp: now },
-        ...prev,
-      ].slice(0, 10))
-      setSuccessMessage(`✅ Created "${data.name}"`)
-      setInputText('')
-      
-      // Notify parent to add prop to showcase
-      if (onPropGenerated && data.parts) {
-        onPropGenerated({
-          name: data.name,
-          filename: data.filename,
-          parts: data.parts,
-          timestamp: now,
-        })
+
+      // Validate response
+      if (!data.parts || !Array.isArray(data.parts) || data.parts.length === 0) {
+        throw new Error('Generated prop has no geometry parts')
       }
+
+      // Validate parts structure
+      for (const part of data.parts) {
+        if (!part.type || !part.position || !part.args || !part.color) {
+          throw new Error('Invalid part structure in generated prop')
+        }
+      }
+
+      // Set preview state
+      setPreviewParts(data.parts)
+      setPreviewName(data.name)
+      setPreviewFilename(data.filename)
+      setPreviewCode(data.code || '')
+      setPreviewMethod(data.method || 'template')
+      setInputText('')
+
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Generation failed')
+      setPreviewParts(null)
     } finally {
       setIsGenerating(false)
     }
   }
+
+  const handleApprove = useCallback(async () => {
+    if (!previewParts || !previewName || isSaving) return
+
+    setIsSaving(true)
+    setError(null)
+
+    const kebabName = previewName
+      .replace(/([a-z])([A-Z])/g, '$1-$2')
+      .toLowerCase()
+
+    try {
+      // Save to backend persistent storage
+      const res = await fetch('/api/creator/save-prop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: previewName,
+          propId: kebabName,
+          code: previewCode,
+          parts: previewParts,
+          mountType: 'floor',
+          yOffset: 0.16,
+        }),
+      })
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData?.detail || 'Save failed')
+      }
+
+      const now = Date.now()
+      setGeneratedProps((prev) => [
+        { name: previewName, filename: previewFilename, timestamp: now },
+        ...prev,
+      ].slice(0, 10))
+      setSuccessMessage(`✅ "${previewName}" saved! It will appear in the showcase.`)
+
+      // Notify parent to add prop to showcase
+      if (onPropGenerated) {
+        onPropGenerated({
+          name: previewName,
+          filename: previewFilename,
+          parts: previewParts,
+          timestamp: now,
+        })
+      }
+
+      // Clear preview after save
+      setTimeout(() => {
+        setPreviewParts(null)
+        setPreviewName('')
+        setSuccessMessage(null)
+      }, 2000)
+
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [previewParts, previewName, previewFilename, previewCode, isSaving, onPropGenerated])
+
+  const handleRegenerate = useCallback(() => {
+    if (lastPrompt) {
+      handleGenerate(lastPrompt)
+    }
+  }, [lastPrompt])
+
+  const handleRetry = useCallback(() => {
+    setRenderError(null)
+    setError(null)
+    if (lastPrompt) {
+      handleGenerate(lastPrompt)
+    }
+  }, [lastPrompt])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -122,6 +226,9 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGen
       handleGenerate()
     }
   }
+
+  // Create preview component from parts
+  const PreviewComponent = previewParts ? createPartsPreviewComponent(previewParts) : null
 
   return (
     <group
@@ -229,171 +336,226 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGen
         decay={2}
       />
 
-      {/* Chat dialog */}
+      {/* Chat dialog + preview */}
       {dialogOpen && (
         <Html position={[0, 2.5, 0]} center zIndexRange={[100, 110]}>
           <div
             style={{
-              width: '320px',
-              background: 'rgba(10, 10, 30, 0.95)',
-              border: '1px solid rgba(0, 255, 204, 0.4)',
-              borderRadius: '16px',
-              padding: '20px',
-              fontFamily: 'system-ui, sans-serif',
-              color: '#fff',
-              boxShadow: '0 0 30px rgba(0, 255, 204, 0.15)',
+              display: 'flex',
+              gap: '16px',
+              alignItems: 'flex-start',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#00ffcc' }}>
-                🔧 Prop Maker
-              </span>
-              <button
-                onClick={() => setDialogOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#888',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  padding: '0 4px',
-                }}
-              >
-                ✕
-              </button>
-            </div>
-            <p style={{ fontSize: '13px', color: '#aaa', margin: '0 0 16px 0', lineHeight: 1.5 }}>
-              Describe the prop you want to create. The AI fabricator will generate a 3D object for your world.
-            </p>
+            {/* Main dialog */}
+            <div
+              style={{
+                width: '320px',
+                background: 'rgba(10, 10, 30, 0.95)',
+                border: '1px solid rgba(0, 255, 204, 0.4)',
+                borderRadius: '16px',
+                padding: '20px',
+                fontFamily: 'system-ui, sans-serif',
+                color: '#fff',
+                boxShadow: '0 0 30px rgba(0, 255, 204, 0.15)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontSize: '16px', fontWeight: 700, color: '#00ffcc' }}>
+                  🔧 Prop Maker
+                </span>
+                <button
+                  onClick={() => setDialogOpen(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#888',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    padding: '0 4px',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <p style={{ fontSize: '13px', color: '#aaa', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+                Describe the prop you want to create. The AI fabricator will generate a 3D object for your world.
+              </p>
 
-            {/* Example prompts toggle */}
-            <div style={{ marginBottom: '10px' }}>
-              <button
-                onClick={() => setShowExamples(!showExamples)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#00ffcc',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  padding: 0,
-                  textDecoration: 'underline',
-                  opacity: 0.8,
-                }}
-              >
-                {showExamples ? 'Hide examples ▴' : 'Show example prompts ▾'}
-              </button>
-              {showExamples && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-                  {examplePrompts.map((prompt) => (
+              {/* Example prompts toggle */}
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  onClick={() => setShowExamples(!showExamples)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#00ffcc',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    padding: 0,
+                    textDecoration: 'underline',
+                    opacity: 0.8,
+                  }}
+                >
+                  {showExamples ? 'Hide examples ▴' : 'Show example prompts ▾'}
+                </button>
+                {showExamples && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                    {examplePrompts.map((prompt) => (
+                      <button
+                        key={prompt}
+                        onClick={() => { setInputText(prompt); setShowExamples(false) }}
+                        style={{
+                          background: 'rgba(0, 255, 204, 0.1)',
+                          border: '1px solid rgba(0, 255, 204, 0.25)',
+                          borderRadius: '12px',
+                          padding: '4px 10px',
+                          color: '#aaa',
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Input row */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="e.g. A glowing mushroom lamp..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isGenerating}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(0, 255, 204, 0.3)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    color: '#fff',
+                    fontSize: '13px',
+                    outline: 'none',
+                    opacity: isGenerating ? 0.5 : 1,
+                  }}
+                />
+                <button
+                  onClick={() => handleGenerate()}
+                  disabled={isGenerating || !inputText.trim()}
+                  style={{
+                    background: isGenerating
+                      ? 'linear-gradient(135deg, #666, #444)'
+                      : 'linear-gradient(135deg, #00ffcc, #0f3460)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    color: '#fff',
+                    fontWeight: 600,
+                    cursor: isGenerating ? 'wait' : 'pointer',
+                    fontSize: '13px',
+                    minWidth: '70px',
+                  }}
+                >
+                  {isGenerating ? '⏳' : 'Create'}
+                </button>
+              </div>
+
+              {/* Status messages */}
+              {isGenerating && (
+                <div style={{ marginTop: '10px', fontSize: '12px', color: '#ffd700', textAlign: 'center', animation: 'pulse 1.5s ease-in-out infinite' }}>
+                  <div style={{ display: 'inline-block', animation: 'spin 2s linear infinite' }}>⚙️</div>
+                  {' '}Fabricating prop...
+                  <style>{`
+                    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+                    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                  `}</style>
+                </div>
+              )}
+              {successMessage && !isGenerating && (
+                <div style={{ marginTop: '10px', fontSize: '12px', color: '#00ffcc', textAlign: 'center' }}>
+                  {successMessage}
+                </div>
+              )}
+              {error && !isGenerating && !previewParts && (
+                <div style={{ marginTop: '10px', fontSize: '12px', color: '#e94560', textAlign: 'center' }}>
+                  ❌ {error}
+                  <div style={{ marginTop: '6px' }}>
                     <button
-                      key={prompt}
-                      onClick={() => { setInputText(prompt); setShowExamples(false) }}
+                      onClick={handleRetry}
                       style={{
-                        background: 'rgba(0, 255, 204, 0.1)',
-                        border: '1px solid rgba(0, 255, 204, 0.25)',
-                        borderRadius: '12px',
-                        padding: '4px 10px',
-                        color: '#aaa',
+                        background: 'rgba(233, 69, 96, 0.2)',
+                        border: '1px solid rgba(233, 69, 96, 0.4)',
+                        borderRadius: '6px',
+                        padding: '4px 12px',
+                        color: '#e94560',
                         fontSize: '11px',
                         cursor: 'pointer',
                       }}
                     >
-                      {prompt}
+                      🔄 Retry
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Generation method badge */}
+              {previewParts && previewMethod && (
+                <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}>
+                  <span style={{
+                    background: previewMethod === 'ai' ? 'rgba(0, 255, 204, 0.15)' : 'rgba(255, 215, 0, 0.15)',
+                    border: `1px solid ${previewMethod === 'ai' ? 'rgba(0, 255, 204, 0.3)' : 'rgba(255, 215, 0, 0.3)'}`,
+                    borderRadius: '12px',
+                    padding: '2px 10px',
+                    fontSize: '11px',
+                    color: previewMethod === 'ai' ? '#00ffcc' : '#ffd700',
+                  }}>
+                    {previewMethod === 'ai' ? '🤖 AI Generated' : '📐 Template Generated'}
+                  </span>
+                </div>
+              )}
+
+              {/* History */}
+              {generatedProps.length > 0 && (
+                <div style={{ marginTop: '14px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px' }}>
+                  <div style={{ fontSize: '11px', color: '#666', marginBottom: '6px' }}>Recent props:</div>
+                  {generatedProps.map((prop, i) => (
+                    <div
+                      key={`${prop.filename}-${prop.timestamp}`}
+                      style={{
+                        fontSize: '12px',
+                        color: '#aaa',
+                        padding: '3px 0',
+                        opacity: 1 - i * 0.1,
+                      }}
+                    >
+                      📦 {prop.name} <span style={{ color: '#555', fontSize: '10px' }}>({prop.filename})</span>
+                    </div>
                   ))}
                 </div>
               )}
+
+              <div style={{ marginTop: '12px', fontSize: '11px', color: '#666', textAlign: 'center' }}>
+                ⚡ Powered by AI subagent
+              </div>
             </div>
 
-            {/* Input row */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input
-                type="text"
-                placeholder="e.g. A glowing mushroom lamp..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isGenerating}
-                style={{
-                  flex: 1,
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(0, 255, 204, 0.3)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  color: '#fff',
-                  fontSize: '13px',
-                  outline: 'none',
-                  opacity: isGenerating ? 0.5 : 1,
-                }}
+            {/* Preview Panel - shown when we have generated output */}
+            {(previewParts || isGenerating) && (
+              <PreviewPanel
+                PropComponent={PreviewComponent}
+                componentName={previewName || 'Generating...'}
+                renderError={renderError}
+                onApprove={handleApprove}
+                onRegenerate={handleRegenerate}
+                onRetry={handleRetry}
+                isGenerating={isGenerating}
+                isSaving={isSaving}
               />
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || !inputText.trim()}
-                style={{
-                  background: isGenerating
-                    ? 'linear-gradient(135deg, #666, #444)'
-                    : 'linear-gradient(135deg, #00ffcc, #0f3460)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 14px',
-                  color: '#fff',
-                  fontWeight: 600,
-                  cursor: isGenerating ? 'wait' : 'pointer',
-                  fontSize: '13px',
-                  minWidth: '70px',
-                }}
-              >
-                {isGenerating ? '⏳' : 'Create'}
-              </button>
-            </div>
-
-            {/* Status messages */}
-            {isGenerating && (
-              <div style={{ marginTop: '10px', fontSize: '12px', color: '#ffd700', textAlign: 'center', animation: 'pulse 1.5s ease-in-out infinite' }}>
-                <div style={{ display: 'inline-block', animation: 'spin 2s linear infinite' }}>⚙️</div>
-                {' '}Fabricating prop...
-                <style>{`
-                  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-                  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                `}</style>
-              </div>
             )}
-            {successMessage && !isGenerating && (
-              <div style={{ marginTop: '10px', fontSize: '12px', color: '#00ffcc', textAlign: 'center' }}>
-                {successMessage}
-              </div>
-            )}
-            {error && !isGenerating && (
-              <div style={{ marginTop: '10px', fontSize: '12px', color: '#e94560', textAlign: 'center' }}>
-                ❌ {error}
-              </div>
-            )}
-
-            {/* History */}
-            {generatedProps.length > 0 && (
-              <div style={{ marginTop: '14px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px' }}>
-                <div style={{ fontSize: '11px', color: '#666', marginBottom: '6px' }}>Recent props:</div>
-                {generatedProps.map((prop, i) => (
-                  <div
-                    key={`${prop.filename}-${prop.timestamp}`}
-                    style={{
-                      fontSize: '12px',
-                      color: '#aaa',
-                      padding: '3px 0',
-                      opacity: 1 - i * 0.1,
-                    }}
-                  >
-                    📦 {prop.name} <span style={{ color: '#555', fontSize: '10px' }}>({prop.filename})</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div style={{ marginTop: '12px', fontSize: '11px', color: '#666', textAlign: 'center' }}>
-              ⚡ Powered by AI subagent
-            </div>
           </div>
         </Html>
       )}

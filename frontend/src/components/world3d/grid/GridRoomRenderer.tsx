@@ -158,19 +158,34 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
 // ─── Hover Glow Effect ──────────────────────────────────────────
 
 function HoverGlow({ position }: { position: [number, number, number] }) {
-  const ref = useRef<THREE.Mesh>(null!)
+  const ringRef = useRef<THREE.Mesh>(null!)
+  const glowRef = useRef<THREE.Mesh>(null!)
   
   useFrame((state) => {
-    if (!ref.current) return
-    const mat = ref.current.material as THREE.MeshBasicMaterial
-    mat.opacity = 0.08 + Math.sin(state.clock.getElapsedTime() * 3) * 0.04
+    const t = state.clock.getElapsedTime()
+    if (ringRef.current) {
+      const mat = ringRef.current.material as THREE.MeshBasicMaterial
+      mat.opacity = 0.35 + Math.sin(t * 3) * 0.15
+    }
+    if (glowRef.current) {
+      const mat = glowRef.current.material as THREE.MeshBasicMaterial
+      mat.opacity = 0.08 + Math.sin(t * 2) * 0.04
+    }
   })
   
   return (
-    <mesh ref={ref} position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-      <circleGeometry args={[0.7, 32]} />
-      <meshBasicMaterial color="#60a5fa" transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
-    </mesh>
+    <group>
+      {/* Pulsing outline ring */}
+      <mesh ref={ringRef} position={[position[0], 0.03, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.6, 0.7, 32]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.35} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+      {/* Subtle inner glow */}
+      <mesh ref={glowRef} position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.65, 32]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+    </group>
   )
 }
 
@@ -438,11 +453,16 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     const obj = e.eventObject
     if (obj?.userData?.propKey) {
       setHoveredPropKey(obj.userData.propKey)
-      document.body.style.cursor = 'pointer'
+      // Show grab cursor when hovering a movable prop (or pointer if already moving)
+      if (isMoving) {
+        document.body.style.cursor = isDragging ? 'grabbing' : 'grab'
+      } else {
+        document.body.style.cursor = 'grab'
+      }
     } else if (obj?.userData?.debugPropKey) {
       setHoveredPropKey(obj.userData.debugPropKey)
     }
-  }, [])
+  }, [isMoving, isDragging])
 
   // Long-press handlers for prop selection and mouse drag
   const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -496,7 +516,9 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     // Don't cancel if we're dragging - the user might move outside the prop temporarily
     if (!isDragging) {
       cancelLongPress()
-      document.body.style.cursor = 'auto'
+      if (!isMoving) {
+        document.body.style.cursor = 'auto'
+      }
     }
     // Clear hover
     const obj = e.eventObject
@@ -504,7 +526,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     if (key) {
       setHoveredPropKey((prev) => prev === key ? null : prev)
     }
-  }, [cancelLongPress, isDragging])
+  }, [cancelLongPress, isDragging, isMoving])
 
   // Build list of prop instances from grid (memoized per blueprint)
   const propInstances = useMemo(() => {
