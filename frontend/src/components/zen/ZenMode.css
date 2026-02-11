@@ -359,7 +359,7 @@
   padding: 4px 8px;
   border: 1px solid var(--zen-border);
   border-radius: 6px;
-  background: var(--zen-bg-elevated);
+  background: transparent;
   color: var(--zen-fg-muted);
   font-size: 11px;
   cursor: pointer;
@@ -368,7 +368,7 @@
 
 .zen-btn-thinking:hover {
   background: var(--zen-bg-hover);
-  border-color: var(--zen-accent-muted);
+  color: var(--zen-fg);
 }
 
 .zen-btn-thinking-active {
