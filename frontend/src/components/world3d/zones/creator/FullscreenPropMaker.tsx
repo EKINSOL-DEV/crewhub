@@ -1053,14 +1053,14 @@ const fullscreenPropMakerStyles = `
 .fpm-preview-name {
   position: absolute;
   top: 12px; left: 12px;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--zen-bg-elevated, rgba(30, 30, 50, 0.85));
   backdrop-filter: blur(4px);
   border: 1px solid var(--zen-border, #2a2a4a);
   border-radius: 8px;
   padding: 6px 12px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--zen-accent, #6366f1);
+  color: var(--zen-fg, #e2e2e8);
 }
 
 /* History */
