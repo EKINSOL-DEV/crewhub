@@ -9,6 +9,7 @@ import { api } from '@/lib/api'
 import type { SessionMessage, SessionContentBlock } from '@/lib/api'
 import type { ActiveTask } from '@/hooks/useActiveTasks'
 import type { CrewSession } from '@/lib/api'
+import { FullscreenDetailView } from './FullscreenDetailView'
 
 interface ActivityEvent {
   id: string
@@ -199,6 +200,7 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'info' | 'history'>('info')
+  const [fullscreen, setFullscreen] = useState(false)
 
   const statusConfig = getStatusConfig(task.status)
 
@@ -278,8 +280,22 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
             {statusConfig.dot} {statusConfig.label}
           </span>
         </div>
-        <button className="zen-sd-close" onClick={onClose} title="Close">✕</button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button className="zen-sd-close" onClick={() => setFullscreen(true)} title="Fullscreen" style={{ fontSize: 13 }}>⛶</button>
+          <button className="zen-sd-close" onClick={onClose} title="Close">✕</button>
+        </div>
       </div>
+
+      {/* Fullscreen overlay */}
+      {fullscreen && (
+        <FullscreenDetailView
+          type="activity"
+          task={task}
+          session={session}
+          events={events}
+          onClose={() => setFullscreen(false)}
+        />
+      )}
 
       {/* Tab bar */}
       <div className="zen-sd-tabs">

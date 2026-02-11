@@ -6,6 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { api } from '@/lib/api'
 import type { SessionMessage, SessionContentBlock, CrewSession } from '@/lib/api'
+import { FullscreenDetailView } from './FullscreenDetailView'
 
 interface ZenSessionDetailPanelProps {
   session: CrewSession
@@ -168,6 +169,7 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'meta' | 'history'>('meta')
+  const [fullscreen, setFullscreen] = useState(false)
 
   // Fetch history
   useEffect(() => {
@@ -241,8 +243,20 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
           <span className="zen-sd-header-name">{displayName}</span>
           <span className="zen-sd-header-key">{session.key}</span>
         </div>
-        <button className="zen-sd-close" onClick={onClose} title="Close">✕</button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button className="zen-sd-close" onClick={() => setFullscreen(true)} title="Fullscreen" style={{ fontSize: 13 }}>⛶</button>
+          <button className="zen-sd-close" onClick={onClose} title="Close">✕</button>
+        </div>
       </div>
+
+      {/* Fullscreen overlay */}
+      {fullscreen && (
+        <FullscreenDetailView
+          type="session"
+          session={session}
+          onClose={() => setFullscreen(false)}
+        />
+      )}
 
       {/* Tab bar */}
       <div className="zen-sd-tabs">
