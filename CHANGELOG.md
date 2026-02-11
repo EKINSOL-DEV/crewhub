@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.0] - 2026-02-11
 
+### 🎯 PropMaker Quality Phase 1
+
+- **Material Strategy Fix** — Switched from meshToonMaterial to meshStandardMaterial + flatShading (matches showcase quality)
+- **Rewritten AI Prompt** — 5-layer composition model, saturated color palettes, micro-story approach, mandatory animation & emissive rules
+- **Post-Processor** — Auto-fixes generated props: enforces flatShading, injects animation if missing, replaces toon materials, quality scoring (0-100)
+- **Showcase Props Library** — 10 high-quality reference props available via API (`/api/creator/showcase-props`)
+- **Quality Validation** — Every generated prop checked for mesh count, animation, emissive, material correctness
+
 ### ✨ Major Features
 
 - **Fullscreen Detail Views** — Activity and Sessions panels now have fullscreen mode (30/70 split) with history controls (filter, sort, autoscroll, up to 500 messages)

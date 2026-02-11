@@ -36,6 +36,18 @@ class GeneratePropRequest(BaseModel):
     model: str = DEFAULT_MODEL
 
 
+class PropRefinementRequest(BaseModel):
+    propId: str
+    changes: dict = {}  # colorChanges, addComponents, animation, material
+
+
+class PropRefinementResponse(BaseModel):
+    propId: str
+    code: str
+    diagnostics: list[str] = []
+    refinementOptions: dict = {}
+
+
 class PropPart(BaseModel):
     type: str  # "box", "cylinder", "sphere", "cone", "torus"
     position: list[float]  # [x, y, z]
@@ -805,13 +817,39 @@ async def _stream_prop_generation(request: Request, prompt: str, name: str, mode
         ai_parts = _parse_ai_parts(raw_text)
         code = _strip_parts_block(raw_text)
 
-        if 'useToonMaterialProps' in code and 'export function' in code:
-            corrections_collected = []
-            diagnostics_collected = ["✅ Post-processing: no corrections needed"]
+        if 'export function' in code and ('<mesh' in code or 'mesh' in code.lower()):
+            # Run post-processor to enhance quality
+            from ..services.prop_post_processor import enhance_generated_prop, validate_prop_quality
+            
+            pp_result = enhance_generated_prop(code)
+            code = pp_result.code
+            corrections_collected = pp_result.corrections
+            diagnostics_collected = []
+            
+            if pp_result.corrections:
+                diagnostics_collected.append(f"✅ Post-processor applied {len(pp_result.corrections)} fixes")
+                for fix in pp_result.corrections:
+                    diagnostics_collected.append(f"  → {fix}")
+            else:
+                diagnostics_collected.append("✅ Post-processing: no corrections needed")
+            
+            if pp_result.warnings:
+                for warn in pp_result.warnings:
+                    diagnostics_collected.append(f"⚠️ {warn}")
+            
+            diagnostics_collected.append(f"📊 Quality score: {pp_result.quality_score}/100")
+            
             for diag in diagnostics_collected:
                 yield sse_event("correction", {"message": diag})
 
+            # Re-parse parts from potentially modified code
+            ai_parts_new = _parse_ai_parts(code)
+            if ai_parts_new:
+                ai_parts = ai_parts_new
             parts = ai_parts if ai_parts else _extract_parts(prompt)
+            
+            # Validate final quality
+            validation = validate_prop_quality(code)
             
             # Save to history
             _add_generation_record({
@@ -821,6 +859,7 @@ async def _stream_prop_generation(request: Request, prompt: str, name: str, mode
                 "corrections": corrections_collected, "diagnostics": diagnostics_collected,
                 "parts": parts, "code": code,
                 "createdAt": datetime.utcnow().isoformat(), "error": None,
+                "qualityScore": pp_result.quality_score, "validation": validation,
             })
             
             yield sse_event("complete", {
@@ -832,6 +871,8 @@ async def _stream_prop_generation(request: Request, prompt: str, name: str, mode
                 "model": model_key,
                 "modelLabel": model_label,
                 "generationId": gen_id,
+                "qualityScore": pp_result.quality_score,
+                "validation": validation,
             })
         else:
             logger.warning(f"AI output invalid for {name}, using template fallback")
@@ -942,7 +983,11 @@ async def generate_prop(req: GeneratePropRequest):
                         raw = re.sub(r'\n```\s*$', '', raw)
                         ai_parts = _parse_ai_parts(raw)
                         code = _strip_parts_block(raw)
-                        if 'useToonMaterialProps' in code and 'export function' in code:
+                        if 'export function' in code and '<mesh' in code:
+                            # Run post-processor
+                            from ..services.prop_post_processor import enhance_generated_prop
+                            pp_result = enhance_generated_prop(code)
+                            code = pp_result.code
                             method = "ai"
                         else:
                             code = None
@@ -1003,6 +1048,43 @@ async def list_saved_props():
     return [SavedPropResponse(**p) for p in _load_saved_props()]
 
 
+# ─── Showcase Props Library ───────────────────────────────────────
+SHOWCASE_PROPS_DIR = Path(__file__).parent.parent.parent / "data" / "showcase_props"
+
+
+@router.get("/showcase-props")
+async def list_showcase_props():
+    """List showcase props as high-quality examples."""
+    props = []
+    if SHOWCASE_PROPS_DIR.exists():
+        for f in sorted(SHOWCASE_PROPS_DIR.glob("*.tsx")):
+            name = f.stem
+            code = f.read_text()
+            mesh_count = len(re.findall(r'<mesh\b', code))
+            has_animation = 'useFrame' in code
+            has_emissive = 'emissive=' in code
+            props.append({
+                "name": name,
+                "filename": f.name,
+                "code": code,
+                "isShowcase": True,
+                "meshCount": mesh_count,
+                "hasAnimation": has_animation,
+                "hasEmissive": has_emissive,
+            })
+    return {"props": props, "count": len(props)}
+
+
+@router.get("/showcase-props/{name}")
+async def get_showcase_prop(name: str):
+    """Get a specific showcase prop by name."""
+    path = SHOWCASE_PROPS_DIR / f"{name}.tsx"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"Showcase prop '{name}' not found")
+    code = path.read_text()
+    return {"name": name, "filename": path.name, "code": code, "isShowcase": True}
+
+
 @router.delete("/saved-props/{prop_id}")
 async def delete_saved_prop(prop_id: str):
     props = _load_saved_props()
@@ -1011,3 +1093,240 @@ async def delete_saved_prop(prop_id: str):
         raise HTTPException(status_code=404, detail="Prop not found")
     _save_props_to_disk(new_props)
     return {"status": "deleted", "propId": prop_id}
+
+
+# ─── Phase 2: Multi-Pass & Refinement ───────────────────────────
+
+@router.post("/props/refine", response_model=PropRefinementResponse)
+async def refine_prop(req: PropRefinementRequest):
+    """Apply user refinements to a generated prop."""
+    from ..services.multi_pass_generator import MultiPassGenerator
+
+    # Find the prop in history
+    history = _load_generation_history()
+    record = None
+    for r in history:
+        if r.get("id") == req.propId or r.get("name", "").replace(
+            r.get("name", "")[0:1].upper() + r.get("name", "")[1:], ""
+        ).lower().replace(" ", "-") == req.propId:
+            record = r
+            break
+
+    if not record or not record.get("code"):
+        raise HTTPException(status_code=404, detail="Prop not found or has no code")
+
+    generator = MultiPassGenerator()
+    refined_code, diagnostics = generator.apply_refinement(record["code"], req.changes)
+    options = generator.get_refinement_options(record.get("prompt", ""))
+
+    return PropRefinementResponse(
+        propId=req.propId,
+        code=refined_code,
+        diagnostics=diagnostics,
+        refinementOptions=options,
+    )
+
+
+@router.get("/props/refinement-options")
+async def get_refinement_options(prompt: str = Query("", min_length=0)):
+    """Get available refinement options for a prop description."""
+    from ..services.multi_pass_generator import MultiPassGenerator
+
+    generator = MultiPassGenerator()
+    return generator.get_refinement_options(prompt)
+
+
+# ─── Phase 3: Advanced Features ─────────────────────────────────
+
+class IteratePropRequest(BaseModel):
+    code: str
+    feedback: str
+    componentName: str = "CustomProp"
+
+
+class StyleTransferRequest(BaseModel):
+    code: str
+    styleSource: str
+    componentName: str = "CustomProp"
+
+
+class HybridGenerateRequest(BaseModel):
+    prompt: str
+    templateBase: Optional[str] = None
+    model: str = DEFAULT_MODEL
+
+
+class CrossbreedRequest(BaseModel):
+    parentACode: str
+    parentBCode: str
+    parentAName: str = "ParentA"
+    parentBName: str = "ParentB"
+    componentName: str = "HybridProp"
+    traits: list[str] = []
+
+
+class QualityScoreRequest(BaseModel):
+    code: str
+
+
+@router.post("/props/iterate")
+async def iterate_prop(req: IteratePropRequest):
+    """Iterate on a prop with natural language feedback."""
+    from ..services.prop_iterator import PropIterator
+    from ..services.prop_quality_scorer import QualityScorer
+
+    try:
+        iterator = PropIterator()
+        improved_code, feedback_type = await iterator.iterate_prop(
+            original_code=req.code,
+            feedback=req.feedback,
+            component_name=req.componentName,
+        )
+
+        scorer = QualityScorer()
+        score = scorer.score_prop(improved_code)
+
+        return {
+            "code": improved_code,
+            "feedbackType": feedback_type,
+            "qualityScore": score.to_dict(),
+        }
+    except Exception as e:
+        logger.error(f"Iteration failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/props/style-transfer")
+async def apply_style_transfer(req: StyleTransferRequest):
+    """Apply a showcase style to a generated prop."""
+    from ..services.style_transfer import StyleTransfer
+    from ..services.prop_quality_scorer import QualityScorer
+
+    try:
+        transfer = StyleTransfer()
+        styled_code = await transfer.apply_style(
+            generated_code=req.code,
+            style_source=req.styleSource,
+            component_name=req.componentName,
+        )
+
+        scorer = QualityScorer()
+        score = scorer.score_prop(styled_code)
+
+        return {
+            "code": styled_code,
+            "styleSource": req.styleSource,
+            "qualityScore": score.to_dict(),
+        }
+    except Exception as e:
+        logger.error(f"Style transfer failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/props/styles")
+async def list_styles():
+    """List available styles for transfer."""
+    from ..services.style_transfer import get_available_styles
+    return {"styles": get_available_styles()}
+
+
+@router.post("/props/hybrid-generate")
+async def hybrid_generate(req: HybridGenerateRequest):
+    """Generate a prop using hybrid AI + template approach."""
+    from ..services.hybrid_generator import HybridGenerator
+    from ..services.prop_quality_scorer import QualityScorer
+
+    name, filename = _prompt_to_filename(req.prompt.strip())
+
+    try:
+        generator = HybridGenerator()
+        code = await generator.generate_hybrid(
+            description=req.prompt,
+            component_name=name,
+            template_base=req.templateBase,
+        )
+
+        scorer = QualityScorer()
+        score = scorer.score_prop(code)
+
+        # Parse parts if available
+        ai_parts = _parse_ai_parts(code)
+        clean_code = _strip_parts_block(code)
+        parts = ai_parts if ai_parts else _extract_parts(req.prompt)
+
+        gen_id = str(_uuid_mod.uuid4())[:8]
+        _add_generation_record({
+            "id": gen_id, "prompt": req.prompt, "name": name,
+            "model": req.model, "modelLabel": "Hybrid",
+            "method": "hybrid" if req.templateBase else "ai-enhanced",
+            "fullPrompt": "", "toolCalls": [], "corrections": [],
+            "diagnostics": [f"Template: {req.templateBase or 'none'}"],
+            "parts": parts, "code": clean_code,
+            "createdAt": datetime.utcnow().isoformat(), "error": None,
+        })
+
+        return {
+            "name": name,
+            "filename": filename,
+            "code": clean_code,
+            "method": "hybrid" if req.templateBase else "ai-enhanced",
+            "parts": parts,
+            "qualityScore": score.to_dict(),
+            "generationId": gen_id,
+        }
+    except Exception as e:
+        logger.error(f"Hybrid generation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/props/templates")
+async def list_templates():
+    """List available template bases for hybrid generation."""
+    from ..services.hybrid_generator import HybridGenerator
+    generator = HybridGenerator()
+    return {"templates": generator.get_templates()}
+
+
+@router.post("/props/crossbreed")
+async def crossbreed_props(req: CrossbreedRequest):
+    """Crossbreed two props to create a hybrid offspring."""
+    from ..services.prop_genetics import PropGenetics
+    from ..services.prop_quality_scorer import QualityScorer
+
+    try:
+        genetics = PropGenetics()
+        offspring_code = await genetics.crossbreed(
+            parent_a_code=req.parentACode,
+            parent_b_code=req.parentBCode,
+            parent_a_name=req.parentAName,
+            parent_b_name=req.parentBName,
+            component_name=req.componentName,
+            traits=req.traits,
+        )
+
+        scorer = QualityScorer()
+        score = scorer.score_prop(offspring_code)
+
+        ai_parts = _parse_ai_parts(offspring_code)
+        clean_code = _strip_parts_block(offspring_code)
+
+        return {
+            "code": clean_code,
+            "name": req.componentName,
+            "parts": ai_parts or [],
+            "qualityScore": score.to_dict(),
+            "parents": [req.parentAName, req.parentBName],
+        }
+    except Exception as e:
+        logger.error(f"Crossbreeding failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/props/quality-score")
+async def score_prop_quality(req: QualityScoreRequest):
+    """Score prop code quality objectively."""
+    from ..services.prop_quality_scorer import QualityScorer
+
+    scorer = QualityScorer()
+    score = scorer.score_prop(req.code)
+    return score.to_dict()

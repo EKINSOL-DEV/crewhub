@@ -41,7 +41,7 @@ interface GenerationRecord {
   error: string | null
 }
 
-type TabId = 'generate' | 'history'
+type TabId = 'generate' | 'history' | 'advanced'
 
 interface FullscreenPropMakerProps {
   onClose: () => void

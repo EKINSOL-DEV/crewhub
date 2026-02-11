@@ -26,19 +26,19 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **3D World** | 6 | 1 | 1 | 3 | 1 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
-| **Creative** | 9 | 4 | 0 | 4 | 1 | 7 |
+| **Creative** | 11 | 5 | 0 | 5 | 1 | 8 |
 | **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **35** | **18** | **1** | **14** | **2** | **59** |
+| **TOTAL** | **37** | **19** | **1** | **15** | **2** | **60** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ███████████████████████████████              51% (18)
+Released:     ████████████████████████████████             51% (19)
 In Progress:  █                                             3% (1)
-Planned:      ████████████████████                         40% (14)
-Research:     ███                                           6% (2)
+Planned:      ████████████████████                         41% (15)
+Research:     ██                                            5% (2)
 ```
 
 ---
@@ -66,11 +66,13 @@ Research:     ███                                           6% (2)
 - ✅ Creator Zone MVP (PropMaker alpha - AI generation, history, model chooser UI)
 - ✅ Backend watchdog & auto-restart (Docker-based, crash logging, healthcheck)
 - ✅ Markdown viewer Phase 1-3 (view docs, fullscreen, TOC, editor with CodeMirror 6)
+- ✅ PropCreator Design Showcase (71 props across 7 categories with tab navigation)
 - 📋 Markdown viewer Phase 4 (Polish - search, bookmarks, breadcrumbs, favorites, light theme)
 
 ### v0.14.0
 - 📋 Zen Mode Standalone (separate app sharing code/DB/API with CrewHub - monorepo architecture)
 - 📋 Prop Delete (delete props from history with cascade warning for room placements)
+- 📋 PropMaker Quality Improvements (Phases 1-3: material fix, component library, iteration system, style transfer)
 
 ### v0.15.0
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
@@ -92,6 +94,7 @@ Research:     ███                                           6% (2)
 - Voice chat in first person mode
 - Agent Teams support (Anthropic extended context)
 - 📋 External 3D Generation APIs (Meshy.ai, etc. - alternative/fallback to AI code generation)
+- 📋 Prop Library with Ratings (evolved from design showcase - user ratings, favorites, search, categories)
 
 ### v0.19.0
 - 📋 Bot navigation to props via voice commands (spatial awareness + pathfinding)
@@ -173,14 +176,17 @@ Research:     ███                                           6% (2)
 | **Creator Zone** | ✅ | v0.13.0 | 1 | PropMaker alpha - AI generation, history tab, model chooser UI, thinking process view |
 | **PropMaker AI Streaming** | ✅ | v0.13.0 | 0 | Real-time streaming of AI thinking process during prop generation (SSE-based) |
 | **Prop Post-Processing** | ✅ | v0.13.0 | 0 | Auto-detect and fix orientation errors (vertical spines, upright text) with SSE transparency |
+| **PropCreator Design Showcase** | ✅ | v0.13.0 | 1 | 71 high-quality example props across 7 categories (General, Office, Tech, Creative, Gaming, Science, Workshop) with tab navigation |
 | **Prop Delete** | 📋 | v0.14.0 | 1 | Delete props from history with cascade warning (shows rooms where prop is placed) |
 | **Prop Library** | 📋 | v0.17.0 | 0 | RAG-based baseline library with 50-100+ templates, semantic search, learns from approved props |
 | **External 3D APIs** | 📋 | v0.18.0 | 0 | Integration with Meshy.ai and similar services for alternative/fallback 3D generation |
+| **Prop Library with Ratings** | 📋 | v0.18.0 | 0 | Evolved design showcase - categorized props (70+), user ratings, favorites, search & filter |
+| **PropMaker Quality** | 📋 | v0.14.0 | 3 | Phases 1-3: material fix, component library, multi-pass generation, iteration system, style transfer, hybrid generation |
 | **Prop Editor** | 📋 | v0.20.0 | 0 | Manual editing UI for generated props (position, rotation, scale, colors, mesh tweaks) |
 | **Modding System** | ✅ | v0.6.0 | 4 | Data-driven modding with Registry<T>, JSON blueprints |
 | **Pixel Avatars** | 🔬 | TBD | 1 | Pixel art bots as alternative to 3D geometric style |
 
-**Total:** 9 features • 7 docs • 4 released, 4 planned, 1 research
+**Total:** 11 features • 8 docs • 5 released, 5 planned, 1 research
 
 ---
 
@@ -204,4 +210,4 @@ Research:     ███                                           6% (2)
 
 ---
 
-*Generated from: 6 categories × 35 features × 59 documentation files*
+*Generated from: 6 categories × 37 features × 60 documentation files*
