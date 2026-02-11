@@ -4,7 +4,7 @@ import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { useDragState } from '@/contexts/DragDropContext'
 import { botPositionRegistry } from './Bot3D'
-import { getIsPropBeingMoved, getIsPropBeingDragged } from '@/hooks/usePropMovement'
+import { getIsPropBeingMoved, getIsPropBeingDragged, getIsLongPressPending } from '@/hooks/usePropMovement'
 import CameraControlsImpl from 'camera-controls'
 import * as THREE from 'three'
 
@@ -215,7 +215,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     if (!controls) return
     const propMoving = getIsPropBeingMoved()
     const propDragging = getIsPropBeingDragged()
-    const shouldDisable = propMoving || propDragging
+    const longPressPending = getIsLongPressPending()
+    const shouldDisable = propMoving || propDragging || longPressPending
     // Only update if changed to avoid unnecessary work
     if (shouldDisable && controls.enabled) {
       controls.enabled = false
@@ -243,8 +244,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return
-      // Don't move camera when a prop is selected for movement or being dragged
-      if (getIsPropBeingMoved() || getIsPropBeingDragged()) return
+      // Don't move camera when a prop is selected for movement, being dragged, or long-press pending
+      if (getIsPropBeingMoved() || getIsPropBeingDragged() || getIsLongPressPending()) return
       switch (e.code) {
         case 'KeyW': case 'ArrowUp':    _wasdKeys.forward = true; break
         case 'KeyS': case 'ArrowDown':  _wasdKeys.backward = true; break

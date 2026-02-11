@@ -13,6 +13,7 @@ const LONG_PRESS_MS = 600 // 600ms for long-press detection
 // Used by camera controllers to block WASD/mouse look when a prop is selected/dragged
 let _isPropBeingMoved = false
 let _isPropBeingDragged = false
+let _isLongPressPending = false
 
 /** Returns true if a prop is currently selected for movement */
 export function getIsPropBeingMoved(): boolean {
@@ -22,6 +23,11 @@ export function getIsPropBeingMoved(): boolean {
 /** Returns true if a prop is currently being dragged with the mouse */
 export function getIsPropBeingDragged(): boolean {
   return _isPropBeingDragged
+}
+
+/** Returns true if a long-press is pending (user holding down on a prop) */
+export function getIsLongPressPending(): boolean {
+  return _isLongPressPending
 }
 
 export type { PropPlacement }
@@ -110,6 +116,7 @@ export function usePropMovement({
       longPressTimer.current = null
     }
     pendingSelect.current = null
+    _isLongPressPending = false
   }, [])
 
   // Start long-press detection
@@ -124,8 +131,10 @@ export function usePropMovement({
     cancelLongPress()
     
     pendingSelect.current = { key, propId, gridX, gridZ, rotation, span }
+    _isLongPressPending = true
     
     longPressTimer.current = setTimeout(() => {
+      _isLongPressPending = false
       if (pendingSelect.current) {
         const { key, propId, gridX, gridZ, rotation, span } = pendingSelect.current
         setSelectedProp({
