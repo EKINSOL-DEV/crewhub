@@ -1,13 +1,13 @@
 /**
  * Fullscreen PropCreator Design Showcase
- * Grid gallery of 10 hand-crafted showcase props with detail view.
+ * 211 props across 7 categories with category tabs, pagination, and viewport-fit layout.
  */
 
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'
-import { showcaseProps, type ShowcaseProp } from './showcaseProps'
+import { showcaseCategories, showcaseProps, type ShowcaseProp, type ShowcaseCategory } from './showcaseProps'
 
 // ── Prop source code (loaded on demand) ───────────────────────
 
@@ -16,7 +16,6 @@ const propSourceCache: Record<string, string> = {}
 async function loadPropSource(id: string): Promise<string> {
   if (propSourceCache[id]) return propSourceCache[id]
   try {
-    // Try fetching from backend
     const res = await fetch(`/api/creator/showcase-source/${id}`)
     if (res.ok) {
       const data = await res.json()
@@ -40,7 +39,6 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
   const [codeContent, setCodeContent] = useState('')
   const [codeLoading, setCodeLoading] = useState(false)
 
-  // Escape to close / back
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -53,7 +51,6 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
     return () => document.removeEventListener('keydown', handler)
   }, [onClose, selectedProp, showCode])
 
-  // Lock body scroll
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -82,7 +79,6 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
 
   const overlay = (
     <div className="psc-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      {/* Top bar */}
       <div className="psc-topbar">
         <div className="psc-topbar-left">
           <button className="psc-back-btn" onClick={() => {
@@ -98,11 +94,11 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
           <span className="psc-topbar-title">
             {showCode ? `${selectedProp?.name} — Source` : selectedProp ? selectedProp.name : 'PropCreator Design Showcase'}
           </span>
+          <span className="psc-topbar-count">{showcaseProps.length} props</span>
         </div>
         <button className="psc-close" onClick={onClose} title="Close (Esc)">✕</button>
       </div>
 
-      {/* Content */}
       <div className="psc-content">
         {showCode && selectedProp ? (
           <CodeViewContent
@@ -118,8 +114,8 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
             onViewCode={() => handleViewCode(selectedProp)}
           />
         ) : (
-          <GridView
-            props={showcaseProps}
+          <CategoryGridView
+            categories={showcaseCategories}
             onSelect={setSelectedProp}
           />
         )}
@@ -132,51 +128,70 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
   return createPortal(overlay, document.body)
 }
 
-// ── Grid View ─────────────────────────────────────────────────
+// ── Category Grid View (with tabs + pagination, viewport-fit) ─
 
-const PROPS_PER_PAGE = 20
+const PROPS_PER_PAGE = 6
 
-function GridView({ props, onSelect }: { props: ShowcaseProp[]; onSelect: (p: ShowcaseProp) => void }) {
+function CategoryGridView({ categories, onSelect }: {
+  categories: ShowcaseCategory[]
+  onSelect: (p: ShowcaseProp) => void
+}) {
+  const [activeTab, setActiveTab] = useState(categories[0].id)
   const [currentPage, setCurrentPage] = useState(0)
-  const totalPages = Math.ceil(props.length / PROPS_PER_PAGE)
+
+  const activeCategory = categories.find(c => c.id === activeTab)!
+  const totalPages = Math.ceil(activeCategory.props.length / PROPS_PER_PAGE)
   const startIdx = currentPage * PROPS_PER_PAGE
-  const endIdx = startIdx + PROPS_PER_PAGE
-  const visibleProps = props.slice(startIdx, endIdx)
+  const visibleProps = activeCategory.props.slice(startIdx, startIdx + PROPS_PER_PAGE)
+
+  useEffect(() => { setCurrentPage(0) }, [activeTab])
 
   return (
-    <div className="psc-grid-wrapper">
-      <div className="psc-grid-header">
-        <h2 className="psc-grid-title">✨ {props.length} Hand-Crafted Props</h2>
-        <p className="psc-grid-subtitle">
-          Each prop demonstrates different Three.js techniques. Click any prop to explore its details and view the source code.
-        </p>
-      </div>
-      <div className="psc-grid">
-        {visibleProps.map((prop) => (
-          <ShowcaseCard key={prop.id} prop={prop} onClick={() => onSelect(prop)} />
+    <div className="psc-category-view">
+      {/* Category Tabs */}
+      <div className="psc-tabs">
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            className={`psc-tab ${activeTab === cat.id ? 'psc-tab-active' : ''}`}
+            onClick={() => setActiveTab(cat.id)}
+          >
+            <span className="psc-tab-icon">{cat.icon}</span>
+            <span className="psc-tab-name">{cat.name}</span>
+            <span className="psc-tab-count">({cat.props.length})</span>
+          </button>
         ))}
       </div>
-      {props.length > PROPS_PER_PAGE && (
-        <div className="psc-pagination">
-          <button
-            className="psc-btn psc-btn-secondary"
-            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-            disabled={currentPage === 0}
-          >
-            ← Previous
-          </button>
-          <span className="psc-pagination-info">
-            Page {currentPage + 1} of {totalPages} ({visibleProps.length} props)
-          </span>
-          <button
-            className="psc-btn psc-btn-secondary"
-            onClick={() => setCurrentPage(p => p + 1)}
-            disabled={endIdx >= props.length}
-          >
-            Next →
-          </button>
+
+      {/* Grid - fills available space */}
+      <div className="psc-grid-area">
+        <div className="psc-grid">
+          {visibleProps.map((prop) => (
+            <ShowcaseCard key={prop.id} prop={prop} onClick={() => onSelect(prop)} />
+          ))}
         </div>
-      )}
+      </div>
+
+      {/* Pagination - pinned to bottom */}
+      <div className="psc-pagination">
+        <button
+          className="psc-btn psc-btn-secondary"
+          onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+          disabled={currentPage === 0}
+        >
+          ← Previous
+        </button>
+        <span className="psc-pagination-info">
+          Page {currentPage + 1} of {totalPages} • {activeCategory.props.length} props in {activeCategory.name}
+        </span>
+        <button
+          className="psc-btn psc-btn-secondary"
+          onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+          disabled={currentPage >= totalPages - 1}
+        >
+          Next →
+        </button>
+      </div>
     </div>
   )
 }
@@ -195,23 +210,19 @@ function ShowcaseCard({ prop, onClick }: { prop: ShowcaseProp; onClick: () => vo
       onMouseLeave={() => setHovered(false)}
     >
       <div className="psc-card-preview">
-        <Canvas camera={{ position: [0, 0, 3.5], fov: 50 }}>
-          <ambientLight intensity={0.6} />
-          <pointLight position={[5, 5, 5]} intensity={0.8} />
+        <Canvas camera={{ position: [0, 0.5, 3], fov: 35 }}>
+          <ambientLight intensity={0.4} />
+          <directionalLight position={[3, 5, 3]} intensity={1} />
+          <pointLight position={[-2, 2, 2]} intensity={0.5} color={prop.color} />
           <Suspense fallback={null}>
             <Comp />
           </Suspense>
           <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={hovered ? 4 : 1.5} />
         </Canvas>
       </div>
-      <div className="psc-card-info">
-        <div className="psc-card-name">{prop.name}</div>
-        <div className="psc-card-meta">
-          <span className="psc-card-category">{prop.category}</span>
-          <span className="psc-card-score">⭐ {prop.qualityScore}/100</span>
-        </div>
+      <div className="psc-card-label" style={{ color: hovered ? prop.color : '#aaaacc' }}>
+        {prop.name}
       </div>
-      <div className="psc-card-lines">{prop.codeLines} lines</div>
     </div>
   )
 }
@@ -241,22 +252,7 @@ function DetailView({ prop, onBack: _onBack, onViewCode }: {
       </div>
       <div className="psc-detail-info">
         <h2 className="psc-detail-name">{prop.name}</h2>
-        <div className="psc-detail-badges">
-          <span className="psc-badge psc-badge-category">{prop.category}</span>
-          <span className="psc-badge psc-badge-score">⭐ {prop.qualityScore}/100</span>
-          <span className="psc-badge psc-badge-lines">📄 {prop.codeLines} lines</span>
-        </div>
-        <p className="psc-detail-desc">{prop.description}</p>
-
-        <div className="psc-detail-section">
-          <h3 className="psc-detail-section-title">🔧 Techniques Used</h3>
-          <ul className="psc-detail-techniques">
-            {prop.techniques.map((t, i) => (
-              <li key={i}>{t}</li>
-            ))}
-          </ul>
-        </div>
-
+        <div className="psc-detail-color-swatch" style={{ background: prop.color }} />
         <div className="psc-detail-actions">
           <button className="psc-btn psc-btn-primary" onClick={onViewCode}>
             📜 View Source Code
@@ -317,6 +313,7 @@ const showcaseStyles = `
   animation: psc-fadein 0.25s ease-out;
   font-family: system-ui, -apple-system, sans-serif;
   color: #e0e0e0;
+  overflow: hidden;
 }
 @keyframes psc-fadein { from { opacity: 0; } to { opacity: 1; } }
 
@@ -325,11 +322,13 @@ const showcaseStyles = `
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background: rgba(10, 10, 25, 0.9);
   border-bottom: 1px solid rgba(255, 215, 0, 0.15);
   flex-shrink: 0;
   backdrop-filter: blur(8px);
+  height: 44px;
+  box-sizing: border-box;
 }
 .psc-topbar-left { flex: 1; }
 .psc-topbar-center {
@@ -337,8 +336,9 @@ const showcaseStyles = `
   align-items: center;
   gap: 8px;
 }
-.psc-topbar-icon { font-size: 18px; }
+.psc-topbar-icon { font-size: 16px; }
 .psc-topbar-title { font-size: 14px; font-weight: 600; color: #ffd700; }
+.psc-topbar-count { font-size: 11px; color: #666; }
 .psc-back-btn {
   background: transparent;
   border: 1px solid rgba(255, 215, 0, 0.25);
@@ -360,112 +360,138 @@ const showcaseStyles = `
 }
 .psc-close:hover { color: #e0e0e0; background: rgba(255, 255, 255, 0.05); }
 
-/* Content */
+/* Content fills remaining space */
 .psc-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
-.psc-content::-webkit-scrollbar { width: 6px; }
-.psc-content::-webkit-scrollbar-thumb { background: rgba(255, 215, 0, 0.2); border-radius: 3px; }
 
-/* Grid View */
-.psc-grid-wrapper {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
+/* Category View - full viewport fit, no scroll */
+.psc-category-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
-.psc-grid-header {
-  text-align: center;
-  margin-bottom: 32px;
+
+/* Tabs */
+.psc-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 16px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  justify-content: center;
+  background: rgba(10, 10, 25, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
-.psc-grid-title {
-  font-size: 28px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #ffd700, #ffaa00);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 8px;
+.psc-tabs::-webkit-scrollbar { height: 0; }
+.psc-tab {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: #6666aa;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.psc-grid-subtitle {
-  font-size: 14px;
-  color: #888;
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
+.psc-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #9999cc;
+}
+.psc-tab-active {
+  background: linear-gradient(135deg, #3344aa, #4466cc) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 12px rgba(50, 80, 200, 0.3);
+}
+.psc-tab-icon { font-size: 14px; }
+.psc-tab-name {}
+.psc-tab-count { font-size: 10px; opacity: 0.6; }
+
+/* Grid area fills available space */
+.psc-grid-area {
+  flex: 1;
+  overflow: hidden;
+  padding: 12px 24px;
+  min-height: 0;
 }
 .psc-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-@media (max-width: 1400px) {
-  .psc-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 900px) {
-  .psc-grid { grid-template-columns: 1fr; }
+  grid-template-rows: repeat(2, 1fr);
+  gap: 16px;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* Card */
 .psc-card {
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 215, 0, 0.15);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .psc-card-hover,
 .psc-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(255, 215, 0, 0.15);
-  border-color: rgba(255, 215, 0, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.35);
 }
 .psc-card-preview {
-  width: 100%;
-  height: 300px;
-  background: rgba(0, 0, 0, 0.3);
+  flex: 1;
+  min-height: 0;
+  background: rgba(0, 0, 0, 0.2);
 }
 .psc-card-preview canvas {
   width: 100% !important;
   height: 100% !important;
 }
-.psc-card-info {
-  padding: 12px 16px 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.psc-card-name {
-  font-size: 1.1rem;
+.psc-card-label {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  text-align: center;
   font-weight: 600;
-  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  transition: color 0.3s ease;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.4));
 }
-.psc-card-meta {
+
+/* Pagination - fixed at bottom */
+.psc-pagination {
   display: flex;
-  gap: 8px;
+  gap: 1rem;
   align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  background: rgba(10, 10, 25, 0.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
 }
-.psc-card-category {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #ffd700;
-  background: rgba(255, 215, 0, 0.1);
-  padding: 2px 8px;
-  border-radius: 4px;
+.psc-pagination .psc-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
-.psc-card-score {
+.psc-pagination-info {
+  color: rgba(255, 255, 255, 0.6);
   font-size: 12px;
-  color: #ffd700;
-}
-.psc-card-lines {
-  padding: 0 16px 12px;
-  font-size: 11px;
-  color: #666;
 }
 
 /* Detail View */
@@ -478,14 +504,13 @@ const showcaseStyles = `
   flex: 1;
   min-height: 400px;
   background: rgba(0, 0, 0, 0.3);
-  position: relative;
 }
 .psc-detail-preview canvas {
   width: 100% !important;
   height: 100% !important;
 }
 .psc-detail-info {
-  width: 380px;
+  width: 320px;
   flex-shrink: 0;
   padding: 24px;
   overflow-y: auto;
@@ -496,80 +521,26 @@ const showcaseStyles = `
   font-size: 24px;
   font-weight: 700;
   color: #ffd700;
-  margin: 0 0 12px;
+  margin: 0 0 16px;
 }
-.psc-detail-badges {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.psc-badge {
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 500;
-}
-.psc-badge-category {
-  background: rgba(255, 215, 0, 0.15);
-  color: #ffd700;
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.psc-badge-score {
-  background: rgba(255, 215, 0, 0.1);
-  color: #ffd700;
-}
-.psc-badge-lines {
-  background: rgba(100, 100, 255, 0.1);
-  color: #8888ff;
-}
-.psc-detail-desc {
-  font-size: 14px;
-  line-height: 1.7;
-  color: #aaa;
-  margin: 0 0 20px;
-}
-.psc-detail-section {
+.psc-detail-color-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   margin-bottom: 20px;
-}
-.psc-detail-section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ccc;
-  margin: 0 0 8px;
-}
-.psc-detail-techniques {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.psc-detail-techniques li {
-  font-size: 12px;
-  color: #888;
-  padding: 4px 0 4px 16px;
-  position: relative;
-  line-height: 1.5;
-}
-.psc-detail-techniques li::before {
-  content: '▸';
-  position: absolute;
-  left: 0;
-  color: #ffd700;
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 .psc-detail-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 24px;
 }
 
 /* Buttons */
 .psc-btn {
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   border: none;
@@ -580,7 +551,7 @@ const showcaseStyles = `
   background: linear-gradient(135deg, #ffd700, #ffaa00);
   color: #1a1a2e;
 }
-.psc-btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.psc-btn-primary:hover { opacity: 0.9; }
 .psc-btn-secondary {
   background: transparent;
   border: 1px solid rgba(255, 215, 0, 0.3);
@@ -616,16 +587,13 @@ const showcaseStyles = `
   font-size: 13px;
   color: #ffd700;
 }
-.psc-code-actions {
-  display: flex;
-  gap: 8px;
-}
+.psc-code-actions { display: flex; gap: 8px; }
 .psc-code-content {
   flex: 1;
   overflow: auto;
   margin: 0;
   padding: 20px;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.7;
   color: #d4d4d4;
@@ -641,44 +609,24 @@ const showcaseStyles = `
   font-size: 14px;
 }
 
-/* Pagination */
-.psc-pagination {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  justify-content: center;
-  margin: 2rem 0;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-.psc-pagination .psc-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-.psc-pagination-info {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
-}
-
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1400px) {
   .psc-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
   }
-  .psc-grid-wrapper { padding: 16px; }
-  .psc-grid-title { font-size: 22px; }
-  .psc-detail {
-    flex-direction: column;
+}
+@media (max-width: 900px) {
+  .psc-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-rows: 250px;
+    overflow-y: auto;
   }
-  .psc-detail-info {
-    width: 100%;
-    border-left: none;
-    border-top: 1px solid rgba(255, 215, 0, 0.1);
-  }
-  .psc-detail-preview {
-    min-height: 280px;
-  }
+  .psc-grid-area { padding: 8px 12px; }
+  .psc-tabs { justify-content: flex-start; }
+  .psc-detail { flex-direction: column; }
+  .psc-detail-info { width: 100%; border-left: none; border-top: 1px solid rgba(255, 215, 0, 0.1); }
+  .psc-detail-preview { min-height: 280px; }
 }
 `
