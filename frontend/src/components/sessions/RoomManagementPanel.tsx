@@ -229,7 +229,18 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
                           </div>
                         ) : (
                           <>
-                            <div className="font-medium truncate">{room.name}</div>
+                            <div className="font-medium truncate flex items-center gap-1.5">
+                              {room.name}
+                              {room.is_hq && (
+                                <span
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white"
+                                  style={{ backgroundColor: 'var(--zen-accent, #6366f1)' }}
+                                  title="Protected system room — cannot be deleted"
+                                >
+                                  🏢 HQ
+                                </span>
+                              )}
+                            </div>
                             <div className="text-xs text-muted-foreground truncate">{room.id}</div>
                           </>
                         )}
@@ -243,12 +254,14 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
-                          <button
-                            onClick={() => setDeleteConfirm(room.id)}
-                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {!room.is_hq && (
+                            <button
+                              onClick={() => setDeleteConfirm(room.id)}
+                              className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
