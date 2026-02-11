@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'
-import { showcaseProps, type ShowcaseProp } from '../../../../data/showcaseProps'
+import { showcaseProps, type ShowcaseProp } from './showcaseProps'
 
 // ── Prop source code (loaded on demand) ───────────────────────
 
