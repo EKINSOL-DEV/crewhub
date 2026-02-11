@@ -12,6 +12,7 @@ import { formatSessionKeyAsName } from '@/lib/friendlyNames'
 import { RoomInfoTab } from './RoomInfoTab'
 import { RoomProjectTab } from './RoomProjectTab'
 import { RoomFilesTab } from './RoomFilesTab'
+import { OrgChartTab } from './OrgChartTab'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -99,7 +100,7 @@ export function RoomInfoPanel({
   } = useProjects()
 
   // UI state
-  const [activeInfoTab, setActiveInfoTab] = useState<'room' | 'project' | 'files'>('room')
+  const [activeInfoTab, setActiveInfoTab] = useState<'room' | 'project' | 'files' | 'org'>('room')
   const [showEditDialog, setShowEditDialog] = useState(false)
   // Note: showPicker/confirmAction moved to RoomProjectTab, but we keep references for outside-click guard
   const [hqOverview, setHqOverview] = useState<ProjectOverview[]>([])
@@ -368,6 +369,7 @@ export function RoomInfoPanel({
           { id: 'room' as const, label: '🏠 Room', always: true },
           { id: 'project' as const, label: room.is_hq ? '🏛️ HQ' : '📋 Project', always: true },
           { id: 'files' as const, label: '📂 Files', always: !!(currentProject?.folder_path) },
+          { id: 'org' as const, label: '🏢 Org Chart', always: !!room.is_hq },
         ]).filter(t => t.always).map(tab => (
           <button
             key={tab.id}
@@ -427,6 +429,9 @@ export function RoomInfoPanel({
           <RoomFilesTab
             room={room}
           />
+        )}
+        {activeInfoTab === 'org' && (
+          <OrgChartTab />
         )}
       </div>
 
