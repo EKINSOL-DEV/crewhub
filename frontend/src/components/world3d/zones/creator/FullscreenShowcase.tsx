@@ -32,10 +32,9 @@ async function loadPropSource(id: string): Promise<string> {
 
 interface FullscreenShowcaseProps {
   onClose: () => void
-  onUseAsTemplate?: (propId: string, code: string) => void
 }
 
-export function FullscreenShowcase({ onClose, onUseAsTemplate }: FullscreenShowcaseProps) {
+export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
   const [selectedProp, setSelectedProp] = useState<ShowcaseProp | null>(null)
   const [showCode, setShowCode] = useState(false)
   const [codeContent, setCodeContent] = useState('')
@@ -77,12 +76,6 @@ export function FullscreenShowcase({ onClose, onUseAsTemplate }: FullscreenShowc
     setCodeLoading(false)
   }, [])
 
-  const handleUseAsTemplate = useCallback(async (prop: ShowcaseProp) => {
-    const src = await loadPropSource(prop.id)
-    onUseAsTemplate?.(prop.id, src)
-    onClose()
-  }, [onClose, onUseAsTemplate])
-
   const handleCopyCode = useCallback(() => {
     navigator.clipboard.writeText(codeContent).catch(() => {})
   }, [codeContent])
@@ -117,14 +110,12 @@ export function FullscreenShowcase({ onClose, onUseAsTemplate }: FullscreenShowc
             loading={codeLoading}
             propName={selectedProp.name}
             onCopy={handleCopyCode}
-            onUseAsTemplate={() => handleUseAsTemplate(selectedProp)}
           />
         ) : selectedProp ? (
           <DetailView
             prop={selectedProp}
             onBack={() => setSelectedProp(null)}
             onViewCode={() => handleViewCode(selectedProp)}
-            onUseAsTemplate={() => handleUseAsTemplate(selectedProp)}
           />
         ) : (
           <GridView
@@ -149,7 +140,7 @@ function GridView({ props, onSelect }: { props: ShowcaseProp[]; onSelect: (p: Sh
       <div className="psc-grid-header">
         <h2 className="psc-grid-title">✨ 10 Hand-Crafted Props</h2>
         <p className="psc-grid-subtitle">
-          Each prop demonstrates different Three.js techniques. Click any prop to explore its details, view the source code, or use it as a template in Prop Maker.
+          Each prop demonstrates different Three.js techniques. Click any prop to explore its details and view the source code.
         </p>
       </div>
       <div className="psc-grid">
@@ -198,11 +189,10 @@ function ShowcaseCard({ prop, onClick }: { prop: ShowcaseProp; onClick: () => vo
 
 // ── Detail View ───────────────────────────────────────────────
 
-function DetailView({ prop, onBack: _onBack, onViewCode, onUseAsTemplate }: {
+function DetailView({ prop, onBack: _onBack, onViewCode }: {
   prop: ShowcaseProp
   onBack: () => void
   onViewCode: () => void
-  onUseAsTemplate: () => void
 }) {
   const Comp = prop.component
 
@@ -242,9 +232,6 @@ function DetailView({ prop, onBack: _onBack, onViewCode, onUseAsTemplate }: {
           <button className="psc-btn psc-btn-primary" onClick={onViewCode}>
             📜 View Source Code
           </button>
-          <button className="psc-btn psc-btn-secondary" onClick={onUseAsTemplate}>
-            🚀 Use as Template
-          </button>
         </div>
       </div>
     </div>
@@ -253,12 +240,11 @@ function DetailView({ prop, onBack: _onBack, onViewCode, onUseAsTemplate }: {
 
 // ── Code View ─────────────────────────────────────────────────
 
-function CodeViewContent({ code, loading, propName, onCopy, onUseAsTemplate }: {
+function CodeViewContent({ code, loading, propName, onCopy }: {
   code: string
   loading: boolean
   propName: string
   onCopy: () => void
-  onUseAsTemplate: () => void
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -279,9 +265,6 @@ function CodeViewContent({ code, loading, propName, onCopy, onUseAsTemplate }: {
         <div className="psc-code-actions">
           <button className="psc-btn psc-btn-small" onClick={handleCopy}>
             {copied ? '✅ Copied!' : '📋 Copy'}
-          </button>
-          <button className="psc-btn psc-btn-small psc-btn-primary" onClick={onUseAsTemplate}>
-            🚀 Use as Template
           </button>
         </div>
       </div>
