@@ -1275,7 +1275,7 @@
 .zen-sd-meta-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--zen-space-xs);
+  gap: var(--zen-space-md);
 }
 
 .zen-sd-meta-item {
@@ -1349,7 +1349,8 @@
 
 .zen-sd-message {
   border-radius: var(--zen-radius);
-  padding: var(--zen-space-xs) var(--zen-space-sm);
+  padding: var(--zen-space-sm) var(--zen-space-sm);
+  margin-bottom: var(--zen-space-sm);
   font-size: 12px;
 }
 
