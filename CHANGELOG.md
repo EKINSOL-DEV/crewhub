@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-02-11
+
+### ✨ Major Features
+
+- **Fullscreen Detail Views** — Activity and Sessions panels now have fullscreen mode (30/70 split) with history controls (filter, sort, autoscroll, up to 500 messages)
+- **Fullscreen PropMaker** — PropMaker opens fullscreen by default (50/50 split, thinking process + 3D preview), removed in-scene dialog
+- **Markdown Viewer/Editor** — Phase 1-3 complete: CodeMirror 6 editor, auto-save (2.5s debounce), split pane (edit | preview), project documents support
+- **Org Chart** — New HQ tab showing team hierarchy with color-coded model badges (Opus/Sonnet/GPT-5.2)
+- **Demo Content** — 5 demo tasks, 11 PropMaker history items, 4 demo markdown docs
+- **Agent Persona Tuning** — Customize agent behavior with presets (Executor, Advisor, Explorer) or fine-tune individual traits
+- **Creator Zone MVP** — Prop gallery showcase, AI prompt templates, generation pipeline with SSE streaming
+- **Prop Movement** — Drag props in 3D with hover glow, cursor changes, and edge case handling
+
+### 🎨 UI/UX Improvements
+
+- Simplified PropMaker UX (click bot → fullscreen, no more in-scene panels)
+- Fixed Escape navigation (fullscreen views return to Zen Mode, not World)
+- Improved spacing throughout (grid gaps, message margins, padding)
+- Theme color consistency (memory toggle, prop labels, panel titles)
+- Sessions/Activity detail panels (bottom layout, 50/50 split, timestamps)
+- Zen Mode CSS variable cleanup (replaced all hardcoded colors)
+- Brighter markdown syntax colors for dark themes
+- Direct fullscreen on file click in Documents panel
+- Projects & Kanban added to Zen Mode panel registry
+
+### 🐛 Bug Fixes
+
+- Fixed fullscreen Escape handler (capture phase + stopPropagation)
+- Fixed memory toggle colors (now uses standard theme)
+- Fixed prop preview label (theme colors instead of hardcoded)
+- Fixed 3D camera interference with fullscreen overlays and panels
+- Fixed panel title readability when focused in Zen Mode
+- Blocked camera controls during prop movement and long-press drag
+- Fixed Kanban and Projects panel fallbacks for Zen Mode compatibility
+- Python 3.9 compatibility (Optional[str] instead of str | None)
+
+### 🔧 Infrastructure
+
+- Backend watchdog (auto-restart, crash logging, healthcheck endpoint)
+- Frontend watchdog (monitoring script for dev)
+- Crash analysis complete (memory pressure from multiple dev servers)
+- Version centralization (version.json as single source of truth)
+- Agent identity in context envelopes with display names
+- Clean slate onboarding and demo mode improvements
+
+### 📝 Documentation
+
+- Comprehensive features matrix with category files and daily auto-sync
+- Agent Identity Pattern and Agent Visibility documentation
+- Creator Zone MVP documentation and prop-maker guide
+- Persona system documentation with migration guide
+- Design documents for markdown viewer, meetings, and spatial awareness
+- Reorganized documentation structure
+
+### 📋 Known Issues
+
+- Theme inconsistencies between World and Zen Mode
+- Prop movement not optimal yet
+- Saving prop movement triggers canvas refresh
+- Watchdog scripts exist but not enabled for local dev
+
+### 🙏 Community
+
+- Live Mirror concept (v0.21.0+) suggested by Vendetta
+
 ## [0.9.1] - 2026-02-06
 
 ### 🌟 New Features
@@ -221,6 +286,7 @@ First public beta release of CrewHub - a real-time dashboard for monitoring AI a
 - **Frontend**: React 18 with TypeScript, Vite, and Tailwind CSS
 - **Real-time**: Server-Sent Events for live updates
 
+[0.13.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.13.0
 [0.9.1]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.9.1
 [0.9.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.9.0
 [0.8.0]: https://github.com/ekinsolbot/crewhub/releases/tag/v0.8.0

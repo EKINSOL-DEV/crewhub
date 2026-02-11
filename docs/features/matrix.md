@@ -1,7 +1,7 @@
 # CrewHub Features Matrix
 
 *Last updated: 2026-02-11*  
-*Current version: v0.12.0*
+*Current version: v0.13.0*
 
 Quick-reference table showing all CrewHub features, their status, and implementation versions.
 
@@ -26,18 +26,18 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **3D World** | 6 | 1 | 1 | 3 | 1 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
-| **Creative** | 8 | 4 | 0 | 3 | 1 | 6 |
+| **Creative** | 9 | 4 | 0 | 4 | 1 | 7 |
 | **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **34** | **18** | **1** | **13** | **2** | **58** |
+| **TOTAL** | **35** | **18** | **1** | **14** | **2** | **59** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ████████████████████████████████             53% (18)
+Released:     ███████████████████████████████              51% (18)
 In Progress:  █                                             3% (1)
-Planned:      ████████████████████                         38% (13)
+Planned:      ████████████████████                         40% (14)
 Research:     ███                                           6% (2)
 ```
 
@@ -65,11 +65,12 @@ Research:     ███                                           6% (2)
 ### v0.13.0 (Current)
 - ✅ Creator Zone MVP (PropMaker alpha - AI generation, history, model chooser UI)
 - ✅ Backend watchdog & auto-restart (Docker-based, crash logging, healthcheck)
-- 🚧 Markdown viewer Phase 1-3 (view docs, fullscreen, TOC, editor with CodeMirror 6)
+- ✅ Markdown viewer Phase 1-3 (view docs, fullscreen, TOC, editor with CodeMirror 6)
 - 📋 Markdown viewer Phase 4 (Polish - search, bookmarks, breadcrumbs, favorites, light theme)
 
 ### v0.14.0
 - 📋 Zen Mode Standalone (separate app sharing code/DB/API with CrewHub - monorepo architecture)
+- 📋 Prop Delete (delete props from history with cascade warning for room placements)
 
 ### v0.15.0
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
@@ -155,7 +156,7 @@ Research:     ███                                           6% (2)
 
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
-| **Markdown Viewer/Editor** | 🚧 | v0.13.0 | 4 | Phase 1-3: View docs, fullscreen + TOC, Editor. Phase 4: Polish |
+| **Markdown Viewer/Editor** | ✅ | v0.13.0 | 4 | Phase 1-3: View docs, fullscreen + TOC, Editor. Phase 4: Polish |
 | **Zen Mode Panel Registry** | 📋 | v0.15.0 | 1 | Single source of truth for all panels (Ctrl+K, context menu, layouts) |
 | **Stand-Up Meetings** | 📋 | v0.15.0 | 4 | Automated meetings in 3D (bots walk, take turns, summaries) |
 | **Zen Mode Standalone** | 📋 | v0.14.0 | 1 | Standalone app sharing code/DB/API with CrewHub (monorepo architecture) |
@@ -172,13 +173,14 @@ Research:     ███                                           6% (2)
 | **Creator Zone** | ✅ | v0.13.0 | 1 | PropMaker alpha - AI generation, history tab, model chooser UI, thinking process view |
 | **PropMaker AI Streaming** | ✅ | v0.13.0 | 0 | Real-time streaming of AI thinking process during prop generation (SSE-based) |
 | **Prop Post-Processing** | ✅ | v0.13.0 | 0 | Auto-detect and fix orientation errors (vertical spines, upright text) with SSE transparency |
+| **Prop Delete** | 📋 | v0.14.0 | 1 | Delete props from history with cascade warning (shows rooms where prop is placed) |
 | **Prop Library** | 📋 | v0.17.0 | 0 | RAG-based baseline library with 50-100+ templates, semantic search, learns from approved props |
 | **External 3D APIs** | 📋 | v0.18.0 | 0 | Integration with Meshy.ai and similar services for alternative/fallback 3D generation |
 | **Prop Editor** | 📋 | v0.20.0 | 0 | Manual editing UI for generated props (position, rotation, scale, colors, mesh tweaks) |
 | **Modding System** | ✅ | v0.6.0 | 4 | Data-driven modding with Registry<T>, JSON blueprints |
 | **Pixel Avatars** | 🔬 | TBD | 1 | Pixel art bots as alternative to 3D geometric style |
 
-**Total:** 8 features • 6 docs • 4 released, 3 planned, 1 research
+**Total:** 9 features • 7 docs • 4 released, 4 planned, 1 research
 
 ---
 
@@ -202,4 +204,4 @@ Research:     ███                                           6% (2)
 
 ---
 
-*Generated from: 6 categories × 34 features × 58 documentation files*
+*Generated from: 6 categories × 35 features × 59 documentation files*
