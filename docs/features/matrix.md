@@ -23,22 +23,22 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | Category | Total Features | Released | In Progress | Planned | Research | Total Docs |
 |----------|----------------|----------|-------------|---------|----------|------------|
 | **Core** | 5 | 4 | 0 | 1 | 0 | 14 |
-| **3D World** | 5 | 1 | 1 | 2 | 1 | 12 |
+| **3D World** | 6 | 1 | 1 | 3 | 1 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 4 | 1 | 0 | 3 | 0 | 11 |
 | **Creative** | 3 | 1 | 1 | 0 | 1 | 6 |
 | **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **26** | **14** | **2** | **8** | **2** | **57** |
+| **TOTAL** | **27** | **14** | **2** | **9** | **2** | **57** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ██████████████████████████                   54% (14)
-In Progress:  ███                                           8% (2)
-Planned:      ██████████████                               31% (8)
-Research:     ███                                           8% (2)
+Released:     █████████████████████████                    52% (14)
+In Progress:  ███                                           7% (2)
+Planned:      ████████████████                             33% (9)
+Research:     ███                                           7% (2)
 ```
 
 ---
@@ -83,9 +83,12 @@ Research:     ███                                           8% (2)
 - 🚧 Zones system (Creator Center, Academy, Game Center)
 - 📋 Academy Zone (Knowledge Tree, flying books)
 
-### v0.17.0+
+### v0.17.0
 - Voice chat in first person mode
 - Agent Teams support (Anthropic extended context)
+
+### v0.18.0
+- 📋 Bot navigation to props via voice commands (spatial awareness + pathfinding)
 
 ### Research (no version assigned)
 - 🔬 Pixel avatars alternative aesthetic
@@ -116,9 +119,10 @@ Research:     ███                                           8% (2)
 | **Zones** | 🚧 | v0.16.0 | 6 | Thematic areas: Creator Center, Academy, Game Center |
 | **Academy Zone** | 📋 | v0.16.0 | 1 | Learning-focused zone with Knowledge Tree |
 | **Spatial Awareness** | 🔬 | v0.14.0 | 1 | Agent vision, proximity, pathfinding |
+| **Bot Navigation** | 📋 | v0.18.0 | 0 | Voice-controlled bot movement to props (e.g. "walk to the coffee machine") |
 | **Multi-Zone System** | 📋 | v0.16.0 | 1 | Architecture for multiple themed zones |
 
-**Total:** 5 features • 12 docs • 1 released, 1 in progress, 2 planned, 1 research
+**Total:** 6 features • 12 docs • 1 released, 1 in progress, 3 planned, 1 research
 
 ---
 
@@ -183,4 +187,4 @@ Research:     ███                                           8% (2)
 
 ---
 
-*Generated from: 6 categories × 23 features × 54 documentation files*
+*Generated from: 6 categories × 27 features × 57 documentation files*
