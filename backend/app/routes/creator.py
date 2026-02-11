@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/creator", tags=["creator"])
 
 # Path to prompt template
-PROMPT_TEMPLATE_PATH = Path(__file__).parent.parent.parent.parent / "docs" / "creator-zone-prompt.md"
+PROMPT_TEMPLATE_PATH = Path(__file__).parent.parent.parent.parent / "docs" / "features" / "creative" / "creator-zone" / "creator-zone-prompt.md"
 
 # OpenClaw gateway config
 OPENCLAW_GATEWAY_TOKEN = "ee6e3282bca98c6452a7e2132944c551280ad7776d0969ea"
@@ -28,11 +28,56 @@ class GeneratePropRequest(BaseModel):
     use_ai: bool = True  # Set to False to use template fallback
 
 
+class PropPart(BaseModel):
+    type: str  # "box", "cylinder", "sphere", "cone", "torus"
+    position: list[float]  # [x, y, z]
+    args: list[float]
+    color: str  # hex color
+    emissive: bool = False
+
+
 class GeneratePropResponse(BaseModel):
     name: str
     filename: str
     code: str
     method: str  # "ai" or "template"
+    parts: list[PropPart] = []  # structured geometry for runtime rendering
+
+
+class SavePropRequest(BaseModel):
+    name: str
+    propId: str
+    code: str = ""
+    parts: list[PropPart] = []
+    mountType: str = "floor"
+    yOffset: float = 0.16
+
+
+class SavedPropResponse(BaseModel):
+    propId: str
+    name: str
+    parts: list[PropPart] = []
+    mountType: str = "floor"
+    yOffset: float = 0.16
+    createdAt: str = ""
+
+
+# ─── Saved Props Storage (JSON file) ────────────────────────────
+SAVED_PROPS_PATH = Path(__file__).parent.parent.parent / "data" / "saved_props.json"
+
+
+def _load_saved_props() -> list[dict]:
+    try:
+        if SAVED_PROPS_PATH.exists():
+            return json.loads(SAVED_PROPS_PATH.read_text())
+    except Exception:
+        pass
+    return []
+
+
+def _save_props_to_disk(props: list[dict]):
+    SAVED_PROPS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    SAVED_PROPS_PATH.write_text(json.dumps(props, indent=2))
 
 
 def _prompt_to_filename(prompt: str) -> tuple[str, str]:
@@ -188,6 +233,26 @@ def _detect_color(prompt: str, default: str) -> str:
     return default
 
 
+def _extract_parts(prompt: str) -> list[dict]:
+    """Extract structured parts data from template for a prompt."""
+    shape_key = _detect_shape(prompt)
+    shape = SHAPE_TEMPLATES[shape_key]
+    main_color = _detect_color(prompt, shape["main_color"])
+    accent_color = shape["accent_color"]
+    
+    parts = []
+    for geo_type, pos, args, color_role in shape["parts"]:
+        color = main_color if color_role in ("main", "emissive") else accent_color
+        parts.append({
+            "type": geo_type,
+            "position": pos,
+            "args": [float(a) for a in args],
+            "color": color,
+            "emissive": color_role == "emissive",
+        })
+    return parts
+
+
 def _generate_template_code(name: str, prompt: str) -> str:
     """Generate prop code using smart templates based on prompt keywords."""
     shape_key = _detect_shape(prompt)
@@ -340,4 +405,53 @@ async def generate_prop(req: GeneratePropRequest):
 
     logger.info(f"Generated prop ({method}): {name} from prompt: {req.prompt[:80]}")
 
-    return GeneratePropResponse(name=name, filename=filename, code=code, method=method)
+    # Extract structured parts for runtime rendering
+    parts = _extract_parts(req.prompt)
+
+    return GeneratePropResponse(
+        name=name, filename=filename, code=code, method=method,
+        parts=[PropPart(**p) for p in parts],
+    )
+
+
+@router.post("/save-prop", response_model=SavedPropResponse)
+async def save_prop(req: SavePropRequest):
+    """Save a generated prop to persistent storage."""
+    from datetime import datetime
+    
+    props = _load_saved_props()
+    
+    # Remove existing with same propId
+    props = [p for p in props if p["propId"] != req.propId]
+    
+    entry = {
+        "propId": req.propId,
+        "name": req.name,
+        "parts": [p.dict() for p in req.parts],
+        "mountType": req.mountType,
+        "yOffset": req.yOffset,
+        "createdAt": datetime.utcnow().isoformat(),
+    }
+    props.append(entry)
+    _save_props_to_disk(props)
+    
+    logger.info(f"Saved prop: {req.propId}")
+    return SavedPropResponse(**entry)
+
+
+@router.get("/saved-props", response_model=list[SavedPropResponse])
+async def list_saved_props():
+    """List all saved props."""
+    return [SavedPropResponse(**p) for p in _load_saved_props()]
+
+
+@router.delete("/saved-props/{prop_id}")
+async def delete_saved_prop(prop_id: str):
+    """Delete a saved prop."""
+    props = _load_saved_props()
+    new_props = [p for p in props if p["propId"] != prop_id]
+    if len(new_props) == len(props):
+        raise HTTPException(status_code=404, detail="Prop not found")
+    _save_props_to_disk(new_props)
+    logger.info(f"Deleted prop: {prop_id}")
+    return {"status": "deleted", "propId": prop_id}

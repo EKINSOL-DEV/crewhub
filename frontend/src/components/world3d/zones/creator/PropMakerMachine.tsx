@@ -2,11 +2,20 @@ import { useState, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { useToonMaterialProps } from '../../utils/toonMaterials'
+import type { PropPart } from './DynamicProp'
 import * as THREE from 'three'
+
+export interface GeneratedPropData {
+  name: string
+  filename: string
+  parts: PropPart[]
+  timestamp: number
+}
 
 interface PropMakerMachineProps {
   position?: [number, number, number]
   rotation?: number
+  onPropGenerated?: (prop: GeneratedPropData) => void
 }
 
 interface GeneratedProp {
@@ -21,7 +30,7 @@ interface GeneratedProp {
  * Futuristic prop fabricator machine — a glowing sci-fi console
  * that opens a chat dialog for AI-powered prop creation.
  */
-export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMakerMachineProps) {
+export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGenerated }: PropMakerMachineProps) {
   const [hovered, setHovered] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [inputText, setInputText] = useState('')
@@ -83,12 +92,23 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
       }
 
       const data = await res.json()
+      const now = Date.now()
       setGeneratedProps((prev) => [
-        { name: data.name, filename: data.filename, timestamp: Date.now() },
+        { name: data.name, filename: data.filename, timestamp: now },
         ...prev,
       ].slice(0, 10))
       setSuccessMessage(`✅ Created "${data.name}"`)
       setInputText('')
+      
+      // Notify parent to add prop to showcase
+      if (onPropGenerated && data.parts) {
+        onPropGenerated({
+          name: data.name,
+          filename: data.filename,
+          parts: data.parts,
+          timestamp: now,
+        })
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Generation failed')
     } finally {
