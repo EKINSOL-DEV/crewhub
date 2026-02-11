@@ -327,6 +327,7 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
   const overlay = (
     <div
       className="zen-fs-overlay"
+      data-fullscreen-overlay
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       {/* Top bar */}
