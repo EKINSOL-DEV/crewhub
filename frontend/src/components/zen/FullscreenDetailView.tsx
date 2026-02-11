@@ -274,11 +274,18 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
     if (autoScroll) userScrolledRef.current = false
   }, [autoScroll])
 
-  // Escape to close
+  // Escape to close — use capture phase + stopPropagation to prevent
+  // other Escape handlers (e.g. ZenMode exit) from also firing
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
   }, [onClose])
 
   // Lock body scroll + disable canvas pointer events
