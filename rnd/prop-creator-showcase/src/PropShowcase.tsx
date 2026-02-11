@@ -516,7 +516,8 @@ function PropCard({ name, Component, color, index }: {
       style={{
         position: 'relative',
         width: '100%',
-        aspectRatio: '1',
+        aspectRatio: '0.85',
+        minHeight: 400,
         borderRadius: 16,
         background: 'linear-gradient(145deg, #12122a, #1a1a3a)',
         border: `1px solid ${hovered ? color : '#2a2a4a'}`,
@@ -550,7 +551,7 @@ function PropCard({ name, Component, color, index }: {
           background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
           color: hovered ? color : '#aaaacc',
           fontWeight: 600,
-          fontSize: 14,
+          fontSize: 16,
           letterSpacing: 0.5,
           transition: 'color 0.3s ease',
           pointerEvents: 'none',
@@ -575,7 +576,7 @@ function PropCard({ name, Component, color, index }: {
   );
 }
 
-const PROPS_PER_PAGE = 20;
+const PROPS_PER_PAGE = 5;
 
 export default function PropShowcase() {
   const [activeTab, setActiveTab] = useState('general');
@@ -675,8 +676,8 @@ export default function PropShowcase() {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(6, 1fr)',
-          gap: 16,
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 24,
           maxWidth: 1200,
           margin: '0 auto',
         }}>
