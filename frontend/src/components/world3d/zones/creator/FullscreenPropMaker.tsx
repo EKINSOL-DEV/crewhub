@@ -75,6 +75,7 @@ class PropErrorBoundary extends React.Component<
 // ── Main Component ────────────────────────────────────────────
 
 export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenPropMakerProps) {
+  const isDemoMode = window.location.hostname.includes('demo.')
   const [activeTab, setActiveTab] = useState<TabId>('generate')
   const [inputText, setInputText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -403,6 +404,11 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
 
               {activeTab === 'generate' && (
                 <>
+                  {isDemoMode && (
+                    <div className="fpm-demo-banner">
+                      ⚠️ Demo Mode — Prop generation is disabled. You can browse existing history.
+                    </div>
+                  )}
                   <p className="fpm-description">
                     Describe the prop you want. The AI fabricator will generate a 3D object.
                   </p>
@@ -460,9 +466,10 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                   <button
                     className="fpm-create-btn"
                     onClick={() => handleGenerate()}
-                    disabled={isGenerating || !inputText.trim()}
+                    disabled={isDemoMode || isGenerating || !inputText.trim()}
+                    title={isDemoMode ? 'Not available in demo mode' : undefined}
                   >
-                    {isGenerating ? '⏳ Generating...' : '⚡ Create'}
+                    {isDemoMode ? '⚠️ Generate (Demo)' : isGenerating ? '⏳ Generating...' : '⚡ Create'}
                   </button>
 
                   {/* Error */}
@@ -822,6 +829,16 @@ const fullscreenPropMakerStyles = `
   border-bottom: 2px solid var(--zen-accent, #6366f1);
 }
 
+.fpm-demo-banner {
+  background: rgba(255, 165, 0, 0.15);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #f59e0b;
+  text-align: center;
+}
 .fpm-description {
   font-size: 13px;
   color: var(--zen-fg-dim, #888);
