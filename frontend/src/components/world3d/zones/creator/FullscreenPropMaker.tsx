@@ -912,6 +912,9 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
               <div className="fpm-preview-sublabel">
                 {previewModelLabel || selectedModel}
               </div>
+              <div className="fpm-generating-hint">
+                This may take a few minutes — AI is crafting your prop! 🤖
+              </div>
             </div>
           ) : canPreview && PreviewWrapper ? (
             <Canvas camera={{ position: [3, 2, 3], fov: 45 }}>
@@ -1400,6 +1403,13 @@ const fullscreenPropMakerStyles = `
 .fpm-preview-sublabel {
   font-size: 11px;
   color: var(--zen-fg-muted, #555);
+}
+.fpm-generating-hint {
+  font-size: 12px;
+  color: var(--zen-fg-muted, #555);
+  font-style: italic;
+  margin-top: 8px;
+  animation: fpm-fadein 0.5s ease-out;
 }
 .fpm-preview-error {
   font-size: 11px;
