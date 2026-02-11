@@ -271,6 +271,40 @@ export function AgentsSettingsTab() {
       <div className="text-sm text-muted-foreground mb-2">
         Manage your crew's appearance and personality. Color changes reflect in the 3D world after save.
       </div>
+
+      {/* How to create agents info box */}
+      <div style={{
+        background: 'var(--zen-bg-elevated, hsl(var(--muted)))',
+        border: '1px solid var(--zen-border, hsl(var(--border)))',
+        borderRadius: '6px',
+        padding: '16px',
+        marginBottom: '16px',
+      }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95em' }}>💡 Creating Agents</h4>
+        <p style={{ margin: '0 0 12px 0', fontSize: '0.9em', lineHeight: '1.5', opacity: 0.8 }}>
+          You can create new agents by talking to your existing agent. Just ask it to create a new agent for you!
+        </p>
+        <details>
+          <summary style={{ cursor: 'pointer', fontSize: '0.85em', color: 'var(--zen-accent, hsl(var(--primary)))' }}>
+            Advanced: CLI Options
+          </summary>
+          <div style={{ marginTop: '8px', fontSize: '0.85em', fontFamily: 'monospace' }}>
+            <p style={{ margin: '0 0 4px 0' }}>Using OpenClaw CLI:</p>
+            <code style={{
+              display: 'block',
+              background: 'var(--zen-bg, hsl(var(--background)))',
+              padding: '8px',
+              borderRadius: '4px',
+              marginTop: '4px',
+              whiteSpace: 'pre-wrap',
+              lineHeight: '1.6',
+            }}>
+              {`# Add a new agent\nopenclaw agents add\n\n# List all agents\nopenclaw agents list\n\n# Update identity\nopenclaw agents set-identity`}
+            </code>
+          </div>
+        </details>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {agents.map(agent => (
           <AgentCard key={agent.id} agent={agent} onSave={handleSave} />
