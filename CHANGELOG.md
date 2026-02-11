@@ -33,16 +33,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Showcase Props Library** — 10 high-quality reference props available via API (`/api/creator/showcase-props`)
 - **Quality Validation** — Every generated prop checked for mesh count, animation, emissive, material correctness
 
+### 🎨 PropCreator Design Showcase
+
+- **211 High-Quality Props** — Expanded from 10 to 211 showcase props across 7 themed categories
+- **7 Categories** — General (30), Office & Productivity (31), Tech & Developer (30), Creative & Art (30), Gaming & Entertainment (30), Science & Lab (30), Workshop & Tools (30)
+- **Pagination** — 5 props per page with bigger preview cards (3-column grid layout) to prevent WebGL context overflow
+- **Integrated Showcase** — Golden pedestal in Creator Center room opens fullscreen showcase viewer
+- **Standalone Showcase** — Separate development viewer at port 5181 for prop testing
+- **Quality Standards** — All props feature low-poly toon style, flatShading, animations, emissive materials, 5-10 mesh parts each
+- **Highlights** — LED Matrix Display with animated pattern, Oscilloscope with moving trace, Centrifuge with spinning rotor, Circular Saw with blade animation
+- **Visual Reference** — Showcase serves as quality baseline and inspiration for PropMaker AI generation
+
 ### ✨ Major Features
 
 - **Fullscreen Detail Views** — Activity and Sessions panels now have fullscreen mode (30/70 split) with history controls (filter, sort, autoscroll, up to 500 messages)
 - **Fullscreen PropMaker** — PropMaker opens fullscreen by default (50/50 split, thinking process + 3D preview), removed in-scene dialog
 - **Markdown Viewer/Editor** — Phase 1-3 complete: CodeMirror 6 editor, auto-save (2.5s debounce), split pane (edit | preview), project documents support
-- **Org Chart** — New HQ tab showing team hierarchy with color-coded model badges (Opus/Sonnet/GPT-5.2)
 - **Demo Content** — 5 demo tasks, 11 PropMaker history items, 4 demo markdown docs
 - **Agent Persona Tuning** — Customize agent behavior with presets (Executor, Advisor, Explorer) or fine-tune individual traits
-- **Creator Zone MVP** — Prop gallery showcase, AI prompt templates, generation pipeline with SSE streaming
-- **Prop Movement** — Drag props in 3D with hover glow, cursor changes, and edge case handling
+- **Creator Zone MVP** — PropMaker with AI-powered generation, SSE streaming, quality improvements (3 phases), and **PropCreator Design Showcase** (211 high-quality example props across 7 categories with pagination)
 
 ### 🎨 UI/UX Improvements
 

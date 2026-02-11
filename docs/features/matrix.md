@@ -22,22 +22,22 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 
 | Category | Total Features | Released | In Progress | Planned | Research | Total Docs |
 |----------|----------------|----------|-------------|---------|----------|------------|
-| **Core** | 6 | 5 | 0 | 1 | 0 | 14 |
+| **Core** | 7 | 5 | 0 | 2 | 0 | 14 |
 | **3D World** | 6 | 1 | 1 | 3 | 1 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
 | **Creative** | 12 | 6 | 0 | 5 | 1 | 8 |
 | **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **38** | **20** | **1** | **15** | **2** | **60** |
+| **TOTAL** | **39** | **20** | **1** | **16** | **2** | **60** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     █████████████████████████████████            53% (20)
+Released:     ████████████████████████████████             51% (20)
 In Progress:  █                                             3% (1)
-Planned:      ███████████████████                          39% (15)
+Planned:      ████████████████████                         41% (16)
 Research:     ██                                            5% (2)
 ```
 
@@ -79,6 +79,7 @@ Research:     ██                                            5% (2)
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
 - 📋 Frontend watchdog & auto-restart (Docker-based, monitors Vite dev server crashes)
 - 📋 Agent Identity Pattern (single identity, multiple surfaces - prevent personality drift)
+- 📋 Agent Status Logic Improvements (fix false "sleeping" status during long-running tasks)
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
 - 📋 Stand-up meetings Phase 1 (UX + backend)
 - 📋 Improving and Reviewing Skills usage during onboarding
@@ -120,8 +121,9 @@ Research:     ██                                            5% (2)
 | **Room Projects** | ✅ | v0.5.0 | 3 | Organize agents by project, HQ command center |
 | **Backend Watchdog** | ✅ | v0.13.0 | 1 | Auto-restart on crash, healthcheck, logging |
 | **Frontend Watchdog** | 📋 | v0.15.0 | 0 | Auto-restart Vite dev server on crash (Docker-based) |
+| **Agent Status Logic** | 📋 | v0.15.0 | 0 | Improved sleeping/active detection (fix false sleeping during long-running tasks) |
 
-**Total:** 6 features • 14 docs • 5 released, 1 planned
+**Total:** 7 features • 14 docs • 5 released, 2 planned
 
 ---
 
@@ -212,4 +214,4 @@ Research:     ██                                            5% (2)
 
 ---
 
-*Generated from: 6 categories × 38 features × 60 documentation files*
+*Generated from: 6 categories × 39 features × 60 documentation files*
