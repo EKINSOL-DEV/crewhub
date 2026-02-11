@@ -134,20 +134,49 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
 
 // ── Grid View ─────────────────────────────────────────────────
 
+const PROPS_PER_PAGE = 20
+
 function GridView({ props, onSelect }: { props: ShowcaseProp[]; onSelect: (p: ShowcaseProp) => void }) {
+  const [currentPage, setCurrentPage] = useState(0)
+  const totalPages = Math.ceil(props.length / PROPS_PER_PAGE)
+  const startIdx = currentPage * PROPS_PER_PAGE
+  const endIdx = startIdx + PROPS_PER_PAGE
+  const visibleProps = props.slice(startIdx, endIdx)
+
   return (
     <div className="psc-grid-wrapper">
       <div className="psc-grid-header">
-        <h2 className="psc-grid-title">✨ 10 Hand-Crafted Props</h2>
+        <h2 className="psc-grid-title">✨ {props.length} Hand-Crafted Props</h2>
         <p className="psc-grid-subtitle">
           Each prop demonstrates different Three.js techniques. Click any prop to explore its details and view the source code.
         </p>
       </div>
       <div className="psc-grid">
-        {props.map((prop) => (
+        {visibleProps.map((prop) => (
           <ShowcaseCard key={prop.id} prop={prop} onClick={() => onSelect(prop)} />
         ))}
       </div>
+      {props.length > PROPS_PER_PAGE && (
+        <div className="psc-pagination">
+          <button
+            className="psc-btn psc-btn-secondary"
+            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+            disabled={currentPage === 0}
+          >
+            ← Previous
+          </button>
+          <span className="psc-pagination-info">
+            Page {currentPage + 1} of {totalPages} ({visibleProps.length} props)
+          </span>
+          <button
+            className="psc-btn psc-btn-secondary"
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={endIdx >= props.length}
+          >
+            Next →
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -368,8 +397,14 @@ const showcaseStyles = `
 }
 .psc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+@media (max-width: 1400px) {
+  .psc-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  .psc-grid { grid-template-columns: 1fr; }
 }
 
 /* Card */
@@ -391,7 +426,7 @@ const showcaseStyles = `
 }
 .psc-card-preview {
   width: 100%;
-  height: 200px;
+  height: 300px;
   background: rgba(0, 0, 0, 0.3);
 }
 .psc-card-preview canvas {
@@ -405,7 +440,7 @@ const showcaseStyles = `
   align-items: center;
 }
 .psc-card-name {
-  font-size: 15px;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #fff;
 }
@@ -604,6 +639,26 @@ const showcaseStyles = `
   height: 100%;
   color: #888;
   font-size: 14px;
+}
+
+/* Pagination */
+.psc-pagination {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+.psc-pagination .psc-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.psc-pagination-info {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
 }
 
 /* Responsive */
