@@ -318,9 +318,10 @@ export function usePropMovement({
     const localX = worldX + halfGridWidth
     const localZ = worldZ + halfGridDepth
     
-    // Snap to grid
-    const gridX = Math.round(localX / cellSize)
-    const gridZ = Math.round(localZ / cellSize)
+    // Snap to grid — use Math.floor because gridToWorld places cell centers at
+    // gridX * cellSize + cellSize/2, so the cell boundary is at gridX * cellSize.
+    const gridX = Math.max(0, Math.min(gridWidth - 1, Math.floor(localX / cellSize)))
+    const gridZ = Math.max(0, Math.min(gridDepth - 1, Math.floor(localZ / cellSize)))
     
     return { gridX, gridZ }
   }, [gridWidth, gridDepth, cellSize])

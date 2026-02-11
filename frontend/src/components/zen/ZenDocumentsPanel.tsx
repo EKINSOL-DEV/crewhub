@@ -3,7 +3,7 @@
  * Reuses FileTree, MarkdownViewer, FullscreenOverlay from Phase 1.
  */
 import { useState, useCallback, useMemo } from 'react'
-import { useProjectDocuments, useProjectDocumentContent, type DocFileNode } from '@/hooks/useProjectDocuments'
+import { useProjectDocuments, useProjectDocumentContent, saveProjectDocument, type DocFileNode } from '@/hooks/useProjectDocuments'
 import { FileTree } from '../files/FileTree'
 import { MarkdownViewer } from '../markdown/MarkdownViewer'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
@@ -57,7 +57,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
   const [currentFolder, setCurrentFolder] = useState<string | null>(null)
   const [fullscreenOpen, setFullscreenOpen] = useState(false)
 
-  const { content, metadata, loading: contentLoading } = useProjectDocumentContent(projectId, selectedPath)
+  const { content, metadata, loading: contentLoading, setContent } = useProjectDocumentContent(projectId, selectedPath)
 
   const displayName = projectName || fetchedName || 'Project'
 
@@ -255,6 +255,14 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
             size: metadata.size,
             modified: metadata.modified,
             lines: metadata.lines,
+          }}
+          editable={selectedPath?.endsWith('.md') || selectedPath?.endsWith('.txt')}
+          onSave={async (newContent: string) => {
+            if (!projectId || !selectedPath) return
+            await saveProjectDocument(projectId, selectedPath, newContent)
+            setContent(newContent)
+            // Refresh file list to update metadata
+            refresh()
           }}
         />
       )}
