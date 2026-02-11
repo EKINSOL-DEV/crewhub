@@ -60,10 +60,10 @@ export function getThemesByType(type: 'dark' | 'light'): ZenTheme[] {
 }
 
 /**
- * Get the default theme (Tokyo Night)
+ * Get the default theme (Github Light)
  */
 export function getDefaultTheme(): ZenTheme {
-  return tokyoNight
+  return githubLight
 }
 
 // ── Individual Theme Exports ──────────────────────────────────────
