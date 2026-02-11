@@ -15,7 +15,7 @@ interface GeneratedProp {
   timestamp: number
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8091'
+// API calls use relative URLs - Vite proxy handles routing to backend
 
 /**
  * Futuristic prop fabricator machine — a glowing sci-fi console
@@ -72,7 +72,7 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0 }: PropMak
     setSuccessMessage(null)
 
     try {
-      const res = await fetch(`${API_BASE}/api/creator/generate-prop`, {
+      const res = await fetch('/api/creator/generate-prop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: inputText.trim() }),
