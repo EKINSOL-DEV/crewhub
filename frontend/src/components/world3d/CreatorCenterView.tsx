@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { PropMakerRoom } from './zones/creator/PropMakerRoom'
+import { ShowcasePedestal } from './zones/creator/ShowcasePedestal'
 
 interface CreatorCenterViewProps {
   className?: string
@@ -78,6 +79,7 @@ export function CreatorCenterView({ className }: CreatorCenterViewProps) {
           <pointLight position={[0, 4, 0]} intensity={0.8} color="#e0d0ff" distance={15} />
 
           <PropMakerRoom position={[0, 0, 0]} />
+          <ShowcasePedestal position={[5, 0, 3]} />
 
           <OrbitControls
             target={[0, 1, 0]}
