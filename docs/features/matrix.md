@@ -22,23 +22,23 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 
 | Category | Total Features | Released | In Progress | Planned | Research | Total Docs |
 |----------|----------------|----------|-------------|---------|----------|------------|
-| **Core** | 6 | 5 | 0 | 1 | 0 | 14 |
+| **Core** | 7 | 5 | 0 | 2 | 0 | 14 |
 | **3D World** | 6 | 1 | 1 | 3 | 1 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
-| **Creative** | 9 | 4 | 0 | 4 | 1 | 7 |
+| **Creative** | 12 | 6 | 0 | 5 | 1 | 8 |
 | **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **35** | **18** | **1** | **14** | **2** | **59** |
+| **TOTAL** | **39** | **20** | **1** | **16** | **2** | **60** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ███████████████████████████████              51% (18)
+Released:     ████████████████████████████████             51% (20)
 In Progress:  █                                             3% (1)
-Planned:      ████████████████████                         40% (14)
-Research:     ███                                           6% (2)
+Planned:      ████████████████████                         41% (16)
+Research:     ██                                            5% (2)
 ```
 
 ---
@@ -66,16 +66,20 @@ Research:     ███                                           6% (2)
 - ✅ Creator Zone MVP (PropMaker alpha - AI generation, history, model chooser UI)
 - ✅ Backend watchdog & auto-restart (Docker-based, crash logging, healthcheck)
 - ✅ Markdown viewer Phase 1-3 (view docs, fullscreen, TOC, editor with CodeMirror 6)
+- ✅ PropCreator Design Showcase (71 props across 7 categories with tab navigation)
+- ✅ PropMaker Quality Phase 1 (AI prompt rewrite, post-processor, showcase library API, flatShading materials)
 - 📋 Markdown viewer Phase 4 (Polish - search, bookmarks, breadcrumbs, favorites, light theme)
 
 ### v0.14.0
 - 📋 Zen Mode Standalone (separate app sharing code/DB/API with CrewHub - monorepo architecture)
 - 📋 Prop Delete (delete props from history with cascade warning for room placements)
+- 📋 PropMaker Quality Improvements Phase 2-3 (component library, multi-pass, iteration system, style transfer, hybrid generation)
 
 ### v0.15.0
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
 - 📋 Frontend watchdog & auto-restart (Docker-based, monitors Vite dev server crashes)
 - 📋 Agent Identity Pattern (single identity, multiple surfaces - prevent personality drift)
+- 📋 Agent Status Logic Improvements (fix false "sleeping" status during long-running tasks)
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
 - 📋 Stand-up meetings Phase 1 (UX + backend)
 - 📋 Improving and Reviewing Skills usage during onboarding
@@ -92,6 +96,7 @@ Research:     ███                                           6% (2)
 - Voice chat in first person mode
 - Agent Teams support (Anthropic extended context)
 - 📋 External 3D Generation APIs (Meshy.ai, etc. - alternative/fallback to AI code generation)
+- 📋 Prop Library with Ratings (evolved from design showcase - user ratings, favorites, search, categories)
 
 ### v0.19.0
 - 📋 Bot navigation to props via voice commands (spatial awareness + pathfinding)
@@ -116,8 +121,9 @@ Research:     ███                                           6% (2)
 | **Room Projects** | ✅ | v0.5.0 | 3 | Organize agents by project, HQ command center |
 | **Backend Watchdog** | ✅ | v0.13.0 | 1 | Auto-restart on crash, healthcheck, logging |
 | **Frontend Watchdog** | 📋 | v0.15.0 | 0 | Auto-restart Vite dev server on crash (Docker-based) |
+| **Agent Status Logic** | 📋 | v0.15.0 | 0 | Improved sleeping/active detection (fix false sleeping during long-running tasks) |
 
-**Total:** 6 features • 14 docs • 5 released, 1 planned
+**Total:** 7 features • 14 docs • 5 released, 2 planned
 
 ---
 
@@ -173,14 +179,18 @@ Research:     ███                                           6% (2)
 | **Creator Zone** | ✅ | v0.13.0 | 1 | PropMaker alpha - AI generation, history tab, model chooser UI, thinking process view |
 | **PropMaker AI Streaming** | ✅ | v0.13.0 | 0 | Real-time streaming of AI thinking process during prop generation (SSE-based) |
 | **Prop Post-Processing** | ✅ | v0.13.0 | 0 | Auto-detect and fix orientation errors (vertical spines, upright text) with SSE transparency |
+| **PropCreator Design Showcase** | ✅ | v0.13.0 | 1 | 71 high-quality example props across 7 categories (General, Office, Tech, Creative, Gaming, Science, Workshop) with tab navigation |
 | **Prop Delete** | 📋 | v0.14.0 | 1 | Delete props from history with cascade warning (shows rooms where prop is placed) |
 | **Prop Library** | 📋 | v0.17.0 | 0 | RAG-based baseline library with 50-100+ templates, semantic search, learns from approved props |
 | **External 3D APIs** | 📋 | v0.18.0 | 0 | Integration with Meshy.ai and similar services for alternative/fallback 3D generation |
+| **Prop Library with Ratings** | 📋 | v0.18.0 | 0 | Evolved design showcase - categorized props (70+), user ratings, favorites, search & filter |
+| **PropMaker Quality Phase 1** | ✅ | v0.13.0 | 3 | AI prompt rewrite, post-processor, showcase library API, flatShading materials, quality scoring |
+| **PropMaker Quality Phase 2-3** | 📋 | v0.14.0 | 0 | Component library, multi-pass generation, iteration system, style transfer, hybrid generation |
 | **Prop Editor** | 📋 | v0.20.0 | 0 | Manual editing UI for generated props (position, rotation, scale, colors, mesh tweaks) |
 | **Modding System** | ✅ | v0.6.0 | 4 | Data-driven modding with Registry<T>, JSON blueprints |
 | **Pixel Avatars** | 🔬 | TBD | 1 | Pixel art bots as alternative to 3D geometric style |
 
-**Total:** 9 features • 7 docs • 4 released, 4 planned, 1 research
+**Total:** 11 features • 8 docs • 5 released, 5 planned, 1 research
 
 ---
 
@@ -204,4 +214,4 @@ Research:     ███                                           6% (2)
 
 ---
 
-*Generated from: 6 categories × 35 features × 59 documentation files*
+*Generated from: 6 categories × 39 features × 60 documentation files*

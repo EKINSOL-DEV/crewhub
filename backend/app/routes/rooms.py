@@ -195,12 +195,18 @@ async def delete_room(room_id: str):
     try:
         db = await get_db()
         try:
-            # Check if room exists
+            # Check if room exists and if it's HQ
             async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (room_id,)
+                "SELECT id, is_hq FROM rooms WHERE id = ?", (room_id,)
             ) as cursor:
-                if not await cursor.fetchone():
+                row = await cursor.fetchone()
+                if not row:
                     raise HTTPException(status_code=404, detail="Room not found")
+                if row[1]:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Cannot delete Headquarters room. HQ is a protected system room."
+                    )
             
             # Delete associated assignments first
             await db.execute(

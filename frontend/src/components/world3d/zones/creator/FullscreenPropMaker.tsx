@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'
 import { DynamicProp, type PropPart } from './DynamicProp'
+import { PropRefiner, type RefineChanges } from './PropRefiner'
 import React from 'react'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ interface GenerationRecord {
   error: string | null
 }
 
-type TabId = 'generate' | 'history'
+type TabId = 'generate' | 'history' | 'advanced'
 
 interface FullscreenPropMakerProps {
   onClose: () => void
@@ -75,6 +76,7 @@ class PropErrorBoundary extends React.Component<
 // ── Main Component ────────────────────────────────────────────
 
 export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenPropMakerProps) {
+  const isDemoMode = window.location.hostname.includes('demo.')
   const [activeTab, setActiveTab] = useState<TabId>('generate')
   const [inputText, setInputText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -97,6 +99,9 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const [renderError, setRenderError] = useState<string | null>(null)
   const [lastPrompt, setLastPrompt] = useState('')
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
+  const [refinementOptions, setRefinementOptions] = useState<any>(null)
+  const [isRefining, setIsRefining] = useState(false)
+  const [generationId, setGenerationId] = useState<string>('')
 
   // AI thinking
   const [thinkingLines, setThinkingLines] = useState<ThinkingLine[]>([])
@@ -104,6 +109,18 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const [toolCalls, setToolCalls] = useState<{ name: string; input: string }[]>([])
   const eventSourceRef = useRef<EventSource | null>(null)
   const thinkingScrollRef = useRef<HTMLDivElement>(null)
+
+  // Phase 3: Quality & Iteration
+  const [qualityScore, setQualityScore] = useState<any>(null)
+  const [iterationFeedback, setIterationFeedback] = useState('')
+  const [isIterating, setIsIterating] = useState(false)
+  const [iterationHistory, setIterationHistory] = useState<{ version: number; feedback: string; score: number; code: string }[]>([])
+  const [generationMode, setGenerationMode] = useState<'standard' | 'hybrid'>('standard')
+  const [templateBase, setTemplateBase] = useState<string>('')
+  const [availableStyles, setAvailableStyles] = useState<{ id: string; name: string; palette: string[] }[]>([])
+  const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([])
+  const [selectedStyle, setSelectedStyle] = useState('')
+  const [isApplyingStyle, setIsApplyingStyle] = useState(false)
 
   const examplePrompts = [
     'A glowing mushroom lamp',
@@ -114,7 +131,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     'A tiny robot figurine',
   ]
 
-  // Load models
+  // Load models + Phase 3 data
   useEffect(() => {
     fetch('/api/creator/models')
       .then(r => r.json())
@@ -131,6 +148,9 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
           { key: 'gpt-5-2', id: 'openai/gpt-5.2', label: 'GPT-5.2', provider: 'openai' },
         ])
       })
+    // Load styles and templates
+    fetch('/api/creator/props/styles').then(r => r.json()).then(d => setAvailableStyles(d.styles || [])).catch(() => {})
+    fetch('/api/creator/props/templates').then(r => r.json()).then(d => setAvailableTemplates(d.templates || [])).catch(() => {})
   }, [])
 
   // Escape to close
@@ -242,8 +262,12 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
         setPreviewCode(data.code || '')
         setPreviewMethod(data.method || 'template')
         setPreviewModelLabel(data.modelLabel || '')
+        setRefinementOptions(data.refinementOptions || null)
+        setGenerationId(data.generationId || '')
         setIsGenerating(false)
         setHistoryRefreshKey(k => k + 1)
+        setIterationHistory([])
+        if (data.code) scoreQuality(data.code)
       })
       es.addEventListener('error', (e) => {
         if (e instanceof MessageEvent) {
@@ -317,6 +341,92 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     if (lastPrompt) handleGenerate(lastPrompt)
   }, [lastPrompt, handleGenerate])
 
+  // Phase 3: Score quality when code changes
+  const scoreQuality = useCallback(async (code: string) => {
+    try {
+      const res = await fetch('/api/creator/props/quality-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      if (res.ok) {
+        const score = await res.json()
+        setQualityScore(score)
+      }
+    } catch { /* ignore */ }
+  }, [])
+
+  // Phase 3: Iterate on prop
+  const handleIterate = useCallback(async () => {
+    if (!iterationFeedback.trim() || !previewCode || isIterating) return
+    setIsIterating(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/creator/props/iterate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: previewCode,
+          feedback: iterationFeedback.trim(),
+          componentName: previewName,
+        }),
+      })
+      if (!res.ok) throw new Error((await res.json()).detail || 'Iteration failed')
+      const data = await res.json()
+      
+      // Save to iteration history
+      setIterationHistory(prev => [...prev, {
+        version: prev.length + 1,
+        feedback: iterationFeedback.trim(),
+        score: data.qualityScore?.overall || 0,
+        code: previewCode,
+      }])
+      
+      setPreviewCode(data.code)
+      setQualityScore(data.qualityScore)
+      setIterationFeedback('')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Iteration failed')
+    } finally {
+      setIsIterating(false)
+    }
+  }, [iterationFeedback, previewCode, previewName, isIterating])
+
+  // Phase 3: Apply style transfer
+  const handleApplyStyle = useCallback(async () => {
+    if (!selectedStyle || !previewCode || isApplyingStyle) return
+    setIsApplyingStyle(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/creator/props/style-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: previewCode,
+          styleSource: selectedStyle,
+          componentName: previewName,
+        }),
+      })
+      if (!res.ok) throw new Error((await res.json()).detail || 'Style transfer failed')
+      const data = await res.json()
+      setPreviewCode(data.code)
+      setQualityScore(data.qualityScore)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Style transfer failed')
+    } finally {
+      setIsApplyingStyle(false)
+    }
+  }, [selectedStyle, previewCode, previewName, isApplyingStyle])
+
+  // Phase 3: Rollback to previous iteration
+  const handleRollback = useCallback((version: number) => {
+    const entry = iterationHistory.find(h => h.version === version)
+    if (entry) {
+      setPreviewCode(entry.code)
+      scoreQuality(entry.code)
+    }
+  }, [iterationHistory, scoreQuality])
+
   const handleLoadFromHistory = useCallback((record: GenerationRecord) => {
     setPreviewParts(record.parts)
     setPreviewName(record.name)
@@ -334,6 +444,46 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       handleGenerate()
     }
   }
+
+  const handleRefine = useCallback(async (changes: RefineChanges) => {
+    if (!generationId || isRefining) return
+    setIsRefining(true)
+    try {
+      const res = await fetch('/api/creator/props/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propId: generationId, changes }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.code) {
+          setPreviewCode(data.code)
+          if (data.refinementOptions) setRefinementOptions(data.refinementOptions)
+          setThinkingLines(prev => [
+            ...prev,
+            { text: '🎨 Refinements applied:', type: 'correction' as const },
+            ...data.diagnostics.map((d: string) => ({ text: `  ${d}`, type: 'correction' as const })),
+          ])
+        }
+      }
+    } catch (err) {
+      console.error('Refine error:', err)
+    } finally {
+      setIsRefining(false)
+    }
+  }, [generationId, isRefining])
+
+  const handleRefineReset = useCallback(() => {
+    // Reload from history to get original code
+    if (generationId) {
+      fetch(`/api/creator/generation-history/${generationId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.code) setPreviewCode(data.code)
+        })
+        .catch(() => {})
+    }
+  }, [generationId])
 
   const handleRuntimeError = useCallback((error: Error) => {
     setRenderError(error.message)
@@ -399,10 +549,21 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                 >
                   📋 History
                 </button>
+                <button
+                  className={`fpm-tab ${activeTab === 'advanced' ? 'fpm-tab-active' : ''}`}
+                  onClick={() => setActiveTab('advanced')}
+                >
+                  🧬 Advanced
+                </button>
               </div>
 
               {activeTab === 'generate' && (
                 <>
+                  {isDemoMode && (
+                    <div className="fpm-demo-banner">
+                      ⚠️ Demo Mode — Prop generation is disabled. You can browse existing history.
+                    </div>
+                  )}
                   <p className="fpm-description">
                     Describe the prop you want. The AI fabricator will generate a 3D object.
                   </p>
@@ -447,6 +608,36 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                     )}
                   </div>
 
+                  {/* Mode & Template */}
+                  <div className="fpm-model-row">
+                    <label className="fpm-label">Mode:</label>
+                    <select
+                      value={generationMode}
+                      onChange={(e) => setGenerationMode(e.target.value as 'standard' | 'hybrid')}
+                      disabled={isGenerating}
+                      className="fpm-select"
+                    >
+                      <option value="standard">Standard AI</option>
+                      <option value="hybrid">Hybrid (Template + AI)</option>
+                    </select>
+                  </div>
+                  {generationMode === 'hybrid' && (
+                    <div className="fpm-model-row">
+                      <label className="fpm-label">Base:</label>
+                      <select
+                        value={templateBase}
+                        onChange={(e) => setTemplateBase(e.target.value)}
+                        disabled={isGenerating}
+                        className="fpm-select"
+                      >
+                        <option value="">None (enhanced AI)</option>
+                        {availableTemplates.map(t => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   {/* Input */}
                   <textarea
                     className="fpm-textarea"
@@ -460,9 +651,10 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                   <button
                     className="fpm-create-btn"
                     onClick={() => handleGenerate()}
-                    disabled={isGenerating || !inputText.trim()}
+                    disabled={isDemoMode || isGenerating || !inputText.trim()}
+                    title={isDemoMode ? 'Not available in demo mode' : undefined}
                   >
-                    {isGenerating ? '⏳ Generating...' : '⚡ Create'}
+                    {isDemoMode ? '⚠️ Generate (Demo)' : isGenerating ? '⏳ Generating...' : '⚡ Create'}
                   </button>
 
                   {/* Error */}
@@ -500,11 +692,168 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                       </button>
                     </div>
                   )}
+
+                  {/* Quality Score */}
+                  {qualityScore && !isGenerating && (
+                    <div className="fpm-quality-panel">
+                      <div className="fpm-quality-header">
+                        Quality: {qualityScore.overall}/100
+                        {qualityScore.overall >= 85 ? ' 🌟' : qualityScore.overall >= 70 ? ' ✨' : ' 💫'}
+                      </div>
+                      <div className="fpm-quality-bars">
+                        {[
+                          { label: 'Composition', value: qualityScore.composition_score },
+                          { label: 'Color', value: qualityScore.color_score },
+                          { label: 'Animation', value: qualityScore.animation_score },
+                          { label: 'Detail', value: qualityScore.detail_score },
+                          { label: 'Style', value: qualityScore.style_consistency },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="fpm-quality-bar-row">
+                            <span className="fpm-quality-bar-label">{label}</span>
+                            <div className="fpm-quality-bar-track">
+                              <div
+                                className="fpm-quality-bar-fill"
+                                style={{
+                                  width: `${value}%`,
+                                  background: value >= 80 ? '#22c55e' : value >= 50 ? '#eab308' : '#ef4444',
+                                }}
+                              />
+                            </div>
+                            <span className="fpm-quality-bar-value">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {qualityScore.suggestions?.length > 0 && (
+                        <div className="fpm-quality-suggestions">
+                          {qualityScore.suggestions.map((s: string, i: number) => (
+                            <div key={i} className="fpm-quality-suggestion">💡 {s}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Phase 2: Visual Refinement Panel */}
+                  {previewParts && previewCode && !isGenerating && (
+                    <PropRefiner
+                      propName={previewName}
+                      propId={generationId}
+                      currentCode={previewCode}
+                      refinementOptions={refinementOptions}
+                      onApplyChanges={handleRefine}
+                      onReset={handleRefineReset}
+                      disabled={isRefining}
+                    />
+                  )}
+
+                  {/* Iteration Panel */}
+                  {previewCode && !isGenerating && (
+                    <div className="fpm-iteration-panel">
+                      <div className="fpm-iteration-header">🔄 Refine with Feedback</div>
+                      <div className="fpm-iteration-input-row">
+                        <input
+                          type="text"
+                          className="fpm-iteration-input"
+                          placeholder="e.g. Make it more colorful, add blinking lights..."
+                          value={iterationFeedback}
+                          onChange={(e) => setIterationFeedback(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleIterate() }}
+                          disabled={isIterating}
+                        />
+                        <button
+                          className="fpm-iteration-btn"
+                          onClick={handleIterate}
+                          disabled={isIterating || !iterationFeedback.trim()}
+                        >
+                          {isIterating ? '⏳' : '✨'}
+                        </button>
+                      </div>
+                      {iterationHistory.length > 0 && (
+                        <div className="fpm-iteration-history">
+                          {iterationHistory.map((h) => (
+                            <div key={h.version} className="fpm-iteration-entry">
+                              <span>v{h.version}: "{h.feedback}" (Score: {h.score})</span>
+                              <button
+                                className="fpm-iteration-rollback"
+                                onClick={() => handleRollback(h.version)}
+                                title="Rollback to this version"
+                              >
+                                ↩️
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 
               {activeTab === 'history' && (
                 <HistoryPanel onLoadProp={handleLoadFromHistory} refreshKey={historyRefreshKey} />
+              )}
+
+              {activeTab === 'advanced' && (
+                <div className="fpm-advanced">
+                  {/* Style Transfer */}
+                  <div className="fpm-advanced-section">
+                    <div className="fpm-advanced-title">🎨 Style Transfer</div>
+                    <p className="fpm-description">Apply a showcase prop's visual style to your current prop.</p>
+                    <div className="fpm-model-row">
+                      <label className="fpm-label">Style:</label>
+                      <select
+                        value={selectedStyle}
+                        onChange={(e) => setSelectedStyle(e.target.value)}
+                        className="fpm-select"
+                        disabled={isApplyingStyle || !previewCode}
+                      >
+                        <option value="">Select style...</option>
+                        {availableStyles.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedStyle && (
+                      <div className="fpm-style-palette">
+                        {availableStyles.find(s => s.id === selectedStyle)?.palette.map((c, i) => (
+                          <div key={i} className="fpm-style-swatch" style={{ background: c }} title={c} />
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      className="fpm-create-btn"
+                      onClick={handleApplyStyle}
+                      disabled={!selectedStyle || !previewCode || isApplyingStyle}
+                      style={{ marginTop: 8 }}
+                    >
+                      {isApplyingStyle ? '⏳ Applying...' : '🎨 Apply Style'}
+                    </button>
+                  </div>
+
+                  {/* Crossbreeding placeholder */}
+                  <div className="fpm-advanced-section">
+                    <div className="fpm-advanced-title">🧬 Prop Genetics</div>
+                    <p className="fpm-description">
+                      Combine traits from two props to create unique hybrids.
+                      Use the API endpoint <code>/api/creator/props/crossbreed</code> for programmatic access.
+                    </p>
+                    <div className="fpm-advanced-hint">
+                      💡 Coming soon to the UI — available now via API
+                    </div>
+                  </div>
+
+                  {/* Quality Tips */}
+                  <div className="fpm-advanced-section">
+                    <div className="fpm-advanced-title">💡 Quality Tips</div>
+                    <div className="fpm-quality-tips">
+                      <div>• Use <strong>Hybrid mode</strong> with a template base for best results</div>
+                      <div>• <strong>Iterate</strong> with feedback to improve score by 10-20 points</div>
+                      <div>• Apply <strong>style transfer</strong> from a showcase prop for consistent quality</div>
+                      <div>• Aim for <strong>85+</strong> quality score for showcase-grade props</div>
+                      <div>• Try <strong>"add blinking lights"</strong> or <strong>"more colorful"</strong> as feedback</div>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -562,6 +911,9 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
               <div>Generating prop...</div>
               <div className="fpm-preview-sublabel">
                 {previewModelLabel || selectedModel}
+              </div>
+              <div className="fpm-generating-hint">
+                This may take a few minutes — AI is crafting your prop! 🤖
               </div>
             </div>
           ) : canPreview && PreviewWrapper ? (
@@ -822,6 +1174,16 @@ const fullscreenPropMakerStyles = `
   border-bottom: 2px solid var(--zen-accent, #6366f1);
 }
 
+.fpm-demo-banner {
+  background: rgba(255, 165, 0, 0.15);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #f59e0b;
+  text-align: center;
+}
 .fpm-description {
   font-size: 13px;
   color: var(--zen-fg-dim, #888);
@@ -1042,6 +1404,13 @@ const fullscreenPropMakerStyles = `
   font-size: 11px;
   color: var(--zen-fg-muted, #555);
 }
+.fpm-generating-hint {
+  font-size: 12px;
+  color: var(--zen-fg-muted, #555);
+  font-style: italic;
+  margin-top: 8px;
+  animation: fpm-fadein 0.5s ease-out;
+}
 .fpm-preview-error {
   font-size: 11px;
   color: var(--zen-error, #ef4444);
@@ -1127,4 +1496,90 @@ const fullscreenPropMakerStyles = `
   font-size: 12px; cursor: pointer;
   margin-top: 8px;
 }
+
+/* Phase 3: Quality Score Panel */
+.fpm-quality-panel {
+  margin-top: 12px;
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(99, 102, 241, 0.05);
+}
+.fpm-quality-header {
+  font-size: 14px; font-weight: 700;
+  color: var(--zen-accent, #6366f1);
+  margin-bottom: 8px; text-align: center;
+}
+.fpm-quality-bars { display: flex; flex-direction: column; gap: 4px; }
+.fpm-quality-bar-row { display: flex; align-items: center; gap: 6px; }
+.fpm-quality-bar-label { font-size: 10px; color: var(--zen-fg-dim, #888); width: 70px; text-align: right; }
+.fpm-quality-bar-track {
+  flex: 1; height: 6px; background: var(--zen-bg, #0f0f23);
+  border-radius: 3px; overflow: hidden;
+}
+.fpm-quality-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.fpm-quality-bar-value { font-size: 10px; color: var(--zen-fg-dim, #888); width: 24px; }
+.fpm-quality-suggestions { margin-top: 8px; }
+.fpm-quality-suggestion { font-size: 10px; color: var(--zen-fg-dim, #888); padding: 2px 0; }
+
+/* Phase 3: Iteration Panel */
+.fpm-iteration-panel {
+  margin-top: 12px;
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 8px;
+  padding: 10px;
+}
+.fpm-iteration-header {
+  font-size: 12px; font-weight: 700;
+  color: var(--zen-accent, #6366f1);
+  margin-bottom: 6px;
+}
+.fpm-iteration-input-row { display: flex; gap: 6px; }
+.fpm-iteration-input {
+  flex: 1;
+  background: var(--zen-bg, #0f0f23);
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 6px; padding: 6px 10px;
+  color: var(--zen-fg, #e0e0e0); font-size: 12px;
+}
+.fpm-iteration-input:disabled { opacity: 0.5; }
+.fpm-iteration-btn {
+  background: var(--zen-accent, #6366f1);
+  border: none; border-radius: 6px;
+  width: 36px; color: white; cursor: pointer; font-size: 14px;
+}
+.fpm-iteration-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.fpm-iteration-history { margin-top: 8px; max-height: 100px; overflow-y: auto; }
+.fpm-iteration-entry {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 10px; color: var(--zen-fg-dim, #888); padding: 3px 0;
+  border-bottom: 1px solid var(--zen-border, #2a2a4a);
+}
+.fpm-iteration-rollback {
+  background: none; border: none; cursor: pointer; font-size: 12px; padding: 2px;
+}
+
+/* Phase 3: Advanced Tab */
+.fpm-advanced { display: flex; flex-direction: column; gap: 16px; }
+.fpm-advanced-section {
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 8px; padding: 12px;
+}
+.fpm-advanced-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--zen-accent, #6366f1);
+  margin-bottom: 6px;
+}
+.fpm-advanced-hint {
+  font-size: 11px; color: var(--zen-fg-muted, #555);
+  font-style: italic; margin-top: 6px;
+}
+.fpm-style-palette {
+  display: flex; gap: 4px; margin: 6px 0;
+}
+.fpm-style-swatch {
+  width: 24px; height: 24px; border-radius: 4px;
+  border: 1px solid var(--zen-border, #2a2a4a);
+}
+.fpm-quality-tips { font-size: 11px; color: var(--zen-fg-dim, #888); line-height: 1.8; }
 `

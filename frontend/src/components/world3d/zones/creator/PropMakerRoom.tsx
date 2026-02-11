@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { PropMakerMachine, type GeneratedPropData } from './PropMakerMachine'
 import { PropShowcase, type ShowcaseProp } from './PropShowcase'
+import { ShowcasePedestal } from './ShowcasePedestal'
 import { ZoneRoom } from '../../ZoneRoom'
 
 interface PropMakerRoomProps {
@@ -58,6 +59,9 @@ export function PropMakerRoom({ position = [0, 0, 0], size = 12 }: PropMakerRoom
     >
       {/* Center fabricator machine */}
       <PropMakerMachine position={[0, 0, 0]} onPropGenerated={handlePropGenerated} />
+
+      {/* Showcase pedestal — opens fullscreen gallery */}
+      <ShowcasePedestal position={[3.5, 0, -3.5]} />
 
       {/* Generated props gallery */}
       <PropShowcase
