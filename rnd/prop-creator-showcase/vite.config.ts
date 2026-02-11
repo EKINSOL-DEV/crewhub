@@ -6,5 +6,6 @@ export default defineConfig({
   server: {
     port: 5181,
     host: true,
+    allowedHosts: ['ekinbot.local', 'localhost', '127.0.0.1'],
   },
 });
