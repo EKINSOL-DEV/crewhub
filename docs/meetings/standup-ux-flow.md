@@ -1,298 +1,317 @@
-# Stand-Up Meeting UX Flow
+# Stand-Up Meetings — UX Flow
 
-> CrewHub HQ — User Experience & Interface Design
-> Version: 1.0 | Date: 2026-02-11
+> CrewHub HQ Feature · v1.0 · 2026-02-12
 
-## User Journey Overview
+---
+
+## 1. User Journey Overview
 
 ```
-Click Meeting Table → Select Bots → Configure → Watch Meeting → Get Summary
-     (1s)              (5s)          (5s)        (~4 min)        (instant)
+Click Meeting Table    Configure Meeting     Watch Discussion      View Results
+  (3D HQ Room)      ─→  (Dialog)          ─→  (Live Progress)   ─→  (MD Output)
+      [1]                 [2]                    [3]                   [4]
 ```
 
-## Step 1: Trigger — Click Meeting Table Prop
+---
 
-In the HQ 3D room, the user clicks the **Meeting Table** or **Whiteboard** prop. The prop glows on hover to indicate interactivity.
+## 2. Step 1 — Trigger: Meeting Table Prop
 
+The **Meeting Table** is a 3D interactive prop placed in the HQ room, rendered alongside existing props (Desk, Plant, CoffeeMachine, etc.).
+
+### Visual Design
+- Round/oval table model, distinct from rectangular desks
+- Subtle pulsing glow when hovered (same pattern as other interactive props)
+- Small icon overlay: 📋 or meeting icon
+- Positioned centrally in HQ room
+
+### Interaction
+- **Click** → Opens MeetingDialog
+- **Hover** → Tooltip: "Start Stand-Up Meeting"
+- Table is only interactive when no meeting is in progress
+- During active meeting: table shows a "Meeting in Progress" indicator
+
+---
+
+## 3. Step 2 — Configure: MeetingDialog
+
+### Dialog Mockup
+
+```
+┌─────────────────────────────────────────────────────┐
+│  📋 Start Stand-Up Meeting                      ✕   │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Meeting Goal                                       │
+│  ┌─────────────────────────────────────────────┐    │
+│  │ Daily standup for CrewHub development       │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  Participants                    Select All ☐       │
+│  ┌─────────────────────────────────────────────┐    │
+│  │ ☑ 🟣 DevBot        (Developer)             │    │
+│  │ ☑ 🔵 DesignBot     (Designer)              │    │
+│  │ ☑ 🟢 PlannerBot    (Project Manager)       │    │
+│  │ ☑ 🟡 QABot         (Quality Assurance)     │    │
+│  │ ☐ 🔴 ResearchBot   (Researcher)            │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  Rounds  ┌───┐                                      │
+│           │ 3 │  ▲▼                                  │
+│           └───┘                                      │
+│                                                     │
+│  Round Topics (editable)                            │
+│  1. ┌──────────────────────────────────────────┐    │
+│     │ What have you been working on?           │    │
+│     └──────────────────────────────────────────┘    │
+│  2. ┌──────────────────────────────────────────┐    │
+│     │ What will you focus on next?             │    │
+│     └──────────────────────────────────────────┘    │
+│  3. ┌──────────────────────────────────────────┐    │
+│     │ Any blockers or concerns?                │    │
+│     └──────────────────────────────────────────┘    │
+│                                                     │
+│  Project: CrewHub (auto-detected from HQ room)      │
+│                                                     │
+│              ┌──────────┐  ┌──────────────────┐     │
+│              │  Cancel   │  │  Start Meeting ▶ │     │
+│              └──────────┘  └──────────────────┘     │
+└─────────────────────────────────────────────────────┘
+```
+
+### Behavior
+- Participants default to all bots assigned to the HQ room
+- Round topics have sensible defaults, fully editable
+- Project auto-detected from room's assigned project
+- "Start Meeting" → POST `/api/meetings/start` → Dialog transitions to progress view
+
+---
+
+## 4. Step 3 — Live Progress: MeetingProgressView
+
+### 3D Visual Behavior
+
+#### Gathering Phase (3-5 seconds)
+1. Bots stop their current wandering/idle animations
+2. Each bot walks toward the Meeting Table using pathfinding
+3. Bots arrange themselves in a circle around the table
+4. Standing positions calculated: `angle = (2π / numBots) * index`
+
+```
+        Bot 3
+         ◉
+    Bot 2     Bot 4
+      ◉  ┌───┐  ◉
+         │ ○ │         ← Meeting Table (top view)
+      ◉  └───┘  ◉
+    Bot 1     Bot 5
+```
+
+#### During Rounds
+- **Active speaker:** Highlighted with a glow ring + slightly raised position
+- **Speech bubble:** Shows abbreviated response text above active bot
+- **Waiting bots:** Subtle idle animation (slight sway)
+- **Completed turn:** Small ✓ checkmark appears above bot
+
+#### Synthesis Phase
+- All bots face center
+- Table glows/pulses indicating processing
+- No individual speaker highlight
+
+#### Complete
+- Bots do a small "nod" animation
+- Table displays a ✓
+- Bots return to normal wandering after 3 seconds
+
+### Progress Dialog Mockup
+
+```
+┌─────────────────────────────────────────────────────┐
+│  📋 Stand-Up Meeting in Progress               ✕   │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ┌─ Progress ─────────────────────────────────────┐ │
+│  │ ████████████████████░░░░░░░░░  Round 2/3  60%  │ │
+│  └────────────────────────────────────────────────┘ │
+│                                                     │
+│  Round 2: What will you focus on next?              │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐    │
+│  │ ✓ 🟣 DevBot: "I'll finish the auth          │    │
+│  │   middleware refactor and start on the       │    │
+│  │   WebSocket reconnection logic."             │    │
+│  │                                              │    │
+│  │ ✓ 🔵 DesignBot: "Building on what Dev       │    │
+│  │   said about auth, I'll update the login     │    │
+│  │   flow mockups to match the new middleware." │    │
+│  │                                              │    │
+│  │ ● 🟢 PlannerBot: generating...              │    │
+│  │   ░░░░░░░░░░                                │    │
+│  │                                              │    │
+│  │ ○ 🟡 QABot: waiting                         │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  ┌────────────────────────┐                         │
+│  │  Cancel Meeting  ⏹     │                         │
+│  └────────────────────────┘                         │
+└─────────────────────────────────────────────────────┘
+
+Legend:  ✓ = completed   ● = speaking   ○ = waiting
+```
+
+### SSE Events Driving Updates
+
+| SSE Event | UI Update |
+|-----------|-----------|
+| `meeting-state` | Update progress bar, round label |
+| `meeting-turn` | Add bot response to transcript, move to next bot |
+| `meeting-turn-start` | Show "generating..." for active bot |
+| `meeting-synthesis` | Show "Generating summary..." state |
+| `meeting-complete` | Switch to output view |
+| `meeting-error` | Show error message with retry option |
+| `meeting-cancelled` | Close dialog, show toast |
+
+---
+
+## 5. Step 4 — Results: MeetingOutput
+
+### Output Dialog Mockup
+
+```
+┌─────────────────────────────────────────────────────┐
+│  ✅ Stand-Up Complete — Feb 12, 2026            ✕   │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  # Stand-Up Meeting — 2026-02-12                    │
+│                                                     │
+│  ## Goal                                            │
+│  Daily standup for CrewHub development              │
+│                                                     │
+│  ## Participants                                    │
+│  - 🟣 DevBot (Developer)                           │
+│  - 🔵 DesignBot (Designer)                         │
+│  - 🟢 PlannerBot (Project Manager)                 │
+│  - 🟡 QABot (Quality Assurance)                    │
+│                                                     │
+│  ## Discussion Summary                              │
+│  The team focused on auth middleware refactoring    │
+│  and its downstream effects on the login flow...    │
+│                                                     │
+│  ## Action Items                                    │
+│  - [ ] DevBot: Complete auth middleware refactor    │
+│  - [ ] DesignBot: Update login flow mockups         │
+│  - [ ] PlannerBot: Reprioritize sprint backlog      │
+│  - [ ] QABot: Write integration tests for auth      │
+│                                                     │
+│  ## Decisions                                       │
+│  - Agreed to use JWT refresh tokens over sessions   │
+│                                                     │
+│  ## Blockers                                        │
+│  - QABot: Waiting on staging environment access     │
+│                                                     │
+│  ────────────────────────────────────────────────   │
+│                                                     │
+│  💾 Saved to: CrewHub/meetings/2026-02-12-standup.md│
+│                                                     │
+│  ┌──────┐  ┌──────────┐  ┌───────────────────┐     │
+│  │ Copy │  │ Open File │  │ View Full Transcript│    │
+│  └──────┘  └──────────┘  └───────────────────┘     │
+│                                                     │
+│              ┌──────────────────┐                    │
+│              │      Close       │                    │
+│              └──────────────────┘                    │
+└─────────────────────────────────────────────────────┘
+```
+
+### Actions
+- **Copy:** Copy MD to clipboard
+- **Open File:** Open in system file viewer (Synology Drive path)
+- **View Full Transcript:** Toggle between summary and raw turn-by-turn transcript
+
+### Full Transcript View
+
+```
+┌─────────────────────────────────────────────────────┐
+│  📋 Full Transcript                         [Summary]│
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ── Round 1: What have you been working on? ──      │
+│                                                     │
+│  🟣 DevBot:                                        │
+│  "I've been refactoring the auth middleware to      │
+│  support JWT refresh tokens. About 70% done,        │
+│  the token rotation logic is working in tests."     │
+│                                                     │
+│  🔵 DesignBot:                                     │
+│  "Completed the dark mode color palette. Also       │
+│  reviewed DevBot's auth changes — the login flow    │
+│  will need updated mockups for the token flow."     │
+│                                                     │
+│  🟢 PlannerBot:                                    │
+│  "Updated the sprint board. Auth refactor is now    │
+│  the top priority based on what Dev and Design      │
+│  mentioned. Moved 3 lower-priority items to next    │
+│  sprint."                                           │
+│  ...                                                │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 6. Edge Cases & Error States
+
+### No Bots in Room
 ```
 ┌─────────────────────────────────────────────┐
-│                  HQ Room (3D)                │
-│                                              │
-│    🤖 Main        🤖 Dev                     │
-│         \          /                         │
-│          ┌────────┐                          │
-│          │Meeting │  ← click                 │
-│          │ Table  │  ← glow on hover         │
-│          └────────┘                          │
-│         /          \                         │
-│    🤖 Flowy      🤖 Creator                  │
-│                                              │
+│  ⚠️ No bots available                       │
+│                                             │
+│  Assign at least 2 bots to HQ to start     │
+│  a stand-up meeting.                        │
+│                                             │
+│           ┌──────────┐                      │
+│           │    OK     │                      │
+│           └──────────┘                      │
 └─────────────────────────────────────────────┘
 ```
 
-**Interaction:** Cursor changes to pointer. Table emits subtle pulse animation. Click opens the Meeting Setup dialog.
-
-## Step 2: Bot Selection Dialog
-
+### Meeting Already Running
 ```
 ┌─────────────────────────────────────────────┐
-│  🗓  Start Stand-Up Meeting                  │
-│─────────────────────────────────────────────│
-│                                              │
-│  Select Participants:                        │
-│                                              │
-│  ┌─────────────────────────────────────────┐ │
-│  │ [✓] 🟢 Main      Sonnet   (Coordinator)│ │
-│  │ [✓] 🟢 Dev       Opus     (Developer)  │ │
-│  │ [✓] 🟢 Flowy     GPT-5.2  (Creative)   │ │
-│  │ [✓] 🟢 Creator   Sonnet   (Designer)   │ │
-│  │ [ ] 🔴 Reviewer  GPT-5.2  (Offline)    │ │
-│  └─────────────────────────────────────────┘ │
-│                                              │
-│  🟢 = Online  🔴 = Offline (cannot select)   │
-│                                              │
-│  Selected: 4/5 agents                        │
-│                                              │
-│         [ Cancel ]        [ Next → ]         │
+│  ⚠️ Meeting in progress                     │
+│                                             │
+│  A stand-up is already running in this      │
+│  room. View it or wait for it to complete.  │
+│                                             │
+│     ┌──────────┐  ┌─────────────────┐       │
+│     │  Cancel   │  │  View Progress  │       │
+│     └──────────┘  └─────────────────┘       │
 └─────────────────────────────────────────────┘
 ```
 
-**Rules:**
-- Minimum 2 participants
-- Offline bots are greyed out
-- Pre-selects all online bots by default
+### Bot Fails to Respond
+- Show "(no response — skipped)" in the transcript
+- Continue with next bot
+- Note in synthesis that a participant was unavailable
 
-## Step 3: Meeting Configuration
+### Connection Lost
+- Show reconnecting spinner
+- Auto-resume when SSE reconnects (state is server-side)
+- After 60s: show "Meeting may have failed" with refresh option
 
-```
-┌─────────────────────────────────────────────┐
-│  🗓  Configure Meeting                       │
-│─────────────────────────────────────────────│
-│                                              │
-│  Topic / Agenda:                             │
-│  ┌─────────────────────────────────────────┐ │
-│  │ Plan the authentication system for      │ │
-│  │ CrewHub mobile app                      │ │
-│  └─────────────────────────────────────────┘ │
-│                                              │
-│  Rounds:  [ 1 ]  [ 2 ]  [•3•]  [ 4 ]  [ 5 ]│
-│                                              │
-│  Estimated time: ~4 min                      │
-│  Est. cost: ~$0.04                           │
-│                                              │
-│  Templates:                                  │
-│  ┌────────┐ ┌────────┐ ┌────────┐           │
-│  │Sprint  │ │Feature │ │Debug   │           │
-│  │Planning│ │Design  │ │Session │           │
-│  └────────┘ └────────┘ └────────┘           │
-│                                              │
-│  Advanced ▼                                  │
-│  ┌─────────────────────────────────────────┐ │
-│  │ Synthesizer: [ Main (default) ▾ ]       │ │
-│  │ Max response length: [ Normal ▾ ]       │ │
-│  └─────────────────────────────────────────┘ │
-│                                              │
-│       [ ← Back ]        [ 🚀 Start ]        │
-└─────────────────────────────────────────────┘
-```
+---
 
-**Estimated time formula:** `(participants × rounds × 10s) + 30s synthesis + 5s gathering`
+## 7. Responsive Behavior
 
-## Step 4: Gathering Animation (3D)
+The MeetingDialog and output views use the existing CrewHub panel system:
+- On desktop: Rendered in the right-side panel (same as BotInfoPanel, ChatPanel)
+- The 3D view continues to be visible behind/beside the panel
+- Progress dialog is compact enough to not obstruct the 3D meeting animation
 
-When "Start" is clicked, the dialog closes and the 3D scene animates:
+---
 
-```
-Phase 1: Bots walk to table (3s)
-┌─────────────────────────────────────────────┐
-│                                              │
-│    🤖→→→→→→→     ←←←←←←←🤖                  │
-│              ┌────────┐                      │
-│              │Meeting │                      │
-│              │ Table  │                      │
-│              └────────┘                      │
-│    🤖→→→→→→→     ←←←←←←←🤖                  │
-│                                              │
-└─────────────────────────────────────────────┘
+## 8. Accessibility
 
-Phase 2: Bots stand in circle (arrived)
-┌─────────────────────────────────────────────┐
-│                                              │
-│        🤖 Main    🤖 Dev                     │
-│            \      /                          │
-│             ╔════╗                           │
-│             ║Table║                          │
-│             ╚════╝                           │
-│            /      \                          │
-│      🤖 Flowy   🤖 Creator                  │
-│                                              │
-│  ┌───────────────────────────────────────┐   │
-│  │ 📋 Stand-Up: Auth system planning     │   │
-│  │ ██░░░░░░░░░░░░░░░░  Round 1/3        │   │
-│  └───────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-```
-
-**Animation details:**
-- Bots use existing pathfinding (`lib/grid/pathfinding.ts`) to navigate to table
-- Each bot gets assigned a position around the table (evenly spaced circle)
-- Bots face the center of the table
-- Meeting status bar appears at bottom of viewport
-
-## Step 5: Active Meeting — Speech Bubbles
-
-As each bot speaks, they get highlighted and a speech bubble appears:
-
-```
-┌─────────────────────────────────────────────┐
-│                                              │
-│        🤖 Main    🤖 Dev                     │
-│   ┌──────────────┐  |                        │
-│   │ "I think we  │  |                        │
-│   │ should use   │  ╔════╗                   │
-│   │ OAuth2..."   │  ║Table║                  │
-│   └──────┬───────┘  ╚════╝                   │
-│     ⭐ SPEAKING       \                      │
-│      🤖 Flowy       🤖 Creator               │
-│     (waiting)       (waiting)                │
-│                                              │
-│  ┌───────────────────────────────────────┐   │
-│  │ 📋 Stand-Up: Auth system planning     │   │
-│  │ ████████░░░░░░░░░░  Round 2/3         │   │
-│  │ 🗣 Main speaking... (3/4 bots done)   │   │
-│  └───────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-```
-
-**Visual cues:**
-- **Active speaker:** Glowing ring around bot, larger avatar, speech bubble with streaming text
-- **Waiting bots:** Subtle idle animation (bobbing)
-- **Completed bots (this round):** Small ✓ checkmark
-- **Speech bubble:** Shows last ~50 chars of response, streams in real-time
-
-## Step 6: Progress Bar
-
-The bottom bar tracks meeting progress:
-
-```
-┌─────────────────────────────────────────────────┐
-│ 📋 Auth system planning                         │
-│                                                  │
-│ Round 1  ✓✓✓✓     Round 2  ✓✓●○     Round 3     │
-│ ████████████████   ████████████░░   ░░░░░░░░░░  │
-│                                                  │
-│ 🗣 Flowy speaking...        ⏱ ~2:15 remaining   │
-│                              [ Cancel Meeting ]  │
-└─────────────────────────────────────────────────┘
-```
-
-- ✓ = bot completed turn
-- ● = currently speaking
-- ○ = waiting
-- Real-time countdown estimate
-
-## Step 7: Synthesis Phase
-
-```
-┌─────────────────────────────────────────────┐
-│                                              │
-│        🤖    🤖     🤖    🤖                  │
-│         \    |     |    /                    │
-│          ╔════════════╗                      │
-│          ║  ✨ Main   ║                      │
-│          ║ writing    ║                      │
-│          ║ summary... ║                      │
-│          ╚════════════╝                      │
-│                                              │
-│  ┌───────────────────────────────────────┐   │
-│  │ 📋 Synthesizing meeting notes...      │   │
-│  │ ████████████████████████████████░░░░  │   │
-│  └───────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-```
-
-All bots look toward synthesizer. Whiteboard/table shows a writing animation.
-
-## Step 8: Results Dialog
-
-```
-┌─────────────────────────────────────────────────┐
-│  ✅  Stand-Up Complete!                          │
-│─────────────────────────────────────────────────│
-│                                                  │
-│  # Stand-Up Summary: Auth System Planning        │
-│  **Date:** 2026-02-11 11:50                      │
-│  **Participants:** Main, Dev, Flowy, Creator     │
-│                                                  │
-│  ## Goal                                         │
-│  Design OAuth2 authentication for CrewHub        │
-│  mobile app with social login support.           │
-│                                                  │
-│  ## Discussion Summary                           │
-│  - Main proposed OAuth2 + JWT approach           │
-│  - Dev recommended Keycloak for identity mgmt    │
-│  - Flowy suggested progressive auth (guest →     │
-│    full account)                                 │
-│  - Creator proposed login screen mockups with    │
-│    biometric fallback                            │
-│                                                  │
-│  ## Action Items                                 │
-│  - [ ] Set up Keycloak instance — @Dev           │
-│  - [ ] Design login flow mockups — @Creator      │
-│  - [ ] Research OAuth providers — @Flowy         │
-│  - [ ] Write auth middleware — @Dev              │
-│                                                  │
-│  ## Decisions                                    │
-│  - Use OAuth2 + JWT (not session-based)          │
-│  - Support Google + GitHub social login          │
-│  - Implement refresh token rotation              │
-│                                                  │
-│  ⏱ Duration: 4m 23s | 💰 ~$0.04                 │
-│                                                  │
-│  [ 📋 Copy MD ] [ 💾 Save to Project ] [ Close ] │
-└─────────────────────────────────────────────────┘
-```
-
-**Actions:**
-- **Copy MD:** Copies raw markdown to clipboard
-- **Save to Project:** Saves to current room's project docs folder
-- **Close:** Dismisses dialog, bots return to their positions
-
-## Post-Meeting: Bots Return
-
-After closing the results dialog, bots animate back to their original positions in the HQ room. The meeting table returns to its idle state.
-
-## Edge Cases
-
-| Scenario | UX Behavior |
-|----------|-------------|
-| User clicks table during meeting | "Meeting in progress" tooltip |
-| Bot goes offline mid-meeting | Skip remaining turns, note in summary |
-| Network disconnect | Pause indicator, auto-resume on reconnect |
-| Cancel during synthesis | Show partial results collected so far |
-| Very long response | Truncate speech bubble, full text in final output |
-
-## Responsive Considerations
-
-- **Small viewports:** Progress bar becomes floating pill, speech bubbles are smaller
-- **Performance mode:** Disable walking animation, instant teleport to positions
-- **Accessibility:** All speech bubble text available via screen reader, progress announced
-
-## Component Hierarchy
-
-```
-<MeetingProvider>                    // Context for meeting state
-  <MeetingTrigger />                 // Detects click on table prop
-  <MeetingSetupDialog>               // Steps 2-3
-    <BotSelectionStep />
-    <ConfigurationStep />
-  </MeetingSetupDialog>
-  <MeetingScene3D>                   // Steps 4-7
-    <BotGatheringAnimation />
-    <ActiveSpeakerHighlight />
-    <SpeechBubble3D />
-  </MeetingScene3D>
-  <MeetingProgressBar />             // Step 6
-  <MeetingResultsDialog />           // Step 8
-</MeetingProvider>
-```
+- All dialog elements have proper ARIA labels
+- Progress bar uses `role="progressbar"` with `aria-valuenow`
+- Bot responses are announced via `aria-live="polite"` region
+- Cancel button is keyboard-accessible (Escape key also works)
+- Color indicators are paired with icons/names (not color-only)

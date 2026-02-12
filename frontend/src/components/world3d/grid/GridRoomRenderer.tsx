@@ -49,16 +49,16 @@ function getWallPlacement(
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
 
-  // Distance in grid cells from the interior edge of each wall.
-  // Wall cells are at 0 and gridSize-1; interior starts at 1 and gridSize-2.
-  const distNorth = gridZ - 1
-  const distSouth = (gridDepth - 2) - gridZ
-  const distWest = gridX - 1
-  const distEast = (gridWidth - 2) - gridX
+  // Distance in grid cells from each wall edge.
+  // Walls are visual 3D geometry at ±halfSize; grid cells go from 0 to gridSize-1.
+  const distNorth = gridZ
+  const distSouth = (gridDepth - 1) - gridZ
+  const distWest = gridX
+  const distEast = (gridWidth - 1) - gridX
 
   const minDist = Math.min(distNorth, distSouth, distWest, distEast)
 
-  // Only snap to wall if within 1 cell of wall interior edge
+  // Only snap to wall if within 1 cell of wall edge
   if (minDist > 1) return null
 
   // Small gap from wall surface to prevent z-fighting
@@ -92,7 +92,13 @@ function getWallPlacement(
   return { x: eastFace - WALL_GAP, z: worldZ, wallRotation: 90 }
 }
 
-/** Clamp floor-prop positions inward to prevent wall clipping at grid edges. */
+/** Snap floor-prop positions toward the nearest wall when within 1 cell of it.
+ *  Positions the prop so its visual EDGE sits flush against the wall inner face,
+ *  not its CENTER (which would cause clipping).
+ *
+ *  The prop's visual footprint is approximated as span * cellSize, centered on
+ *  the span-center position (worldX/worldZ should already include span centering).
+ */
 function clampToRoomBounds(
   worldX: number,
   worldZ: number,
@@ -101,21 +107,46 @@ function clampToRoomBounds(
   gridWidth: number,
   gridDepth: number,
   cellSize: number,
+  span: { w: number; d: number } = { w: 1, d: 1 },
 ): [number, number] {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
   // Wall inner face matches RoomWalls.tsx wallThickness (0.3)
   const WALL_THICKNESS = 0.3
-  const INWARD = 0.15 // small inward offset to avoid wall clipping
+  const WALL_GAP = 0.02 // tiny gap to prevent z-fighting
 
   let x = worldX
   let z = worldZ
 
-  // Clamp near walls — use actual wall face position (halfSize - wallThickness)
-  if (gridX <= 1) x = Math.max(x, -halfW + WALL_THICKNESS + INWARD)
-  if (gridX >= gridWidth - 2) x = Math.min(x, halfW - WALL_THICKNESS - INWARD)
-  if (gridZ <= 1) z = Math.max(z, -halfD + WALL_THICKNESS + INWARD)
-  if (gridZ >= gridDepth - 2) z = Math.min(z, halfD - WALL_THICKNESS - INWARD)
+  // Prop visual half-footprint (centered on span center)
+  const halfFootprintW = (span.w * cellSize) / 2
+  const halfFootprintD = (span.d * cellSize) / 2
+
+  // Distance in grid cells from each wall edge (cells 0 and gridSize-1 are wall cells)
+  const distWest = gridX
+  const distEast = (gridWidth - 1) - (gridX + span.w - 1)
+  const distNorth = gridZ
+  const distSouth = (gridDepth - 1) - (gridZ + span.d - 1)
+
+  // Wall inner face positions
+  const westFace = -halfW + WALL_THICKNESS
+  const eastFace = halfW - WALL_THICKNESS
+  const northFace = -halfD + WALL_THICKNESS
+  const southFace = halfD - WALL_THICKNESS
+
+  // Snap toward wall: position prop center so that prop EDGE = wallFace + WALL_GAP
+  if (distWest <= 1) {
+    x = westFace + WALL_GAP + halfFootprintW
+  }
+  if (distEast <= 1) {
+    x = eastFace - WALL_GAP - halfFootprintW
+  }
+  if (distNorth <= 1) {
+    z = northFace + WALL_GAP + halfFootprintD
+  }
+  if (distSouth <= 1) {
+    z = southFace - WALL_GAP - halfFootprintD
+  }
 
   return [x, z]
 }
@@ -160,31 +191,46 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
 function HoverGlow({ position }: { position: [number, number, number] }) {
   const ringRef = useRef<THREE.Mesh>(null!)
   const glowRef = useRef<THREE.Mesh>(null!)
+  const outerRef = useRef<THREE.Mesh>(null!)
   
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
     if (ringRef.current) {
       const mat = ringRef.current.material as THREE.MeshBasicMaterial
-      mat.opacity = 0.35 + Math.sin(t * 3) * 0.15
+      mat.opacity = 0.45 + Math.sin(t * 3) * 0.15
+      // Subtle scale pulse
+      const s = 1 + Math.sin(t * 2) * 0.04
+      ringRef.current.scale.set(s, s, 1)
     }
     if (glowRef.current) {
       const mat = glowRef.current.material as THREE.MeshBasicMaterial
-      mat.opacity = 0.08 + Math.sin(t * 2) * 0.04
+      mat.opacity = 0.12 + Math.sin(t * 2) * 0.05
+    }
+    if (outerRef.current) {
+      const mat = outerRef.current.material as THREE.MeshBasicMaterial
+      mat.opacity = 0.15 + Math.sin(t * 2.5 + 1) * 0.1
     }
   })
   
   return (
     <group>
+      {/* Outer soft glow ring */}
+      <mesh ref={outerRef} position={[position[0], 0.025, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.7, 0.9, 32]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
       {/* Pulsing outline ring */}
       <mesh ref={ringRef} position={[position[0], 0.03, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.6, 0.7, 32]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.35} side={THREE.DoubleSide} depthWrite={false} />
+        <ringGeometry args={[0.55, 0.7, 32]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.45} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
-      {/* Subtle inner glow */}
+      {/* Inner glow */}
       <mesh ref={glowRef} position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.65, 32]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
+        <circleGeometry args={[0.6, 32]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
+      {/* Upward point light for subtle highlight on prop geometry */}
+      <pointLight position={[position[0], 0.5, position[2]]} color="#60a5fa" intensity={0.8} distance={2} decay={2} />
     </group>
   )
 }
@@ -297,12 +343,22 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
           center
           zIndexRange={[100, 110]}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
             <div style={HUD_CONTAINER_STYLE}>
               {/* Save Button */}
               <button
                 style={HUD_SAVE_STYLE}
-                onClick={(e) => { e.stopPropagation(); onSave(); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onSave(); }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Save position"
               >
@@ -312,7 +368,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
               {/* Rotate Button */}
               <button
                 style={HUD_ROTATE_STYLE}
-                onClick={(e) => { e.stopPropagation(); onRotate(); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onRotate(); }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Rotate 90°"
               >
@@ -322,7 +378,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
               {/* Delete Button */}
               <button
                 style={HUD_DELETE_STYLE}
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(); }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Delete prop"
               >
@@ -332,7 +388,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
               {/* Cancel Button */}
               <button
                 style={HUD_CANCEL_STYLE}
-                onClick={(e) => { e.stopPropagation(); onCancel(); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onCancel(); }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Cancel"
               >
@@ -470,12 +526,22 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     const obj = e.eventObject
     if (obj?.userData?.propKey && obj?.userData?.propId !== undefined) {
       const { propKey, propId, gridX, gridZ, rotation, span } = obj.userData
+      
+      // If this prop is already selected and in moving mode, skip long-press
+      // and allow immediate drag
+      if (isMoving && selectedProp?.key === propKey) {
+        // Already selected — just set up for immediate drag
+        pointerStartPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
+        hasDragStarted.current = false
+        return
+      }
+      
       startLongPress(propKey, propId, gridX, gridZ, rotation || 0, span)
       // Store pointer position for drag threshold detection
       pointerStartPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
       hasDragStarted.current = false
     }
-  }, [startLongPress])
+  }, [startLongPress, isMoving, selectedProp])
   
   const handlePointerMoveEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
     // Only process if a prop is selected for moving
@@ -501,7 +567,11 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   
   const handlePointerUpEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    handlePointerUp()
+    // Only cancel long-press if we're not already in moving mode
+    // (the timer might have just fired, putting us into moving mode)
+    if (!isMoving) {
+      handlePointerUp()
+    }
     // End drag if we were dragging
     if (isDragging) {
       endDrag()
@@ -513,12 +583,12 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   
   const handlePointerLeaveForLongPress = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    // Don't cancel if we're dragging - the user might move outside the prop temporarily
-    if (!isDragging) {
-      cancelLongPress()
-      if (!isMoving) {
-        document.body.style.cursor = 'auto'
-      }
+    // Don't cancel long-press on pointer leave — R3F fires pointerLeave too aggressively
+    // on small 3D meshes, making it nearly impossible to hold for the long-press duration.
+    // The long-press timer will be cancelled by pointerUp if the user releases early.
+    // Only reset cursor if not in a moving/dragging state.
+    if (!isMoving && !isDragging) {
+      document.body.style.cursor = 'auto'
     }
     // Clear hover
     const obj = e.eventObject
@@ -526,43 +596,42 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     if (key) {
       setHoveredPropKey((prev) => prev === key ? null : prev)
     }
-  }, [cancelLongPress, isDragging, isMoving])
+  }, [isDragging, isMoving])
 
-  // Build list of prop instances from grid (memoized per blueprint)
+  // Build list of prop instances from placements (uses optimistic data, avoids flash-back on confirm)
   const propInstances = useMemo(() => {
     const instances: PropInstance[] = []
 
-    for (let z = 0; z < cells.length; z++) {
-      for (let x = 0; x < cells[z].length; x++) {
-        const cell = cells[z][x]
+    for (const p of placements) {
+      // Skip interaction-only placements without a visual prop
+      if (p.type === 'interaction') continue
 
-        // Skip empty cells, walls, doors, and cells without props
-        if (!cell.propId) continue
+      // Get the entry — skip if not registered
+      const entry = getPropEntry(p.propId)
+      if (!entry) continue
 
-        // Skip spanParent cells (rendered from their anchor)
-        if (cell.spanParent) continue
+      // Convert grid coords to world coords (relative to room center)
+      // gridToWorld returns the anchor cell center; we offset to span center
+      // so multi-cell props are visually centered over their footprint.
+      const [relX, , relZ] = gridToWorld(p.x, p.z, cellSize, gridWidth, gridDepth)
+      const spanW = p.span?.w ?? 1
+      const spanD = p.span?.d ?? 1
+      const spanOffsetX = (spanW - 1) * cellSize / 2
+      const spanOffsetZ = (spanD - 1) * cellSize / 2
 
-        // Get the entry — skip if not registered
-        const entry = getPropEntry(cell.propId)
-        if (!entry) continue
-
-        // Convert grid coords to world coords (relative to room center)
-        const [relX, , relZ] = gridToWorld(x, z, cellSize, gridWidth, gridDepth)
-
-        instances.push({
-          key: `${cell.propId}-${x}-${z}`,
-          propId: cell.propId,
-          gridX: x,
-          gridZ: z,
-          position: [relX, 0, relZ],
-          rotation: cell.rotation ?? 0,
-          span: cell.span,
-        })
-      }
+      instances.push({
+        key: `${p.propId}-${p.x}-${p.z}`,
+        propId: p.propId,
+        gridX: p.x,
+        gridZ: p.z,
+        position: [relX + spanOffsetX, 0, relZ + spanOffsetZ],
+        rotation: p.rotation ?? 0,
+        span: p.span,
+      })
     }
 
     return instances
-  }, [cells, cellSize, gridWidth, gridDepth])
+  }, [placements, cellSize, gridWidth, gridDepth])
 
   // Global drag handler for when mouse moves outside the prop
   const handleGlobalPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -617,15 +686,17 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
         const effectiveGridZ = isBeingMoved ? selectedProp!.gridZ : gridZ
         const effectiveRotation = isBeingMoved ? selectedProp!.rotation : rotation
         
-        // Recalculate world position if being moved
+        // Recalculate world position if being moved (including span centering)
         let worldX: number
         let worldZ: number
         if (isBeingMoved) {
           const [newRelX, , newRelZ] = gridToWorld(effectiveGridX, effectiveGridZ, cellSize, gridWidth, gridDepth)
-          worldX = newRelX
-          worldZ = newRelZ
+          const effectiveSpanW = (selectedProp!.span?.w ?? 1)
+          const effectiveSpanD = (selectedProp!.span?.d ?? 1)
+          worldX = newRelX + (effectiveSpanW - 1) * cellSize / 2
+          worldZ = newRelZ + (effectiveSpanD - 1) * cellSize / 2
         } else {
-          worldX = position[0]
+          worldX = position[0]  // already includes span centering from propInstances
           worldZ = position[2]
         }
         
@@ -650,9 +721,10 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
           }
         } else {
           // Floor props: clamp to room bounds to prevent wall clipping
+          const effectiveSpan = isBeingMoved ? (selectedProp!.span || { w: 1, d: 1 }) : (span || { w: 1, d: 1 })
           const [clampedX, clampedZ] = clampToRoomBounds(
             worldX, worldZ, effectiveGridX, effectiveGridZ,
-            gridWidth, gridDepth, cellSize,
+            gridWidth, gridDepth, cellSize, effectiveSpan,
           )
           worldX = clampedX
           worldZ = clampedZ

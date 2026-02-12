@@ -2,6 +2,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
+import { installGlobalErrorCapture } from './lib/devErrorStore'
+
+// Install dev error capture before anything else
+installGlobalErrorCapture()
 
 // Initialize mock API for demo builds (must run before any React rendering)
 async function boot() {

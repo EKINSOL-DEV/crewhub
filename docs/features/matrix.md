@@ -1,7 +1,7 @@
 # CrewHub Features Matrix
 
-*Last updated: 2026-02-11*  
-*Current version: v0.13.0*
+*Last updated: 2026-02-12*  
+*Current version: v0.14.0*
 
 Quick-reference table showing all CrewHub features, their status, and implementation versions.
 
@@ -27,18 +27,19 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
 | **Creative** | 12 | 6 | 0 | 5 | 1 | 8 |
-| **Meta** | 3 | 1 | 0 | 1 | 1 | 5 |
-| **TOTAL** | **40** | **20** | **1** | **16** | **3** | **62** |
+| **SaaS & Distribution** | 2 | 0 | 0 | 2 | 0 | 6 |
+| **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
+| **TOTAL** | **41** | **20** | **1** | **18** | **2** | **66** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ████████████████████████████████             50% (20)
-In Progress:  █                                             3% (1)
-Planned:      ████████████████████                         40% (16)
-Research:     ███                                           8% (3)
+Released:     ████████████████████████████████             49% (20)
+In Progress:  █                                             2% (1)
+Planned:      ██████████████████████                       44% (18)
+Research:     ██                                            5% (2)
 ```
 
 ---
@@ -47,6 +48,8 @@ Research:     ███                                           8% (3)
 
 | Version | Date | Features Added |
 |---------|------|----------------|
+| **v0.14.0** | 2026-02-12 | URL Parameter Zen Mode, Project CRUD, Prop Delete, PropMaker Quality Phase 2-3 |
+| **v0.13.0** | 2026-02-11 | PropCreator Showcase (211 props), Markdown Viewer Phase 1-3, Backend Watchdog |
 | **v0.12.0** | 2026-02-10 | Agent Persona Tuning, Creator Zone MVP |
 | **v0.11.0** | 2026-02-07 | Zen Mode Tabs, Zen Statue, Activity Panel |
 | **v0.9.0** | 2026-02-06 | Task Board, TaskWall3D, Agent Bios |
@@ -62,7 +65,7 @@ Research:     ███                                           8% (3)
 
 ## 🗓️ Upcoming Roadmap
 
-### v0.13.0 (Current)
+### v0.13.0
 - ✅ Creator Zone MVP (PropMaker alpha - AI generation, history, model chooser UI)
 - ✅ Backend watchdog & auto-restart (Docker-based, crash logging, healthcheck)
 - ✅ Markdown viewer Phase 1-3 (view docs, fullscreen, TOC, editor with CodeMirror 6)
@@ -70,18 +73,25 @@ Research:     ███                                           8% (3)
 - ✅ PropMaker Quality Phase 1 (AI prompt rewrite, post-processor, showcase library API, flatShading materials)
 - 📋 Markdown viewer Phase 4 (Polish - search, bookmarks, breadcrumbs, favorites, light theme)
 
-### v0.14.0
-- 📋 Zen Mode Standalone (separate app sharing code/DB/API with CrewHub - monorepo architecture)
-- 📋 Prop Delete (delete props from history with cascade warning for room placements)
-- 📋 PropMaker Quality Improvements Phase 2-3 (component library, multi-pass, iteration system, style transfer, hybrid generation)
+### v0.14.0 (Current)
+- ✅ URL Parameter Zen Mode (?mode=zen replaces standalone app - simpler deployment, one codebase)
+- ✅ Zen Mode Project CRUD (full project management with cascade warnings, World button → Projects)
+- ✅ Zen Mode Context Bug Fix (active project context now correctly sent from Zen Mode to chat)
+- ✅ Prop Delete (delete props from history with cascade warning for room placements)
+- ✅ PropMaker Quality Phase 2-3 (component library PARTS_DATA, 19 unit tests, structured generation)
+- ✅ PropMaker Bug Fixes (camera persistence, Refiner "Apply Changes" fix, HMR mixed exports, prop flicker)
+- ✅ PropMaker Part Editor (select & transform individual sub-objects with position/rotation controls)
+- ✅ PropMaker Refiner UI Cleanup (remove non-functional Material/Animation/Add Details buttons)
+- ✅ Dev Error Logger (bug icon with error tracking, persistent log viewer, dev-only)
 
 ### v0.15.0
+- 📋 Grid boundary fine-tuning (props against walls still not perfect - multi-cell placement edge cases)
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
 - 📋 Frontend watchdog & auto-restart (Docker-based, monitors Vite dev server crashes)
 - 📋 Agent Identity Pattern (single identity, multiple surfaces - prevent personality drift)
 - 📋 Agent Status Logic Improvements (fix false "sleeping" status during long-running tasks)
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
-- 📋 Stand-up meetings Phase 1 (UX + backend)
+- ✅ Stand-up meetings Phase 1 (UX + backend) — v0.17.0
 - 📋 Improving and Reviewing Skills usage during onboarding
 
 ### v0.16.0
@@ -103,10 +113,8 @@ Research:     ███                                           8% (3)
 
 ### v0.20.0
 - 📋 Prop Editor (manual editing of generated props - position, rotation, scale, colors)
-- 🔬 Community Livestream Phase 1 (YouTube/Twitch stream of 3D world with community controls - read-only)
-
-### v0.21.0+
-- 🔬 Community Livestream Phase 2-4 (interactive task suggestions, voting, moderation, achievements)
+- 📋 Tauri Desktop App (native desktop app pointing to online API, ~10MB bundle, OS keychain, auto-updates)
+- 📋 API Key Management (secure API keys with scopes, expiration, rate limiting, audit logging)
 
 ### Research (no version assigned)
 - 🔬 Pixel avatars alternative aesthetic
@@ -168,7 +176,7 @@ Research:     ███                                           8% (3)
 |---------|--------|---------|------|-------------|
 | **Markdown Viewer/Editor** | ✅ | v0.13.0 | 4 | Phase 1-3: View docs, fullscreen + TOC, Editor. Phase 4: Polish |
 | **Zen Mode Panel Registry** | 📋 | v0.15.0 | 1 | Single source of truth for all panels (Ctrl+K, context menu, layouts) |
-| **Stand-Up Meetings** | 📋 | v0.15.0 | 4 | Automated meetings in 3D (bots walk, take turns, summaries) |
+| **Stand-Up Meetings** | 🚧 | v0.17.0 (P1) | 5 | Phase 1: standup CRUD + UI. Phase 2+: 3D animations, round-robin |
 | **Zen Mode Standalone** | 📋 | v0.14.0 | 1 | Standalone app sharing code/DB/API with CrewHub (monorepo architecture) |
 | **Task Management** | ✅ | v0.9.0 | 2 | Visual task board, TaskWall3D, Run with Agent |
 
@@ -198,15 +206,25 @@ Research:     ███                                           8% (3)
 
 ---
 
+## 🚀 SaaS & Distribution
+
+| Feature | Status | Version | Docs | Description |
+|---------|--------|---------|------|-------------|
+| **Tauri Desktop App** | 📋 | v0.20.0 | 6 | Native desktop app (macOS/Windows/Linux) pointing to online CrewHub API. ~10MB bundle (98% smaller than Electron), OS keychain for API keys, auto-updates, SSE/WebSocket support. ~98% frontend code reuse. |
+| **API Key Management** | 📋 | v0.20.0 | 6 | Secure API key system with scopes (read/self/manage/admin), expiration (default 90d), rate limiting (slowapi), audit logging (90d retention), `ch_live_`/`ch_test_` format (128-bit entropy). Frontend UI in Settings. ~70% already implemented. |
+
+**Total:** 2 features • 6 docs • 0 released, 2 planned
+
+---
+
 ## 🔧 Meta & Internal
 
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
 | **Demo Site** | ✅ | live @ demo.crewhub.dev | 2 | Public demo with mock API, no OpenClaw dependency |
 | **Agent Identity Pattern** | 📋 | v0.15.0 | 1 | Single identity, multiple surfaces pattern (prevents personality drift) |
-| **Community Livestream** | 🔬 | v0.20.0+ | 1 | YouTube/Twitch stream with community controls (Big Brother for bots - camera control, task suggestions, voting, safeguards) |
 
-**Total:** 3 features • 5 docs • 1 released, 1 planned, 1 research
+**Total:** 2 features • 3 docs • 1 released, 1 planned
 
 ---
 
@@ -219,4 +237,4 @@ Research:     ███                                           8% (3)
 
 ---
 
-*Generated from: 6 categories × 40 features × 62 documentation files*
+*Generated from: 7 categories × 41 features × 66 documentation files*

@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { useDragState } from '@/contexts/DragDropContext'
-import { botPositionRegistry } from './Bot3D'
+import { botPositionRegistry } from './botConstants'
 import { getIsPropBeingMoved, getIsPropBeingDragged, getIsLongPressPending } from '@/hooks/usePropMovement'
 import CameraControlsImpl from 'camera-controls'
 import * as THREE from 'three'
@@ -127,18 +127,6 @@ const BOT_CAM_LERP_FACTOR = 0.05 // smooth orbit-target follow
 // Reusable vector to avoid GC pressure in useFrame
 const _desiredTarget = new THREE.Vector3()
 
-// Reserved for future use (bot-specific camera positioning)
-export function getBotCamera(botPos: { x: number; y: number; z: number }) {
-  return {
-    posX: botPos.x + BOT_CAM_OFFSET.x,
-    posY: BOT_CAM_OFFSET.y,
-    posZ: botPos.z + BOT_CAM_OFFSET.z,
-    targetX: botPos.x,
-    targetY: 0.5,
-    targetZ: botPos.z,
-  }
-}
-
 // ─── WASD keyboard state for overview/room camera movement ─────
 
 const _wasdKeys = {
@@ -209,19 +197,44 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     controls.enabled = !isDragging && !isInteractingWithUI
   }, [isDragging, isInteractingWithUI])
 
-  // Also disable when prop is being moved or dragged (polled each frame)
+  // During prop movement: keep camera rotation enabled but disable zoom/pan.
+  // During prop DRAG: disable all camera controls (pointer conflicts).
+  // During long-press pending: disable all (to avoid accidental camera moves).
+  const prevPropStateRef = useRef<'none' | 'moving' | 'dragging' | 'pending'>('none')
+  
   useFrame(() => {
     const controls = controlsRef.current
     if (!controls) return
     const propMoving = getIsPropBeingMoved()
     const propDragging = getIsPropBeingDragged()
     const longPressPending = getIsLongPressPending()
-    const shouldDisable = propMoving || propDragging || longPressPending
-    // Only update if changed to avoid unnecessary work
-    if (shouldDisable && controls.enabled) {
-      controls.enabled = false
-    } else if (!shouldDisable && !isDragging && !isInteractingWithUI && !controls.enabled) {
+    
+    // Determine current prop interaction state
+    let propState: 'none' | 'moving' | 'dragging' | 'pending' = 'none'
+    if (longPressPending) propState = 'pending'
+    else if (propDragging) propState = 'dragging'
+    else if (propMoving) propState = 'moving'
+    
+    // Only update when state changes
+    if (propState === prevPropStateRef.current) return
+    prevPropStateRef.current = propState
+    
+    if (propState === 'none') {
+      // Restore full controls (if not disabled by drag-drop context)
+      if (!isDragging && !isInteractingWithUI) {
+        controls.enabled = true
+        applyConstraints(controls, state.level)
+      }
+    } else if (propState === 'moving') {
+      // Prop selected but not being dragged — allow rotation, block zoom/pan
       controls.enabled = true
+      controls.mouseButtons.wheel = ACTION.NONE
+      controls.mouseButtons.right = ACTION.NONE
+      controls.touches.two = ACTION.TOUCH_ROTATE  // allow 2-finger rotate, no zoom
+      controls.touches.three = ACTION.NONE
+    } else {
+      // Dragging or long-press pending — disable all camera controls
+      controls.enabled = false
     }
   })
 

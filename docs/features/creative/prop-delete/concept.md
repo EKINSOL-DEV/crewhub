@@ -1,7 +1,7 @@
 # Prop Delete Feature
 
 **Proposed for:** v0.14.0  
-**Status:** 📋 Planned  
+**Status:** ✅ Implemented (2026-02-12)  
 **Category:** Creative & Customization
 
 ---

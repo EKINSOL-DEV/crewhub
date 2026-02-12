@@ -365,7 +365,19 @@ make logs          # View container logs
 
 ### Development URLs
 - Frontend: http://localhost:5181
+- Frontend (Zen Mode): http://localhost:5181?mode=zen
 - Backend API: http://localhost:8091
+
+### Zen Mode
+
+Access lightweight Zen Mode (no 3D world) via URL parameter:
+
+```
+http://localhost:5180?mode=zen
+```
+
+Perfect for focused work, lower resource usage, or embedded contexts.
+No separate deployment needed — same app, different mode.
 
 ### Project Structure
 

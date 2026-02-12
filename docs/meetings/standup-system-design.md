@@ -1,294 +1,453 @@
-# Stand-Up Meeting System Design
+# Stand-Up Meetings — System Design
 
-> CrewHub HQ — Multi-Agent Stand-Up Meetings
-> Version: 1.0 | Date: 2026-02-11
+> CrewHub HQ Feature · v1.0 · 2026-02-12
 
-## Overview
+---
 
-Stand-up meetings allow CrewHub agents to collaboratively discuss a topic using a round-robin algorithm with cumulative context. The user initiates a meeting, selects participants, and receives a polished markdown summary with goals, action items, and decisions.
+## 1. Overview
 
-**Key constraint:** ~5 minutes wall-clock → polished `plan.md` output.
+Stand-Up Meetings bring AI-orchestrated round-robin discussions to CrewHub HQ. A user clicks the **Meeting Table** prop in the 3D HQ room, selects participants and a topic, and the backend orchestrates a multi-round conversation between bots — each building on cumulative context from prior speakers.
 
-## Architecture
+The output is a structured Markdown report saved to the project's Synology Drive folder.
+
+---
+
+## 2. Architecture
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                    Frontend (React + Three.js)        │
-│  ┌─────────┐  ┌──────────┐  ┌───────────────────┐   │
-│  │ Meeting  │  │ 3D Scene │  │ SSE Event         │   │
-│  │ Dialog   │  │ Avatars  │  │ Consumer          │   │
-│  └────┬─────┘  └────┬─────┘  └────┬──────────────┘   │
-│       │              │              │                  │
-└───────┼──────────────┼──────────────┼──────────────────┘
-        │ REST         │ state        │ SSE
-        ▼              ▼              ▼
-┌──────────────────────────────────────────────────────┐
-│              FastAPI Backend (:8091)                   │
-│  ┌──────────────────────────────────────────────┐    │
-│  │           MeetingOrchestrator                 │    │
-│  │  ┌────────────┐  ┌─────────────────────────┐ │    │
-│  │  │ State      │  │ Round-Robin Engine       │ │    │
-│  │  │ Machine    │  │ (context accumulator)    │ │    │
-│  │  └────────────┘  └─────────────────────────┘ │    │
-│  └──────────────────────┬───────────────────────┘    │
-│                         │                             │
-│  ┌──────────┐  ┌───────┴────────┐  ┌─────────────┐  │
-│  │ SSE      │  │ Gateway Client │  │ SQLite DB    │  │
-│  │ Broadcast│  │ (OpenClaw WS)  │  │ (meetings)   │  │
-│  └──────────┘  └────────────────┘  └─────────────┘  │
+┌─────────────────────────────────────────────────────┐
+│                    Frontend (React)                  │
+│  ┌──────────┐  ┌──────────────┐  ┌───────────────┐  │
+│  │MeetingTable│ │MeetingDialog │  │MeetingOutput  │  │
+│  │  (3D prop)│  │  (config UI) │  │  (results)    │  │
+│  └─────┬─────┘  └──────┬───────┘  └───────▲───────┘  │
+│        │               │                  │          │
+│        │         POST /meetings/start     │          │
+│        │               │          SSE stream         │
+│        ▼               ▼                  │          │
+│  ┌─────────────────────────────────────────┐         │
+│  │          SSE Client (EventSource)       │         │
+│  └─────────────────────▲───────────────────┘         │
+└────────────────────────┼─────────────────────────────┘
+                         │ SSE events
+┌────────────────────────┼─────────────────────────────┐
+│                Backend (FastAPI)                      │
+│  ┌─────────────────────┴───────────────────┐         │
+│  │         /api/meetings/* routes           │         │
+│  └─────────────────────┬───────────────────┘         │
+│                        │                             │
+│  ┌─────────────────────▼───────────────────┐         │
+│  │        MeetingOrchestrator              │         │
+│  │  ┌───────────┐  ┌────────────────┐      │         │
+│  │  │StateMachine│  │RoundRobinEngine│      │         │
+│  │  └───────────┘  └────────┬───────┘      │         │
+│  │                          │              │         │
+│  │  ┌───────────────────────▼────────┐     │         │
+│  │  │  ConnectionManager (Gateway)   │     │         │
+│  │  │  sessions_send / sessions_spawn│     │         │
+│  │  └────────────────────────────────┘     │         │
+│  └─────────────────────────────────────────┘         │
+│                                                      │
+│  ┌──────────────┐  ┌──────────────────────┐          │
+│  │  SQLite DB   │  │  SSE broadcast()     │          │
+│  │  (meetings)  │  │  (real-time events)  │          │
+│  └──────────────┘  └──────────────────────┘          │
 └──────────────────────────────────────────────────────┘
-        │
-        ▼ WebSocket
-┌──────────────────────┐
-│  OpenClaw Gateway    │
-│  (:18789)            │
-│  ┌────┐ ┌────┐      │
-│  │Main│ │Dev │ ...   │
-│  └────┘ └────┘      │
-└──────────────────────┘
 ```
 
-## State Machine
+### Key Components
+
+| Component | Location | Responsibility |
+|-----------|----------|----------------|
+| `MeetingOrchestrator` | `backend/app/services/meetings.py` | Runs the state machine, orchestrates bot turns |
+| `routes/meetings.py` | `backend/app/routes/meetings.py` | REST API + SSE event emission |
+| `MeetingDialog` | `frontend/src/components/meetings/MeetingDialog.tsx` | Config UI (participants, topic, rounds) |
+| `MeetingTable` | `frontend/src/components/world3d/props/MeetingTable.tsx` | 3D clickable prop in HQ |
+| `MeetingOutput` | `frontend/src/components/meetings/MeetingOutput.tsx` | Renders final MD report |
+
+---
+
+## 3. State Machine
 
 ```
-                    ┌─────────┐
-          start()   │IDLE     │
-         ┌─────────►│(no mtg) │
-         │          └────┬────┘
-         │               │ POST /api/meetings/start
-         │               ▼
-         │          ┌─────────┐
-         │          │GATHERING│  Bots walk to table (3-5s)
-         │          └────┬────┘
-         │               │ all bots positioned
-         │               ▼
-         │          ┌─────────┐
-    cancel()        │ROUND_1  │  Each bot speaks in order
-    at any ──────►  ├─────────┤
-    point           │ROUND_2  │  Cumulative context grows
-         │          ├─────────┤
-         │          │ROUND_3  │  Final perspectives
-         │          └────┬────┘
-         │               │ all rounds complete
-         │               ▼
-         │          ┌───────────┐
-         │          │SYNTHESIZING│  Synthesizer bot creates summary
-         │          └────┬──────┘
-         │               │
-         │               ▼
-         │          ┌─────────┐
-         └──────────│COMPLETE │  Output: plan.md
-                    └─────────┘
+                    POST /meetings/start
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   GATHERING  │  Bots walk to table (3D)
+                    │  (3-5 sec)   │  Frontend animation phase
+                    └──────┬───────┘
+                           │ all bots positioned
+                           ▼
+                    ┌──────────────┐
+                    │   ROUND_1    │  Each bot speaks in order
+                    │              │  Topic: "What did you work on?"
+                    └──────┬───────┘
+                           │ all turns complete
+                           ▼
+                    ┌──────────────┐
+                    │   ROUND_2    │  Each bot speaks in order
+                    │              │  Topic: "What will you do next?"
+                    └──────┬───────┘
+                           │ all turns complete
+                           ▼
+                    ┌──────────────┐
+                    │   ROUND_3    │  Each bot speaks in order
+                    │              │  Topic: "Any blockers or concerns?"
+                    └──────┬───────┘
+                           │ all turns complete
+                           ▼
+                    ┌──────────────┐
+                    │ SYNTHESIZING │  Generate summary from all turns
+                    │              │  Create structured MD output
+                    └──────┬───────┘
+                           │ synthesis complete
+                           ▼
+                    ┌──────────────┐
+                    │   COMPLETE   │  Save MD to disk
+                    │              │  Broadcast final event
+                    └──────────────┘
+
+          At any point:
+                    ┌──────────────┐
+                    │  CANCELLED   │  via POST /meetings/{id}/cancel
+                    └──────────────┘
+                    ┌──────────────┐
+                    │    ERROR     │  on unrecoverable failure
+                    └──────────────┘
 ```
 
 ### State Transitions
 
 | From | To | Trigger |
-|------|-----|---------|
-| IDLE | GATHERING | `POST /meetings/start` |
-| GATHERING | ROUND_1 | Animation complete (or timeout 5s) |
-| ROUND_N | ROUND_N+1 | All bots in round have spoken |
-| ROUND_N (last) | SYNTHESIZING | Final round complete |
-| SYNTHESIZING | COMPLETE | Summary generated |
-| Any | CANCELLED | `POST /meetings/{id}/cancel` |
+|------|----|---------|
+| `GATHERING` | `ROUND_1` | Timer expires or frontend signals ready |
+| `ROUND_1` | `ROUND_2` | All participants have spoken |
+| `ROUND_2` | `ROUND_3` | All participants have spoken |
+| `ROUND_3` | `SYNTHESIZING` | All participants have spoken |
+| `SYNTHESIZING` | `COMPLETE` | Summary generated and saved |
+| `*` | `CANCELLED` | User cancels |
+| `*` | `ERROR` | Unrecoverable error (gateway down, all retries exhausted) |
 
-## Round-Robin Algorithm
-
-### Turn Order
-
-Each round iterates through selected bots in a fixed order. The order is determined at meeting start and stays consistent across rounds.
+### State Storage
 
 ```python
-class RoundRobinEngine:
-    def __init__(self, participants: list[str], num_rounds: int):
-        self.participants = participants
-        self.num_rounds = num_rounds
-        self.current_round = 0
-        self.current_turn = 0
-        self.context = []  # cumulative conversation
-
-    def next_turn(self) -> tuple[str, int, int] | None:
-        """Returns (bot_id, round_num, turn_num) or None if complete."""
-        if self.current_round >= self.num_rounds:
-            return None
-        bot = self.participants[self.current_turn]
-        result = (bot, self.current_round, self.current_turn)
-        self.current_turn += 1
-        if self.current_turn >= len(self.participants):
-            self.current_turn = 0
-            self.current_round += 1
-        return result
+class MeetingState(str, Enum):
+    GATHERING = "gathering"
+    ROUND_1 = "round_1"
+    ROUND_2 = "round_2"
+    ROUND_3 = "round_3"
+    SYNTHESIZING = "synthesizing"
+    COMPLETE = "complete"
+    CANCELLED = "cancelled"
+    ERROR = "error"
 ```
 
-### Context Passing Strategy
+States are persisted in SQLite (`meetings` table) so meetings survive backend restarts. The orchestrator checks state on startup and resumes incomplete meetings.
 
-Each bot receives a growing context window containing all previous contributions:
+---
 
-```
-Round 1, Bot 1 (Main):
-  System: "You are Main (Sonnet). Topic: {topic}. You speak first. Share your perspective."
-  → Output: "I think we should..."
+## 4. Round-Robin Algorithm
 
-Round 1, Bot 2 (Dev):
-  System: "You are Dev (Opus). Topic: {topic}."
-  Context: [Main said: "I think we should..."]
-  → Output: "Building on Main's point..."
+### Core Principle: Cumulative Context
 
-Round 2, Bot 1 (Main):
-  System: "You are Main. This is round 2. Build on the discussion."
-  Context: [All Round 1 contributions]
-  → Output: "After hearing everyone..."
-```
+Each bot receives the full context of all previous speakers in the current round. This creates a natural conversation flow where later speakers can build on, agree with, or challenge what earlier speakers said.
 
-**Prompt template per turn:**
+### Algorithm
 
-```
-You are {agent_name}, participating in a stand-up meeting.
-Topic: {topic}
-Round: {round_num}/{total_rounds}
-
-Previous discussion:
-{cumulative_context}
-
-Provide a concise contribution (2-4 sentences). Focus on:
-- Round 1: Your initial perspective on the topic
-- Round 2: Build on others' points, identify agreements/disagreements
-- Round 3: Propose concrete action items and decisions
-
-Respond in character. Be concise.
-```
-
-### Synthesis Prompt
-
-After all rounds, a designated synthesizer (first participant or user-chosen) generates the final output:
-
-```
-You are the meeting synthesizer. Compile the following stand-up discussion into a clean summary.
-
-Topic: {topic}
-Participants: {participant_list}
-Full Discussion:
-{all_contributions}
-
-Output format:
-# Stand-Up Summary: {topic}
-**Date:** {date}
-**Participants:** {names}
-
-## Goal
-{one sentence}
-
-## Discussion Summary
-{key points from each round}
-
-## Action Items
-- [ ] {action} — @{owner}
-
-## Decisions
-- {decision 1}
-- {decision 2}
+```python
+async def run_round(self, round_num: int, round_topic: str):
+    """Execute one round of the standup."""
+    cumulative_context = []
+    
+    for i, bot in enumerate(self.participants):
+        # Build prompt with cumulative context
+        prompt = self._build_turn_prompt(
+            bot=bot,
+            round_num=round_num,
+            round_topic=round_topic,
+            previous_responses=cumulative_context,
+            meeting_goal=self.config.goal,
+            project_context=self.project_summary,
+        )
+        
+        # Send to bot via gateway connection
+        response = await self._get_bot_response(
+            bot=bot,
+            prompt=prompt,
+            max_tokens=200,
+        )
+        
+        # Add to cumulative context for next speakers
+        cumulative_context.append({
+            "bot_name": bot.display_name,
+            "bot_role": bot.role,
+            "response": response,
+        })
+        
+        # Broadcast turn completion via SSE
+        await broadcast("meeting-turn", {
+            "meeting_id": self.meeting_id,
+            "round": round_num,
+            "bot_id": bot.id,
+            "bot_name": bot.display_name,
+            "response": response,
+            "turn_index": i,
+            "total_turns": len(self.participants),
+        })
+        
+        # Store in DB
+        await self._save_turn(round_num, bot.id, response)
 ```
 
-## Gateway Integration
-
-The backend communicates with agents through the existing OpenClaw Gateway WebSocket connection at `ws://localhost:18789`.
-
-**Message flow per turn:**
-
-1. Backend constructs prompt with cumulative context
-2. Sends to Gateway targeting specific agent session
-3. Streams response tokens back via Gateway
-4. Appends completed response to context accumulator
-5. Broadcasts SSE event to frontend
-
-**Connection reuse:** Uses existing `services/gateway.py` WebSocket client. No new connections needed.
-
-## Token Cost Analysis
-
-### Per-Turn Token Breakdown
-
-| Component | Tokens (approx) |
-|-----------|-----------------|
-| System prompt | ~150 |
-| Topic + instructions | ~50 |
-| Cumulative context (avg) | ~200 |
-| Bot response (target) | ~80 |
-| **Total per turn** | **~480** |
-
-### Full Meeting Cost (5 bots, 3 rounds)
+### Prompt Template (per turn)
 
 ```
-Turns: 5 bots × 3 rounds = 15 turns
-Context growth: starts ~0, ends ~1200 tokens
+You are {bot_name}, role: {bot_role}.
+You're in a stand-up meeting about: {meeting_goal}
+Project context: {project_summary}
 
-Early turns (round 1):  ~250 tokens each × 5 = 1,250
-Mid turns (round 2):    ~450 tokens each × 5 = 2,250
-Late turns (round 3):   ~650 tokens each × 5 = 3,250
-Synthesis turn:          ~800 input + ~300 output = 1,100
+Round {round_num}/3: {round_topic}
 
-Total input tokens:  ~6,750
-Total output tokens: ~1,500 (15×80 + 300 synthesis)
-────────────────────────────
-Estimated total:     ~8,250 tokens
+{if previous_responses:}
+Previous speakers in this round:
+{for resp in previous_responses:}
+- **{resp.bot_name}** ({resp.bot_role}): {resp.response}
+{endfor}
 
-At Sonnet pricing ($3/1M input, $15/1M output):
-  Input:  $0.020
-  Output: $0.023
-  Total:  ~$0.04 per meeting
+Build on what was said. Don't repeat. Add your unique perspective.
+{endif}
+
+Respond concisely (2-3 sentences max). Be specific and actionable.
 ```
 
-**With mixed models (Opus for Dev):** ~$0.08-0.12 per meeting.
+### Speaker Order
 
-### Optimization Strategies
+Default order follows room assignment order. Can be overridden in `MeetingConfig`:
 
-1. **Context compression:** Summarize earlier rounds instead of passing verbatim
-2. **Parallel turns:** Within a round, bots that don't need each other's input could run in parallel (breaks round-robin purity but saves time)
-3. **Response length cap:** Enforce max 100 tokens per response via `max_tokens`
-4. **Smart truncation:** Only pass last 2 rounds of context if context exceeds 1000 tokens
+```python
+class MeetingConfig(BaseModel):
+    participants: list[str]          # agent IDs, order = speaking order
+    goal: str = "Daily standup"
+    num_rounds: int = 3              # 1-5
+    max_tokens_per_turn: int = 200
+    round_topics: list[str] = [
+        "What have you been working on?",
+        "What will you focus on next?",
+        "Any blockers, risks, or things you need help with?",
+    ]
+```
 
-## Data Model
+---
+
+## 5. Bot Orchestration via Gateway
+
+CrewHub communicates with bots through the **ConnectionManager** which interfaces with OpenClaw gateway connections.
+
+### How a Turn Works
+
+```
+MeetingOrchestrator
+    │
+    ▼ get connection for bot's agent
+ConnectionManager.get_connection(agent_key)
+    │
+    ▼ send prompt via gateway
+connection.sessions_send(
+    session_id=meeting_session_id,
+    message=turn_prompt,
+    model=bot.default_model or "sonnet",
+)
+    │
+    ▼ await response (with timeout)
+response = await connection.wait_for_response(
+    timeout=30,
+)
+    │
+    ▼ parse and return
+return response.text
+```
+
+### Connection Strategy
+
+1. **Preferred:** Use the bot's existing gateway connection (`connections` table)
+2. **Fallback:** Use any available connection with the required model
+3. **Error:** If no connection available, mark meeting as ERROR
+
+### Session Management
+
+Each meeting creates a dedicated session context:
+- Session ID format: `meeting-{meeting_id}`
+- The session accumulates all turns as conversation history
+- After COMPLETE, the session is closed
+
+---
+
+## 6. Token Budget
+
+Target: **~3500-4000 tokens per meeting** (cost-efficient for daily use)
+
+| Component | Tokens | Count | Subtotal |
+|-----------|--------|-------|----------|
+| Turn response | ~200 | 15 (5 bots × 3 rounds) | ~3000 |
+| Synthesis | ~500 | 1 | ~500 |
+| **Total output** | | | **~3500** |
+
+Input tokens (prompts) scale with cumulative context but are bounded:
+- Round 1, Bot 1: ~100 tokens (system + topic only)
+- Round 3, Bot 5: ~900 tokens (system + topic + 4 previous responses)
+- Total input across all turns: ~6000-8000 tokens
+
+**Total cost estimate:** ~$0.01-0.02 per meeting with Sonnet.
+
+---
+
+## 7. Synthesis Engine
+
+After all rounds complete, the orchestrator generates a summary:
+
+```python
+async def synthesize(self) -> str:
+    """Generate structured meeting summary."""
+    all_turns = await self._get_all_turns()
+    
+    synthesis_prompt = f"""
+    Synthesize this stand-up meeting into a structured summary.
+    
+    Meeting: {self.config.goal}
+    Participants: {', '.join(p.display_name for p in self.participants)}
+    
+    {self._format_all_turns(all_turns)}
+    
+    Output format (Markdown):
+    # Stand-Up Meeting — {date}
+    
+    ## Goal
+    {self.config.goal}
+    
+    ## Participants
+    - List each with role
+    
+    ## Discussion Summary
+    Key points organized by theme (not by person)
+    
+    ## Action Items
+    - [ ] Specific, assigned action items extracted from discussion
+    
+    ## Decisions
+    - Any decisions or agreements reached
+    
+    ## Blockers
+    - Unresolved blockers that need attention
+    """
+    
+    response = await self._get_bot_response(
+        bot=self.synthesis_bot,  # Use first participant or designated lead
+        prompt=synthesis_prompt,
+        max_tokens=500,
+    )
+    
+    return response
+```
+
+### Output File
+
+Saved to: `~/SynologyDrive/ekinbot/01-Projects/{project_name}/meetings/{YYYY-MM-DD}-standup.md`
+
+If multiple standups per day: `{YYYY-MM-DD}-standup-2.md`
+
+---
+
+## 8. Database Schema
 
 ```sql
-CREATE TABLE meetings (
-    id TEXT PRIMARY KEY,
-    topic TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'gathering',
-    config_json TEXT NOT NULL,      -- MeetingConfig as JSON
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL,
-    completed_at INTEGER,
-    output_md TEXT                   -- Final markdown output
-);
+-- New tables for meetings feature
 
-CREATE TABLE meeting_turns (
+CREATE TABLE IF NOT EXISTS meetings (
     id TEXT PRIMARY KEY,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id),
-    round_num INTEGER NOT NULL,
-    turn_num INTEGER NOT NULL,
-    agent_id TEXT NOT NULL,
-    agent_name TEXT NOT NULL,
-    content TEXT,                    -- Bot's contribution
-    tokens_used INTEGER,
+    title TEXT NOT NULL DEFAULT 'Daily Standup',
+    goal TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT 'gathering',
+    room_id TEXT,
+    project_id TEXT,
+    config_json TEXT,           -- JSON: MeetingConfig
+    output_md TEXT,             -- Final synthesized markdown
+    output_path TEXT,           -- File path where MD was saved
+    current_round INTEGER DEFAULT 0,
+    current_turn INTEGER DEFAULT 0,
     started_at INTEGER,
     completed_at INTEGER,
-    status TEXT DEFAULT 'pending'    -- pending, speaking, complete, error
+    cancelled_at INTEGER,
+    error_message TEXT,
+    created_by TEXT DEFAULT 'user',
+    created_at INTEGER NOT NULL,
+    
+    FOREIGN KEY (room_id) REFERENCES rooms(id),
+    FOREIGN KEY (project_id) REFERENCES projects(id)
+);
+
+CREATE TABLE IF NOT EXISTS meeting_participants (
+    meeting_id TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    
+    PRIMARY KEY (meeting_id, agent_id),
+    FOREIGN KEY (meeting_id) REFERENCES meetings(id),
+    FOREIGN KEY (agent_id) REFERENCES agents(id)
+);
+
+CREATE TABLE IF NOT EXISTS meeting_turns (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL,
+    round_num INTEGER NOT NULL,
+    turn_index INTEGER NOT NULL,
+    agent_id TEXT NOT NULL,
+    agent_name TEXT,
+    prompt_tokens INTEGER,
+    response_tokens INTEGER,
+    response_text TEXT,
+    started_at INTEGER,
+    completed_at INTEGER,
+    
+    FOREIGN KEY (meeting_id) REFERENCES meetings(id)
 );
 ```
 
-## Error Handling
+---
 
-| Error | Strategy |
-|-------|----------|
-| Bot timeout (>30s) | Skip turn, note in summary: "{bot} did not respond" |
-| Gateway disconnect | Retry once, then pause meeting with resume option |
-| All bots fail in round | End meeting early, synthesize with available data |
-| User cancels | Set CANCELLED, return partial results if any |
+## 9. Error Handling & Recovery
 
-## Performance Targets
+| Scenario | Handling |
+|----------|----------|
+| Bot timeout (>30s) | Retry once, then skip with "[no response]" |
+| Gateway disconnected | Pause meeting, retry connection for 60s, then ERROR |
+| All bots fail in a round | Skip round, note in synthesis |
+| Backend restart mid-meeting | Resume from last saved state (check `current_round`/`current_turn`) |
+| User cancels | Set state=CANCELLED, stop orchestrator, broadcast event |
 
-| Metric | Target |
-|--------|--------|
-| Total meeting time | < 5 minutes (3 rounds, 5 bots) |
-| Per-turn latency | < 15 seconds |
-| Time to first SSE event | < 2 seconds after start |
-| Gathering animation | 3-5 seconds |
+### Retry Policy
+
+```python
+MAX_RETRIES_PER_TURN = 1
+TURN_TIMEOUT_SECONDS = 30
+GATEWAY_RECONNECT_TIMEOUT = 60
+```
+
+---
+
+## 10. Concurrency
+
+- **One meeting per room at a time.** Attempting to start a second returns HTTP 409.
+- The orchestrator runs as an `asyncio.Task` — non-blocking to the API server.
+- SSE broadcasts are fire-and-forget to all connected clients.
+- Database writes use the existing `get_db()` pattern (per-request connections).
+
+---
+
+## 11. Future Extensions
+
+- **Meeting templates:** Pre-configured topics (retrospective, planning, brainstorm)
+- **Configurable rounds:** 1-5 rounds with custom topics per round
+- **Meeting history:** Browse past meetings, compare across days
+- **Bot voting:** Bots can +1 action items from other bots
+- **External triggers:** Start meetings via cron or API (automated daily standups)

@@ -40,3 +40,4 @@ htmlcov/
 # Docker volumes
 data/
 data/
+docs/features/overview/.backups/

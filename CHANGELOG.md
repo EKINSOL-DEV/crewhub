@@ -5,15 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.15.0] - 2026-02-12
+## [0.14.0] - 2026-02-12
 
-### 🐛 Agent Status Logic Improvements
+### ✨ Major Features
 
-- **Active Children Detection** — Agents now show "working" status when they have active subagents/cron tasks, even if the main session hasn't updated recently. Previously, agents would show "sleeping" after 5 minutes even when subagents were actively processing long-running tasks (e.g., PropMaker generation, research tasks).
-- **`getSessionStatus` Enhancement** — Added `hasActiveChildren` option to override time-based status when child sessions are active.
-- **`calculateStatus` Fix** — Agent registry now checks child sessions (subagents, spawns, cron workers) for recent activity before declaring an agent idle.
-- **Improved Child Session Matching** — Better detection of agent-owned sessions using `agentPrefix:subagent:`, `agentPrefix:spawn:`, and `agentPrefix:cron:` patterns.
-- **Parking Lane Fix** — Sessions with active children are no longer incorrectly sent to the parking lane.
+- **URL Parameter Zen Mode** — Access Zen Mode via `?mode=zen` URL parameter, replacing the standalone app approach. Cleaner architecture, one entry point.
+- **PropMaker Part Editor** — Transform individual sub-objects within generated props (scale, rotate, position each mesh part independently). Fine-grained control over AI-generated content.
+- **Dev Error Logger** — Built-in error overlay with stack traces for debugging. Catches and displays runtime errors with full context.
+
+### 🎯 Improvements
+
+- **Zen Mode Project CRUD + Context Fix** — Full project management (create, edit, delete) now works correctly in Zen Mode with proper context handling.
+- **PropMaker Quality Phase 2-3** — Component library (7 reusable animated components), multi-pass generation pipeline, visual refinement UI, iteration system, style transfer, hybrid generation, quality scorer.
+- **Bot Animation Refactor** — Extracted animation logic into dedicated modules (botAnimTick, botConstants, roomInteractionPoints) for better maintainability.
+- **Grid Room Renderer** — Floor props now snap flush against walls, improved room boundary handling.
+
+### 🐛 Bug Fixes
+
+- Fixed HMR-breaking export in floor prop components
+- Fixed camera controller interference with overlays
+- Fixed prop movement (reduced long-press time, prevent premature cancel)
+- Fixed Zen Mode chat panel context issues
+- Fixed Prop Refiner (simplified, cleaned up redundant code)
+- Fixed flicker issues in 3D world view
+
+### 📝 Documentation
+
+- Updated features matrix for v0.14.0
+- Added Tauri Desktop App + API Key Management roadmap (v0.20.0)
+- Added SaaS strategy document
+- Grid boundary fine-tuning moved to v0.15.0
+
+---
 
 ## [0.13.0] - 2026-02-11
 

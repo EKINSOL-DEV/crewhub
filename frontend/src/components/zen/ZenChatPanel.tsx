@@ -15,6 +15,7 @@ interface ZenChatPanelProps {
   sessionKey: string | null
   agentName: string | null
   agentIcon: string | null
+  roomId?: string  // Room ID for context envelope (Zen Mode active project room)
   onStatusChange?: (status: 'active' | 'thinking' | 'idle' | 'error') => void
   onChangeAgent?: () => void  // Callback to open agent picker
   onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void  // Direct agent selection
@@ -409,6 +410,7 @@ export function ZenChatPanel({
   sessionKey, 
   agentName, 
   agentIcon,
+  roomId,
   onStatusChange,
   onChangeAgent,
   onSelectAgent,
@@ -423,7 +425,7 @@ export function ZenChatPanel({
     loadOlderMessages,
     hasMore,
     isLoadingHistory,
-  } = useAgentChat(sessionKey || '', showThinking)
+  } = useAgentChat(sessionKey || '', showThinking, roomId)
 
   const [inputValue, setInputValue] = useState('')
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)

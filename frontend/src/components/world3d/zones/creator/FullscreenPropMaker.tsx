@@ -110,6 +110,12 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const eventSourceRef = useRef<EventSource | null>(null)
   const thinkingScrollRef = useRef<HTMLDivElement>(null)
 
+  // Part editor
+  const [editMode, setEditMode] = useState(false)
+  const [selectedPartIndex, setSelectedPartIndex] = useState<number | null>(null)
+  const [transformMode, setTransformMode] = useState<'translate' | 'rotate' | 'scale'>('translate')
+  const [isTransformDragging, setIsTransformDragging] = useState(false)
+
   // Phase 3: Quality & Iteration
   const [qualityScore, setQualityScore] = useState<any>(null)
   const [iterationFeedback, setIterationFeedback] = useState('')
@@ -458,6 +464,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
         const data = await res.json()
         if (data.code) {
           setPreviewCode(data.code)
+          if (data.parts?.length) setPreviewParts(data.parts)
           if (data.refinementOptions) setRefinementOptions(data.refinementOptions)
           setThinkingLines(prev => [
             ...prev,
@@ -485,6 +492,26 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     }
   }, [generationId])
 
+  const handlePartSelect = useCallback((index: number | null) => {
+    setSelectedPartIndex(index)
+  }, [])
+
+  const handlePartTransform = useCallback((index: number, position: [number, number, number], rotation: [number, number, number]) => {
+    setPreviewParts(prev => {
+      if (!prev) return prev
+      const updated = [...prev]
+      updated[index] = { ...updated[index], position, rotation }
+      return updated
+    })
+  }, [])
+
+  const handleApplyPartEdits = useCallback(() => {
+    setEditMode(false)
+    setSelectedPartIndex(null)
+    // Parts are already updated in-place via handlePartTransform
+    setThinkingLines(prev => [...prev, { text: '✏️ Part transforms applied', type: 'correction' as const }])
+  }, [])
+
   const handleRuntimeError = useCallback((error: Error) => {
     setRenderError(error.message)
   }, [])
@@ -502,8 +529,20 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const PreviewWrapper = useMemo(() => {
     if (!previewParts) return null
     const parts = previewParts
-    return () => <DynamicProp parts={parts} position={[0, 0, 0]} scale={3} />
-  }, [previewParts])
+    return () => (
+      <DynamicProp
+        parts={parts}
+        position={[0, 0, 0]}
+        scale={3}
+        editMode={editMode}
+        selectedPartIndex={selectedPartIndex}
+        onPartSelect={handlePartSelect}
+        onPartTransform={handlePartTransform}
+        transformMode={transformMode}
+        onDraggingChanged={setIsTransformDragging}
+      />
+    )
+  }, [previewParts, editMode, selectedPartIndex, transformMode, handlePartSelect, handlePartTransform])
 
   const canPreview = PreviewWrapper && !renderError
 
@@ -690,6 +729,52 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                       <button className="fpm-regen-btn" onClick={handleRegenerate}>
                         🔄 Regenerate
                       </button>
+                    </div>
+                  )}
+
+                  {/* Part Editor Toggle */}
+                  {previewParts && !isGenerating && (
+                    <div className="fpm-part-editor">
+                      <div className="fpm-part-editor-header">
+                        <span>✏️ Part Editor</span>
+                        <button
+                          className={`fpm-edit-toggle ${editMode ? 'fpm-edit-toggle-active' : ''}`}
+                          onClick={() => { setEditMode(!editMode); setSelectedPartIndex(null) }}
+                        >
+                          {editMode ? '🔓 Exit Edit' : '🔒 Edit Parts'}
+                        </button>
+                      </div>
+                      {editMode && (
+                        <div className="fpm-part-editor-controls">
+                          <div className="fpm-transform-modes">
+                            {(['translate', 'rotate', 'scale'] as const).map(mode => (
+                              <button
+                                key={mode}
+                                className={`fpm-transform-btn ${transformMode === mode ? 'fpm-transform-btn-active' : ''}`}
+                                onClick={() => setTransformMode(mode)}
+                              >
+                                {mode === 'translate' ? '↔️ Move' : mode === 'rotate' ? '🔄 Rotate' : '📐 Scale'}
+                              </button>
+                            ))}
+                          </div>
+                          {selectedPartIndex !== null ? (
+                            <div className="fpm-selected-part-info">
+                              Selected: Part {selectedPartIndex + 1} ({previewParts[selectedPartIndex]?.type})
+                              <span style={{ color: previewParts[selectedPartIndex]?.color, marginLeft: 6 }}>■</span>
+                            </div>
+                          ) : (
+                            <div className="fpm-selected-part-info" style={{ opacity: 0.5 }}>
+                              Click a part in the preview to select it
+                            </div>
+                          )}
+                          <button
+                            className="fpm-apply-edits-btn"
+                            onClick={handleApplyPartEdits}
+                          >
+                            ✅ Apply Part Changes
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -903,10 +988,27 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
           </div>
         </div>
 
-        {/* Right side: 3D Preview */}
+        {/* Right side: 3D Preview — Canvas stays mounted to preserve camera position */}
         <div className="fpm-right">
-          {isGenerating ? (
-            <div className="fpm-preview-placeholder">
+          {/* Persistent Canvas — never unmounts, so OrbitControls camera survives across generations */}
+          <Canvas camera={{ position: [3, 2, 3], fov: 45 }} style={{ position: 'absolute', inset: 0 }}>
+            <PropErrorBoundary onError={handleRuntimeError}>
+              <Suspense fallback={null}>
+                {canPreview && PreviewWrapper && (
+                  <Stage adjustCamera={false} environment="city" intensity={0.5}>
+                    <PreviewWrapper />
+                  </Stage>
+                )}
+              </Suspense>
+            </PropErrorBoundary>
+            <OrbitControls makeDefault enablePan enableZoom minDistance={1} maxDistance={15} enabled={!isTransformDragging} />
+            <ambientLight intensity={0.4} />
+            <directionalLight position={[5, 5, 5]} intensity={0.8} />
+          </Canvas>
+
+          {/* Overlay placeholders on top of Canvas */}
+          {isGenerating && (
+            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
               <div className="fpm-preview-spinner">⚙️</div>
               <div>Generating prop...</div>
               <div className="fpm-preview-sublabel">
@@ -916,28 +1018,17 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                 This may take a few minutes — AI is crafting your prop! 🤖
               </div>
             </div>
-          ) : canPreview && PreviewWrapper ? (
-            <Canvas camera={{ position: [3, 2, 3], fov: 45 }}>
-              <PropErrorBoundary onError={handleRuntimeError}>
-                <Suspense fallback={null}>
-                  <Stage adjustCamera={false} environment="city" intensity={0.5}>
-                    <PreviewWrapper />
-                  </Stage>
-                </Suspense>
-              </PropErrorBoundary>
-              <OrbitControls makeDefault enablePan enableZoom minDistance={1} maxDistance={15} />
-              <ambientLight intensity={0.4} />
-              <directionalLight position={[5, 5, 5]} intensity={0.8} />
-            </Canvas>
-          ) : renderError ? (
-            <div className="fpm-preview-placeholder">
+          )}
+          {!isGenerating && renderError && (
+            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
               <div>Render failed</div>
               <div className="fpm-preview-error">{renderError}</div>
               <button className="fpm-retry-btn" onClick={handleRetry}>🔄 Retry</button>
             </div>
-          ) : (
-            <div className="fpm-preview-placeholder">
+          )}
+          {!isGenerating && !canPreview && !renderError && (
+            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
               <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>🎨</div>
               <div>No model yet</div>
               <div className="fpm-preview-sublabel">
@@ -984,6 +1075,76 @@ function ExpandableSection({ label, content, color }: { label: string; content: 
 
 // ── History Panel ─────────────────────────────────────────────
 
+interface PropUsagePlacement {
+  blueprintId: string
+  blueprintName: string
+  roomId: string
+  instanceCount: number
+}
+
+interface DeleteConfirmState {
+  record: GenerationRecord
+  loading: boolean
+  placements: PropUsagePlacement[]
+  totalInstances: number
+}
+
+function PropDeleteDialog({
+  state,
+  onConfirm,
+  onCancel,
+}: {
+  state: DeleteConfirmState
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const hasPlacements = state.placements.length > 0
+  const displayPlacements = state.placements.slice(0, 5)
+  const extraCount = state.placements.length - displayPlacements.length
+
+  return (
+    <div className="fpm-delete-overlay" onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
+      <div className="fpm-delete-dialog">
+        <div className="fpm-delete-title">
+          {hasPlacements ? '⚠️ Delete Prop?' : '🗑️ Delete Prop?'}
+        </div>
+        <div className="fpm-delete-body">
+          <p>This will delete "<strong>{state.record.name}</strong>" from your history.</p>
+          {hasPlacements ? (
+            <>
+              <div className="fpm-delete-warning">
+                ⚠️ This prop is currently placed in {state.placements.length} room(s)
+                ({state.totalInstances} instance{state.totalInstances !== 1 ? 's' : ''}):
+              </div>
+              <ul className="fpm-delete-room-list">
+                {displayPlacements.map((p) => (
+                  <li key={p.blueprintId}>
+                    {p.blueprintName} ({p.instanceCount} instance{p.instanceCount !== 1 ? 's' : ''})
+                  </li>
+                ))}
+                {extraCount > 0 && <li className="fpm-delete-more">+ {extraCount} more...</li>}
+              </ul>
+              <p className="fpm-delete-cascade-note">
+                Deleting this prop will <strong>remove it from all rooms</strong> where it's placed.
+              </p>
+            </>
+          ) : (
+            <p className="fpm-delete-note">This action cannot be undone.</p>
+          )}
+        </div>
+        <div className="fpm-delete-actions">
+          <button className="fpm-delete-cancel-btn" onClick={onCancel} disabled={state.loading}>
+            Cancel
+          </button>
+          <button className="fpm-delete-confirm-btn" onClick={onConfirm} disabled={state.loading}>
+            {state.loading ? '⏳ Deleting...' : hasPlacements ? '🗑️ Delete Anyway' : '🗑️ Delete Prop'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function HistoryPanel({
   onLoadProp,
   refreshKey = 0,
@@ -995,6 +1156,8 @@ function HistoryPanel({
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detail, setDetail] = useState<GenerationRecord | null>(null)
+  const [deleteState, setDeleteState] = useState<DeleteConfirmState | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -1003,6 +1166,14 @@ function HistoryPanel({
       .then(data => { setRecords(data.records || []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [refreshKey])
+
+  // Auto-hide toast
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [toast])
 
   const handleSelect = (record: GenerationRecord) => {
     if (selectedId === record.id) {
@@ -1014,11 +1185,77 @@ function HistoryPanel({
     }
   }
 
+  const handleDeleteClick = async (record: GenerationRecord) => {
+    // First check usage
+    try {
+      const res = await fetch(`/api/creator/generation-history/${record.id}/usage`)
+      if (!res.ok) throw new Error('Failed to check usage')
+      const usage = await res.json()
+      setDeleteState({
+        record,
+        loading: false,
+        placements: usage.placements || [],
+        totalInstances: usage.totalInstances || 0,
+      })
+    } catch {
+      // If usage check fails, show simple dialog
+      setDeleteState({
+        record,
+        loading: false,
+        placements: [],
+        totalInstances: 0,
+      })
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteState) return
+    setDeleteState({ ...deleteState, loading: true })
+
+    const hasPlacements = deleteState.placements.length > 0
+    const url = `/api/creator/generation-history/${deleteState.record.id}${hasPlacements ? '?cascade=true' : ''}`
+
+    try {
+      const res = await fetch(url, { method: 'DELETE' })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Delete failed' }))
+        throw new Error(typeof err.detail === 'string' ? err.detail : err.detail?.message || 'Delete failed')
+      }
+      const result = await res.json()
+
+      // Remove from local state
+      setRecords(prev => prev.filter(r => r.id !== deleteState.record.id))
+      if (selectedId === deleteState.record.id) {
+        setSelectedId(null)
+        setDetail(null)
+      }
+
+      const roomsMsg = result.total_instances_removed > 0
+        ? ` (removed from ${result.deleted_from_rooms.length} room${result.deleted_from_rooms.length !== 1 ? 's' : ''})`
+        : ''
+      setToast({ message: `✅ Prop "${deleteState.record.name}" deleted${roomsMsg}`, type: 'success' })
+    } catch (e: any) {
+      setToast({ message: `❌ ${e.message || 'Delete failed'}`, type: 'error' })
+    } finally {
+      setDeleteState(null)
+    }
+  }
+
   if (loading) return <div className="fpm-history-empty">Loading history...</div>
   if (records.length === 0) return <div className="fpm-history-empty">No generations yet</div>
 
   return (
     <div className="fpm-history">
+      {toast && (
+        <div className={`fpm-toast fpm-toast-${toast.type}`}>{toast.message}</div>
+      )}
+      {deleteState && (
+        <PropDeleteDialog
+          state={deleteState}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteState(null)}
+        />
+      )}
       <div className="fpm-history-list">
         {records.map((r) => (
           <div
@@ -1035,6 +1272,13 @@ function HistoryPanel({
             <div className="fpm-history-item-date">
               {new Date(r.createdAt).toLocaleString()}
             </div>
+            <button
+              className="fpm-history-delete-btn"
+              title="Delete prop"
+              onClick={(e) => { e.stopPropagation(); handleDeleteClick(r) }}
+            >
+              🗑️
+            </button>
           </div>
         ))}
       </div>
@@ -1065,11 +1309,19 @@ function HistoryPanel({
           {detail.error && (
             <div style={{ color: '#ef4444', fontSize: 11 }}>❌ {detail.error}</div>
           )}
-          {detail.parts.length > 0 && !detail.error && (
-            <button className="fpm-load-btn" onClick={() => onLoadProp(detail)}>
-              🔄 Load into Preview
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            {detail.parts.length > 0 && !detail.error && (
+              <button className="fpm-load-btn" onClick={() => onLoadProp(detail)}>
+                🔄 Load into Preview
+              </button>
+            )}
+            <button
+              className="fpm-delete-btn"
+              onClick={() => handleDeleteClick(detail)}
+            >
+              🗑️ Delete
             </button>
-          )}
+          </div>
         </div>
       )}
     </div>
@@ -1394,6 +1646,7 @@ const fullscreenPropMakerStyles = `
   color: var(--zen-fg-dim, #888);
   font-size: 14px;
   gap: 8px;
+  background: var(--zen-bg, #0f0f23);
 }
 .fpm-preview-spinner {
   font-size: 32px;
@@ -1582,4 +1835,118 @@ const fullscreenPropMakerStyles = `
   border: 1px solid var(--zen-border, #2a2a4a);
 }
 .fpm-quality-tips { font-size: 11px; color: var(--zen-fg-dim, #888); line-height: 1.8; }
+
+/* Delete button on history items */
+.fpm-history-item { position: relative; }
+.fpm-history-delete-btn {
+  position: absolute; top: 6px; right: 6px;
+  background: none; border: none; cursor: pointer;
+  font-size: 14px; opacity: 0; transition: opacity 0.15s;
+  padding: 2px 4px; border-radius: 4px;
+}
+.fpm-history-item:hover .fpm-history-delete-btn { opacity: 0.6; }
+.fpm-history-delete-btn:hover { opacity: 1 !important; background: rgba(239, 68, 68, 0.15); }
+
+/* Delete button in detail view */
+.fpm-delete-btn {
+  background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px; padding: 8px 14px;
+  color: #ef4444; font-weight: 600; font-size: 12px; cursor: pointer;
+}
+.fpm-delete-btn:hover { background: rgba(239, 68, 68, 0.25); }
+
+/* Delete confirmation dialog */
+.fpm-delete-overlay {
+  position: fixed; inset: 0; z-index: 20000;
+  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center;
+}
+.fpm-delete-dialog {
+  background: var(--zen-bg-panel, #1a1a2e); border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 12px; padding: 20px; max-width: 420px; width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.fpm-delete-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+.fpm-delete-body { font-size: 13px; line-height: 1.6; color: var(--zen-fg-dim, #ccc); }
+.fpm-delete-body p { margin: 0 0 8px; }
+.fpm-delete-warning { color: #eab308; font-weight: 600; margin: 8px 0 4px; }
+.fpm-delete-room-list {
+  margin: 4px 0 8px 16px; padding: 0; font-size: 12px;
+  color: var(--zen-fg-dim, #aaa);
+}
+.fpm-delete-room-list li { margin-bottom: 2px; }
+.fpm-delete-more { color: var(--zen-fg-muted, #666); font-style: italic; }
+.fpm-delete-cascade-note { color: #ef4444; font-weight: 600; }
+.fpm-delete-note { color: var(--zen-fg-muted, #888); font-style: italic; }
+.fpm-delete-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.fpm-delete-cancel-btn {
+  background: var(--zen-bg-input, #2a2a4a); border: 1px solid var(--zen-border, #3a3a5a);
+  border-radius: 8px; padding: 8px 16px; color: var(--zen-fg, #e0e0e0);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.fpm-delete-cancel-btn:hover { background: var(--zen-border, #3a3a5a); }
+.fpm-delete-confirm-btn {
+  background: #ef4444; border: none; border-radius: 8px;
+  padding: 8px 16px; color: white; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.fpm-delete-confirm-btn:hover { background: #dc2626; }
+.fpm-delete-confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Toast */
+.fpm-toast {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  z-index: 25000; padding: 8px 16px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; animation: fpm-fadein 0.2s ease-out;
+}
+.fpm-toast-success { background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.4); color: #22c55e; }
+.fpm-toast-error { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; }
+
+/* Part Editor */
+.fpm-part-editor {
+  margin-top: 12px;
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(99, 102, 241, 0.03);
+}
+.fpm-part-editor-header {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; font-weight: 700; color: var(--zen-accent, #6366f1);
+}
+.fpm-edit-toggle {
+  background: var(--zen-bg, #0f0f23);
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 6px; padding: 4px 10px;
+  color: var(--zen-fg-dim, #888); font-size: 11px; cursor: pointer;
+}
+.fpm-edit-toggle-active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--zen-accent, #6366f1);
+  color: var(--zen-accent, #6366f1);
+}
+.fpm-part-editor-controls { margin-top: 8px; }
+.fpm-transform-modes { display: flex; gap: 6px; margin-bottom: 8px; }
+.fpm-transform-btn {
+  background: var(--zen-bg, #0f0f23);
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 6px; padding: 4px 10px;
+  color: var(--zen-fg-dim, #888); font-size: 11px; cursor: pointer;
+  flex: 1;
+}
+.fpm-transform-btn-active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--zen-accent, #6366f1);
+  color: var(--zen-accent, #6366f1);
+}
+.fpm-selected-part-info {
+  font-size: 11px; color: var(--zen-fg-dim, #888);
+  padding: 4px 0; margin-bottom: 8px;
+}
+.fpm-apply-edits-btn {
+  width: 100%;
+  background: #22c55e; border: none; border-radius: 6px;
+  padding: 6px 12px; color: white; font-weight: 600;
+  font-size: 12px; cursor: pointer;
+}
+.fpm-apply-edits-btn:hover { background: #16a34a; }
 `

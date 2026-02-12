@@ -1,6 +1,6 @@
 import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
-import type { BotStatus } from './Bot3D'
+import type { BotStatus } from './botConstants'
 import { EditBioDialog } from '@/components/shared/EditBioDialog'
 import { useState } from 'react'
 

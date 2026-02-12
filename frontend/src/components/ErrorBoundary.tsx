@@ -1,6 +1,7 @@
 import { Component, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
+import { captureReactError } from '@/lib/devErrorStore'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -23,6 +24,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    captureReactError(error, { componentStack: errorInfo.componentStack ?? undefined })
     console.error('ErrorBoundary caught an error:', error, errorInfo)
   }
 

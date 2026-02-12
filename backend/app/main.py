@@ -20,6 +20,7 @@ from app.routes.auth_routes import router as auth_router
 from app.routes.creator import router as creator_router
 from app.routes.personas import router as personas_router
 from app.routes import agent_files
+from app.routes.standups import router as standups_router
 from app.db.database import init_database, check_database_health
 from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
@@ -246,6 +247,9 @@ app.include_router(creator_router)
 
 # Phase 5: Agent Persona Tuning
 app.include_router(personas_router, prefix="/api", tags=["personas"])
+
+# Phase 6: Stand-up Meetings
+app.include_router(standups_router, prefix="/api/standups", tags=["standups"])
 
 
 @app.get("/")

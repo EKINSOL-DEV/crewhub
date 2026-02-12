@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
-import type { BotStatus } from './Bot3D'
+import type { BotStatus } from './botConstants'
 import { BotInfoTabs } from './BotInfoTabs'
 
 interface BotInfoPanelProps {

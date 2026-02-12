@@ -197,6 +197,55 @@ async def test_project_with_rooms(client):
 
 
 @pytest.mark.asyncio
+async def test_delete_project_requires_archived(client):
+    """Test that only archived projects can be deleted."""
+    create_resp = await client.post("/api/projects", json={"name": "Delete Test"})
+    project_id = create_resp.json()["id"]
+
+    # Try to delete active project — should fail
+    response = await client.delete(f"/api/projects/{project_id}")
+    assert response.status_code == 400
+    assert "archived" in response.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_delete_project_cascade_room_assignments(client):
+    """Test that deleting a project removes room assignments."""
+    # Create project and assign to room
+    create_resp = await client.post("/api/projects", json={"name": "Cascade Test"})
+    project_id = create_resp.json()["id"]
+
+    await client.post("/api/rooms/dev-room/project", json={"project_id": project_id})
+
+    # Verify room is assigned
+    proj_resp = await client.get(f"/api/projects/{project_id}")
+    assert "dev-room" in proj_resp.json()["rooms"]
+
+    # Unassign room first (required before archiving)
+    await client.delete("/api/rooms/dev-room/project")
+
+    # Archive the project
+    archive_resp = await client.put(f"/api/projects/{project_id}", json={"status": "archived"})
+    assert archive_resp.status_code == 200
+
+    # Delete the archived project
+    del_resp = await client.delete(f"/api/projects/{project_id}")
+    assert del_resp.status_code == 200
+    assert del_resp.json()["success"] is True
+
+    # Verify project is gone
+    get_resp = await client.get(f"/api/projects/{project_id}")
+    assert get_resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_nonexistent_project(client):
+    """Test deleting a non-existent project returns 404."""
+    response = await client.delete("/api/projects/nonexistent-id")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_projects_overview(client):
     """Test GET /api/projects/overview returns enriched data."""
     # Create a project

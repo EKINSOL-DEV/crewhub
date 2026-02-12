@@ -7,7 +7,7 @@ import type { PropPlacement } from '@/lib/grid'
 import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 
-const LONG_PRESS_MS = 600 // 600ms for long-press detection
+const LONG_PRESS_MS = 200 // 200ms for long-press detection (reduced from 600 for responsiveness)
 
 // ─── Global prop movement state ────────────────────────────────
 // Used by camera controllers to block WASD/mouse look when a prop is selected/dragged
@@ -91,7 +91,7 @@ export function usePropMovement({
   const [selectedProp, setSelectedProp] = useState<SelectedProp | null>(null)
   const [isMoving, setIsMoving] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const [pendingClear, setPendingClear] = useState(false)
+  const [, setPendingClear] = useState(false)
   const placementsRef = useRef(placements)
   placementsRef.current = placements // Always keep ref in sync (avoids stale closures)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -166,7 +166,8 @@ export function usePropMovement({
     span: { w: number; d: number } = { w: 1, d: 1 },
     excludeKey?: string
   ): boolean => {
-    // Check bounds (accounting for walls at edges)
+    // Check bounds — cells 0 and gridSize-1 are wall cells (from createEmptyGrid).
+    // Props must stay in the interior: cells 1 to gridSize-2.
     if (x < 1 || z < 1) return false
     if (x + span.w > gridWidth - 1) return false
     if (z + span.d > gridDepth - 1) return false
@@ -275,27 +276,11 @@ export function usePropMovement({
       return
     }
 
-    // Success - mark for clearing once placements update
-    setPendingClear(true)
+    // Success - clear selection immediately (optimistic update already applied)
+    setSelectedProp(null)
+    setIsMoving(false)
+    setPendingClear(false)
   }, [selectedProp, onUpdate, apiBaseUrl, blueprintId])
-
-  // Clear selection once placements have the new position
-  useEffect(() => {
-    if (!pendingClear || !selectedProp) return
-    
-    // Check if placements now has the updated position
-    const hasUpdated = placements.some(p => 
-      p.propId === selectedProp.propId && 
-      p.x === selectedProp.gridX && 
-      p.z === selectedProp.gridZ
-    )
-    
-    if (hasUpdated) {
-      setSelectedProp(null)
-      setIsMoving(false)
-      setPendingClear(false)
-    }
-  }, [pendingClear, selectedProp, placements])
 
   // Cancel movement and restore original position
   const cancelMovement = useCallback(() => {

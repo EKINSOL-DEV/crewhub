@@ -7,7 +7,7 @@
   "placements": [
     {
       "propId": "standing-desk-with-monitor",
-      "x": 2,
+      "x": 1,
       "z": 8,
       "rotation": 90,
       "span": {
@@ -24,8 +24,8 @@
     },
     {
       "propId": "standing-desk-with-monitor",
-      "x": 16,
-      "z": 5,
+      "x": 17,
+      "z": 12,
       "rotation": 270,
       "span": {
         "w": 2,
@@ -41,8 +41,8 @@
     },
     {
       "propId": "server-rack",
-      "x": 17,
-      "z": 12,
+      "x": 2,
+      "z": 14,
       "span": {
         "w": 2,
         "d": 1

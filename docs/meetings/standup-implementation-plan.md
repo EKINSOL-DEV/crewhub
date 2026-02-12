@@ -1,195 +1,217 @@
-# Stand-Up Meeting Implementation Plan
+# Stand-Up Meetings — Implementation Plan
 
-> CrewHub HQ — Phased Implementation
-> Version: 1.0 | Date: 2026-02-11
+> CrewHub HQ Feature · v1.0 · 2026-02-12
 
-## Phase Overview
+---
 
-```
-Phase 1          Phase 2           Phase 3            Phase 4
-Backend Core     3D Animations     Live UX Polish     Advanced Features
-─────────────    ─────────────     ──────────────     ─────────────────
-2-3 days         2-3 days          2-3 days           Ongoing
-                                                      
-Round-robin      Gathering anim    Speech bubbles     Recording/replay
-State machine    Bot positioning   Progress bar       Guest bots
-REST + SSE       Walk animations   Streaming tokens   Voting
-DB schema        Camera focus      Sound effects      Templates library
-Gateway comms    Table highlight   Results dialog     Analytics
-Basic output     Return animation  Save to project    Scheduling
-```
+## Overview
+
+Implementation is split into 4 phases, each delivering a usable increment. Phase 1 is the MVP — a working backend that can be tested via API. Each subsequent phase adds visual polish and advanced features.
+
+**Total estimated effort: 4-6 days**
 
 ---
 
 ## Phase 1: Backend Round-Robin Engine (No Visuals)
 
-**Goal:** Working meeting orchestration via API. Test via curl/Postman before any frontend.
-
-**Effort:** 2-3 days
+> **Goal:** Working meeting orchestration, testable via REST API and SSE events.
 
 ### Tasks
 
-| # | Task | File(s) | Est. |
-|---|------|---------|------|
-| 1.1 | Create DB schema (meetings + turns tables) | `db/meeting_models.py`, migration | 2h |
-| 1.2 | Implement `RoundRobinEngine` class | `services/meetings/round_robin.py` | 2h |
-| 1.3 | Implement `MeetingOrchestrator` state machine | `services/meetings/orchestrator.py` | 4h |
-| 1.4 | Write prompt templates (per-turn + synthesis) | `services/meetings/prompts.py` | 2h |
-| 1.5 | Create REST endpoints (start, status, cancel) | `routes/meetings.py` | 3h |
-| 1.6 | Add SSE meeting events to existing broadcast | `routes/sse.py` (extend) | 2h |
-| 1.7 | Gateway integration for agent communication | `services/meetings/orchestrator.py` | 3h |
-| 1.8 | Synthesizer: compile final markdown output | `services/meetings/synthesizer.py` | 2h |
-| 1.9 | Error handling (timeouts, offline bots) | Orchestrator | 2h |
-| 1.10 | Manual testing via API | — | 2h |
+| # | Task | File(s) | Effort |
+|---|------|---------|--------|
+| 1.1 | Create `MeetingState` enum and Pydantic models | `backend/app/db/meeting_models.py` | 1h |
+| 1.2 | Database migration: `meetings`, `meeting_participants`, `meeting_turns` tables | `backend/app/db/database.py` | 1h |
+| 1.3 | Create `MeetingOrchestrator` service with state machine | `backend/app/services/meeting_orchestrator.py` | 4h |
+| 1.4 | Implement round-robin with cumulative context passing | `backend/app/services/meeting_orchestrator.py` | 2h |
+| 1.5 | Implement synthesis step (summary generation) | `backend/app/services/meeting_orchestrator.py` | 1h |
+| 1.6 | Create REST endpoints: start, status, cancel, list, output | `backend/app/routes/meetings.py` | 2h |
+| 1.7 | Wire SSE events for all state transitions | `backend/app/routes/meetings.py` | 1h |
+| 1.8 | Save output MD to Synology Drive path | `backend/app/services/meeting_orchestrator.py` | 0.5h |
+| 1.9 | Register routes in `main.py` | `backend/app/main.py` | 0.25h |
+| 1.10 | Error handling: timeouts, retries, gateway failures | `backend/app/services/meeting_orchestrator.py` | 1h |
+| 1.11 | Test via curl/httpie: full meeting flow | — | 1h |
 
-**Total: ~24h (~3 days)**
+### Deliverable
+- `POST /api/meetings/start` triggers a full round-robin meeting
+- Each bot responds via gateway connection
+- SSE events stream progress in real time
+- Final MD saved to disk
+- Testable without frontend changes
 
-### Definition of Done
-- [ ] `POST /api/meetings/start` creates meeting and runs to completion
-- [ ] SSE events fire for each state transition
-- [ ] Final markdown output contains all sections (Goal, Summary, Actions, Decisions)
-- [ ] Cancellation works mid-meeting
-- [ ] Timeout handling for unresponsive bots
-- [ ] Meeting history persisted in SQLite
+### Effort: **~1.5 days**
 
-### Key Decisions for Phase 1
-- **Sequential turns only** (no parallelism yet) — simpler, more natural conversation
-- **In-memory state + SQLite persistence** — state machine in memory, persist after each turn
-- **Reuse existing SSE** — extend `_sse_clients` pool, add meeting event types
+### Key Decisions
+- Reuse existing `ConnectionManager` for bot communication
+- Orchestrator runs as `asyncio.Task` (non-blocking)
+- New tables, don't modify existing `standups` table (that's the old simple standup system)
+- State persisted to DB after every transition for crash recovery
 
 ---
 
 ## Phase 2: 3D Gathering Animation
 
-**Goal:** Visual feedback in the HQ room when a meeting starts. Bots walk to table and stand in formation.
-
-**Effort:** 2-3 days
-
-**Depends on:** Phase 1
+> **Goal:** Bots visually walk to the Meeting Table and stand in a circle.
 
 ### Tasks
 
-| # | Task | File(s) | Est. |
-|---|------|---------|------|
-| 2.1 | Make Meeting Table an interactive prop | `components/hq/MeetingTable.tsx` | 2h |
-| 2.2 | Meeting context provider + state hook | `contexts/MeetingContext.tsx`, `hooks/useMeeting.ts` | 3h |
-| 2.3 | Bot selection dialog component | `components/meetings/BotSelectionDialog.tsx` | 3h |
-| 2.4 | Configuration dialog component | `components/meetings/MeetingConfigDialog.tsx` | 2h |
-| 2.5 | Calculate circle positions around table | `lib/meetingPositions.ts` | 1h |
-| 2.6 | Bot walk-to-table animation (use pathfinding) | `components/hq/BotGathering.tsx` | 4h |
-| 2.7 | Bot return-to-position animation | Same | 1h |
-| 2.8 | Connect dialogs to REST API | `hooks/useMeeting.ts` | 2h |
-| 2.9 | Subscribe to SSE for state updates | `hooks/useMeetingStream.ts` | 2h |
-| 2.10 | Active speaker glow/highlight | `components/hq/BotAvatar.tsx` | 2h |
+| # | Task | File(s) | Effort |
+|---|------|---------|--------|
+| 2.1 | Create `MeetingTable.tsx` 3D prop (round table model) | `frontend/src/components/world3d/props/MeetingTable.tsx` | 2h |
+| 2.2 | Add Meeting Table to HQ room props config | `frontend/src/data/` or room config | 0.5h |
+| 2.3 | Click handler: detect meeting table click → open dialog | `MeetingTable.tsx` | 0.5h |
+| 2.4 | Create `MeetingDialog.tsx` (config form) | `frontend/src/components/meetings/MeetingDialog.tsx` | 3h |
+| 2.5 | Bot gathering animation: walk to table positions | `frontend/src/components/world3d/Bot3D.tsx` | 3h |
+| 2.6 | Calculate circle positions around table | `frontend/src/components/world3d/utils/` | 1h |
+| 2.7 | SSE listener: react to `meeting-started` → trigger gathering | `frontend/src/hooks/useMeetingEvents.ts` | 1h |
+| 2.8 | Bot return animation: walk back to original position after meeting | `Bot3D.tsx` | 1h |
+| 2.9 | "Meeting in progress" indicator on table | `MeetingTable.tsx` | 0.5h |
 
-**Total: ~22h (~3 days)**
+### Deliverable
+- Clickable Meeting Table prop in HQ room
+- MeetingDialog with participant picker, goal input, round config
+- Bots walk to table when meeting starts
+- Bots return to normal after meeting ends
 
-### Definition of Done
-- [ ] Click meeting table → setup dialog opens
-- [ ] Bots animate to table positions after "Start"
-- [ ] Active speaker has visible highlight
-- [ ] Bots return to original positions after meeting ends
-- [ ] Works with existing pathfinding grid
+### Effort: **~1.5 days**
+
+### Key Decisions
+- Gathering positions: evenly spaced on circle of radius ~2 units around table center
+- Walking animation: use existing bot movement system (lerp to target position)
+- Table model: procedural geometry (cylinder + top disc), not imported GLTF (keep it lightweight)
+- MeetingDialog reuses existing UI components (Dialog from shadcn/ui, etc.)
 
 ---
 
-## Phase 3: Live Speech Bubbles + Progress
+## Phase 3: Live Speech Bubbles & Progress UI
 
-**Goal:** Real-time visual feedback during meeting. Streaming text in speech bubbles, progress tracking, polished results dialog.
-
-**Effort:** 2-3 days
-
-**Depends on:** Phase 2
+> **Goal:** See who's speaking, read responses live, track progress.
 
 ### Tasks
 
-| # | Task | File(s) | Est. |
-|---|------|---------|------|
-| 3.1 | 3D speech bubble component (HTML overlay or sprite) | `components/meetings/SpeechBubble3D.tsx` | 4h |
-| 3.2 | Streaming token display in speech bubble | Same + SSE consumer | 2h |
-| 3.3 | Meeting progress bar (bottom overlay) | `components/meetings/MeetingProgressBar.tsx` | 3h |
-| 3.4 | Round indicators (✓ ● ○) | Same | 1h |
-| 3.5 | Time remaining estimate | `hooks/useMeeting.ts` | 1h |
-| 3.6 | Synthesis animation (writing on whiteboard) | `components/meetings/SynthesisAnimation.tsx` | 2h |
-| 3.7 | Results dialog with markdown preview | `components/meetings/MeetingResultsDialog.tsx` | 3h |
-| 3.8 | "Copy MD" + "Save to Project" actions | Same + API call | 2h |
-| 3.9 | Sound effects (optional: turn chime, complete) | `lib/meetingSounds.ts` | 1h |
-| 3.10 | Polish: transitions, timing, edge cases | Various | 3h |
+| # | Task | File(s) | Effort |
+|---|------|---------|--------|
+| 3.1 | Active speaker highlight: glow ring around speaking bot | `Bot3D.tsx`, `BotStatusGlow.tsx` | 1.5h |
+| 3.2 | Speech bubble component (3D text above bot) | `frontend/src/components/world3d/BotSpeechBubble.tsx` | 2h |
+| 3.3 | Create `MeetingProgressView.tsx` (inline panel) | `frontend/src/components/meetings/MeetingProgressView.tsx` | 3h |
+| 3.4 | Progress bar component with round/turn tracking | `frontend/src/components/meetings/MeetingProgressBar.tsx` | 1h |
+| 3.5 | Live transcript: append bot responses as SSE events arrive | `MeetingProgressView.tsx` | 1.5h |
+| 3.6 | Create `MeetingOutput.tsx` (final results view) | `frontend/src/components/meetings/MeetingOutput.tsx` | 2h |
+| 3.7 | Copy to clipboard, open file actions | `MeetingOutput.tsx` | 0.5h |
+| 3.8 | Full transcript toggle (summary ↔ raw turns) | `MeetingOutput.tsx` | 1h |
+| 3.9 | `useMeeting` hook: SSE state management for meeting events | `frontend/src/hooks/useMeeting.ts` | 2h |
+| 3.10 | Cancel button wired to `POST /meetings/{id}/cancel` | `MeetingProgressView.tsx` | 0.5h |
+| 3.11 | Bot ✓ indicator after completing turn | `Bot3D.tsx` | 0.5h |
 
-**Total: ~22h (~3 days)**
+### Deliverable
+- Active speaker visually highlighted in 3D with glow
+- Speech bubbles show abbreviated response above bots
+- Side panel shows live transcript with progress bar
+- Final output rendered with actions (copy, open, toggle transcript)
+- Cancel button works
 
-### Definition of Done
-- [ ] Speech bubbles show streaming text above active speaker
-- [ ] Progress bar accurately reflects meeting state
-- [ ] Results dialog renders final markdown beautifully
-- [ ] Copy to clipboard works
-- [ ] Save to project docs works
-- [ ] Smooth transitions between all states
+### Effort: **~1.5 days**
 
----
-
-## Phase 4: Advanced Features (Ongoing)
-
-**Goal:** Power-user features built incrementally after the core experience is solid.
-
-### 4A: Recording & Replay (3-4 days)
-- Save full meeting transcript with timestamps
-- Replay meeting: re-animate the 3D scene with recorded turns
-- Export as PDF or share link
-- Browse meeting history in a dedicated panel
-
-### 4B: Guest Bots (2-3 days)
-- Invite external agents (not in HQ) to a meeting
-- Temporary bot avatar appears at table
-- Configure guest bot's model and persona inline
-
-### 4C: Voting & Reactions (2-3 days)
-- After meeting, participants vote on action items
-- Thumbs up/down reactions during turns (shown as emoji above bots)
-- Priority ranking of decisions
-
-### 4D: Meeting Templates Library (1-2 days)
-- Pre-built templates: Sprint Planning, Feature Design, Bug Triage, Retrospective, Brainstorm
-- Each template sets: default rounds, prompt style, output format
-- User-created custom templates saved to project
-
-### 4E: Scheduling & Recurring (2-3 days)
-- Schedule meetings for later (cron-like)
-- Recurring stand-ups (daily, weekly)
-- Auto-start at scheduled time, results delivered to project docs
-
-### 4F: Analytics Dashboard (2-3 days)
-- Meeting frequency, avg duration, token costs
-- Per-bot contribution metrics
-- Action item completion tracking
-- Cost trends over time
+### Key Decisions
+- Speech bubbles use `Html` from `@react-three/drei` (HTML overlay in 3D space)
+- Truncate bubble text to ~60 chars with "..." (full text in side panel)
+- Progress view replaces the right-side panel content during meeting
+- `useMeeting` hook manages all meeting state via SSE events (no polling)
 
 ---
 
-## Total Effort Summary
+## Phase 4: Recording, Replay & Templates
 
-| Phase | Effort | Cumulative | Milestone |
-|-------|--------|------------|-----------|
-| Phase 1 | 3 days | 3 days | API works end-to-end |
-| Phase 2 | 3 days | 6 days | Visual meetings in HQ |
-| Phase 3 | 3 days | 9 days | **Full experience complete** |
-| Phase 4 | Ongoing | — | Power features |
+> **Goal:** Polish features for daily use — history browsing, templates, replay.
 
-**MVP (Phases 1-3): ~9 working days**
+### Tasks
 
-## Risk Assessment
+| # | Task | File(s) | Effort |
+|---|------|---------|--------|
+| 4.1 | Meeting history list page | `frontend/src/components/meetings/MeetingHistory.tsx` | 2h |
+| 4.2 | Meeting detail/replay view (step through turns) | `frontend/src/components/meetings/MeetingReplay.tsx` | 3h |
+| 4.3 | Meeting templates system (backend model + API) | `backend/app/routes/meetings.py`, `meeting_models.py` | 2h |
+| 4.4 | Template presets: Daily Standup, Retrospective, Planning, Brainstorm | `backend/app/services/meeting_templates.py` | 1h |
+| 4.5 | Template picker in MeetingDialog | `MeetingDialog.tsx` | 1h |
+| 4.6 | Token usage tracking and display | `MeetingOutput.tsx`, `meeting_orchestrator.py` | 1h |
+| 4.7 | Meeting comparison (diff between today and yesterday) | `frontend/src/components/meetings/MeetingCompare.tsx` | 2h |
+| 4.8 | Auto-schedule: cron trigger for daily standup | `backend/app/routes/cron.py` integration | 1.5h |
+| 4.9 | Integration with task system (action items → tasks) | `backend/app/routes/meetings.py` | 2h |
+| 4.10 | Polish: animations, transitions, loading states | Various | 1.5h |
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Gateway latency spikes | Meetings take >10 min | Implement per-turn timeout (30s), skip on failure |
-| Token costs higher than estimated | $0.15+ per meeting | Add cost cap in config, warn before start |
-| 3D performance with speech bubbles | FPS drops | Use HTML overlays (CSS3DRenderer) not 3D geometry |
-| Multiple simultaneous meetings | State confusion | Phase 1: single meeting lock. Phase 4: multi-meeting support |
-| Bot prompt quality | Incoherent discussion | Iterate on prompts before any frontend work |
+### Deliverable
+- Browse past meetings with search/filter
+- Replay meetings turn by turn (like a presentation)
+- Meeting templates (quick-start for common formats)
+- Action items can be converted to tasks
+- Optional auto-scheduling via cron
 
-## Recommended Start
+### Effort: **~2 days**
 
-1. **Start with Phase 1, Task 1.4** (prompts) — get the conversation quality right first
-2. Then build the engine around proven prompts
-3. Test 5+ meetings via API before touching frontend
-4. Phase 2-3 can be parallelized (one person on 3D, another on dialogs)
+### Key Decisions
+- Templates stored as JSON presets, not DB records (simple, version-controlled)
+- Replay uses the same MeetingProgressView but in "replay mode" (manual step-through)
+- Action items → tasks: parse `- [ ]` items from synthesis, offer "Create Tasks" button
+- Auto-schedule: leverage existing cron system in CrewHub
+
+---
+
+## Summary
+
+| Phase | Focus | Effort | Cumulative |
+|-------|-------|--------|------------|
+| **Phase 1** | Backend engine | 1.5 days | 1.5 days |
+| **Phase 2** | 3D gathering | 1.5 days | 3 days |
+| **Phase 3** | Live UI | 1.5 days | 4.5 days |
+| **Phase 4** | Polish & extras | 2 days | 6.5 days |
+
+### Recommended Approach
+- **Phase 1 + 2** together for first demo (~3 days)
+- **Phase 3** for a polished daily-use feature (~1.5 days)
+- **Phase 4** as needed, tasks can be cherry-picked individually
+
+### Dependencies
+- Phase 1: No frontend dependencies. Needs working gateway connections.
+- Phase 2: Depends on Phase 1 API. Needs Three.js/R3F knowledge.
+- Phase 3: Depends on Phase 1 SSE events + Phase 2 3D elements.
+- Phase 4: Depends on Phase 1-3 being stable.
+
+### Migration from Existing Standups
+The current `standups` and `standup_entries` tables (manual entry system) remain untouched. The new meeting system uses separate `meetings`, `meeting_participants`, and `meeting_turns` tables. The old system can be deprecated once the new one is proven.
+
+---
+
+## File Structure (New Files)
+
+```
+backend/
+  app/
+    db/
+      meeting_models.py          # Pydantic models for meetings
+    routes/
+      meetings.py                # REST API endpoints (replaces/extends standups.py)
+    services/
+      meeting_orchestrator.py    # State machine + round-robin engine
+      meeting_templates.py       # Template presets (Phase 4)
+
+frontend/
+  src/
+    components/
+      meetings/
+        MeetingDialog.tsx        # Config dialog
+        MeetingProgressView.tsx  # Live progress panel
+        MeetingProgressBar.tsx   # Progress bar component
+        MeetingOutput.tsx        # Final results view
+        MeetingHistory.tsx       # History list (Phase 4)
+        MeetingReplay.tsx        # Replay view (Phase 4)
+        MeetingCompare.tsx       # Comparison view (Phase 4)
+        index.ts
+    components/
+      world3d/
+        props/
+          MeetingTable.tsx       # 3D meeting table prop
+        BotSpeechBubble.tsx      # Speech bubble overlay
+    hooks/
+      useMeeting.ts              # Meeting SSE state management
+      useMeetingEvents.ts        # SSE event listener
+```

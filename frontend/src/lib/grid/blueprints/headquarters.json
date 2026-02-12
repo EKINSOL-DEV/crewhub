@@ -42,8 +42,9 @@
     },
     {
       "propId": "water-cooler",
-      "x": 2,
-      "z": 3
+      "x": 3,
+      "z": 0,
+      "rotation": 0
     },
     {
       "propId": "sleep-corner",

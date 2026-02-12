@@ -65,6 +65,8 @@ interface ZenModeProps {
   roomName?: string
   connected: boolean
   onExit: () => void
+  exitLabel?: string       // "World" (CrewHub) or "Projects" (standalone)
+  exitIcon?: string        // "🌍" or "📋"
   projectFilter?: ZenProjectFilter | null  // Filter tasks to specific project
   onClearProjectFilter?: () => void
 }
@@ -85,6 +87,8 @@ export function ZenMode({
   roomName,
   connected,
   onExit,
+  exitLabel,
+  exitIcon,
   projectFilter: propProjectFilter,
   onClearProjectFilter: propClearProjectFilter,
 }: ZenModeProps) {
@@ -145,6 +149,19 @@ export function ZenMode({
     }
     return undefined
   }, [projectFilter, worldFocusState.level, worldFocusState.focusedRoomId, rooms])
+
+  // Find a room belonging to the active project (for context envelope)
+  const activeProjectRoomId = useMemo(() => {
+    if (!activeProjectId) return undefined
+    // If we have a focused room that matches the project, prefer that
+    if (worldFocusState.level === 'room' && worldFocusState.focusedRoomId) {
+      const room = rooms.find(r => r.id === worldFocusState.focusedRoomId)
+      if (room?.project_id === activeProjectId) return room.id
+    }
+    // Otherwise find first room for this project
+    const projectRoom = rooms.find(r => r.project_id === activeProjectId)
+    return projectRoom?.id
+  }, [activeProjectId, worldFocusState.level, worldFocusState.focusedRoomId, rooms])
   
   // Project filter change handler (shared across panels)
   const handleProjectFilterChange = useCallback((projectId: string | null, projectName: string, projectColor?: string) => {
@@ -529,6 +546,7 @@ export function ZenMode({
               sessionKey={panel.agentSessionKey || null}
               agentName={panel.agentName || null}
               agentIcon={panel.agentIcon || null}
+              roomId={activeProjectRoomId}
               onStatusChange={handleStatusChange}
               onChangeAgent={() => setShowAgentPicker(true)}
               onSelectAgent={(agentId, agentName, agentIcon) => {
@@ -635,7 +653,9 @@ export function ZenMode({
       aria-label="Zen Mode - Focused workspace"
     >
       <ZenTopBar 
-        onExit={onExit} 
+        onExit={onExit}
+        exitLabel={exitLabel}
+        exitIcon={exitIcon}
         isMaximized={isMaximized}
         onRestore={isMaximized ? restoreLayout : undefined}
         layoutName={isMaximized ? 'Maximized' : undefined}

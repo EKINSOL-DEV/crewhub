@@ -4,6 +4,7 @@
  */
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useProjects, type Project } from '@/hooks/useProjects'
+import { ProjectManagerModal } from './ProjectManagerModal'
 
 interface ProjectFilterSelectProps {
   currentProjectId: string | null | undefined
@@ -21,6 +22,7 @@ export function ProjectFilterSelect({
   const { projects, isLoading } = useProjects()
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [showManager, setShowManager] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -255,8 +257,44 @@ export function ProjectFilterSelect({
               })
             )}
           </div>
+
+          {/* Manage Projects button */}
+          <div style={{ borderTop: '1px solid var(--zen-border, rgba(0,0,0,0.06))', padding: '4px 4px 4px' }}>
+            <button
+              onClick={() => { setIsOpen(false); setSearch(''); setShowManager(true) }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 6,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--zen-fg-muted, #9ca3af)',
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                textAlign: 'left',
+                transition: 'background 0.1s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <span style={{ fontSize: 14 }}>⚙️</span>
+              <span>Manage Projects...</span>
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Project Manager Modal */}
+      <ProjectManagerModal
+        isOpen={showManager}
+        onClose={() => setShowManager(false)}
+        onProjectSelect={onSelect}
+      />
     </div>
   )
 }
