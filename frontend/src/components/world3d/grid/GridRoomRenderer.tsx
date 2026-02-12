@@ -49,16 +49,16 @@ function getWallPlacement(
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
 
-  // Distance in grid cells from the interior edge of each wall.
-  // Wall cells are at 0 and gridSize-1; interior starts at 1 and gridSize-2.
-  const distNorth = gridZ - 1
-  const distSouth = (gridDepth - 2) - gridZ
-  const distWest = gridX - 1
-  const distEast = (gridWidth - 2) - gridX
+  // Distance in grid cells from each wall edge.
+  // Walls are visual 3D geometry at ±halfSize; grid cells go from 0 to gridSize-1.
+  const distNorth = gridZ
+  const distSouth = (gridDepth - 1) - gridZ
+  const distWest = gridX
+  const distEast = (gridWidth - 1) - gridX
 
   const minDist = Math.min(distNorth, distSouth, distWest, distEast)
 
-  // Only snap to wall if within 1 cell of wall interior edge
+  // Only snap to wall if within 1 cell of wall edge
   if (minDist > 1) return null
 
   // Small gap from wall surface to prevent z-fighting
@@ -92,7 +92,10 @@ function getWallPlacement(
   return { x: eastFace - WALL_GAP, z: worldZ, wallRotation: 90 }
 }
 
-/** Clamp floor-prop positions inward to prevent wall clipping at grid edges. */
+/** Snap floor-prop positions toward the nearest wall when within 1 cell of it.
+ *  Ensures props placed at wall-adjacent grid cells (1 or gridSize-2) sit flush
+ *  against the wall instead of floating a full cell away.
+ *  Also clamps at exact grid edges (0, gridSize-1) for safety. */
 function clampToRoomBounds(
   worldX: number,
   worldZ: number,
@@ -101,21 +104,42 @@ function clampToRoomBounds(
   gridWidth: number,
   gridDepth: number,
   cellSize: number,
+  span: { w: number; d: number } = { w: 1, d: 1 },
 ): [number, number] {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
   // Wall inner face matches RoomWalls.tsx wallThickness (0.3)
   const WALL_THICKNESS = 0.3
-  const INWARD = 0.15 // small inward offset to avoid wall clipping
+  const WALL_GAP = 0.08 // small gap from wall surface to prevent z-fighting
 
   let x = worldX
   let z = worldZ
 
-  // Clamp near walls — use actual wall face position (halfSize - wallThickness)
-  if (gridX <= 1) x = Math.max(x, -halfW + WALL_THICKNESS + INWARD)
-  if (gridX >= gridWidth - 2) x = Math.min(x, halfW - WALL_THICKNESS - INWARD)
-  if (gridZ <= 1) z = Math.max(z, -halfD + WALL_THICKNESS + INWARD)
-  if (gridZ >= gridDepth - 2) z = Math.min(z, halfD - WALL_THICKNESS - INWARD)
+  // Distance in grid cells from each wall edge (cells 0 and gridSize-1 are wall cells)
+  const distWest = gridX
+  const distEast = (gridWidth - 1) - (gridX + span.w - 1)
+  const distNorth = gridZ
+  const distSouth = (gridDepth - 1) - (gridZ + span.d - 1)
+
+  // Snap toward wall if within 1 cell (i.e., at cell 0 or 1 for min, gridSize-1 or gridSize-2 for max)
+  // Wall inner face positions
+  const westFace = -halfW + WALL_THICKNESS
+  const eastFace = halfW - WALL_THICKNESS
+  const northFace = -halfD + WALL_THICKNESS
+  const southFace = halfD - WALL_THICKNESS
+
+  if (distWest <= 1) {
+    x = westFace + WALL_GAP
+  }
+  if (distEast <= 1) {
+    x = eastFace - WALL_GAP - (span.w - 1) * cellSize
+  }
+  if (distNorth <= 1) {
+    z = northFace + WALL_GAP
+  }
+  if (distSouth <= 1) {
+    z = southFace - WALL_GAP - (span.d - 1) * cellSize
+  }
 
   return [x, z]
 }
@@ -312,12 +336,22 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
           center
           zIndexRange={[100, 110]}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
             <div style={HUD_CONTAINER_STYLE}>
               {/* Save Button */}
               <button
                 style={HUD_SAVE_STYLE}
-                onClick={(e) => { e.stopPropagation(); onSave(); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onSave(); }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Save position"
               >
@@ -327,7 +361,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
               {/* Rotate Button */}
               <button
                 style={HUD_ROTATE_STYLE}
-                onClick={(e) => { e.stopPropagation(); onRotate(); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onRotate(); }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Rotate 90°"
               >
@@ -337,7 +371,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
               {/* Delete Button */}
               <button
                 style={HUD_DELETE_STYLE}
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(); }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Delete prop"
               >
@@ -347,7 +381,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
               {/* Cancel Button */}
               <button
                 style={HUD_CANCEL_STYLE}
-                onClick={(e) => { e.stopPropagation(); onCancel(); }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onCancel(); }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Cancel"
               >
@@ -679,9 +713,10 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
           }
         } else {
           // Floor props: clamp to room bounds to prevent wall clipping
+          const effectiveSpan = isBeingMoved ? (selectedProp!.span || { w: 1, d: 1 }) : (span || { w: 1, d: 1 })
           const [clampedX, clampedZ] = clampToRoomBounds(
             worldX, worldZ, effectiveGridX, effectiveGridZ,
-            gridWidth, gridDepth, cellSize,
+            gridWidth, gridDepth, cellSize, effectiveSpan,
           )
           worldX = clampedX
           worldZ = clampedZ
