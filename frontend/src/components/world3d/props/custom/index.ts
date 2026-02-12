@@ -48,7 +48,8 @@ export async function loadSavedCustomProps(): Promise<number> {
     if (!res.ok) return 0
 
     const data = await res.json()
-    const props: SavedPropEntry[] = data.props || []
+    // Backend returns array directly or { props: [...] }
+    const props: SavedPropEntry[] = Array.isArray(data) ? data : (data.props || [])
 
     let registered = 0
     for (const prop of props) {
