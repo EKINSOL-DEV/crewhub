@@ -1,7 +1,7 @@
 # CrewHub Features Matrix
 
-*Last updated: 2026-02-11*  
-*Current version: v0.13.0*
+*Last updated: 2026-02-12*  
+*Current version: v0.14.0*
 
 Quick-reference table showing all CrewHub features, their status, and implementation versions.
 
@@ -48,6 +48,8 @@ Research:     ██                                            5% (2)
 
 | Version | Date | Features Added |
 |---------|------|----------------|
+| **v0.14.0** | 2026-02-12 | URL Parameter Zen Mode, Project CRUD, Prop Delete, PropMaker Quality Phase 2-3 |
+| **v0.13.0** | 2026-02-11 | PropCreator Showcase (211 props), Markdown Viewer Phase 1-3, Backend Watchdog |
 | **v0.12.0** | 2026-02-10 | Agent Persona Tuning, Creator Zone MVP |
 | **v0.11.0** | 2026-02-07 | Zen Mode Tabs, Zen Statue, Activity Panel |
 | **v0.9.0** | 2026-02-06 | Task Board, TaskWall3D, Agent Bios |
@@ -63,7 +65,7 @@ Research:     ██                                            5% (2)
 
 ## 🗓️ Upcoming Roadmap
 
-### v0.13.0 (Current)
+### v0.13.0
 - ✅ Creator Zone MVP (PropMaker alpha - AI generation, history, model chooser UI)
 - ✅ Backend watchdog & auto-restart (Docker-based, crash logging, healthcheck)
 - ✅ Markdown viewer Phase 1-3 (view docs, fullscreen, TOC, editor with CodeMirror 6)
@@ -71,10 +73,12 @@ Research:     ██                                            5% (2)
 - ✅ PropMaker Quality Phase 1 (AI prompt rewrite, post-processor, showcase library API, flatShading materials)
 - 📋 Markdown viewer Phase 4 (Polish - search, bookmarks, breadcrumbs, favorites, light theme)
 
-### v0.14.0
-- 📋 Zen Mode Standalone (separate app sharing code/DB/API with CrewHub - monorepo architecture)
-- 📋 Prop Delete (delete props from history with cascade warning for room placements)
-- 📋 PropMaker Quality Improvements Phase 2-3 (component library, multi-pass, iteration system, style transfer, hybrid generation)
+### v0.14.0 (Current)
+- ✅ URL Parameter Zen Mode (?mode=zen replaces standalone app - simpler deployment, one codebase)
+- ✅ Zen Mode Project CRUD (full project management with cascade warnings, World button → Projects)
+- ✅ Prop Delete (delete props from history with cascade warning for room placements)
+- ✅ PropMaker Quality Phase 2-3 (component library PARTS_DATA, 19 unit tests, structured generation)
+- ✅ PropMaker Bug Fixes (grid boundary fix, camera persistence, Refiner "Apply Changes" fix)
 
 ### v0.15.0
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
