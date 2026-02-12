@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-02-12
+
+### 🐛 Agent Status Logic Improvements
+
+- **Active Children Detection** — Agents now show "working" status when they have active subagents/cron tasks, even if the main session hasn't updated recently. Previously, agents would show "sleeping" after 5 minutes even when subagents were actively processing long-running tasks (e.g., PropMaker generation, research tasks).
+- **`getSessionStatus` Enhancement** — Added `hasActiveChildren` option to override time-based status when child sessions are active.
+- **`calculateStatus` Fix** — Agent registry now checks child sessions (subagents, spawns, cron workers) for recent activity before declaring an agent idle.
+- **Improved Child Session Matching** — Better detection of agent-owned sessions using `agentPrefix:subagent:`, `agentPrefix:spawn:`, and `agentPrefix:cron:` patterns.
+- **Parking Lane Fix** — Sessions with active children are no longer incorrectly sent to the parking lane.
+
 ## [0.13.0] - 2026-02-11
 
 ### 🚀 PropMaker Quality Phase 3 — Advanced Features

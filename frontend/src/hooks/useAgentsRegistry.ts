@@ -70,12 +70,24 @@ export function useAgentsRegistry(sessions: CrewSession[]) {
     }
   }, [fetchAgents])
   
-  const calculateStatus = useCallback((session: CrewSession | undefined): AgentStatus => {
+  const calculateStatus = useCallback((session: CrewSession | undefined, childSessions: CrewSession[] = []): AgentStatus => {
     if (!session) return "offline"
     const now = Date.now()
     const lastActivity = session.updatedAt || 0
     const timeSinceActivity = now - lastActivity
+    
+    // Check if any child sessions (subagents) are actively running
+    // This catches long-running tasks where the main session is idle but work is happening
+    const hasActiveChildren = childSessions.some(child => {
+      const childAge = now - (child.updatedAt || 0)
+      return childAge < 60_000 // child active within last 60s
+    })
+    
     const isRecent = timeSinceActivity < 5 * 60 * 1000
+    
+    // Agent has active subagents → working, regardless of main session age
+    if (hasActiveChildren) return "working"
+    
     if (!isRecent) return "idle"
     if (session.messages && session.messages.length > 0) {
       const lastMessage = session.messages[session.messages.length - 1]
@@ -89,9 +101,18 @@ export function useAgentsRegistry(sessions: CrewSession[]) {
     return agents.map(agent => {
       const mainSession = sessions.find(s => s.key === agent.agent_session_key || s.sessionId === agent.agent_session_key)
       const childSessions = sessions.filter(s => {
-        return s.label?.includes(`parent=${agent.agent_session_key}`) || s.key.startsWith(`${agent.agent_session_key}:`)
+        if (!agent.agent_session_key) return false
+        const agentPrefix = agent.agent_session_key.replace(/:main$/, "")
+        return (
+          s.key !== agent.agent_session_key && (
+            s.label?.includes(`parent=${agent.agent_session_key}`) ||
+            s.key.startsWith(`${agentPrefix}:subagent:`) ||
+            s.key.startsWith(`${agentPrefix}:spawn:`) ||
+            s.key.startsWith(`${agentPrefix}:cron:`)
+          )
+        )
       })
-      return { agent, session: mainSession, status: calculateStatus(mainSession), childSessions }
+      return { agent, session: mainSession, status: calculateStatus(mainSession, childSessions), childSessions }
     })
   }, [agents, sessions, calculateStatus])
   

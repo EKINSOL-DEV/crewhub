@@ -74,6 +74,20 @@ describe('getSessionStatus', () => {
   it('returns sleeping for sessions 1 hour old', () => {
     expect(getSessionStatus(makeMockSession({ updatedAt: Date.now() - 60 * 60 * 1000 }))).toBe('sleeping')
   })
+
+  it('returns active for stale session with active children', () => {
+    expect(getSessionStatus(
+      makeMockSession({ updatedAt: Date.now() - 60 * 60 * 1000 }),
+      { hasActiveChildren: true }
+    )).toBe('active')
+  })
+
+  it('returns active for idle session with active children', () => {
+    expect(getSessionStatus(
+      makeMockSession({ updatedAt: Date.now() - 10 * 60 * 1000 }),
+      { hasActiveChildren: true }
+    )).toBe('active')
+  })
 })
 
 describe('getStatusIndicator', () => {

@@ -16,7 +16,10 @@ export interface ActivityEvent {
   role?: "user" | "assistant" | "system"
 }
 
-export function getSessionStatus(session: MinionSession): SessionStatus {
+export function getSessionStatus(session: MinionSession, options?: { hasActiveChildren?: boolean }): SessionStatus {
+  // If this session has active child sessions (subagents), it's actively working
+  if (options?.hasActiveChildren) return "active"
+  
   const timeSinceUpdate = Date.now() - session.updatedAt
   if (timeSinceUpdate < SESSION_CONFIG.statusActiveThresholdMs) return "active"
   if (timeSinceUpdate < SESSION_CONFIG.statusSleepingThresholdMs) return "idle"
@@ -109,9 +112,12 @@ function extractDomain(url: string): string {
   }
 }
 
-export function getCurrentActivity(session: MinionSession): string {
+export function getCurrentActivity(session: MinionSession, options?: { hasActiveChildren?: boolean }): string {
   const activities = parseRecentActivities(session, 1)
   if (activities.length === 0) {
+    // If the session has active child sessions, show working status
+    if (options?.hasActiveChildren) return "Working on tasks..."
+    
     const status = getSessionStatus(session)
     const timeSinceUpdate = Date.now() - session.updatedAt
     if (status === "active") {
@@ -237,9 +243,12 @@ export function getIdleOpacity(idleSeconds: number): number {
 /** Default parking idle threshold in seconds (reads from centralized config) */
 export const DEFAULT_PARKING_IDLE_THRESHOLD = SESSION_CONFIG.parkingIdleThresholdS
 
-export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?: boolean, idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD): boolean {
+export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?: boolean, idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD, hasActiveChildren?: boolean): boolean {
   // Fixed agents (agent:*:main) always stay in their room
   if (/^agent:[a-zA-Z0-9_-]+:main$/.test(session.key)) return false
+
+  // Sessions with active children (subagents) should not be parked
+  if (hasActiveChildren) return false
 
   const idleSeconds = getIdleTimeSeconds(session)
   const status = getSessionStatus(session)
