@@ -89,6 +89,23 @@ clean:
 	rm -rf backend/__pycache__ backend/.pytest_cache
 
 # ============================================
+# ZEN STANDALONE (port 5183)
+# ============================================
+
+# Start Zen standalone app
+dev-zen:
+	@echo "Starting Zen Standalone on http://localhost:5183"
+	@cd apps/zen-standalone && npm run dev
+
+# Start all dev (backend + frontend + zen)
+dev-all:
+	@echo "Starting CrewHub + Zen Standalone..."
+	@echo "Backend: http://localhost:8091"
+	@echo "Frontend: http://localhost:5180"
+	@echo "Zen Standalone: http://localhost:5183"
+	@make -j3 dev-backend dev-frontend dev-zen
+
+# ============================================
 # UTILITIES
 # ============================================
 
@@ -109,4 +126,4 @@ status:
 	@docker compose ps 2>/dev/null || echo "Not running"
 	@echo ""
 	@echo "=== Local processes ==="
-	@lsof -i :8090 -i :8091 -i :5180 -i :5181 -i :8445 2>/dev/null | grep LISTEN || echo "None"
+	@lsof -i :8090 -i :8091 -i :5180 -i :5181 -i :5183 -i :8445 2>/dev/null | grep LISTEN || echo "None"
