@@ -4,7 +4,7 @@ import * as THREE from 'three';
 
 export function CoffeeMug() {
   const groupRef = useRef<THREE.Group>(null);
-  const steamParts = useMemo(() => Array.from({ length: 8 }, (_, i) => ({
+  const steamParts = useMemo(() => Array.from({ length: 8 }, () => ({
     x: (Math.random() - 0.5) * 0.1, z: (Math.random() - 0.5) * 0.1, offset: Math.random() * 6,
   })), []);
   useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2; });

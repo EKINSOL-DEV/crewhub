@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { TransformControls } from '@react-three/drei'
 import { useToonMaterialProps } from '../../utils/toonMaterials'
 import * as THREE from 'three'
@@ -96,32 +96,55 @@ function DynamicMesh({
 
 /**
  * Wraps a single selected part mesh so TransformControls can attach to it.
+ * TransformControls is rendered OUTSIDE the scaled group (via portal pattern)
+ * to avoid gizmo scaling issues.
  */
 function TransformableMesh({
   part,
   index,
   mode,
+  parentScale,
   onTransform,
   onDraggingChanged,
 }: {
   part: PropPart
   index: number
   mode: 'translate' | 'rotate' | 'scale'
+  parentScale: number
   onTransform: (index: number, position: [number, number, number], rotation: [number, number, number]) => void
   onDraggingChanged: (dragging: boolean) => void
 }) {
-  const groupRef = useRef<THREE.Group>(null!)
+  const meshRef = useRef<THREE.Mesh>(null!)
+  const controlsRef = useRef<any>(null!)
+  const isDraggingRef = useRef(false)
+  const [meshReady, setMeshReady] = useState(false)
 
-  const handleChange = useCallback(() => {
-    if (!groupRef.current) return
-    const pos = groupRef.current.position
-    const rot = groupRef.current.rotation
-    onTransform(
-      index,
-      [pos.x, pos.y, pos.z],
-      [rot.x, rot.y, rot.z],
-    )
-  }, [index, onTransform])
+  // Signal mesh is mounted so TransformControls can attach
+  useEffect(() => { setMeshReady(true) }, [])
+
+  // Listen for dragging-changed event — commit transform only on drag end
+  useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+    const cb = (event: any) => {
+      const dragging = event.value as boolean
+      isDraggingRef.current = dragging
+      onDraggingChanged(dragging)
+
+      // On drag END: commit the final position/rotation
+      if (!dragging && meshRef.current) {
+        const pos = meshRef.current.position
+        const rot = meshRef.current.rotation
+        onTransform(
+          index,
+          [pos.x, pos.y, pos.z],
+          [rot.x, rot.y, rot.z],
+        )
+      }
+    }
+    controls.addEventListener('dragging-changed', cb)
+    return () => controls.removeEventListener('dragging-changed', cb)
+  }, [onDraggingChanged, onTransform, index])
 
   const rotation = part.rotation && (part.rotation[0] !== 0 || part.rotation[1] !== 0 || part.rotation[2] !== 0)
     ? part.rotation as [number, number, number]
@@ -138,34 +161,42 @@ function TransformableMesh({
     }
   })()
 
+  // Compute gizmo size relative to parent scale so it looks proportional
+  // With parentScale=3, we want the gizmo to appear ~0.5 screen units
+  const gizmoSize = 0.5 / Math.max(parentScale, 0.1)
+
   return (
-    <TransformControls
-      mode={mode}
-      size={0.6}
-      object={groupRef}
-      onObjectChange={handleChange}
-      onMouseDown={() => onDraggingChanged(true)}
-      onMouseUp={() => onDraggingChanged(false)}
-    >
-      <group ref={groupRef} position={part.position} rotation={rotation}>
-        <mesh castShadow>
-          {geometry}
-          {part.emissive ? (
-            <meshStandardMaterial
-              color="#88aaff"
-              emissive="#4466ff"
-              emissiveIntensity={0.8}
-            />
-          ) : (
-            <meshStandardMaterial
-              color={part.color}
-              emissive="#4466ff"
-              emissiveIntensity={0.4}
-            />
-          )}
-        </mesh>
-      </group>
-    </TransformControls>
+    <>
+      <mesh
+        ref={meshRef}
+        castShadow
+        position={part.position}
+        rotation={rotation}
+      >
+        {geometry}
+        {part.emissive ? (
+          <meshStandardMaterial
+            color="#88aaff"
+            emissive="#4466ff"
+            emissiveIntensity={0.8}
+          />
+        ) : (
+          <meshStandardMaterial
+            color={part.color}
+            emissive="#4466ff"
+            emissiveIntensity={0.4}
+          />
+        )}
+      </mesh>
+      {meshReady && meshRef.current && (
+        <TransformControls
+          ref={controlsRef}
+          object={meshRef.current}
+          mode={mode}
+          size={gizmoSize}
+        />
+      )}
+    </>
   )
 }
 
@@ -192,7 +223,6 @@ export function DynamicProp({
 
   const handleBackgroundClick = useCallback((_e: any) => {
     if (editMode && onPartSelect && !isDragging) {
-      // Click on background → deselect
       onPartSelect(null)
     }
     onClick?.()
@@ -204,10 +234,11 @@ export function DynamicProp({
         if (editMode && selectedPartIndex === i && onPartTransform) {
           return (
             <TransformableMesh
-              key={i}
+              key={`transform-${i}`}
               part={part}
               index={i}
               mode={transformMode}
+              parentScale={scale}
               onTransform={onPartTransform}
               onDraggingChanged={(d) => { setIsDragging(d); handleDraggingChanged(d) }}
             />

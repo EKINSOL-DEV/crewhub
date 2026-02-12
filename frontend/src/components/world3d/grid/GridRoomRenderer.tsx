@@ -484,7 +484,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     isMoving,
     isDragging,
     startLongPress,
-    cancelLongPress,
+    cancelLongPress: _cancelLongPress,
     handlePointerUp,
     handleDragMove,
     startDrag,
