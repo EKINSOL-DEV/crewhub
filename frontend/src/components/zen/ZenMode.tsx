@@ -65,6 +65,8 @@ interface ZenModeProps {
   roomName?: string
   connected: boolean
   onExit: () => void
+  exitLabel?: string       // "World" (CrewHub) or "Projects" (standalone)
+  exitIcon?: string        // "🌍" or "📋"
   projectFilter?: ZenProjectFilter | null  // Filter tasks to specific project
   onClearProjectFilter?: () => void
 }
@@ -85,6 +87,8 @@ export function ZenMode({
   roomName,
   connected,
   onExit,
+  exitLabel,
+  exitIcon,
   projectFilter: propProjectFilter,
   onClearProjectFilter: propClearProjectFilter,
 }: ZenModeProps) {
@@ -635,7 +639,9 @@ export function ZenMode({
       aria-label="Zen Mode - Focused workspace"
     >
       <ZenTopBar 
-        onExit={onExit} 
+        onExit={onExit}
+        exitLabel={exitLabel}
+        exitIcon={exitIcon}
         isMaximized={isMaximized}
         onRestore={isMaximized ? restoreLayout : undefined}
         layoutName={isMaximized ? 'Maximized' : undefined}

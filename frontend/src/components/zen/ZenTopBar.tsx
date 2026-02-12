@@ -14,6 +14,8 @@ interface ProjectFilterInfo {
 
 interface ZenTopBarProps {
   onExit: () => void
+  exitLabel?: string       // Default "World" — standalone uses "Projects"
+  exitIcon?: string        // Default "🌍"
   isMaximized?: boolean
   onRestore?: () => void
   layoutName?: string
@@ -56,7 +58,9 @@ function useFullscreen() {
 }
 
 export function ZenTopBar({ 
-  onExit, 
+  onExit,
+  exitLabel = 'World',
+  exitIcon = '🌍',
   isMaximized, 
   onRestore, 
   layoutName,
@@ -246,13 +250,13 @@ export function ZenTopBar({
             {isFullscreen ? '⊙' : '⛶'}
           </button>
           
-          {/* World button (exit Zen Mode) */}
+          {/* Exit button (World in CrewHub, Projects in standalone) */}
           <button
             type="button"
             className="zen-btn zen-btn-world"
             onClick={onExit}
-            title="Go to 3D World (Esc)"
-            aria-label="Go to 3D World"
+            title={`Go to ${exitLabel} (Esc)`}
+            aria-label={`Go to ${exitLabel}`}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -262,8 +266,8 @@ export function ZenTopBar({
               fontWeight: 500,
             }}
           >
-            <span>🌍</span>
-            <span>World</span>
+            <span>{exitIcon}</span>
+            <span>{exitLabel}</span>
           </button>
         </div>
       </header>

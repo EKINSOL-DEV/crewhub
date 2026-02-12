@@ -13,6 +13,7 @@ import { ZenMode } from '@/components/zen/ZenMode'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useRoomsContext } from '@/contexts/RoomsContext'
 import { API_BASE } from '@/lib/api'
+import { ProjectManagerModal } from '@/components/zen/ProjectManagerModal'
 
 // ── Workspace Selector ─────────────────────────────────────────
 
@@ -29,8 +30,9 @@ function WorkspaceSelector({ onSelect, onEnterAll }: {
 }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [showManager, setShowManager] = useState(false)
 
-  useEffect(() => {
+  const refreshProjects = useCallback(() => {
     fetch(`${API_BASE}/projects`)
       .then(r => r.json())
       .then(data => {
@@ -39,6 +41,10 @@ function WorkspaceSelector({ onSelect, onEnterAll }: {
       })
       .catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    refreshProjects()
+  }, [refreshProjects])
 
   return (
     <div className="zen-standalone-selector" style={{
@@ -154,7 +160,46 @@ function WorkspaceSelector({ onSelect, onEnterAll }: {
             ))}
           </>
         )}
+
+        {/* Manage Projects button */}
+        <button
+          onClick={() => setShowManager(true)}
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: '10px 20px',
+            marginTop: '16px',
+            background: 'transparent',
+            border: '1px solid #3b4261',
+            borderRadius: '8px',
+            color: '#565f89',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            textAlign: 'center',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = '#7aa2f7'
+            e.currentTarget.style.color = '#7aa2f7'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = '#3b4261'
+            e.currentTarget.style.color = '#565f89'
+          }}
+        >
+          ⚙️ Manage Projects
+        </button>
       </div>
+
+      {/* Project Manager Modal */}
+      <ProjectManagerModal
+        isOpen={showManager}
+        onClose={() => { setShowManager(false); refreshProjects() }}
+        onProjectSelect={(id, name, color) => {
+          setShowManager(false)
+          onSelect({ id, name, color: color || null, description: null })
+        }}
+      />
     </div>
   )
 }
@@ -211,6 +256,8 @@ function ZenStandaloneInner() {
       roomName={zenRoomName}
       connected={connected}
       onExit={handleExit}
+      exitLabel="Projects"
+      exitIcon="📋"
       projectFilter={zenMode.projectFilter}
       onClearProjectFilter={zenMode.clearProjectFilter}
     />
