@@ -27,17 +27,18 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
 | **Creative** | 12 | 6 | 0 | 5 | 1 | 8 |
+| **SaaS & Distribution** | 2 | 0 | 0 | 2 | 0 | 6 |
 | **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **39** | **20** | **1** | **16** | **2** | **60** |
+| **TOTAL** | **41** | **20** | **1** | **18** | **2** | **66** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ████████████████████████████████             51% (20)
-In Progress:  █                                             3% (1)
-Planned:      ████████████████████                         41% (16)
+Released:     ████████████████████████████████             49% (20)
+In Progress:  █                                             2% (1)
+Planned:      ██████████████████████                       44% (18)
 Research:     ██                                            5% (2)
 ```
 
@@ -103,6 +104,8 @@ Research:     ██                                            5% (2)
 
 ### v0.20.0
 - 📋 Prop Editor (manual editing of generated props - position, rotation, scale, colors)
+- 📋 Tauri Desktop App (native desktop app pointing to online API, ~10MB bundle, OS keychain, auto-updates)
+- 📋 API Key Management (secure API keys with scopes, expiration, rate limiting, audit logging)
 
 ### Research (no version assigned)
 - 🔬 Pixel avatars alternative aesthetic
@@ -194,6 +197,17 @@ Research:     ██                                            5% (2)
 
 ---
 
+## 🚀 SaaS & Distribution
+
+| Feature | Status | Version | Docs | Description |
+|---------|--------|---------|------|-------------|
+| **Tauri Desktop App** | 📋 | v0.20.0 | 6 | Native desktop app (macOS/Windows/Linux) pointing to online CrewHub API. ~10MB bundle (98% smaller than Electron), OS keychain for API keys, auto-updates, SSE/WebSocket support. ~98% frontend code reuse. |
+| **API Key Management** | 📋 | v0.20.0 | 6 | Secure API key system with scopes (read/self/manage/admin), expiration (default 90d), rate limiting (slowapi), audit logging (90d retention), `ch_live_`/`ch_test_` format (128-bit entropy). Frontend UI in Settings. ~70% already implemented. |
+
+**Total:** 2 features • 6 docs • 0 released, 2 planned
+
+---
+
 ## 🔧 Meta & Internal
 
 | Feature | Status | Version | Docs | Description |
@@ -214,4 +228,4 @@ Research:     ██                                            5% (2)
 
 ---
 
-*Generated from: 6 categories × 39 features × 60 documentation files*
+*Generated from: 7 categories × 41 features × 66 documentation files*
