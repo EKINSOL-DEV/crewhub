@@ -1,23 +1,17 @@
-# Markdown Viewer/Editor — API Spec
+# Markdown Viewer/Editor — API Specification
 
-*All endpoints implemented and working.*
+> All endpoints implemented in `backend/app/routes/agent_files.py` and `project_documents.py`.
 
 ## Agent Files API
 
 Base: `/api/agents`
 
-### List Agent Files
+### List Files
 ```
-GET /api/agents/{agent_id}/files?path=&depth=2
+GET /api/agents/{agent_id}/files?depth=3
 ```
 
-**Parameters:**
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| path | string | null | Subdirectory to list |
-| depth | int | 2 | Max folder depth (1-5) |
-
-**Response:**
+**Response 200:**
 ```json
 {
   "agent_id": "main",
@@ -27,49 +21,84 @@ GET /api/agents/{agent_id}/files?path=&depth=2
       "name": "MEMORY.md",
       "path": "MEMORY.md",
       "type": "file",
-      "size": 4321,
-      "modified": "2026-02-05T10:30:00+00:00",
-      "lines": 180
+      "size": 12800,
+      "modified": "2026-02-05T14:30:00Z",
+      "lines": 342,
+      "extension": ".md"
     },
     {
       "name": "memory",
-      "path": "memory/",
+      "path": "memory",
       "type": "directory",
-      "children": [...]
+      "children": [
+        {
+          "name": "2026-02-12.md",
+          "path": "memory/2026-02-12.md",
+          "type": "file",
+          "size": 2048,
+          "modified": "2026-02-12T09:00:00Z",
+          "lines": 45,
+          "extension": ".md"
+        }
+      ]
     }
   ]
 }
 ```
 
-**Workspace resolution:**
-1. Check `settings` table key `agent_workspaces` (JSON map)
-2. Fallback to `DEFAULT_WORKSPACES` dict (main→~/clawd, flowy→~/clawd-flowy, etc.)
+**Workspace resolution priority:**
+1. Settings DB (`agent_workspaces` key)
+2. `DEFAULT_WORKSPACES` dict (main→`~/clawd`, flowy→`~/clawd-flowy`, etc.)
 
-**Security:**
-- Path traversal blocked (`..` rejected)
-- `_is_safe_path()` validates resolved path within workspace
-- Skipped dirs: node_modules, .git, __pycache__, .venv, dist, build, etc.
-- Allowed extensions: .md, .txt, .json, .yaml, .yml, .toml
-- Max file size: 1MB
+**Filters:**
+- Allowed extensions: `.md`, `.txt`, `.json`, `.yaml`, `.yml`, `.toml`
+- Skipped dirs: `node_modules`, `.git`, `__pycache__`, `.venv`, `dist`, `build`, etc.
+- Max depth: configurable via `depth` query param (default 3)
 
-### Read Agent File
+### Read File
 ```
 GET /api/agents/{agent_id}/files/{file_path}
 ```
 
-**Response:**
+**Response 200:**
 ```json
 {
   "path": "MEMORY.md",
   "content": "# MEMORY.md — Ekinbot Long-Term Memory\n...",
-  "size": 4321,
-  "modified": "2026-02-05T10:30:00+00:00",
-  "lines": 180,
+  "size": 12800,
+  "modified": "2026-02-05T14:30:00Z",
+  "lines": 342,
   "language": "markdown"
 }
 ```
 
-**Language detection:** Extension-based (.md→markdown, .json→json, .yaml→yaml, .toml→toml, .txt→text)
+**Errors:**
+- `404` — File not found or agent workspace unknown
+- `403` — Path traversal attempt (resolved path outside workspace)
+- `413` — File exceeds 1MB limit
+
+### Save File
+```
+PUT /api/agents/{agent_id}/files/{file_path}
+Content-Type: application/json
+
+{ "content": "# Updated content\n..." }
+```
+
+**Response 200:**
+```json
+{
+  "path": "MEMORY.md",
+  "size": 13200,
+  "modified": "2026-02-12T10:00:00Z",
+  "lines": 355
+}
+```
+
+**Security:**
+- Path traversal protection (`_is_safe_path` — resolved path must be under workspace)
+- Only allowed extensions can be written
+- Max file size: 1MB
 
 ---
 
@@ -77,78 +106,63 @@ GET /api/agents/{agent_id}/files/{file_path}
 
 Base: `/api/projects`
 
-### List Project Documents
+### List Documents
 ```
-GET /api/projects/{project_id}/documents?path=&depth=3
+GET /api/projects/{project_id}/documents?depth=3
 ```
 
-**Response:**
+**Response 200:**
 ```json
 {
   "project_id": "abc123",
   "project_name": "CrewHub",
-  "base_path": "/Users/ekinbot/SynologyDrive/ekinbot/01-Projects/CrewHub",
-  "files": [...]
+  "docs_path": "/Users/ekinbot/SynologyDrive/ekinbot/01-Projects/CrewHub",
+  "files": [ /* same structure as agent files */ ]
 }
 ```
 
-**Path resolution:**
-1. Check `projects.docs_path` column (explicit override)
-2. Fallback: `PROJECT_DATA_PATH/{project.name}/`
+**Path resolution priority:**
+1. Project `docs_path` field in DB
+2. `PROJECT_DATA_PATH` env var + `/{project_name}/`
 
-### Read Project Document
+### Read Document
 ```
 GET /api/projects/{project_id}/documents/{file_path}
 ```
+Same response schema as agent file read.
 
-Same response format as agent file read.
-
-### Save Project Document ✅
+### Save Document
 ```
 PUT /api/projects/{project_id}/documents/{file_path}
-```
+Content-Type: application/json
 
-**Body:**
-```json
-{ "content": "# Updated content\n..." }
+{ "content": "# Updated doc\n..." }
 ```
+Same response schema as agent file save.
 
-**Response:**
+---
+
+## Error Responses
+
+All errors follow:
 ```json
 {
-  "path": "design-doc.md",
-  "size": 1234,
-  "modified": "2026-02-11T09:00:00+00:00",
-  "lines": 45,
-  "status": "saved"
+  "detail": "Human-readable error message"
 }
 ```
 
-**Safety:** Creates `.bak` backup before overwriting.
-
----
-
-## Project Files API (Extended)
-
-Base: `/api/project-files`
-
-Broader file browsing (code, images, configs) for project source folders. Allows more extensions than the documents API.
-
----
-
-## Not Yet Implemented
-
-- `PUT /api/agents/{agent_id}/files/{path}` — Write agent files (Phase 3 gap)
-- Full-text search endpoint
-- File diff/version history
-- Conflict detection (compare `modified` timestamp before save)
-
-## Error Handling
-
-| Status | Meaning |
-|--------|---------|
-| 400 | Invalid path (traversal, not a file) |
-| 403 | Path outside workspace/project |
-| 404 | Agent/project/file not found |
+| Code | Meaning |
+|------|---------|
+| 400 | Invalid request (empty content, bad extension) |
+| 403 | Path traversal / security violation |
+| 404 | File, agent, or project not found |
 | 413 | File too large (>1MB) |
-| 500 | Read/write failure |
+| 500 | Server error (disk I/O, etc.) |
+
+## Future Endpoints (Phase 4)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/agents/{id}/files/search?q=term` | Full-text search |
+| GET | `/api/agents/{id}/files/{path}/history` | Git log for file |
+| GET | `/api/agents/{id}/files/{path}/diff?ref=HEAD~1` | Diff view |

@@ -1,81 +1,408 @@
-# Stand-Up Meeting API Specification
+# Stand-Up Meetings — API Specification
 
-> CrewHub HQ — REST + SSE API Design
-> Version: 1.0 | Date: 2026-02-11
-
-## Base URL
-
-```
-http://localhost:8091/api/meetings
-```
-
-## Endpoints Overview
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/meetings/start` | Start a new meeting |
-| `GET` | `/api/meetings/{id}/status` | Get meeting status |
-| `POST` | `/api/meetings/{id}/cancel` | Cancel a meeting |
-| `GET` | `/api/meetings/{id}/stream` | SSE event stream |
-| `GET` | `/api/meetings/{id}/output` | Get final markdown output |
-| `GET` | `/api/meetings/history` | List past meetings |
+> CrewHub HQ Feature · v1.0 · 2026-02-12
 
 ---
 
-## Data Models
+## 1. REST Endpoints
 
-### MeetingConfig
+Base path: `/api/meetings`
 
-```python
-class MeetingConfig(BaseModel):
-    topic: str                              # Meeting topic/agenda
-    participants: list[str]                 # Agent IDs
-    num_rounds: int = 3                     # 1-5
-    synthesizer_id: str | None = None       # Agent to write summary (default: first participant)
-    template: str | None = None             # "sprint_planning", "feature_design", "debug_session"
-    max_response_tokens: int = 150          # Per-turn token limit
+### POST /api/meetings/start
+
+Start a new stand-up meeting. Returns immediately; orchestration runs asynchronously.
+
+**Request Body:**
+```json
+{
+  "title": "Daily Standup",
+  "goal": "Sync on CrewHub development progress",
+  "room_id": "hq",
+  "project_id": "proj_abc123",
+  "participants": ["agent_dev", "agent_design", "agent_planner", "agent_qa"],
+  "num_rounds": 3,
+  "round_topics": [
+    "What have you been working on?",
+    "What will you focus on next?",
+    "Any blockers or concerns?"
+  ],
+  "max_tokens_per_turn": 200
+}
 ```
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `title` | string | No | `"Daily Standup"` | Display title |
+| `goal` | string | No | `""` | Meeting goal/context for bots |
+| `room_id` | string | No | `null` | Room where meeting happens |
+| `project_id` | string | No | `null` | Associated project (for file output path) |
+| `participants` | string[] | **Yes** | — | Agent IDs, in speaking order. Min 2. |
+| `num_rounds` | int | No | `3` | Number of rounds (1-5) |
+| `round_topics` | string[] | No | See defaults | Topic per round. Length must match `num_rounds`. |
+| `max_tokens_per_turn` | int | No | `200` | Max response tokens per bot per turn |
+
+**Response: `201 Created`**
+```json
+{
+  "id": "mtg_7f3a2b1c",
+  "title": "Daily Standup",
+  "state": "gathering",
+  "participants": [
+    {"agent_id": "agent_dev", "name": "DevBot", "sort_order": 0},
+    {"agent_id": "agent_design", "name": "DesignBot", "sort_order": 1},
+    {"agent_id": "agent_planner", "name": "PlannerBot", "sort_order": 2},
+    {"agent_id": "agent_qa", "name": "QABot", "sort_order": 3}
+  ],
+  "config": {
+    "num_rounds": 3,
+    "round_topics": ["What have you been working on?", "What will you focus on next?", "Any blockers or concerns?"],
+    "max_tokens_per_turn": 200
+  },
+  "created_at": 1739353200000
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `400` | Fewer than 2 participants |
+| `400` | `round_topics` length ≠ `num_rounds` |
+| `404` | Unknown agent ID in participants |
+| `409` | Meeting already in progress in this room |
+
+---
+
+### GET /api/meetings/{id}/status
+
+Get current state and progress of a meeting.
+
+**Response: `200 OK`**
+```json
+{
+  "id": "mtg_7f3a2b1c",
+  "title": "Daily Standup",
+  "state": "round_2",
+  "current_round": 2,
+  "current_turn": 1,
+  "total_rounds": 3,
+  "total_participants": 4,
+  "progress_pct": 45,
+  "participants": [
+    {"agent_id": "agent_dev", "name": "DevBot", "sort_order": 0},
+    {"agent_id": "agent_design", "name": "DesignBot", "sort_order": 1},
+    {"agent_id": "agent_planner", "name": "PlannerBot", "sort_order": 2},
+    {"agent_id": "agent_qa", "name": "QABot", "sort_order": 3}
+  ],
+  "rounds": [
+    {
+      "round_num": 1,
+      "topic": "What have you been working on?",
+      "status": "complete",
+      "turns": [
+        {
+          "agent_id": "agent_dev",
+          "agent_name": "DevBot",
+          "response": "I've been refactoring the auth middleware...",
+          "started_at": 1739353205000,
+          "completed_at": 1739353212000
+        },
+        {
+          "agent_id": "agent_design",
+          "agent_name": "DesignBot",
+          "response": "Completed the dark mode palette...",
+          "started_at": 1739353212000,
+          "completed_at": 1739353219000
+        }
+      ]
+    },
+    {
+      "round_num": 2,
+      "topic": "What will you focus on next?",
+      "status": "in_progress",
+      "turns": [
+        {
+          "agent_id": "agent_dev",
+          "agent_name": "DevBot",
+          "response": "I'll finish the auth refactor...",
+          "started_at": 1739353225000,
+          "completed_at": 1739353231000
+        }
+      ]
+    }
+  ],
+  "output_md": null,
+  "output_path": null,
+  "started_at": 1739353200000,
+  "completed_at": null
+}
+```
+
+**Progress Calculation:**
+```
+progress_pct = (completed_turns / total_turns) * 90 + (synthesis_done ? 10 : 0)
+total_turns = num_participants × num_rounds
+```
+
+The last 10% is reserved for the synthesis step.
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `404` | Meeting not found |
+
+---
+
+### POST /api/meetings/{id}/cancel
+
+Cancel a running meeting.
+
+**Response: `200 OK`**
+```json
+{
+  "id": "mtg_7f3a2b1c",
+  "state": "cancelled",
+  "cancelled_at": 1739353240000
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `404` | Meeting not found |
+| `409` | Meeting already completed or cancelled |
+
+---
+
+### GET /api/meetings
+
+List recent meetings.
+
+**Query Parameters:**
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `days` | int | `30` | How many days back to look |
+| `room_id` | string | `null` | Filter by room |
+| `project_id` | string | `null` | Filter by project |
+| `limit` | int | `20` | Max results |
+
+**Response: `200 OK`**
+```json
+{
+  "meetings": [
+    {
+      "id": "mtg_7f3a2b1c",
+      "title": "Daily Standup",
+      "state": "complete",
+      "participant_count": 4,
+      "project_id": "proj_abc123",
+      "project_name": "CrewHub",
+      "output_path": "CrewHub/meetings/2026-02-12-standup.md",
+      "created_at": 1739353200000,
+      "completed_at": 1739353280000
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/meetings/{id}/output
+
+Get the final meeting output (markdown).
+
+**Response: `200 OK`**
+```json
+{
+  "id": "mtg_7f3a2b1c",
+  "output_md": "# Stand-Up Meeting — 2026-02-12\n\n## Goal\n...",
+  "output_path": "/Users/ekinbot/SynologyDrive/ekinbot/01-Projects/CrewHub/meetings/2026-02-12-standup.md"
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `404` | Meeting not found |
+| `409` | Meeting not yet complete |
+
+---
+
+## 2. SSE Events
+
+All meeting events are broadcast through the existing SSE endpoint at `/api/sse` using the `broadcast()` function.
+
+### Event Types
+
+#### `meeting-started`
+Fired when meeting transitions from initial state to GATHERING.
+
+```json
+{
+  "meeting_id": "mtg_7f3a2b1c",
+  "title": "Daily Standup",
+  "state": "gathering",
+  "participants": ["agent_dev", "agent_design", "agent_planner", "agent_qa"]
+}
+```
+
+#### `meeting-state`
+Fired on every state transition.
+
+```json
+{
+  "meeting_id": "mtg_7f3a2b1c",
+  "state": "round_2",
+  "previous_state": "round_1",
+  "current_round": 2,
+  "round_topic": "What will you focus on next?",
+  "progress_pct": 35
+}
+```
+
+#### `meeting-turn-start`
+Fired when a bot begins generating its response.
+
+```json
+{
+  "meeting_id": "mtg_7f3a2b1c",
+  "round": 2,
+  "agent_id": "agent_design",
+  "agent_name": "DesignBot",
+  "turn_index": 1,
+  "total_turns": 4
+}
+```
+
+#### `meeting-turn`
+Fired when a bot completes its turn.
+
+```json
+{
+  "meeting_id": "mtg_7f3a2b1c",
+  "round": 2,
+  "agent_id": "agent_design",
+  "agent_name": "DesignBot",
+  "response": "Building on what Dev said about auth, I'll update the login flow mockups...",
+  "turn_index": 1,
+  "total_turns": 4,
+  "progress_pct": 42
+}
+```
+
+#### `meeting-synthesis`
+Fired when synthesis begins.
+
+```json
+{
+  "meeting_id": "mtg_7f3a2b1c",
+  "state": "synthesizing",
+  "progress_pct": 90
+}
+```
+
+#### `meeting-complete`
+Fired when meeting is fully complete and output is saved.
+
+```json
+{
+  "meeting_id": "mtg_7f3a2b1c",
+  "state": "complete",
+  "output_path": "CrewHub/meetings/2026-02-12-standup.md",
+  "progress_pct": 100,
+  "duration_seconds": 82,
+  "total_tokens": 3650
+}
+```
+
+#### `meeting-error`
+Fired on unrecoverable errors.
+
+```json
+{
+  "meeting_id": "mtg_7f3a2b1c",
+  "state": "error",
+  "error": "Gateway connection lost after 60s retry",
+  "last_completed_round": 1
+}
+```
+
+#### `meeting-cancelled`
+Fired when user cancels.
+
+```json
+{
+  "meeting_id": "mtg_7f3a2b1c",
+  "state": "cancelled",
+  "cancelled_at": 1739353240000
+}
+```
+
+---
+
+## 3. Data Models
 
 ### Meeting
 
 ```python
 class Meeting(BaseModel):
     id: str
-    topic: str
-    status: MeetingStatus                   # gathering|round_1|round_2|round_3|synthesizing|complete|cancelled
+    title: str
+    goal: str
+    state: MeetingState
+    room_id: Optional[str]
+    project_id: Optional[str]
     config: MeetingConfig
-    participants: list[MeetingParticipant]
-    current_round: int | None
-    current_speaker: str | None
-    created_at: int                         # Unix timestamp
-    updated_at: int
-    completed_at: int | None
-    output_md: str | None                   # Final markdown (set on complete)
-    duration_seconds: int | None
-    total_tokens: int | None
+    current_round: int = 0
+    current_turn: int = 0
+    output_md: Optional[str] = None
+    output_path: Optional[str] = None
+    error_message: Optional[str] = None
+    created_by: str = "user"
+    started_at: Optional[int] = None
+    completed_at: Optional[int] = None
+    cancelled_at: Optional[int] = None
+    created_at: int
 ```
 
-### MeetingStatus (enum)
+### MeetingConfig
 
 ```python
-class MeetingStatus(str, Enum):
+class MeetingConfig(BaseModel):
+    participants: list[str]              # agent IDs in speaking order
+    num_rounds: int = 3                  # 1-5
+    round_topics: list[str] = [
+        "What have you been working on?",
+        "What will you focus on next?",
+        "Any blockers, risks, or things you need help with?",
+    ]
+    max_tokens_per_turn: int = 200
+    synthesis_max_tokens: int = 500
+```
+
+### MeetingState
+
+```python
+class MeetingState(str, Enum):
     GATHERING = "gathering"
     ROUND_1 = "round_1"
     ROUND_2 = "round_2"
     ROUND_3 = "round_3"
+    ROUND_4 = "round_4"       # optional
+    ROUND_5 = "round_5"       # optional
     SYNTHESIZING = "synthesizing"
     COMPLETE = "complete"
     CANCELLED = "cancelled"
+    ERROR = "error"
 ```
 
-### MeetingParticipant
+### Round
 
 ```python
-class MeetingParticipant(BaseModel):
-    agent_id: str
-    agent_name: str
-    model: str                              # sonnet, opus, gpt5
-    role: str | None                        # user-visible role
+class Round(BaseModel):
+    round_num: int
+    topic: str
+    status: Literal["pending", "in_progress", "complete", "skipped"]
+    turns: list[Turn] = []
 ```
 
 ### Turn
@@ -84,295 +411,61 @@ class MeetingParticipant(BaseModel):
 class Turn(BaseModel):
     id: str
     meeting_id: str
-    round_num: int                          # 0-indexed
-    turn_num: int                           # Position within round
+    round_num: int
+    turn_index: int
     agent_id: str
     agent_name: str
-    content: str | None                     # Response text
-    tokens_used: int | None
-    status: TurnStatus                      # pending|speaking|complete|skipped|error
-    started_at: int | None
-    completed_at: int | None
-    error: str | None
+    response: Optional[str] = None
+    prompt_tokens: Optional[int] = None
+    response_tokens: Optional[int] = None
+    started_at: Optional[int] = None
+    completed_at: Optional[int] = None
 ```
 
----
+### MeetingParticipant
 
-## Endpoint Details
-
-### POST `/api/meetings/start`
-
-Start a new stand-up meeting.
-
-**Request:**
-```json
-{
-  "topic": "Plan authentication system for mobile app",
-  "participants": ["main", "dev", "flowy", "creator"],
-  "num_rounds": 3,
-  "synthesizer_id": "main",
-  "template": null,
-  "max_response_tokens": 150
-}
-```
-
-**Response: `201 Created`**
-```json
-{
-  "id": "mtg_a1b2c3d4",
-  "topic": "Plan authentication system for mobile app",
-  "status": "gathering",
-  "config": { ... },
-  "participants": [
-    {"agent_id": "main", "agent_name": "Main", "model": "sonnet", "role": "Coordinator"},
-    {"agent_id": "dev", "agent_name": "Dev", "model": "opus", "role": "Developer"}
-  ],
-  "current_round": null,
-  "current_speaker": null,
-  "created_at": 1739270400,
-  "updated_at": 1739270400,
-  "stream_url": "/api/meetings/mtg_a1b2c3d4/stream"
-}
-```
-
-**Errors:**
-- `400` — Invalid config (< 2 participants, rounds out of range)
-- `409` — Meeting already in progress
-- `503` — Gateway not connected
-
----
-
-### GET `/api/meetings/{id}/status`
-
-**Response: `200 OK`**
-```json
-{
-  "id": "mtg_a1b2c3d4",
-  "status": "round_2",
-  "current_round": 1,
-  "current_speaker": "flowy",
-  "progress": {
-    "total_turns": 12,
-    "completed_turns": 6,
-    "percentage": 50
-  },
-  "turns": [
-    {
-      "round_num": 0,
-      "agent_name": "Main",
-      "status": "complete",
-      "content": "I think we should use OAuth2..."
-    },
-    ...
-  ],
-  "estimated_remaining_seconds": 120
-}
-```
-
----
-
-### POST `/api/meetings/{id}/cancel`
-
-Cancel a running meeting. Returns partial results if any turns completed.
-
-**Response: `200 OK`**
-```json
-{
-  "id": "mtg_a1b2c3d4",
-  "status": "cancelled",
-  "completed_turns": 6,
-  "partial_output_md": "# Partial Stand-Up Notes\n..."
-}
-```
-
----
-
-### GET `/api/meetings/{id}/stream`
-
-Server-Sent Events stream for real-time meeting updates. Connects to existing SSE infrastructure in `routes/sse.py`.
-
-**Headers:**
-```
-Accept: text/event-stream
-Cache-Control: no-cache
-```
-
-**Events:**
-
-#### `meeting_started`
-```
-event: meeting_started
-data: {"meeting_id": "mtg_a1b2c3d4", "topic": "Auth planning", "participants": ["Main", "Dev", "Flowy", "Creator"]}
-```
-
-#### `gathering_complete`
-```
-event: gathering_complete
-data: {"meeting_id": "mtg_a1b2c3d4"}
-```
-
-#### `round_started`
-```
-event: round_started
-data: {"meeting_id": "mtg_a1b2c3d4", "round": 1, "total_rounds": 3}
-```
-
-#### `bot_speaking`
-```
-event: bot_speaking
-data: {"meeting_id": "mtg_a1b2c3d4", "agent_id": "main", "agent_name": "Main", "round": 1, "turn": 0}
-```
-
-#### `bot_token`
-Streamed tokens for live speech bubble:
-```
-event: bot_token
-data: {"meeting_id": "mtg_a1b2c3d4", "agent_id": "main", "token": "I think"}
-```
-
-#### `bot_complete`
-```
-event: bot_complete
-data: {"meeting_id": "mtg_a1b2c3d4", "agent_id": "main", "round": 1, "content": "I think we should use OAuth2 with JWT tokens for stateless auth...", "tokens_used": 87}
-```
-
-#### `bot_error`
-```
-event: bot_error
-data: {"meeting_id": "mtg_a1b2c3d4", "agent_id": "dev", "round": 2, "error": "timeout", "message": "Dev did not respond within 30s"}
-```
-
-#### `round_complete`
-```
-event: round_complete
-data: {"meeting_id": "mtg_a1b2c3d4", "round": 1, "summary": "Round 1 complete. 4/4 bots contributed."}
-```
-
-#### `synthesizing`
-```
-event: synthesizing
-data: {"meeting_id": "mtg_a1b2c3d4", "synthesizer": "Main"}
-```
-
-#### `meeting_complete`
-```
-event: meeting_complete
-data: {"meeting_id": "mtg_a1b2c3d4", "output_md": "# Stand-Up Summary...", "duration_seconds": 263, "total_tokens": 3847}
-```
-
-#### `meeting_cancelled`
-```
-event: meeting_cancelled
-data: {"meeting_id": "mtg_a1b2c3d4", "reason": "user_cancelled", "completed_turns": 6}
-```
-
----
-
-### GET `/api/meetings/{id}/output`
-
-Get the final markdown output after meeting completes.
-
-**Response: `200 OK`**
-```json
-{
-  "meeting_id": "mtg_a1b2c3d4",
-  "output_md": "# Stand-Up Summary: Auth System Planning\n...",
-  "format": "markdown"
-}
-```
-
-**Errors:**
-- `404` — Meeting not found
-- `425` — Meeting not yet complete
-
----
-
-### GET `/api/meetings/history`
-
-List past meetings with pagination.
-
-**Query params:** `?limit=20&offset=0&status=complete`
-
-**Response: `200 OK`**
-```json
-{
-  "meetings": [
-    {
-      "id": "mtg_a1b2c3d4",
-      "topic": "Auth system planning",
-      "status": "complete",
-      "participants": ["Main", "Dev", "Flowy", "Creator"],
-      "created_at": 1739270400,
-      "duration_seconds": 263
-    }
-  ],
-  "total": 15,
-  "limit": 20,
-  "offset": 0
-}
-```
-
----
-
-## Backend Implementation Notes
-
-### Router Registration
-
-Add to `app/main.py`:
 ```python
-from app.routes.meetings import router as meetings_router
-app.include_router(meetings_router, prefix="/api/meetings", tags=["meetings"])
+class MeetingParticipant(BaseModel):
+    meeting_id: str
+    agent_id: str
+    agent_name: str
+    agent_icon: Optional[str] = None
+    agent_color: Optional[str] = None
+    sort_order: int = 0
 ```
 
-### SSE Integration
+---
 
-Reuse existing `routes/sse.py` broadcast infrastructure. Meeting events use the same `_sse_clients` pool with meeting-specific event types:
+## 4. Integration Points
 
+### Existing SSE Infrastructure
+Uses the existing `broadcast()` from `app/routes/sse.py`:
 ```python
 from app.routes.sse import broadcast
-
-# During meeting orchestration:
-await broadcast("bot_speaking", {
-    "meeting_id": meeting.id,
-    "agent_id": "main",
-    "agent_name": "Main",
-    "round": 1,
-    "turn": 0
-})
+await broadcast("meeting-turn", {...})
 ```
 
-### File Structure
+### Existing Database Pattern
+Uses `get_db()` from `app/db/database.py` for SQLite access.
 
-```
-backend/app/
-├── routes/
-│   └── meetings.py          # REST endpoints
-├── services/
-│   └── meetings/
-│       ├── __init__.py
-│       ├── orchestrator.py   # MeetingOrchestrator (state machine)
-│       ├── round_robin.py    # RoundRobinEngine
-│       ├── prompts.py        # Prompt templates
-│       └── synthesizer.py    # Summary generation
-└── db/
-    └── meeting_models.py     # Pydantic models
-```
+### Existing Agent/Room System
+- Participants reference agents from the `agents` table
+- Room ID references the `rooms` table
+- Project ID references the `projects` table
 
-### Gateway Communication
+### Gateway Connections
+Bot responses routed through `ConnectionManager` from `app/services/connections/`.
 
-```python
-# In orchestrator.py
-async def execute_turn(self, turn: Turn) -> str:
-    """Send prompt to agent via gateway, return response."""
-    prompt = self.build_prompt(turn)
+---
 
-    # Use existing gateway service
-    response = await self.gateway.send_to_agent(
-        agent_id=turn.agent_id,
-        message=prompt,
-        max_tokens=self.config.max_response_tokens,
-        stream_callback=lambda token: self.on_token(turn, token)
-    )
+## 5. Rate Limits & Constraints
 
-    return response.content
-```
+| Constraint | Value | Rationale |
+|------------|-------|-----------|
+| Max concurrent meetings per room | 1 | Avoid confusion |
+| Max concurrent meetings globally | 3 | Token budget control |
+| Max participants per meeting | 8 | Context window limits |
+| Min participants per meeting | 2 | Need a conversation |
+| Max rounds | 5 | Diminishing returns |
+| Max tokens per turn | 500 | Keep responses focused |
+| Meeting timeout | 10 minutes | Safety net for stuck meetings |

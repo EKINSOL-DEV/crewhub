@@ -1349,3 +1349,149 @@ async def score_prop_quality(req: QualityScoreRequest):
     scorer = QualityScorer()
     score = scorer.score_prop(req.code)
     return score.to_dict()
+
+
+# ─── Prop Delete with Cascade Warning ───────────────────────────
+
+async def _find_prop_usage_in_blueprints(prop_name: str) -> list[dict]:
+    """Find all blueprint/room placements that reference a prop by name."""
+    from ..db.database import get_db
+    
+    placements = []
+    try:
+        async with get_db() as db:
+            cursor = await db.execute(
+                "SELECT id, name, room_id, blueprint_json FROM custom_blueprints"
+            )
+            rows = await cursor.fetchall()
+            for row in rows:
+                bp_json = row["blueprint_json"]
+                if isinstance(bp_json, str):
+                    bp_json = json.loads(bp_json)
+                bp_placements = bp_json.get("placements", [])
+                # Count instances of this prop in the blueprint
+                instances = [p for p in bp_placements if p.get("propId") == prop_name]
+                if instances:
+                    placements.append({
+                        "blueprintId": row["id"],
+                        "blueprintName": row["name"],
+                        "roomId": row["room_id"],
+                        "instanceCount": len(instances),
+                    })
+    except Exception as e:
+        logger.error(f"Error checking prop usage in blueprints: {e}")
+    return placements
+
+
+@router.get("/generation-history/{gen_id}/usage")
+async def get_prop_usage(gen_id: str):
+    """Check where a generated prop is used (in blueprints/rooms)."""
+    # Find the record
+    record = None
+    for r in _load_generation_history():
+        if r.get("id") == gen_id:
+            record = r
+            break
+    if not record:
+        raise HTTPException(status_code=404, detail="Generation record not found")
+
+    prop_name = record.get("name", "")
+    placements = await _find_prop_usage_in_blueprints(prop_name)
+    
+    return {
+        "propId": gen_id,
+        "propName": prop_name,
+        "canDelete": True,
+        "placements": placements,
+        "totalInstances": sum(p["instanceCount"] for p in placements),
+    }
+
+
+@router.delete("/generation-history/{gen_id}")
+async def delete_generation_record(gen_id: str, cascade: bool = Query(False)):
+    """Delete a generation history record, optionally cascading to blueprint placements."""
+    from ..db.database import get_db
+
+    history = _load_generation_history()
+    record = None
+    record_idx = None
+    for i, r in enumerate(history):
+        if r.get("id") == gen_id:
+            record = r
+            record_idx = i
+            break
+
+    if record is None:
+        raise HTTPException(status_code=404, detail="Generation record not found")
+
+    prop_name = record.get("name", "")
+    deleted_from_rooms: list[str] = []
+    total_instances_removed = 0
+
+    # Check for placements
+    placements = await _find_prop_usage_in_blueprints(prop_name)
+
+    if placements and not cascade:
+        # Return info so frontend can show confirmation
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "Prop is used in rooms. Use cascade=true to delete anyway.",
+                "placements": placements,
+                "totalInstances": sum(p["instanceCount"] for p in placements),
+            },
+        )
+
+    # Cascade: remove prop from blueprints
+    if placements and cascade:
+        try:
+            async with get_db() as db:
+                for placement in placements:
+                    cursor = await db.execute(
+                        "SELECT id, blueprint_json FROM custom_blueprints WHERE id = ?",
+                        (placement["blueprintId"],),
+                    )
+                    row = await cursor.fetchone()
+                    if not row:
+                        continue
+                    bp_json = row["blueprint_json"]
+                    if isinstance(bp_json, str):
+                        bp_json = json.loads(bp_json)
+
+                    original_count = len(bp_json.get("placements", []))
+                    bp_json["placements"] = [
+                        p for p in bp_json.get("placements", [])
+                        if p.get("propId") != prop_name
+                    ]
+                    removed = original_count - len(bp_json["placements"])
+                    total_instances_removed += removed
+                    deleted_from_rooms.append(placement.get("blueprintName", placement["blueprintId"]))
+
+                    await db.execute(
+                        "UPDATE custom_blueprints SET blueprint_json = ? WHERE id = ?",
+                        (json.dumps(bp_json), placement["blueprintId"]),
+                    )
+                await db.commit()
+        except Exception as e:
+            logger.error(f"Error cascading prop delete to blueprints: {e}")
+            raise HTTPException(status_code=500, detail=f"Cascade delete failed: {e}")
+
+    # Remove from generation history
+    history.pop(record_idx)
+    _save_generation_history(history)
+
+    # Also remove from saved props if exists
+    saved = _load_saved_props()
+    new_saved = [p for p in saved if p.get("propId") != record.get("name")]
+    if len(new_saved) != len(saved):
+        _save_props_to_disk(new_saved)
+
+    logger.info(f"Deleted prop '{prop_name}' (gen_id={gen_id}), cascade={cascade}, rooms_affected={len(deleted_from_rooms)}")
+
+    return {
+        "success": True,
+        "propId": gen_id,
+        "propName": prop_name,
+        "deleted_from_rooms": deleted_from_rooms,
+        "total_instances_removed": total_instances_removed,
+    }

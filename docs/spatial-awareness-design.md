@@ -1,707 +1,309 @@
 # Spatial Awareness Design — Props in Rooms
 
-> **Status:** Design Document (not yet implemented)  
-> **Author:** Ekinbot (Claude Opus)  
-> **Date:** 2026-02-11  
-> **CrewHub Version:** Schema v8, Frontend with PropRegistry + Grid Blueprint system
+> CrewHub bots become aware of props in their 3D rooms so they can navigate to them and reference them naturally.
 
-## 1. Problem Statement
+**Status:** Design  
+**Date:** 2026-02-12  
+**Author:** Ekinbot (subagent)
 
-CrewHub bots exist in 3D rooms with props (desks, coffee machines, plants, etc.) but have **zero awareness** of what's in their room. A bot can't say "I'll walk to the coffee machine" because it doesn't know one exists, where it is, or what else is nearby.
+---
 
-**Goal:** A bot can say *"I'm walking to the clock"* and it matches what's actually in the 3D room — token-efficiently.
+## 1. Current State
 
-## 2. Current Architecture Summary
+Blueprints already store prop placements as grid coordinates in `custom_blueprints.blueprint_json`:
 
-### What exists today
-
-| Layer | Component | Key details |
-|-------|-----------|-------------|
-| **Database** | `custom_blueprints` table | Stores `blueprint_json` (full grid layout + placements) per room |
-| **Database** | `rooms` table | Room metadata (name, project, HQ flag), no prop data |
-| **Backend** | `GET /api/blueprints?room_id=X` | Returns full blueprint JSON (can be large) |
-| **Backend** | Context Envelope service | Builds ≤2KB JSON for agent preambles (room, project, tasks — **no props**) |
-| **Frontend** | `PropRegistry` (modding registry) | Maps `propId` → React component + mount metadata |
-| **Frontend** | `builtinProps.ts` | 50+ registered props (floor, wall, composite, interaction-only) |
-| **Frontend** | `GridRoomRenderer` | Renders props from blueprint placements on a grid |
-| **Grid** | Blueprint JSON | `gridWidth × gridDepth` (typically 20×20), `cellSize: 0.6`, placements array |
-
-### Blueprint placement structure (existing)
 ```json
 {
-  "propId": "desk-with-monitor",
-  "x": 4, "z": 16,
-  "type": null,
-  "interactionType": null,
-  "span": { "w": 2, "d": 2 }
+  "gridWidth": 20, "gridDepth": 20, "cellSize": 0.6,
+  "placements": [
+    { "propId": "desk-with-monitor", "x": 4, "z": 16, "span": {"w":2,"d":2} },
+    { "propId": "plant", "x": 18, "z": 18 }
+  ],
+  "doors": [{ "x": 9, "z": 19, "facing": "south" }],
+  "walkableCenter": { "x": 10, "z": 10 }
 }
 ```
 
-### What's missing
-- No API to query "what props are in room X?"
-- Context envelope has no spatial/prop info
-- No human-readable position system
-- No skill/tool for bots to query their surroundings
-- No way for a bot to "navigate to" a specific prop
+The context envelope (`build_crewhub_context`) already injects room/project/participant info into agent prompts but has **no spatial/prop data**.
 
 ---
 
-## 3. Position System Design
+## 2. API Endpoint
 
-### 3.1 Approach: Zone-Based with Grid Coordinates
+### `GET /api/rooms/{room_id}/props`
 
-The grid is typically 20×20. Raw grid coords (x=4, z=16) are meaningless to bots and humans. We need a **dual system**:
+Returns the prop layout for a room. Sources data from:
+1. `custom_blueprints` table (if room has a custom blueprint)
+2. Default blueprint registry (frontend-side, mirrored to backend)
 
-1. **Zone labels** — human-readable, for context envelopes and bot speech
-2. **Grid coordinates** — precise, for navigation/animation
+**Response (compact format — default):**
 
-### 3.2 Zone Map (4×4 zones on a 20×20 grid)
-
-Divide the room into a 4×4 grid of named zones:
-
-```
-         NORTH WALL (z=0)
-    ┌─────┬─────┬─────┬─────┐
-    │ NW  │ N1  │ N2  │ NE  │  z: 0-4
-    ├─────┼─────┼─────┼─────┤
-    │ W1  │ C1  │ C2  │ E1  │  z: 5-9
-    ├─────┼─────┼─────┼─────┤
-    │ W2  │ C3  │ C4  │ E2  │  z: 10-14
-    ├─────┼─────┼─────┼─────┤
-    │ SW  │ S1  │ S2  │ SE  │  z: 15-19
-    └─────┴─────┴─────┴─────┘
-         SOUTH WALL (z=19, door side typically)
-```
-
-**Zone naming rules:**
-- Corners: `NW`, `NE`, `SW`, `SE`
-- Edges: `N1`, `N2` (north inner), `S1`, `S2` (south inner), `W1`, `W2`, `E1`, `E2`
-- Center: `C1`, `C2`, `C3`, `C4`
-
-**Human-readable aliases** (for bot speech):
-| Zone | Alias |
-|------|-------|
-| NW, NE, SW, SE | "northwest corner", "southeast corner" |
-| N1, N2 | "north side" |
-| S1, S2 | "near the door" (if door is south wall) |
-| C1-C4 | "center of the room" |
-| W1, W2 | "west side" |
-| E1, E2 | "east side" |
-
-### 3.3 Zone Calculation
-
-```python
-def grid_to_zone(x: int, z: int, grid_width: int = 20, grid_depth: int = 20) -> str:
-    """Convert grid coordinates to zone label."""
-    # Normalize to 0-3 range
-    col = min(3, int(x / (grid_width / 4)))
-    row = min(3, int(z / (grid_depth / 4)))
-    
-    ZONE_MAP = [
-        ["NW", "N1", "N2", "NE"],
-        ["W1", "C1", "C2", "E1"],
-        ["W2", "C3", "C4", "E2"],
-        ["SW", "S1", "S2", "SE"],
-    ]
-    return ZONE_MAP[row][col]
-
-def zone_to_friendly(zone: str, door_wall: str = "south") -> str:
-    """Convert zone label to human-friendly description."""
-    FRIENDLY = {
-        "NW": "northwest corner", "NE": "northeast corner",
-        "SW": "southwest corner", "SE": "southeast corner",
-        "N1": "north side", "N2": "north side",
-        "S1": "south side", "S2": "south side",
-        "W1": "west side", "W2": "west side",
-        "E1": "east side", "E2": "east side",
-        "C1": "center", "C2": "center", "C3": "center", "C4": "center",
-    }
-    return FRIENDLY.get(zone, zone)
-```
-
-### 3.4 Scalable for non-20×20 grids
-
-The zone system adapts to any `gridWidth × gridDepth` by dividing proportionally. A 10×10 room still gets 4×4 zones, just with smaller cells per zone.
-
----
-
-## 4. API Endpoint Design
-
-### 4.1 `GET /api/rooms/{room_id}/props`
-
-Returns a compact prop listing for a room, derived from its active blueprint.
-
-**Response format:**
 ```json
 {
   "room_id": "dev-room",
-  "room_name": "Dev Room",
-  "grid": { "w": 20, "d": 20, "cell_size": 0.6 },
-  "doors": [{ "x": 9, "z": 19, "zone": "S1" }],
+  "grid": [20, 20, 0.6],
   "props": [
-    {
-      "id": "desk-with-monitor",
-      "label": "Desk with Monitor",
-      "zone": "SW",
-      "x": 4, "z": 16,
-      "mount": "floor",
-      "interaction": null
-    },
-    {
-      "id": "coffee-machine",
-      "label": "Coffee Machine",
-      "zone": "NE",
-      "x": 17, "z": 2,
-      "mount": "floor",
-      "interaction": "coffee"
-    },
-    {
-      "id": "wall-clock",
-      "label": "Wall Clock",
-      "zone": "N1",
-      "x": 8, "z": 0,
-      "mount": "wall",
-      "interaction": null
-    }
+    ["desk-with-monitor", 4, 16, "work"],
+    ["plant", 18, 18, "deco"],
+    ["sleep-corner", 2, 2, "sleep"],
+    ["coffee-machine", 15, 3, "coffee"]
   ],
-  "interaction_points": {
-    "work": [{ "x": 5, "z": 15, "zone": "SW" }],
-    "coffee": [{ "x": 17, "z": 3, "zone": "NE" }],
-    "sleep": [{ "x": 2, "z": 2, "zone": "NW" }]
-  },
-  "summary": "8 props: 3 desks, 2 plants, 1 coffee machine, 1 wall clock, 1 bookshelf"
+  "doors": [[9, 19, "S"], [10, 19, "S"]],
+  "center": [10, 10]
 }
 ```
 
-**Key design decisions:**
-- `label` is auto-generated from propId: `"desk-with-monitor"` → `"Desk with Monitor"`
-- `zone` is pre-calculated server-side
-- `summary` is a one-line text for compact context injection
-- Interaction-only props (work-point, coffee-point, sleep-corner) are in `interaction_points`, not `props`
-- Response is typically 500B-2KB depending on prop count
+Each prop is `[propId, x, z, zone]` — **~30 tokens per prop** vs ~80 for a full object.
 
-### 4.2 Blueprint Resolution Logic
+**Query params:**
+- `?format=compact` (default) — array-of-arrays as above
+- `?format=full` — full JSON objects with span, interactionType, etc.
+- `?format=natural` — natural language summary (see §4)
 
-```python
-async def get_active_blueprint(room_id: str) -> dict | None:
-    """Get the active blueprint for a room.
-    
-    Priority:
-    1. Custom blueprint linked to room (custom_blueprints.room_id)
-    2. Built-in blueprint file matching room_id
-    """
-    # Check custom blueprint
-    db_row = await db.execute(
-        "SELECT blueprint_json FROM custom_blueprints WHERE room_id = ? ORDER BY updated_at DESC LIMIT 1",
-        (room_id,)
-    )
-    if db_row:
-        return json.loads(db_row["blueprint_json"])
-    
-    # Fall back to built-in JSON file
-    path = f"frontend/src/lib/grid/blueprints/{room_id}.json"
-    if os.path.exists(path):
-        return json.load(open(path))
-    
-    return None
-```
+**Implementation:** ~40 lines in `routes/rooms.py`. Read blueprint JSON, reshape.
 
-### 4.3 `GET /api/rooms/{room_id}/props/{prop_id}`
+### `GET /api/rooms/{room_id}/props/{prop_id}`
 
-Returns details of a specific prop type in the room (useful for "where is the coffee machine?").
+Single prop lookup. Returns position + nearest interaction point.
 
 ```json
 {
-  "id": "coffee-machine",
-  "label": "Coffee Machine",
-  "instances": [
-    { "x": 17, "z": 2, "zone": "NE", "zone_friendly": "northeast corner" }
-  ],
-  "nearest_interaction": { "type": "coffee", "x": 17, "z": 3, "zone": "NE" }
+  "propId": "coffee-machine",
+  "x": 15, "z": 3,
+  "zone": "coffee",
+  "nearby": ["water-cooler", "bench"]
 }
 ```
 
 ---
 
-## 5. Context Envelope Integration
+## 3. Context Envelope Integration
 
-### 5.1 Options Analysis
+Three token-budget strategies, selectable per room/agent config:
 
-| Approach | What's injected | Token cost | Pros | Cons |
-|----------|----------------|------------|------|------|
-| **A. Full prop list** | All props with zones | ~150-400 tokens | Complete picture | Wasteful if bot doesn't need spatial info |
-| **B. Summary only** | One-line summary string | ~20-30 tokens | Ultra cheap | Bot can't navigate to specific props |
-| **C. Summary + skill** | Summary + "use `get_room_layout()` for details" | ~40-50 tokens | Cheap default, detail on demand | Requires tool call round-trip |
-| **D. Nothing (skill-only)** | Just skill availability | ~15 tokens | Minimal cost | Bot doesn't know what's available without asking |
-
-### 5.2 Recommendation: **Option C — Summary + Skill**
-
-Add to the existing context envelope:
+### Option A: Inline Summary (recommended default)
+Add a `layout` field to the context envelope:
 
 ```json
 {
-  "room": {
-    "id": "dev-room",
-    "name": "Dev Room",
-    "type": "standard",
-    "props_summary": "8 props: 3 desks, 2 plants, coffee machine, wall clock, bookshelf",
-    "has_coffee": true,
-    "has_work_stations": true
-  },
-  "skills": ["spatial_awareness"]
+  "room": { "id": "dev-room", "name": "Dev Room", "type": "standard" },
+  "layout": "20x20 grid. Props: desk-with-monitor(4,16) plant(18,18) sleep-corner(2,2) coffee-machine(15,3). Doors: S(9-10,19). Center(10,10)."
 }
 ```
 
-**Token cost:** ~35-45 tokens added to envelope (currently ≤2KB budget).
+**Cost:** ~40-60 tokens. Always available, no round-trip.
 
-**Why this works:**
-- Bot always knows *what's* in the room (summary) — enough for casual mentions
-- Bot can query details on demand via skill (zone, exact position)
-- Token cost is near-zero for sessions that don't need spatial navigation
-- `has_coffee` / `has_work_stations` booleans enable quick behavioral decisions
+### Option B: On-Demand (tool call)
+No layout in envelope. Agent calls `get_room_layout()` skill when needed.
 
-### 5.3 Envelope Changes (context_envelope.py)
+**Cost:** 0 tokens baseline + ~50 tokens per call. Better for agents that rarely reference props.
 
-```python
-# In build_crewhub_context(), after room query:
+### Option C: Hybrid (recommended for phase 2)
+Envelope includes prop *names only* (no coordinates). Agent queries positions on demand:
 
-# Fetch prop summary for room
-props_data = await get_room_props_summary(room_id)
-if props_data:
-    room["props_summary"] = props_data["summary"]
-    room["has_coffee"] = props_data["has_coffee"]
-    room["has_work_stations"] = props_data["has_work_stations"]
+```json
+{ "layout": { "props": ["desk","plant","coffee-machine","sleep-corner"], "size": "20x20" } }
 ```
+
+**Cost:** ~15 tokens baseline + ~20 per position lookup.
+
+### Recommendation
+**Phase 1:** Option A (inline summary). Simple, always works, ~50 tokens is negligible.  
+**Phase 2:** Option C for rooms with >10 props.
 
 ---
 
-## 6. Skill/Tool Interface Design
+## 4. Natural Language Spatial Index
 
-### 6.1 CrewHub Spatial Awareness Skill
-
-This skill would be available as an OpenClaw tool/skill that bots can invoke.
-
-**Skill name:** `crewhub_spatial`
-
-**Functions:**
-
-#### `get_room_layout()`
-Returns the full prop layout of the bot's current room.
+### Zone-Based (primary)
+Divide the grid into a 3×3 named zone grid:
 
 ```
-→ Request: GET /api/rooms/{room_id}/props
-← Response (formatted for bot):
+ NW  |  N   |  NE
+-----|------|-----
+  W  | center|  E
+-----|------|-----
+ SW  |  S   |  SE
+```
 
+Map grid coords → zone: `x < grid/3 → W column`, etc.
+
+**Example output:**
+```
 Room: Dev Room (20×20 grid)
-Door: south wall (S1)
-
-Props:
-  • Desk with Monitor — southwest corner (SW)
-  • Desk with Monitor — southwest corner (SW)  
-  • Coffee Machine — northeast corner (NE)
-  • Wall Clock — north wall (N1)
-  • Plant — southeast corner (SE)
-  • Bookshelf — west side (W1)
-
-Work stations: SW (×2)
-Coffee: NE
-Rest: NW
+NW: sleep-corner
+N: desk-with-monitor
+NE: plant
+S: doors
+SW: coffee-machine
+Center: (open space)
 ```
 
-**Token cost:** ~80-120 tokens for a typical room (8-15 props).
+~35 tokens. Agents can say "I'm in the northwest corner near the sleep area" or "walking south to the coffee machine."
 
-#### `get_prop_location(prop_name)`
-Find a specific prop by name (fuzzy match).
-
-```
-→ get_prop_location("clock")
-← "Wall Clock is on the north wall (zone N1, grid 8,0)"
-
-→ get_prop_location("coffee")
-← "Coffee Machine is in the northeast corner (zone NE, grid 17,2). Nearest coffee interaction point: NE (17,3)"
-```
-
-**Token cost:** ~20-30 tokens.
-
-#### `list_nearby_props(zone?)`
-List props near the bot's current position or a given zone.
+### Relative Descriptions
+For `get_prop_location(name)` responses, include relative info:
 
 ```
-→ list_nearby_props("SW")
-← "Props in/near SW: Desk with Monitor (SW), Desk with Monitor (SW), Plant (S2). Work station available."
+"The coffee machine is in the SW corner, near the water cooler. About 12 cells from the desk."
 ```
 
-**Token cost:** ~30-50 tokens.
-
-#### `navigate_to(target)`
-Resolve a navigation target to grid coordinates for the animation system.
-
-```
-→ navigate_to("coffee machine")
-← { "target": "coffee-machine", "x": 17, "z": 2, "interaction_point": { "x": 17, "z": 3 }, "zone": "NE" }
-```
-
-This returns structured data that the frontend animation system can use to path the bot.
-
-**Token cost:** ~25 tokens.
-
-### 6.2 Fuzzy Matching
-
-Prop name resolution should be forgiving:
-- "clock" → matches `wall-clock`
-- "coffee" → matches `coffee-machine`
-- "desk" → matches `desk-with-monitor` (returns all instances)
-- "board" → matches `notice-board`, `whiteboard`, `mood-board`
+### Grid-to-Zone Mapping Function
 
 ```python
-def fuzzy_match_prop(query: str, props: list[dict]) -> list[dict]:
-    """Match a query string against prop IDs and labels."""
-    q = query.lower().replace(" ", "-")
-    results = []
-    for p in props:
-        pid = p["id"].lower()
-        label = p["label"].lower()
-        if q in pid or q in label or pid in q:
-            results.append(p)
-    return results
-```
-
-### 6.3 Integration with Bot Movement
-
-The frontend already has bot walking animation. The skill's `navigate_to()` returns grid coords that can be sent via SSE to trigger movement:
-
-```
-SSE event: bot-navigate
-{
-  "session_key": "agent:dev:main",
-  "target_x": 17,
-  "target_z": 3,
-  "target_prop": "coffee-machine",
-  "animation": "walk"
-}
-```
-
-The frontend `Bot3D` component picks this up and animates the walk.
-
----
-
-## 7. Database Schema
-
-### 7.1 Analysis: New Table vs Extend Existing
-
-**Current state:** Prop placements live inside `custom_blueprints.blueprint_json` (embedded JSON) or in built-in JSON files. There is no normalized prop placement table.
-
-**Options:**
-
-| Option | Description | Effort | Query speed |
-|--------|-------------|--------|-------------|
-| A. Read from blueprint JSON | Parse existing data, no schema change | Low | Moderate (JSON parse) |
-| B. New `room_props` table | Denormalized cache of active placements | Medium | Fast (SQL) |
-| C. Materialized view | Auto-sync from blueprint changes | High | Fast |
-
-### 7.2 Recommendation: Option A (Phase 1) → Option B (Phase 2)
-
-**Phase 1: No schema change.** The API endpoint reads from the existing blueprint JSON. This works because:
-- Blueprint data is already there
-- Rooms typically have <20 props
-- JSON parsing is fast for small payloads
-- No migration needed
-
-**Phase 2: Add `room_props` cache table** for performance if needed:
-
-```sql
--- Schema v9 migration
-CREATE TABLE room_props (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room_id TEXT NOT NULL,
-    prop_id TEXT NOT NULL,          -- e.g., 'coffee-machine'
-    label TEXT NOT NULL,            -- e.g., 'Coffee Machine'
-    x INTEGER NOT NULL,
-    z INTEGER NOT NULL,
-    zone TEXT NOT NULL,             -- e.g., 'NE'
-    mount_type TEXT DEFAULT 'floor', -- 'floor' or 'wall'
-    interaction_type TEXT,          -- 'work', 'coffee', 'sleep', or NULL
-    span_w INTEGER DEFAULT 1,
-    span_d INTEGER DEFAULT 1,
-    blueprint_id TEXT,              -- source blueprint
-    updated_at INTEGER NOT NULL,
-    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_room_props_room ON room_props(room_id);
-CREATE INDEX idx_room_props_type ON room_props(room_id, interaction_type);
-```
-
-**Sync strategy:** Whenever a blueprint is saved/updated (create, move-prop, delete-prop), rebuild the `room_props` rows for that room. This is event-driven, not polled.
-
-```python
-async def sync_room_props(room_id: str, blueprint: dict):
-    """Rebuild room_props from blueprint placements."""
-    await db.execute("DELETE FROM room_props WHERE room_id = ?", (room_id,))
-    
-    for p in blueprint.get("placements", []):
-        if p.get("type") == "interaction":
-            continue  # Skip interaction-only markers
-        
-        zone = grid_to_zone(p["x"], p["z"], blueprint["gridWidth"], blueprint["gridDepth"])
-        label = prop_id_to_label(p["propId"])
-        
-        await db.execute("""
-            INSERT INTO room_props (room_id, prop_id, label, x, z, zone, mount_type, 
-                                    interaction_type, span_w, span_d, blueprint_id, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (room_id, p["propId"], label, p["x"], p["z"], zone, 
-              "wall" if is_wall_prop(p["propId"]) else "floor",
-              p.get("interactionType"), 
-              p.get("span", {}).get("w", 1), p.get("span", {}).get("d", 1),
-              blueprint.get("id"), int(time.time() * 1000)))
-    
-    await db.commit()
+def grid_to_zone(x: int, z: int, w: int, d: int) -> str:
+    col = "W" if x < w/3 else ("E" if x > 2*w/3 else "")
+    row = "S" if z < d/3 else ("N" if z > 2*d/3 else "")
+    return row + col or "center"
 ```
 
 ---
 
-## 8. Frontend Integration
+## 5. Skill/Tool Interface
 
-### 8.1 No PropRegistry Changes Needed
+Three skills for the agent tool registry:
 
-The PropRegistry is a rendering concern — it maps propIds to React components. The spatial awareness system reads from **blueprint data**, not the registry. No registry changes needed.
+### `get_room_layout()`
+Returns full room prop layout in natural language.
 
-### 8.2 SSE Events for Real-Time Sync
-
-Existing SSE events already broadcast blueprint changes:
-- `blueprint-update` with `action: "prop-moved"` / `"prop-deleted"`
-
-**New SSE events needed:**
-
-```typescript
-// When a bot navigates to a prop
-type BotNavigateEvent = {
-  type: "bot-navigate"
-  session_key: string
-  target_x: number
-  target_z: number
-  target_prop?: string    // propId
-  target_zone?: string    // zone label
-  animation: "walk" | "run"
-}
-
-// When room props cache is rebuilt (Phase 2)
-type RoomPropsRefreshEvent = {
-  type: "room-props-refresh"
-  room_id: string
-}
+```
+Room: Dev Room (20×20, cell=0.6m)
+Props by zone:
+  NW: sleep-corner
+  N: desk-with-monitor (2×2)
+  NE: plant
+  SW: coffee-machine
+Doors: south wall (9-10)
 ```
 
-### 8.3 Bot3D Integration
+### `get_prop_location(name: str)`
+Fuzzy-match prop name, return position + zone + nearby props.
 
-The `Bot3D` component needs to listen for `bot-navigate` events and animate the bot walking to the target grid position. This likely hooks into the existing `usePropMovement` hook or a new `useBotNavigation` hook.
+```
+desk-with-monitor: grid(4,16), zone N, near: plant(5 cells), work-point(adjacent)
+```
 
-```typescript
-// New hook: useBotNavigation.ts
-function useBotNavigation(sessionKey: string) {
-  useSSEEvent("bot-navigate", (event) => {
-    if (event.session_key === sessionKey) {
-      // Convert grid coords to world coords
-      const worldX = event.target_x * cellSize
-      const worldZ = event.target_z * cellSize
-      // Trigger walk animation to (worldX, worldZ)
-      startWalkTo(worldX, worldZ)
-    }
-  })
-}
+Fuzzy matching: lowercase, strip hyphens, partial match. "desk" → "desk-with-monitor".
+
+### `list_nearby_props(x: int, z: int, radius: int = 3)`
+Props within radius of a grid point. Useful for "what's around me?"
+
+```
+Near (10,10): nothing within 3 cells. Nearest: desk-with-monitor (7 cells NW)
+```
+
+### Implementation
+These map to the `/api/rooms/{room_id}/props` endpoint variants. The agent's OpenClaw skill definition:
+
+```yaml
+name: crewhub_room_layout
+description: Get prop layout of current CrewHub room
+parameters: {}
+endpoint: GET /api/rooms/{context.room_id}/props?format=natural
 ```
 
 ---
 
-## 9. Token Cost Analysis
+## 6. Frontend Integration
 
-### 9.1 Per-Approach Comparison
+### Current State
+- Props defined in `PropRegistry.ts` / `PropRegistry.tsx` (frontend only)
+- Blueprint JSON stored in `custom_blueprints` table with `room_id` FK
+- No dedicated `room_props` table (placements are embedded in blueprint JSON)
 
-Assuming a typical room with **10 props**, measured in GPT-4 tokens (≈ Claude tokens):
+### Approach: Use Blueprint JSON (no new table)
+The blueprint JSON already contains all placement data. **No schema change needed.**
 
-| What | Tokens | When |
-|------|--------|------|
-| **Context envelope (current, no props)** | ~250-400 | Every message |
-| **+ props_summary (Option C)** | +35-45 | Every message |
-| **get_room_layout() call** | ~100-150 | On demand |
-| **get_prop_location("X") call** | ~25-35 | On demand |
-| **list_nearby_props() call** | ~40-60 | On demand |
-| **navigate_to("X") response** | ~25 | On demand |
-| **Full prop list in envelope (Option A)** | +150-400 | Every message |
+For rooms without custom blueprints, the backend needs access to default blueprints. Options:
+1. **Export defaults to DB at startup** — backend seeds `custom_blueprints` for built-in room types
+2. **Hardcode defaults in backend** — simple Python dict of default layouts
 
-### 9.2 Cost Scenarios
+**Recommendation:** Option 1 — frontend sends default blueprint to backend on room creation.
 
-**Scenario 1: Bot casually mentions room** (most common)
-- Cost: +40 tokens (summary in envelope)
-- Bot says: "I'm in the Dev Room. There's a coffee machine and a few desks."
+### SSE Sync
+When a blueprint is updated (via Creator Center or API), broadcast:
+```
+event: room-layout-changed
+data: { "room_id": "dev-room" }
+```
 
-**Scenario 2: Bot navigates to a prop**
-- Cost: +40 (envelope) + 30 (get_prop_location) + 25 (navigate_to) = **+95 tokens**
-- Bot says: "I'll walk over to the coffee machine in the northeast corner."
+Agents with active context envelopes for that room get refreshed layout on next envelope build.
 
-**Scenario 3: Bot describes its surroundings in detail**
-- Cost: +40 (envelope) + 120 (get_room_layout) = **+160 tokens**
-- Bot says: "Let me look around. I see two desks in the southwest, a bookshelf on the west wall..."
+### PropRegistry ↔ Backend Sync
+The frontend `PropRegistry` defines available prop *types* (meshes, sizes). The backend only needs prop *placements* (which props are where). These are already in blueprint JSON.
 
-### 9.3 Annual Token Cost Estimate
-
-Assuming 100 bot messages/day, 10% use spatial features:
-- Envelope overhead: 100 × 40 = 4,000 tokens/day
-- Spatial queries: 10 × 95 = 950 tokens/day
-- **Total: ~5,000 tokens/day ≈ 150K tokens/month** (negligible)
+No additional sync mechanism needed — blueprints are the single source of truth.
 
 ---
 
-## 10. Implementation Plan
+## 7. Token Cost Analysis
 
-### Phase 1: API + Basic Awareness (1-2 days)
+| Approach | Tokens/query | Always-on cost | Round-trips |
+|----------|-------------|----------------|-------------|
+| **A: Inline summary** | 0 (included) | ~50 tokens | 0 |
+| **B: On-demand tool** | ~50 | 0 | 1 |
+| **C: Hybrid names+lookup** | ~20/lookup | ~15 | 0-N |
+| **Natural language zone** | ~35 | ~35 | 0 |
+| **Full JSON compact** | ~80 | ~80 | 0 |
+| **Full JSON verbose** | ~200 | ~200 | 0 |
 
-**Backend:**
-1. Add `GET /api/rooms/{room_id}/props` endpoint
-   - Reads from blueprint JSON (custom or built-in)
-   - Calculates zones, generates labels and summary
-   - Returns compact JSON response
-2. Add `grid_to_zone()` and `prop_id_to_label()` utility functions
-3. Add `props_summary`, `has_coffee`, `has_work_stations` to context envelope
+**For a room with 6 props:**
+- Option A: 50 tokens per message (always) = ~2,500 tokens over 50-message session
+- Option B: 50 tokens × maybe 3 lookups = 150 tokens per session
+- Option C: 15 + (20 × 3 lookups) = 75 tokens per session
 
-**Files to create/modify:**
-- `backend/app/routes/rooms.py` — add props endpoint
-- `backend/app/utils/spatial.py` — new: zone calculation, label generation
-- `backend/app/services/context_envelope.py` — add prop summary to envelope
-
-**No frontend changes. No schema changes.**
-
-### Phase 2: Skill + Navigation (2-3 days)
-
-**Backend:**
-1. Create `GET /api/rooms/{room_id}/props/{prop_query}` (fuzzy search)
-2. Add `POST /api/rooms/{room_id}/navigate` (resolve target → coords, emit SSE)
-3. Create `room_props` cache table (schema v9 migration)
-4. Add sync hooks to blueprint create/update/delete/move-prop
-
-**Frontend:**
-1. Add `useBotNavigation` hook
-2. Wire `bot-navigate` SSE event to Bot3D walk animation
-3. Add navigation indicator (dotted line or destination marker?)
-
-**Skill (OpenClaw):**
-1. Create `crewhub_spatial` skill with `get_room_layout()`, `get_prop_location()`, `navigate_to()`
-2. Register skill in bot capabilities
-
-### Phase 3: Polish + Advanced Features (ongoing)
-
-- **Door-relative descriptions:** "near the door", "far from entrance"
-- **Bot proximity:** "I'm standing next to the bookshelf"  
-- **Prop grouping:** "the desk area" (cluster of desks + chairs)
-- **Multi-floor awareness:** If buildings/floors are added later
-- **Prop interaction animations:** Bot sits at desk, pours coffee, etc.
-- **Voice narration:** Bot TTS describes walking: "Walking to the coffee machine..."
+**Verdict:** At 50 tokens, Option A is negligible overhead and eliminates latency. Use it.
 
 ---
 
-## 11. Example Flows
-
-### Flow 1: Bot mentions room casually
+## 8. Bot Navigation Flow
 
 ```
-Context envelope includes:
-  props_summary: "8 props: 3 desks, 2 plants, coffee machine, wall clock, bookshelf"
-
-User: "What are you working on?"
-Bot: "I'm at my desk in the Dev Room — there's a nice bookshelf nearby and 
-      I can see the wall clock says it's almost coffee time!"
-```
-*No tool calls needed. Summary is enough for flavor text.*
-
-### Flow 2: Bot navigates to a prop
-
-```
-User: "Go get some coffee"
-Bot thinks: I need to find the coffee machine.
-
-→ get_prop_location("coffee")
-← "Coffee Machine is in the northeast corner (NE, grid 17,2). 
-    Nearest coffee point: (17,3)"
-
-→ navigate_to("coffee-machine")
-← { target_x: 17, target_z: 3, zone: "NE" }
-
-Bot: "On my way to the coffee machine in the northeast corner! ☕"
-[Frontend animates bot walking from current position to (17,3)]
+1. Bot receives context envelope with layout summary
+2. Bot decides to interact: "I'll go check the coffee machine"
+3. Bot calls get_prop_location("coffee machine") → gets grid(15,3)
+4. Frontend receives bot action via SSE: { action: "move_to", target: "coffee-machine", grid: [15,3] }
+5. 3D avatar pathfinds to (15,3) and plays interaction animation
+6. Bot says: "Getting some coffee ☕ — anyone want some?"
 ```
 
-### Flow 3: Bot describes surroundings
-
-```
-User: "Look around and tell me what you see"
-
-→ get_room_layout()
-← Room: Dev Room (20×20)
-   Door: south wall
-   Props:
-   • Desk with Monitor — SW
-   • Desk with Monitor — SW
-   • Coffee Machine — NE
-   • Wall Clock — N1
-   • Plant — SE
-   • Plant — NE
-   • Bookshelf — W1
-   • Server Rack — NW
-
-Bot: "I'm in the Dev Room. Looking around, I see two desks with monitors 
-      in the southwest corner near the door. There's a coffee machine in the 
-      far northeast corner, a wall clock on the north wall, and a server rack 
-      tucked away in the northwest. A couple of plants brighten up the place, 
-      and there's a bookshelf along the west wall."
-```
+For the "I'm walking to the clock" goal:
+- If "clock" exists in the blueprint → fuzzy match succeeds → avatar walks there
+- If "clock" doesn't exist → skill returns "No prop matching 'clock' found. Available: desk, plant, coffee-machine..." → bot self-corrects
 
 ---
 
-## 12. Open Questions
+## 9. Phased Implementation Plan
 
-1. **Built-in vs custom blueprint priority:** If a room has both a built-in blueprint file AND a custom blueprint, which takes precedence? → Recommendation: custom always wins (already the case in frontend).
+### Phase 1: Read-Only Prop Awareness (1-2 days)
+- [ ] Add `GET /api/rooms/{room_id}/props` endpoint (read from `custom_blueprints`)
+- [ ] Add `grid_to_zone()` helper + natural language formatter
+- [ ] Add `layout` field to context envelope (Option A)
+- [ ] Default blueprint seeding for rooms without custom blueprints
 
-2. **Prop labels:** Should we maintain a label registry (propId → display name) or always auto-generate from ID? → Recommendation: auto-generate with an optional override table later.
+### Phase 2: Agent Skills (1 day)
+- [ ] Register `get_room_layout` / `get_prop_location` / `list_nearby_props` as OpenClaw skills
+- [ ] Add fuzzy prop name matching
+- [ ] Add `?format=natural` query param
 
-3. **Bot position tracking:** Do we need server-side bot position tracking, or is the frontend position sufficient? → Recommendation: Phase 1 is frontend-only. Phase 2 could add server-side position for multi-client sync.
+### Phase 3: Frontend Bot Actions (2-3 days)
+- [ ] SSE event for `bot-action: move_to` with grid target
+- [ ] Avatar pathfinding to arbitrary grid cell
+- [ ] Interaction animations at prop locations
+- [ ] `room-layout-changed` SSE broadcast on blueprint update
 
-4. **Interaction point proximity:** Should `navigate_to()` target the prop itself or the nearest interaction point? → Recommendation: target the interaction point if one exists (e.g., coffee-point near coffee-machine), otherwise the prop grid cell.
+### Phase 4: Rich Spatial Queries (nice-to-have)
+- [ ] `list_nearby_props` with distance calculations
+- [ ] Relative directions ("the plant is 3 meters east of the desk")
+- [ ] Prop interaction history ("last visited the coffee machine 10 min ago")
+- [ ] Hybrid token strategy (Option C) for large rooms
 
 ---
 
-## Appendix A: Prop ID → Label Mapping
+## 10. Technical Notes
 
-```python
-def prop_id_to_label(prop_id: str) -> str:
-    """Convert propId to human-readable label.
-    
-    'desk-with-monitor' → 'Desk with Monitor'
-    'coffee-machine' → 'Coffee Machine'
-    'wall-clock' → 'Wall Clock'
-    """
-    return prop_id.replace("-", " ").title()
-```
-
-## Appendix B: Known Prop IDs (from blueprints.py)
-
-**Floor props:** desk, monitor, chair, lamp, plant, coffee-machine, water-cooler, bench, server-rack, desk-lamp, cable-mess, easel, color-palette, bar-chart, megaphone, standing-desk, round-table, bean-bag, bookshelf, conveyor-belt, control-panel, antenna-tower, headset, filing-cabinet, fire-extinguisher, drawing-tablet
-
-**Wall props:** notice-board, whiteboard, mood-board, presentation-screen, wall-clock, small-screen, gear-mechanism, satellite-dish, signal-waves, status-lights
-
-**Composite:** desk-with-monitor, desk-with-dual-monitors, standing-desk-with-monitor, desk-with-monitor-headset, desk-with-monitor-tablet
-
-**Interaction-only:** work-point, work-point-1..4, coffee-point, sleep-corner
-
-## Appendix C: Wall Prop Detection
-
-```python
-WALL_PROPS = {
-    "notice-board", "whiteboard", "mood-board", "presentation-screen",
-    "wall-clock", "small-screen", "gear-mechanism", "satellite-dish",
-    "signal-waves", "status-lights", "painting", "clock",
-}
-
-def is_wall_prop(prop_id: str) -> bool:
-    return prop_id in WALL_PROPS
-```
+- **Grid → World coords:** `worldX = gridX * cellSize`, `worldZ = gridZ * cellSize` (cellSize default 0.6)
+- **Fuzzy matching:** Use simple substring + Levenshtein for prop name resolution
+- **No new DB tables needed** — blueprint JSON is the source of truth
+- **Context envelope budget:** Target ≤2KB total. Layout adds ~200 bytes, well within budget.
+- **Blueprint fallback:** Rooms without custom blueprints get a minimal default layout (just walkable center + doors)

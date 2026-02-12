@@ -1,113 +1,163 @@
 # Markdown Viewer/Editor — UX Design
 
-*Status: Phase 1-3 implemented, Phase 4 in progress*
+> Status: Phase 1 (Viewing) & Phase 3 (Editing) **COMPLETE**. Phase 2 & 4 in progress/planned.
 
-## Component Hierarchy
+## Current Implementation Summary
+
+The Markdown Viewer/Editor system is already substantially built with:
+- `MarkdownViewer` — react-markdown + GFM + syntax highlighting
+- `MarkdownEditor` — CodeMirror 6 with dark theme, auto-save, ⌘S
+- `FullscreenOverlay` — Portal-based fullscreen with TOC sidebar, edit mode, metadata footer
+- `TOCSidebar` — Auto-generated from headings, IntersectionObserver active tracking
+- `FilesTab` — File tree + inline preview + fullscreen button
+- `FileTree` — Collapsible directory tree with icons
+- `ProjectFilesSection` — Project document browsing
+
+### Component Hierarchy
 
 ```
-App
-├── BotInfoPanel
-│   └── FilesTab                    ✅ Implemented
-│       ├── FileTree                ✅ Implemented
-│       ├── MarkdownViewer (inline) ✅ Implemented
-│       └── FullscreenOverlay       ✅ Implemented
-│           ├── TOCSidebar          ✅ Implemented
-│           ├── MarkdownViewer      ✅ Implemented
-│           └── MarkdownEditor      ✅ Implemented
-├── RoomInfoPanel
-│   └── ProjectFilesSection         ✅ Implemented
-│       ├── FileTreeNode            ✅ Implemented
-│       └── FullscreenOverlay       ✅ (reused)
-└── ZenMode
-    └── (MarkdownViewer reuse)      ✅ Implemented
+BotInfoPanel
+  └── BotInfoTabs
+        ├── Activity tab
+        ├── Info tab
+        ├── Actions tab
+        └── Files tab ← FilesTab
+              ├── FileTree (top 40%)
+              ├── MarkdownViewer (bottom 60%, inline preview)
+              └── FullscreenOverlay (portal to body)
+                    ├── Header (title, subtitle, Edit button, Close)
+                    ├── Body
+                    │   ├── TOCSidebar (left 240px)
+                    │   └── MarkdownViewer (center, max-width 720px)
+                    │   OR
+                    │   └── MarkdownEditor (CodeMirror 6, full width)
+                    └── Footer (size, lines, modified date)
 ```
 
 ## User Flows
 
-### Flow 1: View Agent Files
-1. Click bot in 3D world → BotInfoPanel opens
-2. Switch to **Files** tab
-3. File tree loads (MEMORY.md, SOUL.md, memory/, TOOLS.md, etc.)
-4. Click file → inline preview appears (bottom 60%)
-5. Click ⤢ Fullscreen → FullscreenOverlay opens
-
-### Flow 2: Fullscreen Document Viewer
+### Flow 1: View Agent File
 ```
-┌────────────────────────────────────────────────────┐
-│  [✕] Close     📄 MEMORY.md     Assistent  [✏️ Edit]│  ← Header
-├──────────┬─────────────────────────────────────────┤
-│ CONTENTS │                                         │
-│          │  # MEMORY.md — Ekinbot Long-Term ...    │
-│ ▸ Team   │                                         │
-│ ▸ Nicky  │  *Last updated: 2026-02-05*             │
-│ ▸ Water..│                                         │
-│ ▸ Planner│  ## Team Hiërarchie                     │
-│ ▸ ...    │  ```                                    │
-│          │  Nicky (Owner/CEO/CTO)                  │
-│          │      ↓                                  │
-│          │  Assistent (Director of Bots)            │
-│          │  ```                                    │
-├──────────┴─────────────────────────────────────────┤
-│  4.2 KB  •  180 lines  •  Modified: Feb 5, 2026   │  ← Footer
-└────────────────────────────────────────────────────┘
+Click bot → BotInfoPanel opens → Click "Files" tab
+→ FileTree loads (API: GET /api/agents/{id}/files)
+→ Click file → Inline preview appears (API: GET /api/agents/{id}/files/{path})
+→ Click "⤢ Fullscreen" → FullscreenOverlay with TOC
+→ Click TOC heading → Smooth scroll to section
+→ Press Escape → Close overlay
 ```
 
-- **ESC** closes overlay
-- **Click outside** closes overlay
-- **TOC sidebar** has active heading highlight (IntersectionObserver)
-- **Scroll to section** on TOC click (smooth scroll)
+### Flow 2: Edit Agent File
+```
+Open file in Fullscreen → Click "✏️ Edit" button
+→ CodeMirror editor opens (replaces viewer)
+→ Type changes → Auto-save after 2.5s debounce
+→ Or press ⌘S → Immediate save (PUT /api/agents/{id}/files/{path})
+→ Status bar shows: Saving... → ✓ Saved
+→ Click "Cancel (Esc)" → Confirm discard if dirty → Back to viewer
+```
 
-### Flow 3: Edit Document
-1. In fullscreen overlay, click ✏️ Edit
-2. CodeMirror 6 editor replaces viewer
-3. Status bar: Save (⌘S) | Cancel (Esc) | auto-save indicator
-4. Auto-save after 2.5s debounce
-5. Dirty state tracking with unsaved changes warning
-6. Cancel → confirm if dirty → back to viewer
+### Flow 3: View Project Documents
+```
+Open project panel → ProjectFilesSection loads
+→ Folder tree from GET /api/projects/{id}/documents
+→ Click file → Preview/fullscreen (same as agent files)
+→ Edit → PUT /api/projects/{id}/documents/{path}
+```
 
-### Flow 4: Project Documents
-1. Open room → Room Info Panel
-2. ProjectFilesSection shows project folder tree
-3. Click file → opens FullscreenOverlay directly (no inline preview)
-4. Editing supported via PUT endpoint (with .bak backup)
+## Wireframes
 
-## Interaction Details
+### FilesTab (in BotInfoPanel)
+```
+┌──────────────────────────────┐
+│ 📂 Files                     │ ← Tab header
+├──────────────────────────────┤
+│ 📄 AGENTS.md                 │
+│ 📄 MEMORY.md            ⤢   │ ← expand icon on hover
+│ 📄 SOUL.md                   │
+│ 📄 TOOLS.md                  │
+│ 📁 memory/                   │
+│   📄 2026-02-12.md           │
+│   📄 2026-02-11.md           │
+├──────────────────────────────┤
+│ memory/2026-02-12.md    ⤢    │ ← path + fullscreen btn
+│                              │
+│ # Daily Notes                │ ← inline preview
+│ - Worked on CrewHub v0.11    │   (MarkdownViewer)
+│ - Fixed jitter bugs          │
+│ ...                          │
+└──────────────────────────────┘
+```
 
 ### Fullscreen Overlay
-- **Portal**: Rendered via `createPortal` to `document.body`
-- **Z-index**: 9999 (above everything)
-- **3D blocking**: Disables canvas pointer events + dispatches `fullscreen-overlay` event to pause CameraControls
-- **Body scroll lock**: `overflow: hidden` on body
-- **Backdrop**: `rgba(0,0,0,0.85)` with `blur(4px)`
+```
+┌──────────────────────────────────────────────────────────┐
+│  📄 MEMORY.md    Assistent           [✏️ Edit]    [✕]   │
+├────────────┬─────────────────────────────────────────────┤
+│  CONTENTS  │                                             │
+│            │  # MEMORY.md — Ekinbot Long-Term Memory     │
+│  ● Team    │                                             │
+│    Hiërar  │  *Last updated: 2026-02-05*                 │
+│  ○ Nicky   │                                             │
+│  ○ Water-  │  ## Team Hiërarchie                         │
+│    leau    │  ```                                        │
+│  ○ Ekinbot │  Nicky (Owner/CEO/CTO)                     │
+│    Planner │      ↓                                      │
+│  ○ Synol-  │  Assistent (Director of Bots)               │
+│    ogy     │  ```                                        │
+│  ...       │                                             │
+├────────────┴─────────────────────────────────────────────┤
+│  12.4 KB   │  342 lines  │  Modified: Feb 5, 2026       │
+└──────────────────────────────────────────────────────────┘
+```
 
-### File Tree
-- Directories auto-expand at depth 0
-- File icons: 📁 directory, 📝 .md, 📋 .json, ⚙️ .yaml, 📄 other
-- Size shown in compact format (e.g., "4.2K")
-- Selected file highlighted with primary color
+### Edit Mode (replaces TOC + viewer)
+```
+┌──────────────────────────────────────────────────────────┐
+│  📄 MEMORY.md    Assistent    ● Unsaved changes    [✕]  │
+├──────────────────────────────────────────────────────────┤
+│                           💾 Saving... [Save ⌘S] [Cancel]│
+├──────────────────────────────────────────────────────────┤
+│  1 │ # MEMORY.md — Ekinbot Long-Term Memory             │
+│  2 │                                                     │
+│  3 │ *Last updated: 2026-02-05*                          │
+│  4 │                                                     │
+│  5 │ ## Team Hiërarchie                                  │
+│  6 │ ```                                                 │
+│  7 │ Nicky (Owner/CEO/CTO)                               │
+│  8 │     ↓                                               │
+│  9 │ Assistent (jij - Director of Bots)                  │
+│ 10 │ ```                                                 │
+│    │ █                                                   │
+└──────────────────────────────────────────────────────────┘
+```
 
-### Markdown Rendering
-- Max content width: 720px (centered)
-- Font: system-ui, 14px, line-height 1.7
-- Headings get auto-generated `id` slugs for TOC linking
-- Code blocks: syntax highlighting (rehype-highlight), copy button, language label
-- Tables: full border, scrollable overflow
-- Images: remote only (local paths shown as `[Image: alt]`)
-- Checkboxes: rendered but disabled
+## Keyboard Shortcuts
 
-## Remaining UX Work (Phase 4)
+| Key | Context | Action |
+|-----|---------|--------|
+| Escape | Fullscreen overlay | Close (confirm if dirty) |
+| Escape | Edit mode | Cancel editing |
+| ⌘S | Edit mode | Save immediately |
 
-### Not Yet Implemented
-- [ ] Side-by-side mode (doc viewer + 3D view split)
-- [ ] Recent docs history
-- [ ] Favorites/bookmarks
-- [ ] Full-text search across all docs
-- [ ] Breadcrumb navigation in project docs
-- [ ] Keyboard shortcuts (F11 for fullscreen from inline)
-- [ ] Light theme support (currently dark-only styling)
+## Theme Integration
 
-### Known Issues
-- Inline preview in FilesTab has fixed 40%/60% split — not resizable
-- No loading skeleton (just "Loading…" text)
-- TOC sidebar not collapsible
-- Editor is dark-theme-only (hardcoded CodeMirror theme)
+All components use CSS custom properties for theming:
+- `hsl(var(--foreground))`, `hsl(var(--background))`, etc.
+- Zen mode overrides via `var(--zen-fg)`, `var(--zen-bg)`, etc.
+- CodeMirror uses custom `crewHubTheme` (dark mode matching CrewHub palette)
+
+## Remaining Work
+
+### Phase 2 — Project Documents Panel (TODO)
+- Dedicated ProjectDocumentsPanel (not just in project settings)
+- Breadcrumb navigation
+- Recent/starred docs
+- Search across project docs
+
+### Phase 4 — Polish (TODO)
+- Side-by-side mode (doc viewer + 3D world split)
+- Recent docs history / favorites
+- Full-text search across all docs
+- Version history / diff view
+- Mermaid diagram support
+- LaTeX math rendering
