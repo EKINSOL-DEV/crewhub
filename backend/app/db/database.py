@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 11  # v11: Added docs_path to projects
+SCHEMA_VERSION = 12  # v12: Stand-up meetings tables
 
 
 async def init_database():
@@ -363,6 +363,40 @@ async def init_database():
                 await db.execute("ALTER TABLE projects ADD COLUMN docs_path TEXT")
             except Exception:
                 pass  # Column already exists
+
+            # ========================================
+            # v12: Stand-up Meetings
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS standups (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL DEFAULT 'Daily Standup',
+                    created_by TEXT,
+                    created_at INTEGER NOT NULL
+                )
+            """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS standup_entries (
+                    id TEXT PRIMARY KEY,
+                    standup_id TEXT NOT NULL REFERENCES standups(id) ON DELETE CASCADE,
+                    agent_key TEXT NOT NULL,
+                    yesterday TEXT DEFAULT '',
+                    today TEXT DEFAULT '',
+                    blockers TEXT DEFAULT '',
+                    submitted_at INTEGER NOT NULL
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_standup_entries_standup
+                ON standup_entries(standup_id)
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_standups_created
+                ON standups(created_at DESC)
+            """)
 
             # Set initial version if not exists
             await db.execute("""

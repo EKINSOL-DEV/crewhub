@@ -44,7 +44,21 @@ Basic output     Return animation  Save to project    Scheduling
 
 **Total: ~24h (~3 days)**
 
-### Definition of Done
+### Phase 1 Status: ✅ COMPLETE (v0.17.0, 2026-02-12)
+
+**Implemented (simplified standup CRUD instead of full orchestration):**
+- [x] Database schema: `standups` + `standup_entries` tables (schema v12)
+- [x] POST `/api/standups` — Create standup
+- [x] POST `/api/standups/{id}/entries` — Submit agent entry (with upsert)
+- [x] GET `/api/standups` — List recent standups (with entry count)
+- [x] GET `/api/standups/{id}` — Get standup with all entries + agent info
+- [x] SSE broadcast on standup creation and entry submission
+- [x] Frontend: StandupModal (agent selection → per-agent entry → done)
+- [x] Frontend: StandupHistory (expandable list in HQ Command Center)
+- [x] "Daily Standup" button in HQ Command Center
+- [x] Edge cases: empty fields, special characters, nonexistent standup 404
+
+### Original Definition of Done (deferred to Phase 2+)
 - [ ] `POST /api/meetings/start` creates meeting and runs to completion
 - [ ] SSE events fire for each state transition
 - [ ] Final markdown output contains all sections (Goal, Summary, Actions, Decisions)

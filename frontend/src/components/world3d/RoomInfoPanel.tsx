@@ -1,4 +1,5 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
+import { StandupModal, StandupHistory } from '@/components/standups'
 import type { CrewSession } from '@/lib/api'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { useRooms, type Room } from '@/hooks/useRooms'
@@ -461,6 +462,7 @@ function HQDashboard({
   onProjectClick?: (roomId: string) => void
   onOpenHQBoard?: () => void
 }) {
+  const [standupOpen, setStandupOpen] = useState(false)
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -495,7 +497,38 @@ function HQDashboard({
             📋 HQ Board
           </button>
         )}
+        <button
+          onClick={() => setStandupOpen(true)}
+          style={{
+            padding: '4px 10px',
+            fontSize: 11,
+            fontWeight: 600,
+            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            boxShadow: '0 2px 4px rgba(79,70,229,0.3)',
+            transition: 'transform 0.15s, box-shadow 0.15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-1px)'
+            e.currentTarget.style.boxShadow = '0 4px 8px rgba(79,70,229,0.4)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.boxShadow = '0 2px 4px rgba(79,70,229,0.3)'
+          }}
+        >
+          🗓️ Daily Standup
+        </button>
       </div>
+
+      {/* Standup Modal */}
+      <StandupModal open={standupOpen} onClose={() => setStandupOpen(false)} />
       {loading ? (
         <div style={{
           marginTop: 8,
@@ -606,6 +639,14 @@ function HQDashboard({
           })}
         </div>
       )}
+
+      {/* Recent Standups */}
+      <div style={{ marginTop: 20 }}>
+        <SectionHeader>🗓️ RECENT STANDUPS</SectionHeader>
+        <div style={{ marginTop: 8 }}>
+          <StandupHistory maxDays={3} />
+        </div>
+      </div>
     </div>
   )
 }

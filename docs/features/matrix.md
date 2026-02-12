@@ -81,7 +81,7 @@ Research:     ██                                            5% (2)
 - 📋 Agent Identity Pattern (single identity, multiple surfaces - prevent personality drift)
 - 📋 Agent Status Logic Improvements (fix false "sleeping" status during long-running tasks)
 - 🔬 Spatial awareness (vision, proximity, pathfinding)
-- 📋 Stand-up meetings Phase 1 (UX + backend)
+- ✅ Stand-up meetings Phase 1 (UX + backend) — v0.17.0
 - 📋 Improving and Reviewing Skills usage during onboarding
 
 ### v0.16.0
@@ -164,7 +164,7 @@ Research:     ██                                            5% (2)
 |---------|--------|---------|------|-------------|
 | **Markdown Viewer/Editor** | ✅ | v0.13.0 | 4 | Phase 1-3: View docs, fullscreen + TOC, Editor. Phase 4: Polish |
 | **Zen Mode Panel Registry** | 📋 | v0.15.0 | 1 | Single source of truth for all panels (Ctrl+K, context menu, layouts) |
-| **Stand-Up Meetings** | 📋 | v0.15.0 | 4 | Automated meetings in 3D (bots walk, take turns, summaries) |
+| **Stand-Up Meetings** | 🚧 | v0.17.0 (P1) | 5 | Phase 1: standup CRUD + UI. Phase 2+: 3D animations, round-robin |
 | **Zen Mode Standalone** | 📋 | v0.14.0 | 1 | Standalone app sharing code/DB/API with CrewHub (monorepo architecture) |
 | **Task Management** | ✅ | v0.9.0 | 2 | Visual task board, TaskWall3D, Run with Agent |
 
