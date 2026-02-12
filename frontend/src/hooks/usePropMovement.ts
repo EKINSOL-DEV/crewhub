@@ -7,7 +7,7 @@ import type { PropPlacement } from '@/lib/grid'
 import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 
-const LONG_PRESS_MS = 600 // 600ms for long-press detection
+const LONG_PRESS_MS = 200 // 200ms for long-press detection (reduced from 600 for responsiveness)
 
 // ─── Global prop movement state ────────────────────────────────
 // Used by camera controllers to block WASD/mouse look when a prop is selected/dragged

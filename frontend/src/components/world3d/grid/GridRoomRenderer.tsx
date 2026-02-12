@@ -470,12 +470,22 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     const obj = e.eventObject
     if (obj?.userData?.propKey && obj?.userData?.propId !== undefined) {
       const { propKey, propId, gridX, gridZ, rotation, span } = obj.userData
+      
+      // If this prop is already selected and in moving mode, skip long-press
+      // and allow immediate drag
+      if (isMoving && selectedProp?.key === propKey) {
+        // Already selected — just set up for immediate drag
+        pointerStartPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
+        hasDragStarted.current = false
+        return
+      }
+      
       startLongPress(propKey, propId, gridX, gridZ, rotation || 0, span)
       // Store pointer position for drag threshold detection
       pointerStartPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
       hasDragStarted.current = false
     }
-  }, [startLongPress])
+  }, [startLongPress, isMoving, selectedProp])
   
   const handlePointerMoveEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
     // Only process if a prop is selected for moving
@@ -501,7 +511,11 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   
   const handlePointerUpEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    handlePointerUp()
+    // Only cancel long-press if we're not already in moving mode
+    // (the timer might have just fired, putting us into moving mode)
+    if (!isMoving) {
+      handlePointerUp()
+    }
     // End drag if we were dragging
     if (isDragging) {
       endDrag()
@@ -513,12 +527,12 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   
   const handlePointerLeaveForLongPress = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    // Don't cancel if we're dragging - the user might move outside the prop temporarily
-    if (!isDragging) {
-      cancelLongPress()
-      if (!isMoving) {
-        document.body.style.cursor = 'auto'
-      }
+    // Don't cancel long-press on pointer leave — R3F fires pointerLeave too aggressively
+    // on small 3D meshes, making it nearly impossible to hold for the long-press duration.
+    // The long-press timer will be cancelled by pointerUp if the user releases early.
+    // Only reset cursor if not in a moving/dragging state.
+    if (!isMoving && !isDragging) {
+      document.body.style.cursor = 'auto'
     }
     // Clear hover
     const obj = e.eventObject
@@ -526,7 +540,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     if (key) {
       setHoveredPropKey((prev) => prev === key ? null : prev)
     }
-  }, [cancelLongPress, isDragging, isMoving])
+  }, [isDragging, isMoving])
 
   // Build list of prop instances from grid (memoized per blueprint)
   const propInstances = useMemo(() => {
