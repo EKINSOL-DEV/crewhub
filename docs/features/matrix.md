@@ -76,9 +76,12 @@ Research:     ██                                            5% (2)
 ### v0.14.0 (Current)
 - ✅ URL Parameter Zen Mode (?mode=zen replaces standalone app - simpler deployment, one codebase)
 - ✅ Zen Mode Project CRUD (full project management with cascade warnings, World button → Projects)
+- ✅ Zen Mode Context Bug Fix (active project context now correctly sent from Zen Mode to chat)
 - ✅ Prop Delete (delete props from history with cascade warning for room placements)
 - ✅ PropMaker Quality Phase 2-3 (component library PARTS_DATA, 19 unit tests, structured generation)
 - ✅ PropMaker Bug Fixes (grid boundary fix, camera persistence, Refiner "Apply Changes" fix)
+- 🚧 PropMaker Part Editor (select & transform individual sub-objects with position/rotation controls)
+- 🚧 PropMaker Refiner UI Cleanup (remove non-functional Material/Animation/Add Details buttons)
 
 ### v0.15.0
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
