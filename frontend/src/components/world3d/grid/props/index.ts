@@ -14,3 +14,7 @@ export {
 
 // Ensure built-in props are registered (side-effect import)
 import './builtinProps'
+
+// Load custom props from backend (async, non-blocking)
+import { loadSavedCustomProps } from '../../props/custom'
+loadSavedCustomProps()

@@ -160,31 +160,46 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
 function HoverGlow({ position }: { position: [number, number, number] }) {
   const ringRef = useRef<THREE.Mesh>(null!)
   const glowRef = useRef<THREE.Mesh>(null!)
+  const outerRef = useRef<THREE.Mesh>(null!)
   
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
     if (ringRef.current) {
       const mat = ringRef.current.material as THREE.MeshBasicMaterial
-      mat.opacity = 0.35 + Math.sin(t * 3) * 0.15
+      mat.opacity = 0.45 + Math.sin(t * 3) * 0.15
+      // Subtle scale pulse
+      const s = 1 + Math.sin(t * 2) * 0.04
+      ringRef.current.scale.set(s, s, 1)
     }
     if (glowRef.current) {
       const mat = glowRef.current.material as THREE.MeshBasicMaterial
-      mat.opacity = 0.08 + Math.sin(t * 2) * 0.04
+      mat.opacity = 0.12 + Math.sin(t * 2) * 0.05
+    }
+    if (outerRef.current) {
+      const mat = outerRef.current.material as THREE.MeshBasicMaterial
+      mat.opacity = 0.15 + Math.sin(t * 2.5 + 1) * 0.1
     }
   })
   
   return (
     <group>
+      {/* Outer soft glow ring */}
+      <mesh ref={outerRef} position={[position[0], 0.025, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.7, 0.9, 32]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
       {/* Pulsing outline ring */}
       <mesh ref={ringRef} position={[position[0], 0.03, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.6, 0.7, 32]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.35} side={THREE.DoubleSide} depthWrite={false} />
+        <ringGeometry args={[0.55, 0.7, 32]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.45} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
-      {/* Subtle inner glow */}
+      {/* Inner glow */}
       <mesh ref={glowRef} position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.65, 32]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
+        <circleGeometry args={[0.6, 32]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
+      {/* Upward point light for subtle highlight on prop geometry */}
+      <pointLight position={[position[0], 0.5, position[2]]} color="#60a5fa" intensity={0.8} distance={2} decay={2} />
     </group>
   )
 }
