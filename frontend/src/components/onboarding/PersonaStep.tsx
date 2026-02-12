@@ -2,15 +2,17 @@
  * PersonaStep — Onboarding wizard step for configuring agent persona.
  *
  * Preset-first UI with collapsible fine-tune sliders and inline preview.
+ * Implements Agent Identity Pattern: detects locked identities and
+ * offers connection-only mode for existing agents.
  */
 
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, ChevronDown, AlertTriangle } from "lucide-react"
+import { ChevronRight, ChevronDown, AlertTriangle, ShieldCheck } from "lucide-react"
 import { PresetCard } from "@/components/persona/PresetCard"
 import { PersonaSlider } from "@/components/persona/PersonaSlider"
 import { PersonaPreview } from "@/components/persona/PersonaPreview"
-import { fetchPresets } from "@/lib/personaApi"
+import { fetchPresets, fetchIdentity } from "@/lib/personaApi"
 import {
   DIMENSIONS,
   DEFAULT_PERSONA,
@@ -21,11 +23,12 @@ import {
 
 interface PersonaStepProps {
   agentName?: string
+  agentId?: string
   onComplete: (config: PersonaConfig) => void
   onSkip: () => void
 }
 
-export function PersonaStep({ agentName, onComplete, onSkip }: PersonaStepProps) {
+export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaStepProps) {
   const [presets, setPresets] = useState<Record<string, PresetDefinition>>({})
   const [selectedPreset, setSelectedPreset] = useState<string | null>("executor")
   const [dimensions, setDimensions] = useState<PersonaDimensions>({
@@ -38,15 +41,30 @@ export function PersonaStep({ agentName, onComplete, onSkip }: PersonaStepProps)
   const [fineTuneOpen, setFineTuneOpen] = useState(false)
   const [customOpen, setCustomOpen] = useState(false)
   const [isCustomized, setIsCustomized] = useState(false)
+  const [identityLocked, setIdentityLocked] = useState(false)
+  const [checkingIdentity, setCheckingIdentity] = useState(false)
 
-  // Load presets
+  // Load presets + check identity lock
   useEffect(() => {
     fetchPresets()
       .then((data) => setPresets(data.presets))
       .catch(() => {
         // Use hardcoded fallback
       })
-  }, [])
+
+    // Check if this agent has a locked identity
+    if (agentId) {
+      setCheckingIdentity(true)
+      fetchIdentity(agentId)
+        .then((data) => {
+          if (data.identity_locked) {
+            setIdentityLocked(true)
+          }
+        })
+        .catch(() => {})
+        .finally(() => setCheckingIdentity(false))
+    }
+  }, [agentId])
 
   const handlePresetSelect = useCallback(
     (key: string) => {
@@ -85,6 +103,47 @@ export function PersonaStep({ agentName, onComplete, onSkip }: PersonaStepProps)
   const orderedPresets = presetOrder
     .filter((k) => presets[k])
     .map((k) => ({ key: k, preset: presets[k] }))
+
+  // If identity is locked, show connection-only mode
+  if (identityLocked) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold">Agent Identity Detected</h2>
+          <p className="text-muted-foreground">
+            <span className="font-medium text-foreground">{agentName || "This agent"}</span>{" "}
+            already has a configured identity.
+          </p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-6 space-y-3 text-center">
+          <ShieldCheck className="h-10 w-10 mx-auto text-green-500" />
+          <h3 className="font-medium">Identity Locked</h3>
+          <p className="text-sm text-muted-foreground">
+            This agent&apos;s personality is already defined and locked. CrewHub will
+            connect to it for monitoring without modifying its identity.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            You can adjust this later in Settings → Identity.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <Button onClick={onSkip} className="gap-2">
+            Continue with existing identity →
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (checkingIdentity) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6 text-center py-12 text-muted-foreground">
+        Checking agent identity...
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">

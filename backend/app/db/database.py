@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 12  # v12: Stand-up meetings tables
+SCHEMA_VERSION = 13  # v13: Agent Identity Pattern
 
 
 async def init_database():
@@ -396,6 +396,39 @@ async def init_database():
             await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_standups_created
                 ON standups(created_at DESC)
+            """)
+
+            # ========================================
+            # v13: Agent Identity Pattern
+            # ========================================
+            # Add identity fields to agent_personas: core identity statement + surface rules
+            try:
+                await db.execute("ALTER TABLE agent_personas ADD COLUMN identity_anchor TEXT DEFAULT ''")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                await db.execute("ALTER TABLE agent_personas ADD COLUMN surface_rules TEXT DEFAULT ''")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                await db.execute("ALTER TABLE agent_personas ADD COLUMN identity_locked BOOLEAN DEFAULT FALSE")
+            except Exception:
+                pass  # Column already exists
+
+            # Create agent_surfaces table: per-surface format adaptation rules
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS agent_surfaces (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+                    surface TEXT NOT NULL,
+                    format_rules TEXT DEFAULT '',
+                    enabled BOOLEAN DEFAULT TRUE,
+                    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+                    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+                    UNIQUE(agent_id, surface)
+                )
             """)
 
             # Set initial version if not exists
