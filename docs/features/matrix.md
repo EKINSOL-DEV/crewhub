@@ -27,18 +27,18 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
 | **Creative** | 12 | 6 | 0 | 5 | 1 | 8 |
-| **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **39** | **20** | **1** | **16** | **2** | **60** |
+| **Meta** | 3 | 1 | 0 | 1 | 1 | 5 |
+| **TOTAL** | **40** | **20** | **1** | **16** | **3** | **62** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ████████████████████████████████             51% (20)
+Released:     ████████████████████████████████             50% (20)
 In Progress:  █                                             3% (1)
-Planned:      ████████████████████                         41% (16)
-Research:     ██                                            5% (2)
+Planned:      ████████████████████                         40% (16)
+Research:     ███                                           8% (3)
 ```
 
 ---
@@ -103,6 +103,10 @@ Research:     ██                                            5% (2)
 
 ### v0.20.0
 - 📋 Prop Editor (manual editing of generated props - position, rotation, scale, colors)
+- 🔬 Community Livestream Phase 1 (YouTube/Twitch stream of 3D world with community controls - read-only)
+
+### v0.21.0+
+- 🔬 Community Livestream Phase 2-4 (interactive task suggestions, voting, moderation, achievements)
 
 ### Research (no version assigned)
 - 🔬 Pixel avatars alternative aesthetic
@@ -200,8 +204,9 @@ Research:     ██                                            5% (2)
 |---------|--------|---------|------|-------------|
 | **Demo Site** | ✅ | live @ demo.crewhub.dev | 2 | Public demo with mock API, no OpenClaw dependency |
 | **Agent Identity Pattern** | 📋 | v0.15.0 | 1 | Single identity, multiple surfaces pattern (prevents personality drift) |
+| **Community Livestream** | 🔬 | v0.20.0+ | 1 | YouTube/Twitch stream with community controls (Big Brother for bots - camera control, task suggestions, voting, safeguards) |
 
-**Total:** 2 features • 3 docs • 1 released, 1 planned
+**Total:** 3 features • 5 docs • 1 released, 1 planned, 1 research
 
 ---
 
@@ -214,4 +219,4 @@ Research:     ██                                            5% (2)
 
 ---
 
-*Generated from: 6 categories × 39 features × 60 documentation files*
+*Generated from: 6 categories × 40 features × 62 documentation files*
