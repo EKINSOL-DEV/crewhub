@@ -1,5 +1,11 @@
 # Zen Mode Standalone
 
+> ⚠️ **Deprecated in favor of URL parameter approach.**
+>
+> Use `http://localhost:5180?mode=zen` instead.
+>
+> This standalone app remains as a fallback option.
+
 A focused, standalone Zen Mode experience that shares all code and data with CrewHub.
 
 ## Architecture

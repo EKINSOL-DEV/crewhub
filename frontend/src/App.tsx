@@ -21,9 +21,16 @@ import { DevDesigns } from './components/dev/DevDesigns'
 import { BackendStatus } from './components/dev/BackendStatus'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
 import { ZenMode, ZenModeButton, useZenMode, ZenModeProvider } from './components/zen'
-import { getOnboardingStatus } from './lib/api'
+import type { ZenProjectFilter } from './components/zen/hooks/useZenMode'
+import { ProjectManagerModal } from './components/zen/ProjectManagerModal'
+import { getOnboardingStatus, API_BASE } from './lib/api'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
 import { Button } from './components/ui/button'
+
+// ── URL Parameter Detection ────────────────────────────────────
+function isZenModeUrl(): boolean {
+  return new URLSearchParams(window.location.search).get('mode') === 'zen'
+}
 
 // Simple path-based routing for dev pages
 function useRoute() {
@@ -325,7 +332,7 @@ function AppContent() {
           <div className="flex items-center gap-3">
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.13.0</span></h1>
+              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.14.0</span></h1>
               <p className="text-xs text-muted-foreground">Multi-agent orchestration<BackendStatus /></p>
             </div>
           </div>
@@ -448,11 +455,289 @@ function AppContent() {
   )
 }
 
+// ── Zen Mode Workspace Selector (for ?mode=zen) ───────────────
+
+interface ZenProject {
+  id: string
+  name: string
+  color: string | null
+  description: string | null
+}
+
+function ZenWorkspaceSelector({ onSelect, onEnterAll }: { 
+  onSelect: (project: ZenProject) => void
+  onEnterAll: () => void 
+}) {
+  const [projects, setProjects] = useState<ZenProject[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showManager, setShowManager] = useState(false)
+
+  const refreshProjects = useCallback(() => {
+    fetch(`${API_BASE}/projects`)
+      .then(r => r.json())
+      .then(data => {
+        setProjects(data.projects || [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    refreshProjects()
+  }, [refreshProjects])
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      background: '#1a1b26',
+      color: '#a9b1d6',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    }}>
+      <div style={{ textAlign: 'center', maxWidth: 600, padding: '0 24px' }}>
+        <h1 style={{ 
+          fontSize: '2rem', 
+          fontWeight: 300, 
+          color: '#c0caf5',
+          marginBottom: '0.5rem',
+          letterSpacing: '-0.02em',
+        }}>
+          ⚡ Zen Mode
+        </h1>
+        <p style={{ fontSize: '0.875rem', color: '#565f89', marginBottom: '2rem' }}>
+          Focused workspace • Shared with CrewHub
+        </p>
+
+        <button
+          onClick={onEnterAll}
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: '14px 20px',
+            marginBottom: '12px',
+            background: '#24283b',
+            border: '1px solid #3b4261',
+            borderRadius: '8px',
+            color: '#7aa2f7',
+            fontSize: '1rem',
+            fontWeight: 500,
+            cursor: 'pointer',
+            textAlign: 'left',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = '#2a2e45'
+            e.currentTarget.style.borderColor = '#7aa2f7'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = '#24283b'
+            e.currentTarget.style.borderColor = '#3b4261'
+          }}
+        >
+          🚀 Enter Zen Mode
+          <span style={{ display: 'block', fontSize: '0.75rem', color: '#565f89', marginTop: 4 }}>
+            All sessions • No project filter
+          </span>
+        </button>
+
+        {loading ? (
+          <p style={{ color: '#565f89', fontSize: '0.875rem' }}>Loading projects...</p>
+        ) : projects.length > 0 && (
+          <>
+            <div style={{ 
+              fontSize: '0.75rem', 
+              color: '#565f89', 
+              margin: '20px 0 12px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}>
+              Or focus on a project
+            </div>
+            {projects.map(project => (
+              <button
+                key={project.id}
+                onClick={() => onSelect(project)}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '12px 20px',
+                  marginBottom: '8px',
+                  background: '#24283b',
+                  border: '1px solid #3b4261',
+                  borderRadius: '8px',
+                  color: '#c0caf5',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = '#2a2e45'
+                  e.currentTarget.style.borderColor = project.color || '#7aa2f7'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = '#24283b'
+                  e.currentTarget.style.borderColor = '#3b4261'
+                }}
+              >
+                <span style={{ 
+                  display: 'inline-block',
+                  width: 8, height: 8, 
+                  borderRadius: '50%', 
+                  background: project.color || '#7aa2f7',
+                  marginRight: 10,
+                }} />
+                {project.name}
+                {project.description && (
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#565f89', marginTop: 2, marginLeft: 18 }}>
+                    {project.description}
+                  </span>
+                )}
+              </button>
+            ))}
+          </>
+        )}
+
+        <button
+          onClick={() => setShowManager(true)}
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: '10px 20px',
+            marginTop: '16px',
+            background: 'transparent',
+            border: '1px solid #3b4261',
+            borderRadius: '8px',
+            color: '#565f89',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            textAlign: 'center',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = '#7aa2f7'
+            e.currentTarget.style.color = '#7aa2f7'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = '#3b4261'
+            e.currentTarget.style.color = '#565f89'
+          }}
+        >
+          ⚙️ Manage Projects
+        </button>
+
+        {/* Link to full CrewHub */}
+        <a
+          href="/"
+          style={{
+            display: 'block',
+            marginTop: '24px',
+            fontSize: '0.8rem',
+            color: '#565f89',
+            textDecoration: 'none',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#7aa2f7' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#565f89' }}
+        >
+          🌍 Exit to Full CrewHub
+        </a>
+      </div>
+
+      <ProjectManagerModal
+        isOpen={showManager}
+        onClose={() => { setShowManager(false); refreshProjects() }}
+        onProjectSelect={(id, name, color) => {
+          setShowManager(false)
+          onSelect({ id, name, color: color || null, description: null })
+        }}
+      />
+    </div>
+  )
+}
+
+// ── Zen Mode App Content (for ?mode=zen) ───────────────────────
+
+function ZenModeAppContent() {
+  const zenMode = useZenMode()
+  const { connected } = useSessionsStream()
+  const { rooms, getRoomForSession } = useRoomsContext()
+
+  const zenRoomName = useMemo(() => {
+    if (!zenMode.selectedAgentId) return undefined
+    const roomId = getRoomForSession(zenMode.selectedAgentId)
+    if (!roomId) return undefined
+    return rooms.find(r => r.id === roomId)?.name
+  }, [zenMode.selectedAgentId, getRoomForSession, rooms])
+
+  const handleSelectProject = useCallback((project: ZenProject) => {
+    const filter: ZenProjectFilter = {
+      projectId: project.id,
+      projectName: project.name,
+      projectColor: project.color || undefined,
+    }
+    zenMode.enterWithProject(filter)
+  }, [zenMode])
+
+  const handleEnterAll = useCallback(() => {
+    zenMode.enter()
+  }, [zenMode])
+
+  const handleExit = useCallback(() => {
+    zenMode.exit()
+  }, [zenMode])
+
+  if (!zenMode.isActive) {
+    return (
+      <ZenWorkspaceSelector
+        onSelect={handleSelectProject}
+        onEnterAll={handleEnterAll}
+      />
+    )
+  }
+
+  return (
+    <ZenMode
+      sessionKey={zenMode.selectedAgentId}
+      agentName={zenMode.selectedAgentName}
+      agentIcon={zenMode.selectedAgentIcon}
+      agentColor={zenMode.selectedAgentColor}
+      roomName={zenRoomName}
+      connected={connected}
+      onExit={handleExit}
+      exitLabel="Projects"
+      exitIcon="📋"
+      projectFilter={zenMode.projectFilter}
+      onClearProjectFilter={zenMode.clearProjectFilter}
+    />
+  )
+}
+
+function ZenModeApp() {
+  return (
+    <RoomsProvider>
+      <ZenModeProvider>
+        <ZenModeAppContent />
+      </ZenModeProvider>
+    </RoomsProvider>
+  )
+}
+
+// ── Main App Router ────────────────────────────────────────────
+
 function App() {
   const route = useRoute()
   
   if (route === '/dev/designs') {
     return <DevDesigns />
+  }
+
+  // URL parameter Zen Mode: ?mode=zen
+  if (isZenModeUrl()) {
+    return <ZenModeApp />
   }
   
   return (
