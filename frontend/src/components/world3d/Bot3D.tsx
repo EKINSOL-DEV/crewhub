@@ -10,7 +10,9 @@ import { BotChestDisplay } from './BotChestDisplay'
 import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
 import { BotLaptop } from './BotLaptop'
-import { SleepingZs, useBotAnimation, tickAnimState, getRoomInteractionPoints, getWalkableCenter } from './BotAnimations'
+import { SleepingZs, useBotAnimation } from './BotAnimations'
+import { tickAnimState } from './botAnimTick'
+import { getRoomInteractionPoints, getWalkableCenter } from './roomInteractionPoints'
 import { getBlueprintForRoom, getWalkableMask, worldToGrid } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragActions } from '@/contexts/DragDropContext'
@@ -30,16 +32,8 @@ const DIRECTIONS = [
   { x: -1, z: -1 }, // NW
 ]
 
-// ─── Fixed Y height for ALL bots ─────────────────────────────────
-// Single constant — never calculated from floor geometry or raycasting.
-// Feet rest visibly ON TOP of the floor surface (floor top ≈ 0.16).
-export const BOT_FIXED_Y = 0.35
-
-// ─── Global bot position registry (module-level, no React state) ──
-// CameraController reads from this to follow bots smoothly.
-export const botPositionRegistry = new Map<string, { x: number; y: number; z: number }>()
-
-export type BotStatus = 'active' | 'idle' | 'sleeping' | 'offline'
+import { BOT_FIXED_Y, botPositionRegistry } from './botConstants'
+import type { BotStatus } from './botConstants'
 
 interface Bot3DProps {
   /** Position in 3D space (bot bottom on floor) */

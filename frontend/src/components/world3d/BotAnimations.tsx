@@ -1,9 +1,9 @@
 import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { getBlueprintForRoom, gridToWorld, findInteractionCells } from '@/lib/grid'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
-import type { BotStatus } from './Bot3D'
+import type { BotStatus } from './botConstants'
+import type { RoomBounds } from './World3DView'
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -37,110 +37,9 @@ export interface AnimState {
   nextTypingPauseTimer: number // seconds until next typing pause
 }
 
-export interface RoomInteractionPoints {
-  deskPosition: [number, number, number]
-  coffeePosition: [number, number, number] | null
-  sleepCorner: [number, number, number]
-}
-
-// Locally-defined bounds type (avoids circular import from World3DView)
-interface RoomBounds {
-  minX: number
-  maxX: number
-  minZ: number
-  maxZ: number
-}
-
-// ─── Room Interaction Points (Grid-Based) ───────────────────────
-
-/**
- * Get world-space positions for room furniture that bots interact with.
- * Uses grid blueprint interaction points instead of hardcoded positions.
- *
- * Note: deskPosition is kept for reference but bots no longer pathfind to desks.
- * Coffee and sleep positions are still used.
- */
-export function getRoomInteractionPoints(
-  roomName: string,
-  _roomSize: number,
-  roomPosition: [number, number, number],
-): RoomInteractionPoints {
-  const rx = roomPosition[0]
-  const rz = roomPosition[2]
-  const blueprint = getBlueprintForRoom(roomName)
-  const { cells, cellSize, gridWidth, gridDepth } = blueprint
-
-  // Get interaction cells from grid
-  const workCells = findInteractionCells(cells, 'work')
-  const coffeeCells = findInteractionCells(cells, 'coffee')
-  const sleepCells = findInteractionCells(cells, 'sleep')
-
-  // Convert first found cell of each type to world coords
-  const toWorld = (cell: { x: number; z: number }): [number, number, number] => {
-    const [relX, , relZ] = gridToWorld(cell.x, cell.z, cellSize, gridWidth, gridDepth)
-    return [rx + relX, 0, rz + relZ]
-  }
-
-  // Fallback: use walkable center for desk, and a corner for sleep
-  const fallbackDesk: [number, number, number] = (() => {
-    const [relX, , relZ] = gridToWorld(
-      blueprint.walkableCenter.x,
-      blueprint.walkableCenter.z,
-      cellSize, gridWidth, gridDepth,
-    )
-    return [rx + relX, 0, rz + relZ]
-  })()
-
-  const fallbackSleep: [number, number, number] = (() => {
-    const [relX, , relZ] = gridToWorld(17, 17, cellSize, gridWidth, gridDepth)
-    return [rx + relX, 0, rz + relZ]
-  })()
-
-  return {
-    deskPosition: workCells.length > 0 ? toWorld(workCells[0]) : fallbackDesk,
-    coffeePosition: coffeeCells.length > 0 ? toWorld(coffeeCells[0]) : null,
-    sleepCorner: sleepCells.length > 0 ? toWorld(sleepCells[0]) : fallbackSleep,
-  }
-}
-
-// ─── Walkable Zone (Grid-Based) ─────────────────────────────────
-
-export interface WalkableCenter {
-  x: number
-  z: number
-  radius: number
-}
-
-/**
- * Returns a safe circular walkable area in the center of each room.
- * Uses the grid blueprint's walkableCenter + computed radius from walkable cells.
- */
-export function getWalkableCenter(
-  roomName: string,
-  roomSize: number,
-  roomPosition: [number, number, number],
-): WalkableCenter {
-  const rx = roomPosition[0]
-  const rz = roomPosition[2]
-  const blueprint = getBlueprintForRoom(roomName)
-  const { cellSize, gridWidth, gridDepth } = blueprint
-
-  // Convert blueprint walkable center from grid to world coords
-  const [relX, , relZ] = gridToWorld(
-    blueprint.walkableCenter.x,
-    blueprint.walkableCenter.z,
-    cellSize, gridWidth, gridDepth,
-  )
-
-  // Default radius: ~35% of half-room-size (same as before)
-  const defaultRadius = roomSize * 0.17
-
-  return {
-    x: rx + relX,
-    z: rz + relZ,
-    radius: defaultRadius,
-  }
-}
+// RoomInteractionPoints & WalkableCenter extracted to ./roomInteractionPoints.ts
+import type { RoomInteractionPoints, WalkableCenter } from './roomInteractionPoints'
+export type { RoomInteractionPoints, WalkableCenter }
 
 // ─── Animation State Machine Hook ───────────────────────────────
 
@@ -350,63 +249,7 @@ export function useBotAnimation(
   return stateRef
 }
 
-// ─── Per-frame animation state transitions ──────────────────────
-// Called from Bot3D's single useFrame to avoid extra callbacks.
-
-export function tickAnimState(s: AnimState, delta: number): void {
-  switch (s.phase) {
-    case 'getting-coffee': {
-      if (s.arrived) {
-        s.coffeeTimer -= delta
-        if (s.coffeeTimer <= 0) {
-          s.phase = 'idle-wandering'
-          s.targetX = null
-          s.targetZ = null
-          s.walkSpeed = SESSION_CONFIG.botWalkSpeedIdle
-          s.freezeWhenArrived = false
-          s.arrived = false
-          s.resetWanderTarget = true
-        }
-      }
-      break
-    }
-
-    case 'sleeping-walking': {
-      if (s.arrived) {
-        s.phase = 'sleeping'
-        s.yOffset = -0.1
-        s.showZzz = true
-        s.sleepRotZ = 0.12
-        s.bodyTilt = -0.08
-        s.walkSpeed = 0
-      }
-      break
-    }
-  }
-
-  // ─── Typing pause management (active walking bots with laptop) ──
-  if (s.isActiveWalking && s.phase === 'idle-wandering') {
-    if (s.typingPause) {
-      // Currently paused — count down pause duration
-      s.typingPauseTimer -= delta
-      if (s.typingPauseTimer <= 0) {
-        // Resume walking
-        s.typingPause = false
-        s.bodyTilt = 0
-        s.nextTypingPauseTimer = 5 + Math.random() * 10 // next pause in 5-15s
-      }
-    } else {
-      // Walking — count down to next pause
-      s.nextTypingPauseTimer -= delta
-      if (s.nextTypingPauseTimer <= 0) {
-        // Start a typing pause
-        s.typingPause = true
-        s.typingPauseTimer = 1.0 + Math.random() * 1.0 // pause for 1-2s
-        s.bodyTilt = 0.04 // slight forward lean (looking at laptop)
-      }
-    }
-  }
-}
+// tickAnimState extracted to ./botAnimTick.ts for HMR compatibility
 
 // ─── Sleeping ZZZ Particles ─────────────────────────────────────
 

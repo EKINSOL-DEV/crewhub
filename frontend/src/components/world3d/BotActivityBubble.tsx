@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
-import type { BotStatus } from './Bot3D'
+import type { BotStatus } from './botConstants'
 
 interface BotActivityBubbleProps {
   /** Current activity text to display */

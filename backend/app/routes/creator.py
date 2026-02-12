@@ -44,6 +44,7 @@ class PropRefinementRequest(BaseModel):
 class PropRefinementResponse(BaseModel):
     propId: str
     code: str
+    parts: list[PropPart] = []
     diagnostics: list[str] = []
     refinementOptions: dict = {}
 
@@ -1138,9 +1139,35 @@ async def refine_prop(req: PropRefinementRequest):
     refined_code, diagnostics = generator.apply_refinement(record["code"], req.changes)
     options = generator.get_refinement_options(record.get("prompt", ""))
 
+    # Apply color changes to parts as well
+    parts = record.get("parts", [])
+    color_changes = req.changes.get("colorChanges", {})
+    if color_changes and parts:
+        updated_parts = []
+        for part in parts:
+            p = dict(part)
+            if p.get("color", "").lower() in {k.lower(): k for k in color_changes}:
+                # Find the matching key (case-insensitive)
+                for old_c, new_c in color_changes.items():
+                    if p["color"].lower() == old_c.lower():
+                        p["color"] = new_c
+                        break
+            updated_parts.append(p)
+        parts = updated_parts
+
+    # Update the record in history so subsequent refines use updated state
+    history = _load_generation_history()
+    for r in history:
+        if r.get("id") == req.propId:
+            r["code"] = refined_code
+            r["parts"] = parts
+            break
+    _save_generation_history(history)
+
     return PropRefinementResponse(
         propId=req.propId,
         code=refined_code,
+        parts=[PropPart(**p) for p in parts],
         diagnostics=diagnostics,
         refinementOptions=options,
     )

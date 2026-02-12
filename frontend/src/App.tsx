@@ -19,6 +19,7 @@ import { MobileWarning } from './components/MobileWarning'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { BackendStatus } from './components/dev/BackendStatus'
+import { DevToolbar } from './components/dev/DevErrorViewer'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
 import { ZenMode, ZenModeButton, useZenMode, ZenModeProvider } from './components/zen'
 import type { ZenProjectFilter } from './components/zen/hooks/useZenMode'
@@ -431,6 +432,7 @@ function AppContent() {
 
       <DemoModeIndicator />
       <MobileWarning />
+      <DevToolbar />
       
       {/* Zen Mode Entry Button - shown when not in Zen Mode */}
       {!zenMode.isActive && sessions.length > 0 && (

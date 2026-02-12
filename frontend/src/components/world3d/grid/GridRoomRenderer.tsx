@@ -93,9 +93,12 @@ function getWallPlacement(
 }
 
 /** Snap floor-prop positions toward the nearest wall when within 1 cell of it.
- *  Ensures props placed at wall-adjacent grid cells (1 or gridSize-2) sit flush
- *  against the wall instead of floating a full cell away.
- *  Also clamps at exact grid edges (0, gridSize-1) for safety. */
+ *  Positions the prop so its visual EDGE sits flush against the wall inner face,
+ *  not its CENTER (which would cause clipping).
+ *
+ *  The prop's visual footprint is approximated as span * cellSize, centered on
+ *  the span-center position (worldX/worldZ should already include span centering).
+ */
 function clampToRoomBounds(
   worldX: number,
   worldZ: number,
@@ -110,10 +113,14 @@ function clampToRoomBounds(
   const halfD = (gridDepth * cellSize) / 2
   // Wall inner face matches RoomWalls.tsx wallThickness (0.3)
   const WALL_THICKNESS = 0.3
-  const WALL_GAP = 0.08 // small gap from wall surface to prevent z-fighting
+  const WALL_GAP = 0.02 // tiny gap to prevent z-fighting
 
   let x = worldX
   let z = worldZ
+
+  // Prop visual half-footprint (centered on span center)
+  const halfFootprintW = (span.w * cellSize) / 2
+  const halfFootprintD = (span.d * cellSize) / 2
 
   // Distance in grid cells from each wall edge (cells 0 and gridSize-1 are wall cells)
   const distWest = gridX
@@ -121,24 +128,24 @@ function clampToRoomBounds(
   const distNorth = gridZ
   const distSouth = (gridDepth - 1) - (gridZ + span.d - 1)
 
-  // Snap toward wall if within 1 cell (i.e., at cell 0 or 1 for min, gridSize-1 or gridSize-2 for max)
   // Wall inner face positions
   const westFace = -halfW + WALL_THICKNESS
   const eastFace = halfW - WALL_THICKNESS
   const northFace = -halfD + WALL_THICKNESS
   const southFace = halfD - WALL_THICKNESS
 
+  // Snap toward wall: position prop center so that prop EDGE = wallFace + WALL_GAP
   if (distWest <= 1) {
-    x = westFace + WALL_GAP
+    x = westFace + WALL_GAP + halfFootprintW
   }
   if (distEast <= 1) {
-    x = eastFace - WALL_GAP - (span.w - 1) * cellSize
+    x = eastFace - WALL_GAP - halfFootprintW
   }
   if (distNorth <= 1) {
-    z = northFace + WALL_GAP
+    z = northFace + WALL_GAP + halfFootprintD
   }
   if (distSouth <= 1) {
-    z = southFace - WALL_GAP - (span.d - 1) * cellSize
+    z = southFace - WALL_GAP - halfFootprintD
   }
 
   return [x, z]
@@ -591,41 +598,40 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     }
   }, [isDragging, isMoving])
 
-  // Build list of prop instances from grid (memoized per blueprint)
+  // Build list of prop instances from placements (uses optimistic data, avoids flash-back on confirm)
   const propInstances = useMemo(() => {
     const instances: PropInstance[] = []
 
-    for (let z = 0; z < cells.length; z++) {
-      for (let x = 0; x < cells[z].length; x++) {
-        const cell = cells[z][x]
+    for (const p of placements) {
+      // Skip interaction-only placements without a visual prop
+      if (p.type === 'interaction') continue
 
-        // Skip empty cells, walls, doors, and cells without props
-        if (!cell.propId) continue
+      // Get the entry — skip if not registered
+      const entry = getPropEntry(p.propId)
+      if (!entry) continue
 
-        // Skip spanParent cells (rendered from their anchor)
-        if (cell.spanParent) continue
+      // Convert grid coords to world coords (relative to room center)
+      // gridToWorld returns the anchor cell center; we offset to span center
+      // so multi-cell props are visually centered over their footprint.
+      const [relX, , relZ] = gridToWorld(p.x, p.z, cellSize, gridWidth, gridDepth)
+      const spanW = p.span?.w ?? 1
+      const spanD = p.span?.d ?? 1
+      const spanOffsetX = (spanW - 1) * cellSize / 2
+      const spanOffsetZ = (spanD - 1) * cellSize / 2
 
-        // Get the entry — skip if not registered
-        const entry = getPropEntry(cell.propId)
-        if (!entry) continue
-
-        // Convert grid coords to world coords (relative to room center)
-        const [relX, , relZ] = gridToWorld(x, z, cellSize, gridWidth, gridDepth)
-
-        instances.push({
-          key: `${cell.propId}-${x}-${z}`,
-          propId: cell.propId,
-          gridX: x,
-          gridZ: z,
-          position: [relX, 0, relZ],
-          rotation: cell.rotation ?? 0,
-          span: cell.span,
-        })
-      }
+      instances.push({
+        key: `${p.propId}-${p.x}-${p.z}`,
+        propId: p.propId,
+        gridX: p.x,
+        gridZ: p.z,
+        position: [relX + spanOffsetX, 0, relZ + spanOffsetZ],
+        rotation: p.rotation ?? 0,
+        span: p.span,
+      })
     }
 
     return instances
-  }, [cells, cellSize, gridWidth, gridDepth])
+  }, [placements, cellSize, gridWidth, gridDepth])
 
   // Global drag handler for when mouse moves outside the prop
   const handleGlobalPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -680,15 +686,17 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
         const effectiveGridZ = isBeingMoved ? selectedProp!.gridZ : gridZ
         const effectiveRotation = isBeingMoved ? selectedProp!.rotation : rotation
         
-        // Recalculate world position if being moved
+        // Recalculate world position if being moved (including span centering)
         let worldX: number
         let worldZ: number
         if (isBeingMoved) {
           const [newRelX, , newRelZ] = gridToWorld(effectiveGridX, effectiveGridZ, cellSize, gridWidth, gridDepth)
-          worldX = newRelX
-          worldZ = newRelZ
+          const effectiveSpanW = (selectedProp!.span?.w ?? 1)
+          const effectiveSpanD = (selectedProp!.span?.d ?? 1)
+          worldX = newRelX + (effectiveSpanW - 1) * cellSize / 2
+          worldZ = newRelZ + (effectiveSpanD - 1) * cellSize / 2
         } else {
-          worldX = position[0]
+          worldX = position[0]  // already includes span centering from propInstances
           worldZ = position[2]
         }
         

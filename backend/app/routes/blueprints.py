@@ -646,12 +646,16 @@ async def _save_blueprint(blueprint_id: str, bp_json: dict, db_row: Optional[dic
 
 
 def _validate_bounds(x: int, z: int, grid_width: int, grid_depth: int, span_w: int = 1, span_d: int = 1) -> None:
-    """Validate that position + span is within grid bounds (inside walls)."""
-    if x < 1 or z < 1:
+    """Validate that position + span is within grid bounds.
+    
+    Props can be placed at any cell 0..gridSize-1 (walls are visual 3D geometry,
+    not grid occupants).
+    """
+    if x < 0 or z < 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Position ({x},{z}) is outside room bounds")
-    if x + span_w > grid_width - 1:
+    if x + span_w > grid_width:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Position x={x} + span w={span_w} exceeds grid width {grid_width}")
-    if z + span_d > grid_depth - 1:
+    if z + span_d > grid_depth:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Position z={z} + span d={span_d} exceeds grid depth {grid_depth}")
 
 

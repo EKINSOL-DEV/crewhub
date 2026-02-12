@@ -5,10 +5,8 @@
 
 import { useState, useCallback } from 'react'
 
+
 interface RefinementOptions {
-  components: { name: string; suggested: boolean; defaultColor: string }[]
-  materialPresets: { name: string; label: string }[]
-  animationPresets: { name: string; label: string; description: string }[]
   suggestedColors: string[]
 }
 
@@ -35,28 +33,6 @@ const DEFAULT_PALETTE = [
   '#1a1a2e', '#ffffff', '#ff6644', '#00aaff',
 ]
 
-const MATERIAL_PRESETS = [
-  { name: 'solid', label: 'Solid', icon: '🟫' },
-  { name: 'metallic', label: 'Metal', icon: '🔩' },
-  { name: 'glowing', label: 'Glow', icon: '✨' },
-  { name: 'glass', label: 'Glass', icon: '💎' },
-]
-
-const ANIMATION_PRESETS = [
-  { name: 'rotate', label: 'Rotate', icon: '🔄' },
-  { name: 'pulse', label: 'Pulse', icon: '💓' },
-  { name: 'bob', label: 'Bob', icon: '🎈' },
-  { name: 'sway', label: 'Sway', icon: '🌊' },
-]
-
-const INJECTABLE_COMPONENTS = [
-  { name: 'LED', label: '+LED', icon: '💡' },
-  { name: 'SteamParticles', label: '+Steam', icon: '♨️' },
-  { name: 'GlowOrb', label: '+Glow', icon: '🔮' },
-  { name: 'Screen', label: '+Screen', icon: '🖥️' },
-  { name: 'DataStream', label: '+Data', icon: '📊' },
-]
-
 export function PropRefiner({
   propName,
   propId: _propId,
@@ -68,10 +44,6 @@ export function PropRefiner({
 }: PropRefinerProps) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [colorChanges, setColorChanges] = useState<Record<string, string>>({})
-  const [addedComponents, setAddedComponents] = useState<string[]>([])
-  const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null)
-  const [selectedAnimation, setSelectedAnimation] = useState<string | null>(null)
-
   // Extract colors used in the current code
   const usedColors = Array.from(
     new Set(
@@ -85,36 +57,20 @@ export function PropRefiner({
     setColorChanges(prev => ({ ...prev, [oldColor]: newColor }))
   }, [])
 
-  const handleToggleComponent = useCallback((comp: string) => {
-    setAddedComponents(prev =>
-      prev.includes(comp)
-        ? prev.filter(c => c !== comp)
-        : [...prev, comp]
-    )
-  }, [])
-
   const handleApply = useCallback(() => {
     onApplyChanges({
       colorChanges,
-      addComponents: addedComponents,
-      animation: selectedAnimation || undefined,
-      material: selectedMaterial || undefined,
+      addComponents: [],
     })
-  }, [colorChanges, addedComponents, selectedAnimation, selectedMaterial, onApplyChanges])
+  }, [colorChanges, onApplyChanges])
 
   const handleReset = useCallback(() => {
     setColorChanges({})
-    setAddedComponents([])
-    setSelectedMaterial(null)
-    setSelectedAnimation(null)
     setSelectedColor(null)
     onReset()
   }, [onReset])
 
-  const hasChanges = Object.keys(colorChanges).length > 0 ||
-    addedComponents.length > 0 ||
-    selectedMaterial !== null ||
-    selectedAnimation !== null
+  const hasChanges = Object.keys(colorChanges).length > 0
 
   return (
     <div className="pr-container">
@@ -157,62 +113,6 @@ export function PropRefiner({
             </div>
           </>
         )}
-      </div>
-
-      {/* Material Presets */}
-      <div className="pr-section">
-        <div className="pr-section-label">Material</div>
-        <div className="pr-preset-row">
-          {MATERIAL_PRESETS.map(m => (
-            <button
-              key={m.name}
-              className={`pr-preset-btn ${selectedMaterial === m.name ? 'pr-preset-active' : ''}`}
-              onClick={() => setSelectedMaterial(selectedMaterial === m.name ? null : m.name)}
-              disabled={disabled}
-            >
-              {m.icon} {m.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Animation Presets */}
-      <div className="pr-section">
-        <div className="pr-section-label">Animation</div>
-        <div className="pr-preset-row">
-          {ANIMATION_PRESETS.map(a => (
-            <button
-              key={a.name}
-              className={`pr-preset-btn ${selectedAnimation === a.name ? 'pr-preset-active' : ''}`}
-              onClick={() => setSelectedAnimation(selectedAnimation === a.name ? null : a.name)}
-              disabled={disabled}
-            >
-              {a.icon} {a.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Component Injection */}
-      <div className="pr-section">
-        <div className="pr-section-label">Add Details</div>
-        <div className="pr-preset-row">
-          {INJECTABLE_COMPONENTS.map(c => {
-            const suggested = refinementOptions?.components?.find(
-              rc => rc.name === c.name
-            )?.suggested
-            return (
-              <button
-                key={c.name}
-                className={`pr-preset-btn ${addedComponents.includes(c.name) ? 'pr-preset-active' : ''} ${suggested ? 'pr-preset-suggested' : ''}`}
-                onClick={() => handleToggleComponent(c.name)}
-                disabled={disabled}
-              >
-                {c.icon} {c.label}
-              </button>
-            )
-          })}
-        </div>
       </div>
 
       {/* Action Buttons */}

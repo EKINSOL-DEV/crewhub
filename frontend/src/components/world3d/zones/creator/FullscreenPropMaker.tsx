@@ -110,6 +110,12 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const eventSourceRef = useRef<EventSource | null>(null)
   const thinkingScrollRef = useRef<HTMLDivElement>(null)
 
+  // Part editor
+  const [editMode, setEditMode] = useState(false)
+  const [selectedPartIndex, setSelectedPartIndex] = useState<number | null>(null)
+  const [transformMode, setTransformMode] = useState<'translate' | 'rotate' | 'scale'>('translate')
+  const [isTransformDragging, setIsTransformDragging] = useState(false)
+
   // Phase 3: Quality & Iteration
   const [qualityScore, setQualityScore] = useState<any>(null)
   const [iterationFeedback, setIterationFeedback] = useState('')
@@ -458,6 +464,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
         const data = await res.json()
         if (data.code) {
           setPreviewCode(data.code)
+          if (data.parts?.length) setPreviewParts(data.parts)
           if (data.refinementOptions) setRefinementOptions(data.refinementOptions)
           setThinkingLines(prev => [
             ...prev,
@@ -485,6 +492,26 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     }
   }, [generationId])
 
+  const handlePartSelect = useCallback((index: number | null) => {
+    setSelectedPartIndex(index)
+  }, [])
+
+  const handlePartTransform = useCallback((index: number, position: [number, number, number], rotation: [number, number, number]) => {
+    setPreviewParts(prev => {
+      if (!prev) return prev
+      const updated = [...prev]
+      updated[index] = { ...updated[index], position, rotation }
+      return updated
+    })
+  }, [])
+
+  const handleApplyPartEdits = useCallback(() => {
+    setEditMode(false)
+    setSelectedPartIndex(null)
+    // Parts are already updated in-place via handlePartTransform
+    setThinkingLines(prev => [...prev, { text: '✏️ Part transforms applied', type: 'correction' as const }])
+  }, [])
+
   const handleRuntimeError = useCallback((error: Error) => {
     setRenderError(error.message)
   }, [])
@@ -502,8 +529,20 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const PreviewWrapper = useMemo(() => {
     if (!previewParts) return null
     const parts = previewParts
-    return () => <DynamicProp parts={parts} position={[0, 0, 0]} scale={3} />
-  }, [previewParts])
+    return () => (
+      <DynamicProp
+        parts={parts}
+        position={[0, 0, 0]}
+        scale={3}
+        editMode={editMode}
+        selectedPartIndex={selectedPartIndex}
+        onPartSelect={handlePartSelect}
+        onPartTransform={handlePartTransform}
+        transformMode={transformMode}
+        onDraggingChanged={setIsTransformDragging}
+      />
+    )
+  }, [previewParts, editMode, selectedPartIndex, transformMode, handlePartSelect, handlePartTransform])
 
   const canPreview = PreviewWrapper && !renderError
 
@@ -690,6 +729,52 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                       <button className="fpm-regen-btn" onClick={handleRegenerate}>
                         🔄 Regenerate
                       </button>
+                    </div>
+                  )}
+
+                  {/* Part Editor Toggle */}
+                  {previewParts && !isGenerating && (
+                    <div className="fpm-part-editor">
+                      <div className="fpm-part-editor-header">
+                        <span>✏️ Part Editor</span>
+                        <button
+                          className={`fpm-edit-toggle ${editMode ? 'fpm-edit-toggle-active' : ''}`}
+                          onClick={() => { setEditMode(!editMode); setSelectedPartIndex(null) }}
+                        >
+                          {editMode ? '🔓 Exit Edit' : '🔒 Edit Parts'}
+                        </button>
+                      </div>
+                      {editMode && (
+                        <div className="fpm-part-editor-controls">
+                          <div className="fpm-transform-modes">
+                            {(['translate', 'rotate', 'scale'] as const).map(mode => (
+                              <button
+                                key={mode}
+                                className={`fpm-transform-btn ${transformMode === mode ? 'fpm-transform-btn-active' : ''}`}
+                                onClick={() => setTransformMode(mode)}
+                              >
+                                {mode === 'translate' ? '↔️ Move' : mode === 'rotate' ? '🔄 Rotate' : '📐 Scale'}
+                              </button>
+                            ))}
+                          </div>
+                          {selectedPartIndex !== null ? (
+                            <div className="fpm-selected-part-info">
+                              Selected: Part {selectedPartIndex + 1} ({previewParts[selectedPartIndex]?.type})
+                              <span style={{ color: previewParts[selectedPartIndex]?.color, marginLeft: 6 }}>■</span>
+                            </div>
+                          ) : (
+                            <div className="fpm-selected-part-info" style={{ opacity: 0.5 }}>
+                              Click a part in the preview to select it
+                            </div>
+                          )}
+                          <button
+                            className="fpm-apply-edits-btn"
+                            onClick={handleApplyPartEdits}
+                          >
+                            ✅ Apply Part Changes
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -903,10 +988,27 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
           </div>
         </div>
 
-        {/* Right side: 3D Preview */}
+        {/* Right side: 3D Preview — Canvas stays mounted to preserve camera position */}
         <div className="fpm-right">
-          {isGenerating ? (
-            <div className="fpm-preview-placeholder">
+          {/* Persistent Canvas — never unmounts, so OrbitControls camera survives across generations */}
+          <Canvas camera={{ position: [3, 2, 3], fov: 45 }} style={{ position: 'absolute', inset: 0 }}>
+            <PropErrorBoundary onError={handleRuntimeError}>
+              <Suspense fallback={null}>
+                {canPreview && PreviewWrapper && (
+                  <Stage adjustCamera={false} environment="city" intensity={0.5}>
+                    <PreviewWrapper />
+                  </Stage>
+                )}
+              </Suspense>
+            </PropErrorBoundary>
+            <OrbitControls makeDefault enablePan enableZoom minDistance={1} maxDistance={15} enabled={!isTransformDragging} />
+            <ambientLight intensity={0.4} />
+            <directionalLight position={[5, 5, 5]} intensity={0.8} />
+          </Canvas>
+
+          {/* Overlay placeholders on top of Canvas */}
+          {isGenerating && (
+            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
               <div className="fpm-preview-spinner">⚙️</div>
               <div>Generating prop...</div>
               <div className="fpm-preview-sublabel">
@@ -916,28 +1018,17 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
                 This may take a few minutes — AI is crafting your prop! 🤖
               </div>
             </div>
-          ) : canPreview && PreviewWrapper ? (
-            <Canvas camera={{ position: [3, 2, 3], fov: 45 }}>
-              <PropErrorBoundary onError={handleRuntimeError}>
-                <Suspense fallback={null}>
-                  <Stage adjustCamera={false} environment="city" intensity={0.5}>
-                    <PreviewWrapper />
-                  </Stage>
-                </Suspense>
-              </PropErrorBoundary>
-              <OrbitControls makeDefault enablePan enableZoom minDistance={1} maxDistance={15} />
-              <ambientLight intensity={0.4} />
-              <directionalLight position={[5, 5, 5]} intensity={0.8} />
-            </Canvas>
-          ) : renderError ? (
-            <div className="fpm-preview-placeholder">
+          )}
+          {!isGenerating && renderError && (
+            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
               <div>Render failed</div>
               <div className="fpm-preview-error">{renderError}</div>
               <button className="fpm-retry-btn" onClick={handleRetry}>🔄 Retry</button>
             </div>
-          ) : (
-            <div className="fpm-preview-placeholder">
+          )}
+          {!isGenerating && !canPreview && !renderError && (
+            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
               <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>🎨</div>
               <div>No model yet</div>
               <div className="fpm-preview-sublabel">
@@ -1555,6 +1646,7 @@ const fullscreenPropMakerStyles = `
   color: var(--zen-fg-dim, #888);
   font-size: 14px;
   gap: 8px;
+  background: var(--zen-bg, #0f0f23);
 }
 .fpm-preview-spinner {
   font-size: 32px;
@@ -1808,4 +1900,53 @@ const fullscreenPropMakerStyles = `
 }
 .fpm-toast-success { background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.4); color: #22c55e; }
 .fpm-toast-error { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; }
+
+/* Part Editor */
+.fpm-part-editor {
+  margin-top: 12px;
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(99, 102, 241, 0.03);
+}
+.fpm-part-editor-header {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; font-weight: 700; color: var(--zen-accent, #6366f1);
+}
+.fpm-edit-toggle {
+  background: var(--zen-bg, #0f0f23);
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 6px; padding: 4px 10px;
+  color: var(--zen-fg-dim, #888); font-size: 11px; cursor: pointer;
+}
+.fpm-edit-toggle-active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--zen-accent, #6366f1);
+  color: var(--zen-accent, #6366f1);
+}
+.fpm-part-editor-controls { margin-top: 8px; }
+.fpm-transform-modes { display: flex; gap: 6px; margin-bottom: 8px; }
+.fpm-transform-btn {
+  background: var(--zen-bg, #0f0f23);
+  border: 1px solid var(--zen-border, #2a2a4a);
+  border-radius: 6px; padding: 4px 10px;
+  color: var(--zen-fg-dim, #888); font-size: 11px; cursor: pointer;
+  flex: 1;
+}
+.fpm-transform-btn-active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--zen-accent, #6366f1);
+  color: var(--zen-accent, #6366f1);
+}
+.fpm-selected-part-info {
+  font-size: 11px; color: var(--zen-fg-dim, #888);
+  padding: 4px 0; margin-bottom: 8px;
+}
+.fpm-apply-edits-btn {
+  width: 100%;
+  background: #22c55e; border: none; border-radius: 6px;
+  padding: 6px 12px; color: white; font-weight: 600;
+  font-size: 12px; cursor: pointer;
+}
+.fpm-apply-edits-btn:hover { background: #16a34a; }
 `

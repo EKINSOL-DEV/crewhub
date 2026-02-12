@@ -34,7 +34,7 @@ interface HistoryResponse {
   oldestTimestamp: number | null
 }
 
-export function useAgentChat(sessionKey: string, raw: boolean = false): UseAgentChatReturn {
+export function useAgentChat(sessionKey: string, raw: boolean = false, roomId?: string): UseAgentChatReturn {
   const [messages, setMessages] = useState<ChatMessageData[]>([])
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -127,7 +127,7 @@ export function useAgentChat(sessionKey: string, raw: boolean = false): UseAgent
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: trimmed }),
+            body: JSON.stringify({ message: trimmed, ...(roomId ? { room_id: roomId } : {}) }),
             signal: sendAbortRef.current.signal,
           }
         )
@@ -162,7 +162,7 @@ export function useAgentChat(sessionKey: string, raw: boolean = false): UseAgent
         setIsSending(false)
       }
     },
-    [sessionKey, isSending]
+    [sessionKey, isSending, roomId]
   )
 
   const loadOlderMessages = useCallback(async () => {
