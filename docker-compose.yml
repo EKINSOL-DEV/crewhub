@@ -46,3 +46,29 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
+
+  # Development frontend with watchdog (use: docker compose --profile dev up frontend-dev)
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    profiles: ["dev"]
+    ports:
+      - "5180:5180"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - frontend-dev-logs:/app/logs
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5180"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  frontend-dev-logs:
