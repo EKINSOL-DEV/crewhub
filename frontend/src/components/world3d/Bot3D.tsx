@@ -11,6 +11,8 @@ import { BotStatusGlow } from './BotStatusGlow'
 import { BotActivityBubble } from './BotActivityBubble'
 import { BotLaptop } from './BotLaptop'
 import { SleepingZs, useBotAnimation } from './BotAnimations'
+import { BotSpeechBubble } from './BotSpeechBubble'
+import { meetingGatheringState } from '@/lib/meetingStore'
 import { tickAnimState } from './botAnimTick'
 import { getRoomInteractionPoints, getWalkableCenter } from './roomInteractionPoints'
 import { getBlueprintForRoom, getWalkableMask, worldToGrid } from '@/lib/grid'
@@ -313,6 +315,54 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       wasMovingRef.current = false
       walkPhaseRef.current = 0
       return
+    }
+
+    // ─── Meeting gathering override ──────────────────────────
+    const meetingPos = session?.key ? meetingGatheringState.positions.get(session.key) : null
+    if (meetingPos && meetingGatheringState.active) {
+      const dx = meetingPos.x - state.currentX
+      const dz = meetingPos.z - state.currentZ
+      const dist = Math.sqrt(dx * dx + dz * dz)
+
+      if (dist > 0.3) {
+        // Walk toward gathering position
+        const gatherSpeed = 1.2
+        const step = Math.min(gatherSpeed * delta, dist)
+        state.currentX += (dx / dist) * step
+        state.currentZ += (dz / dist) * step
+
+        // Face direction of travel
+        const targetRotY = Math.atan2(dx, dz)
+        const currentRotY = groupRef.current.rotation.y
+        let angleDiff = targetRotY - currentRotY
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+        groupRef.current.rotation.y = currentRotY + angleDiff * 0.2
+      } else {
+        // Arrived at gathering position — face center of table
+        groupRef.current.rotation.y = meetingPos.angle
+        state.currentX = meetingPos.x
+        state.currentZ = meetingPos.z
+      }
+
+      groupRef.current.position.x = state.currentX
+      groupRef.current.position.z = state.currentZ
+
+      if (session?.key) {
+        botPositionRegistry.set(session.key, {
+          x: state.currentX, y: groupRef.current.position.y, z: state.currentZ,
+        })
+      }
+
+      // Walk animation
+      const frameDx2 = state.currentX - frameStartX
+      const frameDz2 = state.currentZ - frameStartZ
+      const isMoving2 = Math.sqrt(frameDx2 * frameDx2 + frameDz2 * frameDz2) > 0.001
+      wasMovingRef.current = isMoving2
+      if (isMoving2) walkPhaseRef.current += delta * 8
+      else { walkPhaseRef.current *= 0.85; if (Math.abs(walkPhaseRef.current) < 0.01) walkPhaseRef.current = 0 }
+
+      return // Skip normal wandering
     }
 
     // Frozen states (sleeping in corner, coffee break, offline)
@@ -711,6 +761,45 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
             status={status}
             isActive={isActive}
           />
+        )}
+
+        {/* Meeting: Speech bubble above active speaker */}
+        {session?.key && meetingGatheringState.active &&
+          meetingGatheringState.activeSpeaker === session.key &&
+          meetingGatheringState.activeSpeakerText && (
+          <BotSpeechBubble text={meetingGatheringState.activeSpeakerText} />
+        )}
+
+        {/* Meeting: Completed turn checkmark */}
+        {session?.key && meetingGatheringState.active &&
+          meetingGatheringState.completedTurns.has(session.key) &&
+          meetingGatheringState.activeSpeaker !== session.key && (
+          <Html
+            position={[0, 1.2, 0]}
+            center
+            distanceFactor={10}
+            zIndexRange={[5, 10]}
+            style={{ pointerEvents: 'none' }}
+          >
+            <div style={{ fontSize: '16px', opacity: 0.8 }}>✓</div>
+          </Html>
+        )}
+
+        {/* Meeting: Active speaker glow ring */}
+        {session?.key && meetingGatheringState.active &&
+          meetingGatheringState.activeSpeaker === session.key && (
+          <mesh position={[0, -0.34, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.28, 0.42, 24]} />
+            <meshStandardMaterial
+              color="#60a5fa"
+              emissive="#60a5fa"
+              emissiveIntensity={1.2}
+              transparent
+              opacity={0.8}
+              side={THREE.DoubleSide}
+              depthWrite={false}
+            />
+          </mesh>
         )}
 
         {/* Name tag (conditionally shown based on focus level, always shown when focused) */}

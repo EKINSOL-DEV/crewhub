@@ -52,6 +52,15 @@
       "z": 18,
       "type": "interaction",
       "interactionType": "sleep"
+    },
+    {
+      "propId": "meeting-table",
+      "x": 10,
+      "z": 10,
+      "span": {
+        "w": 3,
+        "d": 3
+      }
     }
   ],
   "doorPositions": [

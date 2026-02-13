@@ -88,11 +88,13 @@ import { TasksWindow } from './TasksWindow'
 import { AgentTopBar } from './AgentTopBar'
 import { useTasks } from '@/hooks/useTasks'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
+import { MeetingProvider, useMeetingContext } from '@/contexts/MeetingContext'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { TaskBoardProvider } from '@/contexts/TaskBoardContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
+import { MeetingDialog, MeetingProgressView, MeetingOutput } from '@/components/meetings'
 import { TaskBoardOverlay, HQTaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
@@ -107,6 +109,56 @@ interface World3DViewProps {
   sessions: CrewSession[]
   settings: SessionsSettings
   onAliasChanged?: () => void
+}
+
+// ─── Meeting Overlays ──────────────────────────────────────────
+
+function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime[]; rooms: Room[] }) {
+  const { meeting, view, openDialog: _od, closeDialog, showProgress, showOutput, closeView } = useMeetingContext()
+  void _od
+
+  // Find HQ room for project info
+  const hqRoom = rooms.find(r => r.name.toLowerCase().includes('headquarter') || r.name.toLowerCase() === 'hq')
+
+  return (
+    <>
+      {/* Meeting Dialog */}
+      <MeetingDialog
+        open={view === 'dialog'}
+        onOpenChange={(open) => { if (!open) closeDialog() }}
+        agents={agentRuntimes}
+        roomId={hqRoom?.id}
+        projectId={hqRoom?.project_id || undefined}
+        projectName={hqRoom?.project_name || undefined}
+        onStart={async (params) => {
+          await meeting.startMeeting(params)
+        }}
+        meetingInProgress={meeting.isActive}
+        onViewProgress={showProgress}
+      />
+
+      {/* Meeting Progress Panel (right side overlay) */}
+      {(view === 'progress') && (
+        <div className="fixed right-0 top-12 bottom-12 w-96 z-30 shadow-xl border-l bg-background">
+          <MeetingProgressView
+            meeting={meeting}
+            onCancel={async () => { await meeting.cancelMeeting() }}
+            onViewOutput={showOutput}
+          />
+        </div>
+      )}
+
+      {/* Meeting Output Panel */}
+      {view === 'output' && (
+        <div className="fixed right-0 top-12 bottom-12 w-96 z-30 shadow-xl border-l bg-background">
+          <MeetingOutput
+            meeting={meeting}
+            onClose={closeView}
+          />
+        </div>
+      )}
+    </>
+  )
 }
 
 // ─── Layout Constants ──────────────────────────────────────────
@@ -1326,6 +1378,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
 
+        {/* Meeting UI Overlays */}
+        <MeetingOverlays agentRuntimes={agentRuntimesForPanel} rooms={rooms} />
+
         {/* TaskBoardOverlay (outside Canvas) */}
         {taskBoardContext && (
           <TaskBoardOverlay
@@ -1357,7 +1412,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 export function World3DView(props: World3DViewProps) {
   return (
     <WorldFocusProvider>
-      <World3DViewInner {...props} />
+      <MeetingProvider>
+        <World3DViewInner {...props} />
+      </MeetingProvider>
     </WorldFocusProvider>
   )
 }
