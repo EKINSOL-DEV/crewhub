@@ -150,6 +150,16 @@ export function MeetingProgressView({
           </div>
         )}
 
+        {meeting.warnings && meeting.warnings.length > 0 && (
+          <div className="space-y-1 mt-2">
+            {meeting.warnings.map((w, i) => (
+              <div key={i} className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 p-2 rounded">
+                ⚠️ {w}
+              </div>
+            ))}
+          </div>
+        )}
+
         {meeting.phase === 'error' && (
           <div className="text-sm text-destructive bg-destructive/10 p-3 rounded mt-2">
             ⚠️ {meeting.error || 'An error occurred'}

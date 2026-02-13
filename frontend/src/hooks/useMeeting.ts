@@ -54,6 +54,7 @@ export interface MeetingState {
   outputError: string | null
   error: string | null
   durationSeconds: number | null
+  warnings: string[]
 }
 
 export interface StartMeetingParams {
@@ -86,6 +87,7 @@ const INITIAL_STATE: MeetingState = {
   outputError: null,
   error: null,
   durationSeconds: null,
+  warnings: [],
 }
 
 // ─── Hook ───────────────────────────────────────────────────────
@@ -332,6 +334,19 @@ export function useMeeting() {
       }
     }
 
+    const handleWarning = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
+        setState(prev => ({
+          ...prev,
+          warnings: [...prev.warnings, data.message || 'Unknown warning'],
+        }))
+      } catch (e) {
+        console.error('Failed to parse meeting-warning:', e)
+      }
+    }
+
     const unsubs = [
       sseManager.subscribe('meeting-started', handleStarted),
       sseManager.subscribe('meeting-state', handleState),
@@ -341,6 +356,7 @@ export function useMeeting() {
       sseManager.subscribe('meeting-complete', handleComplete),
       sseManager.subscribe('meeting-error', handleError),
       sseManager.subscribe('meeting-cancelled', handleCancelled),
+      sseManager.subscribe('meeting-warning', handleWarning),
     ]
 
     return () => unsubs.forEach(fn => fn())

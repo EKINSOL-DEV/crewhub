@@ -1,38 +1,48 @@
 # Markdown Viewer/Editor — Component Specification
 
-> All components implemented in `frontend/src/components/markdown/` and `frontend/src/components/files/`.
+## Status: Implemented ✅
+
+---
 
 ## MarkdownViewer
 
-**Location:** `components/markdown/MarkdownViewer.tsx` (124 lines)
+Renders markdown content with full GFM support.
 
 ```typescript
 interface MarkdownViewerProps {
   content: string        // Raw markdown string
-  className?: string     // Optional CSS class
-  maxHeight?: string     // CSS max-height (default: none)
+  className?: string     // Additional CSS class
+  maxHeight?: string     // CSS max-height (scroll container)
 }
 ```
 
-**Dependencies:** `react-markdown@9`, `remark-gfm`, `rehype-highlight`
+**Dependencies:** `react-markdown`, `remark-gfm`, `rehype-highlight`
 
-**Rendered elements:** h1-h4 (with `id` slugs for TOC linking), p, ul/ol/li, a (external, target=_blank), blockquote, table/th/td, code (inline + block via CodeBlock), hr, img (remote only), checkbox inputs.
-
-**Theming:** Uses CSS custom properties — `var(--zen-fg)` with fallback `hsl(var(--foreground))`. Max-width 720px. Font: system-ui, 14px, line-height 1.7.
+**Features:**
+- Headings (h1-h4) with auto-generated `id` slugs for TOC linking
+- GFM: tables, strikethrough, task lists, autolinks
+- Code blocks with syntax highlighting (rehype-highlight)
+- Inline code with monospace styling
+- Blockquotes, lists (ordered/unordered), horizontal rules
+- Images (remote only — local paths show `[Image: alt]` placeholder)
+- Checkboxes (disabled, display only)
+- Links open in new tab (`target="_blank"`)
+- Zen mode CSS variable support (`--zen-fg`, `--zen-border`, etc.)
+- Max content width: 720px
 
 ---
 
 ## MarkdownEditor
 
-**Location:** `components/markdown/MarkdownEditor.tsx` (203 lines)
+CodeMirror 6 based editor with auto-save.
 
 ```typescript
 interface MarkdownEditorProps {
-  initialContent: string       // Starting content
-  onSave: (content: string) => Promise<void>  // Save callback
-  onCancel: () => void         // Cancel/close callback
+  initialContent: string              // Starting content
+  onSave: (content: string) => Promise<void>  // Save handler
+  onCancel: () => void                // Cancel/close handler
   onDirtyChange?: (dirty: boolean) => void    // Dirty state callback
-  autoSaveMs?: number          // Auto-save debounce (default: 2500ms)
+  autoSaveMs?: number                 // Auto-save delay (default: 2500ms)
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -41,59 +51,63 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 **Dependencies:** `@codemirror/state`, `@codemirror/view`, `@codemirror/lang-markdown`, `@codemirror/commands`, `@codemirror/language`
 
 **Features:**
-- Line numbers, active line highlight
+- Line numbers, active line highlighting
+- Markdown syntax highlighting
 - History (undo/redo)
 - Line wrapping
-- ⌘S to save, Escape to cancel
-- Auto-save with configurable debounce
-- Status bar: save status + Save/Cancel buttons
-- Custom dark theme matching CrewHub palette
+- ⌘S to save, ESC to cancel (with dirty check confirm)
+- Auto-save on 2.5s idle after changes
+- Save status indicator (saving/saved/error)
+- Dark theme matching CrewHub palette
+- Auto-focus on mount
 
 ---
 
 ## FullscreenOverlay
 
-**Location:** `components/markdown/FullscreenOverlay.tsx` (263 lines)
+Portal-based fullscreen document viewer/editor.
 
 ```typescript
 interface FullscreenOverlayProps {
   open: boolean
   onClose: () => void
-  title: string              // Filename
-  subtitle?: string          // Agent name
+  title: string           // Filename
+  subtitle?: string       // Agent name
   content: string
   metadata?: {
     size: number
     modified: string
     lines: number
   }
-  editable?: boolean         // Show Edit button
+  editable?: boolean      // Show Edit button
   onSave?: (content: string) => Promise<void>
 }
 ```
 
-**Renders via:** `createPortal` to `document.body` (z-index 9999)
-
-**Key behaviors:**
-- Locks body scroll when open
-- Disables pointer events on Three.js canvases (prevents camera interference)
-- Dispatches `fullscreen-overlay` CustomEvent for CameraController
-- Blocks document-level pointer events via capture-phase listeners
-- Escape key closes (with dirty confirmation)
-- Click outside closes
-- Toggles between MarkdownViewer + TOCSidebar and MarkdownEditor
+**Features:**
+- `createPortal` to `document.body` (z-index 9999)
+- TOC sidebar (auto-generated, collapsible by omission if no headings)
+- Active heading tracking via IntersectionObserver
+- Smooth scroll on TOC click
+- View mode ↔ Edit mode toggle
+- ESC to close, click-outside to close
+- Body scroll lock while open
+- Canvas pointer events disabled (prevents 3D camera interference)
+- Camera controls blocked via `fullscreen-overlay` CustomEvent
+- Backdrop blur + dark overlay
+- Footer with file metadata (size, lines, modified date)
 
 ---
 
 ## TOCSidebar
 
-**Location:** `components/markdown/TOCSidebar.tsx` (114 lines)
+Auto-generated table of contents from markdown headings.
 
 ```typescript
 interface TOCHeading {
-  id: string      // Slugified heading text
-  text: string    // Clean heading text
-  level: number   // 1-4
+  id: string    // Slugified heading text
+  text: string  // Plain heading text
+  level: number // 1-4
 }
 
 interface TOCSidebarProps {
@@ -104,26 +118,21 @@ interface TOCSidebarProps {
 
 // Utilities
 function extractHeadings(content: string): TOCHeading[]
-function useActiveHeading(headings: TOCHeading[], containerRef?: RefObject<HTMLElement>): string | undefined
+function useActiveHeading(headings: TOCHeading[], containerRef?): string | undefined
 ```
 
-**Active tracking:** IntersectionObserver with `rootMargin: '-20% 0px -70% 0px'`
-
-**Width:** 240px fixed. Indentation: 12px per heading level.
-
----
-
-## CodeBlock
-
-**Location:** `components/markdown/CodeBlock.tsx` (71 lines)
-
-Copy-to-clipboard button on hover. Language label from className.
+**Features:**
+- 240px fixed width sidebar
+- Indentation by heading level (12px per level)
+- Active heading: blue highlight + left border
+- Hover state on inactive items
+- IntersectionObserver with `-20% 0px -70% 0px` margins
 
 ---
 
 ## FilesTab
 
-**Location:** `components/files/FilesTab.tsx` (116 lines)
+Agent file browser in BotInfoPanel.
 
 ```typescript
 interface FilesTabProps {
@@ -132,39 +141,40 @@ interface FilesTabProps {
 }
 ```
 
-**Hooks:** `useAgentFiles(agentId)`, `useFileContent(agentId, path)`
-
-**Layout:** FileTree (top, max 40% when file selected) + inline MarkdownViewer (bottom 60%) + FullscreenOverlay.
+**Layout:** File tree (top, max 40% when file selected) + inline preview (bottom, flex 1)
 
 ---
 
 ## FileTree
 
-**Location:** `components/files/FileTree.tsx` (159 lines)
+Collapsible file/folder tree.
 
-Recursive collapsible tree. File icons by extension. Click to select, expand button for fullscreen.
+```typescript
+interface FileNode {
+  name: string
+  path: string
+  type: 'file' | 'directory'
+  size?: number
+  modified?: string
+  extension?: string
+  children?: FileNode[]
+}
 
----
-
-## ProjectFilesSection
-
-**Location:** `components/files/ProjectFilesSection.tsx` (163 lines)
-
-Same pattern as FilesTab but for project documents. Uses project documents API.
+interface FileTreeProps {
+  files: FileNode[]
+  selectedPath?: string
+  onSelect: (file: FileNode) => void
+  onExpand: (file: FileNode) => void
+  loading?: boolean
+}
+```
 
 ---
 
 ## Styling Approach
 
-All components use **inline styles** with CSS custom properties (consistent with CrewHub's existing pattern — no CSS modules or Tailwind). Theme tokens:
-
-| Token | Usage |
-|-------|-------|
-| `--foreground` | Text color |
-| `--background` | Page background |
-| `--card` | Panel/header background |
-| `--border` | Borders |
-| `--primary` | Accent (links, active TOC, buttons) |
-| `--secondary` | Secondary backgrounds |
-| `--muted-foreground` | Subdued text |
-| `--zen-*` | Zen mode overrides |
+All components use inline styles with CSS variables for theming:
+- Standard: `hsl(var(--foreground))`, `hsl(var(--border))`, etc.
+- Zen mode: `var(--zen-fg)`, `var(--zen-border)`, etc. with standard fallbacks
+- CodeMirror: Custom `EditorView.theme()` with matching dark palette
+- No external CSS files — fully self-contained components

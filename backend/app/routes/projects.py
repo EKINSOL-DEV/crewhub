@@ -1,4 +1,5 @@
 """Projects API routes."""
+import asyncio
 import os
 import re
 import time
@@ -15,6 +16,12 @@ DEFAULT_PROJECTS_BASE_PATH = "~/Projects"
 
 # Synology Drive base for project documents
 SYNOLOGY_PROJECTS_BASE = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects"
+
+# Allowed roots for project folders (security boundary)
+ALLOWED_PROJECT_ROOTS = [
+    Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects",
+    Path.home() / "Projects",
+]
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -178,38 +185,47 @@ async def list_markdown_files(project_id: str):
         if not project_dir or not project_dir.exists():
             return {"files": [], "warning": "Project folder not found"}
 
-        # Scan for .md files (max depth 3, max 100 files)
+        # Security: verify project folder is within allowed roots
         resolved_base = project_dir.resolve()
-        md_files: list[str] = []
-        for md_path in sorted(project_dir.rglob("*.md")):
-            # Security: ensure file is within project dir (no symlink escape)
-            try:
-                resolved = md_path.resolve()
-                if not str(resolved).startswith(str(resolved_base)):
+        if not any(resolved_base.is_relative_to(root) for root in ALLOWED_PROJECT_ROOTS if root.exists()):
+            logger.warning(f"Project folder outside allowed roots: {resolved_base}")
+            raise HTTPException(403, "Project folder outside allowed roots")
+
+        # Scan for .md files in thread pool (non-blocking)
+        def _scan_files(base_dir: Path, resolved: Path) -> list[str]:
+            md_files: list[str] = []
+            for md_path in sorted(base_dir.rglob("*.md")):
+                # Security: ensure file is within project dir (no symlink escape)
+                try:
+                    resolved_path = md_path.resolve()
+                    if not resolved_path.is_relative_to(resolved):
+                        continue
+                except (OSError, ValueError):
                     continue
-            except (OSError, ValueError):
-                continue
 
-            # Skip hidden dirs and node_modules
-            rel = md_path.relative_to(project_dir)
-            parts = rel.parts
-            if any(p.startswith('.') or p == 'node_modules' for p in parts):
-                continue
-
-            # Max depth 3
-            if len(parts) > 4:
-                continue
-
-            # Skip files > 1MB
-            try:
-                if md_path.stat().st_size > 1_000_000:
+                # Skip hidden dirs and node_modules
+                rel = md_path.relative_to(base_dir)
+                parts = rel.parts
+                if any(p.startswith('.') or p == 'node_modules' for p in parts):
                     continue
-            except OSError:
-                continue
 
-            md_files.append(str(rel))
-            if len(md_files) >= 100:
-                break
+                # Max depth 3
+                if len(parts) > 4:
+                    continue
+
+                # Skip files > 1MB
+                try:
+                    if md_path.stat().st_size > 1_000_000:
+                        continue
+                except OSError:
+                    continue
+
+                md_files.append(str(rel))
+                if len(md_files) >= 100:
+                    break
+            return md_files
+
+        md_files = await asyncio.to_thread(_scan_files, project_dir, resolved_base)
 
         return {"files": md_files}
 

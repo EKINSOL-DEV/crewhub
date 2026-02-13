@@ -286,6 +286,11 @@ export function MeetingDialog({
                   📄 {documentPath}
                 </div>
               )}
+              {!filesLoading && markdownFiles.length === 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  No .md files found in this project folder.
+                </p>
+              )}
             </div>
           )}
 

@@ -272,6 +272,7 @@ class MeetingOrchestrator:
         # Security: no path traversal
         if ".." in doc_path or doc_path.startswith("/"):
             logger.warning(f"Rejected document path (traversal attempt): {doc_path}")
+            await self._emit_document_warning(f"Invalid document path: {doc_path}")
             return None
 
         # Find project folder
@@ -300,25 +301,46 @@ class MeetingOrchestrator:
 
         if not project_dir:
             logger.warning(f"Project folder not found for document: {doc_path}")
+            await self._emit_document_warning(f"Project folder not found for document: {doc_path}")
+            return None
+
+        # Security: verify project folder is within allowed roots
+        ALLOWED_PROJECT_ROOTS = [
+            Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects",
+            Path.home() / "Projects",
+        ]
+        resolved_base = project_dir.resolve()
+        if not any(resolved_base.is_relative_to(root) for root in ALLOWED_PROJECT_ROOTS if root.exists()):
+            logger.warning(f"Project folder outside allowed roots: {resolved_base}")
+            await self._emit_document_warning(f"Project folder outside allowed roots")
             return None
 
         full_path = (project_dir / doc_path).resolve()
-        # Security: ensure within project dir
-        if not str(full_path).startswith(str(project_dir.resolve())):
+        # Security: ensure within project dir (proper path containment)
+        if not full_path.is_relative_to(resolved_base):
             logger.warning(f"Document path escapes project dir: {full_path}")
+            await self._emit_document_warning(f"Document path escapes project directory")
             return None
 
         if not full_path.exists():
             logger.warning(f"Document not found: {full_path}")
+            await self._emit_document_warning(f"Document not found: {doc_path}")
             return None
 
         # Size check (1MB max)
-        if full_path.stat().st_size > 1_000_000:
+        try:
+            size = await asyncio.to_thread(lambda: full_path.stat().st_size)
+        except OSError:
+            await self._emit_document_warning(f"Could not access document: {doc_path}")
+            return None
+
+        if size > 1_000_000:
             logger.warning(f"Document too large: {full_path}")
+            await self._emit_document_warning(f"Document too large (>{size // 1024}KB): {doc_path}")
             return None
 
         try:
-            content = full_path.read_text(encoding="utf-8")
+            content = await asyncio.to_thread(full_path.read_text, "utf-8")
             # Token budget: ~4 chars per token, limit to ~3000 tokens worth
             max_chars = 12000
             if len(content) > max_chars:
@@ -327,7 +349,16 @@ class MeetingOrchestrator:
             return content
         except Exception as e:
             logger.warning(f"Failed to read document: {e}")
+            await self._emit_document_warning(f"Failed to read document: {doc_path}")
             return None
+
+    async def _emit_document_warning(self, message: str):
+        """Emit SSE warning about document load failure."""
+        await broadcast("meeting-warning", {
+            "meeting_id": self.meeting_id,
+            "message": message,
+            "severity": "warning",
+        })
 
     def _build_turn_prompt(self, participant: dict, round_num: int, round_topic: str,
                            previous_responses: list[dict]) -> str:
@@ -460,7 +491,7 @@ Respond ONLY with the markdown. No extra commentary."""
                 logger.warning(f"Synthesis failed via {participant['name']}: {e}")
 
         # Fallback: build a basic summary ourselves
-        return f"# Stand-Up Meeting — {today}\n\n## Goal\n{self.goal or self.title}\n\n## Participants\n" + \
+        return f"# Meeting — {today}\n\n## Goal\n{self.goal or self.title}\n\n## Participants\n" + \
                "\n".join(f"- {p['name']}" for p in self.participants) + \
                f"\n\n## Discussion\n\n{all_rounds}\n"
 
