@@ -70,7 +70,7 @@ import { useSessionDisplayNames } from '@/hooks/useSessionDisplayNames'
 import { useToonMaterialProps } from './utils/toonMaterials'
 import { EnvironmentSwitcher } from './environments'
 import { getBotConfigFromSession, isSubagent } from './utils/botVariants'
-import { getSessionDisplayName } from '@/lib/minionUtils'
+import { getSessionDisplayName, hasActiveSubagents } from '@/lib/minionUtils'
 // Fallback chain for room assignment:
 //   1. Explicit assignment (session-room-assignments API)
 //   2. Rules-based routing (room-assignment-rules API, via getRoomForSession)
@@ -190,10 +190,14 @@ function LoadingFallback() {
 
 // ─── Bot Status (accurate, matching 2D) ────────────────────────
 
-function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatus {
+function getAccurateBotStatus(session: CrewSession, isActive: boolean, allSessions?: CrewSession[]): BotStatus {
   if (isActive) return 'active'
   const idleMs = Date.now() - session.updatedAt
   if (idleMs < SESSION_CONFIG.botIdleThresholdMs) return 'idle'
+
+  // Check for active subagents before marking as sleeping
+  if (allSessions && hasActiveSubagents(session, allSessions)) return 'supervising'
+
   if (idleMs < SESSION_CONFIG.botSleepingThresholdMs) return 'sleeping'
   return 'offline'
 }
@@ -298,7 +302,26 @@ function extractTaskSummary(messages: CrewSession['messages']): string | null {
   return null
 }
 
-function getActivityText(session: CrewSession, isActive: boolean): string {
+function getActivityText(session: CrewSession, isActive: boolean, allSessions?: CrewSession[]): string {
+  // Check if supervising subagents
+  if (!isActive && allSessions && hasActiveSubagents(session, allSessions)) {
+    const agentId = (session.key || "").split(":")[1]
+    const now = Date.now()
+    const activeChild = allSessions
+      .filter(s => {
+        const parts = s.key.split(":")
+        return parts[1] === agentId
+          && (parts[2]?.includes("subagent") || parts[2]?.includes("spawn"))
+          && (now - s.updatedAt) < SESSION_CONFIG.statusActiveThresholdMs
+      })
+      .sort((a, b) => b.updatedAt - a.updatedAt)[0]
+    if (activeChild) {
+      const label = activeChild.label ? humanizeLabel(activeChild.label) : 'subagent'
+      return `👁️ Supervising: ${label}`
+    }
+    return '👁️ Supervising subagent'
+  }
+
   if (isActive) {
     // 1. Prefer session label — humanize it into a task summary
     if (session.label) {
@@ -557,11 +580,11 @@ function SceneContent({
 
   const buildBotPlacement = (session: CrewSession, _runtime?: AgentRuntime): BotPlacement => {
     const isActive = isActivelyRunning(session.key)
-    const status = getAccurateBotStatus(session, isActive)
+    const status = getAccurateBotStatus(session, isActive, allSessions)
     const config = getBotConfigFromSession(session.key, session.label, _runtime?.agent?.color)
     const name = getSessionDisplayName(session, displayNames.get(session.key))
     const scale = isSubagent(session.key) ? 0.6 : 1.0
-    const activity = getActivityText(session, isActive)
+    const activity = getActivityText(session, isActive, allSessions)
     return { key: session.key, session, status, config, name, scale, activity, isActive }
   }
 
@@ -665,7 +688,7 @@ function SceneContent({
   // Helper: should a bot show its label based on focus level?
   const shouldShowLabel = (botStatus: BotStatus, botRoomId: string): boolean => {
     if (focusLevel === 'overview') {
-      return botStatus === 'active' // only active bots in overview
+      return botStatus === 'active' || botStatus === 'supervising'
     }
     return focusedRoomId === botRoomId // all bots in focused room
   }
@@ -677,7 +700,7 @@ function SceneContent({
     // Bot focus: always show for focused bot
     if (focusLevel === 'bot' && focusedBotKey === botKey) return true
     // Overview: only active bots
-    if (focusLevel === 'overview') return botStatus === 'active'
+    if (focusLevel === 'overview') return botStatus === 'active' || botStatus === 'supervising'
     // Room focus: all bots in focused room + active bots elsewhere
     return focusedRoomId === botRoomId || botStatus === 'active'
   }
@@ -1066,8 +1089,8 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
   const focusedBotStatus: BotStatus = useMemo(() => {
     if (!focusedSession) return 'offline'
-    return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key))
-  }, [focusedSession, isActivelyRunning])
+    return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key), allSessions)
+  }, [focusedSession, isActivelyRunning, allSessions])
 
   // Get bio and agentId for focused bot from agents registry
   const { agents: agentRuntimesForPanel, refresh: refreshAgents } = useAgentsRegistry(allSessions)

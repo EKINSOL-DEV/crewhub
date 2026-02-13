@@ -18,7 +18,7 @@ export interface Agent {
   updated_at: number
 }
 
-export type AgentStatus = "offline" | "idle" | "thinking" | "working"
+export type AgentStatus = "offline" | "idle" | "thinking" | "working" | "supervising"
 
 export interface AgentRuntime {
   agent: Agent
@@ -70,13 +70,20 @@ export function useAgentsRegistry(sessions: CrewSession[]) {
     }
   }, [fetchAgents])
   
-  const calculateStatus = useCallback((session: CrewSession | undefined): AgentStatus => {
+  const calculateStatus = useCallback((session: CrewSession | undefined, childSessions: CrewSession[]): AgentStatus => {
     if (!session) return "offline"
     const now = Date.now()
     const lastActivity = session.updatedAt || 0
     const timeSinceActivity = now - lastActivity
     const isRecent = timeSinceActivity < 5 * 60 * 1000
-    if (!isRecent) return "idle"
+
+    if (!isRecent) {
+      // Check if any child sessions are actively running
+      const hasActiveChildren = childSessions.some(s => (now - s.updatedAt) < 5 * 60 * 1000)
+      if (hasActiveChildren) return "supervising"
+      return "idle"
+    }
+
     if (session.messages && session.messages.length > 0) {
       const lastMessage = session.messages[session.messages.length - 1]
       if (lastMessage.role === "assistant") return "thinking"
@@ -91,7 +98,7 @@ export function useAgentsRegistry(sessions: CrewSession[]) {
       const childSessions = sessions.filter(s => {
         return s.label?.includes(`parent=${agent.agent_session_key}`) || s.key.startsWith(`${agent.agent_session_key}:`)
       })
-      return { agent, session: mainSession, status: calculateStatus(mainSession), childSessions }
+      return { agent, session: mainSession, status: calculateStatus(mainSession, childSessions), childSessions }
     })
   }, [agents, sessions, calculateStatus])
   

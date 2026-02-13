@@ -15,9 +15,9 @@ interface CardsViewProps {
 }
 
 type SortOption = "recent" | "name" | "tokens" | "status"
-type StatusFilter = "active" | "idle" | "sleeping"
-const ALL_STATUSES: StatusFilter[] = ["active", "idle", "sleeping"]
-const DEFAULT_FILTERS: Set<StatusFilter> = new Set(["active", "idle"])
+type StatusFilter = "active" | "supervising" | "idle" | "sleeping"
+const ALL_STATUSES: StatusFilter[] = ["active", "supervising", "idle", "sleeping"]
+const DEFAULT_FILTERS: Set<StatusFilter> = new Set(["active", "supervising", "idle"])
 
 function getDisplayName(session: CrewSession): string {
   if (session.displayName) return session.displayName
@@ -42,14 +42,16 @@ const sortLabels: Record<SortOption, string> = {
 
 const filterLabels: Record<StatusFilter, string> = {
   active: "Active",
+  supervising: "Supervising",
   idle: "Idle",
   sleeping: "Sleeping",
 }
 
 const statusOrder: Record<SessionStatus, number> = {
   active: 0,
-  idle: 1,
-  sleeping: 2,
+  supervising: 1,
+  idle: 2,
+  sleeping: 3,
 }
 
 /** Collapsible room group header */
@@ -246,7 +248,7 @@ export function CardsView({ sessions }: CardsViewProps) {
   }
 
   const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: sessions.length, active: 0, idle: 0, sleeping: 0 }
+    const counts: Record<string, number> = { all: sessions.length, active: 0, supervising: 0, idle: 0, sleeping: 0 }
     sessions.forEach((s) => {
       const status = getSessionStatus(s)
       counts[status]++

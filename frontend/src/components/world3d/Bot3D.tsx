@@ -699,7 +699,7 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         <BotAccessory type={config.accessory} color={config.color} />
 
         {/* Floating laptop (visible when bot is actively working) */}
-        <BotLaptop visible={status === 'active'} />
+        <BotLaptop visible={status === 'active' || status === 'supervising'} />
 
         {/* Sleeping ZZZ (visibility controlled by animRef.showZzz, not raw status) */}
         {status === 'sleeping' && <SleepingZs animRef={animRef} />}

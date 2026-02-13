@@ -23,18 +23,27 @@
 - **Blog:** `docs/features/core/agent-persona-tuning/agent-identity-pattern-blog.md`
 - **Commits:** feat: Agent Identity Pattern - single identity, multiple surfaces
 
-### Agent Status Logic Improvements
-**Status:** ✅ Complete (01:09)
+### Agent Status Logic Improvements (v2)
+**Status:** ✅ Complete (02:40)
 
-- **Fixed:** Agents falsely showing "sleeping" after 5 minutes during long-running subagent tasks (PropMaker generation, research, multi-step work)
-- **Changed:** `calculateStatus()` now checks child sessions for recent activity before falling back to time-based status
-- **Changed:** `getSessionStatus()` accepts `hasActiveChildren` option to override time-based idle/sleeping detection
-- **Changed:** `shouldBeInParkingLane()` respects active children — agents with working subagents stay in their room
-- **Added:** Child session matching patterns for subagent/spawn/cron session keys
-- **Added:** Tests for `hasActiveChildren` behavior in `minionUtils.test.ts`
-- **Files:** `useAgentsRegistry.ts`, `minionUtils.ts`, `minionUtils.test.ts`, `CHANGELOG.md` (4 files, +60/-6 lines)
-- **Commits:** `bfcd31c` fix: agent status shows 'working' during long tasks with active subagents
-- **Blog:** `docs/features/core/agent-status-logic-blog.md`
+- **Added:** New "Supervising" status (👁️) — agents with active subagents show as supervising instead of idle/sleeping
+- **Added:** `hasActiveSubagents()` utility for detecting parent-child session relationships
+- **Added:** `getActiveSubagentLabel()` — shows which subagent task is being supervised
+- **Added:** Purple glow effect for supervising bots in 3D world (`BotStatusGlow.tsx`)
+- **Added:** Supervising personality messages for all agent types (`personality.ts`)
+- **Added:** Supervising filter in Cards view, stats header, and sort ordering
+- **Changed:** `getSessionStatus()` now accepts optional `allSessions` parameter for subagent detection
+- **Changed:** `calculateStatus()` in `useAgentsRegistry.ts` checks `childSessions` activity
+- **Changed:** `getAccurateBotStatus()` in `World3DView.tsx` checks for active subagents
+- **Changed:** `shouldBeInParkingLane()` — supervising sessions never get parked
+- **Changed:** `getCurrentActivity()` shows "Supervising: [task name]" when delegating
+- **Changed:** `BotStatus` type extended across all 3D components (Bot3D, BotBody, BotFace, BotStatusGlow, BotInfoPanel, RoomInfoTab, RoomInfoPanel, AgentTopBar)
+- **Changed:** `CrewStatus` type in CrewBar extended with "supervising"
+- **Changed:** `CrewAvatar` shows purple status dot and 👁️ emoji for supervising agents
+- **Added:** 4 new tests for supervising status (parent with active subagent, stale subagent, sibling isolation, cron supervision)
+- **Tests:** All 151 tests pass
+- **Files:** 17 files changed
+- **Blog:** `docs/features/core/agent-status-logic-blog.md` (updated)
 
 ### Spatial Awareness Research
 **Status:** Scheduled (04:00)

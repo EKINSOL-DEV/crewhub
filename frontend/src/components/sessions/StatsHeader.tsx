@@ -6,9 +6,10 @@ interface StatsHeaderProps {
 }
 
 export function StatsHeader({ sessions }: StatsHeaderProps) {
-  const activeCount = sessions.filter(s => getSessionStatus(s) === "active").length
-  const idleCount = sessions.filter(s => getSessionStatus(s) === "idle").length
-  const sleepingCount = sessions.filter(s => getSessionStatus(s) === "sleeping").length
+  const activeCount = sessions.filter(s => getSessionStatus(s, sessions) === "active").length
+  const supervisingCount = sessions.filter(s => getSessionStatus(s, sessions) === "supervising").length
+  const idleCount = sessions.filter(s => getSessionStatus(s, sessions) === "idle").length
+  const sleepingCount = sessions.filter(s => getSessionStatus(s, sessions) === "sleeping").length
   
   const totalTokens = sessions.reduce((sum, s) => sum + (s.totalTokens || 0), 0)
   const totalCost = sessions.reduce((sum, s) => sum + getSessionCost(s), 0)
@@ -25,6 +26,12 @@ export function StatsHeader({ sessions }: StatsHeaderProps) {
           <span className="text-green-500">●</span>
           <span>{activeCount} active</span>
         </div>
+        {supervisingCount > 0 && (
+          <div className="flex items-center gap-1">
+            <span className="text-purple-500">●</span>
+            <span>{supervisingCount} supervising</span>
+          </div>
+        )}
         <div className="flex items-center gap-1">
           <span className="text-yellow-500">●</span>
           <span>{idleCount} idle</span>

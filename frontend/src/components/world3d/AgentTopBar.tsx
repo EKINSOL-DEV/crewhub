@@ -19,7 +19,7 @@ interface AgentTopBarProps {
   rooms: Array<{ id: string; name: string }>
 }
 
-type AgentStatus = 'active' | 'idle' | 'sleeping'
+type AgentStatus = 'active' | 'idle' | 'sleeping' | 'supervising'
 
 const BOSS_SESSION_KEY = 'agent:main:main'
 const PINNED_STORAGE_KEY = 'crewhub-pinned-agent'
@@ -37,6 +37,7 @@ function getStatusColor(status: AgentStatus): string {
   switch (status) {
     case 'active': return '#22c55e'
     case 'idle': return '#9ca3af'
+    case 'supervising': return '#a78bfa'
     case 'sleeping': return '#ef4444'
   }
 }

@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import type { BotExpression } from './utils/botVariants'
 
 interface BotFaceProps {
-  status: 'active' | 'idle' | 'sleeping' | 'offline'
+  status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline'
   expression: BotExpression
 }
 

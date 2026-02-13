@@ -1,63 +1,73 @@
 # Why Your Agent Looked Asleep (When It Wasn't)
 
-*CrewHub v0.15.0 — Agent Status Logic*
+Ever noticed your main agent showing as "sleeping" 💤 while it was clearly doing something? You'd spawn a subagent to handle a big task, check back 10 minutes later, and see the parent agent snoozing — even though its subagent was actively churning away.
+
+That's because the old status logic was... simple. Too simple.
 
 ## The Problem
 
-Picture this: you ask your AI agent to generate a complex 3D prop. It spawns a subagent, which starts working hard — reading files, generating code, testing builds. Ten minutes later, you glance at CrewHub and see... your agent sleeping. 😴
+Previously, agent status was determined by one thing: **how recently the session's `updatedAt` timestamp changed**. The logic was straightforward:
 
-But it's not sleeping. It delegated the work to a child session, and the parent session hasn't sent a message in a while. The old status logic only looked at the *parent's* last activity timestamp. If that was more than 5 minutes ago? Sleeping.
+- Updated in the last 5 minutes → 🟢 **Active**
+- Updated 5–30 minutes ago → 🟡 **Idle**
+- Updated 30+ minutes ago → 💤 **Sleeping**
 
-This was confusing. Agents appeared idle precisely when they were doing their most important work — supervising long-running tasks.
+This works fine for agents that do everything themselves. But modern agents don't work alone — they **delegate**. A parent agent spawns a subagent, gives it a task, and waits for the result. During that wait, the parent's `updatedAt` stops changing, and within minutes it looks like it fell asleep.
 
-## The Fix
+**Before:**
+```
+🦞 Main Agent    → 💤 Sleeping (10 min idle)
+⚡ Subagent #1   → 🟢 Active (working on task)
+```
 
-The new status logic asks a simple question before marking an agent as idle or sleeping:
+The main agent looks dead, but it's actually supervising a running task. Misleading!
 
-> "Do any of my child sessions have recent activity?"
+## The Fix: "Supervising" Status
 
-If yes, the parent agent shows as **working** (or **active**), not sleeping. It's that straightforward.
+We added a new status: **👁️ Supervising**. The system now checks whether an agent has active child sessions (subagents) before marking it as idle or sleeping.
 
-### What counts as a child session?
+**After:**
+```
+🦞 Main Agent    → 👁️ Supervising: "fix-login-bug"
+⚡ Subagent #1   → 🟢 Active (working on task)
+```
 
-CrewHub now recognizes three patterns:
-- **Subagent sessions** — spawned via `sessions_spawn` (e.g., `agent:dev:subagent:abc123`)
-- **Cron sessions** — scheduled background tasks (e.g., `agent:main:cron:xyz789`)
-- **Spawn sessions** — any session whose key indicates it was created by the parent
+The logic is simple but effective:
+1. Is the session recently active? → **Active** (as before)
+2. Is the session idle, but does it have subagents that *are* active? → **Supervising**
+3. Otherwise → **Idle** or **Sleeping** (as before)
 
-### How it works
+### How It Detects Parent-Child Relationships
 
-1. When calculating an agent's status, we gather all sessions that match the agent's key prefix
-2. We check if any child session has been updated within the activity threshold
-3. If active children exist, the parent is marked as "working" regardless of its own last message time
-4. This also prevents the agent from being moved to the "parking lane" (the area for inactive sessions)
+Agent sessions follow a naming convention:
+- `agent:dev:main` — the main Dev agent session
+- `agent:dev:subagent:abc123` — a subagent spawned by the Dev agent
+- `agent:main:cron:daily` — a cron job for the Main agent
 
-## Before & After
+The system matches parent and child by the agent ID (the second part of the key). If `agent:dev:main` has any `agent:dev:subagent:*` sessions that are active, the parent shows as supervising.
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| Agent spawns 10-min PropMaker task | Shows "sleeping" after 5 min | Shows "working" throughout |
-| Agent delegates research to subagent | Shows "idle" after 2 min | Shows "active" while subagent works |
-| Agent's cron job runs in background | No effect on status | Parent reflects cron activity |
-| Agent genuinely idle (no children) | Shows "sleeping" ✅ | Shows "sleeping" ✅ (unchanged) |
+## What Changed in the UI
 
-## Technical Details
+### Status Cards & Filters
+The cards view now shows a **purple "Supervising"** badge and you can filter by it.
 
-The changes touch 4 files with a net addition of ~60 lines:
+### 3D World
+- Supervising bots keep their laptop visible (they're watching, not napping)
+- A soft **purple glow** pulsates under the bot
+- Activity bubbles show "👁️ Supervising: [task name]"
+- Supervising bots stay visible in the overview (not hidden like sleeping ones)
+- They **won't be parked** — they're still working, just indirectly
 
-- **`useAgentsRegistry.ts`** — Enriched session data with child activity detection
-- **`minionUtils.ts`** — `calculateStatus()` and `shouldBeInParkingLane()` now accept and respect `hasActiveChildren`
-- **`minionUtils.test.ts`** — New test cases for the `hasActiveChildren` behavior
-- **`CHANGELOG.md`** — Documented the fix
+### Stats Bar
+A new purple dot shows the supervising count when there are agents in that state.
 
-No database changes. No API changes. No breaking changes. Just smarter status inference from existing session data.
+## Edge Cases Handled
 
-## Why It Matters
+- **Cron sessions** that spawn subagents also show as supervising
+- **Subagents don't supervise siblings** — only main/cron sessions can supervise
+- **Stale subagents** don't trigger supervising — the child must be active (within the threshold)
+- **No backend changes needed** — all detection is done client-side using existing session data
 
-In a multi-agent system like CrewHub, delegation is the norm. The main assistant delegates to dev agents, review agents, and specialized workers. If the UI shows the orchestrator as "sleeping" while its team is hard at work, that erodes trust in the system.
+## The Takeaway
 
-Now, the 3D world accurately reflects what's happening: if work is being done on your behalf, your agent shows it. Simple, correct, trustworthy.
-
----
-
-*Commit: `bfcd31c` — fix: agent status shows 'working' during long tasks with active subagents*
+Status detection should reflect what an agent is *actually doing*, not just when it last spoke. Delegating work is still work — and now CrewHub shows that.
