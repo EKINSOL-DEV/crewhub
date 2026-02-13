@@ -213,9 +213,20 @@ export function ProjectMeetingTable({ roomId, projectId, projectName, ...props }
 
 function MeetingTableConnected(props: PropProps & { roomId?: string; projectId?: string; projectName?: string }) {
   const meetingCtx = useMeetingContextSafe()
+  const groupRef = useRef<THREE.Group>(null)
 
   const handleClick = () => {
     if (!meetingCtx) return
+
+    // Always update world position on click (most reliable timing)
+    if (groupRef.current) {
+      const worldPos = new THREE.Vector3()
+      groupRef.current.getWorldPosition(worldPos)
+      console.log('[MeetingTable] World position on click:', worldPos.x.toFixed(2), worldPos.z.toFixed(2),
+        props.roomId ? `room=${props.roomId}` : 'HQ')
+      meetingCtx.setTablePosition(worldPos.x, worldPos.z)
+    }
+
     if (meetingCtx.meeting.isActive) {
       meetingCtx.showProgress()
     } else if (props.roomId || props.projectId) {
@@ -229,19 +240,33 @@ function MeetingTableConnected(props: PropProps & { roomId?: string; projectId?:
     }
   }
 
-  // Register table position for gathering calculations
-  const posX = props.position[0]
-  const posZ = props.position[2]
+  // Register table world position for gathering calculations.
+  // Uses a one-frame delay to ensure parent transforms are applied.
   useEffect(() => {
-    meetingCtx?.setTablePosition(posX, posZ)
-  }, [meetingCtx, posX, posZ])
+    if (!meetingCtx || !groupRef.current) return
+    // Wait one frame so parent group transforms are committed
+    const id = requestAnimationFrame(() => {
+      if (groupRef.current) {
+        const worldPos = new THREE.Vector3()
+        groupRef.current.getWorldPosition(worldPos)
+        console.log('[MeetingTable] World position registered:', worldPos.x.toFixed(2), worldPos.z.toFixed(2),
+          props.roomId ? `room=${props.roomId}` : 'HQ')
+        meetingCtx.setTablePosition(worldPos.x, worldPos.z)
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [meetingCtx, props.position, props.roomId])
 
   return (
-    <MeetingTable
-      {...props}
-      meetingActive={meetingCtx?.meeting.isActive ?? false}
-      onTableClick={handleClick}
-    />
+    <group ref={groupRef} position={props.position} rotation={props.rotation ? [0, (props.rotation * Math.PI) / 180, 0] : undefined}>
+      <MeetingTable
+        {...props}
+        position={[0, 0, 0]}
+        rotation={0}
+        meetingActive={meetingCtx?.meeting.isActive ?? false}
+        onTableClick={handleClick}
+      />
+    </group>
   )
 }
 
