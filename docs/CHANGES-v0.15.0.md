@@ -82,3 +82,10 @@
 ---
 
 *This document is updated by overnight agents as work progresses.*
+
+### Creator Zone Prompt Refinement
+**Status:** ✅ Complete (03:00)
+
+- **Changed:** Added "NO questions" directive to creator-zone-prompt.md — AI generates immediately without asking for preferences
+- **Verified:** Creator Zone MVP fully implemented: prompt input, model selection, streaming generation, 3D preview, refinement panel, history, save/load
+- **Verified:** Prop drag fix from 02:00 working (capture plane active during entire move mode)
