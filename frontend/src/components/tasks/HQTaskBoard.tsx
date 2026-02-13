@@ -17,6 +17,7 @@ interface ColumnConfig {
 const columns: ColumnConfig[] = [
   { status: 'todo', label: 'To Do', icon: '📋', color: 'text-gray-600', bgColor: 'bg-gray-100' },
   { status: 'in_progress', label: 'In Progress', icon: '🔄', color: 'text-blue-600', bgColor: 'bg-blue-50' },
+  { status: 'review', label: 'Review', icon: '👀', color: 'text-purple-600', bgColor: 'bg-purple-50' },
   { status: 'done', label: 'Done', icon: '✅', color: 'text-green-600', bgColor: 'bg-green-50' },
 ]
 
