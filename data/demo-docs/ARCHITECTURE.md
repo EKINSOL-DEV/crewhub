@@ -16,23 +16,32 @@ User ← 3D UI ← SSE Events ← Backend ← WebSocket ← Agent Response ←�
 
 ### Frontend
 - **World3D** — Three.js scene with rooms, agents, props
+- **Bot3D** — Agent avatars with pathfinding navigation
 - **Zen Mode** — 2D panels for task management and sessions
 - **PropMaker** — AI-powered 3D prop generation
-- **CrewBar** — Navigation and quick actions
+- **Meetings** — AI meeting interface with round/turn visualization
 
 ### Backend
 - **Sessions API** — List, view, manage agent sessions
 - **Tasks API** — CRUD for tasks with project history
-- **History API** — Archived session browser with search
+- **Meetings API** — Create, run, and manage AI meetings
 - **Creator API** — PropMaker generation and history
 - **Agent Files API** — Browse workspace markdown files
 - **SSE** — Real-time event streaming to frontend
 
 ### Database
 - SQLite with versioned schema migrations
-- Tables: rooms, agents, tasks, projects, project_history, settings, connections
+- Tables: rooms, agents, tasks, projects, meetings, meeting_turns, meeting_action_items
 
-## Security Model
-- Local-first: runs on your machine
-- No cloud dependency (except AI model APIs)
-- Agent workspaces are sandboxed per-agent
+## AI Meetings Architecture
+
+```
+Meeting Start → Gather Participants → Run Rounds
+                                         ↓
+                              For each participant:
+                              Build context → Call AI → Store turn
+                                         ↓
+                              Extract Action Items → Generate Output MD
+                                         ↓
+                              Post-Meeting: Create tasks from action items
+```

@@ -68,6 +68,7 @@ export interface StartMeetingParams {
   max_tokens_per_turn?: number
   document_path?: string
   document_context?: string
+  parent_meeting_id?: string  // F4: follow-up meeting
 }
 
 const INITIAL_STATE: MeetingState = {
@@ -385,7 +386,15 @@ export function useMeeting() {
       const err = await res.json().catch(() => ({ detail: 'Failed to cancel' }))
       throw new Error(err.detail || `HTTP ${res.status}`)
     }
-    return res.json()
+    const data = await res.json()
+    // Immediately update local state (don't wait for SSE which may race)
+    setState(prev => ({
+      ...prev,
+      phase: 'cancelled',
+      currentTurnAgentId: null,
+      currentTurnAgentName: null,
+    }))
+    return data
   }, [])
 
   const fetchOutput = useCallback(async () => {

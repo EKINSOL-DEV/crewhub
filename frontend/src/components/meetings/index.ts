@@ -1,4 +1,7 @@
 export { MeetingDialog } from './MeetingDialog'
+export type { FollowUpContext } from './MeetingDialog'
 export { MeetingProgressView } from './MeetingProgressView'
 export { MeetingProgressBar } from './MeetingProgressBar'
 export { MeetingOutput } from './MeetingOutput'
+export { MeetingResultsPanel } from './MeetingResultsPanel'
+export { MeetingHistoryBrowser } from './MeetingHistoryBrowser'

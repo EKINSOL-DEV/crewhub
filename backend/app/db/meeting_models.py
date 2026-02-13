@@ -103,3 +103,29 @@ class StartMeetingRequest(BaseModel):
     max_tokens_per_turn: int = 200
     document_path: Optional[str] = None
     document_context: Optional[str] = None
+    parent_meeting_id: Optional[str] = None  # F4: follow-up meeting
+
+
+class ActionItem(BaseModel):
+    id: str = ""
+    text: str
+    assignee_agent_id: Optional[str] = None
+    priority: str = "medium"
+    status: str = "pending"
+    planner_task_id: Optional[str] = None
+    execution_session_id: Optional[str] = None
+    sort_order: int = 0
+
+
+class SaveActionItemsRequest(BaseModel):
+    items: list[ActionItem]
+
+
+class ActionItemToPlannerRequest(BaseModel):
+    title: str
+    assignee: Optional[str] = None
+    priority: Optional[str] = "medium"
+
+
+class ActionItemExecuteRequest(BaseModel):
+    agent_id: Optional[str] = None

@@ -78,13 +78,15 @@ class MeetingOrchestrator:
     """Orchestrates a single meeting through all phases."""
 
     def __init__(self, meeting_id: str, config: MeetingConfig, title: str = "", goal: str = "",
-                 room_id: Optional[str] = None, project_id: Optional[str] = None):
+                 room_id: Optional[str] = None, project_id: Optional[str] = None,
+                 parent_meeting_id: Optional[str] = None):
         self.meeting_id = meeting_id
         self.config = config
         self.title = title
         self.goal = goal
         self.room_id = room_id
         self.project_id = project_id
+        self.parent_meeting_id = parent_meeting_id
         self.participants: list[dict] = []  # resolved agent info dicts
         self._cancelled = False
         self._document_content: Optional[str] = None  # loaded document text
@@ -102,6 +104,13 @@ class MeetingOrchestrator:
             # Load document if provided
             if self.config.document_path:
                 self._document_content = await self._load_document()
+
+            # F4: Load parent meeting context for follow-ups
+            if self.parent_meeting_id:
+                parent = await get_meeting(self.parent_meeting_id)
+                if parent and parent.get("output_md"):
+                    context_prefix = f"## Previous Meeting Results\n\n{parent['output_md']}\n\n---\n\n"
+                    self._document_content = context_prefix + (self._document_content or "")
 
             # Save participants to DB
             await self._save_participants()
@@ -177,6 +186,11 @@ class MeetingOrchestrator:
         except asyncio.CancelledError:
             logger.info(f"Meeting {self.meeting_id} cancelled via task cancellation")
             await self._set_state(MeetingState.CANCELLED)
+            await broadcast("meeting-cancelled", {
+                "meeting_id": self.meeting_id,
+                "state": "cancelled",
+                "cancelled_at": _now_ms(),
+            })
         except Exception as e:
             logger.error(f"Meeting {self.meeting_id} failed: {e}", exc_info=True)
             await self._set_state(MeetingState.ERROR, error_message=str(e))
@@ -454,20 +468,22 @@ Participants: {participant_names}
 
 {all_rounds}
 
-Output format (Markdown):
+Output format (use these EXACT headers in this order):
+
 # Meeting — {today}
 
 ## Goal
 {self.goal or self.title}
 
 ## Participants
-- List each with their name
+- List each participant by name
 
 ## Discussion Summary
 Key points organized by theme (not by person)
 
 ## Action Items
-- [ ] Specific, assigned action items extracted from discussion
+Use this EXACT format for each action item (enables automated parsing):
+- [ ] @{{agent_name}}: {{action item description}} [priority: high/medium/low]
 
 ## Decisions
 - Any decisions or agreements reached
@@ -501,6 +517,15 @@ Respond ONLY with the markdown. No extra commentary."""
     # Output
     # =========================================================================
 
+    @staticmethod
+    def _slugify(text: str, max_len: int = 40) -> str:
+        """Convert text to URL-safe slug for filenames."""
+        import re as _re
+        text = text.lower().strip()
+        text = _re.sub(r'[^a-z0-9\s-]', '', text)
+        text = _re.sub(r'[\s-]+', '-', text)
+        return text[:max_len].rstrip('-')
+
     async def _save_output(self, output_md: str) -> Optional[str]:
         """Save meeting output to Synology Drive."""
         data_path = os.environ.get("PROJECT_DATA_PATH", "")
@@ -512,8 +537,16 @@ Respond ONLY with the markdown. No extra commentary."""
         meetings_dir = Path(data_path) / "meetings"
         meetings_dir.mkdir(parents=True, exist_ok=True)
 
+        # Build contextual filename from title/goal
+        topic_slug = self._slugify(self.title or self.goal or "meeting")
+        # If title is the generic default, prefer the goal
+        if topic_slug in ("team-meeting", "meeting", "daily-standup"):
+            topic_slug = self._slugify(self.goal) if self.goal else "meeting"
+        if not topic_slug:
+            topic_slug = "meeting"
+
         # Find unique filename
-        base_name = f"{today}-meeting"
+        base_name = f"{today}-{topic_slug}"
         filename = f"{base_name}.md"
         counter = 2
         while (meetings_dir / filename).exists():
@@ -648,7 +681,8 @@ Respond ONLY with the markdown. No extra commentary."""
 
 
 async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
-                        room_id: Optional[str] = None, project_id: Optional[str] = None) -> Meeting:
+                        room_id: Optional[str] = None, project_id: Optional[str] = None,
+                        parent_meeting_id: Optional[str] = None) -> Meeting:
     """Create a meeting record and launch the orchestrator as a background task."""
     # Check concurrency
     active_count = len(_active_meetings)
@@ -671,10 +705,10 @@ async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
     # Create DB record
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
-            """INSERT INTO meetings (id, title, goal, state, room_id, project_id, config_json, current_round, current_turn, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?)""",
+            """INSERT INTO meetings (id, title, goal, state, room_id, project_id, config_json, current_round, current_turn, parent_meeting_id, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)""",
             (meeting_id, title or "Team Meeting", goal, MeetingState.GATHERING.value,
-             room_id, project_id, config.model_dump_json(), now),
+             room_id, project_id, config.model_dump_json(), parent_meeting_id, now),
         )
         await db.commit()
 
@@ -686,6 +720,7 @@ async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
         goal=goal,
         room_id=room_id,
         project_id=project_id,
+        parent_meeting_id=parent_meeting_id,
     )
     task = asyncio.create_task(orchestrator.run())
     _active_meetings[meeting_id] = task
@@ -820,47 +855,72 @@ async def get_meeting(meeting_id: str) -> Optional[dict]:
 
 
 async def list_meetings(days: int = 30, room_id: Optional[str] = None,
-                        project_id: Optional[str] = None, limit: int = 20) -> list[dict]:
-    """List recent meetings."""
+                        project_id: Optional[str] = None, limit: int = 20,
+                        offset: int = 0, state_filter: Optional[str] = None) -> dict:
+    """List recent meetings with pagination. Returns {meetings, total, has_more}."""
     cutoff = _now_ms() - (days * 86400 * 1000)
 
-    query = "SELECT * FROM meetings WHERE created_at > ?"
+    where = "WHERE created_at > ?"
     params: list = [cutoff]
 
     if room_id:
-        query += " AND room_id = ?"
+        where += " AND room_id = ?"
         params.append(room_id)
     if project_id:
-        query += " AND project_id = ?"
+        where += " AND project_id = ?"
         params.append(project_id)
-
-    query += " ORDER BY created_at DESC LIMIT ?"
-    params.append(limit)
+    if state_filter:
+        where += " AND state = ?"
+        params.append(state_filter)
 
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
-        async with db.execute(query, params) as cur:
+
+        # Total count
+        async with db.execute(f"SELECT COUNT(*) FROM meetings {where}", params) as cur:
+            total = (await cur.fetchone())[0]
+
+        # Paginated query
+        query = f"SELECT * FROM meetings {where} ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        async with db.execute(query, params + [limit, offset]) as cur:
             rows = await cur.fetchall()
 
         results = []
         for row in rows:
             m = dict(row)
-            # Get participant count
+            # Get participant names
             async with db.execute(
-                "SELECT COUNT(*) FROM meeting_participants WHERE meeting_id = ?",
+                "SELECT agent_name FROM meeting_participants WHERE meeting_id = ? ORDER BY sort_order",
                 (m["id"],),
             ) as cur2:
-                m["participant_count"] = (await cur2.fetchone())[0]
+                part_rows = await cur2.fetchall()
+                participant_names = [r["agent_name"] for r in part_rows]
+
+            # Parse config for num_rounds
+            config = json.loads(m.get("config_json") or "{}")
+            duration = None
+            if m.get("started_at") and m.get("completed_at"):
+                duration = (m["completed_at"] - m["started_at"]) // 1000
+
             results.append({
                 "id": m["id"],
                 "title": m["title"],
+                "goal": m.get("goal", ""),
                 "state": m["state"],
-                "participant_count": m["participant_count"],
+                "participant_count": len(participant_names),
+                "participant_names": participant_names,
+                "num_rounds": config.get("num_rounds", 3),
                 "room_id": m.get("room_id"),
                 "project_id": m.get("project_id"),
                 "output_path": m.get("output_path"),
+                "parent_meeting_id": m.get("parent_meeting_id"),
+                "duration_seconds": duration,
                 "created_at": m["created_at"],
                 "completed_at": m.get("completed_at"),
             })
 
-        return results
+        return {
+            "meetings": results,
+            "total": total,
+            "has_more": (offset + limit) < total,
+        }

@@ -12,7 +12,7 @@ import { BotActivityBubble } from './BotActivityBubble'
 import { BotLaptop } from './BotLaptop'
 import { SleepingZs, useBotAnimation } from './BotAnimations'
 import { BotSpeechBubble } from './BotSpeechBubble'
-import { meetingGatheringState } from '@/lib/meetingStore'
+import { meetingGatheringState, calculateMeetingPath } from '@/lib/meetingStore'
 import { tickAnimState } from './botAnimTick'
 import { getRoomInteractionPoints, getWalkableCenter } from './roomInteractionPoints'
 import { getBlueprintForRoom, getWalkableMask, worldToGrid } from '@/lib/grid'
@@ -120,6 +120,10 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
     dirZ: -1,
     stepsRemaining: 0,
     cellProgress: 0, // 0..1 progress toward next cell center
+    // Meeting pathfinding waypoints
+    meetingWaypoints: [] as { x: number; z: number }[],
+    meetingWaypointIndex: 0,
+    meetingPathComputed: false,
   })
 
   // Update base position when session key changes (bot reassigned to a new spot)
@@ -317,16 +321,40 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       return
     }
 
-    // ─── Meeting gathering override ──────────────────────────
+    // ─── Meeting gathering override (with waypoint pathfinding) ──
     const meetingPos = session?.key ? meetingGatheringState.positions.get(session.key) : null
     if (meetingPos && meetingGatheringState.active) {
-      const dx = meetingPos.x - state.currentX
-      const dz = meetingPos.z - state.currentZ
+      // Compute waypoints once when meeting gathering starts
+      if (!state.meetingPathComputed) {
+        const botRoomId = session?.key ? meetingGatheringState.agentRooms.get(session.key) : undefined
+        state.meetingWaypoints = calculateMeetingPath(
+          state.currentX, state.currentZ,
+          meetingPos.x, meetingPos.z,
+          botRoomId,
+          meetingGatheringState,
+        )
+        state.meetingWaypointIndex = 0
+        state.meetingPathComputed = true
+      }
+
+      // Get current waypoint target
+      const waypoints = state.meetingWaypoints
+      const wpIdx = state.meetingWaypointIndex
+      const isLastWaypoint = wpIdx >= waypoints.length - 1
+      const currentTarget = wpIdx < waypoints.length
+        ? waypoints[wpIdx]
+        : { x: meetingPos.x, z: meetingPos.z }
+
+      const dx = currentTarget.x - state.currentX
+      const dz = currentTarget.z - state.currentZ
       const dist = Math.sqrt(dx * dx + dz * dz)
 
-      if (dist > 0.3) {
-        // Walk toward gathering position
-        const gatherSpeed = 1.2
+      // Threshold: use tighter threshold for intermediate waypoints
+      const arrivalThreshold = isLastWaypoint ? 0.3 : 0.5
+
+      if (dist > arrivalThreshold) {
+        // Walk toward current waypoint
+        const gatherSpeed = 1.8 // Slightly faster for long paths
         const step = Math.min(gatherSpeed * delta, dist)
         state.currentX += (dx / dist) * step
         state.currentZ += (dz / dist) * step
@@ -338,8 +366,11 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
         groupRef.current.rotation.y = currentRotY + angleDiff * 0.2
+      } else if (!isLastWaypoint) {
+        // Reached intermediate waypoint — advance to next
+        state.meetingWaypointIndex++
       } else {
-        // Arrived at gathering position — face center of table
+        // Arrived at final gathering position — face center of table
         groupRef.current.rotation.y = meetingPos.angle
         state.currentX = meetingPos.x
         state.currentZ = meetingPos.z
@@ -363,6 +394,11 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       else { walkPhaseRef.current *= 0.85; if (Math.abs(walkPhaseRef.current) < 0.01) walkPhaseRef.current = 0 }
 
       return // Skip normal wandering
+    } else if (!meetingGatheringState.active && state.meetingPathComputed) {
+      // Meeting ended — reset path state
+      state.meetingPathComputed = false
+      state.meetingWaypoints = []
+      state.meetingWaypointIndex = 0
     }
 
     // Frozen states (sleeping in corner, coffee break, offline)

@@ -6,11 +6,15 @@
  * - Dialog open/close
  * - Bot gathering positions
  * - Active speaker info for 3D highlights
+ * - Sidebar panel state (F2)
+ * - Follow-up meeting support (F4)
  */
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { useMeeting, type StartMeetingParams, type MeetingState, type MeetingPhase } from '@/hooks/useMeeting'
 import { updateMeetingGatheringState, resetMeetingGatheringState } from '@/lib/meetingStore'
+import { showToast } from '@/lib/toast'
+import type { FollowUpContext } from '@/components/meetings/MeetingDialog'
 
 // ─── Gathering positions ────────────────────────────────────────
 
@@ -21,13 +25,6 @@ export interface GatheringPosition {
   angle: number
 }
 
-/**
- * Calculate circle positions around a center point.
- * @param centerX - Table center X
- * @param centerZ - Table center Z
- * @param participants - Agent IDs
- * @param radius - Circle radius (default 2)
- */
 export function calculateGatheringPositions(
   centerX: number,
   centerZ: number,
@@ -40,7 +37,7 @@ export function calculateGatheringPositions(
       agentId,
       x: centerX + Math.cos(angle) * radius,
       z: centerZ + Math.sin(angle) * radius,
-      angle: angle + Math.PI, // face center
+      angle: angle + Math.PI,
     }
   })
 }
@@ -68,6 +65,15 @@ interface MeetingContextValue {
   gatheringPositions: GatheringPosition[]
   dialogRoomContext: DialogRoomContext | null
 
+  // F2: Sidebar
+  sidebarMeetingId: string | null
+  openInSidebar: (meetingId: string) => void
+  closeSidebar: () => void
+
+  // F4: Follow-up
+  followUpContext: FollowUpContext | null
+  openFollowUp: (meetingId: string) => void
+
   // Actions
   openDialog: () => void
   openDialogForRoom: (ctx: DialogRoomContext) => void
@@ -85,13 +91,15 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<MeetingView>('none')
   const [tablePos, setTablePos] = useState<{ x: number; z: number }>({ x: 0, z: 0 })
   const [dialogRoomContext, setDialogRoomContext] = useState<DialogRoomContext | null>(null)
+  const [sidebarMeetingId, setSidebarMeetingId] = useState<string | null>(null)
+  const [followUpContext, setFollowUpContext] = useState<FollowUpContext | null>(null)
 
   const gatheringPositions = useMemo(() => {
     if (!meeting.isActive && meeting.phase !== 'complete') return []
     return calculateGatheringPositions(tablePos.x, tablePos.z, meeting.participants)
   }, [meeting.isActive, meeting.phase, meeting.participants, tablePos.x, tablePos.z])
 
-  // Auto-switch views based on phase changes (in useEffect, not render)
+  // Auto-switch views based on phase changes
   const prevPhaseRef = useRef<MeetingPhase>('idle')
   useEffect(() => {
     const prev = prevPhaseRef.current
@@ -104,17 +112,23 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     }
     if (next === 'complete' && view === 'progress') {
       meeting.fetchOutput()
-      setView('output')
+      // F6: Open results in fullscreen overlay
+      if (meeting.meetingId) {
+        setSidebarMeetingId(meeting.meetingId)
+      }
+      setView('none')
+      showToast({ message: '✅ Meeting complete!' })
     }
-    // cancelled/error: keep progress view to show the state
   }, [meeting.phase, view, meeting])
 
   const openDialog = useCallback(() => {
     setDialogRoomContext(null)
+    setFollowUpContext(null)
     setView('dialog')
   }, [])
   const openDialogForRoom = useCallback((ctx: DialogRoomContext) => {
     setDialogRoomContext(ctx)
+    setFollowUpContext(null)
     setView('dialog')
   }, [])
   const closeDialog = useCallback(() => setView('none'), [])
@@ -131,6 +145,41 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
   }, [meeting])
   const setTablePosition = useCallback((x: number, z: number) => setTablePos({ x, z }), [])
 
+  // F2: Sidebar
+  const openInSidebar = useCallback((meetingId: string) => {
+    setSidebarMeetingId(meetingId)
+    // Close the dialog/output view if open
+    if (view === 'output') {
+      setView('none')
+      meeting.reset()
+    }
+  }, [view, meeting])
+  const closeSidebar = useCallback(() => setSidebarMeetingId(null), [])
+
+  // F4: Follow-up
+  const openFollowUp = useCallback(async (meetingId: string) => {
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}/status`)
+      const data = await res.json()
+      setFollowUpContext({
+        parentMeetingId: meetingId,
+        title: data.title || '',
+        goal: data.goal || data.title || '',
+        participants: data.participants?.map((p: any) => p.agent_id) || [],
+        roomId: data.room_id,
+        projectId: data.project_id,
+      })
+      setDialogRoomContext({
+        roomId: data.room_id,
+        projectId: data.project_id,
+      })
+      setView('dialog')
+    } catch {
+      setFollowUpContext(null)
+      setView('dialog')
+    }
+  }, [])
+
   // Sync meeting state to the global store for Bot3D useFrame reads
   useEffect(() => {
     if (!meeting.isActive && meeting.phase !== 'complete') {
@@ -143,7 +192,6 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
       posMap.set(gp.agentId, { x: gp.x, z: gp.z, angle: gp.angle })
     }
 
-    // Find latest response text from active speaker
     let speakerText: string | null = null
     if (meeting.currentTurnAgentId) {
       for (const round of meeting.rounds) {
@@ -154,7 +202,6 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Completed turns in current round
     const completed = new Set<string>()
     const currentRound = meeting.rounds[meeting.currentRound - 1]
     if (currentRound) {
@@ -187,6 +234,11 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     showOutput,
     closeView,
     setTablePosition,
+    sidebarMeetingId,
+    openInSidebar,
+    closeSidebar,
+    followUpContext,
+    openFollowUp,
   }
 
   return (

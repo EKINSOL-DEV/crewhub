@@ -1,19 +1,17 @@
 /**
  * MeetingOutput — Rich structured results view after meeting completes.
  *
- * Uses the shared MarkdownViewer for rendering meeting markdown,
- * with interactive action item cards layered on top.
- *
- * Features: F2 (sidebar), F3 (better UI), F1 (action item buttons), F4 (follow-up)
+ * Redesigned to match FullscreenOverlay (markdown viewer) layout:
+ * - Top bar: title left, X close right, action buttons below
+ * - Left sidebar: view menu (structured, actions, transcript, raw)
+ * - Main content: switches based on active view
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { MarkdownViewer } from '@/components/markdown/MarkdownViewer'
+import { MeetingViewMenu, type MeetingView } from './MeetingViewMenu'
 import type { MeetingState, MeetingRound } from '@/hooks/useMeeting'
 import { parseMeetingOutput, type ParsedActionItem } from '@/lib/parseMeetingOutput'
 import { showToast } from '@/lib/toast'
@@ -27,12 +25,12 @@ interface MeetingOutputProps {
   onRetryFetch?: () => Promise<unknown>
   outputLoading?: boolean
   outputError?: string | null
-  mode?: 'dialog' | 'sidebar'
+  mode?: 'dialog' | 'sidebar' | 'fullscreen'
   onOpenInSidebar?: () => void
   onStartFollowUp?: () => void
 }
 
-// ─── Action Item Components (interactive layer on top of markdown) ───
+// ─── Action Item Card ───────────────────────────────────────────
 
 function ActionItemCard({
   item,
@@ -101,13 +99,18 @@ function ActionItemCard({
   const status = item.status || 'pending'
 
   return (
-    <div className="border rounded-lg p-3 space-y-2">
-      <div className="flex items-start gap-2">
-        <input type="checkbox" checked={item.checked || status === 'done'} readOnly className="mt-1 rounded" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm">{item.text}</p>
-          <div className="flex items-center gap-2 mt-1">
-            {item.assignee && <span className="text-xs text-muted-foreground">👤 {item.assignee}</span>}
+    <div style={{
+      border: '1px solid hsl(var(--border))',
+      borderRadius: 8,
+      padding: 12,
+      background: 'hsl(var(--card))',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <input type="checkbox" checked={item.checked || status === 'done'} readOnly style={{ marginTop: 3, borderRadius: 3 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 13, margin: 0, lineHeight: 1.5 }}>{item.text}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            {item.assignee && <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>👤 {item.assignee}</span>}
             <Badge variant="secondary" className={`text-xs ${priorityColor}`}>{item.priority}</Badge>
             {status !== 'pending' && (
               <Badge variant="outline" className="text-xs">
@@ -118,13 +121,13 @@ function ActionItemCard({
         </div>
       </div>
       {status === 'pending' && (
-        <div className="flex gap-2 ml-6">
+        <div style={{ display: 'flex', gap: 8, marginLeft: 24, marginTop: 8 }}>
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleAddToPlanner} disabled={loading !== null}>
-            {loading === 'planner' ? '...' : '➕ Add to Planner'}
+            {loading === 'planner' ? '...' : '➕ Planner'}
           </Button>
           {item.assignee && (
             <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleExecute} disabled={loading !== null}>
-              {loading === 'execute' ? '...' : '🤖 Execute Now'}
+              {loading === 'execute' ? '...' : '🤖 Execute'}
             </Button>
           )}
         </div>
@@ -133,7 +136,57 @@ function ActionItemCard({
   )
 }
 
-function ActionItemsPanel({
+// ─── Transcript View ────────────────────────────────────────────
+
+function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
+  if (rounds.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+        No transcript available
+      </div>
+    )
+  }
+  return (
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      {rounds.map((round) => (
+        <div key={round.roundNum} style={{ marginBottom: 24 }}>
+          <div style={{
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: 'hsl(var(--muted-foreground))',
+            borderBottom: '1px solid hsl(var(--border))',
+            paddingBottom: 6,
+            marginBottom: 12,
+          }}>
+            Round {round.roundNum}: {round.topic}
+          </div>
+          {round.turns.map((turn, i) => (
+            <div key={i} style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--foreground))', marginBottom: 2 }}>
+                {turn.agentName}
+              </div>
+              <p style={{
+                fontSize: 13,
+                color: 'hsl(var(--muted-foreground))',
+                whiteSpace: 'pre-wrap',
+                margin: 0,
+                lineHeight: 1.6,
+              }}>
+                {turn.response || '(no response)'}
+              </p>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Actions View ───────────────────────────────────────────────
+
+function ActionsView({
   items,
   meetingId,
   onStatusChange,
@@ -142,51 +195,26 @@ function ActionItemsPanel({
   meetingId: string | null
   onStatusChange: (id: string, status: string) => void
 }) {
-  if (items.length === 0) return null
+  if (items.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+        No action items found
+      </div>
+    )
+  }
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm">✅ Action Items ({items.length})</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0 space-y-2">
-        {items.map(item => (
-          <ActionItemCard key={item.id} item={item} meetingId={meetingId} onStatusChange={onStatusChange} />
-        ))}
-      </CardContent>
-    </Card>
-  )
-}
-
-function RoundAccordion({ rounds }: { rounds: MeetingRound[] }) {
-  if (rounds.length === 0) return null
-  return (
-    <Accordion type="multiple" className="w-full">
-      {rounds.map((round) => (
-        <AccordionItem key={round.roundNum} value={`round-${round.roundNum}`}>
-          <AccordionTrigger className="text-sm py-2">
-            Round {round.roundNum}: {round.topic}
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-3">
-              {round.turns.map((turn, i) => (
-                <div key={i}>
-                  <div className="text-xs font-medium">{turn.agentName}</div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-0.5">
-                    {turn.response || '(no response)'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+    <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--muted-foreground))', marginBottom: 4 }}>
+        {items.length} Action Item{items.length !== 1 ? 's' : ''}
+      </div>
+      {items.map(item => (
+        <ActionItemCard key={item.id} item={item} meetingId={meetingId} onStatusChange={onStatusChange} />
       ))}
-    </Accordion>
+    </div>
   )
 }
 
 // ─── Main Component ─────────────────────────────────────────────
-
-type ViewMode = 'structured' | 'markdown' | 'transcript'
 
 export function MeetingOutput({
   meeting,
@@ -199,8 +227,9 @@ export function MeetingOutput({
   onStartFollowUp,
 }: MeetingOutputProps) {
   const [copied, setCopied] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('structured')
+  const [activeView, setActiveView] = useState<MeetingView>('structured')
   const [itemStatuses, setItemStatuses] = useState<Record<string, string>>({})
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const parsed = useMemo(
     () => parseMeetingOutput(meeting.outputMd || ''),
@@ -245,10 +274,9 @@ export function MeetingOutput({
     setItemStatuses(prev => ({ ...prev, [id]: status }))
   }, [])
 
-  // Build markdown without the Action Items section (we render those interactively)
+  // Build markdown without the Action Items section
   const markdownWithoutActions = useMemo(() => {
     if (!meeting.outputMd) return ''
-    // Strip the Action Items section so we can render it as interactive cards
     const lines = meeting.outputMd.split('\n')
     const result: string[] = []
     let inActionItems = false
@@ -267,102 +295,175 @@ export function MeetingOutput({
     return result.join('\n')
   }, [meeting.outputMd])
 
-  const viewToggleLabel = {
-    structured: 'Markdown',
-    markdown: 'Transcript',
-    transcript: 'Structured',
-  }[viewMode]
+  // Derive title
+  const meetingTitle = meeting.title || 'Meeting Results'
+  const duration = meeting.durationSeconds ? `${Math.round(meeting.durationSeconds)}s` : null
+
+  const actionItems = parsed.actionItems.map(ai => ({ ...ai, status: itemStatuses[ai.id] }))
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header bar */}
-      <div className="px-4 py-3 border-b flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'hsl(var(--background))' }}>
+      {/* ── Header ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 20px',
+        borderBottom: '1px solid hsl(var(--border))',
+        background: 'hsl(var(--card))',
+        flexShrink: 0,
+      }}>
         <div>
-          <h3 className="text-sm font-semibold">✅ Meeting Complete</h3>
-          {meeting.durationSeconds && (
-            <span className="text-xs text-muted-foreground">⏱ {Math.round(meeting.durationSeconds)}s</span>
-          )}
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>
+            ✅ {meetingTitle}
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            {duration && (
+              <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>⏱ {duration}</span>
+            )}
+            {meeting.outputPath && (
+              <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', opacity: 0.7 }}>
+                💾 {meeting.outputPath.split('/').pop()}
+              </span>
+            )}
+          </div>
         </div>
         <button
-          className="text-xs text-primary hover:underline"
-          onClick={() => setViewMode(viewMode === 'structured' ? 'markdown' : viewMode === 'markdown' ? 'transcript' : 'structured')}
+          onClick={onClose}
+          title="Close (Esc)"
+          style={{
+            background: 'hsl(var(--secondary))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 6,
+            width: 32,
+            height: 32,
+            fontSize: 16,
+            cursor: 'pointer',
+            color: 'hsl(var(--foreground))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
         >
-          {viewToggleLabel} →
+          ✕
         </button>
       </div>
 
-      {/* Content */}
-      <ScrollArea className="flex-1 px-4 py-3">
-        {meeting.outputMd ? (
-          viewMode === 'structured' ? (
-            /* Structured view: MarkdownViewer for prose + interactive ActionItems */
-            <div className="space-y-4">
-              <MarkdownViewer content={markdownWithoutActions} className="text-sm" />
-              <ActionItemsPanel
-                items={parsed.actionItems.map(ai => ({ ...ai, status: itemStatuses[ai.id] }))}
+      {/* ── Action buttons bar ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 20px',
+        borderBottom: '1px solid hsl(var(--border))',
+        background: 'hsl(var(--card))',
+        flexShrink: 0,
+      }}>
+        <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleCopy}>
+          {copied ? '✓ Copied' : '📋 Copy'}
+        </Button>
+        {onStartFollowUp && (
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={onStartFollowUp}>
+            🔄 Follow-up
+          </Button>
+        )}
+        {mode === 'dialog' && onOpenInSidebar && !onStartFollowUp && (
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={onOpenInSidebar}>
+            📌 Sidebar
+          </Button>
+        )}
+      </div>
+
+      {/* ── Body: Menu + Content ── */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Left sidebar menu */}
+        <MeetingViewMenu
+          activeView={activeView}
+          onSelect={setActiveView}
+          actionCount={actionItems.length}
+          roundCount={meeting.rounds.length}
+        />
+
+        {/* Content area */}
+        <div
+          ref={contentRef}
+          style={{
+            flex: 1,
+            overflow: 'auto',
+            padding: '24px 32px',
+            background: 'hsl(var(--background))',
+          }}
+        >
+          {meeting.outputMd ? (
+            activeView === 'structured' ? (
+              <div style={{ maxWidth: 720, margin: '0 auto' }}>
+                <MarkdownViewer content={markdownWithoutActions} className="text-sm" />
+                {actionItems.length > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <h2 style={{
+                      fontSize: 20,
+                      fontWeight: 600,
+                      marginBottom: 12,
+                      color: 'hsl(var(--foreground))',
+                      borderBottom: '1px solid hsl(var(--border))',
+                      paddingBottom: 6,
+                    }}>
+                      ✅ Action Items
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {actionItems.map(item => (
+                        <ActionItemCard
+                          key={item.id}
+                          item={item}
+                          meetingId={meeting.meetingId}
+                          onStatusChange={handleStatusChange}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : activeView === 'actions' ? (
+              <ActionsView
+                items={actionItems}
                 meetingId={meeting.meetingId}
                 onStatusChange={handleStatusChange}
               />
-              {meeting.rounds.length > 0 && (
-                <div className="pt-2">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Full Transcript</p>
-                  <RoundAccordion rounds={meeting.rounds} />
-                </div>
+            ) : activeView === 'transcript' ? (
+              <TranscriptView rounds={meeting.rounds} />
+            ) : (
+              /* Raw markdown */
+              <div style={{ maxWidth: 720, margin: '0 auto' }}>
+                <pre style={{
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  color: 'hsl(var(--foreground))',
+                  background: 'hsl(var(--secondary) / 0.3)',
+                  padding: 16,
+                  borderRadius: 8,
+                  border: '1px solid hsl(var(--border))',
+                  margin: 0,
+                }}>
+                  {meeting.outputMd}
+                </pre>
+              </div>
+            )
+          ) : outputError ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ fontSize: 13, color: 'hsl(var(--destructive))', marginBottom: 12 }}>⚠️ {outputError}</div>
+              {onRetryFetch && (
+                <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>🔄 Retry</Button>
               )}
             </div>
-          ) : viewMode === 'markdown' ? (
-            /* Full markdown view using shared MarkdownViewer */
-            <MarkdownViewer content={meeting.outputMd} className="text-sm" />
           ) : (
-            /* Transcript view */
-            <div className="space-y-4">
-              {meeting.rounds.map((round) => (
-                <div key={round.roundNum}>
-                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b pb-1 mb-2">
-                    Round {round.roundNum}: {round.topic}
-                  </div>
-                  {round.turns.map((turn, i) => (
-                    <div key={i} className="mb-3">
-                      <div className="text-sm font-medium">{turn.agentName}:</div>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-0.5">
-                        {turn.response || '(no response)'}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+              {outputLoading ? 'Loading output…' : 'No output available'}
             </div>
-          )
-        ) : outputError ? (
-          <div className="text-center py-8 space-y-3">
-            <div className="text-sm text-destructive">⚠️ {outputError}</div>
-            {onRetryFetch && (
-              <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>🔄 Retry</Button>
-            )}
-          </div>
-        ) : (
-          <div className="text-sm text-muted-foreground text-center py-8">
-            {outputLoading ? 'Loading output…' : 'Loading output…'}
-          </div>
-        )}
-      </ScrollArea>
-
-      {/* Footer */}
-      <div className="px-4 py-3 border-t space-y-2">
-        {meeting.outputPath && (
-          <div className="text-xs text-muted-foreground truncate">💾 {meeting.outputPath}</div>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={handleCopy}>
-            {copied ? '✓ Copied' : '📋 Copy'}
-          </Button>
-          {mode === 'dialog' && onOpenInSidebar && (
-            <Button variant="outline" size="sm" onClick={onOpenInSidebar}>📌 Sidebar</Button>
           )}
-          {onStartFollowUp && (
-            <Button variant="outline" size="sm" onClick={onStartFollowUp}>🔄 Follow-up</Button>
-          )}
-          <Button variant="outline" size="sm" className="flex-1" onClick={onClose}>Close</Button>
         </div>
       </div>
     </div>

@@ -89,12 +89,14 @@ import { AgentTopBar } from './AgentTopBar'
 import { useTasks } from '@/hooks/useTasks'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { MeetingProvider, useMeetingContext } from '@/contexts/MeetingContext'
+import { meetingGatheringState } from '@/lib/meetingStore'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { TaskBoardProvider } from '@/contexts/TaskBoardContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
-import { MeetingDialog, MeetingProgressView, MeetingOutput } from '@/components/meetings'
+import { MeetingDialog, MeetingProgressView, MeetingOutput, MeetingResultsPanel } from '@/components/meetings'
+import { ToastContainer } from '@/components/ui/toast-container'
 import { TaskBoardOverlay, HQTaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
@@ -114,7 +116,11 @@ interface World3DViewProps {
 // ─── Meeting Overlays ──────────────────────────────────────────
 
 function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime[]; rooms: Room[] }) {
-  const { meeting, view, dialogRoomContext, openDialog: _od, closeDialog, showProgress, showOutput, closeView } = useMeetingContext()
+  const {
+    meeting, view, dialogRoomContext,
+    openDialog: _od, closeDialog, showProgress, showOutput, closeView,
+    openInSidebar, followUpContext, openFollowUp,
+  } = useMeetingContext()
   void _od
 
   // Find HQ room as default fallback
@@ -130,7 +136,7 @@ function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime
 
   return (
     <>
-      {/* Meeting Dialog */}
+      {/* Meeting Dialog (with History tab and Follow-up support) */}
       <MeetingDialog
         open={view === 'dialog'}
         onOpenChange={(open) => { if (!open) closeDialog() }}
@@ -143,6 +149,8 @@ function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime
         }}
         meetingInProgress={meeting.isActive}
         onViewProgress={showProgress}
+        followUpContext={followUpContext}
+        onViewResults={(meetingId) => openInSidebar(meetingId)}
       />
 
       {/* Meeting Progress Panel (right side overlay) */}
@@ -156,15 +164,29 @@ function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime
         </div>
       )}
 
-      {/* Meeting Output Panel */}
+      {/* Meeting Output Panel — Fullscreen overlay */}
       {view === 'output' && (
-        <div className="fixed right-0 top-12 bottom-12 w-96 z-30 shadow-xl border-l bg-background">
-          <MeetingOutput
-            meeting={meeting}
-            onClose={closeView}
-          />
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+          <div className="flex-1 flex items-stretch justify-center p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-5xl bg-background border rounded-xl shadow-2xl flex flex-col overflow-hidden">
+              <MeetingOutput
+                meeting={meeting}
+                onClose={closeView}
+                mode="fullscreen"
+                onStartFollowUp={() => {
+                  if (meeting.meetingId) {
+                    closeView()
+                    openFollowUp(meeting.meetingId)
+                  }
+                }}
+              />
+            </div>
+          </div>
         </div>
       )}
+
+      {/* F2: Sidebar Results Panel */}
+      <MeetingResultsPanel />
     </>
   )
 }
@@ -743,6 +765,31 @@ function SceneContent({
 
     return { roomBots, parkingBots }
   }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames, debugRoomMap])
+
+  // ─── Populate meeting store with room layout for pathfinding ──
+  useEffect(() => {
+    if (!layout) return
+    const roomPosMap = new Map<string, { x: number; z: number; doorX: number; doorZ: number }>()
+    for (const { room, position } of layout.roomPositions) {
+      roomPosMap.set(room.id, {
+        x: position[0],
+        z: position[2],
+        doorX: position[0], // door is centered on room X
+        doorZ: position[2] - ROOM_SIZE / 2, // door is on -Z side
+      })
+    }
+    meetingGatheringState.roomPositions = roomPosMap
+    meetingGatheringState.roomSize = ROOM_SIZE
+
+    // Populate agent → room mapping
+    const agentRooms = new Map<string, string>()
+    for (const [roomId, bots] of roomBots) {
+      for (const bot of bots) {
+        agentRooms.set(bot.key, roomId)
+      }
+    }
+    meetingGatheringState.agentRooms = agentRooms
+  }, [layout, roomBots])
 
   // Build room positions for CameraController (MUST be before early return to respect hooks rules)
   const cameraRoomPositions = useMemo(
@@ -1435,6 +1482,7 @@ export function World3DView(props: World3DViewProps) {
     <WorldFocusProvider>
       <MeetingProvider>
         <World3DViewInner {...props} />
+        <ToastContainer />
       </MeetingProvider>
     </WorldFocusProvider>
   )

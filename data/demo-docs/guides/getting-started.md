@@ -9,34 +9,27 @@
 ## Installation
 
 ```bash
-# Clone the repo
 git clone https://github.com/ekinsolbot/crewhub.git
 cd crewhub
-
-# Start everything
 make dev
 ```
 
 ## First Steps
 
 ### 1. Create a Room
-Click on the empty plot in the 3D world to create your first room. Give it a name and pick a theme.
+Click on the empty plot in the 3D world to create your first room.
 
 ### 2. Add an Agent
-Agents are automatically discovered from your OpenClaw connections. Assign one to your room.
+Agents are auto-discovered from OpenClaw connections. Assign one to your room.
 
 ### 3. Create a Task
-Open the Zen panel → Activity tab → New Task. Describe what you want done.
+Open Zen panel → Activity → New Task. Describe what you want done.
 
-### 4. Watch It Work
-The agent picks up the task and starts working. Watch the session history in real-time.
+### 4. Run an AI Meeting
+Open Zen panel → Meetings → New Meeting. Select participants and set a goal.
 
 ### 5. Try PropMaker
-Visit the Creator room. Type a description like "a cozy fireplace" and watch a 3D prop appear!
+Visit the Creator room. Type "a cozy fireplace" and watch a 3D prop appear!
 
-## Tips
-
-- Use **fullscreen mode** (⤢ icon) on any detail panel for a better view
-- **Search** sessions with the filter bar in fullscreen
-- **Sort** messages oldest-first or newest-first
-- Check **token usage** in session details to monitor costs
+### 6. Watch Bot Navigation
+Assign a bot to a different room and watch it pathfind through the 3D world.

@@ -265,6 +265,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
                     "assignee": req.assignee or "",
                     "source": f"meeting:{meeting_id}",
                     "priority": req.priority or "medium",
+                    "columnId": "todo",
                 },
                 timeout=aiohttp.ClientTimeout(total=10),
             )
