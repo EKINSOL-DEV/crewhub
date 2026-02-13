@@ -65,6 +65,8 @@ export interface StartMeetingParams {
   num_rounds?: number
   round_topics?: string[]
   max_tokens_per_turn?: number
+  document_path?: string
+  document_context?: string
 }
 
 const INITIAL_STATE: MeetingState = {

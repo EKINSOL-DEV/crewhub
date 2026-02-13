@@ -16,18 +16,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import type { AgentRuntime } from '@/hooks/useAgentsRegistry'
 import type { StartMeetingParams } from '@/hooks/useMeeting'
-
-// ─── Default round topics ───────────────────────────────────────
-
-const DEFAULT_TOPICS = [
-  'What have you been working on?',
-  'What will you focus on next?',
-  'Any blockers, risks, or things you need help with?',
-  'Open discussion',
-  'Wrap-up and action items',
-]
+import { useProjectMarkdownFiles } from '@/hooks/useProjectMarkdownFiles'
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -57,12 +49,16 @@ export function MeetingDialog({
   meetingInProgress = false,
   onViewProgress,
 }: MeetingDialogProps) {
-  const [goal, setGoal] = useState('')
+  const [topic, setTopic] = useState('')
   const [numRounds, setNumRounds] = useState(3)
   const [selectedAgents, setSelectedAgents] = useState<Set<string>>(new Set())
-  const [topics, setTopics] = useState<string[]>(DEFAULT_TOPICS.slice(0, 3))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [documentPath, setDocumentPath] = useState<string>('')
+  const [documentContext, setDocumentContext] = useState<string>('')
+
+  // Fetch markdown files for document selector
+  const { files: markdownFiles, loading: filesLoading } = useProjectMarkdownFiles(projectId)
 
   // Available agents (only those with a session key, i.e., existing agents)
   const availableAgents = useMemo(
@@ -74,11 +70,11 @@ export function MeetingDialog({
   const prevOpenRef = useRef(false)
   useEffect(() => {
     if (open && !prevOpenRef.current) {
-      const allKeys = new Set(availableAgents.map(a => a.agent.agent_session_key!))
-      setSelectedAgents(allKeys)
-      setGoal('')
+      setSelectedAgents(new Set())
+      setTopic('')
       setNumRounds(3)
-      setTopics(DEFAULT_TOPICS.slice(0, 3))
+      setDocumentPath('')
+      setDocumentContext('')
       setError(null)
     }
     prevOpenRef.current = open
@@ -102,22 +98,7 @@ export function MeetingDialog({
   }
 
   const updateRounds = (n: number) => {
-    const clamped = Math.max(1, Math.min(5, n))
-    setNumRounds(clamped)
-    // Adjust topics array
-    const newTopics = [...topics]
-    while (newTopics.length < clamped) {
-      newTopics.push(DEFAULT_TOPICS[newTopics.length] || `Round ${newTopics.length + 1}`)
-    }
-    setTopics(newTopics.slice(0, clamped))
-  }
-
-  const updateTopic = (idx: number, value: string) => {
-    setTopics(prev => {
-      const next = [...prev]
-      next[idx] = value
-      return next
-    })
+    setNumRounds(Math.max(1, Math.min(5, n)))
   }
 
   const handleStart = async () => {
@@ -128,14 +109,22 @@ export function MeetingDialog({
     setLoading(true)
     setError(null)
     try {
+      // Generate round topics from single topic
+      const meetingTopic = topic || 'Team sync'
+      const roundTopics = Array.from({ length: numRounds }, (_, i) =>
+        numRounds > 1 ? `${meetingTopic} - Round ${i + 1}` : meetingTopic
+      )
+
       await onStart({
-        title: goal ? `Meeting: ${goal}` : 'Daily Standup',
-        goal: goal || 'Team sync',
+        title: topic ? `Meeting: ${topic}` : 'Team Meeting',
+        goal: meetingTopic,
         room_id: roomId,
         project_id: projectId,
         participants: Array.from(selectedAgents),
         num_rounds: numRounds,
-        round_topics: topics,
+        round_topics: roundTopics,
+        document_path: documentPath || undefined,
+        document_context: documentContext || undefined,
       })
       onOpenChange(false)
     } catch (err: unknown) {
@@ -154,7 +143,7 @@ export function MeetingDialog({
             <DialogTitle>⚠️ Meeting in Progress</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            A stand-up meeting is already running in this room. View it or wait for it to complete.
+            A meeting is already running in this room. View it or wait for it to complete.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -180,7 +169,7 @@ export function MeetingDialog({
             <DialogTitle>⚠️ Not Enough Bots</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Assign at least 2 bots to this room to start a stand-up meeting.
+            Assign at least 2 bots to this room to start a meeting.
           </p>
           <DialogFooter>
             <Button onClick={() => onOpenChange(false)}>OK</Button>
@@ -194,18 +183,18 @@ export function MeetingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>📋 Start Stand-Up Meeting</DialogTitle>
+          <DialogTitle>📋 Start Meeting</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Meeting Goal */}
+          {/* Meeting Topic */}
           <div className="space-y-1.5">
-            <Label htmlFor="meeting-goal">Meeting Goal</Label>
+            <Label htmlFor="meeting-topic">Meeting Topic</Label>
             <Input
-              id="meeting-goal"
-              placeholder="Daily standup for development progress"
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
+              id="meeting-topic"
+              placeholder="What should we discuss?"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
             />
           </div>
 
@@ -276,24 +265,44 @@ export function MeetingDialog({
             </div>
           </div>
 
-          {/* Round Topics */}
-          <div className="space-y-1.5">
-            <Label>Round Topics</Label>
-            <div className="space-y-2">
-              {topics.map((topic, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-5 flex-shrink-0">
-                    {i + 1}.
-                  </span>
-                  <Input
-                    value={topic}
-                    onChange={(e) => updateTopic(i, e.target.value)}
-                    className="text-sm"
-                  />
+          {/* Document Selector */}
+          {projectId && (
+            <div className="space-y-1.5">
+              <Label htmlFor="document-select">Optional: Attach Document</Label>
+              <select
+                id="document-select"
+                value={documentPath}
+                onChange={(e) => setDocumentPath(e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Select markdown file from project...</option>
+                {filesLoading && <option disabled>Loading files...</option>}
+                {markdownFiles.map(f => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+              {documentPath && (
+                <div className="text-xs text-muted-foreground">
+                  📄 {documentPath}
                 </div>
-              ))}
+              )}
             </div>
-          </div>
+          )}
+
+          {/* Additional context */}
+          {documentPath && (
+            <div className="space-y-1.5">
+              <Label htmlFor="document-context">Additional context (before document)</Label>
+              <Textarea
+                id="document-context"
+                placeholder="Add intro, questions, or focus areas before the document content..."
+                value={documentContext}
+                onChange={(e) => setDocumentContext(e.target.value)}
+                className="text-sm"
+                rows={3}
+              />
+            </div>
+          )}
 
           {/* Project (read-only) */}
           {projectName && (

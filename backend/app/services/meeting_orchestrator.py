@@ -87,6 +87,7 @@ class MeetingOrchestrator:
         self.project_id = project_id
         self.participants: list[dict] = []  # resolved agent info dicts
         self._cancelled = False
+        self._document_content: Optional[str] = None  # loaded document text
 
     # =========================================================================
     # Public API
@@ -97,6 +98,10 @@ class MeetingOrchestrator:
         try:
             # Resolve participants
             self.participants = [await _resolve_agent_info(p) for p in self.config.participants]
+
+            # Load document if provided
+            if self.config.document_path:
+                self._document_content = await self._load_document()
 
             # Save participants to DB
             await self._save_participants()
@@ -258,13 +263,88 @@ class MeetingOrchestrator:
                 "progress_pct": progress,
             })
 
+    async def _load_document(self) -> Optional[str]:
+        """Load a document from the project folder for meeting context."""
+        doc_path = self.config.document_path
+        if not doc_path:
+            return None
+
+        # Security: no path traversal
+        if ".." in doc_path or doc_path.startswith("/"):
+            logger.warning(f"Rejected document path (traversal attempt): {doc_path}")
+            return None
+
+        # Find project folder
+        project_dir = None
+        if self.project_id:
+            try:
+                async with aiosqlite.connect(DB_PATH) as db:
+                    db.row_factory = aiosqlite.Row
+                    async with db.execute(
+                        "SELECT folder_path, name FROM projects WHERE id = ?",
+                        (self.project_id,),
+                    ) as cur:
+                        row = await cur.fetchone()
+                        if row and row["folder_path"]:
+                            expanded = Path(os.path.expanduser(row["folder_path"]))
+                            if expanded.exists():
+                                project_dir = expanded
+                        if not project_dir and row:
+                            import re
+                            slug = re.sub(r'[^a-zA-Z0-9]+', '-', row["name"]).strip('-')
+                            candidate = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects" / slug
+                            if candidate.exists():
+                                project_dir = candidate
+            except Exception as e:
+                logger.warning(f"Could not resolve project folder: {e}")
+
+        if not project_dir:
+            logger.warning(f"Project folder not found for document: {doc_path}")
+            return None
+
+        full_path = (project_dir / doc_path).resolve()
+        # Security: ensure within project dir
+        if not str(full_path).startswith(str(project_dir.resolve())):
+            logger.warning(f"Document path escapes project dir: {full_path}")
+            return None
+
+        if not full_path.exists():
+            logger.warning(f"Document not found: {full_path}")
+            return None
+
+        # Size check (1MB max)
+        if full_path.stat().st_size > 1_000_000:
+            logger.warning(f"Document too large: {full_path}")
+            return None
+
+        try:
+            content = full_path.read_text(encoding="utf-8")
+            # Token budget: ~4 chars per token, limit to ~3000 tokens worth
+            max_chars = 12000
+            if len(content) > max_chars:
+                content = content[:max_chars] + "\n\n[... document truncated for token budget ...]"
+                logger.info(f"Document truncated to {max_chars} chars")
+            return content
+        except Exception as e:
+            logger.warning(f"Failed to read document: {e}")
+            return None
+
     def _build_turn_prompt(self, participant: dict, round_num: int, round_topic: str,
                            previous_responses: list[dict]) -> str:
         lines = [
-            f"You are {participant['name']} in a stand-up meeting.",
+            f"You are {participant['name']} in a meeting.",
         ]
         if self.goal:
             lines.append(f"Meeting topic: {self.goal}")
+
+        # Document context
+        if self._document_content:
+            doc_name = self.config.document_path or "document"
+            lines.append(f"\nDocument: {doc_name}")
+            if self.config.document_context:
+                lines.append(f"\n{self.config.document_context}")
+            lines.append(f"\n--- Document Content ---\n{self._document_content}\n---")
+
         lines.append(f"\nRound {round_num}/{self.config.num_rounds}: {round_topic}")
 
         if previous_responses:
@@ -332,7 +412,7 @@ class MeetingOrchestrator:
         today = datetime.now().strftime("%Y-%m-%d")
         participant_names = ", ".join(p["name"] for p in self.participants)
 
-        synthesis_prompt = f"""Synthesize this stand-up meeting into a structured summary.
+        synthesis_prompt = f"""Synthesize this meeting into a structured summary.
 
 Meeting: {self.title}
 Goal: {self.goal}
@@ -342,7 +422,7 @@ Participants: {participant_names}
 {all_rounds}
 
 Output format (Markdown):
-# Stand-Up Meeting — {today}
+# Meeting — {today}
 
 ## Goal
 {self.goal or self.title}
@@ -400,7 +480,7 @@ Respond ONLY with the markdown. No extra commentary."""
         meetings_dir.mkdir(parents=True, exist_ok=True)
 
         # Find unique filename
-        base_name = f"{today}-standup"
+        base_name = f"{today}-meeting"
         filename = f"{base_name}.md"
         counter = 2
         while (meetings_dir / filename).exists():
@@ -560,7 +640,7 @@ async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
         await db.execute(
             """INSERT INTO meetings (id, title, goal, state, room_id, project_id, config_json, current_round, current_turn, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?)""",
-            (meeting_id, title or "Daily Standup", goal, MeetingState.GATHERING.value,
+            (meeting_id, title or "Team Meeting", goal, MeetingState.GATHERING.value,
              room_id, project_id, config.model_dump_json(), now),
         )
         await db.commit()
@@ -569,7 +649,7 @@ async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
     orchestrator = MeetingOrchestrator(
         meeting_id=meeting_id,
         config=config,
-        title=title or "Daily Standup",
+        title=title or "Team Meeting",
         goal=goal,
         room_id=room_id,
         project_id=project_id,
@@ -580,7 +660,7 @@ async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
     # Return meeting object
     return Meeting(
         id=meeting_id,
-        title=title or "Daily Standup",
+        title=title or "Team Meeting",
         goal=goal,
         state=MeetingState.GATHERING,
         room_id=room_id,

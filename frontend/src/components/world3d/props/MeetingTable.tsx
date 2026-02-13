@@ -163,7 +163,7 @@ export function MeetingTable({
               fontFamily: 'system-ui, sans-serif',
             }}
           >
-            📋 Start Stand-Up Meeting
+            📋 Start Meeting
           </div>
         </Html>
       )}

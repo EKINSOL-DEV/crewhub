@@ -1,7 +1,9 @@
 """Projects API routes."""
+import os
 import re
 import time
 import logging
+from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from app.db.database import get_db
@@ -10,6 +12,9 @@ from app.routes.sse import broadcast
 
 # Default projects base path (configurable via settings)
 DEFAULT_PROJECTS_BASE_PATH = "~/Projects"
+
+# Synology Drive base for project documents
+SYNOLOGY_PROJECTS_BASE = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects"
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -132,6 +137,86 @@ async def get_project(project_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get project {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{project_id}/markdown-files")
+async def list_markdown_files(project_id: str):
+    """List markdown files in a project's Synology Drive folder."""
+    try:
+        db = await get_db()
+        try:
+            db.row_factory = lambda cursor, row: dict(
+                zip([col[0] for col in cursor.description], row)
+            )
+            async with db.execute(
+                "SELECT * FROM projects WHERE id = ?", (project_id,)
+            ) as cursor:
+                project = await cursor.fetchone()
+                if not project:
+                    raise HTTPException(status_code=404, detail="Project not found")
+        finally:
+            await db.close()
+
+        # Determine project folder path
+        folder_path = project.get("folder_path", "")
+        project_dir = None
+
+        # Try Synology Drive path first
+        if folder_path:
+            expanded = Path(os.path.expanduser(folder_path))
+            if expanded.exists():
+                project_dir = expanded
+
+        # Fallback: try project name in Synology projects base
+        if not project_dir:
+            name_slug = re.sub(r'[^a-zA-Z0-9]+', '-', project["name"]).strip('-')
+            candidate = SYNOLOGY_PROJECTS_BASE / name_slug
+            if candidate.exists():
+                project_dir = candidate
+
+        if not project_dir or not project_dir.exists():
+            return {"files": [], "warning": "Project folder not found"}
+
+        # Scan for .md files (max depth 3, max 100 files)
+        resolved_base = project_dir.resolve()
+        md_files: list[str] = []
+        for md_path in sorted(project_dir.rglob("*.md")):
+            # Security: ensure file is within project dir (no symlink escape)
+            try:
+                resolved = md_path.resolve()
+                if not str(resolved).startswith(str(resolved_base)):
+                    continue
+            except (OSError, ValueError):
+                continue
+
+            # Skip hidden dirs and node_modules
+            rel = md_path.relative_to(project_dir)
+            parts = rel.parts
+            if any(p.startswith('.') or p == 'node_modules' for p in parts):
+                continue
+
+            # Max depth 3
+            if len(parts) > 4:
+                continue
+
+            # Skip files > 1MB
+            try:
+                if md_path.stat().st_size > 1_000_000:
+                    continue
+            except OSError:
+                continue
+
+            md_files.append(str(rel))
+            if len(md_files) >= 100:
+                break
+
+        return {"files": md_files}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to list markdown files for project {project_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

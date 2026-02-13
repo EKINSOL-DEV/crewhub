@@ -104,7 +104,7 @@ export function MeetingProgressView({
       <div className="px-4 py-3 border-b">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">
-            📋 {meeting.title || 'Stand-Up Meeting'}
+            📋 {meeting.title || 'Meeting'}
           </h3>
           {meeting.phase === 'gathering' && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">

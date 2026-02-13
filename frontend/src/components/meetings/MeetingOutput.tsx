@@ -75,7 +75,7 @@ export function MeetingOutput({ meeting, onClose, onRetryFetch, outputLoading, o
       <div className="px-4 py-3 border-b">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">
-            ✅ Stand-Up Complete — {dateStr}
+            ✅ Meeting Complete — {dateStr}
           </h3>
           {!showTranscript ? (
             <button

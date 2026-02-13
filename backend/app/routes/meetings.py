@@ -45,6 +45,8 @@ async def api_start_meeting(req: StartMeetingRequest):
         num_rounds=req.num_rounds,
         round_topics=round_topics,
         max_tokens_per_turn=req.max_tokens_per_turn,
+        document_path=req.document_path,
+        document_context=req.document_context,
     )
 
     try:

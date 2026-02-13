@@ -38,6 +38,8 @@ class MeetingConfig(BaseModel):
     ])
     max_tokens_per_turn: int = 200
     synthesis_max_tokens: int = 500
+    document_path: Optional[str] = None
+    document_context: Optional[str] = None
 
 
 class MeetingParticipant(BaseModel):
@@ -91,7 +93,7 @@ class Meeting(BaseModel):
 
 
 class StartMeetingRequest(BaseModel):
-    title: str = "Daily Standup"
+    title: str = "Team Meeting"
     goal: str = ""
     room_id: Optional[str] = None
     project_id: Optional[str] = None
@@ -99,3 +101,5 @@ class StartMeetingRequest(BaseModel):
     num_rounds: int = Field(default=3, ge=1, le=5)
     round_topics: Optional[list[str]] = None
     max_tokens_per_turn: int = 200
+    document_path: Optional[str] = None
+    document_context: Optional[str] = None
