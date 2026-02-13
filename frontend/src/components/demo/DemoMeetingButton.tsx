@@ -27,7 +27,7 @@ export function DemoMeetingButton({ onClick, isActive, isComplete }: DemoMeeting
       onMouseLeave={() => setHovered(false)}
       style={{
         position: 'absolute',
-        bottom: '80px',
+        bottom: '140px',
         left: '50%',
         transform: `translateX(-50%) scale(${hovered && !isActive ? 1.05 : 1})`,
         zIndex: 30,
