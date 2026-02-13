@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 14  # v14: AI-Orchestrated Meetings
+SCHEMA_VERSION = 15  # v15: Post-Meeting Workflow (action items, follow-up, history)
 
 
 async def init_database():
@@ -498,9 +498,52 @@ async def init_database():
                 CREATE INDEX IF NOT EXISTS idx_meeting_turns_meeting ON meeting_turns(meeting_id)
             """)
 
-            # Set initial version if not exists
+            # ========================================
+            # v15: Post-Meeting Workflow
+            # ========================================
+
+            # Add parent_meeting_id for follow-up meetings
+            try:
+                await db.execute("ALTER TABLE meetings ADD COLUMN parent_meeting_id TEXT")
+            except Exception:
+                pass  # Column already exists
+
+            # Meeting action items table
             await db.execute("""
-                INSERT OR IGNORE INTO schema_version (version) 
+                CREATE TABLE IF NOT EXISTS meeting_action_items (
+                    id TEXT PRIMARY KEY,
+                    meeting_id TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    assignee_agent_id TEXT,
+                    priority TEXT DEFAULT 'medium',
+                    status TEXT DEFAULT 'pending',
+                    planner_task_id TEXT,
+                    execution_session_id TEXT,
+                    sort_order INTEGER DEFAULT 0,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    FOREIGN KEY (meeting_id) REFERENCES meetings(id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meeting_action_items_meeting
+                ON meeting_action_items(meeting_id)
+            """)
+
+            # Indexes for meeting history queries
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meetings_room
+                ON meetings(room_id, created_at DESC)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meetings_project
+                ON meetings(project_id, created_at DESC)
+            """)
+
+            # Set schema version (advance if needed)
+            await db.execute("""
+                INSERT OR REPLACE INTO schema_version (version)
                 VALUES (?)
             """, (SCHEMA_VERSION,))
             
