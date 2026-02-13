@@ -27,6 +27,15 @@ function TurnEntry({ turn }: { turn: MeetingTurn }) {
           ? '⊘'
           : '○'
 
+  const statusLabel =
+    turn.status === 'done'
+      ? 'Completed'
+      : turn.status === 'speaking'
+        ? 'Speaking'
+        : turn.status === 'skipped'
+          ? 'Skipped'
+          : 'Waiting'
+
   const statusColor =
     turn.status === 'done'
       ? 'text-green-500'
@@ -39,7 +48,7 @@ function TurnEntry({ turn }: { turn: MeetingTurn }) {
   return (
     <div className="py-2 border-b border-border/40 last:border-0">
       <div className="flex items-start gap-2">
-        <span className={`text-sm mt-0.5 ${statusColor}`}>{statusIcon}</span>
+        <span className={`text-sm mt-0.5 ${statusColor}`} aria-label={statusLabel} role="img">{statusIcon}</span>
         <div className="flex-1 min-w-0">
           <span className="text-sm font-medium">{turn.agentName}</span>
           {turn.status === 'speaking' && (

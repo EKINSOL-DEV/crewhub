@@ -37,6 +37,13 @@ export function MeetingTable({
   const glowRef = useRef<THREE.Mesh>(null)
   const activeRingRef = useRef<THREE.Mesh>(null)
 
+  // Cleanup cursor on unmount to prevent leaking pointer cursor
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = 'auto'
+    }
+  }, [])
+
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
 

@@ -8,7 +8,7 @@
  * - Active speaker info for 3D highlights
  */
 
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { useMeeting, type StartMeetingParams, type MeetingState, type MeetingPhase } from '@/hooks/useMeeting'
 import { updateMeetingGatheringState, resetMeetingGatheringState } from '@/lib/meetingStore'
 
@@ -82,25 +82,23 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     return calculateGatheringPositions(tablePos.x, tablePos.z, meeting.participants)
   }, [meeting.isActive, meeting.phase, meeting.participants, tablePos.x, tablePos.z])
 
-  // Auto-switch views based on phase changes
-  const prevPhaseRef = useState<MeetingPhase>('idle')
-  if (meeting.phase !== prevPhaseRef[0]) {
-    const prev = prevPhaseRef[0]
+  // Auto-switch views based on phase changes (in useEffect, not render)
+  const prevPhaseRef = useRef<MeetingPhase>('idle')
+  useEffect(() => {
+    const prev = prevPhaseRef.current
     const next = meeting.phase
-    prevPhaseRef[0] = next
+    if (prev === next) return
+    prevPhaseRef.current = next
 
     if (prev === 'idle' && (next === 'gathering' || next === 'round')) {
       setView('progress')
     }
     if (next === 'complete' && view === 'progress') {
-      // Fetch output and switch to output view
       meeting.fetchOutput()
       setView('output')
     }
-    if (next === 'cancelled' || next === 'error') {
-      // Keep progress view to show the error/cancelled state
-    }
-  }
+    // cancelled/error: keep progress view to show the state
+  }, [meeting.phase, view, meeting])
 
   const openDialog = useCallback(() => setView('dialog'), [])
   const closeDialog = useCallback(() => setView('none'), [])

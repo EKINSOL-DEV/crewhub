@@ -7,9 +7,11 @@
  * Updated from MeetingContext whenever meeting state changes.
  */
 
+import type { MeetingPhase } from '@/hooks/useMeeting'
+
 export interface MeetingGatheringState {
   active: boolean
-  phase: string
+  phase: MeetingPhase
   /** Map of agentId → target position for gathering */
   positions: Map<string, { x: number; z: number; angle: number }>
   /** Currently speaking agent ID */

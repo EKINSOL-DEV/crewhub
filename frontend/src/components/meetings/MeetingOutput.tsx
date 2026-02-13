@@ -13,6 +13,9 @@ import type { MeetingState, MeetingRound } from '@/hooks/useMeeting'
 interface MeetingOutputProps {
   meeting: MeetingState
   onClose: () => void
+  onRetryFetch?: () => Promise<unknown>
+  outputLoading?: boolean
+  outputError?: string | null
 }
 
 function FullTranscript({ rounds }: { rounds: MeetingRound[] }) {
@@ -37,7 +40,7 @@ function FullTranscript({ rounds }: { rounds: MeetingRound[] }) {
   )
 }
 
-export function MeetingOutput({ meeting, onClose }: MeetingOutputProps) {
+export function MeetingOutput({ meeting, onClose, onRetryFetch, outputLoading, outputError }: MeetingOutputProps) {
   const [showTranscript, setShowTranscript] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -124,9 +127,18 @@ export function MeetingOutput({ meeting, onClose }: MeetingOutputProps) {
               return <p key={i} className="text-sm text-muted-foreground">{line}</p>
             })}
           </div>
+        ) : outputError ? (
+          <div className="text-center py-8 space-y-3">
+            <div className="text-sm text-destructive">⚠️ {outputError}</div>
+            {onRetryFetch && (
+              <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>
+                🔄 Retry
+              </Button>
+            )}
+          </div>
         ) : (
           <div className="text-sm text-muted-foreground text-center py-8">
-            Loading output…
+            {outputLoading ? 'Loading output…' : 'Loading output…'}
           </div>
         )}
       </ScrollArea>

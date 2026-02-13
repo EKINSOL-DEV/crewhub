@@ -50,6 +50,8 @@ export interface MeetingState {
   rounds: MeetingRound[]
   outputMd: string | null
   outputPath: string | null
+  outputLoading: boolean
+  outputError: string | null
   error: string | null
   durationSeconds: number | null
 }
@@ -78,6 +80,8 @@ const INITIAL_STATE: MeetingState = {
   rounds: [],
   outputMd: null,
   outputPath: null,
+  outputLoading: false,
+  outputError: null,
   error: null,
   durationSeconds: null,
 }
@@ -102,7 +106,7 @@ export function useMeeting() {
           title: data.title || 'Meeting',
           participants: data.participants || [],
           currentRound: 0,
-          totalRounds: 0,
+          totalRounds: data.num_rounds || data.total_rounds || 0,
           progressPct: 0,
           rounds: [],
           outputMd: null,
@@ -156,6 +160,7 @@ export function useMeeting() {
             ...prev,
             phase,
             currentRound: data.current_round ?? prev.currentRound,
+            totalRounds: data.total_rounds ?? prev.totalRounds,
             progressPct: data.progress_pct ?? prev.progressPct,
             rounds: newRounds,
           }
@@ -368,15 +373,28 @@ export function useMeeting() {
   const fetchOutput = useCallback(async () => {
     const meetingId = stateRef.current.meetingId
     if (!meetingId) return null
-    const res = await fetch(`${API_BASE}/meetings/${meetingId}/output`)
-    if (!res.ok) return null
-    const data = await res.json()
-    setState(prev => ({
-      ...prev,
-      outputMd: data.output_md || null,
-      outputPath: data.output_path || null,
-    }))
-    return data
+    setState(prev => ({ ...prev, outputLoading: true, outputError: null }))
+    try {
+      const res = await fetch(`${API_BASE}/meetings/${meetingId}/output`)
+      if (!res.ok) {
+        const errText = `Failed to load output (HTTP ${res.status})`
+        setState(prev => ({ ...prev, outputLoading: false, outputError: errText }))
+        return null
+      }
+      const data = await res.json()
+      setState(prev => ({
+        ...prev,
+        outputMd: data.output_md || null,
+        outputPath: data.output_path || null,
+        outputLoading: false,
+        outputError: null,
+      }))
+      return data
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Failed to load output'
+      setState(prev => ({ ...prev, outputLoading: false, outputError: errMsg }))
+      return null
+    }
   }, [])
 
   const reset = useCallback(() => {

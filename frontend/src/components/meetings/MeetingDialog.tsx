@@ -5,7 +5,7 @@
  * round count, editable round topics, auto-detected project.
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -71,16 +71,18 @@ export function MeetingDialog({
   )
 
   // Initialize selected agents when dialog opens
-  const prevOpenRef = useState(false)
-  if (open && !prevOpenRef[0]) {
-    const allKeys = new Set(availableAgents.map(a => a.agent.agent_session_key!))
-    setSelectedAgents(allKeys)
-    setGoal('')
-    setNumRounds(3)
-    setTopics(DEFAULT_TOPICS.slice(0, 3))
-    setError(null)
-  }
-  prevOpenRef[0] = open
+  const prevOpenRef = useRef(false)
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      const allKeys = new Set(availableAgents.map(a => a.agent.agent_session_key!))
+      setSelectedAgents(allKeys)
+      setGoal('')
+      setNumRounds(3)
+      setTopics(DEFAULT_TOPICS.slice(0, 3))
+      setError(null)
+    }
+    prevOpenRef.current = open
+  }, [open, availableAgents])
 
   const toggleAgent = (key: string) => {
     setSelectedAgents(prev => {
