@@ -634,11 +634,24 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   }, [placements, cellSize, gridWidth, gridDepth])
 
   // Global drag handler for when mouse moves outside the prop
+  // Handles both pre-drag threshold detection and active dragging
   const handleGlobalPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
     if (isDragging) {
       handleDragMove(e)
+      return
     }
-  }, [isDragging, handleDragMove])
+    // Pre-drag: detect threshold even when pointer left the prop mesh
+    if (isMoving && !hasDragStarted.current && pointerStartPos.current) {
+      const dx = e.nativeEvent.clientX - pointerStartPos.current.x
+      const dy = e.nativeEvent.clientY - pointerStartPos.current.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      if (distance >= DRAG_THRESHOLD) {
+        hasDragStarted.current = true
+        startDrag(e)
+        document.body.style.cursor = 'grabbing'
+      }
+    }
+  }, [isDragging, isMoving, handleDragMove, startDrag])
 
   const handleGlobalPointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
     if (isDragging) {
@@ -646,8 +659,12 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
       endDrag()
       pointerStartPos.current = null
       hasDragStarted.current = false
+    } else if (isMoving) {
+      // Release during pre-drag phase (pointer was down but didn't pass threshold)
+      pointerStartPos.current = null
+      hasDragStarted.current = false
     }
-  }, [isDragging, endDrag])
+  }, [isDragging, isMoving, endDrag])
 
   // Reset cursor when movement ends
   useEffect(() => {
@@ -658,8 +675,10 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
 
   return (
     <group>
-      {/* Invisible drag capture plane - only visible during drag */}
-      {isDragging && (
+      {/* Invisible capture plane - active when prop is selected (isMoving) or being dragged.
+          Catches pointer events even when cursor leaves the small prop mesh, enabling
+          smooth drag threshold detection and continuous drag movement. */}
+      {isMoving && (
         <mesh
           position={[0, 0.2, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
