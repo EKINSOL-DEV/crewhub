@@ -20,6 +20,10 @@
 
 ---
 
+> ⚠️ **Security Notice:** CrewHub ships with **no authentication** by default and is designed for local/trusted networks. Public or internet-facing deployment requires enabling auth, HTTPS, and firewall rules. See **[SECURITY.md](SECURITY.md)** for details.
+
+---
+
 ## What is CrewHub?
 
 CrewHub is an **open-source monitoring dashboard** for AI coding agents. It connects to [OpenClaw](https://openclaw.dev), Claude Code, and Codex CLI — giving you live visibility into every agent, session, and task.
@@ -263,12 +267,6 @@ Join us on **[Discord](https://discord.gg/Bfupkmvp)** — chat with the team, sh
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 > **Note:** This project uses a Contributor License Agreement (CLA). You'll be asked to sign it when opening your first pull request.
-
-## ⚠️ Security Notice
-
-CrewHub ships with **no authentication** by default and is designed for local/trusted networks. Public or internet-facing deployment requires enabling auth, HTTPS, and firewall rules.
-
-See **[SECURITY.md](SECURITY.md)** for production hardening guidelines.
 
 ## 📚 Research Project
 
