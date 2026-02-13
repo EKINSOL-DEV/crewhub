@@ -148,8 +148,23 @@ async def test_db(tmp_path):
                 response_detail INTEGER NOT NULL DEFAULT 2,
                 approach_style INTEGER NOT NULL DEFAULT 3,
                 custom_instructions TEXT DEFAULT '',
+                identity_anchor TEXT DEFAULT '',
+                surface_rules TEXT DEFAULT '',
+                identity_locked BOOLEAN DEFAULT FALSE,
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL
+            )
+        """)
+        await db.execute("""
+            CREATE TABLE agent_surfaces (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+                surface TEXT NOT NULL,
+                format_rules TEXT DEFAULT '',
+                enabled BOOLEAN DEFAULT TRUE,
+                created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+                updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+                UNIQUE(agent_id, surface)
             )
         """)
         now = int(time.time() * 1000)

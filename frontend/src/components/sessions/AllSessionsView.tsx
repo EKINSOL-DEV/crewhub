@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react"
 import { type MinionSession } from "@/lib/api"
 import { SESSION_CONFIG } from "@/lib/sessionConfig"
+import { hasActiveSubagents } from "@/lib/minionUtils"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,11 +33,15 @@ function formatRelativeTime(timestamp: number): string {
   return `${Math.floor(diff / 86400000)}d ago`
 }
 
-function getSessionStatus(session: MinionSession): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } {
+function getSessionStatusForTable(session: MinionSession, allSessions?: MinionSession[]): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } {
   if (session.abortedLastRun) return { label: "Aborted", variant: "destructive" }
   const now = Date.now()
   const lastUpdate = session.updatedAt
   if (now - lastUpdate < SESSION_CONFIG.tableActiveThresholdMs) return { label: "Active", variant: "default" }
+
+  // Check for supervising (has active subagents)
+  if (allSessions && hasActiveSubagents(session, allSessions)) return { label: "Supervising", variant: "default" }
+
   if (now - lastUpdate < SESSION_CONFIG.tableIdleThresholdMs) return { label: "Idle", variant: "secondary" }
   return { label: "Stale", variant: "outline" }
 }
@@ -84,7 +89,7 @@ export function AllSessionsView({ sessions }: AllSessionsViewProps) {
           comparison = getDisplayName(a).localeCompare(getDisplayName(b))
           break
         case "status":
-          comparison = getSessionStatus(a).label.localeCompare(getSessionStatus(b).label)
+          comparison = getSessionStatusForTable(a, sessions).label.localeCompare(getSessionStatusForTable(b, sessions).label)
           break
         case "model":
           comparison = (a.model || "").localeCompare(b.model || "")
@@ -190,7 +195,7 @@ export function AllSessionsView({ sessions }: AllSessionsViewProps) {
               </div>
             ) : (
               filteredSessions.map((session) => {
-                const status = getSessionStatus(session)
+                const status = getSessionStatusForTable(session, sessions)
                 return (
                   <div 
                     key={session.key}

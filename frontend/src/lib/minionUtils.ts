@@ -6,7 +6,7 @@ type MinionContentBlock = SessionContentBlock
 import { getTaskEmoji, generateFriendlyName } from "./friendlyNames"
 import { SESSION_CONFIG } from "./sessionConfig"
 
-export type SessionStatus = "active" | "idle" | "sleeping"
+export type SessionStatus = "active" | "idle" | "sleeping" | "supervising"
 
 export interface ActivityEvent {
   timestamp: number
@@ -16,14 +16,46 @@ export interface ActivityEvent {
   role?: "user" | "assistant" | "system"
 }
 
-export function getSessionStatus(session: MinionSession, options?: { hasActiveChildren?: boolean }): SessionStatus {
-  // If this session has active child sessions (subagents), it's actively working
-  if (options?.hasActiveChildren) return "active"
-  
+export function getSessionStatus(session: MinionSession, allSessions?: MinionSession[]): SessionStatus {
   const timeSinceUpdate = Date.now() - session.updatedAt
   if (timeSinceUpdate < SESSION_CONFIG.statusActiveThresholdMs) return "active"
+
+  // Check if this session has active subagents (parent appears idle but subagent is working)
+  if (allSessions && hasActiveSubagents(session, allSessions)) return "supervising"
+
   if (timeSinceUpdate < SESSION_CONFIG.statusSleepingThresholdMs) return "idle"
   return "sleeping"
+}
+
+/**
+ * Check if a session has active child/subagent sessions.
+ * Detects parent-child relationships by:
+ * 1. Session key prefix matching (e.g. agent:dev:main → agent:dev:subagent:*)
+ * 2. Label containing parent session reference
+ * 3. Cron sessions spawning subagents for the same agent
+ */
+export function hasActiveSubagents(session: MinionSession, allSessions: MinionSession[]): boolean {
+  const key = session.key || ""
+  const parts = key.split(":")
+
+  // Only check for main sessions and cron sessions (they spawn subagents)
+  if (parts.length < 3) return false
+  const agentId = parts[1] // e.g. "dev", "main"
+  const sessionType = parts[2] // e.g. "main", "cron"
+  if (sessionType !== "main" && sessionType !== "cron") return false
+
+  const now = Date.now()
+  return allSessions.some(s => {
+    if (s.key === key) return false // skip self
+    const childParts = s.key.split(":")
+    if (childParts.length < 3) return false
+    // Must be same agent and a subagent/spawn type
+    if (childParts[1] !== agentId) return false
+    if (!childParts[2]?.includes("subagent") && !childParts[2]?.includes("spawn")) return false
+    // Child must be recently active (within active threshold)
+    const childAge = now - s.updatedAt
+    return childAge < SESSION_CONFIG.statusActiveThresholdMs
+  })
 }
 
 export function getStatusIndicator(status: SessionStatus): { emoji: string; color: string; label: string } {
@@ -32,6 +64,8 @@ export function getStatusIndicator(status: SessionStatus): { emoji: string; colo
       return { emoji: "🟢", color: "text-green-500", label: "Active" }
     case "idle":
       return { emoji: "🟡", color: "text-yellow-500", label: "Idle" }
+    case "supervising":
+      return { emoji: "👁️", color: "text-blue-500", label: "Supervising" }
     case "sleeping":
       return { emoji: "💤", color: "text-gray-400", label: "Sleeping" }
   }
@@ -112,17 +146,18 @@ function extractDomain(url: string): string {
   }
 }
 
-export function getCurrentActivity(session: MinionSession, options?: { hasActiveChildren?: boolean }): string {
+export function getCurrentActivity(session: MinionSession, allSessions?: MinionSession[]): string {
   const activities = parseRecentActivities(session, 1)
   if (activities.length === 0) {
-    // If the session has active child sessions, show working status
-    if (options?.hasActiveChildren) return "Working on tasks..."
-    
-    const status = getSessionStatus(session)
+    const status = getSessionStatus(session, allSessions)
     const timeSinceUpdate = Date.now() - session.updatedAt
     if (status === "active") {
       if (timeSinceUpdate < 30000) return "Working..."
       return "Ready and listening"
+    }
+    if (status === "supervising") {
+      const subagentLabel = getActiveSubagentLabel(session, allSessions || [])
+      return subagentLabel ? `Supervising: ${subagentLabel}` : "Supervising subagent"
     }
     if (status === "idle") return "Waiting for tasks"
     return "Sleeping 💤"
@@ -206,6 +241,28 @@ export function getSessionDisplayName(session: MinionSession, customName?: strin
   return parts.pop() || key
 }
 
+/**
+ * Get the label/name of the most recently active subagent for a parent session.
+ */
+function getActiveSubagentLabel(session: MinionSession, allSessions: MinionSession[]): string | null {
+  const agentId = (session.key || "").split(":")[1]
+  if (!agentId) return null
+
+  const now = Date.now()
+  const activeChildren = allSessions
+    .filter(s => {
+      const parts = s.key.split(":")
+      return parts[1] === agentId
+        && (parts[2]?.includes("subagent") || parts[2]?.includes("spawn"))
+        && (now - s.updatedAt) < SESSION_CONFIG.statusActiveThresholdMs
+    })
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+
+  if (activeChildren.length === 0) return null
+  const child = activeChildren[0]
+  return child.label || generateFriendlyName(child.key)
+}
+
 export { getTaskEmoji, generateFriendlyName }
 
 export function formatModel(model: string): string {
@@ -243,15 +300,14 @@ export function getIdleOpacity(idleSeconds: number): number {
 /** Default parking idle threshold in seconds (reads from centralized config) */
 export const DEFAULT_PARKING_IDLE_THRESHOLD = SESSION_CONFIG.parkingIdleThresholdS
 
-export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?: boolean, idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD, hasActiveChildren?: boolean): boolean {
+export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?: boolean, idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD, allSessions?: MinionSession[]): boolean {
   // Fixed agents (agent:*:main) always stay in their room
   if (/^agent:[a-zA-Z0-9_-]+:main$/.test(session.key)) return false
 
-  // Sessions with active children (subagents) should not be parked
-  if (hasActiveChildren) return false
-
   const idleSeconds = getIdleTimeSeconds(session)
-  const status = getSessionStatus(session)
+  const status = getSessionStatus(session, allSessions)
+  // Supervising sessions should NOT be parked — they're actively delegating work
+  if (status === "supervising") return false
   if (status === "sleeping") return true
   if (isActivelyRunning) return false
   return idleSeconds > idleThresholdSeconds

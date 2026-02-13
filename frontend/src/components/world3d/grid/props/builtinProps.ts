@@ -6,6 +6,8 @@ import { propRegistry } from '@/lib/modding/registries'
 import type { PropEntry } from './PropRegistry'
 
 // Static prop components
+import { MeetingTableProp } from '../../props/MeetingTable'
+
 import {
   DeskProp,
   MonitorProp,
@@ -104,6 +106,9 @@ function registerBuiltinProps(): void {
     'standing-desk-with-monitor': { component: StandingDeskWithMonitorProp, mountType: 'floor', yOffset: 0.16 },
     'desk-with-monitor-headset':  { component: DeskWithMonitorHeadsetProp,  mountType: 'floor', yOffset: 0.16 },
     'desk-with-monitor-tablet':   { component: DeskWithMonitorTabletProp,   mountType: 'floor', yOffset: 0.16 },
+
+    // ─── Meeting table (interactive) ────────────────────────────────
+    'meeting-table':              { component: MeetingTableProp,            mountType: 'floor', yOffset: 0.16 },
 
     // ─── Interaction-only (no visual) ────────────────────────────
     'work-point':                 { component: NullProp,                    mountType: 'floor', yOffset: 0 },

@@ -75,18 +75,54 @@ describe('getSessionStatus', () => {
     expect(getSessionStatus(makeMockSession({ updatedAt: Date.now() - 60 * 60 * 1000 }))).toBe('sleeping')
   })
 
-  it('returns active for stale session with active children', () => {
-    expect(getSessionStatus(
-      makeMockSession({ updatedAt: Date.now() - 60 * 60 * 1000 }),
-      { hasActiveChildren: true }
-    )).toBe('active')
+  it('returns supervising when parent has active subagents', () => {
+    const parentSession = makeMockSession({
+      key: 'agent:dev:main',
+      updatedAt: Date.now() - 10 * 60 * 1000, // 10 min ago (would be idle)
+    })
+    const activeSubagent = makeMockSession({
+      key: 'agent:dev:subagent:abc123',
+      updatedAt: Date.now() - 30 * 1000, // 30s ago (active)
+    })
+    const allSessions = [parentSession, activeSubagent]
+    expect(getSessionStatus(parentSession, allSessions)).toBe('supervising')
   })
 
-  it('returns active for idle session with active children', () => {
-    expect(getSessionStatus(
-      makeMockSession({ updatedAt: Date.now() - 10 * 60 * 1000 }),
-      { hasActiveChildren: true }
-    )).toBe('active')
+  it('returns idle when subagents are also idle', () => {
+    const parentSession = makeMockSession({
+      key: 'agent:dev:main',
+      updatedAt: Date.now() - 10 * 60 * 1000,
+    })
+    const staleSubagent = makeMockSession({
+      key: 'agent:dev:subagent:abc123',
+      updatedAt: Date.now() - 20 * 60 * 1000, // 20 min ago (not active)
+    })
+    const allSessions = [parentSession, staleSubagent]
+    expect(getSessionStatus(parentSession, allSessions)).toBe('idle')
+  })
+
+  it('does not mark subagent as supervising its siblings', () => {
+    const subagent1 = makeMockSession({
+      key: 'agent:dev:subagent:abc',
+      updatedAt: Date.now() - 10 * 60 * 1000,
+    })
+    const subagent2 = makeMockSession({
+      key: 'agent:dev:subagent:def',
+      updatedAt: Date.now() - 30 * 1000,
+    })
+    expect(getSessionStatus(subagent1, [subagent1, subagent2])).toBe('idle')
+  })
+
+  it('cron session shows supervising when its subagent is active', () => {
+    const cronSession = makeMockSession({
+      key: 'agent:main:cron:daily',
+      updatedAt: Date.now() - 10 * 60 * 1000,
+    })
+    const subagent = makeMockSession({
+      key: 'agent:main:subagent:task1',
+      updatedAt: Date.now() - 30 * 1000,
+    })
+    expect(getSessionStatus(cronSession, [cronSession, subagent])).toBe('supervising')
   })
 })
 
@@ -101,6 +137,12 @@ describe('getStatusIndicator', () => {
     const indicator = getStatusIndicator('idle')
     expect(indicator.emoji).toBe('🟡')
     expect(indicator.label).toBe('Idle')
+  })
+
+  it('returns supervising indicator', () => {
+    const indicator = getStatusIndicator('supervising')
+    expect(indicator.emoji).toBe('👁️')
+    expect(indicator.label).toBe('Supervising')
   })
 
   it('returns sleeping indicator', () => {

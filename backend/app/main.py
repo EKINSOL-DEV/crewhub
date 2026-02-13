@@ -21,10 +21,12 @@ from app.routes.creator import router as creator_router
 from app.routes.personas import router as personas_router
 from app.routes import agent_files
 from app.routes.standups import router as standups_router
+from app.routes.meetings import router as meetings_router
 from app.db.database import init_database, check_database_health
 from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
 from app.routes.sse import broadcast
+from app.services.meeting_recovery import recover_stuck_meetings
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +162,14 @@ async def lifespan(app: FastAPI):
     await manager.start(health_interval=30.0)
     logger.info("ConnectionManager started")
     
+    # Recover stuck meetings from previous restart
+    try:
+        recovered = await recover_stuck_meetings()
+        if recovered:
+            logger.info(f"Recovered {recovered} stuck meetings on startup")
+    except Exception as e:
+        logger.error(f"Meeting recovery failed: {e}")
+    
     # Start background polling task
     _polling_task = asyncio.create_task(poll_sessions_loop())
     logger.info("Started sessions polling task")
@@ -250,6 +260,9 @@ app.include_router(personas_router, prefix="/api", tags=["personas"])
 
 # Phase 6: Stand-up Meetings
 app.include_router(standups_router, prefix="/api/standups", tags=["standups"])
+
+# Phase 6b: AI-Orchestrated Meetings
+app.include_router(meetings_router, prefix="/api/meetings", tags=["meetings"])
 
 
 @app.get("/")

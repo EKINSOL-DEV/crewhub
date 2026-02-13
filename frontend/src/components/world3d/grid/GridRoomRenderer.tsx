@@ -303,14 +303,18 @@ interface SelectionIndicatorProps {
   position: [number, number, number]
   isMoving: boolean
   isDragging: boolean
+  isOverInvalid: boolean
   onSave: () => void
   onRotate: () => void
   onCancel: () => void
   onDelete: () => void
 }
 
-function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, onCancel, onDelete }: SelectionIndicatorProps) {
+function SelectionIndicator({ position, isMoving, isDragging, isOverInvalid, onSave, onRotate, onCancel, onDelete }: SelectionIndicatorProps) {
   const hudPos: [number, number, number] = [position[0], position[1] + 1.8, position[2]]
+  
+  // Color changes based on state: red for invalid, green for dragging, orange for selected
+  const ringColor = isOverInvalid ? '#ff4444' : isDragging ? '#00ff88' : '#ffa500'
 
   return (
     <>
@@ -318,7 +322,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
       <mesh position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.8, 1.0, 32]} />
         <meshBasicMaterial 
-          color={isDragging ? '#00ff88' : '#ffa500'} 
+          color={ringColor} 
           transparent 
           opacity={0.7}
           side={THREE.DoubleSide}
@@ -329,7 +333,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
       <mesh position={[position[0], 0.01, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.85, 32]} />
         <meshBasicMaterial 
-          color={isDragging ? '#00ff88' : '#ffa500'} 
+          color={ringColor} 
           transparent 
           opacity={0.15}
           side={THREE.DoubleSide}
@@ -398,7 +402,7 @@ function SelectionIndicator({ position, isMoving, isDragging, onSave, onRotate, 
             
             {/* Hint text */}
             <div style={HUD_HINT_STYLE}>
-              {isDragging ? 'Release to drop' : 'Drag to move • Arrows/WASD'}
+              {isOverInvalid ? '⛔ Can\'t place here' : isDragging ? 'Release to drop' : 'Drag to move • Arrows/WASD'}
             </div>
           </div>
         </Html>
@@ -483,6 +487,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     selectedProp,
     isMoving,
     isDragging,
+    isOverInvalid,
     startLongPress,
     cancelLongPress: _cancelLongPress,
     handlePointerUp,
@@ -559,11 +564,12 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
       }
     }
     
-    // If dragging, update position
+    // If dragging, update position and cursor
     if (isDragging) {
       handleDragMove(e)
+      document.body.style.cursor = isOverInvalid ? 'not-allowed' : 'grabbing'
     }
-  }, [isMoving, isDragging, startDrag, handleDragMove])
+  }, [isMoving, isDragging, isOverInvalid, startDrag, handleDragMove])
   
   const handlePointerUpEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
@@ -634,11 +640,25 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   }, [placements, cellSize, gridWidth, gridDepth])
 
   // Global drag handler for when mouse moves outside the prop
+  // Handles both pre-drag threshold detection and active dragging
   const handleGlobalPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
     if (isDragging) {
       handleDragMove(e)
+      document.body.style.cursor = isOverInvalid ? 'not-allowed' : 'grabbing'
+      return
     }
-  }, [isDragging, handleDragMove])
+    // Pre-drag: detect threshold even when pointer left the prop mesh
+    if (isMoving && !hasDragStarted.current && pointerStartPos.current) {
+      const dx = e.nativeEvent.clientX - pointerStartPos.current.x
+      const dy = e.nativeEvent.clientY - pointerStartPos.current.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      if (distance >= DRAG_THRESHOLD) {
+        hasDragStarted.current = true
+        startDrag(e)
+        document.body.style.cursor = 'grabbing'
+      }
+    }
+  }, [isDragging, isMoving, isOverInvalid, handleDragMove, startDrag])
 
   const handleGlobalPointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
     if (isDragging) {
@@ -646,8 +666,12 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
       endDrag()
       pointerStartPos.current = null
       hasDragStarted.current = false
+    } else if (isMoving) {
+      // Release during pre-drag phase (pointer was down but didn't pass threshold)
+      pointerStartPos.current = null
+      hasDragStarted.current = false
     }
-  }, [isDragging, endDrag])
+  }, [isDragging, isMoving, endDrag])
 
   // Reset cursor when movement ends
   useEffect(() => {
@@ -658,8 +682,10 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
 
   return (
     <group>
-      {/* Invisible drag capture plane - only visible during drag */}
-      {isDragging && (
+      {/* Invisible capture plane - active when prop is selected (isMoving) or being dragged.
+          Catches pointer events even when cursor leaves the small prop mesh, enabling
+          smooth drag threshold detection and continuous drag movement. */}
+      {isMoving && (
         <mesh
           position={[0, 0.2, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
@@ -765,6 +791,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
                 position={worldPos} 
                 isMoving={isMoving} 
                 isDragging={isDragging}
+                isOverInvalid={isOverInvalid}
                 onSave={confirmMovement}
                 onRotate={rotateProp}
                 onCancel={cancelMovement}

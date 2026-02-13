@@ -18,6 +18,9 @@ export function DevToolbar() {
   const [count, setCount] = useState(getErrorCount)
   const [open, setOpen] = useState(false)
   const [flash, setFlash] = useState(false)
+  const [visible, setVisible] = useState(() => {
+    try { return localStorage.getItem('dev-error-viewer-visible') === 'true' } catch { return false }
+  })
 
   useEffect(() => {
     let prevCount = getErrorCount()
@@ -32,7 +35,24 @@ export function DevToolbar() {
     })
   }, [])
 
+  // F6 toggle
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'F6') {
+        e.preventDefault()
+        setVisible(v => {
+          const next = !v
+          try { localStorage.setItem('dev-error-viewer-visible', String(next)) } catch {}
+          return next
+        })
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [])
+
   if (import.meta.env.PROD) return null
+  if (!visible) return null
 
   return (
     <>

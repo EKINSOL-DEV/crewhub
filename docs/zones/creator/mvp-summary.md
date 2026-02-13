@@ -74,6 +74,30 @@ The `usePropMovement` hook implements:
 - **Single-user** — no collaboration or prop sharing between users.
 - **Preview lighting** — preview panel lighting may differ from the room, so colors can look slightly different after placement.
 
+## Cool Props to Try
+
+Here are some prompts that produce great results with the Prop Maker:
+
+| Prompt | What You Get |
+|--------|-------------|
+| A glowing mushroom lamp | Bioluminescent cap with emissive spots on a wooden stem |
+| A steampunk gear clock | Brass gears, clock face, and industrial housing |
+| A floating crystal orb | Translucent crystal hovering above a stone pedestal |
+| A retro arcade cabinet | Colorful cabinet with screen, joystick, and buttons |
+| A neon "OPEN" sign | Glowing text panel with wall mount bracket |
+| A tiny robot figurine | Boxy body with antenna, arms, and glowing eyes |
+| A campfire with logs | Crossed log cylinders with emissive flame cones |
+| A golden trophy cup | Shiny metallic cup on a tiered base |
+| A stack of colorful books | Three thin boxes in red, blue, and green |
+| A wooden treasure chest | Box body with curved lid and metal band details |
+
+💡 **Tips for best results:**
+- Mention **colors and materials** ("blue metallic", "wooden", "glowing")
+- Describe **shape and proportions** ("tall thin", "small round")
+- Keep it **simple** — primitives work best for clear, recognizable objects
+- Use the **Hybrid mode** with a template base for higher quality
+- **Iterate** with feedback to refine — try "make it more colorful" or "add blinking lights"
+
 ## Next Steps
 
 1. **Prop animations** — add an `animation` field to `PropPart` (rotate, float, pulse)

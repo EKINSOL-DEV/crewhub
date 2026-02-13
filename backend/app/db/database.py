@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 12  # v12: Stand-up meetings tables
+SCHEMA_VERSION = 15  # v15: Post-Meeting Workflow (action items, follow-up, history)
 
 
 async def init_database():
@@ -398,9 +398,152 @@ async def init_database():
                 ON standups(created_at DESC)
             """)
 
-            # Set initial version if not exists
+            # ========================================
+            # v13: Agent Identity Pattern
+            # ========================================
+            # Add identity fields to agent_personas: core identity statement + surface rules
+            try:
+                await db.execute("ALTER TABLE agent_personas ADD COLUMN identity_anchor TEXT DEFAULT ''")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                await db.execute("ALTER TABLE agent_personas ADD COLUMN surface_rules TEXT DEFAULT ''")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                await db.execute("ALTER TABLE agent_personas ADD COLUMN identity_locked BOOLEAN DEFAULT FALSE")
+            except Exception:
+                pass  # Column already exists
+
+            # Create agent_surfaces table: per-surface format adaptation rules
             await db.execute("""
-                INSERT OR IGNORE INTO schema_version (version) 
+                CREATE TABLE IF NOT EXISTS agent_surfaces (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+                    surface TEXT NOT NULL,
+                    format_rules TEXT DEFAULT '',
+                    enabled BOOLEAN DEFAULT TRUE,
+                    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+                    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+                    UNIQUE(agent_id, surface)
+                )
+            """)
+
+            # ========================================
+            # v14: AI-Orchestrated Meetings
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS meetings (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL DEFAULT 'Daily Standup',
+                    goal TEXT NOT NULL DEFAULT '',
+                    state TEXT NOT NULL DEFAULT 'gathering',
+                    room_id TEXT,
+                    project_id TEXT,
+                    config_json TEXT,
+                    output_md TEXT,
+                    output_path TEXT,
+                    current_round INTEGER DEFAULT 0,
+                    current_turn INTEGER DEFAULT 0,
+                    started_at INTEGER,
+                    completed_at INTEGER,
+                    cancelled_at INTEGER,
+                    error_message TEXT,
+                    created_by TEXT DEFAULT 'user',
+                    created_at INTEGER NOT NULL,
+                    FOREIGN KEY (room_id) REFERENCES rooms(id),
+                    FOREIGN KEY (project_id) REFERENCES projects(id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_participants (
+                    meeting_id TEXT NOT NULL,
+                    agent_id TEXT NOT NULL,
+                    agent_name TEXT DEFAULT '',
+                    agent_icon TEXT,
+                    agent_color TEXT,
+                    sort_order INTEGER DEFAULT 0,
+                    PRIMARY KEY (meeting_id, agent_id),
+                    FOREIGN KEY (meeting_id) REFERENCES meetings(id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_turns (
+                    id TEXT PRIMARY KEY,
+                    meeting_id TEXT NOT NULL,
+                    round_num INTEGER NOT NULL,
+                    turn_index INTEGER NOT NULL,
+                    agent_id TEXT NOT NULL,
+                    agent_name TEXT,
+                    prompt_tokens INTEGER,
+                    response_tokens INTEGER,
+                    response_text TEXT,
+                    started_at INTEGER,
+                    completed_at INTEGER,
+                    FOREIGN KEY (meeting_id) REFERENCES meetings(id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meetings_state ON meetings(state)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meetings_created ON meetings(created_at DESC)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meeting_turns_meeting ON meeting_turns(meeting_id)
+            """)
+
+            # ========================================
+            # v15: Post-Meeting Workflow
+            # ========================================
+
+            # Add parent_meeting_id for follow-up meetings
+            try:
+                await db.execute("ALTER TABLE meetings ADD COLUMN parent_meeting_id TEXT")
+            except Exception:
+                pass  # Column already exists
+
+            # Meeting action items table
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_action_items (
+                    id TEXT PRIMARY KEY,
+                    meeting_id TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    assignee_agent_id TEXT,
+                    priority TEXT DEFAULT 'medium',
+                    status TEXT DEFAULT 'pending',
+                    planner_task_id TEXT,
+                    execution_session_id TEXT,
+                    sort_order INTEGER DEFAULT 0,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    FOREIGN KEY (meeting_id) REFERENCES meetings(id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meeting_action_items_meeting
+                ON meeting_action_items(meeting_id)
+            """)
+
+            # Indexes for meeting history queries
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meetings_room
+                ON meetings(room_id, created_at DESC)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meetings_project
+                ON meetings(project_id, created_at DESC)
+            """)
+
+            # Set schema version (advance if needed)
+            await db.execute("""
+                INSERT OR REPLACE INTO schema_version (version)
                 VALUES (?)
             """, (SCHEMA_VERSION,))
             

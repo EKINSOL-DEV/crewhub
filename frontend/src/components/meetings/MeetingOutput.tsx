@@ -1,0 +1,471 @@
+/**
+ * MeetingOutput — Rich structured results view after meeting completes.
+ *
+ * Redesigned to match FullscreenOverlay (markdown viewer) layout:
+ * - Top bar: title left, X close right, action buttons below
+ * - Left sidebar: view menu (structured, actions, transcript, raw)
+ * - Main content: switches based on active view
+ */
+
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { MarkdownViewer } from '@/components/markdown/MarkdownViewer'
+import { MeetingViewMenu, type MeetingView } from './MeetingViewMenu'
+import type { MeetingState, MeetingRound } from '@/hooks/useMeeting'
+import { parseMeetingOutput, type ParsedActionItem } from '@/lib/parseMeetingOutput'
+import { showToast } from '@/lib/toast'
+import { API_BASE } from '@/lib/api'
+
+// ─── Types ──────────────────────────────────────────────────────
+
+interface MeetingOutputProps {
+  meeting: MeetingState
+  onClose: () => void
+  onRetryFetch?: () => Promise<unknown>
+  outputLoading?: boolean
+  outputError?: string | null
+  mode?: 'dialog' | 'sidebar' | 'fullscreen'
+  onOpenInSidebar?: () => void
+  onStartFollowUp?: () => void
+}
+
+// ─── Action Item Card ───────────────────────────────────────────
+
+function ActionItemCard({
+  item,
+  meetingId,
+  onStatusChange,
+}: {
+  item: ParsedActionItem & { status?: string }
+  meetingId: string | null
+  onStatusChange: (id: string, status: string) => void
+}) {
+  const [loading, setLoading] = useState<'planner' | 'execute' | null>(null)
+
+  const priorityColor = {
+    high: 'bg-red-500/15 text-red-700 dark:text-red-400',
+    medium: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400',
+    low: 'bg-green-500/15 text-green-700 dark:text-green-400',
+  }[item.priority]
+
+  const handleAddToPlanner = async () => {
+    if (!meetingId) return
+    setLoading('planner')
+    try {
+      const res = await fetch(`${API_BASE}/meetings/${meetingId}/action-items/${item.id}/to-planner`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: item.text, assignee: item.assignee, priority: item.priority }),
+      })
+      if (res.ok) {
+        onStatusChange(item.id, 'planned')
+        showToast({ message: '✅ Added to Planner' })
+      } else {
+        const err = await res.json().catch(() => ({ detail: 'Failed' }))
+        showToast({ message: `❌ ${err.detail || 'Failed to add to Planner'}` })
+      }
+    } catch {
+      showToast({ message: '❌ Planner not reachable' })
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const handleExecute = async () => {
+    if (!meetingId) return
+    if (!confirm(`Execute action item with ${item.assignee || 'agent'}?\n\n"${item.text}"`)) return
+    setLoading('execute')
+    try {
+      const res = await fetch(`${API_BASE}/meetings/${meetingId}/action-items/${item.id}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agent_id: item.assignee }),
+      })
+      if (res.ok) {
+        onStatusChange(item.id, 'executing')
+        showToast({ message: '🤖 Agent executing...' })
+      } else {
+        const err = await res.json().catch(() => ({ detail: 'Failed' }))
+        showToast({ message: `❌ ${err.detail || 'Failed to execute'}` })
+      }
+    } catch {
+      showToast({ message: '❌ Failed to reach agent' })
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const status = item.status || 'pending'
+
+  return (
+    <div style={{
+      border: '1px solid hsl(var(--border))',
+      borderRadius: 8,
+      padding: 12,
+      background: 'hsl(var(--card))',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <input type="checkbox" checked={item.checked || status === 'done'} readOnly style={{ marginTop: 3, borderRadius: 3 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 13, margin: 0, lineHeight: 1.5 }}>{item.text}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            {item.assignee && <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>👤 {item.assignee}</span>}
+            <Badge variant="secondary" className={`text-xs ${priorityColor}`}>{item.priority}</Badge>
+            {status !== 'pending' && (
+              <Badge variant="outline" className="text-xs">
+                {status === 'planned' ? '📋 Planned' : status === 'executing' ? '⚡ Executing' : status === 'done' ? '✅ Done' : status === 'failed' ? '❌ Failed' : status}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+      {status === 'pending' && (
+        <div style={{ display: 'flex', gap: 8, marginLeft: 24, marginTop: 8 }}>
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleAddToPlanner} disabled={loading !== null}>
+            {loading === 'planner' ? '...' : '➕ Planner'}
+          </Button>
+          {item.assignee && (
+            <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleExecute} disabled={loading !== null}>
+              {loading === 'execute' ? '...' : '🤖 Execute'}
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Transcript View ────────────────────────────────────────────
+
+function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
+  if (rounds.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+        No transcript available
+      </div>
+    )
+  }
+  return (
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      {rounds.map((round) => (
+        <div key={round.roundNum} style={{ marginBottom: 24 }}>
+          <div style={{
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: 'hsl(var(--muted-foreground))',
+            borderBottom: '1px solid hsl(var(--border))',
+            paddingBottom: 6,
+            marginBottom: 12,
+          }}>
+            Round {round.roundNum}: {round.topic}
+          </div>
+          {round.turns.map((turn, i) => (
+            <div key={i} style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--foreground))', marginBottom: 2 }}>
+                {turn.agentName}
+              </div>
+              <p style={{
+                fontSize: 13,
+                color: 'hsl(var(--muted-foreground))',
+                whiteSpace: 'pre-wrap',
+                margin: 0,
+                lineHeight: 1.6,
+              }}>
+                {turn.response || '(no response)'}
+              </p>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Actions View ───────────────────────────────────────────────
+
+function ActionsView({
+  items,
+  meetingId,
+  onStatusChange,
+}: {
+  items: (ParsedActionItem & { status?: string })[]
+  meetingId: string | null
+  onStatusChange: (id: string, status: string) => void
+}) {
+  if (items.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+        No action items found
+      </div>
+    )
+  }
+  return (
+    <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--muted-foreground))', marginBottom: 4 }}>
+        {items.length} Action Item{items.length !== 1 ? 's' : ''}
+      </div>
+      {items.map(item => (
+        <ActionItemCard key={item.id} item={item} meetingId={meetingId} onStatusChange={onStatusChange} />
+      ))}
+    </div>
+  )
+}
+
+// ─── Main Component ─────────────────────────────────────────────
+
+export function MeetingOutput({
+  meeting,
+  onClose,
+  onRetryFetch,
+  outputLoading,
+  outputError,
+  mode = 'dialog',
+  onOpenInSidebar,
+  onStartFollowUp,
+}: MeetingOutputProps) {
+  const [copied, setCopied] = useState(false)
+  const [activeView, setActiveView] = useState<MeetingView>('structured')
+  const [itemStatuses, setItemStatuses] = useState<Record<string, string>>({})
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  const parsed = useMemo(
+    () => parseMeetingOutput(meeting.outputMd || ''),
+    [meeting.outputMd]
+  )
+
+  // Save action items to backend when parsed
+  useEffect(() => {
+    if (parsed.actionItems.length > 0 && meeting.meetingId) {
+      fetch(`${API_BASE}/meetings/${meeting.meetingId}/action-items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: parsed.actionItems.map(ai => ({
+            id: ai.id,
+            text: ai.text,
+            assignee_agent_id: ai.assignee,
+            priority: ai.priority,
+          })),
+        }),
+      }).catch(() => {})
+    }
+  }, [parsed.actionItems, meeting.meetingId])
+
+  const handleCopy = useCallback(async () => {
+    const text = meeting.outputMd || 'No output available'
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }, [meeting.outputMd])
+
+  const handleStatusChange = useCallback((id: string, status: string) => {
+    setItemStatuses(prev => ({ ...prev, [id]: status }))
+  }, [])
+
+  // Build markdown without the Action Items section
+  const markdownWithoutActions = useMemo(() => {
+    if (!meeting.outputMd) return ''
+    const lines = meeting.outputMd.split('\n')
+    const result: string[] = []
+    let inActionItems = false
+    for (const line of lines) {
+      if (/^##\s+(Action Items|Next Steps)/i.test(line)) {
+        inActionItems = true
+        continue
+      }
+      if (inActionItems && /^##\s/.test(line)) {
+        inActionItems = false
+      }
+      if (!inActionItems) {
+        result.push(line)
+      }
+    }
+    return result.join('\n')
+  }, [meeting.outputMd])
+
+  // Derive title
+  const meetingTitle = meeting.title || 'Meeting Results'
+  const duration = meeting.durationSeconds ? `${Math.round(meeting.durationSeconds)}s` : null
+
+  const actionItems = parsed.actionItems.map(ai => ({ ...ai, status: itemStatuses[ai.id] }))
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'hsl(var(--background))' }}>
+      {/* ── Header ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 20px',
+        borderBottom: '1px solid hsl(var(--border))',
+        background: 'hsl(var(--card))',
+        flexShrink: 0,
+      }}>
+        <div>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>
+            ✅ {meetingTitle}
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            {duration && (
+              <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>⏱ {duration}</span>
+            )}
+            {meeting.outputPath && (
+              <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', opacity: 0.7 }}>
+                💾 {meeting.outputPath.split('/').pop()}
+              </span>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          title="Close (Esc)"
+          style={{
+            background: 'hsl(var(--secondary))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 6,
+            width: 32,
+            height: 32,
+            fontSize: 16,
+            cursor: 'pointer',
+            color: 'hsl(var(--foreground))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* ── Action buttons bar ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 20px',
+        borderBottom: '1px solid hsl(var(--border))',
+        background: 'hsl(var(--card))',
+        flexShrink: 0,
+      }}>
+        <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleCopy}>
+          {copied ? '✓ Copied' : '📋 Copy'}
+        </Button>
+        {onStartFollowUp && (
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={onStartFollowUp}>
+            🔄 Follow-up
+          </Button>
+        )}
+        {mode === 'dialog' && onOpenInSidebar && !onStartFollowUp && (
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={onOpenInSidebar}>
+            📌 Sidebar
+          </Button>
+        )}
+      </div>
+
+      {/* ── Body: Menu + Content ── */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Left sidebar menu */}
+        <MeetingViewMenu
+          activeView={activeView}
+          onSelect={setActiveView}
+          actionCount={actionItems.length}
+          roundCount={meeting.rounds.length}
+        />
+
+        {/* Content area */}
+        <div
+          ref={contentRef}
+          style={{
+            flex: 1,
+            overflow: 'auto',
+            padding: '24px 32px',
+            background: 'hsl(var(--background))',
+          }}
+        >
+          {meeting.outputMd ? (
+            activeView === 'structured' ? (
+              <div style={{ maxWidth: 720, margin: '0 auto' }}>
+                <MarkdownViewer content={markdownWithoutActions} className="text-sm" />
+                {actionItems.length > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <h2 style={{
+                      fontSize: 20,
+                      fontWeight: 600,
+                      marginBottom: 12,
+                      color: 'hsl(var(--foreground))',
+                      borderBottom: '1px solid hsl(var(--border))',
+                      paddingBottom: 6,
+                    }}>
+                      ✅ Action Items
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {actionItems.map(item => (
+                        <ActionItemCard
+                          key={item.id}
+                          item={item}
+                          meetingId={meeting.meetingId}
+                          onStatusChange={handleStatusChange}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : activeView === 'actions' ? (
+              <ActionsView
+                items={actionItems}
+                meetingId={meeting.meetingId}
+                onStatusChange={handleStatusChange}
+              />
+            ) : activeView === 'transcript' ? (
+              <TranscriptView rounds={meeting.rounds} />
+            ) : (
+              /* Raw markdown */
+              <div style={{ maxWidth: 720, margin: '0 auto' }}>
+                <pre style={{
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  color: 'hsl(var(--foreground))',
+                  background: 'hsl(var(--secondary) / 0.3)',
+                  padding: 16,
+                  borderRadius: 8,
+                  border: '1px solid hsl(var(--border))',
+                  margin: 0,
+                }}>
+                  {meeting.outputMd}
+                </pre>
+              </div>
+            )
+          ) : outputError ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ fontSize: 13, color: 'hsl(var(--destructive))', marginBottom: 12 }}>⚠️ {outputError}</div>
+              {onRetryFetch && (
+                <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>🔄 Retry</Button>
+              )}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+              {outputLoading ? 'Loading output…' : 'No output available'}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

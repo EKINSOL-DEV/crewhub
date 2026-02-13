@@ -32,8 +32,12 @@ function getStatusBadge(status: BotStatus): { label: string; color: string; bg: 
       return { label: 'Active', color: '#15803d', bg: '#dcfce7' }
     case 'idle':
       return { label: 'Idle', color: '#a16207', bg: '#fef9c3' }
+    case 'supervising':
+      return { label: 'Supervising', color: '#7c3aed', bg: '#ede9fe' }
     case 'sleeping':
       return { label: 'Sleeping', color: '#6b7280', bg: '#f3f4f6' }
+    case 'meeting':
+      return { label: 'In Meeting', color: '#0369a1', bg: '#e0f2fe' }
     case 'offline':
       return { label: 'Offline', color: '#991b1b', bg: '#fecaca' }
   }

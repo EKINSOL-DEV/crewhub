@@ -59,6 +59,7 @@ interface UsePropMovementReturn {
   selectedProp: SelectedProp | null
   isMoving: boolean
   isDragging: boolean
+  isOverInvalid: boolean
   startLongPress: (key: string, propId: string, gridX: number, gridZ: number, rotation: number, span?: { w: number; d: number }) => void
   cancelLongPress: () => void
   handlePointerUp: () => void
@@ -91,6 +92,7 @@ export function usePropMovement({
   const [selectedProp, setSelectedProp] = useState<SelectedProp | null>(null)
   const [isMoving, setIsMoving] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [isOverInvalid, setIsOverInvalid] = useState(false)
   const [, setPendingClear] = useState(false)
   const placementsRef = useRef(placements)
   placementsRef.current = placements // Always keep ref in sync (avoids stale closures)
@@ -239,10 +241,17 @@ export function usePropMovement({
       return p
     })
 
-    // Optimistically update UI
+    // Optimistically update UI BEFORE clearing selection to prevent flash-back.
+    // We update placements first, then clear selection in the same tick via
+    // a microtask to ensure React batches both updates together.
     onUpdate(updatedPlacements)
 
-    // Save to API
+    // Clear selection synchronously — React 18 batches these with the onUpdate above
+    setSelectedProp(null)
+    setIsMoving(false)
+    setPendingClear(false)
+
+    // Save to API (fire-and-forget with revert on failure)
     try {
       const response = await fetch(`${apiBaseUrl}/blueprints/${blueprintId}/move-prop`, {
         method: 'PATCH',
@@ -261,25 +270,13 @@ export function usePropMovement({
         console.error('Failed to save prop movement:', await response.text())
         // Revert on failure
         onUpdate(currentPlacements)
-        setSelectedProp(null)
-        setIsMoving(false)
-        setPendingClear(false)
         return
       }
     } catch (err) {
       console.error('Failed to save prop movement:', err)
       // Revert on failure
       onUpdate(currentPlacements)
-      setSelectedProp(null)
-      setIsMoving(false)
-      setPendingClear(false)
-      return
     }
-
-    // Success - clear selection immediately (optimistic update already applied)
-    setSelectedProp(null)
-    setIsMoving(false)
-    setPendingClear(false)
   }, [selectedProp, onUpdate, apiBaseUrl, blueprintId])
 
   // Cancel movement and restore original position
@@ -356,7 +353,9 @@ export function usePropMovement({
     
     // Check if position is valid and update
     const span = selectedProp.span || { w: 1, d: 1 }
-    if (isValidPosition(newGridX, newGridZ, span, selectedProp.key)) {
+    const valid = isValidPosition(newGridX, newGridZ, span, selectedProp.key)
+    setIsOverInvalid(!valid)
+    if (valid) {
       if (newGridX !== selectedProp.gridX || newGridZ !== selectedProp.gridZ) {
         setSelectedProp(prev => prev ? { ...prev, gridX: newGridX, gridZ: newGridZ } : null)
       }
@@ -366,6 +365,7 @@ export function usePropMovement({
   // End dragging
   const endDrag = useCallback(() => {
     setIsDragging(false)
+    setIsOverInvalid(false)
   }, [])
 
   // Delete prop
@@ -493,6 +493,7 @@ export function usePropMovement({
     selectedProp,
     isMoving,
     isDragging,
+    isOverInvalid,
     startLongPress,
     cancelLongPress,
     handlePointerUp,

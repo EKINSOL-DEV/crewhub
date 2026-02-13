@@ -6,7 +6,7 @@ import type { CrewSession } from '@/lib/api'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { formatSessionKeyAsName } from '@/lib/friendlyNames'
 
-type BotStatus = 'active' | 'idle' | 'sleeping' | 'offline'
+type BotStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
 
 interface RoomInfoTabProps {
   sessions: CrewSession[]
@@ -27,7 +27,9 @@ function getStatusBadge(status: BotStatus): { label: string; color: string; dot:
   switch (status) {
     case 'active': return { label: 'Active', color: '#15803d', dot: '#22c55e' }
     case 'idle': return { label: 'Idle', color: '#a16207', dot: '#eab308' }
+    case 'supervising': return { label: 'Supervising', color: '#7c3aed', dot: '#a78bfa' }
     case 'sleeping': return { label: 'Sleeping', color: '#6b7280', dot: '#9ca3af' }
+    case 'meeting': return { label: 'In Meeting', color: '#0369a1', dot: '#0ea5e9' }
     case 'offline': return { label: 'Offline', color: '#991b1b', dot: '#ef4444' }
   }
 }
@@ -58,7 +60,7 @@ export function RoomInfoTab({ sessions, isActivelyRunning, displayNames, onBotCl
     const name = getDisplayName(s, displayNames.get(s.key))
     return { session: s, status, name }
   }).sort((a, b) => {
-    const order: Record<BotStatus, number> = { active: 0, idle: 1, sleeping: 2, offline: 3 }
+    const order: Record<BotStatus, number> = { active: 0, meeting: 1, supervising: 2, idle: 3, sleeping: 4, offline: 5 }
     return order[a.status] - order[b.status]
   })
 

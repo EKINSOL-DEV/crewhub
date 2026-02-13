@@ -212,9 +212,13 @@ async def build_crewhub_context(
                 if tasks:
                     envelope["tasks"] = tasks
 
-            # Attach persona prompt (not included in hash, stripped before serialization)
+            # Attach persona + identity prompt (not included in hash, stripped before serialization)
             if self_identity and self_identity.get("agentId"):
-                persona_prompt = await get_persona_prompt(self_identity["agentId"])
+                persona_prompt = await get_persona_prompt(
+                    self_identity["agentId"],
+                    channel=channel,
+                    agent_name=self_identity.get("handle"),
+                )
                 if persona_prompt:
                     envelope["_persona_prompt"] = persona_prompt
 
@@ -273,9 +277,17 @@ async def _get_context_version(
     return max(candidates) if candidates else 0
 
 
-async def get_persona_prompt(agent_id: str) -> Optional[str]:
-    """Build persona prompt fragment for an agent, or None if no persona configured."""
-    from app.services.personas import build_persona_prompt
+async def get_persona_prompt(
+    agent_id: str,
+    channel: Optional[str] = None,
+    agent_name: Optional[str] = None,
+) -> Optional[str]:
+    """Build persona + identity prompt fragment for an agent, or None if no persona configured.
+    
+    When a channel is specified, includes identity stability rules and
+    surface-specific format hints (Agent Identity Pattern).
+    """
+    from app.services.personas import build_full_persona_prompt, build_persona_prompt
 
     try:
         async with aiosqlite.connect(DB_PATH) as db:
@@ -286,13 +298,59 @@ async def get_persona_prompt(agent_id: str) -> Optional[str]:
                 row = await cur.fetchone()
             if not row:
                 return None
-            return build_persona_prompt(
-                start_behavior=row["start_behavior"],
-                checkin_frequency=row["checkin_frequency"],
-                response_detail=row["response_detail"],
-                approach_style=row["approach_style"],
-                custom_instructions=row["custom_instructions"] or "",
-            )
+
+            # Read identity fields safely (may not exist on older schemas)
+            identity_anchor = ""
+            surface_rules = ""
+            try:
+                identity_anchor = row["identity_anchor"] or ""
+            except (IndexError, KeyError):
+                pass
+            try:
+                surface_rules = row["surface_rules"] or ""
+            except (IndexError, KeyError):
+                pass
+
+            # Check for per-surface custom rules
+            surface_format = ""
+            if channel:
+                try:
+                    async with db.execute(
+                        "SELECT format_rules, enabled FROM agent_surfaces WHERE agent_id = ? AND surface = ?",
+                        (agent_id, channel.lower())
+                    ) as scur:
+                        srow = await scur.fetchone()
+                    if srow and srow["enabled"]:
+                        surface_format = srow["format_rules"] or ""
+                except Exception:
+                    pass
+
+            # Build full prompt with identity if we have identity data
+            if identity_anchor or channel:
+                full_surface_rules = surface_rules
+                if surface_format:
+                    full_surface_rules = f"{surface_rules}\n{surface_format}".strip() if surface_rules else surface_format
+
+                return build_full_persona_prompt(
+                    start_behavior=row["start_behavior"],
+                    checkin_frequency=row["checkin_frequency"],
+                    response_detail=row["response_detail"],
+                    approach_style=row["approach_style"],
+                    custom_instructions=row["custom_instructions"] or "",
+                    identity_anchor=identity_anchor,
+                    surface_rules=full_surface_rules,
+                    current_surface=channel,
+                    agent_name=agent_name,
+                )
+            else:
+                # Legacy behavior: just persona prompt
+                return build_persona_prompt(
+                    start_behavior=row["start_behavior"],
+                    checkin_frequency=row["checkin_frequency"],
+                    response_detail=row["response_detail"],
+                    approach_style=row["approach_style"],
+                    custom_instructions=row["custom_instructions"] or "",
+                )
     except Exception as e:
         logger.error(f"Failed to get persona prompt for agent {agent_id}: {e}")
         return None
@@ -327,9 +385,10 @@ def format_context_block(envelope: dict) -> str:
 
 (You may have a different personal identity in your workspace files.)"""
 
-    # Persona behavior guidelines (injected if available)
+    # Persona + identity guidelines (injected if available)
+    # The prompt may already include ## Identity and ## Behavior Guidelines sections
     persona_prompt = envelope.get("_persona_prompt")
     if persona_prompt:
-        block += f"\n\n## Behavior Guidelines\n{persona_prompt}"
+        block += f"\n\n{persona_prompt}"
 
     return block

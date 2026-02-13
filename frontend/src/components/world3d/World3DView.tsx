@@ -70,7 +70,7 @@ import { useSessionDisplayNames } from '@/hooks/useSessionDisplayNames'
 import { useToonMaterialProps } from './utils/toonMaterials'
 import { EnvironmentSwitcher } from './environments'
 import { getBotConfigFromSession, isSubagent } from './utils/botVariants'
-import { getSessionDisplayName } from '@/lib/minionUtils'
+import { getSessionDisplayName, hasActiveSubagents } from '@/lib/minionUtils'
 // Fallback chain for room assignment:
 //   1. Explicit assignment (session-room-assignments API)
 //   2. Rules-based routing (room-assignment-rules API, via getRoomForSession)
@@ -88,11 +88,15 @@ import { TasksWindow } from './TasksWindow'
 import { AgentTopBar } from './AgentTopBar'
 import { useTasks } from '@/hooks/useTasks'
 import { WorldFocusProvider, useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
+import { MeetingProvider, useMeetingContext } from '@/contexts/MeetingContext'
+import { meetingGatheringState } from '@/lib/meetingStore'
 import { DragDropProvider, useDragState } from '@/contexts/DragDropContext'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { useChatContext } from '@/contexts/ChatContext'
 import { TaskBoardProvider } from '@/contexts/TaskBoardContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
+import { MeetingDialog, MeetingProgressView, MeetingOutput, MeetingResultsPanel } from '@/components/meetings'
+import { ToastContainer } from '@/components/ui/toast-container'
 import { TaskBoardOverlay, HQTaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
@@ -107,6 +111,84 @@ interface World3DViewProps {
   sessions: CrewSession[]
   settings: SessionsSettings
   onAliasChanged?: () => void
+}
+
+// ─── Meeting Overlays ──────────────────────────────────────────
+
+function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime[]; rooms: Room[] }) {
+  const {
+    meeting, view, dialogRoomContext,
+    openDialog: _od, closeDialog, showProgress, showOutput, closeView,
+    openInSidebar, followUpContext, openFollowUp,
+  } = useMeetingContext()
+  void _od
+
+  // Find HQ room as default fallback
+  const hqRoom = rooms.find(r => r.name.toLowerCase().includes('headquarter') || r.name.toLowerCase() === 'hq')
+
+  // Use room context from the clicked table, or fall back to HQ
+  const dialogRoom = dialogRoomContext
+    ? rooms.find(r => r.id === dialogRoomContext.roomId) || null
+    : null
+  const effectiveRoomId = dialogRoomContext?.roomId || hqRoom?.id
+  const effectiveProjectId = dialogRoomContext?.projectId || hqRoom?.project_id || undefined
+  const effectiveProjectName = dialogRoomContext?.projectName || dialogRoom?.project_name || hqRoom?.project_name || undefined
+
+  return (
+    <>
+      {/* Meeting Dialog (with History tab and Follow-up support) */}
+      <MeetingDialog
+        open={view === 'dialog'}
+        onOpenChange={(open) => { if (!open) closeDialog() }}
+        agents={agentRuntimes}
+        roomId={effectiveRoomId}
+        projectId={effectiveProjectId}
+        projectName={effectiveProjectName}
+        onStart={async (params) => {
+          await meeting.startMeeting(params)
+        }}
+        meetingInProgress={meeting.isActive}
+        onViewProgress={showProgress}
+        followUpContext={followUpContext}
+        onViewResults={(meetingId) => openInSidebar(meetingId)}
+      />
+
+      {/* Meeting Progress Panel (right side overlay) */}
+      {(view === 'progress') && (
+        <div className="fixed right-0 top-12 bottom-12 w-96 z-30 shadow-xl border-l bg-background">
+          <MeetingProgressView
+            meeting={meeting}
+            onCancel={async () => { await meeting.cancelMeeting() }}
+            onViewOutput={showOutput}
+          />
+        </div>
+      )}
+
+      {/* Meeting Output Panel — Fullscreen overlay */}
+      {view === 'output' && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+          <div className="flex-1 flex items-stretch justify-center p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-5xl bg-background border rounded-xl shadow-2xl flex flex-col overflow-hidden">
+              <MeetingOutput
+                meeting={meeting}
+                onClose={closeView}
+                mode="fullscreen"
+                onStartFollowUp={() => {
+                  if (meeting.meetingId) {
+                    closeView()
+                    openFollowUp(meeting.meetingId)
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* F2: Sidebar Results Panel */}
+      <MeetingResultsPanel />
+    </>
+  )
 }
 
 // ─── Layout Constants ──────────────────────────────────────────
@@ -190,10 +272,14 @@ function LoadingFallback() {
 
 // ─── Bot Status (accurate, matching 2D) ────────────────────────
 
-function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatus {
+function getAccurateBotStatus(session: CrewSession, isActive: boolean, allSessions?: CrewSession[]): BotStatus {
   if (isActive) return 'active'
   const idleMs = Date.now() - session.updatedAt
   if (idleMs < SESSION_CONFIG.botIdleThresholdMs) return 'idle'
+
+  // Check for active subagents before marking as sleeping
+  if (allSessions && hasActiveSubagents(session, allSessions)) return 'supervising'
+
   if (idleMs < SESSION_CONFIG.botSleepingThresholdMs) return 'sleeping'
   return 'offline'
 }
@@ -298,7 +384,26 @@ function extractTaskSummary(messages: CrewSession['messages']): string | null {
   return null
 }
 
-function getActivityText(session: CrewSession, isActive: boolean): string {
+function getActivityText(session: CrewSession, isActive: boolean, allSessions?: CrewSession[]): string {
+  // Check if supervising subagents
+  if (!isActive && allSessions && hasActiveSubagents(session, allSessions)) {
+    const agentId = (session.key || "").split(":")[1]
+    const now = Date.now()
+    const activeChild = allSessions
+      .filter(s => {
+        const parts = s.key.split(":")
+        return parts[1] === agentId
+          && (parts[2]?.includes("subagent") || parts[2]?.includes("spawn"))
+          && (now - s.updatedAt) < SESSION_CONFIG.statusActiveThresholdMs
+      })
+      .sort((a, b) => b.updatedAt - a.updatedAt)[0]
+    if (activeChild) {
+      const label = activeChild.label ? humanizeLabel(activeChild.label) : 'subagent'
+      return `👁️ Supervising: ${label}`
+    }
+    return '👁️ Supervising subagent'
+  }
+
   if (isActive) {
     // 1. Prefer session label — humanize it into a task summary
     if (session.label) {
@@ -485,6 +590,8 @@ interface SceneContentProps {
   rooms: Room[]
   getRoomForSession: (sessionKey: string, sessionData?: { label?: string; model?: string; channel?: string }) => string | undefined
   isRoomsLoading: boolean
+  /** Session keys of bots currently in an active meeting */
+  meetingParticipantKeys?: Set<string>
 }
 
 // ─── Scene Content ─────────────────────────────────────────────
@@ -505,6 +612,7 @@ function SceneContent({
   rooms,
   getRoomForSession,
   isRoomsLoading,
+  meetingParticipantKeys,
 }: SceneContentProps) {
   void _settings // Available for future use (e.g. animation speed)
   // Combine all sessions for agent registry lookup
@@ -557,11 +665,13 @@ function SceneContent({
 
   const buildBotPlacement = (session: CrewSession, _runtime?: AgentRuntime): BotPlacement => {
     const isActive = isActivelyRunning(session.key)
-    const status = getAccurateBotStatus(session, isActive)
+    const baseStatus = getAccurateBotStatus(session, isActive, allSessions)
+    // Override status for bots currently in a meeting
+    const status: BotStatus = meetingParticipantKeys?.has(session.key) ? 'meeting' : baseStatus
     const config = getBotConfigFromSession(session.key, session.label, _runtime?.agent?.color)
     const name = getSessionDisplayName(session, displayNames.get(session.key))
     const scale = isSubagent(session.key) ? 0.6 : 1.0
-    const activity = getActivityText(session, isActive)
+    const activity = getActivityText(session, isActive, allSessions)
     return { key: session.key, session, status, config, name, scale, activity, isActive }
   }
 
@@ -656,6 +766,31 @@ function SceneContent({
     return { roomBots, parkingBots }
   }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames, debugRoomMap])
 
+  // ─── Populate meeting store with room layout for pathfinding ──
+  useEffect(() => {
+    if (!layout) return
+    const roomPosMap = new Map<string, { x: number; z: number; doorX: number; doorZ: number }>()
+    for (const { room, position } of layout.roomPositions) {
+      roomPosMap.set(room.id, {
+        x: position[0],
+        z: position[2],
+        doorX: position[0], // door is centered on room X
+        doorZ: position[2] - ROOM_SIZE / 2, // door is on -Z side
+      })
+    }
+    meetingGatheringState.roomPositions = roomPosMap
+    meetingGatheringState.roomSize = ROOM_SIZE
+
+    // Populate agent → room mapping
+    const agentRooms = new Map<string, string>()
+    for (const [roomId, bots] of roomBots) {
+      for (const bot of bots) {
+        agentRooms.set(bot.key, roomId)
+      }
+    }
+    meetingGatheringState.agentRooms = agentRooms
+  }, [layout, roomBots])
+
   // Build room positions for CameraController (MUST be before early return to respect hooks rules)
   const cameraRoomPositions = useMemo(
     () => layout?.roomPositions.map(rp => ({ roomId: rp.room.id, position: rp.position })) ?? [],
@@ -665,7 +800,7 @@ function SceneContent({
   // Helper: should a bot show its label based on focus level?
   const shouldShowLabel = (botStatus: BotStatus, botRoomId: string): boolean => {
     if (focusLevel === 'overview') {
-      return botStatus === 'active' // only active bots in overview
+      return botStatus === 'active' || botStatus === 'supervising'
     }
     return focusedRoomId === botRoomId // all bots in focused room
   }
@@ -677,7 +812,7 @@ function SceneContent({
     // Bot focus: always show for focused bot
     if (focusLevel === 'bot' && focusedBotKey === botKey) return true
     // Overview: only active bots
-    if (focusLevel === 'overview') return botStatus === 'active'
+    if (focusLevel === 'overview') return botStatus === 'active' || botStatus === 'supervising'
     // Room focus: all bots in focused room + active bots elsewhere
     return focusedRoomId === botRoomId || botStatus === 'active'
   }
@@ -864,6 +999,13 @@ function DragStatusIndicator() {
 // ─── Main Component ────────────────────────────────────────────
 
 function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+  // Meeting context — get active meeting participants for status override
+  const { meeting: meetingState } = useMeetingContext()
+  const meetingParticipantKeys = useMemo(() => {
+    if (!meetingState.isActive) return new Set<string>()
+    return new Set(meetingState.participants || [])
+  }, [meetingState.isActive, meetingState.participants])
+
   // Debug keyboard shortcuts (F2=Grid, F3=Lighting, F4=Bots)
   useDebugKeyboardShortcuts()
 
@@ -1066,8 +1208,8 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
   const focusedBotStatus: BotStatus = useMemo(() => {
     if (!focusedSession) return 'offline'
-    return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key))
-  }, [focusedSession, isActivelyRunning])
+    return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key), allSessions)
+  }, [focusedSession, isActivelyRunning, allSessions])
 
   // Get bio and agentId for focused bot from agents registry
   const { agents: agentRuntimesForPanel, refresh: refreshAgents } = useAgentsRegistry(allSessions)
@@ -1144,6 +1286,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               rooms={rooms}
               getRoomForSession={getRoomForSession}
               isRoomsLoading={isRoomsLoading}
+              meetingParticipantKeys={meetingParticipantKeys}
               />
             </Suspense>
           </Canvas>
@@ -1303,6 +1446,9 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
 
+        {/* Meeting UI Overlays */}
+        <MeetingOverlays agentRuntimes={agentRuntimesForPanel} rooms={rooms} />
+
         {/* TaskBoardOverlay (outside Canvas) */}
         {taskBoardContext && (
           <TaskBoardOverlay
@@ -1334,7 +1480,10 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 export function World3DView(props: World3DViewProps) {
   return (
     <WorldFocusProvider>
-      <World3DViewInner {...props} />
+      <MeetingProvider>
+        <World3DViewInner {...props} />
+        <ToastContainer />
+      </MeetingProvider>
     </WorldFocusProvider>
   )
 }

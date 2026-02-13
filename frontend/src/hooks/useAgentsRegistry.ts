@@ -18,7 +18,7 @@ export interface Agent {
   updated_at: number
 }
 
-export type AgentStatus = "offline" | "idle" | "thinking" | "working"
+export type AgentStatus = "offline" | "idle" | "thinking" | "working" | "supervising"
 
 export interface AgentRuntime {
   agent: Agent
@@ -70,25 +70,20 @@ export function useAgentsRegistry(sessions: CrewSession[]) {
     }
   }, [fetchAgents])
   
-  const calculateStatus = useCallback((session: CrewSession | undefined, childSessions: CrewSession[] = []): AgentStatus => {
+  const calculateStatus = useCallback((session: CrewSession | undefined, childSessions: CrewSession[]): AgentStatus => {
     if (!session) return "offline"
     const now = Date.now()
     const lastActivity = session.updatedAt || 0
     const timeSinceActivity = now - lastActivity
-    
-    // Check if any child sessions (subagents) are actively running
-    // This catches long-running tasks where the main session is idle but work is happening
-    const hasActiveChildren = childSessions.some(child => {
-      const childAge = now - (child.updatedAt || 0)
-      return childAge < 60_000 // child active within last 60s
-    })
-    
     const isRecent = timeSinceActivity < 5 * 60 * 1000
-    
-    // Agent has active subagents → working, regardless of main session age
-    if (hasActiveChildren) return "working"
-    
-    if (!isRecent) return "idle"
+
+    if (!isRecent) {
+      // Check if any child sessions are actively running
+      const hasActiveChildren = childSessions.some(s => (now - s.updatedAt) < 5 * 60 * 1000)
+      if (hasActiveChildren) return "supervising"
+      return "idle"
+    }
+
     if (session.messages && session.messages.length > 0) {
       const lastMessage = session.messages[session.messages.length - 1]
       if (lastMessage.role === "assistant") return "thinking"
@@ -101,16 +96,7 @@ export function useAgentsRegistry(sessions: CrewSession[]) {
     return agents.map(agent => {
       const mainSession = sessions.find(s => s.key === agent.agent_session_key || s.sessionId === agent.agent_session_key)
       const childSessions = sessions.filter(s => {
-        if (!agent.agent_session_key) return false
-        const agentPrefix = agent.agent_session_key.replace(/:main$/, "")
-        return (
-          s.key !== agent.agent_session_key && (
-            s.label?.includes(`parent=${agent.agent_session_key}`) ||
-            s.key.startsWith(`${agentPrefix}:subagent:`) ||
-            s.key.startsWith(`${agentPrefix}:spawn:`) ||
-            s.key.startsWith(`${agentPrefix}:cron:`)
-          )
-        )
+        return s.label?.includes(`parent=${agent.agent_session_key}`) || s.key.startsWith(`${agent.agent_session_key}:`)
       })
       return { agent, session: mainSession, status: calculateStatus(mainSession, childSessions), childSessions }
     })

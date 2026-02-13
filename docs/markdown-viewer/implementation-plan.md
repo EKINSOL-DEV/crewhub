@@ -1,113 +1,101 @@
 # Markdown Viewer/Editor — Implementation Plan
 
-## Status Overview
+## Phase Summary
 
-| Phase | Status | Components |
-|-------|--------|------------|
-| **Phase 1 — Viewing** | ✅ Complete | MarkdownViewer, TOCSidebar, FileTree, FilesTab, FullscreenOverlay |
-| **Phase 2 — Project Docs** | ✅ Complete | ProjectFilesSection, project_documents.py API |
-| **Phase 3 — Editing** | ✅ Complete | MarkdownEditor (CodeMirror 6), PUT endpoints, auto-save |
-| **Phase 4 — Polish** | 🔲 Planned | Side-by-side, search, history, advanced rendering |
+| Phase | Status | Description |
+|-------|--------|-------------|
+| 1 — Viewing (MVP) | ✅ Done | Backend API, MarkdownViewer, FilesTab, Fullscreen |
+| 2 — Project Docs | ✅ Done | ProjectFilesSection, folder tree, project documents API |
+| 3 — Editing | ✅ Done | CodeMirror editor, PUT endpoints, auto-save, dirty tracking |
+| 4 — Polish | 🔜 Next | Side-by-side, search, conflict detection, extras |
+
+---
 
 ## What's Built (Phases 1-3)
 
-### Frontend (1,213 lines across 8 components)
-- `MarkdownViewer` — react-markdown + GFM + rehype-highlight (124 lines)
-- `MarkdownEditor` — CodeMirror 6 with auto-save, dark theme (203 lines)
-- `FullscreenOverlay` — Portal overlay, TOC, view/edit toggle (263 lines)
-- `TOCSidebar` — Auto-generated, IntersectionObserver tracking (114 lines)
-- `CodeBlock` — Syntax highlighted with copy button (71 lines)
-- `FilesTab` — Agent file browser with tree + preview (116 lines)
-- `FileTree` — Recursive collapsible directory tree (159 lines)
-- `ProjectFilesSection` — Project document browser (163 lines)
+### Backend (~300 LOC)
+- `routes/agent_files.py` — workspace file listing + read + write
+- `routes/project_documents.py` — project docs listing + read + write
+- Workspace resolution from settings DB or defaults
+- Security: extension whitelist, path traversal protection, size limits
 
-### Backend (2 route files)
-- `agent_files.py` — GET list, GET read, PUT save for agent workspaces
-- `project_documents.py` — GET list, GET read, PUT save for project docs
-- Security: path traversal protection, extension allowlist, 1MB size limit
-- Workspace resolution from settings DB with fallback defaults
+### Frontend (~1,200 LOC)
+- `markdown/MarkdownViewer.tsx` — Full GFM rendering with syntax highlighting
+- `markdown/MarkdownEditor.tsx` — CodeMirror 6 with auto-save
+- `markdown/FullscreenOverlay.tsx` — Portal overlay with TOC + edit mode
+- `markdown/TOCSidebar.tsx` — Auto-generated TOC with scroll tracking
+- `markdown/CodeBlock.tsx` — Syntax highlighted code blocks
+- `files/FilesTab.tsx` — Agent file browser
+- `files/FileTree.tsx` — Collapsible tree component
+- `files/ProjectFilesSection.tsx` — Project docs browser
 
 ### Dependencies (already installed)
-- `react-markdown@9`, `remark-gfm`, `rehype-highlight`
-- `@codemirror/state`, `@codemirror/view`, `@codemirror/lang-markdown`, `@codemirror/commands`, `@codemirror/language`
+- `react-markdown`, `remark-gfm`, `rehype-highlight`
+- `@codemirror/state`, `@codemirror/view`, `@codemirror/lang-markdown`
+- `@codemirror/commands`, `@codemirror/language`
 
 ---
 
-## Phase 4 — Polish (Remaining Work)
+## Phase 4 — Polish (Estimated: 2-3 days)
 
-### 4a. Side-by-Side Mode (~1 day)
-Split the main viewport: 3D world left, document viewer right.
+### 4.1 Side-by-Side Mode (~4h)
+Split screen: markdown viewer on one side, 3D world on other.
+- Resizable splitter (drag to resize)
+- Toggle button in fullscreen header: "⬛ Fullscreen" ↔ "◧ Side-by-side"
+- Persist preference in localStorage
+- Re-enable canvas pointer events on the 3D side
 
-**Approach:**
-- New `SplitViewLayout` wrapper component
-- Toggle button in FullscreenOverlay header: "📐 Side-by-side"
-- CSS Grid: `grid-template-columns: 1fr 480px`
-- Escape or close button returns to full 3D
-- Remember preference in localStorage
+### 4.2 In-Document Search (~3h)
+- Ctrl+F / ⌘F in fullscreen viewer → search bar
+- Highlight matches in rendered markdown
+- Next/Previous navigation
+- Match count display
 
-**Estimate:** 4-6 hours
+### 4.3 Conflict Detection (~2h)
+- On edit start: store file `modified` timestamp
+- Before save: GET metadata, compare timestamps
+- If changed: show "File was modified externally. Overwrite / Reload / Merge?"
+- Polling: check every 30s while editing
 
-### 4b. Full-Text Search (~1 day)
-Search across all agent files or project documents.
+### 4.4 Recent Docs & Favorites (~3h)
+- localStorage history of recently viewed files (per agent, max 10)
+- Star/favorite toggle on file items
+- "Recent" section at top of FilesTab
+- "Starred" filter toggle
 
-**Backend:**
-- `GET /api/agents/{id}/files/search?q=term` — grep-style search
-- Return: `[{ path, line, lineNumber, context }]`
-- Use Python `pathlib` + simple string matching (no index needed for <1000 files)
+### 4.5 Full-Text Search (~4h)
+- New endpoint: `GET /api/agents/{id}/files/search?q=term`
+- Backend: walk workspace, grep allowed files
+- Frontend: search input above file tree, results list with snippets
+- Click result → open file at matching line
 
-**Frontend:**
-- Search input in FilesTab header
-- Results list with path + highlighted match + click to open
-- Debounced search (300ms)
+### 4.6 Advanced Rendering (~2h)
+- Mermaid diagrams: `rehype-mermaid` or lazy-load mermaid.js
+- Math: `remark-math` + `rehype-katex`
+- Only if needed — adds bundle size
 
-**Estimate:** 6-8 hours
-
-### 4c. Recent/Favorites (~0.5 day)
-Track recently opened and starred files.
-
-**Storage:** localStorage (`crewhub-recent-files`, `crewhub-favorite-files`)
-**UI:** "Recent" section at top of FileTree, ★ toggle on file items
-
-**Estimate:** 3-4 hours
-
-### 4d. Version History / Diff View (~2 days)
-Show git history for files in git-tracked workspaces.
-
-**Backend:**
-- `GET /api/agents/{id}/files/{path}/history` → `git log --oneline -20 -- {path}`
-- `GET /api/agents/{id}/files/{path}/diff?ref=HEAD~1` → `git diff`
-
-**Frontend:**
-- History panel in FullscreenOverlay (tab or dropdown)
-- Diff rendering: `react-diff-viewer` or simple line-by-line coloring
-
-**Estimate:** 12-16 hours
-
-### 4e. Advanced Rendering (~1 day)
-- **Mermaid diagrams:** `rehype-mermaid` or lazy-load mermaid.js for ```mermaid blocks
-- **Math/LaTeX:** `remark-math` + `rehype-katex`
-- **Checkbox toggle:** Click to toggle `- [ ]` / `- [x]` and auto-save
-
-**Estimate:** 6-8 hours
+### 4.7 Split Edit/Preview (~3h)
+- Side-by-side: CodeMirror left, live MarkdownViewer right
+- Synced scroll position
+- Toggle: "Edit" | "Preview" | "Split"
 
 ---
 
-## Priority Recommendation
+## Dependencies & Risks
 
-1. **4b. Search** — Highest user value, finding files quickly
-2. **4c. Recent/Favorites** — Quick wins, improves daily workflow
-3. **4a. Side-by-Side** — Nice for doc review while monitoring 3D world
-4. **4e. Advanced Rendering** — Mermaid diagrams especially useful for design docs
-5. **4d. Version History** — Lower priority, git CLI available as fallback
-
-**Total Phase 4 estimate:** 3-5 days of dev work
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Large files (>1MB) | Editor may lag | Already capped at 1MB |
+| Synology Drive paths | Files may not be materialized | Skip unmaterialized, show warning |
+| CodeMirror bundle size | ~150KB | Already loaded, acceptable |
+| Mermaid bundle | ~500KB | Lazy-load only when diagram detected |
 
 ---
 
-## Architecture Notes
+## Decision Log
 
-- All markdown components are **standalone** — reusable outside BotInfoPanel
-- Inline styles with CSS custom properties (no CSS modules) — matches CrewHub convention
-- FullscreenOverlay uses **createPortal** to escape any parent overflow/z-index stacking
-- Camera interference handled via pointer-event blocking + CustomEvent notification
-- Backend uses **path traversal protection** (`_is_safe_path`) on all file operations
+- **react-markdown over marked**: Better React integration, component overrides
+- **CodeMirror 6 over Monaco**: Lighter weight, better mobile, sufficient for markdown
+- **Portal overlay over route**: Preserves 3D state, no navigation needed
+- **Inline styles over CSS modules**: Consistent with CrewHub codebase, theme var access
+- **Auto-save over manual-only**: Better UX, 2.5s debounce prevents data loss

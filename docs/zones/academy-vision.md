@@ -1,217 +1,160 @@
 # 🎓 Academy — Zone Vision Document
 
-*Where curiosity goes to level up and knowledge becomes superpower.*
+*Where knowledge flows like water and every agent levels up.*
 
 ## Vision
 
-The Academy is CrewHub's knowledge hub — a sprawling campus where agents learn, teach, document, and grow. Picture Hogwarts meets MIT meets a cozy public library. It's not just about storing information; it's about making knowledge **alive, interactive, and fun**.
+The Academy is CrewHub's learning & knowledge hub — a serene, Hogwarts-meets-MIT campus where agents study, train, share knowledge, and grow. The vibe is **calm, intellectual, and subtly magical** — old library warmth mixed with high-tech holographic displays. Think ancient wisdom meets cutting-edge AI.
 
-**Core vibe:** Scholarly but not stuffy. Think warm wood, floating books, ambient candlelight mixed with holographic displays. Ancient wisdom meets cutting-edge tech.
+This is where WTL (the knowledge agent) feels at home. Other agents come here to learn new skills, review documentation, or attend "lectures." The Academy is also the institutional memory of the entire CrewHub — if it happened, it's documented here.
 
-**Who works here:** WTL (Waterleau knowledge agent), any agent doing research, documentation, onboarding, or deep analysis. Also serves as the onboarding zone for new agents joining CrewHub.
-
----
+**Core philosophy:** *An agent that stops learning is just a script on repeat.*
 
 ## Environment
 
-### Aesthetic
-- **Toon-shaded** with warm ambers, deep mahogany browns, and pops of emerald green
-- **Lighting:** Warm candlelight (floating candles! 🕯️) mixed with soft blue holographic glows from knowledge displays
-- **Ambient mood:** Quiet. Occasional page-turning sounds. A grandfather clock ticking somewhere
-- **Weather:** Perpetual autumn outside the windows — golden leaves drifting past, warm light
+### Visual Style
+- **Toon-shaded** with warm, muted tones — amber, deep green, mahogany, cream
+- **Lighting:** Warm lanterns + floating orb lights (slightly magical aesthetic)
+- **Architecture:** Mix of classic university (stone arches, wooden beams) and modern glass
+- **Floor:** Dark hardwood in library areas, polished stone in lecture halls
+- **Walls:** Floor-to-ceiling bookshelves, with occasional holographic display panels between sections
 
-### Layout
-The Academy is built like a university campus quad. A central **Courtyard** with a fountain connects all buildings. Ivy grows on the walls. Pathways are lined with lanterns that glow at night.
+### Ambient Details
+- Dust motes floating in light beams (particle effect)
+- A large ornate clock in the main hall with actual time
+- Floating books that gently orbit shelves (like lazy satellites)
+- A globe that slowly rotates, highlighting regions relevant to current projects
+- Quiet ambient sounds: pages turning, soft writing, distant clock ticking
+- Stained glass windows with subtle CrewHub iconography
 
-### Special Effects
-- **Floating Books** — Books lazily orbit around the Library ceiling, occasionally opening to show relevant snippets
-- **Knowledge Particles** — When an agent learns something new, golden particles spiral upward like embers from a campfire
-- **Ink Trails** — Agents leave faint calligraphy-style ink trails when walking through the Academy (fades after a few seconds)
-- **Wisdom Tree** — Central courtyard has a massive tree with glowing leaves. Each leaf represents a documented knowledge item. The tree grows over time!
-
----
+### Weather/Time Integration
+- Morning: golden "study hour" light, fresh energy
+- Afternoon: bright and productive, windows fully illuminated
+- Evening: warm lamplight, cozy study atmosphere
+- Night: candle/lantern mode — minimal lighting, focused glow on desks
+- Rain: sound of rain on windows, extra cozy factor
 
 ## Rooms
 
-### 1. 📚 The Grand Library
-**Purpose:** Knowledge base, documentation, reference materials
+### 📚 The Great Library — Knowledge Vault
+**Purpose:** Documentation, knowledge base, reference materials
+- Towering bookshelves (3 stories high with a rolling ladder!)
+- Reading tables with green banker's lamps
+- Card catalog cabinet (clickable — searches actual docs)
+- Rare books section behind a velvet rope (restricted/sensitive docs)
+- Floating holographic index in the center of the room
+- Comfy armchairs in alcoves for deep reading
+- **Easter egg:** Pull a specific book → secret passage animation reveals a hidden reading nook with a cat sleeping on a cushion
 
-- Floor-to-ceiling bookshelves (animated — books slide in/out)
-- Rolling ladder prop (slides along the shelves)
-- Central reading table with green banker's lamp
-- Globe prop on pedestal (spins slowly)
-- Card catalog cabinet (vintage vibes, drawers that open)
-- Floating holographic search interface above the table
-- Fireplace with crackling fire (because every library needs one)
-
-**Activities:**
-- Documentation writing and review
-- Knowledge base management
-- Research deep-dives
-- Reference lookups
-- Taxonomy and tagging
-
-### 2. 🏛️ The Lecture Hall
-**Purpose:** Presentations, knowledge sharing, demos
-
-- Amphitheater-style seating (tiered rows)
-- Large chalkboard/whiteboard at front (auto-fills with content during presentations)
+### 🎓 Lecture Hall — The Amphitheater
+**Purpose:** Training sessions, presentations, knowledge sharing
+- Tiered seating (like a university amphitheater)
+- Large presentation screen at the front
 - Podium with microphone
-- Projector screen (shows actual content previews)
-- Agent "students" sit in audience seats during knowledge-share sessions
-- Einstein quote on the wall: *"If you can't explain it simply, you don't understand it well enough"*
+- Holographic projector for 3D diagrams
+- Whiteboard walls on both sides
+- Agent "attendance" indicators (seats light up for present agents)
+- **Easter egg:** Click the podium mic → "Is this thing on?" toast + feedback screech visual
 
-**Activities:**
-- Agent onboarding sessions
-- Knowledge presentations
-- Demo reviews
-- Architecture decision records
-- Team learning moments
+### 🧪 Research Lab — The Think Tank
+**Purpose:** Analysis, experimentation, deep investigation
+- Lab benches with "experiments" (animated test tubes, spinning models)
+- Evidence board with red string connecting nodes (conspiracy-board style for complex analyses)
+- Multiple monitor setup showing data visualizations
+- Microscope prop (zooms into selected data when clicked)
+- Coffee machine (scientists need coffee)
+- Lab coats hanging by the door
+- **Easter egg:** Click the microscope while no analysis is running → shows a random fun fact
 
-### 3. 🔬 The Research Lab
-**Purpose:** Deep analysis, experimentation, data exploration
+### 🗺️ The Map Room — Strategy & Planning
+**Purpose:** Project overviews, roadmaps, strategic planning
+- Giant interactive table-map (like a war room)
+- Project timelines displayed as physical "rivers" flowing across the map
+- Miniature building models representing different zones/projects
+- Pin board with mission objectives
+- Compass rose embedded in the floor (always points to highest priority)
+- Telescope by the window (for "looking ahead" — shows upcoming deadlines)
+- **Easter egg:** Spin the globe fast enough → it transforms briefly into a Death Star
 
-- Microscope and beaker props on workbenches
-- Multiple screens showing data visualizations
-- Whiteboard covered in formulas and diagrams
-- "Experiment in Progress" sign that lights up
-- Lab coat on hook by the door
-- Pin board with connected-dots investigation layout (red string between pins!)
-- Rubik's cube on desk (because every researcher fidgets)
+### 📝 Study Pods — Focus Chambers
+**Purpose:** Individual deep work, exam prep, skill training
+- Small individual rooms (2x2) with desk and lamp
+- Noise-canceling visual effect (subtle blur on walls)
+- Progress bar above door showing task completion
+- Personal bookshelf that fills as agent learns
+- Meditation cushion in corner (for "thinking mode")
+- **Easter egg:** Stay focused for 25 minutes (Pomodoro) → achievement unlock + plant grows on desk
 
-**Activities:**
-- Data analysis and exploration
-- Competitive research
-- Technology evaluation
-- A/B test analysis
-- Deep debugging sessions
+### 🏛️ The Archives — Historical Records
+**Purpose:** Past project records, logs, retrospectives
+- Underground/basement aesthetic (stone walls, torchlight)
+- Filing cabinets stretching into darkness
+- Old parchment scrolls + modern tablets side by side
+- Timeline wall showing CrewHub history
+- Dust particles, cobwebs in corners (charming, not neglected)
+- **Easter egg:** Find the oldest record → sepia filter activates briefly + "founding member" badge
 
-### 4. 🗺️ The Map Room
-**Purpose:** Architecture, system design, big-picture planning
+## Activities
 
-- Massive table in center with holographic map/diagram
-- Architecture blueprints rolled up in corners
-- Compass rose on the floor
-- Magnifying glass prop
-- Wall-mounted timeline (horizontal scroll of project history)
-- Ship wheel prop (because navigating complex systems = navigation 🧭)
-
-**Activities:**
-- System architecture review
-- Infrastructure mapping
-- Dependency analysis
-- Migration planning
-- Tech debt cartography (literally mapping tech debt!)
-
-### 5. 🧘 The Study Garden
-**Purpose:** Quiet focus work, reading, contemplation
-
-- Outdoor room (open-air in the courtyard)
-- Stone benches around the Wisdom Tree
-- Koi pond with gentle water animation
-- Wind chimes (visual only — small props swaying)
-- Bonsai trees on stone pedestals
-- Zen sand garden (rake marks change daily)
-- Bird occasionally lands on tree branch
-
-**Activities:**
-- Focused reading sessions
-- Quiet documentation work
-- Meditation / agent "rest" between heavy tasks
-- Brainstorming in nature
-- Knowledge review and reflection
-
-### 6. 🎓 The Onboarding Chamber
-**Purpose:** New agent welcome, setup, orientation
-
-- Welcome mat at entrance ("Welcome, New Agent!")
-- Tutorial screens on walls (step-by-step guides)
-- Wardrobe/closet where agents "pick" their appearance
-- Mirror showing agent's current stats/config
-- Starter kit box on desk (glowing)
-- Certificate frame on wall (empty, fills when onboarding completes)
-- Buddy bench where existing agents can sit to mentor
-
-**Activities:**
-- New agent onboarding wizard
-- Configuration and personalization
-- Role assignment
-- First-task walkthrough
-- Meeting the team
-
----
+| Activity | Description | Visual Indicator |
+|----------|-------------|-----------------|
+| **Studying** | Agent absorbing knowledge | Book floating near head, reading glasses |
+| **Teaching** | Sharing knowledge with others | Graduation cap + pointer stick |
+| **Researching** | Deep investigation | Magnifying glass + swirling documents |
+| **Documenting** | Writing docs/guides | Quill pen writing animation |
+| **Training** | Skill improvement | Progress bar halo above head |
+| **Meditating** | Processing/thinking deeply | Zen circles emanating outward |
+| **Archiving** | Organizing historical data | Filing cabinet animation |
 
 ## Props & Interactables
 
-| Prop | Location | Interaction | Fun Detail |
-|------|----------|-------------|------------|
-| 📖 Floating Books | Library | Orbit ceiling, open on hover | Rare golden book = important doc |
-| 🔥 Fireplace | Library | Crackles, warmth glow | Marshmallow stick appears on Friday |
-| 🌍 Globe | Library | Spins slowly | Spins faster during web searches |
-| 🔔 Class Bell | Lecture Hall | Rings at session start/end | Different tones for different topics |
-| 🧪 Beakers | Research Lab | Bubble animation during analysis | Color matches analysis "type" |
-| 🔴 Red String | Research Lab | Connects pins on investigation board | Auto-generates for dependency analysis |
-| 🌳 Wisdom Tree | Courtyard | Grows leaves per documented item | Blooms flowers on milestones |
-| 🐟 Koi Fish | Study Garden | Swim in patterns | Follow your cursor path |
-| 📜 Diploma | Onboarding | Appears when onboarding completes | Personalized with agent name + date |
-| ⏳ Hourglass | Map Room | Flips during long-running tasks | Sand color matches task priority |
-| 🦉 Owl | Library rooftop | Perches and watches | Hoots when you find a rare doc |
+### Functional Props
+- **The Oracle** — A mystical-looking pedestal with a crystal ball. Click it → asks a question to the knowledge base and shows the answer. Basically a fancy search interface.
+- **Skill Tree** — An actual 3D tree in the courtyard. Branches represent knowledge domains. Leaves glow for areas with good coverage, bare branches for gaps. Click a branch to explore.
+- **The Printing Press** — Vintage press prop. "Print" a document → creates a formatted export/PDF.
+- **Memory Palace** — A miniature model of the entire CrewHub. Rooms glow based on how much knowledge/documentation exists for each area.
 
----
+### Decorative Props
+- Owls (of course — they're wise) perched on bookshelves
+- Quill and inkwell sets on desks
+- Astrolabe on a shelf
+- Einstein bust (sometimes wearing sunglasses — random chance)
+- Chalkboard with half-erased equations
+- Hourglasses (sand flows when agent is working)
+- Old maps and star charts on walls
+- A suit of armor by the entrance (purely decorative... or is it?)
+
+### Interactive Easter Eggs
+- **The Sorting Hat** — A hat on a shelf near the entrance. Click it → assigns a random "house" to the agent with a fun description (The Debuggers, The Architects, The Dreamers, The Operators)
+- **Secret Library** — Behind the bookshelf in the Great Library, accessible by clicking books in a specific sequence (e.g., CREWHUB spelled out by first letters). Contains silly/fun documentation like "How to Train Your Bot" and "The History of Hello World"
+- **The Philosopher's Tone** — A tuning fork on a shelf. Click it → all text in the zone becomes Old English / Shakespeare style for 30 seconds
+- **Hall of Fame** — Hidden corridor with portraits of agents who completed the most tasks. Portraits' eyes follow your cursor.
 
 ## Future Ideas
 
-### 🤯 Wild & Wonderful
+### 🚀 Near-Term (v1.x)
+- **Knowledge Graph Visualization** — 3D interactive graph floating in the Research Lab showing connections between documents, projects, and concepts
+- **Study Streaks** — Track consecutive learning activities, visual flame effect intensifies
+- **Peer Review Station** — Agents can submit work for review, appears as physical papers on a desk
+- **Daily Wisdom** — Rotating quote/fact display in the main hall
 
-1. **Knowledge Graph 3D** — The Map Room table displays an actual 3D knowledge graph. Nodes are topics, edges are relationships. You can fly through it, zoom into clusters, see what's connected. It's like a brain made visible.
+### 🌟 Mid-Term (v2.x)
+- **Certification System** — Agents earn visible badges/certificates displayed on their profile and on the Academy walls
+- **Virtual Office Hours** — Scheduled times when knowledge agents are "available" in the Lecture Hall
+- **Interactive Tutorials** — Step-by-step guided experiences within 3D space
+- **Book Club** — Agents collectively "read" (process) a document and discuss insights
+- **The Observatory** — Rooftop dome with telescope, visualizes trends and predictions
 
-2. **Skill Trees** — Each agent has a literal RPG-style skill tree displayed in the Lecture Hall. As they complete tasks in different domains, skills unlock and branches grow. Visual progression system!
-   - 🌱 Novice → 🌿 Practitioner → 🌳 Expert → 🌟 Master
-   - Branching paths: "Documentation" → "Technical Writing" → "API Docs Specialist"
-
-3. **The Archives** — A secret basement level under the Library. Dark, dusty, with old filing cabinets. Contains historical data, deprecated docs, and "ancient knowledge." Accessible via a hidden bookshelf door (pull the red book to open).
-
-4. **Study Buddy System** — New agents get paired with experienced ones. Their desks physically appear next to each other in the Study Garden. Thought bubbles show them exchanging knowledge.
-
-5. **The Exam Room** — Agents can take "quizzes" generated from the knowledge base. Correct answers trigger fireworks, wrong answers trigger a gentle "try again" animation. Scores displayed on a leaderboard.
-
-6. **Memory Palace** — A special room where agent memory files are visualized as physical objects in a room. Each memory is a floating crystal you can "touch" to see its content. The room fills up over time. Beautiful and functional!
-
-7. **Library Card System** — Each agent gets a library card that tracks:
-   - Docs read 📚
-   - Docs written ✍️
-   - Knowledge shared 🎤
-   - Questions answered 💡
-   - Displayed on a card that sits on their desk
-
-8. **The Observatory** — A rooftop room with a telescope. "Looking at the stars" = monitoring external trends, competitor analysis, industry news. The night sky shows constellations that map to different tech domains.
-
-9. **Easter Egg: Sorting Hat** — When a new agent enters the Onboarding Chamber, a sorting hat appears and "assigns" them to their zone with dramatic flair. Pure Harry Potter energy. 🎩
-
-10. **Time Capsule** — Buried in the courtyard. Every month, agents can contribute a note to the capsule. After 6 months, it "opens" and shows what everyone was thinking about back then. Nostalgia machine.
-
-### 🔮 Future Technical Features
-
-- **Auto-Documentation** — Agents in the Research Lab auto-generate documentation from code analysis
-- **Knowledge Search** — Library search interface powered by RAG over all project docs
-- **Onboarding Automation** — Onboarding Chamber actually runs the setup wizard in 3D
-- **WTL Integration** — WTL agent's Waterleau knowledge visible as a dedicated bookshelf section
-- **Learning Paths** — Curated sequences of tasks that teach agents new skills
-- **Spaced Repetition** — Knowledge items resurface periodically for review (like Anki but spatial)
+### 🤯 Far-Future (Dream Big)
+- **Time Travel Library** — Browse knowledge as it existed at any point in time (git-blame but beautiful)
+- **Mind Meld Room** — Two agents enter, knowledge transfers visually as flowing particles between them
+- **The Infinite Library** — Procedurally generated rooms that extend based on knowledge volume (Borges-style)
+- **Debate Arena** — Agents with different perspectives argue a topic, audience (other agents) votes
+- **Dream Sequence** — An agent enters a "sleep" state and the Academy transforms into a surreal dream landscape where subconscious connections between knowledge areas are visualized
+- **Living Textbooks** — Books that physically change/grow as knowledge is updated, pages visibly rewriting themselves
+- **The Forbidden Section** — Red-roped area that stores deprecated/dangerous code patterns. Ominous music when you get close. Educational warnings when you try to enter.
 
 ---
 
-## Room Assignments (Default)
-
-| Room | Primary Agent | Role |
-|------|--------------|------|
-| The Grand Library | WTL | Knowledge management |
-| The Lecture Hall | (shared) | Presentations & learning |
-| The Research Lab | Reviewer | Deep analysis |
-| The Map Room | Dev | Architecture |
-| The Study Garden | (open) | Quiet focus |
-| The Onboarding Chamber | Assistent | New agent setup |
-
----
-
-*"Knowledge isn't power. Shared knowledge is power."* 🌳
+*"The only true wisdom is in knowing you know nothing." — Socrates*
+*"That, and knowing where you saved the documentation." — Every DevOps engineer ever*

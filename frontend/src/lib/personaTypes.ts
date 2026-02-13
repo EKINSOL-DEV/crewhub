@@ -14,10 +14,38 @@ export interface PersonaConfig extends PersonaDimensions {
   custom_instructions: string
 }
 
-export interface PersonaResponse extends PersonaConfig {
+export interface IdentityConfig {
+  identity_anchor: string
+  surface_rules: string
+  identity_locked: boolean
+}
+
+export interface PersonaResponse extends PersonaConfig, IdentityConfig {
   agent_id: string
   created_at: number | null
   updated_at: number | null
+}
+
+export interface SurfaceRule {
+  surface: string
+  format_rules: string
+  enabled: boolean
+  is_custom: boolean
+  default_rules: string
+}
+
+export interface SurfacesResponse {
+  agent_id: string
+  surfaces: SurfaceRule[]
+}
+
+export interface IdentityResponse {
+  agent_id: string
+  agent_name: string
+  identity_anchor: string
+  surface_rules: string
+  identity_locked: boolean
+  surfaces: Array<{ surface: string; format_rules: string; enabled: boolean }>
 }
 
 export interface PresetDefinition extends PersonaDimensions {

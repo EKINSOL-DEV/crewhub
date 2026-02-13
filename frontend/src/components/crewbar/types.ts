@@ -9,6 +9,7 @@ export type CrewStatus =
   | "idle" 
   | "thinking" 
   | "working" 
+  | "supervising"
   | "success" 
   | "error" 
   | "offline"

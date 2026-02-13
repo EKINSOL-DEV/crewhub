@@ -3,12 +3,14 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface BotStatusGlowProps {
-  status: 'active' | 'idle' | 'sleeping' | 'offline'
+  status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
 }
 
 const STATUS_GLOW_COLOR: Record<string, string> = {
   active: '#4ade80',  // green
   idle: '#fbbf24',    // yellow
+  supervising: '#a78bfa', // purple
+  meeting: '#0ea5e9',   // sky blue
   sleeping: '#9ca3af', // gray
   offline: '#6b7280',  // dark gray
 }
@@ -38,6 +40,11 @@ export function BotStatusGlow({ status }: BotStatusGlowProps) {
         // Steady glow
         mat.emissiveIntensity = 0.4
         mat.opacity = 0.6
+        break
+      case 'supervising':
+        // Slow pulse — watching over subagents
+        mat.emissiveIntensity = 0.4 + Math.sin(t * 1.5) * 0.2
+        mat.opacity = 0.6 + Math.sin(t * 1.5) * 0.15
         break
       case 'sleeping':
       case 'offline':
