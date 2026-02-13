@@ -6,9 +6,8 @@
  * Also updates meetingGatheringState for Bot3D animations.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { MeetingState } from '@/hooks/useMeeting'
-import { updateMeetingGatheringState, resetMeetingGatheringState } from '@/lib/meetingStore'
 
 // ─── Fake Script ────────────────────────────────────────────────
 
@@ -159,14 +158,6 @@ export function useDemoMeeting() {
     timersRef.current = []
   }, [])
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      clearTimers()
-      resetMeetingGatheringState()
-    }
-  }, [clearTimers])
-
   const startDemoMeeting = useCallback(() => {
     if (isRunningRef.current) return
     isRunningRef.current = true
@@ -185,25 +176,9 @@ export function useDemoMeeting() {
       progressPct: 5,
     })
 
-    // Update gathering store for bot animations
-    const posMap = new Map<string, { x: number; z: number; angle: number }>()
-    FAKE_PARTICIPANTS.forEach((id, i) => {
-      const angle = (2 * Math.PI / FAKE_PARTICIPANTS.length) * i
-      // Positions will be overridden by MeetingContext's calculateGatheringPositions
-      // when it sees the active state. These are just initial hints.
-      posMap.set(id, { x: Math.cos(angle) * 2, z: Math.sin(angle) * 2, angle: angle + Math.PI })
-    })
-
-    updateMeetingGatheringState({
-      active: true,
-      phase: 'gathering',
-      positions: posMap,
-      activeSpeaker: null,
-      activeSpeakerText: null,
-      completedTurns: new Set(),
-      synthesizing: false,
-      complete: false,
-    })
+    // NOTE: We do NOT call updateMeetingGatheringState here.
+    // MeetingContext's useEffect syncs gathering state from React state,
+    // ensuring correct table positions and room data are used for pathfinding.
 
     // Schedule the full script
     let delay = 3000 // 3s for gathering animation
@@ -243,7 +218,6 @@ export function useDemoMeeting() {
             rounds: newRounds,
           }
         })
-        updateMeetingGatheringState({ phase: 'round' })
       }, roundStartDelay))
       delay += 1000
 
@@ -267,10 +241,6 @@ export function useDemoMeeting() {
               currentTurnAgentName: turn.agentName,
               rounds: newRounds,
             }
-          })
-          updateMeetingGatheringState({
-            activeSpeaker: turn.agentId,
-            activeSpeakerText: null,
           })
         }, speakingDelay))
 
@@ -296,13 +266,6 @@ export function useDemoMeeting() {
               rounds: newRounds,
             }
           })
-          updateMeetingGatheringState({
-            activeSpeaker: turn.agentId,
-            activeSpeakerText: turn.response,
-            completedTurns: new Set(
-              FAKE_SCRIPT[ri].turns.slice(0, ti + 1).map(t => t.agentId)
-            ),
-          })
         }, delay))
 
         delay += 500 // brief pause between turns
@@ -320,12 +283,6 @@ export function useDemoMeeting() {
         currentTurnAgentId: null,
         currentTurnAgentName: null,
       }))
-      updateMeetingGatheringState({
-        phase: 'synthesizing',
-        synthesizing: true,
-        activeSpeaker: null,
-        activeSpeakerText: null,
-      })
     }, delay))
     delay += 5000
 
@@ -338,12 +295,6 @@ export function useDemoMeeting() {
         outputMd: FAKE_OUTPUT_MD,
         durationSeconds: Math.round(delay / 1000),
       }))
-      updateMeetingGatheringState({
-        phase: 'complete',
-        synthesizing: false,
-        complete: true,
-        active: false,
-      })
       isRunningRef.current = false
     }, delay))
   }, [clearTimers])
@@ -357,14 +308,12 @@ export function useDemoMeeting() {
       currentTurnAgentId: null,
       currentTurnAgentName: null,
     }))
-    resetMeetingGatheringState()
   }, [clearTimers])
 
   const resetDemoMeeting = useCallback(() => {
     clearTimers()
     isRunningRef.current = false
     setState(INITIAL_STATE)
-    resetMeetingGatheringState()
   }, [clearTimers])
 
   const isActive = state.phase !== 'idle' && state.phase !== 'complete' && state.phase !== 'error' && state.phase !== 'cancelled'
