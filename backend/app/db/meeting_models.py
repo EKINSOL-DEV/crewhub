@@ -31,7 +31,7 @@ ROUND_STATES = {
 class MeetingConfig(BaseModel):
     participants: list[str]  # agent IDs or session keys, in speaking order
     num_rounds: int = Field(default=3, ge=1, le=5)
-    round_topics: list[str] = Field(default=[
+    round_topics: list[str] = Field(default_factory=lambda: [
         "What have you been working on?",
         "What will you focus on next?",
         "Any blockers, risks, or things you need help with?",
@@ -67,7 +67,7 @@ class Round(BaseModel):
     round_num: int
     topic: str
     status: Literal["pending", "in_progress", "complete", "skipped"] = "pending"
-    turns: list[Turn] = []
+    turns: list[Turn] = Field(default_factory=list)
 
 
 class Meeting(BaseModel):

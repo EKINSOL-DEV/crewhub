@@ -22,6 +22,8 @@ async def api_start_meeting(req: StartMeetingRequest):
         raise HTTPException(400, "At least 2 participants required")
     if len(req.participants) > 8:
         raise HTTPException(400, "Maximum 8 participants allowed")
+    if len(req.participants) != len(set(req.participants)):
+        raise HTTPException(400, "Duplicate participants are not allowed")
 
     # Build round topics
     default_topics = [
@@ -112,10 +114,12 @@ async def api_cancel_meeting(meeting_id: str):
     if not success:
         raise HTTPException(500, "Failed to cancel meeting")
 
+    # Re-fetch to get fresh cancelled_at
+    fresh = await get_meeting(meeting_id)
     return {
         "id": meeting_id,
         "state": "cancelled",
-        "cancelled_at": meeting.get("cancelled_at"),
+        "cancelled_at": fresh.get("cancelled_at") if fresh else None,
     }
 
 

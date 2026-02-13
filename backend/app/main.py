@@ -26,6 +26,7 @@ from app.db.database import init_database, check_database_health
 from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
 from app.routes.sse import broadcast
+from app.services.meeting_recovery import recover_stuck_meetings
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +161,14 @@ async def lifespan(app: FastAPI):
     manager = await get_connection_manager()
     await manager.start(health_interval=30.0)
     logger.info("ConnectionManager started")
+    
+    # Recover stuck meetings from previous restart
+    try:
+        recovered = await recover_stuck_meetings()
+        if recovered:
+            logger.info(f"Recovered {recovered} stuck meetings on startup")
+    except Exception as e:
+        logger.error(f"Meeting recovery failed: {e}")
     
     # Start background polling task
     _polling_task = asyncio.create_task(poll_sessions_loop())

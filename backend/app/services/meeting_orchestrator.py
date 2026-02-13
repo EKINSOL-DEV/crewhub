@@ -231,7 +231,7 @@ class MeetingOrchestrator:
                 "response": response,
             })
 
-            # Save turn
+            # Save turn with token estimates
             await self._save_turn(Turn(
                 id=turn_id,
                 meeting_id=self.meeting_id,
@@ -240,6 +240,7 @@ class MeetingOrchestrator:
                 agent_id=participant["id"],
                 agent_name=participant["name"],
                 response=response,
+                prompt_tokens=max(1, len(prompt) // 4),
                 started_at=started_at,
                 completed_at=completed_at,
             ))
@@ -272,7 +273,7 @@ class MeetingOrchestrator:
                 lines.append(f"- **{resp['bot_name']}**: {resp['response']}")
             lines.append("\nBuild on what was said. Don't repeat. Add your unique perspective.")
 
-        lines.append("\nRespond concisely (2-3 sentences max). Be specific and actionable.")
+        lines.append(f"\nRespond concisely (2-3 sentences max, max ~{self.config.max_tokens_per_turn} tokens). Be specific and actionable.")
         return "\n".join(lines)
 
     async def _get_bot_response_with_retry(self, participant: dict, prompt: str) -> str:
@@ -361,6 +362,7 @@ Key points organized by theme (not by person)
 ## Blockers
 - Unresolved blockers that need attention
 
+Keep total output under ~{self.config.synthesis_max_tokens} tokens.
 Respond ONLY with the markdown. No extra commentary."""
 
         # Use first participant (or any available) to generate synthesis
@@ -470,13 +472,20 @@ Respond ONLY with the markdown. No extra commentary."""
             await db.commit()
 
     async def _save_turn(self, turn: Turn):
+        # Estimate token counts (~4 chars per token)
+        prompt_tokens = turn.prompt_tokens
+        response_tokens = turn.response_tokens
+        if response_tokens is None and turn.response:
+            response_tokens = max(1, len(turn.response) // 4)
         async with aiosqlite.connect(DB_PATH) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO meeting_turns 
-                   (id, meeting_id, round_num, turn_index, agent_id, agent_name, response_text, started_at, completed_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, meeting_id, round_num, turn_index, agent_id, agent_name, response_text,
+                    prompt_tokens, response_tokens, started_at, completed_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (turn.id, turn.meeting_id, turn.round_num, turn.turn_index,
-                 turn.agent_id, turn.agent_name, turn.response, turn.started_at, turn.completed_at),
+                 turn.agent_id, turn.agent_name, turn.response,
+                 prompt_tokens, response_tokens, turn.started_at, turn.completed_at),
             )
             await db.commit()
 
