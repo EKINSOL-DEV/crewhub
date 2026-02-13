@@ -57,6 +57,7 @@ export function TaskWall3D({
     <group 
       position={position} 
       rotation={rotation}
+      userData={{ isScreenHtml: true }}
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
     >
