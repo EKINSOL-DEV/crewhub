@@ -1,8 +1,51 @@
 # Known Issues - CrewHub
 
-*Last updated: 2026-02-12*
+*Last updated: 2026-02-13*
 
 ## 🐛 Active Issues
+
+### Active Tasks Panel - Empty Task Details (v0.14.0)
+
+**Severity:** Medium  
+**Status:** Known, will fix after AI Meetings feature
+
+**Problem:**
+- Active Tasks panel (left sidebar button) opens correctly
+- Task title and URGENT label are visible
+- But task details/body is completely empty (white/blank area)
+- No description, no controls, no metadata shown
+
+**Reproduction:**
+1. Click Active Tasks button (left sidebar, clipboard icon with badge)
+2. Panel opens showing task count "1 in progress"
+3. Task header visible: "Onboarding fixes (production issues)" + URGENT label
+4. Rest of panel is blank white space
+
+**Expected:**
+- Task details should show description, assignee, status, controls (complete/edit/etc.)
+
+**Root cause (hypothesis):**
+- Data fetching issue (API returns partial data?)
+- Rendering logic missing for task body/details
+- CSS layout issue (content rendered but hidden?)
+- Component state not updating after panel opens
+
+**Workaround:**
+- Use HQ TaskBoard or Zen Mode task list instead
+- Active Tasks ticker (bottom bar) still works
+
+**Plan:**
+- Fix after AI Meetings feature implementation
+- Debug which component renders task details
+- Check API response structure
+- Test with multiple task types
+
+**Tracking:**
+- Issue discovered: 2026-02-13 08:04
+- Reported by: Nicky (WhatsApp screenshot)
+- Priority: After AI Meetings
+
+---
 
 ### PropMaker Part Editor - TransformControls Position (v0.14.0)
 

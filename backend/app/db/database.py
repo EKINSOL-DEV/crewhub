@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 13  # v13: Agent Identity Pattern
+SCHEMA_VERSION = 14  # v14: AI-Orchestrated Meetings
 
 
 async def init_database():
@@ -429,6 +429,73 @@ async def init_database():
                     updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
                     UNIQUE(agent_id, surface)
                 )
+            """)
+
+            # ========================================
+            # v14: AI-Orchestrated Meetings
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS meetings (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL DEFAULT 'Daily Standup',
+                    goal TEXT NOT NULL DEFAULT '',
+                    state TEXT NOT NULL DEFAULT 'gathering',
+                    room_id TEXT,
+                    project_id TEXT,
+                    config_json TEXT,
+                    output_md TEXT,
+                    output_path TEXT,
+                    current_round INTEGER DEFAULT 0,
+                    current_turn INTEGER DEFAULT 0,
+                    started_at INTEGER,
+                    completed_at INTEGER,
+                    cancelled_at INTEGER,
+                    error_message TEXT,
+                    created_by TEXT DEFAULT 'user',
+                    created_at INTEGER NOT NULL,
+                    FOREIGN KEY (room_id) REFERENCES rooms(id),
+                    FOREIGN KEY (project_id) REFERENCES projects(id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_participants (
+                    meeting_id TEXT NOT NULL,
+                    agent_id TEXT NOT NULL,
+                    agent_name TEXT DEFAULT '',
+                    agent_icon TEXT,
+                    agent_color TEXT,
+                    sort_order INTEGER DEFAULT 0,
+                    PRIMARY KEY (meeting_id, agent_id),
+                    FOREIGN KEY (meeting_id) REFERENCES meetings(id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS meeting_turns (
+                    id TEXT PRIMARY KEY,
+                    meeting_id TEXT NOT NULL,
+                    round_num INTEGER NOT NULL,
+                    turn_index INTEGER NOT NULL,
+                    agent_id TEXT NOT NULL,
+                    agent_name TEXT,
+                    prompt_tokens INTEGER,
+                    response_tokens INTEGER,
+                    response_text TEXT,
+                    started_at INTEGER,
+                    completed_at INTEGER,
+                    FOREIGN KEY (meeting_id) REFERENCES meetings(id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meetings_state ON meetings(state)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meetings_created ON meetings(created_at DESC)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_meeting_turns_meeting ON meeting_turns(meeting_id)
             """)
 
             # Set initial version if not exists
