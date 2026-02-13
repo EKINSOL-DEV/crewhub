@@ -5,103 +5,105 @@
 <h1 align="center">CrewHub</h1>
 
 <p align="center">
-  <strong>Your AI crew, one dashboard.</strong><br>
-  A real-time monitoring dashboard and interactive 3D world for your AI agent sessions.
+  <strong>Your AI Team, One Dashboard</strong><br>
+  Watch your AI agents collaborate in real-time, navigate a 3D office, and run actual structured meetings.
 </p>
 
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
-  <img src="https://img.shields.io/badge/Docs-Coming%20Soon-lightgrey?style=flat&logo=readthedocs&logoColor=white" alt="Docs">
-  <img src="https://img.shields.io/badge/version-v0.13.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.15.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
-  <img src="https://img.shields.io/badge/status-research%20project-9333EA?logo=flask&logoColor=white" alt="Research Project">
 </p>
-
----
-
-> ⚠️ **Security Notice:** CrewHub ships with **no authentication** by default and is designed for local/trusted networks. Public or internet-facing deployment requires enabling auth, HTTPS, and firewall rules. See **[SECURITY.md](SECURITY.md)** for details.
 
 ---
 
 ## What is CrewHub?
 
-CrewHub is an open-source dashboard for monitoring and managing AI coding agents. It connects to [OpenClaw](https://openclaw.dev), Claude Code, and Codex CLI — giving you a live overview of every session, room, and agent in one place. Its standout feature is a fully interactive **3D world** where your agents come alive as animated characters.
+CrewHub is an **open-source monitoring dashboard** for AI coding agents. It connects to [OpenClaw](https://openclaw.dev), Claude Code, and Codex CLI — giving you live visibility into every agent, session, and task.
+
+But CrewHub isn't just another dashboard. Your agents come alive in a **fully interactive 3D world** where they walk between rooms, gather around meeting tables, and collaborate on structured discussions that produce real results.
 
 > 🎮 **[Try the Live Demo →](https://demo.crewhub.dev)**
 
 ---
 
-## 🌍 3D World View — The Hero Feature
+## ✨ What's New in v0.15.0
 
-<p align="center">
-  <em>Watch your agents roam a toon-shaded campus, carry laptops while coding, and wander between rooms when idle.</em>
-</p>
+### 🤝 AI Meetings: Your Bots Actually Collaborate
 
-CrewHub's 3D World turns your agent fleet into a living, breathing campus:
+Click a meeting table. Pick participants and a topic. Watch your bots **physically walk to the table, form a circle, and have a structured round-robin discussion**.
 
-- **Toon-shaded rooms** on a 20×20 grid with floor & wall textures
-- **3 zoom levels** — Overview → Room focus → Bot close-up with camera orbit
-- **4 environments** — Grass, Island, Sky, and Desert — each with unique props and atmosphere
-- **Animated bots** — Working agents type on laptops; idle agents wander the campus
-- **Activity bubbles** — See what each agent is doing at a glance
-- **Blueprints** — JSON-defined room layouts you can create, share, and import
+When the meeting ends, you get:
+- ✅ **Structured summaries** organized by theme
+- ✅ **Action items** with Execute/Add to Planner buttons
+- ✅ **Documented decisions** so nothing gets lost
+- ✅ **Follow-up meetings** that carry context forward automatically
 
-### 🆕 New in v0.13.0
+This isn't just another chat interface. **It's your agents actually working together as a team.**
 
-- **Fullscreen Detail Views** — Activity and Sessions panels with 30/70 split, filter, sort, and autoscroll
-- **Fullscreen PropMaker** — Click bot → instant fullscreen workspace (50/50 split, thinking + 3D preview)
-- **Markdown Viewer/Editor** — CodeMirror 6 editor with split pane, auto-save, and project documents
-- **Org Chart** — New HQ tab showing team hierarchy with color-coded model badges
-- **Agent Persona Tuning** — Customize agent behavior with presets or fine-tune individual traits
-- **Creator Zone MVP** — Prop gallery, AI generation pipeline, and prompt templates
+### 🗺️ Bot Pathfinding
+
+Bots navigate through doors and hallways properly. No more wall-walking — they understand the space and move like they belong there.
+
+### 🤖 Agent Identity Pattern
+
+Single identity across all surfaces. Your Dev bot in the 3D world is the same Dev in chat, same Dev in tasks. The 3D avatar is a representation, not a different personality.
+
+[Read the full v0.15.0 announcement →](https://crewhub.dev/blog/v0-15-0-released)
 
 ---
 
-## ✨ Features
+## 🌟 Core Features
 
-### 📡 Monitoring
-- **Real-time updates** via Server-Sent Events (SSE) — no polling, no delays
-- **Cards view** with status filtering (Active, Idle, Working, Error, and more)
-- **Session history** with full search and filtering
-- **Cron jobs view** for scheduled and recurring agent tasks
-- **Log viewer** with search, browse, and export
+### 🌍 3D World View
+
+Watch your agents roam a toon-shaded campus with procedural rooms, animated bots, and multiple environments (Grass, Island, Sky, Desert).
+
+**Interactions:**
+- **3 zoom levels** — Overview → Room focus → Bot close-up
+- **Click any bot** to see what they're working on
+- **Drag & drop** agents between rooms
+- **Activity bubbles** show current tasks in real-time
+
+### 💬 AI Meetings
+
+Run structured round-robin meetings where agents build on each other's contributions. Get organized output with action items that turn into executable tasks.
+
+### 📋 Task Board (HQ)
+
+Kanban-style board with columns: To Do, In Progress, Review, Done, Blocked. Create tasks, assign to agents, execute directly with "Run with Agent."
+
+### 📡 Real-Time Monitoring
+
+- **Cards view** with status filtering (Active, Idle, Working, Meeting, Supervising)
+- **Live session tracking** via Server-Sent Events (no polling delays)
+- **Fullscreen detail panels** for deep inspection
+- **Activity feed** showing what every agent is doing
 
 ### 🏠 Rooms & Organization
-- **Room management** with drag & drop agent assignment
-- **Custom display names** and room routing rules
-- **Live room refresh** — new rooms appear instantly, no reload needed
-- **Connections manager** for OpenClaw, Claude Code, and Codex integrations
 
-### 💬 Chat & Interaction
-- **Planner-style chat windows** — draggable, resizable, and minimizable
-- **Click-to-detail panels** — inspect any agent's info, stats, and activity
-- **Agent bios** with pre-filled personality descriptions
-- **Agent Top Bar** with boss button, pinned agent, and agent picker
-- **Persona tuning** — customize agent behavior with presets (Executor, Advisor, Explorer) or fine-tune individual traits
-
-### 📋 Task Board
-- **Kanban-style board** in the HQ room with columns: To Do, In Progress, Review, Done, Blocked
-- **Project-linked tasks** — create tasks tied to projects and assignable to agents
-- **Embedded 3D TaskBoard** — full task board rendered on room whiteboards
-- **"Run with Agent" action** — execute tasks directly with an assigned agent
-- **"Spawn Agent" action** — spawn a new agent session to work on a task
+- **Drag & drop** room assignment for agents
+- **Custom display names** and routing rules
+- **Meeting tables** in every project room
+- **Blueprints** — JSON-defined room layouts you can share
 
 ### 🎨 Customization
+
 - **Dark/light theme** with customizable accent colors
-- **5 bot personalities** — Worker 🟠, Thinker 🔵, Cron 🟢, Comms 🟣, Dev 🔴
-- **Settings UI** with backup & restore
-- **Onboarding wizard** with auto-discovery _(in testing)_
+- **5 bot personalities** (Worker, Thinker, Cron, Comms, Dev)
+- **Persona tuning** — customize agent behavior with presets or fine-tune individual traits
+- **Settings backup/restore**
 
-### 🧩 Extensibility _(in testing)_
-- **Modding support** — add custom props, environments, blueprints, and room layouts
-- **Namespaced IDs** (`core:desk`, `desert:cactus`) to avoid conflicts
-- **JSON blueprints** with schema validation for shareable room designs
-- **Data-driven environments** — register your own themes without modifying core code
+### 🧩 Extensibility
 
-> 📖 Documentation coming soon at **docs.crewhub.dev**
+- **Modding support** — add custom props, environments, and blueprints
+- **Namespaced IDs** to avoid conflicts
+- **Data-driven everything** — no code changes needed for most customizations
+
+> 📖 Full documentation coming soon at **docs.crewhub.dev**
 
 ---
 
@@ -133,29 +135,13 @@ Works with:
 
 ### Option 1: Docker (Recommended)
 
-**1. Install Docker**
-
-First, make sure Docker is installed:
-- **macOS/Windows**: Download [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- **Linux**: Install via package manager ([instructions](https://docs.docker.com/engine/install/))
-
-Verify installation:
-```bash
-docker --version
-docker compose version
-```
-
-**2. Clone and Run**
-
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git
 cd crewhub
-make up
+make prod-up
 ```
 
-The dashboard will be available at **http://localhost:8446** (production build). The onboarding wizard will guide you through connecting to your gateway.
-
-> **Note:** Port 5180 is only used for local development (`make dev`). Docker production uses port 8446.
+The dashboard will be available at **http://localhost:8446**. The onboarding wizard will guide you through connecting to your gateway.
 
 ### Option 2: Local Development
 
@@ -165,147 +151,36 @@ cd crewhub
 make dev
 ```
 
-### Option 3: Production without Docker
+Frontend: http://localhost:5181  
+Backend API: http://localhost:8091
 
-For production deployments on VPS/cloud without Docker:
-
-**1. Build the frontend:**
-
-```bash
-cd frontend
-npm install
-npm run build
-# Builds to frontend/dist/
-```
-
-**2. Set up a reverse proxy (nginx or Caddy):**
-
-**nginx example:**
-```nginx
-server {
-    listen 8446;
-    server_name your-domain.com;
-
-    # Frontend (static files)
-    location / {
-        root /path/to/crewhub/frontend/dist;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Backend API proxy
-    location /api {
-        proxy_pass http://localhost:8090;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
-
-**Caddy example (simpler):**
-```
-your-domain.com:8446 {
-    handle /api/* {
-        reverse_proxy localhost:8090
-    }
-    handle {
-        root * /path/to/crewhub/frontend/dist
-        file_server
-        try_files {path} /index.html
-    }
-}
-```
-
-**3. Run the backend:**
-
-**Option A: Direct run (development/testing)**
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8090
-```
-
-**Option B: systemd service (production)**
-```ini
-# /etc/systemd/system/crewhub-backend.service
-[Unit]
-Description=CrewHub Backend
-After=network.target
-
-[Service]
-Type=simple
-User=your-user
-WorkingDirectory=/path/to/crewhub/backend
-Environment="PATH=/path/to/crewhub/backend/venv/bin"
-ExecStart=/path/to/crewhub/backend/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8090
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable crewhub-backend
-sudo systemctl start crewhub-backend
-```
-
-**4. Configure OpenClaw Gateway:**
-
-Make sure your gateway is accessible from the machine running CrewHub. The onboarding wizard will detect your local config automatically, or you can manually enter:
-- `ws://localhost:18789` (same machine)
-- `ws://your-server-ip:18789` (remote machine)
-
-**Security:** See [SECURITY.md](SECURITY.md) for production hardening (auth, HTTPS, firewall).
-
-### Option 4: Demo Mode (No OpenClaw needed)
+### Option 3: Demo Mode (No OpenClaw Needed)
 
 Want to explore CrewHub without setting up OpenClaw? Run in demo mode with simulated agents:
 
 ```bash
-git clone https://github.com/EKINSOL-DEV/crewhub.git
-cd crewhub
 docker compose -f docker-compose.demo.yml up
 ```
 
-Open **http://localhost:3000** — you'll see a fully interactive 3D world with mock agents, rooms, and activity. Perfect for exploring the UI or demoing to your team.
+Open **http://localhost:3000** — you'll see a fully interactive 3D world with mock agents and activity.
 
 > 💡 Or try it online at **[demo.crewhub.dev](https://demo.crewhub.dev)**
 
+---
+
 ## ⚙️ Configuration
 
-Copy `.env.example` to `.env`:
-
-```bash
-# Optional: Override default Gateway URL (default: ws://localhost:18789)
-OPENCLAW_GATEWAY_URL=ws://localhost:18789
-
-# Optional: Backend settings
-BACKEND_PORT=8090
-DEBUG=false
-```
-
-On first launch, the **onboarding wizard** will auto-detect your OpenClaw installation and configure the connection — including the gateway token. No manual token setup needed.
+On first launch, the **onboarding wizard** will auto-detect your OpenClaw installation and configure the connection — including the gateway token. No manual setup needed.
 
 ### Docker Network Notes
 
-When running in Docker, set the Gateway URL to reach your host:
-- **macOS/Windows**: `ws://host.docker.internal:18789`
-- **Linux**: `ws://172.17.0.1:18789` (or your host IP)
-
-**⚠️ Important:** OpenClaw must bind to `lan` instead of `loopback` for Docker to connect:
+When running in Docker, OpenClaw must bind to `lan` instead of `loopback`:
 
 1. Edit `~/.openclaw/openclaw.json`:
    ```json
    {
      "gateway": {
-       "bind": "lan",  // Change from "loopback"
+       "bind": "lan",
        ...
      }
    }
@@ -316,56 +191,35 @@ When running in Docker, set the Gateway URL to reach your host:
    openclaw gateway restart
    ```
 
-Without this change, you'll get **HTTP 405** errors when testing the connection.
-
-## 🌐 Ports
-
-CrewHub supports both **production** (Docker) and **development** (local) environments running simultaneously:
-
-| Environment | Service  | Port | Description |
-|-------------|----------|------|-------------|
-| **Production** | Backend  | 8090 | FastAPI in Docker |
-| **Production** | Frontend | 8446 | Static build (nginx) |
-| **Development** | Backend  | 8091 | Local uvicorn |
-| **Development** | Frontend | 5181 | Vite dev server |
-
-**Databases:**
-- Production: `~/.crewhub/crewhub.db`
-- Development: `~/.crewhub/crewhub-dev.db`
+Set the Gateway URL to reach your host:
+- **macOS/Windows**: `ws://host.docker.internal:18789`
+- **Linux**: `ws://172.17.0.1:18789` (or your host IP)
 
 ---
 
 ## 🧑‍💻 Development
 
-### Dual Environment Setup
-
-CrewHub supports running production (stable) and development (hot-reload) simultaneously:
+### Commands
 
 ```bash
 # Production (Docker)
 make prod-up       # Start production containers
 make prod-down     # Stop production
-make prod-logs     # View production logs
+make prod-logs     # View logs
 make prod-rebuild  # Rebuild and restart
 
 # Development (Local)
-make dev           # Start both backend + frontend (ports 8091/5181)
+make dev           # Start both backend + frontend
 make dev-backend   # Backend only (port 8091)
 make dev-frontend  # Frontend only (port 5181)
-
-# Legacy Docker dev (kept for compatibility)
-make up            # Start with docker-compose.yml
-make down          # Stop all services
-make logs          # View container logs
 ```
 
 ### Production URLs
-- Frontend: http://ekinbot.local:8446
-- Backend API: http://ekinbot.local:8090
+- Frontend: http://localhost:8446
+- Backend API: http://localhost:8090
 
 ### Development URLs
 - Frontend: http://localhost:5181
-- Frontend (Zen Mode): http://localhost:5181?mode=zen
 - Backend API: http://localhost:8091
 
 ### Zen Mode
@@ -373,11 +227,10 @@ make logs          # View container logs
 Access lightweight Zen Mode (no 3D world) via URL parameter:
 
 ```
-http://localhost:5180?mode=zen
+http://localhost:5181?mode=zen
 ```
 
-Perfect for focused work, lower resource usage, or embedded contexts.
-No separate deployment needed — same app, different mode.
+Perfect for focused work, lower resource usage, or embedded contexts. Same app, different mode.
 
 ### Project Structure
 
@@ -387,22 +240,23 @@ crewhub/
 │   ├── app/
 │   │   ├── routes/    # API endpoints
 │   │   ├── services/  # Business logic
-│   │   └── config.py  # Settings
+│   │   └── db/        # Database models
 │   └── tests/
 ├── frontend/          # React + TypeScript frontend
 │   ├── src/
 │   │   ├── components/  # UI components
 │   │   ├── hooks/       # React hooks
-│   │   └── lib/         # Utilities
-│   └── public/          # Static assets & logo
-└── docker-compose.yml
+│   │   ├── lib/         # Utilities
+│   │   └── contexts/    # React contexts
+│   └── public/
+└── docs/              # Documentation & design docs
 ```
 
 ---
 
 ## 💬 Community
 
-Join us on **[Discord](https://discord.gg/Bfupkmvp)** — chat with the team, get early access, and help shape the roadmap.
+Join us on **[Discord](https://discord.gg/Bfupkmvp)** — chat with the team, share your setup, and help shape the roadmap.
 
 ## 🤝 Contributing
 
@@ -410,23 +264,30 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 > **Note:** This project uses a Contributor License Agreement (CLA). You'll be asked to sign it when opening your first pull request.
 
-CrewHub is licensed under **AGPL-3.0**, which means any modified version that's served over a network must also be open-sourced under the same license. Keep this in mind when building on top of CrewHub.
+## ⚠️ Security Notice
+
+CrewHub ships with **no authentication** by default and is designed for local/trusted networks. Public or internet-facing deployment requires enabling auth, HTTPS, and firewall rules.
+
+See **[SECURITY.md](SECURITY.md)** for production hardening guidelines.
 
 ## 📚 Research Project
 
-This is an **open research project** by [EKINSOL BV](https://ekinsol.be). 
-We're exploring AI-assisted software development and sharing our journey 
-openly — including planning docs, design decisions, and learnings.
+This is an **open research project** by [EKINSOL BV](https://ekinsol.be). We're exploring AI-assisted software development and sharing our journey openly — including planning docs, design decisions, and learnings.
 
 **What this means:**
 - 🧪 Code and docs evolve rapidly as we experiment
 - 📖 We share our process, not just polished results
-- 🤝 Feedback and contributions are welcome!
+- 🤝 Feedback and contributions shape the direction
 
 ## 📄 License
 
 AGPL-3.0 — see [LICENSE](LICENSE)
 
+CrewHub is licensed under **AGPL-3.0**, which means any modified version that's served over a network must also be open-sourced under the same license.
+
 ---
 
-<p align="center"><strong>Made by <a href="https://ekinsol.be">EKINSOL</a></strong></p>
+<p align="center">
+  <strong>Made by <a href="https://ekinsol.be">EKINSOL</a></strong><br>
+  <a href="https://crewhub.dev">Website</a> · <a href="https://demo.crewhub.dev">Demo</a> · <a href="https://discord.gg/Bfupkmvp">Discord</a>
+</p>
