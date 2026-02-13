@@ -285,7 +285,7 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
       {/* HQ already has a meeting table in its blueprint; other project rooms get one dynamically */}
       {room.project_id && !room.is_hq && (
         <ProjectMeetingTable
-          position={[0, 0.16, 0]}
+          position={[2, 0.16, 2]}
           rotation={0}
           cellSize={0.6}
           roomId={room.id}

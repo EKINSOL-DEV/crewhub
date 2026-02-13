@@ -2,7 +2,7 @@
 // Extracted from Bot3D.tsx to avoid mixed exports (React + non-React)
 // which breaks Vite HMR Fast Refresh.
 
-export type BotStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline'
+export type BotStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
 
 // ─── Fixed Y height for ALL bots ─────────────────────────────────
 export const BOT_FIXED_Y = 0.35

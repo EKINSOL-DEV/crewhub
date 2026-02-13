@@ -28,18 +28,36 @@ export function DocumentSelectorModal({
   onSelect,
 }: DocumentSelectorModalProps) {
   const [tree, setTree] = useState<TreeNode[] | null>(null)
+  const [, setFlatFiles] = useState<string[]>([])
   const [selectedPath, setSelectedPath] = useState<string>()
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
+  const [warning, setWarning] = useState<string>()
 
   useEffect(() => {
     if (!open || !projectId) return
     setLoading(true)
     setSelectedPath(undefined)
     setSearch('')
+    setWarning(undefined)
+    setFlatFiles([])
     fetch(`${API_BASE}/api/projects/${projectId}/markdown-files`)
       .then(res => res.json())
-      .then(data => setTree(data.tree || []))
+      .then(data => {
+        const treeData = data.tree || []
+        setTree(treeData)
+        setFlatFiles(data.files || [])
+        if (data.warning) setWarning(data.warning)
+        // If tree is empty but we have flat files, build a simple tree from file paths
+        if (treeData.length === 0 && data.files && data.files.length > 0) {
+          const simpleTree: TreeNode[] = data.files.map((f: string) => ({
+            name: f.split('/').pop() || f,
+            type: 'file' as const,
+            path: f,
+          }))
+          setTree(simpleTree)
+        }
+      })
       .catch(() => setTree([]))
       .finally(() => setLoading(false))
   }, [open, projectId])
@@ -68,7 +86,9 @@ export function DocumentSelectorModal({
         <div className="border rounded-md p-2 flex-1 min-h-[300px] max-h-[50vh] overflow-y-auto">
           {loading && <div className="text-sm text-muted-foreground p-4 text-center">Loading files...</div>}
           {!loading && tree && tree.length === 0 && (
-            <div className="text-sm text-muted-foreground p-4 text-center">No markdown files found</div>
+            <div className="text-sm text-muted-foreground p-4 text-center">
+              {warning || 'No markdown files found'}
+            </div>
           )}
           {!loading && tree && tree.map((node, i) => (
             <FolderTreeNode

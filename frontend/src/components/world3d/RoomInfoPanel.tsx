@@ -17,7 +17,7 @@ import { OrgChartTab } from './OrgChartTab'
 
 // ── Types ──────────────────────────────────────────────────────
 
-type BotStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline'
+type BotStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
 
 interface RoomInfoPanelProps {
   room: Room
@@ -165,7 +165,7 @@ export function RoomInfoPanel({
       const name = getDisplayName(s, displayNames.get(s.key))
       return { session: s, status, name }
     }).sort((a, b) => {
-      const order: Record<BotStatus, number> = { active: 0, supervising: 1, idle: 2, sleeping: 3, offline: 4 }
+      const order: Record<BotStatus, number> = { active: 0, meeting: 1, supervising: 2, idle: 3, sleeping: 4, offline: 5 }
       return order[a.status] - order[b.status]
     })
   }, [sessions, isActivelyRunning, displayNames])

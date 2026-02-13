@@ -26,7 +26,7 @@ function matchesSearch(node: TreeNode, filter: string): boolean {
 }
 
 export function FolderTreeNode({ node, onSelectFile, selectedPath, searchFilter = '', depth = 0 }: FolderTreeNodeProps) {
-  const [expanded, setExpanded] = useState(depth < 1 || !!searchFilter)
+  const [expanded, setExpanded] = useState(depth < 2 || !!searchFilter)
 
   if (searchFilter && !matchesSearch(node, searchFilter)) {
     return null

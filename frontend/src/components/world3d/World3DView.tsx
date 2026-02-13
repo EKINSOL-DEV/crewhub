@@ -568,6 +568,8 @@ interface SceneContentProps {
   rooms: Room[]
   getRoomForSession: (sessionKey: string, sessionData?: { label?: string; model?: string; channel?: string }) => string | undefined
   isRoomsLoading: boolean
+  /** Session keys of bots currently in an active meeting */
+  meetingParticipantKeys?: Set<string>
 }
 
 // ─── Scene Content ─────────────────────────────────────────────
@@ -588,6 +590,7 @@ function SceneContent({
   rooms,
   getRoomForSession,
   isRoomsLoading,
+  meetingParticipantKeys,
 }: SceneContentProps) {
   void _settings // Available for future use (e.g. animation speed)
   // Combine all sessions for agent registry lookup
@@ -640,7 +643,9 @@ function SceneContent({
 
   const buildBotPlacement = (session: CrewSession, _runtime?: AgentRuntime): BotPlacement => {
     const isActive = isActivelyRunning(session.key)
-    const status = getAccurateBotStatus(session, isActive, allSessions)
+    const baseStatus = getAccurateBotStatus(session, isActive, allSessions)
+    // Override status for bots currently in a meeting
+    const status: BotStatus = meetingParticipantKeys?.has(session.key) ? 'meeting' : baseStatus
     const config = getBotConfigFromSession(session.key, session.label, _runtime?.agent?.color)
     const name = getSessionDisplayName(session, displayNames.get(session.key))
     const scale = isSubagent(session.key) ? 0.6 : 1.0
@@ -947,6 +952,13 @@ function DragStatusIndicator() {
 // ─── Main Component ────────────────────────────────────────────
 
 function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+  // Meeting context — get active meeting participants for status override
+  const { meeting: meetingState } = useMeetingContext()
+  const meetingParticipantKeys = useMemo(() => {
+    if (!meetingState.isActive) return new Set<string>()
+    return new Set(meetingState.participants || [])
+  }, [meetingState.isActive, meetingState.participants])
+
   // Debug keyboard shortcuts (F2=Grid, F3=Lighting, F4=Bots)
   useDebugKeyboardShortcuts()
 
@@ -1227,6 +1239,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
               rooms={rooms}
               getRoomForSession={getRoomForSession}
               isRoomsLoading={isRoomsLoading}
+              meetingParticipantKeys={meetingParticipantKeys}
               />
             </Suspense>
           </Canvas>

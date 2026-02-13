@@ -113,6 +113,8 @@ class MeetingOrchestrator:
                 "title": self.title,
                 "state": MeetingState.GATHERING.value,
                 "participants": [p["session_key"] for p in self.participants],
+                "num_rounds": self.config.num_rounds,
+                "total_rounds": self.config.num_rounds,
             })
 
             # Brief gathering pause (frontend animation time)
