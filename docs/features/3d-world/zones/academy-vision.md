@@ -8,7 +8,7 @@ The Academy is CrewHub's learning and knowledge hub — a place where agents lev
 
 **Vibe:** Calm but intellectually buzzing. Warm wood tones, soft lighting, the quiet hum of focused thinking. Occasional "eureka!" moments that ripple through the space.
 
-**Who lives here:** Knowledge agents (like WTL), any agent in learning mode, research tasks, documentation work.
+**Who lives here:** Knowledge agents (like Knowledge Agent), any agent in learning mode, research tasks, documentation work.
 
 ---
 

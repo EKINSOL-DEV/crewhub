@@ -89,7 +89,7 @@ Closed by: `Escape`, X button, or clicking outside.
 │            │  - Full name: Nicky Goethals                     │
 │            │  - Location: Zedelgem, Belgium                   │
 │            │                                                 │
-│            │  ## Waterleau Data Platform                       │
+│            │  ## Industry Data Platform                       │
 │            │  - Nicky is Technical Lead...                    │
 │            │                                                 │
 ├────────────┴─────────────────────────────────────────────────┤

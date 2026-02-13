@@ -48,7 +48,6 @@ _AGENT_DEFAULTS = {
     "flowy": {"name": "Flowy", "icon": "🌊", "color": "#8b5cf6", "session_key": "agent:flowy:main", "sort": 3, "bio": "Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2."},
     "creator": {"name": "Creator", "icon": "🎨", "color": "#f59e0b", "session_key": "agent:creator:main", "sort": 4, "bio": "A hardworking crew member."},
     "reviewer": {"name": "Reviewer", "icon": "🔍", "color": "#ef4444", "session_key": "agent:reviewer:main", "sort": 5, "bio": "Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions."},
-    "wtl": {"name": "WTL", "icon": "💧", "color": "#06b6d4", "session_key": "agent:wtl:main", "sort": 6, "bio": "Waterleau knowledge specialist. Industrial data pipelines, wastewater treatment, and SCADA systems. The domain expert on Sonnet."},
 }
 
 
@@ -377,7 +376,6 @@ async def generate_bio(agent_id: str):
         "flowy": "{name} handles marketing, media, and creative content.",
         "creator": "{name} is the video specialist, crafting visual stories.",
         "reviewer": "{name} reviews code and provides feedback for quality.",
-        "wtl": "{name} is the Waterleau knowledge agent, specializing in water treatment.",
     }
     
     # Try to extract personality from SOUL.md

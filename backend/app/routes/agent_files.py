@@ -31,7 +31,6 @@ DEFAULT_WORKSPACES = {
     "main": str(Path.home() / "clawd"),
     "dev": str(Path.home() / "clawd"),
     "flowy": str(Path.home() / "clawd-flowy"),
-    "wtl": str(Path.home() / "clawd-wtl"),
     "creator": str(Path.home() / "clawd-creator"),
 }
 

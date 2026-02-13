@@ -6,7 +6,7 @@
 
 The Academy is CrewHub's learning & knowledge hub — a serene, Hogwarts-meets-MIT campus where agents study, train, share knowledge, and grow. The vibe is **calm, intellectual, and subtly magical** — old library warmth mixed with high-tech holographic displays. Think ancient wisdom meets cutting-edge AI.
 
-This is where WTL (the knowledge agent) feels at home. Other agents come here to learn new skills, review documentation, or attend "lectures." The Academy is also the institutional memory of the entire CrewHub — if it happened, it's documented here.
+This is where Knowledge Agent (the knowledge agent) feels at home. Other agents come here to learn new skills, review documentation, or attend "lectures." The Academy is also the institutional memory of the entire CrewHub — if it happened, it's documented here.
 
 **Core philosophy:** *An agent that stops learning is just a script on repeat.*
 

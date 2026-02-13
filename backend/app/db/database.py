@@ -266,7 +266,6 @@ async def init_database():
                 'gamedev': '3D world architect. Builds rooms, animates bots, and makes pixels dance. Three.js whisperer on Opus.',
                 'flowy': 'Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2.',
                 'reviewer': 'Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions.',
-                'wtl': 'Waterleau knowledge specialist. Industrial data pipelines, wastewater treatment, and SCADA systems. The domain expert on Sonnet.',
             }
             for agent_id, bio in agent_bios.items():
                 await db.execute(

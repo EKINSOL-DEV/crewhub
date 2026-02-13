@@ -325,17 +325,6 @@ const MOCK_AGENTS: Agent[] = [
     updated_at: Date.now(),
   },
   {
-    id: 'agent-wtl',
-    name: 'WTL',
-    icon: '💧',
-    avatar_url: null,
-    color: '#ef4444',
-    agent_session_key: 'agent:wtl:main',
-    default_model: 'claude-sonnet-4-20250514',
-    default_room_id: 'ops-room',
-    sort_order: 5,
-    is_pinned: false,
-    auto_spawn: false,
     bio: 'Water technology specialist — data analysis, monitoring, alerts.',
     created_at: Date.now() - 86400000 * 2,
     updated_at: Date.now(),
@@ -427,7 +416,6 @@ const MOCK_DISPLAY_NAMES = [
   { session_key: 'agent:gamedev:main', display_name: 'Game Dev' },
   { session_key: 'agent:flowy:main', display_name: 'Flowy' },
   { session_key: 'agent:reviewer:main', display_name: 'Reviewer' },
-  { session_key: 'agent:wtl:main', display_name: 'WTL' },
 ]
 ```
 

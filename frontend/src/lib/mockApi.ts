@@ -155,7 +155,7 @@ const MOCK_ROOMS: MockRoom[] = [
   },
 ]
 
-// 5 agents — NO WTL agent
+// 5 core agents for demo
 const MOCK_AGENTS: MockAgent[] = [
   {
     id: 'agent-main',

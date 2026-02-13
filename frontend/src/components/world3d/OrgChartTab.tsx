@@ -2,11 +2,10 @@
 
 const HIERARCHY: Record<string, { role: string; model?: string; icon?: string; children: string[] }> = {
   'Nicky': { role: 'Owner / CEO / CTO', icon: '👨‍💼', children: ['Assistent'] },
-  'Assistent': { role: 'Director of Bots', model: 'Sonnet', icon: '🤖', children: ['Dev', 'Game Dev', 'Reviewer', 'WTL', 'Flowy'] },
+  'Assistent': { role: 'Director of Bots', model: 'Sonnet', icon: '🤖', children: ['Dev', 'Game Dev', 'Reviewer', 'Flowy'] },
   'Dev': { role: 'Developer', model: 'Opus', icon: '💻', children: [] },
   'Game Dev': { role: '3D / Three.js specialist', model: 'Opus', icon: '🎮', children: [] },
   'Reviewer': { role: 'Code Review', model: 'GPT-5.2', icon: '🔍', children: [] },
-  'WTL': { role: 'Waterleau knowledge agent', model: 'Sonnet', icon: '💧', children: [] },
   'Flowy': { role: 'PO/PM marketing & media', model: 'GPT-5.2', icon: '📊', children: ['Creator'] },
   'Creator': { role: 'Video specialist', model: 'Sonnet', icon: '🎬', children: [] },
 }

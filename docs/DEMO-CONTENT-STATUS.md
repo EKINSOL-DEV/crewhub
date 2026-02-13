@@ -52,7 +52,7 @@ Located in `data/demo-docs/`:
 | guides/ai-meetings.md | **New** — AI Meetings user guide |
 
 ### 5. Agents & Rooms
-- **7 agents**: Main, Dev, Flowy, Creator, Reviewer, Gamedev, WTL
+- **7 agents**: Main, Dev, Flowy, Creator, Reviewer, Gamedev, Knowledge Agent
 - **8 rooms**: Headquarters, Marketing, Dev Room, Creative Room, Thinking Room, Automation Room, Ops Room, Clients
 - Room assignments managed via `session_room_assignments` table (agents table has no `room_id` column)
 

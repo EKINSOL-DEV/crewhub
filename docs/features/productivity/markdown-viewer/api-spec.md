@@ -62,7 +62,6 @@ List files in an agent's workspace.
 | main | `/Users/ekinbot/clawd` |
 | dev | `/Users/ekinbot/clawd` |
 | flowy | `/Users/ekinbot/clawd-flowy` |
-| wtl | `/Users/ekinbot/clawd-wtl` |
 | creator | `/Users/ekinbot/clawd-creator` |
 
 ### GET /api/agents/{agent_id}/files/{path:path}
@@ -204,7 +203,6 @@ Store in `settings` table:
   "value": {
     "main": "/Users/ekinbot/clawd",
     "flowy": "/Users/ekinbot/clawd-flowy",
-    "wtl": "/Users/ekinbot/clawd-wtl",
     "creator": "/Users/ekinbot/clawd-creator"
   }
 }
