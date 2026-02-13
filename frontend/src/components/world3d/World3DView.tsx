@@ -114,11 +114,19 @@ interface World3DViewProps {
 // ─── Meeting Overlays ──────────────────────────────────────────
 
 function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime[]; rooms: Room[] }) {
-  const { meeting, view, openDialog: _od, closeDialog, showProgress, showOutput, closeView } = useMeetingContext()
+  const { meeting, view, dialogRoomContext, openDialog: _od, closeDialog, showProgress, showOutput, closeView } = useMeetingContext()
   void _od
 
-  // Find HQ room for project info
+  // Find HQ room as default fallback
   const hqRoom = rooms.find(r => r.name.toLowerCase().includes('headquarter') || r.name.toLowerCase() === 'hq')
+
+  // Use room context from the clicked table, or fall back to HQ
+  const dialogRoom = dialogRoomContext
+    ? rooms.find(r => r.id === dialogRoomContext.roomId) || null
+    : null
+  const effectiveRoomId = dialogRoomContext?.roomId || hqRoom?.id
+  const effectiveProjectId = dialogRoomContext?.projectId || hqRoom?.project_id || undefined
+  const effectiveProjectName = dialogRoomContext?.projectName || dialogRoom?.project_name || hqRoom?.project_name || undefined
 
   return (
     <>
@@ -127,9 +135,9 @@ function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime
         open={view === 'dialog'}
         onOpenChange={(open) => { if (!open) closeDialog() }}
         agents={agentRuntimes}
-        roomId={hqRoom?.id}
-        projectId={hqRoom?.project_id || undefined}
-        projectName={hqRoom?.project_name || undefined}
+        roomId={effectiveRoomId}
+        projectId={effectiveProjectId}
+        projectName={effectiveProjectName}
         onStart={async (params) => {
           await meeting.startMeeting(params)
         }}

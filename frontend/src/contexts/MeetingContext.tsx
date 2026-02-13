@@ -49,6 +49,12 @@ export function calculateGatheringPositions(
 
 type MeetingView = 'none' | 'dialog' | 'progress' | 'output'
 
+export interface DialogRoomContext {
+  roomId?: string
+  projectId?: string
+  projectName?: string
+}
+
 interface MeetingContextValue {
   // State
   meeting: MeetingState & {
@@ -60,9 +66,11 @@ interface MeetingContextValue {
   }
   view: MeetingView
   gatheringPositions: GatheringPosition[]
+  dialogRoomContext: DialogRoomContext | null
 
   // Actions
   openDialog: () => void
+  openDialogForRoom: (ctx: DialogRoomContext) => void
   closeDialog: () => void
   showProgress: () => void
   showOutput: () => void
@@ -76,6 +84,7 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
   const meeting = useMeeting()
   const [view, setView] = useState<MeetingView>('none')
   const [tablePos, setTablePos] = useState<{ x: number; z: number }>({ x: 0, z: 0 })
+  const [dialogRoomContext, setDialogRoomContext] = useState<DialogRoomContext | null>(null)
 
   const gatheringPositions = useMemo(() => {
     if (!meeting.isActive && meeting.phase !== 'complete') return []
@@ -100,7 +109,14 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     // cancelled/error: keep progress view to show the state
   }, [meeting.phase, view, meeting])
 
-  const openDialog = useCallback(() => setView('dialog'), [])
+  const openDialog = useCallback(() => {
+    setDialogRoomContext(null)
+    setView('dialog')
+  }, [])
+  const openDialogForRoom = useCallback((ctx: DialogRoomContext) => {
+    setDialogRoomContext(ctx)
+    setView('dialog')
+  }, [])
   const closeDialog = useCallback(() => setView('none'), [])
   const showProgress = useCallback(() => setView('progress'), [])
   const showOutput = useCallback(() => {
@@ -164,6 +180,8 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     view,
     gatheringPositions,
     openDialog,
+    openDialogForRoom,
+    dialogRoomContext,
     closeDialog,
     showProgress,
     showOutput,

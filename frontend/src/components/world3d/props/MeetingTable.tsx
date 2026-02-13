@@ -206,13 +206,24 @@ export function MeetingTableProp(props: PropProps) {
   return <MeetingTableConnected {...props} />
 }
 
-function MeetingTableConnected(props: PropProps) {
+/** Standalone meeting table for project rooms (not from blueprint). */
+export function ProjectMeetingTable({ roomId, projectId, projectName, ...props }: PropProps & { roomId: string; projectId: string; projectName?: string }) {
+  return <MeetingTableConnected {...props} roomId={roomId} projectId={projectId} projectName={projectName} />
+}
+
+function MeetingTableConnected(props: PropProps & { roomId?: string; projectId?: string; projectName?: string }) {
   const meetingCtx = useMeetingContextSafe()
 
   const handleClick = () => {
     if (!meetingCtx) return
     if (meetingCtx.meeting.isActive) {
       meetingCtx.showProgress()
+    } else if (props.roomId || props.projectId) {
+      meetingCtx.openDialogForRoom({
+        roomId: props.roomId,
+        projectId: props.projectId,
+        projectName: props.projectName,
+      })
     } else {
       meetingCtx.openDialog()
     }

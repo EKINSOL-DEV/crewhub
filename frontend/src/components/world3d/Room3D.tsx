@@ -12,6 +12,7 @@ import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragDrop } from '@/contexts/DragDropContext'
 import { useGridDebug } from '@/hooks/useGridDebug'
 import { useZenMode } from '@/components/zen'
+import { ProjectMeetingTable } from './props/MeetingTable'
 import type { Room } from '@/hooks/useRooms'
 import type { ThreeEvent } from '@react-three/fiber'
 
@@ -277,6 +278,19 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
           projectName={room.project_name}
           projectColor={room.project_color || undefined}
           onActivate={handleZenActivate}
+        />
+      )}
+
+      {/* ─── Meeting Table (dynamic, for project rooms without blueprint table) ─ */}
+      {/* HQ already has a meeting table in its blueprint; other project rooms get one dynamically */}
+      {room.project_id && !room.is_hq && (
+        <ProjectMeetingTable
+          position={[0, 0.16, 0]}
+          rotation={0}
+          cellSize={0.6}
+          roomId={room.id}
+          projectId={room.project_id}
+          projectName={room.project_name || undefined}
         />
       )}
     </group>
