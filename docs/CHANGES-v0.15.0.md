@@ -45,13 +45,24 @@
 - **Files:** 17 files changed
 - **Blog:** `docs/features/core/agent-status-logic-blog.md` (updated)
 
-### Spatial Awareness Research
-**Status:** Scheduled (04:00)
+### Spatial Awareness Research & Prototype
+**Status:** ✅ Complete (05:20)
 
-- Research: [to be filled by agent]
-- Prototype: [to be filled by agent]
-- Documentation: [to be filled by agent]
-- Commits: [to be filled by agent]
+- **Added:** `frontend/src/lib/spatial/` — complete spatial awareness library (880 lines, 4 modules)
+- **Added:** `VisionSystem` — Bresenham grid raycasting with FOV, range, and obstacle blocking
+- **Added:** `ProximityGrid` — Spatial hash grid for O(1) insert, O(k) radius queries
+- **Added:** `SpatialNavigator` — A* path smoothing, zone-based navigation, prop targeting, layout summaries
+- **Added:** `SpatialManager` — Per-room orchestrator tying vision + proximity + navigation together
+- **Added:** `gridToZone()` — Maps 20×20 grid positions to 9 named zones (nw, n, ne, w, center, e, sw, s, se)
+- **Added:** Zone labels for natural language ("northwest corner", "east wall", "south wall (near door)")
+- **Added:** `getLayoutSummary()` — Token-efficient room description (~30-40 tokens) for context envelope injection
+- **Added:** `navigateToProp()` — Fuzzy name matching + pathfind to adjacent walkable cell
+- **Added:** Path smoothing via line-of-sight simplification (reduces 12+ waypoints to 3-4)
+- **Research:** Evaluated Three.js Raycaster, three-pathfinding, recast-navigation-js, Yuka.js
+- **Decision:** Grid-based approach (Bresenham + spatial hash + A* smoothing) — zero external dependencies, perfect fit for 20×20 rectangular rooms
+- **Tests:** 31 new tests covering vision, proximity, navigation, zones, and path smoothing — all passing
+- **Blog:** `docs/features/3d-world/spatial-awareness/spatial-awareness-blog.md`
+- **Commits:** feat: Spatial Awareness research prototype — vision, proximity, pathfinding
 
 ---
 
