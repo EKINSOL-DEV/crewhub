@@ -195,7 +195,6 @@ export function DynamicProp({
   const handleDraggingChanged = useCallback((dragging: boolean) => {
     onDraggingChangedProp?.(dragging)
   }, [onDraggingChangedProp])
-  const [isDragging, setIsDragging] = useState(false)
   const isDraggingRef = useRef(false)
   const dragPartIndexRef = useRef<number | null>(null)
   const selectedMeshRef = useRef<THREE.Mesh>(null!)
@@ -219,7 +218,6 @@ export function DynamicProp({
     if (!controls) return
     const cb = (event: any) => {
       const dragging = event.value as boolean
-      setIsDragging(dragging)
       isDraggingRef.current = dragging
       handleDraggingChanged(dragging)
 

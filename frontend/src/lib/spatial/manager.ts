@@ -7,9 +7,9 @@
 // and provides a simple API for Bot3D and other components.
 
 import { VisionSystem, type VisionConfig, type VisionResult } from './vision'
-import { ProximityGrid, type ProximityEntity } from './proximity'
+import { ProximityGrid } from './proximity'
 import { SpatialNavigator, type NavigationPath, type NavigationConfig, gridToZone, type ZoneName } from './navigation'
-import type { GridCell, RoomBlueprint } from '@/lib/grid/types'
+import type { RoomBlueprint } from '@/lib/grid/types'
 
 export interface BotSpatialInfo {
   /** Bot session key */
