@@ -10,6 +10,7 @@ export function useProjectMarkdownFiles(projectId?: string) {
   const [files, setFiles] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     if (!projectId) {
@@ -42,7 +43,9 @@ export function useProjectMarkdownFiles(projectId?: string) {
       })
 
     return () => { cancelled = true }
-  }, [projectId])
+  }, [projectId, refreshKey])
 
-  return { files, loading, error }
+  const refetch = () => setRefreshKey(k => k + 1)
+
+  return { files, loading, error, refetch }
 }

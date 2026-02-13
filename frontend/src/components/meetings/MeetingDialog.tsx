@@ -14,12 +14,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import type { AgentRuntime } from '@/hooks/useAgentsRegistry'
 import type { StartMeetingParams } from '@/hooks/useMeeting'
 import { useProjectMarkdownFiles } from '@/hooks/useProjectMarkdownFiles'
+import { DocumentSelectorModal } from './DocumentSelectorModal'
+import { DocumentUploadZone } from './DocumentUploadZone'
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -56,9 +57,10 @@ export function MeetingDialog({
   const [error, setError] = useState<string | null>(null)
   const [documentPath, setDocumentPath] = useState<string>('')
   const [documentContext, setDocumentContext] = useState<string>('')
+  const [showDocModal, setShowDocModal] = useState(false)
 
   // Fetch markdown files for document selector
-  const { files: markdownFiles, loading: filesLoading } = useProjectMarkdownFiles(projectId)
+  const { refetch: refetchFiles } = useProjectMarkdownFiles(projectId)
 
   // Available agents (only those with a session key, i.e., existing agents)
   const availableAgents = useMemo(
@@ -190,11 +192,13 @@ export function MeetingDialog({
           {/* Meeting Topic */}
           <div className="space-y-1.5">
             <Label htmlFor="meeting-topic">Meeting Topic</Label>
-            <Input
+            <Textarea
               id="meeting-topic"
               placeholder="What should we discuss?"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
+              rows={5}
+              className="resize-y"
             />
           </div>
 
@@ -267,31 +271,59 @@ export function MeetingDialog({
 
           {/* Document Selector */}
           {projectId && (
-            <div className="space-y-1.5">
-              <Label htmlFor="document-select">Optional: Attach Document</Label>
-              <select
-                id="document-select"
-                value={documentPath}
-                onChange={(e) => setDocumentPath(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="">Select markdown file from project...</option>
-                {filesLoading && <option disabled>Loading files...</option>}
-                {markdownFiles.map(f => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-              {documentPath && (
-                <div className="text-xs text-muted-foreground">
-                  📄 {documentPath}
-                </div>
-              )}
-              {!filesLoading && markdownFiles.length === 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  No .md files found in this project folder.
-                </p>
-              )}
+            <div className="space-y-3">
+              <Label>Optional: Attach Document</Label>
+              
+              {/* Select from project tree */}
+              <div className="space-y-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  onClick={() => setShowDocModal(true)}
+                >
+                  {documentPath ? (
+                    <span className="truncate">📄 {documentPath}</span>
+                  ) : (
+                    <span className="text-muted-foreground">Select document from project...</span>
+                  )}
+                </Button>
+                {documentPath && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-6"
+                    onClick={() => setDocumentPath('')}
+                  >
+                    ✕ Clear selection
+                  </Button>
+                )}
+              </div>
+
+              {/* Upload zone */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Or upload new:</Label>
+                <DocumentUploadZone
+                  projectId={projectId}
+                  onUploadComplete={(path) => {
+                    setDocumentPath(path)
+                    refetchFiles()
+                  }}
+                />
+              </div>
             </div>
+          )}
+
+          {/* Document selector modal */}
+          {projectId && (
+            <DocumentSelectorModal
+              open={showDocModal}
+              onOpenChange={setShowDocModal}
+              projectId={projectId}
+              projectName={projectName}
+              onSelect={(path) => setDocumentPath(path)}
+            />
           )}
 
           {/* Additional context */}

@@ -5,7 +5,8 @@ import re
 import time
 import logging
 from pathlib import Path
-from fastapi import APIRouter, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, HTTPException, UploadFile, File
 
 from app.db.database import get_db
 from app.db.models import ProjectCreate, ProjectUpdate, ProjectResponse, generate_id
@@ -20,6 +21,7 @@ SYNOLOGY_PROJECTS_BASE = Path.home() / "SynologyDrive" / "ekinbot" / "01-Project
 # Allowed roots for project folders (security boundary)
 ALLOWED_PROJECT_ROOTS = [
     Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects",
+    Path.home() / "Library" / "CloudStorage" / "SynologyDrive-ekinbot" / "01-Projects",
     Path.home() / "Projects",
 ]
 
@@ -191,49 +193,130 @@ async def list_markdown_files(project_id: str):
             logger.warning(f"Project folder outside allowed roots: {resolved_base}")
             raise HTTPException(403, "Project folder outside allowed roots")
 
-        # Scan for .md files in thread pool (non-blocking)
+        # Scan for .md files (flat list) in thread pool
         def _scan_files(base_dir: Path, resolved: Path) -> list[str]:
             md_files: list[str] = []
             for md_path in sorted(base_dir.rglob("*.md")):
-                # Security: ensure file is within project dir (no symlink escape)
                 try:
                     resolved_path = md_path.resolve()
                     if not resolved_path.is_relative_to(resolved):
                         continue
                 except (OSError, ValueError):
                     continue
-
-                # Skip hidden dirs and node_modules
                 rel = md_path.relative_to(base_dir)
                 parts = rel.parts
                 if any(p.startswith('.') or p == 'node_modules' for p in parts):
                     continue
-
-                # Max depth 3
                 if len(parts) > 4:
                     continue
-
-                # Skip files > 1MB
                 try:
                     if md_path.stat().st_size > 1_000_000:
                         continue
                 except OSError:
                     continue
-
                 md_files.append(str(rel))
-                if len(md_files) >= 100:
+                if len(md_files) >= 200:
                     break
             return md_files
 
-        md_files = await asyncio.to_thread(_scan_files, project_dir, resolved_base)
+        # Build tree structure
+        SKIP_DIRS = {'.git', 'node_modules', '.DS_Store', '__pycache__', '.venv', 'venv'}
 
-        return {"files": md_files}
+        def _build_tree(base_dir: Path, current_dir: Path, resolved: Path, depth: int = 0) -> list[dict]:
+            if depth > 4:
+                return []
+            items = []
+            try:
+                entries = sorted(current_dir.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+            except PermissionError:
+                return []
+            for item in entries:
+                if item.name.startswith('.') or item.name in SKIP_DIRS:
+                    continue
+                if item.is_dir():
+                    children = _build_tree(base_dir, item, resolved, depth + 1)
+                    if children:  # Only include folders that have .md files
+                        items.append({
+                            "name": item.name,
+                            "type": "folder",
+                            "children": children,
+                        })
+                elif item.is_file() and item.suffix == '.md':
+                    try:
+                        resolved_path = item.resolve()
+                        if not resolved_path.is_relative_to(resolved):
+                            continue
+                        if item.stat().st_size > 1_000_000:
+                            continue
+                    except (OSError, ValueError):
+                        continue
+                    rel_path = item.relative_to(base_dir)
+                    items.append({
+                        "name": item.name,
+                        "type": "file",
+                        "path": str(rel_path),
+                    })
+            return items
+
+        md_files = await asyncio.to_thread(_scan_files, project_dir, resolved_base)
+        tree = await asyncio.to_thread(_build_tree, project_dir, project_dir, resolved_base)
+
+        return {"files": md_files, "tree": tree, "root": project["name"]}
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to list markdown files for project {project_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{project_id}/upload-document")
+async def upload_document(project_id: str, file: UploadFile = File(...)):
+    """Upload markdown document to project meetings folder."""
+    db = await get_db()
+    try:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
+            project = await cursor.fetchone()
+            if not project:
+                raise HTTPException(404, "Project not found")
+    finally:
+        await db.close()
+
+    if not file.filename or not file.filename.endswith('.md'):
+        raise HTTPException(400, "Only .md files allowed")
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(400, "File too large (max 5MB)")
+
+    # Determine project folder
+    folder_path = project.get("folder_path", "")
+    if not folder_path:
+        raise HTTPException(400, "Project has no folder path configured")
+    project_dir = Path(os.path.expanduser(folder_path)).resolve()
+
+    if not any(project_dir.is_relative_to(root) for root in ALLOWED_PROJECT_ROOTS if root.exists()):
+        raise HTTPException(403, "Project folder outside allowed roots")
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    meetings_dir = project_dir / "meetings" / today
+    await asyncio.to_thread(lambda: meetings_dir.mkdir(parents=True, exist_ok=True))
+
+    filename = file.filename
+    save_path = meetings_dir / filename
+    counter = 1
+    while save_path.exists():
+        name, ext = filename.rsplit('.', 1)
+        save_path = meetings_dir / f"{name}-{counter}.{ext}"
+        counter += 1
+
+    await asyncio.to_thread(save_path.write_bytes, content)
+
+    rel_path = save_path.relative_to(project_dir)
+    return {"path": str(rel_path), "filename": save_path.name, "size": len(content)}
 
 
 @router.post("", response_model=ProjectResponse)
