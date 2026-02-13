@@ -42,14 +42,22 @@ function DynamicMesh({
   const toon = useToonMaterialProps(part.color)
   const meshRef = useRef<THREE.Mesh>(null)
 
+  // Center geometry so pivot point is at visual center
+  const centerGeometry = useCallback((geo: THREE.BufferGeometry | null) => {
+    if (geo) {
+      geo.computeBoundingBox()
+      geo.center()
+    }
+  }, [])
+
   const geometry = (() => {
     switch (part.type) {
-      case 'box': return <boxGeometry args={part.args as any} />
-      case 'cylinder': return <cylinderGeometry args={part.args as any} />
-      case 'sphere': return <sphereGeometry args={part.args as any} />
-      case 'cone': return <coneGeometry args={part.args as any} />
-      case 'torus': return <torusGeometry args={part.args as any} />
-      default: return <boxGeometry args={[0.3, 0.3, 0.3]} />
+      case 'box': return <boxGeometry ref={centerGeometry} args={part.args as any} />
+      case 'cylinder': return <cylinderGeometry ref={centerGeometry} args={part.args as any} />
+      case 'sphere': return <sphereGeometry ref={centerGeometry} args={part.args as any} />
+      case 'cone': return <coneGeometry ref={centerGeometry} args={part.args as any} />
+      case 'torus': return <torusGeometry ref={centerGeometry} args={part.args as any} />
+      default: return <boxGeometry ref={centerGeometry} args={[0.3, 0.3, 0.3]} />
     }
   })()
 
@@ -57,8 +65,22 @@ function DynamicMesh({
     ? part.rotation as [number, number, number]
     : undefined
 
+  const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
+
+  const handlePointerDown = useCallback((e: any) => {
+    if (editMode) {
+      pointerDownPos.current = { x: e.clientX ?? e.point?.x ?? 0, y: e.clientY ?? e.point?.y ?? 0 }
+    }
+  }, [editMode])
+
   const handleClick = useCallback((e: any) => {
     if (editMode && onSelect) {
+      // Only select if pointer didn't move much (not a drag)
+      if (pointerDownPos.current) {
+        const dx = (e.clientX ?? e.point?.x ?? 0) - pointerDownPos.current.x
+        const dy = (e.clientY ?? e.point?.y ?? 0) - pointerDownPos.current.y
+        if (Math.abs(dx) + Math.abs(dy) > 5) return // Was a drag, don't select
+      }
       e.stopPropagation()
       onSelect(index)
     }
@@ -70,6 +92,7 @@ function DynamicMesh({
       position={part.position}
       rotation={rotation}
       castShadow
+      onPointerDown={handlePointerDown}
       onClick={handleClick}
       onPointerOver={editMode ? (e: any) => { e.stopPropagation(); document.body.style.cursor = 'pointer' } : undefined}
       onPointerOut={editMode ? () => { document.body.style.cursor = 'auto' } : undefined}
@@ -95,108 +118,61 @@ function DynamicMesh({
 }
 
 /**
- * Wraps a single selected part mesh so TransformControls can attach to it.
- * TransformControls is rendered OUTSIDE the scaled group (via portal pattern)
- * to avoid gizmo scaling issues.
+ * Selected part mesh — just the mesh with highlight material.
+ * TransformControls is rendered OUTSIDE the scaled group by the parent component.
  */
-function TransformableMesh({
+function SelectedPartMesh({
   part,
-  index,
-  mode,
-  parentScale,
-  onTransform,
-  onDraggingChanged,
+  meshRef,
 }: {
   part: PropPart
-  index: number
-  mode: 'translate' | 'rotate' | 'scale'
-  parentScale: number
-  onTransform: (index: number, position: [number, number, number], rotation: [number, number, number]) => void
-  onDraggingChanged: (dragging: boolean) => void
+  meshRef: React.RefObject<THREE.Mesh>
 }) {
-  const meshRef = useRef<THREE.Mesh>(null!)
-  const controlsRef = useRef<any>(null!)
-  const isDraggingRef = useRef(false)
-  const [meshReady, setMeshReady] = useState(false)
-
-  // Signal mesh is mounted so TransformControls can attach
-  useEffect(() => { setMeshReady(true) }, [])
-
-  // Listen for dragging-changed event — commit transform only on drag end
-  useEffect(() => {
-    const controls = controlsRef.current
-    if (!controls) return
-    const cb = (event: any) => {
-      const dragging = event.value as boolean
-      isDraggingRef.current = dragging
-      onDraggingChanged(dragging)
-
-      // On drag END: commit the final position/rotation
-      if (!dragging && meshRef.current) {
-        const pos = meshRef.current.position
-        const rot = meshRef.current.rotation
-        onTransform(
-          index,
-          [pos.x, pos.y, pos.z],
-          [rot.x, rot.y, rot.z],
-        )
-      }
-    }
-    controls.addEventListener('dragging-changed', cb)
-    return () => controls.removeEventListener('dragging-changed', cb)
-  }, [onDraggingChanged, onTransform, index])
-
   const rotation = part.rotation && (part.rotation[0] !== 0 || part.rotation[1] !== 0 || part.rotation[2] !== 0)
     ? part.rotation as [number, number, number]
     : undefined
 
+  // Center geometry so TransformControls gizmo appears at visual center
+  const centerGeometry = useCallback((geo: THREE.BufferGeometry | null) => {
+    if (geo) {
+      geo.computeBoundingBox()
+      geo.center()
+    }
+  }, [])
+
   const geometry = (() => {
     switch (part.type) {
-      case 'box': return <boxGeometry args={part.args as any} />
-      case 'cylinder': return <cylinderGeometry args={part.args as any} />
-      case 'sphere': return <sphereGeometry args={part.args as any} />
-      case 'cone': return <coneGeometry args={part.args as any} />
-      case 'torus': return <torusGeometry args={part.args as any} />
-      default: return <boxGeometry args={[0.3, 0.3, 0.3]} />
+      case 'box': return <boxGeometry ref={centerGeometry} args={part.args as any} />
+      case 'cylinder': return <cylinderGeometry ref={centerGeometry} args={part.args as any} />
+      case 'sphere': return <sphereGeometry ref={centerGeometry} args={part.args as any} />
+      case 'cone': return <coneGeometry ref={centerGeometry} args={part.args as any} />
+      case 'torus': return <torusGeometry ref={centerGeometry} args={part.args as any} />
+      default: return <boxGeometry ref={centerGeometry} args={[0.3, 0.3, 0.3]} />
     }
   })()
 
-  // Compute gizmo size relative to parent scale so it looks proportional
-  // With parentScale=3, we want the gizmo to appear ~0.5 screen units
-  const gizmoSize = 0.5 / Math.max(parentScale, 0.1)
-
   return (
-    <>
-      <mesh
-        ref={meshRef}
-        castShadow
-        position={part.position}
-        rotation={rotation}
-      >
-        {geometry}
-        {part.emissive ? (
-          <meshStandardMaterial
-            color="#88aaff"
-            emissive="#4466ff"
-            emissiveIntensity={0.8}
-          />
-        ) : (
-          <meshStandardMaterial
-            color={part.color}
-            emissive="#4466ff"
-            emissiveIntensity={0.4}
-          />
-        )}
-      </mesh>
-      {meshReady && meshRef.current && (
-        <TransformControls
-          ref={controlsRef}
-          object={meshRef.current}
-          mode={mode}
-          size={gizmoSize}
+    <mesh
+      ref={meshRef}
+      castShadow
+      position={part.position}
+      rotation={rotation}
+    >
+      {geometry}
+      {part.emissive ? (
+        <meshStandardMaterial
+          color="#88aaff"
+          emissive="#4466ff"
+          emissiveIntensity={0.8}
+        />
+      ) : (
+        <meshStandardMaterial
+          color={part.color}
+          emissive="#4466ff"
+          emissiveIntensity={0.4}
         />
       )}
-    </>
+    </mesh>
   )
 }
 
@@ -220,41 +196,108 @@ export function DynamicProp({
     onDraggingChangedProp?.(dragging)
   }, [onDraggingChangedProp])
   const [isDragging, setIsDragging] = useState(false)
+  const isDraggingRef = useRef(false)
+  const dragPartIndexRef = useRef<number | null>(null)
+  const selectedMeshRef = useRef<THREE.Mesh>(null!)
+  const controlsRef = useRef<any>(null!)
+  const groupRef = useRef<THREE.Group>(null!)
+  const [meshReady, setMeshReady] = useState(false)
+
+  // Track mesh readiness when selected part changes
+  useEffect(() => { setMeshReady(false) }, [selectedPartIndex])
+  useEffect(() => {
+    if (selectedPartIndex != null && selectedMeshRef.current) {
+      // Ensure world matrix is up to date before TransformControls reads it
+      selectedMeshRef.current.updateWorldMatrix(true, false)
+      setMeshReady(true)
+    }
+  })
+
+  // Listen for dragging-changed on TransformControls
+  useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+    const cb = (event: any) => {
+      const dragging = event.value as boolean
+      setIsDragging(dragging)
+      isDraggingRef.current = dragging
+      handleDraggingChanged(dragging)
+
+      if (dragging) {
+        // Remember which part we're dragging (separate from selection)
+        dragPartIndexRef.current = selectedPartIndex ?? null
+      }
+
+      // On drag END: commit final position/rotation using the DRAGGED part index
+      if (!dragging && selectedMeshRef.current && dragPartIndexRef.current != null && onPartTransform) {
+        const pos = selectedMeshRef.current.position
+        const rot = selectedMeshRef.current.rotation
+        onPartTransform(
+          dragPartIndexRef.current,
+          [pos.x, pos.y, pos.z],
+          [rot.x, rot.y, rot.z],
+        )
+        dragPartIndexRef.current = null
+        // Keep isDraggingRef true briefly to block the click event that fires on mouseup
+        setTimeout(() => { isDraggingRef.current = false }, 50)
+        return // Don't set isDraggingRef to false synchronously
+      }
+    }
+    controls.addEventListener('dragging-changed', cb)
+    return () => controls.removeEventListener('dragging-changed', cb)
+  }, [handleDraggingChanged, onPartTransform, selectedPartIndex])
+
+  // Wrap onPartSelect to block clicks during/right after drag
+  const handlePartSelect = useCallback((index: number | null) => {
+    // Block selection changes while dragging or immediately after
+    if (isDraggingRef.current) return
+    onPartSelect?.(index)
+  }, [onPartSelect])
 
   const handleBackgroundClick = useCallback((_e: any) => {
-    if (editMode && onPartSelect && !isDragging) {
+    if (isDraggingRef.current) return
+    if (editMode && onPartSelect) {
       onPartSelect(null)
     }
     onClick?.()
-  }, [editMode, onPartSelect, isDragging, onClick])
+  }, [editMode, onPartSelect, onClick])
+
+  const hasSelection = editMode && selectedPartIndex != null && onPartTransform
 
   return (
-    <group position={position} scale={scale} onClick={handleBackgroundClick}>
-      {parts.map((part, i) => {
-        if (editMode && selectedPartIndex === i && onPartTransform) {
+    <>
+      <group ref={groupRef} position={position} scale={scale} onClick={handleBackgroundClick}>
+        {parts.map((part, i) => {
+          if (editMode && selectedPartIndex === i && onPartTransform) {
+            return (
+              <SelectedPartMesh
+                key={`selected-${i}`}
+                part={part}
+                meshRef={selectedMeshRef}
+              />
+            )
+          }
           return (
-            <TransformableMesh
-              key={`transform-${i}`}
+            <DynamicMesh
+              key={i}
               part={part}
               index={i}
-              mode={transformMode}
-              parentScale={scale}
-              onTransform={onPartTransform}
-              onDraggingChanged={(d) => { setIsDragging(d); handleDraggingChanged(d) }}
+              editMode={editMode}
+              selected={editMode && selectedPartIndex === i}
+              onSelect={handlePartSelect}
             />
           )
-        }
-        return (
-          <DynamicMesh
-            key={i}
-            part={part}
-            index={i}
-            editMode={editMode}
-            selected={editMode && selectedPartIndex === i}
-            onSelect={onPartSelect || undefined}
-          />
-        )
-      })}
-    </group>
+        })}
+      </group>
+      {/* TransformControls OUTSIDE the scaled group to avoid double-transform */}
+      {hasSelection && meshReady && selectedMeshRef.current && (
+        <TransformControls
+          ref={controlsRef}
+          object={selectedMeshRef.current}
+          mode={transformMode}
+          size={0.5}
+        />
+      )}
+    </>
   )
 }
