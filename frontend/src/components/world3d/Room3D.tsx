@@ -13,6 +13,7 @@ import { useDragDrop } from '@/contexts/DragDropContext'
 import { useGridDebug } from '@/hooks/useGridDebug'
 import { useZenMode } from '@/components/zen'
 import { ProjectMeetingTable } from './props/MeetingTable'
+import { useDemoMode } from '@/contexts/DemoContext'
 import type { Room } from '@/hooks/useRooms'
 import type { ThreeEvent } from '@react-three/fiber'
 
@@ -133,6 +134,7 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
 export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const roomColor = room.color || '#4f46e5'
   const blueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
+  const { isDemoMode } = useDemoMode()
   const [gridDebugEnabled] = useGridDebug()
   const { state, focusRoom } = useWorldFocus()
   const isRoomFocused = state.focusedRoomId === room.id && state.level === 'room'
@@ -283,7 +285,8 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
 
       {/* ─── Meeting Table (dynamic, for project rooms without blueprint table) ─ */}
       {/* HQ already has a meeting table in its blueprint; other project rooms get one dynamically */}
-      {room.project_id && !room.is_hq && (
+      {/* In demo mode: hide meeting tables from non-HQ rooms to focus attention on HQ */}
+      {room.project_id && !room.is_hq && !isDemoMode && (
         <ProjectMeetingTable
           position={[2, 0.16, 2]}
           rotation={0}

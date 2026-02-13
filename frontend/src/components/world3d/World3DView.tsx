@@ -96,6 +96,7 @@ import { useChatContext } from '@/contexts/ChatContext'
 import { TaskBoardProvider } from '@/contexts/TaskBoardContext'
 import { LogViewer } from '@/components/sessions/LogViewer'
 import { MeetingDialog, MeetingProgressView, MeetingOutput, MeetingResultsPanel } from '@/components/meetings'
+import { DemoMeetingButton } from '@/components/demo/DemoMeetingButton'
 import { ToastContainer } from '@/components/ui/toast-container'
 import { TaskBoardOverlay, HQTaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
@@ -1000,7 +1001,7 @@ function DragStatusIndicator() {
 
 function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
   // Meeting context — get active meeting participants for status override
-  const { meeting: meetingState } = useMeetingContext()
+  const { meeting: meetingState, startDemoMeeting, isDemoMeetingActive } = useMeetingContext()
   const meetingParticipantKeys = useMemo(() => {
     if (!meetingState.isActive) return new Set<string>()
     return new Set(meetingState.participants || [])
@@ -1445,6 +1446,15 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
         {/* LogViewer (outside Canvas) */}
         <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
+
+        {/* Demo Meeting Button (only in demo mode) */}
+        {isDemoMode && focusState.level !== 'firstperson' && (
+          <DemoMeetingButton
+            onClick={startDemoMeeting}
+            isActive={isDemoMeetingActive}
+            isComplete={meetingState.phase === 'complete'}
+          />
+        )}
 
         {/* Meeting UI Overlays */}
         <MeetingOverlays agentRuntimes={agentRuntimesForPanel} rooms={rooms} />

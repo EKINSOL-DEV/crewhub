@@ -12,9 +12,12 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { useMeeting, type StartMeetingParams, type MeetingState, type MeetingPhase } from '@/hooks/useMeeting'
+import { useDemoMeeting } from '@/hooks/useDemoMeeting'
 import { updateMeetingGatheringState, resetMeetingGatheringState } from '@/lib/meetingStore'
 import { showToast } from '@/lib/toast'
 import type { FollowUpContext } from '@/components/meetings/MeetingDialog'
+
+const isPublicDemo = import.meta.env.VITE_DEMO_MODE === 'true'
 
 // ─── Gathering positions ────────────────────────────────────────
 
@@ -82,12 +85,21 @@ interface MeetingContextValue {
   showOutput: () => void
   closeView: () => void
   setTablePosition: (x: number, z: number) => void
+
+  // Demo meeting
+  startDemoMeeting: () => void
+  isDemoMeetingActive: boolean
 }
 
 const MeetingContext = createContext<MeetingContextValue | null>(null)
 
 export function MeetingProvider({ children }: { children: ReactNode }) {
-  const meeting = useMeeting()
+  const realMeeting = useMeeting()
+  const { demoMeeting, startDemoMeeting, isDemoMeetingActive, isDemoMeetingComplete } = useDemoMeeting()
+
+  // In demo mode with active demo meeting, use demo state; otherwise use real meeting
+  const meeting = (isPublicDemo && (isDemoMeetingActive || isDemoMeetingComplete)) ? demoMeeting : realMeeting
+
   const [view, setView] = useState<MeetingView>('none')
   const [tablePos, setTablePos] = useState<{ x: number; z: number }>({ x: 0, z: 0 })
   const [dialogRoomContext, setDialogRoomContext] = useState<DialogRoomContext | null>(null)
@@ -222,6 +234,11 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     })
   }, [meeting, gatheringPositions])
 
+  const handleStartDemoMeeting = useCallback(() => {
+    startDemoMeeting()
+    setView('progress')
+  }, [startDemoMeeting])
+
   const value: MeetingContextValue = {
     meeting,
     view,
@@ -239,6 +256,8 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     closeSidebar,
     followUpContext,
     openFollowUp,
+    startDemoMeeting: handleStartDemoMeeting,
+    isDemoMeetingActive,
   }
 
   return (
