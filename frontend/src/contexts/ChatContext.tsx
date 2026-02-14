@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -249,23 +249,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     )
   }, [])
 
+  const value = useMemo<ChatContextValue>(() => ({
+    windows,
+    openChat,
+    closeChat,
+    minimizeChat,
+    restoreChat,
+    togglePin,
+    toggleInternals,
+    focusChat,
+    updatePosition,
+    updateSize,
+    onFocusAgent,
+    setFocusHandler,
+  }), [windows, openChat, closeChat, minimizeChat, restoreChat, togglePin, toggleInternals, focusChat, updatePosition, updateSize, onFocusAgent, setFocusHandler])
+
   return (
-    <ChatContext.Provider
-      value={{
-        windows,
-        openChat,
-        closeChat,
-        minimizeChat,
-        restoreChat,
-        togglePin,
-        toggleInternals,
-        focusChat,
-        updatePosition,
-        updateSize,
-        onFocusAgent,
-        setFocusHandler,
-      }}
-    >
+    <ChatContext.Provider value={value}>
       {children}
     </ChatContext.Provider>
   )

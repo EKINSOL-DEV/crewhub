@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react"
 import { API_BASE } from "@/lib/api"
 import { sseManager } from "@/lib/sseManager"
 
@@ -338,7 +338,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchRooms])
 
-  const value: RoomsContextValue = {
+  const value = useMemo<RoomsContextValue>(() => ({
     rooms,
     sessionAssignments,
     rules,
@@ -351,7 +351,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
     updateRoom,
     deleteRoom,
     reorderRooms,
-  }
+  }), [rooms, sessionAssignments, rules, isLoading, error, fetchRooms, getRoomForSession, getRoomFromRules, createRoom, updateRoom, deleteRoom, reorderRooms])
 
   return (
     <RoomsContext.Provider value={value}>

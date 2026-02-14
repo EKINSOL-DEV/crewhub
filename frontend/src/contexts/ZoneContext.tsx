@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react'
 import type { Zone } from '../lib/zones'
 import { zoneRegistry, zonePersistence } from '../lib/zones'
 
@@ -84,8 +84,12 @@ export function ZoneProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setIsTransitioning(false), 100)
   }, [activeZone.id, isTransitioning])
 
+  const value = useMemo<ZoneContextValue>(() => ({
+    activeZone, isTransitioning, switchZone,
+  }), [activeZone, isTransitioning, switchZone])
+
   return (
-    <ZoneContext.Provider value={{ activeZone, isTransitioning, switchZone }}>
+    <ZoneContext.Provider value={value}>
       {children}
     </ZoneContext.Provider>
   )

@@ -239,7 +239,7 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     setView('progress')
   }, [startDemoMeeting])
 
-  const value: MeetingContextValue = {
+  const value = useMemo<MeetingContextValue>(() => ({
     meeting,
     view,
     gatheringPositions,
@@ -258,7 +258,7 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     openFollowUp,
     startDemoMeeting: handleStartDemoMeeting,
     isDemoMeetingActive,
-  }
+  }), [meeting, view, gatheringPositions, openDialog, openDialogForRoom, dialogRoomContext, closeDialog, showProgress, showOutput, closeView, setTablePosition, sidebarMeetingId, openInSidebar, closeSidebar, followUpContext, openFollowUp, handleStartDemoMeeting, isDemoMeetingActive])
 
   return (
     <MeetingContext.Provider value={value}>

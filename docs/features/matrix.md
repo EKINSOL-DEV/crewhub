@@ -22,23 +22,23 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 
 | Category | Total Features | Released | In Progress | Planned | Research | Total Docs |
 |----------|----------------|----------|-------------|---------|----------|------------|
-| **Core** | 7 | 6 | 0 | 1 | 0 | 14 |
+| **Core** | 6 | 6 | 0 | 0 | 0 | 14 |
 | **3D World** | 6 | 2 | 0 | 4 | 0 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
 | **Productivity** | 5 | 2 | 0 | 3 | 0 | 12 |
 | **Creative** | 12 | 6 | 0 | 5 | 1 | 8 |
 | **SaaS & Distribution** | 2 | 0 | 0 | 2 | 0 | 6 |
 | **Meta** | 2 | 2 | 0 | 0 | 0 | 3 |
-| **TOTAL** | **41** | **24** | **0** | **16** | **1** | **66** |
+| **TOTAL** | **40** | **24** | **0** | **15** | **1** | **66** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ████████████████████████████████████████     59% (24)
+Released:     ████████████████████████████████████████     60% (24)
 In Progress:                                                0% (0)
-Planned:      ████████████████████                         39% (16)
+Planned:      ███████████████████                          38% (15)
 Research:     █                                             2% (1)
 ```
 
@@ -94,9 +94,7 @@ Research:     █                                             2% (1)
 - ✅ Spatial Awareness (waypoint pathfinding, proximity detection)
 
 ### v0.16.0
-- 📋 Grid boundary fine-tuning (props against walls still not perfect - multi-cell placement edge cases)
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
-- 📋 Frontend watchdog & auto-restart (Docker-based, monitors Vite dev server crashes)
 - 📋 Improving and Reviewing Skills usage during onboarding
 
 ### v0.17.0
@@ -135,10 +133,9 @@ Research:     █                                             2% (1)
 | **Settings** | ✅ | v0.4.0 | 2 | 5-tab configuration UI with backup/restore |
 | **Room Projects** | ✅ | v0.5.0 | 3 | Organize agents by project, HQ command center |
 | **Backend Watchdog** | ✅ | v0.13.0 | 1 | Auto-restart on crash, healthcheck, logging |
-| **Frontend Watchdog** | 📋 | v0.16.0 | 0 | Auto-restart Vite dev server on crash (Docker-based) |
 | **Agent Status Logic** | ✅ | v0.15.0 | 0 | Improved sleeping/active detection with 'supervising' status for long subagent tasks |
 
-**Total:** 7 features • 14 docs • 6 released, 1 planned
+**Total:** 6 features • 14 docs • 6 released, 0 planned
 
 ---
 

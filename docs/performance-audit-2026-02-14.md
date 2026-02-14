@@ -158,3 +158,49 @@ The SSE-based architecture is already efficient. Main improvement would be HTTP 
 - Initial page load reduced by 80%
 - TypeScript compilation: clean ✅
 - Build: successful ✅
+
+---
+
+## Review Comments (Validation) — 2026-02-14
+
+### Scope reviewed
+- Document: `docs/performance-audit-2026-02-14.md`
+- Implementation commit: `224689b` (branch `develop`)
+- Files checked: `frontend/src/App.tsx`, `frontend/vite.config.ts`
+
+### Implementation validation
+- ✅ **Code splitting approach is correct and production-appropriate.**
+  - `ZoneRenderer` is loaded via `React.lazy(() => import(...))`, so Three.js payload is deferred until the Active/3D view is actually rendered.
+  - `Suspense` fallback exists and prevents blank screen during chunk fetch.
+  - `manualChunks` groups heavy libraries (`three`, `codemirror`, markdown/highlight stack) into stable async chunks.
+- ✅ **Reported outcome is plausible.**
+  - Moving Three.js + related libs out of the initial path explains the large initial bundle drop.
+- ✅ **No immediate architectural red flags** in the selected implementation.
+
+### Top 5 ranking validation
+1. **Code-splitting Three.js & heavy deps** — ✅ Correctly ranked #1 (highest user-perceived impact, low effort, already delivered).
+2. **Memoize context values** — ✅ Good #2. Likely broad render reduction across app.
+3. **Add `React.memo` to expensive components** — ✅ Good #3. Valuable after context stabilization.
+4. **Reduce `highlight.js` payload** — ✅ Reasonable #4. Chunk-size win, but less critical than render-path issues.
+5. **Three.js `useFrame` optimization** — ✅ Reasonable #5 for current scale; becomes more important with high bot/session density.
+
+### Lazy-loading UX risk assessment
+- **Current risk level: LOW-MEDIUM (acceptable).**
+- Potential issue: first switch to Active (3D) tab can show a visible loading pause on slow network/CPU because `vendor-three` + `ZoneRenderer` are fetched on demand.
+- Mitigations already present:
+  - Explicit `Suspense` loading state (“Loading 3D view…”)
+  - 3D is not loaded when there are zero sessions (good guardrail)
+- Recommended UX hardening:
+  - Add lightweight skeleton/progress UI instead of plain text fallback
+  - Optionally prefetch 3D chunk after app becomes idle (`requestIdleCallback`) when sessions exist
+  - Optionally prefetch on tab hover/focus for perceived instant switch
+
+### Additional optimizations / concerns
+- **Priority add:** include chunk-size budgets in CI (`build --report` + threshold check) to prevent regressions.
+- **Vendor chunk strategy:** monitor `vendor-react` split; if cache churn is low this is fine, but excessive micro-chunking can increase request overhead.
+- **Markdown stack:** consider replacing broad `rehype-highlight` usage with selective language registration to reduce `vendor-markdown` further.
+- **Context-first optimization order:** do context value memoization before mass `React.memo` rollout to maximize ROI and avoid unnecessary custom comparators.
+
+### Critical issues requiring immediate attention
+- ❗ **No blocker/critical defect found** in the code-splitting implementation.
+- Follow-up priority is UX polish for first-load of 3D chunk (not a release blocker).

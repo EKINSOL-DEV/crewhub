@@ -3,7 +3,7 @@
 // Toggle with F5. Persists state in localStorage.
 // Does NOT make any API calls — purely frontend overlay.
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import type { CrewSession } from '@/lib/api'
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -321,8 +321,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const value = useMemo<DemoContextValue>(() => ({
+    isDemoMode, toggleDemoMode, demoSessions, demoRoomAssignments,
+  }), [isDemoMode, toggleDemoMode, demoSessions, demoRoomAssignments])
+
   return (
-    <DemoContext.Provider value={{ isDemoMode, toggleDemoMode, demoSessions, demoRoomAssignments }}>
+    <DemoContext.Provider value={value}>
       {children}
     </DemoContext.Provider>
   )

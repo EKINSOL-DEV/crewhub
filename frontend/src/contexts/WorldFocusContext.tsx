@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -167,8 +167,12 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setState(prev => ({ ...prev, isAnimating: false })), 900)
   }, [])
 
+  const value = useMemo<WorldFocusContextValue>(() => ({
+    state, focusRoom, focusBoard, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson,
+  }), [state, focusRoom, focusBoard, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson])
+
   return (
-    <WorldFocusContext.Provider value={{ state, focusRoom, focusBoard, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson }}>
+    <WorldFocusContext.Provider value={value}>
       {children}
     </WorldFocusContext.Provider>
   )

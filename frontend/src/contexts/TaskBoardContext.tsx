@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useCallback, useMemo, type ReactNode } from 'react'
 
 interface TaskBoardContextValue {
   openTaskBoard: () => void
@@ -18,8 +18,10 @@ export function TaskBoardProvider({ children, onOpen }: TaskBoardProviderProps) 
     onOpen()
   }, [onOpen])
 
+  const value = useMemo(() => ({ openTaskBoard }), [openTaskBoard])
+
   return (
-    <TaskBoardContext.Provider value={{ openTaskBoard }}>
+    <TaskBoardContext.Provider value={value}>
       {children}
     </TaskBoardContext.Provider>
   )
