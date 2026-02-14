@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
+import { rehypeHighlightLite } from './rehypeHighlightLite'
 import { CodeBlock } from './CodeBlock'
 
 function slugify(text: string): string {
@@ -114,7 +114,7 @@ export function MarkdownViewer({ content, className, maxHeight }: MarkdownViewer
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
+        rehypePlugins={[rehypeHighlightLite]}
         components={components}
       >
         {content}
