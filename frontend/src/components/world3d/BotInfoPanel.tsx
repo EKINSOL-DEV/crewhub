@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, memo } from 'react'
 import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { BotStatus } from './botConstants'
@@ -45,7 +45,7 @@ function getStatusBadge(status: BotStatus): { label: string; color: string; bg: 
 
 // ── Component ──────────────────────────────────────────────────
 
-export function BotInfoPanel({ session, displayName, botConfig, status, bio, agentId, currentRoomId, onClose, onOpenLog, onAssignmentChanged, onBioUpdated }: BotInfoPanelProps) {
+export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, botConfig, status, bio, agentId, currentRoomId, onClose, onOpenLog, onAssignmentChanged, onBioUpdated }: BotInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const canChat = session ? isFixedAgent(session.key) : false
 
@@ -213,4 +213,4 @@ export function BotInfoPanel({ session, displayName, botConfig, status, bio, age
 
     </div>
   )
-}
+})

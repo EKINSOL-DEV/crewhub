@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
+import { useEffect, useRef, useMemo, useState, useCallback, memo } from 'react'
 import { StandupModal, StandupHistory } from '@/components/standups'
 import type { CrewSession } from '@/lib/api'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
@@ -75,7 +75,7 @@ function getProjectStatusBadge(status: string): { label: string; color: string; 
 
 // ── Component ──────────────────────────────────────────────────
 
-export function RoomInfoPanel({
+export const RoomInfoPanel = memo(function RoomInfoPanel({
   room,
   sessions,
   isActivelyRunning,
@@ -445,7 +445,7 @@ export function RoomInfoPanel({
       `}</style>
     </div>
   )
-}
+})
 
 // TasksSection, TaskCountBadge, MiniTaskCard moved to RoomProjectTab.tsx
 

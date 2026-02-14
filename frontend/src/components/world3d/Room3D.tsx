@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, memo } from 'react'
 import { Html } from '@react-three/drei'
 import { RoomFloor } from './RoomFloor'
 import { RoomWalls } from './RoomWalls'
@@ -132,7 +132,7 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
  * - Click at overview: focusRoom → camera zooms in, Room HUD opens
  * - Click at room level: floor click re-opens Room HUD, bot clicks handled by Bot3D
  */
-export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
+export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const roomColor = room.color || '#4f46e5'
   const baseBlueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
   // Mutable placements state so prop moves persist in the UI
@@ -308,4 +308,4 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
       )}
     </group>
   )
-}
+})

@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +27,7 @@ interface SessionCardProps {
 
 const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
 
-export function SessionCard({ session, onViewLogs }: SessionCardProps) {
+export const SessionCard = memo(function SessionCard({ session, onViewLogs }: SessionCardProps) {
   const status = getSessionStatus(session)
   const statusInfo = getStatusIndicator(status)
   const sessionType = getSessionType(session)
@@ -134,7 +135,7 @@ export function SessionCard({ session, onViewLogs }: SessionCardProps) {
       </CardContent>
     </Card>
   )
-}
+})
 
 // Backwards compatibility alias
 export { SessionCard as MinionCard }

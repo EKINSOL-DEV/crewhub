@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, useState } from 'react'
+import { useRef, useEffect, useMemo, useState, memo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -73,7 +73,7 @@ interface Bot3DProps {
  * Includes body, face, accessory, chest display, status glow, laptop (when active),
  * animations, wandering, and floating name tag.
  */
-export function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId, roomName }: Bot3DProps) {
+export const Bot3D = memo(function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId, roomName }: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
   const walkPhaseRef = useRef(0)
   const wasMovingRef = useRef(false)
@@ -875,6 +875,6 @@ export function Bot3D({ position, config, status, name, scale = 1.0, session, on
       </group>
     </group>
   )
-}
+})
 
 // SleepingZs moved to BotAnimations.tsx
