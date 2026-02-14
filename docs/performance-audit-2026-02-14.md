@@ -124,29 +124,31 @@ The SSE-based architecture is already efficient. Main improvement would be HTTP 
 - Split vendor-three, vendor-codemirror, vendor-markdown into separate chunks
 - **Result: 80% initial bundle reduction (1,072 KB → 211 KB gzip)**
 
-### 2. Memoize Context Values
+### 2. ✅ IMPLEMENTED: Memoize Context Values
 **Impact: MEDIUM | Effort: MEDIUM (2-3 hours)**
-- Wrap all context provider values in `useMemo`
+- Wrapped all 7 unmemoized context provider values in `useMemo`
+- WorldFocusContext, ZoneContext, RoomsContext, ChatContext, DemoContext, TaskBoardContext, MeetingContext
+- ThemeContext and DragDropContext were already memoized
 - Prevents cascading re-renders when unrelated state changes
-- Priority contexts: ZoneContext, ChatContext, TaskBoardContext
 
-### 3. Add React.memo to Expensive Components
+### 3. ✅ IMPLEMENTED: Add React.memo to Expensive Components
 **Impact: MEDIUM | Effort: MEDIUM (2-4 hours)**
-- Wrap bot avatars, session cards, task cards in `React.memo`
-- Add proper comparison functions for complex props
-- Currently only 2/441 components are memoized
+- Wrapped Bot3D, Room3D, RoomInfoPanel, BotInfoPanel, SessionCard in `React.memo`
+- TaskCard was already memoized. Total memoized: 2 → 7 components
+- Focus on frequently re-rendering 3D scene and panel components
 
-### 4. Reduce highlight.js Bundle
+### 4. ✅ IMPLEMENTED: Reduce highlight.js Bundle
 **Impact: LOW-MEDIUM | Effort: LOW (30 min)**
-- Import only needed languages instead of all via rehype-highlight
-- Could save ~100-200 KB from vendor-markdown chunk
-- Register only: javascript, python, bash, json, yaml, markdown, typescript
+- Replaced rehype-highlight with custom rehypeHighlightLite plugin
+- Imports only 10 languages instead of ~40 common languages
+- **vendor-markdown chunk: 495 KB → 388 KB raw, 152 KB → 120 KB gzip (~107 KB saved)**
 
-### 5. Three.js useFrame Optimization
+### 5. ✅ IMPLEMENTED: Three.js useFrame Optimization
 **Impact: LOW | Effort: MEDIUM (2 hours)**
-- Add early-return conditions to useFrame callbacks when nothing changed
-- Consider `useFrame` with `priority` parameter for ordering
-- Add LOD for distant objects in large rooms
+- Added `useThrottledFrame` utility (runs every Nth frame)
+- Applied to cosmetic prop animations: RotatingPart, GlowOrb, LED, Screen, BotStatusGlow
+- Bot3D and CameraController keep full 60fps for smooth movement
+- Reduces CPU cost of decorative animations by 50-67%
 
 ---
 
