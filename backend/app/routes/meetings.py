@@ -254,11 +254,13 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
             if not item:
                 raise HTTPException(404, "Action item not found")
 
-    # Resolve project_id: prefer request, then meeting data
+    # Resolve project_id and room_id: prefer request, then meeting data
     project_id = req.project_id
-    if not project_id:
-        meeting = await get_meeting(meeting_id)
-        if meeting:
+    room_id = None
+    meeting = await get_meeting(meeting_id)
+    if meeting:
+        room_id = meeting.get("room_id")
+        if not project_id:
             project_id = meeting.get("project_id")
 
     if not project_id:
@@ -289,7 +291,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
             (
                 task_id,
                 project_id,
-                None,
+                room_id,
                 req.title,
                 f"From meeting: {meeting_id}",
                 "todo",
@@ -313,6 +315,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
     await broadcast("task-created", {
         "task_id": task_id,
         "project_id": project_id,
+        "room_id": room_id,
     })
     await broadcast("action-item-status", {
         "meeting_id": meeting_id,
