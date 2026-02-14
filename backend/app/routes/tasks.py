@@ -79,19 +79,44 @@ def _row_to_task(row: dict, display_name: Optional[str] = None) -> TaskResponse:
 
 
 # ========================================
-# TASKS CRUD
+# ROOM & PROJECT TASKS (must be before /{task_id} to avoid route shadowing)
 # ========================================
 
-@router.get("", response_model=TaskListResponse)
-async def list_tasks(
-    project_id: Optional[str] = Query(None, description="Filter by project"),
-    room_id: Optional[str] = Query(None, description="Filter by room"),
+@router.get("/rooms/{room_id}/tasks", response_model=TaskListResponse)
+async def get_room_tasks(
+    room_id: str,
     status: Optional[str] = Query(None, description="Filter by status (comma-separated)"),
-    assigned_session_key: Optional[str] = Query(None, description="Filter by assignee"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
-    """Get all tasks with optional filters."""
+    """Get all tasks for a specific room."""
+    return await _list_tasks_impl(room_id=room_id, status=status, limit=limit, offset=offset)
+
+
+@router.get("/projects/{project_id}/tasks", response_model=TaskListResponse)
+async def get_project_tasks(
+    project_id: str,
+    status: Optional[str] = Query(None, description="Filter by status (comma-separated)"),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    """Get all tasks for a specific project."""
+    return await _list_tasks_impl(project_id=project_id, status=status, limit=limit, offset=offset)
+
+
+# ========================================
+# TASKS CRUD
+# ========================================
+
+async def _list_tasks_impl(
+    project_id: Optional[str] = None,
+    room_id: Optional[str] = None,
+    status: Optional[str] = None,
+    assigned_session_key: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> TaskListResponse:
+    """Core task listing logic, callable from multiple routes."""
     try:
         db = await get_db()
         try:
@@ -147,6 +172,22 @@ async def list_tasks(
     except Exception as e:
         logger.error(f"Failed to list tasks: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("", response_model=TaskListResponse)
+async def list_tasks(
+    project_id: Optional[str] = Query(None, description="Filter by project"),
+    room_id: Optional[str] = Query(None, description="Filter by room"),
+    status: Optional[str] = Query(None, description="Filter by status (comma-separated)"),
+    assigned_session_key: Optional[str] = Query(None, description="Filter by assignee"),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    """Get all tasks with optional filters."""
+    return await _list_tasks_impl(
+        project_id=project_id, room_id=room_id, status=status,
+        assigned_session_key=assigned_session_key, limit=limit, offset=offset
+    )
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
@@ -403,30 +444,6 @@ async def delete_task(task_id: str):
     except Exception as e:
         logger.error(f"Failed to delete task {task_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# ========================================
-# ROOM & PROJECT TASKS
-# ========================================
-
-@router.get("/rooms/{room_id}/tasks", response_model=TaskListResponse)
-async def get_room_tasks(
-    room_id: str,
-    status: Optional[str] = Query(None, description="Filter by status (comma-separated)"),
-    limit: int = Query(100, ge=1, le=500),
-):
-    """Get all tasks for a specific room."""
-    return await list_tasks(room_id=room_id, status=status, limit=limit)
-
-
-@router.get("/projects/{project_id}/tasks", response_model=TaskListResponse)
-async def get_project_tasks(
-    project_id: str,
-    status: Optional[str] = Query(None, description="Filter by status (comma-separated)"),
-    limit: int = Query(100, ge=1, le=500),
-):
-    """Get all tasks for a specific project."""
-    return await list_tasks(project_id=project_id, status=status, limit=limit)
 
 
 # ========================================
