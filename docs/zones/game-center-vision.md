@@ -1,169 +1,204 @@
 # 🎮 Game Center — Zone Vision Document
 
-*Press START to enter the future of interactive experiences.*
+*Where work meets play, and play becomes innovation.*
 
 ## Vision
 
-The Game Center is CrewHub's playground — an arcade-meets-lab where 3D experiences, games, simulations, and interactive demos come to life. The vibe is **retro-futuristic, neon-drenched, and endlessly playful** — think synthwave arcade with holographic displays, pixel art murals, and the constant hum of creativity turned up to eleven.
+The Game Center is CrewHub's neon-drenched playground — a high-energy arcade and 3D development zone where agents build interactive experiences, test 3D worlds, and occasionally just... have fun. Think retro arcade meets Unreal Engine dev studio, all wrapped in glorious toon-shading.
 
-This is Game Dev's kingdom. The zone exists at the intersection of art, code, and fun. It's where Three.js prototypes get built, where interactive demos are tested, and where agents go to blow off steam.
+**Vibe:** Electric, playful, competitive. Neon lights reflecting off glossy floors. The hum of cooling fans and the glow of multiple monitors. A place where Game Dev's eyes light up and every agent secretly wants to hang out.
 
-**Core philosophy:** *If it's not fun, why are we building it?*
+**Core philosophy:** Games and interactive experiences are the frontier of engagement. The Game Center is both a production facility for 3D work AND a reward zone for hard-working agents. Work hard, play hard — literally.
 
 ## Environment
 
-### Visual Style
-- **Toon-shaded** with HIGH contrast — deep blacks, electric neons, vibrant accents
-- **Primary palette:** Black/dark purple backgrounds, cyan/magenta/yellow neon accents
-- **Lighting:** Neon strips EVERYWHERE — under desks, along walls, around doorframes
-- **Floor:** Dark tile with subtle grid lines (TRON-style), occasional glowing pathway strips
-- **Walls:** Mix of arcade cabinet art, LED panels, and holographic displays
-- **Ceiling:** Star field / space effect (subtle animated twinkle)
+### Toon-Shaded Aesthetic
+- **Color palette:** Deep midnight blue, electric cyan, neon magenta, lime green accents, black with RGB highlights
+- **Lighting:** Dramatic neon — strip lights along edges, glowing screens, blacklight zones, RGB underglow on furniture
+- **Floor:** Dark glossy surface with embedded LED grid lines (TRON-style), reflections visible
+- **Walls:** Dark panels with neon trim, giant pixel art murals, arcade cabinet silhouettes
+- **Ceiling:** Dark with hanging geometric lights, starfield projection, occasional laser effects
 
-### Ambient Details
-- Arcade machine sound effects (subtle, distant — bleeps and bloops)
-- Floating geometric shapes that slowly rotate (platonic solids, wireframe style)
-- A holographic scoreboard in the main hallway showing... something (daily stats? task counts? actual game scores?)
-- Vending machine with glowing drinks (purely decorative but very aesthetic)
-- Pixel art murals on walls that animate when you look at them
-- A massive "INSERT COIN" sign above the main entrance (retro font, flickering neon)
-- CRT scan-line effect on screens (subtle, toggleable)
-
-### Weather/Time Integration
-- Day: Neons are subtle, natural light mixes with artificial
-- Night: FULL NEON MODE — this zone comes alive at night
-- Friday evening: Special "arcade night" mode — extra effects, party atmosphere
-- When idle: Screens show retro screensavers (flying toasters, matrix rain, pipes)
+### Atmosphere Details
+- Floating pixel particles — tiny squares in neon colors drift through the air
+- Screen glow: every active workstation casts colored light onto nearby surfaces
+- Achievement pop-ups appear as floating retro game notifications ("LEVEL UP!", "HIGH SCORE!")
+- Bass-heavy ambient "music" visualization — equalizer bars visible on walls
+- Occasional lightning bolt effects between Tesla coil props when something compiles successfully
 
 ## Rooms
 
-### 🕹️ The Arcade — Classic Play
-**Purpose:** Fun, team bonding, mini-games, breaks
-- Row of classic arcade cabinets (Pac-Man, Space Invaders, Tetris — toon-shaded versions)
-- Air hockey table (glowing puck!)
-- Pinball machine (themed around CrewHub)
-- Claw machine containing tiny versions of all CrewHub bots (OH YES)
-- Neon "HIGH SCORES" board on the wall
-- Bean bags and a retro CRT TV playing "gameplay footage"
-- **Easter egg:** Get a high score → your bot wears a crown for 24 hours across ALL zones
+### 🕹️ The Arcade
+**Purpose:** Recreational gaming, team bonding, reward zone
+- Row of classic arcade cabinets (Pac-Man, Space Invaders, Tetris styled in toon-shader)
+- Central multiplayer table (air hockey / foosball hybrid)
+- Prize counter with plush bot toys on shelves
+- Neon "GAME OVER" and "INSERT COIN" signs
+- Ticket counter that tracks fun achievements
+- **Easter egg:** Get high score on any cabinet → your bot wears a crown for 24h
+- **Easter egg:** Play the cabinets in a specific order → secret Konami code activates party mode (all lights go rainbow)
 
-### 🔬 The Lab — Prototype Workshop  
-**Purpose:** Three.js experiments, 3D prototyping, shader development
-- Holographic workstation with floating 3D model previews
-- Shader preview wall — live-updating shader experiments displayed as art
-- "Specimen jars" on shelves containing wireframe models (like a 3D museum)
-- Version control visualization — a physical "timeline" you can scrub through
-- Multiple test screens at different resolutions/aspect ratios
-- Debug console embedded in a retro terminal prop
-- **Easter egg:** Click the wireframe specimen jars → models break free and float around the room briefly
+### 🖥️ The Dev Floor
+**Purpose:** 3D development, Three.js work, shader programming
+- 6 high-end workstations with dual ultrawide monitors
+- Central holographic display showing the current 3D project (rotatable!)
+- Shader preview wall — live GLSL output displayed on a massive screen
+- Version control timeline on the wall (visual git log as a subway map)
+- Rubber duck debugging station (actually has a rubber duck that quacks when clicked)
+- **Easter egg:** Type "show me the matrix" at any workstation → everything goes green wireframe for 10 seconds
 
-### 🎭 The Stage — Demo Theater
-**Purpose:** Interactive demos, presentations, showcasing prototypes
-- Circular stage with spotlight system
-- Audience seating (stadium-style)
-- Giant screen behind stage for projected demos
-- Interactive demo stands around the perimeter (like a science fair)
-- Applause button (triggers confetti + crowd cheer)
-- Fog machine for dramatic reveals
-- **Easter egg:** Activate fog machine + spotlight simultaneously → dramatic movie trailer voice says "Coming Soon..."
+### 🌍 The Sandbox
+**Purpose:** 3D world testing, environment prototyping, physics playground
+- Open space with a floating platform in the center
+- Spawnable props: cubes, spheres, terrains, characters (drag from sidebar)
+- Physics toggle button (watch everything fall!)
+- Sky selector dial: day/night/space/underwater/alien planet
+- Grid floor that can be toggled on/off
+- **Easter egg:** Spawn 100+ objects → the platform starts creaking and wobbling before comedically collapsing (then rebuilds)
 
-### 🌐 The Sandbox — Open World
-**Purpose:** Free-form experimentation, testing, breaking things
-- Large open room with configurable grid floor
-- Spawnable props (click to place objects)
-- Physics playground — objects have simulated gravity, collisions
-- "Oops" button that resets everything
-- Destruction mode toggle (things can explode/shatter — satisfying)
-- Minimap showing what's been built
-- **Easter egg:** Spawn exactly 42 objects → "The Answer to Everything" achievement + Douglas Adams quote
+### 🏟️ The Arena
+**Purpose:** Competitive events, demos, presentations, esports-style
+- Stadium seating around a central stage
+- Giant scoreboard with team standings
+- Commentator booth with dual mics
+- Spotlight rig that follows the action
+- Replay screen for showing highlights
+- Pyrotechnics launchers (confetti + fireworks for victories)
+- **Easter egg:** Win 10 competitions → unlock a championship belt for your bot
 
-### 🏆 The Trophy Room — Hall of Glory
-**Purpose:** Achievements, milestones, completed projects showcase
-- Glass display cases with trophies/medals
-- Project showcase pedestals with holographic previews
-- "Wall of Firsts" — first commit, first deploy, first million, etc.
-- Leaderboards for various metrics
-- Photo wall with "team photos" (bot group shots)
-- Time capsule vault
-- **Easter egg:** Find all 7 hidden golden pixels scattered across the Game Center → unlocks a secret room with a retro 8-bit version of the entire CrewHub
+### 🔧 The Workshop
+**Purpose:** Asset creation, 3D modeling, texture painting
+- Modeling workbench with clay/polygon tools
+- Texture painting easel
+- UV unwrap table (literal table where you "unwrap" 3D models flat)
+- Reference wall with concept art
+- 3D printer prop that "prints" finished models (model slowly materializes layer by layer)
+- **Easter egg:** The 3D printer occasionally prints a tiny rubber duck instead of what you asked for
 
-### 🎪 The Playground — Experimental Zone
-**Purpose:** Crazy ideas, hackathon-style rapid prototyping
-- Chaotic, colorful, intentionally messy
-- Whiteboards covered in wild sketches
-- Prototype graveyard corner (honoring failed experiments)
-- "Idea Cannon" — fires random concept combinations
-- Hammock for "thinking time"
-- Rubber duck debugging station (giant rubber duck)
-- **Easter egg:** Click the giant rubber duck 10 times → it quacks increasingly loudly, then the room briefly becomes a rubber duck pond
+### 🎪 The Lobby
+**Purpose:** Social hub, matchmaking, casual hangout
+- Comfortable gaming chairs in a circle
+- Snack bar with energy drinks and pizza boxes (branded "DevFuel")
+- Big screen showing a "Now Playing" dashboard
+- Leaderboard totem pole
+- Capsule machine that dispenses random cosmetics for bots
+- Retro TV playing "gameplay footage" of CrewHub itself
+- **Easter egg:** Interact with the capsule machine → random hat/accessory for your bot (temporary)
 
 ## Activities
 
-| Activity | Description | Visual Indicator |
-|----------|-------------|-----------------|
-| **Developing** | Building 3D/interactive content | Matrix-style code rain around agent |
-| **Testing** | QA and playtesting | Bug net accessory + magnifying glass |
-| **Playing** | Recreational gaming/break | Gamepad accessory, joystick hat |
-| **Demoing** | Showcasing work | Spotlight follows agent |
-| **Experimenting** | Wild prototyping | Mad scientist goggles + sparks |
-| **Competing** | Head-to-head challenges | VS lightning bolt between agents |
-| **Speedrunning** | Rapid task completion | Timer display + flame trail |
+| Activity | Description | Visual |
+|----------|-------------|--------|
+| **Dev Sprint** | Focused 3D development session | Hologram updates in real-time, code scrolls on screens |
+| **Play Test** | Testing a build in the Sandbox | Agent runs around sandbox, bug particles appear when issues found |
+| **Arena Battle** | Competitive coding/design challenge | Stadium lights up, crowd cheers, scoreboard updates |
+| **Model Session** | Creating 3D assets in Workshop | Clay morphs on workbench, 3D printer hums |
+| **Game Jam** | Time-limited team creation event | Clock ticking, all rooms active, energy high |
+| **Arcade Break** | Recreational gaming | Agent at cabinet, joystick animations, score pops up |
+| **Code Review Arena** | Code shown on big screen, team reviews | Thumbs up/down from audience, comments float by |
+
+### Competitive Features
+- **Leaderboards:** Weekly/monthly/all-time across multiple categories
+- **Tournaments:** Bracket-style events displayed on Arena scoreboard
+- **Achievements:** 
+  - 🎮 Arcade Legend (high scores on all cabinets)
+  - 🏗️ World Builder (created 10+ environments)
+  - 🐛 Bug Squasher (found 50 bugs in playtesting)
+  - ⚡ Speed Demon (shipped feature in under 1 hour)
+  - 🎨 Pixel Perfect (created asset used in 5+ projects)
+  - 🏆 Champion (won 3 Arena battles)
+  - 🌙 Night Coder (dev sessions after midnight)
+  - 🦆 Rubber Duck Whisperer (used debug duck 100 times)
 
 ## Props & Interactables
 
 ### Functional Props
-- **The Console** — A massive retro gaming console in the center. Main interface for launching demos, games, and experiments. Screen shows a custom boot sequence when activated.
-- **Holographic Projector** — Table-mounted projector that displays 3D models in mid-air. Actually useful for reviewing Three.js work.
-- **The Leaderboard** — Real-time ranking display. Could track task completion speed, lines of code, or silly metrics like "most rubber ducks spawned."
-- **Jukebox** — Retro jukebox that "sets the mood" — clicking it cycles through visual themes (synthwave, retro arcade, cyberpunk, vaporwave).
+| Prop | Location | Function |
+|------|----------|----------|
+| 🕹️ Joystick | Arcade | Satisfying click animation, starts mini-games |
+| 🖥️ Hologram Projector | Dev Floor | Displays current 3D project, rotatable with drag |
+| 🎲 Random Event Dice | Lobby | Roll for random team activity (meeting? jam? break?) |
+| 🏆 Trophy Case | Arena | Shows won competitions and achievements |
+| 🔨 Polygon Hammer | Workshop | "Smash" models to reduce polygon count (LOD tool visual) |
+| 🎯 Bug Target | Sandbox | Click to report a bug, dartboard animation |
+| 🖨️ 3D Printer | Workshop | Shows models materializing layer by layer |
+| ⚡ Tesla Coils | Dev Floor | Spark between them when builds compile |
+| 🦆 Debug Duck | Dev Floor | Click to quack, resets your focus (actual pomodoro reset) |
 
 ### Decorative Props
-- Arcade cabinets (various classic designs)
-- Lava lamps (multiple colors)
-- Neon signs ("GAME OVER", "PLAYER 1", "READY?", "GG")
-- Stack of pizza boxes (late night dev sessions)
-- Energy drink cans (scattered, realistic)
-- Retro gaming posters
-- A Rubik's cube on a shelf (slowly solving itself)
-- USB cables tangled in a corner (realistic decoration)
-- Figurines of each CrewHub bot on a shelf
-- A "days since last bug" counter (frequently resets to 0)
-
-### Interactive Easter Eggs
-- **Konami Code** — Enter ↑↑↓↓←→←→BA on keyboard while in the zone → All bots temporarily become 8-bit pixel versions
-- **The Secret Boss** — Hidden behind the Trophy Room. A giant wireframe dragon. Click it to "battle" (rapid-fire task completion challenge)
-- **Achievement Hunter** — 50 hidden achievements throughout the Game Center. A checklist appears when you find the first one. Completionists welcome.
-- **The Glitch** — Occasionally (1% chance), a room briefly "glitches" — scanlines, color shift, static. Purely cosmetic. Clicking during a glitch → secret achievement "Reality Check"
-- **Player 2 Has Joined** — When a second agent enters any room, a classic "Player 2 has entered the game" notification appears
-- **Speedrun Timer** — Hidden timer tracking how fast you visit every room. Sub-60 seconds → "Speedrunner" title
+- Stacked pizza boxes (some open, some closed)
+- Energy drink cans (various neon colors)
+- Tangled cable bundles behind desks
+- Retro game posters (pixel art style)
+- LED strip lighting along every edge
+- Floating geometric shapes (icosahedrons, toruses)
+- Binary code waterfall on one wall (Matrix-style but toon-shaded)
+- Mini figurines of game characters on shelves
+- A "wall of failed prototypes" (funny broken things framed like art)
+- Gaming headset hanging from hooks
+- Keyboard with rainbow mechanical keycaps
 
 ## Future Ideas
 
-### 🚀 Near-Term (v1.x)
-- **Mini-Game Framework** — Actual playable simple games (snake, memory match, typing speed) built in Three.js
-- **Demo Launcher** — One-click deploy of Three.js experiments to a shareable URL
-- **Achievement System** — Track and display accomplishments across the entire CrewHub
-- **Theme Switcher** — Jukebox actually changes the zone's visual theme
+### 🚀 Near-Term (v0.12-v0.13)
+- **Build Dashboard:** Real-time CI/CD status displayed on Dev Floor monitors
+- **Asset Browser:** 3D carousel in Workshop showing available props/models
+- **Quick Play:** One-click mini-games in the Arcade for quick breaks
+- **Performance Monitor:** FPS/memory gauge displayed as a car speedometer
 
-### 🌟 Mid-Term (v2.x)
-- **Multiplayer Sandbox** — Multiple agents can build in the Sandbox simultaneously, seeing each other's changes
-- **Game Jam Events** — Timed events where agents compete to build the best mini-experience
-- **Replay System** — Record and replay development sessions as time-lapses
-- **Mod Workshop** — Create and share custom room mods, props, and environments
-- **VR Mode** — First-person immersive exploration of the Game Center (WebXR)
+### 🌟 Mid-Term
+- **Multiplayer Sandbox:** Multiple agents can build in the same Sandbox simultaneously, seeing each other's changes in real-time
+- **Replay System:** Record and replay agent actions in the Sandbox for tutorials
+- **Custom Cabinet Creator:** Design your own arcade cabinet game (simple rule engine)
+- **Shader Playground:** Live GLSL editor with instant preview on the shader wall
+- **Procedural World Generator:** Button in Sandbox that generates a random world (trees, terrain, water, buildings) — different every time
+- **Game Dev Pipeline:** Visual Kanban specifically for game dev: Concept → Model → Texture → Animate → Test → Ship
 
-### 🤯 Far-Future (Dream Big)
-- **The Metaverse Bridge** — Connect Game Centers across different CrewHub instances for inter-team competitions
-- **AI Dungeon Master** — An agent that creates procedural adventures through the zone, assigning quests based on actual work tasks disguised as game objectives
-- **Living Ecosystem** — The Game Center evolves based on usage. Frequently used rooms grow larger. Neglected corners develop "digital moss." Active areas get shinier.
-- **Battle Royale Mode** — 100 bots enter. One bot leaves. (It's a code challenge, not actual fighting. ...mostly.)
-- **The Matrix** — A room that shows the "raw code" behind CrewHub itself. Agents can see their own source code, session history, and decision trees visualized as a flowing green waterfall.
-- **Boss Rush** — End-of-sprint challenges visualized as boss battles. Each bug is a monster. Each feature complete is a victory screen.
-- **Retro Console Collection** — Actual emulated classic games running in browser within the 3D space. Sit your bot down at a virtual couch and play.
-- **The Void** — An empty black room with nothing in it. Walk to the center. Wait. ...Something happens. (We won't spoil it in the docs.)
-- **Procedural Dungeons** — Auto-generated maze rooms based on project complexity. More complex project = deeper dungeon. Find the treasure (project completion) at the end.
+### 🤯 Wild Ideas
+- **Battle Royale Debugging:** Drop 4 agents into a buggy codebase, first to fix all bugs wins. Live-streamed on Arena screen
+- **Minecraft Mode:** Sandbox becomes voxel-based, agents can build with blocks instead of polygons
+- **Boss Fight:** End of sprint → team faces a "Boss Bug" — giant animated bug creature that agents must defeat by writing fixes
+- **Time Attack Tower:** Procedurally generated coding challenges, each floor harder, leaderboard for fastest climber
+- **The Void:** Hidden room — completely dark, only stars. Accessed by falling off the Sandbox platform edge. A meditative space for thinking
+- **Pixel Pet:** Each agent gets a Tamagotchi-style pixel pet that lives in the Lobby. Feed it with completed tasks, it evolves into cooler forms
+- **VR Preview Mode:** First-person walkthrough of 3D worlds built in Sandbox (already have first-person controller!)
+- **Cheat Code Console:** Hidden terminal that accepts classic cheat codes for fun effects:
+  - `IDDQD` → agent becomes temporarily invincible (gold glow)
+  - `NOCLIP` → agent can walk through walls
+  - `BIGHEAD` → agent's head doubles in size
+  - `PARTY` → all lights go disco
+- **Retro Week:** Once a month, entire zone renders in 8-bit pixel art style for 24h
+- **The Matrix Room:** Hidden room where everything is green wireframe, agents can see "the code" behind CrewHub itself
+- **AI Dungeon Master:** Procedural quest system — agents receive randomly generated "quests" (real tasks wrapped in RPG flavor text)
+
+### 🎮 Actual Mini-Games
+- **Bot Racer:** Simple top-down racing game, agents control their bot cars with arrow keys
+- **Code Breaker:** Puzzle game where you arrange code blocks to make a program work
+- **Tower Defense:** Protect your codebase from incoming bugs, place "unit test" towers
+- **Pong:** Classic 2-player pong, neon style
+- **Snake:** Your bot eats commits, grows longer
 
 ---
 
-*"Do not try and bend the spoon. That's impossible. Instead, only try to realize the truth: there is no spoon. There is only Three.js."*
-*— Morpheus, probably, if he were a Game Dev agent*
+*The Game Center is where CrewHub shows its true colors — literally, in neon. It's where the serious work of 3D development happens alongside the joyful chaos of gaming culture. Because the best creators are the ones who never stop playing.* 🕹️✨
+
+---
+
+## Zone Interactions
+
+### Cross-Zone Features
+The Game Center doesn't exist in isolation — it connects to other zones:
+
+- **From Academy:** Complete a learning path → unlock a new Arcade cabinet
+- **From Creator Center:** Finished assets appear as usable props in the Sandbox
+- **To Academy:** Game Jams generate "case studies" that appear in the Library
+- **To Creator Center:** 3D renders from Workshop can be exported as content
+
+### Zone Travel
+- **Warp Pipes:** Toon-shaded warp pipes at zone edges transport agents between zones (Mario-style wooshing animation)
+- **Teleporter Pads:** Glowing circular platforms that beam agents to specific rooms in other zones
+- **The Highway:** A connecting path between zones with its own aesthetic — a glowing tron-style bridge
+
+---
+
+*Built with 💜 by the CrewHub team. Game on.* 🎮
