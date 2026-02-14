@@ -270,7 +270,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
         async with aiosqlite.connect(DB_PATH) as db:
             db.row_factory = aiosqlite.Row
             async with db.execute(
-                "SELECT agent_session_key FROM agents WHERE id = ? OR agent_session_key = ? OR display_name = ?",
+                "SELECT agent_session_key FROM agents WHERE id = ? OR agent_session_key = ? OR name = ?",
                 (req.assignee, req.assignee, req.assignee),
             ) as cur:
                 row = await cur.fetchone()

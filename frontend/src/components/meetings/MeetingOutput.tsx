@@ -62,7 +62,7 @@ function ActionItemCard({
       })
       if (res.ok) {
         onStatusChange(item.id, 'planned')
-        showToast({ message: '✅ Added to Planner' })
+        showToast({ message: `✅ Task added to project board`, duration: 4000 })
       } else {
         const err = await res.json().catch(() => ({ detail: 'Failed' }))
         showToast({ message: `❌ ${err.detail || 'Failed to add to Planner'}` })
@@ -125,11 +125,11 @@ function ActionItemCard({
       {status === 'pending' && (
         <div style={{ display: 'flex', gap: 8, marginLeft: 24, marginTop: 8 }}>
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleAddToPlanner} disabled={loading !== null}>
-            {loading === 'planner' ? '...' : '➕ Planner'}
+            {loading === 'planner' ? '⏳ Adding…' : '➕ Planner'}
           </Button>
           {item.assignee && (
             <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleExecute} disabled={loading !== null}>
-              {loading === 'execute' ? '...' : '🤖 Execute'}
+              {loading === 'execute' ? '⏳ Starting…' : '🤖 Execute'}
             </Button>
           )}
         </div>
