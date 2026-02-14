@@ -172,6 +172,9 @@ class MeetingOrchestrator:
             # Save output
             output_path = await self._save_output(output_md)
 
+            # Parse and save action items from synthesis output
+            await self._save_action_items(output_md)
+
             # Complete
             duration = (_now_ms() - (await self._get_started_at())) // 1000
             await self._set_state(MeetingState.COMPLETE, output_md=output_md, output_path=output_path)
@@ -557,6 +560,68 @@ Respond ONLY with the markdown. No extra commentary."""
         output_path.write_text(output_md, encoding="utf-8")
         logger.info(f"Meeting output saved to {output_path}")
         return str(output_path)
+
+    async def _save_action_items(self, output_md: str):
+        """Parse action items from synthesis output and save to database."""
+        import re
+        lines = output_md.split('\n')
+        in_action_section = False
+        items = []
+
+        for line in lines:
+            stripped = line.strip()
+            # Detect action items / next steps section
+            if re.match(r'^##\s+(Action Items|Next Steps)', stripped, re.IGNORECASE):
+                in_action_section = True
+                continue
+            if in_action_section and stripped.startswith('## '):
+                break
+            if not in_action_section:
+                continue
+            # Parse checkbox lines: - [ ] @Agent: description [priority: high]
+            m = re.match(r'^- \[[ xX]\]\s*(.*)', stripped)
+            if not m:
+                continue
+            text = m.group(1)
+            assignee = None
+            am = re.match(r'@(\S+?):\s*(.*)', text)
+            if am:
+                assignee = am.group(1)
+                text = am.group(2)
+            priority = 'medium'
+            pm = re.search(r'\[priority:\s*(high|medium|low)\]\s*$', text)
+            if pm:
+                priority = pm.group(1)
+                text = text[:pm.start()].strip()
+            items.append({
+                'id': f'ai_{uuid.uuid4().hex[:8]}',
+                'text': text,
+                'assignee': assignee,
+                'priority': priority,
+            })
+
+        if not items:
+            return
+
+        now = _now_ms()
+        try:
+            async with aiosqlite.connect(DB_PATH) as db:
+                await db.execute(
+                    "DELETE FROM meeting_action_items WHERE meeting_id = ?",
+                    (self.meeting_id,),
+                )
+                for i, item in enumerate(items):
+                    await db.execute(
+                        """INSERT INTO meeting_action_items
+                           (id, meeting_id, text, assignee_agent_id, priority, status, sort_order, created_at, updated_at)
+                           VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)""",
+                        (item['id'], self.meeting_id, item['text'], item['assignee'],
+                         item['priority'], i, now, now),
+                    )
+                await db.commit()
+            logger.info(f"Saved {len(items)} action items for meeting {self.meeting_id}")
+        except Exception as e:
+            logger.error(f"Failed to save action items for {self.meeting_id}: {e}")
 
     # =========================================================================
     # Database Operations

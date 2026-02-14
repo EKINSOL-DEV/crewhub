@@ -240,9 +240,11 @@ export function MeetingOutput({
     [meeting.outputMd]
   )
 
-  // Save action items to backend when parsed
+  // Save action items to backend when parsed (backup — backend also saves on synthesis)
+  const savedForMeetingRef = useRef<string | null>(null)
   useEffect(() => {
-    if (parsed.actionItems.length > 0 && meeting.meetingId) {
+    if (parsed.actionItems.length > 0 && meeting.meetingId && savedForMeetingRef.current !== meeting.meetingId) {
+      savedForMeetingRef.current = meeting.meetingId
       fetch(`${API_BASE}/meetings/${meeting.meetingId}/action-items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -254,7 +256,9 @@ export function MeetingOutput({
             priority: ai.priority,
           })),
         }),
-      }).catch(() => {})
+      })
+        .then(r => { if (!r.ok) console.warn('[MeetingOutput] Failed to save action items:', r.status) })
+        .catch(err => console.warn('[MeetingOutput] Failed to save action items:', err))
     }
   }, [parsed.actionItems, meeting.meetingId])
 
