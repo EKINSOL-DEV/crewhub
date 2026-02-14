@@ -1,7 +1,7 @@
 # CrewHub Features Matrix
 
-*Last updated: 2026-02-12*  
-*Current version: v0.14.0*
+*Last updated: 2026-02-14*  
+*Current version: v0.15.0*
 
 Quick-reference table showing all CrewHub features, their status, and implementation versions.
 
@@ -22,24 +22,24 @@ Quick-reference table showing all CrewHub features, their status, and implementa
 
 | Category | Total Features | Released | In Progress | Planned | Research | Total Docs |
 |----------|----------------|----------|-------------|---------|----------|------------|
-| **Core** | 7 | 5 | 0 | 2 | 0 | 14 |
-| **3D World** | 6 | 1 | 1 | 3 | 1 | 12 |
+| **Core** | 7 | 6 | 0 | 1 | 0 | 14 |
+| **3D World** | 6 | 2 | 0 | 4 | 0 | 12 |
 | **UI** | 7 | 6 | 0 | 1 | 0 | 11 |
-| **Productivity** | 5 | 1 | 0 | 4 | 0 | 12 |
+| **Productivity** | 5 | 2 | 0 | 3 | 0 | 12 |
 | **Creative** | 12 | 6 | 0 | 5 | 1 | 8 |
 | **SaaS & Distribution** | 2 | 0 | 0 | 2 | 0 | 6 |
-| **Meta** | 2 | 1 | 0 | 1 | 0 | 3 |
-| **TOTAL** | **41** | **20** | **1** | **18** | **2** | **66** |
+| **Meta** | 2 | 2 | 0 | 0 | 0 | 3 |
+| **TOTAL** | **41** | **24** | **0** | **16** | **1** | **66** |
 
 ---
 
 ## 📈 Status Distribution
 
 ```
-Released:     ████████████████████████████████             49% (20)
-In Progress:  █                                             2% (1)
-Planned:      ██████████████████████                       44% (18)
-Research:     ██                                            5% (2)
+Released:     ████████████████████████████████████████     59% (24)
+In Progress:                                                0% (0)
+Planned:      ████████████████████                         39% (16)
+Research:     █                                             2% (1)
 ```
 
 ---
@@ -48,6 +48,7 @@ Research:     ██                                            5% (2)
 
 | Version | Date | Features Added |
 |---------|------|----------------|
+| **v0.15.0** | 2026-02-13 | AI Meetings (CRUD, orchestrator, real-time SSE), Post-Meeting Workflow (6 features), Bot Pathfinding |
 | **v0.14.0** | 2026-02-12 | URL Parameter Zen Mode, Project CRUD, Prop Delete, PropMaker Quality Phase 2-3 |
 | **v0.13.0** | 2026-02-11 | PropCreator Showcase (211 props), Markdown Viewer Phase 1-3, Backend Watchdog |
 | **v0.12.0** | 2026-02-10 | Agent Persona Tuning, Creator Zone MVP |
@@ -73,7 +74,7 @@ Research:     ██                                            5% (2)
 - ✅ PropMaker Quality Phase 1 (AI prompt rewrite, post-processor, showcase library API, flatShading materials)
 - 📋 Markdown viewer Phase 4 (Polish - search, bookmarks, breadcrumbs, favorites, light theme)
 
-### v0.14.0 (Current)
+### v0.14.0
 - ✅ URL Parameter Zen Mode (?mode=zen replaces standalone app - simpler deployment, one codebase)
 - ✅ Zen Mode Project CRUD (full project management with cascade warnings, World button → Projects)
 - ✅ Zen Mode Context Bug Fix (active project context now correctly sent from Zen Mode to chat)
@@ -84,18 +85,19 @@ Research:     ██                                            5% (2)
 - ✅ PropMaker Refiner UI Cleanup (remove non-functional Material/Animation/Add Details buttons)
 - ✅ Dev Error Logger (bug icon with error tracking, persistent log viewer, dev-only)
 
-### v0.15.0
+### v0.15.0 (Current)
+- ✅ AI Meetings (meeting orchestrator, real-time SSE updates, post-meeting workflow with 6 features)
+- ✅ Bot Pathfinding (waypoint-based navigation system for meeting gatherings)
+- ✅ Post-Meeting Workflow (markdown export, action items extraction, follow-up meetings, summary, task creation, Planner API integration)
+- ✅ Agent Identity Pattern (single identity, multiple surfaces - prevents personality drift)
+- ✅ Agent Status Logic Improvements ('supervising' status for long-running subagent tasks)
+- ✅ Spatial Awareness (waypoint pathfinding, proximity detection)
+
+### v0.16.0
 - 📋 Grid boundary fine-tuning (props against walls still not perfect - multi-cell placement edge cases)
 - 📋 Zen Mode panel registry (single source of truth: Ctrl+K, context menu, layouts)
 - 📋 Frontend watchdog & auto-restart (Docker-based, monitors Vite dev server crashes)
-- 📋 Agent Identity Pattern (single identity, multiple surfaces - prevent personality drift)
-- 📋 Agent Status Logic Improvements (fix false "sleeping" status during long-running tasks)
-- 🔬 Spatial awareness (vision, proximity, pathfinding)
-- ✅ Stand-up meetings Phase 1 (UX + backend) — v0.17.0
 - 📋 Improving and Reviewing Skills usage during onboarding
-
-### v0.16.0
-- 📋 HQ visual redesign (design TBD)
 
 ### v0.17.0
 - 🚧 Zones system (Creator Center, Academy, Game Center)
@@ -103,6 +105,7 @@ Research:     ██                                            5% (2)
 - 📋 Prop Library (RAG-based baseline library, semantic search, self-improving from approved props)
 
 ### v0.18.0
+- 📋 HQ visual redesign (design TBD)
 - Voice chat in first person mode
 - Agent Teams support (Anthropic extended context)
 - 📋 External 3D Generation APIs (Meshy.ai, etc. - alternative/fallback to AI code generation)
@@ -132,10 +135,10 @@ Research:     ██                                            5% (2)
 | **Settings** | ✅ | v0.4.0 | 2 | 5-tab configuration UI with backup/restore |
 | **Room Projects** | ✅ | v0.5.0 | 3 | Organize agents by project, HQ command center |
 | **Backend Watchdog** | ✅ | v0.13.0 | 1 | Auto-restart on crash, healthcheck, logging |
-| **Frontend Watchdog** | 📋 | v0.15.0 | 0 | Auto-restart Vite dev server on crash (Docker-based) |
-| **Agent Status Logic** | 📋 | v0.15.0 | 0 | Improved sleeping/active detection (fix false sleeping during long-running tasks) |
+| **Frontend Watchdog** | 📋 | v0.16.0 | 0 | Auto-restart Vite dev server on crash (Docker-based) |
+| **Agent Status Logic** | ✅ | v0.15.0 | 0 | Improved sleeping/active detection with 'supervising' status for long subagent tasks |
 
-**Total:** 7 features • 14 docs • 5 released, 2 planned
+**Total:** 7 features • 14 docs • 6 released, 1 planned
 
 ---
 
@@ -146,11 +149,11 @@ Research:     ██                                            5% (2)
 | **3D World Core** | ✅ | v0.3.0 | 3 | Toon-shaded campus, 3 zoom levels, animated bots |
 | **Zones** | 📋 | v0.17.0 | 6 | Thematic areas: Creator Center, Academy, Game Center |
 | **Academy Zone** | 📋 | v0.17.0 | 1 | Learning-focused zone with Knowledge Tree |
-| **Spatial Awareness** | 🔬 | v0.15.0 | 1 | Agent vision, proximity, pathfinding |
+| **Spatial Awareness** | ✅ | v0.15.0 | 1 | Waypoint-based pathfinding for meeting gatherings, proximity detection |
 | **Bot Navigation** | 📋 | v0.19.0 | 0 | Voice-controlled bot movement to props (e.g. "walk to the coffee machine") |
 | **Multi-Zone System** | 📋 | v0.17.0 | 1 | Architecture for multiple themed zones |
 
-**Total:** 6 features • 12 docs • 1 released, 4 planned, 1 research
+**Total:** 6 features • 12 docs • 2 released, 4 planned
 
 ---
 
@@ -164,7 +167,7 @@ Research:     ██                                            5% (2)
 | **Room Focus Mode** | ✅ | v0.3.0 | 1 | Zoom into rooms, camera fly-to, TaskWall3D |
 | **Agent Chat** | ✅ | v0.7.0 | 1 | Direct messaging with agents (Planner-style windows) |
 | **Zen Mode** | ✅ | v0.11.0 | 4 | Distraction-free multi-tab workspaces, Zen Statue |
-| **HQ Visual Redesign** | 📋 | v0.16.0 | 0 | Visual redesign of HQ command center (design TBD) |
+| **HQ Visual Redesign** | 📋 | v0.18.0 | 0 | Visual redesign of HQ command center (design TBD) |
 
 **Total:** 7 features • 11 docs • 6 released, 1 planned
 
@@ -176,11 +179,11 @@ Research:     ██                                            5% (2)
 |---------|--------|---------|------|-------------|
 | **Markdown Viewer/Editor** | ✅ | v0.13.0 | 4 | Phase 1-3: View docs, fullscreen + TOC, Editor. Phase 4: Polish |
 | **Zen Mode Panel Registry** | 📋 | v0.15.0 | 1 | Single source of truth for all panels (Ctrl+K, context menu, layouts) |
-| **Stand-Up Meetings** | 🚧 | v0.17.0 (P1) | 5 | Phase 1: standup CRUD + UI. Phase 2+: 3D animations, round-robin |
+| **AI Meetings** | ✅ | v0.15.0 | 5 | Meeting orchestrator, real-time SSE, post-meeting workflow (markdown export, action items, follow-up meetings, summary, task creation, Planner sync) |
 | **Zen Mode Standalone** | 📋 | v0.14.0 | 1 | Standalone app sharing code/DB/API with CrewHub (monorepo architecture) |
 | **Task Management** | ✅ | v0.9.0 | 2 | Visual task board, TaskWall3D, Run with Agent |
 
-**Total:** 5 features • 12 docs • 1 released, 1 in progress, 3 planned
+**Total:** 5 features • 12 docs • 3 released, 2 planned
 
 ---
 
@@ -222,9 +225,9 @@ Research:     ██                                            5% (2)
 | Feature | Status | Version | Docs | Description |
 |---------|--------|---------|------|-------------|
 | **Demo Site** | ✅ | live @ demo.crewhub.dev | 2 | Public demo with mock API, no OpenClaw dependency |
-| **Agent Identity Pattern** | 📋 | v0.15.0 | 1 | Single identity, multiple surfaces pattern (prevents personality drift) |
+| **Agent Identity Pattern** | ✅ | v0.15.0 | 1 | Single identity, multiple surfaces pattern (prevents personality drift) |
 
-**Total:** 2 features • 3 docs • 1 released, 1 planned
+**Total:** 2 features • 3 docs • 2 released
 
 ---
 

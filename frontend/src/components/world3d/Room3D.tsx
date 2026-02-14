@@ -8,6 +8,7 @@ import { ZenBeeldje } from './ZenBeeldje'
 import { GridRoomRenderer } from './grid/GridRoomRenderer'
 import { GridDebugOverlay, GridDebugLabels } from './grid/GridDebugOverlay'
 import { getBlueprintForRoom } from '@/lib/grid'
+import type { PropPlacement } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragDrop } from '@/contexts/DragDropContext'
 import { useGridDebug } from '@/hooks/useGridDebug'
@@ -133,7 +134,16 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
  */
 export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
   const roomColor = room.color || '#4f46e5'
-  const blueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
+  const baseBlueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
+  // Mutable placements state so prop moves persist in the UI
+  const [localPlacements, setLocalPlacements] = useState<PropPlacement[] | null>(null)
+  const blueprint = useMemo(() => {
+    if (!localPlacements) return baseBlueprint
+    return { ...baseBlueprint, placements: localPlacements }
+  }, [baseBlueprint, localPlacements])
+  const handleBlueprintUpdate = useCallback((placements: PropPlacement[]) => {
+    setLocalPlacements(placements)
+  }, [])
   const { isDemoMode } = useDemoMode()
   const [gridDebugEnabled] = useGridDebug()
   const { state, focusRoom } = useWorldFocus()
@@ -249,7 +259,7 @@ export function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
       <RoomDropZone roomId={room.id} size={size} />
 
       {/* ─── Grid-based furniture props ────────────────────────────── */}
-      <GridRoomRenderer blueprint={blueprint} roomPosition={position} />
+      <GridRoomRenderer blueprint={blueprint} roomPosition={position} onBlueprintUpdate={handleBlueprintUpdate} />
 
       {/* ─── Grid debug overlay (dev tool) ─────────────────────────── */}
       {gridDebugEnabled && (
