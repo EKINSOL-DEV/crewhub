@@ -188,10 +188,15 @@ function PropDebugLabel({ propId, position }: { propId: string; position: [numbe
 
 // ─── Hover Glow Effect ──────────────────────────────────────────
 
-function HoverGlow({ position }: { position: [number, number, number] }) {
+function HoverGlow({ position, span }: { position: [number, number, number]; span?: { w: number; d: number } }) {
   const ringRef = useRef<THREE.Mesh>(null!)
   const glowRef = useRef<THREE.Mesh>(null!)
   const outerRef = useRef<THREE.Mesh>(null!)
+  
+  // Scale glow to match prop footprint
+  const scaleX = (span?.w ?? 1) * 0.7
+  const scaleZ = (span?.d ?? 1) * 0.7
+  const avgScale = (scaleX + scaleZ) / 2
   
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
@@ -216,21 +221,21 @@ function HoverGlow({ position }: { position: [number, number, number] }) {
     <group>
       {/* Outer soft glow ring */}
       <mesh ref={outerRef} position={[position[0], 0.025, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.7, 0.9, 32]} />
+        <ringGeometry args={[0.7 * avgScale, 0.9 * avgScale, 32]} />
         <meshBasicMaterial color="#60a5fa" transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
       {/* Pulsing outline ring */}
       <mesh ref={ringRef} position={[position[0], 0.03, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.55, 0.7, 32]} />
+        <ringGeometry args={[0.55 * avgScale, 0.7 * avgScale, 32]} />
         <meshBasicMaterial color="#60a5fa" transparent opacity={0.45} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
       {/* Inner glow */}
       <mesh ref={glowRef} position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.6, 32]} />
+        <circleGeometry args={[0.6 * avgScale, 32]} />
         <meshBasicMaterial color="#60a5fa" transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false} />
       </mesh>
       {/* Upward point light for subtle highlight on prop geometry */}
-      <pointLight position={[position[0], 0.5, position[2]]} color="#60a5fa" intensity={0.8} distance={2} decay={2} />
+      <pointLight position={[position[0], 0.5, position[2]]} color="#60a5fa" intensity={0.8} distance={2 * avgScale} decay={2} />
     </group>
   )
 }
@@ -312,12 +317,28 @@ interface SelectionIndicatorProps {
 
 function SelectionIndicator({ position, isMoving, isDragging, isOverInvalid, onSave, onRotate, onCancel, onDelete }: SelectionIndicatorProps) {
   const hudPos: [number, number, number] = [position[0], position[1] + 1.8, position[2]]
+  const shadowRef = useRef<THREE.Mesh>(null!)
   
   // Color changes based on state: red for invalid, green for dragging, orange for selected
   const ringColor = isOverInvalid ? '#ff4444' : isDragging ? '#00ff88' : '#ffa500'
+  
+  // Animate shadow opacity/scale when lifted (dragging)
+  useFrame(() => {
+    if (!shadowRef.current) return
+    const mat = shadowRef.current.material as THREE.MeshBasicMaterial
+    mat.opacity = isDragging ? 0.25 : 0.1
+    const s = isDragging ? 1.1 : 1.0
+    shadowRef.current.scale.set(s, s, 1)
+  })
 
   return (
     <>
+      {/* Drop shadow on floor (grows when prop is lifted) */}
+      <mesh ref={shadowRef} position={[position[0], 0.005, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.7, 24]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+      
       {/* Pulsing ring on the floor around the prop */}
       <mesh position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.8, 1.0, 32]} />
@@ -596,11 +617,15 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     if (!isMoving && !isDragging) {
       document.body.style.cursor = 'auto'
     }
-    // Clear hover
+    // Always clear hover for this specific prop (allows clean transitions between props)
     const obj = e.eventObject
     const key = obj?.userData?.propKey || obj?.userData?.debugPropKey
     if (key) {
-      setHoveredPropKey((prev) => prev === key ? null : prev)
+      // Use a microtask so that if pointerEnter fires on a new prop in the same frame,
+      // the new hover takes precedence over this clear
+      queueMicrotask(() => {
+        setHoveredPropKey((prev) => prev === key ? null : prev)
+      })
     }
   }, [isDragging, isMoving])
 
@@ -800,7 +825,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
             )}
             {/* Hover glow when not selected */}
             {isHovered && !isSelected && (
-              <HoverGlow position={worldPos} />
+              <HoverGlow position={worldPos} span={span} />
             )}
             {gridDebugEnabled && isHovered && (
               <PropDebugLabel propId={propId} position={worldPos} />

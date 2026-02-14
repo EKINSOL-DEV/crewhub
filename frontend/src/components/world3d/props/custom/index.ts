@@ -24,16 +24,38 @@ interface SavedPropEntry {
 }
 
 /**
+ * Fallback component shown when a custom prop fails to render.
+ * Displays a small error cube so the user can see where the broken prop is.
+ */
+const FallbackProp: React.FC<PropProps> = ({ position }) => {
+  return React.createElement('group', { position },
+    React.createElement('mesh', { position: [0, 0.25, 0] },
+      React.createElement('boxGeometry', { args: [0.3, 0.3, 0.3] }),
+      React.createElement('meshStandardMaterial', { color: '#ff4444', wireframe: true }),
+    ),
+  )
+}
+
+/**
  * Create a prop component from structured parts data.
  * Returns a React component that conforms to PropProps interface.
+ * Wraps in a try-catch for graceful fallback on render errors.
  */
 function createCustomPropComponent(parts: PropPart[]): React.FC<PropProps> {
   const CustomProp: React.FC<PropProps> = ({ position, rotation: _rotation }) => {
-    return React.createElement(DynamicProp, {
-      parts,
-      position,
-      scale: 1,
-    })
+    try {
+      if (!parts || parts.length === 0) {
+        return React.createElement(FallbackProp, { position, rotation: 0, cellSize: 1 })
+      }
+      return React.createElement(DynamicProp, {
+        parts,
+        position,
+        scale: 1,
+      })
+    } catch (err) {
+      console.error('[CustomProp] Render error:', err)
+      return React.createElement(FallbackProp, { position, rotation: 0, cellSize: 1 })
+    }
   }
   return CustomProp
 }
