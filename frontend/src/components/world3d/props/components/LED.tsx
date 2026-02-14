@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useThrottledFrame } from '../../utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface LEDProps {
@@ -29,7 +29,7 @@ export function LED({
 }: LEDProps) {
   const matRef = useRef<THREE.MeshStandardMaterial>(null)
 
-  useFrame((state) => {
+  useThrottledFrame((state) => {
     if (!matRef.current) return
     const t = state.clock.elapsedTime
     if (pulse) {
@@ -40,7 +40,7 @@ export function LED({
       // Steady glow with subtle shimmer
       matRef.current.emissiveIntensity = intensity * (0.9 + 0.1 * Math.sin(t * 8))
     }
-  })
+  }, 3)
 
   return (
     <mesh position={position}>

@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useThrottledFrame } from './utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface BotStatusGlowProps {
@@ -25,7 +25,7 @@ export function BotStatusGlow({ status }: BotStatusGlowProps) {
   const glowRef = useRef<THREE.Mesh>(null)
   const glowColor = STATUS_GLOW_COLOR[status] || STATUS_GLOW_COLOR.offline
 
-  useFrame(({ clock }) => {
+  useThrottledFrame(({ clock }) => {
     if (!glowRef.current) return
     const mat = glowRef.current.material as THREE.MeshStandardMaterial
     const t = clock.getElapsedTime()
@@ -53,7 +53,7 @@ export function BotStatusGlow({ status }: BotStatusGlowProps) {
         mat.opacity = 0.3
         break
     }
-  })
+  }, 3)
 
   return (
     <mesh

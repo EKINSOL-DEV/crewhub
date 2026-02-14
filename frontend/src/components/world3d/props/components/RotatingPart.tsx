@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useThrottledFrame } from '../../utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface RotatingPartProps {
@@ -29,7 +29,7 @@ export function RotatingPart({
 }: RotatingPartProps) {
   const groupRef = useRef<THREE.Group>(null)
 
-  useFrame((_, delta) => {
+  useThrottledFrame((_, delta) => {
     if (!groupRef.current) return
     const rate = speed * delta * 2
     switch (axis) {
@@ -37,7 +37,7 @@ export function RotatingPart({
       case 'y': groupRef.current.rotation.y += rate; break
       case 'z': groupRef.current.rotation.z += rate; break
     }
-  })
+  }, 2)
 
   return (
     <group position={position} ref={groupRef}>

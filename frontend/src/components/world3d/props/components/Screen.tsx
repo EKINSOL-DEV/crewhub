@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useThrottledFrame } from '../../utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface ScreenProps {
@@ -34,7 +34,7 @@ export function Screen({
   const screenRef = useRef<THREE.MeshStandardMaterial>(null)
   const scanRef = useRef<THREE.Mesh>(null)
 
-  useFrame((state) => {
+  useThrottledFrame((state) => {
     const t = state.clock.elapsedTime
     if (screenRef.current) {
       let intensity = 0.5 + Math.sin(t * 2) * 0.1
@@ -47,7 +47,7 @@ export function Screen({
       // Scroll scanline overlay
       scanRef.current.position.y = ((t * 0.3) % 1 - 0.5) * height * 0.8
     }
-  })
+  }, 2)
 
   const bezelDepth = 0.03
 

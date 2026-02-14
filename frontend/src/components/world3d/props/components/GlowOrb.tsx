@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useThrottledFrame } from '../../utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface GlowOrbProps {
@@ -30,7 +30,7 @@ export function GlowOrb({
   const innerRef = useRef<THREE.Mesh>(null)
   const outerRef = useRef<THREE.Mesh>(null)
 
-  useFrame((state) => {
+  useThrottledFrame((state) => {
     const t = state.clock.elapsedTime
     const pulse = 0.95 + Math.sin(t * pulseSpeed * Math.PI) * 0.05
 
@@ -44,7 +44,7 @@ export function GlowOrb({
       outerRef.current.rotation.x = Math.sin(t * 0.3) * 0.2
       outerRef.current.scale.setScalar(1.02 + Math.sin(t * pulseSpeed * 0.7) * 0.03)
     }
-  })
+  }, 2)
 
   return (
     <group position={position}>
