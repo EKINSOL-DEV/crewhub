@@ -35,10 +35,12 @@ interface MeetingOutputProps {
 function ActionItemCard({
   item,
   meetingId,
+  projectId,
   onStatusChange,
 }: {
   item: ParsedActionItem & { status?: string }
   meetingId: string | null
+  projectId?: string
   onStatusChange: (id: string, status: string) => void
 }) {
   const [loading, setLoading] = useState<'planner' | 'execute' | null>(null)
@@ -56,7 +58,7 @@ function ActionItemCard({
       const res = await fetch(`${API_BASE}/meetings/${meetingId}/action-items/${item.id}/to-planner`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: item.text, assignee: item.assignee, priority: item.priority }),
+        body: JSON.stringify({ title: item.text, assignee: item.assignee, priority: item.priority, project_id: projectId }),
       })
       if (res.ok) {
         onStatusChange(item.id, 'planned')
@@ -189,10 +191,12 @@ function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
 function ActionsView({
   items,
   meetingId,
+  projectId,
   onStatusChange,
 }: {
   items: (ParsedActionItem & { status?: string })[]
   meetingId: string | null
+  projectId?: string
   onStatusChange: (id: string, status: string) => void
 }) {
   if (items.length === 0) {
@@ -208,7 +212,7 @@ function ActionsView({
         {items.length} Action Item{items.length !== 1 ? 's' : ''}
       </div>
       {items.map(item => (
-        <ActionItemCard key={item.id} item={item} meetingId={meetingId} onStatusChange={onStatusChange} />
+        <ActionItemCard key={item.id} item={item} meetingId={meetingId} projectId={projectId} onStatusChange={onStatusChange} />
       ))}
     </div>
   )
@@ -417,6 +421,7 @@ export function MeetingOutput({
                           key={item.id}
                           item={item}
                           meetingId={meeting.meetingId}
+                          projectId={meeting.project_id}
                           onStatusChange={handleStatusChange}
                         />
                       ))}
@@ -428,6 +433,7 @@ export function MeetingOutput({
               <ActionsView
                 items={actionItems}
                 meetingId={meeting.meetingId}
+                projectId={meeting.project_id}
                 onStatusChange={handleStatusChange}
               />
             ) : activeView === 'transcript' ? (

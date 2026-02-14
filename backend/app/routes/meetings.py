@@ -6,7 +6,6 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
-import aiohttp
 import aiosqlite
 
 from app.db.database import DB_PATH
@@ -243,8 +242,8 @@ async def api_save_action_items(meeting_id: str, req: SaveActionItemsRequest):
 
 @router.post("/{meeting_id}/action-items/{item_id}/to-planner")
 async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionItemToPlannerRequest):
-    """Push an action item to Ekinbot Planner as a task."""
-    # Verify item exists
+    """Push an action item to the project task board (or fallback to Ekinbot Planner)."""
+    # Verify item exists and get meeting data
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
@@ -255,30 +254,54 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
             if not item:
                 raise HTTPException(404, "Action item not found")
 
-    # Create task in Ekinbot Planner
-    try:
-        async with aiohttp.ClientSession() as session:
-            resp = await session.post(
-                "http://localhost:8080/api/tasks",
-                json={
-                    "title": req.title,
-                    "assignee": req.assignee or "",
-                    "source": f"meeting:{meeting_id}",
-                    "priority": req.priority or "medium",
-                    "columnId": "todo",
-                },
-                timeout=aiohttp.ClientTimeout(total=10),
-            )
-            if resp.status >= 400:
-                error_text = await resp.text()
-                raise HTTPException(502, f"Planner API error: {error_text}")
-            planner_data = await resp.json()
-    except aiohttp.ClientError as e:
-        raise HTTPException(502, f"Could not reach Planner API: {str(e)}")
+    # Resolve project_id: prefer request, then meeting data
+    project_id = req.project_id
+    if not project_id:
+        meeting = await get_meeting(meeting_id)
+        if meeting:
+            project_id = meeting.get("project_id")
+
+    if not project_id:
+        raise HTTPException(400, "Meeting is not associated with a project. Cannot add to task board.")
+
+    # Resolve assignee to session_key if it looks like an agent name
+    assigned_session_key = None
+    if req.assignee:
+        async with aiosqlite.connect(DB_PATH) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT agent_session_key FROM agents WHERE id = ? OR agent_session_key = ? OR display_name = ?",
+                (req.assignee, req.assignee, req.assignee),
+            ) as cur:
+                row = await cur.fetchone()
+                if row:
+                    assigned_session_key = row["agent_session_key"]
+
+    # Create task in the project via internal task creation
+    from app.db.models import generate_id
+    task_id = generate_id()
+    now = _now_ms()
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            """INSERT INTO tasks (id, project_id, room_id, title, description, status, priority, assigned_session_key, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                task_id,
+                project_id,
+                None,
+                req.title,
+                f"From meeting: {meeting_id}",
+                "todo",
+                req.priority or "medium",
+                assigned_session_key,
+                now,
+                now,
+            ),
+        )
+        await db.commit()
 
     # Update action item status
-    now = _now_ms()
-    task_id = planner_data.get("id", planner_data.get("task_id", ""))
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
             "UPDATE meeting_action_items SET status = 'planned', planner_task_id = ?, updated_at = ? WHERE id = ?",
@@ -286,7 +309,11 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
         )
         await db.commit()
 
-    # SSE notification
+    # SSE notifications
+    await broadcast("task-created", {
+        "task_id": task_id,
+        "project_id": project_id,
+    })
     await broadcast("action-item-status", {
         "meeting_id": meeting_id,
         "item_id": item_id,
@@ -297,8 +324,8 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
     return {
         "item_id": item_id,
         "status": "planned",
-        "planner_task_id": task_id,
-        "planner_url": f"http://ekinbot.local:5173/tasks/{task_id}",
+        "task_id": task_id,
+        "project_id": project_id,
     }
 
 

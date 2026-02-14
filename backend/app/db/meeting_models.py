@@ -125,6 +125,7 @@ class ActionItemToPlannerRequest(BaseModel):
     title: str
     assignee: Optional[str] = None
     priority: Optional[str] = "medium"
+    project_id: Optional[str] = None
 
 
 class ActionItemExecuteRequest(BaseModel):

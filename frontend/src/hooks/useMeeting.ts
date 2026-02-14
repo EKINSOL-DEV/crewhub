@@ -55,6 +55,7 @@ export interface MeetingState {
   error: string | null
   durationSeconds: number | null
   warnings: string[]
+  project_id?: string
 }
 
 export interface StartMeetingParams {
@@ -109,6 +110,7 @@ export function useMeeting() {
           phase: 'gathering',
           meetingId: data.meeting_id,
           title: data.title || 'Meeting',
+          project_id: data.project_id || prev.project_id,
           participants: data.participants || [],
           currentRound: 0,
           totalRounds: data.num_rounds || data.total_rounds || 0,

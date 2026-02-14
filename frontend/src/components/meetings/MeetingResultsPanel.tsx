@@ -55,6 +55,7 @@ export function MeetingResultsPanel() {
           phase: 'complete',
           meetingId: data.id,
           title: data.title || 'Meeting Results',
+          project_id: data.project_id || undefined,
           participants: data.participants?.map((p: any) => p.agent_id) || [],
           currentRound: data.total_rounds,
           totalRounds: data.total_rounds,
