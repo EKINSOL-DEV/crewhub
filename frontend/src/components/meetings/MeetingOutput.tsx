@@ -233,6 +233,7 @@ export function MeetingOutput({
   const [copied, setCopied] = useState(false)
   const [activeView, setActiveView] = useState<MeetingView>('structured')
   const [itemStatuses, setItemStatuses] = useState<Record<string, string>>({})
+  const [backendItems, setBackendItems] = useState<(ParsedActionItem & { status?: string })[] | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
   const parsed = useMemo(
@@ -240,26 +241,57 @@ export function MeetingOutput({
     [meeting.outputMd]
   )
 
-  // Save action items to backend when parsed (backup — backend also saves on synthesis)
-  const savedForMeetingRef = useRef<string | null>(null)
+  // Fetch action items from backend (source of truth for IDs) or save parsed ones if none exist
+  const syncedForMeetingRef = useRef<string | null>(null)
   useEffect(() => {
-    if (parsed.actionItems.length > 0 && meeting.meetingId && savedForMeetingRef.current !== meeting.meetingId) {
-      savedForMeetingRef.current = meeting.meetingId
-      fetch(`${API_BASE}/meetings/${meeting.meetingId}/action-items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: parsed.actionItems.map(ai => ({
-            id: ai.id,
-            text: ai.text,
-            assignee_agent_id: ai.assignee,
-            priority: ai.priority,
-          })),
-        }),
+    if (!meeting.meetingId || syncedForMeetingRef.current === meeting.meetingId) return
+    syncedForMeetingRef.current = meeting.meetingId
+    const meetingId = meeting.meetingId
+
+    // First try to fetch existing items from backend
+    fetch(`${API_BASE}/meetings/${meetingId}/action-items`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.items?.length > 0) {
+          // Backend has items — use their IDs (they match the DB)
+          setBackendItems(data.items.map((item: any) => ({
+            id: item.id,
+            text: item.text,
+            assignee: item.assignee_agent_id,
+            priority: item.priority || 'medium',
+            checked: item.status === 'done',
+            status: item.status,
+          })))
+          // Seed statuses from backend
+          const statuses: Record<string, string> = {}
+          for (const item of data.items) {
+            if (item.status && item.status !== 'pending') statuses[item.id] = item.status
+          }
+          setItemStatuses(prev => ({ ...prev, ...statuses }))
+        } else if (parsed.actionItems.length > 0) {
+          // No backend items — save parsed ones (creates them with parsed IDs)
+          fetch(`${API_BASE}/meetings/${meetingId}/action-items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: parsed.actionItems.map(ai => ({
+                id: ai.id,
+                text: ai.text,
+                assignee_agent_id: ai.assignee,
+                priority: ai.priority,
+              })),
+            }),
+          })
+            .then(r => { if (!r.ok) console.warn('[MeetingOutput] Failed to save action items:', r.status) })
+            .catch(err => console.warn('[MeetingOutput] Failed to save action items:', err))
+          // Use parsed items (IDs will match what we just saved)
+          setBackendItems(null)
+        }
       })
-        .then(r => { if (!r.ok) console.warn('[MeetingOutput] Failed to save action items:', r.status) })
-        .catch(err => console.warn('[MeetingOutput] Failed to save action items:', err))
-    }
+      .catch(err => {
+        console.warn('[MeetingOutput] Failed to fetch action items:', err)
+        setBackendItems(null)
+      })
   }, [parsed.actionItems, meeting.meetingId])
 
   const handleCopy = useCallback(async () => {
@@ -307,7 +339,9 @@ export function MeetingOutput({
   const meetingTitle = meeting.title || 'Meeting Results'
   const duration = meeting.durationSeconds ? `${Math.round(meeting.durationSeconds)}s` : null
 
-  const actionItems = parsed.actionItems.map(ai => ({ ...ai, status: itemStatuses[ai.id] }))
+  // Use backend items (correct IDs) when available, fall back to parsed
+  const baseItems = backendItems || parsed.actionItems
+  const actionItems = baseItems.map(ai => ({ ...ai, status: itemStatuses[ai.id] || (ai as any).status }))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'hsl(var(--background))' }}>
