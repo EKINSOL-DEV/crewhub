@@ -30,6 +30,15 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom'],
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'vendor-codemirror': [
+            '@codemirror/commands',
+            '@codemirror/lang-markdown',
+            '@codemirror/language',
+            '@codemirror/state',
+            '@codemirror/view',
+          ],
+          'vendor-markdown': ['react-markdown', 'rehype-highlight', 'rehype-raw', 'remark-gfm', 'highlight.js'],
           'vendor-dnd': [
             '@dnd-kit/core',
             '@dnd-kit/sortable',

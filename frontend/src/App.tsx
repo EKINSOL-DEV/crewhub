@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import { ZoneRenderer } from './components/world3d/ZoneRenderer'
+import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
+const ZoneRenderer = lazy(() => import('./components/world3d/ZoneRenderer').then(m => ({ default: m.ZoneRenderer })))
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
 import { CronView } from './components/sessions/CronView'
@@ -389,11 +389,13 @@ function AppContent() {
             {activeTab === 'active' && (
               sessions.length === 0
                 ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={openConnectionsSettings} />
-                : <ZoneRenderer
-                    sessions={sessions}
-                    settings={settings}
-                    onAliasChanged={handleAliasChanged}
-                  />
+                : <Suspense fallback={<div className="flex-1 flex items-center justify-center text-muted-foreground">Loading 3D view…</div>}>
+                    <ZoneRenderer
+                      sessions={sessions}
+                      settings={settings}
+                      onAliasChanged={handleAliasChanged}
+                    />
+                  </Suspense>
             )}
             {activeTab === 'cards' && (
               sessions.length === 0
