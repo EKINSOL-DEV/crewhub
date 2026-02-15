@@ -218,14 +218,21 @@ export function usePropMovement({
     const currentSpan = selectedProp.span || { w: 1, d: 1 }
     // Swap width and depth on each 90° rotation
     const newSpan = { w: currentSpan.d, d: currentSpan.w }
+    
+    // Validate that the rotated span fits at the current position
+    if (!isValidPosition(selectedProp.gridX, selectedProp.gridZ, newSpan, selectedProp.key)) {
+      // Can't rotate here — span doesn't fit
+      return
+    }
+    
     setSelectedProp(prev => prev ? { ...prev, rotation: newRotation, span: newSpan } : null)
-  }, [selectedProp])
+  }, [selectedProp, isValidPosition])
 
   // Confirm movement and save to API
   const confirmMovement = useCallback(async () => {
     if (!selectedProp) return
 
-    const { propId, gridX, gridZ, originalX, originalZ, rotation } = selectedProp
+    const { propId, gridX, gridZ, originalX, originalZ, rotation, span } = selectedProp
     
     // Stop dragging first
     setIsDragging(false)
@@ -233,10 +240,10 @@ export function usePropMovement({
     // Use ref to get latest placements (avoids stale closure if placements changed during drag)
     const currentPlacements = placementsRef.current
 
-    // Update placements array
+    // Update placements array (including span which may have changed due to rotation)
     const updatedPlacements = currentPlacements.map(p => {
       if (p.propId === propId && p.x === originalX && p.z === originalZ) {
-        return { ...p, x: gridX, z: gridZ, rotation: rotation as 0 | 90 | 180 | 270 }
+        return { ...p, x: gridX, z: gridZ, rotation: rotation as 0 | 90 | 180 | 270, span }
       }
       return p
     })
@@ -263,6 +270,7 @@ export function usePropMovement({
           toX: gridX,
           toZ: gridZ,
           rotation,
+          span,
         }),
       })
 
