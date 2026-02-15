@@ -17,10 +17,12 @@ export interface ParsedProp {
 
 /**
  * Extract TSX code blocks from an AI response string.
- * Looks for ```tsx or ```jsx fenced code blocks.
+ * Looks for ```tsx, ```jsx, or ```typescript fenced code blocks.
+ * Also handles cases where the AI omits the language tag but code contains JSX.
  */
 export function extractCodeBlocks(text: string): string[] {
-  const pattern = /```(?:tsx|jsx)\s*\n([\s\S]*?)```/g
+  // Primary: explicit tsx/jsx/typescript blocks
+  const pattern = /```(?:tsx|jsx|typescript)\s*\n([\s\S]*?)```/g
   const blocks: string[] = []
   let match: RegExpExecArray | null
 
@@ -28,6 +30,18 @@ export function extractCodeBlocks(text: string): string[] {
     const code = match[1].trim()
     if (code.length > 0) {
       blocks.push(code)
+    }
+  }
+
+  // Fallback: untagged code blocks that contain JSX-like syntax
+  if (blocks.length === 0) {
+    const untaggedPattern = /```\s*\n([\s\S]*?)```/g
+    while ((match = untaggedPattern.exec(text)) !== null) {
+      const code = match[1].trim()
+      // Only include if it looks like React/Three.js code
+      if (code.length > 50 && (/<mesh|<group|<boxGeometry|useFrame|Three/.test(code))) {
+        blocks.push(code)
+      }
     }
   }
 

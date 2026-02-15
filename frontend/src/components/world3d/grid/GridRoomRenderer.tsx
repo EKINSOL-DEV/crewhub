@@ -739,9 +739,13 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     }
   }, [isMoving, isDragging])
 
-  // Reset cursor when movement ends
+  // Reset cursor when movement ends + cleanup on unmount
   useEffect(() => {
     if (!isMoving) {
+      document.body.style.cursor = 'auto'
+    }
+    return () => {
+      // Always clean up cursor on unmount to prevent stuck cursors
       document.body.style.cursor = 'auto'
     }
   }, [isMoving])

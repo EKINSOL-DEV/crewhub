@@ -362,3 +362,9 @@ svg * {
 .hljs-link {
   color: hsl(var(--code-string));
 }
+
+/* ─── Prop Movement Cursors ──────────────────────────────────── */
+/* Applied to the canvas element for reliable cursor during 3D interactions */
+.cursor-grab, .cursor-grab canvas { cursor: grab !important; }
+.cursor-grabbing, .cursor-grabbing canvas { cursor: grabbing !important; }
+.cursor-not-allowed, .cursor-not-allowed canvas { cursor: not-allowed !important; }
