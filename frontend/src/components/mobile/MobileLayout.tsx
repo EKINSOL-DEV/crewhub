@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { MobileAgentList } from './MobileAgentList'
 import { MobileAgentChat } from './MobileAgentChat'
+import { MobileDrawer, type MobilePanel } from './MobileDrawer'
+import { MobileDocsPanel } from './MobileDocsPanel'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useAgentsRegistry } from '@/hooks/useAgentsRegistry'
 import { AgentMultiSelectSheet, GroupThreadChat } from './group'
@@ -11,6 +13,7 @@ type View =
   | { type: 'chat'; sessionKey: string; agentId: string; agentName: string; agentIcon: string | null; agentColor: string | null }
   | { type: 'new-group' }
   | { type: 'group-chat'; thread: Thread }
+  | { type: 'docs' }
 
 // Fixed crew members only
 const FIXED_AGENT_IDS = ['main', 'dev', 'flowy', 'creator', 'reviewer', 'wtl', 'game-dev']
@@ -20,6 +23,7 @@ export function MobileLayout() {
   const { agents } = useAgentsRegistry(sessions)
   const [view, setView] = useState<View>({ type: 'list' })
   const [threads, setThreads] = useState<Thread[]>([])
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Filter to fixed agents only
   const fixedAgents = agents.filter(r => FIXED_AGENT_IDS.includes(r.agent.id))
@@ -67,6 +71,25 @@ export function MobileLayout() {
     }
   }, [view])
 
+  // Drawer navigation
+  const handleDrawerNavigate = useCallback((panel: MobilePanel) => {
+    switch (panel) {
+      case 'chat':
+        setView({ type: 'list' })
+        break
+      case 'docs':
+        setView({ type: 'docs' })
+        break
+      // Future panels
+      default:
+        break
+    }
+  }, [])
+
+  // Determine current panel for drawer highlight
+  const currentPanel: MobilePanel =
+    view.type === 'docs' ? 'docs' : 'chat'
+
   return (
     <div style={{
       height: '100dvh',
@@ -78,6 +101,14 @@ export function MobileLayout() {
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       overflow: 'hidden',
     }}>
+      {/* Drawer */}
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onNavigate={handleDrawerNavigate}
+        currentPanel={currentPanel}
+      />
+
       {view.type === 'chat' ? (
         <MobileAgentChat
           sessionKey={view.sessionKey}
@@ -101,6 +132,8 @@ export function MobileLayout() {
           onAddParticipants={() => {/* TODO: add participants flow */}}
           onRename={() => {/* TODO: rename flow */}}
         />
+      ) : view.type === 'docs' ? (
+        <MobileDocsPanel onBack={handleBack} />
       ) : (
         <MobileAgentList
           agents={fixedAgents}
@@ -111,6 +144,7 @@ export function MobileLayout() {
           threads={threads}
           onNewGroup={() => setView({ type: 'new-group' })}
           onSelectThread={handleSelectThread}
+          onOpenDrawer={() => setDrawerOpen(true)}
         />
       )}
     </div>

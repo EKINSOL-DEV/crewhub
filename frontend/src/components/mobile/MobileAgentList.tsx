@@ -1,4 +1,4 @@
-import { RefreshCw, Wifi, WifiOff, Users } from 'lucide-react'
+import { RefreshCw, Wifi, WifiOff, Users, Menu } from 'lucide-react'
 import type { AgentRuntime, AgentStatus } from '@/hooks/useAgentsRegistry'
 import type { Thread } from '@/lib/threads.api'
 import { ParticipantAvatarStack } from './group/ParticipantAvatarStack'
@@ -12,6 +12,7 @@ interface MobileAgentListProps {
   threads?: Thread[]
   onNewGroup?: () => void
   onSelectThread?: (thread: Thread) => void
+  onOpenDrawer?: () => void
 }
 
 // Deterministic color from agent id
@@ -54,6 +55,7 @@ export function MobileAgentList({
   threads = [],
   onNewGroup,
   onSelectThread,
+  onOpenDrawer,
 }: MobileAgentListProps) {
   const onlineCount = agents.filter(a => a.status !== 'offline').length
 
@@ -68,7 +70,22 @@ export function MobileAgentList({
         borderBottom: '1px solid rgba(255,255,255,0.06)',
         flexShrink: 0,
       }}>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {onOpenDrawer && (
+            <button
+              onClick={onOpenDrawer}
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                border: 'none', background: 'rgba(255,255,255,0.06)',
+                color: '#94a3b8', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Menu size={18} />
+            </button>
+          )}
+          <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#f1f5f9' }}>
             CrewHub
           </h1>
@@ -78,6 +95,7 @@ export function MobileAgentList({
             ) : (
               <><WifiOff size={12} color="#ef4444" /> <span>Disconnected</span></>
             )}
+          </div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
