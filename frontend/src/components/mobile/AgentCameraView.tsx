@@ -1,15 +1,13 @@
-import { useState, useRef, lazy, Suspense, useEffect } from 'react'
-import { X, Camera } from 'lucide-react'
+import { useState, lazy, Suspense } from 'react'
+import { Camera, Minimize2, Maximize2 } from 'lucide-react'
 import type { BotVariantConfig } from '@/components/world3d/utils/botVariants'
 
 // ── Capability Detection ───────────────────────────────────────
 
 function canRender3D(): boolean {
   try {
-    // Check device memory (Chrome only)
     const nav = navigator as any
     if (nav.deviceMemory && nav.deviceMemory < 4) return false
-    // Check WebGL support
     const canvas = document.createElement('canvas')
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
     if (!gl) return false
@@ -23,15 +21,36 @@ function canRender3D(): boolean {
 
 const AgentScene3D = lazy(() => import('./AgentScene3D'))
 
-// ── Static Fallback ────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────
 
-function StaticAgentAvatar({ config, name, status }: {
+export type AgentStatus = 'active' | 'idle' | 'sleeping'
+
+type ViewportSize = 'small' | 'expanded'
+
+// ── Status helpers ─────────────────────────────────────────────
+
+function getStatusInfo(status: AgentStatus) {
+  switch (status) {
+    case 'active': return { color: '#22c55e', label: 'Working', emoji: '⚡' }
+    case 'idle': return { color: '#f59e0b', label: 'Idle', emoji: '😌' }
+    case 'sleeping': return { color: '#6366f1', label: 'Sleeping', emoji: '😴' }
+  }
+}
+
+// ── Static Fallback (for non-3D devices) ───────────────────────
+
+function StaticAgentAvatar({ config, status }: {
   config: BotVariantConfig
-  name: string
   status: AgentStatus
 }) {
-  const statusColor = status === 'active' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#64748b'
-  const statusLabel = status === 'active' ? 'Working' : status === 'idle' ? 'Idle' : 'Sleeping'
+  const info = getStatusInfo(status)
+
+  const eyeStyle: React.CSSProperties = {
+    width: 14, height: status === 'sleeping' ? 3 : 14,
+    borderRadius: status === 'sleeping' ? 3 : '50%',
+    background: '#fff', position: 'relative' as const,
+    transition: 'all 0.4s ease',
+  }
 
   return (
     <div style={{
@@ -39,67 +58,44 @@ function StaticAgentAvatar({ config, name, status }: {
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       background: 'radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%)',
-      gap: 16,
+      gap: 6,
     }}>
-      {/* Simple bot avatar */}
       <div style={{
-        width: 120, height: 140, position: 'relative',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        width: 52, height: 46, borderRadius: 12,
+        background: config.color,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
       }}>
-        {/* Head */}
-        <div style={{
-          width: 72, height: 64, borderRadius: 16,
-          background: config.color,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 12, position: 'relative',
-        }}>
-          {/* Eyes */}
-          <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'relative' }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#1a1a1a', position: 'absolute', top: 5, left: 5 }} />
-          </div>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'relative' }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#1a1a1a', position: 'absolute', top: 5, left: 5 }} />
-          </div>
+        <div style={eyeStyle}>
+          {status !== 'sleeping' && (
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#1a1a1a', position: 'absolute', top: 3, left: 3 }} />
+          )}
         </div>
-        {/* Body */}
-        <div style={{
-          width: 80, height: 56, borderRadius: '12px 12px 16px 16px',
-          background: config.color, marginTop: -4,
-          opacity: 0.9,
-        }} />
-      </div>
-
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 18, fontWeight: 600, color: '#f1f5f9' }}>{name}</div>
-        <div style={{ fontSize: 13, color: statusColor, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, display: 'inline-block' }} />
-          {statusLabel}
+        <div style={eyeStyle}>
+          {status !== 'sleeping' && (
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#1a1a1a', position: 'absolute', top: 3, left: 3 }} />
+          )}
         </div>
       </div>
-
-      <div style={{ fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
-        3D view not available on this device
+      <div style={{ fontSize: 10, color: info.color, display: 'flex', alignItems: 'center', gap: 3 }}>
+        <span style={{ width: 5, height: 5, borderRadius: '50%', background: info.color, display: 'inline-block' }} />
+        {info.label}
       </div>
     </div>
   )
 }
 
-// ── Types ──────────────────────────────────────────────────────
-
-export type AgentStatus = 'active' | 'idle' | 'sleeping'
-
 // ── Camera Button (for chat header) ────────────────────────────
 
-export function AgentCameraButton({ onClick }: { onClick: () => void }) {
+export function AgentCameraButton({ onClick, isActive }: { onClick: () => void; isActive?: boolean }) {
   return (
     <button
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         width: 36, height: 36, borderRadius: 12,
-        border: '1px solid rgba(255,255,255,0.1)',
-        background: 'rgba(255,255,255,0.05)',
-        color: '#94a3b8', cursor: 'pointer',
+        border: `1px solid ${isActive ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`,
+        background: isActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.05)',
+        color: isActive ? '#818cf8' : '#94a3b8', cursor: 'pointer',
         flexShrink: 0, transition: 'all 0.15s',
       }}
     >
@@ -108,7 +104,106 @@ export function AgentCameraButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-// ── Fullscreen 3D Viewport Overlay ─────────────────────────────
+// ── Floating Mini Viewport ─────────────────────────────────────
+
+interface AgentMiniViewportProps {
+  isVisible: boolean
+  agentName: string
+  agentStatus: AgentStatus
+  botConfig: BotVariantConfig
+}
+
+export function AgentMiniViewport({
+  isVisible,
+  agentName,
+  agentStatus,
+  botConfig,
+}: AgentMiniViewportProps) {
+  const [has3D] = useState(() => canRender3D())
+  const [size, setSize] = useState<ViewportSize>('small')
+  const info = getStatusInfo(agentStatus)
+
+  if (!isVisible) return null
+
+  const isSmall = size === 'small'
+  const vpWidth = isSmall ? 120 : 180
+  const vpHeight = isSmall ? 140 : 220
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: isSmall ? 70 : 60,
+        right: 12,
+        width: vpWidth,
+        height: vpHeight,
+        zIndex: 900,
+        borderRadius: 16,
+        overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        background: '#0f172a',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
+    >
+      {/* 3D Content */}
+      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+        {has3D ? (
+          <Suspense fallback={
+            <div style={{
+              width: '100%', height: '100%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#475569', fontSize: 11,
+            }}>
+              Loading…
+            </div>
+          }>
+            <AgentScene3D
+              botConfig={botConfig}
+              agentName={agentName}
+              agentStatus={agentStatus}
+              mini
+            />
+          </Suspense>
+        ) : (
+          <StaticAgentAvatar config={botConfig} status={agentStatus} />
+        )}
+
+        {/* Status badge overlay - bottom */}
+        <div style={{
+          position: 'absolute',
+          bottom: 0, left: 0, right: 0,
+          padding: '6px 8px',
+          background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{
+            fontSize: 10, color: info.color,
+            display: 'flex', alignItems: 'center', gap: 4,
+            fontWeight: 500,
+          }}>
+            <span>{info.emoji}</span>
+            {info.label}
+          </div>
+          <button
+            onClick={() => setSize(s => s === 'small' ? 'expanded' : 'small')}
+            style={{
+              width: 20, height: 20, borderRadius: 6,
+              border: 'none', background: 'rgba(255,255,255,0.1)',
+              color: '#94a3b8', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0,
+            }}
+          >
+            {isSmall ? <Maximize2 size={10} /> : <Minimize2 size={10} />}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Legacy export for backwards compat (redirects to mini viewport) ──
 
 interface AgentCameraViewProps {
   isOpen: boolean
@@ -118,92 +213,13 @@ interface AgentCameraViewProps {
   botConfig: BotVariantConfig
 }
 
-export function AgentCameraOverlay({
-  isOpen,
-  onClose,
-  agentName,
-  agentStatus,
-  botConfig,
-}: AgentCameraViewProps) {
-  const [has3D] = useState(() => canRender3D())
-  const overlayRef = useRef<HTMLDivElement>(null)
-
-  // Prevent body scroll when overlay is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = '' }
-    }
-  }, [isOpen])
-
-  if (!isOpen) return null
-
+export function AgentCameraOverlay(props: AgentCameraViewProps) {
   return (
-    <div
-      ref={overlayRef}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 1100,
-        background: '#0a0f1a',
-        display: 'flex', flexDirection: 'column',
-      }}
-    >
-      {/* Header bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 16px',
-        background: 'rgba(0,0,0,0.4)',
-        backdropFilter: 'blur(10px)',
-        zIndex: 10,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Camera size={16} color="#64748b" />
-          <span style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0' }}>
-            {agentName}
-          </span>
-          <span style={{
-            fontSize: 11, padding: '2px 8px', borderRadius: 8,
-            background: agentStatus === 'active' ? 'rgba(34,197,94,0.2)' : 'rgba(100,116,139,0.2)',
-            color: agentStatus === 'active' ? '#22c55e' : agentStatus === 'idle' ? '#f59e0b' : '#64748b',
-          }}>
-            {agentStatus === 'active' ? 'Working' : agentStatus === 'idle' ? 'Idle' : 'Sleeping'}
-          </span>
-        </div>
-
-        <button
-          onClick={onClose}
-          style={{
-            width: 36, height: 36, borderRadius: 10,
-            border: 'none', background: 'rgba(255,255,255,0.08)',
-            color: '#94a3b8', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {/* 3D Viewport or Static Fallback */}
-      <div style={{ flex: 1, position: 'relative' }}>
-        {has3D ? (
-          <Suspense fallback={
-            <div style={{
-              width: '100%', height: '100%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#475569', fontSize: 14,
-            }}>
-              Loading 3D view…
-            </div>
-          }>
-            <AgentScene3D
-              botConfig={botConfig}
-              agentName={agentName}
-              agentStatus={agentStatus}
-            />
-          </Suspense>
-        ) : (
-          <StaticAgentAvatar config={botConfig} name={agentName} status={agentStatus} />
-        )}
-      </div>
-    </div>
+    <AgentMiniViewport
+      isVisible={props.isOpen}
+      agentName={props.agentName}
+      agentStatus={props.agentStatus}
+      botConfig={props.botConfig}
+    />
   )
 }

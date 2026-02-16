@@ -478,7 +478,7 @@ export function MobileAgentChat({
           </div>
         </div>
 
-        <AgentCameraButton onClick={() => setShowCamera(true)} />
+        <AgentCameraButton onClick={() => setShowCamera(v => !v)} isActive={showCamera} />
         <ActiveTasksBadge
           count={subagentSessions.length}
           onClick={() => setShowTasks(true)}
