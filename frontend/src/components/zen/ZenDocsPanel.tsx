@@ -1,9 +1,9 @@
 /**
  * Zen Docs Panel - Browse CrewHub repo documentation (docs/ folder)
- * Table view with fullscreen markdown viewer overlay.
+ * Folder tree view with collapsible directories and fullscreen markdown viewer.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 import { API_BASE } from '@/lib/api'
 
@@ -17,42 +17,137 @@ interface DocNode {
   lastModified?: number
 }
 
-interface FlatDoc {
-  name: string
-  path: string
-  lastModified?: number
-  folder: string
-}
-
-type SortKey = 'name' | 'lastModified'
-type SortDir = 'asc' | 'desc'
+type SortKey = 'name' | 'date'
 
 // ── Helpers ───────────────────────────────────────────────────────
 
-/** Flatten tree into a list of files */
-function flattenDocs(nodes: DocNode[], prefix = ''): FlatDoc[] {
-  const result: FlatDoc[] = []
-  for (const n of nodes) {
-    if (n.type === 'file') {
-      result.push({
-        name: n.name,
-        path: n.path,
-        lastModified: n.lastModified,
-        folder: prefix,
-      })
-    }
-    if (n.children) {
-      result.push(...flattenDocs(n.children, prefix ? `${prefix}/${n.name}` : n.name))
-    }
-  }
-  return result
+function formatDate(ts?: number): string {
+  if (!ts) return ''
+  const d = new Date(ts * 1000)
+  return d.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short' }) +
+    ' ' + d.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
 }
 
-function formatDate(ts?: number): string {
-  if (!ts) return '—'
-  const d = new Date(ts * 1000)
-  return d.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', year: 'numeric' }) +
-    ' ' + d.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
+function sortNodes(nodes: DocNode[], sortKey: SortKey): DocNode[] {
+  return [...nodes].sort((a, b) => {
+    // Directories first
+    if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
+    if (sortKey === 'date') {
+      return (b.lastModified ?? 0) - (a.lastModified ?? 0)
+    }
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  })
+}
+
+// ── Tree Node ─────────────────────────────────────────────────────
+
+function DocTreeNode({
+  node,
+  depth,
+  sortKey,
+  onOpen,
+  searchQuery,
+}: {
+  node: DocNode
+  depth: number
+  sortKey: SortKey
+  onOpen: (path: string) => void
+  searchQuery: string
+}) {
+  const [expanded, setExpanded] = useState(depth === 0)
+  const isDir = node.type === 'directory'
+
+  // Filter: if searching, only show matching files and dirs containing matches
+  if (searchQuery.length >= 2) {
+    const q = searchQuery.toLowerCase()
+    if (isDir) {
+      const hasMatch = node.children?.some(c => matchesSearch(c, q))
+      if (!hasMatch) return null
+    } else {
+      if (!node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q)) {
+        return null
+      }
+    }
+  }
+
+  // Auto-expand when searching
+  const isExpanded = searchQuery.length >= 2 ? true : expanded
+
+  const sorted = isDir && node.children ? sortNodes(node.children, sortKey) : []
+
+  return (
+    <div>
+      <div
+        onClick={() => {
+          if (isDir) setExpanded(prev => !prev)
+          else onOpen(node.path)
+        }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: `4px 12px 4px ${12 + depth * 18}px`,
+          cursor: 'pointer',
+          fontSize: 12,
+          fontFamily: 'system-ui, sans-serif',
+          color: 'var(--zen-fg, hsl(var(--foreground)))',
+          userSelect: 'none',
+          borderRadius: 4,
+          transition: 'background 0.1s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--zen-bg-hover, hsl(var(--accent)))'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      >
+        {/* Expand/collapse arrow for dirs */}
+        {isDir ? (
+          <span style={{ fontSize: 9, width: 12, textAlign: 'center', color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))' }}>
+            {isExpanded ? '▼' : '▶'}
+          </span>
+        ) : (
+          <span style={{ width: 12 }} />
+        )}
+
+        {/* Icon */}
+        <span style={{ fontSize: 13 }}>{isDir ? (isExpanded ? '📂' : '📁') : '📄'}</span>
+
+        {/* Name */}
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {isDir ? node.name : node.name.replace(/\.md$/, '')}
+        </span>
+
+        {/* Date for files */}
+        {!isDir && node.lastModified && (
+          <span style={{
+            fontSize: 10,
+            color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}>
+            {formatDate(node.lastModified)}
+          </span>
+        )}
+      </div>
+
+      {/* Children */}
+      {isDir && isExpanded && sorted.map(child => (
+        <DocTreeNode
+          key={child.path}
+          node={child}
+          depth={depth + 1}
+          sortKey={sortKey}
+          onOpen={onOpen}
+          searchQuery={searchQuery}
+        />
+      ))}
+    </div>
+  )
+}
+
+function matchesSearch(node: DocNode, q: string): boolean {
+  if (node.type === 'file') {
+    return node.name.toLowerCase().includes(q) || node.path.toLowerCase().includes(q)
+  }
+  return node.children?.some(c => matchesSearch(c, q)) ?? false
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -67,7 +162,6 @@ export function ZenDocsPanel() {
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('name')
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   // Fetch tree on mount
   useEffect(() => {
@@ -77,24 +171,8 @@ export function ZenDocsPanel() {
       .catch(() => { setError('Failed to load docs tree'); setLoading(false) })
   }, [])
 
-  // Flatten + filter + sort
-  const docs = useMemo(() => {
-    let flat = flattenDocs(tree)
-    if (searchQuery.length >= 2) {
-      const q = searchQuery.toLowerCase()
-      flat = flat.filter(d => d.name.toLowerCase().includes(q) || d.folder.toLowerCase().includes(q))
-    }
-    flat.sort((a, b) => {
-      let cmp = 0
-      if (sortKey === 'name') {
-        cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-      } else {
-        cmp = (a.lastModified ?? 0) - (b.lastModified ?? 0)
-      }
-      return sortDir === 'desc' ? -cmp : cmp
-    })
-    return flat
-  }, [tree, searchQuery, sortKey, sortDir])
+  // Count total files
+  const fileCount = countFiles(tree)
 
   // Open file in fullscreen
   const openDoc = useCallback((path: string) => {
@@ -109,38 +187,7 @@ export function ZenDocsPanel() {
       .catch(() => { setError('Failed to load document'); setContentLoading(false) })
   }, [])
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortKey(key)
-      setSortDir(key === 'lastModified' ? 'desc' : 'asc')
-    }
-  }
-
-  const sortIcon = (key: SortKey) => {
-    if (sortKey !== key) return ' ↕'
-    return sortDir === 'asc' ? ' ↑' : ' ↓'
-  }
-
-  const thStyle: React.CSSProperties = {
-    textAlign: 'left',
-    padding: '8px 12px',
-    fontSize: 11,
-    fontWeight: 600,
-    color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))',
-    borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
-    cursor: 'pointer',
-    userSelect: 'none',
-    whiteSpace: 'nowrap',
-  }
-
-  const tdStyle: React.CSSProperties = {
-    padding: '6px 12px',
-    fontSize: 12,
-    borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
-    color: 'var(--zen-fg, hsl(var(--foreground)))',
-  }
+  const sorted = sortNodes(tree, sortKey)
 
   return (
     <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--zen-bg, hsl(var(--background)))' }}>
@@ -150,23 +197,43 @@ export function ZenDocsPanel() {
         borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        gap: 10,
+        flexShrink: 0,
       }}>
         <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>
           📚 Docs
         </span>
         <span style={{ fontSize: 11, color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))' }}>
-          {docs.length} files
+          {fileCount} files
         </span>
         <div style={{ flex: 1 }} />
+
+        {/* Sort toggle */}
+        <button
+          onClick={() => setSortKey(k => k === 'name' ? 'date' : 'name')}
+          title={`Sort by ${sortKey === 'name' ? 'date' : 'name'}`}
+          style={{
+            background: 'none',
+            border: '1px solid var(--zen-border, hsl(var(--border)))',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontSize: 10,
+            padding: '3px 8px',
+            color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))',
+          }}
+        >
+          {sortKey === 'name' ? '🔤 Name' : '🕒 Date'}
+        </button>
+
+        {/* Search */}
         <input
           type="text"
-          placeholder="Search docs..."
+          placeholder="Search..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           style={{
-            width: 200,
-            padding: '5px 8px',
+            width: 160,
+            padding: '4px 8px',
             border: '1px solid var(--zen-border, hsl(var(--border)))',
             borderRadius: 4,
             background: 'var(--zen-bg-panel, hsl(var(--card)))',
@@ -177,56 +244,29 @@ export function ZenDocsPanel() {
         />
       </div>
 
-      {/* Table */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      {/* Tree */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '4px 0' }}>
         {loading ? (
           <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))' }}>
             Loading…
           </div>
         ) : error && !fullscreenOpen ? (
           <div style={{ padding: 16, color: 'var(--zen-error, #ef4444)', fontSize: 13 }}>{error}</div>
+        ) : sorted.length === 0 ? (
+          <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))' }}>
+            No documents found
+          </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={thStyle} onClick={() => toggleSort('name')}>
-                  Filename{sortIcon('name')}
-                </th>
-                <th style={{ ...thStyle, width: 180 }} onClick={() => toggleSort('lastModified')}>
-                  Last Modified{sortIcon('lastModified')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {docs.map(doc => (
-                <tr
-                  key={doc.path}
-                  onClick={() => openDoc(doc.path)}
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--zen-bg-hover, hsl(var(--accent)))')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '')}
-                >
-                  <td style={tdStyle}>
-                    <span style={{ marginRight: 6, opacity: 0.5 }}>📄</span>
-                    {doc.name.replace(/\.md$/, '')}
-                    {doc.folder && (
-                      <span style={{ marginLeft: 8, fontSize: 10, opacity: 0.4 }}>{doc.folder}</span>
-                    )}
-                  </td>
-                  <td style={{ ...tdStyle, fontSize: 11, color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))' }}>
-                    {formatDate(doc.lastModified)}
-                  </td>
-                </tr>
-              ))}
-              {docs.length === 0 && (
-                <tr>
-                  <td colSpan={2} style={{ ...tdStyle, textAlign: 'center', padding: 24, color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))' }}>
-                    No documents found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          sorted.map(node => (
+            <DocTreeNode
+              key={node.path}
+              node={node}
+              depth={0}
+              sortKey={sortKey}
+              onOpen={openDoc}
+              searchQuery={searchQuery}
+            />
+          ))
         )}
       </div>
 
@@ -240,4 +280,13 @@ export function ZenDocsPanel() {
       />
     </div>
   )
+}
+
+function countFiles(nodes: DocNode[]): number {
+  let count = 0
+  for (const n of nodes) {
+    if (n.type === 'file') count++
+    if (n.children) count += countFiles(n.children)
+  }
+  return count
 }
