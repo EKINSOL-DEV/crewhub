@@ -1,5 +1,7 @@
-import { RefreshCw, Wifi, WifiOff } from 'lucide-react'
+import { RefreshCw, Wifi, WifiOff, Users } from 'lucide-react'
 import type { AgentRuntime, AgentStatus } from '@/hooks/useAgentsRegistry'
+import type { Thread } from '@/lib/threads.api'
+import { ParticipantAvatarStack } from './group/ParticipantAvatarStack'
 
 interface MobileAgentListProps {
   agents: AgentRuntime[]
@@ -7,6 +9,9 @@ interface MobileAgentListProps {
   connected: boolean
   onSelectAgent: (agentId: string, name: string, icon: string | null, color: string | null, sessionKey: string) => void
   onRefresh: () => void
+  threads?: Thread[]
+  onNewGroup?: () => void
+  onSelectThread?: (thread: Thread) => void
 }
 
 // Deterministic color from agent id
@@ -46,6 +51,9 @@ export function MobileAgentList({
   connected,
   onSelectAgent,
   onRefresh,
+  threads = [],
+  onNewGroup,
+  onSelectThread,
 }: MobileAgentListProps) {
   const onlineCount = agents.filter(a => a.status !== 'offline').length
 
@@ -72,18 +80,34 @@ export function MobileAgentList({
             )}
           </div>
         </div>
-        <button
-          onClick={onRefresh}
-          disabled={loading}
-          style={{
-            width: 36, height: 36, borderRadius: 10,
-            border: 'none', background: 'rgba(255,255,255,0.06)',
-            color: '#94a3b8', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {onNewGroup && (
+            <button
+              onClick={onNewGroup}
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                border: 'none', background: 'rgba(99,102,241,0.15)',
+                color: '#818cf8', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+              title="New group chat"
+            >
+              <Users size={16} />
+            </button>
+          )}
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              border: 'none', background: 'rgba(255,255,255,0.06)',
+              color: '#94a3b8', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
       </header>
 
       {/* Agent List */}
@@ -168,6 +192,68 @@ export function MobileAgentList({
             </button>
           )
         })}
+
+        {/* Group Threads Section */}
+        {threads.length > 0 && (
+          <>
+            <div style={{
+              padding: '16px 12px 8px',
+              fontSize: 12, fontWeight: 600, color: '#64748b',
+              textTransform: 'uppercase', letterSpacing: '0.05em',
+            }}>
+              Group Chats
+            </div>
+            {threads.map(thread => {
+              const title = thread.title || thread.title_auto || 'Group Chat'
+              const activeParticipants = thread.participants.filter(p => p.is_active)
+              const timeSince = thread.last_message_at
+                ? getTimeSince(thread.last_message_at)
+                : getTimeSince(thread.created_at)
+
+              return (
+                <button
+                  key={thread.id}
+                  onClick={() => onSelectThread?.(thread)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    width: '100%', padding: '14px 12px',
+                    background: 'transparent', border: 'none',
+                    borderRadius: 14, cursor: 'pointer',
+                    textAlign: 'left', color: 'inherit',
+                    transition: 'background 0.15s',
+                  }}
+                  onTouchStart={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+                  onTouchEnd={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  {/* Avatar stack */}
+                  <div style={{ flexShrink: 0 }}>
+                    <ParticipantAvatarStack participants={activeParticipants} size={44} maxShow={3} />
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: 15, fontWeight: 600, color: '#f1f5f9',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {title}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                      {activeParticipants.length} agents
+                    </div>
+                  </div>
+
+                  {/* Time */}
+                  {timeSince && (
+                    <div style={{ fontSize: 11, color: '#475569', flexShrink: 0 }}>
+                      {timeSince}
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </>
+        )}
       </div>
     </>
   )

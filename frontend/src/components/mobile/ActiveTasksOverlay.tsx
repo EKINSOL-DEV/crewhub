@@ -49,9 +49,52 @@ function TaskLogsView({
       const resp = await fetch(`${API_BASE}/sessions/${encodeURIComponent(session.key)}/history?limit=100`)
       if (!resp.ok) return
       const data = await resp.json()
-      setLogs(data.messages || [])
-    } catch {
-      // ignore
+      const raw: any[] = data.messages || []
+      // Map from API format { type, message: { role, content, ... } } to LogEntry
+      const mapped: LogEntry[] = raw
+        .filter((m: any) => m?.message?.role && m.message.role !== 'thinking')
+        .map((m: any) => {
+          const msg = m.message
+          // Extract text content from content array or string
+          let content = ''
+          if (typeof msg.content === 'string') {
+            content = msg.content
+          } else if (Array.isArray(msg.content)) {
+            content = msg.content
+              .filter((c: any) => c.type === 'text')
+              .map((c: any) => c.text || '')
+              .join('\n')
+          }
+          // Extract tool calls
+          const tools: { name: string; status?: string }[] = []
+          if (Array.isArray(msg.content)) {
+            for (const c of msg.content) {
+              if (c.type === 'toolCall') {
+                tools.push({ name: c.name || c.toolName || 'tool' })
+              }
+            }
+          }
+          // For toolResult role, use toolName
+          if (msg.role === 'toolResult' && msg.toolName) {
+            return {
+              role: 'tool',
+              content: content || `[${msg.toolName} result]`,
+              timestamp: m.timestamp ? new Date(m.timestamp).getTime() : undefined,
+              tools: [],
+            }
+          }
+          return {
+            role: msg.role === 'assistant' ? 'assistant' : msg.role === 'user' ? 'user' : 'system',
+            content: content || (tools.length > 0 ? '' : '[no content]'),
+            timestamp: m.timestamp ? new Date(m.timestamp).getTime() : undefined,
+            tools,
+          }
+        })
+        // Filter out empty assistant messages that are just tool calls with no text
+        .filter((e: LogEntry) => e.content || (e.tools && e.tools.length > 0))
+      setLogs(mapped)
+    } catch (err) {
+      console.error('Failed to fetch logs:', err)
     } finally {
       setLoading(false)
     }
@@ -215,7 +258,8 @@ function TaskLogsView({
 }
 
 function simpleFormat(text: string): string {
-  let html = escapeHtml(text)
+  if (!text) return ''
+  let html = escapeHtml(String(text))
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
   html = html.replace(/`([^`]+)`/g,
     '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:11px">$1</code>')
