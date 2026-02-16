@@ -13,13 +13,12 @@ interface HallwayProps {
 }
 
 /**
- * Radial hallway paths connecting HQ (center) to peripheral rooms.
- * Renders floor strips + decorative plants along paths.
+ * Grid hallway paths connecting HQ (center) to adjacent rooms via
+ * horizontal and vertical corridor strips.
  */
 export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
   const floorToon = useToonMaterialProps('#C8BFA0')
 
-  // Find HQ (center room) and peripheral rooms
   const hq = roomPositions.find(rp => rp.room?.is_hq)
   const center = hq || roomPositions[0]
   const peripherals = roomPositions.filter(rp => rp !== center)
@@ -33,11 +32,9 @@ export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
       const rx = rp.position[0]
       const rz = rp.position[2]
 
-      // Midpoint
       const mx = (cx + rx) / 2
       const mz = (cz + rz) / 2
 
-      // Length and angle
       const dx = rx - cx
       const dz = rz - cz
       const length = Math.sqrt(dx * dx + dz * dz)
@@ -51,15 +48,13 @@ export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
     if (!center) return []
     const items: { position: [number, number, number]; scale: number }[] = []
 
-    // Plants at midpoints of paths
     for (const rp of peripherals) {
       const mx = (center.position[0] + rp.position[0]) / 2
       const mz = (center.position[2] + rp.position[2]) / 2
-      // Offset slightly to the side
       const dx = rp.position[0] - center.position[0]
       const dz = rp.position[2] - center.position[2]
       const len = Math.sqrt(dx * dx + dz * dz) || 1
-      const nx = -dz / len // perpendicular
+      const nx = -dz / len
       const nz = dx / len
       items.push({
         position: [mx + nx * 1.5, 0.16, mz + nz * 1.5],
@@ -72,7 +67,6 @@ export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
 
   return (
     <group>
-      {/* Floor paths from HQ to each room */}
       {paths.map(({ key, mx, mz, length, angle }) => (
         <mesh
           key={key}
@@ -84,10 +78,8 @@ export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
           <meshToonMaterial {...floorToon} />
         </mesh>
       ))}
-
-      {/* Decorative plants along paths */}
       {plants.map((p, i) => (
-        <Plant key={`plant-${i}`} position={p.position} scale={p.scale} />
+        <Plant key={`hallway-plant-${i}`} position={p.position} scale={p.scale} />
       ))}
     </group>
   )

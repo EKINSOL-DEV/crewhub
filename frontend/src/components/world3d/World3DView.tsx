@@ -197,7 +197,6 @@ const ROOM_SIZE = 12
 const HQ_SIZE = 16 // HQ is larger — command center feel
 const HALLWAY_WIDTH = 4
 // GRID_SPACING removed — radial layout no longer uses fixed grid spacing
-const MAX_COLS = 3
 const BUILDING_PADDING = 3 // padding inside building walls around the grid
 // MAX_VISIBLE_BOTS_PER_ROOM read from SESSION_CONFIG at render time
 const PARKING_WIDTH = 9 // width of parking/break area (compact break room)
@@ -223,115 +222,73 @@ interface BuildingLayout {
 }
 
 /**
- * HQ-centric radial layout:
- * - HQ room placed at the center (0, 0, 0)
- * - Other rooms arranged radially around HQ
- * - Building envelope contains everything
+ * Centered 3×3 grid layout:
+ * - HQ (larger) sits at the center cell
+ * - 8 peripheral rooms fill the remaining cells
+ * - Even spacing between all rooms with margin from campus edges
  */
 function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): BuildingLayout {
   const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
 
-  // Separate HQ from other rooms
   const hqRoom = sorted.find(r => r.is_hq)
   const otherRooms = sorted.filter(r => !r.is_hq)
-
-  // If no HQ found, fall back to first room as "HQ-like" center
   const centerRoom = hqRoom || sorted[0]
   const peripheralRooms = hqRoom ? otherRooms : sorted.slice(1)
-  const centerSize = getRoomSize(centerRoom)
 
-  // Place HQ at origin
+  // Grid parameters — spacing is center-to-center distance
+  // Using HQ_SIZE as the cell pitch so larger HQ fits without overlap
+  const cellPitch = HQ_SIZE + HALLWAY_WIDTH // 16 + 4 = 20
+
+  const cols = 3
+  const rows = 3
+
+  // Grid cell order: row-major, center cell (1,1) reserved for HQ
+  // Order: (0,0) (0,1) (0,2) (1,0) [HQ at 1,1] (1,2) (2,0) (2,1) (2,2)
+  const gridCells: [number, number][] = []
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (r === 1 && c === 1) continue // skip center for HQ
+      gridCells.push([c, r])
+    }
+  }
+
+  // Center of grid at origin (0, 0)
+  const gridOffsetX = -(cols - 1) * cellPitch / 2
+  const gridOffsetZ = -(rows - 1) * cellPitch / 2
+
   const roomPositions: BuildingLayout['roomPositions'] = []
+
+  // Place HQ at center
   roomPositions.push({
     room: centerRoom,
     position: [0, 0, 0],
-    size: centerSize,
+    size: getRoomSize(centerRoom),
   })
 
-  // Place other rooms radially around HQ
-  // Use per-angle distance to prevent box overlap at diagonal angles.
-  // For two axis-aligned squares, the minimum center distance at angle θ is:
-  //   max(|cos(θ)|, |sin(θ)|) must push edges apart.
-  // We need: for each axis, |offset| >= halfA + halfB + gap  OR the other axis satisfies it.
-  // Safest: ensure BOTH axes clear → distance = (halfA + halfB + gap) / min(|cos|, |sin|)
-  // But that explodes near 0/90°. Instead: ensure the Chebyshev distance is enough.
-  const minGap = HALLWAY_WIDTH
-  const halfCenter = centerSize / 2
-  const halfRoom = ROOM_SIZE / 2
-  const minEdgeDist = halfCenter + halfRoom + minGap // 8 + 6 + 4 = 18
-
-  const n = peripheralRooms.length
-
-  if (n > 0) {
-    // Start angle: front-left (-135°), go clockwise
-    const startAngle = -Math.PI * 0.75
-    const angleStep = (Math.PI * 2) / Math.max(n, 1)
-
-    // Two-pass: first compute ideal positions, then push apart any overlapping pairs
-    const positions: [number, number][] = []
-
-    for (let i = 0; i < n; i++) {
-      const angle = startAngle + i * angleStep
-      // Per-angle distance to avoid box overlap with HQ
-      const cosA = Math.abs(Math.cos(angle))
-      const sinA = Math.abs(Math.sin(angle))
-      const chebyshevMax = Math.max(cosA, sinA)
-      const ringDistForAngle = minEdgeDist / Math.max(chebyshevMax, 0.5)
-
-      // Also ensure adjacent rooms don't overlap (Euclidean baseline)
-      const minChord = ROOM_SIZE + minGap
-      const minRingForChord = n > 1 ? minChord / (2 * Math.sin(Math.PI / n)) : 0
-      const ringDistance = Math.max(ringDistForAngle, minRingForChord)
-
-      positions.push([Math.cos(angle) * ringDistance, Math.sin(angle) * ringDistance])
-    }
-
-    // Push apart overlapping adjacent rooms (iterative relaxation)
-    for (let iter = 0; iter < 5; iter++) {
-      for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
-          const dx = Math.abs(positions[i][0] - positions[j][0])
-          const dz = Math.abs(positions[i][1] - positions[j][1])
-          const overlapX = (ROOM_SIZE + minGap) - dx
-          const overlapZ = (ROOM_SIZE + minGap) - dz
-          if (overlapX > 0 && overlapZ > 0) {
-            // Push both rooms outward from center by a small amount
-            const pushAmount = Math.min(overlapX, overlapZ) / 2 + 0.5
-            for (const idx of [i, j]) {
-              const dist = Math.sqrt(positions[idx][0] ** 2 + positions[idx][1] ** 2)
-              if (dist > 0) {
-                const scale = (dist + pushAmount) / dist
-                positions[idx][0] *= scale
-                positions[idx][1] *= scale
-              }
-            }
-          }
-        }
-      }
-    }
-
-    for (let i = 0; i < n; i++) {
-      roomPositions.push({
-        room: peripheralRooms[i],
-        position: [positions[i][0], 0, positions[i][1]],
-        size: ROOM_SIZE,
-      })
-    }
+  // Place peripheral rooms in grid cells
+  for (let i = 0; i < Math.min(peripheralRooms.length, gridCells.length); i++) {
+    const [c, r] = gridCells[i]
+    const x = gridOffsetX + c * cellPitch
+    const z = gridOffsetZ + r * cellPitch
+    roomPositions.push({
+      room: peripheralRooms[i],
+      position: [x, 0, z],
+      size: ROOM_SIZE,
+    })
   }
 
-  // Calculate bounding box for building envelope
-  let minX = -centerSize / 2, maxX = centerSize / 2
-  let minZ = -centerSize / 2, maxZ = centerSize / 2
-
+  // Bounding box
+  let minX = Infinity, maxX = -Infinity
+  let minZ = Infinity, maxZ = -Infinity
   for (const rp of roomPositions) {
-    const halfSize = rp.size / 2
-    minX = Math.min(minX, rp.position[0] - halfSize)
-    maxX = Math.max(maxX, rp.position[0] + halfSize)
-    minZ = Math.min(minZ, rp.position[2] - halfSize)
-    maxZ = Math.max(maxZ, rp.position[2] + halfSize)
+    const half = rp.size / 2
+    minX = Math.min(minX, rp.position[0] - half)
+    maxX = Math.max(maxX, rp.position[0] + half)
+    minZ = Math.min(minZ, rp.position[2] - half)
+    maxZ = Math.max(maxZ, rp.position[2] + half)
   }
 
-  // Parking area to the right of rooms
+  // Parking area to the right
   const parkingX = maxX + BUILDING_PADDING + HALLWAY_WIDTH / 2 + PARKING_WIDTH / 2
   const parkingZ = 0
   const parkingRightEdge = parkingX + PARKING_WIDTH / 2 + BUILDING_PADDING
@@ -344,13 +301,10 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   const parkingDepth = Math.min(Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2), buildingDepth - BUILDING_PADDING * 2)
   const parkingArea = { x: parkingX, z: parkingZ, width: PARKING_WIDTH, depth: parkingDepth }
 
-  const entranceX = 0 // centered on HQ
+  const entranceX = 0
 
-  // Legacy grid values (approximate for hallway renderer)
-  const cols = Math.min(sorted.length, MAX_COLS)
-  const rows = Math.ceil(sorted.length / cols)
-  const gridOriginX = minX + ROOM_SIZE / 2
-  const gridOriginZ = minZ + ROOM_SIZE / 2
+  const gridOriginX = gridOffsetX
+  const gridOriginZ = gridOffsetZ
 
   return { roomPositions, buildingWidth, buildingDepth, buildingCenterX, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
 }
