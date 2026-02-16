@@ -403,7 +403,7 @@ export function MobileAgentChat({
             borderRadius: 14,
             border: '1px solid rgba(255,255,255,0.1)',
             background: 'rgba(255,255,255,0.05)',
-            color: '#e2e8f0', fontSize: 15,
+            color: '#e2e8f0', fontSize: 16,
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
             resize: 'none', outline: 'none',
             maxHeight: 100, lineHeight: 1.4,
