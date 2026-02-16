@@ -28,22 +28,34 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
-          'vendor-codemirror': [
-            '@codemirror/commands',
-            '@codemirror/lang-markdown',
-            '@codemirror/language',
-            '@codemirror/state',
-            '@codemirror/view',
-          ],
-          'vendor-markdown': ['react-markdown', 'rehype-highlight', 'rehype-raw', 'remark-gfm', 'highlight.js'],
-          'vendor-dnd': [
-            '@dnd-kit/core',
-            '@dnd-kit/sortable',
-            '@dnd-kit/utilities',
-          ],
+        manualChunks(id) {
+          // Keep React and React-DOM separate from everything else
+          if (id.includes('node_modules/react-dom')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/react/') && !id.includes('react-')) {
+            return 'vendor-react';
+          }
+          
+          // Three.js and related
+          if (id.includes('@react-three/') || id.includes('node_modules/three')) {
+            return 'vendor-three';
+          }
+          
+          // CodeMirror
+          if (id.includes('@codemirror/')) {
+            return 'vendor-codemirror';
+          }
+          
+          // Markdown
+          if (id.includes('react-markdown') || id.includes('rehype-') || id.includes('remark-') || id.includes('highlight.js')) {
+            return 'vendor-markdown';
+          }
+          
+          // DnD Kit - keep separate from React
+          if (id.includes('@dnd-kit/')) {
+            return 'vendor-dnd';
+          }
         },
       },
     },
