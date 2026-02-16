@@ -184,20 +184,28 @@ mobile/
 
 ## Future Enhancements
 
+- **Multi-agent chat rooms** (group chat) — ✅ Confirmed gewenst door Nicky
 - Push notifications (PWA)
 - Voice chat on mobile
-- Multi-agent chat rooms
 - Offline mode with sync
 - Native app (React Native?)
+- Landscape mode support (later)
 
 ---
 
-## Open Questions
+## Open Questions — ANSWERED (2026-02-16)
 
-1. Should mobile users see **all** agents or just **active** ones?
-2. Do we need multi-agent selection (group chat)?
-3. Should camera be always-on or tap-to-enable?
-4. Do we support landscape mode (different layout)?
+1. **Should mobile users see all agents or just active ones?**  
+   → *Not specified yet — default to all agents for now*
+
+2. **Do we need multi-agent selection (group chat)?**  
+   ✅ **Ja, dat zou echt tof zijn!** — Group chat feature gewenst
+
+3. **Should camera be always-on or tap-to-enable?**  
+   ✅ **Tap to enable** — Lijkt logischer (on-demand 3D view)
+
+4. **Do we support landscape mode (different layout)?**  
+   ✅ **Nog niet nodig** — Focus eerst op portrait mode
 
 ---
 
