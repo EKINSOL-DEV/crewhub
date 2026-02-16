@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type CSSProperties, type ClipboardEvent } from 'react'
-import { ArrowLeft, ChevronDown, ChevronRight, Zap, Paperclip, X } from 'lucide-react'
+import { ArrowLeft, Paperclip, X } from 'lucide-react'
 import { useAgentChat, type ChatMessageData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
 import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
 import { API_BASE } from '@/lib/api'
 import type { CrewSession } from '@/lib/api'
+import { ActiveTasksBadge, ActiveTasksOverlay } from './ActiveTasksOverlay'
 
 // ── File Upload Types & Helpers ────────────────────────────────
 
@@ -164,79 +165,6 @@ function ChatBubble({ msg, accentColor }: { msg: ChatMessageData; accentColor: s
   )
 }
 
-// ── Subagent Panel ─────────────────────────────────────────────
-
-function SubagentPanel({ sessions }: { sessions: CrewSession[] }) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(null)
-
-  if (sessions.length === 0) return null
-
-  return (
-    <div style={{
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
-      background: 'rgba(139, 92, 246, 0.04)',
-    }}>
-      <div style={{
-        padding: '8px 16px 4px',
-        fontSize: 11, fontWeight: 600, color: '#a78bfa',
-        display: 'flex', alignItems: 'center', gap: 6,
-        textTransform: 'uppercase', letterSpacing: 0.5,
-      }}>
-        <Zap size={12} />
-        Active Tasks ({sessions.length})
-      </div>
-      {sessions.map(s => {
-        const isExpanded = expandedKey === s.key
-        const uuid = s.key.split(':subagent:')[1]?.slice(0, 8) || '?'
-        const label = s.label || `Subagent ${uuid}`
-        const elapsed = s.updatedAt ? getTimeSinceShort(s.updatedAt) : ''
-        const lastMsg = s.messages?.[s.messages.length - 1]
-        const preview = lastMsg?.content?.[0]?.text?.slice(0, 120) || ''
-
-        return (
-          <div key={s.key}>
-            <button
-              onClick={() => setExpandedKey(isExpanded ? null : s.key)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                padding: '6px 16px', background: 'transparent', border: 'none',
-                color: '#cbd5e1', fontSize: 13, cursor: 'pointer', textAlign: 'left',
-              }}
-            >
-              {isExpanded ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#64748b" />}
-              <span style={{
-                width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                background: (Date.now() - s.updatedAt) < 300_000 ? '#22c55e' : '#64748b',
-              }} />
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {label}
-              </span>
-              <span style={{ fontSize: 10, color: '#475569', flexShrink: 0 }}>{elapsed}</span>
-            </button>
-            {isExpanded && preview && (
-              <div style={{
-                padding: '4px 16px 8px 46px',
-                fontSize: 12, color: '#64748b', lineHeight: 1.4,
-                wordBreak: 'break-word',
-              }}>
-                {preview}{preview.length >= 120 ? '…' : ''}
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function getTimeSinceShort(ts: number): string {
-  const diff = Date.now() - ts
-  if (diff < 60_000) return 'now'
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h`
-  return `${Math.floor(diff / 86_400_000)}d`
-}
-
 // ── File Preview Bar ───────────────────────────────────────────
 
 function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (id: string) => void }) {
@@ -337,6 +265,7 @@ export function MobileAgentChat({
   } = useAgentChat(sessionKey)
 
   const [inputValue, setInputValue] = useState('')
+  const [showTasks, setShowTasks] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -536,10 +465,20 @@ export function MobileAgentChat({
             {isSending ? 'Thinking…' : 'Online'}
           </div>
         </div>
+
+        <ActiveTasksBadge
+          count={subagentSessions.length}
+          onClick={() => setShowTasks(true)}
+        />
       </header>
 
-      {/* Active Subagents */}
-      <SubagentPanel sessions={subagentSessions} />
+      {/* Active Tasks Overlay */}
+      {showTasks && (
+        <ActiveTasksOverlay
+          sessions={subagentSessions}
+          onClose={() => setShowTasks(false)}
+        />
+      )}
 
       {/* Messages */}
       <div

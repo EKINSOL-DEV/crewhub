@@ -16,6 +16,8 @@ import { DemoProvider, DemoModeIndicator, useDemoMode } from './contexts/DemoCon
 import { ZoneProvider } from './contexts/ZoneContext'
 // ZoneSwitcher moved to RoomTabsBar
 import { MobileWarning } from './components/MobileWarning'
+import { MobileLayout } from './components/mobile/MobileLayout'
+import { useMobile } from './hooks/useMobile'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { BackendStatus } from './components/dev/BackendStatus'
@@ -734,6 +736,7 @@ function ZenModeApp() {
 
 function App() {
   const route = useRoute()
+  const isMobile = useMobile()
   
   if (route === '/dev/designs') {
     return <DevDesigns />
@@ -742,6 +745,11 @@ function App() {
   // URL parameter Zen Mode: ?mode=zen
   if (isZenModeUrl()) {
     return <ZenModeApp />
+  }
+
+  // Mobile: chat-first experience
+  if (isMobile) {
+    return <MobileLayout />
   }
   
   return (
