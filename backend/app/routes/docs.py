@@ -21,6 +21,7 @@ class DocNode(BaseModel):
     path: str  # Relative path from docs root
     type: str  # "file" or "directory"
     children: Optional[list["DocNode"]] = None
+    lastModified: Optional[float] = None  # Unix timestamp
 
 
 class DocContent(BaseModel):
@@ -60,6 +61,7 @@ def _build_tree(base: Path, rel: str = "") -> list[DocNode]:
                 name=entry.name,
                 path=entry_rel,
                 type="file",
+                lastModified=entry.stat().st_mtime,
             ))
     
     return nodes
