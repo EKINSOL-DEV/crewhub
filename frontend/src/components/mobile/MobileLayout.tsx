@@ -3,6 +3,9 @@ import { MobileAgentList } from './MobileAgentList'
 import { MobileAgentChat } from './MobileAgentChat'
 import { MobileDrawer, type MobilePanel } from './MobileDrawer'
 import { MobileDocsPanel } from './MobileDocsPanel'
+import { MobileKanbanPanel } from './MobileKanbanPanel'
+import { MobileActivityPanel } from './MobileActivityPanel'
+import { MobileProjectsPanel } from './MobileProjectsPanel'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useAgentsRegistry } from '@/hooks/useAgentsRegistry'
 import { AgentMultiSelectSheet, GroupThreadChat } from './group'
@@ -14,6 +17,9 @@ type View =
   | { type: 'new-group' }
   | { type: 'group-chat'; thread: Thread }
   | { type: 'docs' }
+  | { type: 'kanban' }
+  | { type: 'activity' }
+  | { type: 'projects' }
 
 // Fixed crew members only
 const FIXED_AGENT_IDS = ['main', 'dev', 'flowy', 'creator', 'reviewer', 'gamedev', 'webdev']
@@ -80,6 +86,15 @@ export function MobileLayout() {
       case 'docs':
         setView({ type: 'docs' })
         break
+      case 'kanban':
+        setView({ type: 'kanban' })
+        break
+      case 'activity':
+        setView({ type: 'activity' })
+        break
+      case 'projects':
+        setView({ type: 'projects' })
+        break
       // Future panels
       default:
         break
@@ -88,7 +103,11 @@ export function MobileLayout() {
 
   // Determine current panel for drawer highlight
   const currentPanel: MobilePanel =
-    view.type === 'docs' ? 'docs' : 'chat'
+    view.type === 'docs' ? 'docs' :
+    view.type === 'kanban' ? 'kanban' :
+    view.type === 'activity' ? 'activity' :
+    view.type === 'projects' ? 'projects' :
+    'chat'
 
   return (
     <div style={{
@@ -134,6 +153,12 @@ export function MobileLayout() {
         />
       ) : view.type === 'docs' ? (
         <MobileDocsPanel onBack={handleBack} />
+      ) : view.type === 'kanban' ? (
+        <MobileKanbanPanel onBack={handleBack} />
+      ) : view.type === 'activity' ? (
+        <MobileActivityPanel onBack={handleBack} />
+      ) : view.type === 'projects' ? (
+        <MobileProjectsPanel onBack={handleBack} />
       ) : (
         <MobileAgentList
           agents={fixedAgents}

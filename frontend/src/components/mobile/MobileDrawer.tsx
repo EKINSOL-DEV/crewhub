@@ -4,9 +4,9 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { FileText, MessageSquare, ListTodo, Settings, X } from 'lucide-react'
+import { FileText, MessageSquare, ListTodo, Settings, X, Kanban, Activity, FolderKanban } from 'lucide-react'
 
-export type MobilePanel = 'chat' | 'docs' | 'tasks' | 'settings'
+export type MobilePanel = 'chat' | 'docs' | 'kanban' | 'activity' | 'projects' | 'tasks' | 'settings'
 
 interface MobileDrawerProps {
   open: boolean
@@ -18,6 +18,9 @@ interface MobileDrawerProps {
 const MENU_ITEMS: { id: MobilePanel; label: string; icon: typeof FileText; enabled: boolean }[] = [
   { id: 'chat', label: 'Chat', icon: MessageSquare, enabled: true },
   { id: 'docs', label: 'Docs', icon: FileText, enabled: true },
+  { id: 'kanban', label: 'Kanban', icon: Kanban, enabled: true },
+  { id: 'activity', label: 'Activity', icon: Activity, enabled: true },
+  { id: 'projects', label: 'Projects', icon: FolderKanban, enabled: true },
   { id: 'tasks', label: 'Tasks', icon: ListTodo, enabled: false },
   { id: 'settings', label: 'Settings', icon: Settings, enabled: false },
 ]
