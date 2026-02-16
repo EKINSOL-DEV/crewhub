@@ -34,15 +34,32 @@ function formatDate(iso: string): string {
   } catch { return iso }
 }
 
+/** Hook to detect mobile viewport */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    setIsMobile(mq.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [breakpoint])
+  return isMobile
+}
+
 export function FullscreenOverlay({ open, onClose, title, subtitle, content, metadata, editable, onSave }: FullscreenOverlayProps) {
   const [editing, setEditing] = useState(false)
   const [currentContent, setCurrentContent] = useState(content)
   const [dirty, setDirty] = useState(false)
+  const [tocOpen, setTocOpen] = useState(false)
+  const isMobile = useIsMobile()
 
   // Sync content when prop changes
   useEffect(() => { setCurrentContent(content) }, [content])
   // Reset edit mode when overlay closes
-  useEffect(() => { if (!open) { setEditing(false); setDirty(false) } }, [open])
+  useEffect(() => { if (!open) { setEditing(false); setDirty(false); setTocOpen(false) } }, [open])
 
   const contentScrollRef = useRef<HTMLDivElement>(null)
   const headings = useMemo(() => extractHeadings(currentContent), [currentContent])
@@ -55,17 +72,22 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
       const top = el.offsetTop - container.offsetTop
       container.scrollTo({ top, behavior: 'smooth' })
     }
-  }, [])
+    // Close TOC overlay on mobile after selecting
+    if (isMobile) setTocOpen(false)
+  }, [isMobile])
 
   // Keyboard shortcuts
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        if (tocOpen) { setTocOpen(false); return }
+        onClose()
+      }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [open, onClose])
+  }, [open, onClose, tocOpen])
 
   // Lock body scroll, disable canvas pointer events, AND block camera-controls document listeners
   useEffect(() => {
@@ -110,6 +132,8 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
 
   if (!open) return null
 
+  const hasTOC = headings.length > 0 && !editing
+
   const overlay = (
     <div
       data-fullscreen-overlay
@@ -133,61 +157,98 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '12px 20px',
+        gap: 8,
+        padding: isMobile ? '8px 12px' : '12px 20px',
+        paddingTop: isMobile ? 'max(8px, env(safe-area-inset-top, 8px))' : '12px',
         borderBottom: '1px solid hsl(var(--border))',
         background: 'hsl(var(--card))',
         flexShrink: 0,
       }}>
-        <div>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>
-            📄 {title}
-          </h2>
-          {subtitle && (
-            <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>{subtitle}</span>
+        {/* Left: TOC button (mobile) + title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+          {isMobile && hasTOC && (
+            <button
+              onClick={() => setTocOpen(true)}
+              style={{
+                width: 44, height: 44, borderRadius: 10,
+                border: '1px solid hsl(var(--border))',
+                background: 'hsl(var(--secondary))',
+                color: 'hsl(var(--foreground))',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18,
+                flexShrink: 0,
+              }}
+              title="Table of Contents"
+            >
+              ☰
+            </button>
           )}
+          <div style={{ minWidth: 0 }}>
+            <h2 style={{
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: 600,
+              color: 'hsl(var(--foreground))',
+              margin: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              📄 {title}
+            </h2>
+            {subtitle && !isMobile && (
+              <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>{subtitle}</span>
+            )}
+          </div>
         </div>
-        {editable && !editing && (
+
+        {/* Right: edit + close */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {editable && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              style={{
+                background: 'hsl(var(--primary))',
+                border: 'none',
+                borderRadius: 6,
+                padding: '6px 14px',
+                fontSize: 12,
+                cursor: 'pointer',
+                color: 'hsl(var(--primary-foreground))',
+                fontWeight: 500,
+                minHeight: 44,
+              }}
+            >
+              ✏️ Edit
+            </button>
+          )}
+          {editing && dirty && (
+            <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>● Unsaved</span>
+          )}
           <button
-            onClick={() => setEditing(true)}
+            onClick={() => {
+              if (editing && dirty && !confirm('You have unsaved changes. Discard?')) return
+              onClose()
+            }}
+            title="Close (Esc)"
             style={{
-              background: 'hsl(var(--primary))',
-              border: 'none',
-              borderRadius: 6,
-              padding: '6px 14px',
-              fontSize: 12,
+              background: 'hsl(var(--secondary))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: 10,
+              width: 44,
+              height: 44,
+              fontSize: 20,
               cursor: 'pointer',
-              color: 'hsl(var(--primary-foreground))',
-              fontWeight: 500,
+              color: 'hsl(var(--foreground))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            ✏️ Edit
+            ✕
           </button>
-        )}
-        {editing && dirty && (
-          <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>● Unsaved changes</span>
-        )}
-        <button
-          onClick={() => {
-            if (editing && dirty && !confirm('You have unsaved changes. Discard?')) return
-            onClose()
-          }}
-          title="Close (Esc)"
-          style={{
-            background: 'hsl(var(--secondary))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: 6,
-            width: 32,
-            height: 32,
-            fontSize: 16,
-            cursor: 'pointer',
-            color: 'hsl(var(--foreground))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          ✕
-        </button>
+        </div>
       </div>
 
       {/* Body: TOC + Content or Editor */}
@@ -211,18 +272,112 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
           </div>
         ) : (
           <>
-            {headings.length > 0 && (
+            {/* Desktop: inline TOC sidebar */}
+            {!isMobile && hasTOC && (
               <TOCSidebar
                 headings={headings}
                 activeId={activeId}
                 onSelect={handleTOCSelect}
               />
             )}
+
+            {/* Mobile: TOC slide-in overlay */}
+            {isMobile && hasTOC && tocOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  onClick={() => setTocOpen(false)}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 10,
+                    background: 'rgba(0,0,0,0.5)',
+                  }}
+                />
+                {/* TOC Panel */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
+                  width: 'min(300px, 80vw)',
+                  zIndex: 11,
+                  background: 'hsl(var(--card))',
+                  boxShadow: '4px 0 20px rgba(0,0,0,0.4)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  animation: 'slideInLeft 0.2s ease-out',
+                }}>
+                  {/* TOC Header */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
+                    borderBottom: '1px solid hsl(var(--border))',
+                    flexShrink: 0,
+                  }}>
+                    <span style={{
+                      fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
+                      letterSpacing: '0.05em', color: 'hsl(var(--muted-foreground))',
+                    }}>
+                      📑 Contents
+                    </span>
+                    <button
+                      onClick={() => setTocOpen(false)}
+                      style={{
+                        width: 36, height: 36, borderRadius: 8,
+                        border: '1px solid hsl(var(--border))',
+                        background: 'hsl(var(--secondary))',
+                        color: 'hsl(var(--foreground))',
+                        cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 16,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {/* TOC Items */}
+                  <div style={{ flex: 1, overflow: 'auto', padding: '8px 0', WebkitOverflowScrolling: 'touch' }}>
+                    {headings.map((h, i) => {
+                      const isActive = h.id === activeId
+                      return (
+                        <button
+                          key={`${h.id}-${i}`}
+                          onClick={() => handleTOCSelect(h.id)}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: `10px 16px 10px ${16 + (h.level - 1) * 14}px`,
+                            fontSize: h.level === 1 ? 14 : 13,
+                            fontWeight: isActive ? 600 : h.level === 1 ? 500 : 400,
+                            color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+                            background: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent',
+                            border: 'none',
+                            borderLeft: isActive ? '3px solid hsl(var(--primary))' : '3px solid transparent',
+                            cursor: 'pointer',
+                            minHeight: 44,
+                            fontFamily: 'system-ui, sans-serif',
+                          }}
+                        >
+                          {h.text}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+
             <div ref={contentScrollRef} style={{
               flex: 1,
               overflow: 'auto',
-              padding: '24px 32px',
+              padding: isMobile ? '16px' : '24px 32px',
               background: 'hsl(var(--background))',
+              WebkitOverflowScrolling: 'touch',
             }}>
               <div style={{ maxWidth: 720, margin: '0 auto' }}>
                 <MarkdownViewer content={currentContent} />
@@ -233,7 +388,7 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
       </div>
 
       {/* Footer */}
-      {metadata && (
+      {metadata && !isMobile && (
         <div style={{
           display: 'flex',
           gap: 16,
@@ -254,6 +409,10 @@ export function FullscreenOverlay({ open, onClose, title, subtitle, content, met
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        @keyframes slideInLeft {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
         }
       `}</style>
     </div>
