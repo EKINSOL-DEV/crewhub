@@ -51,11 +51,11 @@ export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, b
 
   // Close on outside click
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+    const handleClick = (e: MouseEvent | TouchEvent) => {
+      const target = (e instanceof TouchEvent ? e.target : e.target) as HTMLElement
+      if (panelRef.current && !panelRef.current.contains(target as Node)) {
         // Don't close when clicking on the 3D canvas (camera rotation/pan starts with mousedown)
         // or on 3D world UI overlays (e.g. Focus Board button rendered via drei Html)
-        const target = e.target as HTMLElement
         if (target.closest?.('canvas') || target.tagName === 'CANVAS') return
         if (target.closest?.('[data-world-ui]')) return
         setTimeout(() => onClose(), 50)
@@ -63,10 +63,12 @@ export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, b
     }
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClick)
+      document.addEventListener('touchstart', handleClick)
     }, 200)
     return () => {
       clearTimeout(timer)
       document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('touchstart', handleClick)
     }
   }, [onClose])
 
@@ -162,6 +164,7 @@ export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, b
         {/* Close button */}
         <button
           onClick={onClose}
+          onTouchEnd={e => { e.preventDefault(); onClose() }}
           style={{
             width: 28,
             height: 28,

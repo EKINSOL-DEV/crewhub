@@ -727,6 +727,11 @@ function HeaderBtn({
           e.stopPropagation()
           onClick()
         }}
+        onTouchEnd={e => {
+          e.preventDefault()
+          e.stopPropagation()
+          onClick()
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
