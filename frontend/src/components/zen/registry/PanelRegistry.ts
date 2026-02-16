@@ -23,6 +23,7 @@ export type PanelId =
   | 'cron'
   | 'logs'
   | 'projects'
+  | 'docs'       // Documentation browser
   | 'documents'  // Legacy alias for projects
   | 'details'    // Future
   | 'empty'
@@ -132,6 +133,16 @@ const PANEL_DEFINITIONS: PanelDefinition[] = [
     category: 'system',
     keywords: ['cron', 'schedule', 'jobs', 'timer', 'periodic'],
     primary: false,
+  },
+  {
+    id: 'docs',
+    label: 'Docs',
+    icon: '📚',
+    description: 'Browse CrewHub documentation',
+    category: 'productivity',
+    keywords: ['docs', 'documentation', 'markdown', 'guides', 'help', 'readme'],
+    shortcutHint: 'd',
+    primary: true,
   },
   {
     id: 'projects',

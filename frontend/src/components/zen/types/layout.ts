@@ -14,6 +14,7 @@ export type PanelType =
   | 'kanban'    // Kanban board view
   | 'cron'      // Cron jobs viewer
   | 'logs'      // System logs
+  | 'docs'      // Documentation browser
   | 'projects'  // Projects panel (overview + documents)
   | 'documents' // Legacy alias for projects
   | 'details'   // Session details (future)

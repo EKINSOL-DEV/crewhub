@@ -22,6 +22,7 @@ from app.routes.personas import router as personas_router
 from app.routes import agent_files
 from app.routes.standups import router as standups_router
 from app.routes.meetings import router as meetings_router
+from app.routes.docs import router as docs_router
 from app.db.database import init_database, check_database_health
 from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
@@ -263,6 +264,9 @@ app.include_router(standups_router, prefix="/api/standups", tags=["standups"])
 
 # Phase 6b: AI-Orchestrated Meetings
 app.include_router(meetings_router, prefix="/api/meetings", tags=["meetings"])
+
+# Documentation browser
+app.include_router(docs_router, prefix="/api/docs", tags=["docs"])
 
 
 @app.get("/")
