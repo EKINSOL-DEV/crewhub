@@ -16,7 +16,7 @@ type View =
   | { type: 'docs' }
 
 // Fixed crew members only
-const FIXED_AGENT_IDS = ['main', 'dev', 'flowy', 'creator', 'reviewer', 'game-dev']
+const FIXED_AGENT_IDS = ['main', 'dev', 'flowy', 'creator', 'reviewer', 'game-dev', 'webdev']
 
 export function MobileLayout() {
   const { sessions, loading, connected, refresh } = useSessionsStream(true)
