@@ -1,97 +1,134 @@
 {
   "id": "headquarters",
-  "name": "Headquarters",
-  "gridWidth": 20,
-  "gridDepth": 20,
+  "name": "Headquarters — Command Center",
+  "gridWidth": 26,
+  "gridDepth": 26,
   "cellSize": 0.6,
   "placements": [
     {
+      "propId": "meeting-table",
+      "x": 13,
+      "z": 13,
+      "span": { "w": 4, "d": 4 },
+      "comment": "Central command table — hologram meeting area"
+    },
+    {
       "propId": "desk-with-monitor",
       "x": 4,
-      "z": 16,
+      "z": 22,
       "rotation": 180,
-      "span": {
-        "w": 2,
-        "d": 2
-      }
+      "span": { "w": 2, "d": 2 },
+      "comment": "Commander desk — back-left"
     },
     {
       "propId": "work-point",
       "x": 4,
-      "z": 15,
+      "z": 21,
       "type": "interaction",
       "interactionType": "work"
     },
     {
+      "propId": "desk-with-monitor",
+      "x": 22,
+      "z": 22,
+      "rotation": 180,
+      "span": { "w": 2, "d": 2 },
+      "comment": "Second command station — back-right"
+    },
+    {
+      "propId": "work-point",
+      "x": 22,
+      "z": 21,
+      "type": "interaction",
+      "interactionType": "work"
+    },
+    {
+      "propId": "desk-with-monitor",
+      "x": 4,
+      "z": 4,
+      "rotation": 0,
+      "span": { "w": 2, "d": 2 },
+      "comment": "Monitoring station — front-left"
+    },
+    {
+      "propId": "desk-with-monitor",
+      "x": 22,
+      "z": 4,
+      "rotation": 0,
+      "span": { "w": 2, "d": 2 },
+      "comment": "Monitoring station — front-right"
+    },
+    {
+      "propId": "notice-board",
+      "x": 13,
+      "z": 24,
+      "rotation": 180,
+      "comment": "Status board on back wall"
+    },
+    {
       "propId": "plant",
-      "x": 18,
-      "z": 18,
+      "x": 24,
+      "z": 24,
+      "type": "decoration"
+    },
+    {
+      "propId": "plant",
+      "x": 1,
+      "z": 24,
+      "type": "decoration"
+    },
+    {
+      "propId": "plant",
+      "x": 24,
+      "z": 1,
+      "type": "decoration"
+    },
+    {
+      "propId": "plant",
+      "x": 1,
+      "z": 1,
       "type": "decoration"
     },
     {
       "propId": "coffee-machine",
-      "x": 18,
-      "z": 3
+      "x": 24,
+      "z": 12
     },
     {
       "propId": "coffee-point",
-      "x": 17,
-      "z": 3,
+      "x": 23,
+      "z": 12,
       "type": "interaction",
       "interactionType": "coffee"
     },
     {
       "propId": "water-cooler",
-      "x": 3,
-      "z": 0,
+      "x": 1,
+      "z": 12,
       "rotation": 0
     },
     {
       "propId": "sleep-corner",
-      "x": 2,
-      "z": 18,
+      "x": 1,
+      "z": 20,
       "type": "interaction",
       "interactionType": "sleep"
-    },
-    {
-      "propId": "meeting-table",
-      "x": 10,
-      "z": 10,
-      "span": {
-        "w": 3,
-        "d": 3
-      }
     }
   ],
   "doorPositions": [
-    {
-      "x": 9,
-      "z": 19,
-      "facing": "south"
-    }
+    { "x": 13, "z": 25, "facing": "south" }
   ],
-  "walkableCenter": {
-    "x": 10,
-    "z": 10
-  },
+  "walkableCenter": { "x": 13, "z": 13 },
   "interactionPoints": {
     "work": [
-      {
-        "x": 4,
-        "z": 15
-      }
+      { "x": 4, "z": 21 },
+      { "x": 22, "z": 21 }
     ],
     "coffee": [
-      {
-        "x": 17,
-        "z": 3
-      }
+      { "x": 23, "z": 12 }
     ],
     "sleep": [
-      {
-        "x": 2,
-        "z": 18
-      }
+      { "x": 1, "z": 20 }
     ]
   }
 }

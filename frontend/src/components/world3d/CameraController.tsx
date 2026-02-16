@@ -11,6 +11,7 @@ import * as THREE from 'three'
 interface RoomPosition {
   roomId: string
   position: [number, number, number]
+  size?: number
 }
 
 interface CameraControllerProps {
@@ -24,15 +25,16 @@ const OVERVIEW_CAMERA = {
   targetX: 0, targetY: 0, targetZ: 0,
 }
 
-function getRoomCamera(roomPos: [number, number, number]) {
+function getRoomCamera(roomPos: [number, number, number], roomSize: number = 12) {
   // Offset in the same direction as OVERVIEW_CAMERA (-X, -Z quadrant)
   // so zooming in from overview to room keeps the same viewing angle.
-  // Tuned by Nicky for good task board visibility
+  // Scale offset based on room size (HQ = 16 is larger)
+  const scale = roomSize / 12
   return {
-    posX: roomPos[0] - 7,
-    posY: 6.7,
-    posZ: roomPos[2] - 12,
-    targetX: roomPos[0] - 2,
+    posX: roomPos[0] - 7 * scale,
+    posY: 6.7 * scale,
+    posZ: roomPos[2] - 12 * scale,
+    targetX: roomPos[0] - 2 * scale,
     targetY: 1.5,
     targetZ: roomPos[2],
   }
@@ -371,14 +373,14 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       isFollowing.current = false
       const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
       if (roomEntry) {
-        const c = getRoomCamera(roomEntry.position)
+        const c = getRoomCamera(roomEntry.position, roomEntry.size)
         controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
       }
     } else if (state.level === 'board' && state.focusedRoomId) {
       isFollowing.current = false
       const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
       if (roomEntry) {
-        const c = getBoardCamera(roomEntry.position)
+        const c = getBoardCamera(roomEntry.position, roomEntry.size)
         controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
       }
     } else if (state.level === 'bot' && state.focusedBotKey) {

@@ -10,6 +10,7 @@ interface RoomWallsProps {
   wallHeight?: number // default 1.5
   hovered?: boolean
   wallStyle?: WallStyle
+  isHQ?: boolean   // HQ gets taller walls
 }
 
 type WallSegment = {
@@ -294,10 +295,13 @@ function createWallShaderMaterial(
 export function RoomWalls({
   color,
   size = 12,
-  wallHeight = 1.5,
+  wallHeight: wallHeightProp,
   hovered = false,
   wallStyle = 'default',
+  isHQ = false,
 }: RoomWallsProps) {
+  // HQ gets taller walls for imposing command center feel
+  const wallHeight = wallHeightProp ?? (isHQ ? 2.5 : 1.5)
   const accentColor = color || '#4f46e5'
   const wallColor = WARM_COLORS.stone
   const wallToon = useToonMaterialProps(wallColor)

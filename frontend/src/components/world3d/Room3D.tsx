@@ -14,6 +14,7 @@ import { useDragDrop } from '@/contexts/DragDropContext'
 import { useGridDebug } from '@/hooks/useGridDebug'
 import { useZenMode } from '@/components/zen'
 import { ProjectMeetingTable } from './props/MeetingTable'
+import { HQCommandOverlay } from './props/HQCommandProps'
 import { useDemoMode } from '@/contexts/DemoContext'
 import type { Room } from '@/hooks/useRooms'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -232,7 +233,7 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
         hovered={hovered}
         projectColor={room.project_color}
         isHQ={room.is_hq}
-        floorStyle={room.floor_style || 'default'}
+        floorStyle={room.is_hq ? 'marble' : (room.floor_style || 'default')}
       />
 
       {/* Perimeter walls */}
@@ -240,7 +241,8 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
         color={roomColor}
         size={size}
         hovered={hovered}
-        wallStyle={room.wall_style || 'default'}
+        wallStyle={room.is_hq ? 'glass' : (room.wall_style || 'default')}
+        isHQ={room.is_hq}
       />
 
       {/* Floating nameplate above entrance */}
@@ -260,6 +262,9 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
 
       {/* ─── Grid-based furniture props ────────────────────────────── */}
       <GridRoomRenderer blueprint={blueprint} roomPosition={position} onBlueprintUpdate={handleBlueprintUpdate} />
+
+      {/* ─── HQ Command Center overlay (hologram, monitors, data pillars) ── */}
+      {room.is_hq && <HQCommandOverlay size={size} />}
 
       {/* ─── Grid debug overlay (dev tool) ─────────────────────────── */}
       {gridDebugEnabled && (

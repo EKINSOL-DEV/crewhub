@@ -194,19 +194,26 @@ function MeetingOverlays({ agentRuntimes, rooms }: { agentRuntimes: AgentRuntime
 
 // ─── Layout Constants ──────────────────────────────────────────
 const ROOM_SIZE = 12
+const HQ_SIZE = 16 // HQ is larger — command center feel
 const HALLWAY_WIDTH = 4
-const GRID_SPACING = ROOM_SIZE + HALLWAY_WIDTH // 16
+// GRID_SPACING removed — radial layout no longer uses fixed grid spacing
 const MAX_COLS = 3
 const BUILDING_PADDING = 3 // padding inside building walls around the grid
 // MAX_VISIBLE_BOTS_PER_ROOM read from SESSION_CONFIG at render time
 const PARKING_WIDTH = 9 // width of parking/break area (compact break room)
 const PARKING_DEPTH_MIN = ROOM_SIZE // minimum depth (≈ 1 room tall)
 
+/** Get the effective size for a room (HQ is larger) */
+export function getRoomSize(room: { is_hq?: boolean }): number {
+  return room.is_hq ? HQ_SIZE : ROOM_SIZE
+}
+
 // ─── Building Layout Calculation ───────────────────────────────
 interface BuildingLayout {
-  roomPositions: { room: ReturnType<typeof useRooms>['rooms'][0]; position: [number, number, number] }[]
+  roomPositions: { room: ReturnType<typeof useRooms>['rooms'][0]; position: [number, number, number]; size: number }[]
   buildingWidth: number
   buildingDepth: number
+  buildingCenterX: number
   parkingArea: { x: number; z: number; width: number; depth: number }
   entranceX: number
   cols: number
@@ -215,37 +222,137 @@ interface BuildingLayout {
   gridOriginZ: number
 }
 
+/**
+ * HQ-centric radial layout:
+ * - HQ room placed at the center (0, 0, 0)
+ * - Other rooms arranged radially around HQ
+ * - Building envelope contains everything
+ */
 function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): BuildingLayout {
   const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
-  const roomCount = sorted.length
-  const cols = Math.min(roomCount, MAX_COLS)
-  const rows = Math.ceil(roomCount / cols)
 
-  const gridWidth = cols * ROOM_SIZE + (cols - 1) * HALLWAY_WIDTH
-  const gridDepth = rows * ROOM_SIZE + (rows - 1) * HALLWAY_WIDTH
+  // Separate HQ from other rooms
+  const hqRoom = sorted.find(r => r.is_hq)
+  const otherRooms = sorted.filter(r => !r.is_hq)
 
-  const buildingWidth = BUILDING_PADDING * 2 + gridWidth + HALLWAY_WIDTH + PARKING_WIDTH
-  const parkingDepth = Math.min(Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2), gridDepth)
-  const buildingDepth = BUILDING_PADDING * 2 + gridDepth
+  // If no HQ found, fall back to first room as "HQ-like" center
+  const centerRoom = hqRoom || sorted[0]
+  const peripheralRooms = hqRoom ? otherRooms : sorted.slice(1)
+  const centerSize = getRoomSize(centerRoom)
 
-  const gridOriginX = -buildingWidth / 2 + BUILDING_PADDING + ROOM_SIZE / 2
-  const gridOriginZ = -buildingDepth / 2 + BUILDING_PADDING + ROOM_SIZE / 2
-
-  const roomPositions = sorted.map((room, index) => {
-    const row = Math.floor(index / cols)
-    const col = index % cols
-    const x = gridOriginX + col * GRID_SPACING
-    const z = gridOriginZ + row * GRID_SPACING
-    return { room, position: [x, 0, z] as [number, number, number] }
+  // Place HQ at origin
+  const roomPositions: BuildingLayout['roomPositions'] = []
+  roomPositions.push({
+    room: centerRoom,
+    position: [0, 0, 0],
+    size: centerSize,
   })
 
-  const parkingX = gridOriginX + cols * GRID_SPACING + HALLWAY_WIDTH / 2 + PARKING_WIDTH / 2 - ROOM_SIZE / 2
-  const parkingZ = gridOriginZ + parkingDepth / 2 - ROOM_SIZE / 2
+  // Place other rooms radially around HQ
+  // Use per-angle distance to prevent box overlap at diagonal angles.
+  // For two axis-aligned squares, the minimum center distance at angle θ is:
+  //   max(|cos(θ)|, |sin(θ)|) must push edges apart.
+  // We need: for each axis, |offset| >= halfA + halfB + gap  OR the other axis satisfies it.
+  // Safest: ensure BOTH axes clear → distance = (halfA + halfB + gap) / min(|cos|, |sin|)
+  // But that explodes near 0/90°. Instead: ensure the Chebyshev distance is enough.
+  const minGap = HALLWAY_WIDTH
+  const halfCenter = centerSize / 2
+  const halfRoom = ROOM_SIZE / 2
+  const minEdgeDist = halfCenter + halfRoom + minGap // 8 + 6 + 4 = 18
+
+  const n = peripheralRooms.length
+
+  if (n > 0) {
+    // Start angle: front-left (-135°), go clockwise
+    const startAngle = -Math.PI * 0.75
+    const angleStep = (Math.PI * 2) / Math.max(n, 1)
+
+    // Two-pass: first compute ideal positions, then push apart any overlapping pairs
+    const positions: [number, number][] = []
+
+    for (let i = 0; i < n; i++) {
+      const angle = startAngle + i * angleStep
+      // Per-angle distance to avoid box overlap with HQ
+      const cosA = Math.abs(Math.cos(angle))
+      const sinA = Math.abs(Math.sin(angle))
+      const chebyshevMax = Math.max(cosA, sinA)
+      const ringDistForAngle = minEdgeDist / Math.max(chebyshevMax, 0.5)
+
+      // Also ensure adjacent rooms don't overlap (Euclidean baseline)
+      const minChord = ROOM_SIZE + minGap
+      const minRingForChord = n > 1 ? minChord / (2 * Math.sin(Math.PI / n)) : 0
+      const ringDistance = Math.max(ringDistForAngle, minRingForChord)
+
+      positions.push([Math.cos(angle) * ringDistance, Math.sin(angle) * ringDistance])
+    }
+
+    // Push apart overlapping adjacent rooms (iterative relaxation)
+    for (let iter = 0; iter < 5; iter++) {
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const dx = Math.abs(positions[i][0] - positions[j][0])
+          const dz = Math.abs(positions[i][1] - positions[j][1])
+          const overlapX = (ROOM_SIZE + minGap) - dx
+          const overlapZ = (ROOM_SIZE + minGap) - dz
+          if (overlapX > 0 && overlapZ > 0) {
+            // Push both rooms outward from center by a small amount
+            const pushAmount = Math.min(overlapX, overlapZ) / 2 + 0.5
+            for (const idx of [i, j]) {
+              const dist = Math.sqrt(positions[idx][0] ** 2 + positions[idx][1] ** 2)
+              if (dist > 0) {
+                const scale = (dist + pushAmount) / dist
+                positions[idx][0] *= scale
+                positions[idx][1] *= scale
+              }
+            }
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < n; i++) {
+      roomPositions.push({
+        room: peripheralRooms[i],
+        position: [positions[i][0], 0, positions[i][1]],
+        size: ROOM_SIZE,
+      })
+    }
+  }
+
+  // Calculate bounding box for building envelope
+  let minX = -centerSize / 2, maxX = centerSize / 2
+  let minZ = -centerSize / 2, maxZ = centerSize / 2
+
+  for (const rp of roomPositions) {
+    const halfSize = rp.size / 2
+    minX = Math.min(minX, rp.position[0] - halfSize)
+    maxX = Math.max(maxX, rp.position[0] + halfSize)
+    minZ = Math.min(minZ, rp.position[2] - halfSize)
+    maxZ = Math.max(maxZ, rp.position[2] + halfSize)
+  }
+
+  // Parking area to the right of rooms
+  const parkingX = maxX + BUILDING_PADDING + HALLWAY_WIDTH / 2 + PARKING_WIDTH / 2
+  const parkingZ = 0
+  const parkingRightEdge = parkingX + PARKING_WIDTH / 2 + BUILDING_PADDING
+  const leftEdge = minX - BUILDING_PADDING
+
+  const buildingWidth = parkingRightEdge - leftEdge
+  const buildingDepth = (maxZ - minZ) + BUILDING_PADDING * 2
+  const buildingCenterX = (leftEdge + parkingRightEdge) / 2
+
+  const parkingDepth = Math.min(Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2), buildingDepth - BUILDING_PADDING * 2)
   const parkingArea = { x: parkingX, z: parkingZ, width: PARKING_WIDTH, depth: parkingDepth }
 
-  const entranceX = gridOriginX + ((cols - 1) * GRID_SPACING) / 2
+  const entranceX = 0 // centered on HQ
 
-  return { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
+  // Legacy grid values (approximate for hallway renderer)
+  const cols = Math.min(sorted.length, MAX_COLS)
+  const rows = Math.ceil(sorted.length / cols)
+  const gridOriginX = minX + ROOM_SIZE / 2
+  const gridOriginZ = minZ + ROOM_SIZE / 2
+
+  return { roomPositions, buildingWidth, buildingDepth, buildingCenterX, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
 }
 
 // ─── Parking / Break Area ──────────────────────────────────────
@@ -632,8 +739,8 @@ function SceneContent({
   const roomBoundsMap = useMemo(() => {
     if (!layout) return new Map<string, RoomBounds>()
     const map = new Map<string, RoomBounds>()
-    for (const { room, position } of layout.roomPositions) {
-      map.set(room.id, getRoomBounds(position, ROOM_SIZE))
+    for (const { room, position, size } of layout.roomPositions) {
+      map.set(room.id, getRoomBounds(position, size))
     }
     return map
   }, [layout])
@@ -647,11 +754,11 @@ function SceneContent({
   // Room obstacles for wandering bots to avoid (rooms + parking area)
   const roomObstacles = useMemo<RoomObstacle[]>(() => {
     if (!layout) return []
-    const obstacles: RoomObstacle[] = layout.roomPositions.map(({ position }) => ({
+    const obstacles: RoomObstacle[] = layout.roomPositions.map(({ position, size }) => ({
       cx: position[0],
       cz: position[2],
-      halfW: ROOM_SIZE / 2,
-      halfD: ROOM_SIZE / 2,
+      halfW: size / 2,
+      halfD: size / 2,
     }))
     obstacles.push({
       cx: layout.parkingArea.x,
@@ -771,16 +878,16 @@ function SceneContent({
   useEffect(() => {
     if (!layout) return
     const roomPosMap = new Map<string, { x: number; z: number; doorX: number; doorZ: number }>()
-    for (const { room, position } of layout.roomPositions) {
+    for (const { room, position, size } of layout.roomPositions) {
       roomPosMap.set(room.id, {
         x: position[0],
         z: position[2],
         doorX: position[0], // door is centered on room X
-        doorZ: position[2] - ROOM_SIZE / 2, // door is on -Z side
+        doorZ: position[2] - size / 2, // door is on -Z side
       })
     }
     meetingGatheringState.roomPositions = roomPosMap
-    meetingGatheringState.roomSize = ROOM_SIZE
+    meetingGatheringState.roomSize = ROOM_SIZE // average for pathfinding
 
     // Populate agent → room mapping
     const agentRooms = new Map<string, string>()
@@ -794,7 +901,7 @@ function SceneContent({
 
   // Build room positions for CameraController (MUST be before early return to respect hooks rules)
   const cameraRoomPositions = useMemo(
-    () => layout?.roomPositions.map(rp => ({ roomId: rp.room.id, position: rp.position })) ?? [],
+    () => layout?.roomPositions.map(rp => ({ roomId: rp.room.id, position: rp.position, size: rp.size })) ?? [],
     [layout],
   )
 
@@ -824,13 +931,15 @@ function SceneContent({
     return null
   }
 
-  const { roomPositions, buildingWidth, buildingDepth, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
+  const { roomPositions, buildingWidth, buildingDepth, buildingCenterX, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
 
   return (
     <>
       <EnvironmentSwitcher buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
-      <BuildingFloor width={buildingWidth} depth={buildingDepth} />
-      <BuildingWalls width={buildingWidth} depth={buildingDepth} entranceWidth={5} entranceOffset={entranceX} />
+      <group position={[buildingCenterX, 0, 0]}>
+        <BuildingFloor width={buildingWidth} depth={buildingDepth} />
+        <BuildingWalls width={buildingWidth} depth={buildingDepth} entranceWidth={5} entranceOffset={entranceX - buildingCenterX} />
+      </group>
       <ParkingAreaFloor x={parkingArea.x} z={parkingArea.z} width={parkingArea.width} depth={parkingArea.depth} />
       <ParkingArea3D position={[parkingArea.x, 0, parkingArea.z]} width={parkingArea.width} depth={parkingArea.depth} />
       <HallwayFloorLines roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
@@ -854,17 +963,17 @@ function SceneContent({
         onLeaveRoom={onLeaveRoom}
       />
 
-      {/* Rooms in grid layout */}
-      {roomPositions.map(({ room, position }) => {
+      {/* Rooms in radial layout (HQ at center, others around it) */}
+      {roomPositions.map(({ room, position, size: roomSize }) => {
         const botsInRoom = roomBots.get(room.id) || []
         const visibleBots = botsInRoom.slice(0, SESSION_CONFIG.maxVisibleBotsPerRoom)
         const overflowCount = botsInRoom.length - visibleBots.length
-        const botPositions = getBotPositionsInRoom(position, ROOM_SIZE, visibleBots.length)
+        const botPositions = getBotPositionsInRoom(position, roomSize, visibleBots.length)
         const bounds = roomBoundsMap.get(room.id)!
 
         return (
           <group key={room.id}>
-            <Room3D room={room} position={position} size={ROOM_SIZE} />
+            <Room3D room={room} position={position} size={roomSize} />
             {visibleBots.map((bot, i) => (
               <Bot3D
                 key={bot.key}
@@ -886,7 +995,7 @@ function SceneContent({
             ))}
             {overflowCount > 0 && (
               <Html
-                position={[position[0] + ROOM_SIZE / 2 - 1.5, 1.2, position[2] + ROOM_SIZE / 2 - 1]}
+                position={[position[0] + roomSize / 2 - 1.5, 1.2, position[2] + roomSize / 2 - 1]}
                 center
                 distanceFactor={15}
                 zIndexRange={[1, 5]}
