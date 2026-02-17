@@ -28,14 +28,19 @@ const HEAD_Y = 0.748
 function HeadCamera() {
   const { camera } = useThree()
 
+  // Set FOV once on mount
   useEffect(() => {
-    camera.position.set(0, HEAD_Y, 0.65)
-    camera.lookAt(0, HEAD_Y, 0)
     if (camera instanceof THREE.PerspectiveCamera) {
       camera.fov = 50
       camera.updateProjectionMatrix()
     }
   }, [camera])
+
+  // Re-apply position + lookAt every frame so R3F can't reset it
+  useFrame(() => {
+    camera.position.set(0, HEAD_Y, 0.65)
+    camera.lookAt(0, HEAD_Y, 0)
+  })
 
   return null
 }
