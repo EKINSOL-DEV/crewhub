@@ -176,9 +176,12 @@ class SSEManager {
     try {
       const token = getAuthToken()
       // Use absolute URL to backend (bypass Vite proxy for SSE)
-      const backendHost = window.location.hostname === 'localhost' 
-        ? 'localhost:8091' 
-        : `${window.location.hostname}:8091`
+      const configuredUrl = import.meta.env.VITE_API_URL
+      const backendHost = configuredUrl 
+        ? configuredUrl.replace(/^https?:\/\//, '')
+        : window.location.hostname === 'localhost' 
+          ? 'localhost:8091' 
+          : `${window.location.hostname}:8091`
       const sseUrl = token 
         ? `http://${backendHost}/api/events?token=${encodeURIComponent(token)}` 
         : `http://${backendHost}/api/events`

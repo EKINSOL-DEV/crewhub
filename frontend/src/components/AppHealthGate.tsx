@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import { Button } from './ui/button'
 
-const BACKEND_URL = 'http://localhost:8091'
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8091'
 const HEALTH_ENDPOINT = `${BACKEND_URL}/api/health`
 const RECHECK_INTERVAL_MS = 10_000
 
