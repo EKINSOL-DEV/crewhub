@@ -731,7 +731,6 @@ function PropHistoryTab() {
               background: '#1e293b',
               border: `1px solid ${isExpanded ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.07)'}`,
               borderRadius: 12,
-              overflow: 'hidden',
               transition: 'border-color 0.15s',
               minHeight: 64,
             }}
