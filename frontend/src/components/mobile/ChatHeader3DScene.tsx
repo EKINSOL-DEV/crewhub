@@ -23,24 +23,20 @@ import type { AvatarAnimation } from './ChatHeader3DAvatar'
 //   → Z ≈ 0.65
 // Slight top/bottom portrait crop is intentional (face stays fully visible).
 
-const HEAD_Y = 0.748
+// Head is at local y=0.34 × scale 2.2 = 0.748 above group origin.
+// We offset the whole group by -0.748 so the head sits at world (0,0,0).
+// The Canvas default camera already looks at the origin — no lookAt tricks needed.
+const HEAD_OFFSET_Y = -0.748
 
 function HeadCamera() {
   const { camera } = useThree()
 
-  // Set FOV once on mount
   useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {
       camera.fov = 50
       camera.updateProjectionMatrix()
     }
   }, [camera])
-
-  // Re-apply position + lookAt every frame so R3F can't reset it
-  useFrame(() => {
-    camera.position.set(0, HEAD_Y, 0.65)
-    camera.lookAt(0, HEAD_Y, 0)
-  })
 
   return null
 }
@@ -70,12 +66,12 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
     // ── Movement based on animation prop ──
     if (animation === 'thinking') {
       // Faster bob + slight side tilt = "processing" feel
-      groupRef.current.position.y = Math.sin(t * 2.5) * 0.04
+      groupRef.current.position.y = HEAD_OFFSET_Y + Math.sin(t * 2.5) * 0.04
       groupRef.current.rotation.y = Math.sin(t * 0.8) * 0.10
       groupRef.current.rotation.z = Math.sin(t * 1.5) * 0.02
     } else {
       // idle — gentle float
-      groupRef.current.position.y = Math.sin(t * 1.0) * 0.04
+      groupRef.current.position.y = HEAD_OFFSET_Y + Math.sin(t * 1.0) * 0.04
       groupRef.current.rotation.y = Math.sin(t * 0.25) * 0.08
       groupRef.current.rotation.z = 0
     }
@@ -86,7 +82,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
       groupRef.current.scale.set(1, breathe, 1)
       groupRef.current.rotation.z = 0.06
       groupRef.current.rotation.y = 0
-      groupRef.current.position.y = 0
+      groupRef.current.position.y = HEAD_OFFSET_Y
     } else {
       groupRef.current.scale.set(1, 1, 1)
     }
@@ -104,9 +100,8 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
                             '#6366f1'
 
   return (
-    // Group base y is 0; useFrame animates position.y.
-    // Head sits at local y=0.34 → world y ≈ 0.748 (scale 2.2).
-    <group ref={groupRef} position={[0, 0, 0]} scale={2.2}>
+    // Group offset so head is at world origin — camera default lookAt (0,0,0) frames it correctly.
+    <group ref={groupRef} position={[0, HEAD_OFFSET_Y, 0]} scale={2.2}>
 
       {/* ── Head ── */}
       <group position={[0, 0.34, 0]}>
@@ -237,8 +232,8 @@ export default function ChatHeader3DScene({
   return (
     <Canvas
       dpr={[1, 1.5]}
-      // Initial camera position; HeadCamera component overrides lookAt + fov
-      camera={{ position: [0, HEAD_Y, 0.65], fov: 50, near: 0.1, far: 20 }}
+      // Camera looks at world origin (0,0,0) — head is offset there via HEAD_OFFSET_Y
+      camera={{ position: [0, 0, 0.65], fov: 50, near: 0.1, far: 20 }}
       style={{ width: '100%', height: '100%', touchAction: 'none' }}
       frameloop="always"
       gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
