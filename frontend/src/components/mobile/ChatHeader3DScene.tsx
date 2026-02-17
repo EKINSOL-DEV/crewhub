@@ -13,9 +13,15 @@ import type { BotVariantConfig } from '@/components/world3d/utils/botVariants'
 import type { AvatarAnimation } from './ChatHeader3DAvatar'
 
 // ── Head-level Camera ──────────────────────────────────────────
-// The bot head is centred at approx y = 0.748 in world space
-// (group.position.y=0 + head.local.y=0.34 * group.scale=2.2 = 0.748).
-// We position the camera at the same y so it looks straight at the head.
+// Head world centre Y = head.local.y × group.scale = 0.34 × 2.2 = 0.748.
+// Head world width  = 0.34 × 2.2 = 0.748 units.
+// Head world height = 0.30 × 2.2 = 0.66  units.
+// Canvas aspect     = 128 / 72   ≈ 1.778.
+//
+// For ~70 % horizontal fill with FOV 50:
+//   horizontal_view = 2 × Z × tan(25°) × 1.778 = 0.748 / 0.70
+//   → Z ≈ 0.65
+// Slight top/bottom portrait crop is intentional (face stays fully visible).
 
 const HEAD_Y = 0.748
 
@@ -23,10 +29,10 @@ function HeadCamera() {
   const { camera } = useThree()
 
   useEffect(() => {
-    camera.position.set(0, HEAD_Y, 2.0)
+    camera.position.set(0, HEAD_Y, 0.65)
     camera.lookAt(0, HEAD_Y, 0)
     if (camera instanceof THREE.PerspectiveCamera) {
-      camera.fov = 30
+      camera.fov = 50
       camera.updateProjectionMatrix()
     }
   }, [camera])
@@ -227,7 +233,7 @@ export default function ChatHeader3DScene({
     <Canvas
       dpr={[1, 1.5]}
       // Initial camera position; HeadCamera component overrides lookAt + fov
-      camera={{ position: [0, HEAD_Y, 2.0], fov: 30, near: 0.1, far: 20 }}
+      camera={{ position: [0, HEAD_Y, 0.65], fov: 50, near: 0.1, far: 20 }}
       style={{ width: '100%', height: '100%', touchAction: 'none' }}
       frameloop="always"
       gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
