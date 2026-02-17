@@ -611,27 +611,68 @@ function PropGeneratorTab() {
 
 // ── History Tab ───────────────────────────────────────────────────
 
+/** Convert CamelCase or PascalCase prop names to readable display names.
+ *  "GamingLaptopWithRgb" → "Gaming Laptop With Rgb"
+ */
+function formatPropName(name: string): string {
+  if (!name) return ''
+  return name
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .trim()
+}
+
 function PropHistoryTab() {
   const [records, setRecords] = useState<GenerationRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [preview3D, setPreview3D] = useState<{ id: string; parts: PropPart[]; name: string } | null>(null)
 
   useEffect(() => {
     setLoading(true)
-    fetch('/api/creator/generation-history?limit=30')
-      .then(r => r.json())
-      .then(data => { setRecords(data.records || []); setLoading(false) })
-      .catch(() => setLoading(false))
+    setError(null)
+    fetch('/api/creator/generation-history?limit=50')
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then(data => {
+        setRecords(Array.isArray(data.records) ? data.records : [])
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error('[PropHistoryTab] fetch failed:', err)
+        setError('Could not load history')
+        setLoading(false)
+      })
   }, [])
 
   if (loading) {
     return (
       <div style={{
         flex: 1, display: 'flex', alignItems: 'center',
-        justifyContent: 'center', color: '#64748b', fontSize: 14,
+        justifyContent: 'center', gap: 10,
+        color: '#94a3b8', fontSize: 14,
       }}>
-        Loading history...
+        <Clock size={16} style={{ opacity: 0.5 }} />
+        Loading history…
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        gap: 12, padding: 32,
+      }}>
+        <span style={{ fontSize: 32 }}>⚠️</span>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>Load failed</div>
+          <div style={{ fontSize: 13, color: '#94a3b8' }}>{error}</div>
+        </div>
       </div>
     )
   }
@@ -645,8 +686,8 @@ function PropHistoryTab() {
       }}>
         <Clock size={36} style={{ opacity: 0.3 }} />
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>No props yet</div>
-          <div style={{ fontSize: 13 }}>Generate your first prop to see it here</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#94a3b8', marginBottom: 4 }}>No props yet</div>
+          <div style={{ fontSize: 13, color: '#64748b' }}>Generate your first prop to see it here</div>
         </div>
       </div>
     )
@@ -654,102 +695,226 @@ function PropHistoryTab() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Count */}
+      <div style={{ fontSize: 11, color: '#64748b', paddingLeft: 2, paddingBottom: 2 }}>
+        {records.length} generation{records.length !== 1 ? 's' : ''}
+      </div>
+
       {records.map(record => {
         const isExpanded = expandedId === record.id
-        const methodIcon = record.error ? '❌' : record.method === 'ai' ? '🤖' : '📐'
-        const date = new Date(record.createdAt)
-        const dateStr = date.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short' })
-        const timeStr = date.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
-        const hasParts = record.parts && record.parts.length > 0 && !record.error
+        const hasError = !!record.error
+        const hasParts = !hasError && Array.isArray(record.parts) && record.parts.length > 0
         const showing3D = preview3D?.id === record.id
+        const methodIcon = hasError ? '❌' : record.method === 'ai' ? '🤖' : '📐'
+        const displayName = formatPropName(record.name) || record.prompt || 'Untitled prop'
+        const promptPreview = record.prompt
+          ? record.prompt.length > 80
+            ? record.prompt.slice(0, 77) + '…'
+            : record.prompt
+          : ''
+
+        // Date formatting
+        let dateStr = ''
+        let timeStr = ''
+        try {
+          const date = new Date(record.createdAt)
+          dateStr = date.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short' })
+          timeStr = date.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
+        } catch {
+          dateStr = record.createdAt?.slice(0, 10) ?? ''
+        }
 
         return (
           <div
             key={record.id}
             style={{
-              background: 'var(--mobile-surface, #1e293b)',
-              border: `1px solid ${isExpanded ? 'rgba(99,102,241,0.35)' : 'var(--mobile-border, rgba(255,255,255,0.06))'}`,
+              background: '#1e293b',
+              border: `1px solid ${isExpanded ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.07)'}`,
               borderRadius: 12,
               overflow: 'hidden',
               transition: 'border-color 0.15s',
             }}
           >
-            {/* Row */}
+            {/* ── Collapsed row ── */}
             <button
               onClick={() => setExpandedId(isExpanded ? null : record.id)}
               style={{
-                width: '100%', padding: '12px 14px',
-                background: 'transparent', border: 'none',
-                display: 'flex', alignItems: 'center', gap: 10,
-                cursor: 'pointer', textAlign: 'left',
+                width: '100%',
+                padding: '12px 14px',
+                background: 'transparent',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+                cursor: 'pointer',
+                textAlign: 'left',
+                color: '#e2e8f0', // explicit — never rely on inheritance for buttons
               }}
             >
-              <span style={{ fontSize: 18, flexShrink: 0 }}>{methodIcon}</span>
+              {/* Icon */}
+              <span style={{
+                fontSize: 20,
+                flexShrink: 0,
+                lineHeight: 1.2,
+                marginTop: 1,
+              }}>
+                {methodIcon}
+              </span>
+
+              {/* Main text block */}
               <div style={{ flex: 1, minWidth: 0 }}>
+                {/* Prop name */}
                 <div style={{
-                  fontSize: 14, fontWeight: 600,
-                  color: record.error ? '#fca5a5' : 'var(--mobile-text, #e2e8f0)',
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: hasError ? '#fca5a5' : '#f1f5f9',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  marginBottom: 3,
                 }}>
-                  {record.name || record.prompt}
+                  {displayName}
                 </div>
-                <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
-                  {record.modelLabel} · {dateStr} {timeStr}
+
+                {/* Prompt preview */}
+                {promptPreview && (
+                  <div style={{
+                    fontSize: 12,
+                    color: '#94a3b8',
+                    marginBottom: 5,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {promptPreview}
+                  </div>
+                )}
+
+                {/* Meta row: date + parts count */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  {dateStr && (
+                    <span style={{ fontSize: 11, color: '#64748b' }}>
+                      {dateStr} {timeStr}
+                    </span>
+                  )}
+                  {hasParts && (
+                    <span style={{
+                      fontSize: 10,
+                      color: '#818cf8',
+                      background: 'rgba(99,102,241,0.12)',
+                      border: '1px solid rgba(99,102,241,0.2)',
+                      borderRadius: 10,
+                      padding: '1px 7px',
+                      fontWeight: 600,
+                    }}>
+                      {record.parts.length} part{record.parts.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {hasError && (
+                    <span style={{
+                      fontSize: 10,
+                      color: '#fca5a5',
+                      background: 'rgba(239,68,68,0.1)',
+                      borderRadius: 10,
+                      padding: '1px 7px',
+                    }}>
+                      failed
+                    </span>
+                  )}
                 </div>
               </div>
-              <div style={{ flexShrink: 0, color: '#64748b' }}>
+
+              {/* Chevron */}
+              <div style={{ flexShrink: 0, color: '#64748b', marginTop: 3 }}>
                 {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </div>
             </button>
 
-            {/* Expanded detail */}
+            {/* ── Expanded detail ── */}
             {isExpanded && (
               <div style={{
-                padding: '0 14px 14px',
-                borderTop: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
-                paddingTop: 12,
+                padding: '12px 14px 14px',
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
               }}>
-                <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>
-                  <span style={{ color: '#64748b' }}>Prompt: </span>
-                  {record.prompt}
+                {/* Full prompt */}
+                <div style={{
+                  fontSize: 12,
+                  color: '#94a3b8',
+                  lineHeight: 1.5,
+                }}>
+                  <span style={{ color: '#64748b', fontWeight: 600 }}>Prompt: </span>
+                  {record.prompt || '—'}
                 </div>
-                {hasParts && (
-                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 10 }}>
-                    {record.parts.length} geometry part{record.parts.length !== 1 ? 's' : ''}
-                  </div>
-                )}
-                {record.error && (
+
+                {/* Model + parts info */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {record.modelLabel && (
+                    <span style={{
+                      fontSize: 11, color: '#64748b',
+                      background: 'rgba(255,255,255,0.05)',
+                      borderRadius: 8, padding: '2px 8px',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                    }}>
+                      🎯 {record.modelLabel}
+                    </span>
+                  )}
+                  {hasParts && (
+                    <span style={{
+                      fontSize: 11, color: '#64748b',
+                      background: 'rgba(255,255,255,0.05)',
+                      borderRadius: 8, padding: '2px 8px',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                    }}>
+                      📦 {record.parts.length} geometry part{record.parts.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+
+                {/* Error message */}
+                {hasError && (
                   <div style={{
-                    fontSize: 12, color: '#fca5a5',
+                    fontSize: 12,
+                    color: '#fca5a5',
                     background: 'rgba(239,68,68,0.08)',
-                    padding: '6px 10px', borderRadius: 6, marginBottom: 10,
+                    border: '1px solid rgba(239,68,68,0.15)',
+                    padding: '8px 10px',
+                    borderRadius: 8,
                   }}>
-                    Error: {record.error}
+                    <span style={{ fontWeight: 600 }}>Error: </span>
+                    {record.error}
                   </div>
                 )}
 
-                {/* 3D preview toggle for history items */}
+                {/* View in 3D button */}
                 {hasParts && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <button
-                      onClick={() => {
-                        setPreview3D(showing3D ? null : { id: record.id, parts: record.parts, name: record.name })
-                      }}
+                      onClick={() =>
+                        setPreview3D(showing3D
+                          ? null
+                          : { id: record.id, parts: record.parts, name: record.name }
+                        )
+                      }
                       style={{
-                        padding: '8px 14px',
-                        background: showing3D ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.08)',
-                        border: '1px solid rgba(99,102,241,0.25)',
-                        borderRadius: 8,
+                        padding: '9px 14px',
+                        background: showing3D ? 'rgba(99,102,241,0.22)' : 'rgba(99,102,241,0.1)',
+                        border: '1px solid rgba(99,102,241,0.3)',
+                        borderRadius: 9,
                         color: '#818cf8',
-                        fontSize: 12,
+                        fontSize: 13,
+                        fontWeight: 600,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 6,
                         justifyContent: 'center',
+                        transition: 'background 0.15s',
                       }}
                     >
-                      {showing3D ? '🔼 Hide 3D Preview' : '🔽 View in 3D'}
+                      {showing3D ? '🔼 Hide 3D' : '🔽 View in 3D'}
                     </button>
                     {showing3D && (
                       <PropPreview3D parts={record.parts} name={record.name} />
