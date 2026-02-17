@@ -3,6 +3,7 @@ import { Rnd } from 'react-rnd'
 import { useChatContext, MIN_SIZE } from '@/contexts/ChatContext'
 import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
+import { stripOpenClawTags } from '@/lib/messageUtils'
 import { ImageThumbnail } from './ImageThumbnail'
 import { VideoThumbnail } from './VideoThumbnail'
 
@@ -186,7 +187,7 @@ function ChatBubble({
   if (isSystem) {
     return (
       <div style={{ textAlign: 'center', fontSize: 11, color: '#9ca3af', fontStyle: 'italic', padding: '4px 0' }}>
-        {msg.content}
+        {stripOpenClawTags(msg.content || '')}
       </div>
     )
   }
@@ -250,7 +251,7 @@ function ChatBubble({
             maxWidth: '100%',
             ...bubbleStyle,
           }}
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(stripOpenClawTags(text)) }}
         />
       )}
 

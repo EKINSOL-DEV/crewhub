@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type CSSP
 import { ArrowLeft, Paperclip, X, Settings as SettingsIcon } from 'lucide-react'
 import { useAgentChat, type ChatMessageData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
+import { stripOpenClawTags } from '@/lib/messageUtils'
 import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
 import { API_BASE } from '@/lib/api'
 import type { CrewSession } from '@/lib/api'
@@ -93,7 +94,7 @@ function ChatBubble({ msg, accentColor }: { msg: ChatMessageData; accentColor: s
   if (isSystem) {
     return (
       <div style={{ textAlign: 'center', fontSize: 11, color: '#64748b', fontStyle: 'italic', padding: '4px 0' }}>
-        {msg.content}
+        {stripOpenClawTags(msg.content || '')}
       </div>
     )
   }
@@ -148,7 +149,7 @@ function ChatBubble({ msg, accentColor }: { msg: ChatMessageData; accentColor: s
             padding: '10px 14px', fontSize: 14, lineHeight: 1.5,
             wordBreak: 'break-word', maxWidth: '100%', ...bubbleStyle,
           }}
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(stripOpenClawTags(text)) }}
         />
       )}
       {images.length > 0 && (

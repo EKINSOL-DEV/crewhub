@@ -6,6 +6,7 @@
 import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 'react'
 import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
+import { stripOpenClawTags } from '@/lib/messageUtils'
 import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
 import { VideoThumbnail } from '@/components/chat/VideoThumbnail'
 import { PixelAvatar } from './PixelAvatar'
@@ -172,7 +173,7 @@ function Message({ msg }: { msg: ChatMessageData }) {
           padding: 'var(--zen-space-sm) 0'
         }}
       >
-        {text}
+        {stripOpenClawTags(text)}
       </div>
     )
   }
@@ -236,7 +237,7 @@ function Message({ msg }: { msg: ChatMessageData }) {
       {text && (
         <div 
           className="zen-message-content"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(stripOpenClawTags(text)) }}
         />
       )}
     </div>
