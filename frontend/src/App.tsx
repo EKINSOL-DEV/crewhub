@@ -17,6 +17,7 @@ import { ZoneProvider } from './contexts/ZoneContext'
 // ZoneSwitcher moved to RoomTabsBar
 import { MobileWarning } from './components/MobileWarning'
 import { MobileLayout } from './components/mobile/MobileLayout'
+import { SettingsView } from './components/SettingsView'
 import { AppHealthGate } from './components/AppHealthGate'
 import { useMobile } from './hooks/useMobile'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
@@ -50,6 +51,17 @@ function isTauriMobileView(): boolean {
   if (window.__TAURI_VIEW__ === 'mobile') return true
   // Dev fallback: allow ?view=mobile in browser for UI testing
   return new URLSearchParams(window.location.search).get('view') === 'mobile'
+}
+
+/**
+ * Detect whether we're in the Tauri settings window.
+ * Uses window.__TAURI_VIEW__ injected by initializationScript in lib.rs.
+ * Falls back to query param ?view=settings for dev convenience.
+ */
+function isTauriSettingsView(): boolean {
+  // Cast to string to handle the injected value (bypasses strict union comparison)
+  if ((window.__TAURI_VIEW__ as string | undefined) === 'settings') return true
+  return new URLSearchParams(window.location.search).get('view') === 'settings'
 }
 
 // Simple path-based routing for dev pages
@@ -757,6 +769,15 @@ function App() {
   
   if (route === '/dev/designs') {
     return <DevDesigns />
+  }
+
+  // Tauri desktop: settings window (window.__TAURI_VIEW__ === 'settings')
+  if (isTauriSettingsView()) {
+    return (
+      <ThemeProvider>
+        <SettingsView />
+      </ThemeProvider>
+    )
   }
 
   // Tauri desktop: compact chat window (window.__TAURI_VIEW__ === 'mobile')

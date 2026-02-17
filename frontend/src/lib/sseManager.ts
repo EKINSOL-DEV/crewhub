@@ -176,7 +176,8 @@ class SSEManager {
     try {
       const token = getAuthToken()
       // Use absolute URL to backend (bypass Vite proxy for SSE)
-      const configuredUrl = import.meta.env.VITE_API_URL
+      // Priority: localStorage > env var > default
+      const configuredUrl = localStorage.getItem('crewhub_backend_url') || import.meta.env.VITE_API_URL
       const backendHost = configuredUrl 
         ? configuredUrl.replace(/^https?:\/\//, '')
         : window.location.hostname === 'localhost' 

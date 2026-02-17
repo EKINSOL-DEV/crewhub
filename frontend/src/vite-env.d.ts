@@ -6,11 +6,12 @@
 interface Window {
   /**
    * Injected by Tauri's initializationScript before page load.
-   * - 'mobile'  → compact chat window (390×700px)
-   * - 'desktop' → full 3D world window (1280×900px)
-   * - undefined → running in browser (not Tauri)
+   * - 'mobile'   → compact chat window (390×700px)
+   * - 'desktop'  → full 3D world window (1280×900px)
+   * - 'settings' → settings window (420×280px)
+   * - undefined  → running in browser (not Tauri)
    */
-  __TAURI_VIEW__?: 'mobile' | 'desktop'
+  __TAURI_VIEW__?: 'mobile' | 'desktop' | 'settings'
 
   /**
    * Set by Tauri core when running inside the desktop app.

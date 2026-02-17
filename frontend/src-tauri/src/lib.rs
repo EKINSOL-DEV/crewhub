@@ -11,6 +11,9 @@ const CHAT_WINDOW_LABEL: &str = "chat";
 /// Label for the 3D world window (full desktop view)
 const WORLD_WINDOW_LABEL: &str = "world";
 
+/// Label for the settings window (small, 420×280)
+const SETTINGS_WINDOW_LABEL: &str = "settings";
+
 /// Returns the backend URL from env var or default.
 fn backend_url() -> String {
     std::env::var("VITE_API_URL").unwrap_or_else(|_| "http://localhost:8091".to_string())
@@ -24,6 +27,11 @@ fn chat_init_script() -> String {
 /// JavaScript injected into the world window before page load.
 fn world_init_script() -> String {
     format!("window.__TAURI_VIEW__ = 'desktop'; window.__CREWHUB_BACKEND_URL__ = '{}';", backend_url())
+}
+
+/// JavaScript injected into the settings window before page load.
+fn settings_init_script() -> String {
+    format!("window.__TAURI_VIEW__ = 'settings'; window.__CREWHUB_BACKEND_URL__ = '{}';", backend_url())
 }
 
 /// Show an existing window and explicitly focus it.
@@ -118,16 +126,56 @@ fn world_url() -> WebviewUrl {
     }
 }
 
+/// Build the WebviewUrl for the settings window.
+fn settings_url() -> WebviewUrl {
+    #[cfg(debug_assertions)]
+    {
+        WebviewUrl::External("http://localhost:5180/?view=settings".parse().unwrap())
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        WebviewUrl::App("index.html?view=settings".into())
+    }
+}
+
+/// Open or focus the settings window (420×280, not resizable).
+/// - If already open: bring to front.
+/// - If hidden: show + focus.
+/// - If not yet created: create, then show + focus.
+fn open_or_focus_settings<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(window) = app.get_webview_window(SETTINGS_WINDOW_LABEL) {
+        show_and_focus(&window);
+        return;
+    }
+
+    let result = WebviewWindowBuilder::new(app, SETTINGS_WINDOW_LABEL, settings_url())
+        .title("CrewHub Settings")
+        .inner_size(420.0, 280.0)
+        .resizable(false)
+        .fullscreen(false)
+        .decorations(true)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .initialization_script(&settings_init_script())
+        .build();
+
+    match result {
+        Ok(window) => show_and_focus(&window),
+        Err(e) => eprintln!("[CrewHub] Failed to create settings window: {}", e),
+    }
+}
+
 /// Set up the system tray with the CrewHub menu.
 fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
 
     let chat_item = MenuItem::with_id(handle, "chat", "Chat", true, None::<&str>)?;
     let world_item = MenuItem::with_id(handle, "world", "3D World", true, None::<&str>)?;
+    let settings_item = MenuItem::with_id(handle, "settings", "⚙️ Settings", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(handle)?;
     let quit_item = MenuItem::with_id(handle, "quit", "Quit CrewHub", true, None::<&str>)?;
 
-    let menu = Menu::with_items(handle, &[&chat_item, &world_item, &separator, &quit_item])?;
+    let menu = Menu::with_items(handle, &[&chat_item, &world_item, &settings_item, &separator, &quit_item])?;
 
     let _tray = TrayIconBuilder::new()
         .menu(&menu)
@@ -137,6 +185,7 @@ fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         .on_menu_event(|app, event| match event.id.as_ref() {
             "chat" => open_or_focus_chat(app),
             "world" => open_or_focus_world(app),
+            "settings" => open_or_focus_settings(app),
             "quit" => {
                 println!("[CrewHub] Quitting...");
                 app.exit(0);
@@ -182,7 +231,7 @@ pub fn run() {
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let label = window.label();
-                if label == CHAT_WINDOW_LABEL || label == WORLD_WINDOW_LABEL {
+                if label == CHAT_WINDOW_LABEL || label == WORLD_WINDOW_LABEL || label == SETTINGS_WINDOW_LABEL {
                     api.prevent_close();
                     let _ = window.hide();
                 }
