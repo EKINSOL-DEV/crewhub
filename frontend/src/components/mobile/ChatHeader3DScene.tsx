@@ -29,18 +29,6 @@ import type { AvatarAnimation } from './ChatHeader3DAvatar'
 const HEAD_WORLD_Y = 0.748
 const DEBUG_CAMERA = true // ← set false to disable debug overlay
 
-// ── Debug camera info overlay ──────────────────────────────────
-function CameraDebug({ onUpdate }: { onUpdate: (info: string) => void }) {
-  const { camera } = useThree()
-  useFrame(() => {
-    const p = camera.position
-    const d = new THREE.Vector3()
-    camera.getWorldDirection(d)
-    onUpdate(`pos: [${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}]\ndir: [${d.x.toFixed(2)}, ${d.y.toFixed(2)}, ${d.z.toFixed(2)}]`)
-  })
-  return null
-}
-
 // ── Full-body Bot (head shown by camera framing) ───────────────
 
 interface HeaderBotProps {
@@ -228,42 +216,59 @@ export default function ChatHeader3DScene({
   agentStatus,
   animation = 'idle',
 }: ChatHeader3DSceneProps) {
-  const [debugInfo, setDebugInfo] = useState('')
+  const [pivotY, setPivotY] = useState(HEAD_WORLD_Y)
+  const [camZ, setCamZ] = useState(0.9)
+  const step = 0.05
 
-  return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <Canvas
-        dpr={[1, 1.5]}
-        style={{ width: '100%', height: '100%', touchAction: DEBUG_CAMERA ? 'none' : 'none' }}
-        frameloop="always"
-        gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
-      >
+  if (!DEBUG_CAMERA) {
+    return (
+      <Canvas dpr={[1, 1.5]} style={{ width: '100%', height: '100%', touchAction: 'none' }}
+        frameloop="always" gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}>
         <group position={[0, HEAD_WORLD_Y, 0]}>
           <PerspectiveCamera makeDefault position={[0, 0, 0.9]} fov={50} near={0.1} far={20} />
         </group>
-
-        {DEBUG_CAMERA && <OrbitControls target={[0, HEAD_WORLD_Y, 0]} enablePan={false} />}
-        {DEBUG_CAMERA && <CameraDebug onUpdate={setDebugInfo} />}
-        {DEBUG_CAMERA && <axesHelper args={[0.5]} />}
-
         <color attach="background" args={['#0d1626']} />
         <ambientLight intensity={0.55} />
         <directionalLight position={[2, 4, 3]} intensity={0.85} />
         <pointLight position={[-2, 2, 1]} intensity={0.3} color="#6366f1" />
-
         <HeaderBot config={botConfig} status={agentStatus} animation={animation} />
       </Canvas>
+    )
+  }
 
-      {DEBUG_CAMERA && debugInfo && (
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          background: 'rgba(0,0,0,0.75)', color: '#a6e3a1',
-          fontSize: 9, fontFamily: 'monospace', padding: '2px 4px',
-          whiteSpace: 'pre', lineHeight: 1.4, pointerEvents: 'none',
-        }}>
-          {debugInfo}
+  // DEBUG MODE — interactive Y/Z tuning buttons
+  const btn = (label: string, onClick: () => void) => (
+    <button onClick={onClick} style={{
+      background: '#334155', color: '#e2e8f0', border: 'none', borderRadius: 4,
+      padding: '2px 6px', fontSize: 11, cursor: 'pointer', touchAction: 'manipulation',
+    }}>{label}</button>
+  )
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <Canvas dpr={[1, 1.5]} style={{ width: '100%', height: 150, touchAction: 'none' }}
+        frameloop="always" gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}>
+        <group position={[0, pivotY, 0]}>
+          <PerspectiveCamera makeDefault position={[0, 0, camZ]} fov={50} near={0.1} far={20} />
+        </group>
+        <axesHelper args={[0.5]} />
+        <color attach="background" args={['#0d1626']} />
+        <ambientLight intensity={0.55} />
+        <directionalLight position={[2, 4, 3]} intensity={0.85} />
+        <pointLight position={[-2, 2, 1]} intensity={0.3} color="#6366f1" />
+        <HeaderBot config={botConfig} status={agentStatus} animation={animation} />
+      </Canvas>
+      <div style={{ background: '#0f172a', padding: '4px 8px', fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 3 }}>
+          <span style={{ color: '#a6e3a1', minWidth: 60 }}>Y: {pivotY.toFixed(2)}</span>
+          {btn('▲', () => setPivotY(v => +(v + step).toFixed(2)))}
+          {btn('▼', () => setPivotY(v => +(v - step).toFixed(2)))}
+          <span style={{ color: '#89b4fa', minWidth: 60, marginLeft: 8 }}>Z: {camZ.toFixed(2)}</span>
+          {btn('+', () => setCamZ(v => +(v + step).toFixed(2)))}
+          {btn('−', () => setCamZ(v => +(v - step).toFixed(2)))}
         </div>
-      )}
+        <div style={{ color: '#64748b', fontSize: 10 }}>HEAD_WORLD_Y={pivotY.toFixed(2)} camZ={camZ.toFixed(2)}</div>
+      </div>
     </div>
   )
 }
