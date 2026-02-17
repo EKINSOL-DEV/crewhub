@@ -738,6 +738,22 @@ function PropHistoryTab() {
           >
             {/* ── Collapsed row ── */}
             <button
+              onTouchStart={(e) => {
+                const touch = e.touches[0]
+                e.currentTarget.dataset.touchStartX = String(touch.clientX)
+                e.currentTarget.dataset.touchStartY = String(touch.clientY)
+              }}
+              onTouchEnd={(e) => {
+                const touch = e.changedTouches[0]
+                const startX = parseFloat(e.currentTarget.dataset.touchStartX || '0')
+                const startY = parseFloat(e.currentTarget.dataset.touchStartY || '0')
+                const dx = Math.abs(touch.clientX - startX)
+                const dy = Math.abs(touch.clientY - startY)
+                if (dx < 10 && dy < 10) {
+                  e.preventDefault()
+                  setExpandedId(isExpanded ? null : record.id)
+                }
+              }}
               onClick={() => setExpandedId(isExpanded ? null : record.id)}
               style={{
                 width: '100%',
@@ -893,6 +909,25 @@ function PropHistoryTab() {
                 {hasParts && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <button
+                      onTouchStart={(e) => {
+                        const touch = e.touches[0]
+                        e.currentTarget.dataset.touchStartX = String(touch.clientX)
+                        e.currentTarget.dataset.touchStartY = String(touch.clientY)
+                      }}
+                      onTouchEnd={(e) => {
+                        const touch = e.changedTouches[0]
+                        const startX = parseFloat(e.currentTarget.dataset.touchStartX || '0')
+                        const startY = parseFloat(e.currentTarget.dataset.touchStartY || '0')
+                        const dx = Math.abs(touch.clientX - startX)
+                        const dy = Math.abs(touch.clientY - startY)
+                        if (dx < 10 && dy < 10) {
+                          e.preventDefault()
+                          setPreview3D(showing3D
+                            ? null
+                            : { id: record.id, parts: record.parts, name: record.name }
+                          )
+                        }
+                      }}
                       onClick={() =>
                         setPreview3D(showing3D
                           ? null
