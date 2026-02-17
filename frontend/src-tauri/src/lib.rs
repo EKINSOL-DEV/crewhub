@@ -11,13 +11,20 @@ const CHAT_WINDOW_LABEL: &str = "chat";
 /// Label for the 3D world window (full desktop view)
 const WORLD_WINDOW_LABEL: &str = "world";
 
+/// Returns the backend URL from env var or default.
+fn backend_url() -> String {
+    std::env::var("VITE_API_URL").unwrap_or_else(|_| "http://localhost:8091".to_string())
+}
+
 /// JavaScript injected into the chat window before page load.
-/// This is more reliable than query params: survives navigation, works in
-/// both dev and production, has no routing side effects.
-const CHAT_INIT_SCRIPT: &str = "window.__TAURI_VIEW__ = 'mobile';";
+fn chat_init_script() -> String {
+    format!("window.__TAURI_VIEW__ = 'mobile'; window.__CREWHUB_BACKEND_URL__ = '{}';", backend_url())
+}
 
 /// JavaScript injected into the world window before page load.
-const WORLD_INIT_SCRIPT: &str = "window.__TAURI_VIEW__ = 'desktop';";
+fn world_init_script() -> String {
+    format!("window.__TAURI_VIEW__ = 'desktop'; window.__CREWHUB_BACKEND_URL__ = '{}';", backend_url())
+}
 
 /// Show an existing window and explicitly focus it.
 ///
@@ -48,7 +55,7 @@ fn open_or_focus_chat<R: Runtime>(app: &AppHandle<R>) {
         .decorations(true)
         .always_on_top(false)
         .skip_taskbar(true) // Don't show in taskbar/dock
-        .initialization_script(CHAT_INIT_SCRIPT)
+        .initialization_script(&chat_init_script())
         .build();
 
     match result {
@@ -76,7 +83,7 @@ fn open_or_focus_world<R: Runtime>(app: &AppHandle<R>) {
         .fullscreen(false)
         .decorations(true)
         .always_on_top(false)
-        .initialization_script(WORLD_INIT_SCRIPT)
+        .initialization_script(&world_init_script())
         .build();
 
     match result {
