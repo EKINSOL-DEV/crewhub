@@ -7,6 +7,7 @@ import { MobileKanbanPanel } from './MobileKanbanPanel'
 import { MobileActivityPanel } from './MobileActivityPanel'
 import { MobileProjectsPanel } from './MobileProjectsPanel'
 import { MobileSettingsPanel, initAppSettings } from './MobileSettingsPanel'
+import { MobileCreatorView } from './MobileCreatorView'
 import { MobileDebugBar } from './MobileDebugBar'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useAgentsRegistry } from '@/hooks/useAgentsRegistry'
@@ -22,6 +23,7 @@ type View =
   | { type: 'kanban' }
   | { type: 'activity' }
   | { type: 'projects' }
+  | { type: 'creator' }
 
 // Fixed crew members only
 const FIXED_AGENT_IDS = ['main', 'dev', 'flowy', 'creator', 'reviewer', 'gamedev', 'webdev']
@@ -125,6 +127,9 @@ export function MobileLayout() {
       case 'projects':
         setView({ type: 'projects' })
         break
+      case 'creator':
+        setView({ type: 'creator' })
+        break
       case 'settings':
         setSettingsOpen(true)
         break
@@ -139,6 +144,7 @@ export function MobileLayout() {
     view.type === 'kanban' ? 'kanban' :
     view.type === 'activity' ? 'activity' :
     view.type === 'projects' ? 'projects' :
+    view.type === 'creator' ? 'creator' :
     'chat'
 
   return (
@@ -205,6 +211,8 @@ export function MobileLayout() {
         <MobileActivityPanel onBack={handleBack} />
       ) : view.type === 'projects' ? (
         <MobileProjectsPanel onBack={handleBack} />
+      ) : view.type === 'creator' ? (
+        <MobileCreatorView onBack={handleBack} />
       ) : (
         <MobileAgentList
           agents={fixedAgents}

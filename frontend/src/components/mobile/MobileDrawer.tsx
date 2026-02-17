@@ -4,9 +4,9 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { FileText, MessageSquare, ListTodo, Settings, X, Kanban, Activity, FolderKanban } from 'lucide-react'
+import { FileText, MessageSquare, ListTodo, Settings, X, Kanban, Activity, FolderKanban, Palette } from 'lucide-react'
 
-export type MobilePanel = 'chat' | 'docs' | 'kanban' | 'activity' | 'projects' | 'tasks' | 'settings'
+export type MobilePanel = 'chat' | 'docs' | 'kanban' | 'activity' | 'projects' | 'tasks' | 'settings' | 'creator'
 
 interface MobileDrawerProps {
   open: boolean
@@ -15,13 +15,22 @@ interface MobileDrawerProps {
   currentPanel: MobilePanel
 }
 
-const MENU_ITEMS: { id: MobilePanel; label: string; icon: typeof FileText; enabled: boolean }[] = [
+interface MenuItem {
+  id: MobilePanel
+  label: string
+  icon: typeof FileText
+  enabled: boolean
+  section?: string
+}
+
+const MENU_ITEMS: MenuItem[] = [
   { id: 'chat', label: 'Chat', icon: MessageSquare, enabled: true },
   { id: 'docs', label: 'Docs', icon: FileText, enabled: true },
   { id: 'kanban', label: 'Kanban', icon: Kanban, enabled: true },
   { id: 'activity', label: 'Activity', icon: Activity, enabled: true },
   { id: 'projects', label: 'Projects', icon: FolderKanban, enabled: true },
   { id: 'tasks', label: 'Tasks', icon: ListTodo, enabled: false },
+  { id: 'creator', label: 'Prop Maker', icon: Palette, enabled: true, section: 'Creator' },
   { id: 'settings', label: 'Settings', icon: Settings, enabled: true },
 ]
 
@@ -106,51 +115,85 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
 
         {/* Menu items */}
         <nav style={{ flex: 1, padding: '12px 12px', overflow: 'auto' }}>
-          {MENU_ITEMS.map(item => {
+          {MENU_ITEMS.map((item, idx) => {
             const Icon = item.icon
             const isActive = currentPanel === item.id
             const isDisabled = !item.enabled
+            const showSectionHeader = item.section != null
 
             return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  if (!isDisabled) {
-                    onNavigate(item.id)
-                    onClose()
-                  }
-                }}
-                disabled={isDisabled}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  width: '100%',
-                  padding: '14px 16px',
-                  background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
-                  border: 'none',
-                  borderRadius: 12,
-                  cursor: isDisabled ? 'default' : 'pointer',
-                  color: isDisabled ? 'var(--mobile-text-muted, #475569)' : isActive ? '#818cf8' : 'var(--mobile-text, #cbd5e1)',
-                  fontSize: 15,
-                  fontWeight: isActive ? 600 : 400,
-                  textAlign: 'left',
-                  opacity: isDisabled ? 0.5 : 1,
-                  transition: 'background 0.15s',
-                }}
-              >
-                <Icon size={20} />
-                <span>{item.label}</span>
-                {isDisabled && (
-                  <span style={{
-                    fontSize: 10, marginLeft: 'auto',
-                    padding: '2px 8px', borderRadius: 6,
-                    background: 'rgba(255,255,255,0.06)', color: '#475569',
+              <div key={item.id}>
+                {/* Section header */}
+                {showSectionHeader && (
+                  <div style={{
+                    padding: '12px 16px 6px',
+                    marginTop: idx > 0 ? 4 : 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
                   }}>
-                    Soon
-                  </span>
+                    <div style={{
+                      flex: 1,
+                      height: 1,
+                      background: 'var(--mobile-border, rgba(255,255,255,0.08))',
+                    }} />
+                    <span style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--mobile-text-muted, #475569)',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {item.section}
+                    </span>
+                    <div style={{
+                      flex: 1,
+                      height: 1,
+                      background: 'var(--mobile-border, rgba(255,255,255,0.08))',
+                    }} />
+                  </div>
                 )}
-              </button>
+
+                <button
+                  onClick={() => {
+                    if (!isDisabled) {
+                      onNavigate(item.id)
+                      onClose()
+                    }
+                  }}
+                  disabled={isDisabled}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    width: '100%',
+                    padding: '14px 16px',
+                    background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
+                    border: 'none',
+                    borderRadius: 12,
+                    cursor: isDisabled ? 'default' : 'pointer',
+                    color: isDisabled ? 'var(--mobile-text-muted, #475569)' : isActive ? '#818cf8' : 'var(--mobile-text, #cbd5e1)',
+                    fontSize: 15,
+                    fontWeight: isActive ? 600 : 400,
+                    textAlign: 'left',
+                    opacity: isDisabled ? 0.5 : 1,
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                  {isDisabled && (
+                    <span style={{
+                      fontSize: 10, marginLeft: 'auto',
+                      padding: '2px 8px', borderRadius: 6,
+                      background: 'rgba(255,255,255,0.06)', color: '#475569',
+                    }}>
+                      Soon
+                    </span>
+                  )}
+                </button>
+              </div>
             )
           })}
         </nav>
