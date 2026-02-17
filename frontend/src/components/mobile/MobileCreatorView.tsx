@@ -750,7 +750,7 @@ function PropHistoryTab() {
               }}
             >
               {/* iOS Safari fix: flex must live on a div, not directly on <button> */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, pointerEvents: 'none' }}>
               {/* Icon */}
               <span style={{
                 fontSize: 20,
