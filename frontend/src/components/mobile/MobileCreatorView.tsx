@@ -846,8 +846,12 @@ function PropHistoryTab() {
               </div>{/* end iOS Safari flex wrapper */}
             </button>
 
-            {/* ── Expanded detail ── */}
-            {isExpanded && (
+            {/* ── Expanded detail — always rendered, shown via max-height (iOS Safari fix) ── */}
+            <div style={{
+              overflow: 'hidden',
+              maxHeight: isExpanded ? '600px' : '0px',
+              transition: 'max-height 0.2s ease-out',
+            }}>
               <div style={{
                 padding: '12px 14px 14px',
                 borderTop: '1px solid rgba(255,255,255,0.06)',
@@ -957,7 +961,7 @@ function PropHistoryTab() {
                   </div>
                 )}
               </div>
-            )}
+            </div>{/* end max-height wrapper */}
           </div>
         )
       })}
