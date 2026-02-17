@@ -240,10 +240,12 @@ function PropGeneratorTab() {
   const [inputText, setInputText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [thinkingLines, setThinkingLines] = useState<ThinkingLine[]>([])
-  const [result, setResult] = useState<{ name: string; parts: PropPart[] } | null>(null)
+  const [result, setResult] = useState<{ name: string; parts: PropPart[]; code: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showExamples, setShowExamples] = useState(false)
   const [showThinking, setShowThinking] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const thinkingScrollRef = useRef<HTMLDivElement>(null)
 
@@ -276,6 +278,7 @@ function PropGeneratorTab() {
     setIsGenerating(true)
     setError(null)
     setResult(null)
+    setIsSaved(false)
     setThinkingLines([])
     setShowThinking(true)
 
@@ -310,7 +313,7 @@ function PropGeneratorTab() {
         eventSourceRef.current = null
         addLine({ text: '✅ Prop generated successfully!', type: 'complete' })
         if (data.parts?.length) {
-          setResult({ name: data.name, parts: data.parts as PropPart[] })
+          setResult({ name: data.name, parts: data.parts as PropPart[], code: data.code || '' })
         } else {
           setError('Generated prop has no geometry parts')
         }
@@ -339,6 +342,36 @@ function PropGeneratorTab() {
       setIsGenerating(false)
     }
   }, [inputText, isGenerating])
+
+  const handleSave = useCallback(async () => {
+    if (!result || isSaving || isSaved) return
+    setIsSaving(true)
+    setError(null)
+    const kebabName = result.name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+    try {
+      const res = await fetch('/api/creator/save-prop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: result.name,
+          propId: kebabName,
+          code: result.code,
+          parts: result.parts,
+          mountType: 'floor',
+          yOffset: 0.16,
+        }),
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData?.detail || 'Save failed')
+      }
+      setIsSaved(true)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setIsSaving(false)
+    }
+  }, [result, isSaving, isSaved])
 
   const getLineColor = (line: ThinkingLine, isLast: boolean) => {
     if (line.type === 'error') return '#ef4444'
@@ -463,13 +496,43 @@ function PropGeneratorTab() {
             <div>
               <div style={{ fontWeight: 600, color: '#86efac', fontSize: 15 }}>{result.name}</div>
               <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-                {result.parts.length} part{result.parts.length !== 1 ? 's' : ''} generated · Saved to library
+                {result.parts.length} part{result.parts.length !== 1 ? 's' : ''} generated
               </div>
             </div>
           </div>
 
           {/* 3D Canvas */}
           <PropPreview3D parts={result.parts} name={result.name} />
+
+          {/* Save to Library button */}
+          <button
+            onClick={handleSave}
+            disabled={isSaved || isSaving}
+            style={{
+              padding: '13px 20px',
+              background: isSaved
+                ? 'rgba(34,197,94,0.15)'
+                : isSaving
+                  ? 'rgba(99,102,241,0.2)'
+                  : 'linear-gradient(135deg, #059669, #10b981)',
+              border: isSaved
+                ? '1px solid rgba(34,197,94,0.35)'
+                : '1px solid transparent',
+              borderRadius: 12,
+              color: isSaved ? '#86efac' : '#fff',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: isSaved || isSaving ? 'default' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all 0.15s',
+              opacity: isSaving ? 0.7 : 1,
+            }}
+          >
+            {isSaved ? '✅ Saved!' : isSaving ? '💾 Saving…' : '💾 Save to Library'}
+          </button>
         </div>
       )}
 
