@@ -98,6 +98,10 @@ class OpenClawConnection(AgentConnection):
         self._listen_task: Optional[asyncio.Task] = None
         self._reconnect_task: Optional[asyncio.Task] = None
         
+        # Device identity (set during _do_connect)
+        self._identity_manager = None
+        self._device_identity = None
+        
         logger.info(
             f"OpenClawConnection initialized: uri={self.uri}, "
             f"token={'set' if self.token else 'none'}"
@@ -154,44 +158,105 @@ class OpenClawConnection(AgentConnection):
                 self._connecting = False
     
     async def _do_connect(self) -> bool:
-        """Internal: perform the actual connection handshake."""
+        """
+        Internal: perform the actual connection handshake with device identity auth.
+
+        Protocol (matching OpenClaw's v2 device auth, discovered from Control UI source):
+
+        1. Load or create device identity (Ed25519 keypair) for this connection.
+           - deviceId = SHA256(raw_public_key_bytes) as hex
+        2. Open WebSocket and receive challenge (contains nonce).
+        3. Build `device` block: {id, publicKey, signature, signedAt, nonce}
+           - signature = Ed25519 sign of:
+             "v2|<deviceId>|cli|cli|operator|<scopes CSV>|<signedAtMs>|<token>|<nonce>"
+           - auth.token = device token (if known) else gateway token
+        4. Send connect request with both `client` and `device` blocks.
+        5. On success: check response for `auth.deviceToken` and store it.
+           Future connections will use this device token instead of the gateway
+           token, granting operator.admin scope.
+        6. On device-token-rejected errors: clear stored token so the next
+           reconnect will fall back to gateway-token + re-register.
+        7. Start background listener only after the handshake completes.
+        """
         try:
             logger.info(f"Connecting to Gateway at {self.uri}...")
-            
-            # Close existing connection if any
+
+            # ── Close any existing connection ───────────────────────────────
             if self.ws:
                 try:
                     await self.ws.close()
                 except Exception as e:
                     logger.debug(f"Error closing old connection: {e}")
                 self.ws = None
-            
-            # Cancel old listener
+
+            # ── Cancel old listener ─────────────────────────────────────────
             if self._listen_task and not self._listen_task.done():
                 self._listen_task.cancel()
                 try:
                     await self._listen_task
                 except asyncio.CancelledError:
                     pass
-            
-            # Connect WebSocket
+
+            # ── 1. Device identity ──────────────────────────────────────────
+            from .device_identity import DeviceIdentityManager, CREWHUB_SCOPES
+            identity_manager = DeviceIdentityManager()
+            identity = await identity_manager.get_or_create_device_identity(
+                connection_id=self.connection_id,
+                device_name=f"CrewHub-{self.name}",
+            )
+            self._identity_manager = identity_manager
+            self._device_identity = identity
+
+            # ── 2. WebSocket connect ────────────────────────────────────────
             self.ws = await asyncio.wait_for(
                 websockets.connect(self.uri, ping_interval=20, ping_timeout=20),
-                timeout=10.0
+                timeout=10.0,
             )
-            
-            # Receive challenge
+
+            # ── 3. Receive challenge ────────────────────────────────────────
             challenge_raw = await asyncio.wait_for(self.ws.recv(), timeout=5.0)
             challenge = json.loads(challenge_raw)
-            
-            if challenge.get("type") != "event" or challenge.get("event") != "connect.challenge":
+
+            if (
+                challenge.get("type") != "event"
+                or challenge.get("event") != "connect.challenge"
+            ):
                 raise Exception(f"Expected connect.challenge, got: {challenge}")
-            
-            logger.debug(
-                f"Received challenge: {challenge.get('payload', {}).get('nonce', 'unknown')}"
+
+            nonce = challenge.get("payload", {}).get("nonce", "")
+            logger.debug(f"Received challenge nonce: {nonce[:16]}...")
+
+            # ── 4. Build auth token ─────────────────────────────────────────
+            # Prefer device token (secure, grants admin scope).
+            # Fall back to gateway token for first-time registration.
+            use_device_token = bool(identity.device_token)
+            auth_token = identity.device_token if use_device_token else (self.token or "")
+
+            if use_device_token:
+                logger.debug(
+                    f"Authenticating with stored device token "
+                    f"(device {identity.device_id[:16]}...)"
+                )
+            elif self.token:
+                logger.info(
+                    f"No device token yet — authenticating with gateway token "
+                    f"for initial device registration (device {identity.device_id[:16]}...)"
+                )
+            else:
+                logger.warning(
+                    "No auth credentials available "
+                    "(no device token, no gateway token)"
+                )
+
+            # ── 5. Build device block with Ed25519 signature ────────────────
+            signed_at_ms = int(__import__("time").time() * 1000)
+            device_block = identity.build_device_block(
+                nonce=nonce,
+                auth_token=auth_token,
+                signed_at_ms=signed_at_ms,
             )
-            
-            # Send connect request
+
+            # ── 6. Send connect request ─────────────────────────────────────
             connect_req = {
                 "type": "req",
                 "id": f"connect-{uuid.uuid4()}",
@@ -202,35 +267,78 @@ class OpenClawConnection(AgentConnection):
                     "client": {
                         "id": "cli",
                         "version": "1.0.0",
-                        "platform": "python",
-                        "mode": "cli"
+                        "platform": "crewhub",
+                        "mode": "cli",
                     },
+                    "device": device_block,  # ← device identity proof
                     "role": "operator",
-                    "scopes": ["operator.read", "operator.write", "operator.admin"],
-                    "auth": {"token": self.token} if self.token else {},
+                    "scopes": CREWHUB_SCOPES,
+                    "auth": {"token": auth_token} if auth_token else {},
                     "locale": "en-US",
-                    "userAgent": f"crewhub/{self.connection_id}/1.0.0"
-                }
+                    "userAgent": f"crewhub/{self.connection_id}/1.0.0",
+                },
             }
-            
+
             await self.ws.send(json.dumps(connect_req))
-            
-            # Receive response
+
+            # ── 7. Receive connect response ─────────────────────────────────
             response_raw = await asyncio.wait_for(self.ws.recv(), timeout=5.0)
             response = json.loads(response_raw)
-            
+
             if not response.get("ok"):
                 error = response.get("error", {})
+                error_code = error.get("code", "")
+
+                # Device token rejected → clear it; next connect will re-register.
+                if use_device_token and error_code in (
+                    "DEVICE_TOKEN_INVALID",
+                    "DEVICE_NOT_FOUND",
+                    "TOKEN_EXPIRED",
+                    "UNAUTHORIZED",
+                ):
+                    logger.warning(
+                        f"Device token rejected by gateway ({error_code}) — "
+                        "clearing stored token; will re-register on next connect"
+                    )
+                    identity.device_token = None
+                    await identity_manager.clear_device_token(identity.device_id)
+
                 raise Exception(f"Connect rejected: {error.get('message', error)}")
-            
+
+            # ── 8. Extract and store deviceToken from response ──────────────
+            # The gateway returns auth.deviceToken when it registers/recognises
+            # a device identity for the first time (or after token rotation).
+            payload = response.get("payload", {})
+            response_auth = payload.get("auth") or {}
+            new_device_token = (
+                response_auth.get("deviceToken")
+                or response_auth.get("token")  # older format fallback
+            )
+
+            if new_device_token and new_device_token != auth_token:
+                identity.device_token = new_device_token
+                await identity_manager.update_device_token(
+                    identity.device_id, new_device_token
+                )
+                logger.info(
+                    f"✓ Device token received from gateway — stored for device "
+                    f"{identity.device_id[:16]}... "
+                    "Future connections will use device-token auth with admin scope."
+                )
+
+            # ── 9. Mark connected and start listener ────────────────────────
             self.status = ConnectionStatus.CONNECTED
-            logger.info(f"Gateway {self.name} connected successfully!")
-            
-            # Start listener
+
+            auth_mode = "device-token" if use_device_token else "gateway-token"
+            got_token = " (got new device token ✓)" if (new_device_token and not use_device_token) else ""
+            logger.info(
+                f"Gateway '{self.name}' connected [{auth_mode}]{got_token}"
+            )
+
             self._listen_task = asyncio.create_task(self._listen_loop())
-            
+
             return True
-            
+
         except asyncio.TimeoutError:
             self._set_error("Connection timed out")
             return False
