@@ -1,5 +1,7 @@
+use std::sync::Mutex;
 use tauri::{
-    App, AppHandle, Manager, Runtime,
+    App, AppHandle, Manager, Runtime, State,
+    image::Image,
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     WebviewUrl, WebviewWindowBuilder,
@@ -13,6 +15,12 @@ const WORLD_WINDOW_LABEL: &str = "world";
 
 /// Label for the settings window (small, 420×280)
 const SETTINGS_WINDOW_LABEL: &str = "settings";
+
+/// ID for the system tray icon (used for badge updates)
+const TRAY_ID: &str = "main-tray";
+
+/// App state: current badge count (used to debounce icon updates)
+struct BadgeCount(Mutex<u32>);
 
 /// Returns the backend URL from env var or default.
 fn backend_url() -> String {
@@ -185,7 +193,7 @@ fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
     let menu = Menu::with_items(handle, &[&chat_item, &world_item, &settings_item, &separator, &quit_item])?;
 
-    let _tray = TrayIconBuilder::new()
+    let _tray = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
         .icon(app.default_window_icon().unwrap().clone())
         .tooltip("CrewHub")
@@ -216,10 +224,73 @@ fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Tauri command: update the tray icon badge.
+///
+/// - count = 0 → normal tray icon
+/// - count = 1 → tray-badge-1.png
+/// - count = 2 → tray-badge-2.png
+/// - count ≥ 3 → tray-badge-3plus.png
+///
+/// Called from the frontend via `invoke('update_tray_badge', { count })`.
+#[tauri::command]
+fn update_tray_badge(
+    count: u32,
+    app: AppHandle,
+    badge_state: State<BadgeCount>,
+) -> Result<(), String> {
+    // Debounce: skip if count hasn't changed
+    {
+        let mut current = badge_state.0.lock().map_err(|e| e.to_string())?;
+        if *current == count {
+            return Ok(());
+        }
+        *current = count;
+    }
+
+    let tray = app
+        .tray_by_id(TRAY_ID)
+        .ok_or_else(|| "Tray icon not found".to_string())?;
+
+    let icon = if count == 0 {
+        // Restore default icon
+        app.default_window_icon()
+            .ok_or_else(|| "No default icon".to_string())?
+            .clone()
+    } else {
+        // Pick the appropriate badge icon
+        let icon_name = match count {
+            1 => "tray-badge-1.png",
+            2 => "tray-badge-2.png",
+            _ => "tray-badge-3plus.png",
+        };
+        Image::from_path(
+            app.path()
+                .resource_dir()
+                .map_err(|e| e.to_string())?
+                .join("icons")
+                .join(icon_name),
+        )
+        .map_err(|e| format!("Failed to load badge icon '{}': {}", icon_name, e))?
+    };
+
+    tray.set_icon(Some(icon)).map_err(|e| e.to_string())?;
+    tray.set_tooltip(Some(if count == 0 {
+        "CrewHub".to_string()
+    } else {
+        format!("CrewHub — {} unread", count)
+    }))
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_notification::init())
+        .manage(BadgeCount(Mutex::new(0)))
+        .invoke_handler(tauri::generate_handler![update_tray_badge])
         .setup(|app| {
             // ── macOS: Accessory activation policy ──────────────────────────
             // Accessory = no Dock icon, no App Switcher (Cmd+Tab).

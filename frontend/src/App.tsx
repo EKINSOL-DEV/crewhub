@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
+import { notificationManager } from './lib/notificationManager'
 const ZoneRenderer = lazy(() => import('./components/world3d/ZoneRenderer').then(m => ({ default: m.ZoneRenderer })))
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
@@ -766,6 +767,21 @@ function ZenModeApp() {
 function App() {
   const route = useRoute()
   const isMobile = useMobile()
+
+  // Initialize system notifications + tray badge in Tauri desktop context.
+  // Only runs once on mount; safe no-op in browser.
+  useEffect(() => {
+    if (window.__TAURI_INTERNALS__) {
+      notificationManager.init().catch(err =>
+        console.warn('[App] NotificationManager init failed:', err)
+      )
+    }
+    return () => {
+      if (window.__TAURI_INTERNALS__) {
+        notificationManager.destroy()
+      }
+    }
+  }, [])
   
   if (route === '/dev/designs') {
     return <DevDesigns />

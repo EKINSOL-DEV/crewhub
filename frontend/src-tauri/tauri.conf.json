@@ -64,6 +64,12 @@
             "icons/128x128@2x.png",
             "icons/icon.icns",
             "icons/icon.ico"
-        ]
+        ],
+        "resources": {
+            "icons/tray-icon.png": "icons/tray-icon.png",
+            "icons/tray-badge-1.png": "icons/tray-badge-1.png",
+            "icons/tray-badge-2.png": "icons/tray-badge-2.png",
+            "icons/tray-badge-3plus.png": "icons/tray-badge-3plus.png"
+        }
     }
 }

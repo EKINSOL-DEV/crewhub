@@ -1,1 +1,1 @@
-{"default":{"identifier":"default","description":"Capability for the main CrewHub windows","local":true,"windows":["main","chat","world"],"permissions":["core:default","shell:allow-open"]}}
+{"default":{"identifier":"default","description":"Capability for the main CrewHub windows","local":true,"windows":["main","chat","world"],"permissions":["core:default","shell:allow-open","notification:default"]}}
