@@ -199,17 +199,6 @@ class SSEManager {
         // This works regardless of hostname (localhost, ekinbot.local, etc.)
         sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : '/api/events'
       }
-      // DEBUG BANNER — temporary, shows SSE URL on screen
-      {
-        const existing = document.getElementById('__sse_debug__')
-        if (existing) existing.remove()
-        const el = document.createElement('div')
-        el.id = '__sse_debug__'
-        el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#1e1e2e;color:#cdd6f4;font:12px/1.4 monospace;padding:8px 12px;border-top:2px solid #89b4fa;word-break:break-all'
-        el.innerHTML = `🔌 SSE: <b style="color:#a6e3a1">${sseUrl}</b><br>host: ${window.location.host} | tauri: ${isInTauri} | raw: ${rawConfigured || '(none)'} | used: ${configuredUrl || 'relative'} | token: ${token ? '✓' : '✗'}`
-        document.body.appendChild(el)
-      }
-
       const eventSource = new EventSource(sseUrl)
       this.eventSource = eventSource
 
@@ -218,8 +207,6 @@ class SSEManager {
         this.reconnectAttempts = 0
         this.setConnectionState("connected")
         console.log("[SSEManager] Connected")
-        const dbg = document.getElementById('__sse_debug__')
-        if (dbg) dbg.style.borderTopColor = '#a6e3a1'
 
         // Register dispatchers for all subscribed event types
         this.registeredDispatchers.clear()
@@ -229,8 +216,6 @@ class SSEManager {
       }
 
       eventSource.onerror = () => {
-        const dbg = document.getElementById('__sse_debug__')
-        if (dbg) dbg.style.borderTopColor = '#f38ba8'
         this.handleDisconnect()
       }
     } catch (err) {
