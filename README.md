@@ -12,10 +12,11 @@
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
-  <img src="https://img.shields.io/badge/version-v0.15.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.16.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/mobile-iOS%20%7C%20Android%20%7C%20iPad-34D399?style=flat&logo=apple&logoColor=white" alt="Mobile">
 </p>
 
 ---
@@ -34,27 +35,52 @@ But CrewHub isn't just another dashboard. Your agents come alive in a **fully in
 
 ---
 
-## ✨ What's New in v0.15.0
+## ✨ What's New in v0.16.0
 
-### 🤝 AI Meetings: Your Bots Actually Collaborate
+### 📱 Full Mobile Support
 
-Click a meeting table. Pick participants and a topic. Watch your bots **physically walk to the table, form a circle, and have a structured round-robin discussion**.
+CrewHub now works properly on **iOS, Android, and iPad**. The entire app is responsive — Kanban board, chat, activity feed, project panels, and the 3D world. The 3D viewport adapts to a floating mini-camera on small screens, and the hamburger menu gives you access to all panels without cluttering the interface.
 
-When the meeting ends, you get:
-- ✅ **Structured summaries** organized by theme
-- ✅ **Action items** with Execute/Add to Planner buttons
-- ✅ **Documented decisions** so nothing gets lost
-- ✅ **Follow-up meetings** that carry context forward automatically
+File and image upload in chat works on mobile too (including the iOS file picker).
 
-This isn't just another chat interface. **It's your agents actually working together as a team.**
+### 🔐 Proper Device Authentication
 
-### 🗺️ Bot Pathfinding
+The CrewHub backend now authenticates with the OpenClaw gateway using **Ed25519 device identity** (the same protocol as any other first-class OpenClaw client). No more workarounds.
 
-Bots navigate through doors and hallways properly. No more wall-walking — they understand the space and move like they belong there.
+**What this means for you:** you no longer need `dangerouslyDisableDeviceAuth` or `allowInsecureAuth` in your `~/.openclaw/openclaw.json`. Those flags can be removed — CrewHub handles auth correctly.
 
-### 🤖 Agent Identity Pattern
+On first connect, the backend automatically pairs itself as a registered device. The device identity is stored in SQLite and reused across restarts. No manual steps needed.
 
-Single identity across all surfaces. Your Dev bot in the 3D world is the same Dev in chat, same Dev in tasks. The 3D avatar is a representation, not a different personality.
+### 🧙 Onboarding Wizard
+
+New installations get an **interactive setup wizard** (OpenClawWizard) that walks you through:
+1. Entering your OpenClaw gateway URL (e.g. `ws://localhost:18789`)
+2. Entering your gateway token
+3. Testing the connection
+4. Confirming the setup is working
+
+The wizard auto-detects common configurations and handles Docker networking for you.
+
+### 💬 Group Chat
+
+All your agents in one room, one conversation. Group Chat lets you send a message and have multiple agents respond in context — useful for coordination, reviews, or just asking the team something without routing it to one specific bot.
+
+### 🏢 HQ Redesign
+
+The task board (HQ) got a proper redesign: cleaner layout, a **Review column** in the Kanban, better task creation flow, and demo data so new users immediately see what it's supposed to look like.
+
+### 📄 Docs Panel
+
+Browse your CrewHub docs directly from the dashboard. The Docs Panel (accessible from the Zen sidebar and mobile hamburger menu) has a full folder tree, last-modified dates, and a fullscreen markdown viewer with a table of contents.
+
+### ⚡ Performance Optimizations
+
+Five concrete improvements landed:
+- **80% initial bundle reduction** via code-splitting (Three.js and heavy deps loaded on demand)
+- **React.memo** on frequently re-rendering components
+- **Memoized context providers** to prevent cascading re-renders
+- **Throttled Three.js animations** for non-critical elements
+- **Smaller highlight.js bundle** by importing only needed languages
 
 [Read the full v0.15.0 announcement →](https://crewhub.dev/blog/v0-15-0-released)
 
@@ -72,13 +98,36 @@ Watch your agents roam a toon-shaded campus with procedural rooms, animated bots
 - **Drag & drop** agents between rooms
 - **Activity bubbles** show current tasks in real-time
 
+### 📱 Mobile UI
+
+Full mobile experience on iOS, Android, and iPad:
+- Responsive layout across all panels
+- Floating mini 3D viewport on small screens
+- Hamburger menu with access to Docs Panel and navigation
+- Touch-friendly chat with file/image upload
+- No zoom-in on iOS keyboard (font-size fix)
+
+### 💬 Group Chat
+
+Send messages to multiple agents at once. All agents in a session can respond in context — great for team coordination, quick reviews, or broadcasting a question to everyone.
+
 ### 💬 AI Meetings
 
 Run structured round-robin meetings where agents build on each other's contributions. Get organized output with action items that turn into executable tasks.
 
-### 📋 Task Board (HQ)
+**When a meeting ends:**
+- ✅ **Structured summaries** organized by theme
+- ✅ **Action items** with Execute/Add to Planner buttons
+- ✅ **Documented decisions** so nothing gets lost
+- ✅ **Follow-up meetings** carry context forward automatically
 
-Kanban-style board with columns: To Do, In Progress, Review, Done, Blocked. Create tasks, assign to agents, execute directly with "Run with Agent."
+### 🏢 HQ Task Board
+
+Redesigned Kanban board with columns: To Do, In Progress, Review, Done, Blocked. Create tasks, assign to agents, execute directly with "Run with Agent."
+
+### 📄 Docs Panel
+
+Browse your documentation from inside CrewHub. Full folder tree, last-modified dates, fullscreen markdown viewer with auto-generated table of contents. Available in Zen Mode sidebar and mobile menu.
 
 ### 📡 Real-Time Monitoring
 
@@ -125,6 +174,7 @@ Works with:
 | Frontend | React 19, TypeScript, Tailwind CSS, Three.js |
 | Backend | FastAPI (Python), SQLite |
 | Real-time | Server-Sent Events (SSE) |
+| Auth | Ed25519 device identity (OpenClaw v2 protocol) |
 | Deployment | Docker, Docker Compose |
 
 ---
@@ -135,7 +185,7 @@ Works with:
 
 - [Docker](https://docker.com) and Docker Compose (recommended)
 - OR Node.js 18+ and Python 3.11+
-- OpenClaw running on the same machine (auto-discovery reads your local config)
+- OpenClaw running on the same machine or accessible over the network
 
 ### Option 1: Docker (Recommended)
 
@@ -172,9 +222,48 @@ Open **http://localhost:3000** — you'll see a fully interactive 3D world with 
 
 ---
 
-## ⚙️ Configuration
+## 🧙 Onboarding
 
-On first launch, the **onboarding wizard** will auto-detect your OpenClaw installation and configure the connection — including the gateway token. No manual setup needed.
+On first launch, the **OpenClawWizard** walks you through setup:
+
+1. **Gateway URL** — enter where your OpenClaw gateway is running (default: `ws://localhost:18789`). When running in Docker, use `ws://host.docker.internal:18789` on macOS/Windows or `ws://172.17.0.1:18789` on Linux.
+2. **Gateway token** — find this in `~/.openclaw/openclaw.json` under `gateway.auth.token`
+3. **Test connection** — the wizard verifies the connection before saving
+4. **Done** — CrewHub pairs itself as a registered device automatically
+
+No need to touch the OpenClaw config beyond this.
+
+---
+
+## 🔐 Security & Device Auth
+
+CrewHub v0.16.0 uses **proper device authentication** with the OpenClaw gateway:
+
+- The backend generates an **Ed25519 keypair** on first run and registers itself as a device
+- Authentication uses a **device token** (not the shared gateway token) for all ongoing connections
+- The device identity is stored in SQLite and reused across restarts
+- This follows the same auth protocol as any other OpenClaw client (Claude Code, the CLI, etc.)
+
+**If you're upgrading from an older version** and have these flags in `~/.openclaw/openclaw.json`:
+
+```json
+"controlUi": {
+  "allowInsecureAuth": true,
+  "dangerouslyDisableDeviceAuth": true
+}
+```
+
+You can safely remove them. CrewHub no longer needs them. After removing, restart the gateway:
+
+```bash
+openclaw gateway restart
+```
+
+CrewHub will re-pair automatically on next connect.
+
+---
+
+## ⚙️ Configuration
 
 ### Docker Network Notes
 
@@ -184,8 +273,7 @@ When running in Docker, OpenClaw must bind to `lan` instead of `loopback`:
    ```json
    {
      "gateway": {
-       "bind": "lan",
-       ...
+       "bind": "lan"
      }
    }
    ```
@@ -234,7 +322,7 @@ Access lightweight Zen Mode (no 3D world) via URL parameter:
 http://localhost:5181?mode=zen
 ```
 
-Perfect for focused work, lower resource usage, or embedded contexts. Same app, different mode.
+Perfect for focused work, lower resource usage, or embedded contexts. Same app, different mode. The Docs Panel is available in Zen Mode from the sidebar.
 
 ### Project Structure
 
@@ -244,6 +332,7 @@ crewhub/
 │   ├── app/
 │   │   ├── routes/    # API endpoints
 │   │   ├── services/  # Business logic
+│   │   │   └── connections/  # OpenClaw connection + device identity
 │   │   └── db/        # Database models
 │   └── tests/
 ├── frontend/          # React + TypeScript frontend
