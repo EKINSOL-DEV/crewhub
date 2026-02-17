@@ -2,7 +2,7 @@
  * ChatHeader3DAvatar
  *
  * Renders a small 3D character preview for the mobile chat header.
- * - ~64px wide × 76px tall, portrait format
+ * - 128px wide × 72px tall, landscape portrait
  * - rounded-xl corners + subtle border
  * - Non-interactive (no orbit controls / drag)
  * - Lazy-loads the Three.js canvas; falls back to a static avatar if WebGL
@@ -12,6 +12,10 @@
 import { lazy, Suspense, useState, type CSSProperties } from 'react'
 import type { BotVariantConfig } from '@/components/world3d/utils/botVariants'
 import type { AgentStatus } from './AgentCameraView'
+
+// ── Animation type ─────────────────────────────────────────────
+
+export type AvatarAnimation = 'idle' | 'thinking' | 'talking'
 
 // ── Capability detection ───────────────────────────────────────
 
@@ -44,7 +48,7 @@ function StaticAvatar({ config, icon }: { config: BotVariantConfig; icon: string
         justifyContent: 'center',
         background: config.color + '28',
         color: config.color,
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 600,
         borderRadius: 'inherit',
       }}
@@ -89,6 +93,8 @@ function LoadingPlaceholder({ color }: { color: string }) {
 interface ChatHeader3DAvatarProps {
   config: BotVariantConfig
   agentStatus: AgentStatus
+  /** Animation mode — controls movement behaviour */
+  animation?: AvatarAnimation
   /** Fallback icon/emoji (if 3D unavailable) */
   icon: string
   /** Container style overrides */
@@ -98,14 +104,15 @@ interface ChatHeader3DAvatarProps {
 export function ChatHeader3DAvatar({
   config,
   agentStatus,
+  animation = 'idle',
   icon,
   style,
 }: ChatHeader3DAvatarProps) {
   const [has3D] = useState(() => canRender3D())
 
   const containerStyle: CSSProperties = {
-    width: 64,
-    height: 76,
+    width: 128,
+    height: 72,
     borderRadius: 14,
     overflow: 'hidden',
     flexShrink: 0,
@@ -119,7 +126,11 @@ export function ChatHeader3DAvatar({
     <div style={containerStyle}>
       {has3D ? (
         <Suspense fallback={<LoadingPlaceholder color={config.color} />}>
-          <ChatHeader3DScene botConfig={config} agentStatus={agentStatus} />
+          <ChatHeader3DScene
+            botConfig={config}
+            agentStatus={agentStatus}
+            animation={animation}
+          />
         </Suspense>
       ) : (
         <StaticAvatar config={config} icon={icon} />

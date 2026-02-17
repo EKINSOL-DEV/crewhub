@@ -6,9 +6,9 @@ import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
 import { API_BASE } from '@/lib/api'
 import type { CrewSession } from '@/lib/api'
 import { ActiveTasksBadge, ActiveTasksOverlay } from './ActiveTasksOverlay'
-import { AgentCameraButton, AgentCameraOverlay, type AgentStatus } from './AgentCameraView'
+import { type AgentStatus } from './AgentCameraView'
 import { getBotConfigFromSession } from '@/components/world3d/utils/botVariants'
-import { ChatHeader3DAvatar } from './ChatHeader3DAvatar'
+import { ChatHeader3DAvatar, type AvatarAnimation } from './ChatHeader3DAvatar'
 
 // ── File Upload Types & Helpers ────────────────────────────────
 
@@ -240,15 +240,6 @@ function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (
   )
 }
 
-// ── Agent Status Derivation ────────────────────────────────────
-
-function deriveAgentStatus(isSending: boolean, subagentSessions: CrewSession[]): AgentStatus {
-  if (isSending) return 'active'
-  const hasActiveSubagent = subagentSessions.some(s => (Date.now() - s.updatedAt) < 300_000)
-  if (hasActiveSubagent) return 'active'
-  return 'idle'
-}
-
 // ── Main Component ─────────────────────────────────────────────
 
 interface MobileAgentChatProps {
@@ -280,7 +271,6 @@ export function MobileAgentChat({
 
   const [inputValue, setInputValue] = useState('')
   const [showTasks, setShowTasks] = useState(false)
-  const [showCamera, setShowCamera] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -439,9 +429,10 @@ export function MobileAgentChat({
     }
   }
 
-  // Derive bot config + status for 3D avatar
+  // Derive bot config, status, and animation for 3D avatar
   const botConfig = getBotConfigFromSession(sessionKey, agentName, agentColor)
   const agentStatus: AgentStatus = isSending ? 'active' : 'idle'
+  const avatarAnimation: AvatarAnimation = agentStatus === 'active' ? 'thinking' : 'idle'
 
   return (
     <>
@@ -469,6 +460,7 @@ export function MobileAgentChat({
         <ChatHeader3DAvatar
           config={botConfig}
           agentStatus={agentStatus}
+          animation={avatarAnimation}
           icon={icon}
         />
 
@@ -484,7 +476,6 @@ export function MobileAgentChat({
           </div>
         </div>
 
-        <AgentCameraButton onClick={() => setShowCamera(v => !v)} isActive={showCamera} />
         <ActiveTasksBadge
           count={subagentSessions.length}
           onClick={() => setShowTasks(true)}
@@ -512,15 +503,6 @@ export function MobileAgentChat({
           onClose={() => setShowTasks(false)}
         />
       )}
-
-      {/* 3D Camera Overlay */}
-      <AgentCameraOverlay
-        isOpen={showCamera}
-        onClose={() => setShowCamera(false)}
-        agentName={agentName}
-        agentStatus={deriveAgentStatus(isSending, subagentSessions)}
-        botConfig={botConfig}
-      />
 
       {/* Messages */}
       <div
