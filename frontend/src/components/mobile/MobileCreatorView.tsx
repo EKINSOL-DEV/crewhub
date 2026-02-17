@@ -733,6 +733,7 @@ function PropHistoryTab() {
               borderRadius: 12,
               overflow: 'hidden',
               transition: 'border-color 0.15s',
+              minHeight: 64,
             }}
           >
             {/* ── Collapsed row ── */}
@@ -743,14 +744,13 @@ function PropHistoryTab() {
                 padding: '12px 14px',
                 background: 'transparent',
                 border: 'none',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 12,
                 cursor: 'pointer',
                 textAlign: 'left',
                 color: '#e2e8f0', // explicit — never rely on inheritance for buttons
               }}
             >
+              {/* iOS Safari fix: flex must live on a div, not directly on <button> */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
               {/* Icon */}
               <span style={{
                 fontSize: 20,
@@ -828,6 +828,7 @@ function PropHistoryTab() {
               <div style={{ flexShrink: 0, color: '#64748b', marginTop: 3 }}>
                 {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </div>
+              </div>{/* end iOS Safari flex wrapper */}
             </button>
 
             {/* ── Expanded detail ── */}
