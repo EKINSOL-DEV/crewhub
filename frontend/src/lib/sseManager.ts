@@ -175,17 +175,41 @@ class SSEManager {
 
     try {
       const token = getAuthToken()
-      // Use absolute URL to backend (bypass Vite proxy for SSE)
-      // Priority: localStorage > env var > default
-      const configuredUrl = localStorage.getItem('crewhub_backend_url') || import.meta.env.VITE_API_URL
-      const backendHost = configuredUrl 
-        ? configuredUrl.replace(/^https?:\/\//, '')
-        : window.location.hostname === 'localhost' 
-          ? 'localhost:8091' 
-          : `${window.location.hostname}:8091`
-      const sseUrl = token 
-        ? `http://${backendHost}/api/events?token=${encodeURIComponent(token)}` 
-        : `http://${backendHost}/api/events`
+      // Detect Tauri environment
+      const isInTauri = typeof (window as any).__TAURI__ !== 'undefined'
+      // Priority: localStorage > Tauri injected var > env var
+      const rawConfigured =
+        localStorage.getItem('crewhub_backend_url') ||
+        (window as any).__CREWHUB_BACKEND_URL__ ||
+        import.meta.env.VITE_API_URL
+      // In browser mode, ignore localhost-based URLs — they only make sense in Tauri.
+      // A localhost URL from Safari on iPhone will never reach the Mac mini backend.
+      const configuredUrl =
+        !isInTauri && rawConfigured?.includes('localhost') ? null : rawConfigured
+
+      let sseUrl: string
+      if (configuredUrl) {
+        // Tauri or explicit non-localhost backend URL — connect directly (absolute URL)
+        const backendHost = configuredUrl.replace(/^https?:\/\//, '')
+        sseUrl = token
+          ? `http://${backendHost}/api/events?token=${encodeURIComponent(token)}`
+          : `http://${backendHost}/api/events`
+      } else {
+        // Browser mode — use relative URL so Vite proxy forwards to backend
+        // This works regardless of hostname (localhost, ekinbot.local, etc.)
+        sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : '/api/events'
+      }
+      // DEBUG BANNER — temporary, shows SSE URL on screen
+      {
+        const existing = document.getElementById('__sse_debug__')
+        if (existing) existing.remove()
+        const el = document.createElement('div')
+        el.id = '__sse_debug__'
+        el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#1e1e2e;color:#cdd6f4;font:12px/1.4 monospace;padding:8px 12px;border-top:2px solid #89b4fa;word-break:break-all'
+        el.innerHTML = `🔌 SSE: <b style="color:#a6e3a1">${sseUrl}</b><br>host: ${window.location.host} | tauri: ${isInTauri} | raw: ${rawConfigured || '(none)'} | used: ${configuredUrl || 'relative'} | token: ${token ? '✓' : '✗'}`
+        document.body.appendChild(el)
+      }
+
       const eventSource = new EventSource(sseUrl)
       this.eventSource = eventSource
 
@@ -194,6 +218,8 @@ class SSEManager {
         this.reconnectAttempts = 0
         this.setConnectionState("connected")
         console.log("[SSEManager] Connected")
+        const dbg = document.getElementById('__sse_debug__')
+        if (dbg) dbg.style.borderTopColor = '#a6e3a1'
 
         // Register dispatchers for all subscribed event types
         this.registeredDispatchers.clear()
@@ -203,6 +229,8 @@ class SSEManager {
       }
 
       eventSource.onerror = () => {
+        const dbg = document.getElementById('__sse_debug__')
+        if (dbg) dbg.style.borderTopColor = '#f38ba8'
         this.handleDisconnect()
       }
     } catch (err) {

@@ -217,7 +217,7 @@ _CORS_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_CORS_ORIGINS,
-    allow_origin_regex=r"http://localhost:\d+",  # any localhost port for dev flexibility
+    allow_origin_regex=r"http://(localhost|ekinbot\.local):\d+",  # any localhost or ekinbot.local port for dev flexibility
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
