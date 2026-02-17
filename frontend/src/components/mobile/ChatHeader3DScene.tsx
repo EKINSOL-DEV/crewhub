@@ -12,21 +12,21 @@ import type { AgentStatus } from './AgentCameraView'
 import type { BotVariantConfig } from '@/components/world3d/utils/botVariants'
 import type { AvatarAnimation } from './ChatHeader3DAvatar'
 
-// ── Head-level Camera ──────────────────────────────────────────
+// ── Camera strategy ────────────────────────────────────────────
 // Head world centre Y = head.local.y × group.scale = 0.34 × 2.2 = 0.748.
-// Head world width  = 0.34 × 2.2 = 0.748 units.
+// Head world width  = 0.30 × 2.2 = 0.66  units.
 // Head world height = 0.30 × 2.2 = 0.66  units.
 // Canvas aspect     = 128 / 72   ≈ 1.778.
 //
-// For ~70 % horizontal fill with FOV 50:
-//   horizontal_view = 2 × Z × tan(25°) × 1.778 = 0.748 / 0.70
-//   → Z ≈ 0.65
-// Slight top/bottom portrait crop is intentional (face stays fully visible).
-
-// Head is at local y=0.34 × scale 2.2 = 0.748 above group origin.
-// We offset the whole group by -0.748 so the head sits at world (0,0,0).
-// The Canvas default camera already looks at the origin — no lookAt tricks needed.
-const HEAD_OFFSET_Y = -0.748
+// We use a group-as-pivot at Y=0.748 (head world centre).
+// The PerspectiveCamera sits at local [0, 0, 0.9] inside that group,
+// which means its world position = [0, 0.748, 0.9].
+// Three.js cameras default look direction is -Z, so the camera looks
+// straight toward [0, 0.748, 0] — exactly the head centre. No rotation needed.
+//
+// Vertical view at Z=0.9, FOV 50: 2 × 0.9 × tan(25°) ≈ 0.84 units.
+// Head (0.66 units) + max bob (0.08) = 0.74 — fits comfortably. ✓
+const HEAD_WORLD_Y = 0.748
 
 // ── Full-body Bot (head shown by camera framing) ───────────────
 
@@ -218,14 +218,16 @@ export default function ChatHeader3DScene({
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={false}
       style={{ width: '100%', height: '100%', touchAction: 'none' }}
       frameloop="always"
       gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
     >
-      {/* Declarative camera — makeDefault, looks at origin where head is */}
-      {/* Camera above head, tilted ~40° down to center the head in frame */}
-      <PerspectiveCamera makeDefault position={[0, 1.5, 0.9]} rotation={[0.697, 0, 0]} fov={50} near={0.1} far={20} />
+      {/* Camera pivot at head world Y=0.748. Camera child at local [0,0,0.9]   */}
+      {/* → world pos [0, 0.748, 0.9], default look direction -Z               */}
+      {/* → looks straight at [0, 0.748, 0] = head centre. No rotation needed. */}
+      <group position={[0, HEAD_WORLD_Y, 0]}>
+        <PerspectiveCamera makeDefault position={[0, 0, 0.9]} fov={50} near={0.1} far={20} />
+      </group>
 
       <color attach="background" args={['#0d1626']} />
       <ambientLight intensity={0.55} />
