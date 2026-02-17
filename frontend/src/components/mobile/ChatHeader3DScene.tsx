@@ -4,9 +4,9 @@
  * Idle animations: gentle float/bob + eye blinking.
  * Not interactive — purely decorative.
  */
-import { useRef, useEffect } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { RoundedBox } from '@react-three/drei'
+import { useRef } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { RoundedBox, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import type { AgentStatus } from './AgentCameraView'
 import type { BotVariantConfig } from '@/components/world3d/utils/botVariants'
@@ -27,19 +27,6 @@ import type { AvatarAnimation } from './ChatHeader3DAvatar'
 // We offset the whole group by -0.748 so the head sits at world (0,0,0).
 // The Canvas default camera already looks at the origin — no lookAt tricks needed.
 const HEAD_OFFSET_Y = -0.748
-
-function HeadCamera() {
-  const { camera } = useThree()
-
-  useEffect(() => {
-    if (camera instanceof THREE.PerspectiveCamera) {
-      camera.fov = 50
-      camera.updateProjectionMatrix()
-    }
-  }, [camera])
-
-  return null
-}
 
 // ── Full-body Bot (head shown by camera framing) ───────────────
 
@@ -232,14 +219,13 @@ export default function ChatHeader3DScene({
   return (
     <Canvas
       dpr={[1, 1.5]}
-      // Camera looks at world origin (0,0,0) — head is offset there via HEAD_OFFSET_Y
-      camera={{ position: [0, 0, 0.65], fov: 50, near: 0.1, far: 20 }}
+      camera={false}
       style={{ width: '100%', height: '100%', touchAction: 'none' }}
       frameloop="always"
       gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
     >
-      {/* Adjust camera to look straight at head center */}
-      <HeadCamera />
+      {/* Declarative camera — makeDefault, looks at origin where head is */}
+      <PerspectiveCamera makeDefault position={[0, 0, 0.9]} fov={50} near={0.1} far={20} />
 
       <color attach="background" args={['#0d1626']} />
       <ambientLight intensity={0.55} />
