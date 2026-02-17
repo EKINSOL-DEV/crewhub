@@ -3,12 +3,16 @@
  *
  * Provides a full-screen mobile UI for generating props:
  * - Text prompt → AI-generated 3D prop
+ * - Inline 3D preview (WebGL/R3F) after successful generation
  * - Generation history
- * - Desktop redirect note for 3D preview
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { ArrowLeft, Wand2, Clock, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
+import { useState, useCallback, useEffect, useRef, Suspense } from 'react'
+import React from 'react'
+import { ArrowLeft, Wand2, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls, Stage } from '@react-three/drei'
+import { DynamicProp, type PropPart } from '../world3d/zones/creator/DynamicProp'
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -19,7 +23,7 @@ interface GenerationRecord {
   model: string
   modelLabel: string
   method: string
-  parts: unknown[]
+  parts: PropPart[]
   code: string
   createdAt: string
   error: string | null
@@ -28,6 +32,110 @@ interface GenerationRecord {
 interface ThinkingLine {
   text: string
   type: 'status' | 'thinking' | 'text' | 'tool' | 'tool_result' | 'correction' | 'complete' | 'error' | 'model' | 'prompt'
+}
+
+// ── Error Boundary ─────────────────────────────────────────────────
+
+interface PropErrorBoundaryState { hasError: boolean }
+
+class PropErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  PropErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError(): PropErrorBoundaryState {
+    return { hasError: true }
+  }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback ?? (
+        <div style={{
+          width: '100%', height: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#94a3b8', fontSize: 13, flexDirection: 'column', gap: 8,
+        }}>
+          <span style={{ fontSize: 28 }}>⚠️</span>
+          <span>3D preview unavailable</span>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+// ── 3D Preview Component ────────────────────────────────────────────
+
+interface PropPreview3DProps {
+  parts: PropPart[]
+  name: string
+}
+
+function PropPreview3D({ parts, name }: PropPreview3DProps) {
+  return (
+    <div style={{
+      width: '100%',
+      height: 250,
+      borderRadius: 12,
+      overflow: 'hidden',
+      background: '#0f1e35',
+      border: '1px solid rgba(99,102,241,0.25)',
+      position: 'relative',
+    }}>
+      <PropErrorBoundary>
+        <Canvas camera={{ position: [3, 2, 3], fov: 45 }} style={{ width: '100%', height: '100%' }}>
+          <Suspense fallback={null}>
+            <Stage adjustCamera={false} environment="city" intensity={0.5}>
+              <DynamicProp parts={parts} position={[0, 0, 0]} scale={3} />
+            </Stage>
+          </Suspense>
+          <OrbitControls
+            makeDefault
+            enablePan={false}
+            enableZoom
+            minDistance={1}
+            maxDistance={15}
+          />
+          <ambientLight intensity={0.4} />
+          <directionalLight position={[5, 5, 5]} intensity={0.8} />
+        </Canvas>
+      </PropErrorBoundary>
+
+      {/* Label overlay */}
+      {name && (
+        <div style={{
+          position: 'absolute',
+          bottom: 8,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(4px)',
+          borderRadius: 20,
+          padding: '3px 10px',
+          fontSize: 11,
+          color: '#e2e8f0',
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+        }}>
+          🔍 {name}
+        </div>
+      )}
+
+      {/* Drag hint */}
+      <div style={{
+        position: 'absolute',
+        top: 8,
+        right: 10,
+        fontSize: 10,
+        color: 'rgba(148,163,184,0.6)',
+        pointerEvents: 'none',
+      }}>
+        drag to rotate
+      </div>
+    </div>
+  )
 }
 
 // ── Main Component ────────────────────────────────────────────────
@@ -132,7 +240,7 @@ function PropGeneratorTab() {
   const [inputText, setInputText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [thinkingLines, setThinkingLines] = useState<ThinkingLine[]>([])
-  const [result, setResult] = useState<{ name: string; parts: unknown[] } | null>(null)
+  const [result, setResult] = useState<{ name: string; parts: PropPart[] } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showExamples, setShowExamples] = useState(false)
   const [showThinking, setShowThinking] = useState(false)
@@ -202,7 +310,7 @@ function PropGeneratorTab() {
         eventSourceRef.current = null
         addLine({ text: '✅ Prop generated successfully!', type: 'complete' })
         if (data.parts?.length) {
-          setResult({ name: data.name, parts: data.parts })
+          setResult({ name: data.name, parts: data.parts as PropPart[] })
         } else {
           setError('Generated prop has no geometry parts')
         }
@@ -244,24 +352,6 @@ function PropGeneratorTab() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-      {/* Desktop hint banner */}
-      <div style={{
-        padding: '10px 14px',
-        background: 'rgba(99,102,241,0.1)',
-        border: '1px solid rgba(99,102,241,0.25)',
-        borderRadius: 10,
-        fontSize: 12,
-        color: '#a5b4fc',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 8,
-      }}>
-        <Sparkles size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-        <span>
-          Generate 3D props with AI. For the full experience with live 3D preview and part editor, open CrewHub on desktop.
-        </span>
-      </div>
 
       {/* Examples toggle */}
       <div>
@@ -358,28 +448,50 @@ function PropGeneratorTab() {
         </div>
       )}
 
-      {/* Success result */}
+      {/* 3D Preview — shown after successful generation */}
       {result && (
-        <div style={{
-          padding: '14px 16px',
-          background: 'rgba(34,197,94,0.1)',
-          border: '1px solid rgba(34,197,94,0.25)',
-          borderRadius: 12,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 20 }}>🎉</span>
-            <span style={{ fontWeight: 600, color: '#86efac', fontSize: 15 }}>{result.name}</span>
-          </div>
-          <div style={{ fontSize: 12, color: '#94a3b8' }}>
-            {(result.parts as unknown[]).length} part{(result.parts as unknown[]).length !== 1 ? 's' : ''} generated • Prop saved to library
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Success banner */}
           <div style={{
-            marginTop: 10, padding: '8px 12px',
-            background: 'rgba(99,102,241,0.1)',
-            borderRadius: 8, fontSize: 12, color: '#a5b4fc',
+            padding: '12px 14px',
+            background: 'rgba(34,197,94,0.1)',
+            border: '1px solid rgba(34,197,94,0.25)',
+            borderRadius: 12,
+            display: 'flex', alignItems: 'center', gap: 10,
           }}>
-            💡 Open CrewHub on desktop to view and place this prop in 3D
+            <span style={{ fontSize: 20 }}>🎉</span>
+            <div>
+              <div style={{ fontWeight: 600, color: '#86efac', fontSize: 15 }}>{result.name}</div>
+              <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
+                {result.parts.length} part{result.parts.length !== 1 ? 's' : ''} generated · Saved to library
+              </div>
+            </div>
           </div>
+
+          {/* 3D Canvas */}
+          <PropPreview3D parts={result.parts} name={result.name} />
+        </div>
+      )}
+
+      {/* Generating placeholder (while generating, after a previous result was cleared) */}
+      {isGenerating && (
+        <div style={{
+          width: '100%',
+          height: 250,
+          borderRadius: 12,
+          background: 'rgba(99,102,241,0.06)',
+          border: '1px solid rgba(99,102,241,0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          color: '#818cf8',
+          fontSize: 14,
+        }}>
+          <span style={{ fontSize: 36 }}>⚙️</span>
+          <span>Generating prop…</span>
+          <span style={{ fontSize: 11, color: '#64748b' }}>This may take a minute</span>
         </div>
       )}
 
@@ -440,6 +552,7 @@ function PropHistoryTab() {
   const [records, setRecords] = useState<GenerationRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [preview3D, setPreview3D] = useState<{ id: string; parts: PropPart[]; name: string } | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -484,6 +597,8 @@ function PropHistoryTab() {
         const date = new Date(record.createdAt)
         const dateStr = date.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short' })
         const timeStr = date.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
+        const hasParts = record.parts && record.parts.length > 0 && !record.error
+        const showing3D = preview3D?.id === record.id
 
         return (
           <div
@@ -535,8 +650,8 @@ function PropHistoryTab() {
                   <span style={{ color: '#64748b' }}>Prompt: </span>
                   {record.prompt}
                 </div>
-                {record.parts && record.parts.length > 0 && (
-                  <div style={{ fontSize: 12, color: '#64748b' }}>
+                {hasParts && (
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 10 }}>
                     {record.parts.length} geometry part{record.parts.length !== 1 ? 's' : ''}
                   </div>
                 )}
@@ -544,18 +659,40 @@ function PropHistoryTab() {
                   <div style={{
                     fontSize: 12, color: '#fca5a5',
                     background: 'rgba(239,68,68,0.08)',
-                    padding: '6px 10px', borderRadius: 6, marginTop: 6,
+                    padding: '6px 10px', borderRadius: 6, marginBottom: 10,
                   }}>
                     Error: {record.error}
                   </div>
                 )}
-                <div style={{
-                  marginTop: 10, padding: '8px 10px',
-                  background: 'rgba(99,102,241,0.08)',
-                  borderRadius: 8, fontSize: 11, color: '#818cf8',
-                }}>
-                  💻 Open desktop to view 3D preview & place in world
-                </div>
+
+                {/* 3D preview toggle for history items */}
+                {hasParts && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <button
+                      onClick={() => {
+                        setPreview3D(showing3D ? null : { id: record.id, parts: record.parts, name: record.name })
+                      }}
+                      style={{
+                        padding: '8px 14px',
+                        background: showing3D ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.08)',
+                        border: '1px solid rgba(99,102,241,0.25)',
+                        borderRadius: 8,
+                        color: '#818cf8',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {showing3D ? '🔼 Hide 3D Preview' : '🔽 View in 3D'}
+                    </button>
+                    {showing3D && (
+                      <PropPreview3D parts={record.parts} name={record.name} />
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
