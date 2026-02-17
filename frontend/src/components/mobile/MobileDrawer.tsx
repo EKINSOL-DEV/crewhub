@@ -70,7 +70,7 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
           bottom: 0,
           width: 280,
           maxWidth: '80vw',
-          background: '#1e293b',
+          background: 'var(--mobile-surface, #1e293b)',
           zIndex: 9999,
           transform: open ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.25s ease',
@@ -86,17 +86,17 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
         }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--mobile-text, #f1f5f9)' }}>
             CrewHub
           </h2>
           <button
             onClick={onClose}
             style={{
               width: 32, height: 32, borderRadius: 8,
-              border: 'none', background: 'rgba(255,255,255,0.06)',
-              color: '#94a3b8', cursor: 'pointer',
+              border: 'none', background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
+              color: 'var(--mobile-text-muted, #94a3b8)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -131,7 +131,7 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
                   border: 'none',
                   borderRadius: 12,
                   cursor: isDisabled ? 'default' : 'pointer',
-                  color: isDisabled ? '#475569' : isActive ? '#818cf8' : '#cbd5e1',
+                  color: isDisabled ? 'var(--mobile-text-muted, #475569)' : isActive ? '#818cf8' : 'var(--mobile-text, #cbd5e1)',
                   fontSize: 15,
                   fontWeight: isActive ? 600 : 400,
                   textAlign: 'left',
@@ -158,9 +158,9 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
         {/* Footer */}
         <div style={{
           padding: '16px 20px',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
           fontSize: 11,
-          color: '#475569',
+          color: 'var(--mobile-text-muted, #475569)',
         }}>
           CrewHub Mobile
         </div>

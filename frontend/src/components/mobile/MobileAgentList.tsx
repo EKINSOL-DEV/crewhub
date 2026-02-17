@@ -67,7 +67,7 @@ export function MobileAgentList({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
         flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -76,8 +76,8 @@ export function MobileAgentList({
               onClick={onOpenDrawer}
               style={{
                 width: 36, height: 36, borderRadius: 10,
-                border: 'none', background: 'rgba(255,255,255,0.06)',
-                color: '#94a3b8', cursor: 'pointer',
+                border: 'none', background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
+                color: 'var(--mobile-text-muted, #94a3b8)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}
@@ -86,10 +86,10 @@ export function MobileAgentList({
             </button>
           )}
           <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#f1f5f9' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--mobile-text, #f1f5f9)' }}>
             CrewHub
           </h1>
-          <div style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--mobile-text-muted, #64748b)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
             {connected ? (
               <><Wifi size={12} color="#22c55e" /> <span>{onlineCount} of {agents.length} agents online</span></>
             ) : (
@@ -118,8 +118,8 @@ export function MobileAgentList({
             disabled={loading}
             style={{
               width: 36, height: 36, borderRadius: 10,
-              border: 'none', background: 'rgba(255,255,255,0.06)',
-              color: '#94a3b8', cursor: 'pointer',
+              border: 'none', background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
+              color: 'var(--mobile-text-muted, #94a3b8)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -176,19 +176,19 @@ export function MobileAgentList({
                   position: 'absolute', bottom: -1, right: -1,
                   width: 14, height: 14, borderRadius: '50%',
                   background: statusInfo.dot,
-                  border: '2.5px solid #0f172a',
+                  border: '2.5px solid var(--mobile-bg, #0f172a)',
                 }} />
               </div>
 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 15, fontWeight: 600, color: '#f1f5f9',
+                  fontSize: 15, fontWeight: 600, color: 'var(--mobile-text, #f1f5f9)',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {name}
                 </div>
-                <div style={{ fontSize: 12, color: '#64748b', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ fontSize: 12, color: 'var(--mobile-text-muted, #64748b)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>{statusInfo.label}</span>
                   {activeSubagents > 0 && (
                     <span style={{
@@ -203,7 +203,7 @@ export function MobileAgentList({
 
               {/* Time */}
               {timeSince && (
-                <div style={{ fontSize: 11, color: '#475569', flexShrink: 0 }}>
+                <div style={{ fontSize: 11, color: 'var(--mobile-text-muted, #475569)', flexShrink: 0 }}>
                   {timeSince}
                 </div>
               )}
@@ -216,7 +216,7 @@ export function MobileAgentList({
           <>
             <div style={{
               padding: '16px 12px 8px',
-              fontSize: 12, fontWeight: 600, color: '#64748b',
+              fontSize: 12, fontWeight: 600, color: 'var(--mobile-text-muted, #64748b)',
               textTransform: 'uppercase', letterSpacing: '0.05em',
             }}>
               Group Chats
@@ -251,19 +251,19 @@ export function MobileAgentList({
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontSize: 15, fontWeight: 600, color: '#f1f5f9',
+                      fontSize: 15, fontWeight: 600, color: 'var(--mobile-text, #f1f5f9)',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
                       {title}
                     </div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: 'var(--mobile-text-muted, #64748b)', marginTop: 2 }}>
                       {activeParticipants.length} agents
                     </div>
                   </div>
 
                   {/* Time */}
                   {timeSince && (
-                    <div style={{ fontSize: 11, color: '#475569', flexShrink: 0 }}>
+                    <div style={{ fontSize: 11, color: 'var(--mobile-text-muted, #475569)', flexShrink: 0 }}>
                       {timeSince}
                     </div>
                   )}
