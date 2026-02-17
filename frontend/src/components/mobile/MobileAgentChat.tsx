@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type CSSProperties, type ClipboardEvent } from 'react'
-import { ArrowLeft, Paperclip, X } from 'lucide-react'
+import { ArrowLeft, Paperclip, X, Settings as SettingsIcon } from 'lucide-react'
 import { useAgentChat, type ChatMessageData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
 import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
@@ -258,6 +258,7 @@ interface MobileAgentChatProps {
   agentColor: string | null
   subagentSessions: CrewSession[]
   onBack: () => void
+  onOpenSettings?: () => void
 }
 
 export function MobileAgentChat({
@@ -267,6 +268,7 @@ export function MobileAgentChat({
   agentColor,
   subagentSessions,
   onBack,
+  onOpenSettings,
 }: MobileAgentChatProps) {
   const accentColor = agentColor || getColor(sessionKey)
   const icon = agentIcon || agentName.charAt(0).toUpperCase()
@@ -487,6 +489,20 @@ export function MobileAgentChat({
           count={subagentSessions.length}
           onClick={() => setShowTasks(true)}
         />
+        {onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            title="Settings"
+            style={{
+              width: 34, height: 34, borderRadius: 10, border: 'none',
+              background: 'transparent', color: '#64748b', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <SettingsIcon size={17} />
+          </button>
+        )}
       </header>
 
       {/* Active Tasks Overlay */}

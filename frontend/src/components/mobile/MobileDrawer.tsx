@@ -22,7 +22,7 @@ const MENU_ITEMS: { id: MobilePanel; label: string; icon: typeof FileText; enabl
   { id: 'activity', label: 'Activity', icon: Activity, enabled: true },
   { id: 'projects', label: 'Projects', icon: FolderKanban, enabled: true },
   { id: 'tasks', label: 'Tasks', icon: ListTodo, enabled: false },
-  { id: 'settings', label: 'Settings', icon: Settings, enabled: false },
+  { id: 'settings', label: 'Settings', icon: Settings, enabled: true },
 ]
 
 export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: MobileDrawerProps) {

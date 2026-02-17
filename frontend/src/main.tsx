@@ -3,9 +3,13 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import { installGlobalErrorCapture } from './lib/devErrorStore'
+import { initAppSettings } from './components/mobile/MobileSettingsPanel'
 
 // Install dev error capture before anything else
 installGlobalErrorCapture()
+
+// Apply persisted theme & font size before React renders (prevents FOUC)
+initAppSettings()
 
 // Initialize mock API for demo builds (must run before any React rendering)
 async function boot() {

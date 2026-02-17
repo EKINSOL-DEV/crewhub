@@ -6,6 +6,8 @@ import { MobileDocsPanel } from './MobileDocsPanel'
 import { MobileKanbanPanel } from './MobileKanbanPanel'
 import { MobileActivityPanel } from './MobileActivityPanel'
 import { MobileProjectsPanel } from './MobileProjectsPanel'
+import { MobileSettingsPanel, initAppSettings } from './MobileSettingsPanel'
+import { MobileDebugBar } from './MobileDebugBar'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useAgentsRegistry } from '@/hooks/useAgentsRegistry'
 import { AgentMultiSelectSheet, GroupThreadChat } from './group'
@@ -30,6 +32,34 @@ export function MobileLayout() {
   const [view, setView] = useState<View>({ type: 'list' })
   const [threads, setThreads] = useState<Thread[]>([])
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [debugMode, setDebugMode] = useState(
+    () => localStorage.getItem('crewhub-debug') === 'true'
+  )
+
+  // Initialize theme + font size on first render
+  useEffect(() => {
+    initAppSettings()
+  }, [])
+
+  // Keep debugMode in sync with localStorage (settings panel writes it directly)
+  useEffect(() => {
+    const syncDebug = () => {
+      setDebugMode(localStorage.getItem('crewhub-debug') === 'true')
+    }
+    window.addEventListener('storage', syncDebug)
+    return () => window.removeEventListener('storage', syncDebug)
+  }, [])
+
+  // Listen for debug mode changes from within the same window
+  // (storage event only fires for other tabs; we poll lightly)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const current = localStorage.getItem('crewhub-debug') === 'true'
+      setDebugMode(prev => prev !== current ? current : prev)
+    }, 500)
+    return () => clearInterval(interval)
+  }, [])
 
   // Filter to fixed agents only
   const fixedAgents = agents.filter(r => FIXED_AGENT_IDS.includes(r.agent.id))
@@ -95,7 +125,9 @@ export function MobileLayout() {
       case 'projects':
         setView({ type: 'projects' })
         break
-      // Future panels
+      case 'settings':
+        setSettingsOpen(true)
+        break
       default:
         break
     }
@@ -115,8 +147,8 @@ export function MobileLayout() {
       width: '100vw',
       display: 'flex',
       flexDirection: 'column',
-      background: '#0f172a',
-      color: '#e2e8f0',
+      background: 'var(--mobile-bg, #0f172a)',
+      color: 'var(--mobile-text, #e2e8f0)',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       overflow: 'hidden',
     }}>
@@ -128,6 +160,19 @@ export function MobileLayout() {
         currentPanel={currentPanel}
       />
 
+      {/* Settings Panel */}
+      <MobileSettingsPanel
+        open={settingsOpen}
+        onClose={() => {
+          setSettingsOpen(false)
+          // Re-sync debug mode after settings closed
+          setDebugMode(localStorage.getItem('crewhub-debug') === 'true')
+        }}
+      />
+
+      {/* Debug status bar */}
+      <MobileDebugBar enabled={debugMode} />
+
       {view.type === 'chat' ? (
         <MobileAgentChat
           sessionKey={view.sessionKey}
@@ -136,6 +181,7 @@ export function MobileLayout() {
           agentColor={view.agentColor}
           subagentSessions={getSubagentSessions(view.agentId)}
           onBack={handleBack}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
       ) : view.type === 'new-group' ? (
         <AgentMultiSelectSheet
