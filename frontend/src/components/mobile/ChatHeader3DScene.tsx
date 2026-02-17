@@ -5,8 +5,8 @@
  * Not interactive — purely decorative.
  */
 import { useRef, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { RoundedBox, PerspectiveCamera, OrbitControls } from '@react-three/drei'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { RoundedBox, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import type { AgentStatus } from './AgentCameraView'
 import type { BotVariantConfig } from '@/components/world3d/utils/botVariants'

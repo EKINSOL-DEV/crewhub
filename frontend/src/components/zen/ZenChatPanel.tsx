@@ -4,11 +4,8 @@
  */
 
 import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 'react'
-import { useAgentChat, type ChatMessageData, type ToolCallData } from '@/hooks/useAgentChat'
-import { parseMediaAttachments } from '@/utils/mediaParser'
-import { stripOpenClawTags } from '@/lib/messageUtils'
-import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
-import { VideoThumbnail } from '@/components/chat/VideoThumbnail'
+import { useAgentChat } from '@/hooks/useAgentChat'
+import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { PixelAvatar } from './PixelAvatar'
 import { ImageDropZone, ImagePreviews, type PendingImage } from './ImageDropZone'
 
@@ -22,227 +19,7 @@ interface ZenChatPanelProps {
   onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void  // Direct agent selection
 }
 
-// ── Lightweight markdown rendering ─────────────────────────────
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-function renderMarkdown(text: string): string {
-  let html = text
-  
-  // Code blocks (must be first to protect content)
-  html = html.replace(
-    /```(\w*)\n([\s\S]*?)```/g,
-    (_m, lang, code) =>
-      `<pre class="zen-md-codeblock" data-lang="${lang}"><code>${escapeHtml(code.trim())}</code></pre>`
-  )
-  
-  // Inline code (protect from other replacements)
-  const inlineCodePlaceholders: string[] = []
-  html = html.replace(/`([^`]+)`/g, (_m, code) => {
-    const placeholder = `%%INLINE_CODE_${inlineCodePlaceholders.length}%%`
-    inlineCodePlaceholders.push(`<code class="zen-md-inline-code">${escapeHtml(code)}</code>`)
-    return placeholder
-  })
-  
-  // Headers
-  html = html.replace(/^### (.+)$/gm, '<h4 class="zen-md-h3">$1</h4>')
-  html = html.replace(/^## (.+)$/gm, '<h3 class="zen-md-h2">$1</h3>')
-  html = html.replace(/^# (.+)$/gm, '<h2 class="zen-md-h1">$1</h2>')
-  
-  // Blockquotes
-  html = html.replace(/^> (.+)$/gm, '<blockquote class="zen-md-blockquote">$1</blockquote>')
-  
-  // Horizontal rule
-  html = html.replace(/^---$/gm, '<hr class="zen-md-hr" />')
-  
-  // Bold
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  
-  // Italic
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
-  
-  // Strikethrough
-  html = html.replace(/~~(.+?)~~/g, '<del>$1</del>')
-  
-  // Links [text](url)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="zen-md-link">$1</a>')
-  
-  // Unordered lists
-  html = html.replace(/^- (.+)$/gm, '<li class="zen-md-li">$1</li>')
-  html = html.replace(/(<li class="zen-md-li">.*<\/li>\n?)+/g, '<ul class="zen-md-ul">$&</ul>')
-  
-  // Ordered lists
-  html = html.replace(/^\d+\. (.+)$/gm, '<li class="zen-md-li-ordered">$1</li>')
-  html = html.replace(/(<li class="zen-md-li-ordered">.*<\/li>\n?)+/g, '<ol class="zen-md-ol">$&</ol>')
-  
-  // Restore inline code
-  inlineCodePlaceholders.forEach((code, i) => {
-    html = html.replace(`%%INLINE_CODE_${i}%%`, code)
-  })
-  
-  // Line breaks (but not inside lists/blockquotes)
-  html = html.replace(/\n/g, '<br/>')
-  
-  // Clean up extra breaks after block elements
-  html = html.replace(/<\/(h[234]|blockquote|ul|ol|pre|hr)><br\/>/g, '</$1>')
-  html = html.replace(/<br\/><(h[234]|blockquote|ul|ol|pre)/g, '<$1')
-  
-  return html
-}
-
-function formatRelativeTime(timestamp: number): string {
-  const now = Date.now()
-  const diff = now - timestamp
-  
-  if (diff < 60000) return 'just now'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-  return new Date(timestamp).toLocaleDateString()
-}
-
-// ── Thinking Block Component ───────────────────────────────────
-
-function ThinkingBlock({ content }: { content: string }) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const isLong = content.length > 500
-  
-  return (
-    <div className="zen-thinking-block">
-      <button
-        type="button"
-        className="zen-thinking-block-header"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <span>🧠</span>
-        <span>Thinking</span>
-        {isLong && (
-          <span className="zen-thinking-block-toggle">
-            {isExpanded ? '▾ collapse' : '▸ expand'}
-          </span>
-        )}
-      </button>
-      <div className={`zen-thinking-block-content ${isExpanded ? 'zen-thinking-block-expanded' : ''}`}>
-        {isExpanded || !isLong ? content : content.slice(0, 500) + '...'}
-      </div>
-    </div>
-  )
-}
-
-// ── Tool Call Component ────────────────────────────────────────
-
-function ToolCall({ tool }: { tool: ToolCallData }) {
-  const isSuccess = tool.status === 'done' || tool.status === 'called'
-  
-  return (
-    <div className="zen-tool-call">
-      <span className="zen-tool-icon">🔧</span>
-      <span className="zen-tool-name">{tool.name}</span>
-      <span className={`zen-tool-status ${isSuccess ? 'zen-tool-status-success' : 'zen-tool-status-error'}`}>
-        {isSuccess ? '✓' : '✗'}
-      </span>
-    </div>
-  )
-}
-
-// ── Message Component ──────────────────────────────────────────
-
-function Message({ msg }: { msg: ChatMessageData }) {
-  const isUser = msg.role === 'user'
-  const isSystem = msg.role === 'system'
-  
-  // Parse media attachments from content
-  const { text, attachments } = parseMediaAttachments(msg.content || '')
-  const imageAttachments = attachments.filter(a => a.type === 'image')
-  const videoAttachments = attachments.filter(a => a.type === 'video')
-
-  if (isSystem) {
-    return (
-      <div 
-        className="zen-message zen-message-system zen-fade-in"
-        style={{ 
-          alignSelf: 'center', 
-          color: 'var(--zen-fg-muted)', 
-          fontStyle: 'italic',
-          fontSize: '12px',
-          padding: 'var(--zen-space-sm) 0'
-        }}
-      >
-        {stripOpenClawTags(text)}
-      </div>
-    )
-  }
-
-  return (
-    <div className={`zen-message ${isUser ? 'zen-message-user' : 'zen-message-assistant'} zen-fade-in`}>
-      <div className="zen-message-header">
-        <span className={`zen-message-role ${isUser ? 'zen-message-role-user' : 'zen-message-role-assistant'}`}>
-          {isUser ? 'YOU' : 'ASSISTANT'}
-        </span>
-        <span className="zen-message-time">{formatRelativeTime(msg.timestamp)}</span>
-      </div>
-      
-      {/* Image attachments */}
-      {imageAttachments.length > 0 && (
-        <div style={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          gap: '8px', 
-          marginBottom: '8px' 
-        }}>
-          {imageAttachments.map((attachment, i) => (
-            <ImageThumbnail key={i} attachment={attachment} maxWidth={200} />
-          ))}
-        </div>
-      )}
-      
-      {/* Video attachments */}
-      {videoAttachments.length > 0 && (
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          gap: '8px', 
-          marginBottom: '8px' 
-        }}>
-          {videoAttachments.map((attachment, i) => (
-            <VideoThumbnail key={i} attachment={attachment} maxWidth={300} />
-          ))}
-        </div>
-      )}
-      
-      {/* Thinking blocks */}
-      {msg.thinking && msg.thinking.length > 0 && (
-        <div className="zen-thinking-blocks">
-          {msg.thinking.map((thought, i) => (
-            <ThinkingBlock key={i} content={thought} />
-          ))}
-        </div>
-      )}
-      
-      {/* Tool calls */}
-      {msg.tools && msg.tools.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
-          {msg.tools.map((tool, i) => (
-            <ToolCall key={i} tool={tool} />
-          ))}
-        </div>
-      )}
-      
-      {/* Message content */}
-      {text && (
-        <div 
-          className="zen-message-content"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(stripOpenClawTags(text)) }}
-        />
-      )}
-    </div>
-  )
-}
+// (renderMarkdown, ThinkingBlock, ToolCall, Message all moved to ChatMessageBubble.tsx)
 
 // ── Empty State ────────────────────────────────────────────────
 
@@ -668,7 +445,12 @@ export function ZenChatPanel({
 
           {/* Messages */}
           {messages.map(msg => (
-            <Message key={msg.id} msg={msg} />
+            <ChatMessageBubble
+              key={msg.id}
+              msg={msg}
+              variant="zen"
+              showThinking={showThinking}
+            />
           ))}
 
           {/* Thinking indicator */}

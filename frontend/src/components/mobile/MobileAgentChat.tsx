@@ -1,9 +1,7 @@
-import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type CSSProperties, type ClipboardEvent } from 'react'
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ClipboardEvent } from 'react'
 import { ArrowLeft, Paperclip, X, Settings as SettingsIcon } from 'lucide-react'
-import { useAgentChat, type ChatMessageData } from '@/hooks/useAgentChat'
-import { parseMediaAttachments } from '@/utils/mediaParser'
-import { stripOpenClawTags } from '@/lib/messageUtils'
-import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
+import { useAgentChat } from '@/hooks/useAgentChat'
+import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { API_BASE } from '@/lib/api'
 import type { CrewSession } from '@/lib/api'
 import { ActiveTasksBadge, ActiveTasksOverlay } from './ActiveTasksOverlay'
@@ -47,32 +45,7 @@ async function uploadFile(file: File): Promise<{ path: string; url: string }> {
   return { path: data.path, url: data.url }
 }
 
-// ── Helpers ────────────────────────────────────────────────────
-
-function renderMarkdown(text: string): string {
-  let html = text.replace(
-    /```(\w*)\n([\s\S]*?)```/g,
-    (_m, _lang, code) =>
-      `<pre style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0"><code>${escapeHtml(code.trim())}</code></pre>`
-  )
-  html = html.replace(
-    /`([^`]+)`/g,
-    '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>'
-  )
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
-  html = html.replace(/\n/g, '<br/>')
-  return html
-}
-
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
-function formatTimestamp(ts: number): string {
-  if (!ts) return ''
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
+// (renderMarkdown, escapeHtml, formatTimestamp, ChatBubble moved to ChatMessageBubble.tsx)
 
 // Deterministic color
 const AGENT_COLORS = [
@@ -85,89 +58,7 @@ function getColor(key: string): string {
   return AGENT_COLORS[Math.abs(hash) % AGENT_COLORS.length]
 }
 
-// ── Chat Bubble ────────────────────────────────────────────────
-
-function ChatBubble({ msg, accentColor }: { msg: ChatMessageData; accentColor: string }) {
-  const isUser = msg.role === 'user'
-  const isSystem = msg.role === 'system'
-
-  if (isSystem) {
-    return (
-      <div style={{ textAlign: 'center', fontSize: 11, color: '#64748b', fontStyle: 'italic', padding: '4px 0' }}>
-        {stripOpenClawTags(msg.content || '')}
-      </div>
-    )
-  }
-
-  const { text, attachments } = parseMediaAttachments(msg.content || '')
-  const images = attachments.filter(a => a.type === 'image')
-
-  // Tool calls summary
-  const toolsSummary = msg.tools && msg.tools.length > 0 ? (
-    <div style={{
-      display: 'flex', flexWrap: 'wrap', gap: 4,
-      ...(isUser ? { justifyContent: 'flex-end' } : {}),
-    }}>
-      {msg.tools.map((tool, i) => (
-        <span key={i} style={{
-          fontSize: 10, padding: '2px 6px', borderRadius: 6,
-          background: 'rgba(251, 191, 36, 0.12)',
-          color: '#fbbf24',
-        }}>
-          🔧 {tool.name} {tool.status === 'done' || tool.status === 'called' ? '✓' : '✗'}
-        </span>
-      ))}
-    </div>
-  ) : null
-
-  const bubbleStyle: CSSProperties = isUser
-    ? {
-        background: accentColor + 'cc',
-        color: '#fff',
-        borderRadius: '16px 16px 4px 16px',
-        marginLeft: 48,
-        alignSelf: 'flex-end',
-      }
-    : {
-        background: 'rgba(255,255,255,0.07)',
-        color: '#e2e8f0',
-        borderRadius: '16px 16px 16px 4px',
-        marginRight: 48,
-        alignSelf: 'flex-start',
-      }
-
-  return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      alignItems: isUser ? 'flex-end' : 'flex-start',
-      gap: 4,
-    }}>
-      {toolsSummary}
-      {text && (
-        <div
-          style={{
-            padding: '10px 14px', fontSize: 14, lineHeight: 1.5,
-            wordBreak: 'break-word', maxWidth: '100%', ...bubbleStyle,
-          }}
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(stripOpenClawTags(text)) }}
-        />
-      )}
-      {images.length > 0 && (
-        <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: 6,
-          ...(isUser ? { marginLeft: 48 } : { marginRight: 48 }),
-        }}>
-          {images.map((att, i) => (
-            <ImageThumbnail key={i} attachment={att} maxWidth={180} />
-          ))}
-        </div>
-      )}
-      <div style={{ fontSize: 10, color: '#475569', padding: '0 4px' }}>
-        {formatTimestamp(msg.timestamp)}
-      </div>
-    </div>
-  )
-}
+// (ChatBubble moved to ChatMessageBubble.tsx — use <ChatMessageBubble variant="mobile" />)
 
 // ── File Preview Bar ───────────────────────────────────────────
 
@@ -544,7 +435,7 @@ export function MobileAgentChat({
         )}
 
         {messages.map(msg => (
-          <ChatBubble key={msg.id} msg={msg} accentColor={accentColor} />
+          <ChatMessageBubble key={msg.id} msg={msg} variant="mobile" accentColor={accentColor} />
         ))}
 
         {isSending && (
