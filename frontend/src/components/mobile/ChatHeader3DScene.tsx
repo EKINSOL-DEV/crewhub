@@ -26,8 +26,9 @@ import type { AvatarAnimation } from './ChatHeader3DAvatar'
 //
 // Vertical view at Z=0.9, FOV 50: 2 × 0.9 × tan(25°) ≈ 0.84 units.
 // Head (0.66 units) + max bob (0.08) = 0.74 — fits comfortably. ✓
-const HEAD_WORLD_Y = 0.748
-const DEBUG_CAMERA = true // ← set false to disable debug overlay
+const HEAD_WORLD_Y = 0.35
+const CAM_Z = 0.65
+const DEBUG_CAMERA = false // set true to re-enable tuning overlay
 
 // ── Full-body Bot (head shown by camera framing) ───────────────
 
@@ -225,7 +226,7 @@ export default function ChatHeader3DScene({
       <Canvas dpr={[1, 1.5]} style={{ width: '100%', height: '100%', touchAction: 'none' }}
         frameloop="always" gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}>
         <group position={[0, HEAD_WORLD_Y, 0]}>
-          <PerspectiveCamera makeDefault position={[0, 0, 0.9]} fov={50} near={0.1} far={20} />
+          <PerspectiveCamera makeDefault position={[0, 0, CAM_Z]} fov={50} near={0.1} far={20} />
         </group>
         <color attach="background" args={['#0d1626']} />
         <ambientLight intensity={0.55} />
