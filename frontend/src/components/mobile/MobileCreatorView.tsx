@@ -731,8 +731,12 @@ function PropHistoryTab() {
               background: '#1e293b',
               border: `1px solid ${isExpanded ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.07)'}`,
               borderRadius: 12,
+              overflow: 'hidden',
               transition: 'border-color 0.15s',
               minHeight: 64,
+              // Force GPU compositing layer — fixes iOS Safari scroll container height caching
+              WebkitTransform: 'translateZ(0)',
+              transform: 'translateZ(0)',
             }}
           >
             {/* ── Collapsed row ── */}
@@ -846,12 +850,8 @@ function PropHistoryTab() {
               </div>{/* end iOS Safari flex wrapper */}
             </button>
 
-            {/* ── Expanded detail — always rendered, shown via max-height (iOS Safari fix) ── */}
-            <div style={{
-              overflow: 'hidden',
-              maxHeight: isExpanded ? '600px' : '0px',
-              transition: 'max-height 0.2s ease-out',
-            }}>
+            {/* ── Expanded detail — conditional render (iOS Safari: no max-height caching) ── */}
+            {isExpanded && (
               <div style={{
                 padding: '12px 14px 14px',
                 borderTop: '1px solid rgba(255,255,255,0.06)',
@@ -961,7 +961,7 @@ function PropHistoryTab() {
                   </div>
                 )}
               </div>
-            </div>{/* end max-height wrapper */}
+            )}{/* end conditional expanded section */}
           </div>
         )
       })}
