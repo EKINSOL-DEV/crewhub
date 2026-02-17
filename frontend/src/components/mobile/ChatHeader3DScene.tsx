@@ -53,12 +53,12 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
     // ── Movement based on animation prop ──
     if (animation === 'thinking') {
       // Faster bob + slight side tilt = "processing" feel
-      groupRef.current.position.y = HEAD_OFFSET_Y + Math.sin(t * 2.5) * 0.04
+      groupRef.current.position.y = Math.sin(t * 2.5) * 0.04
       groupRef.current.rotation.y = Math.sin(t * 0.8) * 0.10
       groupRef.current.rotation.z = Math.sin(t * 1.5) * 0.02
     } else {
       // idle — gentle float
-      groupRef.current.position.y = HEAD_OFFSET_Y + Math.sin(t * 1.0) * 0.04
+      groupRef.current.position.y = Math.sin(t * 1.0) * 0.04
       groupRef.current.rotation.y = Math.sin(t * 0.25) * 0.08
       groupRef.current.rotation.z = 0
     }
@@ -69,7 +69,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
       groupRef.current.scale.set(1, breathe, 1)
       groupRef.current.rotation.z = 0.06
       groupRef.current.rotation.y = 0
-      groupRef.current.position.y = HEAD_OFFSET_Y
+      groupRef.current.position.y = 0
     } else {
       groupRef.current.scale.set(1, 1, 1)
     }
@@ -87,8 +87,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
                             '#6366f1'
 
   return (
-    // Group offset so head is at world origin — camera default lookAt (0,0,0) frames it correctly.
-    <group ref={groupRef} position={[0, HEAD_OFFSET_Y, 0]} scale={2.2}>
+    <group ref={groupRef} position={[0, 0, 0]} scale={2.2}>
 
       {/* ── Head ── */}
       <group position={[0, 0.34, 0]}>
@@ -225,7 +224,7 @@ export default function ChatHeader3DScene({
       gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
     >
       {/* Declarative camera — makeDefault, looks at origin where head is */}
-      <PerspectiveCamera makeDefault position={[0, 0.25, 0.9]} fov={50} near={0.1} far={20} />
+      <PerspectiveCamera makeDefault position={[0, 0.748, 0.9]} fov={50} near={0.1} far={20} />
 
       <color attach="background" args={['#0d1626']} />
       <ambientLight intensity={0.55} />
