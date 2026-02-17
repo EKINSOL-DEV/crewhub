@@ -112,9 +112,9 @@ export function ChatHeader3DAvatar({
 
   const containerStyle: CSSProperties = {
     width: 128,
-    height: 72,
+    height: 230, // DEBUG: expanded for camera tuning (restore to 72 after)
     borderRadius: 14,
-    overflow: 'hidden',
+    overflow: 'visible', // DEBUG: show buttons below canvas
     flexShrink: 0,
     border: `1px solid ${config.color}30`,
     background: '#0d1626',
