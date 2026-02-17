@@ -224,7 +224,8 @@ export default function ChatHeader3DScene({
       gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
     >
       {/* Declarative camera — makeDefault, looks at origin where head is */}
-      <PerspectiveCamera makeDefault position={[0, 0.748, 0.9]} fov={50} near={0.1} far={20} />
+      {/* Camera above head, tilted ~40° down to center the head in frame */}
+      <PerspectiveCamera makeDefault position={[0, 1.5, 0.9]} rotation={[0.697, 0, 0]} fov={50} near={0.1} far={20} />
 
       <color attach="background" args={['#0d1626']} />
       <ambientLight intensity={0.55} />
