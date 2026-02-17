@@ -71,7 +71,8 @@ export type MinionSession = CrewSession
 export type MinionMessage = SessionMessage
 export type MinionContentBlock = SessionContentBlock
 
-export const API_BASE = '/api'
+const _configuredBackend = localStorage.getItem('crewhub_backend_url') || (window as any).__CREWHUB_BACKEND_URL__ || import.meta.env.VITE_API_URL || ''
+export const API_BASE = _configuredBackend ? `${_configuredBackend}/api` : '/api'
 
 // ─── Discovery Types ──────────────────────────────────────────────
 
