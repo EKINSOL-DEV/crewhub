@@ -201,9 +201,23 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Explicitly list allowed origins so Tauri desktop windows are accepted.
+# - http://localhost:5180     → Vite dev server
+# - http://localhost:1420     → Tauri default dev port (fallback)
+# - tauri://localhost         → Tauri production build (macOS / Linux)
+# - https://tauri.localhost   → Tauri production build (Windows WebView2)
+# The wildcard fallback is kept last so existing deployments/proxies still work.
+_CORS_ORIGINS = [
+    "http://localhost:5180",
+    "http://localhost:1420",
+    "tauri://localhost",
+    "https://tauri.localhost",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_CORS_ORIGINS,
+    allow_origin_regex=r"http://localhost:\d+",  # any localhost port for dev flexibility
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

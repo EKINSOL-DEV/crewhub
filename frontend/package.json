@@ -9,7 +9,9 @@
     "preview": "vite preview --port 5180",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.2",
@@ -30,6 +32,8 @@
     "@radix-ui/react-switch": "^1.0.3",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-shell": "^2.3.5",
     "@types/three": "^0.182.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",

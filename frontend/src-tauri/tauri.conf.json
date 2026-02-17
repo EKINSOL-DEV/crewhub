@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CrewHub",
+  "version": "0.1.0",
+  "identifier": "dev.crewhub.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5180",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "trayIcon": {
+      "iconPath": "icons/tray-icon.png",
+      "iconAsTemplate": true
+    },
+    "windows": [],
+    "security": {
+      "csp": {
+        "default-src": ["'self'", "tauri:"],
+        "connect-src": [
+          "'self'",
+          "http://localhost:8091",
+          "ws://localhost:8091",
+          "http://127.0.0.1:8091",
+          "ws://127.0.0.1:8091"
+        ],
+        "img-src": [
+          "'self'",
+          "asset:",
+          "https:",
+          "http://localhost:8091",
+          "data:"
+        ],
+        "media-src": ["'self'", "http://localhost:8091"],
+        "script-src": ["'self'", "'unsafe-inline'"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "font-src": ["'self'", "data:"],
+        "worker-src": ["'self'", "blob:"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

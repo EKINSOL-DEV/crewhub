@@ -17,6 +17,7 @@ import { ZoneProvider } from './contexts/ZoneContext'
 // ZoneSwitcher moved to RoomTabsBar
 import { MobileWarning } from './components/MobileWarning'
 import { MobileLayout } from './components/mobile/MobileLayout'
+import { AppHealthGate } from './components/AppHealthGate'
 import { useMobile } from './hooks/useMobile'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
@@ -33,6 +34,22 @@ import { Button } from './components/ui/button'
 // ── URL Parameter Detection ────────────────────────────────────
 function isZenModeUrl(): boolean {
   return new URLSearchParams(window.location.search).get('mode') === 'zen'
+}
+
+/**
+ * Detect whether we're in the Tauri compact chat window.
+ *
+ * Uses window.__TAURI_VIEW__ injected by initializationScript in lib.rs —
+ * more reliable than query params: survives navigation, works in dev and
+ * production, no React Router side effects.
+ *
+ * Falls back to query param (?view=mobile) for dev convenience when testing
+ * outside Tauri (e.g. directly in the browser during development).
+ */
+function isTauriMobileView(): boolean {
+  if (window.__TAURI_VIEW__ === 'mobile') return true
+  // Dev fallback: allow ?view=mobile in browser for UI testing
+  return new URLSearchParams(window.location.search).get('view') === 'mobile'
 }
 
 // Simple path-based routing for dev pages
@@ -742,6 +759,25 @@ function App() {
     return <DevDesigns />
   }
 
+  // Tauri desktop: compact chat window (window.__TAURI_VIEW__ === 'mobile')
+  // Explicitly render MobileLayout regardless of screen size — wraps in
+  // AppHealthGate so the user sees a friendly error if backend is down.
+  if (isTauriMobileView()) {
+    return (
+      <ThemeProvider>
+        <DemoProvider>
+          <RoomsProvider>
+            <ChatProvider>
+              <AppHealthGate>
+                <MobileLayout />
+              </AppHealthGate>
+            </ChatProvider>
+          </RoomsProvider>
+        </DemoProvider>
+      </ThemeProvider>
+    )
+  }
+
   // URL parameter Zen Mode: ?mode=zen
   if (isZenModeUrl()) {
     return <ZenModeApp />
@@ -759,7 +795,12 @@ function App() {
           <RoomsProvider>
             <ZenModeProvider>
               <ChatProvider>
-                <AppContent />
+                {/* AppHealthGate: in Tauri desktop, shows error screen if
+                    backend on localhost:8091 is not running. In browser,
+                    passes through directly (health check skipped). */}
+                <AppHealthGate>
+                  <AppContent />
+                </AppHealthGate>
               </ChatProvider>
             </ZenModeProvider>
           </RoomsProvider>

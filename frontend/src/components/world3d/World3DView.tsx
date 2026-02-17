@@ -1063,6 +1063,19 @@ function DragStatusIndicator() {
 // ─── Main Component ────────────────────────────────────────────
 
 function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+  // ── Tauri: pause render loop when window is hidden ─────────────────────
+  // When the Tauri 3D World window is hidden (via tray click or close),
+  // the document becomes invisible. Stopping the render loop saves GPU/CPU
+  // and prevents WebGL resource leaks while the window is not visible.
+  const [canvasFrameloop, setCanvasFrameloop] = useState<'always' | 'demand' | 'never'>('always')
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setCanvasFrameloop(document.hidden ? 'never' : 'always')
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
   // Meeting context — get active meeting participants for status override
   const { meeting: meetingState, startDemoMeeting, isDemoMeetingActive } = useMeetingContext()
   const meetingParticipantKeys = useMemo(() => {
@@ -1328,6 +1341,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
         <CanvasErrorBoundary>
           <Canvas
             shadows
+            frameloop={canvasFrameloop}
             camera={{ position: [-45, 40, -45], fov: 40, near: 0.1, far: 300 }}
             style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)' }}
           >
