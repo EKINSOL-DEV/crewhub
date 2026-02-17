@@ -61,7 +61,7 @@ function BackendDownScreen({ onRetry, retrying }: DownScreenProps) {
         <p className="text-sm text-muted-foreground mb-6">
           CrewHub can't connect to the backend at{' '}
           <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
-            localhost:8091
+            {BACKEND_URL.replace(/^https?:\/\//, '')}
           </code>
           . Make sure it's running.
         </p>
