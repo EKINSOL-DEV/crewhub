@@ -8,6 +8,7 @@ import type { CrewSession } from '@/lib/api'
 import { ActiveTasksBadge, ActiveTasksOverlay } from './ActiveTasksOverlay'
 import { AgentCameraButton, AgentCameraOverlay, type AgentStatus } from './AgentCameraView'
 import { getBotConfigFromSession } from '@/components/world3d/utils/botVariants'
+import { ChatHeader3DAvatar } from './ChatHeader3DAvatar'
 
 // ── File Upload Types & Helpers ────────────────────────────────
 
@@ -436,12 +437,16 @@ export function MobileAgentChat({
     }
   }
 
+  // Derive bot config + status for 3D avatar
+  const botConfig = getBotConfigFromSession(sessionKey, agentName, agentColor)
+  const agentStatus: AgentStatus = isSending ? 'active' : 'idle'
+
   return (
     <>
       {/* Header */}
       <header style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '12px 12px 10px 8px',
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 12px 8px 8px',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
         flexShrink: 0,
       }}>
@@ -452,19 +457,18 @@ export function MobileAgentChat({
             border: 'none', background: 'transparent',
             color: '#94a3b8', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
           <ArrowLeft size={20} />
         </button>
 
-        <div style={{
-          width: 38, height: 38, borderRadius: 12,
-          background: accentColor + '25', color: accentColor,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18, fontWeight: 600, flexShrink: 0,
-        }}>
-          {icon}
-        </div>
+        {/* 3D character preview */}
+        <ChatHeader3DAvatar
+          config={botConfig}
+          agentStatus={agentStatus}
+          icon={icon}
+        />
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
@@ -499,7 +503,7 @@ export function MobileAgentChat({
         onClose={() => setShowCamera(false)}
         agentName={agentName}
         agentStatus={deriveAgentStatus(isSending, subagentSessions)}
-        botConfig={getBotConfigFromSession(sessionKey, agentName, agentColor)}
+        botConfig={botConfig}
       />
 
       {/* Messages */}
