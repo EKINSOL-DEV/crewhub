@@ -19,14 +19,22 @@ fn backend_url() -> String {
     std::env::var("VITE_API_URL").unwrap_or_else(|_| "http://localhost:8091".to_string())
 }
 
+/// Base init: sets backend URL and skips onboarding (backend handles OpenClaw connection).
+fn base_init() -> String {
+    format!(
+        "window.__CREWHUB_BACKEND_URL__ = '{}'; localStorage.setItem('crewhub-onboarded', 'true');",
+        backend_url()
+    )
+}
+
 /// JavaScript injected into the chat window before page load.
 fn chat_init_script() -> String {
-    format!("window.__TAURI_VIEW__ = 'mobile'; window.__CREWHUB_BACKEND_URL__ = '{}';", backend_url())
+    format!("window.__TAURI_VIEW__ = 'mobile'; {}", base_init())
 }
 
 /// JavaScript injected into the world window before page load.
 fn world_init_script() -> String {
-    format!("window.__TAURI_VIEW__ = 'desktop'; window.__CREWHUB_BACKEND_URL__ = '{}';", backend_url())
+    format!("window.__TAURI_VIEW__ = 'desktop'; {}", base_init())
 }
 
 /// JavaScript injected into the settings window before page load.
