@@ -423,6 +423,7 @@
   display: flex;
   flex-direction: column;
   max-width: 85%;
+  min-width: 0;
   gap: var(--zen-space-xs);
 }
 
@@ -464,6 +465,9 @@
   padding: var(--zen-space-sm) var(--zen-space-md);
   border-radius: var(--zen-radius-lg);
   word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .zen-message-user .zen-message-content {
@@ -5581,3 +5585,4 @@
   border-color: var(--zen-border);
   color: var(--zen-fg);
 }
+

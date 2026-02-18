@@ -1,11 +1,9 @@
 import { useMemo } from 'react'
 import { Plant } from './props/Plant'
-import { WaterCooler } from './props/WaterCooler'
-import { NoticeBoard } from './props/NoticeBoard'
+import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface HallwayProps {
-  /** Room positions to figure out where hallway intersections/corners are */
-  roomPositions: { position: [number, number, number] }[]
+  roomPositions: { room?: { is_hq?: boolean }; position: [number, number, number]; size?: number }[]
   roomSize: number
   hallwayWidth: number
   cols: number
@@ -14,105 +12,75 @@ interface HallwayProps {
   gridOriginZ: number
 }
 
-interface DecorationItem {
-  type: 'plant' | 'waterCooler' | 'noticeBoard'
-  position: [number, number, number]
-  rotation?: [number, number, number]
-  scale?: number
-}
-
 /**
- * Hallway decorations placed between rooms.
- * Plants at corners, water cooler mid-hallway, notice board on walls.
+ * Grid hallway paths connecting HQ (center) to adjacent rooms via
+ * horizontal and vertical corridor strips.
  */
-export function Hallway({
-  roomSize,
-  hallwayWidth,
-  cols,
-  rows,
-  gridOriginX,
-  gridOriginZ,
-}: HallwayProps) {
-  const gridSpacing = roomSize + hallwayWidth
+export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
+  const floorToon = useToonMaterialProps('#C8BFA0')
 
-  const decorations = useMemo(() => {
-    const items: DecorationItem[] = []
-    const halfRoom = roomSize / 2
+  const hq = roomPositions.find(rp => rp.room?.is_hq)
+  const center = hq || roomPositions[0]
+  const peripherals = roomPositions.filter(rp => rp !== center)
 
-    // Place plants at hallway intersections (where horizontal & vertical hallways cross)
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const roomX = gridOriginX + col * gridSpacing
-        const roomZ = gridOriginZ + row * gridSpacing
+  const paths = useMemo(() => {
+    if (!center || peripherals.length === 0) return []
 
-        // Plant at top-right corner of each room (hallway intersection)
-        if (col < cols - 1 && row < rows - 1) {
-          items.push({
-            type: 'plant',
-            position: [roomX + halfRoom + hallwayWidth / 2, 0.16, roomZ + halfRoom + hallwayWidth / 2],
-            scale: 0.8,
-          })
-        }
+    return peripherals.map((rp, i) => {
+      const cx = center.position[0]
+      const cz = center.position[2]
+      const rx = rp.position[0]
+      const rz = rp.position[2]
 
-        // Plant at bottom-right corner (for first row)
-        if (row === 0 && col < cols - 1) {
-          items.push({
-            type: 'plant',
-            position: [roomX + halfRoom + hallwayWidth / 2, 0.16, roomZ - halfRoom - hallwayWidth / 4],
-            scale: 0.7,
-          })
-        }
+      const mx = (cx + rx) / 2
+      const mz = (cz + rz) / 2
 
-        // Water cooler in a horizontal hallway (between rows, near the left side)
-        if (row < rows - 1 && col === 0) {
-          items.push({
-            type: 'waterCooler',
-            position: [roomX - halfRoom + 1, 0.16, roomZ + halfRoom + hallwayWidth / 2],
-            rotation: [0, Math.PI / 4, 0],
-          })
-        }
+      const dx = rx - cx
+      const dz = rz - cz
+      const length = Math.sqrt(dx * dx + dz * dz)
+      const angle = Math.atan2(dx, dz)
 
-        // Notice board mounted on a room's north wall, facing into the hallway between rows
-        if (row < rows - 1 && col === Math.floor(cols / 2)) {
-          items.push({
-            type: 'noticeBoard',
-            // Hallway side: past wall outer face (halfRoom + wallThickness 0.3 + half board depth 0.03)
-            position: [roomX, 1.2, roomZ + halfRoom + 0.35],
-            rotation: [0, 0, 0], // notes face +Z into hallway
-          })
-        }
-      }
+      return { key: `path-${i}`, mx, mz, length, angle }
+    })
+  }, [center, peripherals])
+
+  const plants = useMemo(() => {
+    if (!center) return []
+    const items: { position: [number, number, number]; scale: number }[] = []
+
+    for (const rp of peripherals) {
+      const mx = (center.position[0] + rp.position[0]) / 2
+      const mz = (center.position[2] + rp.position[2]) / 2
+      const dx = rp.position[0] - center.position[0]
+      const dz = rp.position[2] - center.position[2]
+      const len = Math.sqrt(dx * dx + dz * dz) || 1
+      const nx = -dz / len
+      const nz = dx / len
+      items.push({
+        position: [mx + nx * 1.5, 0.16, mz + nz * 1.5],
+        scale: 0.7,
+      })
     }
 
-    // Extra plant near entrance area (bottom center)
-    items.push({
-      type: 'plant',
-      position: [gridOriginX + ((cols - 1) * gridSpacing) / 2 - 3.5, 0.16, gridOriginZ + (rows - 1) * gridSpacing + halfRoom + hallwayWidth / 3],
-      scale: 1.0,
-    })
-    items.push({
-      type: 'plant',
-      position: [gridOriginX + ((cols - 1) * gridSpacing) / 2 + 3.5, 0.16, gridOriginZ + (rows - 1) * gridSpacing + halfRoom + hallwayWidth / 3],
-      scale: 1.0,
-    })
-
     return items
-  }, [roomSize, hallwayWidth, cols, rows, gridOriginX, gridOriginZ, gridSpacing])
+  }, [center, peripherals])
 
   return (
     <group>
-      {decorations.map((item, i) => {
-        switch (item.type) {
-          case 'plant':
-            return <Plant key={i} position={item.position} scale={item.scale} />
-          case 'waterCooler':
-            return <WaterCooler key={i} position={item.position} rotation={item.rotation} />
-          case 'noticeBoard':
-            return <NoticeBoard key={i} position={item.position} rotation={item.rotation} />
-          default:
-            return null
-        }
-      })}
+      {paths.map(({ key, mx, mz, length, angle }) => (
+        <mesh
+          key={key}
+          position={[mx, 0.06, mz]}
+          rotation={[-Math.PI / 2, 0, angle]}
+          receiveShadow
+        >
+          <planeGeometry args={[hallwayWidth, length]} />
+          <meshToonMaterial {...floorToon} />
+        </mesh>
+      ))}
+      {plants.map((p, i) => (
+        <Plant key={`hallway-plant-${i}`} position={p.position} scale={p.scale} />
+      ))}
     </group>
   )
 }

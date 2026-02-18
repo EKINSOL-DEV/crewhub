@@ -22,6 +22,8 @@ from app.routes.personas import router as personas_router
 from app.routes import agent_files
 from app.routes.standups import router as standups_router
 from app.routes.meetings import router as meetings_router
+from app.routes.docs import router as docs_router
+from app.routes.threads import router as threads_router
 from app.db.database import init_database, check_database_health
 from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
@@ -53,17 +55,79 @@ APP_VERSION = _get_version()
 # Background task handle
 _polling_task = None
 
+# ── Poll loop diagnostics (module-level state) ───────────────────────────────
+_poll_prev_session_keys: set[str] = set()
+_poll_prev_updatedAt: dict[str, int] = {}
+_poll_stale_count: dict[str, int] = {}
+
+# Statuses that OpenClaw may return for non-active (archived/pruned) sessions.
+# We filter these out before broadcasting to the frontend to prevent ghost sessions.
+_INACTIVE_STATUSES = frozenset({"archived", "pruned", "completed", "deleted", "ended"})
+
 
 async def poll_sessions_loop():
     """Background task that polls all connections for sessions and broadcasts to SSE clients."""
+    global _poll_prev_session_keys, _poll_prev_updatedAt, _poll_stale_count
     manager = await get_connection_manager()
     while True:
         try:
             sessions_data = await manager.get_all_sessions()
             if sessions_data:
+                raw_dicts = [s.to_dict() for s in sessions_data]
+
+                # ── Issue 2 fix: filter archived/pruned sessions ─────────────
+                # OpenClaw v2026.2.17 may include archived sessions in sessions.list
+                # with a non-active status field. Filter them out to prevent ghosts.
+                active_dicts = [
+                    s for s in raw_dicts
+                    if s.get("status", "active") not in _INACTIVE_STATUSES
+                ]
+
+                current_keys = {s["key"] for s in active_dicts if s.get("key")}
+
+                # ── Issue 2 fix: emit session-removed for disappeared sessions ─
+                removed_keys = _poll_prev_session_keys - current_keys
+                for removed_key in removed_keys:
+                    logger.info(f"[POLL] Session removed from active list: {removed_key}")
+                    await broadcast("session-removed", {"key": removed_key})
+                    _poll_stale_count.pop(removed_key, None)
+                    _poll_prev_updatedAt.pop(removed_key, None)
+
+                added_keys = current_keys - _poll_prev_session_keys
+                if added_keys:
+                    logger.info(f"[POLL] Sessions added to list: {added_keys}")
+
+                # ── Diagnostics: detect non-active statuses ──────────────────
+                for s in raw_dicts:
+                    status = s.get("status", "active")
+                    if status not in ("active", "idle", ""):
+                        logger.warning(
+                            f"[DIAG] Session {s.get('key')} has non-active status: {status!r}"
+                        )
+
+                # ── Diagnostics: detect stale updatedAt ─────────────────────
+                for s in active_dicts:
+                    key = s.get("key")
+                    if not key:
+                        continue
+                    updated_at = s.get("updatedAt") or 0
+                    prev_updated_at = _poll_prev_updatedAt.get(key, updated_at)
+                    if updated_at == prev_updated_at:
+                        _poll_stale_count[key] = _poll_stale_count.get(key, 0) + 1
+                        if _poll_stale_count[key] == 6:  # ~30s of stale updatedAt
+                            logger.info(
+                                f"[DIAG] Session {key} updatedAt stale for ~30s "
+                                f"(status={s.get('status', 'active')})"
+                            )
+                    else:
+                        _poll_stale_count.pop(key, None)
+                    _poll_prev_updatedAt[key] = updated_at
+
+                _poll_prev_session_keys = current_keys
+
                 await broadcast(
                     "sessions-refresh",
-                    {"sessions": [s.to_dict() for s in sessions_data]},
+                    {"sessions": active_dicts},
                 )
         except Exception as e:
             logger.debug(f"Polling error: {e}")
@@ -199,9 +263,23 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Explicitly list allowed origins so Tauri desktop windows are accepted.
+# - http://localhost:5180     → Vite dev server
+# - http://localhost:1420     → Tauri default dev port (fallback)
+# - tauri://localhost         → Tauri production build (macOS / Linux)
+# - https://tauri.localhost   → Tauri production build (Windows WebView2)
+# The wildcard fallback is kept last so existing deployments/proxies still work.
+_CORS_ORIGINS = [
+    "http://localhost:5180",
+    "http://localhost:1420",
+    "tauri://localhost",
+    "https://tauri.localhost",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_CORS_ORIGINS,
+    allow_origin_regex=r"http://(localhost|ekinbot\.local):\d+",  # any localhost or ekinbot.local port for dev flexibility
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -263,6 +341,12 @@ app.include_router(standups_router, prefix="/api/standups", tags=["standups"])
 
 # Phase 6b: AI-Orchestrated Meetings
 app.include_router(meetings_router, prefix="/api/meetings", tags=["meetings"])
+
+# Documentation browser
+app.include_router(docs_router, prefix="/api/docs", tags=["docs"])
+
+# Phase 7: Group Chat Threads
+app.include_router(threads_router, prefix="/api/threads", tags=["threads"])
 
 
 @app.get("/")

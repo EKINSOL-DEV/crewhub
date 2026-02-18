@@ -585,6 +585,13 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
       }
     }
     
+    // If threshold was met by window handler but drag not yet started in R3F,
+    // start it now that we have a ThreeEvent with camera data
+    if (hasDragStarted.current && !isDragging) {
+      startDrag(e)
+      document.body.style.cursor = 'grabbing'
+    }
+    
     // If dragging, update position and cursor
     if (isDragging) {
       handleDragMove(e)
@@ -698,19 +705,58 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
     }
   }, [isDragging, isMoving, endDrag])
 
-  // Reset cursor when movement ends
+  // Window-level pointer tracking for pre-drag threshold detection.
+  // When a prop is selected (isMoving) but not yet dragging, the cursor might
+  // leave the prop mesh before the drag threshold is met. Window events ensure
+  // we can still detect when the threshold is crossed and set hasDragStarted.
+  useEffect(() => {
+    if (!isMoving || isDragging) return
+    
+    const handleWindowPointerMove = (e: PointerEvent) => {
+      if (hasDragStarted.current || !pointerStartPos.current) return
+      const dx = e.clientX - pointerStartPos.current.x
+      const dy = e.clientY - pointerStartPos.current.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      if (distance >= DRAG_THRESHOLD) {
+        hasDragStarted.current = true
+        document.body.style.cursor = 'grabbing'
+        // The actual R3F startDrag will be called when a pointer event
+        // reaches an R3F object (prop mesh or any other 3D element).
+        // For now, mark the drag as pending.
+      }
+    }
+    
+    const handleWindowPointerUp = (_e: PointerEvent) => {
+      pointerStartPos.current = null
+      hasDragStarted.current = false
+    }
+    
+    window.addEventListener('pointermove', handleWindowPointerMove)
+    window.addEventListener('pointerup', handleWindowPointerUp)
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove)
+      window.removeEventListener('pointerup', handleWindowPointerUp)
+    }
+  }, [isMoving, isDragging])
+
+  // Reset cursor when movement ends + cleanup on unmount
   useEffect(() => {
     if (!isMoving) {
+      document.body.style.cursor = 'auto'
+    }
+    return () => {
+      // Always clean up cursor on unmount to prevent stuck cursors
       document.body.style.cursor = 'auto'
     }
   }, [isMoving])
 
   return (
     <group>
-      {/* Invisible capture plane - active when prop is selected (isMoving) or being dragged.
-          Catches pointer events even when cursor leaves the small prop mesh, enabling
-          smooth drag threshold detection and continuous drag movement. */}
-      {isMoving && (
+      {/* Invisible capture plane - only active during drag (isDragging).
+          Catches pointer events when cursor leaves the prop mesh during drag.
+          NOT rendered during selection-only mode (isMoving && !isDragging) to
+          avoid blocking onPointerDown events on prop meshes below. */}
+      {isDragging && (
         <mesh
           position={[0, 0.2, 0]}
           rotation={[-Math.PI / 2, 0, 0]}

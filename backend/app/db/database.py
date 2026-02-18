@@ -19,7 +19,7 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version for migrations
-SCHEMA_VERSION = 15  # v15: Post-Meeting Workflow (action items, follow-up, history)
+SCHEMA_VERSION = 16  # v16: Group Chat Threads
 
 
 async def init_database():
@@ -538,6 +538,78 @@ async def init_database():
             await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_meetings_project
                 ON meetings(project_id, created_at DESC)
+            """)
+
+            # ========================================
+            # v16: Group Chat Threads
+            # ========================================
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS threads (
+                    id TEXT PRIMARY KEY,
+                    kind TEXT NOT NULL DEFAULT 'group' CHECK(kind IN ('direct', 'group')),
+                    title TEXT,
+                    title_auto TEXT,
+                    created_by TEXT NOT NULL DEFAULT 'user',
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    archived_at INTEGER,
+                    last_message_at INTEGER,
+                    settings_json TEXT NOT NULL DEFAULT '{}'
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_threads_kind ON threads(kind)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_threads_archived ON threads(archived_at)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_threads_last_message ON threads(last_message_at DESC)
+            """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS thread_participants (
+                    id TEXT PRIMARY KEY,
+                    thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+                    agent_id TEXT NOT NULL,
+                    agent_name TEXT NOT NULL DEFAULT '',
+                    agent_icon TEXT,
+                    agent_color TEXT,
+                    role TEXT NOT NULL DEFAULT 'member' CHECK(role IN ('owner', 'member')),
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    joined_at INTEGER NOT NULL,
+                    left_at INTEGER,
+                    UNIQUE(thread_id, agent_id)
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_thread_participants_thread
+                ON thread_participants(thread_id)
+            """)
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_thread_participants_agent
+                ON thread_participants(agent_id)
+            """)
+
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS thread_messages (
+                    id TEXT PRIMARY KEY,
+                    thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+                    role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
+                    content TEXT NOT NULL DEFAULT '',
+                    agent_id TEXT,
+                    agent_name TEXT,
+                    routing_mode TEXT DEFAULT 'broadcast',
+                    target_agent_ids_json TEXT,
+                    created_at INTEGER NOT NULL
+                )
+            """)
+
+            await db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_thread_messages_thread
+                ON thread_messages(thread_id, created_at)
             """)
 
             # Set schema version (advance if needed)

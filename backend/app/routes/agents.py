@@ -39,6 +39,17 @@ class AgentUpdate(BaseModel):
     bio: Optional[str] = None
 
 
+class AgentCreate(BaseModel):
+    """Fields required / optional when creating a new agent."""
+    id: str  # slug, e.g. "mybot"
+    name: str
+    icon: Optional[str] = "🤖"
+    color: Optional[str] = "#6b7280"
+    default_room_id: Optional[str] = "headquarters"
+    agent_session_key: Optional[str] = None
+    bio: Optional[str] = None
+
+
 # ── Default metadata for well-known agents ────────────────────────────
 
 _AGENT_DEFAULTS = {
@@ -122,14 +133,37 @@ async def sync_agents_from_gateway() -> int:
 
 # ── Routes ────────────────────────────────────────────────────────────
 
+async def _get_gateway_agent_ids() -> set[str]:
+    """Fetch the set of agent IDs currently configured in the OpenClaw gateway."""
+    try:
+        manager = await get_connection_manager()
+        conn = manager.get_default_openclaw()
+        if not conn:
+            return set()
+        status = await conn.call("status")
+        if not status:
+            return set()
+        heartbeat = status.get("heartbeat") or {}
+        gw_agents = heartbeat.get("agents") or []
+        return {a.get("agentId") for a in gw_agents if a.get("agentId")}
+    except Exception as e:
+        logger.warning(f"Could not fetch gateway agent IDs: {e}")
+        return set()
+
+
 @router.get("")
 async def list_agents():
-    """Return every registered agent (from local DB)."""
+    """Return every registered agent (from local DB), with is_stale flag."""
     # Best-effort sync from gateway (non-blocking quick call)
     try:
         await sync_agents_from_gateway()
     except Exception:
         pass  # DB data is fine even if gateway is unreachable
+
+    # Determine which agent IDs are live in the gateway
+    gateway_ids = await _get_gateway_agent_ids()
+    # Only mark stale if we successfully reached the gateway (non-empty set)
+    gateway_reachable = bool(gateway_ids)
 
     db = await get_db()
     try:
@@ -148,8 +182,10 @@ async def list_agents():
         agents = []
         for row in rows:
             session_key = row["agent_session_key"]
+            agent_id = row["id"]
+            is_stale = gateway_reachable and (agent_id not in gateway_ids)
             agents.append({
-                "id": row["id"],
+                "id": agent_id,
                 "name": row["name"],
                 "display_name": display_names.get(session_key) if session_key else None,
                 "icon": row["icon"],
@@ -164,6 +200,7 @@ async def list_agents():
                 "bio": row["bio"] if "bio" in row.keys() else None,
                 "created_at": row["created_at"],
                 "updated_at": row["updated_at"],
+                "is_stale": is_stale,
             })
 
         return {"agents": agents}
@@ -171,9 +208,54 @@ async def list_agents():
         await db.close()
 
 
+@router.post("")
+async def create_agent(payload: AgentCreate):
+    """Create a new agent in the local registry."""
+    now = int(time.time() * 1000)
+    agent_id = payload.id.strip().lower().replace(" ", "-")
+    session_key = payload.agent_session_key or f"agent:{agent_id}:main"
+
+    db = await get_db()
+    try:
+        # Check for duplicate
+        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
+            if await cur.fetchone():
+                raise HTTPException(status_code=409, detail=f"Agent '{agent_id}' already exists")
+
+        await db.execute(
+            """
+            INSERT INTO agents
+                (id, name, icon, color, agent_session_key,
+                 default_model, default_room_id, sort_order,
+                 is_pinned, auto_spawn, bio, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, NULL, ?, 99, FALSE, TRUE, ?, ?, ?)
+            """,
+            (
+                agent_id,
+                payload.name,
+                payload.icon or "🤖",
+                payload.color or "#6b7280",
+                session_key,
+                payload.default_room_id or "headquarters",
+                payload.bio or f"{payload.name} is a hardworking crew member.",
+                now,
+                now,
+            ),
+        )
+        await db.commit()
+    finally:
+        await db.close()
+
+    window_event = True  # signal callers to refresh
+    return {"success": True, "agent_id": agent_id}
+
+
 @router.get("/{agent_id}")
 async def get_agent(agent_id: str):
     """Get a single agent by ID."""
+    gateway_ids = await _get_gateway_agent_ids()
+    gateway_reachable = bool(gateway_ids)
+
     db = await get_db()
     try:
         db.row_factory = aiosqlite.Row
@@ -213,6 +295,7 @@ async def get_agent(agent_id: str):
             "bio": row["bio"] if "bio" in row.keys() else None,
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
+            "is_stale": gateway_reachable and (row["id"] not in gateway_ids),
         }
     finally:
         await db.close()

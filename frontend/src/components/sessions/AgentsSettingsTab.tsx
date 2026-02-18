@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { API_BASE } from "@/lib/api"
-import { Loader2, Edit2, Check, X, Sparkles } from "lucide-react"
+import { Loader2, Edit2, Check, X, Sparkles, Trash2, Plus, AlertTriangle } from "lucide-react"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -25,6 +25,13 @@ interface Agent {
   bio: string | null
   created_at: number
   updated_at: number
+  is_stale: boolean
+}
+
+interface Room {
+  id: string
+  name: string
+  icon: string | null
 }
 
 // ── API helpers ──────────────────────────────────────────────────────
@@ -36,6 +43,13 @@ async function fetchAgents(): Promise<Agent[]> {
   return data.agents
 }
 
+async function fetchRooms(): Promise<Room[]> {
+  const res = await fetch(`${API_BASE}/rooms`)
+  if (!res.ok) return []
+  const data = await res.json()
+  return (data.rooms ?? data) as Room[]
+}
+
 async function updateAgent(agentId: string, updates: Partial<Agent>): Promise<void> {
   const res = await fetch(`${API_BASE}/agents/${agentId}`, {
     method: "PUT",
@@ -43,6 +57,30 @@ async function updateAgent(agentId: string, updates: Partial<Agent>): Promise<vo
     body: JSON.stringify(updates),
   })
   if (!res.ok) throw new Error("Failed to update agent")
+}
+
+async function deleteAgent(agentId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/agents/${agentId}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete agent")
+}
+
+async function createAgent(payload: {
+  id: string
+  name: string
+  icon: string
+  color: string
+  default_room_id: string
+  bio?: string
+}): Promise<void> {
+  const res = await fetch(`${API_BASE}/agents`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail ?? "Failed to create agent")
+  }
 }
 
 async function generateAgentBio(agentId: string): Promise<string> {
@@ -68,26 +106,230 @@ function ColorSphere({ color, size = 48 }: { color: string; size?: number }) {
   )
 }
 
+// ── Add Agent Modal ──────────────────────────────────────────────────
+
+function AddAgentModal({
+  rooms,
+  onClose,
+  onCreated,
+}: {
+  rooms: Room[]
+  onClose: () => void
+  onCreated: () => void
+}) {
+  const [name, setName] = useState("")
+  const [agentId, setAgentId] = useState("")
+  const [icon, setIcon] = useState("🤖")
+  const [color, setColor] = useState("#6b7280")
+  const [roomId, setRoomId] = useState("headquarters")
+  const [bio, setBio] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [idManual, setIdManual] = useState(false)
+  const { toast } = useToast()
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    dialogRef.current?.showModal()
+  }, [])
+
+  // Auto-slug from name
+  useEffect(() => {
+    if (!idManual && name) {
+      setAgentId(name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))
+    }
+  }, [name, idManual])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim() || !agentId.trim()) return
+    setSaving(true)
+    try {
+      await createAgent({ id: agentId, name, icon, color, default_room_id: roomId, bio: bio || undefined })
+      toast({ title: "Agent created", description: `${icon} ${name} added to CrewHub` })
+      onCreated()
+      dialogRef.current?.close()
+      onClose()
+    } catch (err: unknown) {
+      toast({ title: "Failed to create agent", description: String(err instanceof Error ? err.message : err), variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      onClose={onClose}
+      style={{
+        border: "1px solid var(--zen-border, hsl(var(--border)))",
+        borderRadius: "12px",
+        background: "hsl(var(--background))",
+        color: "hsl(var(--foreground))",
+        padding: "0",
+        maxWidth: "440px",
+        width: "calc(100vw - 32px)",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+      }}
+    >
+      <form onSubmit={handleSubmit}>
+        <div style={{ padding: "24px" }}>
+          <h2 style={{ margin: "0 0 20px 0", fontSize: "1.1em", fontWeight: 600 }}>➕ Add New Agent</h2>
+
+          {/* Icon + Color row */}
+          <div style={{ display: "flex", gap: "12px", marginBottom: "16px", alignItems: "flex-end" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Icon</label>
+              <Input
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                className="w-16 text-center text-xl"
+                maxLength={4}
+                required
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Color</label>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  style={{ width: "36px", height: "36px", borderRadius: "6px", border: "1px solid hsl(var(--border))", cursor: "pointer", background: "transparent" }}
+                />
+                <Input
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="h-9 text-xs font-mono w-28"
+                  placeholder="#hex"
+                />
+                <ColorSphere color={color} size={32} />
+              </div>
+            </div>
+          </div>
+
+          {/* Name */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Name *</label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="My Agent"
+              required
+            />
+          </div>
+
+          {/* Agent ID / slug */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Agent ID (slug) *</label>
+            <Input
+              value={agentId}
+              onChange={(e) => { setAgentId(e.target.value); setIdManual(true) }}
+              placeholder="my-agent"
+              className="font-mono text-sm"
+              required
+            />
+          </div>
+
+          {/* Room */}
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Default Room</label>
+            <select
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              style={{
+                width: "100%",
+                height: "36px",
+                borderRadius: "6px",
+                border: "1px solid hsl(var(--border))",
+                background: "hsl(var(--background))",
+                color: "hsl(var(--foreground))",
+                padding: "0 8px",
+                fontSize: "0.875rem",
+              }}
+            >
+              <option value="headquarters">🏠 Headquarters</option>
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.icon ? `${r.icon} ` : ""}{r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Bio */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Bio (optional)</label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              style={{
+                width: "100%",
+                height: "64px",
+                borderRadius: "6px",
+                border: "1px solid hsl(var(--border))",
+                background: "hsl(var(--background))",
+                color: "hsl(var(--foreground))",
+                padding: "8px 12px",
+                fontSize: "0.875rem",
+                resize: "none",
+                fontFamily: "inherit",
+              }}
+              placeholder="Short description of this agent…"
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+            <Button type="button" variant="ghost" size="sm" onClick={() => { dialogRef.current?.close(); onClose() }} disabled={saving}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm" disabled={saving || !name.trim() || !agentId.trim()}>
+              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+              Create Agent
+            </Button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+  )
+}
+
 // ── Agent Card ───────────────────────────────────────────────────────
 
-function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updates: Partial<Agent>) => Promise<void> }) {
+function AgentCard({
+  agent,
+  rooms,
+  onSave,
+  onDelete,
+}: {
+  agent: Agent
+  rooms: Room[]
+  onSave: (id: string, updates: Partial<Agent>) => Promise<void>
+  onDelete: (agent: Agent) => void
+}) {
   const [editing, setEditing] = useState(false)
   const [color, setColor] = useState(agent.color || "#6b7280")
   const [bio, setBio] = useState(agent.bio || "")
+  const [roomId, setRoomId] = useState(agent.default_room_id || "headquarters")
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
+  // Inline icon editing
+  const [editingIcon, setEditingIcon] = useState(false)
+  const [iconValue, setIconValue] = useState(agent.icon || "🤖")
+  const [savingIcon, setSavingIcon] = useState(false)
   const { toast } = useToast()
 
   // Reset local state when agent prop changes
   useEffect(() => {
     setColor(agent.color || "#6b7280")
     setBio(agent.bio || "")
-  }, [agent.color, agent.bio])
+    setRoomId(agent.default_room_id || "headquarters")
+    setIconValue(agent.icon || "🤖")
+  }, [agent.color, agent.bio, agent.default_room_id, agent.icon])
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await onSave(agent.id, { color, bio: bio || null })
+      await onSave(agent.id, { color, bio: bio || null, default_room_id: roomId })
       setEditing(false)
       toast({ title: "Agent Updated", description: `${agent.icon} ${agent.display_name || agent.name} saved` })
     } catch {
@@ -112,7 +354,22 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
   const handleCancel = () => {
     setColor(agent.color || "#6b7280")
     setBio(agent.bio || "")
+    setRoomId(agent.default_room_id || "headquarters")
     setEditing(false)
+  }
+
+  const handleSaveIcon = async () => {
+    if (!iconValue.trim()) return
+    setSavingIcon(true)
+    try {
+      await onSave(agent.id, { icon: iconValue.trim() })
+      setEditingIcon(false)
+      toast({ title: "Icon updated" })
+    } catch {
+      toast({ title: "Failed to save icon", variant: "destructive" })
+    } finally {
+      setSavingIcon(false)
+    }
   }
 
   const lastSeen = agent.updated_at
@@ -122,18 +379,97 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
       })
     : "Unknown"
 
+  const roomName = rooms.find((r) => r.id === agent.default_room_id)?.name ?? agent.default_room_id ?? "—"
+
   return (
-    <div className="rounded-xl border bg-card/80 p-5 shadow-sm hover:shadow-md transition-shadow min-h-[200px]">
+    <div
+      className="rounded-xl border bg-card/80 p-5 shadow-sm hover:shadow-md transition-shadow min-h-[200px]"
+      style={agent.is_stale ? { opacity: 0.65, borderColor: "hsl(var(--muted-foreground) / 0.3)" } : {}}
+    >
       <div className="flex items-start gap-4">
-        {/* Color sphere preview */}
-        <ColorSphere color={editing ? color : (agent.color || "#6b7280")} size={48} />
+        {/* Color sphere with icon */}
+        <div className="relative shrink-0">
+          <ColorSphere color={editing ? color : (agent.color || "#6b7280")} size={48} />
+          {/* Icon overlay — clickable to edit inline */}
+          {editingIcon ? (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "hsl(var(--background) / 0.9)",
+                borderRadius: "50%",
+                gap: "2px",
+              }}
+            >
+              <input
+                type="text"
+                value={iconValue}
+                onChange={(e) => setIconValue(e.target.value)}
+                maxLength={4}
+                autoFocus
+                style={{
+                  width: "32px",
+                  textAlign: "center",
+                  fontSize: "1.2em",
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  color: "hsl(var(--foreground))",
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveIcon()
+                  if (e.key === "Escape") { setEditingIcon(false); setIconValue(agent.icon || "🤖") }
+                }}
+              />
+            </div>
+          ) : null}
+        </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{agent.icon || "🤖"}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Clickable icon badge */}
+            {!editingIcon ? (
+              <button
+                title="Click to edit icon"
+                onClick={() => setEditingIcon(true)}
+                className="text-lg hover:scale-110 transition-transform"
+              >
+                {agent.icon || "🤖"}
+              </button>
+            ) : (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleSaveIcon}
+                  disabled={savingIcon}
+                  className="p-1 hover:bg-muted rounded text-green-500"
+                  title="Save icon"
+                >
+                  {savingIcon ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                </button>
+                <button
+                  onClick={() => { setEditingIcon(false); setIconValue(agent.icon || "🤖") }}
+                  className="p-1 hover:bg-muted rounded text-muted-foreground"
+                  title="Cancel"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
             <h3 className="font-semibold text-sm truncate">{agent.display_name || agent.name}</h3>
             {agent.is_pinned && <Badge variant="secondary" className="text-[10px]">Pinned</Badge>}
+            {agent.is_stale && (
+              <Badge
+                variant="outline"
+                className="text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400 gap-1"
+              >
+                <AlertTriangle className="h-2.5 w-2.5" />
+                Not in OpenClaw
+              </Badge>
+            )}
           </div>
 
           {!editing && (
@@ -141,7 +477,7 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
               <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
                 {agent.bio || <span className="italic">No bio set</span>}
               </p>
-              <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-2">
+              <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-2 flex-wrap">
                 <span className="font-mono">{agent.id}</span>
                 <span>•</span>
                 <span>{lastSeen}</span>
@@ -151,20 +487,31 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
                     <span>{agent.default_model}</span>
                   </>
                 )}
+                <span>•</span>
+                <span>🏠 {roomName}</span>
               </div>
             </>
           )}
         </div>
 
-        {/* Edit button */}
+        {/* Action buttons */}
         {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors shrink-0"
-            title="Edit agent"
-          >
-            <Edit2 className="h-4 w-4" />
-          </button>
+          <div className="flex flex-col gap-1 shrink-0">
+            <button
+              onClick={() => setEditing(true)}
+              className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+              title="Edit agent"
+            >
+              <Edit2 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onDelete(agent)}
+              className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+              title="Delete agent"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -190,6 +537,32 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
               />
               <ColorSphere color={color} size={36} />
             </div>
+          </div>
+
+          {/* Room dropdown */}
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Default Room</Label>
+            <select
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              style={{
+                width: "100%",
+                height: "36px",
+                borderRadius: "6px",
+                border: "1px solid hsl(var(--border))",
+                background: "hsl(var(--background))",
+                color: "hsl(var(--foreground))",
+                padding: "0 8px",
+                fontSize: "0.875rem",
+              }}
+            >
+              <option value="headquarters">🏠 Headquarters</option>
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.icon ? `${r.icon} ` : ""}{r.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Bio */}
@@ -231,17 +604,102 @@ function AgentCard({ agent, onSave }: { agent: Agent; onSave: (id: string, updat
   )
 }
 
+// ── Delete Confirmation Dialog ────────────────────────────────────────
+
+function DeleteConfirmDialog({
+  agent,
+  onConfirm,
+  onCancel,
+}: {
+  agent: Agent
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    dialogRef.current?.showModal()
+  }, [])
+
+  return (
+    <dialog
+      ref={dialogRef}
+      onClose={onCancel}
+      style={{
+        border: "1px solid hsl(var(--border))",
+        borderRadius: "12px",
+        background: "hsl(var(--background))",
+        color: "hsl(var(--foreground))",
+        padding: "24px",
+        maxWidth: "360px",
+        width: "calc(100vw - 32px)",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <Trash2 style={{ color: "hsl(var(--destructive))", width: 20, height: 20, flexShrink: 0 }} />
+          <h3 style={{ margin: 0, fontSize: "1em", fontWeight: 600 }}>
+            Delete {agent.icon || "🤖"} {agent.display_name || agent.name}?
+          </h3>
+        </div>
+
+        {!agent.is_stale && (
+          <div
+            style={{
+              background: "hsl(var(--muted))",
+              border: "1px solid hsl(38 92% 50% / 0.4)",
+              borderRadius: "8px",
+              padding: "12px",
+              display: "flex",
+              gap: "8px",
+              alignItems: "flex-start",
+            }}
+          >
+            <AlertTriangle style={{ color: "hsl(38 92% 50%)", width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
+            <p style={{ margin: 0, fontSize: "0.8em", lineHeight: 1.5, opacity: 0.85 }}>
+              This agent is still active in OpenClaw. Only removing from CrewHub — the agent will still run.
+            </p>
+          </div>
+        )}
+
+        <p style={{ margin: 0, fontSize: "0.85em", opacity: 0.7 }}>
+          Agent <code style={{ fontFamily: "monospace" }}>{agent.id}</code> will be permanently removed from CrewHub. This cannot be undone.
+        </p>
+
+        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+          <Button variant="ghost" size="sm" onClick={() => { dialogRef.current?.close(); onCancel() }}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => { dialogRef.current?.close(); onConfirm() }}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
+        </div>
+      </div>
+    </dialog>
+  )
+}
+
 // ── Main Tab Component ───────────────────────────────────────────────
 
 export function AgentsSettingsTab() {
   const [agents, setAgents] = useState<Agent[]>([])
+  const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null)
   const { toast } = useToast()
 
   const loadAgents = useCallback(async () => {
     try {
-      const data = await fetchAgents()
-      setAgents(data)
+      const [agentData, roomData] = await Promise.all([fetchAgents(), fetchRooms()])
+      setAgents(agentData)
+      setRooms(roomData)
     } catch {
       toast({ title: "Failed to load agents", variant: "destructive" })
     } finally {
@@ -254,9 +712,24 @@ export function AgentsSettingsTab() {
   const handleSave = async (agentId: string, updates: Partial<Agent>) => {
     await updateAgent(agentId, updates)
     window.dispatchEvent(new CustomEvent("agents-updated"))
-    // Update local state immediately
     setAgents(prev => prev.map(a => a.id === agentId ? { ...a, ...updates } : a))
   }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    try {
+      await deleteAgent(deleteTarget.id)
+      setAgents(prev => prev.filter(a => a.id !== deleteTarget.id))
+      window.dispatchEvent(new CustomEvent("agents-updated"))
+      toast({ title: "Agent deleted", description: `${deleteTarget.icon || "🤖"} ${deleteTarget.display_name || deleteTarget.name} removed` })
+    } catch {
+      toast({ title: "Failed to delete agent", variant: "destructive" })
+    } finally {
+      setDeleteTarget(null)
+    }
+  }
+
+  const staleCount = agents.filter(a => a.is_stale).length
 
   if (loading) {
     return (
@@ -268,8 +741,23 @@ export function AgentsSettingsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground mb-2">
-        Manage your crew's appearance and personality. Color changes reflect in the 3D world after save.
+      {/* Header row with title + Add button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Manage your crew's appearance and personality. Color changes reflect in the 3D world after save.
+          </p>
+          {staleCount > 0 && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              {staleCount} agent{staleCount > 1 ? "s" : ""} not found in OpenClaw gateway
+            </p>
+          )}
+        </div>
+        <Button size="sm" onClick={() => setShowAddModal(true)} className="gap-1 shrink-0">
+          <Plus className="h-4 w-4" />
+          Add Agent
+        </Button>
       </div>
 
       {/* How to create agents info box */}
@@ -307,13 +795,37 @@ export function AgentsSettingsTab() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {agents.map(agent => (
-          <AgentCard key={agent.id} agent={agent} onSave={handleSave} />
+          <AgentCard
+            key={agent.id}
+            agent={agent}
+            rooms={rooms}
+            onSave={handleSave}
+            onDelete={setDeleteTarget}
+          />
         ))}
       </div>
       {agents.length === 0 && (
         <div className="text-center py-12 text-muted-foreground text-sm">
           No agents registered yet. They'll appear here once discovered from the Gateway.
         </div>
+      )}
+
+      {/* Add Agent Modal */}
+      {showAddModal && (
+        <AddAgentModal
+          rooms={rooms}
+          onClose={() => setShowAddModal(false)}
+          onCreated={loadAgents}
+        />
+      )}
+
+      {/* Delete Confirm Dialog */}
+      {deleteTarget && (
+        <DeleteConfirmDialog
+          agent={deleteTarget}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
     </div>
   )

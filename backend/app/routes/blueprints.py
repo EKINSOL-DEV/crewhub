@@ -552,6 +552,7 @@ class MovePropRequest(BaseModel):
     toX: int
     toZ: int
     rotation: Optional[int] = None
+    span: Optional[dict] = None  # Updated span after rotation (w/d swapped)
 
 
 class DeletePropRequest(BaseModel):
@@ -703,11 +704,16 @@ async def move_prop(blueprint_id: str, body: MovePropRequest):
             detail=f"Prop '{body.propId}' not found at position ({body.fromX}, {body.fromZ})",
         )
 
-    # Determine span (account for rotation swap)
+    # Determine span — use request span if provided (rotation may have swapped w/d),
+    # otherwise fall back to the stored span.
     prop = placements[found_index]
-    span = prop.get("span") or {}
-    span_w = span.get("w", 1)
-    span_d = span.get("d", 1)
+    if body.span and "w" in body.span and "d" in body.span:
+        span_w = body.span["w"]
+        span_d = body.span["d"]
+    else:
+        span = prop.get("span") or {}
+        span_w = span.get("w", 1)
+        span_d = span.get("d", 1)
 
     # Server-side validation: bounds check
     _validate_bounds(body.toX, body.toZ, grid_width, grid_depth, span_w, span_d)
@@ -720,6 +726,8 @@ async def move_prop(blueprint_id: str, body: MovePropRequest):
     prop["z"] = body.toZ
     if body.rotation is not None:
         prop["rotation"] = body.rotation
+    if body.span and "w" in body.span and "d" in body.span:
+        prop["span"] = {"w": span_w, "d": span_d}
 
     await _save_blueprint(blueprint_id, bp_json, db_row, source)
     logger.info(f"Prop moved in blueprint {blueprint_id}: {body.propId} from ({body.fromX},{body.fromZ}) to ({body.toX},{body.toZ})")

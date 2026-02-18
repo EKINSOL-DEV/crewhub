@@ -41,3 +41,4 @@ htmlcov/
 data/
 data/
 docs/features/overview/.backups/
+frontend/src-tauri/target/

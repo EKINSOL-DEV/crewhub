@@ -8,7 +8,7 @@ export function BackendStatus() {
   const [uptime, setUptime] = useState<string | null>(null)
   const [reachable, setReachable] = useState(true)
 
-  const backendUrl = import.meta.env.VITE_API_URL || window.location.origin
+  void (import.meta.env.VITE_API_URL || window.location.origin) // backendUrl removed from display per UX feedback
 
   useEffect(() => {
     if (!import.meta.env.DEV) return
@@ -40,8 +40,7 @@ export function BackendStatus() {
       style={{ fontSize: '10px', marginLeft: 8 }}
       className={reachable ? 'text-muted-foreground' : 'text-red-500'}
     >
-      backend: {backendUrl}
-      {uptime ? ` · uptime: ${uptime}` : reachable ? '' : ' · unreachable'}
+      {uptime ? `uptime: ${uptime}` : reachable ? '' : 'backend unreachable'}
     </span>
   )
 }

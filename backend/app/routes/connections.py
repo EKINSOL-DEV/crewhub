@@ -498,6 +498,125 @@ async def get_connection_health(connection_id: str):
     )
 
 
+@router.get("/{connection_id}/device-status")
+async def get_connection_device_status(connection_id: str):
+    """
+    Get device pairing status for an OpenClaw connection.
+
+    Returns the device identity info (ID, name, pairing state) that the
+    backend uses for secure gateway auth. Useful for diagnosing auth issues
+    and monitoring the pairing state.
+    """
+    db_conn = await _get_connection_by_id(connection_id)
+    if not db_conn:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not found: {connection_id}",
+        )
+
+    if db_conn.get("type") != "openclaw":
+        return {
+            "connection_id": connection_id,
+            "supported": False,
+            "message": "Device pairing is only available for OpenClaw connections",
+        }
+
+    try:
+        from ..services.connections.device_identity import DeviceIdentityManager
+
+        identity_manager = DeviceIdentityManager()
+        identity = await identity_manager.get_device_identity(connection_id)
+
+        if not identity:
+            return {
+                "connection_id": connection_id,
+                "supported": True,
+                "paired": False,
+                "device_id": None,
+                "device_name": None,
+                "message": "No device identity found — will be created on next connect",
+            }
+
+        return {
+            "connection_id": connection_id,
+            "supported": True,
+            "paired": identity.device_token is not None,
+            "device_id": identity.device_id,
+            "device_name": identity.device_name,
+            "platform": identity.platform,
+            "message": (
+                "Device is paired and will use device-token auth"
+                if identity.device_token
+                else "Device identity exists but not yet paired (token missing)"
+            ),
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching device status for {connection_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch device status: {e}",
+        )
+
+
+@router.post("/{connection_id}/pair")
+async def trigger_device_pairing(connection_id: str):
+    """
+    Trigger a device re-pairing for an OpenClaw connection.
+
+    Clears the stored device token (if any) so the next reconnect will
+    perform a fresh pairing flow. Then triggers a reconnect.
+    """
+    db_conn = await _get_connection_by_id(connection_id)
+    if not db_conn:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Connection not found: {connection_id}",
+        )
+
+    if db_conn.get("type") != "openclaw":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Device pairing is only available for OpenClaw connections",
+        )
+
+    try:
+        from ..services.connections.device_identity import DeviceIdentityManager
+
+        identity_manager = DeviceIdentityManager()
+        identity = await identity_manager.get_device_identity(connection_id)
+
+        if identity:
+            await identity_manager.clear_device_token(identity.device_id)
+            logger.info(
+                f"Cleared device token for {connection_id} — re-pairing on reconnect"
+            )
+
+        # Trigger reconnect so pairing happens immediately
+        manager = await get_connection_manager()
+        conn = manager.get_connection(connection_id)
+        if conn:
+            await conn.disconnect()
+            import asyncio as _asyncio
+            _asyncio.create_task(conn.connect())
+
+        return {
+            "connection_id": connection_id,
+            "status": "re-pairing triggered",
+            "message": (
+                "Device token cleared. Backend will re-pair on next connect. "
+                "Check backend logs for pairing result."
+            ),
+        }
+
+    except Exception as e:
+        logger.error(f"Error triggering re-pairing for {connection_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to trigger re-pairing: {e}",
+        )
+
+
 @router.get("/{connection_id}/sessions")
 async def get_connection_sessions(connection_id: str):
     """

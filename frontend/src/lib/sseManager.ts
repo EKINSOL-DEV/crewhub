@@ -175,7 +175,30 @@ class SSEManager {
 
     try {
       const token = getAuthToken()
-      const sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : "/api/events"
+      // Detect Tauri environment
+      const isInTauri = typeof (window as any).__TAURI__ !== 'undefined'
+      // Priority: localStorage > Tauri injected var > env var
+      const rawConfigured =
+        localStorage.getItem('crewhub_backend_url') ||
+        (window as any).__CREWHUB_BACKEND_URL__ ||
+        import.meta.env.VITE_API_URL
+      // In browser mode, ignore localhost-based URLs — they only make sense in Tauri.
+      // A localhost URL from Safari on iPhone will never reach the Mac mini backend.
+      const configuredUrl =
+        !isInTauri && rawConfigured?.includes('localhost') ? null : rawConfigured
+
+      let sseUrl: string
+      if (configuredUrl) {
+        // Tauri or explicit non-localhost backend URL — connect directly (absolute URL)
+        const backendHost = configuredUrl.replace(/^https?:\/\//, '')
+        sseUrl = token
+          ? `http://${backendHost}/api/events?token=${encodeURIComponent(token)}`
+          : `http://${backendHost}/api/events`
+      } else {
+        // Browser mode — use relative URL so Vite proxy forwards to backend
+        // This works regardless of hostname (localhost, ekinbot.local, etc.)
+        sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : '/api/events'
+      }
       const eventSource = new EventSource(sseUrl)
       this.eventSource = eventSource
 

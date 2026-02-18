@@ -97,19 +97,38 @@ export function RoomFloor({
 
   const isDefault = floorStyle === 'default'
 
+  // HQ gets an elevated platform with step
+  const floorY = isHQ ? 0.2 : 0.08
+  const floorThickness = isHQ ? 0.4 : 0.16
+
   return (
-    <mesh position={[0, 0.08, 0]} receiveShadow>
-      <boxGeometry args={[size, 0.16, size]} />
-      {isDefault ? (
-        <meshToonMaterial
-          ref={toonMatRef}
-          {...toonProps}
-          emissive={hasProjectTint ? persistentEmissiveColor : '#000000'}
-          emissiveIntensity={persistentIntensity}
-        />
-      ) : (
-        <primitive object={shaderMat!} attach="material" />
+    <group>
+      <mesh position={[0, floorY, 0]} receiveShadow>
+        <boxGeometry args={[size, floorThickness, size]} />
+        {isDefault ? (
+          <meshToonMaterial
+            ref={toonMatRef}
+            {...toonProps}
+            emissive={hasProjectTint ? persistentEmissiveColor : '#000000'}
+            emissiveIntensity={persistentIntensity}
+          />
+        ) : (
+          <primitive object={shaderMat!} attach="material" />
+        )}
+      </mesh>
+      {/* HQ elevated platform edge glow */}
+      {isHQ && (
+        <mesh position={[0, 0.01, 0]} receiveShadow>
+          <boxGeometry args={[size + 0.4, 0.02, size + 0.4]} />
+          <meshStandardMaterial
+            color="#FFD700"
+            emissive="#FFD700"
+            emissiveIntensity={0.3}
+            transparent
+            opacity={0.6}
+          />
+        </mesh>
       )}
-    </mesh>
+    </group>
   )
 }

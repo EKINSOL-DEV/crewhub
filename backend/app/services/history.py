@@ -53,13 +53,21 @@ def _parse_session_file(file_path: Path) -> Optional[Dict[str, Any]]:
             return None
         
         # Extract agent_id from path
-        agent_id = file_path.parent.name
+        # parent might be sessions/ or archive/ — agent_id is one level up
+        parent_name = file_path.parent.name
+        if parent_name in ("sessions", "archive"):
+            agent_id = file_path.parent.parent.name
+        else:
+            agent_id = parent_name  # legacy: sessions/ folder named after agent
         session_id = file_path.stem
-        
+
         # Handle deleted sessions (filename may have .deleted.timestamp suffix)
         if ".deleted." in file_path.name:
             session_id = session_id.split(".deleted.")[0]
             status = "deleted"
+        elif parent_name == "archive":
+            # v2026.2.17: sessions moved to archive/ folder by OpenClaw maintenance
+            status = "archived"
         elif file_path.suffix == ".jsonl":
             status = "archived"
         else:
@@ -169,14 +177,19 @@ async def get_archived_sessions(
         if not OPENCLAW_BASE.exists():
             return {"sessions": [], "total": 0, "limit": limit, "offset": offset}
         
-        # Collect all agent directories
+        # Collect all agent directories (sessions/ and archive/ folders)
         agent_dirs = []
         if agent_id:
             try:
                 safe_agent = _safe_id(agent_id)
-                agent_path = OPENCLAW_BASE / safe_agent / "sessions"
-                if agent_path.exists():
-                    agent_dirs.append(agent_path)
+                agent_path = OPENCLAW_BASE / safe_agent
+                sessions_path = agent_path / "sessions"
+                if sessions_path.exists():
+                    agent_dirs.append(sessions_path)
+                # v2026.2.17: also scan archive/ folder
+                archive_path = agent_path / "archive"
+                if archive_path.exists():
+                    agent_dirs.append(archive_path)
             except ValueError:
                 pass
         else:
@@ -185,6 +198,10 @@ async def get_archived_sessions(
                     sessions_path = agent_path / "sessions"
                     if sessions_path.exists():
                         agent_dirs.append(sessions_path)
+                    # v2026.2.17: also scan archive/ folder
+                    archive_path = agent_path / "archive"
+                    if archive_path.exists():
+                        agent_dirs.append(archive_path)
         
         # Collect all session files
         for sessions_dir in agent_dirs:
@@ -265,19 +282,27 @@ async def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
         
         base = OPENCLAW_BASE / agent_id / "sessions"
         session_file = (base / f"{session_id}.jsonl").resolve()
-        
+
         # Security check
         if not str(session_file).startswith(str(base.resolve())):
             return None
-        
-        # Try normal file first, then deleted
+
+        # Try normal file first, then deleted, then archive folder
         if not session_file.exists():
-            # Look for deleted files
+            # Look for deleted files in sessions/
             for f in base.iterdir():
                 if f.name.startswith(f"{session_id}.jsonl.deleted."):
                     session_file = f
                     break
-        
+
+        # v2026.2.17: check archive/ folder if not found in sessions/
+        if not session_file.exists():
+            archive_base = OPENCLAW_BASE / agent_id / "archive"
+            if archive_base.exists():
+                archive_file = (archive_base / f"{session_id}.jsonl").resolve()
+                if str(archive_file).startswith(str(archive_base.resolve())) and archive_file.exists():
+                    session_file = archive_file
+
         if not session_file.exists():
             return None
         

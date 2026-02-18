@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
+import { version } from '../package.json'
+import { notificationManager } from './lib/notificationManager'
 const ZoneRenderer = lazy(() => import('./components/world3d/ZoneRenderer').then(m => ({ default: m.ZoneRenderer })))
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
@@ -16,6 +18,10 @@ import { DemoProvider, DemoModeIndicator, useDemoMode } from './contexts/DemoCon
 import { ZoneProvider } from './contexts/ZoneContext'
 // ZoneSwitcher moved to RoomTabsBar
 import { MobileWarning } from './components/MobileWarning'
+import { MobileLayout } from './components/mobile/MobileLayout'
+import { SettingsView } from './components/SettingsView'
+import { AppHealthGate } from './components/AppHealthGate'
+import { useMobile } from './hooks/useMobile'
 import { ChatWindowManager } from './components/chat/ChatWindowManager'
 import { DevDesigns } from './components/dev/DevDesigns'
 import { BackendStatus } from './components/dev/BackendStatus'
@@ -31,6 +37,33 @@ import { Button } from './components/ui/button'
 // ── URL Parameter Detection ────────────────────────────────────
 function isZenModeUrl(): boolean {
   return new URLSearchParams(window.location.search).get('mode') === 'zen'
+}
+
+/**
+ * Detect whether we're in the Tauri compact chat window.
+ *
+ * Uses window.__TAURI_VIEW__ injected by initializationScript in lib.rs —
+ * more reliable than query params: survives navigation, works in dev and
+ * production, no React Router side effects.
+ *
+ * Falls back to query param (?view=mobile) for dev convenience when testing
+ * outside Tauri (e.g. directly in the browser during development).
+ */
+function isTauriMobileView(): boolean {
+  if (window.__TAURI_VIEW__ === 'mobile') return true
+  // Dev fallback: allow ?view=mobile in browser for UI testing
+  return new URLSearchParams(window.location.search).get('view') === 'mobile'
+}
+
+/**
+ * Detect whether we're in the Tauri settings window.
+ * Uses window.__TAURI_VIEW__ injected by initializationScript in lib.rs.
+ * Falls back to query param ?view=settings for dev convenience.
+ */
+function isTauriSettingsView(): boolean {
+  // Cast to string to handle the injected value (bypasses strict union comparison)
+  if ((window.__TAURI_VIEW__ as string | undefined) === 'settings') return true
+  return new URLSearchParams(window.location.search).get('view') === 'settings'
 }
 
 // Simple path-based routing for dev pages
@@ -333,7 +366,7 @@ function AppContent() {
           <div className="flex items-center gap-3">
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.15.1</span></h1>
+              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v{version}</span></h1>
               <p className="text-xs text-muted-foreground">Multi-agent orchestration<BackendStatus /></p>
             </div>
           </div>
@@ -734,14 +767,63 @@ function ZenModeApp() {
 
 function App() {
   const route = useRoute()
+  const isMobile = useMobile()
+
+  // Initialize system notifications + tray badge in Tauri desktop context.
+  // Only runs once on mount; safe no-op in browser.
+  useEffect(() => {
+    if (window.__TAURI_INTERNALS__) {
+      notificationManager.init().catch(err =>
+        console.warn('[App] NotificationManager init failed:', err)
+      )
+    }
+    return () => {
+      if (window.__TAURI_INTERNALS__) {
+        notificationManager.destroy()
+      }
+    }
+  }, [])
   
   if (route === '/dev/designs') {
     return <DevDesigns />
   }
 
+  // Tauri desktop: settings window (window.__TAURI_VIEW__ === 'settings')
+  if (isTauriSettingsView()) {
+    return (
+      <ThemeProvider>
+        <SettingsView />
+      </ThemeProvider>
+    )
+  }
+
+  // Tauri desktop: compact chat window (window.__TAURI_VIEW__ === 'mobile')
+  // Explicitly render MobileLayout regardless of screen size — wraps in
+  // AppHealthGate so the user sees a friendly error if backend is down.
+  if (isTauriMobileView()) {
+    return (
+      <ThemeProvider>
+        <DemoProvider>
+          <RoomsProvider>
+            <ChatProvider>
+              <AppHealthGate>
+                <MobileLayout />
+              </AppHealthGate>
+            </ChatProvider>
+          </RoomsProvider>
+        </DemoProvider>
+      </ThemeProvider>
+    )
+  }
+
   // URL parameter Zen Mode: ?mode=zen
   if (isZenModeUrl()) {
     return <ZenModeApp />
+  }
+
+  // Mobile: chat-first experience
+  if (isMobile) {
+    return <MobileLayout />
   }
   
   return (
@@ -751,7 +833,12 @@ function App() {
           <RoomsProvider>
             <ZenModeProvider>
               <ChatProvider>
-                <AppContent />
+                {/* AppHealthGate: in Tauri desktop, shows error screen if
+                    backend on localhost:8091 is not running. In browser,
+                    passes through directly (health check skipped). */}
+                <AppHealthGate>
+                  <AppContent />
+                </AppHealthGate>
               </ChatProvider>
             </ZenModeProvider>
           </RoomsProvider>

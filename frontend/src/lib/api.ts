@@ -13,6 +13,8 @@ export interface CrewSession {
   abortedLastRun?: boolean
   lastChannel?: string
   transcriptPath?: string
+  /** OpenClaw session status — may be "archived", "pruned", etc. for non-active sessions */
+  status?: string
   deliveryContext?: {
     channel?: string
     to?: string
@@ -71,7 +73,12 @@ export type MinionSession = CrewSession
 export type MinionMessage = SessionMessage
 export type MinionContentBlock = SessionContentBlock
 
-export const API_BASE = '/api'
+const _isInTauri = typeof (window as any).__TAURI__ !== 'undefined'
+const _rawConfiguredBackend = localStorage.getItem('crewhub_backend_url') || (window as any).__CREWHUB_BACKEND_URL__ || import.meta.env.VITE_API_URL || ''
+// In browser mode, ignore localhost-based URLs — they only make sense in Tauri.
+const _isLocalUrl = _rawConfiguredBackend.includes('localhost') || _rawConfiguredBackend.includes('127.0.0.1')
+const _configuredBackend = (!_isInTauri && _isLocalUrl) ? '' : _rawConfiguredBackend
+export const API_BASE = _configuredBackend ? `${_configuredBackend}/api` : '/api'
 
 // ─── Discovery Types ──────────────────────────────────────────────
 

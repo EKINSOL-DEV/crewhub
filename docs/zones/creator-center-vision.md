@@ -1,137 +1,185 @@
 # 🎬 Creator Center — Zone Vision Document
 
-*Where ideas become reality, and every pixel tells a story.*
+*Where ideas become pixels, sound waves, and stories.*
 
 ## Vision
 
-The Creator Center is CrewHub's creative powerhouse — a vibrant, buzzing studio complex where agents craft content, edit media, brainstorm campaigns, and produce everything from social posts to full video productions. Think Pixar's campus meets a cyberpunk coworking space.
+The Creator Center is CrewHub's creative powerhouse — a vibrant, neon-lit media studio where agents craft content, edit videos, design graphics, and brainstorm campaigns. Think: a mix between a YouTube creator's dream studio and a Pixar animation bullpen, rendered in CrewHub's signature toon-shaded style.
 
-**Vibe:** Electric creativity. Neon accents. Screens everywhere showing live previews. The sound of keyboards clacking and ideas sparking. A place where Flowy and Creator feel *at home*.
+**Vibe:** Electric, colorful, slightly chaotic — like walking into a creative agency at 2 AM when the best ideas happen. Screens everywhere showing work-in-progress, sticky notes on every surface, and a faint lo-fi beat in the background.
 
-**Core philosophy:** Creation is messy, collaborative, and fun. The space should reflect that — whiteboards with half-finished sketches, coffee cups on desks, sticky notes everywhere.
+**Who works here:** Flowy (PO/PM marketing & media), Creator (video specialist), and any agent doing content work.
+
+---
 
 ## Environment
 
-### Toon-Shaded Aesthetic
-- **Color palette:** Deep purples, electric blues, hot pink accents, with warm orange task lights
-- **Lighting:** Dramatic — spotlights on workstations, soft ambient glow from screens, neon strip lights along walls
-- **Floor:** Dark polished concrete with paint splatter decals (toon-shaded, of course)
-- **Walls:** Exposed brick texture mixed with digital display panels showing rotating content
-- **Ceiling:** Industrial with exposed beams, hanging studio lights, and cable runs
+### Visual Style
+- **Color palette:** Deep purple base with neon pink and electric blue accents
+- **Lighting:** Warm studio lights mixed with RGB LED strips along walls and ceiling
+- **Floor:** Dark hardwood with paint splatter details (toon-shaded splotches in brand colors)
+- **Walls:** Exposed brick texture with mounted monitors, mood boards, and framed "best campaigns"
+- **Ceiling:** Industrial with visible beams, hanging pendant lights, and a projector
+- **Ambient particles:** Tiny floating sparkles (like creative dust) that drift slowly
 
 ### Atmosphere Details
-- Floating holographic mood boards that slowly rotate above desks
-- A giant LED wall at the entrance cycling through recent creations
-- Ambient particles: tiny sparkles/stars floating in creative rooms (like dust in sunbeams)
-- Weather system: the zone's "sky" (visible through skylights) changes based on creative output — sunny when productive, aurora borealis during brainstorm sessions
+- A large neon sign reading "CREATE" glows above the main entrance
+- One wall is a massive digital canvas that cycles through recent designs/outputs
+- Plants in quirky pots (skull planters, robot-shaped vases) add life
+- A vintage jukebox in the corner — purely decorative, but it has a subtle glow animation
+
+---
 
 ## Rooms
 
-### 🎙️ The Studio
-**Purpose:** Video and audio production hub
-- Green screen wall (toggleable)
-- Podcast desk with 3 mic positions
-- Camera rig on a mini track
-- Soundproofing panels on walls (wavy acoustic foam, toon-shaded)
-- **Easter egg:** Click the "ON AIR" sign 5 times → disco lights activate
+### 1. 🎥 Production Studio
+The main content creation space. Big open room with a green screen wall, ring lights, and camera rigs on tripods.
 
-### 🎨 Design Lab
-**Purpose:** Visual design, image generation, brand work
-- Large drawing tablets on desks (glow when active)
-- Color wheel prop that spins when an agent is generating images
-- Inspiration wall with pinned references (pulls from actual project assets)
-- Pantone swatch tower in the corner
-- **Easter egg:** Drag a color from the color wheel onto a bot → temporarily changes their color
+- **Purpose:** Video editing, thumbnail creation, content assembly
+- **Key prop:** A massive curved ultrawide monitor showing a timeline editor
+- **Bot position:** Creator sits here by default, laptop open, headphones on
+- **Detail:** The green screen actually changes color based on the current project's brand palette
 
-### 📝 Content Forge
-**Purpose:** Writing, copywriting, social media content
-- Cozy writer's nook with armchair and lamp
-- Typewriter prop on a vintage desk (keys animate when writing)
-- Word cloud floating above the room showing trending topics
-- Stack of "published" documents that grows over time
-- **Easter egg:** The typewriter occasionally goes "DING!" with a little bell animation
+### 2. 📝 Content Lab
+A cozy writing/brainstorming room with whiteboards covering every wall.
 
-### 📊 Campaign HQ
-**Purpose:** Marketing strategy, analytics, campaign management
-- War room table with holographic campaign dashboards
-- Timeline wall showing campaign milestones
-- Competitor radar display (rotating dish on roof)
-- Whiteboard with strategy diagrams
-- **Easter egg:** Tap the radar dish → it beeps and shows "NO COMPETITORS DETECTED" 😎
+- **Purpose:** Copywriting, blog posts, social media captions, SEO content
+- **Key prop:** A whiteboard covered in sticky notes that actually populate from real Planner tasks
+- **Bot position:** Flowy's primary workspace
+- **Detail:** A "word count" ticker on the wall shows total words generated today
 
-### ☕ The Lounge
-**Purpose:** Informal brainstorming, breaks, creative recharging
-- Bean bags and low tables
-- Arcade cabinet in the corner (playable mini-game?)
-- Vending machine with "Creative Fuel" branding
-- Plant wall (living green wall, toon-shaded)
-- Record player with vinyl spinning when music "plays"
-- **Easter egg:** Interact with the vending machine → random creative prompt appears
+### 3. 🎨 Design Workshop
+An art studio vibe — easels, color swatches, and a massive Wacom-style tablet on the desk.
+
+- **Purpose:** Graphic design, image generation, brand assets, UI mockups
+- **Key prop:** A color wheel that slowly rotates, casting rainbow reflections
+- **Detail:** Paint tubes and brushes scattered around, with an actual palette prop that shows the current project's color scheme
+
+### 4. 📊 Analytics Lounge
+A darker, more focused room with dashboards on multiple screens.
+
+- **Purpose:** Performance tracking, A/B test results, campaign metrics
+- **Key prop:** A big TV showing live-updating charts (mock data, looks impressive)
+- **Detail:** A comfy bean bag in the corner — because staring at numbers is tiring
+
+### 5. 🎙️ Podcast Booth
+A small, soundproofed room with acoustic foam panels on the walls.
+
+- **Purpose:** Audio content, voiceovers, TTS experiments, podcast recording
+- **Key prop:** A professional microphone on a boom arm with a pop filter
+- **Detail:** An "ON AIR" light above the door that glows red when an agent is generating audio
+
+---
 
 ## Activities
 
-| Activity | Description | Trigger |
-|----------|-------------|---------|
-| **Content Sprint** | Timed burst of content creation, progress bar visible | Agent assigned content task |
-| **Brainstorm Session** | Multiple agents gather in Campaign HQ, thought bubbles appear | 2+ agents in same room |
-| **Review Round** | Content displayed on the LED wall for team review | Task status → review |
-| **Publish Moment** | Confetti burst + content flies to the LED wall | Task completed |
-| **Creative Block** | Agent sits with storm cloud above head (funny!) | Agent idle >10 min in zone |
+| Activity | Description | Visual Feedback |
+|----------|-------------|-----------------|
+| **Content Generation** | Agent creates blog posts, social copy, newsletters | Typewriter animation on screen, pages flying out |
+| **Video Assembly** | Creator edits video timelines | Timeline scrubbing animation on the ultrawide |
+| **Image Generation** | AI image gen via OpenAI/DALL-E | Canvas prop shows progressive image reveal |
+| **Campaign Planning** | Multi-agent brainstorm session | Sticky notes appear on whiteboard in real-time |
+| **A/B Testing** | Compare content variants | Split-screen animation on analytics displays |
+| **Brand Review** | Check consistency across outputs | Color swatches highlight matching/conflicting |
 
-### Collaborative Features
-- **Shared Mood Board:** Any agent can pin items to the Design Lab inspiration wall
-- **Content Queue:** Visual stack of upcoming content in the Content Forge
-- **Live Preview:** The Studio shows a real-time preview of what Creator is working on
+### Activity Bubbles (above bots)
+- 🎬 "Editing product video..."
+- ✍️ "Writing blog post about X..."
+- 🎨 "Designing social media carousel..."
+- 📊 "Analyzing campaign performance..."
+- 🎙️ "Recording voiceover..."
+
+---
 
 ## Props & Interactables
 
 ### Functional Props
-| Prop | Location | Function |
-|------|----------|----------|
-| 🎬 Clapperboard | Studio | Click to mark task start, satisfying "clap" animation |
-| 🎨 Paint Palette | Design Lab | Shows current project's color scheme |
-| 📚 Style Guide Book | Design Lab | Opens brand guidelines overlay |
-| ☕ Coffee Machine | Lounge | "Brewing..." animation, gives agent speed boost visual |
-| 📺 Preview Monitor | Studio | Shows latest generated image/content |
-| 🎯 Target Board | Campaign HQ | Shows campaign KPIs as dart positions |
-| 📮 Outbox | Content Forge | Published items fly out with a whoosh |
-| 🏆 Trophy Shelf | Lounge | Displays milestones (100 posts, 1000 tasks, etc.) |
+| Prop | Visual | Interaction |
+|------|--------|-------------|
+| **Ultrawide Monitor** | Curved 49" display with timeline UI | Click to see Creator's current task |
+| **Mood Board** | Cork board with pinned images/colors | Shows current project's brand assets |
+| **Content Calendar** | Wall calendar with colored dots | Displays upcoming scheduled content |
+| **Idea Jar** | Glass jar filled with glowing paper scraps | Click for a random content idea prompt |
+| **Trophy Shelf** | Small shelf with miniature awards | Shows completed campaign milestones |
 
 ### Decorative Props
-- Stacked film reels
-- Director's chair with agent name
-- Polaroid photos pinned to walls
-- Potted succulents on desks
-- Motivational posters ("SHIP IT" / "DONE > PERFECT" / "CREATE DAILY")
-- Mini figurines of the team bots on a shelf
+| Prop | Visual | Detail |
+|------|--------|--------|
+| **Ring Light** | Circle light on tripod | Subtle glow animation, casts soft shadows |
+| **Camera Rig** | DSLR on tripod | Red recording light blinks occasionally |
+| **Acoustic Panels** | Colored foam tiles on walls | In podcast booth, different patterns |
+| **Neon Sign** | "CREATE" in script font | Flickers subtly every ~30 seconds |
+| **Vinyl Records** | Stack of records near jukebox | Easter egg: hover shows album names |
+| **Clapperboard** | Classic movie slate | Shows today's date and "Scene: [task count]" |
+| **Polaroid Wall** | Grid of instant photos | Could show thumbnails of generated images |
 
-## Future Ideas
-
-### 🚀 Near-Term (v0.12-v0.13)
-- **Portfolio Gallery:** Walk-through gallery of generated content, like a virtual museum
-- **Template Library:** Physical "filing cabinet" prop that holds content templates
-- **Collab Board:** Real-time shared canvas where multiple agents can sketch ideas
-
-### 🌟 Mid-Term
-- **Live Streaming Mode:** Studio transforms into a streaming setup, OBS-style overlay
-- **Client Preview Room:** Separate space where "clients" (external viewers) can review work
-- **Time-lapse Wall:** Records a day's creative output and plays it back as a timelapse
-- **Asset Vault:** Secure room with combination lock for storing brand assets, templates, fonts
-
-### 🤯 Wild Ideas
-- **Creative AI Battles:** Two agents compete to create the best content for a brief, audience votes
-- **Inspiration Roulette:** Spin a wheel → get a random creative constraint ("only use emojis" / "90s aesthetic" / "make it spooky")
-- **The Darkroom:** Secret room for experimental/weird content, accessible through a hidden door behind a bookshelf
-- **Awards Ceremony:** Monthly "Oscars" in the Lounge where best content gets trophies
-- **Graffiti Wall:** Agents can leave doodles/tags on a back alley wall outside the zone
-- **Drone Camera:** Tiny drone prop that follows an agent around, streaming their POV
-- **Magic Paintbrush:** Legendary prop that appears randomly — agent who finds it gets sparkle trail for 24h
-
-### 🎮 Mini-Games
-- **Pixel Art Painter:** Simple grid where agents can collaboratively make pixel art
-- **Caption This:** Random image appears, agents compete for best caption
-- **Speed Designer:** Timed challenge to create something with limited props
+### Hidden Props (Easter Eggs! 🥚)
+- **The Golden Pen:** Hidden behind the whiteboard — clicking it triggers a confetti animation
+- **Secret Playlist:** The jukebox has a tiny clickable button that changes the ambient particle colors to match music genres (jazz=blue, rock=red, lo-fi=purple)
+- **Rubber Duck:** On Creator's desk — classic debugging duck, clicking it shows a random creative tip
+- **"Shipped" Bell:** A brass bell near the exit — when a campaign is marked complete, it rings with a satisfying *ding*
 
 ---
 
-*The Creator Center isn't just a workspace — it's a creative playground where the line between work and play is beautifully blurred. Every corner has a surprise, every tool sparks joy, and every finished piece gets its moment in the spotlight.* ✨
+## Future Ideas
+
+### 🚀 Near-Term (v0.12-v0.14)
+- **Live Preview Wall:** The big digital canvas actually shows real outputs from Canva/image gen tools
+- **Content Pipeline Visualization:** A conveyor belt prop that shows content moving through stages (Draft → Review → Published)
+- **Collaboration Mode:** Multiple agents in the Content Lab simultaneously, with speech bubbles showing their contributions
+
+### 🌟 Mid-Term
+- **Client Portal Room:** A presentation room where content can be "staged" for review — like a virtual client meeting room with a projector
+- **Asset Library:** A filing cabinet prop that opens to show the team's media assets organized by project
+- **Inspiration Board:** An AI-powered wall that automatically surfaces trending content/designs from the web
+- **Sound Design Corner:** A mini synthesizer desk where agents can create jingles and sound effects
+
+### 🔮 Far-Future (Dream Big!)
+- **Virtual Photo Studio:** Full green screen room where agents can composite images with AI backgrounds
+- **Creator Marketplace:** A shop-style room where templates, presets, and content packages are displayed like products
+- **Time Machine:** A prop that lets you scroll through all content ever created, organized chronologically — like a creative time capsule
+- **Holographic Pitch Room:** Present campaigns in a holographic display that floats above a conference table
+- **Cross-Zone Content Delivery:** A pneumatic tube system that visually sends content from Creator Center to other zones (like the Academy for educational content)
+- **Achievement Wall:** An ever-growing mural that fills in with art pieces representing milestones — 100 blog posts, 1000 images generated, first viral post, etc.
+
+### 🎭 Fun & Quirky Ideas
+- **Director's Chair:** A special chair prop that only appears when Flowy is "directing" a campaign — it has their name on the back
+- **Blooper Reel Room:** A tiny hidden room (accessible via a secret door) that shows failed/rejected content attempts as a "blooper reel"
+- **Pet Mascot:** A small animated character (a pixel art cat? a tiny robot?) that wanders the Creator Center and reacts to activity — sleeps when idle, dances when content ships
+- **Weather System:** The room's ambient lighting changes based on creative "mood" — sunny when productive, stormy when deadlines are tight
+- **Snack Bar:** A mini fridge prop that shows "creative fuel" — each snack represents a content type (coffee = blog posts, energy drink = social media, pizza = late-night video edits)
+
+---
+
+## Technical Notes
+
+### Registry Integration
+```typescript
+// Zone registration
+zoneRegistry.register({
+  id: 'builtin:creator-center',
+  name: 'Creator Center',
+  icon: '🎬',
+  color: '#8B5CF6', // purple
+  defaultRooms: ['production-studio', 'content-lab', 'design-workshop', 'analytics-lounge', 'podcast-booth'],
+  environment: 'studio',
+  ambientSound: 'lo-fi-beats', // future
+});
+```
+
+### Props Blueprint (JSON)
+```json
+{
+  "id": "builtin:ultrawide-monitor",
+  "zone": "creator-center",
+  "room": "production-studio",
+  "model": "monitor-curved",
+  "position": [0, 1.2, -2],
+  "interactive": true,
+  "onClick": "showAgentTask"
+}
+```
+
+---
+
+*"Every pixel tells a story. The Creator Center is where those stories begin."* ✨

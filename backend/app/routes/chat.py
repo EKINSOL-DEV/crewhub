@@ -26,6 +26,9 @@ AGENT_DISPLAY_NAMES = {
     "flowy": "Flowy",
     "creator": "Creator",
     "dev": "Dev",
+    "reviewer": "Reviewer",
+    "webdev": "Webdev",
+    "gamedev": "Game Dev",
 }
 
 
@@ -167,6 +170,24 @@ async def get_chat_history(
         if not content and not tools:
             continue
 
+        # Filter internal system messages from chat history
+        if role == "user":
+            SYSTEM_MARKERS = [
+                "[System Message]",
+                "A completed subagent task is ready for user delivery",
+                "```crewhub-context",
+                "Conversation info (untrusted metadata)",
+                "[HEARTBEAT]",
+                "HEARTBEAT_OK",
+                "Read HEARTBEAT.md",
+            ]
+            if any(marker in content for marker in SYSTEM_MARKERS):
+                continue
+            # Also skip messages that are primarily JSON metadata blocks
+            stripped = content.strip()
+            if stripped.startswith("```") and ("message_id" in content or "sender_id" in content):
+                continue
+
         # Token usage (can be on entry level or message level)
         usage = entry.get("usage") or msg.get("usage") or {}
         tokens = usage.get("totalTokens", 0) if isinstance(usage, dict) else 0
@@ -250,7 +271,7 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         response_text = await conn.send_chat(
             message=message,
             agent_id=agent_id,
-            timeout=90.0,
+            timeout=120.0,
         )
     except Exception as e:
         logger.error(f"send_chat error: {e}")

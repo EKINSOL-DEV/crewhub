@@ -276,6 +276,9 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionRemoved = (event: MessageEvent) => {
       try {
         const { key } = JSON.parse(event.data)
+        if (import.meta.env.DEV) {
+          console.debug('[DIAG] session-removed event ontvangen:', key)
+        }
         setState(prev => {
           if (!prev.sessions.some(s => s.key === key)) return prev // Already gone
           const newSessions = prev.sessions.filter(s => s.key !== key)
