@@ -276,7 +276,7 @@ class AgentConnection(ABC):
         self,
         session_key: str,
         message: str,
-        timeout: float = 90.0,
+        timeout: float = 120.0,
     ) -> Optional[str]:
         """
         Send a message to a session.

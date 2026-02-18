@@ -74,7 +74,7 @@ class GatewayClient:
         conn = await self._get_conn()
         return await conn.kill_session(session_key) if conn else False
     
-    async def send_chat(self, message: str, agent_id: str = "main", session_id=None, timeout: float = 90.0):
+    async def send_chat(self, message: str, agent_id: str = "main", session_id=None, timeout: float = 120.0):
         conn = await self._get_conn()
         return await conn.send_chat(message, agent_id, session_id, timeout) if conn else None
     

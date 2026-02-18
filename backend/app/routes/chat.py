@@ -271,7 +271,7 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         response_text = await conn.send_chat(
             message=message,
             agent_id=agent_id,
-            timeout=90.0,
+            timeout=120.0,
         )
     except Exception as e:
         logger.error(f"send_chat error: {e}")

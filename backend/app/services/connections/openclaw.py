@@ -925,7 +925,7 @@ class OpenClawConnection(AgentConnection):
         message: str,
         agent_id: str = "main",
         session_id: Optional[str] = None,
-        timeout: float = 90.0,
+        timeout: float = 120.0,
         model: Optional[str] = None,
     ) -> Optional[str]:
         """Send a chat message to an agent and return the assistant text."""
