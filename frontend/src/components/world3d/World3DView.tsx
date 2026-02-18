@@ -98,6 +98,7 @@ import { LogViewer } from '@/components/sessions/LogViewer'
 import { MeetingDialog, MeetingProgressView, MeetingOutput, MeetingResultsPanel } from '@/components/meetings'
 import { DemoMeetingButton } from '@/components/demo/DemoMeetingButton'
 import { ToastContainer } from '@/components/ui/toast-container'
+import { useZenMode } from '@/components/zen'
 import { TaskBoardOverlay, HQTaskBoardOverlay } from '@/components/tasks'
 import { LightingDebugPanel } from './LightingDebugPanel'
 import { DebugPanel } from './DebugPanel'
@@ -1063,18 +1064,27 @@ function DragStatusIndicator() {
 // ─── Main Component ────────────────────────────────────────────
 
 function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+  // ── Zen Mode: pause render loop when Zen Mode is active ───────────────
+  const { isActive: isZenModeActive } = useZenMode()
+
   // ── Tauri: pause render loop when window is hidden ─────────────────────
   // When the Tauri 3D World window is hidden (via tray click or close),
   // the document becomes invisible. Stopping the render loop saves GPU/CPU
   // and prevents WebGL resource leaks while the window is not visible.
+  // Also pauses when Zen Mode is active (full-screen overlay, 3D not visible).
   const [canvasFrameloop, setCanvasFrameloop] = useState<'always' | 'demand' | 'never'>('always')
   useEffect(() => {
     const handleVisibilityChange = () => {
-      setCanvasFrameloop(document.hidden ? 'never' : 'always')
+      setCanvasFrameloop(document.hidden || isZenModeActive ? 'never' : 'always')
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
+  }, [isZenModeActive])
+
+  // Immediately respond to Zen Mode toggle (don't wait for visibility event)
+  useEffect(() => {
+    setCanvasFrameloop(document.hidden || isZenModeActive ? 'never' : 'always')
+  }, [isZenModeActive])
 
   // Meeting context — get active meeting participants for status override
   const { meeting: meetingState, startDemoMeeting, isDemoMeetingActive } = useMeetingContext()
