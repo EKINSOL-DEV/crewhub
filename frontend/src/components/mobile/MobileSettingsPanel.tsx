@@ -312,7 +312,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
         style={{
           position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10001,
           maxHeight: '90dvh',
-          background: '#1e293b',
+          background: 'var(--mobile-surface, #1e293b)',
           borderRadius: '20px 20px 0 0',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
