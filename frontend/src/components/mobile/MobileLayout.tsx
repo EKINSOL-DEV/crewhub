@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { MobileAgentList } from './MobileAgentList'
 import { MobileAgentChat } from './MobileAgentChat'
 import { MobileDrawer, type MobilePanel } from './MobileDrawer'
@@ -11,6 +11,7 @@ import { MobileCreatorView } from './MobileCreatorView'
 import { MobileDebugBar } from './MobileDebugBar'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useAgentsRegistry } from '@/hooks/useAgentsRegistry'
+import { useDemoMode } from '@/contexts/DemoContext'
 import { AgentMultiSelectSheet, GroupThreadChat } from './group'
 import { threadsApi, type Thread } from '@/lib/threads.api'
 
@@ -29,7 +30,12 @@ type View =
 const FIXED_AGENT_IDS = ['main', 'dev', 'flowy', 'creator', 'reviewer', 'gamedev', 'webdev']
 
 export function MobileLayout() {
-  const { sessions, loading, connected, refresh } = useSessionsStream(true)
+  const { sessions: realSessions, loading, connected, refresh } = useSessionsStream(true)
+  const { isDemoMode, demoSessions } = useDemoMode()
+  const sessions = useMemo(
+    () => (isDemoMode && demoSessions.length > 0 ? demoSessions : realSessions),
+    [isDemoMode, demoSessions, realSessions]
+  )
   const { agents } = useAgentsRegistry(sessions)
   const [view, setView] = useState<View>({ type: 'list' })
   const [threads, setThreads] = useState<Thread[]>([])
