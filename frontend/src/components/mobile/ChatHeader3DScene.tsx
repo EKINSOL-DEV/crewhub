@@ -218,7 +218,7 @@ export default function ChatHeader3DScene({
   animation = 'idle',
 }: ChatHeader3DSceneProps) {
   const [pivotY, setPivotY] = useState(HEAD_WORLD_Y)
-  const [camZ, setCamZ] = useState(0.9)
+  const [camZ, setCamZ] = useState(CAM_Z)
   const step = 0.05
 
   if (!DEBUG_CAMERA) {
