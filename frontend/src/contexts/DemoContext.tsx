@@ -334,10 +334,18 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
 // ─── Hook ───────────────────────────────────────────────────────
 
-export function useDemoMode() {
+export function useDemoMode(): DemoContextValue {
   const context = useContext(DemoContext)
   if (!context) {
-    throw new Error('useDemoMode must be used within a DemoProvider')
+    // Rendered outside DemoProvider (e.g. demo site with different app structure,
+    // or mobile early-return in App.tsx before providers are mounted).
+    // Return safe defaults so hooks don't crash.
+    return {
+      isDemoMode: false,
+      toggleDemoMode: () => {},
+      demoSessions: [] as CrewSession[],
+      demoRoomAssignments: new Map<string, string>(),
+    }
   }
   return context
 }
