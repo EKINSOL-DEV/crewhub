@@ -821,9 +821,20 @@ function App() {
     return <ZenModeApp />
   }
 
-  // Mobile: chat-first experience
+  // Mobile: chat-first experience — wrap with providers so MobileLayout
+  // can safely call useDemoMode(), useRoomsContext(), etc.
   if (isMobile) {
-    return <MobileLayout />
+    return (
+      <ThemeProvider>
+        <DemoProvider>
+          <RoomsProvider>
+            <ChatProvider>
+              <MobileLayout />
+            </ChatProvider>
+          </RoomsProvider>
+        </DemoProvider>
+      </ThemeProvider>
+    )
   }
   
   return (
