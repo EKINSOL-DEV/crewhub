@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CrewHub - Multi-Agent Orchestration</title>
+    <!-- Anti-FOUC: apply dark/light class synchronously before React mounts.
+         zen-theme is the source of truth; only light themes need special handling. -->
+    <script>
+      (function () {
+        try {
+          var zen = localStorage.getItem('zen-theme');
+          var lightThemes = ['github-light', 'solarized-light'];
+          var isDark = zen ? lightThemes.indexOf(zen) === -1 : true;
+          document.documentElement.classList.add(isDark ? 'dark' : 'light');
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

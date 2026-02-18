@@ -36,31 +36,20 @@ function resolveThemeToDark(theme: AppTheme): boolean {
   return theme === 'dark'
 }
 
+// Light zen theme IDs (all others are dark)
+const ZEN_LIGHT_THEMES = [ZEN_LIGHT_THEME, 'solarized-light']
+
 /**
- * Apply theme to the document root:
- * - Sets dark/light class on <html>
- * - Updates zen-theme for ThemeProvider (Tauri context) compatibility
- * - Sets --mobile-bg CSS var for MobileLayout to consume
+ * Apply only the dark/light class and mobile CSS vars — does NOT touch zen-theme.
+ * Safe to call on every startup (no side effects on the user's chosen zen theme).
  */
-export function applyTheme(theme: AppTheme): void {
-  const isDark = resolveThemeToDark(theme)
+function applyThemeClassOnly(isDark: boolean): void {
   const root = document.documentElement
 
   root.classList.remove('dark', 'light')
   root.classList.add(isDark ? 'dark' : 'light')
   document.body.classList.remove('dark', 'light')
   document.body.classList.add(isDark ? 'dark' : 'light')
-
-  // Update zen-theme for when ThemeProvider is present (Tauri, or when wrapped)
-  // Only set if ThemeProvider hasn't already set a user-chosen zen theme
-  const currentZen = localStorage.getItem(ZEN_THEME_KEY)
-  const isLightZen = currentZen === ZEN_LIGHT_THEME || currentZen === 'solarized-light'
-  const isDarkZen = currentZen && currentZen !== ZEN_LIGHT_THEME && currentZen !== 'solarized-light'
-  if (isDark && isLightZen) {
-    localStorage.setItem(ZEN_THEME_KEY, ZEN_DARK_THEME)
-  } else if (!isDark && (isDarkZen || !currentZen)) {
-    localStorage.setItem(ZEN_THEME_KEY, ZEN_LIGHT_THEME)
-  }
 
   // CSS custom property for mobile layout background
   root.style.setProperty('--mobile-bg', isDark ? '#0f172a' : '#f8fafc')
@@ -69,6 +58,35 @@ export function applyTheme(theme: AppTheme): void {
   root.style.setProperty('--mobile-border', isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)')
   root.style.setProperty('--mobile-text', isDark ? '#e2e8f0' : '#0f172a')
   root.style.setProperty('--mobile-text-muted', isDark ? '#64748b' : '#64748b')
+}
+
+/**
+ * Apply theme to the document root:
+ * - Sets dark/light class on <html>
+ * - Syncs zen-theme when user explicitly toggles dark/light in mobile settings
+ * - Sets --mobile-bg CSS var for MobileLayout to consume
+ *
+ * NOTE: Only call this when the user *explicitly* changes the mobile theme toggle.
+ *       For startup initialization use initAppSettings() which does NOT overwrite
+ *       the user's saved zen-theme choice.
+ */
+export function applyTheme(theme: AppTheme): void {
+  const isDark = resolveThemeToDark(theme)
+  applyThemeClassOnly(isDark)
+
+  // Sync zen-theme type when user explicitly toggles mobile dark/light
+  // (e.g. switching from dark→light should also switch to a light zen theme)
+  const currentZen = localStorage.getItem(ZEN_THEME_KEY)
+  const isLightZen = currentZen ? ZEN_LIGHT_THEMES.includes(currentZen) : false
+  const isDarkZen = currentZen ? !ZEN_LIGHT_THEMES.includes(currentZen) : false
+
+  if (isDark && isLightZen) {
+    // User switched to dark: replace the light zen theme with the default dark one
+    localStorage.setItem(ZEN_THEME_KEY, ZEN_DARK_THEME)
+  } else if (!isDark && (isDarkZen || !currentZen)) {
+    // User switched to light: replace the dark zen theme with the default light one
+    localStorage.setItem(ZEN_THEME_KEY, ZEN_LIGHT_THEME)
+  }
 }
 
 /**
@@ -84,11 +102,30 @@ export function applyFontSize(size: FontSize): void {
   document.documentElement.setAttribute('data-font-size', size)
 }
 
-/** Initialize theme & font size from localStorage on app start. */
+/**
+ * Initialize theme & font size from localStorage on app start.
+ *
+ * Bug fix: we MUST NOT call applyTheme() here because that function syncs
+ * zen-theme based on crewhub-theme, which would overwrite the user's chosen
+ * specific zen theme (e.g. 'github-light') with a generic default ('tokyo-night')
+ * every time the page loads when crewhub-theme is 'dark' (the default).
+ *
+ * Instead: derive dark/light from the authoritative zen-theme key, then apply
+ * only the class — without touching zen-theme itself.
+ */
 export function initAppSettings(): void {
-  const theme = (localStorage.getItem('crewhub-theme') as AppTheme | null) ?? 'dark'
+  // zen-theme is the source of truth for dark/light; crewhub-theme is the mobile
+  // fallback for when no zen-theme has been set yet.
+  const zenThemeId = localStorage.getItem(ZEN_THEME_KEY)
+  const cTheme = (localStorage.getItem('crewhub-theme') as AppTheme | null) ?? 'dark'
+
+  const isDark = zenThemeId
+    ? !ZEN_LIGHT_THEMES.includes(zenThemeId)   // derive from zen-theme type
+    : resolveThemeToDark(cTheme)                // fall back to crewhub-theme
+
+  applyThemeClassOnly(isDark)
+
   const fontSize = (localStorage.getItem('crewhub-font-size') as FontSize | null) ?? 'normal'
-  applyTheme(theme)
   applyFontSize(fontSize)
 }
 
