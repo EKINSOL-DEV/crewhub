@@ -47,6 +47,8 @@ const FIXED_AGENTS = [
   { id: 'dev', name: 'Dev', icon: '💻', description: 'Development and coding tasks' },
   { id: 'flowy', name: 'Flowy', icon: '🌊', description: 'Flow and automation tasks' },
   { id: 'reviewer', name: 'Reviewer', icon: '🔍', description: 'Code review and analysis' },
+  { id: 'webdev', name: 'Webdev', icon: '🌐', description: 'Frontend and web development tasks' },
+  { id: 'gamedev', name: 'Game Dev', icon: '🎮', description: '3D and game development tasks' },
 ]
 
 // ── Agent Dropdown Component ───────────────────────────────────

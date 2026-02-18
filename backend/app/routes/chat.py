@@ -26,6 +26,9 @@ AGENT_DISPLAY_NAMES = {
     "flowy": "Flowy",
     "creator": "Creator",
     "dev": "Dev",
+    "reviewer": "Reviewer",
+    "webdev": "Webdev",
+    "gamedev": "Game Dev",
 }
 
 
