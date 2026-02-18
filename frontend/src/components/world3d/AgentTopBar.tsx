@@ -6,6 +6,7 @@ import { getSessionDisplayName } from '@/lib/minionUtils'
 import { isSubagent } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
+import type { AgentRuntime } from '@/hooks/useAgentsRegistry'
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -17,9 +18,11 @@ interface AgentTopBarProps {
   isActivelyRunning: (key: string) => boolean
   displayNames: Map<string, string | null>
   rooms: Array<{ id: string; name: string }>
+  /** All agent runtimes from useAgentsRegistry — passed from outside Canvas context */
+  agentRuntimes?: AgentRuntime[]
 }
 
-type AgentStatus = 'active' | 'idle' | 'sleeping' | 'supervising'
+type AgentStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline'
 
 const BOSS_SESSION_KEY = 'agent:main:main'
 const PINNED_STORAGE_KEY = 'crewhub-pinned-agent'
@@ -39,6 +42,7 @@ function getStatusColor(status: AgentStatus): string {
     case 'idle': return '#9ca3af'
     case 'supervising': return '#a78bfa'
     case 'sleeping': return '#ef4444'
+    case 'offline': return '#6b7280'
   }
 }
 
@@ -562,6 +566,7 @@ export function AgentTopBar({
   isActivelyRunning,
   displayNames,
   rooms,
+  agentRuntimes,
 }: AgentTopBarProps) {
   const { state, focusBot } = useWorldFocus()
   const { openChat } = useChatContext()
@@ -639,29 +644,83 @@ export function AgentTopBar({
     const fixedAgents: DropdownEntry[] = []
     const recentSubagents: DropdownEntry[] = []
 
-    for (const session of sessions) {
-      // Skip boss — it's always in the bar
-      if (session.key === BOSS_SESSION_KEY) continue
-      // Skip debug sessions
-      if (session.key.startsWith('debug:')) continue
+    if (agentRuntimes && agentRuntimes.length > 0) {
+      // ─── Registry-based: all agents from /api/agents, merged with session data ──
+      for (const runtime of agentRuntimes) {
+        const { agent, session } = runtime
+        // Resolve the canonical session key for this agent
+        const agentKey = agent.agent_session_key || `agent:${agent.name.toLowerCase()}:main`
+        // Skip boss — always shown separately
+        if (agentKey === BOSS_SESSION_KEY) continue
 
-      const config = getBotConfig(session.key, session.label)
-      const name = getSessionDisplayName(session, displayNames.get(session.key))
-      const isActive = isActivelyRunning(session.key)
-      const status = getAgentStatus(session, isActive)
-      const roomId = getRoomId(session, getRoomForSession, defaultRoomId)
-      const roomName = getRoomName(roomId, rooms)
+        let entry: DropdownEntry
 
-      const entry: DropdownEntry = { session, config, name, status, roomName, roomId }
+        if (session) {
+          // Agent has an active session — use full session data
+          const config = getBotConfig(session.key, session.label)
+          const name = getSessionDisplayName(session, displayNames.get(session.key))
+          const isActive = isActivelyRunning(session.key)
+          const status = getAgentStatus(session, isActive)
+          const roomId = getRoomId(session, getRoomForSession, defaultRoomId)
+          const roomName = getRoomName(roomId, rooms)
+          entry = { session, config, name, status, roomName, roomId }
+        } else {
+          // Agent exists in DB but has no active session — show as offline
+          const syntheticSession: CrewSession = {
+            key: agentKey,
+            sessionId: agentKey,
+            kind: 'agent',
+            channel: 'whatsapp',
+            updatedAt: 0,
+            label: agent.name,
+          }
+          const config = getBotConfig(agentKey, agent.name)
+          const name = agent.name
+          const status: AgentStatus = 'offline'
+          const roomId = agent.default_room_id || defaultRoomId || 'headquarters'
+          const roomName = getRoomName(roomId, rooms)
+          entry = { session: syntheticSession, config, name, status, roomName, roomId }
+        }
 
-      // Fixed agents: agent:*:main (not subagents)
-      const parts = session.key.split(':')
-      if (parts.length === 3 && parts[0] === 'agent' && parts[2] === 'main') {
         fixedAgents.push(entry)
       }
-      // Recently active subagents (within last 30 min)
-      else if (isSubagent(session.key) && (now - session.updatedAt) < RECENT_THRESHOLD_MS) {
-        recentSubagents.push(entry)
+    } else {
+      // ─── Fallback: build fixed agents from active sessions only ──────────────
+      for (const session of sessions) {
+        // Skip boss — it's always in the bar
+        if (session.key === BOSS_SESSION_KEY) continue
+        // Skip debug sessions
+        if (session.key.startsWith('debug:')) continue
+
+        const config = getBotConfig(session.key, session.label)
+        const name = getSessionDisplayName(session, displayNames.get(session.key))
+        const isActive = isActivelyRunning(session.key)
+        const status = getAgentStatus(session, isActive)
+        const roomId = getRoomId(session, getRoomForSession, defaultRoomId)
+        const roomName = getRoomName(roomId, rooms)
+
+        const entry: DropdownEntry = { session, config, name, status, roomName, roomId }
+
+        // Fixed agents: agent:*:main (not subagents)
+        const parts = session.key.split(':')
+        if (parts.length === 3 && parts[0] === 'agent' && parts[2] === 'main') {
+          fixedAgents.push(entry)
+        }
+      }
+    }
+
+    // Recently active subagents (always from session list, not registry)
+    for (const session of sessions) {
+      if (session.key === BOSS_SESSION_KEY) continue
+      if (session.key.startsWith('debug:')) continue
+      if (isSubagent(session.key) && (now - session.updatedAt) < RECENT_THRESHOLD_MS) {
+        const config = getBotConfig(session.key, session.label)
+        const name = getSessionDisplayName(session, displayNames.get(session.key))
+        const isActive = isActivelyRunning(session.key)
+        const status = getAgentStatus(session, isActive)
+        const roomId = getRoomId(session, getRoomForSession, defaultRoomId)
+        const roomName = getRoomName(roomId, rooms)
+        recentSubagents.push({ session, config, name, status, roomName, roomId })
       }
     }
 
@@ -671,7 +730,7 @@ export function AgentTopBar({
     recentSubagents.sort((a, b) => b.session.updatedAt - a.session.updatedAt)
 
     return { fixedAgents, recentSubagents }
-  }, [sessions, getBotConfig, isActivelyRunning, getRoomForSession, defaultRoomId, rooms, displayNames])
+  }, [sessions, agentRuntimes, getBotConfig, isActivelyRunning, getRoomForSession, defaultRoomId, rooms, displayNames])
 
   // ─── Handlers ──────────────────────────────────────────────────
 
@@ -692,7 +751,10 @@ export function AgentTopBar({
   }, [])
 
   const handleDropdownSelect = useCallback((session: CrewSession, roomId: string, name: string, config: BotVariantConfig) => {
-    focusBot(session.key, roomId)
+    // Only fly to the bot if it has a real session (updatedAt > 0 means it exists)
+    if (session.updatedAt > 0) {
+      focusBot(session.key, roomId)
+    }
     openChat(session.key, name, config.icon, config.color)
     setPickerOpen(false)
   }, [focusBot, openChat])

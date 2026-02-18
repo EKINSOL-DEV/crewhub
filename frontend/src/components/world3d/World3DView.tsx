@@ -1511,6 +1511,7 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           isActivelyRunning={isActivelyRunning}
           displayNames={displayNames}
           rooms={rooms}
+          agentRuntimes={agentRuntimesForPanel}
         />
 
         {/* Drag status indicator */}
