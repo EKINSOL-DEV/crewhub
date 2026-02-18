@@ -223,10 +223,12 @@ interface BuildingLayout {
 }
 
 /**
- * Centered 3×3 grid layout:
- * - HQ (larger) sits at the center cell
- * - 8 peripheral rooms fill the remaining cells
- * - Even spacing between all rooms with margin from campus edges
+ * Adaptive grid layout — size chosen based on total room count:
+ *   ≤ 1 room  → 1×1  (HQ only)
+ *   ≤ 4 rooms → 2×2  (HQ at top-left, col=0 row=0)
+ *   ≤ 6 rooms → 3×2  (HQ at top-center, col=1 row=0)
+ *   7-9 rooms → 3×3  (HQ at center cell, col=1 row=1)
+ *   > 9 rooms → 3×3  (capped at 8 peripheral slots)
  */
 function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): BuildingLayout {
   const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
@@ -240,29 +242,59 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   // Using HQ_SIZE as the cell pitch so larger HQ fits without overlap
   const cellPitch = HQ_SIZE + HALLWAY_WIDTH // 16 + 4 = 20
 
-  const cols = 3
-  const rows = 3
+  const totalRooms = rooms.length
 
-  // Grid cell order: row-major, center cell (1,1) reserved for HQ
-  // Order: (0,0) (0,1) (0,2) (1,0) [HQ at 1,1] (1,2) (2,0) (2,1) (2,2)
-  const gridCells: [number, number][] = []
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (r === 1 && c === 1) continue // skip center for HQ
-      gridCells.push([c, r])
+  // Choose grid dimensions and HQ cell position adaptively
+  let cols: number
+  let rows: number
+  let hqCol: number
+  let hqRow: number
+  let gridCells: [number, number][]
+
+  if (totalRooms <= 1) {
+    // 1×1 — just HQ, no peripheral slots
+    cols = 1; rows = 1; hqCol = 0; hqRow = 0
+    gridCells = []
+  } else if (totalRooms <= 4) {
+    // 2×2 — HQ at top-left (col=0, row=0)
+    // peripheral slots: (1,0), (0,1), (1,1)
+    cols = 2; rows = 2; hqCol = 0; hqRow = 0
+    gridCells = [
+      [1, 0],
+      [0, 1], [1, 1],
+    ]
+  } else if (totalRooms <= 6) {
+    // 3×2 — HQ at top-center (col=1, row=0)
+    // peripheral slots: flanks of top row, then full bottom row
+    cols = 3; rows = 2; hqCol = 1; hqRow = 0
+    gridCells = [
+      [0, 0], [2, 0], // top-left and top-right, flanking HQ
+      [0, 1], [1, 1], [2, 1], // full bottom row
+    ]
+  } else {
+    // 3×3 — HQ at center cell (col=1, row=1); cap at 8 peripheral slots
+    cols = 3; rows = 3; hqCol = 1; hqRow = 1
+    gridCells = []
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (r === 1 && c === 1) continue // skip center for HQ
+        gridCells.push([c, r])
+      }
     }
   }
 
-  // Center of grid at origin (0, 0)
+  // Center the grid at origin (0, 0)
   const gridOffsetX = -(cols - 1) * cellPitch / 2
   const gridOffsetZ = -(rows - 1) * cellPitch / 2
 
   const roomPositions: BuildingLayout['roomPositions'] = []
 
-  // Place HQ at center
+  // Place HQ at its designated grid cell
+  const hqX = gridOffsetX + hqCol * cellPitch
+  const hqZ = gridOffsetZ + hqRow * cellPitch
   roomPositions.push({
     room: centerRoom,
-    position: [0, 0, 0],
+    position: [hqX, 0, hqZ],
     size: getRoomSize(centerRoom),
   })
 
