@@ -13,6 +13,8 @@ export interface CrewSession {
   abortedLastRun?: boolean
   lastChannel?: string
   transcriptPath?: string
+  /** OpenClaw session status — may be "archived", "pruned", etc. for non-active sessions */
+  status?: string
   deliveryContext?: {
     channel?: string
     to?: string

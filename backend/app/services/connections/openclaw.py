@@ -764,33 +764,60 @@ class OpenClawConnection(AgentConnection):
         return None
     
     async def kill_session(self, session_key: str) -> bool:
-        """Kill a session by renaming its file."""
+        """Kill a session by renaming its file.
+
+        Multi-strategy approach (v2026.2.17 compatible):
+        1. If session not in active list → already removed/archived → treat as success.
+        2. Try direct file rename in sessions/ folder (legacy, in-place approach).
+        3. Check if file already moved to archive/ folder → treat as success.
+        """
         from datetime import datetime
-        
+
         try:
             sessions = await self.get_sessions()
             session = next((s for s in sessions if s.key == session_key), None)
+
+            # Strategy 1: session not in active list → already gone/archived
             if not session:
-                return False
-            
+                logger.info(
+                    f"kill_session: {session_key} not in active sessions — "
+                    "already removed/archived, treating as success"
+                )
+                return True
+
             session_id = _safe_id(session.session_id)
             if not session_id:
                 return False
-            
+
             agent_id = _safe_id(session.agent_id)
-            
+
+            # Strategy 2: Direct file rename in sessions/ (legacy approach)
             base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
             session_file = (base / f"{session_id}.jsonl").resolve()
-            
+
             if not str(session_file).startswith(str(base.resolve())):
                 return False
-            
+
             if session_file.exists():
-                ts = datetime.utcnow().isoformat().replace(':', '-')
+                ts = datetime.utcnow().isoformat().replace(":", "-")
                 session_file.rename(session_file.with_suffix(f".jsonl.deleted.{ts}"))
+                logger.info(f"kill_session: renamed {session_file.name} → .deleted")
                 return True
-            
+
+            # Strategy 3: File not in sessions/ — check archive/ folder
+            # OpenClaw v2026.2.17 may have moved it to archive/ already
+            archive_base = Path.home() / ".openclaw" / "agents" / agent_id / "archive"
+            archive_file = (archive_base / f"{session_id}.jsonl").resolve()
+            if archive_base.exists() and str(archive_file).startswith(str(archive_base.resolve())):
+                if archive_file.exists():
+                    logger.info(
+                        f"kill_session: {session_key} already in archive/ — treating as success"
+                    )
+                    return True
+
+            logger.warning(f"kill_session: could not find session file for {session_key}")
             return False
+
         except (ValueError, OSError) as e:
             logger.error(f"Error killing session: {e}")
             return False

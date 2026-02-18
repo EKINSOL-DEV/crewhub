@@ -45,7 +45,9 @@ export function hasActiveSubagents(session: MinionSession, allSessions: MinionSe
   if (sessionType !== "main" && sessionType !== "cron") return false
 
   const now = Date.now()
-  return allSessions.some(s => {
+
+  // Primary check: child session's updatedAt within threshold (original logic)
+  const hasRecentChild = allSessions.some(s => {
     if (s.key === key) return false // skip self
     const childParts = s.key.split(":")
     if (childParts.length < 3) return false
@@ -54,8 +56,42 @@ export function hasActiveSubagents(session: MinionSession, allSessions: MinionSe
     if (!childParts[2]?.includes("subagent") && !childParts[2]?.includes("spawn")) return false
     // Child must be recently active (within active threshold)
     const childAge = now - s.updatedAt
+    if (import.meta.env.DEV) {
+      console.debug(
+        `[DIAG] hasActiveSubagents: child ${s.key} age=${Math.round(childAge / 1000)}s, ` +
+        `threshold=${SESSION_CONFIG.statusActiveThresholdMs / 1000}s, active=${childAge < SESSION_CONFIG.statusActiveThresholdMs}`
+      )
+    }
     return childAge < SESSION_CONFIG.statusActiveThresholdMs
   })
+
+  if (hasRecentChild) return true
+
+  // Secondary check (v2026.2.17 compensation):
+  // Announce routing from sub-subagents bumps THIS session's updatedAt (not the child's).
+  // If we recently received a bump AND we have any child sessions → still supervising.
+  const SUPERVISING_GRACE_MS = 60_000  // 1 minute grace window
+  const thisSessionAge = now - (session.updatedAt || 0)
+  if (thisSessionAge < SUPERVISING_GRACE_MS) {
+    const hasAnyChild = allSessions.some(s => {
+      if (s.key === key) return false
+      const childParts = s.key.split(":")
+      return childParts.length >= 3 &&
+        childParts[1] === agentId &&
+        (childParts[2]?.includes("subagent") || childParts[2]?.includes("spawn"))
+    })
+    if (hasAnyChild) {
+      if (import.meta.env.DEV) {
+        console.debug(
+          `[DIAG] hasActiveSubagents: secondary check triggered for ${key} ` +
+          `(thisAge=${Math.round(thisSessionAge / 1000)}s < grace=60s, hasChild=true)`
+        )
+      }
+      return true
+    }
+  }
+
+  return false
 }
 
 export function getStatusIndicator(status: SessionStatus): { emoji: string; color: string; label: string } {
@@ -69,6 +105,22 @@ export function getStatusIndicator(status: SessionStatus): { emoji: string; colo
     case "sleeping":
       return { emoji: "💤", color: "text-gray-400", label: "Sleeping" }
   }
+}
+
+/**
+ * Heuristic to detect announce-routing messages injected into parent sessions.
+ * OpenClaw v2026.2.17 routes sub-subagent result announces to the parent session
+ * as user-role messages. We skip them to avoid showing sub-subagent results
+ * as parent's own activity in BotActivityBubble.
+ * Conservative patterns — refine after observing actual announce format.
+ */
+function _isLikelyAnnounceRouting(text: string): boolean {
+  return (
+    text.startsWith("[Subagent result]") ||
+    text.startsWith("[Agent completed]") ||
+    text.startsWith("[announce]") ||
+    /^(Subagent|Sub-agent)\s+\S+\s+(completed|finished|done)/i.test(text)
+  )
 }
 
 export function parseRecentActivities(session: MinionSession, limit = 5): ActivityEvent[] {
@@ -86,6 +138,9 @@ export function parseRecentActivities(session: MinionSession, limit = 5): Activi
         if (block.type === "text" && block.text && block.text.trim()) {
           const text = block.text.trim()
           if (text === "NO_REPLY" || text === "HEARTBEAT_OK") continue
+          // Issue 1 fix: skip routed announce messages from sub-subagents
+          // These are injected into the parent session by OpenClaw's announce routing.
+          if (msg.role === "user" && _isLikelyAnnounceRouting(text)) continue
           activities.push({
             timestamp,
             type: "message",
@@ -304,12 +359,71 @@ export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?
   // Fixed agents (agent:*:main) always stay in their room
   if (/^agent:[a-zA-Z0-9_-]+:main$/.test(session.key)) return false
 
+  // Issue 2 safeguard: sessions with non-active status from OpenClaw
+  // should be parked immediately. Backend should filter these, but this is defensive.
+  const rawStatus = session.status
+  if (rawStatus && !["active", "idle", ""].includes(rawStatus)) {
+    return true  // archived/pruned/completed → park immediately
+  }
+
   const idleSeconds = getIdleTimeSeconds(session)
   const status = getSessionStatus(session, allSessions)
   // Supervising sessions should NOT be parked — they're actively delegating work
   if (status === "supervising") return false
   if (status === "sleeping") return true
   if (isActivelyRunning) return false
+
+  // Issue 1 fix (v2026.2.17 — nested announce routing compensation):
+  // Sub-subagent sessions don't get their updatedAt bumped by their own result announce
+  // (the announce is routed to the parent session instead).
+  // Check whether the parent main session recently received an update (proxy for: parent
+  // received the announce routing) — if so, hold off parking the subagent.
+  if (allSessions && (session.key.includes(":subagent:") || session.key.includes(":spawn:"))) {
+    const keyParts = session.key.split(":")
+    const agentId = keyParts[1]
+    // Grace window = 2× parking threshold (240s by default)
+    const ANNOUNCE_ROUTING_GRACE_MS = SESSION_CONFIG.parkingIdleThresholdS * 1000 * 2
+
+    // Check parent main session
+    const parentMainSession = allSessions.find(s => s.key === `agent:${agentId}:main`)
+    if (parentMainSession) {
+      const parentAge = Date.now() - parentMainSession.updatedAt
+      if (parentAge < ANNOUNCE_ROUTING_GRACE_MS) {
+        if (import.meta.env.DEV) {
+          console.debug(
+            `[DIAG] shouldBeInParkingLane(${session.key}): deferred — parent main updated ` +
+            `${Math.round(parentAge / 1000)}s ago (grace=${ANNOUNCE_ROUTING_GRACE_MS / 1000}s)`
+          )
+        }
+        return false  // Parent recently updated → hold off parking
+      }
+    }
+
+    // Also check sibling/parent subagent sessions (for depth-2 sub-subagents)
+    const recentSiblingOrParent = allSessions.some(s => {
+      if (s.key === session.key) return false
+      const sParts = s.key.split(":")
+      return sParts[1] === agentId &&
+        (sParts[2]?.includes("subagent") || sParts[2]?.includes("spawn")) &&
+        (Date.now() - s.updatedAt) < ANNOUNCE_ROUTING_GRACE_MS
+    })
+    if (recentSiblingOrParent) {
+      if (import.meta.env.DEV) {
+        console.debug(
+          `[DIAG] shouldBeInParkingLane(${session.key}): deferred — sibling/parent subagent recently updated`
+        )
+      }
+      return false
+    }
+  }
+
+  if (import.meta.env.DEV && session.key.includes(":subagent:")) {
+    console.debug(
+      `[DIAG] shouldBeInParkingLane(${session.key}): idleSeconds=${idleSeconds}, ` +
+      `status=${status}, isActivelyRunning=${isActivelyRunning}, threshold=${idleThresholdSeconds}`
+    )
+  }
+
   return idleSeconds > idleThresholdSeconds
 }
 
