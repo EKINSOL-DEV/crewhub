@@ -214,6 +214,7 @@ interface BuildingLayout {
   buildingWidth: number
   buildingDepth: number
   buildingCenterX: number
+  buildingCenterZ: number
   parkingArea: { x: number; z: number; width: number; depth: number }
   entranceX: number
   cols: number
@@ -330,6 +331,9 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   const buildingWidth = parkingRightEdge - leftEdge
   const buildingDepth = (maxZ - minZ) + BUILDING_PADDING * 2
   const buildingCenterX = (leftEdge + parkingRightEdge) / 2
+  // Center Z on the actual room bounding box so the floor covers all rooms
+  // regardless of which grid rows are occupied (fixes rooms sticking out north/south)
+  const buildingCenterZ = (minZ - BUILDING_PADDING + maxZ + BUILDING_PADDING) / 2
 
   const parkingDepth = Math.min(Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2), buildingDepth - BUILDING_PADDING * 2)
   const parkingArea = { x: parkingX, z: parkingZ, width: PARKING_WIDTH, depth: parkingDepth }
@@ -339,7 +343,7 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   const gridOriginX = gridOffsetX
   const gridOriginZ = gridOffsetZ
 
-  return { roomPositions, buildingWidth, buildingDepth, buildingCenterX, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
+  return { roomPositions, buildingWidth, buildingDepth, buildingCenterX, buildingCenterZ, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
 }
 
 // ─── Parking / Break Area ──────────────────────────────────────
@@ -918,12 +922,12 @@ function SceneContent({
     return null
   }
 
-  const { roomPositions, buildingWidth, buildingDepth, buildingCenterX, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
+  const { roomPositions, buildingWidth, buildingDepth, buildingCenterX, buildingCenterZ, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
 
   return (
     <>
       <EnvironmentSwitcher buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
-      <group position={[buildingCenterX, 0, 0]}>
+      <group position={[buildingCenterX, 0, buildingCenterZ]}>
         <BuildingFloor width={buildingWidth} depth={buildingDepth} />
         <BuildingWalls width={buildingWidth} depth={buildingDepth} entranceWidth={5} entranceOffset={entranceX - buildingCenterX} />
       </group>
