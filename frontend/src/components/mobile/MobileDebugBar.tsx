@@ -48,7 +48,7 @@ export function MobileDebugBar({ enabled }: MobileDebugBarProps) {
         left: 0,
         right: 0,
         zIndex: 9990,
-        background: 'rgba(15,23,42,0.95)',
+        background: 'var(--mobile-surface, rgba(15,23,42,0.95))',
         borderTop: '1px solid rgba(255,255,255,0.08)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
