@@ -214,6 +214,7 @@ interface BuildingLayout {
   buildingWidth: number
   buildingDepth: number
   buildingCenterX: number
+  buildingCenterZ: number
   parkingArea: { x: number; z: number; width: number; depth: number }
   entranceX: number
   cols: number
@@ -223,10 +224,12 @@ interface BuildingLayout {
 }
 
 /**
- * Centered 3×3 grid layout:
- * - HQ (larger) sits at the center cell
- * - 8 peripheral rooms fill the remaining cells
- * - Even spacing between all rooms with margin from campus edges
+ * Adaptive grid layout — size chosen based on total room count:
+ *   ≤ 1 room  → 1×1  (HQ only)
+ *   ≤ 4 rooms → 2×2  (HQ at top-left, col=0 row=0)
+ *   ≤ 6 rooms → 3×2  (HQ at top-center, col=1 row=0)
+ *   7-9 rooms → 3×3  (HQ at center cell, col=1 row=1)
+ *   > 9 rooms → 3×3  (capped at 8 peripheral slots)
  */
 function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): BuildingLayout {
   const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
@@ -240,29 +243,59 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   // Using HQ_SIZE as the cell pitch so larger HQ fits without overlap
   const cellPitch = HQ_SIZE + HALLWAY_WIDTH // 16 + 4 = 20
 
-  const cols = 3
-  const rows = 3
+  const totalRooms = rooms.length
 
-  // Grid cell order: row-major, center cell (1,1) reserved for HQ
-  // Order: (0,0) (0,1) (0,2) (1,0) [HQ at 1,1] (1,2) (2,0) (2,1) (2,2)
-  const gridCells: [number, number][] = []
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (r === 1 && c === 1) continue // skip center for HQ
-      gridCells.push([c, r])
+  // Choose grid dimensions and HQ cell position adaptively
+  let cols: number
+  let rows: number
+  let hqCol: number
+  let hqRow: number
+  let gridCells: [number, number][]
+
+  if (totalRooms <= 1) {
+    // 1×1 — just HQ, no peripheral slots
+    cols = 1; rows = 1; hqCol = 0; hqRow = 0
+    gridCells = []
+  } else if (totalRooms <= 4) {
+    // 2×2 — HQ at top-left (col=0, row=0)
+    // peripheral slots: (1,0), (0,1), (1,1)
+    cols = 2; rows = 2; hqCol = 0; hqRow = 0
+    gridCells = [
+      [1, 0],
+      [0, 1], [1, 1],
+    ]
+  } else if (totalRooms <= 6) {
+    // 3×2 — HQ at top-center (col=1, row=0)
+    // peripheral slots: flanks of top row, then full bottom row
+    cols = 3; rows = 2; hqCol = 1; hqRow = 0
+    gridCells = [
+      [0, 0], [2, 0], // top-left and top-right, flanking HQ
+      [0, 1], [1, 1], [2, 1], // full bottom row
+    ]
+  } else {
+    // 3×3 — HQ at center cell (col=1, row=1); cap at 8 peripheral slots
+    cols = 3; rows = 3; hqCol = 1; hqRow = 1
+    gridCells = []
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (r === 1 && c === 1) continue // skip center for HQ
+        gridCells.push([c, r])
+      }
     }
   }
 
-  // Center of grid at origin (0, 0)
+  // Center the grid at origin (0, 0)
   const gridOffsetX = -(cols - 1) * cellPitch / 2
   const gridOffsetZ = -(rows - 1) * cellPitch / 2
 
   const roomPositions: BuildingLayout['roomPositions'] = []
 
-  // Place HQ at center
+  // Place HQ at its designated grid cell
+  const hqX = gridOffsetX + hqCol * cellPitch
+  const hqZ = gridOffsetZ + hqRow * cellPitch
   roomPositions.push({
     room: centerRoom,
-    position: [0, 0, 0],
+    position: [hqX, 0, hqZ],
     size: getRoomSize(centerRoom),
   })
 
@@ -298,6 +331,9 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   const buildingWidth = parkingRightEdge - leftEdge
   const buildingDepth = (maxZ - minZ) + BUILDING_PADDING * 2
   const buildingCenterX = (leftEdge + parkingRightEdge) / 2
+  // Center Z on the actual room bounding box so the floor covers all rooms
+  // regardless of which grid rows are occupied (fixes rooms sticking out north/south)
+  const buildingCenterZ = (minZ - BUILDING_PADDING + maxZ + BUILDING_PADDING) / 2
 
   const parkingDepth = Math.min(Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2), buildingDepth - BUILDING_PADDING * 2)
   const parkingArea = { x: parkingX, z: parkingZ, width: PARKING_WIDTH, depth: parkingDepth }
@@ -307,7 +343,7 @@ function calculateBuildingLayout(rooms: ReturnType<typeof useRooms>['rooms']): B
   const gridOriginX = gridOffsetX
   const gridOriginZ = gridOffsetZ
 
-  return { roomPositions, buildingWidth, buildingDepth, buildingCenterX, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
+  return { roomPositions, buildingWidth, buildingDepth, buildingCenterX, buildingCenterZ, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ }
 }
 
 // ─── Parking / Break Area ──────────────────────────────────────
@@ -886,12 +922,12 @@ function SceneContent({
     return null
   }
 
-  const { roomPositions, buildingWidth, buildingDepth, buildingCenterX, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
+  const { roomPositions, buildingWidth, buildingDepth, buildingCenterX, buildingCenterZ, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
 
   return (
     <>
       <EnvironmentSwitcher buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
-      <group position={[buildingCenterX, 0, 0]}>
+      <group position={[buildingCenterX, 0, buildingCenterZ]}>
         <BuildingFloor width={buildingWidth} depth={buildingDepth} />
         <BuildingWalls width={buildingWidth} depth={buildingDepth} entranceWidth={5} entranceOffset={entranceX - buildingCenterX} />
       </group>
