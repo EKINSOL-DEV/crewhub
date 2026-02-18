@@ -40,8 +40,7 @@ export function BackendStatus() {
       style={{ fontSize: '10px', marginLeft: 8 }}
       className={reachable ? 'text-muted-foreground' : 'text-red-500'}
     >
-      backend: {backendUrl}
-      {uptime ? ` · uptime: ${uptime}` : reachable ? '' : ' · unreachable'}
+      {uptime ? `uptime: ${uptime}` : reachable ? '' : 'backend unreachable'}
     </span>
   )
 }
