@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
+import { version } from '../package.json'
 import { notificationManager } from './lib/notificationManager'
 const ZoneRenderer = lazy(() => import('./components/world3d/ZoneRenderer').then(m => ({ default: m.ZoneRenderer })))
 import { AllSessionsView } from './components/sessions/AllSessionsView'
@@ -365,7 +366,7 @@ function AppContent() {
           <div className="flex items-center gap-3">
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v0.16.0</span></h1>
+              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v{version}</span></h1>
               <p className="text-xs text-muted-foreground">Multi-agent orchestration<BackendStatus /></p>
             </div>
           </div>
