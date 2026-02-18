@@ -115,12 +115,16 @@ export function getStatusIndicator(status: SessionStatus): { emoji: string; colo
  * Conservative patterns — refine after observing actual announce format.
  */
 function _isLikelyAnnounceRouting(text: string): boolean {
-  return (
+  const matched = (
     text.startsWith("[Subagent result]") ||
     text.startsWith("[Agent completed]") ||
     text.startsWith("[announce]") ||
     /^(Subagent|Sub-agent)\s+\S+\s+(completed|finished|done)/i.test(text)
   )
+  if (matched) {
+    console.warn('[DIAG] announce-routing heuristic triggered:', text.slice(0, 80))
+  }
+  return matched
 }
 
 export function parseRecentActivities(session: MinionSession, limit = 5): ActivityEvent[] {
@@ -399,22 +403,6 @@ export function shouldBeInParkingLane(session: MinionSession, isActivelyRunning?
       }
     }
 
-    // Also check sibling/parent subagent sessions (for depth-2 sub-subagents)
-    const recentSiblingOrParent = allSessions.some(s => {
-      if (s.key === session.key) return false
-      const sParts = s.key.split(":")
-      return sParts[1] === agentId &&
-        (sParts[2]?.includes("subagent") || sParts[2]?.includes("spawn")) &&
-        (Date.now() - s.updatedAt) < ANNOUNCE_ROUTING_GRACE_MS
-    })
-    if (recentSiblingOrParent) {
-      if (import.meta.env.DEV) {
-        console.debug(
-          `[DIAG] shouldBeInParkingLane(${session.key}): deferred — sibling/parent subagent recently updated`
-        )
-      }
-      return false
-    }
   }
 
   if (import.meta.env.DEV && session.key.includes(":subagent:")) {

@@ -90,6 +90,8 @@ async def poll_sessions_loop():
                 for removed_key in removed_keys:
                     logger.info(f"[POLL] Session removed from active list: {removed_key}")
                     await broadcast("session-removed", {"key": removed_key})
+                    _poll_stale_count.pop(removed_key, None)
+                    _poll_prev_updatedAt.pop(removed_key, None)
 
                 added_keys = current_keys - _poll_prev_session_keys
                 if added_keys:
