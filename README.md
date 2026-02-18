@@ -37,6 +37,16 @@ But CrewHub isn't just another dashboard. Your agents come alive in a **fully in
 
 ## ✨ What's New in v0.16.0
 
+### 🖥️ Native Desktop App for macOS *(Beta)*
+
+CrewHub now ships as a **native macOS menubar app** built with Tauri v2. No browser, no tabs — just click the tray icon.
+
+- **Two windows:** a compact Chat window and the full 3D World (1280×900)
+- **No Dock icon** — lives in your menubar, stays out of Cmd+Tab
+- **Close = hide**, not quit — the 3D world stays loaded in the background
+- **Native notifications + tray badge** when an agent completes a task
+- Settings panel in the tray menu — configure your backend URL without touching config files
+
 ### 📱 Full Mobile Support
 
 CrewHub now works properly on **iOS, Android, and iPad**. The entire app is responsive — Kanban board, chat, activity feed, project panels, and the 3D world. The 3D viewport adapts to a floating mini-camera on small screens, and the hamburger menu gives you access to all panels without cluttering the interface.
@@ -82,7 +92,7 @@ Five concrete improvements landed:
 - **Throttled Three.js animations** for non-critical elements
 - **Smaller highlight.js bundle** by importing only needed languages
 
-[Read the full v0.15.0 announcement →](https://crewhub.dev/blog/v0-15-0-released)
+[Read the full v0.16.0 release notes →](https://crewhub.dev/blog/v0-16-0-released)
 
 ---
 
