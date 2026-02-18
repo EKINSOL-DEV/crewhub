@@ -217,10 +217,7 @@ export default function ChatHeader3DScene({
   agentStatus,
   animation = 'idle',
 }: ChatHeader3DSceneProps) {
-  const [pivotY, setPivotY] = useState(HEAD_WORLD_Y)
-  const [camZ, setCamZ] = useState(CAM_Z)
-  const step = 0.05
-
+  // Production path — no debug state allocated
   if (!DEBUG_CAMERA) {
     return (
       <Canvas dpr={[1, 1.5]} style={{ width: '100%', height: '100%', touchAction: 'none' }}
@@ -237,7 +234,18 @@ export default function ChatHeader3DScene({
     )
   }
 
-  // DEBUG MODE — interactive Y/Z tuning buttons
+  // Unreachable when DEBUG_CAMERA=false, but kept for future tuning sessions.
+  return <ChatHeader3DSceneDebug botConfig={botConfig} agentStatus={agentStatus} animation={animation} />
+}
+
+/** Debug-only component — only rendered when DEBUG_CAMERA=true. Separated to avoid hook rules violation. */
+function ChatHeader3DSceneDebug({ botConfig, agentStatus, animation }: {
+  botConfig: BotVariantConfig; agentStatus: AgentStatus; animation: AvatarAnimation
+}) {
+  const [pivotY, setPivotY] = useState(HEAD_WORLD_Y)
+  const [camZ, setCamZ] = useState(CAM_Z)
+  const step = 0.05
+
   const btn = (label: string, onClick: () => void) => (
     <button onClick={onClick} style={{
       background: '#334155', color: '#e2e8f0', border: 'none', borderRadius: 4,
