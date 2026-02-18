@@ -8,6 +8,8 @@ import { useAgentChat } from '@/hooks/useAgentChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { PixelAvatar } from './PixelAvatar'
 import { ImageDropZone, ImagePreviews, type PendingImage } from './ImageDropZone'
+import { API_BASE } from '@/lib/api'
+import type { Agent } from '@/hooks/useAgentsRegistry'
 
 interface ZenChatPanelProps {
   sessionKey: string | null
@@ -40,16 +42,18 @@ function EmptyState({ agentName, agentIcon }: { agentName: string | null; agentI
   )
 }
 
-// ── Fixed Agents for Quick Selection ───────────────────────────
+// ── Agent list hook ────────────────────────────────────────────
 
-const FIXED_AGENTS = [
-  { id: 'main', name: 'Assistent', icon: '🧠', description: 'Primary assistant for general tasks' },
-  { id: 'dev', name: 'Dev', icon: '💻', description: 'Development and coding tasks' },
-  { id: 'flowy', name: 'Flowy', icon: '🌊', description: 'Flow and automation tasks' },
-  { id: 'reviewer', name: 'Reviewer', icon: '🔍', description: 'Code review and analysis' },
-  { id: 'webdev', name: 'Webdev', icon: '🌐', description: 'Frontend and web development tasks' },
-  { id: 'gamedev', name: 'Game Dev', icon: '🎮', description: '3D and game development tasks' },
-]
+function useFixedAgents() {
+  const [agents, setAgents] = useState<Agent[]>([])
+  useEffect(() => {
+    fetch(`${API_BASE}/agents`)
+      .then(r => r.json())
+      .then(data => setAgents(data.agents ?? []))
+      .catch(() => {}) // silently fail, list stays empty
+  }, [])
+  return agents
+}
 
 // ── Agent Dropdown Component ───────────────────────────────────
 
@@ -92,8 +96,10 @@ function AgentDropdown({ currentAgentName, currentAgentIcon: _currentAgentIcon, 
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen])
   
-  const handleSelect = useCallback((agent: typeof FIXED_AGENTS[0]) => {
-    onSelectAgent?.(agent.id, agent.name, agent.icon)
+  const fixedAgents = useFixedAgents()
+
+  const handleSelect = useCallback((agent: Agent) => {
+    onSelectAgent?.(agent.id, agent.name ?? agent.id, agent.icon ?? '🤖')
     setIsOpen(false)
   }, [onSelectAgent])
   
@@ -111,14 +117,14 @@ function AgentDropdown({ currentAgentName, currentAgentIcon: _currentAgentIcon, 
       
       {isOpen && (
         <div className="zen-agent-dropdown-menu">
-          {FIXED_AGENTS.map(agent => (
+          {fixedAgents.map(agent => (
             <button
               key={agent.id}
               className={`zen-agent-dropdown-item ${currentAgentName === agent.name ? 'active' : ''}`}
               onClick={() => handleSelect(agent)}
             >
-              <span className="zen-agent-dropdown-icon">{agent.icon}</span>
-              <span className="zen-agent-dropdown-name">{agent.name}</span>
+              <span className="zen-agent-dropdown-icon">{agent.icon ?? '🤖'}</span>
+              <span className="zen-agent-dropdown-name">{agent.name ?? agent.id}</span>
             </button>
           ))}
           {onOpenPicker && (
@@ -149,6 +155,7 @@ interface NoAgentStateProps {
 }
 
 function NoAgentState({ onSelectAgent }: NoAgentStateProps) {
+  const fixedAgents = useFixedAgents()
   return (
     <div className="zen-empty-state">
       <div className="zen-empty-icon">🧘</div>
@@ -159,16 +166,15 @@ function NoAgentState({ onSelectAgent }: NoAgentStateProps) {
       
       {onSelectAgent && (
         <div className="zen-agent-grid">
-          {FIXED_AGENTS.map(agent => (
+          {fixedAgents.map(agent => (
             <button
               key={agent.id}
               className="zen-agent-option"
-              onClick={() => onSelectAgent(agent.id, agent.name, agent.icon)}
+              onClick={() => onSelectAgent(agent.id, agent.name ?? agent.id, agent.icon ?? '🤖')}
             >
-              <span className="zen-agent-option-icon">{agent.icon}</span>
+              <span className="zen-agent-option-icon">{agent.icon ?? '🤖'}</span>
               <div className="zen-agent-option-info">
-                <span className="zen-agent-option-name">{agent.name}</span>
-                <span className="zen-agent-option-desc">{agent.description}</span>
+                <span className="zen-agent-option-name">{agent.name ?? agent.id}</span>
               </div>
             </button>
           ))}
