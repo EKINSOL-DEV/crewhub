@@ -74,7 +74,8 @@ export type MinionContentBlock = SessionContentBlock
 const _isInTauri = typeof (window as any).__TAURI__ !== 'undefined'
 const _rawConfiguredBackend = localStorage.getItem('crewhub_backend_url') || (window as any).__CREWHUB_BACKEND_URL__ || import.meta.env.VITE_API_URL || ''
 // In browser mode, ignore localhost-based URLs — they only make sense in Tauri.
-const _configuredBackend = (!_isInTauri && _rawConfiguredBackend.includes('localhost')) ? '' : _rawConfiguredBackend
+const _isLocalUrl = _rawConfiguredBackend.includes('localhost') || _rawConfiguredBackend.includes('127.0.0.1')
+const _configuredBackend = (!_isInTauri && _isLocalUrl) ? '' : _rawConfiguredBackend
 export const API_BASE = _configuredBackend ? `${_configuredBackend}/api` : '/api'
 
 // ─── Discovery Types ──────────────────────────────────────────────
