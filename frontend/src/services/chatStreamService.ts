@@ -52,7 +52,6 @@ export function streamMessage(
 
     // Reset event tracking
     let buffer = ''
-    let currentEvent = ''
 
     try {
       while (true) {
