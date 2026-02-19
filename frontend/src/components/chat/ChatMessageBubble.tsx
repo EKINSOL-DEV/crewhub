@@ -9,7 +9,7 @@
  * and OpenClaw reply-tag stripping.
  */
 
-import { useState, type CSSProperties } from 'react'
+import { memo, useMemo, useState, type CSSProperties } from 'react'
 import type { ChatMessageData, ToolCallData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
 import { stripOpenClawTags } from '@/lib/messageUtils'
@@ -343,7 +343,7 @@ function formatTimestamp(ts: number): string {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-export function ChatMessageBubble({
+const ChatMessageBubbleInner = memo(function ChatMessageBubble({
   msg,
   variant = 'float',
   accentColor = '#8b5cf6',
@@ -358,6 +358,21 @@ export function ChatMessageBubble({
   const imageAttachments = attachments.filter(a => a.type === 'image')
   const videoAttachments = attachments.filter(a => a.type === 'video')
   const cleanText = stripOpenClawTags(text)
+
+  // Memoize markdown rendering to avoid re-running regex on unchanged content
+  const renderedHtml = useMemo(() => {
+    if (!cleanText) return ''
+    const isDark = variant === 'mobile'
+    const codeBlockStyle = isDark
+      ? 'background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
+      : variant === 'zen' ? undefined
+      : 'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
+    const inlineCodeStyle = isDark
+      ? 'background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px'
+      : variant === 'zen' ? undefined
+      : 'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px'
+    return renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle)
+  }, [cleanText, variant])
 
   // ── ZEN variant ────────────────────────────────────────────────
   if (variant === 'zen') {
@@ -433,7 +448,7 @@ export function ChatMessageBubble({
         {(cleanText || msg.isStreaming) && (
           <div className="zen-message-content">
             {cleanText && (
-              <span dangerouslySetInnerHTML={{ __html: renderMarkdown(cleanText) }} />
+              <span dangerouslySetInnerHTML={{ __html: renderedHtml }} />
             )}
             {msg.isStreaming && (
               <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>▋</span>
@@ -463,14 +478,6 @@ export function ChatMessageBubble({
       </div>
     )
   }
-
-  const codeBlockStyle = isDark
-    ? 'background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
-    : 'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
-
-  const inlineCodeStyle = isDark
-    ? 'background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px'
-    : 'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px'
 
   const bubbleStyle: CSSProperties = isUser
     ? {
@@ -531,9 +538,7 @@ export function ChatMessageBubble({
           }}
         >
           {cleanText && (
-            <span dangerouslySetInnerHTML={{
-              __html: renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle),
-            }} />
+            <span dangerouslySetInnerHTML={{ __html: renderedHtml }} />
           )}
           {msg.isStreaming && (
             <span style={{
@@ -592,4 +597,15 @@ export function ChatMessageBubble({
       </div>
     </div>
   )
-}
+}, (prev, next) => {
+  return (
+    prev.msg.content === next.msg.content &&
+    prev.msg.isStreaming === next.msg.isStreaming &&
+    prev.msg.tools === next.msg.tools &&
+    prev.variant === next.variant &&
+    prev.showThinking === next.showThinking &&
+    prev.showToolDetails === next.showToolDetails
+  )
+})
+
+export { ChatMessageBubbleInner as ChatMessageBubble }

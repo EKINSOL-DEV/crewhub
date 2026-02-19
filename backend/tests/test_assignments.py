@@ -39,11 +39,11 @@ async def test_create_assignment_upsert(client):
     # Update to different room
     response = await client.post("/api/session-room-assignments", json={
         "session_key": "agent:main:upsert-test",
-        "room_id": "thinking-room",
+        "room_id": "headquarters",
     })
     assert response.status_code == 200
     data = response.json()
-    assert data["room_id"] == "thinking-room"
+    assert data["room_id"] == "headquarters"
 
 
 @pytest.mark.asyncio
@@ -119,7 +119,7 @@ async def test_get_assignments_for_room(client):
     })
     await client.post("/api/session-room-assignments", json={
         "session_key": "agent:main:room-test-3",
-        "room_id": "thinking-room",
+        "room_id": "headquarters",
     })
 
     response = await client.get("/api/session-room-assignments/room/dev-lab")
@@ -136,7 +136,7 @@ async def test_batch_assign(client):
     assignments = [
         {"session_key": "agent:batch:1", "room_id": "dev-lab"},
         {"session_key": "agent:batch:2", "room_id": "dev-lab"},
-        {"session_key": "agent:batch:3", "room_id": "thinking-room"},
+        {"session_key": "agent:batch:3", "room_id": "headquarters"},
     ]
     response = await client.post("/api/session-room-assignments/batch", json=assignments)
     assert response.status_code == 200

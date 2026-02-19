@@ -30,13 +30,21 @@ export function useStreamingChat(
   raw: boolean = false,
   roomId?: string
 ): UseStreamingChatReturn {
-  const [messages, setMessages] = useState<ChatMessageData[]>([])
+  const [messages, setMessagesRaw] = useState<ChatMessageData[]>([])
+  const setMessages: React.Dispatch<React.SetStateAction<ChatMessageData[]>> = useCallback((action) => {
+    setMessagesRaw(prev => {
+      const next = typeof action === 'function' ? action(prev) : action
+      messagesRef.current = next
+      return next
+    })
+  }, [])
   const [isSending, setIsSending] = useState(false)
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
 
+  const messagesRef = useRef<ChatMessageData[]>([])
   const abortRef = useRef<AbortController | null>(null)
   const historyAbortRef = useRef<AbortController | null>(null)
   // Throttling refs
@@ -82,9 +90,9 @@ export function useStreamingChat(
   }, [loadHistory])
 
   const loadOlderMessages = useCallback(async () => {
-    const oldest = messages[0]?.timestamp
+    const oldest = messagesRef.current[0]?.timestamp
     if (oldest) await loadHistory(oldest)
-  }, [loadHistory, messages])
+  }, [loadHistory])
 
   const flushPendingContent = useCallback(() => {
     if (throttleTimerRef.current) {
