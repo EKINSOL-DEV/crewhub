@@ -145,20 +145,26 @@ export function AgentChatWindow({
     duration: recDuration,
     error: recError,
     isSupported: micSupported,
+    pendingAudio,
     startRecording,
     stopRecording,
     cancelRecording,
+    confirmAudio,
+    cancelAudio,
   } = useVoiceRecorder(handleAudioReady)
 
-  // ESC cancels recording
+  // ESC cancels recording or pending audio preview
   useEffect(() => {
-    if (!isRecording) return
+    if (!isRecording && !pendingAudio) return
     const handler = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') cancelRecording()
+      if (e.key === 'Escape') {
+        if (isRecording) cancelRecording()
+        else if (pendingAudio) cancelAudio()
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [isRecording, cancelRecording])
+  }, [isRecording, pendingAudio, cancelRecording, cancelAudio])
 
   const handleDragStop = (_: unknown, d: { x: number; y: number }) => {
     updatePosition(sessionKey, { x: d.x, y: d.y })
@@ -401,6 +407,63 @@ export function AgentChatWindow({
             gap: 4,
           }}
         >
+          {/* Pending audio preview — shown after stop, before send */}
+          {pendingAudio && (
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 5,
+              padding: '6px 0 4px',
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
+              marginBottom: 4,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <audio
+                  src={pendingAudio.url}
+                  controls
+                  style={{ flex: 1, height: 28, minWidth: 0 }}
+                />
+                {/* Send (confirm) button */}
+                <button
+                  onClick={confirmAudio}
+                  title="Send voice message"
+                  style={{
+                    width: 30, height: 30, borderRadius: 8, border: 'none',
+                    background: accentColor + 'dd', color: '#fff',
+                    cursor: 'pointer', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 14,
+                  }}
+                >
+                  ➤
+                </button>
+                {/* Cancel (discard) button */}
+                <button
+                  onClick={cancelAudio}
+                  title="Discard voice message"
+                  style={{
+                    width: 30, height: 30, borderRadius: 8, border: 'none',
+                    background: 'rgba(0,0,0,0.06)', color: '#6b7280',
+                    cursor: 'pointer', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              {pendingAudio.transcript && (
+                <div style={{
+                  fontSize: 11, fontStyle: 'italic', color: '#9ca3af',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  "{pendingAudio.transcript}"
+                </div>
+              )}
+              {pendingAudio.transcriptError && (
+                <div style={{ fontSize: 10, color: '#9ca3af' }}>Transcription unavailable</div>
+              )}
+            </div>
+          )}
+
           {/* Recording indicator */}
           {isRecording && (
             <div style={{
@@ -423,7 +486,7 @@ export function AgentChatWindow({
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
-              disabled={isSending || isRecording}
+              disabled={isSending || isRecording || !!pendingAudio}
               rows={1}
               style={{
                 flex: 1,
@@ -445,8 +508,8 @@ export function AgentChatWindow({
                 el.style.height = Math.min(el.scrollHeight, 80) + 'px'
               }}
             />
-            {/* Mic button */}
-            {micSupported && (
+            {/* Mic button — hidden while there's a pending audio preview */}
+            {micSupported && !pendingAudio && (
               <button
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={micPreparing || isSending}
@@ -465,18 +528,18 @@ export function AgentChatWindow({
             )}
             <button
               onClick={handleSend}
-              disabled={isSending || !inputValue.trim() || isRecording}
+              disabled={isSending || !inputValue.trim() || isRecording || !!pendingAudio}
               style={{
                 width: 36,
                 height: 36,
                 borderRadius: 10,
                 border: 'none',
                 background:
-                  isSending || !inputValue.trim() || isRecording
+                  isSending || !inputValue.trim() || isRecording || !!pendingAudio
                     ? 'rgba(0,0,0,0.08)'
                     : accentColor + 'dd',
-                color: isSending || !inputValue.trim() || isRecording ? '#9ca3af' : '#fff',
-                cursor: isSending || !inputValue.trim() || isRecording ? 'default' : 'pointer',
+                color: isSending || !inputValue.trim() || isRecording || !!pendingAudio ? '#9ca3af' : '#fff',
+                cursor: isSending || !inputValue.trim() || isRecording || !!pendingAudio ? 'default' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

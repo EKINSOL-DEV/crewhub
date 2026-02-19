@@ -5,7 +5,8 @@
  * - Start/stop recording with mic selection via localStorage
  * - Auto-stop after MAX_DURATION_MS (5 minutes)
  * - Uploads to POST /api/media/audio (auto-transcribed via Groq Whisper)
- * - Calls onAudioReady(url, duration, transcript, transcriptError) when upload succeeds
+ * - After upload, sets pendingAudio state instead of sending immediately
+ * - Exposes confirmAudio() to send and cancelAudio() to discard
  * - ESC key cancels recording
  */
 
@@ -15,6 +16,13 @@ import { API_BASE } from '@/lib/api'
 const MAX_DURATION_MS = 5 * 60 * 1000 // 5 minutes
 const MIC_DEVICE_KEY = 'crewhub-mic-device-id'
 
+export interface PendingAudio {
+  url: string
+  duration: number
+  transcript: string | null
+  transcriptError: string | null
+}
+
 export interface UseVoiceRecorderReturn {
   isRecording: boolean
   isPreparing: boolean
@@ -22,9 +30,15 @@ export interface UseVoiceRecorderReturn {
   duration: number
   error: string | null
   isSupported: boolean
+  /** Audio that has been uploaded but not yet sent — null when nothing pending */
+  pendingAudio: PendingAudio | null
   startRecording: () => Promise<void>
   stopRecording: () => void
   cancelRecording: () => void
+  /** Send the pending audio via onAudioReady and clear it */
+  confirmAudio: () => void
+  /** Discard the pending audio without sending */
+  cancelAudio: () => void
 }
 
 export function useVoiceRecorder(
@@ -34,6 +48,7 @@ export function useVoiceRecorder(
   const [isPreparing, setIsPreparing] = useState(false)
   const [duration, setDuration] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [pendingAudio, setPendingAudio] = useState<PendingAudio | null>(null)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -66,7 +81,7 @@ export function useVoiceRecorder(
     mediaRecorderRef.current = null
   }, [])
 
-  // ── Upload audio blob ───────────────────────────────────────────
+  // ── Upload audio blob — sets pendingAudio instead of sending ───
   const uploadAudio = useCallback(
     async (blob: Blob, dur: number) => {
       try {
@@ -90,23 +105,43 @@ export function useVoiceRecorder(
         const data = await resp.json()
         const transcript: string | null = data.transcript ?? null
         const transcriptError: string | null = data.transcriptError ?? null
-        onAudioReady(data.url, Math.round(dur * 10) / 10, transcript, transcriptError)
+
+        // ← Instead of calling onAudioReady immediately, stage it as pending
+        setPendingAudio({
+          url: data.url,
+          duration: Math.round(dur * 10) / 10,
+          transcript,
+          transcriptError,
+        })
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Upload failed'
         setError(msg)
       }
     },
-    [onAudioReady],
+    [],
   )
 
-  // ── Stop recording (sends audio) ────────────────────────────────
+  // ── Confirm: send pending audio and clear it ────────────────────
+  const confirmAudio = useCallback(() => {
+    if (!pendingAudio) return
+    onAudioReady(pendingAudio.url, pendingAudio.duration, pendingAudio.transcript, pendingAudio.transcriptError)
+    setPendingAudio(null)
+  }, [pendingAudio, onAudioReady])
+
+  // ── Cancel: discard pending audio without sending ───────────────
+  const cancelAudio = useCallback(() => {
+    setPendingAudio(null)
+    setError(null)
+  }, [])
+
+  // ── Stop recording (triggers upload → pendingAudio) ─────────────
   const stopRecording = useCallback(() => {
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') return
     cancelledRef.current = false
     mediaRecorderRef.current.stop()
   }, [])
 
-  // ── Cancel recording (discards audio) ──────────────────────────
+  // ── Cancel recording (discards audio entirely) ──────────────────
   const cancelRecording = useCallback(() => {
     cancelledRef.current = true
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -223,9 +258,12 @@ export function useVoiceRecorder(
     duration,
     error,
     isSupported,
+    pendingAudio,
     startRecording,
     stopRecording,
     cancelRecording,
+    confirmAudio,
+    cancelAudio,
   }
 }
 
