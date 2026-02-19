@@ -7,17 +7,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { streamMessage } from '@/services/chatStreamService'
 import { API_BASE } from '@/lib/api'
+import type { ChatMessageData } from '@/hooks/useAgentChat'
 
-export interface ChatMessageData {
-  id: string
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  timestamp: number
-  tokens?: number
-  tools?: Array<{ name: string; status: string }>
-  thinking?: string[]
-  isStreaming?: boolean
-}
+export type { ChatMessageData }
 
 export interface UseStreamingChatReturn {
   messages: ChatMessageData[]
