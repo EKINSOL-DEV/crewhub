@@ -54,6 +54,9 @@
                 "worker-src": [
                     "'self'",
                     "blob:"
+                ],
+                "frame-src": [
+                    "*"
                 ]
             }
         }

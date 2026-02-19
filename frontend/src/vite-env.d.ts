@@ -11,7 +11,7 @@ interface Window {
    * - 'settings' → settings window (420×280px)
    * - undefined  → running in browser (not Tauri)
    */
-  __TAURI_VIEW__?: 'mobile' | 'desktop' | 'settings'
+  __TAURI_VIEW__?: 'mobile' | 'desktop' | 'settings' | 'zen'
 
   /**
    * Set by Tauri core when running inside the desktop app.

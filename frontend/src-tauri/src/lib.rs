@@ -16,6 +16,9 @@ const WORLD_WINDOW_LABEL: &str = "world";
 /// Label for the settings window (small, 420×280)
 const SETTINGS_WINDOW_LABEL: &str = "settings";
 
+/// Label for the standalone Zen Mode window
+const ZEN_WINDOW_LABEL: &str = "zen-mode";
+
 /// ID for the system tray icon (used for badge updates)
 const TRAY_ID: &str = "main-tray";
 
@@ -154,6 +157,61 @@ fn settings_url() -> WebviewUrl {
     }
 }
 
+/// Build the WebviewUrl for the standalone Zen Mode window.
+fn zen_url() -> WebviewUrl {
+    #[cfg(debug_assertions)]
+    {
+        WebviewUrl::External("http://localhost:5180/?mode=zen".parse().unwrap())
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        WebviewUrl::App("index.html?mode=zen".into())
+    }
+}
+
+/// JavaScript injected into the Zen Mode window before page load.
+fn zen_init_script() -> String {
+    format!(
+        "window.__TAURI_VIEW__ = 'zen'; {}",
+        base_init()
+    )
+}
+
+/// Open or focus the standalone Zen Mode window (800×900, resizable, no decorations).
+/// - If already open: bring to front.
+/// - If hidden: show + focus.
+/// - If not yet created: create, then show + focus.
+fn open_or_focus_zen<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(window) = app.get_webview_window(ZEN_WINDOW_LABEL) {
+        show_and_focus(&window);
+        return;
+    }
+
+    let result = WebviewWindowBuilder::new(app, ZEN_WINDOW_LABEL, zen_url())
+        .title("Zen Mode")
+        .inner_size(820.0, 920.0)
+        .min_inner_size(600.0, 500.0)
+        .resizable(true)
+        .fullscreen(false)
+        .decorations(true)
+        .always_on_top(false)
+        .skip_taskbar(false)
+        .initialization_script(&zen_init_script())
+        .build();
+
+    match result {
+        Ok(window) => show_and_focus(&window),
+        Err(e) => eprintln!("[CrewHub] Failed to create Zen Mode window: {}", e),
+    }
+}
+
+/// Tauri command: open or focus the standalone Zen Mode window.
+/// Called from the frontend via `invoke('open_zen_window')`.
+#[tauri::command]
+fn open_zen_window(app: AppHandle) {
+    open_or_focus_zen(&app);
+}
+
 /// Open or focus the settings window (420×280, not resizable).
 /// - If already open: bring to front.
 /// - If hidden: show + focus.
@@ -187,11 +245,12 @@ fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
     let chat_item = MenuItem::with_id(handle, "chat", "Chat", true, None::<&str>)?;
     let world_item = MenuItem::with_id(handle, "world", "3D World", true, None::<&str>)?;
+    let zen_item = MenuItem::with_id(handle, "zen", "🧘 Zen Mode", true, None::<&str>)?;
     let settings_item = MenuItem::with_id(handle, "settings", "⚙️ Settings", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(handle)?;
     let quit_item = MenuItem::with_id(handle, "quit", "Quit CrewHub", true, None::<&str>)?;
 
-    let menu = Menu::with_items(handle, &[&chat_item, &world_item, &settings_item, &separator, &quit_item])?;
+    let menu = Menu::with_items(handle, &[&chat_item, &world_item, &zen_item, &settings_item, &separator, &quit_item])?;
 
     let _tray = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
@@ -201,6 +260,7 @@ fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         .on_menu_event(|app, event| match event.id.as_ref() {
             "chat" => open_or_focus_chat(app),
             "world" => open_or_focus_world(app),
+            "zen" => open_or_focus_zen(app),
             "settings" => open_or_focus_settings(app),
             "quit" => {
                 println!("[CrewHub] Quitting...");
@@ -290,7 +350,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
         .manage(BadgeCount(Mutex::new(0)))
-        .invoke_handler(tauri::generate_handler![update_tray_badge])
+        .invoke_handler(tauri::generate_handler![update_tray_badge, open_zen_window])
         .setup(|app| {
             // ── macOS: Accessory activation policy ──────────────────────────
             // Accessory = no Dock icon, no App Switcher (Cmd+Tab).
@@ -310,7 +370,11 @@ pub fn run() {
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let label = window.label();
-                if label == CHAT_WINDOW_LABEL || label == WORLD_WINDOW_LABEL || label == SETTINGS_WINDOW_LABEL {
+                if label == CHAT_WINDOW_LABEL
+                    || label == WORLD_WINDOW_LABEL
+                    || label == SETTINGS_WINDOW_LABEL
+                    || label == ZEN_WINDOW_LABEL
+                {
                     api.prevent_close();
                     let _ = window.hide();
                 }

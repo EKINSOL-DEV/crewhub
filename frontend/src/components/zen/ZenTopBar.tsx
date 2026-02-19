@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ZenTabBar } from './ZenTabBar'
 import type { ZenTab, ZenProjectFilter } from './hooks/useZenMode'
 
@@ -23,6 +23,7 @@ interface ZenTopBarProps {
   onOpenThemePicker?: () => void
   onOpenCommandPalette?: () => void
   onOpenKeyboardHelp?: () => void
+  onAddBrowserPanel?: () => void
   projectFilter?: ProjectFilterInfo
   onClearProjectFilter?: () => void
   // Tab bar props
@@ -35,6 +36,34 @@ interface ZenTopBarProps {
   onAddTab?: (projectFilter?: ZenProjectFilter) => void
   onReopenClosedTab?: () => void
   onRenameTab?: (tabId: string, newLabel: string) => void
+}
+
+/**
+ * Always-on-top toggle — only meaningful in the standalone Tauri Zen window.
+ * We detect this by checking both __TAURI_INTERNALS__ (Tauri context) and
+ * the ?mode=zen query param (standalone zen window, not the overlay).
+ */
+function useAlwaysOnTop() {
+  const [pinned, setPinned] = useState(false)
+  const isStandalone = useRef(
+    typeof window !== 'undefined' &&
+    !!window.__TAURI_INTERNALS__ &&
+    new URLSearchParams(window.location.search).get('mode') === 'zen'
+  )
+
+  const toggle = useCallback(async () => {
+    if (!isStandalone.current) return
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      const next = !pinned
+      await getCurrentWindow().setAlwaysOnTop(next)
+      setPinned(next)
+    } catch (e) {
+      console.warn('[ZenTopBar] setAlwaysOnTop failed:', e)
+    }
+  }, [pinned])
+
+  return { pinned, toggle, isStandalone: isStandalone.current }
 }
 
 function useFullscreen() {
@@ -68,6 +97,7 @@ export function ZenTopBar({
   onOpenThemePicker,
   onOpenCommandPalette,
   onOpenKeyboardHelp,
+  onAddBrowserPanel,
   projectFilter,
   onClearProjectFilter,
   // Tab bar props
@@ -82,6 +112,7 @@ export function ZenTopBar({
   onRenameTab,
 }: ZenTopBarProps) {
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
+  const { pinned, toggle: togglePin, isStandalone: showPinButton } = useAlwaysOnTop()
   const showTabBar = tabs && tabs.length > 0 && onSwitchTab && onCloseTab && onAddTab
   
   // Keyboard shortcut for fullscreen (F11 or Ctrl+Shift+F)
@@ -239,6 +270,37 @@ export function ZenTopBar({
             </button>
           )}
           
+          {/* Add Browser Panel button */}
+          {onAddBrowserPanel && (
+            <button
+              type="button"
+              className="zen-btn zen-btn-icon"
+              onClick={onAddBrowserPanel}
+              title="Add browser panel (split right)"
+              aria-label="Add browser panel"
+              style={{ fontSize: '14px' }}
+            >
+              🌐
+            </button>
+          )}
+
+          {/* Always-on-top pin — only in standalone Tauri Zen window */}
+          {showPinButton && (
+            <button
+              type="button"
+              className={`zen-btn zen-btn-icon ${pinned ? 'zen-btn-active' : ''}`}
+              onClick={togglePin}
+              title={pinned ? 'Unpin window (disable always-on-top)' : 'Pin window (always on top)'}
+              aria-label={pinned ? 'Disable always on top' : 'Enable always on top'}
+              style={{
+                opacity: pinned ? 1 : undefined,
+                color: pinned ? 'var(--zen-accent)' : undefined,
+              }}
+            >
+              📌
+            </button>
+          )}
+
           {/* Fullscreen toggle */}
           <button
             type="button"

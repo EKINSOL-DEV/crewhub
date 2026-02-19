@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
-  <img src="https://img.shields.io/badge/version-v0.16.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.17.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -35,64 +35,39 @@ But CrewHub isn't just another dashboard. Your agents come alive in a **fully in
 
 ---
 
-## ✨ What's New in v0.16.0
+## ✨ What's New in v0.17.0
 
-### 🖥️ Native Desktop App for macOS *(Beta)*
+### ⚡ Streaming Chat
 
-CrewHub now ships as a **native macOS menubar app** built with Tauri v2. No browser, no tabs — just click the tray icon.
+Agents now respond **word by word, in real-time**. No more waiting for the full reply to load — as soon as your agent starts thinking, you start reading.
 
-- **Two windows:** a compact Chat window and the full 3D World (1280×900)
-- **No Dock icon** — lives in your menubar, stays out of Cmd+Tab
-- **Close = hide**, not quit — the 3D world stays loaded in the background
-- **Native notifications + tray badge** when an agent completes a task
-- Settings panel in the tray menu — configure your backend URL without touching config files
+- Token-by-token streaming across all chat interfaces
+- Auto-scroll follows the response as it comes in
+- Works in Zen Mode, the float window, and mobile chat
 
-### 📱 Full Mobile Support
+### 🎙️ Voice Messages
 
-CrewHub now works properly on **iOS, Android, and iPad**. The entire app is responsive — Kanban board, chat, activity feed, project panels, and the 3D world. The 3D viewport adapts to a floating mini-camera on small screens, and the hamburger menu gives you access to all panels without cluttering the interface.
+Record a voice message directly in the chat. Tap the mic, speak, tap send.
 
-File and image upload in chat works on mobile too (including the iOS file picker).
+- **Auto-transcription** via Groq Whisper so your agent reads your actual words
+- Works in any language
+- Audio player renders inline in the chat bubble with transcript shown beneath
+- macOS mic support in the desktop app
 
-### 🔐 Proper Device Authentication
+### 🧘 Zen Mode Superpowers
 
-The CrewHub backend now authenticates with the OpenClaw gateway using **Ed25519 device identity** (the same protocol as any other first-class OpenClaw client). No more workarounds.
+Zen Mode got a serious upgrade.
 
-**What this means for you:** you no longer need `dangerouslyDisableDeviceAuth` or `allowInsecureAuth` in your `~/.openclaw/openclaw.json`. Those flags can be removed — CrewHub handles auth correctly.
+**Standalone window** — open Zen Mode as a dedicated window in the desktop app, separate from your main CrewHub workspace. Pure focus, no distractions.
 
-On first connect, the backend automatically pairs itself as a registered device. The device identity is stored in SQLite and reused across restarts. No manual steps needed.
+**Browser panels** — add one or more resizable browser panels right next to your chat. Each panel has its own URL bar. Perfect for Agentic Engineering: pull up docs, dashboards, your own apps, or any web tool alongside your agent conversation. In the desktop app, panels use a full native webview with no site restrictions. Panels persist across reloads.
 
-### 🧙 Onboarding Wizard
+### Also in v0.17.0
 
-New installations get an **interactive setup wizard** (OpenClawWizard) that walks you through:
-1. Entering your OpenClaw gateway URL (e.g. `ws://localhost:18789`)
-2. Entering your gateway token
-3. Testing the connection
-4. Confirming the setup is working
+- **Improved Tailscale HTTPS support** for secure remote access
+- React hooks stability fixes and memory leak patches from 5 overnight QA cycles
 
-The wizard auto-detects common configurations and handles Docker networking for you.
-
-### 💬 Group Chat
-
-All your agents in one room, one conversation. Group Chat lets you send a message and have multiple agents respond in context — useful for coordination, reviews, or just asking the team something without routing it to one specific bot.
-
-### 🏢 HQ Redesign
-
-The task board (HQ) got a proper redesign: cleaner layout, a **Review column** in the Kanban, better task creation flow, and demo data so new users immediately see what it's supposed to look like.
-
-### 📄 Docs Panel
-
-Browse your CrewHub docs directly from the dashboard. The Docs Panel (accessible from the Zen sidebar and mobile hamburger menu) has a full folder tree, last-modified dates, and a fullscreen markdown viewer with a table of contents.
-
-### ⚡ Performance Optimizations
-
-Five concrete improvements landed:
-- **80% initial bundle reduction** via code-splitting (Three.js and heavy deps loaded on demand)
-- **React.memo** on frequently re-rendering components
-- **Memoized context providers** to prevent cascading re-renders
-- **Throttled Three.js animations** for non-critical elements
-- **Smaller highlight.js bundle** by importing only needed languages
-
-[Read the full v0.16.0 release notes →](https://crewhub.dev/blog/v0-16-0-released)
+[Read the full v0.17.0 release notes →](https://crewhub.dev/blog/v0-17-0-released)
 
 ---
 

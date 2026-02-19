@@ -26,9 +26,10 @@ export type PanelId =
   | 'docs'       // Documentation browser
   | 'documents'  // Legacy alias for projects
   | 'details'    // Future
+  | 'browser'    // Embedded browser panel
   | 'empty'
 
-export type UserPanelId = Exclude<PanelId, 'empty' | 'details' | 'documents'>
+export type UserPanelId = Exclude<PanelId, 'empty' | 'details' | 'documents' | 'browser'>
 
 // ── Panel Definition ──────────────────────────────────────────────
 
@@ -174,6 +175,16 @@ const PANEL_DEFINITIONS: PanelDefinition[] = [
     keywords: [],
     primary: false,
     hidden: true,
+  },
+  {
+    id: 'browser',
+    label: 'Browser',
+    icon: '🌐',
+    description: 'Embedded browser — open any URL alongside your work',
+    category: 'productivity',
+    keywords: ['browser', 'web', 'url', 'iframe', 'http', 'internet', 'search', 'google'],
+    shortcutHint: 'b',
+    primary: true,
   },
   {
     id: 'empty',

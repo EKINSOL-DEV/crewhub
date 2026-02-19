@@ -34,6 +34,16 @@ import { getOnboardingStatus, API_BASE } from './lib/api'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
 import { Button } from './components/ui/button'
 
+/** Open the standalone Zen Mode Tauri window (or focus it if already open). */
+async function openZenWindow() {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core')
+    await invoke('open_zen_window')
+  } catch (err) {
+    console.warn('[CrewHub] openZenWindow failed:', err)
+  }
+}
+
 // ── URL Parameter Detection ────────────────────────────────────
 function isZenModeUrl(): boolean {
   return new URLSearchParams(window.location.search).get('mode') === 'zen'
@@ -389,6 +399,18 @@ function AppContent() {
             <Button variant="ghost" size="sm" onClick={refresh} disabled={loading}>
               <RefreshCw className={refreshClass} />
             </Button>
+
+            {/* Zen Window button — only in Tauri desktop */}
+            {!!window.__TAURI_INTERNALS__ && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={openZenWindow}
+                title="Open Zen Mode in separate window"
+              >
+                <span style={{ fontSize: '14px', lineHeight: 1 }}>🧘</span>
+              </Button>
+            )}
             
             <Button variant="ghost" size="sm" onClick={() => setSettingsOpen(true)}>
               <Settings className="h-4 w-4" />
