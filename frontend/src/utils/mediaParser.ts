@@ -1,13 +1,19 @@
 /**
  * Media attachment parser for chat messages.
- * Detects and extracts image and video attachments from message content.
+ * Detects and extracts image, video, and audio attachments from message content.
  */
 
 export interface MediaAttachment {
-  type: 'image' | 'video'
+  type: 'image' | 'video' | 'audio'
   path: string
   mimeType: string
   originalText: string
+  /** Duration in seconds (audio only) */
+  duration?: number
+  /** Whisper transcript text (audio only, if available) */
+  transcript?: string
+  /** Transcription error message (audio only, if transcription failed) */
+  transcriptError?: string
 }
 
 export interface ParsedMessage {
@@ -31,8 +37,27 @@ const SUPPORTED_VIDEO_TYPES = new Set([
   'video/quicktime',
 ])
 
+// Supported audio MIME types
+const SUPPORTED_AUDIO_TYPES = new Set([
+  'audio/webm',
+  'audio/mp4',
+  'audio/ogg',
+  'audio/wav',
+  'audio/mpeg',
+  'audio/x-m4a',
+])
+
 // Pattern for [media attached: <path> (<mime>)]
 const MEDIA_ATTACHED_REGEX = /\[media attached:\s*([^\s]+)\s+\(([^)]+)\)\]/gi
+
+// Pattern for [audio attached: <path> (<mime>) <duration>s]
+const AUDIO_ATTACHED_REGEX = /\[audio attached:\s*([^\s]+)\s+\(([^)]+)\)(?:\s+([\d.]+)s)?\]/gi
+
+// Pattern for Transcript: "text" line following an audio attachment
+const TRANSCRIPT_REGEX = /^Transcript:\s*"(.+)"$/m
+
+// Pattern for [Voice transcription unavailable: reason] line
+const TRANSCRIPT_ERROR_REGEX = /\[Voice transcription unavailable:\s*([^\]]+)\]/
 
 // Pattern for MEDIA: prefix (alternative format)
 const MEDIA_PREFIX_REGEX = /MEDIA:\s*([^\s]+)/gi
@@ -52,6 +77,14 @@ export function isVideoMimeType(mimeType: string): boolean {
 }
 
 /**
+ * Check if a MIME type is a supported audio type.
+ */
+export function isAudioMimeType(mimeType: string): boolean {
+  const base = mimeType.toLowerCase().split(';')[0].trim()
+  return SUPPORTED_AUDIO_TYPES.has(base) || base.startsWith('audio/')
+}
+
+/**
  * Convert a file path to a media API URL.
  */
 export function getMediaUrl(path: string): string {
@@ -68,8 +101,53 @@ export function parseMediaAttachments(content: string): ParsedMessage {
   const attachments: MediaAttachment[] = []
   let text = content
 
-  // Parse [media attached: /path/to/file.jpg (image/jpeg)] pattern
+  // Parse [audio attached: /path/to/file.webm (audio/webm) 5.2s] pattern
+  // Also parses optional Transcript: "..." or [Voice transcription unavailable: ...] lines
   let match: RegExpExecArray | null
+  const audioAttachedRegex = new RegExp(AUDIO_ATTACHED_REGEX)
+
+  while ((match = audioAttachedRegex.exec(content)) !== null) {
+    const [fullMatch, path, mimeType, durationStr] = match
+    const baseMime = mimeType.toLowerCase().split(';')[0].trim()
+    if (isAudioMimeType(baseMime)) {
+      // Look for transcript line immediately after the audio tag
+      const afterTag = content.slice(match.index + fullMatch.length)
+      
+      let transcript: string | undefined
+      let transcriptError: string | undefined
+      let transcriptMatchText = ''
+
+      const transcriptMatch = TRANSCRIPT_REGEX.exec(afterTag)
+      if (transcriptMatch) {
+        transcript = transcriptMatch[1]
+        transcriptMatchText = transcriptMatch[0]
+      } else {
+        const errorMatch = TRANSCRIPT_ERROR_REGEX.exec(afterTag)
+        if (errorMatch) {
+          transcriptError = errorMatch[1].trim()
+          transcriptMatchText = errorMatch[0]
+        }
+      }
+
+      attachments.push({
+        type: 'audio',
+        path,
+        mimeType: baseMime,
+        originalText: fullMatch + (transcriptMatchText ? '\n' + transcriptMatchText : ''),
+        duration: durationStr ? parseFloat(durationStr) : undefined,
+        transcript,
+        transcriptError,
+      })
+      // Remove the audio tag and associated transcript line from text
+      let removeText = fullMatch
+      if (transcriptMatchText) {
+        removeText = fullMatch + '\n' + transcriptMatchText
+      }
+      text = text.replace(removeText, '').trim()
+    }
+  }
+
+  // Parse [media attached: /path/to/file.jpg (image/jpeg)] pattern
   const mediaAttachedRegex = new RegExp(MEDIA_ATTACHED_REGEX)
   
   while ((match = mediaAttachedRegex.exec(content)) !== null) {

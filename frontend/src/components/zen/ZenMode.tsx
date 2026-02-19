@@ -39,6 +39,7 @@ import { ZenKeyboardHelp } from './ZenKeyboardHelp'
 import { ZenAgentPicker } from './ZenSessionManager'
 import { ZenSaveLayoutModal, ZenLayoutPicker, addRecentLayout, type SavedLayout } from './ZenLayoutManager'
 import { ZenErrorBoundary } from './ZenErrorBoundary'
+import { ZenBrowserPanel } from './ZenBrowserPanel'
 import { useZenMode, type ZenProjectFilter } from './hooks/useZenMode'
 import { useZenKeyboard } from './hooks/useZenKeyboard'
 import { useZenTheme } from './hooks/useZenTheme'
@@ -406,6 +407,11 @@ export function ZenMode({
   const handleAddPanel = useCallback((type: string) => {
     splitPanelAction(focusedPanelId, 'row', type as PanelType)
   }, [focusedPanelId, splitPanelAction])
+
+  // Dedicated handler: add a browser panel to the right of the focused panel
+  const handleAddBrowserPanel = useCallback(() => {
+    splitPanelAction(focusedPanelId, 'row', 'browser')
+  }, [focusedPanelId, splitPanelAction])
   
   // Handle adding a new tab
   const handleAddTab = useCallback((filter?: ZenProjectFilter) => {
@@ -618,6 +624,14 @@ export function ZenMode({
             />
           )
         
+        case 'browser':
+          return (
+            <ZenBrowserPanel
+              url={panel.browserUrl}
+              onUrlChange={(url) => updatePanelState(panel.panelId, { browserUrl: url })}
+            />
+          )
+
         case 'empty':
         default:
           return (
@@ -646,6 +660,7 @@ export function ZenMode({
     activeProjectId,
     activeProjectName,
     handleProjectFilterChange,
+    updatePanelState,
   ])
 
   return (
@@ -667,6 +682,7 @@ export function ZenMode({
         onOpenThemePicker={() => setShowThemePicker(true)}
         onOpenCommandPalette={() => setShowCommandPalette(true)}
         onOpenKeyboardHelp={() => setShowKeyboardHelp(true)}
+        onAddBrowserPanel={handleAddBrowserPanel}
         projectFilter={projectFilter ? { name: projectFilter.projectName, color: projectFilter.projectColor } : undefined}
         onClearProjectFilter={clearProjectFilter}
         // Tab bar props

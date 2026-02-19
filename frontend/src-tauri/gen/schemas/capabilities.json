@@ -1,1 +1,1 @@
-{"default":{"identifier":"default","description":"Capability for the main CrewHub windows","local":true,"windows":["main","chat","world"],"permissions":["core:default","shell:allow-open","notification:default"]}}
+{"default":{"identifier":"default","description":"Capability for the main CrewHub windows","local":true,"windows":["main","chat","world","zen-mode"],"permissions":["core:default","shell:allow-open","notification:default","core:window:allow-set-always-on-top","core:window:allow-is-always-on-top"]}}

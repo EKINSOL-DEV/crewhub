@@ -4,12 +4,14 @@
  */
 
 import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 'react'
-import { useAgentChat } from '@/hooks/useAgentChat'
+import { ArrowUp, X } from 'lucide-react'
+import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { PixelAvatar } from './PixelAvatar'
 import { ImageDropZone, ImagePreviews, type PendingImage } from './ImageDropZone'
 import { API_BASE } from '@/lib/api'
 import type { Agent } from '@/hooks/useAgentsRegistry'
+import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 
 interface ZenChatPanelProps {
   sessionKey: string | null
@@ -206,12 +208,13 @@ export function ZenChatPanel({
   const {
     messages,
     isSending,
+    streamingMessageId,
     error,
     sendMessage,
     loadOlderMessages,
     hasMore,
     isLoadingHistory,
-  } = useAgentChat(sessionKey || '', showThinking, roomId)
+  } = useStreamingChat(sessionKey || '', showThinking, roomId)
 
   const [inputValue, setInputValue] = useState('')
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
@@ -221,6 +224,7 @@ export function ZenChatPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isNearBottomRef = useRef(true)
   const prevMessageCount = useRef(0)
+  const prevStreamingIdRef = useRef<string | null>(null)
 
   // Process pending message when agent finishes
   useEffect(() => {
@@ -274,6 +278,23 @@ export function ZenChatPanel({
     }
     prevMessageCount.current = messages.length
   }, [messages.length])
+
+  // Auto-scroll during streaming (fires on every content delta)
+  useEffect(() => {
+    const wasStreaming = prevStreamingIdRef.current !== null
+    const isStreaming = streamingMessageId !== null
+
+    if (isStreaming && isNearBottomRef.current) {
+      // During streaming: follow new tokens if user hasn't scrolled up
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else if (wasStreaming && !isStreaming) {
+      // Streaming just ended: final scroll to bottom and reset scroll-up guard
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      isNearBottomRef.current = true
+    }
+
+    prevStreamingIdRef.current = streamingMessageId
+  }, [messages, streamingMessageId])
 
   // Focus input and scroll to bottom on mount/session switch
   useEffect(() => {
@@ -372,6 +393,39 @@ export function ZenChatPanel({
     el.style.height = 'auto'
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
+
+  // ── Voice recording ─────────────────────────────────────────
+  // NOTE: these hooks MUST live before any early return to comply with Rules of Hooks
+  const handleAudioReady = useCallback((url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
+    let tag = `[audio attached: ${url} (audio/webm) ${duration}s]`
+    if (transcript) {
+      tag += `\nTranscript: "${transcript}"`
+    } else if (transcriptError) {
+      tag += `\n[Voice transcription unavailable: ${transcriptError}]`
+    }
+    sendMessage(tag)
+  }, [sendMessage])
+
+  const {
+    isRecording,
+    isPreparing,
+    duration: recDuration,
+    error: recError,
+    isSupported: micSupported,
+    startRecording,
+    stopAndSend,
+    cancelRecording,
+  } = useVoiceRecorder(handleAudioReady)
+
+  // ESC cancels recording
+  useEffect(() => {
+    if (!isRecording) return
+    const handler = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') cancelRecording()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isRecording, cancelRecording])
 
   // If no session key, show no agent state with agent picker
   if (!sessionKey) {
@@ -488,6 +542,22 @@ export function ZenChatPanel({
 
         {/* Input area */}
         <div className="zen-chat-input-container">
+          {/* Recording indicator (WhatsApp-style: green send + cancel shown inline) */}
+          {isRecording && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 12px 2px',
+              fontSize: 12, color: '#ef4444',
+              fontFamily: 'monospace',
+            }}>
+              <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>●</span>
+              Recording {formatDuration(recDuration)}
+              <span style={{ flex: 1 }} />
+            </div>
+          )}
+          {recError && (
+            <div style={{ padding: '4px 12px', fontSize: 11, color: '#ef4444' }}>{recError}</div>
+          )}
           <div className="zen-chat-input-wrapper">
             <textarea
               ref={inputRef}
@@ -495,20 +565,62 @@ export function ZenChatPanel({
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               onInput={handleInput}
-              placeholder={`Message ${agentName || 'agent'}... (paste or drop images)`}
+              placeholder={isRecording ? 'Recording…' : `Message ${agentName || 'agent'}... (paste or drop images)`}
               rows={1}
               className="zen-chat-input"
+              disabled={isRecording}
             />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!canSend || pendingMessage !== null}
-              className="zen-chat-send-btn"
-              aria-label={isSending ? "Queue message" : "Send message"}
-              title={isSending ? "Message will be sent when agent finishes" : "Send message"}
-            >
-              {pendingMessage ? '⏳' : '➤'}
-            </button>
+            {/* While recording: green send ↑ + ✕ cancel */}
+            {isRecording && (
+              <>
+                <button
+                  type="button"
+                  onClick={stopAndSend}
+                  className="zen-chat-send-btn"
+                  style={{ background: '#22c55e', color: '#fff' }}
+                  aria-label="Stop & send voice message"
+                  title="Stop & send voice message"
+                >
+                  <ArrowUp size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelRecording}
+                  className="zen-chat-send-btn"
+                  aria-label="Cancel recording"
+                  title="Cancel recording"
+                >
+                  <X size={16} />
+                </button>
+              </>
+            )}
+            {/* While not recording: mic + send */}
+            {!isRecording && (
+              <>
+                {micSupported && (
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    disabled={isPreparing || isSending}
+                    className="zen-chat-send-btn"
+                    aria-label="Record voice message"
+                    title="Record voice message"
+                  >
+                    {isPreparing ? '⏳' : '🎤'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={!canSend || pendingMessage !== null}
+                  className="zen-chat-send-btn"
+                  aria-label={isSending ? "Queue message" : "Send message"}
+                  title={isSending ? "Message will be sent when agent finishes" : "Send message"}
+                >
+                  {pendingMessage ? '⏳' : '➤'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </ImageDropZone>

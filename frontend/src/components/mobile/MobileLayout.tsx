@@ -206,8 +206,8 @@ export function MobileLayout() {
           thread={view.thread}
           onBack={handleBack}
           onRemoveParticipant={(agentId) => handleRemoveParticipant(view.thread.id, agentId)}
-          onAddParticipants={() => {/* TODO: add participants flow */}}
-          onRename={() => {/* TODO: rename flow */}}
+          onAddParticipants={() => {/* Phase 2: group management — add participants flow */}}
+          onRename={() => {/* Phase 2: group management — rename flow */}}
         />
       ) : view.type === 'docs' ? (
         <MobileDocsPanel onBack={handleBack} />

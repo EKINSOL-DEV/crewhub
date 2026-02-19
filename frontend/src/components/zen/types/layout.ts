@@ -18,6 +18,7 @@ export type PanelType =
   | 'projects'  // Projects panel (overview + documents)
   | 'documents' // Legacy alias for projects
   | 'details'   // Session details (future)
+  | 'browser'   // Embedded browser panel
   | 'empty'     // Placeholder panel
 
 // ── Layout Node Types ─────────────────────────────────────────────
@@ -33,6 +34,8 @@ export interface LeafNode {
   agentSessionKey?: string
   agentName?: string
   agentIcon?: string
+  // Browser panel state
+  browserUrl?: string
 }
 
 /**

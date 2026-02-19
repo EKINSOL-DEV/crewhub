@@ -9,12 +9,13 @@
  * and OpenClaw reply-tag stripping.
  */
 
-import { useState, type CSSProperties } from 'react'
+import { memo, useMemo, useState, type CSSProperties } from 'react'
 import type { ChatMessageData, ToolCallData } from '@/hooks/useAgentChat'
 import { parseMediaAttachments } from '@/utils/mediaParser'
 import { stripOpenClawTags } from '@/lib/messageUtils'
 import { ImageThumbnail } from './ImageThumbnail'
 import { VideoThumbnail } from './VideoThumbnail'
+import { AudioMessage } from './AudioMessage'
 
 // ─────────────────────────────────────────────────────────────────
 // Markdown renderer (full-featured, shared for all variants)
@@ -41,24 +42,25 @@ export function renderMarkdown(
   codeBlockStyle?: string,
   inlineCodeStyle?: string,
 ): string {
-  let html = text
+  // Escape HTML first to prevent XSS
+  let html = escapeHtml(text)
 
-  // Code blocks (protect first)
+  // Code blocks (protect first — already escaped above, no double-escape)
   html = html.replace(
     /```(\w*)\n([\s\S]*?)```/g,
     (_m, lang, code) => {
       const style = codeBlockStyle ?? ''
-      return `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ` style="${style}"` : ''}><code>${escapeHtml(code.trim())}</code></pre>`
+      return `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ` style="${style}"` : ''}><code>${code.trim()}</code></pre>`
     },
   )
 
-  // Inline code (protect from other replacements)
+  // Inline code (protect from other replacements — already escaped above)
   const inlineCodePlaceholders: string[] = []
   html = html.replace(/`([^`]+)`/g, (_m, code) => {
     const style = inlineCodeStyle ?? ''
     const placeholder = `%%INLINE_CODE_${inlineCodePlaceholders.length}%%`
     inlineCodePlaceholders.push(
-      `<code class="chat-md-inline-code"${style ? ` style="${style}"` : ''}>${escapeHtml(code)}</code>`,
+      `<code class="chat-md-inline-code"${style ? ` style="${style}"` : ''}>${code}</code>`,
     )
     return placeholder
   })
@@ -343,7 +345,7 @@ function formatTimestamp(ts: number): string {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-export function ChatMessageBubble({
+const ChatMessageBubbleInner = memo(function ChatMessageBubble({
   msg,
   variant = 'float',
   accentColor = '#8b5cf6',
@@ -357,7 +359,23 @@ export function ChatMessageBubble({
   const { text, attachments } = parseMediaAttachments(msg.content || '')
   const imageAttachments = attachments.filter(a => a.type === 'image')
   const videoAttachments = attachments.filter(a => a.type === 'video')
+  const audioAttachments = attachments.filter(a => a.type === 'audio')
   const cleanText = stripOpenClawTags(text)
+
+  // Memoize markdown rendering to avoid re-running regex on unchanged content
+  const renderedHtml = useMemo(() => {
+    if (!cleanText) return ''
+    const isDark = variant === 'mobile'
+    const codeBlockStyle = isDark
+      ? 'background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
+      : variant === 'zen' ? undefined
+      : 'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
+    const inlineCodeStyle = isDark
+      ? 'background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px'
+      : variant === 'zen' ? undefined
+      : 'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px'
+    return renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle)
+  }, [cleanText, variant])
 
   // ── ZEN variant ────────────────────────────────────────────────
   if (variant === 'zen') {
@@ -411,6 +429,24 @@ export function ChatMessageBubble({
           </div>
         )}
 
+        {/* Audio attachments */}
+        {audioAttachments.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
+            {audioAttachments.map((attachment, i) => (
+              <AudioMessage
+                key={i}
+                url={attachment.path}
+                duration={attachment.duration}
+                variant="zen"
+                isUser={isUser}
+                accentColor={accentColor}
+                transcript={attachment.transcript}
+                transcriptError={attachment.transcriptError}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Thinking blocks */}
         {showThinking && msg.thinking && msg.thinking.length > 0 && (
           <div className="zen-thinking-blocks">
@@ -430,11 +466,15 @@ export function ChatMessageBubble({
         )}
 
         {/* Message content */}
-        {cleanText && (
-          <div
-            className="zen-message-content"
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(cleanText) }}
-          />
+        {(cleanText || msg.isStreaming) && (
+          <div className="zen-message-content">
+            {cleanText && (
+              <span dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+            )}
+            {msg.isStreaming && (
+              <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>▋</span>
+            )}
+          </div>
         )}
       </div>
     )
@@ -459,14 +499,6 @@ export function ChatMessageBubble({
       </div>
     )
   }
-
-  const codeBlockStyle = isDark
-    ? 'background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
-    : 'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
-
-  const inlineCodeStyle = isDark
-    ? 'background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px'
-    : 'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px'
 
   const bubbleStyle: CSSProperties = isUser
     ? {
@@ -514,7 +546,7 @@ export function ChatMessageBubble({
       )}
 
       {/* Text content */}
-      {cleanText && (
+      {(cleanText || msg.isStreaming) && (
         <div
           style={{
             padding: variant === 'mobile' ? '10px 14px' : '8px 12px',
@@ -525,10 +557,17 @@ export function ChatMessageBubble({
             maxWidth: '100%',
             ...bubbleStyle,
           }}
-          dangerouslySetInnerHTML={{
-            __html: renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle),
-          }}
-        />
+        >
+          {cleanText && (
+            <span dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+          )}
+          {msg.isStreaming && (
+            <span style={{
+              display: 'inline',
+              animation: 'streaming-cursor-blink 0.6s step-end infinite',
+            }}>▋</span>
+          )}
+        </div>
       )}
 
       {/* Image attachments */}
@@ -573,10 +612,48 @@ export function ChatMessageBubble({
         </div>
       )}
 
+      {/* Audio attachments */}
+      {audioAttachments.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            maxWidth: '100%',
+            ...mediaMargin,
+          }}
+        >
+          {audioAttachments.map((attachment, i) => (
+            <AudioMessage
+              key={i}
+              url={attachment.path}
+              duration={attachment.duration}
+              variant={variant}
+              isUser={isUser}
+              accentColor={accentColor}
+              transcript={attachment.transcript}
+              transcriptError={attachment.transcriptError}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Timestamp */}
       <div style={{ fontSize: 10, color: isDark ? '#475569' : '#9ca3af', padding: '0 4px' }}>
         {formatTimestamp(msg.timestamp)}
       </div>
     </div>
   )
-}
+}, (prev, next) => {
+  return (
+    prev.msg.content === next.msg.content &&
+    prev.msg.isStreaming === next.msg.isStreaming &&
+    prev.msg.tools === next.msg.tools &&
+    prev.variant === next.variant &&
+    prev.accentColor === next.accentColor &&
+    prev.showThinking === next.showThinking &&
+    prev.showToolDetails === next.showToolDetails
+  )
+})
+
+export { ChatMessageBubbleInner as ChatMessageBubble }

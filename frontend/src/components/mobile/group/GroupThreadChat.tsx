@@ -9,10 +9,13 @@ import { RoutingSelector } from './RoutingSelector'
 // ── Helpers ────────────────────────────────────────────────────
 
 function renderMarkdown(text: string): string {
-  let html = text.replace(
+  // Escape HTML first to prevent XSS
+  let html = escapeHtml(text)
+
+  html = html.replace(
     /```(\w*)\n([\s\S]*?)```/g,
     (_m, _lang, code) =>
-      `<pre style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0"><code>${escapeHtml(code.trim())}</code></pre>`
+      `<pre style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0"><code>${code.trim()}</code></pre>`
   )
   html = html.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>')
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -124,7 +127,7 @@ export function GroupThreadChat({
 
   const title = thread.title || thread.title_auto || 'Group Chat'
   const activeParticipants = thread.participants.filter(p => p.is_active)
-  const onlineCount = activeParticipants.length // TODO: real presence
+  const onlineCount = activeParticipants.length // Phase 2: real-time presence via SSE
 
   const handleScroll = useCallback(() => {
     const c = scrollContainerRef.current

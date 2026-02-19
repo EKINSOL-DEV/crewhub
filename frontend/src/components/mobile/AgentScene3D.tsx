@@ -110,6 +110,7 @@ function BotMouth({ status }: { status: AgentStatus }) {
 }
 
 // Thinking indicators (floating dots above head when active)
+// Note: All other Three.js objects in this file are JSX-declared; R3F handles their disposal.
 function ThinkingDots({ visible }: { visible: boolean }) {
   const ref = useRef<THREE.Group>(null)
 
@@ -118,11 +119,9 @@ function ThinkingDots({ visible }: { visible: boolean }) {
     const t = clock.getElapsedTime()
     ref.current.children.forEach((dot, i) => {
       dot.position.y = 0.56 + Math.sin(t * 3 + i * 0.8) * 0.03
-      ;(dot as THREE.Mesh).material = new THREE.MeshStandardMaterial({
-        color: '#818cf8',
-        emissive: '#818cf8',
-        emissiveIntensity: 0.3 + Math.sin(t * 2 + i) * 0.2,
-      })
+      // Mutate existing material instead of creating new one each frame (memory leak fix)
+      const mat = (dot as THREE.Mesh).material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 0.3 + Math.sin(t * 2 + i) * 0.2
     })
   })
 
@@ -133,7 +132,7 @@ function ThinkingDots({ visible }: { visible: boolean }) {
       {[-0.06, 0, 0.06].map((x, i) => (
         <mesh key={i} position={[x, 0.56, 0.1]}>
           <sphereGeometry args={[0.015, 8, 8]} />
-          <meshStandardMaterial color="#818cf8" />
+          <meshStandardMaterial color="#818cf8" emissive="#818cf8" emissiveIntensity={0.3} />
         </mesh>
       ))}
     </group>

@@ -175,8 +175,10 @@ class SSEManager {
 
     try {
       const token = getAuthToken()
-      // Detect Tauri environment
-      const isInTauri = typeof (window as any).__TAURI__ !== 'undefined'
+      // Detect Tauri environment (Tauri v2 uses __TAURI_INTERNALS__, v1 uses __TAURI__)
+      const isInTauri =
+        typeof (window as any).__TAURI_INTERNALS__ !== 'undefined' ||
+        typeof (window as any).__TAURI__ !== 'undefined'
       // Priority: localStorage > Tauri injected var > env var
       const rawConfigured =
         localStorage.getItem('crewhub_backend_url') ||
@@ -188,10 +190,19 @@ class SSEManager {
       const configuredUrl =
         !isInTauri && isLocalUrl ? null : rawConfigured
 
+      // In Tauri dev mode, a remote/Tailscale URL stored in settings may redirect
+      // HTTP → HTTPS at the network level (before FastAPI), causing CORS errors in
+      // WKWebView. Fall back to localhost so the dev backend is hit directly.
+      const isTauriDev = isInTauri && import.meta.env.DEV
+      const effectiveUrl =
+        isTauriDev && configuredUrl && !isLocalUrl
+          ? 'http://localhost:8091'
+          : configuredUrl
+
       let sseUrl: string
-      if (configuredUrl) {
+      if (effectiveUrl) {
         // Tauri or explicit non-localhost backend URL — connect directly (absolute URL)
-        const backendHost = configuredUrl.replace(/^https?:\/\//, '')
+        const backendHost = effectiveUrl.replace(/^https?:\/\//, '')
         sseUrl = token
           ? `http://${backendHost}/api/events?token=${encodeURIComponent(token)}`
           : `http://${backendHost}/api/events`

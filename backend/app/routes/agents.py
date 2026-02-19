@@ -304,7 +304,7 @@ async def get_agent(agent_id: str):
 @router.put("/{agent_id}")
 async def update_agent(agent_id: str, patch: AgentUpdate):
     """Update agent fields (pin, room, name, icon, …)."""
-    updates = patch.dict(exclude_unset=True)
+    updates = patch.model_dump(exclude_unset=True)
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
 
@@ -325,7 +325,7 @@ async def update_agent(agent_id: str, patch: AgentUpdate):
     finally:
         await db.close()
 
-    return {"success": True, "agent_id": agent_id, "updated": list(patch.dict(exclude_unset=True).keys())}
+    return {"success": True, "agent_id": agent_id, "updated": list(patch.model_dump(exclude_unset=True).keys())}
 
 
 @router.delete("/{agent_id}")

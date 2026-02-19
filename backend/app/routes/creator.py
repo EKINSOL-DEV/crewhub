@@ -1052,7 +1052,7 @@ async def save_prop(req: SavePropRequest):
     entry = {
         "propId": req.propId,
         "name": req.name,
-        "parts": [p.dict() for p in req.parts],
+        "parts": [p.model_dump() for p in req.parts],
         "mountType": req.mountType,
         "yOffset": req.yOffset,
         "createdAt": datetime.utcnow().isoformat(),

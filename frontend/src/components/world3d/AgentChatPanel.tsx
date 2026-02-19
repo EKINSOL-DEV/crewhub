@@ -13,11 +13,14 @@ interface AgentChatPanelProps {
 // ── Lightweight markdown ────────────────────────────────────────
 
 function renderMarkdown(text: string): string {
+  // Escape HTML first to prevent XSS
+  let html = escapeHtml(text)
+
   // Code blocks
-  let html = text.replace(
+  html = html.replace(
     /```(\w*)\n([\s\S]*?)```/g,
     (_m, _lang, code) =>
-      `<pre style="background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0"><code>${escapeHtml(code.trim())}</code></pre>`
+      `<pre style="background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0"><code>${code.trim()}</code></pre>`
   )
   // Inline code
   html = html.replace(

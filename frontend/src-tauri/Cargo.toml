@@ -1,6 +1,6 @@
 [package]
 name = "crewhub"
-version = "0.1.0"
+version = "0.17.0"
 description = "CrewHub Desktop App"
 authors = []
 edition = "2021"
