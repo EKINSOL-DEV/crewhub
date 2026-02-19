@@ -12,7 +12,7 @@ import os
 import re
 import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, AsyncGenerator, Optional
 import websockets
 from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State
@@ -964,7 +964,72 @@ class OpenClawConnection(AgentConnection):
                 return val
 
         return None
-    
+
+    async def send_chat_streaming(
+        self,
+        message: str,
+        agent_id: str = "main",
+        session_id: Optional[str] = None,
+        timeout: float = 120.0,
+    ) -> AsyncGenerator[str, None]:
+        """Send a chat message and yield text chunks as they arrive via WS events."""
+        idempotency_key = str(uuid.uuid4())
+        chunk_queue: asyncio.Queue = asyncio.Queue()
+        sent_length = 0
+
+        def on_chat_event(payload: dict):
+            nonlocal sent_length
+            session_key_filter = f"agent:{agent_id}:main"
+            if payload.get("sessionKey") != session_key_filter:
+                return
+            state = payload.get("state")
+            if state == "delta":
+                text = ""
+                content = payload.get("message", {}).get("content", [])
+                if content and isinstance(content, list):
+                    text = content[0].get("text", "") if isinstance(content[0], dict) else ""
+                new_chunk = text[sent_length:]
+                sent_length = len(text)
+                if new_chunk:
+                    chunk_queue.put_nowait(("delta", new_chunk))
+            elif state in ("final", "error", "aborted"):
+                chunk_queue.put_nowait(("done", state))
+
+        self.subscribe("chat", on_chat_event)
+
+        try:
+            # Fire the agent call as background task (don't await here)
+            asyncio.create_task(self.call(
+                "agent",
+                {
+                    "message": message,
+                    "agentId": agent_id,
+                    "deliver": False,
+                    "idempotencyKey": idempotency_key,
+                    **({"sessionId": session_id} if session_id else {}),
+                },
+                timeout=timeout,
+                wait_for_final_agent_result=True,
+            ))
+
+            deadline = asyncio.get_event_loop().time() + timeout
+            while True:
+                remaining = deadline - asyncio.get_event_loop().time()
+                if remaining <= 0:
+                    break
+                try:
+                    kind, data = await asyncio.wait_for(
+                        chunk_queue.get(), timeout=min(30.0, remaining)
+                    )
+                    if kind == "delta":
+                        yield data
+                    else:
+                        break  # "done", "error", "aborted"
+                except asyncio.TimeoutError:
+                    break  # No chunk in 30s
+        finally:
+            self.unsubscribe("chat", on_chat_event)
+
     async def patch_session(
         self, session_id: str, model: Optional[str] = None
     ) -> bool:
