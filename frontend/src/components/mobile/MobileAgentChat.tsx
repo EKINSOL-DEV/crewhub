@@ -479,7 +479,7 @@ export function MobileAgentChat({
         padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
         borderTop: pendingFiles.length > 0 ? 'none' : '1px solid rgba(255,255,255,0.06)',
         display: 'flex', gap: 8, alignItems: 'flex-end',
-        background: '#0f172a',
+        background: 'var(--mobile-bg, #0f172a)',
       }}>
         {/* Attach button */}
         <button
