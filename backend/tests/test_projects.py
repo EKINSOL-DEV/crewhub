@@ -157,7 +157,7 @@ async def test_cannot_archive_project_with_rooms(client):
     project_id = create_resp.json()["id"]
 
     # Assign it to a room
-    await client.post("/api/rooms/dev-lab/project", json={
+    await client.post("/api/rooms/dev-room/project", json={
         "project_id": project_id,
     })
 
@@ -186,14 +186,14 @@ async def test_project_with_rooms(client):
     project_id = create_resp.json()["id"]
 
     # Assign to a room
-    await client.post("/api/rooms/dev-lab/project", json={
+    await client.post("/api/rooms/dev-room/project", json={
         "project_id": project_id,
     })
 
     # Get project and verify rooms
     response = await client.get(f"/api/projects/{project_id}")
     data = response.json()
-    assert "dev-lab" in data["rooms"]
+    assert "dev-room" in data["rooms"]
 
 
 @pytest.mark.asyncio
@@ -215,14 +215,14 @@ async def test_delete_project_cascade_room_assignments(client):
     create_resp = await client.post("/api/projects", json={"name": "Cascade Test"})
     project_id = create_resp.json()["id"]
 
-    await client.post("/api/rooms/dev-lab/project", json={"project_id": project_id})
+    await client.post("/api/rooms/dev-room/project", json={"project_id": project_id})
 
     # Verify room is assigned
     proj_resp = await client.get(f"/api/projects/{project_id}")
-    assert "dev-lab" in proj_resp.json()["rooms"]
+    assert "dev-room" in proj_resp.json()["rooms"]
 
     # Unassign room first (required before archiving)
-    await client.delete("/api/rooms/dev-lab/project")
+    await client.delete("/api/rooms/dev-room/project")
 
     # Archive the project
     archive_resp = await client.put(f"/api/projects/{project_id}", json={"status": "archived"})

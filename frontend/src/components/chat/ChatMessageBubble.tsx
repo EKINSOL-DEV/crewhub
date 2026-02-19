@@ -430,15 +430,11 @@ export function ChatMessageBubble({
         )}
 
         {/* Message content */}
-        {(cleanText || msg.isStreaming) && (
-          <div className="zen-message-content">
-            {cleanText && (
-              <span dangerouslySetInnerHTML={{ __html: renderMarkdown(cleanText) }} />
-            )}
-            {msg.isStreaming && (
-              <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>▋</span>
-            )}
-          </div>
+        {cleanText && (
+          <div
+            className="zen-message-content"
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(cleanText) }}
+          />
         )}
       </div>
     )
@@ -518,7 +514,7 @@ export function ChatMessageBubble({
       )}
 
       {/* Text content */}
-      {(cleanText || msg.isStreaming) && (
+      {cleanText && (
         <div
           style={{
             padding: variant === 'mobile' ? '10px 14px' : '8px 12px',
@@ -529,19 +525,10 @@ export function ChatMessageBubble({
             maxWidth: '100%',
             ...bubbleStyle,
           }}
-        >
-          {cleanText && (
-            <span dangerouslySetInnerHTML={{
-              __html: renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle),
-            }} />
-          )}
-          {msg.isStreaming && (
-            <span style={{
-              display: 'inline',
-              animation: 'streaming-cursor-blink 0.6s step-end infinite',
-            }}>▋</span>
-          )}
-        </div>
+          dangerouslySetInnerHTML={{
+            __html: renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle),
+          }}
+        />
       )}
 
       {/* Image attachments */}

@@ -174,10 +174,8 @@ async def test_db(tmp_path):
     import app.db.database as db_mod
 
     db_path = tmp_path / "test.db"
-    import app.routes.personas as personas_mod
     original_path = db_mod.DB_PATH
     db_mod.DB_PATH = db_path
-    personas_mod.DB_PATH = db_path
 
     async with aiosqlite.connect(db_path) as db:
         await db.execute("""
@@ -237,7 +235,6 @@ async def test_db(tmp_path):
     yield db_path
 
     db_mod.DB_PATH = original_path
-    personas_mod.DB_PATH = original_path
 
 
 @pytest.fixture

@@ -12,7 +12,7 @@ async def test_list_rooms(client):
     assert "rooms" in data
     assert isinstance(data["rooms"], list)
     # Default seed data has 8 rooms
-    assert len(data["rooms"]) >= 4
+    assert len(data["rooms"]) >= 8
 
 
 @pytest.mark.asyncio
@@ -148,7 +148,7 @@ async def test_delete_room_cascades_assignments(client):
 @pytest.mark.asyncio
 async def test_set_hq(client):
     """Test PUT /api/rooms/{id}/hq sets a room as HQ."""
-    response = await client.put("/api/rooms/dev-lab/hq")
+    response = await client.put("/api/rooms/dev-room/hq")
     assert response.status_code == 200
     data = response.json()
     assert data["is_hq"] is True
@@ -177,7 +177,7 @@ async def test_room_project_assignment(client):
     project_id = proj_resp.json()["id"]
 
     # Assign project to room
-    response = await client.post("/api/rooms/dev-lab/project", json={
+    response = await client.post("/api/rooms/dev-room/project", json={
         "project_id": project_id,
     })
     assert response.status_code == 200
@@ -186,7 +186,7 @@ async def test_room_project_assignment(client):
     assert data["project_name"] == "Test Project"
 
     # Clear project from room
-    response = await client.delete("/api/rooms/dev-lab/project")
+    response = await client.delete("/api/rooms/dev-room/project")
     assert response.status_code == 200
     data = response.json()
     assert data["project_id"] is None

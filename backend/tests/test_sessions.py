@@ -3,15 +3,12 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
-
-# Defer imports to avoid triggering circular imports at collection time.
-# SessionInfo is imported inside tests that need it.
+from app.services.connections.base import SessionInfo
 
 
 @pytest.mark.asyncio
 async def test_list_sessions(client):
     """Test GET /api/sessions returns session list."""
-    from app.services.connections.base import SessionInfo
     with patch('app.routes.sessions.get_connection_manager') as mock_get_mgr:
         mock_mgr = AsyncMock()
         mock_mgr.get_all_sessions.return_value = [
@@ -34,6 +31,6 @@ async def test_list_sessions(client):
 
 @pytest.mark.asyncio
 async def test_spawn_session_validation(client):
-    """Test POST /api/sessions/spawn — route not yet implemented."""
+    """Test POST /api/sessions/spawn requires task field."""
     response = await client.post("/api/sessions/spawn", json={})
-    assert response.status_code == 405  # Route does not exist yet
+    assert response.status_code == 422  # Validation error

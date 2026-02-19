@@ -12,7 +12,7 @@ async def test_list_rules(client):
     assert "rules" in data
     assert isinstance(data["rules"], list)
     # Default seed data has several rules
-    assert len(data["rules"]) >= 5
+    assert len(data["rules"]) >= 10
 
 
 @pytest.mark.asyncio
@@ -29,14 +29,14 @@ async def test_list_rules_sorted_by_priority(client):
 async def test_get_rule(client):
     """Test GET /api/room-assignment-rules/{id} returns a specific rule."""
     # Get a known default rule
-    response = await client.get("/api/room-assignment-rules/rule-main-hq")
+    response = await client.get("/api/room-assignment-rules/rule-cron-automation")
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == "rule-main-hq"
-    assert data["room_id"] == "headquarters"
-    assert data["rule_type"] == "session_type"
-    assert data["rule_value"] == "main"
-    assert data["priority"] == 80
+    assert data["id"] == "rule-cron-automation"
+    assert data["room_id"] == "automation-room"
+    assert data["rule_type"] == "session_key_contains"
+    assert data["rule_value"] == ":cron:"
+    assert data["priority"] == 100
 
 
 @pytest.mark.asyncio
@@ -50,7 +50,7 @@ async def test_get_rule_not_found(client):
 async def test_create_rule(client):
     """Test POST /api/room-assignment-rules creates a new rule."""
     new_rule = {
-        "room_id": "dev-lab",
+        "room_id": "dev-room",
         "rule_type": "keyword",
         "rule_value": "bugfix",
         "priority": 75,
@@ -58,7 +58,7 @@ async def test_create_rule(client):
     response = await client.post("/api/room-assignment-rules", json=new_rule)
     assert response.status_code == 200
     data = response.json()
-    assert data["room_id"] == "dev-lab"
+    assert data["room_id"] == "dev-room"
     assert data["rule_type"] == "keyword"
     assert data["rule_value"] == "bugfix"
     assert data["priority"] == 75
@@ -80,7 +80,7 @@ async def test_create_rule_invalid_room(client):
 @pytest.mark.asyncio
 async def test_update_rule(client):
     """Test PUT /api/room-assignment-rules/{id} updates a rule."""
-    response = await client.put("/api/room-assignment-rules/rule-main-hq", json={
+    response = await client.put("/api/room-assignment-rules/rule-cron-automation", json={
         "priority": 200,
     })
     assert response.status_code == 200
@@ -102,7 +102,7 @@ async def test_delete_rule(client):
     """Test DELETE /api/room-assignment-rules/{id} deletes a rule."""
     # Create a rule to delete
     response = await client.post("/api/room-assignment-rules", json={
-        "room_id": "dev-lab",
+        "room_id": "dev-room",
         "rule_type": "keyword",
         "rule_value": "to-delete",
     })
@@ -128,12 +128,12 @@ async def test_delete_rule_not_found(client):
 @pytest.mark.asyncio
 async def test_get_rules_for_room(client):
     """Test GET /api/room-assignment-rules/room/{id} returns rules for a room."""
-    response = await client.get("/api/room-assignment-rules/room/dev-lab")
+    response = await client.get("/api/room-assignment-rules/room/dev-room")
     assert response.status_code == 200
     data = response.json()
     assert "rules" in data
     for rule in data["rules"]:
-        assert rule["room_id"] == "dev-lab"
+        assert rule["room_id"] == "dev-room"
 
 
 @pytest.mark.asyncio
@@ -144,6 +144,8 @@ async def test_default_rules_coverage(client):
 
     rule_values = {r["rule_value"] for r in rules}
     # Key routing rules should exist
+    assert ":cron:" in rule_values
+    assert ":subagent:" in rule_values
     assert "main" in rule_values
-    assert "agent:dev" in rule_values
-    assert "agent:gamedev" in rule_values
+    assert "slack" in rule_values
+    assert "whatsapp" in rule_values

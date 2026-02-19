@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useCallback, type KeyboardEvent } from 'react'
 import { Rnd } from 'react-rnd'
 import { useChatContext, MIN_SIZE } from '@/contexts/ChatContext'
-import { useStreamingChat } from '@/hooks/useStreamingChat'
+import { useAgentChat } from '@/hooks/useAgentChat'
 import { ChatMessageBubble } from './ChatMessageBubble'
 
 // (renderMarkdown, ThinkingBlock, ToolCallBlock, ChatBubble all moved to ChatMessageBubble.tsx)
@@ -55,7 +55,7 @@ export function AgentChatWindow({
     loadOlderMessages,
     hasMore,
     isLoadingHistory,
-  } = useStreamingChat(sessionKey, showInternals)
+  } = useAgentChat(sessionKey, showInternals)
 
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)

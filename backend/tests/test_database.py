@@ -20,7 +20,7 @@ async def test_database_health():
     assert "rooms_count" in health
     assert "agents_count" in health
     assert "assignments_count" in health
-    assert health["rooms_count"] >= 4
+    assert health["rooms_count"] >= 8
     assert health["agents_count"] >= 5
 
 

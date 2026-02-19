@@ -32,9 +32,9 @@ async def test_get_agent(client):
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == "main"
-    assert data["name"] == "Director"
-    assert data["icon"] == "🎯"
-    assert data["color"] == "#4f46e5"
+    assert data["name"] == "Main"
+    assert data["icon"] == "🤖"
+    assert data["color"] == "#3b82f6"
     assert data["agent_session_key"] == "agent:main:main"
 
 
@@ -119,4 +119,4 @@ async def test_agent_default_room(client):
     """Test that agents have default room assignments."""
     response = await client.get("/api/agents/dev")
     data = response.json()
-    assert data["default_room_id"] == "headquarters"
+    assert data["default_room_id"] == "dev-room"
