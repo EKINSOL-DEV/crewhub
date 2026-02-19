@@ -109,6 +109,7 @@ Research:     █                                             2% (1)
 - Agent Teams support (Anthropic extended context)
 - 📋 External 3D Generation APIs (Meshy.ai, etc. - alternative/fallback to AI code generation)
 - 📋 Prop Library with Ratings (evolved from design showcase - user ratings, favorites, search, categories)
+- 📋 Voice settings in onboarding (mic selection, transcription language, test recording during CrewHub setup)
 
 ### v0.19.0
 - 📋 Bot navigation to props via voice commands (spatial awareness + pathfinding)
