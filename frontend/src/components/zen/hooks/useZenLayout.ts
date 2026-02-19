@@ -83,7 +83,7 @@ export interface UseZenLayoutReturn {
   splitPanel: (panelId: string, direction: 'row' | 'col', newType?: PanelType) => void
   closePanel: (panelId: string) => void
   
-  resizePanel: (panelId: string, delta: number) => void
+  resizePanel: (panelId: string, ratio: number) => void
   
   maximizePanel: (panelId: string) => void
   restoreLayout: () => void

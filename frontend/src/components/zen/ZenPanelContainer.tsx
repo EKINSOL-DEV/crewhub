@@ -13,7 +13,7 @@ interface ZenPanelContainerProps {
   canClose: boolean
   onFocus: (panelId: string) => void
   onClose: (panelId: string) => void
-  onResize?: (panelId: string, delta: number) => void
+  onResize?: (panelId: string, ratio: number) => void  // L3: renamed delta → ratio (absolute 0–1 value)
   onSplit?: (panelId: string, direction: 'row' | 'col') => void
   onChangePanelType?: (panelId: string, type: PanelType) => void
   renderPanel: (panel: LeafNode) => ReactNode
@@ -21,6 +21,12 @@ interface ZenPanelContainerProps {
 
 // Minimum panel size in pixels
 const MIN_PANEL_SIZE = 150
+
+// M1: Pure helper extracted to module level (was previously an inline function inside the render)
+function findFirstLeafPanelId(n: LayoutNode): string | null {
+  if (n.kind === 'leaf') return n.panelId
+  return findFirstLeafPanelId(n.a)
+}
 
 export function ZenPanelContainer({
   node,
@@ -33,6 +39,17 @@ export function ZenPanelContainer({
   onChangePanelType,
   renderPanel,
 }: ZenPanelContainerProps) {
+  // C1: Stabilize onRatioChange with useCallback so SplitContainer memoization isn't defeated.
+  // Must be called unconditionally (before the leaf early-return) per Rules of Hooks.
+  const handleRatioChange = useCallback((newRatio: number) => {
+    if (node.kind === 'split') {
+      const panelId = findFirstLeafPanelId(node.a)
+      if (panelId && onResize) {
+        onResize(panelId, newRatio)
+      }
+    }
+  }, [node, onResize])
+
   if (node.kind === 'leaf') {
     return (
       <ZenPanel
@@ -49,24 +66,13 @@ export function ZenPanelContainer({
       </ZenPanel>
     )
   }
-  
+
   // Split node - render both children with a resize handle between them
   return (
     <SplitContainer
       direction={node.dir}
       ratio={node.ratio}
-      onRatioChange={(newRatio) => {
-        // Find first panel in 'a' subtree and pass absolute ratio
-        const findFirstPanel = (n: LayoutNode): string | null => {
-          if (n.kind === 'leaf') return n.panelId
-          return findFirstPanel(n.a)
-        }
-        const panelId = findFirstPanel(node.a)
-        if (panelId && onResize) {
-          // Pass absolute ratio directly (not delta)
-          onResize(panelId, newRatio)
-        }
-      }}
+      onRatioChange={handleRatioChange}
     >
       <ZenPanelContainer
         node={node.a}
@@ -110,19 +116,27 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
   // Track active drag state in a ref so cleanup functions always see the latest value
   const isDraggingRef = useRef(false)
   const activePointerIdRef = useRef<number | null>(null)
+  // L1: Remember the body styles that were active before drag so we restore them exactly
+  const prevBodyStylesRef = useRef<{ cursor: string; userSelect: string; webkitUserSelect: string } | null>(null)
+  // M3: rAF handle for throttling pointer-move processing to one update per frame
+  const rafRef = useRef<number | null>(null)
 
   // Keep ratio ref in sync with prop
   ratioRef.current = ratio
 
   /**
    * Restores body styles that were set to prevent text-selection during drag.
+   * L1: Restores to previously saved values instead of blindly clearing to ''.
    * Safe to call multiple times (idempotent).
    */
   const restoreBodyStyles = useCallback(() => {
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(document.body.style as any).webkitUserSelect = ''
+    if (prevBodyStylesRef.current) {
+      document.body.style.cursor = prevBodyStylesRef.current.cursor
+      document.body.style.userSelect = prevBodyStylesRef.current.userSelect
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(document.body.style as any).webkitUserSelect = prevBodyStylesRef.current.webkitUserSelect
+      prevBodyStylesRef.current = null
+    }
   }, [])
 
   /**
@@ -137,11 +151,16 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
     restoreBodyStyles()
   }, [restoreBodyStyles])
 
-  // ── Safety net: restore body styles if the component unmounts mid-drag ──
+  // ── Safety net: restore body styles and cancel pending rAF if component unmounts mid-drag ──
   useEffect(() => {
     return () => {
       if (isDraggingRef.current) {
         restoreBodyStyles()
+      }
+      // M3: Cancel any pending animation frame on unmount
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
       }
     }
   }, [restoreBodyStyles])
@@ -155,6 +174,9 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
   // ── Pointer event handlers (all on the handle element via pointer capture) ──
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    // L2: Ignore a second pointer while a drag is already in progress
+    if (isDraggingRef.current) return
+
     e.preventDefault()
     // Stop propagation so nested SplitContainers don't both start dragging
     e.stopPropagation()
@@ -168,6 +190,13 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
     setIsDragging(true)
 
     const isRow = direction === 'row'
+    // L1: Snapshot current body styles so we can restore them exactly on drag end
+    prevBodyStylesRef.current = {
+      cursor: document.body.style.cursor,
+      userSelect: document.body.style.userSelect,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      webkitUserSelect: (document.body.style as any).webkitUserSelect ?? '',
+    }
     document.body.style.cursor = isRow ? 'col-resize' : 'row-resize'
     document.body.style.userSelect = 'none'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,33 +208,46 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
     if (!isDraggingRef.current || e.pointerId !== activePointerIdRef.current) return
     e.preventDefault()
 
-    const container = containerRef.current
-    if (!container) return
+    // M3: Capture coordinates immediately — the synthetic event object is recycled
+    // by React and must not be accessed inside the rAF callback.
+    const clientX = e.clientX
+    const clientY = e.clientY
 
-    const isRow = direction === 'row'
-    // Always read a fresh rect — no stale-closure issue because we call this on each move
-    const rect = container.getBoundingClientRect()
-    const handleSize = 4 // resize handle width/height in pixels
-    const totalSize = isRow ? rect.width : rect.height
-    const availableSize = totalSize - handleSize
-
-    if (availableSize <= 0) return
-
-    // Mouse position relative to the container
-    const mousePos = isRow ? e.clientX - rect.left : e.clientY - rect.top
-    // Make the handle center follow the cursor
-    const panelSize = mousePos - handleSize / 2
-
-    const minRatio = MIN_PANEL_SIZE / availableSize
-    const maxRatio = 1 - MIN_PANEL_SIZE / availableSize
-
-    let newRatio = panelSize / availableSize
-    newRatio = Math.max(minRatio, Math.min(maxRatio, newRatio))
-
-    if (Math.abs(newRatio - ratioRef.current) > 0.001) {
-      onRatioChange(newRatio)
-      ratioRef.current = newRatio
+    // M3: Throttle to one layout recalculation per animation frame
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
     }
+
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      const container = containerRef.current
+      if (!container) return
+
+      const isRow = direction === 'row'
+      // Always read a fresh rect — no stale-closure issue because we call this on each move
+      const rect = container.getBoundingClientRect()
+      const handleSize = 4 // resize handle width/height in pixels
+      const totalSize = isRow ? rect.width : rect.height
+      const availableSize = totalSize - handleSize
+
+      if (availableSize <= 0) return
+
+      // Mouse position relative to the container
+      const mousePos = isRow ? clientX - rect.left : clientY - rect.top
+      // Make the handle center follow the cursor
+      const panelSize = mousePos - handleSize / 2
+
+      const minRatio = MIN_PANEL_SIZE / availableSize
+      const maxRatio = 1 - MIN_PANEL_SIZE / availableSize
+
+      let newRatio = panelSize / availableSize
+      newRatio = Math.max(minRatio, Math.min(maxRatio, newRatio))
+
+      if (Math.abs(newRatio - ratioRef.current) > 0.001) {
+        onRatioChange(newRatio)
+        ratioRef.current = newRatio
+      }
+    })
   }, [direction, onRatioChange])
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
