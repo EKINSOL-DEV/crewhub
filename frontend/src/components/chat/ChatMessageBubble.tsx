@@ -15,6 +15,7 @@ import { parseMediaAttachments } from '@/utils/mediaParser'
 import { stripOpenClawTags } from '@/lib/messageUtils'
 import { ImageThumbnail } from './ImageThumbnail'
 import { VideoThumbnail } from './VideoThumbnail'
+import { AudioMessage } from './AudioMessage'
 
 // ─────────────────────────────────────────────────────────────────
 // Markdown renderer (full-featured, shared for all variants)
@@ -358,6 +359,7 @@ const ChatMessageBubbleInner = memo(function ChatMessageBubble({
   const { text, attachments } = parseMediaAttachments(msg.content || '')
   const imageAttachments = attachments.filter(a => a.type === 'image')
   const videoAttachments = attachments.filter(a => a.type === 'video')
+  const audioAttachments = attachments.filter(a => a.type === 'audio')
   const cleanText = stripOpenClawTags(text)
 
   // Memoize markdown rendering to avoid re-running regex on unchanged content
@@ -423,6 +425,22 @@ const ChatMessageBubbleInner = memo(function ChatMessageBubble({
           >
             {videoAttachments.map((attachment, i) => (
               <VideoThumbnail key={i} attachment={attachment} maxWidth={300} />
+            ))}
+          </div>
+        )}
+
+        {/* Audio attachments */}
+        {audioAttachments.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
+            {audioAttachments.map((attachment, i) => (
+              <AudioMessage
+                key={i}
+                url={attachment.path}
+                duration={attachment.duration}
+                variant="zen"
+                isUser={isUser}
+                accentColor={accentColor}
+              />
             ))}
           </div>
         )}
@@ -587,6 +605,30 @@ const ChatMessageBubbleInner = memo(function ChatMessageBubble({
               key={i}
               attachment={attachment}
               maxWidth={variant === 'mobile' ? 260 : 280}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Audio attachments */}
+      {audioAttachments.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            maxWidth: '100%',
+            ...mediaMargin,
+          }}
+        >
+          {audioAttachments.map((attachment, i) => (
+            <AudioMessage
+              key={i}
+              url={attachment.path}
+              duration={attachment.duration}
+              variant={variant}
+              isUser={isUser}
+              accentColor={accentColor}
             />
           ))}
         </div>

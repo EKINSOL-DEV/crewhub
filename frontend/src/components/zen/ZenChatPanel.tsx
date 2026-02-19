@@ -10,6 +10,7 @@ import { PixelAvatar } from './PixelAvatar'
 import { ImageDropZone, ImagePreviews, type PendingImage } from './ImageDropZone'
 import { API_BASE } from '@/lib/api'
 import type { Agent } from '@/hooks/useAgentsRegistry'
+import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 
 interface ZenChatPanelProps {
   sessionKey: string | null
@@ -406,6 +407,33 @@ export function ZenChatPanel({
   const stillUploading = pendingImages.some(img => img.uploading)
   const canSend = (inputValue.trim() || uploadedImages.length > 0) && !stillUploading
 
+  // ── Voice recording ─────────────────────────────────────────
+  const handleAudioReady = useCallback((url: string, duration: number) => {
+    const tag = `[audio attached: ${url} (audio/webm) ${duration}s]`
+    sendMessage(tag)
+  }, [sendMessage])
+
+  const {
+    isRecording,
+    isPreparing,
+    duration: recDuration,
+    error: recError,
+    isSupported: micSupported,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useVoiceRecorder(handleAudioReady)
+
+  // ESC cancels recording
+  useEffect(() => {
+    if (!isRecording) return
+    const handler = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') cancelRecording()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isRecording, cancelRecording])
+
   return (
     <div className="zen-chat-panel">
       {/* Chat header with agent info and controls */}
@@ -507,6 +535,24 @@ export function ZenChatPanel({
 
         {/* Input area */}
         <div className="zen-chat-input-container">
+          {/* Recording indicator */}
+          {isRecording && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 12px 2px',
+              fontSize: 12, color: '#ef4444',
+              fontFamily: 'monospace',
+            }}>
+              <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>●</span>
+              Recording {formatDuration(recDuration)}
+              <span style={{ marginLeft: 4, fontSize: 11, opacity: 0.7, color: 'var(--zen-fg-muted)' }}>
+                ESC to cancel
+              </span>
+            </div>
+          )}
+          {recError && (
+            <div style={{ padding: '4px 12px', fontSize: 11, color: '#ef4444' }}>{recError}</div>
+          )}
           <div className="zen-chat-input-wrapper">
             <textarea
               ref={inputRef}
@@ -514,14 +560,29 @@ export function ZenChatPanel({
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               onInput={handleInput}
-              placeholder={`Message ${agentName || 'agent'}... (paste or drop images)`}
+              placeholder={isRecording ? 'Recording…' : `Message ${agentName || 'agent'}... (paste or drop images)`}
               rows={1}
               className="zen-chat-input"
+              disabled={isRecording}
             />
+            {/* Mic button */}
+            {micSupported && (
+              <button
+                type="button"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isPreparing || isSending}
+                className="zen-chat-send-btn"
+                style={isRecording ? { color: '#ef4444', background: 'rgba(239,68,68,0.12)' } : undefined}
+                aria-label={isRecording ? 'Stop recording' : 'Record voice message'}
+                title={isRecording ? 'Stop recording' : 'Record voice message'}
+              >
+                {isPreparing ? '⏳' : isRecording ? '⏹' : '🎤'}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleSend}
-              disabled={!canSend || pendingMessage !== null}
+              disabled={!canSend || pendingMessage !== null || isRecording}
               className="zen-chat-send-btn"
               aria-label={isSending ? "Queue message" : "Send message"}
               title={isSending ? "Message will be sent when agent finishes" : "Send message"}

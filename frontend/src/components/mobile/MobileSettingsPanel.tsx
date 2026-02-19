@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Sun, Moon, Monitor, Check } from 'lucide-react'
+import { X, Sun, Moon, Monitor, Check, Mic } from 'lucide-react'
 import { API_BASE } from '@/lib/api'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -283,6 +283,48 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
   const [urlSaved, setUrlSaved] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // ── Microphone state ──
+  const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedMicId, setSelectedMicId] = useState<string>(
+    () => localStorage.getItem('crewhub-mic-device-id') ?? ''
+  )
+  const [micEnumerating, setMicEnumerating] = useState(false)
+
+  const handleEnumerateMics = async () => {
+    setMicEnumerating(true)
+    try {
+      // Request permission first so labels are populated
+      await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
+        s.getTracks().forEach(t => t.stop())
+      })
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      setMicDevices(devices.filter(d => d.kind === 'audioinput'))
+    } catch {
+      // Permission denied — list may be empty; that's fine
+      const devices = await navigator.mediaDevices.enumerateDevices().catch(() => [])
+      setMicDevices(devices.filter(d => d.kind === 'audioinput'))
+    } finally {
+      setMicEnumerating(false)
+    }
+  }
+
+  const handleMicChange = (deviceId: string) => {
+    setSelectedMicId(deviceId)
+    if (deviceId) {
+      localStorage.setItem('crewhub-mic-device-id', deviceId)
+    } else {
+      localStorage.removeItem('crewhub-mic-device-id')
+    }
+  }
+
+  // Enumerate mics when panel opens
+  useEffect(() => {
+    if (open && micDevices.length === 0 && typeof navigator !== 'undefined' && navigator.mediaDevices) {
+      void handleEnumerateMics()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
   // ── Apply changes reactively ────
   const handleThemeChange = (t: AppTheme) => {
     setThemeState(t)
@@ -511,6 +553,61 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                 { value: 'large', label: 'Large' },
               ]}
             />
+          </Section>
+
+          {/* ── 4b. Microphone ───────────────────────────────────── */}
+          <Section title="Microphone">
+            <div style={{
+              background: 'rgba(255,255,255,0.04)',
+              borderRadius: 12, padding: '12px 14px',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+              }}>
+                <Mic size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: '#e2e8f0', flex: 1 }}>Input Device</span>
+                <button
+                  onClick={handleEnumerateMics}
+                  disabled={micEnumerating}
+                  style={{
+                    padding: '4px 10px', borderRadius: 7, border: 'none',
+                    background: 'rgba(99,102,241,0.2)', color: '#a5b4fc',
+                    fontSize: 11, cursor: micEnumerating ? 'wait' : 'pointer',
+                  }}
+                >
+                  {micEnumerating ? 'Scanning…' : 'Refresh'}
+                </button>
+              </div>
+
+              {micDevices.length === 0 ? (
+                <div style={{ fontSize: 12, color: '#475569' }}>
+                  {micEnumerating ? 'Scanning for microphones…' : 'Click Refresh to list microphones'}
+                </div>
+              ) : (
+                <select
+                  value={selectedMicId}
+                  onChange={e => handleMicChange(e.target.value)}
+                  style={{
+                    width: '100%', padding: '8px 10px', borderRadius: 8,
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'rgba(255,255,255,0.06)', color: '#e2e8f0',
+                    fontSize: 13, outline: 'none', cursor: 'pointer',
+                  }}
+                >
+                  <option value="">Default microphone</option>
+                  {micDevices.map(d => (
+                    <option key={d.deviceId} value={d.deviceId}>
+                      {d.label || `Microphone ${d.deviceId.slice(0, 8)}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <div style={{ fontSize: 11, color: '#475569', marginTop: 6 }}>
+                Used for voice messages. Saved to device.
+              </div>
+            </div>
           </Section>
 
           {/* ── 5. App Info ───────────────────────────────────────── */}

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ClipboardEvent } from 'react'
-import { ArrowLeft, Paperclip, X, Settings as SettingsIcon } from 'lucide-react'
+import { ArrowLeft, Paperclip, X, Settings as SettingsIcon, Mic, Square } from 'lucide-react'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
+import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 import { API_BASE } from '@/lib/api'
 import type { CrewSession } from '@/lib/api'
 import { ActiveTasksBadge, ActiveTasksOverlay } from './ActiveTasksOverlay'
@@ -339,6 +340,36 @@ export function MobileAgentChat({
     }
   }
 
+  // ── Voice recording ────────────────────────────────────────────
+  const handleAudioReady = useCallback((url: string, duration: number) => {
+    void sendMessage(`[audio attached: ${url} (audio/webm) ${duration}s]`)
+  }, [sendMessage])
+
+  const {
+    isRecording,
+    isPreparing: micPreparing,
+    duration: recDuration,
+    error: recError,
+    isSupported: micSupported,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useVoiceRecorder(handleAudioReady)
+
+  // Swipe-to-cancel (mobile): touch move left >= 80px cancels
+  const touchStartXRef = useRef<number | null>(null)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isRecording) touchStartXRef.current = e.touches[0].clientX
+  }, [isRecording])
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isRecording || touchStartXRef.current === null) return
+    const dx = touchStartXRef.current - e.touches[0].clientX
+    if (dx > 80) {
+      touchStartXRef.current = null
+      cancelRecording()
+    }
+  }, [isRecording, cancelRecording])
+
   // Derive bot config, status, and animation for 3D avatar
   const botConfig = getBotConfigFromSession(sessionKey, agentName, agentColor)
   const agentStatus: AgentStatus = isSending ? 'active' : 'idle'
@@ -496,71 +527,134 @@ export function MobileAgentChat({
       <div style={{
         padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
         borderTop: pendingFiles.length > 0 ? 'none' : '1px solid var(--mobile-divider)',
-        display: 'flex', gap: 8, alignItems: 'flex-end',
+        display: 'flex', flexDirection: 'column', gap: 4,
         background: 'var(--mobile-bg, #0f172a)',
       }}>
-        {/* Attach button */}
-        <button
-          onClick={handleFileSelect}
-          disabled={isSending || isUploading}
-          style={{
-            width: 44, height: 44, borderRadius: 14,
-            border: 'none',
-            background: pendingFiles.length > 0 ? accentColor + '20' : 'var(--mobile-attach-btn-bg)',
-            color: pendingFiles.length > 0 ? accentColor : 'var(--mobile-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, transition: 'background 0.15s',
-          }}
-        >
-          <Paperclip size={20} />
-        </button>
+        {/* Recording indicator bar */}
+        {isRecording && (
+          <div
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '4px 4px 0',
+              fontSize: 13, color: '#ef4444',
+              fontFamily: 'monospace',
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+          >
+            <span style={{ animation: 'mob-rec-blink 0.6s step-end infinite' }}>●</span>
+            {formatDuration(recDuration)}
+            <span style={{ flex: 1 }} />
+            <span style={{ fontSize: 11, color: 'var(--mobile-text-muted)', opacity: 0.7 }}>
+              ← swipe to cancel
+            </span>
+          </div>
+        )}
+        {recError && (
+          <div style={{ fontSize: 11, color: '#ef4444', paddingLeft: 4 }}>{recError}</div>
+        )}
 
-        <textarea
-          ref={inputRef}
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          placeholder={`Message ${agentName}…`}
-          disabled={isSending || isUploading}
-          rows={1}
-          style={{
-            flex: 1, padding: '10px 14px',
-            borderRadius: 14,
-            border: '1px solid var(--mobile-input-border)',
-            background: 'var(--mobile-input-bg)',
-            color: 'var(--mobile-text)', fontSize: 16,
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-            resize: 'none', outline: 'none',
-            maxHeight: 100, lineHeight: 1.4,
-          }}
-          onInput={e => {
-            const el = e.currentTarget
-            el.style.height = 'auto'
-            el.style.height = Math.min(el.scrollHeight, 100) + 'px'
-          }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={(isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)}
-          style={{
-            width: 44, height: 44, borderRadius: 14,
-            border: 'none',
-            background: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
-              ? 'var(--mobile-msg-assistant-bg)' : accentColor,
-            color: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
-              ? 'var(--mobile-text-muted)' : '#fff',
-            cursor: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
-              ? 'default' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, flexShrink: 0,
-            transition: 'background 0.15s',
-          }}
-        >
-          {isUploading ? '⏳' : '➤'}
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+          {/* Attach button — hide while recording */}
+          {!isRecording && (
+            <button
+              onClick={handleFileSelect}
+              disabled={isSending || isUploading}
+              style={{
+                width: 44, height: 44, borderRadius: 14,
+                border: 'none',
+                background: pendingFiles.length > 0 ? accentColor + '20' : 'var(--mobile-attach-btn-bg)',
+                color: pendingFiles.length > 0 ? accentColor : 'var(--mobile-text-secondary)',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, transition: 'background 0.15s',
+              }}
+            >
+              <Paperclip size={20} />
+            </button>
+          )}
+
+          <textarea
+            ref={inputRef}
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
+            disabled={isSending || isUploading || isRecording}
+            rows={1}
+            style={{
+              flex: 1, padding: '10px 14px',
+              borderRadius: 14,
+              border: '1px solid var(--mobile-input-border)',
+              background: 'var(--mobile-input-bg)',
+              color: 'var(--mobile-text)', fontSize: 16,
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              resize: 'none', outline: 'none',
+              maxHeight: 100, lineHeight: 1.4,
+            }}
+            onInput={e => {
+              const el = e.currentTarget
+              el.style.height = 'auto'
+              el.style.height = Math.min(el.scrollHeight, 100) + 'px'
+            }}
+          />
+
+          {/* Mic button */}
+          {micSupported && (
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={micPreparing || isSending || isUploading}
+              title={isRecording ? 'Stop recording' : 'Voice message'}
+              style={{
+                width: 44, height: 44, borderRadius: 14,
+                border: 'none',
+                background: isRecording
+                  ? 'rgba(239,68,68,0.2)'
+                  : inputValue.trim()
+                    ? 'var(--mobile-attach-btn-bg)'
+                    : 'var(--mobile-attach-btn-bg)',
+                color: isRecording ? '#ef4444' : 'var(--mobile-text-secondary)',
+                cursor: micPreparing || isSending || isUploading ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, transition: 'background 0.15s, color 0.15s',
+              }}
+            >
+              {micPreparing ? '⏳' : isRecording ? <Square size={18} /> : <Mic size={20} />}
+            </button>
+          )}
+
+          {/* Send button — only show when there's text or files */}
+          {(inputValue.trim() || pendingFiles.filter(f => !f.error).length > 0) && !isRecording && (
+            <button
+              onClick={handleSend}
+              disabled={(isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)}
+              style={{
+                width: 44, height: 44, borderRadius: 14,
+                border: 'none',
+                background: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
+                  ? 'var(--mobile-msg-assistant-bg)' : accentColor,
+                color: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
+                  ? 'var(--mobile-text-muted)' : '#fff',
+                cursor: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
+                  ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18, flexShrink: 0,
+                transition: 'background 0.15s',
+              }}
+            >
+              {isUploading ? '⏳' : '➤'}
+            </button>
+          )}
+        </div>
       </div>
+
+      <style>{`
+        @keyframes mob-rec-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}</style>
     </>
   )
 }

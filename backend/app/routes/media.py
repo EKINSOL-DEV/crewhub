@@ -3,6 +3,7 @@
 Serves media files from allowed directories with security checks.
 Supports images from OpenClaw media folder.
 Handles image uploads for chat attachments.
+Handles audio uploads for voice messages.
 """
 
 import os
@@ -21,16 +22,24 @@ router = APIRouter()
 # Upload directory for chat images
 UPLOAD_DIR = Path.home() / ".openclaw" / "media" / "uploads"
 
+# Upload directory for voice messages
+AUDIO_UPLOAD_DIR = Path.home() / ".crewhub" / "media" / "audio"
+
 # Allowed base directories for media files (resolved to absolute paths)
 ALLOWED_MEDIA_DIRS = [
     Path.home() / ".openclaw" / "media",
     Path.home() / ".openclaw" / "media" / "inbound",
     Path.home() / ".openclaw" / "media" / "uploads",
+    Path.home() / ".crewhub" / "media",
+    Path.home() / ".crewhub" / "media" / "audio",
     Path("/tmp") / "crewhub-media",  # For testing
 ]
 
-# Max upload size: 10MB
+# Max upload size for images: 10MB
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
+# Max upload size for audio: 50MB
+MAX_AUDIO_UPLOAD_SIZE = 50 * 1024 * 1024
 
 # Supported image MIME types
 IMAGE_MIME_TYPES = {
@@ -41,7 +50,16 @@ IMAGE_MIME_TYPES = {
     ".webp": "image/webp",
 }
 
-# Allowed upload MIME types
+# Supported audio MIME types
+AUDIO_MIME_TYPES = {
+    ".webm": "audio/webm",
+    ".mp4": "audio/mp4",
+    ".ogg": "audio/ogg",
+    ".wav": "audio/wav",
+    ".m4a": "audio/mp4",
+}
+
+# Allowed upload MIME types for images
 ALLOWED_UPLOAD_TYPES = {
     "image/jpeg",
     "image/png", 
@@ -49,12 +67,32 @@ ALLOWED_UPLOAD_TYPES = {
     "image/webp",
 }
 
-# Extension mapping for MIME types
+# Allowed upload MIME types for audio
+ALLOWED_AUDIO_UPLOAD_TYPES = {
+    "audio/webm",
+    "audio/mp4",
+    "audio/ogg",
+    "audio/wav",
+    "audio/mpeg",
+    "audio/x-m4a",
+}
+
+# Extension mapping for image MIME types
 MIME_TO_EXT = {
     "image/jpeg": ".jpg",
     "image/png": ".png",
     "image/gif": ".gif",
     "image/webp": ".webp",
+}
+
+# Extension mapping for audio MIME types
+AUDIO_MIME_TO_EXT = {
+    "audio/webm": ".webm",
+    "audio/mp4": ".mp4",
+    "audio/ogg": ".ogg",
+    "audio/wav": ".wav",
+    "audio/mpeg": ".mp3",
+    "audio/x-m4a": ".m4a",
 }
 
 
@@ -120,6 +158,72 @@ async def upload_media(file: UploadFile = File(...)):
     }
 
 
+# ─── AUDIO UPLOAD ROUTE ──────────────────────────────────────────────────────
+
+@router.post("/api/media/audio")
+async def upload_audio(file: UploadFile = File(...)):
+    """Upload an audio file for voice message.
+    
+    Accepts: webm, mp4, ogg, wav, mp3, m4a
+    Max size: 50MB
+    
+    Returns:
+        url: URL to access the file via /api/media/
+        filename: Saved filename
+        mimeType: Detected MIME type
+        size: File size in bytes
+    """
+    # Normalize content type (browsers may send audio/webm;codecs=opus)
+    raw_content_type = (file.content_type or "").split(";")[0].strip().lower()
+    
+    # Accept audio/* types broadly
+    if not raw_content_type.startswith("audio/") and raw_content_type not in ALLOWED_AUDIO_UPLOAD_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type: {file.content_type}. Expected audio/*"
+        )
+    
+    # Read file content (with size check)
+    content = await file.read()
+    if len(content) > MAX_AUDIO_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size: {MAX_AUDIO_UPLOAD_SIZE // (1024*1024)}MB"
+        )
+    
+    # Determine extension
+    ext = AUDIO_MIME_TO_EXT.get(raw_content_type, ".webm")
+    
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:8]
+    filename = f"voice_{timestamp}_{unique_id}{ext}"
+    
+    # Ensure audio upload directory exists
+    AUDIO_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Save file
+    file_path = AUDIO_UPLOAD_DIR / filename
+    try:
+        with open(file_path, "wb") as f:
+            f.write(content)
+        logger.info(f"Uploaded audio file: {file_path}")
+    except Exception as e:
+        logger.error(f"Failed to save audio upload: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save audio file"
+        )
+    
+    return {
+        "success": True,
+        "url": f"/api/media/{file_path}",
+        "filename": filename,
+        "mimeType": raw_content_type,
+        "size": len(content),
+    }
+
+
 # ─── HELPER FUNCTIONS ────────────────────────────────────────────────────────
 
 def is_path_allowed(file_path: Path) -> bool:
@@ -140,9 +244,9 @@ def is_path_allowed(file_path: Path) -> bool:
 
 
 def get_mime_type(file_path: Path) -> Optional[str]:
-    """Get MIME type for a file based on extension."""
+    """Get MIME type for a file based on extension (images and audio)."""
     ext = file_path.suffix.lower()
-    return IMAGE_MIME_TYPES.get(ext)
+    return IMAGE_MIME_TYPES.get(ext) or AUDIO_MIME_TYPES.get(ext)
 
 
 @router.get("/api/media/{file_path:path}")
@@ -153,7 +257,7 @@ async def serve_media(file_path: str):
         file_path: Path to the media file (can be absolute or relative to home/.openclaw/media)
         
     Returns:
-        FileResponse with the image
+        FileResponse with the image or audio
         
     Raises:
         HTTPException 404 if file not found or not in allowed directory
@@ -190,7 +294,7 @@ async def serve_media(file_path: str):
             detail="Not a file"
         )
     
-    # Check MIME type
+    # Check MIME type (images + audio)
     mime_type = get_mime_type(resolved_path)
     if not mime_type:
         logger.warning(f"Unsupported media type: {resolved_path.suffix}")

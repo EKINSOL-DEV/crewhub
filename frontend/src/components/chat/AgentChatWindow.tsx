@@ -3,6 +3,7 @@ import { Rnd } from 'react-rnd'
 import { useChatContext, MIN_SIZE } from '@/contexts/ChatContext'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from './ChatMessageBubble'
+import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 
 // (renderMarkdown, ThinkingBlock, ToolCallBlock, ChatBubble all moved to ChatMessageBubble.tsx)
 
@@ -126,6 +127,32 @@ export function AgentChatWindow({
       handleSend()
     }
   }
+
+  // ── Voice recording ────────────────────────────────────────────
+  const handleAudioReady = useCallback((url: string, duration: number) => {
+    void sendMessage(`[audio attached: ${url} (audio/webm) ${duration}s]`)
+  }, [sendMessage])
+
+  const {
+    isRecording,
+    isPreparing: micPreparing,
+    duration: recDuration,
+    error: recError,
+    isSupported: micSupported,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useVoiceRecorder(handleAudioReady)
+
+  // ESC cancels recording
+  useEffect(() => {
+    if (!isRecording) return
+    const handler = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') cancelRecording()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isRecording, cancelRecording])
 
   const handleDragStop = (_: unknown, d: { x: number; y: number }) => {
     updatePosition(sessionKey, { x: d.x, y: d.y })
@@ -364,63 +391,105 @@ export function AgentChatWindow({
             padding: '10px 16px 14px',
             borderTop: '1px solid rgba(0,0,0,0.06)',
             display: 'flex',
-            gap: 8,
-            alignItems: 'flex-end',
+            flexDirection: 'column',
+            gap: 4,
           }}
         >
-          <textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message ${agentName}…`}
-            disabled={isSending}
-            rows={1}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 10,
-              border: '1px solid rgba(0,0,0,0.1)',
-              background: 'rgba(255,255,255,0.8)',
-              color: '#1f2937',
-              fontSize: 13,
-              fontFamily: 'system-ui, sans-serif',
-              resize: 'none',
-              outline: 'none',
-              maxHeight: 80,
-              lineHeight: 1.4,
-            }}
-            onInput={e => {
-              const el = e.currentTarget
-              el.style.height = 'auto'
-              el.style.height = Math.min(el.scrollHeight, 80) + 'px'
-            }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={isSending || !inputValue.trim()}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              border: 'none',
-              background:
-                isSending || !inputValue.trim()
-                  ? 'rgba(0,0,0,0.08)'
-                  : accentColor + 'dd',
-              color: isSending || !inputValue.trim() ? '#9ca3af' : '#fff',
-              cursor: isSending || !inputValue.trim() ? 'default' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-              flexShrink: 0,
-              transition: 'background 0.15s, color 0.15s',
-            }}
-          >
-            ➤
-          </button>
+          {/* Recording indicator */}
+          {isRecording && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontSize: 11, color: '#ef4444', fontFamily: 'monospace',
+              paddingBottom: 2,
+            }}>
+              <span style={{ animation: 'chat-rec-blink 0.6s step-end infinite' }}>●</span>
+              {formatDuration(recDuration)}
+              <span style={{ color: '#9ca3af', marginLeft: 4 }}>ESC to cancel</span>
+            </div>
+          )}
+          {recError && (
+            <div style={{ fontSize: 11, color: '#ef4444', paddingBottom: 2 }}>{recError}</div>
+          )}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <textarea
+              ref={inputRef}
+              value={inputValue}
+              onChange={e => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
+              disabled={isSending || isRecording}
+              rows={1}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: 10,
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(255,255,255,0.8)',
+                color: '#1f2937',
+                fontSize: 13,
+                fontFamily: 'system-ui, sans-serif',
+                resize: 'none',
+                outline: 'none',
+                maxHeight: 80,
+                lineHeight: 1.4,
+              }}
+              onInput={e => {
+                const el = e.currentTarget
+                el.style.height = 'auto'
+                el.style.height = Math.min(el.scrollHeight, 80) + 'px'
+              }}
+            />
+            {/* Mic button */}
+            {micSupported && (
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={micPreparing || isSending}
+                title={isRecording ? 'Stop recording' : 'Record voice message'}
+                style={{
+                  width: 36, height: 36, borderRadius: 10, border: 'none',
+                  background: isRecording ? 'rgba(239,68,68,0.15)' : 'rgba(0,0,0,0.06)',
+                  color: isRecording ? '#ef4444' : '#6b7280',
+                  cursor: micPreparing || isSending ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 15, flexShrink: 0, transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {micPreparing ? '⏳' : isRecording ? '⏹' : '🎤'}
+              </button>
+            )}
+            <button
+              onClick={handleSend}
+              disabled={isSending || !inputValue.trim() || isRecording}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                border: 'none',
+                background:
+                  isSending || !inputValue.trim() || isRecording
+                    ? 'rgba(0,0,0,0.08)'
+                    : accentColor + 'dd',
+                color: isSending || !inputValue.trim() || isRecording ? '#9ca3af' : '#fff',
+                cursor: isSending || !inputValue.trim() || isRecording ? 'default' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 16,
+                flexShrink: 0,
+                transition: 'background 0.15s, color 0.15s',
+              }}
+            >
+              ➤
+            </button>
+          </div>
         </div>
+
+        <style>{`
+          @keyframes chat-rec-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+          }
+        `}</style>
 
         {/* Tooltip fade-in animation */}
         <style>{`
