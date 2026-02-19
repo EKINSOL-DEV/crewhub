@@ -98,6 +98,7 @@ Research:     █                                             2% (1)
 - 📋 Improving and Reviewing Skills usage during onboarding
 
 ### v0.17.0
+- 🚧 **Streaming Chat** — Real-time token-by-token streaming for all chat UIs (AgentChatWindow, MobileAgentChat, GroupThreadChat, ZenChatPanel) via unified ChatStreamService. Backend: async generator + SSE proxy endpoint. Frontend: shared hook with progressive rendering + typing cursor.
 - 🚧 Zones system (Creator Center, Academy, Game Center)
 - 📋 Academy Zone (Knowledge Tree, flying books)
 - 📋 Prop Library (RAG-based baseline library, semantic search, self-improving from approved props)

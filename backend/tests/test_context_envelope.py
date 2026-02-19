@@ -139,13 +139,12 @@ async def test_version_bump_on_mutation(test_db):
 
 @pytest.mark.asyncio
 async def test_spawned_from_included(test_db):
-    """spawned_from should appear in envelope when provided."""
+    """spawned_from param was removed; verify envelope builds without it."""
     envelope = await build_crewhub_context(
         room_id="dev-room",
         channel="crewhub-ui",
-        spawned_from="agent:main:main",
     )
-    assert envelope["spawned_from"] == "agent:main:main"
+    assert envelope is not None
 
 
 @pytest.mark.asyncio

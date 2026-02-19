@@ -173,10 +173,10 @@ async def test_set_room(client):
     r = await client.post(
         "/api/self/room",
         headers={"X-API-Key": self_key},
-        json={"room_id": "dev-room"},
+        json={"room_id": "dev-lab"},
     )
     assert r.status_code == 200
-    assert r.json()["room_id"] == "dev-room"
+    assert r.json()["room_id"] == "dev-lab"
 
 
 @pytest.mark.anyio

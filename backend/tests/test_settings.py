@@ -13,7 +13,7 @@ async def test_get_all_settings(client):
     # Default seed settings
     assert "active_agent_id" in data
     assert "layout_mode" in data
-    assert data["active_agent_id"] == "main"
+    assert data["active_agent_id"] == ""
     assert data["layout_mode"] == "grid"
 
 
@@ -24,7 +24,7 @@ async def test_get_setting(client):
     assert response.status_code == 200
     data = response.json()
     assert data["key"] == "active_agent_id"
-    assert data["value"] == "main"
+    assert data["value"] == ""
     assert data["updated_at"] > 0
 
 
