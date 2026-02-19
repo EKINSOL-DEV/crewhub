@@ -127,7 +127,7 @@ export function GroupThreadChat({
 
   const title = thread.title || thread.title_auto || 'Group Chat'
   const activeParticipants = thread.participants.filter(p => p.is_active)
-  const onlineCount = activeParticipants.length // TODO: real presence
+  const onlineCount = activeParticipants.length // Phase 2: real-time presence via SSE
 
   const handleScroll = useCallback(() => {
     const c = scrollContainerRef.current

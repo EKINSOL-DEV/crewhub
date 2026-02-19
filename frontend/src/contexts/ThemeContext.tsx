@@ -96,7 +96,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.setAttribute('data-zen-theme', current.id)
     root.setAttribute('data-zen-theme-type', current.type)
 
-    console.debug('[Theme] Applied:', current.name, `(${current.type})`)
+    if (import.meta.env.DEV) {
+      console.debug('[Theme] Applied:', current.name, `(${current.type})`)
+    }
   }, [current, resolvedMode])
 
   // Legacy compat shim
