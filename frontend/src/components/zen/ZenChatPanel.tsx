@@ -4,6 +4,7 @@
  */
 
 import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 'react'
+import { ArrowUp, X } from 'lucide-react'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { PixelAvatar } from './PixelAvatar'
@@ -561,20 +562,19 @@ export function ZenChatPanel({
                   controls
                   style={{ flex: 1, height: 32, minWidth: 0 }}
                 />
-                {/* Send (confirm) button */}
+                {/* Send (confirm) button — green ↑ arrow, single click sends immediately */}
                 <button
                   type="button"
                   onClick={confirmAudio}
                   title="Send voice message"
                   style={{
-                    width: 32, height: 32, borderRadius: 8, border: 'none',
-                    background: '#8b5cf6', color: '#fff',
+                    width: 44, height: 44, borderRadius: 12, border: 'none',
+                    background: '#22c55e', color: '#fff',
                     cursor: 'pointer', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14,
                   }}
                 >
-                  ➤
+                  <ArrowUp size={20} />
                 </button>
                 {/* Cancel (discard) button */}
                 <button
@@ -582,14 +582,13 @@ export function ZenChatPanel({
                   onClick={cancelAudio}
                   title="Discard voice message"
                   style={{
-                    width: 32, height: 32, borderRadius: 8, border: 'none',
-                    background: 'rgba(0,0,0,0.06)', color: '#6b7280',
+                    width: 44, height: 44, borderRadius: 12, border: 'none',
+                    background: 'rgba(255,255,255,0.1)', color: 'var(--zen-fg-muted, #9ca3af)',
                     cursor: 'pointer', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14,
                   }}
                 >
-                  ✕
+                  <X size={18} />
                 </button>
               </div>
               {/* Transcript preview */}

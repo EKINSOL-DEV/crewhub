@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ClipboardEvent } from 'react'
-import { ArrowLeft, Paperclip, X, Settings as SettingsIcon, Mic, Square, Send } from 'lucide-react'
+import { ArrowLeft, ArrowUp, Paperclip, X, Settings as SettingsIcon, Mic, Square } from 'lucide-react'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
@@ -554,18 +554,18 @@ export function MobileAgentChat({
                 controls
                 style={{ flex: 1, height: 36, minWidth: 0 }}
               />
-              {/* Send (confirm) button */}
+              {/* Send (confirm) button — green ↑ arrow, single click sends immediately */}
               <button
                 onClick={confirmAudio}
                 title="Send voice message"
                 style={{
                   width: 44, height: 44, borderRadius: 14, border: 'none',
-                  background: accentColor, color: '#fff',
+                  background: '#22c55e', color: '#fff',
                   cursor: 'pointer', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <Send size={18} />
+                <ArrowUp size={20} />
               </button>
               {/* Cancel (discard) button */}
               <button
@@ -573,7 +573,7 @@ export function MobileAgentChat({
                 title="Discard voice message"
                 style={{
                   width: 44, height: 44, borderRadius: 14, border: 'none',
-                  background: 'var(--mobile-attach-btn-bg)',
+                  background: 'rgba(255,255,255,0.1)',
                   color: 'var(--mobile-text-secondary)',
                   cursor: 'pointer', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',

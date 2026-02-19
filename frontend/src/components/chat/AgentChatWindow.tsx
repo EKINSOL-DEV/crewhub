@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback, type KeyboardEvent } from 'react'
 import { Rnd } from 'react-rnd'
+import { ArrowUp, X } from 'lucide-react'
 import { useChatContext, MIN_SIZE } from '@/contexts/ChatContext'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from './ChatMessageBubble'
@@ -421,33 +422,31 @@ export function AgentChatWindow({
                   controls
                   style={{ flex: 1, height: 28, minWidth: 0 }}
                 />
-                {/* Send (confirm) button */}
+                {/* Send (confirm) button — green ↑ arrow, single click sends immediately */}
                 <button
                   onClick={confirmAudio}
                   title="Send voice message"
                   style={{
-                    width: 30, height: 30, borderRadius: 8, border: 'none',
-                    background: accentColor + 'dd', color: '#fff',
+                    width: 44, height: 44, borderRadius: 12, border: 'none',
+                    background: '#22c55e', color: '#fff',
                     cursor: 'pointer', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14,
                   }}
                 >
-                  ➤
+                  <ArrowUp size={20} />
                 </button>
                 {/* Cancel (discard) button */}
                 <button
                   onClick={cancelAudio}
                   title="Discard voice message"
                   style={{
-                    width: 30, height: 30, borderRadius: 8, border: 'none',
-                    background: 'rgba(0,0,0,0.06)', color: '#6b7280',
+                    width: 44, height: 44, borderRadius: 12, border: 'none',
+                    background: 'rgba(255,255,255,0.1)', color: '#9ca3af',
                     cursor: 'pointer', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13,
                   }}
                 >
-                  ✕
+                  <X size={18} />
                 </button>
               </div>
               {pendingAudio.transcript && (
