@@ -604,6 +604,7 @@ const ChatMessageBubbleInner = memo(function ChatMessageBubble({
     prev.msg.isStreaming === next.msg.isStreaming &&
     prev.msg.tools === next.msg.tools &&
     prev.variant === next.variant &&
+    prev.accentColor === next.accentColor &&
     prev.showThinking === next.showThinking &&
     prev.showToolDetails === next.showToolDetails
   )
