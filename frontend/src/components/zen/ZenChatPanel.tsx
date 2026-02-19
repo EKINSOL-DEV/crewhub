@@ -393,21 +393,8 @@ export function ZenChatPanel({
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 
-  // If no session key, show no agent state with agent picker
-  if (!sessionKey) {
-    return (
-      <div className="zen-chat-panel">
-        <NoAgentState onSelectAgent={onSelectAgent} />
-      </div>
-    )
-  }
-
-  // Check if we can send (has text or uploaded images, and nothing uploading)
-  const uploadedImages = pendingImages.filter(img => img.uploadedPath && !img.error)
-  const stillUploading = pendingImages.some(img => img.uploading)
-  const canSend = (inputValue.trim() || uploadedImages.length > 0) && !stillUploading
-
   // ── Voice recording ─────────────────────────────────────────
+  // NOTE: these hooks MUST live before any early return to comply with Rules of Hooks
   const handleAudioReady = useCallback((url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
     let tag = `[audio attached: ${url} (audio/webm) ${duration}s]`
     if (transcript) {
@@ -444,6 +431,20 @@ export function ZenChatPanel({
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [isRecording, pendingAudio, cancelRecording, cancelAudio])
+
+  // If no session key, show no agent state with agent picker
+  if (!sessionKey) {
+    return (
+      <div className="zen-chat-panel">
+        <NoAgentState onSelectAgent={onSelectAgent} />
+      </div>
+    )
+  }
+
+  // Check if we can send (has text or uploaded images, and nothing uploading)
+  const uploadedImages = pendingImages.filter(img => img.uploadedPath && !img.error)
+  const stillUploading = pendingImages.some(img => img.uploading)
+  const canSend = (inputValue.trim() || uploadedImages.length > 0) && !stillUploading
 
   return (
     <div className="zen-chat-panel">
