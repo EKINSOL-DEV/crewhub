@@ -47,6 +47,7 @@ export function useStreamingChat(
   const messagesRef = useRef<ChatMessageData[]>([])
   const abortRef = useRef<AbortController | null>(null)
   const historyAbortRef = useRef<AbortController | null>(null)
+  const fallbackAbortRef = useRef<AbortController | null>(null)
   // Throttling refs
   const pendingContentRef = useRef<string>('')
   const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -182,10 +183,13 @@ export function useStreamingChat(
         pendingContentRef.current = ''
 
         // Fallback: blocking send
+        if (fallbackAbortRef.current) fallbackAbortRef.current.abort()
+        fallbackAbortRef.current = new AbortController()
         fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: trimmed, ...(roomId ? { room_id: roomId } : {}) }),
+          signal: fallbackAbortRef.current.signal,
         })
           .then(r => r.json())
           .then(data => {
@@ -212,6 +216,16 @@ export function useStreamingChat(
       },
     })
   }, [sessionKey, isSending, roomId, flushPendingContent])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) abortRef.current.abort()
+      if (historyAbortRef.current) historyAbortRef.current.abort()
+      if (fallbackAbortRef.current) fallbackAbortRef.current.abort()
+      if (throttleTimerRef.current) clearTimeout(throttleTimerRef.current)
+    }
+  }, [])
 
   return {
     messages,

@@ -15,10 +15,11 @@ from pathlib import Path
 from typing import Any
 
 import aiosqlite
-from fastapi import APIRouter, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from ..auth import require_scope, APIKeyInfo
 from ..db.database import DB_PATH, DB_DIR, SCHEMA_VERSION, init_database
 
 logger = logging.getLogger(__name__)
@@ -106,7 +107,7 @@ async def _create_file_backup() -> Path:
 # =============================================================================
 
 @router.get("/export")
-async def export_database():
+async def export_database(key: APIKeyInfo = Depends(require_scope("admin"))):
     """
     Export the entire database as a downloadable JSON file.
     
@@ -159,7 +160,7 @@ async def export_database():
 
 
 @router.post("/import", response_model=ImportResponse)
-async def import_database(file: UploadFile = File(...)):
+async def import_database(file: UploadFile = File(...), key: APIKeyInfo = Depends(require_scope("admin"))):
     """
     Import data from a JSON export file.
     
@@ -276,7 +277,7 @@ async def import_database(file: UploadFile = File(...)):
 
 
 @router.get("/list", response_model=list[BackupFileInfo])
-async def list_backups():
+async def list_backups(key: APIKeyInfo = Depends(require_scope("admin"))):
     """
     List available backup files from ~/.crewhub/backups/.
     
@@ -303,7 +304,7 @@ async def list_backups():
 
 
 @router.post("/create", response_model=BackupCreateResponse)
-async def create_backup():
+async def create_backup(key: APIKeyInfo = Depends(require_scope("admin"))):
     """
     Create a manual backup of the database file.
     

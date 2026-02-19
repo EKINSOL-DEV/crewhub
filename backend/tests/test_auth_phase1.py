@@ -25,20 +25,15 @@ from app.db.database import init_database, DB_DIR
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
     """Init DB and API keys before each test."""
-    # Remove old DB
-    if os.path.exists(TEST_DB):
-        os.remove(TEST_DB)
-    await init_database()
     await init_api_keys()
     yield
-    if os.path.exists(TEST_DB):
-        os.remove(TEST_DB)
 
 
 def _get_keys():
-    """Read keys from generated files."""
-    agent_json = DB_DIR / "agent.json"
-    api_keys_json = DB_DIR / "api-keys.json"
+    """Read keys from generated files (uses live DB_DIR which may be patched by conftest)."""
+    import app.db.database as _db_mod
+    agent_json = _db_mod.DB_DIR / "agent.json"
+    api_keys_json = _db_mod.DB_DIR / "api-keys.json"
     with open(agent_json) as f:
         self_key = json.load(f)["auth"]["default_key"]
     with open(api_keys_json) as f:

@@ -41,24 +41,25 @@ export function renderMarkdown(
   codeBlockStyle?: string,
   inlineCodeStyle?: string,
 ): string {
-  let html = text
+  // Escape HTML first to prevent XSS
+  let html = escapeHtml(text)
 
-  // Code blocks (protect first)
+  // Code blocks (protect first — already escaped above, no double-escape)
   html = html.replace(
     /```(\w*)\n([\s\S]*?)```/g,
     (_m, lang, code) => {
       const style = codeBlockStyle ?? ''
-      return `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ` style="${style}"` : ''}><code>${escapeHtml(code.trim())}</code></pre>`
+      return `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ` style="${style}"` : ''}><code>${code.trim()}</code></pre>`
     },
   )
 
-  // Inline code (protect from other replacements)
+  // Inline code (protect from other replacements — already escaped above)
   const inlineCodePlaceholders: string[] = []
   html = html.replace(/`([^`]+)`/g, (_m, code) => {
     const style = inlineCodeStyle ?? ''
     const placeholder = `%%INLINE_CODE_${inlineCodePlaceholders.length}%%`
     inlineCodePlaceholders.push(
-      `<code class="chat-md-inline-code"${style ? ` style="${style}"` : ''}>${escapeHtml(code)}</code>`,
+      `<code class="chat-md-inline-code"${style ? ` style="${style}"` : ''}>${code}</code>`,
     )
     return placeholder
   })
