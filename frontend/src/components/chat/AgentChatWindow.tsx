@@ -107,7 +107,7 @@ export function AgentChatWindow({
       isNearBottomRef.current = true
     }
 
-    prevStreamingIdRef.current = streamingMessageId
+    prevStreamingIdRef.current = streamingMessageId ?? null
   }, [messages, streamingMessageId])
 
   // Focus input on mount

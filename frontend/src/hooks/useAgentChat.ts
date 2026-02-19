@@ -16,6 +16,7 @@ export interface ChatMessageData {
   tokens?: number
   tools?: ToolCallData[]
   thinking?: string[]  // Thinking blocks when raw mode enabled
+  isStreaming?: boolean  // True while streaming response is in progress
 }
 
 export interface UseAgentChatReturn {
@@ -26,6 +27,7 @@ export interface UseAgentChatReturn {
   loadOlderMessages: () => Promise<void>
   hasMore: boolean
   isLoadingHistory: boolean
+  streamingMessageId?: string | null | undefined
 }
 
 interface HistoryResponse {
