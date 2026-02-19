@@ -206,6 +206,7 @@ export function ZenChatPanel({
   const {
     messages,
     isSending,
+    streamingMessageId,
     error,
     sendMessage,
     loadOlderMessages,
@@ -221,6 +222,7 @@ export function ZenChatPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isNearBottomRef = useRef(true)
   const prevMessageCount = useRef(0)
+  const prevStreamingIdRef = useRef<string | null>(null)
 
   // Process pending message when agent finishes
   useEffect(() => {
@@ -274,6 +276,23 @@ export function ZenChatPanel({
     }
     prevMessageCount.current = messages.length
   }, [messages.length])
+
+  // Auto-scroll during streaming (fires on every content delta)
+  useEffect(() => {
+    const wasStreaming = prevStreamingIdRef.current !== null
+    const isStreaming = streamingMessageId !== null
+
+    if (isStreaming && isNearBottomRef.current) {
+      // During streaming: follow new tokens if user hasn't scrolled up
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else if (wasStreaming && !isStreaming) {
+      // Streaming just ended: final scroll to bottom and reset scroll-up guard
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      isNearBottomRef.current = true
+    }
+
+    prevStreamingIdRef.current = streamingMessageId
+  }, [messages, streamingMessageId])
 
   // Focus input and scroll to bottom on mount/session switch
   useEffect(() => {

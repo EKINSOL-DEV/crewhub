@@ -157,7 +157,7 @@ export function MobileAgentChat({
   const icon = agentIcon || agentName.charAt(0).toUpperCase()
 
   const {
-    messages, isSending, error, sendMessage,
+    messages, isSending, streamingMessageId, error, sendMessage,
     loadOlderMessages, hasMore, isLoadingHistory,
   } = useStreamingChat(sessionKey)
 
@@ -171,6 +171,7 @@ export function MobileAgentChat({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isNearBottomRef = useRef(true)
   const prevMessageCount = useRef(0)
+  const prevStreamingIdRef = useRef<string | null>(null)
 
   const handleScroll = useCallback(() => {
     const c = scrollContainerRef.current
@@ -189,6 +190,23 @@ export function MobileAgentChat({
     }
     prevMessageCount.current = messages.length
   }, [messages.length])
+
+  // Auto-scroll during streaming (fires on every content delta)
+  useEffect(() => {
+    const wasStreaming = prevStreamingIdRef.current !== null
+    const isStreaming = streamingMessageId !== null
+
+    if (isStreaming && isNearBottomRef.current) {
+      // During streaming: follow new tokens if user hasn't scrolled up
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else if (wasStreaming && !isStreaming) {
+      // Streaming just ended: final scroll to bottom and reset scroll-up guard
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      isNearBottomRef.current = true
+    }
+
+    prevStreamingIdRef.current = streamingMessageId
+  }, [messages, streamingMessageId])
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 200)
