@@ -34,6 +34,8 @@ export interface UseVoiceRecorderReturn {
   pendingAudio: PendingAudio | null
   startRecording: () => Promise<void>
   stopRecording: () => void
+  /** Stop recording AND immediately send (WhatsApp-style, no preview step) */
+  stopAndSend: () => void
   cancelRecording: () => void
   /** Send the pending audio via onAudioReady and clear it */
   confirmAudio: () => void
@@ -58,6 +60,11 @@ export function useVoiceRecorder(
   const startTimeRef = useRef<number>(0)
   const cancelledRef = useRef(false)
   const mimeTypeRef = useRef<string>('audio/webm')
+  // sendImmediately: when true, uploadAudio calls onAudioReady directly (skip preview)
+  const sendImmediatelyRef = useRef(false)
+  // Keep onAudioReady in a ref so uploadAudio can call the latest version
+  const onAudioReadyRef = useRef(onAudioReady)
+  useEffect(() => { onAudioReadyRef.current = onAudioReady }, [onAudioReady])
 
   const isSupported =
     typeof navigator !== 'undefined' &&
@@ -105,14 +112,22 @@ export function useVoiceRecorder(
         const data = await resp.json()
         const transcript: string | null = data.transcript ?? null
         const transcriptError: string | null = data.transcriptError ?? null
+        const roundedDur = Math.round(dur * 10) / 10
 
-        // ← Instead of calling onAudioReady immediately, stage it as pending
-        setPendingAudio({
-          url: data.url,
-          duration: Math.round(dur * 10) / 10,
-          transcript,
-          transcriptError,
-        })
+        if (sendImmediatelyRef.current) {
+          // WhatsApp-style: send immediately, skip preview
+          sendImmediatelyRef.current = false
+          onAudioReadyRef.current(data.url, roundedDur, transcript, transcriptError)
+          setPendingAudio(null)
+        } else {
+          // Stage as pending for manual confirm
+          setPendingAudio({
+            url: data.url,
+            duration: roundedDur,
+            transcript,
+            transcriptError,
+          })
+        }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Upload failed'
         setError(msg)
@@ -137,6 +152,14 @@ export function useVoiceRecorder(
   // ── Stop recording (triggers upload → pendingAudio) ─────────────
   const stopRecording = useCallback(() => {
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') return
+    cancelledRef.current = false
+    mediaRecorderRef.current.stop()
+  }, [])
+
+  // ── Stop + send immediately (WhatsApp-style, no preview) ────────
+  const stopAndSend = useCallback(() => {
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') return
+    sendImmediatelyRef.current = true
     cancelledRef.current = false
     mediaRecorderRef.current.stop()
   }, [])
@@ -261,6 +284,7 @@ export function useVoiceRecorder(
     pendingAudio,
     startRecording,
     stopRecording,
+    stopAndSend,
     cancelRecording,
     confirmAudio,
     cancelAudio,

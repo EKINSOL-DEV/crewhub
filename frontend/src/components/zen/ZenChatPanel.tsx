@@ -412,26 +412,20 @@ export function ZenChatPanel({
     duration: recDuration,
     error: recError,
     isSupported: micSupported,
-    pendingAudio,
     startRecording,
-    stopRecording,
+    stopAndSend,
     cancelRecording,
-    confirmAudio,
-    cancelAudio,
   } = useVoiceRecorder(handleAudioReady)
 
-  // ESC cancels recording or pending audio preview
+  // ESC cancels recording
   useEffect(() => {
-    if (!isRecording && !pendingAudio) return
+    if (!isRecording) return
     const handler = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (isRecording) cancelRecording()
-        else if (pendingAudio) cancelAudio()
-      }
+      if (e.key === 'Escape') cancelRecording()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [isRecording, pendingAudio, cancelRecording, cancelAudio])
+  }, [isRecording, cancelRecording])
 
   // If no session key, show no agent state with agent picker
   if (!sessionKey) {
@@ -548,70 +542,7 @@ export function ZenChatPanel({
 
         {/* Input area */}
         <div className="zen-chat-input-container">
-          {/* Pending audio preview — shown after stop, before send */}
-          {pendingAudio && (
-            <div style={{
-              display: 'flex', flexDirection: 'column', gap: 6,
-              padding: '8px 12px',
-              background: 'rgba(139,92,246,0.06)',
-              borderTop: '1px solid rgba(139,92,246,0.15)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <audio
-                  src={pendingAudio.url}
-                  controls
-                  style={{ flex: 1, height: 32, minWidth: 0 }}
-                />
-                {/* Send (confirm) button — green ↑ arrow, single click sends immediately */}
-                <button
-                  type="button"
-                  onClick={confirmAudio}
-                  title="Send voice message"
-                  style={{
-                    width: 44, height: 44, borderRadius: 12, border: 'none',
-                    background: '#22c55e', color: '#fff',
-                    cursor: 'pointer', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <ArrowUp size={20} />
-                </button>
-                {/* Cancel (discard) button */}
-                <button
-                  type="button"
-                  onClick={cancelAudio}
-                  title="Discard voice message"
-                  style={{
-                    width: 44, height: 44, borderRadius: 12, border: 'none',
-                    background: 'rgba(255,255,255,0.1)', color: 'var(--zen-fg-muted, #9ca3af)',
-                    cursor: 'pointer', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              {/* Transcript preview */}
-              {pendingAudio.transcript && (
-                <div style={{
-                  fontSize: 12, fontStyle: 'italic',
-                  color: 'var(--zen-fg-muted)',
-                  paddingLeft: 2,
-                  overflow: 'hidden', textOverflow: 'ellipsis',
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                }}>
-                  "{pendingAudio.transcript}"
-                </div>
-              )}
-              {pendingAudio.transcriptError && (
-                <div style={{ fontSize: 11, color: '#9ca3af', paddingLeft: 2 }}>
-                  Transcription unavailable
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Recording indicator */}
+          {/* Recording indicator (WhatsApp-style: green send + cancel shown inline) */}
           {isRecording && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8,
@@ -621,9 +552,7 @@ export function ZenChatPanel({
             }}>
               <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>●</span>
               Recording {formatDuration(recDuration)}
-              <span style={{ marginLeft: 4, fontSize: 11, opacity: 0.7, color: 'var(--zen-fg-muted)' }}>
-                ESC to cancel
-              </span>
+              <span style={{ flex: 1 }} />
             </div>
           )}
           {recError && (
@@ -639,32 +568,59 @@ export function ZenChatPanel({
               placeholder={isRecording ? 'Recording…' : `Message ${agentName || 'agent'}... (paste or drop images)`}
               rows={1}
               className="zen-chat-input"
-              disabled={isRecording || !!pendingAudio}
+              disabled={isRecording}
             />
-            {/* Mic button — hidden while there's a pending audio preview */}
-            {micSupported && !pendingAudio && (
-              <button
-                type="button"
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={isPreparing || isSending}
-                className="zen-chat-send-btn"
-                style={isRecording ? { color: '#ef4444', background: 'rgba(239,68,68,0.12)' } : undefined}
-                aria-label={isRecording ? 'Stop recording' : 'Record voice message'}
-                title={isRecording ? 'Stop recording' : 'Record voice message'}
-              >
-                {isPreparing ? '⏳' : isRecording ? '⏹' : '🎤'}
-              </button>
+            {/* While recording: green send ↑ + ✕ cancel */}
+            {isRecording && (
+              <>
+                <button
+                  type="button"
+                  onClick={stopAndSend}
+                  className="zen-chat-send-btn"
+                  style={{ background: '#22c55e', color: '#fff' }}
+                  aria-label="Stop & send voice message"
+                  title="Stop & send voice message"
+                >
+                  <ArrowUp size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelRecording}
+                  className="zen-chat-send-btn"
+                  aria-label="Cancel recording"
+                  title="Cancel recording"
+                >
+                  <X size={16} />
+                </button>
+              </>
             )}
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!canSend || pendingMessage !== null || isRecording || !!pendingAudio}
-              className="zen-chat-send-btn"
-              aria-label={isSending ? "Queue message" : "Send message"}
-              title={isSending ? "Message will be sent when agent finishes" : "Send message"}
-            >
-              {pendingMessage ? '⏳' : '➤'}
-            </button>
+            {/* While not recording: mic + send */}
+            {!isRecording && (
+              <>
+                {micSupported && (
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    disabled={isPreparing || isSending}
+                    className="zen-chat-send-btn"
+                    aria-label="Record voice message"
+                    title="Record voice message"
+                  >
+                    {isPreparing ? '⏳' : '🎤'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={!canSend || pendingMessage !== null}
+                  className="zen-chat-send-btn"
+                  aria-label={isSending ? "Queue message" : "Send message"}
+                  title={isSending ? "Message will be sent when agent finishes" : "Send message"}
+                >
+                  {pendingMessage ? '⏳' : '➤'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </ImageDropZone>
