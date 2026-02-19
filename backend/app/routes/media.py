@@ -222,6 +222,7 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
                     data={
                         "model": GROQ_MODEL,
                         "response_format": "json",
+                        "language": "nl",
                     },
                 )
         
