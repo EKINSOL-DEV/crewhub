@@ -81,7 +81,7 @@ fn open_or_focus_chat<R: Runtime>(app: &AppHandle<R>) {
         .fullscreen(false)
         .decorations(true)
         .always_on_top(false)
-        .skip_taskbar(true) // Don't show in taskbar/dock
+        .skip_taskbar(false)
         .initialization_script(&chat_init_script())
         .build();
 
@@ -352,12 +352,10 @@ pub fn run() {
         .manage(BadgeCount(Mutex::new(0)))
         .invoke_handler(tauri::generate_handler![update_tray_badge, open_zen_window])
         .setup(|app| {
-            // ── macOS: Accessory activation policy ──────────────────────────
-            // Accessory = no Dock icon, no App Switcher (Cmd+Tab).
-            // Better than Prohibited: windows still receive proper focus when
-            // set_focus() is called explicitly.
+            // ── macOS: Regular activation policy ────────────────────────────
+            // Regular = Dock icon + Cmd+Tab app switcher, like a normal app.
             #[cfg(target_os = "macos")]
-            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            app.set_activation_policy(tauri::ActivationPolicy::Regular);
 
             // ── Set up system tray ───────────────────────────────────────────
             setup_tray(app)?;
