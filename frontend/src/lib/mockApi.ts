@@ -156,9 +156,10 @@ const MOCK_ROOMS: MockRoom[] = [
 ]
 
 // 5 core agents for demo
+// DEMO-FIX: agent IDs must match FIXED_AGENT_IDS in MobileLayout ('main', 'dev', …) so fixedAgents filter is non-empty
 const MOCK_AGENTS: MockAgent[] = [
   {
-    id: 'agent-main',
+    id: 'main', // DEMO-FIX: was 'agent-main'
     name: 'Assistent',
     icon: '🤖',
     avatar_url: null,
@@ -174,7 +175,7 @@ const MOCK_AGENTS: MockAgent[] = [
     updated_at: Date.now(),
   },
   {
-    id: 'agent-dev',
+    id: 'dev', // DEMO-FIX: was 'agent-dev'
     name: 'Dev',
     icon: '💻',
     avatar_url: null,
@@ -190,7 +191,7 @@ const MOCK_AGENTS: MockAgent[] = [
     updated_at: Date.now(),
   },
   {
-    id: 'agent-gamedev',
+    id: 'gamedev', // DEMO-FIX: was 'agent-gamedev'
     name: 'Game Dev',
     icon: '🎮',
     avatar_url: null,
@@ -206,7 +207,7 @@ const MOCK_AGENTS: MockAgent[] = [
     updated_at: Date.now(),
   },
   {
-    id: 'agent-reviewer',
+    id: 'reviewer', // DEMO-FIX: was 'agent-reviewer'
     name: 'Reviewer',
     icon: '🔍',
     avatar_url: null,
@@ -222,7 +223,7 @@ const MOCK_AGENTS: MockAgent[] = [
     updated_at: Date.now(),
   },
   {
-    id: 'agent-flowy',
+    id: 'flowy', // DEMO-FIX: was 'agent-flowy'
     name: 'Flowy',
     icon: '✍️',
     avatar_url: null,
@@ -1226,8 +1227,8 @@ function jsonResponse(data: unknown, status = 200): Response {
   })
 }
 
-function okResponse(): Response {
-  return jsonResponse({ success: true })
+function okResponse(data?: unknown): Response { // DEMO-FIX: accept optional data payload
+  return jsonResponse(data ?? { success: true })
 }
 
 // ─── URL Matching (robust, handles absolute + relative) ────────
@@ -1572,6 +1573,99 @@ function handleMockRequest(pathname: string, method: string, _body?: BodyInit | 
     }
     console.log(`[MockAPI] GET /api/tasks/${taskId} → 404`)
     return new Response(JSON.stringify({ detail: 'Task not found' }), { status: 404 })
+  }
+
+  // GET /api/threads
+  if (pathname === '/api/threads' && method === 'GET') {
+    const mockThreads = [
+      {
+        id: 'thread-standup-group',
+        kind: 'group',
+        title: 'Team Standup',
+        title_auto: 'Team Standup',
+        created_by: 'user',
+        created_at: Date.now() - 6 * 3_600_000,
+        updated_at: Date.now() - 4 * 3_600_000,
+        last_message_at: Date.now() - 4 * 3_600_000,
+        archived_at: null,
+        participant_count: 4,
+        participants: [
+          { id: 'p1', thread_id: 'thread-standup-group', agent_id: 'main', agent_name: 'Director', agent_icon: '🎯', agent_color: '#4f46e5', role: 'owner', is_active: true, joined_at: Date.now() - 6 * 3_600_000 },
+          { id: 'p2', thread_id: 'thread-standup-group', agent_id: 'dev', agent_name: 'Developer', agent_icon: '💻', agent_color: '#10b981', role: 'member', is_active: true, joined_at: Date.now() - 6 * 3_600_000 },
+          { id: 'p3', thread_id: 'thread-standup-group', agent_id: 'flowy', agent_name: 'Flowy', agent_icon: '🎨', agent_color: '#ec4899', role: 'member', is_active: true, joined_at: Date.now() - 6 * 3_600_000 },
+          { id: 'p4', thread_id: 'thread-standup-group', agent_id: 'reviewer', agent_name: 'Reviewer', agent_icon: '🔍', agent_color: '#8b5cf6', role: 'member', is_active: true, joined_at: Date.now() - 6 * 3_600_000 },
+        ],
+        settings: {},
+      },
+    ]
+    console.log(`[MockAPI] GET /api/threads → 200 (${mockThreads.length} threads)`)
+    return okResponse({ threads: mockThreads, total: mockThreads.length })
+  }
+
+  // GET /api/threads/:id
+  if (pathname.startsWith('/api/threads/') && method === 'GET' && !pathname.includes('/messages')) {
+    const threadId = pathname.split('/')[3]
+    console.log(`[MockAPI] GET /api/threads/${threadId} → 200`)
+    return okResponse({ id: threadId, kind: 'group', title: 'Team Standup', participants: [], participant_count: 0, settings: {}, created_by: 'user', created_at: Date.now(), updated_at: Date.now() })
+  }
+
+  // GET /api/threads/:id/messages
+  if (pathname.match(/^\/api\/threads\/[^/]+\/messages$/) && method === 'GET') {
+    const threadId = pathname.split('/')[3]
+    const hour = 3_600_000
+    const mockMessages = [
+      { id: 'msg-1', thread_id: threadId, role: 'user', content: 'Morning everyone! Quick standup — what\'s everyone working on today?', agent_id: null, agent_name: 'You', created_at: Date.now() - 6 * hour },
+      { id: 'msg-2', thread_id: threadId, role: 'assistant', content: 'Director here. Coordinating the v1.0 release checklist. Reviewing the roadmap items and making sure we\'re on track 🎯', agent_id: 'main', agent_name: 'Director', created_at: Date.now() - 6 * hour + 30_000 },
+      { id: 'msg-3', thread_id: threadId, role: 'assistant', content: 'Finishing up the WebSocket reconnect logic, then moving to auth module. Should have both done by EOD 💻', agent_id: 'dev', agent_name: 'Developer', created_at: Date.now() - 6 * hour + 60_000 },
+      { id: 'msg-4', thread_id: threadId, role: 'assistant', content: 'Landing page copy rewrite + finishing the onboarding wizard designs. Almost ready for review 🎨', agent_id: 'flowy', agent_name: 'Flowy', created_at: Date.now() - 6 * hour + 90_000 },
+      { id: 'msg-5', thread_id: threadId, role: 'assistant', content: 'Wrapping up the auth review. Found some good stuff. Will post the summary in #dev 🔍', agent_id: 'reviewer', agent_name: 'Reviewer', created_at: Date.now() - 6 * hour + 120_000 },
+      { id: 'msg-6', thread_id: threadId, role: 'user', content: 'Great! Any blockers?', agent_id: null, agent_name: 'You', created_at: Date.now() - 5 * hour },
+      { id: 'msg-7', thread_id: threadId, role: 'assistant', content: 'No blockers. The backoff algorithm was the tricky part, that\'s done now. 💻', agent_id: 'dev', agent_name: 'Developer', created_at: Date.now() - 5 * hour + 30_000 },
+      { id: 'msg-8', thread_id: threadId, role: 'user', content: 'Let\'s ship it 🚀', agent_id: null, agent_name: 'You', created_at: Date.now() - 4 * hour },
+    ]
+    console.log(`[MockAPI] GET /api/threads/${threadId}/messages → 200 (${mockMessages.length} messages)`)
+    return okResponse({ messages: mockMessages, total: mockMessages.length })
+  }
+
+  // POST /api/threads (create group thread)
+  if (pathname === '/api/threads' && method === 'POST') {
+    console.log('[MockAPI] POST /api/threads → 200')
+    return okResponse({
+      id: 'thread-new-' + Date.now(),
+      kind: 'group',
+      title: 'New Group',
+      title_auto: 'New Group',
+      created_by: 'user',
+      created_at: Date.now(),
+      updated_at: Date.now(),
+      last_message_at: null,
+      archived_at: null,
+      participant_count: 0,
+      participants: [],
+      settings: {},
+    })
+  }
+
+  // GET /api/docs/tree
+  if (pathname === '/api/docs/tree' && method === 'GET') {
+    console.log('[MockAPI] GET /api/docs/tree → 200')
+    return okResponse({
+      tree: [
+        { path: 'getting-started.md', name: 'Getting Started', type: 'file', size: 1200, modified: Date.now() - 86_400_000 },
+        { path: 'configuration.md', name: 'Configuration', type: 'file', size: 3400, modified: Date.now() - 172_800_000 },
+        { path: 'agents/', name: 'Agents', type: 'directory', children: [
+          { path: 'agents/overview.md', name: 'Overview', type: 'file', size: 2100, modified: Date.now() - 259_200_000 },
+          { path: 'agents/rooms.md', name: 'Rooms', type: 'file', size: 1800, modified: Date.now() - 345_600_000 },
+        ]},
+        { path: 'api-reference.md', name: 'API Reference', type: 'file', size: 8900, modified: Date.now() - 432_000_000 },
+      ],
+    })
+  }
+
+  // GET /api/docs/content
+  if (pathname === '/api/docs/content' && method === 'GET') {
+    console.log('[MockAPI] GET /api/docs/content → 200')
+    return okResponse({ content: '# CrewHub Docs\n\nThis is a demo. Connect your own CrewHub backend to see your actual documentation.' })
   }
 
   // GET /api/session-display-names

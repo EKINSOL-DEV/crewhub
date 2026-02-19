@@ -184,8 +184,9 @@ class SSEManager {
         import.meta.env.VITE_API_URL
       // In browser mode, ignore localhost-based URLs — they only make sense in Tauri.
       // A localhost URL from Safari on iPhone will never reach the Mac mini backend.
+      const isLocalUrl = rawConfigured?.includes('localhost') || rawConfigured?.includes('127.0.0.1')
       const configuredUrl =
-        !isInTauri && rawConfigured?.includes('localhost') ? null : rawConfigured
+        !isInTauri && isLocalUrl ? null : rawConfigured
 
       let sseUrl: string
       if (configuredUrl) {
