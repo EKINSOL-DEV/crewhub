@@ -509,8 +509,8 @@ const ChatMessageBubbleInner = memo(function ChatMessageBubble({
         alignSelf: 'flex-end',
       }
     : {
-        background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-        color: isDark ? '#e2e8f0' : '#1f2937',
+        background: variant === 'mobile' ? 'var(--mobile-msg-assistant-bg, rgba(255,255,255,0.07))' : 'rgba(0,0,0,0.05)',
+        color: variant === 'mobile' ? 'var(--mobile-msg-assistant-text, #e2e8f0)' : '#1f2937',
         borderRadius: variant === 'mobile' ? '16px 16px 16px 4px' : '14px 14px 14px 4px',
         marginRight: 48,
         alignSelf: 'flex-start',
