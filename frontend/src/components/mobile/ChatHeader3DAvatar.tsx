@@ -69,7 +69,7 @@ function LoadingPlaceholder({ color }: { color: string }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#0d1626',
+        background: 'var(--mobile-surface, #1e293b)',
         borderRadius: 'inherit',
       }}
     >
@@ -117,7 +117,7 @@ export function ChatHeader3DAvatar({
     overflow: 'hidden',
     flexShrink: 0,
     border: `1px solid ${config.color}30`,
-    background: '#0d1626',
+    background: 'var(--mobile-surface, #1e293b)',
     position: 'relative',
     ...style,
   }

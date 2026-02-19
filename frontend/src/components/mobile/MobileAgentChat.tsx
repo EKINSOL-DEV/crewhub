@@ -66,9 +66,9 @@ function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (
   if (files.length === 0) return null
   return (
     <div style={{
-      padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.06)',
+      padding: '8px 12px', borderTop: '1px solid var(--mobile-divider)',
       display: 'flex', gap: 8, overflowX: 'auto', WebkitOverflowScrolling: 'touch',
-      background: 'rgba(255,255,255,0.02)',
+      background: 'var(--mobile-surface2)',
     }}>
       {files.map(f => (
         <div key={f.id} style={{
@@ -79,16 +79,16 @@ function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (
           {f.previewUrl ? (
             <div style={{
               width: 64, height: 64, borderRadius: 10, overflow: 'hidden',
-              background: 'rgba(255,255,255,0.05)',
-              border: f.error ? '2px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--mobile-surface2)',
+              border: f.error ? '2px solid #ef4444' : '1px solid var(--mobile-input-border)',
             }}>
               <img src={f.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           ) : (
             <div style={{
               width: 64, height: 64, borderRadius: 10,
-              background: 'rgba(255,255,255,0.05)',
-              border: f.error ? '2px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--mobile-surface2)',
+              border: f.error ? '2px solid #ef4444' : '1px solid var(--mobile-input-border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 24,
             }}>
@@ -99,7 +99,7 @@ function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (
           {f.uploading && (
             <div style={{
               position: 'absolute', top: 0, left: 4, width: 64, height: 64, borderRadius: 10,
-              background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--mobile-overlay-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#fff', fontSize: 11, fontWeight: 600,
             }}>
               ⏳
@@ -111,8 +111,8 @@ function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (
             style={{
               position: 'absolute', top: -4, right: 0,
               width: 22, height: 22, borderRadius: '50%',
-              background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
-              color: '#94a3b8', cursor: 'pointer',
+              background: 'var(--mobile-surface)', border: '1px solid var(--mobile-input-border)',
+              color: 'var(--mobile-text-secondary)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -120,7 +120,7 @@ function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (
           </button>
           {/* Filename */}
           <span style={{
-            fontSize: 9, color: f.error ? '#fca5a5' : '#64748b',
+            fontSize: 9, color: f.error ? '#fca5a5' : 'var(--mobile-text-muted)',
             maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             textAlign: 'center',
           }}>
@@ -332,7 +332,7 @@ export function MobileAgentChat({
       <header style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '8px 12px 8px 8px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--mobile-divider)',
         flexShrink: 0,
       }}>
         <button
@@ -340,7 +340,7 @@ export function MobileAgentChat({
           style={{
             width: 36, height: 36, borderRadius: 10,
             border: 'none', background: 'transparent',
-            color: '#94a3b8', cursor: 'pointer',
+            color: 'var(--mobile-text-secondary)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}
@@ -358,12 +358,12 @@ export function MobileAgentChat({
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 16, fontWeight: 600, color: '#f1f5f9',
+            fontSize: 16, fontWeight: 600, color: 'var(--mobile-text)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {agentName}
           </div>
-          <div style={{ fontSize: 11, color: isSending ? accentColor : '#64748b' }}>
+          <div style={{ fontSize: 11, color: isSending ? accentColor : 'var(--mobile-text-muted)' }}>
             {isSending ? 'Thinking…' : 'Online'}
           </div>
         </div>
@@ -378,7 +378,7 @@ export function MobileAgentChat({
             title="Settings"
             style={{
               width: 34, height: 34, borderRadius: 10, border: 'none',
-              background: 'transparent', color: '#64748b', cursor: 'pointer',
+              background: 'transparent', color: 'var(--mobile-text-secondary)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}
@@ -414,7 +414,7 @@ export function MobileAgentChat({
             style={{
               alignSelf: 'center', padding: '6px 14px',
               borderRadius: 10, border: 'none',
-              background: 'rgba(255,255,255,0.06)', color: '#64748b',
+              background: 'var(--mobile-msg-assistant-bg)', color: 'var(--mobile-text-muted)',
               cursor: isLoadingHistory ? 'wait' : 'pointer',
               fontSize: 12, fontWeight: 500,
             }}
@@ -427,7 +427,7 @@ export function MobileAgentChat({
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
-            color: '#475569', fontSize: 14, padding: '40px 0', gap: 8,
+            color: 'var(--mobile-text-muted)', fontSize: 14, padding: '40px 0', gap: 8,
           }}>
             <span style={{ fontSize: 40 }}>💬</span>
             <span>Say hello to {agentName}!</span>
@@ -441,7 +441,7 @@ export function MobileAgentChat({
         {isSending && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '4px 0', color: '#64748b', fontSize: 12,
+            padding: '4px 0', color: 'var(--mobile-text-muted)', fontSize: 12,
           }}>
             <span style={{ animation: 'pulse 1.5s infinite' }}>●</span>
             {agentName} is thinking…
@@ -477,7 +477,7 @@ export function MobileAgentChat({
       {/* Input */}
       <div style={{
         padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
-        borderTop: pendingFiles.length > 0 ? 'none' : '1px solid rgba(255,255,255,0.06)',
+        borderTop: pendingFiles.length > 0 ? 'none' : '1px solid var(--mobile-divider)',
         display: 'flex', gap: 8, alignItems: 'flex-end',
         background: 'var(--mobile-bg, #0f172a)',
       }}>
@@ -488,8 +488,8 @@ export function MobileAgentChat({
           style={{
             width: 44, height: 44, borderRadius: 14,
             border: 'none',
-            background: pendingFiles.length > 0 ? accentColor + '20' : 'rgba(255,255,255,0.05)',
-            color: pendingFiles.length > 0 ? accentColor : '#64748b',
+            background: pendingFiles.length > 0 ? accentColor + '20' : 'var(--mobile-attach-btn-bg)',
+            color: pendingFiles.length > 0 ? accentColor : 'var(--mobile-text-secondary)',
             cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0, transition: 'background 0.15s',
@@ -510,9 +510,9 @@ export function MobileAgentChat({
           style={{
             flex: 1, padding: '10px 14px',
             borderRadius: 14,
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(255,255,255,0.05)',
-            color: '#e2e8f0', fontSize: 16,
+            border: '1px solid var(--mobile-input-border)',
+            background: 'var(--mobile-input-bg)',
+            color: 'var(--mobile-text)', fontSize: 16,
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
             resize: 'none', outline: 'none',
             maxHeight: 100, lineHeight: 1.4,
@@ -530,9 +530,9 @@ export function MobileAgentChat({
             width: 44, height: 44, borderRadius: 14,
             border: 'none',
             background: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
-              ? 'rgba(255,255,255,0.06)' : accentColor,
+              ? 'var(--mobile-msg-assistant-bg)' : accentColor,
             color: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
-              ? '#475569' : '#fff',
+              ? 'var(--mobile-text-muted)' : '#fff',
             cursor: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
               ? 'default' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
