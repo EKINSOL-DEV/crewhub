@@ -151,7 +151,7 @@ async def upload_media(file: UploadFile = File(...)):
     return {
         "success": True,
         "path": str(file_path),
-        "url": f"/api/media/{file_path}",
+        "url": f"/api/media/files/{filename}",
         "filename": filename,
         "mimeType": content_type,
         "size": len(content),
@@ -217,7 +217,7 @@ async def upload_audio(file: UploadFile = File(...)):
     
     return {
         "success": True,
-        "url": f"/api/media/{file_path}",
+        "url": f"/api/media/audio/{filename}",
         "filename": filename,
         "mimeType": raw_content_type,
         "size": len(content),
@@ -267,6 +267,14 @@ async def serve_media(file_path: str):
     if file_path.startswith("/"):
         # Absolute path
         path = Path(file_path)
+    elif file_path.startswith("audio/"):
+        # Audio uploads → ~/.crewhub/media/audio/
+        filename = file_path[len("audio/"):]
+        path = AUDIO_UPLOAD_DIR / filename
+    elif file_path.startswith("files/"):
+        # Image/file uploads → ~/.openclaw/media/uploads/
+        filename = file_path[len("files/"):]
+        path = UPLOAD_DIR / filename
     else:
         # Relative to ~/.openclaw/media
         path = Path.home() / ".openclaw" / "media" / file_path
