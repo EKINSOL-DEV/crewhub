@@ -1,8 +1,10 @@
 /**
  * Hook for thread (group chat) message management.
+ * Subscribes to SSE for real-time streaming of agent responses.
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { threadsApi, type ThreadMessage } from '@/lib/threads.api'
+import { sseManager } from '@/lib/sseManager'
 
 export function useThreadChat(threadId: string) {
   const [messages, setMessages] = useState<ThreadMessage[]>([])
@@ -11,6 +13,24 @@ export function useThreadChat(threadId: string) {
   const [hasMore, setHasMore] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const initialLoadDone = useRef(false)
+
+  // Subscribe to SSE for real-time thread messages (agent responses stream in as they complete)
+  useEffect(() => {
+    if (!threadId) return
+
+    const handleThreadMessage = (data: any) => {
+      if (data?.threadId !== threadId || !data?.message) return
+      const msg = data.message as ThreadMessage
+      // Deduplicate: skip if we already have this message id
+      setMessages(prev => {
+        if (prev.some(m => m.id === msg.id)) return prev
+        return [...prev, msg]
+      })
+    }
+
+    const unsub = sseManager.subscribe('thread.message.created', handleThreadMessage)
+    return unsub
+  }, [threadId])
 
   // Load initial messages
   useEffect(() => {
@@ -60,10 +80,14 @@ export function useThreadChat(threadId: string) {
       try {
         const result = await threadsApi.sendMessage(threadId, content.trim(), routingMode, targetAgentIds)
 
-        // Replace optimistic message with real one + add responses
+        // Replace optimistic message with real user message.
+        // Agent responses arrive in real-time via SSE (thread.message.created),
+        // so we only need to reconcile what the POST returns with what SSE already delivered.
         setMessages(prev => {
           const filtered = prev.filter(m => m.id !== optimisticMsg.id)
-          return [...filtered, result.user_message, ...result.responses]
+          const existingIds = new Set(filtered.map(m => m.id))
+          const newMsgs = [result.user_message, ...result.responses].filter(m => !existingIds.has(m.id))
+          return [...filtered, ...newMsgs]
         })
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'Failed to send')

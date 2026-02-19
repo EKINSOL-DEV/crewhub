@@ -57,7 +57,7 @@ function StaticAgentAvatar({ config, status }: {
       width: '100%', height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%)',
+      background: 'radial-gradient(ellipse at center, var(--mobile-bg-secondary, #1e293b) 0%, var(--mobile-bg, #0f172a) 100%)',
       gap: 6,
     }}>
       <div style={{
@@ -95,7 +95,7 @@ export function AgentCameraButton({ onClick, isActive }: { onClick: () => void; 
         width: 36, height: 36, borderRadius: 12,
         border: `1px solid ${isActive ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`,
         background: isActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.05)',
-        color: isActive ? '#818cf8' : '#94a3b8', cursor: 'pointer',
+        color: isActive ? 'var(--mobile-accent, #818cf8)' : 'var(--mobile-text-secondary, #94a3b8)', cursor: 'pointer',
         flexShrink: 0, transition: 'all 0.15s',
       }}
     >
@@ -142,7 +142,7 @@ export function AgentMiniViewport({
         overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.1)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        background: '#0f172a',
+        background: 'var(--mobile-bg, #0f172a)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
@@ -153,7 +153,7 @@ export function AgentMiniViewport({
             <div style={{
               width: '100%', height: '100%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#475569', fontSize: 11,
+              color: 'var(--mobile-text-muted, #475569)', fontSize: 11,
             }}>
               Loading…
             </div>
@@ -190,7 +190,7 @@ export function AgentMiniViewport({
             style={{
               width: 20, height: 20, borderRadius: 6,
               border: 'none', background: 'rgba(255,255,255,0.1)',
-              color: '#94a3b8', cursor: 'pointer',
+              color: 'var(--mobile-text-secondary, #94a3b8)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: 0,
             }}
