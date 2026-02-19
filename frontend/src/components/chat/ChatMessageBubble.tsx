@@ -440,6 +440,8 @@ const ChatMessageBubbleInner = memo(function ChatMessageBubble({
                 variant="zen"
                 isUser={isUser}
                 accentColor={accentColor}
+                transcript={attachment.transcript}
+                transcriptError={attachment.transcriptError}
               />
             ))}
           </div>
@@ -629,6 +631,8 @@ const ChatMessageBubbleInner = memo(function ChatMessageBubble({
               variant={variant}
               isUser={isUser}
               accentColor={accentColor}
+              transcript={attachment.transcript}
+              transcriptError={attachment.transcriptError}
             />
           ))}
         </div>

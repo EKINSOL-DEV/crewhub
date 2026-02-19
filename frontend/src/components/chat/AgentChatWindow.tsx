@@ -129,8 +129,14 @@ export function AgentChatWindow({
   }
 
   // ── Voice recording ────────────────────────────────────────────
-  const handleAudioReady = useCallback((url: string, duration: number) => {
-    void sendMessage(`[audio attached: ${url} (audio/webm) ${duration}s]`)
+  const handleAudioReady = useCallback((url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
+    let msg = `[audio attached: ${url} (audio/webm) ${duration}s]`
+    if (transcript) {
+      msg += `\nTranscript: "${transcript}"`
+    } else if (transcriptError) {
+      msg += `\n[Voice transcription unavailable: ${transcriptError}]`
+    }
+    void sendMessage(msg)
   }, [sendMessage])
 
   const {

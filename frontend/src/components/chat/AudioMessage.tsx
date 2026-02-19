@@ -15,6 +15,10 @@ interface AudioMessageProps {
   /** Whether this is a user message (affects color) */
   isUser?: boolean
   accentColor?: string
+  /** Whisper transcript (shown below player) */
+  transcript?: string
+  /** Transcription error message */
+  transcriptError?: string
 }
 
 export function AudioMessage({
@@ -23,6 +27,8 @@ export function AudioMessage({
   variant = 'float',
   isUser = false,
   accentColor = '#8b5cf6',
+  transcript,
+  transcriptError,
 }: AudioMessageProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -136,101 +142,147 @@ export function AudioMessage({
 
   const displayTime = isPlaying || currentTime > 0 ? fmt(currentTime) : fmt(totalDuration)
 
+  // Transcript text color
+  const transcriptColor = isUser
+    ? 'rgba(255,255,255,0.75)'
+    : isDark
+      ? 'rgba(226,232,240,0.65)'
+      : isZen
+        ? 'rgba(226,232,240,0.6)'
+        : 'rgba(55,65,81,0.65)'
+
   return (
     <div
       style={{
         display: 'flex',
-        alignItems: 'center',
-        gap: 8,
+        flexDirection: 'column',
+        gap: 6,
         padding: '8px 10px',
         borderRadius: 12,
         background: containerBg,
         minWidth: 180,
-        maxWidth: 260,
+        maxWidth: 280,
         userSelect: 'none',
       }}
     >
       {/* Hidden audio element */}
       <audio ref={audioRef} src={url} preload="metadata" style={{ display: 'none' }} />
 
-      {/* Play/Pause button */}
-      <button
-        onClick={togglePlay}
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: '50%',
-          border: 'none',
-          background: btnBg,
-          color: btnColor,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          fontSize: 13,
-          transition: 'background 0.15s',
-        }}
-        title={isPlaying ? 'Pause' : 'Play'}
-      >
-        {isPlaying ? '⏸' : '▶'}
-      </button>
-
-      {/* Progress bar + time */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {/* Progress track */}
-        <div
-          onClick={handleSeek}
+      {/* Player row: button + progress + waveform */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Play/Pause button */}
+        <button
+          onClick={togglePlay}
           style={{
-            height: 4,
-            borderRadius: 2,
-            background: trackBg,
-            cursor: isLoaded ? 'pointer' : 'default',
-            position: 'relative',
-            overflow: 'hidden',
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            border: 'none',
+            background: btnBg,
+            color: btnColor,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            fontSize: 13,
+            transition: 'background 0.15s',
           }}
+          title={isPlaying ? 'Pause' : 'Play'}
         >
+          {isPlaying ? '⏸' : '▶'}
+        </button>
+
+        {/* Progress bar + time */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* Progress track */}
+          <div
+            onClick={handleSeek}
+            style={{
+              height: 4,
+              borderRadius: 2,
+              background: trackBg,
+              cursor: isLoaded ? 'pointer' : 'default',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                height: '100%',
+                width: `${progress * 100}%`,
+                background: fillColor,
+                borderRadius: 2,
+                transition: 'width 0.1s linear',
+              }}
+            />
+          </div>
+
+          {/* Time */}
           <div
             style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              height: '100%',
-              width: `${progress * 100}%`,
-              background: fillColor,
-              borderRadius: 2,
-              transition: 'width 0.1s linear',
+              fontSize: 10,
+              color: textColor,
+              opacity: 0.7,
+              fontVariantNumeric: 'tabular-nums',
+              lineHeight: 1,
             }}
-          />
+          >
+            {displayTime}
+          </div>
         </div>
 
-        {/* Time */}
+        {/* Waveform icon (decorative) */}
+        <div
+          style={{
+            fontSize: 14,
+            opacity: isPlaying ? 1 : 0.4,
+            color: fillColor,
+            flexShrink: 0,
+            transition: 'opacity 0.2s',
+            animation: isPlaying ? 'audio-wave 0.8s ease infinite alternate' : 'none',
+          }}
+        >
+          🎵
+        </div>
+      </div>
+
+      {/* Transcript line */}
+      {transcript && (
+        <div
+          style={{
+            fontSize: 11,
+            fontStyle: 'italic',
+            color: transcriptColor,
+            lineHeight: 1.4,
+            paddingTop: 2,
+            borderTop: `1px solid ${isUser ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'}`,
+          }}
+        >
+          {transcript}
+        </div>
+      )}
+
+      {/* Transcription error */}
+      {transcriptError && (
         <div
           style={{
             fontSize: 10,
-            color: textColor,
-            opacity: 0.7,
-            fontVariantNumeric: 'tabular-nums',
-            lineHeight: 1,
+            color: transcriptColor,
+            opacity: 0.65,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            paddingTop: 2,
           }}
         >
-          {displayTime}
+          <span>⚠️</span>
+          <span>{transcriptError}</span>
         </div>
-      </div>
-
-      {/* Waveform icon (decorative) */}
-      <div
-        style={{
-          fontSize: 14,
-          opacity: isPlaying ? 1 : 0.4,
-          color: fillColor,
-          flexShrink: 0,
-          transition: 'opacity 0.2s',
-          animation: isPlaying ? 'audio-wave 0.8s ease infinite alternate' : 'none',
-        }}
-      >
-        🎵
-      </div>
+      )}
 
       <style>{`
         @keyframes audio-wave {

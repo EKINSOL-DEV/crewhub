@@ -3,12 +3,15 @@
 Serves media files from allowed directories with security checks.
 Supports images from OpenClaw media folder.
 Handles image uploads for chat attachments.
-Handles audio uploads for voice messages.
+Handles audio uploads for voice messages with auto-transcription via Groq Whisper.
 """
 
 import os
 import uuid
 import logging
+import subprocess
+import tempfile
+import httpx
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
@@ -160,6 +163,90 @@ async def upload_media(file: UploadFile = File(...)):
 
 # ─── AUDIO UPLOAD ROUTE ──────────────────────────────────────────────────────
 
+FFMPEG_PATH = "/opt/homebrew/bin/ffmpeg"
+GROQ_TRANSCRIPTION_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
+GROQ_MODEL = "whisper-large-v3"
+
+
+async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[str]]:
+    """Transcribe an audio file via Groq Whisper API.
+    
+    Converts audio to mp3 first via ffmpeg, then calls Groq API.
+    
+    Returns:
+        (transcript, error) — one will be None if the other is set.
+    """
+    # Check for API key
+    groq_api_key = os.environ.get("GROQ_API_KEY")
+    if not groq_api_key:
+        return None, "No transcription API key configured"
+    
+    # Check for ffmpeg
+    if not os.path.isfile(FFMPEG_PATH):
+        return None, "Audio conversion not available"
+    
+    # Convert to mp3 via ffmpeg in a temp file
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+        mp3_path = tmp.name
+    
+    try:
+        result = subprocess.run(
+            [
+                FFMPEG_PATH,
+                "-y",           # overwrite output
+                "-i", str(audio_path),
+                "-ar", "16000", # 16kHz sample rate (optimal for Whisper)
+                "-ac", "1",     # mono
+                "-b:a", "64k",  # 64kbps bitrate
+                mp3_path,
+            ],
+            capture_output=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            logger.warning(f"ffmpeg conversion failed: {result.stderr.decode()[:200]}")
+            return None, "Audio conversion not available"
+    except subprocess.TimeoutExpired:
+        return None, "Audio conversion not available"
+    except FileNotFoundError:
+        return None, "Audio conversion not available"
+    
+    # Call Groq Whisper API
+    try:
+        with open(mp3_path, "rb") as mp3_file:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    GROQ_TRANSCRIPTION_URL,
+                    headers={"Authorization": f"Bearer {groq_api_key}"},
+                    files={"file": ("audio.mp3", mp3_file, "audio/mpeg")},
+                    data={
+                        "model": GROQ_MODEL,
+                        "response_format": "json",
+                    },
+                )
+        
+        if response.status_code == 200:
+            data = response.json()
+            transcript = data.get("text", "").strip()
+            logger.info(f"Transcription successful: {len(transcript)} chars")
+            return transcript, None
+        else:
+            logger.warning(f"Groq API error: {response.status_code} {response.text[:200]}")
+            return None, f"Transcription failed: {response.status_code}"
+    
+    except httpx.TimeoutException:
+        return None, "Transcription timed out"
+    except Exception as e:
+        logger.error(f"Transcription error: {e}")
+        return None, f"Transcription failed: {str(e)[:100]}"
+    finally:
+        # Clean up temp mp3
+        try:
+            os.unlink(mp3_path)
+        except Exception:
+            pass
+
+
 @router.post("/api/media/audio")
 async def upload_audio(file: UploadFile = File(...)):
     """Upload an audio file for voice message.
@@ -167,11 +254,16 @@ async def upload_audio(file: UploadFile = File(...)):
     Accepts: webm, mp4, ogg, wav, mp3, m4a
     Max size: 50MB
     
+    Auto-transcribes via Groq Whisper if GROQ_API_KEY is set.
+    Transcription failure never breaks the upload — audio URL is always returned.
+    
     Returns:
         url: URL to access the file via /api/media/
         filename: Saved filename
         mimeType: Detected MIME type
         size: File size in bytes
+        transcript: Transcribed text (null if unavailable)
+        transcriptError: Error message if transcription failed (null on success)
     """
     # Normalize content type (browsers may send audio/webm;codecs=opus)
     raw_content_type = (file.content_type or "").split(";")[0].strip().lower()
@@ -215,12 +307,23 @@ async def upload_audio(file: UploadFile = File(...)):
             detail="Failed to save audio file"
         )
     
+    # Auto-transcribe (never let failure break the upload)
+    transcript: Optional[str] = None
+    transcript_error: Optional[str] = None
+    try:
+        transcript, transcript_error = await _transcribe_audio(file_path)
+    except Exception as e:
+        logger.error(f"Unexpected transcription error: {e}")
+        transcript_error = "Transcription failed"
+    
     return {
         "success": True,
         "url": f"/api/media/audio/{filename}",
         "filename": filename,
         "mimeType": raw_content_type,
         "size": len(content),
+        "transcript": transcript,
+        "transcriptError": transcript_error,
     }
 
 

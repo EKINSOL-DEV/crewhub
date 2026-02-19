@@ -408,8 +408,13 @@ export function ZenChatPanel({
   const canSend = (inputValue.trim() || uploadedImages.length > 0) && !stillUploading
 
   // ── Voice recording ─────────────────────────────────────────
-  const handleAudioReady = useCallback((url: string, duration: number) => {
-    const tag = `[audio attached: ${url} (audio/webm) ${duration}s]`
+  const handleAudioReady = useCallback((url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
+    let tag = `[audio attached: ${url} (audio/webm) ${duration}s]`
+    if (transcript) {
+      tag += `\nTranscript: "${transcript}"`
+    } else if (transcriptError) {
+      tag += `\n[Voice transcription unavailable: ${transcriptError}]`
+    }
     sendMessage(tag)
   }, [sendMessage])
 

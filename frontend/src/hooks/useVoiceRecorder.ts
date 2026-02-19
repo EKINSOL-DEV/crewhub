@@ -4,8 +4,8 @@
  * Features:
  * - Start/stop recording with mic selection via localStorage
  * - Auto-stop after MAX_DURATION_MS (5 minutes)
- * - Uploads to POST /api/media/audio
- * - Calls onAudioReady(url, duration) when upload succeeds
+ * - Uploads to POST /api/media/audio (auto-transcribed via Groq Whisper)
+ * - Calls onAudioReady(url, duration, transcript, transcriptError) when upload succeeds
  * - ESC key cancels recording
  */
 
@@ -28,7 +28,7 @@ export interface UseVoiceRecorderReturn {
 }
 
 export function useVoiceRecorder(
-  onAudioReady: (url: string, duration: number) => void,
+  onAudioReady: (url: string, duration: number, transcript: string | null, transcriptError: string | null) => void,
 ): UseVoiceRecorderReturn {
   const [isRecording, setIsRecording] = useState(false)
   const [isPreparing, setIsPreparing] = useState(false)
@@ -88,7 +88,9 @@ export function useVoiceRecorder(
         }
 
         const data = await resp.json()
-        onAudioReady(data.url, Math.round(dur * 10) / 10)
+        const transcript: string | null = data.transcript ?? null
+        const transcriptError: string | null = data.transcriptError ?? null
+        onAudioReady(data.url, Math.round(dur * 10) / 10, transcript, transcriptError)
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Upload failed'
         setError(msg)
