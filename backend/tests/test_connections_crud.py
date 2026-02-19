@@ -13,18 +13,25 @@ async def test_list_connections(client):
     assert "connections" in data
     assert "total" in data
     assert isinstance(data["connections"], list)
-    # Default seed creates at least one openclaw connection
-    assert data["total"] >= 1
+    # No default connections are seeded; total may be 0
+    assert data["total"] >= 0
 
 
 @pytest.mark.asyncio
 async def test_get_connection(client):
     """Test GET /api/connections/{id} returns a specific connection."""
-    response = await client.get("/api/connections/default-openclaw")
+    # Create a connection first (no default connections are seeded)
+    await client.post("/api/connections", json={
+        "id": "test-openclaw",
+        "name": "Test Gateway",
+        "type": "openclaw",
+        "enabled": True,
+    })
+    response = await client.get("/api/connections/test-openclaw")
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == "default-openclaw"
-    assert data["name"] == "OpenClaw Gateway"
+    assert data["id"] == "test-openclaw"
+    assert data["name"] == "Test Gateway"
     assert data["type"] == "openclaw"
     assert data["enabled"] is True
 
@@ -82,8 +89,15 @@ async def test_create_connection_invalid_type(client):
 @pytest.mark.asyncio
 async def test_create_connection_duplicate_id(client):
     """Test POST /api/connections rejects duplicate ID."""
+    # Create a connection first
+    await client.post("/api/connections", json={
+        "id": "dup-test",
+        "name": "Original",
+        "type": "openclaw",
+    })
+    # Try to create with same ID
     response = await client.post("/api/connections", json={
-        "id": "default-openclaw",
+        "id": "dup-test",
         "name": "Duplicate",
         "type": "openclaw",
     })
@@ -147,6 +161,13 @@ async def test_delete_connection_not_found(client):
 @pytest.mark.asyncio
 async def test_connection_config_is_dict(client):
     """Test that config is returned as a dict, not a JSON string."""
-    response = await client.get("/api/connections/default-openclaw")
+    # Create a connection with config
+    await client.post("/api/connections", json={
+        "id": "config-test",
+        "name": "Config Test",
+        "type": "claude_code",
+        "config": {"data_dir": "~/.claude"},
+    })
+    response = await client.get("/api/connections/config-test")
     data = response.json()
     assert isinstance(data["config"], dict)

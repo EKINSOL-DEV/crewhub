@@ -4,7 +4,7 @@
  */
 
 import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 'react'
-import { useAgentChat } from '@/hooks/useAgentChat'
+import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { PixelAvatar } from './PixelAvatar'
 import { ImageDropZone, ImagePreviews, type PendingImage } from './ImageDropZone'
@@ -211,7 +211,7 @@ export function ZenChatPanel({
     loadOlderMessages,
     hasMore,
     isLoadingHistory,
-  } = useAgentChat(sessionKey || '', showThinking, roomId)
+  } = useStreamingChat(sessionKey || '', showThinking, roomId)
 
   const [inputValue, setInputValue] = useState('')
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)

@@ -16,6 +16,7 @@ export interface ChatMessageData {
   tokens?: number
   tools?: ToolCallData[]
   thinking?: string[]  // Thinking blocks when raw mode enabled
+  isStreaming?: boolean
 }
 
 export interface UseAgentChatReturn {

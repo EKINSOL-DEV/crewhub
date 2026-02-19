@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ClipboardEvent } from 'react'
 import { ArrowLeft, Paperclip, X, Settings as SettingsIcon } from 'lucide-react'
-import { useAgentChat } from '@/hooks/useAgentChat'
+import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { API_BASE } from '@/lib/api'
 import type { CrewSession } from '@/lib/api'
@@ -159,7 +159,7 @@ export function MobileAgentChat({
   const {
     messages, isSending, error, sendMessage,
     loadOlderMessages, hasMore, isLoadingHistory,
-  } = useAgentChat(sessionKey)
+  } = useStreamingChat(sessionKey)
 
   const [inputValue, setInputValue] = useState('')
   const [showTasks, setShowTasks] = useState(false)

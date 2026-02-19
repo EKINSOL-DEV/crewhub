@@ -368,3 +368,9 @@ svg * {
 .cursor-grab, .cursor-grab canvas { cursor: grab !important; }
 .cursor-grabbing, .cursor-grabbing canvas { cursor: grabbing !important; }
 .cursor-not-allowed, .cursor-not-allowed canvas { cursor: not-allowed !important; }
+
+/* ─── Streaming Chat Cursor ─────────────────────────────────── */
+@keyframes streaming-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
