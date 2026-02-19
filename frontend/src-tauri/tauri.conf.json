@@ -62,8 +62,7 @@
         "active": true,
         "targets": "all",
         "macOS": {
-            "entitlements": "./Entitlements.plist",
-            "NSMicrophoneUsageDescription": "CrewHub uses your microphone to record voice messages."
+            "entitlements": "./Entitlements.plist"
         },
         "icon": [
             "icons/32x32.png",
