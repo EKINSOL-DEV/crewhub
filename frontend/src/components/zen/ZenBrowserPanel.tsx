@@ -1,20 +1,16 @@
 /**
  * ZenBrowserPanel — Embedded browser panel for Zen Mode
  *
- * Tauri desktop:  Uses a <webview> tag (Chromium-backed, bypasses X-Frame-Options)
- * Web browser:    Uses <iframe> with a friendly fallback if the site blocks it
+ * Uses <iframe> on all platforms (Tauri + browser).
+ * The <webview> tag is an Electron concept that does NOT work in Tauri v2
+ * on macOS (WKWebView) — it silently fails. <iframe> works reliably with
+ * the `frame-src: ["*"]` CSP already set in tauri.conf.json.
  *
  * URL bar: input + Go + Back + Forward + Reload
  * State (URL) is lifted up so the parent can persist it in the layout tree.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-
-// ── Tauri detection ────────────────────────────────────────────────────────────
-
-function isInTauri(): boolean {
-  return typeof window !== 'undefined' && !!window.__TAURI_INTERNALS__
-}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -23,19 +19,6 @@ export interface ZenBrowserPanelProps {
   url?: string
   /** Called whenever the displayed URL changes */
   onUrlChange?: (url: string) => void
-}
-
-// Tauri <webview> element API (subset we use)
-interface WebviewEl extends HTMLElement {
-  src: string
-  loadURL(url: string): void
-  goBack(): void
-  goForward(): void
-  reload(): void
-  stop(): void
-  getURL(): string
-  canGoBack(): boolean
-  canGoForward(): boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -112,19 +95,14 @@ function NavBtn({
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBrowserPanelProps) {
-  const inTauri = isInTauri()
-
   // The URL currently displayed in the browser area
   const [loadedUrl, setLoadedUrl] = useState(controlledUrl)
   // The text in the address bar (may differ while user is typing)
   const [inputValue, setInputValue] = useState(controlledUrl)
   const [isLoading, setIsLoading] = useState(false)
-  const [canBack, setCanBack] = useState(false)
-  const [canForward, setCanForward] = useState(false)
   const [iframeError, setIframeError] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
 
-  const webviewRef = useRef<WebviewEl>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -171,15 +149,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
     setInputValue(url)
     onUrlChange?.(url)
     startProgress()
-
-    if (inTauri && webviewRef.current) {
-      try {
-        webviewRef.current.loadURL(url)
-      } catch {
-        // webview not ready yet — src attribute handles initial load
-      }
-    }
-  }, [inTauri, onUrlChange, startProgress])
+  }, [onUrlChange, startProgress])
 
   const handleGo = useCallback(() => navigate(inputValue), [navigate, inputValue])
 
@@ -189,83 +159,25 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
   }, [handleGo, loadedUrl])
 
   const handleBack = useCallback(() => {
-    if (inTauri && webviewRef.current) {
-      webviewRef.current.goBack()
-    }
-  }, [inTauri])
+    // iframe doesn't expose history navigation — no-op for now
+  }, [])
 
   const handleForward = useCallback(() => {
-    if (inTauri && webviewRef.current) {
-      webviewRef.current.goForward()
-    }
-  }, [inTauri])
+    // iframe doesn't expose history navigation — no-op for now
+  }, [])
 
   const handleReload = useCallback(() => {
     setIframeError(false)
     startProgress()
-    if (inTauri && webviewRef.current) {
-      webviewRef.current.reload()
-    } else if (iframeRef.current) {
-      // Force reload iframe by re-setting src
+    if (iframeRef.current) {
+      // Force reload iframe by briefly clearing src
       const current = loadedUrl
       iframeRef.current.src = 'about:blank'
       setTimeout(() => {
         if (iframeRef.current) iframeRef.current.src = current
       }, 50)
     }
-  }, [inTauri, loadedUrl, startProgress])
-
-  // ── Tauri <webview> event wiring ──────────────────────────────────────────
-
-  useEffect(() => {
-    const el = webviewRef.current
-    if (!el || !inTauri) return
-
-    const onStartLoading = () => startProgress()
-
-    const onStopLoading = () => {
-      finishProgress()
-      // Sync URL from webview
-      try {
-        const current = el.getURL()
-        if (current && current !== 'about:blank') {
-          setInputValue(current)
-          setLoadedUrl(current)
-          onUrlChange?.(current)
-        }
-      } catch { /* ignore */ }
-      // Sync nav state
-      try {
-        setCanBack(el.canGoBack())
-        setCanForward(el.canGoForward())
-      } catch { /* ignore */ }
-    }
-
-    const onNavigate = (e: Event) => {
-      const url = (e as CustomEvent<{ url: string }>).detail?.url ?? (e as any).url
-      if (url) {
-        setInputValue(url)
-        setLoadedUrl(url)
-        onUrlChange?.(url)
-      }
-      try {
-        setCanBack(el.canGoBack())
-        setCanForward(el.canGoForward())
-      } catch { /* ignore */ }
-    }
-
-    el.addEventListener('did-start-loading', onStartLoading)
-    el.addEventListener('did-stop-loading', onStopLoading)
-    el.addEventListener('did-navigate', onNavigate)
-    el.addEventListener('did-navigate-in-page', onNavigate)
-
-    return () => {
-      el.removeEventListener('did-start-loading', onStartLoading)
-      el.removeEventListener('did-stop-loading', onStopLoading)
-      el.removeEventListener('did-navigate', onNavigate)
-      el.removeEventListener('did-navigate-in-page', onNavigate)
-    }
-  }, [inTauri, onUrlChange, startProgress, finishProgress])
+  }, [loadedUrl, startProgress])
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -287,10 +199,10 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
         background: 'var(--zen-bg)',
         flexShrink: 0,
       }}>
-        <NavBtn onClick={handleBack} disabled={!canBack} title="Back (Alt+←)">
+        <NavBtn onClick={handleBack} disabled title="Back (Alt+←)">
           ←
         </NavBtn>
-        <NavBtn onClick={handleForward} disabled={!canForward} title="Forward (Alt+→)">
+        <NavBtn onClick={handleForward} disabled title="Forward (Alt+→)">
           →
         </NavBtn>
         <NavBtn onClick={handleReload} title={isLoading ? 'Stop' : 'Reload'}>
@@ -374,23 +286,10 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
         {!loadedUrl ? (
           // Empty state
           <EmptyBrowserState onNavigate={navigate} />
-        ) : inTauri ? (
-          // Tauri: <webview> — Chromium-backed, bypasses X-Frame-Options
-          // @ts-ignore — webview is not in React's JSX types; allowpopups is a bool attr
-          <webview
-            ref={webviewRef}
-            src={loadedUrl}
-            allowpopups
-            partition="persist:zen-browser"
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flex: 1,
-            }}
-          />
         ) : (
-          // Browser: <iframe> with blocked-site fallback
+          // Use <iframe> on all platforms (Tauri + browser).
+          // <webview> is an Electron concept that does NOT work in Tauri v2 / WKWebView.
+          // The tauri.conf.json already has frame-src: ["*"] so iframes load any URL.
           <>
             <iframe
               ref={iframeRef}

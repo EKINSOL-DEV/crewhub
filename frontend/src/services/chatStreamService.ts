@@ -64,6 +64,13 @@ export function streamMessage(
         const eventBlocks = buffer.split('\n\n')
         buffer = eventBlocks.pop() ?? ''
         
+        // Use a flag instead of `return` inside the loop so we always
+        // process ALL events in this batch before acting on `done`.
+        // Prevents edge-cases where `done` arrives mid-buffer while
+        // trailing `delta` events are still queued in the same chunk.
+        let batchDone = false
+        let batchError: string | null = null
+
         for (const eventBlock of eventBlocks) {
           const lines = eventBlock.split('\n')
           let eventType = 'message'
@@ -78,26 +85,38 @@ export function streamMessage(
           }
           
           if (eventType === 'delta' && dataLine) {
-            try {
-              const parsed = JSON.parse(dataLine)
-              if (parsed.text) {
-                callbacks.onChunk(parsed.text)
+            // Only deliver delta chunks when we haven't seen `done` yet
+            if (!batchDone) {
+              try {
+                const parsed = JSON.parse(dataLine)
+                if (parsed.text) {
+                  callbacks.onChunk(parsed.text)
+                }
+              } catch {
+                // Skip malformed data
               }
-            } catch {
-              // Skip malformed data
             }
           } else if (eventType === 'done') {
-            callbacks.onDone()
-            return
+            batchDone = true
+            // Don't break — continue to process any remaining events in the batch
           } else if (eventType === 'error') {
             try {
               const parsed = JSON.parse(dataLine)
-              callbacks.onError(parsed.error || 'Stream error')
+              batchError = parsed.error || 'Stream error'
             } catch {
-              callbacks.onError('Stream error')
+              batchError = 'Stream error'
             }
-            return
+            break
           }
+        }
+
+        if (batchError !== null) {
+          callbacks.onError(batchError)
+          return
+        }
+        if (batchDone) {
+          callbacks.onDone()
+          return
         }
       }
     } catch (e: unknown) {

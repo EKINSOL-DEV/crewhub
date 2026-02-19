@@ -157,10 +157,15 @@ export function useStreamingChat(
         }
       },
       onDone: () => {
-        // Final flush
-        flushPendingContent()
+        // Cancel any pending throttle timer so it can't fire after we clear the ref
+        if (throttleTimerRef.current) {
+          clearTimeout(throttleTimerRef.current)
+          throttleTimerRef.current = null
+        }
+        // Capture final content and id BEFORE clearing refs
         const finalContent = pendingContentRef.current
         const id = streamingIdRef.current
+        // Single state update: set full content + mark streaming done
         if (id) {
           setMessages(prev =>
             prev.map(m =>
