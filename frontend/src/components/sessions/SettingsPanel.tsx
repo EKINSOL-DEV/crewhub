@@ -342,6 +342,51 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
   // ─── Zen auto-launch state (local for instant toggle) ───
   const [zenAutoLaunch, setZenAutoLaunch] = useState(() => localStorage.getItem("crewhub-zen-auto-launch") === "true")
 
+  // ─── Microphone selection state ───
+  const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([])
+  const [selectedMicId, setSelectedMicId] = useState<string>(
+    () => localStorage.getItem("crewhub-mic-device-id") ?? ""
+  )
+  const [micEnumerating, setMicEnumerating] = useState(false)
+
+  const handleEnumerateMics = async () => {
+    setMicEnumerating(true)
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
+        s.getTracks().forEach(t => t.stop())
+      })
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      setMicDevices(devices.filter(d => d.kind === "audioinput"))
+    } catch {
+      const devices = await navigator.mediaDevices.enumerateDevices().catch(() => [])
+      setMicDevices(devices.filter(d => d.kind === "audioinput"))
+    } finally {
+      setMicEnumerating(false)
+    }
+  }
+
+  const handleMicChange = (deviceId: string) => {
+    setSelectedMicId(deviceId)
+    if (deviceId) {
+      localStorage.setItem("crewhub-mic-device-id", deviceId)
+    } else {
+      localStorage.removeItem("crewhub-mic-device-id")
+    }
+  }
+
+  // Enumerate mics when Behavior tab is opened
+  useEffect(() => {
+    if (
+      selectedTab === "behavior" &&
+      micDevices.length === 0 &&
+      typeof navigator !== "undefined" &&
+      typeof navigator.mediaDevices?.enumerateDevices === "function"
+    ) {
+      void handleEnumerateMics()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTab])
+
   // ─── Room management state ───
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
@@ -1188,6 +1233,44 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
                     />
                   </div>
                 </Section>
+
+                {typeof navigator !== "undefined" && typeof navigator.mediaDevices?.enumerateDevices === "function" && (
+                  <Section title="🎤 Microphone">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm">Input Device</Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleEnumerateMics()}
+                          disabled={micEnumerating}
+                          className="h-7 px-3 text-xs"
+                        >
+                          {micEnumerating ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Scanning…</> : <><RefreshCw className="h-3 w-3 mr-1" />Refresh</>}
+                        </Button>
+                      </div>
+                      {micDevices.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          {micEnumerating ? "Scanning for microphones…" : "Click Refresh to list microphones"}
+                        </p>
+                      ) : (
+                        <select
+                          value={selectedMicId}
+                          onChange={e => handleMicChange(e.target.value)}
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          <option value="">Default microphone</option>
+                          {micDevices.map(d => (
+                            <option key={d.deviceId} value={d.deviceId}>
+                              {d.label || `Microphone ${d.deviceId.slice(0, 8)}`}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <p className="text-xs text-muted-foreground">Used for voice messages. Saved to this device.</p>
+                    </div>
+                  </Section>
+                )}
 
                 <CollapsibleSection
                   title="⏱️ Thresholds & Timing"
