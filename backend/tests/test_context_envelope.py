@@ -23,7 +23,7 @@ def event_loop():
 async def test_db(tmp_path, monkeypatch):
     """Create an in-memory-like test database."""
     db_path = tmp_path / "test.db"
-    monkeypatch.setattr("app.services.context_envelope.DB_PATH", db_path)
+    monkeypatch.setattr("app.db.database.DB_PATH", db_path)
 
     async with aiosqlite.connect(db_path) as db:
         now = int(time.time() * 1000)

@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import aiosqlite
+from app.db.database import get_db
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
@@ -252,7 +253,7 @@ class DeviceIdentityManager:
 
     async def init_database(self):
         """Ensure device_identities table exists."""
-        async with aiosqlite.connect(self.db_path) as db:
+        async with get_db() as db:
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS device_identities (
                     device_id TEXT PRIMARY KEY,
@@ -314,7 +315,7 @@ class DeviceIdentityManager:
 
         now = int(datetime.utcnow().timestamp())
 
-        async with aiosqlite.connect(self.db_path) as db:
+        async with get_db() as db:
             cursor = await db.execute(
                 "SELECT device_id FROM device_identities WHERE device_id = ?",
                 (identity.device_id,),
@@ -376,7 +377,7 @@ class DeviceIdentityManager:
         """Retrieve device identity for a connection (most recently created)."""
         await self.init_database()
 
-        async with aiosqlite.connect(self.db_path) as db:
+        async with get_db() as db:
             cursor = await db.execute(
                 """
                 SELECT device_id, device_name, platform,
@@ -393,15 +394,13 @@ class DeviceIdentityManager:
         if not row:
             return None
 
-        device_id, device_name, platform, private_key_pem, device_token = row
-
         try:
             return DeviceIdentity.from_pem(
-                device_id=device_id,
-                private_key_pem=private_key_pem,
-                device_token=device_token,
-                device_name=device_name,
-                platform=platform,
+                device_id=row["device_id"],
+                private_key_pem=row["private_key_pem"],
+                device_token=row["device_token"],
+                device_name=row["device_name"],
+                platform=row["platform"],
             )
         except Exception as e:
             logger.error(f"Failed to load device identity: {e}")
@@ -415,7 +414,7 @@ class DeviceIdentityManager:
 
         now = int(datetime.utcnow().timestamp())
 
-        async with aiosqlite.connect(self.db_path) as db:
+        async with get_db() as db:
             await db.execute(
                 """
                 UPDATE device_identities
@@ -441,7 +440,7 @@ class DeviceIdentityManager:
 
         now = int(datetime.utcnow().timestamp())
 
-        async with aiosqlite.connect(self.db_path) as db:
+        async with get_db() as db:
             await db.execute(
                 """
                 UPDATE device_identities

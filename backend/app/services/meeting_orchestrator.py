@@ -14,9 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-import aiosqlite
-
-from app.db.database import DB_PATH
+from app.db.database import get_db
 from app.db.meeting_models import (
     Meeting,
     MeetingConfig,
@@ -51,8 +49,7 @@ def _generate_id() -> str:
 async def _resolve_agent_info(agent_id: str) -> dict:
     """Look up agent name/icon/color from DB. Falls back to agent_id."""
     try:
-        async with aiosqlite.connect(DB_PATH) as db:
-            db.row_factory = aiosqlite.Row
+        async with get_db() as db:
             async with db.execute(
                 "SELECT id, name, icon, color, agent_session_key FROM agents WHERE id = ? OR agent_session_key = ?",
                 (agent_id, agent_id),
@@ -298,8 +295,7 @@ class MeetingOrchestrator:
         project_dir = None
         if self.project_id:
             try:
-                async with aiosqlite.connect(DB_PATH) as db:
-                    db.row_factory = aiosqlite.Row
+                async with get_db() as db:
                     async with db.execute(
                         "SELECT folder_path, name FROM projects WHERE id = ?",
                         (self.project_id,),
@@ -605,7 +601,7 @@ Respond ONLY with the markdown. No extra commentary."""
 
         now = _now_ms()
         try:
-            async with aiosqlite.connect(DB_PATH) as db:
+            async with get_db() as db:
                 await db.execute(
                     "DELETE FROM meeting_action_items WHERE meeting_id = ?",
                     (self.meeting_id,),
@@ -632,7 +628,7 @@ Respond ONLY with the markdown. No extra commentary."""
                          error_message: Optional[str] = None):
         """Update meeting state in DB."""
         now = _now_ms()
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             updates = ["state = ?"]
             params: list = [state.value]
 
@@ -666,7 +662,7 @@ Respond ONLY with the markdown. No extra commentary."""
             await db.commit()
 
     async def _update_current_turn(self, round_num: int, turn_index: int):
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             await db.execute(
                 "UPDATE meetings SET current_round = ?, current_turn = ? WHERE id = ?",
                 (round_num, turn_index, self.meeting_id),
@@ -674,7 +670,7 @@ Respond ONLY with the markdown. No extra commentary."""
             await db.commit()
 
     async def _save_participants(self):
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             for i, p in enumerate(self.participants):
                 await db.execute(
                     "INSERT OR REPLACE INTO meeting_participants (meeting_id, agent_id, agent_name, agent_icon, agent_color, sort_order) VALUES (?, ?, ?, ?, ?, ?)",
@@ -688,7 +684,7 @@ Respond ONLY with the markdown. No extra commentary."""
         response_tokens = turn.response_tokens
         if response_tokens is None and turn.response:
             response_tokens = max(1, len(turn.response) // 4)
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             await db.execute(
                 """INSERT OR REPLACE INTO meeting_turns 
                    (id, meeting_id, round_num, turn_index, agent_id, agent_name, response_text,
@@ -701,8 +697,7 @@ Respond ONLY with the markdown. No extra commentary."""
             await db.commit()
 
     async def _load_all_turns(self) -> list[dict]:
-        async with aiosqlite.connect(DB_PATH) as db:
-            db.row_factory = aiosqlite.Row
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM meeting_turns WHERE meeting_id = ? ORDER BY round_num, turn_index",
                 (self.meeting_id,),
@@ -720,12 +715,12 @@ Respond ONLY with the markdown. No extra commentary."""
                 ]
 
     async def _get_started_at(self) -> int:
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             async with db.execute(
                 "SELECT started_at FROM meetings WHERE id = ?", (self.meeting_id,)
             ) as cur:
                 row = await cur.fetchone()
-                return row[0] if row and row[0] else _now_ms()
+                return row["started_at"] if row and row["started_at"] else _now_ms()
 
     # =========================================================================
     # Progress
@@ -756,7 +751,7 @@ async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
 
     # Check room conflict
     if room_id:
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             async with db.execute(
                 "SELECT id FROM meetings WHERE room_id = ? AND state NOT IN ('complete', 'cancelled', 'error')",
                 (room_id,),
@@ -768,7 +763,7 @@ async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
     now = _now_ms()
 
     # Create DB record
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         await db.execute(
             """INSERT INTO meetings (id, title, goal, state, room_id, project_id, config_json, current_round, current_turn, parent_meeting_id, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)""",
@@ -811,14 +806,14 @@ async def cancel_meeting(meeting_id: str) -> bool:
         return True
 
     # Update DB directly if task is gone
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         async with db.execute(
             "SELECT state FROM meetings WHERE id = ?", (meeting_id,)
         ) as cur:
             row = await cur.fetchone()
             if not row:
                 return False
-            if row[0] in (MeetingState.COMPLETE.value, MeetingState.CANCELLED.value):
+            if row["state"] in (MeetingState.COMPLETE.value, MeetingState.CANCELLED.value):
                 return False
 
         await db.execute(
@@ -837,9 +832,7 @@ async def cancel_meeting(meeting_id: str) -> bool:
 
 async def get_meeting(meeting_id: str) -> Optional[dict]:
     """Load a meeting from DB with participants and turns."""
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-
+    async with get_db() as db:
         async with db.execute("SELECT * FROM meetings WHERE id = ?", (meeting_id,)) as cur:
             row = await cur.fetchone()
             if not row:
@@ -938,12 +931,10 @@ async def list_meetings(days: int = 30, room_id: Optional[str] = None,
         where += " AND state = ?"
         params.append(state_filter)
 
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-
+    async with get_db() as db:
         # Total count
-        async with db.execute(f"SELECT COUNT(*) FROM meetings {where}", params) as cur:
-            total = (await cur.fetchone())[0]
+        async with db.execute(f"SELECT COUNT(*) AS total FROM meetings {where}", params) as cur:
+            total = (await cur.fetchone())["total"]
 
         # Paginated query
         query = f"SELECT * FROM meetings {where} ORDER BY created_at DESC LIMIT ? OFFSET ?"
