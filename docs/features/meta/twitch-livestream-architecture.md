@@ -1,4 +1,4 @@
-# CrewHub Live — Livestream Architecture
+# Are the Bots Okay? — Livestream Architecture (CrewHub Live)
 
 **Status:** Planning / Ready to build  
 **Proposed by:** Nicky (voice note 2026-02-19)  
@@ -322,7 +322,7 @@ A standalone web dashboard (or Tauri app) for dynamic real-time control of CrewH
 3. **Empty chat** → auto-start new round immediately ✅
 4. **Max task complexity** → configurable in Control App (Quick/Medium/Deep) ✅
 5. **Multiple Judges** → always one active at a time (TBD)
-6. **Twitch channel name** → TBD (Nicky to provide)
+6. **Twitch channel / show name** → **Are the Bots Okay?** (`arethebotsokay.com`) ✅
 
 ---
 
