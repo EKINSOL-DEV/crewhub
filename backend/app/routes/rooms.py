@@ -1,56 +1,22 @@
 """Rooms API routes."""
-import time
 import logging
 from fastapi import APIRouter, HTTPException
 from typing import List
 
-from app.db.database import get_db
 from app.db.models import Room, RoomCreate, RoomUpdate, RoomProjectAssign
 from app.routes.sse import broadcast
+import app.services.room_service as room_svc
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
-def _row_to_room(row: dict) -> Room:
-    """Convert a DB row to a Room model, handling project_name join."""
-    return Room(
-        id=row["id"],
-        name=row["name"],
-        icon=row.get("icon"),
-        color=row.get("color"),
-        sort_order=row.get("sort_order", 0),
-        default_model=row.get("default_model"),
-        speed_multiplier=row.get("speed_multiplier", 1.0),
-        floor_style=row.get("floor_style", "default"),
-        wall_style=row.get("wall_style", "default"),
-        project_id=row.get("project_id"),
-        project_name=row.get("project_name"),
-        project_color=row.get("project_color"),
-        is_hq=bool(row.get("is_hq", 0)),
-        created_at=row["created_at"],
-        updated_at=row["updated_at"],
-    )
-
-
-_ROOMS_SELECT = """
-    SELECT r.*, p.name as project_name, p.color as project_color
-    FROM rooms r
-    LEFT JOIN projects p ON r.project_id = p.id
-"""
 
 
 @router.get("", response_model=dict)
 async def list_rooms():
     """Get all rooms sorted by sort_order."""
     try:
-        async with get_db() as db:
-            async with db.execute(
-                f"{_ROOMS_SELECT} ORDER BY r.sort_order ASC"
-            ) as cursor:
-                rows = await cursor.fetchall()
-                rooms = [_row_to_room(row) for row in rows]
-            return {"rooms": [room.model_dump() for room in rooms]}
+        rooms = await room_svc.list_rooms()
+        return {"rooms": [room.model_dump() for room in rooms]}
     except Exception as e:
         logger.error(f"Failed to list rooms: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -60,14 +26,7 @@ async def list_rooms():
 async def get_room(room_id: str):
     """Get a specific room by ID."""
     try:
-        async with get_db() as db:
-            async with db.execute(
-                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                if not row:
-                    raise HTTPException(status_code=404, detail="Room not found")
-                return _row_to_room(row)
+        return await room_svc.get_room(room_id)
     except HTTPException:
         raise
     except Exception as e:
@@ -79,36 +38,9 @@ async def get_room(room_id: str):
 async def create_room(room: RoomCreate):
     """Create a new room."""
     try:
-        async with get_db() as db:
-            now = int(time.time() * 1000)
-            
-            # Check if ID already exists
-            async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (room.id,)
-            ) as cursor:
-                if await cursor.fetchone():
-                    raise HTTPException(status_code=400, detail="Room ID already exists")
-            
-            await db.execute("""
-                INSERT INTO rooms (id, name, icon, color, sort_order, default_model, speed_multiplier, floor_style, wall_style, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                room.id, room.name, room.icon, room.color, 
-                room.sort_order, room.default_model, room.speed_multiplier,
-                room.floor_style, room.wall_style,
-                now, now
-            ))
-            await db.commit()
-            
-            # Return created room
-            async with db.execute(
-                f"{_ROOMS_SELECT} WHERE r.id = ?", (room.id,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                created = _row_to_room(row)
-            
-            await broadcast("rooms-refresh", {"action": "created", "room_id": room.id})
-            return created
+        created = await room_svc.create_room(room)
+        await broadcast("rooms-refresh", {"action": "created", "room_id": room.id})
+        return created
     except HTTPException:
         raise
     except Exception as e:
@@ -120,44 +52,9 @@ async def create_room(room: RoomCreate):
 async def update_room(room_id: str, room: RoomUpdate):
     """Update an existing room."""
     try:
-        async with get_db() as db:
-            # Check if room exists
-            async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (room_id,)
-            ) as cursor:
-                if not await cursor.fetchone():
-                    raise HTTPException(status_code=404, detail="Room not found")
-            
-            # Build update query dynamically
-            updates = []
-            values = []
-            update_data = room.model_dump(exclude_unset=True)
-            
-            for field, value in update_data.items():
-                if value is not None:
-                    updates.append(f"{field} = ?")
-                    values.append(value)
-            
-            if updates:
-                updates.append("updated_at = ?")
-                values.append(int(time.time() * 1000))
-                values.append(room_id)
-                
-                await db.execute(
-                    f"UPDATE rooms SET {', '.join(updates)} WHERE id = ?",
-                    values
-                )
-                await db.commit()
-            
-            # Return updated room
-            async with db.execute(
-                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                updated = _row_to_room(row)
-            
-            await broadcast("rooms-refresh", {"action": "updated", "room_id": room_id})
-            return updated
+        updated = await room_svc.update_room(room_id, room)
+        await broadcast("rooms-refresh", {"action": "updated", "room_id": room_id})
+        return updated
     except HTTPException:
         raise
     except Exception as e:
@@ -169,36 +66,9 @@ async def update_room(room_id: str, room: RoomUpdate):
 async def delete_room(room_id: str):
     """Delete a room."""
     try:
-        async with get_db() as db:
-            # Check if room exists and if it's HQ
-            async with db.execute(
-                "SELECT id, is_hq FROM rooms WHERE id = ?", (room_id,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                if not row:
-                    raise HTTPException(status_code=404, detail="Room not found")
-                if row["is_hq"]:
-                    raise HTTPException(
-                        status_code=403,
-                        detail="Cannot delete Headquarters room. HQ is a protected system room."
-                    )
-            
-            # Delete associated assignments first
-            await db.execute(
-                "DELETE FROM session_room_assignments WHERE room_id = ?", (room_id,)
-            )
-            
-            # Delete associated rules
-            await db.execute(
-                "DELETE FROM room_assignment_rules WHERE room_id = ?", (room_id,)
-            )
-            
-            # Delete the room
-            await db.execute("DELETE FROM rooms WHERE id = ?", (room_id,))
-            await db.commit()
-            
-            await broadcast("rooms-refresh", {"action": "deleted", "room_id": room_id})
-            return {"success": True, "deleted": room_id}
+        result = await room_svc.delete_room(room_id)
+        await broadcast("rooms-refresh", {"action": "deleted", "room_id": room_id})
+        return result
     except HTTPException:
         raise
     except Exception as e:
@@ -210,36 +80,9 @@ async def delete_room(room_id: str):
 async def assign_project(room_id: str, body: RoomProjectAssign):
     """Assign a project to a room."""
     try:
-        async with get_db() as db:
-            # Verify room exists
-            async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (room_id,)
-            ) as cursor:
-                if not await cursor.fetchone():
-                    raise HTTPException(status_code=404, detail="Room not found")
-
-            # Verify project exists
-            async with db.execute(
-                "SELECT id FROM projects WHERE id = ?", (body.project_id,)
-            ) as cursor:
-                if not await cursor.fetchone():
-                    raise HTTPException(status_code=404, detail="Project not found")
-
-            now = int(time.time() * 1000)
-            await db.execute(
-                "UPDATE rooms SET project_id = ?, updated_at = ? WHERE id = ?",
-                (body.project_id, now, room_id),
-            )
-            await db.commit()
-
-            # Return updated room with project join
-            async with db.execute(
-                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
-            ) as cursor:
-                row = await cursor.fetchone()
-
-            await broadcast("rooms-refresh", {"action": "project_assigned", "room_id": room_id})
-            return _row_to_room(row)
+        room = await room_svc.assign_project_to_room(room_id, body.project_id)
+        await broadcast("rooms-refresh", {"action": "project_assigned", "room_id": room_id})
+        return room
     except HTTPException:
         raise
     except Exception as e:
@@ -251,29 +94,9 @@ async def assign_project(room_id: str, body: RoomProjectAssign):
 async def clear_project(room_id: str):
     """Clear project assignment from a room."""
     try:
-        async with get_db() as db:
-            # Verify room exists
-            async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (room_id,)
-            ) as cursor:
-                if not await cursor.fetchone():
-                    raise HTTPException(status_code=404, detail="Room not found")
-
-            now = int(time.time() * 1000)
-            await db.execute(
-                "UPDATE rooms SET project_id = NULL, updated_at = ? WHERE id = ?",
-                (now, room_id),
-            )
-            await db.commit()
-
-            # Return updated room
-            async with db.execute(
-                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
-            ) as cursor:
-                row = await cursor.fetchone()
-
-            await broadcast("rooms-refresh", {"action": "project_cleared", "room_id": room_id})
-            return _row_to_room(row)
+        room = await room_svc.clear_project_from_room(room_id)
+        await broadcast("rooms-refresh", {"action": "project_cleared", "room_id": room_id})
+        return room
     except HTTPException:
         raise
     except Exception as e:
@@ -285,37 +108,9 @@ async def clear_project(room_id: str):
 async def set_hq(room_id: str):
     """Set a room as HQ. Only one room can be HQ at a time."""
     try:
-        async with get_db() as db:
-            # Verify room exists
-            async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (room_id,)
-            ) as cursor:
-                if not await cursor.fetchone():
-                    raise HTTPException(status_code=404, detail="Room not found")
-
-            now = int(time.time() * 1000)
-
-            # Clear HQ from all rooms first
-            await db.execute(
-                "UPDATE rooms SET is_hq = 0, updated_at = ? WHERE is_hq = 1",
-                (now,),
-            )
-
-            # Set new HQ
-            await db.execute(
-                "UPDATE rooms SET is_hq = 1, updated_at = ? WHERE id = ?",
-                (now, room_id),
-            )
-            await db.commit()
-
-            # Return updated room
-            async with db.execute(
-                f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
-            ) as cursor:
-                row = await cursor.fetchone()
-
-            await broadcast("rooms-refresh", {"action": "hq_changed", "room_id": room_id})
-            return _row_to_room(row)
+        room = await room_svc.set_room_as_hq(room_id)
+        await broadcast("rooms-refresh", {"action": "hq_changed", "room_id": room_id})
+        return room
     except HTTPException:
         raise
     except Exception as e:
@@ -327,17 +122,9 @@ async def set_hq(room_id: str):
 async def reorder_rooms(room_order: List[str]):
     """Reorder rooms by updating sort_order."""
     try:
-        async with get_db() as db:
-            now = int(time.time() * 1000)
-            for i, room_id in enumerate(room_order):
-                await db.execute(
-                    "UPDATE rooms SET sort_order = ?, updated_at = ? WHERE id = ?",
-                    (i, now, room_id)
-                )
-            await db.commit()
-            
-            await broadcast("rooms-refresh", {"action": "reordered"})
-            return {"success": True, "order": room_order}
+        result = await room_svc.reorder_rooms(room_order)
+        await broadcast("rooms-refresh", {"action": "reordered"})
+        return result
     except Exception as e:
         logger.error(f"Failed to reorder rooms: {e}")
         raise HTTPException(status_code=500, detail=str(e))
