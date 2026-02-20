@@ -3,6 +3,7 @@ import { useAgentChat, type ChatMessageData } from '@/hooks/useAgentChat'
 import type { BotVariantConfig } from './utils/botVariants'
 import { parseMediaAttachments } from '@/utils/mediaParser'
 import { ImageThumbnail } from '@/components/chat/ImageThumbnail'
+import { formatShortTimestamp } from '@/lib/formatters'
 
 interface AgentChatPanelProps {
   sessionKey: string
@@ -42,14 +43,6 @@ function escapeHtml(str: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-}
-
-// ── Timestamp ──────────────────────────────────────────────────
-
-function formatTimestamp(ts: number): string {
-  if (!ts) return ''
-  const d = new Date(ts)
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 // ── Message Bubble ─────────────────────────────────────────────
@@ -173,7 +166,7 @@ function ChatBubble({
           padding: '0 4px',
         }}
       >
-        {formatTimestamp(msg.timestamp)}
+        {formatShortTimestamp(msg.timestamp)}
       </div>
     </div>
   )

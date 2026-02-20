@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
 import { API_BASE } from '@/lib/api'
+import { formatFileSize } from '@/lib/formatters'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -52,12 +53,6 @@ function getFileIcon(entry: FileEntry): string {
     case '.toml': case '.ini': case '.cfg': return '⚙️'
     default: return '📄'
   }
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 // ── TOC Extractor ──────────────────────────────────────────────

@@ -5,6 +5,7 @@ import type { Thread, ThreadMessage } from '@/lib/threads.api'
 import { ParticipantAvatarStack } from './ParticipantAvatarStack'
 import { ParticipantListSheet } from './ParticipantListSheet'
 import { RoutingSelector } from './RoutingSelector'
+import { formatShortTimestamp } from '@/lib/formatters'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -26,11 +27,6 @@ function renderMarkdown(text: string): string {
 function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
-function formatTimestamp(ts: number): string {
-  if (!ts) return ''
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
 // ── Message Bubble ─────────────────────────────────────────────
 
 function GroupMessageBubble({ msg }: { msg: ThreadMessage }) {
@@ -87,7 +83,7 @@ function GroupMessageBubble({ msg }: { msg: ThreadMessage }) {
         dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
       />
       <div style={{ fontSize: 10, color: '#475569', padding: '0 4px' }}>
-        {formatTimestamp(msg.created_at)}
+        {formatShortTimestamp(msg.created_at)}
       </div>
     </div>
   )

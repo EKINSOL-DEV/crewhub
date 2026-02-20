@@ -16,6 +16,7 @@ import { stripOpenClawTags } from '@/lib/messageUtils'
 import { ImageThumbnail } from './ImageThumbnail'
 import { VideoThumbnail } from './VideoThumbnail'
 import { AudioMessage } from './AudioMessage'
+import { formatRelativeTime, formatShortTimestamp } from '@/lib/formatters'
 
 // ─────────────────────────────────────────────────────────────────
 // Markdown renderer (full-featured, shared for all variants)
@@ -331,20 +332,6 @@ export interface ChatMessageBubbleProps {
   showToolDetails?: boolean
 }
 
-function formatRelativeTime(timestamp: number): string {
-  const now = Date.now()
-  const diff = now - timestamp
-  if (diff < 60000) return 'just now'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-  return new Date(timestamp).toLocaleDateString()
-}
-
-function formatTimestamp(ts: number): string {
-  if (!ts) return ''
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
 const ChatMessageBubbleInner = memo(function ChatMessageBubble({
   msg,
   variant = 'float',
@@ -640,7 +627,7 @@ const ChatMessageBubbleInner = memo(function ChatMessageBubble({
 
       {/* Timestamp */}
       <div style={{ fontSize: 10, color: isDark ? '#475569' : '#9ca3af', padding: '0 4px' }}>
-        {formatTimestamp(msg.timestamp)}
+        {formatShortTimestamp(msg.timestamp)}
       </div>
     </div>
   )

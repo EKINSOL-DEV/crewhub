@@ -3,6 +3,7 @@ import type { BotVariantConfig } from './utils/botVariants'
 import type { BotStatus } from './botConstants'
 import { EditBioDialog } from '@/components/shared/EditBioDialog'
 import { useState } from 'react'
+import { formatTokens } from '@/lib/formatters'
 
 interface InfoTabProps {
   session: CrewSession
@@ -34,13 +35,6 @@ function formatModel(model?: string): string {
   if (model.includes('gpt-5')) return 'GPT-5'
   const parts = model.split('/')
   return parts[parts.length - 1].slice(0, 24)
-}
-
-function formatTokens(tokens?: number): string {
-  if (!tokens) return '—'
-  if (tokens < 1000) return `${tokens}`
-  if (tokens < 1_000_000) return `${(tokens / 1000).toFixed(1)}k`
-  return `${(tokens / 1_000_000).toFixed(2)}M`
 }
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
