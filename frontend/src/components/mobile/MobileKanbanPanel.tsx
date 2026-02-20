@@ -5,8 +5,9 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { ArrowLeft, Filter } from 'lucide-react'
-import { useTasks, type Task, type TaskStatus, type TaskPriority } from '@/hooks/useTasks'
+import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
 import { useProjects } from '@/hooks/useProjects'
+import { PRIORITY_CONFIG } from '@/lib/taskConstants'
 
 interface MobileKanbanPanelProps {
   onBack: () => void
@@ -28,13 +29,6 @@ const COLUMNS: ColumnConfig[] = [
   { status: 'blocked', label: 'Blocked', icon: '⚠️', color: '#ef4444' },
   { status: 'done', label: 'Done', icon: '✅', color: '#22c55e' },
 ]
-
-const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; weight: number }> = {
-  urgent: { label: 'URG', color: '#ef4444', weight: 0 },
-  high: { label: 'HI', color: '#f59e0b', weight: 1 },
-  medium: { label: 'MED', color: '#3b82f6', weight: 2 },
-  low: { label: 'LO', color: '#64748b', weight: 3 },
-}
 
 // ── Task Card (Mobile-Optimized) ─────────────────────────────
 
