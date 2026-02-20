@@ -84,7 +84,7 @@ Twitch/YouTube Chat
   - Watch Agent alert: reacts to errors dramatically ("Uh oh. Something has gone terribly right. Or wrong. Hard to tell.")
   - Task done: celebrates or commiserates with chat
 - **Personality traits:** self-aware, slightly chaotic, loves the drama, never breaks character
-- **Model:** claude-haiku-4 — fast, witty, low latency for chat responses
+- **Model:** gpt-5-nano — fastest, cheapest GPT-5, perfect for live chat commentary
 - **Note:** Creator agent is a separate standalone entity (not part of the show)
 
 ---
@@ -283,8 +283,8 @@ error_patterns = [
   "min_chat_messages": 5,
   "platform": "twitch",
   "judge_model": "claude-sonnet-4-6",
-  "triage_model": "claude-haiku-3-5",
-  "announcer_model": "claude-haiku-4",
+  "triage_model": "gpt-5-nano",
+  "announcer_model": "gpt-5-nano",
   "paused": false
 }
 ```
@@ -414,8 +414,8 @@ A standalone web dashboard (or Tauri app) for dynamic real-time control of CrewH
 | Min messages to trigger poll | Number | 5 | Avoid polls from 1–2 messages |
 | Platform | Select (Twitch/YouTube/Both) | Twitch | Active streaming platform |
 | The Judge model | Select | claude-sonnet-4-6 | Which model The Judge uses |
-| Triage model | Select | claude-haiku-3-5 | Lighter model for frequent triage |
-| Announcer model | Select | claude-haiku-4 | Fast + witty, low latency for chat |
+| Triage model | Select | gpt-5-nano | Fast + cheap, frequent triage cycles |
+| Announcer model | Select | gpt-5-nano | Fastest GPT-5, live chat commentary |
 | Announcer enabled | Toggle | ON | Mute the Announcer during breaks |
 
 ### Live Controls (during stream)
