@@ -1,82 +1,69 @@
 """
 MeetingOrchestrator — AI-orchestrated round-robin meeting engine.
 
-Runs as an asyncio.Task. Manages state machine, bot turns, synthesis, and output.
+Runs as an asyncio.Task. Manages state machine, bot turns, synthesis, and
+file output. All SQL lives in meeting_service.py.
+
+Re-exports: start_meeting, cancel_meeting, get_meeting, list_meetings
+(unchanged public API for routes).
 """
 
+from __future__ import annotations
+
 import asyncio
-import json
 import logging
 import os
-import time
-import uuid
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from app.db.database import get_db
 from app.db.meeting_models import (
-    Meeting,
     MeetingConfig,
     MeetingState,
-    MeetingParticipant,
     Turn,
     ROUND_STATES,
 )
 from app.routes.sse import broadcast
 from app.services.connections import get_connection_manager
+from app.services.meeting_service import (
+    _active_meetings,
+    _now_ms,
+    resolve_agent_info,
+    db_set_state,
+    db_update_current_turn,
+    db_save_participants,
+    db_save_turn,
+    db_load_all_turns,
+    db_get_started_at,
+    db_save_action_items,
+    load_document,
+    # Re-export public API so existing imports keep working
+    start_meeting,   # noqa: F401
+    cancel_meeting,  # noqa: F401
+    get_meeting,     # noqa: F401
+    list_meetings,   # noqa: F401
+)
 
 logger = logging.getLogger(__name__)
 
-# Constraints
-TURN_TIMEOUT = 30.0  # seconds per turn
-GATEWAY_RECONNECT_TIMEOUT = 60.0  # seconds
+TURN_TIMEOUT = 30.0
 MAX_RETRIES_PER_TURN = 1
-MAX_CONCURRENT_MEETINGS = 3
-
-# Active orchestrators (meeting_id -> task)
-_active_meetings: dict[str, asyncio.Task] = {}
-
-
-def _now_ms() -> int:
-    return int(time.time() * 1000)
-
-
-def _generate_id() -> str:
-    return f"mtg_{uuid.uuid4().hex[:8]}"
-
-
-async def _resolve_agent_info(agent_id: str) -> dict:
-    """Look up agent name/icon/color from DB. Falls back to agent_id."""
-    try:
-        async with get_db() as db:
-            async with db.execute(
-                "SELECT id, name, icon, color, agent_session_key FROM agents WHERE id = ? OR agent_session_key = ?",
-                (agent_id, agent_id),
-            ) as cur:
-                row = await cur.fetchone()
-                if row:
-                    return {
-                        "id": row["id"],
-                        "name": row["name"] or row["id"],
-                        "icon": row["icon"],
-                        "color": row["color"],
-                        "session_key": row["agent_session_key"] or f"agent:{row['id']}:main",
-                    }
-    except Exception as e:
-        logger.warning(f"Could not resolve agent {agent_id}: {e}")
-    # Fallback: treat as session key
-    parts = agent_id.split(":")
-    name = parts[1] if len(parts) > 1 else agent_id
-    return {"id": agent_id, "name": name, "icon": None, "color": None, "session_key": agent_id}
 
 
 class MeetingOrchestrator:
     """Orchestrates a single meeting through all phases."""
 
-    def __init__(self, meeting_id: str, config: MeetingConfig, title: str = "", goal: str = "",
-                 room_id: Optional[str] = None, project_id: Optional[str] = None,
-                 parent_meeting_id: Optional[str] = None):
+    def __init__(
+        self,
+        meeting_id: str,
+        config: MeetingConfig,
+        title: str = "",
+        goal: str = "",
+        room_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        parent_meeting_id: Optional[str] = None,
+    ):
         self.meeting_id = meeting_id
         self.config = config
         self.title = title
@@ -84,120 +71,91 @@ class MeetingOrchestrator:
         self.room_id = room_id
         self.project_id = project_id
         self.parent_meeting_id = parent_meeting_id
-        self.participants: list[dict] = []  # resolved agent info dicts
+        self.participants: list[dict] = []
         self._cancelled = False
-        self._document_content: Optional[str] = None  # loaded document text
+        self._document_content: Optional[str] = None
 
-    # =========================================================================
-    # Public API
-    # =========================================================================
+    # ── Public API ────────────────────────────────────────────────────────────
 
     async def run(self):
-        """Main entry point — runs the full meeting lifecycle."""
+        """Run the full meeting lifecycle."""
         try:
-            # Resolve participants
-            self.participants = [await _resolve_agent_info(p) for p in self.config.participants]
-
-            # Load document if provided
+            self.participants = [await resolve_agent_info(p) for p in self.config.participants]
             if self.config.document_path:
-                self._document_content = await self._load_document()
-
-            # F4: Load parent meeting context for follow-ups
+                self._document_content = await load_document(
+                    self.config.document_path, self.project_id, self.meeting_id,
+                    self.config.document_context,
+                )
             if self.parent_meeting_id:
-                parent = await get_meeting(self.parent_meeting_id)
+                from app.services.meeting_service import get_meeting as _get
+                parent = await _get(self.parent_meeting_id)
                 if parent and parent.get("output_md"):
-                    context_prefix = f"## Previous Meeting Results\n\n{parent['output_md']}\n\n---\n\n"
-                    self._document_content = context_prefix + (self._document_content or "")
-
-            # Save participants to DB
-            await self._save_participants()
-
-            # Transition: GATHERING
-            await self._set_state(MeetingState.GATHERING)
+                    self._document_content = (
+                        f"## Previous Meeting Results\n\n{parent['output_md']}\n\n---\n\n"
+                        + (self._document_content or "")
+                    )
+            await db_save_participants(self.meeting_id, self.participants)
+            await db_set_state(self.meeting_id, MeetingState.GATHERING)
             await broadcast("meeting-started", {
-                "meeting_id": self.meeting_id,
-                "title": self.title,
+                "meeting_id": self.meeting_id, "title": self.title,
                 "state": MeetingState.GATHERING.value,
                 "participants": [p["session_key"] for p in self.participants],
                 "num_rounds": self.config.num_rounds,
                 "total_rounds": self.config.num_rounds,
             })
-
-            # Brief gathering pause (frontend animation time)
             await asyncio.sleep(3)
-
             if self._cancelled:
                 return
 
-            # Run rounds
             for round_num in range(1, self.config.num_rounds + 1):
                 if self._cancelled:
                     return
-
                 round_state = ROUND_STATES.get(round_num, MeetingState.ROUND_1)
                 round_topic = (
                     self.config.round_topics[round_num - 1]
-                    if round_num <= len(self.config.round_topics)
-                    else f"Round {round_num}"
+                    if round_num <= len(self.config.round_topics) else f"Round {round_num}"
                 )
-
-                await self._set_state(round_state, current_round=round_num)
+                await db_set_state(self.meeting_id, round_state, current_round=round_num)
+                prev_state = ROUND_STATES.get(round_num - 1, MeetingState.GATHERING).value if round_num > 1 else MeetingState.GATHERING.value
                 await broadcast("meeting-state", {
-                    "meeting_id": self.meeting_id,
-                    "state": round_state.value,
-                    "previous_state": ROUND_STATES.get(round_num - 1, MeetingState.GATHERING).value if round_num > 1 else MeetingState.GATHERING.value,
-                    "current_round": round_num,
+                    "meeting_id": self.meeting_id, "state": round_state.value,
+                    "previous_state": prev_state, "current_round": round_num,
                     "round_topic": round_topic,
                     "progress_pct": self._calc_progress(round_num, 0),
                 })
-
                 await self._run_round(round_num, round_topic)
 
             if self._cancelled:
                 return
 
-            # Synthesis
-            await self._set_state(MeetingState.SYNTHESIZING)
+            await db_set_state(self.meeting_id, MeetingState.SYNTHESIZING)
             await broadcast("meeting-synthesis", {
-                "meeting_id": self.meeting_id,
-                "state": "synthesizing",
-                "progress_pct": 90,
+                "meeting_id": self.meeting_id, "state": "synthesizing", "progress_pct": 90,
             })
-
             output_md = await self._synthesize()
-
-            # Save output
             output_path = await self._save_output(output_md)
-
-            # Parse and save action items from synthesis output
-            await self._save_action_items(output_md)
-
-            # Complete
-            duration = (_now_ms() - (await self._get_started_at())) // 1000
-            await self._set_state(MeetingState.COMPLETE, output_md=output_md, output_path=output_path)
+            await db_save_action_items(self.meeting_id, output_md)
+            duration = (_now_ms() - (await db_get_started_at(self.meeting_id))) // 1000
+            await db_set_state(
+                self.meeting_id, MeetingState.COMPLETE,
+                output_md=output_md, output_path=output_path,
+            )
             await broadcast("meeting-complete", {
-                "meeting_id": self.meeting_id,
-                "state": "complete",
-                "output_path": output_path,
-                "progress_pct": 100,
+                "meeting_id": self.meeting_id, "state": "complete",
+                "output_path": output_path, "progress_pct": 100,
                 "duration_seconds": duration,
             })
-
         except asyncio.CancelledError:
-            logger.info(f"Meeting {self.meeting_id} cancelled via task cancellation")
-            await self._set_state(MeetingState.CANCELLED)
+            logger.info(f"Meeting {self.meeting_id} cancelled")
+            await db_set_state(self.meeting_id, MeetingState.CANCELLED)
             await broadcast("meeting-cancelled", {
-                "meeting_id": self.meeting_id,
-                "state": "cancelled",
-                "cancelled_at": _now_ms(),
+                "meeting_id": self.meeting_id, "state": "cancelled", "cancelled_at": _now_ms(),
             })
-        except Exception as e:
-            logger.error(f"Meeting {self.meeting_id} failed: {e}", exc_info=True)
-            await self._set_state(MeetingState.ERROR, error_message=str(e))
+        except Exception as exc:
+            logger.error(f"Meeting {self.meeting_id} failed: {exc}", exc_info=True)
+            await db_set_state(self.meeting_id, MeetingState.ERROR, error_message=str(exc))
             await broadcast("meeting-error", {
-                "meeting_id": self.meeting_id,
-                "state": "error",
-                "error": str(e),
+                "meeting_id": self.meeting_id, "state": "error", "error": str(exc),
             })
         finally:
             _active_meetings.pop(self.meeting_id, None)
@@ -205,778 +163,178 @@ class MeetingOrchestrator:
     def cancel(self):
         self._cancelled = True
 
-    # =========================================================================
-    # Round-Robin Engine
-    # =========================================================================
+    # ── Round-robin engine ────────────────────────────────────────────────────
 
     async def _run_round(self, round_num: int, round_topic: str):
-        """Execute one round — each participant speaks in order with cumulative context."""
+        """Execute one round — each participant speaks in order."""
         cumulative_context: list[dict] = []
-
         for i, participant in enumerate(self.participants):
             if self._cancelled:
                 return
-
             turn_id = f"{self.meeting_id}_r{round_num}_t{i}"
-
-            # Broadcast turn start
             await broadcast("meeting-turn-start", {
-                "meeting_id": self.meeting_id,
-                "round": round_num,
-                "agent_id": participant["id"],
-                "agent_name": participant["name"],
-                "turn_index": i,
-                "total_turns": len(self.participants),
+                "meeting_id": self.meeting_id, "round": round_num,
+                "agent_id": participant["id"], "agent_name": participant["name"],
+                "turn_index": i, "total_turns": len(self.participants),
             })
-
-            await self._update_current_turn(round_num, i)
-
-            # Build prompt
+            await db_update_current_turn(self.meeting_id, round_num, i)
             prompt = self._build_turn_prompt(
-                participant=participant,
-                round_num=round_num,
-                round_topic=round_topic,
-                previous_responses=cumulative_context,
+                participant=participant, round_num=round_num,
+                round_topic=round_topic, previous_responses=cumulative_context,
             )
-
-            # Get response with retry
             started_at = _now_ms()
-            response = await self._get_bot_response_with_retry(
-                participant=participant,
-                prompt=prompt,
-            )
+            response = await self._get_bot_response_with_retry(participant, prompt)
             completed_at = _now_ms()
-
-            cumulative_context.append({
-                "bot_name": participant["name"],
-                "response": response,
-            })
-
-            # Save turn with token estimates
-            await self._save_turn(Turn(
-                id=turn_id,
-                meeting_id=self.meeting_id,
-                round_num=round_num,
-                turn_index=i,
-                agent_id=participant["id"],
-                agent_name=participant["name"],
+            cumulative_context.append({"bot_name": participant["name"], "response": response})
+            await db_save_turn(Turn(
+                id=turn_id, meeting_id=self.meeting_id,
+                round_num=round_num, turn_index=i,
+                agent_id=participant["id"], agent_name=participant["name"],
                 response=response,
                 prompt_tokens=max(1, len(prompt) // 4),
-                started_at=started_at,
-                completed_at=completed_at,
+                started_at=started_at, completed_at=completed_at,
             ))
-
-            # Broadcast turn complete
-            progress = self._calc_progress(round_num, i + 1)
             await broadcast("meeting-turn", {
-                "meeting_id": self.meeting_id,
-                "round": round_num,
-                "agent_id": participant["id"],
-                "agent_name": participant["name"],
-                "response": response,
-                "turn_index": i,
+                "meeting_id": self.meeting_id, "round": round_num,
+                "agent_id": participant["id"], "agent_name": participant["name"],
+                "response": response, "turn_index": i,
                 "total_turns": len(self.participants),
-                "progress_pct": progress,
+                "progress_pct": self._calc_progress(round_num, i + 1),
             })
 
-    async def _load_document(self) -> Optional[str]:
-        """Load a document from the project folder for meeting context."""
-        doc_path = self.config.document_path
-        if not doc_path:
-            return None
-
-        # Security: no path traversal
-        if ".." in doc_path or doc_path.startswith("/"):
-            logger.warning(f"Rejected document path (traversal attempt): {doc_path}")
-            await self._emit_document_warning(f"Invalid document path: {doc_path}")
-            return None
-
-        # Find project folder
-        project_dir = None
-        if self.project_id:
-            try:
-                async with get_db() as db:
-                    async with db.execute(
-                        "SELECT folder_path, name FROM projects WHERE id = ?",
-                        (self.project_id,),
-                    ) as cur:
-                        row = await cur.fetchone()
-                        if row and row["folder_path"]:
-                            expanded = Path(os.path.expanduser(row["folder_path"]))
-                            if expanded.exists():
-                                project_dir = expanded
-                        if not project_dir and row:
-                            import re
-                            slug = re.sub(r'[^a-zA-Z0-9]+', '-', row["name"]).strip('-')
-                            candidate = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects" / slug
-                            if candidate.exists():
-                                project_dir = candidate
-            except Exception as e:
-                logger.warning(f"Could not resolve project folder: {e}")
-
-        if not project_dir:
-            logger.warning(f"Project folder not found for document: {doc_path}")
-            await self._emit_document_warning(f"Project folder not found for document: {doc_path}")
-            return None
-
-        # Security: verify project folder is within allowed roots
-        ALLOWED_PROJECT_ROOTS = [
-            Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects",
-            Path.home() / "Projects",
-        ]
-        resolved_base = project_dir.resolve()
-        if not any(resolved_base.is_relative_to(root) for root in ALLOWED_PROJECT_ROOTS if root.exists()):
-            logger.warning(f"Project folder outside allowed roots: {resolved_base}")
-            await self._emit_document_warning(f"Project folder outside allowed roots")
-            return None
-
-        full_path = (project_dir / doc_path).resolve()
-        # Security: ensure within project dir (proper path containment)
-        if not full_path.is_relative_to(resolved_base):
-            logger.warning(f"Document path escapes project dir: {full_path}")
-            await self._emit_document_warning(f"Document path escapes project directory")
-            return None
-
-        if not full_path.exists():
-            logger.warning(f"Document not found: {full_path}")
-            await self._emit_document_warning(f"Document not found: {doc_path}")
-            return None
-
-        # Size check (1MB max)
-        try:
-            size = await asyncio.to_thread(lambda: full_path.stat().st_size)
-        except OSError:
-            await self._emit_document_warning(f"Could not access document: {doc_path}")
-            return None
-
-        if size > 1_000_000:
-            logger.warning(f"Document too large: {full_path}")
-            await self._emit_document_warning(f"Document too large (>{size // 1024}KB): {doc_path}")
-            return None
-
-        try:
-            content = await asyncio.to_thread(full_path.read_text, "utf-8")
-            # Token budget: ~4 chars per token, limit to ~3000 tokens worth
-            max_chars = 12000
-            if len(content) > max_chars:
-                content = content[:max_chars] + "\n\n[... document truncated for token budget ...]"
-                logger.info(f"Document truncated to {max_chars} chars")
-            return content
-        except Exception as e:
-            logger.warning(f"Failed to read document: {e}")
-            await self._emit_document_warning(f"Failed to read document: {doc_path}")
-            return None
-
-    async def _emit_document_warning(self, message: str):
-        """Emit SSE warning about document load failure."""
-        await broadcast("meeting-warning", {
-            "meeting_id": self.meeting_id,
-            "message": message,
-            "severity": "warning",
-        })
-
-    def _build_turn_prompt(self, participant: dict, round_num: int, round_topic: str,
-                           previous_responses: list[dict]) -> str:
-        lines = [
-            f"You are {participant['name']} in a meeting.",
-        ]
+    def _build_turn_prompt(
+        self, participant: dict, round_num: int, round_topic: str,
+        previous_responses: list[dict],
+    ) -> str:
+        lines = [f"You are {participant['name']} in a meeting."]
         if self.goal:
             lines.append(f"Meeting topic: {self.goal}")
-
-        # Document context
         if self._document_content:
             doc_name = self.config.document_path or "document"
             lines.append(f"\nDocument: {doc_name}")
             if self.config.document_context:
                 lines.append(f"\n{self.config.document_context}")
             lines.append(f"\n--- Document Content ---\n{self._document_content}\n---")
-
         lines.append(f"\nRound {round_num}/{self.config.num_rounds}: {round_topic}")
-
         if previous_responses:
             lines.append("\nPrevious speakers in this round:")
             for resp in previous_responses:
                 lines.append(f"- **{resp['bot_name']}**: {resp['response']}")
             lines.append("\nBuild on what was said. Don't repeat. Add your unique perspective.")
-
-        lines.append(f"\nRespond concisely (2-3 sentences max, max ~{self.config.max_tokens_per_turn} tokens). Be specific and actionable.")
+        lines.append(
+            f"\nRespond concisely (2-3 sentences max, max ~{self.config.max_tokens_per_turn} tokens)."
+            " Be specific and actionable."
+        )
         return "\n".join(lines)
 
     async def _get_bot_response_with_retry(self, participant: dict, prompt: str) -> str:
-        """Get a response from a bot with one retry on failure."""
         for attempt in range(1 + MAX_RETRIES_PER_TURN):
             try:
                 response = await self._get_bot_response(participant, prompt)
                 if response:
                     return response
-            except Exception as e:
-                logger.warning(
-                    f"Turn attempt {attempt + 1} failed for {participant['name']}: {e}"
-                )
+            except Exception as exc:
+                logger.warning(f"Turn attempt {attempt + 1} failed for {participant['name']}: {exc}")
                 if attempt < MAX_RETRIES_PER_TURN:
                     await asyncio.sleep(2)
-
         return "[no response]"
 
     async def _get_bot_response(self, participant: dict, prompt: str) -> Optional[str]:
-        """Send prompt to a bot via ConnectionManager and return the response."""
         manager = await get_connection_manager()
-        session_key = participant["session_key"]
-
-        response = await manager.send_message(
-            session_key=session_key,
-            message=prompt,
-            timeout=TURN_TIMEOUT,
+        return await manager.send_message(
+            session_key=participant["session_key"], message=prompt, timeout=TURN_TIMEOUT,
         )
-        return response
 
-    # =========================================================================
-    # Synthesis
-    # =========================================================================
+    # ── Synthesis ─────────────────────────────────────────────────────────────
 
     async def _synthesize(self) -> str:
         """Generate structured meeting summary from all turns."""
-        all_turns = await self._load_all_turns()
-
-        # Build turn text grouped by round
+        all_turns = await db_load_all_turns(self.meeting_id)
         rounds_text = []
         for round_num in range(1, self.config.num_rounds + 1):
             topic = (
                 self.config.round_topics[round_num - 1]
-                if round_num <= len(self.config.round_topics)
-                else f"Round {round_num}"
+                if round_num <= len(self.config.round_topics) else f"Round {round_num}"
             )
             round_turns = [t for t in all_turns if t["round_num"] == round_num]
             if not round_turns:
                 continue
-            turns_formatted = "\n".join(
-                f"- **{t['agent_name']}**: {t['response']}" for t in round_turns
-            )
-            rounds_text.append(f"### Round {round_num}: {topic}\n{turns_formatted}")
-
+            turns_fmt = "\n".join(f"- **{t['agent_name']}**: {t['response']}" for t in round_turns)
+            rounds_text.append(f"### Round {round_num}: {topic}\n{turns_fmt}")
         all_rounds = "\n\n".join(rounds_text)
         today = datetime.now().strftime("%Y-%m-%d")
         participant_names = ", ".join(p["name"] for p in self.participants)
 
-        synthesis_prompt = f"""Synthesize this meeting into a structured summary.
-
-Meeting: {self.title}
-Goal: {self.goal}
-Date: {today}
-Participants: {participant_names}
-
-{all_rounds}
-
-Output format (use these EXACT headers in this order):
-
-# Meeting — {today}
-
-## Goal
-{self.goal or self.title}
-
-## Participants
-- List each participant by name
-
-## Discussion Summary
-Key points organized by theme (not by person)
-
-## Action Items
-Use this EXACT format for each action item (enables automated parsing):
-- [ ] @{{agent_name}}: {{action item description}} [priority: high/medium/low]
-
-## Decisions
-- Any decisions or agreements reached
-
-## Blockers
-- Unresolved blockers that need attention
-
-Keep total output under ~{self.config.synthesis_max_tokens} tokens.
-Respond ONLY with the markdown. No extra commentary."""
-
-        # Use first participant (or any available) to generate synthesis
+        synthesis_prompt = (
+            f"Synthesize this meeting into a structured summary.\n\n"
+            f"Meeting: {self.title}\nGoal: {self.goal}\nDate: {today}\n"
+            f"Participants: {participant_names}\n\n{all_rounds}\n\n"
+            f"Output format (use these EXACT headers in this order):\n\n"
+            f"# Meeting — {today}\n\n## Goal\n{self.goal or self.title}\n\n"
+            f"## Participants\n- List each participant by name\n\n"
+            f"## Discussion Summary\nKey points organized by theme (not by person)\n\n"
+            f"## Action Items\nUse this EXACT format for each action item:\n"
+            f"- [ ] @{{agent_name}}: {{action item description}} [priority: high/medium/low]\n\n"
+            f"## Decisions\n- Any decisions or agreements reached\n\n"
+            f"## Blockers\n- Unresolved blockers that need attention\n\n"
+            f"Keep total output under ~{self.config.synthesis_max_tokens} tokens.\n"
+            f"Respond ONLY with the markdown. No extra commentary."
+        )
         for participant in self.participants:
             try:
                 manager = await get_connection_manager()
                 response = await manager.send_message(
                     session_key=participant["session_key"],
-                    message=synthesis_prompt,
-                    timeout=60.0,
+                    message=synthesis_prompt, timeout=60.0,
                 )
                 if response:
                     return response
-            except Exception as e:
-                logger.warning(f"Synthesis failed via {participant['name']}: {e}")
+            except Exception as exc:
+                logger.warning(f"Synthesis failed via {participant['name']}: {exc}")
+        return (
+            f"# Meeting — {today}\n\n## Goal\n{self.goal or self.title}\n\n"
+            f"## Participants\n" + "\n".join(f"- {p['name']}" for p in self.participants)
+            + f"\n\n## Discussion\n\n{all_rounds}\n"
+        )
 
-        # Fallback: build a basic summary ourselves
-        return f"# Meeting — {today}\n\n## Goal\n{self.goal or self.title}\n\n## Participants\n" + \
-               "\n".join(f"- {p['name']}" for p in self.participants) + \
-               f"\n\n## Discussion\n\n{all_rounds}\n"
-
-    # =========================================================================
-    # Output
-    # =========================================================================
+    # ── Output ────────────────────────────────────────────────────────────────
 
     @staticmethod
     def _slugify(text: str, max_len: int = 40) -> str:
-        """Convert text to URL-safe slug for filenames."""
-        import re as _re
         text = text.lower().strip()
-        text = _re.sub(r'[^a-z0-9\s-]', '', text)
-        text = _re.sub(r'[\s-]+', '-', text)
-        return text[:max_len].rstrip('-')
+        text = re.sub(r"[^a-z0-9\s-]", "", text)
+        text = re.sub(r"[\s-]+", "-", text)
+        return text[:max_len].rstrip("-")
 
     async def _save_output(self, output_md: str) -> Optional[str]:
-        """Save meeting output to Synology Drive."""
-        data_path = os.environ.get("PROJECT_DATA_PATH", "")
-        if not data_path:
-            # Fallback to home SynologyDrive
-            data_path = str(Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects")
-
+        """Save meeting output markdown to disk."""
+        data_path = os.environ.get("PROJECT_DATA_PATH") or str(
+            Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects"
+        )
         today = datetime.now().strftime("%Y-%m-%d")
         meetings_dir = Path(data_path) / "meetings"
         meetings_dir.mkdir(parents=True, exist_ok=True)
-
-        # Build contextual filename from title/goal
         topic_slug = self._slugify(self.title or self.goal or "meeting")
-        # If title is the generic default, prefer the goal
         if topic_slug in ("team-meeting", "meeting", "daily-standup"):
             topic_slug = self._slugify(self.goal) if self.goal else "meeting"
         if not topic_slug:
             topic_slug = "meeting"
-
-        # Find unique filename
         base_name = f"{today}-{topic_slug}"
         filename = f"{base_name}.md"
         counter = 2
         while (meetings_dir / filename).exists():
             filename = f"{base_name}-{counter}.md"
             counter += 1
-
         output_path = meetings_dir / filename
         output_path.write_text(output_md, encoding="utf-8")
         logger.info(f"Meeting output saved to {output_path}")
         return str(output_path)
 
-    async def _save_action_items(self, output_md: str):
-        """Parse action items from synthesis output and save to database."""
-        import re
-        lines = output_md.split('\n')
-        in_action_section = False
-        items = []
-
-        for line in lines:
-            stripped = line.strip()
-            # Detect action items / next steps section
-            if re.match(r'^##\s+(Action Items|Next Steps)', stripped, re.IGNORECASE):
-                in_action_section = True
-                continue
-            if in_action_section and stripped.startswith('## '):
-                break
-            if not in_action_section:
-                continue
-            # Parse checkbox lines: - [ ] @Agent: description [priority: high]
-            m = re.match(r'^- \[[ xX]\]\s*(.*)', stripped)
-            if not m:
-                continue
-            text = m.group(1)
-            assignee = None
-            am = re.match(r'@(\S+?):\s*(.*)', text)
-            if am:
-                assignee = am.group(1)
-                text = am.group(2)
-            priority = 'medium'
-            pm = re.search(r'\[priority:\s*(high|medium|low)\]\s*$', text)
-            if pm:
-                priority = pm.group(1)
-                text = text[:pm.start()].strip()
-            items.append({
-                'id': f'ai_{uuid.uuid4().hex[:8]}',
-                'text': text,
-                'assignee': assignee,
-                'priority': priority,
-            })
-
-        if not items:
-            return
-
-        now = _now_ms()
-        try:
-            async with get_db() as db:
-                await db.execute(
-                    "DELETE FROM meeting_action_items WHERE meeting_id = ?",
-                    (self.meeting_id,),
-                )
-                for i, item in enumerate(items):
-                    await db.execute(
-                        """INSERT INTO meeting_action_items
-                           (id, meeting_id, text, assignee_agent_id, priority, status, sort_order, created_at, updated_at)
-                           VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)""",
-                        (item['id'], self.meeting_id, item['text'], item['assignee'],
-                         item['priority'], i, now, now),
-                    )
-                await db.commit()
-            logger.info(f"Saved {len(items)} action items for meeting {self.meeting_id}")
-        except Exception as e:
-            logger.error(f"Failed to save action items for {self.meeting_id}: {e}")
-
-    # =========================================================================
-    # Database Operations
-    # =========================================================================
-
-    async def _set_state(self, state: MeetingState, current_round: Optional[int] = None,
-                         output_md: Optional[str] = None, output_path: Optional[str] = None,
-                         error_message: Optional[str] = None):
-        """Update meeting state in DB."""
-        now = _now_ms()
-        async with get_db() as db:
-            updates = ["state = ?"]
-            params: list = [state.value]
-
-            if current_round is not None:
-                updates.append("current_round = ?")
-                params.append(current_round)
-            if output_md is not None:
-                updates.append("output_md = ?")
-                params.append(output_md)
-            if output_path is not None:
-                updates.append("output_path = ?")
-                params.append(output_path)
-            if error_message is not None:
-                updates.append("error_message = ?")
-                params.append(error_message)
-            if state == MeetingState.COMPLETE:
-                updates.append("completed_at = ?")
-                params.append(now)
-            if state == MeetingState.CANCELLED:
-                updates.append("cancelled_at = ?")
-                params.append(now)
-            if state == MeetingState.GATHERING:
-                updates.append("started_at = ?")
-                params.append(now)
-
-            params.append(self.meeting_id)
-            await db.execute(
-                f"UPDATE meetings SET {', '.join(updates)} WHERE id = ?",
-                params,
-            )
-            await db.commit()
-
-    async def _update_current_turn(self, round_num: int, turn_index: int):
-        async with get_db() as db:
-            await db.execute(
-                "UPDATE meetings SET current_round = ?, current_turn = ? WHERE id = ?",
-                (round_num, turn_index, self.meeting_id),
-            )
-            await db.commit()
-
-    async def _save_participants(self):
-        async with get_db() as db:
-            for i, p in enumerate(self.participants):
-                await db.execute(
-                    "INSERT OR REPLACE INTO meeting_participants (meeting_id, agent_id, agent_name, agent_icon, agent_color, sort_order) VALUES (?, ?, ?, ?, ?, ?)",
-                    (self.meeting_id, p["id"], p["name"], p.get("icon"), p.get("color"), i),
-                )
-            await db.commit()
-
-    async def _save_turn(self, turn: Turn):
-        # Estimate token counts (~4 chars per token)
-        prompt_tokens = turn.prompt_tokens
-        response_tokens = turn.response_tokens
-        if response_tokens is None and turn.response:
-            response_tokens = max(1, len(turn.response) // 4)
-        async with get_db() as db:
-            await db.execute(
-                """INSERT OR REPLACE INTO meeting_turns 
-                   (id, meeting_id, round_num, turn_index, agent_id, agent_name, response_text,
-                    prompt_tokens, response_tokens, started_at, completed_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (turn.id, turn.meeting_id, turn.round_num, turn.turn_index,
-                 turn.agent_id, turn.agent_name, turn.response,
-                 prompt_tokens, response_tokens, turn.started_at, turn.completed_at),
-            )
-            await db.commit()
-
-    async def _load_all_turns(self) -> list[dict]:
-        async with get_db() as db:
-            async with db.execute(
-                "SELECT * FROM meeting_turns WHERE meeting_id = ? ORDER BY round_num, turn_index",
-                (self.meeting_id,),
-            ) as cur:
-                rows = await cur.fetchall()
-                return [
-                    {
-                        "round_num": r["round_num"],
-                        "turn_index": r["turn_index"],
-                        "agent_id": r["agent_id"],
-                        "agent_name": r["agent_name"],
-                        "response": r["response_text"],
-                    }
-                    for r in rows
-                ]
-
-    async def _get_started_at(self) -> int:
-        async with get_db() as db:
-            async with db.execute(
-                "SELECT started_at FROM meetings WHERE id = ?", (self.meeting_id,)
-            ) as cur:
-                row = await cur.fetchone()
-                return row["started_at"] if row and row["started_at"] else _now_ms()
-
-    # =========================================================================
-    # Progress
-    # =========================================================================
+    # ── Progress ──────────────────────────────────────────────────────────────
 
     def _calc_progress(self, current_round: int, completed_turns_in_round: int) -> int:
-        """Calculate progress percentage (0-90 for rounds, 90-100 for synthesis)."""
         total_turns = self.config.num_rounds * len(self.participants)
         if total_turns == 0:
             return 0
         completed = (current_round - 1) * len(self.participants) + completed_turns_in_round
         return min(int((completed / total_turns) * 90), 90)
-
-
-# =============================================================================
-# Module-level helpers
-# =============================================================================
-
-
-async def start_meeting(config: MeetingConfig, title: str = "", goal: str = "",
-                        room_id: Optional[str] = None, project_id: Optional[str] = None,
-                        parent_meeting_id: Optional[str] = None) -> Meeting:
-    """Create a meeting record and launch the orchestrator as a background task."""
-    # Check concurrency
-    active_count = len(_active_meetings)
-    if active_count >= MAX_CONCURRENT_MEETINGS:
-        raise ValueError(f"Maximum {MAX_CONCURRENT_MEETINGS} concurrent meetings allowed")
-
-    # Check room conflict
-    if room_id:
-        async with get_db() as db:
-            async with db.execute(
-                "SELECT id FROM meetings WHERE room_id = ? AND state NOT IN ('complete', 'cancelled', 'error')",
-                (room_id,),
-            ) as cur:
-                if await cur.fetchone():
-                    raise ValueError(f"A meeting is already in progress in room {room_id}")
-
-    meeting_id = _generate_id()
-    now = _now_ms()
-
-    # Create DB record
-    async with get_db() as db:
-        await db.execute(
-            """INSERT INTO meetings (id, title, goal, state, room_id, project_id, config_json, current_round, current_turn, parent_meeting_id, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)""",
-            (meeting_id, title or "Team Meeting", goal, MeetingState.GATHERING.value,
-             room_id, project_id, config.model_dump_json(), parent_meeting_id, now),
-        )
-        await db.commit()
-
-    # Create and launch orchestrator
-    orchestrator = MeetingOrchestrator(
-        meeting_id=meeting_id,
-        config=config,
-        title=title or "Team Meeting",
-        goal=goal,
-        room_id=room_id,
-        project_id=project_id,
-        parent_meeting_id=parent_meeting_id,
-    )
-    task = asyncio.create_task(orchestrator.run())
-    _active_meetings[meeting_id] = task
-
-    # Return meeting object
-    return Meeting(
-        id=meeting_id,
-        title=title or "Team Meeting",
-        goal=goal,
-        state=MeetingState.GATHERING,
-        room_id=room_id,
-        project_id=project_id,
-        config=config,
-        created_at=now,
-    )
-
-
-async def cancel_meeting(meeting_id: str) -> bool:
-    """Cancel a running meeting."""
-    task = _active_meetings.get(meeting_id)
-    if task and not task.done():
-        task.cancel()
-        return True
-
-    # Update DB directly if task is gone
-    async with get_db() as db:
-        async with db.execute(
-            "SELECT state FROM meetings WHERE id = ?", (meeting_id,)
-        ) as cur:
-            row = await cur.fetchone()
-            if not row:
-                return False
-            if row["state"] in (MeetingState.COMPLETE.value, MeetingState.CANCELLED.value):
-                return False
-
-        await db.execute(
-            "UPDATE meetings SET state = ?, cancelled_at = ? WHERE id = ?",
-            (MeetingState.CANCELLED.value, _now_ms(), meeting_id),
-        )
-        await db.commit()
-
-    await broadcast("meeting-cancelled", {
-        "meeting_id": meeting_id,
-        "state": "cancelled",
-        "cancelled_at": _now_ms(),
-    })
-    return True
-
-
-async def get_meeting(meeting_id: str) -> Optional[dict]:
-    """Load a meeting from DB with participants and turns."""
-    async with get_db() as db:
-        async with db.execute("SELECT * FROM meetings WHERE id = ?", (meeting_id,)) as cur:
-            row = await cur.fetchone()
-            if not row:
-                return None
-
-        meeting = dict(row)
-
-        # Load participants
-        async with db.execute(
-            "SELECT * FROM meeting_participants WHERE meeting_id = ? ORDER BY sort_order",
-            (meeting_id,),
-        ) as cur:
-            meeting["participants"] = [dict(r) for r in await cur.fetchall()]
-
-        # Load turns grouped by round
-        async with db.execute(
-            "SELECT * FROM meeting_turns WHERE meeting_id = ? ORDER BY round_num, turn_index",
-            (meeting_id,),
-        ) as cur:
-            turns = [dict(r) for r in await cur.fetchall()]
-
-        # Parse config
-        config = json.loads(meeting.get("config_json") or "{}")
-        num_rounds = config.get("num_rounds", 3)
-        round_topics = config.get("round_topics", [])
-
-        # Build rounds structure
-        rounds = []
-        for rn in range(1, num_rounds + 1):
-            round_turns = [t for t in turns if t["round_num"] == rn]
-            topic = round_topics[rn - 1] if rn <= len(round_topics) else f"Round {rn}"
-
-            # Determine round status
-            current_round = meeting.get("current_round", 0)
-            state = meeting.get("state", "")
-            if rn < current_round or state in ("complete", "synthesizing"):
-                status = "complete"
-            elif rn == current_round and state.startswith("round_"):
-                status = "in_progress"
-            else:
-                status = "pending"
-
-            rounds.append({
-                "round_num": rn,
-                "topic": topic,
-                "status": status,
-                "turns": [
-                    {
-                        "agent_id": t["agent_id"],
-                        "agent_name": t["agent_name"],
-                        "response": t["response_text"],
-                        "started_at": t["started_at"],
-                        "completed_at": t["completed_at"],
-                    }
-                    for t in round_turns
-                ],
-            })
-
-        # Calculate progress
-        total_turns = num_rounds * len(meeting["participants"])
-        completed_turns = len(turns)
-        if state == "complete":
-            progress_pct = 100
-        elif state == "synthesizing":
-            progress_pct = 90
-        elif total_turns > 0:
-            progress_pct = min(int((completed_turns / total_turns) * 90), 90)
-        else:
-            progress_pct = 0
-
-        meeting["rounds"] = rounds
-        meeting["config"] = config
-        meeting["progress_pct"] = progress_pct
-        meeting["total_rounds"] = num_rounds
-        meeting["total_participants"] = len(meeting["participants"])
-
-        return meeting
-
-
-async def list_meetings(days: int = 30, room_id: Optional[str] = None,
-                        project_id: Optional[str] = None, limit: int = 20,
-                        offset: int = 0, state_filter: Optional[str] = None) -> dict:
-    """List recent meetings with pagination. Returns {meetings, total, has_more}."""
-    cutoff = _now_ms() - (days * 86400 * 1000)
-
-    where = "WHERE created_at > ?"
-    params: list = [cutoff]
-
-    if room_id:
-        where += " AND room_id = ?"
-        params.append(room_id)
-    if project_id:
-        where += " AND project_id = ?"
-        params.append(project_id)
-    if state_filter:
-        where += " AND state = ?"
-        params.append(state_filter)
-
-    async with get_db() as db:
-        # Total count
-        async with db.execute(f"SELECT COUNT(*) AS total FROM meetings {where}", params) as cur:
-            total = (await cur.fetchone())["total"]
-
-        # Paginated query
-        query = f"SELECT * FROM meetings {where} ORDER BY created_at DESC LIMIT ? OFFSET ?"
-        async with db.execute(query, params + [limit, offset]) as cur:
-            rows = await cur.fetchall()
-
-        results = []
-        for row in rows:
-            m = dict(row)
-            # Get participant names
-            async with db.execute(
-                "SELECT agent_name FROM meeting_participants WHERE meeting_id = ? ORDER BY sort_order",
-                (m["id"],),
-            ) as cur2:
-                part_rows = await cur2.fetchall()
-                participant_names = [r["agent_name"] for r in part_rows]
-
-            # Parse config for num_rounds
-            config = json.loads(m.get("config_json") or "{}")
-            duration = None
-            if m.get("started_at") and m.get("completed_at"):
-                duration = (m["completed_at"] - m["started_at"]) // 1000
-
-            results.append({
-                "id": m["id"],
-                "title": m["title"],
-                "goal": m.get("goal", ""),
-                "state": m["state"],
-                "participant_count": len(participant_names),
-                "participant_names": participant_names,
-                "num_rounds": config.get("num_rounds", 3),
-                "room_id": m.get("room_id"),
-                "project_id": m.get("project_id"),
-                "output_path": m.get("output_path"),
-                "parent_meeting_id": m.get("parent_meeting_id"),
-                "duration_seconds": duration,
-                "created_at": m["created_at"],
-                "completed_at": m.get("completed_at"),
-            })
-
-        return {
-            "meetings": results,
-            "total": total,
-            "has_more": (offset + limit) < total,
-        }
