@@ -10,6 +10,7 @@ import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useActiveTasks, type ActiveTask } from '@/hooks/useActiveTasks'
 import { ZenActivityDetailPanel } from './ZenActivityDetailPanel'
 import type { CrewSession } from '@/lib/api'
+import { formatEventTime } from '@/lib/formatters'
 
 // ── Activity Event Types (for event log) ──────────────────────
 
@@ -40,12 +41,6 @@ function getSessionIcon(session: Partial<CrewSession>): string {
   if (channel.includes('discord')) return '🎮'
   if (channel.includes('whatsapp')) return '📱'
   return '🤖'
-}
-
-function formatEventTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString('en-US', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  })
 }
 
 function getStatusColor(status: string): string {

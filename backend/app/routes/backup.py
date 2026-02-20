@@ -80,9 +80,6 @@ EXPORT_TABLES = [
 
 async def _export_table(db: aiosqlite.Connection, table: str) -> list[dict[str, Any]]:
     """Export all rows from a table as list of dicts."""
-    db.row_factory = lambda cursor, row: dict(
-        zip([col[0] for col in cursor.description], row)
-    )
     async with db.execute(f"SELECT * FROM {table}") as cursor:
         return await cursor.fetchall()
 
@@ -123,7 +120,7 @@ async def export_database(key: APIKeyInfo = Depends(require_scope("admin"))):
         tables_data: dict[str, list[dict[str, Any]]] = {}
         table_counts: dict[str, int] = {}
 
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             for table in EXPORT_TABLES:
                 try:
                     rows = await _export_table(db, table)
@@ -218,7 +215,7 @@ async def import_database(file: UploadFile = File(...), key: APIKeyInfo = Depend
     rows_imported = 0
 
     try:
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             # Clear and re-populate each table
             for table in EXPORT_TABLES:
                 if table not in data:

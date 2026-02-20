@@ -730,8 +730,8 @@ function PropHistoryTab() {
               onClick={() => setSelectedRecord(record)}
               style={{
                 width: '100%',
-                background: '#1e293b',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: 'var(--mobile-surface, #1e293b)',
+                border: '1px solid var(--mobile-border, rgba(255,255,255,0.07))',
                 borderRadius: 12,
                 padding: '12px 14px',
                 cursor: 'pointer',

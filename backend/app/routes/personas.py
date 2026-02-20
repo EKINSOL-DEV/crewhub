@@ -19,9 +19,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional
 
-import aiosqlite
 
-from app.db.database import DB_PATH
+from app.db.database import get_db
 from app.services.personas import (
     PRESETS,
     KNOWN_SURFACES,
@@ -99,8 +98,7 @@ async def get_agent_persona(agent_id: str):
     Returns the stored persona or defaults (Executor preset) if none configured.
     Includes identity anchor and surface rules from the Identity Pattern.
     """
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
@@ -157,8 +155,7 @@ async def update_agent_persona(agent_id: str, body: PersonaUpdate):
     
     Creates the persona row if it doesn't exist (upsert).
     """
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
@@ -261,8 +258,7 @@ async def get_agent_identity(agent_id: str):
     
     Returns identity anchor, surface rules, and lock status.
     """
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Verify agent exists and get name
         async with db.execute("SELECT id, name FROM agents WHERE id = ?", (agent_id,)) as cur:
@@ -326,8 +322,7 @@ async def update_agent_identity(agent_id: str, body: IdentityUpdate):
     
     Creates the persona row if it doesn't exist (upsert on identity fields).
     """
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
@@ -389,8 +384,7 @@ async def get_agent_surfaces(agent_id: str):
     
     Returns configured surfaces with their rules, plus defaults for unconfigured surfaces.
     """
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
@@ -440,8 +434,7 @@ async def update_agent_surface(agent_id: str, surface: str, body: SurfaceRuleUpd
     
     Creates or updates the surface rule entry.
     """
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
@@ -473,7 +466,7 @@ async def update_agent_surface(agent_id: str, surface: str, body: SurfaceRuleUpd
 @router.delete("/agents/{agent_id}/surfaces/{surface}")
 async def delete_agent_surface(agent_id: str, surface: str):
     """Remove a custom surface rule (reverts to default)."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         cursor = await db.execute(
             "DELETE FROM agent_surfaces WHERE agent_id = ? AND surface = ?",
             (agent_id, surface),

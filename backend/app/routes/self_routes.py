@@ -13,7 +13,6 @@ import logging
 import time
 from typing import Optional
 
-import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -86,39 +85,29 @@ async def _resolve_agent_id(key: APIKeyInfo) -> Optional[str]:
         return key.agent_id
 
     # 2. Check agent_identities for this key
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT agent_id FROM agent_identities WHERE api_key_id = ? ORDER BY last_seen_at DESC LIMIT 1",
             (key.key_id,),
         ) as cursor:
             row = await cursor.fetchone()
             return row["agent_id"] if row else None
-    finally:
-        await db.close()
 
 
 async def _resolve_session_key(key: APIKeyInfo, agent_id: str) -> Optional[str]:
     """Resolve most recent session_key for an agent, scoped to the calling key."""
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT session_key FROM agent_identities WHERE agent_id = ? AND api_key_id = ? ORDER BY last_seen_at DESC LIMIT 1",
             (agent_id, key.key_id),
         ) as cursor:
             row = await cursor.fetchone()
             return row["session_key"] if row else None
-    finally:
-        await db.close()
 
 
 async def _get_agent_metadata(agent_id: str) -> dict:
     """Fetch agent metadata from agents table."""
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT icon, color, avatar_url, bio, default_model, default_room_id FROM agents WHERE id = ?",
             (agent_id,),
@@ -127,36 +116,28 @@ async def _get_agent_metadata(agent_id: str) -> dict:
             if not row:
                 return {}
             return {k: row[k] for k in row.keys() if row[k] is not None}
-    finally:
-        await db.close()
 
 
 async def _get_display_name(session_key: str) -> Optional[str]:
     """Get display name for a session."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute(
             "SELECT display_name FROM session_display_names WHERE session_key = ?",
             (session_key,),
         ) as cursor:
             row = await cursor.fetchone()
-            return row[0] if row else None
-    finally:
-        await db.close()
+            return row["display_name"] if row else None
 
 
 async def _get_room_id(session_key: str) -> Optional[str]:
     """Get room assignment for a session."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute(
             "SELECT room_id FROM session_room_assignments WHERE session_key = ?",
             (session_key,),
         ) as cursor:
             row = await cursor.fetchone()
-            return row[0] if row else None
-    finally:
-        await db.close()
+            return row["room_id"] if row else None
 
 
 # ── Routes ────────────────────────────────────────────────────────────
@@ -191,9 +172,7 @@ async def identify(
         )
 
     # ── Check if agent_id exists ──
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT id FROM agents WHERE id = ?", (agent_id,)
         ) as cursor:
@@ -240,7 +219,7 @@ async def identify(
                     (agent_id,),
                 ) as cursor:
                     existing = await cursor.fetchone()
-                if existing and existing[0] != key.key_id:
+                if existing and existing["api_key_id"] != key.key_id:
                     raise HTTPException(
                         status_code=403,
                         detail=f"Agent '{agent_id}' is owned by another key. "
@@ -264,7 +243,7 @@ async def identify(
             ) as cursor:
                 existing_binding = await cursor.fetchone()
 
-            if existing_binding and existing_binding[0] != key.key_id:
+            if existing_binding and existing_binding["api_key_id"] != key.key_id:
                 raise HTTPException(
                     status_code=403,
                     detail=f"Identity binding (agent_id={agent_id}, session_key={session_key}) "
@@ -281,8 +260,6 @@ async def identify(
             )
             await db.commit()
 
-    finally:
-        await db.close()
 
     # ── Build response ──
     display_name = await _get_display_name(session_key) if session_key else None
@@ -365,8 +342,7 @@ async def set_display_name(
         )
 
     now = int(time.time() * 1000)
-    db = await get_db()
-    try:
+    async with get_db() as db:
         await db.execute(
             """INSERT INTO session_display_names (session_key, display_name, updated_at)
                VALUES (?, ?, ?)
@@ -376,8 +352,6 @@ async def set_display_name(
             (session_key, body.display_name, now),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     return {"ok": True, "display_name": body.display_name, "session_key": session_key}
 
@@ -407,8 +381,7 @@ async def set_room(
         )
 
     # Verify room exists
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute(
             "SELECT id FROM rooms WHERE id = ?", (body.room_id,)
         ) as cursor:
@@ -425,8 +398,6 @@ async def set_room(
             (session_key, body.room_id, now),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     await broadcast("rooms-refresh", {
         "action": "assignment_changed",
@@ -459,14 +430,11 @@ async def heartbeat(
     now = int(time.time() * 1000)
 
     if session_key:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             await db.execute(
                 "UPDATE agent_identities SET last_seen_at = ? WHERE agent_id = ? AND session_key = ?",
                 (now, agent_id, session_key),
             )
             await db.commit()
-        finally:
-            await db.close()
 
     return {"ok": True}

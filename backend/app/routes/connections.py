@@ -64,17 +64,11 @@ class ConnectionHealthResponse(BaseModel):
 
 async def _get_all_connections() -> list[dict[str, Any]]:
     """Get all connections from database."""
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM connections ORDER BY created_at"
         ) as cursor:
             rows = await cursor.fetchall()
-    finally:
-        await db.close()
             
     # Parse JSON config
     for row in rows:
@@ -89,18 +83,12 @@ async def _get_all_connections() -> list[dict[str, Any]]:
 
 async def _get_connection_by_id(connection_id: str) -> Optional[dict[str, Any]]:
     """Get a single connection by ID."""
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM connections WHERE id = ?",
             (connection_id,)
         ) as cursor:
             row = await cursor.fetchone()
-    finally:
-        await db.close()
     
     if row and isinstance(row.get("config"), str):
         try:
@@ -116,8 +104,7 @@ async def _create_connection(data: ConnectionCreate) -> dict[str, Any]:
     now = int(time.time() * 1000)
     connection_id = data.id or str(uuid.uuid4())
     
-    db = await get_db()
-    try:
+    async with get_db() as db:
         await db.execute(
             """
             INSERT INTO connections (id, name, type, config, enabled, created_at, updated_at)
@@ -134,8 +121,6 @@ async def _create_connection(data: ConnectionCreate) -> dict[str, Any]:
             )
         )
         await db.commit()
-    finally:
-        await db.close()
     
     return {
         "id": connection_id,
@@ -171,31 +156,25 @@ async def _update_connection(
     set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
     values = list(updates.values()) + [connection_id]
     
-    db = await get_db()
-    try:
+    async with get_db() as db:
         await db.execute(
             f"UPDATE connections SET {set_clause} WHERE id = ?",
             values
         )
         await db.commit()
-    finally:
-        await db.close()
     
     return await _get_connection_by_id(connection_id)
 
 
 async def _delete_connection(connection_id: str) -> bool:
     """Delete a connection from database."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         cursor = await db.execute(
             "DELETE FROM connections WHERE id = ?",
             (connection_id,)
         )
         await db.commit()
         return cursor.rowcount > 0
-    finally:
-        await db.close()
 
 
 # ============================================================================

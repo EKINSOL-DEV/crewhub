@@ -14,7 +14,7 @@ initAppSettings()
 // Initialize mock API for demo builds (must run before any React rendering)
 async function boot() {
   if (import.meta.env.VITE_DEMO_MODE === 'true') {
-    const { setupMockApi } = await import('./lib/mockApi')
+    const { setupMockApi } = await import('./lib/mock')
     setupMockApi()
   }
 

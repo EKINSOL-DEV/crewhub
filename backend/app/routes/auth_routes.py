@@ -11,7 +11,6 @@ import secrets
 import time
 from typing import Optional
 
-import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -103,8 +102,7 @@ async def create_key(
     key_id = f"key_{secrets.token_hex(4)}"
     now = int(time.time() * 1000)
 
-    db = await get_db()
-    try:
+    async with get_db() as db:
         await db.execute(
             """INSERT INTO api_keys (id, key_hash, key_prefix, name, scopes, agent_id, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
@@ -112,8 +110,6 @@ async def create_key(
              body.name, json.dumps(body.scopes), body.agent_id, now),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     logger.info(f"Created API key '{body.name}' (id={key_id}, scopes={body.scopes})")
 
@@ -132,9 +128,7 @@ async def list_keys(
     key: APIKeyInfo = Depends(require_scope("admin")),
 ):
     """List all API keys (masked). Admin only."""
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM api_keys ORDER BY created_at DESC"
         ) as cursor:
@@ -155,8 +149,6 @@ async def list_keys(
             ).model_dump())
 
         return {"keys": items}
-    finally:
-        await db.close()
 
 
 @router.delete("/keys/{key_id}")
@@ -165,16 +157,13 @@ async def revoke_key(
     key: APIKeyInfo = Depends(require_scope("admin")),
 ):
     """Revoke an API key. Admin only."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         cursor = await db.execute(
             "UPDATE api_keys SET revoked = 1 WHERE id = ?", (key_id,)
         )
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Key not found.")
         await db.commit()
-    finally:
-        await db.close()
 
     logger.info(f"Revoked API key {key_id}")
     return {"ok": True, "revoked": key_id}

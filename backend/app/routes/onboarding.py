@@ -370,32 +370,23 @@ async def get_onboarding_status():
     - There is at least one active (connected) connection.
     """
     completed_setting = False
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT value FROM settings WHERE key = 'onboardingCompleted'"
         ) as cursor:
             row = await cursor.fetchone()
             if row and row["value"].lower() in ("true", "1", "yes"):
                 completed_setting = True
-    finally:
-        await db.close()
 
     connections_count = 0
     has_active = False
 
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute(
-            "SELECT COUNT(*) FROM connections WHERE enabled = 1"
+            "SELECT COUNT(*) as cnt FROM connections WHERE enabled = 1"
         ) as cursor:
             row = await cursor.fetchone()
-            connections_count = row[0] if row else 0
-    finally:
-        await db.close()
+            connections_count = row["cnt"] if row else 0
 
     manager = await get_connection_manager()
     for conn_id, conn in manager._connections.items():

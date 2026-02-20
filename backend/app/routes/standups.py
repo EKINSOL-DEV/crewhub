@@ -36,8 +36,7 @@ async def create_standup(body: StandupCreate):
     standup_id = generate_id()
     now = int(time.time() * 1000)
     
-    db = await get_db()
-    try:
+    async with get_db() as db:
         await db.execute(
             "INSERT INTO standups (id, title, created_by, created_at) VALUES (?, ?, ?, ?)",
             (standup_id, body.title, "user", now)
@@ -53,15 +52,12 @@ async def create_standup(body: StandupCreate):
             "created_at": now,
             "participants": body.participants,
         }
-    finally:
-        await db.close()
 
 
 @router.post("/{standup_id}/entries")
 async def submit_entry(standup_id: str, body: StandupEntryCreate):
     """Submit a standup entry for an agent."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         # Verify standup exists
         async with db.execute("SELECT id FROM standups WHERE id = ?", (standup_id,)) as cur:
             if not await cur.fetchone():
@@ -90,8 +86,6 @@ async def submit_entry(standup_id: str, body: StandupEntryCreate):
             "agent_key": body.agent_key,
             "submitted_at": now,
         }
-    finally:
-        await db.close()
 
 
 @router.get("")
@@ -99,8 +93,7 @@ async def list_standups(days: int = Query(7, ge=1, le=90)):
     """List recent standups."""
     cutoff = int((time.time() - days * 86400) * 1000)
     
-    db = await get_db()
-    try:
+    async with get_db() as db:
         db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
         
         async with db.execute(
@@ -116,15 +109,12 @@ async def list_standups(days: int = Query(7, ge=1, le=90)):
             rows = await cur.fetchall()
         
         return {"standups": rows}
-    finally:
-        await db.close()
 
 
 @router.get("/{standup_id}")
 async def get_standup(standup_id: str):
     """Get a standup with all entries."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
         
         async with db.execute("SELECT * FROM standups WHERE id = ?", (standup_id,)) as cur:
@@ -145,5 +135,3 @@ async def get_standup(standup_id: str):
         
         standup["entries"] = entries
         return standup
-    finally:
-        await db.close()

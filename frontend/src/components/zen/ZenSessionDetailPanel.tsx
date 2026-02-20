@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { api } from '@/lib/api'
 import type { SessionMessage, SessionContentBlock, CrewSession } from '@/lib/api'
 import { FullscreenDetailView } from './FullscreenDetailView'
+import { formatTimestamp, formatTokens, formatMessageTime } from '@/lib/formatters'
 
 interface ZenSessionDetailPanelProps {
   session: CrewSession
@@ -14,16 +15,7 @@ interface ZenSessionDetailPanelProps {
   onOpenChat?: (sessionKey: string, agentName: string, agentIcon?: string) => void
 }
 
-// ── Format helpers ────────────────────────────────────────────────
-
-function formatTimestamp(ts: number): string {
-  if (!ts) return '—'
-  const d = new Date(ts)
-  return d.toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  })
-}
+// ── Format helpers (local) ────────────────────────────────────────
 
 function formatDuration(startTs: number): string {
   const diff = Date.now() - startTs
@@ -31,13 +23,6 @@ function formatDuration(startTs: number): string {
   const mins = Math.floor((diff % 3600000) / 60000)
   if (hours > 0) return `${hours}h ${mins}m`
   return `${mins}m`
-}
-
-function formatTokens(n?: number): string {
-  if (!n) return '—'
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
-  return n.toString()
 }
 
 // ── Content Block Renderer ────────────────────────────────────────
@@ -103,18 +88,6 @@ function ContentBlockView({ block }: { block: SessionContentBlock }) {
 }
 
 // ── Message Bubble ────────────────────────────────────────────────
-
-function formatMessageTime(ts?: number): string {
-  if (!ts) return ''
-  const d = new Date(ts)
-  const now = new Date()
-  const sameDay = d.toDateString() === now.toDateString()
-  if (sameDay) {
-    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-  }
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ', ' +
-    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-}
 
 function MessageBubble({ message }: { message: SessionMessage }) {
   const isUser = message.role === 'user'

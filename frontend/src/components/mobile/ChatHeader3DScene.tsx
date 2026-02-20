@@ -18,14 +18,14 @@ import type { AvatarAnimation } from './ChatHeader3DAvatar'
 // Head world height = 0.30 × 2.2 = 0.66  units.
 // Canvas aspect     = 128 / 72   ≈ 1.778.
 //
-// We use a group-as-pivot at Y=0.748 (head world centre).
-// The PerspectiveCamera sits at local [0, 0, 0.9] inside that group,
-// which means its world position = [0, 0.748, 0.9].
+// Camera pivot is placed at HEAD_WORLD_Y with the camera at CAM_Z distance.
+// Values were tuned visually to frame the head+upper-body nicely in the
+// chat header strip (lower than pure head-centre for a more grounded look).
 // Three.js cameras default look direction is -Z, so the camera looks
-// straight toward [0, 0.748, 0] — exactly the head centre. No rotation needed.
+// straight toward [0, HEAD_WORLD_Y, 0]. No rotation needed.
 //
-// Vertical view at Z=0.9, FOV 50: 2 × 0.9 × tan(25°) ≈ 0.84 units.
-// Head (0.66 units) + max bob (0.08) = 0.74 — fits comfortably. ✓
+// Vertical view at CAM_Z=0.65, FOV 50: 2 × 0.65 × tan(25°) ≈ 0.61 units.
+// Head (0.66 units) is slightly cropped at extremes, but bob is small. ✓
 const HEAD_WORLD_Y = 0.35
 const CAM_Z = 0.65
 const DEBUG_CAMERA = false // set true to re-enable tuning overlay

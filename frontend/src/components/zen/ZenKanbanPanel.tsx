@@ -4,7 +4,8 @@
  */
 
 import { useCallback, useState, useMemo } from 'react'
-import { useTasks, type Task, type TaskStatus, type TaskPriority } from '@/hooks/useTasks'
+import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
+import { PRIORITY_CONFIG } from '@/lib/taskConstants'
 import { ProjectFilterSelect } from './ProjectFilterSelect'
 
 interface ZenKanbanPanelProps {
@@ -31,13 +32,6 @@ const COLUMNS: ColumnConfig[] = [
   { status: 'blocked', label: 'Blocked', icon: '⚠️', color: 'var(--zen-error)' },
   { status: 'done', label: 'Done', icon: '✅', color: 'var(--zen-success)' },
 ]
-
-const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; weight: number }> = {
-  urgent: { label: 'URG', color: 'var(--zen-error)', weight: 0 },
-  high: { label: 'HI', color: 'var(--zen-warning)', weight: 1 },
-  medium: { label: 'MED', color: 'var(--zen-info)', weight: 2 },
-  low: { label: 'LO', color: 'var(--zen-fg-muted)', weight: 3 },
-}
 
 // ── Kanban Card Component ────────────────────────────────────────
 

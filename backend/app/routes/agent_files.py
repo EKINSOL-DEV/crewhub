@@ -38,18 +38,15 @@ DEFAULT_WORKSPACES = {
 async def _get_agent_workspace(agent_id: str) -> Path:
     """Resolve the workspace path for an agent."""
     # Try settings table first
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute(
             "SELECT value FROM settings WHERE key = 'agent_workspaces'"
         ) as cursor:
             row = await cursor.fetchone()
             if row:
-                workspaces = json.loads(row[0])
+                workspaces = json.loads(row["value"])
                 if agent_id in workspaces:
                     return Path(workspaces[agent_id]).resolve()
-    finally:
-        await db.close()
 
     # Fallback to defaults
     if agent_id in DEFAULT_WORKSPACES:

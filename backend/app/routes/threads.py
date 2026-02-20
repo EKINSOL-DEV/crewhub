@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 import aiosqlite
 
-from app.db.database import DB_PATH
+from app.db.database import get_db
 from app.db.thread_models import (
     ThreadCreate, ThreadUpdate, ThreadParticipantAdd,
     ThreadMessageSend, ThreadResponse, ThreadParticipantResponse,
@@ -48,7 +48,6 @@ def _generate_auto_title(agent_names: list[str]) -> str:
 
 async def _get_thread_response(db: aiosqlite.Connection, thread_id: str) -> dict:
     """Build full thread response with participants."""
-    db.row_factory = aiosqlite.Row
     cursor = await db.execute("SELECT * FROM threads WHERE id = ?", (thread_id,))
     row = await cursor.fetchone()
     if not row:
@@ -121,8 +120,7 @@ async def create_thread(body: ThreadCreate):
     thread_id = _gen_id()
     settings_json = json.dumps(body.settings or {"maxParticipants": MAX_PARTICIPANTS})
 
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Resolve agent info
         placeholders = ",".join("?" * len(agent_ids))
@@ -182,8 +180,7 @@ async def list_threads(
     limit: int = Query(default=50, ge=1, le=200),
 ):
     """List threads, optionally filtered by kind."""
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         conditions = []
         params = []
@@ -219,7 +216,7 @@ async def list_threads(
 @router.get("/{thread_id}")
 async def get_thread(thread_id: str):
     """Get thread detail with participants."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         result = await _get_thread_response(db, thread_id)
         if not result:
             raise HTTPException(status_code=404, detail="Thread not found")
@@ -230,8 +227,7 @@ async def get_thread(thread_id: str):
 async def update_thread(thread_id: str, body: ThreadUpdate):
     """Update thread (rename, archive)."""
     now = _now_ms()
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         cursor = await db.execute("SELECT id FROM threads WHERE id = ?", (thread_id,))
         if not await cursor.fetchone():
             raise HTTPException(status_code=404, detail="Thread not found")
@@ -263,8 +259,7 @@ async def update_thread(thread_id: str, body: ThreadUpdate):
 async def add_participants(thread_id: str, body: ThreadParticipantAdd):
     """Add agents to a thread."""
     now = _now_ms()
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         cursor = await db.execute("SELECT * FROM threads WHERE id = ?", (thread_id,))
         thread = await cursor.fetchone()
@@ -354,8 +349,7 @@ async def add_participants(thread_id: str, body: ThreadParticipantAdd):
 async def remove_participant(thread_id: str, agent_id: str):
     """Remove an agent from a thread (soft delete)."""
     now = _now_ms()
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         cursor = await db.execute(
             "SELECT id, agent_name FROM thread_participants WHERE thread_id = ? AND agent_id = ? AND is_active = 1",
@@ -406,8 +400,7 @@ async def get_messages(
     before: Optional[int] = Query(default=None),
 ):
     """Get messages for a thread with pagination."""
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Verify thread exists
         cursor = await db.execute("SELECT id FROM threads WHERE id = ?", (thread_id,))
@@ -474,8 +467,7 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
 
     now = _now_ms()
 
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
 
         # Get thread + active participants
         cursor = await db.execute("SELECT * FROM threads WHERE id = ?", (thread_id,))
@@ -559,7 +551,7 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
                     # Save assistant message
                     msg_id = _gen_id()
                     msg_now = _now_ms()
-                    async with aiosqlite.connect(DB_PATH) as db:
+                    async with get_db() as db:
                         await db.execute(
                             """INSERT INTO thread_messages (id, thread_id, role, content, agent_id, agent_name, created_at)
                                VALUES (?, ?, 'assistant', ?, ?, ?, ?)""",
@@ -592,7 +584,7 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
                 # Save error as system message
                 err_msg_id = _gen_id()
                 err_now = _now_ms()
-                async with aiosqlite.connect(DB_PATH) as db:
+                async with get_db() as db:
                     await db.execute(
                         """INSERT INTO thread_messages (id, thread_id, role, content, agent_id, agent_name, created_at)
                            VALUES (?, ?, 'system', ?, ?, ?, ?)""",

@@ -56,19 +56,13 @@ def _validate_regex_pattern(rule_type: str, rule_value: str) -> None:
 async def list_rules():
     """Get all room assignment rules sorted by priority."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM room_assignment_rules ORDER BY priority DESC, created_at ASC"
             ) as cursor:
                 rows = await cursor.fetchall()
                 rules = [RoomAssignmentRule(**row) for row in rows]
             return {"rules": [r.model_dump() for r in rules]}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to list rules: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -78,11 +72,7 @@ async def list_rules():
 async def get_rule(rule_id: str):
     """Get a specific rule by ID."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)
             ) as cursor:
@@ -90,8 +80,6 @@ async def get_rule(rule_id: str):
                 if not row:
                     raise HTTPException(status_code=404, detail="Rule not found")
                 return RoomAssignmentRule(**row)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -108,8 +96,7 @@ async def create_rule(rule: RoomAssignmentRuleCreate):
     _validate_regex_pattern(rule.rule_type, rule.rule_value)
     
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             now = int(time.time() * 1000)
             rule_id = str(uuid.uuid4())
             
@@ -127,9 +114,6 @@ async def create_rule(rule: RoomAssignmentRuleCreate):
             await db.commit()
             
             # Return created rule
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 "SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)
             ) as cursor:
@@ -138,8 +122,6 @@ async def create_rule(rule: RoomAssignmentRuleCreate):
             
             await broadcast("rooms-refresh", {"action": "rule_created", "rule_id": rule_id})
             return result
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -161,8 +143,7 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
         _validate_regex_pattern(rule_type, rule_value)
     
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Check if rule exists
             async with db.execute(
                 "SELECT id FROM room_assignment_rules WHERE id = ?", (rule_id,)
@@ -189,9 +170,6 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
                 await db.commit()
             
             # Return updated rule
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 "SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)
             ) as cursor:
@@ -200,8 +178,6 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
             
             await broadcast("rooms-refresh", {"action": "rule_updated", "rule_id": rule_id})
             return result
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -213,8 +189,7 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
 async def delete_rule(rule_id: str):
     """Delete a room assignment rule."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Check if rule exists
             async with db.execute(
                 "SELECT id FROM room_assignment_rules WHERE id = ?", (rule_id,)
@@ -229,8 +204,6 @@ async def delete_rule(rule_id: str):
             
             await broadcast("rooms-refresh", {"action": "rule_deleted", "rule_id": rule_id})
             return {"success": True, "deleted": rule_id}
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -247,8 +220,7 @@ async def bulk_update_rules(request: BulkRulesRequest):
         _validate_regex_pattern(rule.rule_type, rule.rule_value)
 
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Validate all room_ids exist
             for rule in request.rules:
                 async with db.execute(
@@ -275,9 +247,6 @@ async def bulk_update_rules(request: BulkRulesRequest):
             await db.commit()
 
             # Fetch and return the new rules
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 "SELECT * FROM room_assignment_rules ORDER BY priority DESC, created_at ASC"
             ) as cursor:
@@ -286,8 +255,6 @@ async def bulk_update_rules(request: BulkRulesRequest):
 
             await broadcast("rooms-refresh", {"action": "rules_bulk_updated", "count": len(rules)})
             return {"rules": [r.model_dump() for r in rules], "count": len(rules)}
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -299,11 +266,7 @@ async def bulk_update_rules(request: BulkRulesRequest):
 async def get_rules_for_room(room_id: str):
     """Get all rules for a specific room."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM room_assignment_rules WHERE room_id = ? ORDER BY priority DESC",
                 (room_id,)
@@ -311,8 +274,6 @@ async def get_rules_for_room(room_id: str):
                 rows = await cursor.fetchall()
                 rules = [RoomAssignmentRule(**row) for row in rows]
             return {"rules": [r.model_dump() for r in rules]}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to get rules for room {room_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

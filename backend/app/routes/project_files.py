@@ -73,11 +73,7 @@ def _get_file_type(path: Path) -> str:
 
 async def _get_project_folder(project_id: str) -> str:
     """Get the folder_path for a project from DB."""
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT folder_path FROM projects WHERE id = ?", (project_id,)
         ) as cursor:
@@ -87,8 +83,6 @@ async def _get_project_folder(project_id: str) -> str:
             if not row.get("folder_path"):
                 raise HTTPException(status_code=404, detail="Project has no folder configured")
             return row["folder_path"]
-    finally:
-        await db.close()
 
 
 @router.get("/{project_id}/files")
@@ -248,16 +242,13 @@ discover_router = APIRouter()
 async def _get_projects_base_path() -> str:
     """Get the configured projects base path from settings, with fallback to default."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             async with db.execute(
                 "SELECT value FROM settings WHERE key = 'projects_base_path'"
             ) as cursor:
                 row = await cursor.fetchone()
                 if row:
                     return row[0] if isinstance(row, tuple) else row["value"]
-        finally:
-            await db.close()
     except Exception:
         pass
     return DEFAULT_PROJECTS_BASE_PATH

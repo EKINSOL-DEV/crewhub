@@ -15,19 +15,13 @@ router = APIRouter()
 async def list_assignments():
     """Get all session room assignments."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM session_room_assignments ORDER BY assigned_at DESC"
             ) as cursor:
                 rows = await cursor.fetchall()
                 assignments = [SessionRoomAssignment(**row) for row in rows]
             return {"assignments": [a.model_dump() for a in assignments]}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to list assignments: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -37,11 +31,7 @@ async def list_assignments():
 async def get_assignment(session_key: str):
     """Get assignment for a specific session."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM session_room_assignments WHERE session_key = ?",
                 (session_key,)
@@ -50,8 +40,6 @@ async def get_assignment(session_key: str):
                 if not row:
                     raise HTTPException(status_code=404, detail="Assignment not found")
                 return SessionRoomAssignment(**row)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -63,8 +51,7 @@ async def get_assignment(session_key: str):
 async def create_or_update_assignment(assignment: SessionRoomAssignmentCreate):
     """Create or update a session room assignment."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             now = int(time.time() * 1000)
             
             # Verify room exists
@@ -85,9 +72,6 @@ async def create_or_update_assignment(assignment: SessionRoomAssignmentCreate):
             await db.commit()
             
             # Return the assignment
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 "SELECT * FROM session_room_assignments WHERE session_key = ?",
                 (assignment.session_key,)
@@ -101,8 +85,6 @@ async def create_or_update_assignment(assignment: SessionRoomAssignmentCreate):
                 "room_id": assignment.room_id,
             })
             return result
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -114,8 +96,7 @@ async def create_or_update_assignment(assignment: SessionRoomAssignmentCreate):
 async def delete_assignment(session_key: str):
     """Delete a session room assignment."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Check if exists
             async with db.execute(
                 "SELECT session_key FROM session_room_assignments WHERE session_key = ?",
@@ -135,8 +116,6 @@ async def delete_assignment(session_key: str):
                 "session_key": session_key,
             })
             return {"success": True, "deleted": session_key}
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -148,11 +127,7 @@ async def delete_assignment(session_key: str):
 async def get_assignments_for_room(room_id: str):
     """Get all assignments for a specific room."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM session_room_assignments WHERE room_id = ? ORDER BY assigned_at DESC",
                 (room_id,)
@@ -160,8 +135,6 @@ async def get_assignments_for_room(room_id: str):
                 rows = await cursor.fetchall()
                 assignments = [SessionRoomAssignment(**row) for row in rows]
             return {"assignments": [a.model_dump() for a in assignments]}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to get assignments for room {room_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -171,8 +144,7 @@ async def get_assignments_for_room(room_id: str):
 async def batch_assign(assignments: list[SessionRoomAssignmentCreate]):
     """Batch create/update multiple assignments."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             now = int(time.time() * 1000)
             created = []
             
@@ -201,8 +173,6 @@ async def batch_assign(assignments: list[SessionRoomAssignmentCreate]):
                     "session_keys": created,
                 })
             return {"success": True, "assigned": created, "count": len(created)}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to batch assign: {e}")
         raise HTTPException(status_code=500, detail=str(e))

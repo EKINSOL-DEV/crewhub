@@ -61,11 +61,7 @@ async def get_project_history(
 ):
     """Get project activity history."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             
             # Verify project exists
             async with db.execute(
@@ -102,8 +98,6 @@ async def get_project_history(
                 events.append(_row_to_event(row, display_name))
             
             return HistoryListResponse(events=events, total=total)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -119,11 +113,7 @@ async def get_task_history(
 ):
     """Get history for a specific task."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             
             # Build query
             query = "SELECT * FROM project_history WHERE project_id = ? AND task_id = ? ORDER BY created_at DESC LIMIT ?"
@@ -139,8 +129,6 @@ async def get_task_history(
                 events.append(_row_to_event(row, display_name))
             
             return HistoryListResponse(events=events, total=len(events))
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to get task history for {task_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

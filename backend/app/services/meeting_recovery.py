@@ -3,8 +3,7 @@
 import logging
 import time
 
-import aiosqlite
-
+from app.db.database import get_db
 from app.db.meeting_models import MeetingState
 from app.routes.sse import broadcast
 
@@ -19,12 +18,10 @@ TERMINAL_STATES = (
 
 async def recover_stuck_meetings() -> int:
     """Mark non-terminal meetings as error on startup. Returns count recovered."""
-    from app.db.database import DB_PATH
     now_ms = int(time.time() * 1000)
     recovered = 0
 
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT id, state, title FROM meetings WHERE state NOT IN (?, ?, ?)",
             TERMINAL_STATES,

@@ -13,7 +13,7 @@ from typing import Any, Optional
 
 import aiosqlite
 
-from app.db.database import DB_PATH
+from app.db.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -68,9 +68,7 @@ async def build_crewhub_context(
         Context envelope dict, or None if room not found.
     """
     try:
-        async with aiosqlite.connect(DB_PATH) as db:
-            db.row_factory = aiosqlite.Row
-
+        async with get_db() as db:
             # Determine privacy tier
             privacy = "external" if channel and channel.lower() in EXTERNAL_CHANNELS else "internal"
 
@@ -290,8 +288,7 @@ async def get_persona_prompt(
     from app.services.personas import build_full_persona_prompt, build_persona_prompt
 
     try:
-        async with aiosqlite.connect(DB_PATH) as db:
-            db.row_factory = aiosqlite.Row
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM agent_personas WHERE agent_id = ?", (agent_id,)
             ) as cur:

@@ -208,11 +208,7 @@ async def list_blueprints(
     - source: filter by source ('user', 'import', 'mod')
     - room_id: filter by associated room
     """
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
 
         query = "SELECT * FROM custom_blueprints WHERE 1=1"
         params: list = []
@@ -228,8 +224,6 @@ async def list_blueprints(
 
         async with db.execute(query, params) as cursor:
             rows = await cursor.fetchall()
-    finally:
-        await db.close()
 
     return [row_to_response(row) for row in rows]
 
@@ -241,18 +235,12 @@ async def export_blueprint(blueprint_id: str):
     
     Returns the blueprint JSON with Content-Disposition header for download.
     """
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM custom_blueprints WHERE id = ?",
             (blueprint_id,),
         ) as cursor:
             row = await cursor.fetchone()
-    finally:
-        await db.close()
 
     if not row:
         raise HTTPException(
@@ -282,18 +270,12 @@ async def export_blueprint(blueprint_id: str):
 @router.get("/{blueprint_id}", response_model=CustomBlueprintResponse)
 async def get_blueprint(blueprint_id: str):
     """Get a single custom blueprint by ID."""
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM custom_blueprints WHERE id = ?",
             (blueprint_id,),
         ) as cursor:
             row = await cursor.fetchone()
-    finally:
-        await db.close()
 
     if not row:
         raise HTTPException(
@@ -326,8 +308,7 @@ async def create_blueprint(body: CustomBlueprintCreate):
     # Ensure the stored blueprint has the correct ID
     blueprint_json["id"] = blueprint_id
 
-    db = await get_db()
-    try:
+    async with get_db() as db:
         # Check for duplicate ID
         async with db.execute(
             "SELECT id FROM custom_blueprints WHERE id = ?",
@@ -357,8 +338,6 @@ async def create_blueprint(body: CustomBlueprintCreate):
             ),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     logger.info(f"Blueprint created: {blueprint_id} ({body.name})")
 
@@ -397,8 +376,7 @@ async def import_blueprint(body: BlueprintJson):
     blueprint_json = body.model_dump()
     blueprint_json["id"] = blueprint_id
 
-    db = await get_db()
-    try:
+    async with get_db() as db:
         # Check for duplicate — on import, generate a new ID if collision
         async with db.execute(
             "SELECT id FROM custom_blueprints WHERE id = ?",
@@ -426,8 +404,6 @@ async def import_blueprint(body: BlueprintJson):
             ),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     logger.info(f"Blueprint imported: {blueprint_id} ({body.name})")
 
@@ -452,11 +428,7 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
     
     Only provided fields are updated (partial update).
     """
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM custom_blueprints WHERE id = ?",
             (blueprint_id,),
@@ -500,8 +472,6 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
             (name, room_id, blueprint_json_str, source, now, blueprint_id),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     logger.info(f"Blueprint updated: {blueprint_id}")
 
@@ -522,8 +492,7 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
 @router.delete("/{blueprint_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_blueprint(blueprint_id: str):
     """Delete a custom blueprint by ID."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         cursor = await db.execute(
             "DELETE FROM custom_blueprints WHERE id = ?",
             (blueprint_id,),
@@ -534,8 +503,6 @@ async def delete_blueprint(blueprint_id: str):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Blueprint not found: {blueprint_id}",
             )
-    finally:
-        await db.close()
 
     logger.info(f"Blueprint deleted: {blueprint_id}")
 
@@ -590,18 +557,12 @@ async def _load_blueprint(blueprint_id: str) -> tuple[dict, Optional[dict], str]
     source is 'db' or 'file'.
     Raises HTTPException if not found.
     """
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM custom_blueprints WHERE id = ?",
             (blueprint_id,),
         ) as cursor:
             row = await cursor.fetchone()
-    finally:
-        await db.close()
 
     if row:
         bp_json = json.loads(row["blueprint_json"]) if isinstance(row["blueprint_json"], str) else row["blueprint_json"]
@@ -630,15 +591,12 @@ async def _save_blueprint(blueprint_id: str, bp_json: dict, db_row: Optional[dic
     """Save a blueprint back to its source (db or file)."""
     if source == "db":
         now = int(time.time() * 1000)
-        db = await get_db()
-        try:
+        async with get_db() as db:
             await db.execute(
                 "UPDATE custom_blueprints SET blueprint_json = ?, updated_at = ? WHERE id = ?",
                 (json.dumps(bp_json), now, blueprint_id),
             )
             await db.commit()
-        finally:
-            await db.close()
     else:
         safe_id = _sanitize_blueprint_id(blueprint_id)
         blueprint_path = os.path.join(_BLUEPRINT_DIR, f"{safe_id}.json")

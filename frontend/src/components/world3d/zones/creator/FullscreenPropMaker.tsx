@@ -1,83 +1,50 @@
 /**
  * Fullscreen Prop Maker View
- * Split-pane overlay: Left 50% (controls + think process), Right 50% (3D preview)
+ * Split-pane overlay: Left 50% (controls + think process), Right 50% (3D preview).
+ *
+ * This component is the orchestrator: it owns all state and event handlers,
+ * and delegates rendering to focused sub-components.
+ *
+ * Sub-components:
+ *   - PropMakerToolbar  — top bar (title, status, close)
+ *   - PropControls      — left-side tab panel (generate, history, advanced)
+ *   - ThinkingPanel     — bottom-left AI thinking log
+ *   - PropPreview       — right-side 3D canvas
  */
 
-import { useState, useRef, useCallback, useEffect, useMemo, Suspense } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Stage } from '@react-three/drei'
-import { DynamicProp, type PropPart } from './DynamicProp'
-import { PropRefiner, type RefineChanges } from './PropRefiner'
-import React from 'react'
+import type { PropPart } from './DynamicProp'
+import type { RefineChanges } from './PropRefiner'
+import { PropMakerToolbar } from './PropMakerToolbar'
+import { PropControls } from './PropControls'
+import { ThinkingPanel } from './ThinkingPanel'
+import { PropPreview } from './PropPreview'
+import type {
+  ModelOption,
+  ThinkingLine,
+  GenerationRecord,
+  TabId,
+  TransformMode,
+  GenerationMode,
+} from './propMakerTypes'
 
-// ── Types ─────────────────────────────────────────────────────
+// ── Props ─────────────────────────────────────────────────────
 
-interface ModelOption {
-  key: string
-  id: string
-  label: string
-  provider: string
-}
-
-interface ThinkingLine {
-  text: string
-  type: 'status' | 'thinking' | 'text' | 'tool' | 'tool_result' | 'correction' | 'complete' | 'error' | 'model' | 'prompt'
-}
-
-interface GenerationRecord {
-  id: string
-  prompt: string
-  name: string
-  model: string
-  modelLabel: string
-  method: string
-  fullPrompt: string
-  toolCalls: { name: string; input: string }[]
-  corrections: string[]
-  diagnostics: string[]
-  parts: PropPart[]
-  code: string
-  createdAt: string
-  error: string | null
-}
-
-type TabId = 'generate' | 'history' | 'advanced'
-
-interface FullscreenPropMakerProps {
+export interface FullscreenPropMakerProps {
   onClose: () => void
   onPropGenerated?: (prop: { name: string; filename: string; parts: PropPart[]; timestamp: number }) => void
 }
 
-// ── Error Boundary ────────────────────────────────────────────
-
-interface ErrorBoundaryState { hasError: boolean; error: Error | null }
-
-class PropErrorBoundary extends React.Component<
-  { children: React.ReactNode; onError: (error: Error) => void },
-  ErrorBoundaryState
-> {
-  constructor(props: any) {
-    super(props)
-    this.state = { hasError: false, error: null }
-  }
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error }
-  }
-  componentDidCatch(error: Error): void {
-    this.props.onError(error)
-  }
-  render() {
-    if (this.state.hasError) return null
-    return this.props.children
-  }
-}
-
-// ── Main Component ────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────
 
 export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenPropMakerProps) {
   const isDemoMode = window.location.hostname.includes('demo.')
+
+  // Navigation
   const [activeTab, setActiveTab] = useState<TabId>('generate')
+
+  // Input / UI state
   const [inputText, setInputText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -103,41 +70,35 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const [isRefining, setIsRefining] = useState(false)
   const [generationId, setGenerationId] = useState<string>('')
 
-  // AI thinking
+  // AI thinking log
   const [thinkingLines, setThinkingLines] = useState<ThinkingLine[]>([])
   const [fullPrompt, setFullPrompt] = useState<string | null>(null)
   const [toolCalls, setToolCalls] = useState<{ name: string; input: string }[]>([])
   const eventSourceRef = useRef<EventSource | null>(null)
-  const thinkingScrollRef = useRef<HTMLDivElement>(null)
 
   // Part editor
   const [editMode, setEditMode] = useState(false)
   const [selectedPartIndex, setSelectedPartIndex] = useState<number | null>(null)
-  const [transformMode, setTransformMode] = useState<'translate' | 'rotate' | 'scale'>('translate')
+  const [transformMode, setTransformMode] = useState<TransformMode>('translate')
   const [isTransformDragging, setIsTransformDragging] = useState(false)
 
   // Phase 3: Quality & Iteration
   const [qualityScore, setQualityScore] = useState<any>(null)
   const [iterationFeedback, setIterationFeedback] = useState('')
   const [isIterating, setIsIterating] = useState(false)
-  const [iterationHistory, setIterationHistory] = useState<{ version: number; feedback: string; score: number; code: string }[]>([])
-  const [generationMode, setGenerationMode] = useState<'standard' | 'hybrid'>('standard')
+  const [iterationHistory, setIterationHistory] = useState<
+    { version: number; feedback: string; score: number; code: string }[]
+  >([])
+  const [generationMode, setGenerationMode] = useState<GenerationMode>('standard')
   const [templateBase, setTemplateBase] = useState<string>('')
   const [availableStyles, setAvailableStyles] = useState<{ id: string; name: string; palette: string[] }[]>([])
   const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([])
   const [selectedStyle, setSelectedStyle] = useState('')
   const [isApplyingStyle, setIsApplyingStyle] = useState(false)
 
-  const examplePrompts = [
-    'A glowing mushroom lamp',
-    'A steampunk gear clock',
-    'A floating crystal orb',
-    'A retro arcade cabinet',
-    'A neon "OPEN" sign',
-    'A tiny robot figurine',
-  ]
+  // ── Setup effects ───────────────────────────────────────────
 
-  // Load models + Phase 3 data
+  // Load models, styles, templates
   useEffect(() => {
     fetch('/api/creator/models')
       .then(r => r.json())
@@ -154,19 +115,18 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
           { key: 'gpt-5-2', id: 'openai/gpt-5.2', label: 'GPT-5.2', provider: 'openai' },
         ])
       })
-    // Load styles and templates
     fetch('/api/creator/props/styles').then(r => r.json()).then(d => setAvailableStyles(d.styles || [])).catch(() => {})
     fetch('/api/creator/props/templates').then(r => r.json()).then(d => setAvailableTemplates(d.templates || [])).catch(() => {})
   }, [])
 
-  // Escape to close
+  // Escape key to close
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Lock body scroll + disable canvas pointer events
+  // Lock body scroll; disable background canvas pointer events
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -181,17 +141,12 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     }
   }, [])
 
-  // Cleanup EventSource
+  // Clean up EventSource on unmount
   useEffect(() => {
     return () => { eventSourceRef.current?.close() }
   }, [])
 
-  // Auto-scroll thinking panel
-  useEffect(() => {
-    if (thinkingScrollRef.current) {
-      thinkingScrollRef.current.scrollTop = thinkingScrollRef.current.scrollHeight
-    }
-  }, [thinkingLines])
+  // ── Handlers ────────────────────────────────────────────────
 
   const handleGenerate = useCallback(async (prompt?: string) => {
     const text = (prompt || inputText).trim()
@@ -211,9 +166,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     setLastPrompt(text)
     setInputText('')
 
-    const addLine = (line: ThinkingLine) => {
-      setThinkingLines(prev => [...prev, line])
-    }
+    const addLine = (line: ThinkingLine) => setThinkingLines(prev => [...prev, line])
 
     try {
       const url = `/api/creator/generate-prop-stream?prompt=${encodeURIComponent(text)}&model=${encodeURIComponent(selectedModel)}`
@@ -347,7 +300,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     if (lastPrompt) handleGenerate(lastPrompt)
   }, [lastPrompt, handleGenerate])
 
-  // Phase 3: Score quality when code changes
+  // Phase 3: quality scoring
   const scoreQuality = useCallback(async (code: string) => {
     try {
       const res = await fetch('/api/creator/props/quality-score', {
@@ -355,14 +308,11 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
       })
-      if (res.ok) {
-        const score = await res.json()
-        setQualityScore(score)
-      }
+      if (res.ok) setQualityScore(await res.json())
     } catch { /* ignore */ }
   }, [])
 
-  // Phase 3: Iterate on prop
+  // Phase 3: iterate on prop
   const handleIterate = useCallback(async () => {
     if (!iterationFeedback.trim() || !previewCode || isIterating) return
     setIsIterating(true)
@@ -379,15 +329,13 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       })
       if (!res.ok) throw new Error((await res.json()).detail || 'Iteration failed')
       const data = await res.json()
-      
-      // Save to iteration history
+
       setIterationHistory(prev => [...prev, {
         version: prev.length + 1,
         feedback: iterationFeedback.trim(),
         score: data.qualityScore?.overall || 0,
         code: previewCode,
       }])
-      
       setPreviewCode(data.code)
       setQualityScore(data.qualityScore)
       setIterationFeedback('')
@@ -398,7 +346,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     }
   }, [iterationFeedback, previewCode, previewName, isIterating])
 
-  // Phase 3: Apply style transfer
+  // Phase 3: style transfer
   const handleApplyStyle = useCallback(async () => {
     if (!selectedStyle || !previewCode || isApplyingStyle) return
     setIsApplyingStyle(true)
@@ -424,7 +372,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     }
   }, [selectedStyle, previewCode, previewName, isApplyingStyle])
 
-  // Phase 3: Rollback to previous iteration
+  // Phase 3: rollback to earlier iteration
   const handleRollback = useCallback((version: number) => {
     const entry = iterationHistory.find(h => h.version === version)
     if (entry) {
@@ -433,6 +381,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     }
   }, [iterationHistory, scoreQuality])
 
+  // Load record from history into preview
   const handleLoadFromHistory = useCallback((record: GenerationRecord) => {
     setPreviewParts(record.parts)
     setPreviewName(record.name)
@@ -444,13 +393,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     setActiveTab('generate')
   }, [])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleGenerate()
-    }
-  }
-
+  // Visual refinement (Phase 2)
   const handleRefine = useCallback(async (changes: RefineChanges) => {
     if (!generationId || isRefining) return
     setIsRefining(true)
@@ -481,569 +424,142 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   }, [generationId, isRefining])
 
   const handleRefineReset = useCallback(() => {
-    // Reload from history to get original code
     if (generationId) {
       fetch(`/api/creator/generation-history/${generationId}`)
         .then(r => r.json())
-        .then(data => {
-          if (data.code) setPreviewCode(data.code)
-        })
+        .then(data => { if (data.code) setPreviewCode(data.code) })
         .catch(() => {})
     }
   }, [generationId])
 
+  // Part editor callbacks
   const handlePartSelect = useCallback((index: number | null) => {
     setSelectedPartIndex(index)
   }, [])
 
-  const handlePartTransform = useCallback((index: number, position: [number, number, number], rotation: [number, number, number]) => {
-    setPreviewParts(prev => {
-      if (!prev) return prev
-      const updated = [...prev]
-      updated[index] = { ...updated[index], position, rotation }
-      return updated
-    })
-  }, [])
+  const handlePartTransform = useCallback(
+    (index: number, position: [number, number, number], rotation: [number, number, number]) => {
+      setPreviewParts(prev => {
+        if (!prev) return prev
+        const updated = [...prev]
+        updated[index] = { ...updated[index], position, rotation }
+        return updated
+      })
+    },
+    []
+  )
 
   const handleApplyPartEdits = useCallback(() => {
     setEditMode(false)
     setSelectedPartIndex(null)
-    // Parts are already updated in-place via handlePartTransform
     setThinkingLines(prev => [...prev, { text: '✏️ Part transforms applied', type: 'correction' as const }])
   }, [])
 
-  const handleRuntimeError = useCallback((error: Error) => {
-    setRenderError(error.message)
+  const handleToggleEditMode = useCallback(() => {
+    setEditMode(prev => !prev)
+    setSelectedPartIndex(null)
   }, [])
 
-  const getLineColor = (line: ThinkingLine, isLast: boolean) => {
-    if (line.type === 'error') return 'var(--zen-error, #ef4444)'
-    if (line.type === 'complete') return 'var(--zen-success, #22c55e)'
-    if (line.type === 'correction') return '#f59e0b'
-    if (line.type === 'tool' || line.type === 'tool_result') return '#eab308'
-    if (line.type === 'thinking') return isLast ? 'var(--zen-accent, #6366f1)' : 'var(--zen-fg-dim, #888)'
-    if (isLast) return 'var(--zen-accent, #6366f1)'
-    return 'var(--zen-fg-dim, #888)'
-  }
+  const handleRenderError = useCallback((err: Error) => {
+    setRenderError(err.message)
+  }, [])
 
-  const PreviewWrapper = useMemo(() => {
-    if (!previewParts) return null
-    const parts = previewParts
-    return () => (
-      <DynamicProp
-        parts={parts}
-        position={[0, 0, 0]}
-        scale={3}
-        editMode={editMode}
-        selectedPartIndex={selectedPartIndex}
-        onPartSelect={handlePartSelect}
-        onPartTransform={handlePartTransform}
-        transformMode={transformMode}
-        onDraggingChanged={setIsTransformDragging}
-      />
-    )
-  }, [previewParts, editMode, selectedPartIndex, transformMode, handlePartSelect, handlePartTransform])
-
-  const canPreview = PreviewWrapper && !renderError
+  // ── Render ───────────────────────────────────────────────────
 
   const overlay = (
     <div className="fpm-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      {/* Top bar */}
-      <div className="fpm-topbar">
-        <div className="fpm-topbar-left">
-          <span className="fpm-topbar-icon">🔧</span>
-          <span className="fpm-topbar-title">Prop Maker</span>
-          {isGenerating && (
-            <span className="fpm-topbar-status" style={{ color: '#eab308' }}>
-              ⚙️ Generating...
-            </span>
-          )}
-          {successMessage && (
-            <span className="fpm-topbar-status" style={{ color: 'var(--zen-success, #22c55e)' }}>
-              {successMessage}
-            </span>
-          )}
-        </div>
-        <button className="fpm-close" onClick={onClose} title="Close (Esc)">✕</button>
-      </div>
+      <PropMakerToolbar
+        isGenerating={isGenerating}
+        successMessage={successMessage}
+        onClose={onClose}
+      />
 
-      {/* Split view */}
       <div className="fpm-split">
-        {/* Left side: Controls + Think process */}
+        {/* Left: Controls + Thinking */}
         <div className="fpm-left">
-          {/* Top: Controls */}
-          <div className="fpm-controls">
-            <div className="fpm-controls-scroll">
-              {/* Tabs */}
-              <div className="fpm-tabs">
-                <button
-                  className={`fpm-tab ${activeTab === 'generate' ? 'fpm-tab-active' : ''}`}
-                  onClick={() => setActiveTab('generate')}
-                >
-                  ⚡ Generate
-                </button>
-                <button
-                  className={`fpm-tab ${activeTab === 'history' ? 'fpm-tab-active' : ''}`}
-                  onClick={() => setActiveTab('history')}
-                >
-                  📋 History
-                </button>
-                <button
-                  className={`fpm-tab ${activeTab === 'advanced' ? 'fpm-tab-active' : ''}`}
-                  onClick={() => setActiveTab('advanced')}
-                >
-                  🧬 Advanced
-                </button>
-              </div>
+          <PropControls
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            isDemoMode={isDemoMode}
+            inputText={inputText}
+            onInputChange={setInputText}
+            isGenerating={isGenerating}
+            onGenerate={() => handleGenerate()}
+            onRegenerate={handleRegenerate}
+            onRetry={handleRetry}
+            error={error}
+            models={models}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+            generationMode={generationMode}
+            onGenerationModeChange={setGenerationMode}
+            templateBase={templateBase}
+            onTemplateBaseChange={setTemplateBase}
+            availableTemplates={availableTemplates}
+            showExamples={showExamples}
+            onToggleExamples={() => setShowExamples(v => !v)}
+            onSelectExample={(p) => { setInputText(p); setShowExamples(false) }}
+            previewParts={previewParts}
+            previewMethod={previewMethod}
+            previewModelLabel={previewModelLabel}
+            previewName={previewName}
+            previewCode={previewCode}
+            renderError={renderError}
+            isSaving={isSaving}
+            onApprove={handleApprove}
+            editMode={editMode}
+            onToggleEditMode={handleToggleEditMode}
+            selectedPartIndex={selectedPartIndex}
+            transformMode={transformMode}
+            onTransformModeChange={setTransformMode}
+            onApplyPartEdits={handleApplyPartEdits}
+            qualityScore={qualityScore}
+            iterationFeedback={iterationFeedback}
+            onIterationFeedbackChange={setIterationFeedback}
+            isIterating={isIterating}
+            onIterate={handleIterate}
+            iterationHistory={iterationHistory}
+            onRollback={handleRollback}
+            generationId={generationId}
+            refinementOptions={refinementOptions}
+            isRefining={isRefining}
+            onRefine={handleRefine}
+            onRefineReset={handleRefineReset}
+            availableStyles={availableStyles}
+            selectedStyle={selectedStyle}
+            onStyleChange={setSelectedStyle}
+            isApplyingStyle={isApplyingStyle}
+            onApplyStyle={handleApplyStyle}
+            historyRefreshKey={historyRefreshKey}
+            onLoadFromHistory={handleLoadFromHistory}
+          />
 
-              {activeTab === 'generate' && (
-                <>
-                  {isDemoMode && (
-                    <div className="fpm-demo-banner">
-                      ⚠️ Demo Mode — Prop generation is disabled. You can browse existing history.
-                    </div>
-                  )}
-                  <p className="fpm-description">
-                    Describe the prop you want. The AI fabricator will generate a 3D object.
-                  </p>
-
-                  {/* Model chooser */}
-                  <div className="fpm-model-row">
-                    <label className="fpm-label">Model:</label>
-                    <select
-                      value={selectedModel}
-                      onChange={(e) => setSelectedModel(e.target.value)}
-                      disabled={isGenerating}
-                      className="fpm-select"
-                    >
-                      {models.map((m) => (
-                        <option key={m.key} value={m.key}>
-                          {m.label} ({m.provider})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Examples */}
-                  <div className="fpm-examples-section">
-                    <button
-                      className="fpm-examples-toggle"
-                      onClick={() => setShowExamples(!showExamples)}
-                    >
-                      {showExamples ? 'Hide examples ▴' : 'Show examples ▾'}
-                    </button>
-                    {showExamples && (
-                      <div className="fpm-examples-grid">
-                        {examplePrompts.map((p) => (
-                          <button
-                            key={p}
-                            className="fpm-example-btn"
-                            onClick={() => { setInputText(p); setShowExamples(false) }}
-                          >
-                            {p}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Mode & Template */}
-                  <div className="fpm-model-row">
-                    <label className="fpm-label">Mode:</label>
-                    <select
-                      value={generationMode}
-                      onChange={(e) => setGenerationMode(e.target.value as 'standard' | 'hybrid')}
-                      disabled={isGenerating}
-                      className="fpm-select"
-                    >
-                      <option value="standard">Standard AI</option>
-                      <option value="hybrid">Hybrid (Template + AI)</option>
-                    </select>
-                  </div>
-                  {generationMode === 'hybrid' && (
-                    <div className="fpm-model-row">
-                      <label className="fpm-label">Base:</label>
-                      <select
-                        value={templateBase}
-                        onChange={(e) => setTemplateBase(e.target.value)}
-                        disabled={isGenerating}
-                        className="fpm-select"
-                      >
-                        <option value="">None (enhanced AI)</option>
-                        {availableTemplates.map(t => (
-                          <option key={t.id} value={t.id}>{t.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Input */}
-                  <textarea
-                    className="fpm-textarea"
-                    placeholder="e.g. A glowing mushroom lamp with bioluminescent spots..."
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={isGenerating}
-                    rows={3}
-                  />
-                  <button
-                    className="fpm-create-btn"
-                    onClick={() => handleGenerate()}
-                    disabled={isDemoMode || isGenerating || !inputText.trim()}
-                    title={isDemoMode ? 'Not available in demo mode' : undefined}
-                  >
-                    {isDemoMode ? '⚠️ Generate (Demo)' : isGenerating ? '⏳ Generating...' : '⚡ Create'}
-                  </button>
-
-                  {/* Error */}
-                  {error && !isGenerating && !previewParts && (
-                    <div className="fpm-error">
-                      ❌ {error}
-                      <button className="fpm-retry-btn" onClick={handleRetry}>🔄 Retry</button>
-                    </div>
-                  )}
-
-                  {/* Method badge */}
-                  {previewParts && (
-                    <div className="fpm-badges">
-                      <span className={`fpm-badge fpm-badge-${previewMethod}`}>
-                        {previewMethod === 'ai' ? '🤖 AI' : '📐 Template'}
-                      </span>
-                      {previewModelLabel && (
-                        <span className="fpm-badge fpm-badge-model">{previewModelLabel}</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Approve/Regenerate buttons when preview available */}
-                  {previewParts && !isGenerating && (
-                    <div className="fpm-action-row">
-                      <button
-                        className="fpm-approve-btn"
-                        onClick={handleApprove}
-                        disabled={isSaving || !!renderError}
-                      >
-                        {isSaving ? '💾 Saving...' : '✅ Approve & Save'}
-                      </button>
-                      <button className="fpm-regen-btn" onClick={handleRegenerate}>
-                        🔄 Regenerate
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Part Editor Toggle */}
-                  {previewParts && !isGenerating && (
-                    <div className="fpm-part-editor">
-                      <div className="fpm-part-editor-header">
-                        <span>✏️ Part Editor</span>
-                        <button
-                          className={`fpm-edit-toggle ${editMode ? 'fpm-edit-toggle-active' : ''}`}
-                          onClick={() => { setEditMode(!editMode); setSelectedPartIndex(null) }}
-                        >
-                          {editMode ? '🔓 Exit Edit' : '🔒 Edit Parts'}
-                        </button>
-                      </div>
-                      {editMode && (
-                        <div className="fpm-part-editor-controls">
-                          <div className="fpm-transform-modes">
-                            {(['translate', 'rotate', 'scale'] as const).map(mode => (
-                              <button
-                                key={mode}
-                                className={`fpm-transform-btn ${transformMode === mode ? 'fpm-transform-btn-active' : ''}`}
-                                onClick={() => setTransformMode(mode)}
-                              >
-                                {mode === 'translate' ? '↔️ Move' : mode === 'rotate' ? '🔄 Rotate' : '📐 Scale'}
-                              </button>
-                            ))}
-                          </div>
-                          {selectedPartIndex !== null ? (
-                            <div className="fpm-selected-part-info">
-                              Selected: Part {selectedPartIndex + 1} ({previewParts[selectedPartIndex]?.type})
-                              <span style={{ color: previewParts[selectedPartIndex]?.color, marginLeft: 6 }}>■</span>
-                            </div>
-                          ) : (
-                            <div className="fpm-selected-part-info" style={{ opacity: 0.5 }}>
-                              Click a part in the preview to select it
-                            </div>
-                          )}
-                          <button
-                            className="fpm-apply-edits-btn"
-                            onClick={handleApplyPartEdits}
-                          >
-                            ✅ Apply Part Changes
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Quality Score */}
-                  {qualityScore && !isGenerating && (
-                    <div className="fpm-quality-panel">
-                      <div className="fpm-quality-header">
-                        Quality: {qualityScore.overall}/100
-                        {qualityScore.overall >= 85 ? ' 🌟' : qualityScore.overall >= 70 ? ' ✨' : ' 💫'}
-                      </div>
-                      <div className="fpm-quality-bars">
-                        {[
-                          { label: 'Composition', value: qualityScore.composition_score },
-                          { label: 'Color', value: qualityScore.color_score },
-                          { label: 'Animation', value: qualityScore.animation_score },
-                          { label: 'Detail', value: qualityScore.detail_score },
-                          { label: 'Style', value: qualityScore.style_consistency },
-                        ].map(({ label, value }) => (
-                          <div key={label} className="fpm-quality-bar-row">
-                            <span className="fpm-quality-bar-label">{label}</span>
-                            <div className="fpm-quality-bar-track">
-                              <div
-                                className="fpm-quality-bar-fill"
-                                style={{
-                                  width: `${value}%`,
-                                  background: value >= 80 ? '#22c55e' : value >= 50 ? '#eab308' : '#ef4444',
-                                }}
-                              />
-                            </div>
-                            <span className="fpm-quality-bar-value">{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                      {qualityScore.suggestions?.length > 0 && (
-                        <div className="fpm-quality-suggestions">
-                          {qualityScore.suggestions.map((s: string, i: number) => (
-                            <div key={i} className="fpm-quality-suggestion">💡 {s}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Phase 2: Visual Refinement Panel */}
-                  {previewParts && previewCode && !isGenerating && (
-                    <PropRefiner
-                      propName={previewName}
-                      propId={generationId}
-                      currentCode={previewCode}
-                      refinementOptions={refinementOptions}
-                      onApplyChanges={handleRefine}
-                      onReset={handleRefineReset}
-                      disabled={isRefining}
-                    />
-                  )}
-
-                  {/* Iteration Panel */}
-                  {previewCode && !isGenerating && (
-                    <div className="fpm-iteration-panel">
-                      <div className="fpm-iteration-header">🔄 Refine with Feedback</div>
-                      <div className="fpm-iteration-input-row">
-                        <input
-                          type="text"
-                          className="fpm-iteration-input"
-                          placeholder="e.g. Make it more colorful, add blinking lights..."
-                          value={iterationFeedback}
-                          onChange={(e) => setIterationFeedback(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleIterate() }}
-                          disabled={isIterating}
-                        />
-                        <button
-                          className="fpm-iteration-btn"
-                          onClick={handleIterate}
-                          disabled={isIterating || !iterationFeedback.trim()}
-                        >
-                          {isIterating ? '⏳' : '✨'}
-                        </button>
-                      </div>
-                      {iterationHistory.length > 0 && (
-                        <div className="fpm-iteration-history">
-                          {iterationHistory.map((h) => (
-                            <div key={h.version} className="fpm-iteration-entry">
-                              <span>v{h.version}: "{h.feedback}" (Score: {h.score})</span>
-                              <button
-                                className="fpm-iteration-rollback"
-                                onClick={() => handleRollback(h.version)}
-                                title="Rollback to this version"
-                              >
-                                ↩️
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {activeTab === 'history' && (
-                <HistoryPanel onLoadProp={handleLoadFromHistory} refreshKey={historyRefreshKey} />
-              )}
-
-              {activeTab === 'advanced' && (
-                <div className="fpm-advanced">
-                  {/* Style Transfer */}
-                  <div className="fpm-advanced-section">
-                    <div className="fpm-advanced-title">🎨 Style Transfer</div>
-                    <p className="fpm-description">Apply a showcase prop's visual style to your current prop.</p>
-                    <div className="fpm-model-row">
-                      <label className="fpm-label">Style:</label>
-                      <select
-                        value={selectedStyle}
-                        onChange={(e) => setSelectedStyle(e.target.value)}
-                        className="fpm-select"
-                        disabled={isApplyingStyle || !previewCode}
-                      >
-                        <option value="">Select style...</option>
-                        {availableStyles.map(s => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {selectedStyle && (
-                      <div className="fpm-style-palette">
-                        {availableStyles.find(s => s.id === selectedStyle)?.palette.map((c, i) => (
-                          <div key={i} className="fpm-style-swatch" style={{ background: c }} title={c} />
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      className="fpm-create-btn"
-                      onClick={handleApplyStyle}
-                      disabled={!selectedStyle || !previewCode || isApplyingStyle}
-                      style={{ marginTop: 8 }}
-                    >
-                      {isApplyingStyle ? '⏳ Applying...' : '🎨 Apply Style'}
-                    </button>
-                  </div>
-
-                  {/* Crossbreeding placeholder */}
-                  <div className="fpm-advanced-section">
-                    <div className="fpm-advanced-title">🧬 Prop Genetics</div>
-                    <p className="fpm-description">
-                      Combine traits from two props to create unique hybrids.
-                      Use the API endpoint <code>/api/creator/props/crossbreed</code> for programmatic access.
-                    </p>
-                    <div className="fpm-advanced-hint">
-                      💡 Coming soon to the UI — available now via API
-                    </div>
-                  </div>
-
-                  {/* Quality Tips */}
-                  <div className="fpm-advanced-section">
-                    <div className="fpm-advanced-title">💡 Quality Tips</div>
-                    <div className="fpm-quality-tips">
-                      <div>• Use <strong>Hybrid mode</strong> with a template base for best results</div>
-                      <div>• <strong>Iterate</strong> with feedback to improve score by 10-20 points</div>
-                      <div>• Apply <strong>style transfer</strong> from a showcase prop for consistent quality</div>
-                      <div>• Aim for <strong>85+</strong> quality score for showcase-grade props</div>
-                      <div>• Try <strong>"add blinking lights"</strong> or <strong>"more colorful"</strong> as feedback</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom: Think process */}
-          <div className="fpm-thinking">
-            <div className="fpm-thinking-header">
-              🧠 AI Thinking Process
-              {thinkingLines.some(l => l.type === 'thinking') && (
-                <span className="fpm-live-badge">LIVE</span>
-              )}
-            </div>
-
-            {/* Expandable sections */}
-            <div className="fpm-thinking-toggles">
-              {fullPrompt && (
-                <ExpandableSection label="📜 Full Prompt" content={fullPrompt} />
-              )}
-              {toolCalls.length > 0 && (
-                <ExpandableSection
-                  label={`🔧 Tool Calls (${toolCalls.length})`}
-                  content={toolCalls.map(tc => `${tc.name}: ${tc.input}`).join('\n')}
-                  color="#eab308"
-                />
-              )}
-            </div>
-
-            <div className="fpm-thinking-log" ref={thinkingScrollRef}>
-              {thinkingLines.length === 0 && !isGenerating && (
-                <div className="fpm-thinking-empty">
-                  Thinking process will appear here during generation...
-                </div>
-              )}
-              {thinkingLines.map((line, i) => (
-                <div
-                  key={i}
-                  className={`fpm-thinking-line ${line.type === 'thinking' ? 'fpm-thinking-indent' : ''}`}
-                  style={{ color: getLineColor(line, i === thinkingLines.length - 1) }}
-                >
-                  {line.text}
-                </div>
-              ))}
-              {isGenerating && (
-                <div className="fpm-cursor">▍</div>
-              )}
-            </div>
-          </div>
+          <ThinkingPanel
+            thinkingLines={thinkingLines}
+            isGenerating={isGenerating}
+            fullPrompt={fullPrompt}
+            toolCalls={toolCalls}
+          />
         </div>
 
-        {/* Right side: 3D Preview — Canvas stays mounted to preserve camera position */}
-        <div className="fpm-right">
-          {/* Persistent Canvas — never unmounts, so OrbitControls camera survives across generations */}
-          <Canvas camera={{ position: [3, 2, 3], fov: 45 }} style={{ position: 'absolute', inset: 0 }}>
-            <PropErrorBoundary onError={handleRuntimeError}>
-              <Suspense fallback={null}>
-                {canPreview && PreviewWrapper && (
-                  <Stage adjustCamera={false} environment="city" intensity={0.5}>
-                    <PreviewWrapper />
-                  </Stage>
-                )}
-              </Suspense>
-            </PropErrorBoundary>
-            <OrbitControls makeDefault enablePan enableZoom minDistance={1} maxDistance={15} enabled={!isTransformDragging} />
-            <ambientLight intensity={0.4} />
-            <directionalLight position={[5, 5, 5]} intensity={0.8} />
-          </Canvas>
-
-          {/* Overlay placeholders on top of Canvas */}
-          {isGenerating && (
-            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-              <div className="fpm-preview-spinner">⚙️</div>
-              <div>Generating prop...</div>
-              <div className="fpm-preview-sublabel">
-                {previewModelLabel || selectedModel}
-              </div>
-              <div className="fpm-generating-hint">
-                This may take a few minutes — AI is crafting your prop! 🤖
-              </div>
-            </div>
-          )}
-          {!isGenerating && renderError && (
-            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-              <div>Render failed</div>
-              <div className="fpm-preview-error">{renderError}</div>
-              <button className="fpm-retry-btn" onClick={handleRetry}>🔄 Retry</button>
-            </div>
-          )}
-          {!isGenerating && !canPreview && !renderError && (
-            <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-              <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>🎨</div>
-              <div>No model yet</div>
-              <div className="fpm-preview-sublabel">
-                Generate a prop to see the 3D preview here
-              </div>
-            </div>
-          )}
-
-          {/* Preview name overlay */}
-          {previewName && !isGenerating && (
-            <div className="fpm-preview-name">
-              🔍 {previewName}
-            </div>
-          )}
-        </div>
+        {/* Right: 3D Preview */}
+        <PropPreview
+          previewParts={previewParts}
+          previewName={previewName}
+          isGenerating={isGenerating}
+          renderError={renderError}
+          previewModelLabel={previewModelLabel}
+          selectedModel={selectedModel}
+          editMode={editMode}
+          selectedPartIndex={selectedPartIndex}
+          transformMode={transformMode}
+          isTransformDragging={isTransformDragging}
+          onRenderError={handleRenderError}
+          onRetry={handleRetry}
+          onPartSelect={handlePartSelect}
+          onPartTransform={handlePartTransform}
+          onDraggingChanged={setIsTransformDragging}
+        />
       </div>
 
       <style>{fullscreenPropMakerStyles}</style>
@@ -1051,281 +567,6 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   )
 
   return createPortal(overlay, document.body)
-}
-
-// ── Expandable Section ────────────────────────────────────────
-
-function ExpandableSection({ label, content, color }: { label: string; content: string; color?: string }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div>
-      <button
-        className="fpm-expand-btn"
-        style={color ? { color, borderColor: `${color}33` } : undefined}
-        onClick={() => setOpen(!open)}
-      >
-        {label} {open ? '▴' : '▾'}
-      </button>
-      {open && (
-        <pre className="fpm-expand-content">{content}</pre>
-      )}
-    </div>
-  )
-}
-
-// ── History Panel ─────────────────────────────────────────────
-
-interface PropUsagePlacement {
-  blueprintId: string
-  blueprintName: string
-  roomId: string
-  instanceCount: number
-}
-
-interface DeleteConfirmState {
-  record: GenerationRecord
-  loading: boolean
-  placements: PropUsagePlacement[]
-  totalInstances: number
-}
-
-function PropDeleteDialog({
-  state,
-  onConfirm,
-  onCancel,
-}: {
-  state: DeleteConfirmState
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  const hasPlacements = state.placements.length > 0
-  const displayPlacements = state.placements.slice(0, 5)
-  const extraCount = state.placements.length - displayPlacements.length
-
-  return (
-    <div className="fpm-delete-overlay" onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
-      <div className="fpm-delete-dialog">
-        <div className="fpm-delete-title">
-          {hasPlacements ? '⚠️ Delete Prop?' : '🗑️ Delete Prop?'}
-        </div>
-        <div className="fpm-delete-body">
-          <p>This will delete "<strong>{state.record.name}</strong>" from your history.</p>
-          {hasPlacements ? (
-            <>
-              <div className="fpm-delete-warning">
-                ⚠️ This prop is currently placed in {state.placements.length} room(s)
-                ({state.totalInstances} instance{state.totalInstances !== 1 ? 's' : ''}):
-              </div>
-              <ul className="fpm-delete-room-list">
-                {displayPlacements.map((p) => (
-                  <li key={p.blueprintId}>
-                    {p.blueprintName} ({p.instanceCount} instance{p.instanceCount !== 1 ? 's' : ''})
-                  </li>
-                ))}
-                {extraCount > 0 && <li className="fpm-delete-more">+ {extraCount} more...</li>}
-              </ul>
-              <p className="fpm-delete-cascade-note">
-                Deleting this prop will <strong>remove it from all rooms</strong> where it's placed.
-              </p>
-            </>
-          ) : (
-            <p className="fpm-delete-note">This action cannot be undone.</p>
-          )}
-        </div>
-        <div className="fpm-delete-actions">
-          <button className="fpm-delete-cancel-btn" onClick={onCancel} disabled={state.loading}>
-            Cancel
-          </button>
-          <button className="fpm-delete-confirm-btn" onClick={onConfirm} disabled={state.loading}>
-            {state.loading ? '⏳ Deleting...' : hasPlacements ? '🗑️ Delete Anyway' : '🗑️ Delete Prop'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function HistoryPanel({
-  onLoadProp,
-  refreshKey = 0,
-}: {
-  onLoadProp: (record: GenerationRecord) => void
-  refreshKey?: number
-}) {
-  const [records, setRecords] = useState<GenerationRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [detail, setDetail] = useState<GenerationRecord | null>(null)
-  const [deleteState, setDeleteState] = useState<DeleteConfirmState | null>(null)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-
-  useEffect(() => {
-    setLoading(true)
-    fetch('/api/creator/generation-history?limit=50')
-      .then(r => r.json())
-      .then(data => { setRecords(data.records || []); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [refreshKey])
-
-  // Auto-hide toast
-  useEffect(() => {
-    if (toast) {
-      const t = setTimeout(() => setToast(null), 3000)
-      return () => clearTimeout(t)
-    }
-  }, [toast])
-
-  const handleSelect = (record: GenerationRecord) => {
-    if (selectedId === record.id) {
-      setSelectedId(null)
-      setDetail(null)
-    } else {
-      setSelectedId(record.id)
-      setDetail(record)
-    }
-  }
-
-  const handleDeleteClick = async (record: GenerationRecord) => {
-    // First check usage
-    try {
-      const res = await fetch(`/api/creator/generation-history/${record.id}/usage`)
-      if (!res.ok) throw new Error('Failed to check usage')
-      const usage = await res.json()
-      setDeleteState({
-        record,
-        loading: false,
-        placements: usage.placements || [],
-        totalInstances: usage.totalInstances || 0,
-      })
-    } catch {
-      // If usage check fails, show simple dialog
-      setDeleteState({
-        record,
-        loading: false,
-        placements: [],
-        totalInstances: 0,
-      })
-    }
-  }
-
-  const handleDeleteConfirm = async () => {
-    if (!deleteState) return
-    setDeleteState({ ...deleteState, loading: true })
-
-    const hasPlacements = deleteState.placements.length > 0
-    const url = `/api/creator/generation-history/${deleteState.record.id}${hasPlacements ? '?cascade=true' : ''}`
-
-    try {
-      const res = await fetch(url, { method: 'DELETE' })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: 'Delete failed' }))
-        throw new Error(typeof err.detail === 'string' ? err.detail : err.detail?.message || 'Delete failed')
-      }
-      const result = await res.json()
-
-      // Remove from local state
-      setRecords(prev => prev.filter(r => r.id !== deleteState.record.id))
-      if (selectedId === deleteState.record.id) {
-        setSelectedId(null)
-        setDetail(null)
-      }
-
-      const roomsMsg = result.total_instances_removed > 0
-        ? ` (removed from ${result.deleted_from_rooms.length} room${result.deleted_from_rooms.length !== 1 ? 's' : ''})`
-        : ''
-      setToast({ message: `✅ Prop "${deleteState.record.name}" deleted${roomsMsg}`, type: 'success' })
-    } catch (e: any) {
-      setToast({ message: `❌ ${e.message || 'Delete failed'}`, type: 'error' })
-    } finally {
-      setDeleteState(null)
-    }
-  }
-
-  if (loading) return <div className="fpm-history-empty">Loading history...</div>
-  if (records.length === 0) return <div className="fpm-history-empty">No generations yet</div>
-
-  return (
-    <div className="fpm-history">
-      {toast && (
-        <div className={`fpm-toast fpm-toast-${toast.type}`}>{toast.message}</div>
-      )}
-      {deleteState && (
-        <PropDeleteDialog
-          state={deleteState}
-          onConfirm={handleDeleteConfirm}
-          onCancel={() => setDeleteState(null)}
-        />
-      )}
-      <div className="fpm-history-list">
-        {records.map((r) => (
-          <div
-            key={r.id}
-            className={`fpm-history-item ${selectedId === r.id ? 'fpm-history-item-active' : ''}`}
-            onClick={() => handleSelect(r)}
-          >
-            <div className="fpm-history-item-name">
-              {r.error ? '❌' : r.method === 'ai' ? '🤖' : '📐'} {r.name}
-            </div>
-            <div className="fpm-history-item-meta">
-              {r.modelLabel} · {r.prompt.slice(0, 40)}{r.prompt.length > 40 ? '...' : ''}
-            </div>
-            <div className="fpm-history-item-date">
-              {new Date(r.createdAt).toLocaleString()}
-            </div>
-            <button
-              className="fpm-history-delete-btn"
-              title="Delete prop"
-              onClick={(e) => { e.stopPropagation(); handleDeleteClick(r) }}
-            >
-              🗑️
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {detail && (
-        <div className="fpm-history-detail">
-          <div className="fpm-history-detail-name">{detail.name}</div>
-          <div className="fpm-badges" style={{ marginBottom: 8 }}>
-            <span className={`fpm-badge fpm-badge-${detail.method}`}>
-              {detail.method === 'ai' ? '🤖 AI' : '📐 Template'}
-            </span>
-            <span className="fpm-badge fpm-badge-model">{detail.modelLabel}</span>
-          </div>
-          <div className="fpm-history-field">
-            <span className="fpm-history-field-label">Prompt:</span>
-            <span>{detail.prompt}</span>
-          </div>
-          {detail.toolCalls.length > 0 && (
-            <div className="fpm-history-field">
-              <span className="fpm-history-field-label" style={{ color: '#eab308' }}>
-                Tool Calls ({detail.toolCalls.length}):
-              </span>
-              {detail.toolCalls.map((tc, i) => (
-                <div key={i} style={{ fontSize: 10, color: '#888' }}>🔧 {tc.name}</div>
-              ))}
-            </div>
-          )}
-          {detail.error && (
-            <div style={{ color: '#ef4444', fontSize: 11 }}>❌ {detail.error}</div>
-          )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            {detail.parts.length > 0 && !detail.error && (
-              <button className="fpm-load-btn" onClick={() => onLoadProp(detail)}>
-                🔄 Load into Preview
-              </button>
-            )}
-            <button
-              className="fpm-delete-btn"
-              onClick={() => handleDeleteClick(detail)}
-            >
-              🗑️ Delete
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
 }
 
 // ── Styles ────────────────────────────────────────────────────

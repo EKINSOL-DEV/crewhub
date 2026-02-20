@@ -6,9 +6,8 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
-import aiosqlite
 
-from app.db.database import DB_PATH
+from app.db.database import get_db
 from app.db.meeting_models import (
     MeetingConfig,
     MeetingState,
@@ -204,8 +203,7 @@ async def api_meeting_output(meeting_id: str):
 @router.get("/{meeting_id}/action-items")
 async def api_get_action_items(meeting_id: str):
     """Get action items for a meeting."""
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM meeting_action_items WHERE meeting_id = ? ORDER BY sort_order",
             (meeting_id,),
@@ -222,7 +220,7 @@ async def api_save_action_items(meeting_id: str, req: SaveActionItemsRequest):
         raise HTTPException(404, "Meeting not found")
 
     now = _now_ms()
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         # Delete existing items for this meeting (idempotent save)
         await db.execute("DELETE FROM meeting_action_items WHERE meeting_id = ?", (meeting_id,))
 
@@ -244,8 +242,7 @@ async def api_save_action_items(meeting_id: str, req: SaveActionItemsRequest):
 async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionItemToPlannerRequest):
     """Push an action item to the project task board (or fallback to Ekinbot Planner)."""
     # Verify item exists and get meeting data
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM meeting_action_items WHERE id = ? AND meeting_id = ?",
             (item_id, meeting_id),
@@ -269,8 +266,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
     # Resolve assignee to session_key if it looks like an agent name
     assigned_session_key = None
     if req.assignee:
-        async with aiosqlite.connect(DB_PATH) as db:
-            db.row_factory = aiosqlite.Row
+        async with get_db() as db:
             async with db.execute(
                 "SELECT agent_session_key FROM agents WHERE id = ? OR agent_session_key = ? OR name = ?",
                 (req.assignee, req.assignee, req.assignee),
@@ -284,7 +280,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
     task_id = generate_id()
     now = _now_ms()
 
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         await db.execute(
             """INSERT INTO tasks (id, project_id, room_id, title, description, status, priority, assigned_session_key, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -304,7 +300,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
         await db.commit()
 
     # Update action item status
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         await db.execute(
             "UPDATE meeting_action_items SET status = 'planned', planner_task_id = ?, updated_at = ? WHERE id = ?",
             (task_id, now, item_id),
@@ -336,8 +332,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
 async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItemExecuteRequest):
     """Spawn an agent to execute an action item."""
     # Verify item exists
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM meeting_action_items WHERE id = ? AND meeting_id = ?",
             (item_id, meeting_id),
@@ -351,8 +346,7 @@ async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItem
         raise HTTPException(400, "No agent specified for execution")
 
     # Resolve agent session key
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT agent_session_key FROM agents WHERE id = ? OR agent_session_key = ?",
             (agent_id, agent_id),
@@ -362,7 +356,7 @@ async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItem
 
     # Mark as executing before spawning
     now = _now_ms()
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         await db.execute(
             "UPDATE meeting_action_items SET status = 'executing', execution_session_id = ?, updated_at = ? WHERE id = ?",
             (session_key, now, item_id),
@@ -390,7 +384,7 @@ async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItem
     except Exception as e:
         logger.error(f"Failed to spawn agent execution: {e}")
         # Mark as failed
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with get_db() as db:
             await db.execute(
                 "UPDATE meeting_action_items SET status = 'failed', updated_at = ? WHERE id = ?",
                 (_now_ms(), item_id),
@@ -406,7 +400,7 @@ async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItem
 
     # Update status based on response
     final_status = "done" if response else "failed"
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with get_db() as db:
         await db.execute(
             "UPDATE meeting_action_items SET status = ?, updated_at = ? WHERE id = ?",
             (final_status, _now_ms(), item_id),

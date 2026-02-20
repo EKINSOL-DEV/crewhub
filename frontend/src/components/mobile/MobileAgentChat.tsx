@@ -8,6 +8,7 @@ import type { CrewSession } from '@/lib/api'
 import { ActiveTasksBadge, ActiveTasksOverlay } from './ActiveTasksOverlay'
 import { type AgentStatus } from './AgentCameraView'
 import { getBotConfigFromSession } from '@/components/world3d/utils/botVariants'
+import { formatFileSize } from '@/lib/formatters'
 import { ChatHeader3DAvatar, type AvatarAnimation } from './ChatHeader3DAvatar'
 
 // ── File Upload Types & Helpers ────────────────────────────────
@@ -24,11 +25,6 @@ interface PendingFile {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 function isImageFile(file: File): boolean {
   return ACCEPTED_IMAGE_TYPES.includes(file.type)

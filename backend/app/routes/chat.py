@@ -240,14 +240,13 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
     # Build context envelope for agent awareness
     try:
         import aiosqlite
-        from app.db.database import DB_PATH
+        from app.db.database import get_db
         from app.services.context_envelope import build_crewhub_context, format_context_block
 
         # Determine room_id: prefer request body, fall back to agent default
         ctx_room_id = body.room_id
         if not ctx_room_id:
-            async with aiosqlite.connect(DB_PATH) as db:
-                db.row_factory = aiosqlite.Row
+            async with get_db() as db:
                 cursor = await db.execute(
                     "SELECT default_room_id FROM agents WHERE id = ?", (agent_id,)
                 )
@@ -281,6 +280,73 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         return {"response": response_text, "tokens": 0, "success": True}
     else:
         return {"response": None, "tokens": 0, "success": False, "error": "No response from agent"}
+
+
+@router.post("/api/chat/{session_key}/stream")
+async def stream_chat_message(session_key: str, body: SendMessageBody):
+    """Send a message to an agent and stream back the response via SSE."""
+    from fastapi.responses import StreamingResponse
+    import json
+
+    _validate_session_key(session_key)
+    _check_rate_limit(session_key)
+
+    message = body.message.strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+    if len(message) > 5000:
+        message = message[:5000]
+    message = message.replace("\x00", "")
+
+    agent_id = _get_agent_id(session_key)
+
+    # Build context envelope (same as /send)
+    try:
+        import aiosqlite
+        from app.db.database import get_db
+        from app.services.context_envelope import build_crewhub_context, format_context_block
+
+        ctx_room_id = body.room_id
+        if not ctx_room_id:
+            async with get_db() as db:
+                cursor = await db.execute(
+                    "SELECT default_room_id FROM agents WHERE id = ?", (agent_id,)
+                )
+                row = await cursor.fetchone()
+                if row:
+                    ctx_room_id = row["default_room_id"]
+
+        if ctx_room_id:
+            envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key)
+            if envelope:
+                message = format_context_block(envelope) + "\n\n" + message
+    except Exception as e:
+        logger.warning(f"Failed to build context envelope for stream: {e}")
+
+    manager = await get_connection_manager()
+    conn = manager.get_default_openclaw()
+    if not conn:
+        raise HTTPException(status_code=503, detail="No OpenClaw connection available")
+
+    async def generate():
+        yield "event: start\ndata: {}\n\n"
+        try:
+            async for chunk in conn.send_chat_streaming(message, agent_id=agent_id):
+                yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
+            yield "event: done\ndata: {}\n\n"
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @router.get("/api/chat/{session_key}/info")

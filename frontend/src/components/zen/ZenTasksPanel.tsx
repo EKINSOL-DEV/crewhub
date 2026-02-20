@@ -5,6 +5,7 @@
 
 import { useCallback, useState, useMemo } from 'react'
 import { useTasks, type Task, type TaskStatus, type TaskPriority } from '@/hooks/useTasks'
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '@/lib/taskConstants'
 import { ProjectFilterSelect } from './ProjectFilterSelect'
 
 interface ZenTasksPanelProps {
@@ -13,23 +14,6 @@ interface ZenTasksPanelProps {
   roomFocusName?: string  // Name of the focused room's project (for display)
   onTaskClick?: (task: Task) => void
   onProjectFilterChange?: (projectId: string | null, projectName: string, projectColor?: string) => void
-}
-
-// ── Status Configuration ─────────────────────────────────────────
-
-const STATUS_CONFIG: Record<TaskStatus, { icon: string; label: string; color: string }> = {
-  todo: { icon: '📋', label: 'To Do', color: 'var(--zen-fg-muted)' },
-  in_progress: { icon: '🔄', label: 'In Progress', color: 'var(--zen-info)' },
-  review: { icon: '👀', label: 'Review', color: 'var(--zen-warning)' },
-  done: { icon: '✅', label: 'Done', color: 'var(--zen-success)' },
-  blocked: { icon: '⚠️', label: 'Blocked', color: 'var(--zen-error)' },
-}
-
-const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string }> = {
-  urgent: { label: 'URG', color: 'var(--zen-error)' },
-  high: { label: 'HI', color: 'var(--zen-warning)' },
-  medium: { label: 'MED', color: 'var(--zen-info)' },
-  low: { label: 'LO', color: 'var(--zen-fg-muted)' },
 }
 
 const COLUMNS: { status: TaskStatus; label: string; icon: string }[] = [

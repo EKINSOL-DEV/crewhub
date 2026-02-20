@@ -14,19 +14,13 @@ router = APIRouter()
 async def list_display_names():
     """Get all session display names."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM session_display_names ORDER BY updated_at DESC"
             ) as cursor:
                 rows = await cursor.fetchall()
                 names = [SessionDisplayName(**row) for row in rows]
             return {"display_names": [n.model_dump() for n in names]}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to list display names: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -36,11 +30,7 @@ async def list_display_names():
 async def get_display_name(session_key: str):
     """Get display name for a specific session."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM session_display_names WHERE session_key = ?",
                 (session_key,)
@@ -49,8 +39,6 @@ async def get_display_name(session_key: str):
                 if not row:
                     raise HTTPException(status_code=404, detail="Display name not found")
                 return SessionDisplayName(**row)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -62,8 +50,7 @@ async def get_display_name(session_key: str):
 async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
     """Set or update display name for a session."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             now = int(time.time() * 1000)
             
             # Upsert display name
@@ -77,17 +64,12 @@ async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
             await db.commit()
             
             # Return the display name
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 "SELECT * FROM session_display_names WHERE session_key = ?",
                 (session_key,)
             ) as cursor:
                 row = await cursor.fetchone()
                 return SessionDisplayName(**row)
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to set display name for {session_key}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -97,8 +79,7 @@ async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
 async def delete_display_name(session_key: str):
     """Delete a session display name."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Check if exists
             async with db.execute(
                 "SELECT session_key FROM session_display_names WHERE session_key = ?",
@@ -114,8 +95,6 @@ async def delete_display_name(session_key: str):
             await db.commit()
             
             return {"success": True, "deleted": session_key}
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:

@@ -39,15 +39,12 @@ async def test_database_tables_exist():
         "custom_blueprints",
         "schema_version",
     ]
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute(
             "SELECT name FROM sqlite_master WHERE type='table'"
         ) as cursor:
             rows = await cursor.fetchall()
-            table_names = {row[0] for row in rows}
-    finally:
-        await db.close()
+            table_names = {row["name"] for row in rows}
 
     for table in expected_tables:
         assert table in table_names, f"Table '{table}' not found"
@@ -56,14 +53,11 @@ async def test_database_tables_exist():
 @pytest.mark.asyncio
 async def test_get_db_connection():
     """Test that get_db returns a working connection."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         assert db is not None
-        async with db.execute("SELECT 1") as cursor:
+        async with db.execute("SELECT 1 as one") as cursor:
             row = await cursor.fetchone()
-            assert row[0] == 1
-    finally:
-        await db.close()
+            assert row["one"] == 1
 
 
 @pytest.mark.asyncio
@@ -79,12 +73,9 @@ async def test_seed_data_idempotent():
 @pytest.mark.asyncio
 async def test_rooms_schema():
     """Test rooms table has expected columns."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute("PRAGMA table_info(rooms)") as cursor:
-            columns = {row[1] for row in await cursor.fetchall()}
-    finally:
-        await db.close()
+            columns = {row["name"] for row in await cursor.fetchall()}
 
     expected = {"id", "name", "icon", "color", "sort_order", "default_model",
                 "speed_multiplier", "created_at", "updated_at", "project_id", "is_hq"}
@@ -94,12 +85,9 @@ async def test_rooms_schema():
 @pytest.mark.asyncio
 async def test_agents_schema():
     """Test agents table has expected columns."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute("PRAGMA table_info(agents)") as cursor:
-            columns = {row[1] for row in await cursor.fetchall()}
-    finally:
-        await db.close()
+            columns = {row["name"] for row in await cursor.fetchall()}
 
     expected = {"id", "name", "icon", "color", "agent_session_key",
                 "default_model", "default_room_id", "sort_order",
@@ -110,12 +98,9 @@ async def test_agents_schema():
 @pytest.mark.asyncio
 async def test_connections_schema():
     """Test connections table has expected columns."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         async with db.execute("PRAGMA table_info(connections)") as cursor:
-            columns = {row[1] for row in await cursor.fetchall()}
-    finally:
-        await db.close()
+            columns = {row["name"] for row in await cursor.fetchall()}
 
     expected = {"id", "name", "type", "config", "enabled", "created_at", "updated_at"}
     assert expected.issubset(columns)
