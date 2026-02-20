@@ -84,7 +84,7 @@ Twitch/YouTube Chat
   - Watch Agent alert: reacts to errors dramatically ("Uh oh. Something has gone terribly right. Or wrong. Hard to tell.")
   - Task done: celebrates or commiserates with chat
 - **Personality traits:** self-aware, slightly chaotic, loves the drama, never breaks character
-- **Model:** claude-haiku-3-5 or similar — fast, witty, low latency for chat responses
+- **Model:** claude-haiku-4 — fast, witty, low latency for chat responses
 - **Note:** Creator agent is a separate standalone entity (not part of the show)
 
 ---
@@ -284,6 +284,7 @@ error_patterns = [
   "platform": "twitch",
   "judge_model": "claude-sonnet-4-6",
   "triage_model": "claude-haiku-3-5",
+  "announcer_model": "claude-haiku-4",
   "paused": false
 }
 ```
@@ -414,7 +415,7 @@ A standalone web dashboard (or Tauri app) for dynamic real-time control of CrewH
 | Platform | Select (Twitch/YouTube/Both) | Twitch | Active streaming platform |
 | The Judge model | Select | claude-sonnet-4-6 | Which model The Judge uses |
 | Triage model | Select | claude-haiku-3-5 | Lighter model for frequent triage |
-| Announcer model | Select | claude-haiku-3-5 | Fast + witty, low latency for chat |
+| Announcer model | Select | claude-haiku-4 | Fast + witty, low latency for chat |
 | Announcer enabled | Toggle | ON | Mute the Announcer during breaks |
 
 ### Live Controls (during stream)
