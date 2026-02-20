@@ -27,10 +27,15 @@ Twitch/YouTube Chat
       → clusters into Top 3 themes/requests
       → [Twitch] creates Poll (2 min, community votes)
       → [YouTube] auto-picks Top 1 (no poll available)
+  → The Announcer hypes up the options in chat
   → Winner determined
+  → The Announcer dramatically announces the winner
   → The Judge executes the task
+      → The Announcer narrates progress to chat
       → Watch Agent monitors execution
           → if error/breakpoint → WhatsApp notification to Nicky
+                                → The Announcer reacts to chat
+  → Task done → The Announcer celebrates/commiserates
 ```
 
 ---
@@ -67,9 +72,20 @@ Twitch/YouTube Chat
 - **Notification:** WhatsApp to Nicky (+32494330227)
 - **Format:** `"[Are the Bots Okay?] The Judge hit an error: {error_summary}. Task: {task_title}"`
 
-### 4. Creator (standalone, external)
-- **Not part of CrewHub Live** — operates as a "god" agent in its own world
-- Can be invoked by The Judge if the task is creative in nature, but is not a CrewHub Live citizen
+### 4. The Announcer
+- **What:** The voice and personality of the show — talks directly to the audience
+- **Character:** Funny, dramatic, hype-driven. Makes everything feel like a sporting event.
+- **Speaks in:** Twitch/YouTube chat (as a bot), stream overlay text, maybe TTS on stream
+- **When active:**
+  - Poll opens: hypes up each option ("Option 3 is SPICY, chat. Do you dare?")
+  - Poll closes: dramatic announcement of the winner ("THE CHAT HAS SPOKEN.")
+  - Task starts: narrates what The Judge is about to do
+  - During execution: color commentary on progress ("The Judge is 4 files deep and shows no signs of stopping...")
+  - Watch Agent alert: reacts to errors dramatically ("Uh oh. Something has gone terribly right. Or wrong. Hard to tell.")
+  - Task done: celebrates or commiserates with chat
+- **Personality traits:** self-aware, slightly chaotic, loves the drama, never breaks character
+- **Model:** claude-haiku-3-5 or similar — fast, witty, low latency for chat responses
+- **Note:** Creator agent is a separate standalone entity (not part of the show)
 
 ---
 
@@ -79,12 +95,16 @@ Twitch/YouTube Chat
 T+0:00  Triage Agent reads last 5 min of chat
 T+0:30  LLM clusters chat → Top 3 themes generated
 T+0:31  Twitch Poll created (2 min duration)
+T+0:32  The Announcer hypes each option in Twitch chat
 T+2:31  Poll ends, winner determined
-T+2:32  The Judge receives task prompt
+T+2:32  The Announcer: "THE CHAT HAS SPOKEN. Starting in 3... 2... 1..."
+T+2:33  The Judge receives task prompt
 T+2:35  Watch Agent starts monitoring
+T+2:36  The Announcer narrates task start to chat
 T+?     Task executes (duration varies)
-T+?     Watch Agent notifies Nicky on events
-T+?     Task complete → results shown on stream
+T+?     The Announcer: periodic color commentary
+T+?     Watch Agent notifies Nicky on events + Announcer reacts
+T+?     Task complete → The Announcer celebrates/commiserates
 T+5:00  Next Triage cycle starts (overlapping ok)
 ```
 
@@ -394,6 +414,8 @@ A standalone web dashboard (or Tauri app) for dynamic real-time control of CrewH
 | Platform | Select (Twitch/YouTube/Both) | Twitch | Active streaming platform |
 | The Judge model | Select | claude-sonnet-4-6 | Which model The Judge uses |
 | Triage model | Select | claude-haiku-3-5 | Lighter model for frequent triage |
+| Announcer model | Select | claude-haiku-3-5 | Fast + witty, low latency for chat |
+| Announcer enabled | Toggle | ON | Mute the Announcer during breaks |
 
 ### Live Controls (during stream)
 
