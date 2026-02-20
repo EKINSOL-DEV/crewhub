@@ -273,15 +273,58 @@ When a poll ends and the verdict is in:
 
 ---
 
-## 💡 Open Questions
+## 🎛️ Control App
 
-1. **The Judge name?** (The Judge ✅)
-2. **Poll duration:** 2 min? Or longer for low-activity streams?
-3. **What if chat is empty?** Auto-suggest tasks? Use backlog from matrix?
-4. **Task scope limits:** Max complexity to prevent hour-long tasks?
-5. **Multiple The Judges?** Or always one active at a time?
-6. **Twitch channel name?** Same as crewhub.dev?
+A standalone web dashboard (or Tauri app) for dynamic real-time control of CrewHub Live — no redeploy needed, all settings hot-reload.
+
+### Core Controls
+
+| Setting | Type | Default | Notes |
+|---------|------|---------|-------|
+| Poll duration | Slider (15–300s) | 120s | Changed mid-stream, applies to next poll |
+| Max task complexity | Select (Quick/Medium/Deep) | Medium | Quick = <5 min, Medium = <20 min, Deep = no limit |
+| Triage interval | Slider (1–15 min) | 5 min | How often Triage Agent reads chat |
+| Auto-cycle on empty chat | Toggle | ON | Start new round immediately if chat has no messages |
+| Min messages to trigger poll | Number | 5 | Avoid polls from 1–2 messages |
+| Platform | Select (Twitch/YouTube/Both) | Twitch | Active streaming platform |
+| The Judge model | Select | claude-sonnet-4-6 | Which model The Judge uses |
+| Triage model | Select | claude-haiku-3-5 | Lighter model for frequent triage |
+
+### Live Controls (during stream)
+
+- **Skip current task** — interrupt The Judge, start new triage cycle
+- **Pause / Resume** — freeze all agents (e.g. during break)
+- **Force task** — manually inject a task, bypassing the poll
+- **Extend time** — give The Judge 10 more minutes
+- **Open question to chat** — let The Judge ask the stream something
+
+### Status Panel (read-only)
+
+- Current task title + estimated time remaining
+- The Judge live status (thinking / coding / waiting / done)
+- Current poll status + vote counts
+- Chat activity graph (messages/min)
+- Watch Agent alerts (errors, stuck, questions)
+
+### Architecture
+
+- Backend: FastAPI service (part of CrewHub Live backend)
+- Config stored in DB or JSON file, hot-reloaded by agents via SSE or polling
+- Frontend: React single-page app, served at `localhost:18900` (or embedded in CrewHub)
+- Auth: simple token-based (only Nicky has access during stream)
 
 ---
 
-*Written 2026-02-19 based on Nicky's voice note*
+## 💡 Decisions Made
+
+1. **The Judge name** → The Judge ✅
+2. **Poll duration** → configurable in Control App (default 120s) ✅
+3. **Empty chat** → auto-start new round immediately ✅
+4. **Max task complexity** → configurable in Control App (Quick/Medium/Deep) ✅
+5. **Multiple Judges** → always one active at a time (TBD)
+6. **Twitch channel name** → TBD (Nicky to provide)
+
+---
+
+*Written 2026-02-19 based on Nicky's voice note*  
+*Updated 2026-02-20 — Control App concept added, open questions resolved*
