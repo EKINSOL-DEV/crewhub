@@ -52,7 +52,7 @@ Twitch/YouTube Chat
 
 ### 2. The Judge
 - **What:** The main executor — picks up the winning poll task and runs it
-- **Name ideas:** `Rover`, `Wanderer`, `Scout`, `Nomad`, `Ranger` *(Nicky to pick)*
+- **Name:** The Judge ✅
 - **Behavior:** Takes the triage prompt, executes it as a task (coding, research, building, etc.)
 - **Reports:** Progress updates visible in CrewHub 3D world + on stream overlay
 - **Session:** Long-running, can be interrupted/redirected by next poll cycle
@@ -65,7 +65,7 @@ Twitch/YouTube Chat
   - Agent asks a question that needs human input
   - Task completed (summary notification)
 - **Notification:** WhatsApp to Nicky (+32494330227)
-- **Format:** `"[CrewHub Stream] Rover hit an error: {error_summary}. Task: {task_title}"`
+- **Format:** `"[Are the Bots Okay?] The Judge hit an error: {error_summary}. Task: {task_title}"`
 
 ### 4. Creator (standalone, external)
 - **Not part of CrewHub Live** — operates as a "god" agent in its own world
