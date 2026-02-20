@@ -78,11 +78,7 @@ async def get_session_context(session_key: str):
     ```
     """
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             
             # 1. Find room assignment for this session
             room_id = None
@@ -244,8 +240,6 @@ async def get_session_context(session_key: str):
                 tasks=tasks,
                 recent_history=recent_history,
             )
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to get session context for {session_key}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -313,11 +307,7 @@ async def get_context_envelope(
     - block: a fenced code block ready for preamble injection
     """
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
 
             # Resolve room_id from session key
             room_id = None
@@ -343,8 +333,6 @@ async def get_context_envelope(
 
             if not room_id:
                 return {"envelope": None, "block": ""}
-        finally:
-            await db.close()
 
         envelope = await build_crewhub_context(
             room_id=room_id,

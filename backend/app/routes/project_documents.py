@@ -37,19 +37,13 @@ async def _get_project_docs_path(project_id: str) -> tuple[Path, str]:
     Returns (resolved_path, project_name).
     Priority: project.docs_path > PROJECT_DATA_PATH/{project.name}/
     """
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT name, docs_path FROM projects WHERE id = ?", (project_id,)
         ) as cursor:
             row = await cursor.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Project not found")
-    finally:
-        await db.close()
 
     project_name = row["name"]
     

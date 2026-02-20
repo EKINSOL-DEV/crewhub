@@ -50,15 +50,9 @@ async def get_all_settings() -> dict[str, str]:
     
     Returns a flat dict of {key: value} for easy frontend consumption.
     """
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute("SELECT key, value FROM settings") as cursor:
             rows = await cursor.fetchall()
-    finally:
-        await db.close()
 
     return {row["key"]: row["value"] for row in rows}
 
@@ -70,18 +64,12 @@ async def get_setting(key: str):
     
     Returns 404 if the key doesn't exist.
     """
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute(
             "SELECT key, value, updated_at FROM settings WHERE key = ?",
             (key,),
         ) as cursor:
             row = await cursor.fetchone()
-    finally:
-        await db.close()
 
     if not row:
         raise HTTPException(
@@ -107,8 +95,7 @@ async def update_settings_batch(body: BatchSettingsUpdate) -> dict[str, str]:
         )
 
     now = int(time.time() * 1000)
-    db = await get_db()
-    try:
+    async with get_db() as db:
         for key, value in body.settings.items():
             await db.execute(
                 """
@@ -119,8 +106,6 @@ async def update_settings_batch(body: BatchSettingsUpdate) -> dict[str, str]:
                 (key, value, now, value, now),
             )
         await db.commit()
-    finally:
-        await db.close()
 
     logger.info(f"Batch updated {len(body.settings)} settings")
     # Return all settings after update
@@ -135,8 +120,7 @@ async def update_setting(key: str, body: SettingValue):
     Uses upsert semantics (creates if missing, updates if exists).
     """
     now = int(time.time() * 1000)
-    db = await get_db()
-    try:
+    async with get_db() as db:
         await db.execute(
             """
             INSERT INTO settings (key, value, updated_at)
@@ -146,8 +130,6 @@ async def update_setting(key: str, body: SettingValue):
             (key, body.value, now, body.value, now),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     logger.info(f"Setting updated: {key}")
     return SettingResponse(key=key, value=body.value, updated_at=now)
@@ -160,8 +142,7 @@ async def delete_setting(key: str):
     
     Returns 404 if the key doesn't exist.
     """
-    db = await get_db()
-    try:
+    async with get_db() as db:
         cursor = await db.execute(
             "DELETE FROM settings WHERE key = ?",
             (key,),
@@ -172,7 +153,5 @@ async def delete_setting(key: str):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Setting not found: {key}",
             )
-    finally:
-        await db.close()
 
     logger.info(f"Setting deleted: {key}")

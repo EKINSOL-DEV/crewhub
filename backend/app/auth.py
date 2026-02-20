@@ -117,9 +117,7 @@ def record_identity_creation(key_id: str, agent_id: str):
 async def resolve_api_key(raw_key: str) -> Optional[APIKeyInfo]:
     """Look up an API key in the database. Returns None if not found."""
     key_hash = hash_key(raw_key)
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM api_keys WHERE key_hash = ? AND revoked = 0",
             (key_hash,),
@@ -146,8 +144,6 @@ async def resolve_api_key(raw_key: str) -> Optional[APIKeyInfo]:
             created_at=row["created_at"],
             last_used_at=now,
         )
-    finally:
-        await db.close()
 
 
 # ── FastAPI dependency ────────────────────────────────────────────────
@@ -253,8 +249,7 @@ async def init_api_keys():
     - ~/.crewhub/agent.json  (self-scoped key, 0600)
     - ~/.crewhub/api-keys.json  (admin key, 0600)
     """
-    db = await get_db()
-    try:
+    async with get_db() as db:
         # Create api_keys table
         await db.execute("""
             CREATE TABLE IF NOT EXISTS api_keys (
@@ -301,8 +296,8 @@ async def init_api_keys():
         await db.commit()
 
         # Check if we already have keys
-        async with db.execute("SELECT COUNT(*) FROM api_keys") as cursor:
-            count = (await cursor.fetchone())[0]
+        async with db.execute("SELECT COUNT(*) as cnt FROM api_keys") as cursor:
+            count = (await cursor.fetchone())["cnt"]
 
         if count == 0:
             await _generate_default_keys(db)
@@ -310,8 +305,6 @@ async def init_api_keys():
             # Ensure file exists even if keys are in DB (idempotent)
             await _ensure_key_files(db)
 
-    finally:
-        await db.close()
 
 
 async def _generate_default_keys(db):

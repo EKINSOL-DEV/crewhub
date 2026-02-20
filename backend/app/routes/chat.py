@@ -240,14 +240,13 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
     # Build context envelope for agent awareness
     try:
         import aiosqlite
-        from app.db.database import DB_PATH
+        from app.db.database import get_db
         from app.services.context_envelope import build_crewhub_context, format_context_block
 
         # Determine room_id: prefer request body, fall back to agent default
         ctx_room_id = body.room_id
         if not ctx_room_id:
-            async with aiosqlite.connect(DB_PATH) as db:
-                db.row_factory = aiosqlite.Row
+            async with get_db() as db:
                 cursor = await db.execute(
                     "SELECT default_room_id FROM agents WHERE id = ?", (agent_id,)
                 )
@@ -304,13 +303,12 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
     # Build context envelope (same as /send)
     try:
         import aiosqlite
-        from app.db.database import DB_PATH
+        from app.db.database import get_db
         from app.services.context_envelope import build_crewhub_context, format_context_block
 
         ctx_room_id = body.room_id
         if not ctx_room_id:
-            async with aiosqlite.connect(DB_PATH) as db:
-                db.row_factory = aiosqlite.Row
+            async with get_db() as db:
                 cursor = await db.execute(
                     "SELECT default_room_id FROM agents WHERE id = ?", (agent_id,)
                 )

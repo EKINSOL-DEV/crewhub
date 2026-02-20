@@ -44,19 +44,13 @@ _ROOMS_SELECT = """
 async def list_rooms():
     """Get all rooms sorted by sort_order."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 f"{_ROOMS_SELECT} ORDER BY r.sort_order ASC"
             ) as cursor:
                 rows = await cursor.fetchall()
                 rooms = [_row_to_room(row) for row in rows]
             return {"rooms": [room.model_dump() for room in rooms]}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to list rooms: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -66,11 +60,7 @@ async def list_rooms():
 async def get_room(room_id: str):
     """Get a specific room by ID."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
             ) as cursor:
@@ -78,8 +68,6 @@ async def get_room(room_id: str):
                 if not row:
                     raise HTTPException(status_code=404, detail="Room not found")
                 return _row_to_room(row)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -91,8 +79,7 @@ async def get_room(room_id: str):
 async def create_room(room: RoomCreate):
     """Create a new room."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             now = int(time.time() * 1000)
             
             # Check if ID already exists
@@ -114,9 +101,6 @@ async def create_room(room: RoomCreate):
             await db.commit()
             
             # Return created room
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 f"{_ROOMS_SELECT} WHERE r.id = ?", (room.id,)
             ) as cursor:
@@ -125,8 +109,6 @@ async def create_room(room: RoomCreate):
             
             await broadcast("rooms-refresh", {"action": "created", "room_id": room.id})
             return created
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -138,8 +120,7 @@ async def create_room(room: RoomCreate):
 async def update_room(room_id: str, room: RoomUpdate):
     """Update an existing room."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Check if room exists
             async with db.execute(
                 "SELECT id FROM rooms WHERE id = ?", (room_id,)
@@ -169,9 +150,6 @@ async def update_room(room_id: str, room: RoomUpdate):
                 await db.commit()
             
             # Return updated room
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
             ) as cursor:
@@ -180,8 +158,6 @@ async def update_room(room_id: str, room: RoomUpdate):
             
             await broadcast("rooms-refresh", {"action": "updated", "room_id": room_id})
             return updated
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -193,8 +169,7 @@ async def update_room(room_id: str, room: RoomUpdate):
 async def delete_room(room_id: str):
     """Delete a room."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Check if room exists and if it's HQ
             async with db.execute(
                 "SELECT id, is_hq FROM rooms WHERE id = ?", (room_id,)
@@ -202,7 +177,7 @@ async def delete_room(room_id: str):
                 row = await cursor.fetchone()
                 if not row:
                     raise HTTPException(status_code=404, detail="Room not found")
-                if row[1]:
+                if row["is_hq"]:
                     raise HTTPException(
                         status_code=403,
                         detail="Cannot delete Headquarters room. HQ is a protected system room."
@@ -224,8 +199,6 @@ async def delete_room(room_id: str):
             
             await broadcast("rooms-refresh", {"action": "deleted", "room_id": room_id})
             return {"success": True, "deleted": room_id}
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -237,8 +210,7 @@ async def delete_room(room_id: str):
 async def assign_project(room_id: str, body: RoomProjectAssign):
     """Assign a project to a room."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Verify room exists
             async with db.execute(
                 "SELECT id FROM rooms WHERE id = ?", (room_id,)
@@ -261,9 +233,6 @@ async def assign_project(room_id: str, body: RoomProjectAssign):
             await db.commit()
 
             # Return updated room with project join
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
             ) as cursor:
@@ -271,8 +240,6 @@ async def assign_project(room_id: str, body: RoomProjectAssign):
 
             await broadcast("rooms-refresh", {"action": "project_assigned", "room_id": room_id})
             return _row_to_room(row)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -284,8 +251,7 @@ async def assign_project(room_id: str, body: RoomProjectAssign):
 async def clear_project(room_id: str):
     """Clear project assignment from a room."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Verify room exists
             async with db.execute(
                 "SELECT id FROM rooms WHERE id = ?", (room_id,)
@@ -301,9 +267,6 @@ async def clear_project(room_id: str):
             await db.commit()
 
             # Return updated room
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
             ) as cursor:
@@ -311,8 +274,6 @@ async def clear_project(room_id: str):
 
             await broadcast("rooms-refresh", {"action": "project_cleared", "room_id": room_id})
             return _row_to_room(row)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -324,8 +285,7 @@ async def clear_project(room_id: str):
 async def set_hq(room_id: str):
     """Set a room as HQ. Only one room can be HQ at a time."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Verify room exists
             async with db.execute(
                 "SELECT id FROM rooms WHERE id = ?", (room_id,)
@@ -349,9 +309,6 @@ async def set_hq(room_id: str):
             await db.commit()
 
             # Return updated room
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 f"{_ROOMS_SELECT} WHERE r.id = ?", (room_id,)
             ) as cursor:
@@ -359,8 +316,6 @@ async def set_hq(room_id: str):
 
             await broadcast("rooms-refresh", {"action": "hq_changed", "room_id": room_id})
             return _row_to_room(row)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -372,8 +327,7 @@ async def set_hq(room_id: str):
 async def reorder_rooms(room_order: List[str]):
     """Reorder rooms by updating sort_order."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             now = int(time.time() * 1000)
             for i, room_id in enumerate(room_order):
                 await db.execute(
@@ -384,8 +338,6 @@ async def reorder_rooms(room_order: List[str]):
             
             await broadcast("rooms-refresh", {"action": "reordered"})
             return {"success": True, "order": room_order}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to reorder rooms: {e}")
         raise HTTPException(status_code=500, detail=str(e))

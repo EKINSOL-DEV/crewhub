@@ -11,7 +11,6 @@ import logging
 import time
 from typing import Optional
 
-import aiosqlite
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -89,8 +88,7 @@ async def sync_agents_from_gateway() -> int:
         now = int(time.time() * 1000)
         upserted = 0
 
-        db = await get_db()
-        try:
+        async with get_db() as db:
             for gw_agent in gw_agents:
                 agent_id = gw_agent.get("agentId")
                 if not agent_id:
@@ -119,8 +117,6 @@ async def sync_agents_from_gateway() -> int:
                 upserted += db.total_changes  # counts only actual inserts
 
             await db.commit()
-        finally:
-            await db.close()
 
         if upserted:
             logger.info(f"Synced {upserted} new agent(s) from Gateway")
@@ -165,9 +161,7 @@ async def list_agents():
     # Only mark stale if we successfully reached the gateway (non-empty set)
     gateway_reachable = bool(gateway_ids)
 
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM agents ORDER BY sort_order ASC, name ASC"
         ) as cursor:
@@ -177,7 +171,7 @@ async def list_agents():
         display_names: dict[str, str] = {}
         async with db.execute("SELECT session_key, display_name FROM session_display_names") as dn_cursor:
             async for dn_row in dn_cursor:
-                display_names[dn_row[0]] = dn_row[1]
+                display_names[dn_row["session_key"]] = dn_row["display_name"]
 
         agents = []
         for row in rows:
@@ -204,8 +198,6 @@ async def list_agents():
             })
 
         return {"agents": agents}
-    finally:
-        await db.close()
 
 
 @router.post("")
@@ -215,8 +207,7 @@ async def create_agent(payload: AgentCreate):
     agent_id = payload.id.strip().lower().replace(" ", "-")
     session_key = payload.agent_session_key or f"agent:{agent_id}:main"
 
-    db = await get_db()
-    try:
+    async with get_db() as db:
         # Check for duplicate
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
             if await cur.fetchone():
@@ -243,8 +234,6 @@ async def create_agent(payload: AgentCreate):
             ),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     window_event = True  # signal callers to refresh
     return {"success": True, "agent_id": agent_id}
@@ -256,9 +245,7 @@ async def get_agent(agent_id: str):
     gateway_ids = await _get_gateway_agent_ids()
     gateway_reachable = bool(gateway_ids)
 
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM agents WHERE id = ?", (agent_id,)
         ) as cursor:
@@ -277,7 +264,7 @@ async def get_agent(agent_id: str):
             ) as dn_cursor:
                 dn_row = await dn_cursor.fetchone()
                 if dn_row:
-                    display_name = dn_row[0]
+                    display_name = dn_row["display_name"]
 
         return {
             "id": row["id"],
@@ -297,8 +284,6 @@ async def get_agent(agent_id: str):
             "updated_at": row["updated_at"],
             "is_stale": gateway_reachable and (row["id"] not in gateway_ids),
         }
-    finally:
-        await db.close()
 
 
 @router.put("/{agent_id}")
@@ -314,16 +299,13 @@ async def update_agent(agent_id: str, patch: AgentUpdate):
     set_clauses = ", ".join(f"{k} = ?" for k in updates)
     values = list(updates.values()) + [agent_id]
 
-    db = await get_db()
-    try:
+    async with get_db() as db:
         cursor = await db.execute(
             f"UPDATE agents SET {set_clauses} WHERE id = ?", values
         )
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Agent not found")
         await db.commit()
-    finally:
-        await db.close()
 
     return {"success": True, "agent_id": agent_id, "updated": list(patch.model_dump(exclude_unset=True).keys())}
 
@@ -331,14 +313,11 @@ async def update_agent(agent_id: str, patch: AgentUpdate):
 @router.delete("/{agent_id}")
 async def delete_agent(agent_id: str):
     """Remove an agent from the local registry."""
-    db = await get_db()
-    try:
+    async with get_db() as db:
         cursor = await db.execute("DELETE FROM agents WHERE id = ?", (agent_id,))
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Agent not found")
         await db.commit()
-    finally:
-        await db.close()
 
     return {"status": "deleted", "id": agent_id}
 
@@ -354,9 +333,7 @@ async def generate_bio(agent_id: str):
     from pathlib import Path
     
     # 1. Get agent info from DB
-    db = await get_db()
-    try:
-        db.row_factory = aiosqlite.Row
+    async with get_db() as db:
         async with db.execute(
             "SELECT * FROM agents WHERE id = ?", (agent_id,)
         ) as cursor:
@@ -367,8 +344,6 @@ async def generate_bio(agent_id: str):
         
         agent_name = row["name"]
         agent_icon = row["icon"] or "🤖"
-    finally:
-        await db.close()
     
     # 2. Try to read SOUL.md from agent workspace
     soul_content = ""

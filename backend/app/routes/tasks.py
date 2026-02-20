@@ -118,11 +118,7 @@ async def _list_tasks_impl(
 ) -> TaskListResponse:
     """Core task listing logic, callable from multiple routes."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             
             # Build query with filters
             query = "SELECT * FROM tasks WHERE 1=1"
@@ -167,8 +163,6 @@ async def _list_tasks_impl(
                 tasks.append(_row_to_task(row, display_name))
             
             return TaskListResponse(tasks=tasks, total=total)
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to list tasks: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -194,11 +188,7 @@ async def list_tasks(
 async def get_task(task_id: str):
     """Get a specific task by ID."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             
             async with db.execute(
                 "SELECT * FROM tasks WHERE id = ?", (task_id,)
@@ -210,8 +200,6 @@ async def get_task(task_id: str):
             
             display_name = await _get_display_name(db, row["assigned_session_key"])
             return _row_to_task(row, display_name)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -223,8 +211,7 @@ async def get_task(task_id: str):
 async def create_task(task: TaskCreate):
     """Create a new task."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             # Verify project exists
             async with db.execute(
                 "SELECT id FROM projects WHERE id = ?", (task.project_id,)
@@ -296,8 +283,6 @@ async def create_task(task: TaskCreate):
                 created_at=now,
                 updated_at=now,
             )
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -309,11 +294,7 @@ async def create_task(task: TaskCreate):
 async def update_task(task_id: str, task: TaskUpdate):
     """Update a task."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             
             # Get existing task
             async with db.execute(
@@ -387,8 +368,6 @@ async def update_task(task_id: str, task: TaskUpdate):
             
             display_name = await _get_display_name(db, row["assigned_session_key"])
             return _row_to_task(row, display_name)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -400,11 +379,7 @@ async def update_task(task_id: str, task: TaskUpdate):
 async def delete_task(task_id: str):
     """Delete a task."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             
             # Get task for history
             async with db.execute(
@@ -437,8 +412,6 @@ async def delete_task(task_id: str):
             })
             
             return {"success": True, "deleted": task_id}
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -479,11 +452,7 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
     5. Returns the session key
     """
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             
             # 1. Get the task
             async with db.execute(
@@ -589,8 +558,6 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
                 task_id=task_id,
                 agent_id=body.agent_id,
             )
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:

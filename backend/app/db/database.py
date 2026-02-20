@@ -2,6 +2,7 @@
 import os
 import aiosqlite
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -632,23 +633,28 @@ async def init_database():
         return False
 
 
+@asynccontextmanager
 async def get_db():
-    """Get a database connection.
-    
-    Returns:
-        aiosqlite.Connection: Database connection
-        
-    Note: Caller is responsible for closing the connection.
+    """Async context manager for a database connection.
+
+    Automatically sets row_factory to return plain dicts and ensures
+    the connection is always closed, eliminating connection leaks.
+
+    Usage::
+
+        async with get_db() as db:
+            async with db.execute("SELECT ...") as cursor:
+                rows = await cursor.fetchall()
     """
-    try:
-        # Ensure database exists
-        if not DB_PATH.exists():
-            await init_database()
-            
-        return await aiosqlite.connect(DB_PATH)
-    except Exception as e:
-        logger.error(f"Failed to connect to database: {e}")
-        raise
+    # Ensure database exists on first use
+    if not DB_PATH.exists():
+        await init_database()
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = lambda cursor, row: dict(
+            zip([col[0] for col in cursor.description], row)
+        )
+        yield db
 
 
 async def seed_default_data():

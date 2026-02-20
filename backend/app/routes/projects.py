@@ -33,11 +33,7 @@ router = APIRouter()
 async def list_projects():
     """Get all projects."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM projects ORDER BY created_at DESC"
             ) as cursor:
@@ -58,8 +54,6 @@ async def list_projects():
                 ))
 
             return {"projects": [p.model_dump() for p in projects]}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to list projects: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -69,11 +63,7 @@ async def list_projects():
 async def projects_overview():
     """Get all projects with room counts and agent counts for HQ dashboard."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM projects ORDER BY created_at DESC"
             ) as cursor:
@@ -111,8 +101,6 @@ async def projects_overview():
                 })
 
             return {"projects": overview}
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to get projects overview: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -122,11 +110,7 @@ async def projects_overview():
 async def get_project(project_id: str):
     """Get a specific project by ID."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM projects WHERE id = ?", (project_id,)
             ) as cursor:
@@ -140,8 +124,6 @@ async def get_project(project_id: str):
                 room_ids = [r["id"] for r in await cursor.fetchall()]
 
             return ProjectResponse(**row, rooms=room_ids)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -153,19 +135,13 @@ async def get_project(project_id: str):
 async def list_markdown_files(project_id: str):
     """List markdown files in a project's Synology Drive folder."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
             async with db.execute(
                 "SELECT * FROM projects WHERE id = ?", (project_id,)
             ) as cursor:
                 project = await cursor.fetchone()
                 if not project:
                     raise HTTPException(status_code=404, detail="Project not found")
-        finally:
-            await db.close()
 
         # Determine project folder path
         folder_path = project.get("folder_path", "")
@@ -273,17 +249,11 @@ async def list_markdown_files(project_id: str):
 @router.post("/{project_id}/upload-document")
 async def upload_document(project_id: str, file: UploadFile = File(...)):
     """Upload markdown document to project meetings folder."""
-    db = await get_db()
-    try:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+    async with get_db() as db:
         async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
             project = await cursor.fetchone()
             if not project:
                 raise HTTPException(404, "Project not found")
-    finally:
-        await db.close()
 
     if not file.filename or not file.filename.endswith('.md'):
         raise HTTPException(400, "Only .md files allowed")
@@ -323,8 +293,7 @@ async def upload_document(project_id: str, file: UploadFile = File(...)):
 async def create_project(project: ProjectCreate):
     """Create a new project."""
     try:
-        db = await get_db()
-        try:
+        async with get_db() as db:
             now = int(time.time() * 1000)
             project_id = generate_id()
 
@@ -375,8 +344,6 @@ async def create_project(project: ProjectCreate):
                 updated_at=now,
                 rooms=[],
             )
-        finally:
-            await db.close()
     except Exception as e:
         logger.error(f"Failed to create project: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -386,11 +353,7 @@ async def create_project(project: ProjectCreate):
 async def update_project(project_id: str, project: ProjectUpdate):
     """Update an existing project."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
 
             # Check if project exists
             async with db.execute(
@@ -437,9 +400,6 @@ async def update_project(project_id: str, project: ProjectUpdate):
                 await db.commit()
 
             # Return updated project
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
             async with db.execute(
                 "SELECT * FROM projects WHERE id = ?", (project_id,)
             ) as cursor:
@@ -453,8 +413,6 @@ async def update_project(project_id: str, project: ProjectUpdate):
             await broadcast("rooms-refresh", {"action": "project_updated", "project_id": project_id})
 
             return ProjectResponse(**row, rooms=room_ids)
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -466,11 +424,7 @@ async def update_project(project_id: str, project: ProjectUpdate):
 async def delete_project(project_id: str):
     """Delete a project. Only archived projects can be deleted."""
     try:
-        db = await get_db()
-        try:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
+        async with get_db() as db:
 
             # Check if project exists
             async with db.execute(
@@ -500,8 +454,6 @@ async def delete_project(project_id: str):
             await broadcast("rooms-refresh", {"action": "project_deleted", "project_id": project_id})
 
             return {"success": True, "deleted": project_id}
-        finally:
-            await db.close()
     except HTTPException:
         raise
     except Exception as e:
