@@ -3,6 +3,8 @@
 Sub-modules:
   prop_generator  — template data, detection helpers, code gen, storage
   prop_stream     — SSE async generator for AI-driven prop generation
+  prop_ai         — OpenClaw AI call + post-processing wrapper
+  prop_crud       — blueprint usage lookup, cascade delete, part helpers
 """
 
 from .prop_generator import (
@@ -27,6 +29,13 @@ from .prop_generator import (
     strip_parts_block,
 )
 from .prop_stream import stream_prop_generation
+from .prop_ai import generate_prop_via_ai
+from .prop_crud import (
+    apply_color_changes_to_parts,
+    cascade_delete_prop_from_blueprints,
+    find_prop_usage_in_blueprints,
+    persist_refined_prop,
+)
 
 __all__ = [
     "AVAILABLE_MODELS",
@@ -49,4 +58,9 @@ __all__ = [
     "save_props_to_disk",
     "strip_parts_block",
     "stream_prop_generation",
+    "generate_prop_via_ai",
+    "apply_color_changes_to_parts",
+    "cascade_delete_prop_from_blueprints",
+    "find_prop_usage_in_blueprints",
+    "persist_refined_prop",
 ]
