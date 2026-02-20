@@ -1,0 +1,86 @@
+import type { MockAgent } from './types'
+
+// 5 core agents for demo
+// DEMO-FIX: agent IDs must match FIXED_AGENT_IDS in MobileLayout ('main', 'dev', …) so fixedAgents filter is non-empty
+export const MOCK_AGENTS: MockAgent[] = [
+  {
+    id: 'main', // DEMO-FIX: was 'agent-main'
+    name: 'Assistent',
+    icon: '🤖',
+    avatar_url: null,
+    color: '#f97316',
+    agent_session_key: 'agent:main:main',
+    default_model: 'claude-sonnet-4-20250514',
+    default_room_id: 'headquarters',
+    sort_order: 0,
+    is_pinned: true,
+    auto_spawn: false,
+    bio: 'Director of Bots — orchestrates all agents, handles communication, planning, and task delegation across the entire crew.',
+    created_at: Date.now() - 86400000 * 7,
+    updated_at: Date.now(),
+  },
+  {
+    id: 'dev', // DEMO-FIX: was 'agent-dev'
+    name: 'Dev',
+    icon: '💻',
+    avatar_url: null,
+    color: '#3b82f6',
+    agent_session_key: 'agent:dev:main',
+    default_model: 'claude-opus-4-20250514',
+    default_room_id: 'dev-room',
+    sort_order: 1,
+    is_pinned: true,
+    auto_spawn: false,
+    bio: 'Senior Developer — writes production code, builds features, manages deployments, and mentors sub-agents on complex tasks.',
+    created_at: Date.now() - 86400000 * 7,
+    updated_at: Date.now(),
+  },
+  {
+    id: 'gamedev', // DEMO-FIX: was 'agent-gamedev'
+    name: 'Game Dev',
+    icon: '🎮',
+    avatar_url: null,
+    color: '#f97316',
+    agent_session_key: 'agent:gamedev:main',
+    default_model: 'claude-opus-4-20250514',
+    default_room_id: 'dev-room',
+    sort_order: 2,
+    is_pinned: true,
+    auto_spawn: false,
+    bio: '3D World Architect — specialises in Three.js, R3F, game physics, shaders, and creative coding for immersive experiences.',
+    created_at: Date.now() - 86400000 * 5,
+    updated_at: Date.now(),
+  },
+  {
+    id: 'reviewer', // DEMO-FIX: was 'agent-reviewer'
+    name: 'Reviewer',
+    icon: '🔍',
+    avatar_url: null,
+    color: '#22c55e',
+    agent_session_key: 'agent:reviewer:main',
+    default_model: 'gpt-5.2',
+    default_room_id: 'thinking-room',
+    sort_order: 3,
+    is_pinned: true,
+    auto_spawn: false,
+    bio: 'Code Critic — reviews pull requests, spots bugs, suggests architectural improvements, and keeps the codebase clean.',
+    created_at: Date.now() - 86400000 * 3,
+    updated_at: Date.now(),
+  },
+  {
+    id: 'flowy', // DEMO-FIX: was 'agent-flowy'
+    name: 'Flowy',
+    icon: '✍️',
+    avatar_url: null,
+    color: '#a855f7',
+    agent_session_key: 'agent:flowy:main',
+    default_model: 'claude-sonnet-4-20250514',
+    default_room_id: 'marketing-room',
+    sort_order: 4,
+    is_pinned: true,
+    auto_spawn: false,
+    bio: 'Marketing Maestro — writes blog posts, marketing copy, documentation, and manages content strategy.',
+    created_at: Date.now() - 86400000 * 3,
+    updated_at: Date.now(),
+  },
+]
