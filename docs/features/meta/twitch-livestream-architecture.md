@@ -175,29 +175,134 @@ error_patterns = [
 
 ---
 
+## 🔌 Layer Separation — Technical Architecture
+
+### Two OpenClaw Gateways
+
+```
+┌─────────────────────────────────────────────────┐
+│  META LAYER — Gateway A (port 18790)             │
+│                                                  │
+│   Triage Agent   The Judge   Watch Agent         │
+│   (persistent)  (persistent) (persistent)        │
+│                      │                           │
+│              sessions_spawn()                    │
+│                      │ ← THE PORTAL              │
+└──────────────────────┼──────────────────────────┘
+                        │
+┌──────────────────────┼──────────────────────────┐
+│  EXECUTION LAYER — Gateway B (port 18791)        │
+│                      │                           │
+│              [Isolated Task Session]             │
+│              spawned per task, own workspace     │
+│              destroyed after completion          │
+│                                                  │
+└─────────────────────────────────────────────────┘
+                        │
+         ┌──────────────┴──────────────┐
+         │  CrewHub Live Backend       │
+         │  (broker + event bus)       │
+         │  → Control App (port 18900) │
+         │  → Stream Overlay           │
+         └─────────────────────────────┘
+```
+
+### How It Works
+
+**Meta Layer (Gateway A)**
+- The Judge, Triage Agent, Watch Agent run as persistent long-lived sessions
+- These agents orchestrate — they never directly write code or execute tasks
+- Each has its own workspace under `~/crewhub-live/meta/`
+
+**The Portal = `sessions_spawn`**
+- The Judge calls `sessions_spawn` with the winning task prompt
+- This spawns an isolated sub-agent on Gateway B in a fresh workspace (`~/crewhub-live/tasks/{task_id}/`)
+- The Judge passes context down (task prompt, constraints, max complexity) and monitors via session history
+- The sub-agent has no awareness of the meta layer above it
+
+**Execution Layer (Gateway B)**
+- Ephemeral sessions: one per task, spawned on demand, destroyed after completion
+- Fully isolated: crashes in execution don't affect the meta layer
+- Clean slate per task: no pollution from previous runs
+- Each task session gets its own workspace directory
+
+**Watch Agent**
+- Subscribes to execution session SSE events from Gateway B
+- Triggers WhatsApp notification to Nicky on: errors, stuck (>10 min), human input needed, task done
+- Reports summary back to The Judge when session ends
+
+**CrewHub Live Backend (broker)**
+- Bridges both gateways: receives SSE events from A and B
+- Exposes unified event stream to Control App and OBS overlay
+- Stores task history (task title, duration, outcome, model used)
+
+### Directory Structure
+
+```
+~/crewhub-live/
+├── meta/
+│   ├── judge/          ← The Judge workspace
+│   ├── triage/         ← Triage Agent workspace
+│   └── watch/          ← Watch Agent workspace
+├── tasks/
+│   └── {task_id}/      ← Isolated per-task workspace (auto-cleaned)
+├── config.json         ← Control App settings (hot-reloaded)
+└── logs/               ← Task history + stream logs
+```
+
+### Config Hot-Reload
+
+`config.json` is written by the Control App and watched by all agents:
+
+```json
+{
+  "poll_duration_seconds": 120,
+  "triage_interval_minutes": 5,
+  "max_task_complexity": "medium",
+  "auto_cycle_on_empty_chat": true,
+  "min_chat_messages": 5,
+  "platform": "twitch",
+  "judge_model": "claude-sonnet-4-6",
+  "triage_model": "claude-haiku-3-5",
+  "paused": false
+}
+```
+
+---
+
 ## 🏗️ Implementation Plan
 
-### Phase 1 — Chat Reader + Triage (standalone)
-- Twitch chat reader (Python service)
-- 5-min message buffer
-- LLM triage → console output
+### Phase 0 — Technical Setup (NOW)
+- Scaffold `~/crewhub-live/` directory structure
+- Two OpenClaw gateway configs (ports 18790 + 18791)
+- CrewHub Live backend scaffold (FastAPI, port 18800)
+- `config.json` with defaults, hot-reload watcher
+- Control App scaffold (React, port 18900) — settings + status panel
+- Verify: spawn isolated task session on Gateway B from Gateway A
+
+### Phase 1 — Chat Reader + Triage
+- Twitch chat reader (Python, twitchio or EventSub)
+- 5-min ring buffer (username, message, timestamp)
+- LLM triage prompt → Top 3 clusters → console output
 - No poll yet, just validate the clustering logic
 
 ### Phase 2 — Twitch Poll Integration
-- Create poll after each triage cycle
-- Read poll winner
-- Log to CrewHub backend
+- Create Twitch Poll from Top 3 (Polls API)
+- Wait for poll end, read winner
+- Inject winner as task into The Judge (via sessions_spawn on Gateway B)
 
 ### Phase 3 — The Judge + Watch Agent
-- The Judge session in CrewHub
-- Task injection from poll result
-- Watch Agent monitors via SSE
+- The Judge persistent session on Gateway A
+- Receives task from poll result, spawns execution session on Gateway B
+- Watch Agent monitors execution via SSE
 - WhatsApp notifications on events
+- Results reported back to The Judge
 
-### Phase 4 — Stream Integration
-- OBS overlay showing current task, poll, chat consensus
+### Phase 4 — Control App + Stream Integration
+- Full Control App: all settings, live controls, status panel
+- OBS browser source overlay (current task, poll votes, Watch Agent alerts)
 - CrewHub 3D world visible on stream
-- Full cycle running live
+- Full cycle running live end-to-end
 
 ---
 
