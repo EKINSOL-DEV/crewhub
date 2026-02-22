@@ -186,9 +186,9 @@ function Segmented<T extends string>({ value, options, onChange, accentColor = '
   return (
     <div style={{
       display: 'flex', gap: 4,
-      background: 'rgba(255,255,255,0.04)',
+      background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
       borderRadius: 12, padding: 4,
-      border: '1px solid rgba(255,255,255,0.08)',
+      border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
     }}>
       {options.map(opt => {
         const active = opt.value === value
@@ -201,7 +201,7 @@ function Segmented<T extends string>({ value, options, onChange, accentColor = '
               justifyContent: 'center', gap: 5,
               padding: '8px 6px', borderRadius: 9, border: 'none',
               background: active ? accentColor : 'transparent',
-              color: active ? '#fff' : '#94a3b8',
+              color: active ? '#fff' : 'var(--mobile-text-muted, #94a3b8)',
               fontSize: 13, fontWeight: active ? 600 : 400,
               cursor: 'pointer', transition: 'all 0.15s',
             }}
@@ -228,22 +228,22 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '12px 14px', borderRadius: 12,
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+        border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
         cursor: 'pointer',
       }}
       onClick={() => onChange(!value)}
     >
       <div>
-        <div style={{ fontSize: 14, color: '#e2e8f0', fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 14, color: 'var(--mobile-text, #e2e8f0)', fontWeight: 500 }}>{label}</div>
         {description && (
-          <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{description}</div>
+          <div style={{ fontSize: 11, color: 'var(--mobile-text-muted, #64748b)', marginTop: 2 }}>{description}</div>
         )}
       </div>
       {/* Track */}
       <div style={{
         width: 44, height: 26, borderRadius: 13, flexShrink: 0,
-        background: value ? accentColor : 'rgba(255,255,255,0.1)',
+        background: value ? accentColor : 'var(--mobile-surface2, rgba(255,255,255,0.1))',
         position: 'relative', transition: 'background 0.2s',
       }}>
         {/* Thumb */}
@@ -419,7 +419,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
         <div style={{
           padding: '8px 20px 16px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
           flexShrink: 0,
         }}>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>
@@ -429,7 +429,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
             onClick={onClose}
             style={{
               width: 32, height: 32, borderRadius: 8, border: 'none',
-              background: 'rgba(255,255,255,0.06)', color: '#94a3b8',
+              background: 'var(--mobile-surface2, rgba(255,255,255,0.06))', color: 'var(--mobile-text-secondary, #94a3b8)',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -463,16 +463,16 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
           {/* ── 2. Backend URL ────────────────────────────────────── */}
           <Section title="Backend URL">
             <div style={{
-              background: 'rgba(255,255,255,0.04)',
+              background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
               borderRadius: 12, padding: '12px 14px',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
               marginBottom: 8,
             }}>
               <div style={{ fontSize: 10, color: '#475569', marginBottom: 4 }}>
                 CURRENT EFFECTIVE URL
               </div>
               <div style={{
-                fontSize: 12, color: '#94a3b8',
+                fontSize: 12, color: 'var(--mobile-text-secondary, #94a3b8)',
                 wordBreak: 'break-all', fontFamily: 'monospace',
               }}>
                 {effectiveUrl}
@@ -492,8 +492,8 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
               placeholder="http://hostname:8091"
               style={{
                 width: '100%', padding: '10px 14px',
-                borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)',
-                background: 'rgba(255,255,255,0.04)', color: '#e2e8f0',
+                borderRadius: 10, border: '1px solid var(--mobile-border, rgba(255,255,255,0.12))',
+                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))', color: 'var(--mobile-text, #e2e8f0)',
                 fontSize: 14, fontFamily: 'monospace',
                 outline: 'none', boxSizing: 'border-box',
                 marginBottom: 8,
@@ -517,8 +517,8 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                 onClick={handleClearUrl}
                 style={{
                   padding: '10px 18px', borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  background: 'transparent', color: '#94a3b8',
+                  border: '1px solid var(--mobile-border, rgba(255,255,255,0.1))',
+                  background: 'transparent', color: 'var(--mobile-text-secondary, #94a3b8)',
                   cursor: 'pointer', fontSize: 13,
                 }}
               >
@@ -558,15 +558,15 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
           {/* ── 4b. Microphone ───────────────────────────────────── */}
           <Section title="Microphone">
             <div style={{
-              background: 'rgba(255,255,255,0.04)',
+              background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
               borderRadius: 12, padding: '12px 14px',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
             }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
               }}>
-                <Mic size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: '#e2e8f0', flex: 1 }}>Input Device</span>
+                <Mic size={14} style={{ color: 'var(--mobile-text-secondary, #94a3b8)', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: 'var(--mobile-text, #e2e8f0)', flex: 1 }}>Input Device</span>
                 <button
                   onClick={handleEnumerateMics}
                   disabled={micEnumerating}
@@ -590,8 +590,8 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                   onChange={e => handleMicChange(e.target.value)}
                   style={{
                     width: '100%', padding: '8px 10px', borderRadius: 8,
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    background: 'rgba(255,255,255,0.06)', color: '#e2e8f0',
+                    border: '1px solid var(--mobile-border, rgba(255,255,255,0.12))',
+                    background: 'var(--mobile-surface2, rgba(255,255,255,0.06))', color: 'var(--mobile-text, #e2e8f0)',
                     fontSize: 13, outline: 'none', cursor: 'pointer',
                   }}
                 >
@@ -613,9 +613,9 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
           {/* ── 5. App Info ───────────────────────────────────────── */}
           <Section title="App Info">
             <div style={{
-              background: 'rgba(255,255,255,0.04)',
+              background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
               borderRadius: 12, overflow: 'hidden',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
             }}>
               {[
                 { label: 'Version', value: `v${APP_VERSION}` },
@@ -635,7 +635,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                     display: 'flex', alignItems: 'flex-start',
                     justifyContent: 'space-between', padding: '11px 14px',
                     borderBottom: i < arr.length - 1
-                      ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                      ? '1px solid var(--mobile-border, rgba(255,255,255,0.06))' : 'none',
                     gap: 12,
                   }}
                 >
@@ -643,7 +643,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                     {row.label}
                   </span>
                   <span style={{
-                    fontSize: 12, color: '#e2e8f0', textAlign: 'right',
+                    fontSize: 12, color: 'var(--mobile-text, #e2e8f0)', textAlign: 'right',
                     wordBreak: 'break-all',
                     fontFamily: row.mono ? 'monospace' : 'inherit',
                   }}>
