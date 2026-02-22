@@ -641,7 +641,7 @@ function PropHistoryTab() {
         setLoading(false)
       })
       .catch(err => {
-        console.error('[PropHistoryTab] fetch failed:', err)
+        // Silently handle — error state is shown in UI
         setError('Could not load history')
         setLoading(false)
       })
