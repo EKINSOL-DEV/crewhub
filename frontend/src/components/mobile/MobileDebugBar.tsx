@@ -49,7 +49,7 @@ export function MobileDebugBar({ enabled }: MobileDebugBarProps) {
         right: 0,
         zIndex: 9990,
         background: 'var(--mobile-surface, rgba(15,23,42,0.95))',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
+        borderTop: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         padding: '4px 12px',
@@ -70,21 +70,21 @@ export function MobileDebugBar({ enabled }: MobileDebugBarProps) {
         <span style={{ color: stateColor }}>SSE: {sseState}</span>
       </span>
 
-      <span style={{ color: 'rgba(255,255,255,0.1)' }}>│</span>
+      <span style={{ color: 'var(--mobile-border, rgba(255,255,255,0.1))' }}>│</span>
 
       {/* API base */}
       <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         API: {API_BASE}
       </span>
 
-      <span style={{ color: 'rgba(255,255,255,0.1)' }}>│</span>
+      <span style={{ color: 'var(--mobile-border, rgba(255,255,255,0.1))' }}>│</span>
 
       {/* Tauri */}
       <span style={{ color: inTauri ? '#a78bfa' : '#475569' }}>
         Tauri: {inTauri ? 'yes' : 'no'}
       </span>
 
-      <span style={{ color: 'rgba(255,255,255,0.1)' }}>│</span>
+      <span style={{ color: 'var(--mobile-border, rgba(255,255,255,0.1))' }}>│</span>
 
       {/* Version */}
       <span>v{APP_VERSION}</span>
