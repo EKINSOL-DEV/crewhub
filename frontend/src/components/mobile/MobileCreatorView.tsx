@@ -393,7 +393,7 @@ function PropGeneratorTab() {
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             background: 'transparent', border: 'none',
-            color: '#94a3b8', fontSize: 13, cursor: 'pointer', padding: 0,
+            color: 'var(--mobile-text-muted, #94a3b8)', fontSize: 13, cursor: 'pointer', padding: 0,
           }}
         >
           {showExamples ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -409,9 +409,9 @@ function PropGeneratorTab() {
                 onClick={() => { setInputText(p); setShowExamples(false) }}
                 style={{
                   padding: '6px 12px',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 20, color: '#cbd5e1',
+                  background: 'var(--mobile-surface2, rgba(255,255,255,0.05))',
+                  border: '1px solid var(--mobile-border, rgba(255,255,255,0.1))',
+                  borderRadius: 20, color: 'var(--mobile-text-secondary, #cbd5e1)',
                   fontSize: 12, cursor: 'pointer',
                 }}
               >
@@ -572,7 +572,7 @@ function PropGeneratorTab() {
               background: 'transparent', border: 'none',
               display: 'flex', alignItems: 'center',
               justifyContent: 'space-between',
-              color: '#94a3b8', fontSize: 13, cursor: 'pointer',
+              color: 'var(--mobile-text-muted, #94a3b8)', fontSize: 13, cursor: 'pointer',
             }}
           >
             <span>🧠 AI Thinking Process {isGenerating ? '⏳' : ''}</span>
@@ -640,7 +640,7 @@ function PropHistoryTab() {
         setRecords(Array.isArray(data.records) ? data.records : [])
         setLoading(false)
       })
-      .catch(err => {
+      .catch(() => {
         // Silently handle — error state is shown in UI
         setError('Could not load history')
         setLoading(false)
