@@ -39,15 +39,21 @@ interface ThinkingLine {
 interface PropErrorBoundaryState { hasError: boolean }
 
 class PropErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback?: React.ReactNode },
+  { children: React.ReactNode; fallback?: React.ReactNode; resetKey?: string },
   PropErrorBoundaryState
 > {
-  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode; resetKey?: string }) {
     super(props)
     this.state = { hasError: false }
   }
   static getDerivedStateFromError(): PropErrorBoundaryState {
     return { hasError: true }
+  }
+  componentDidUpdate(prevProps: { resetKey?: string }) {
+    // Reset error state when new parts are provided (resetKey changes)
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false })
+    }
   }
   render() {
     if (this.state.hasError) {
@@ -84,7 +90,7 @@ function PropPreview3D({ parts, name }: PropPreview3DProps) {
       border: '1px solid rgba(99,102,241,0.25)',
       position: 'relative',
     }}>
-      <PropErrorBoundary>
+      <PropErrorBoundary resetKey={`${name}-${parts.length}`}>
         <Canvas camera={{ position: [3, 2, 3], fov: 45 }} style={{ width: '100%', height: '100%' }}>
           <Suspense fallback={null}>
             <Stage adjustCamera={false} environment="city" intensity={0.5}>
