@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import {
   X,
-  Palette, LayoutGrid, SlidersHorizontal, Wrench, FolderKanban, Cable, Bot, Shield, Database,
+  Palette, LayoutGrid, SlidersHorizontal, Wrench, FolderKanban, Cable, Bot, Shield, Database, Key,
 } from "lucide-react"
 import { ConnectionsView } from "./ConnectionsView"
 import { AgentsSettingsTab } from "./AgentsSettingsTab"
@@ -15,6 +15,7 @@ import { ProjectsTab } from "@/components/settings/ProjectsTab"
 import { BehaviorTab } from "@/components/settings/BehaviorTab"
 import { DataTab } from "@/components/settings/DataTab"
 import { AdvancedTab } from "@/components/settings/AdvancedTab"
+import { ApiKeysTab } from "@/components/settings/ApiKeysTab"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,7 +56,7 @@ interface SettingsPanelProps {
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
-type SettingsTab = "look" | "rooms" | "projects" | "agents" | "personas" | "identity" | "behavior" | "data" | "connections" | "advanced"
+type SettingsTab = "look" | "rooms" | "projects" | "agents" | "personas" | "identity" | "behavior" | "data" | "connections" | "apikeys" | "advanced"
 
 const SETTINGS_TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "look",        label: "Look & Feel",  icon: <Palette className="h-4 w-4" /> },
@@ -67,6 +68,7 @@ const SETTINGS_TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[]
   { id: "behavior",    label: "Behavior",     icon: <SlidersHorizontal className="h-4 w-4" /> },
   { id: "data",        label: "Data",         icon: <Database className="h-4 w-4" /> },
   { id: "connections", label: "Connections",  icon: <Cable className="h-4 w-4" /> },
+  { id: "apikeys",     label: "API Keys",     icon: <Key className="h-4 w-4" /> },
   { id: "advanced",    label: "Advanced",     icon: <Wrench className="h-4 w-4" /> },
 ]
 
@@ -182,6 +184,7 @@ export function SettingsPanel({ open, onOpenChange, settings, onSettingsChange, 
               {selectedTab === "behavior"    && <BehaviorTab settings={settings} onSettingsChange={onSettingsChange} />}
               {selectedTab === "data"        && <DataTab />}
               {selectedTab === "connections" && <ConnectionsView embedded />}
+              {selectedTab === "apikeys"     && <ApiKeysTab />}
               {selectedTab === "advanced"    && <AdvancedTab />}
 
             </div>
