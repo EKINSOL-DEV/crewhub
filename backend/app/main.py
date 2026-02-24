@@ -24,6 +24,7 @@ from app.routes.standups import router as standups_router
 from app.routes.meetings import router as meetings_router
 from app.routes.docs import router as docs_router
 from app.routes.threads import router as threads_router
+from app.routes.prop_placement import router as prop_placement_router
 from app.db.database import init_database, check_database_health
 from app.auth import init_api_keys
 from app.services.connections import get_connection_manager
@@ -344,6 +345,9 @@ app.include_router(meetings_router, prefix="/api/meetings", tags=["meetings"])
 
 # Documentation browser
 app.include_router(docs_router, prefix="/api/docs", tags=["docs"])
+
+# Creator Mode: Prop Placement
+app.include_router(prop_placement_router)
 
 # Phase 7: Group Chat Threads
 app.include_router(threads_router, prefix="/api/threads", tags=["threads"])
