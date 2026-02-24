@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.db.database import get_db
 from app.db.models import SessionDisplayName, SessionDisplayNameUpdate
+from app.routes.sse import broadcast
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -69,7 +70,15 @@ async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
                 (session_key,)
             ) as cursor:
                 row = await cursor.fetchone()
-                return SessionDisplayName(**row)
+                result = SessionDisplayName(**row)
+
+            # Broadcast SSE event so other clients update their cache
+            await broadcast("display-name-updated", {
+                "session_key": session_key,
+                "display_name": data.display_name,
+                "action": "set",
+            })
+            return result
     except Exception as e:
         logger.error(f"Failed to set display name for {session_key}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -93,7 +102,13 @@ async def delete_display_name(session_key: str):
                 (session_key,)
             )
             await db.commit()
-            
+
+            # Broadcast SSE event so other clients update their cache
+            await broadcast("display-name-updated", {
+                "session_key": session_key,
+                "display_name": None,
+                "action": "deleted",
+            })
             return {"success": True, "deleted": session_key}
     except HTTPException:
         raise

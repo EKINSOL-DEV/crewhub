@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { sessionDisplayNameApi, API_BASE } from "@/lib/api"
+import { sseManager } from "@/lib/sseManager"
 
 const displayNameCache = new Map<string, string | null>()
 type Subscriber = () => void
@@ -13,11 +14,38 @@ function notifySubscribers() {
   subscribers.forEach(fn => fn())
 }
 
+// ── SSE integration ────────────────────────────────────────────────────────
+// Subscribe once to display-name-updated events so the module-level cache
+// stays in sync across all connected clients without individual re-fetches.
+let _sseSubscribed = false
+function ensureSSESubscription() {
+  if (_sseSubscribed) return
+  _sseSubscribed = true
+
+  sseManager.subscribe("display-name-updated", (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data) as {
+        session_key: string
+        display_name: string | null
+        action: "set" | "deleted"
+      }
+      // Update cache in-place; null means "no display name"
+      displayNameCache.set(data.session_key, data.display_name)
+      notifySubscribers()
+    } catch (err) {
+      console.error("[useSessionDisplayNames] SSE parse error:", err)
+    }
+  })
+}
+
 // Fetch ALL display names at once (much more efficient than individual requests)
 async function fetchAllDisplayNames(): Promise<void> {
   if (bulkFetchDone) return
   if (bulkFetchPromise) return bulkFetchPromise
-  
+
+  // Ensure SSE subscription is active so cache stays live after initial fetch
+  ensureSSESubscription()
+
   bulkFetchPromise = (async () => {
     try {
       const response = await fetch(`${API_BASE}/session-display-names`)
