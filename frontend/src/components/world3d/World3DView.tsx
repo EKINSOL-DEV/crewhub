@@ -1,5 +1,8 @@
 import { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react'
-import { Maximize2, Minimize2 } from 'lucide-react'
+import { Maximize2, Minimize2, Palette } from 'lucide-react'
+import { useCreatorMode } from '@/contexts/CreatorModeContext'
+import { PropBrowser } from '@/components/props/PropBrowser'
+import { API_BASE } from '@/lib/api'
 import { Canvas } from '@react-three/fiber'
 import { CanvasErrorBoundary } from './CanvasErrorBoundary'
 import { SceneContent } from './SceneContent'
@@ -190,6 +193,66 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     return () => document.removeEventListener('fullscreenchange', handler)
   }, [])
 
+  // ── Creator Mode ──────────────────────────────────────────────
+  const {
+    isCreatorMode,
+    toggleCreatorMode,
+    selectedPropId,
+    clearSelection,
+    pendingRotation,
+    placedProps,
+    pushAction,
+    undo,
+    isBrowserOpen,
+    toggleBrowser,
+  } = useCreatorMode()
+
+  const ghostPositionRef = useRef<{ x: number; y: number; z: number } | null>(null)
+
+  const handleGhostPosition = useCallback((pos: { x: number; y: number; z: number } | null) => {
+    ghostPositionRef.current = pos
+  }, [])
+
+  const handlePlaceProp = useCallback(async (pos: { x: number; y: number; z: number }) => {
+    if (!selectedPropId) return
+    const apiKey = localStorage.getItem('crewhub-api-key')
+    const headers: HeadersInit = apiKey
+      ? { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+      : { 'Content-Type': 'application/json' }
+
+    try {
+      const resp = await fetch(`${API_BASE}/world/props`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          prop_id: selectedPropId,
+          position: pos,
+          rotation_y: pendingRotation,
+          room_id: null,
+          scale: 1.0,
+        }),
+      })
+      if (resp.ok) {
+        const placed = await resp.json()
+        pushAction({
+          type: 'place',
+          placedId: placed.id,
+          propId: placed.prop_id,
+          position: placed.position,
+          rotation_y: placed.rotation_y,
+          roomId: placed.room_id,
+        })
+        // Clear selection after placement (one at a time)
+        clearSelection()
+      } else {
+        const err = await resp.json().catch(() => ({ detail: 'Unknown error' }))
+        console.warn('[CreatorMode] Place prop failed:', err.detail)
+      }
+    } catch (e) {
+      console.warn('[CreatorMode] Place prop error:', e)
+    }
+  }, [selectedPropId, pendingRotation, pushAction, clearSelection])
+
   const toggleFullscreen = async () => {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen()
     else await document.exitFullscreen()
@@ -257,7 +320,14 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   return (
     <TaskBoardProvider onOpen={() => setTaskBoardOpen(true)}>
       <DragDropProvider onAssignmentChanged={refreshRooms}>
-        <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
+        <div
+          className="relative w-full h-full"
+          style={{
+            minHeight: '600px',
+            boxShadow: isCreatorMode ? '0 0 0 3px gold, 0 0 20px rgba(255,215,0,0.3)' : undefined,
+            transition: 'box-shadow 0.3s ease',
+          }}
+        >
           {/* 3D Canvas */}
           <CanvasErrorBoundary>
             <Canvas
@@ -285,6 +355,11 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
                   isRoomsLoading={isRoomsLoading}
                   meetingParticipantKeys={meetingParticipantKeys}
                   gridDebugEnabled={gridDebugEnabled}
+                  placedProps={placedProps}
+                  selectedPropId={isCreatorMode ? selectedPropId : null}
+                  pendingRotation={pendingRotation}
+                  onPlaceProp={isCreatorMode ? handlePlaceProp : undefined}
+                  onGhostPosition={handleGhostPosition}
                 />
               </Suspense>
             </Canvas>
@@ -321,6 +396,96 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           >
             {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           </button>
+
+          {/* Creator Mode toggle button */}
+          <button
+            onClick={toggleCreatorMode}
+            title={`${isCreatorMode ? 'Exit' : 'Enter'} Creator Mode [E]`}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '64px',
+              zIndex: 25,
+              padding: '6px',
+              borderRadius: '8px',
+              border: isCreatorMode ? '2px solid gold' : '1px solid rgba(209,213,219,0.5)',
+              background: isCreatorMode ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.6)',
+              color: isCreatorMode ? 'gold' : '#4b5563',
+              cursor: 'pointer',
+              backdropFilter: 'blur(4px)',
+              boxShadow: isCreatorMode ? '0 0 12px rgba(255,215,0,0.5)' : '0 1px 2px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Palette size={18} />
+          </button>
+
+          {/* Prop Browser floating panel */}
+          {isBrowserOpen && isCreatorMode && (
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 150 }}>
+              <div style={{ pointerEvents: 'auto' }}>
+                <PropBrowser />
+              </div>
+            </div>
+          )}
+
+          {/* Creator Mode status bar */}
+          {isCreatorMode && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '16px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 50,
+                background: 'rgba(0,0,0,0.75)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: '10px',
+                padding: '8px 16px',
+                color: '#e2e8f0',
+                fontSize: '12px',
+                border: '1px solid rgba(255,215,0,0.4)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ color: 'gold', fontWeight: 600 }}>✏️ Creator Mode</span>
+              <span style={{ color: '#94a3b8' }}>·</span>
+              {selectedPropId ? (
+                <span style={{ color: '#00ffcc' }}>🎯 Click in world to place · [R] rotate · [Esc] cancel</span>
+              ) : (
+                <span>[B] open prop browser · [E] exit</span>
+              )}
+              <span style={{ color: '#94a3b8' }}>·</span>
+              <button
+                onClick={undo}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '12px', padding: '0 2px' }}
+                title="Undo (Ctrl+Z)"
+              >
+                ↩ undo
+              </button>
+              <button
+                onClick={toggleBrowser}
+                style={{
+                  background: isBrowserOpen ? 'rgba(0,255,204,0.15)' : 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '6px',
+                  color: isBrowserOpen ? '#00ffcc' : '#94a3b8',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  padding: '2px 8px',
+                }}
+              >
+                {isBrowserOpen ? '✕ Close' : '📦 Props [B]'}
+              </button>
+            </div>
+          )}
 
           {/* Controls hint */}
           {focusState.level !== 'bot' && focusState.level !== 'room' && isNotFirstPerson && !isFullscreen && (

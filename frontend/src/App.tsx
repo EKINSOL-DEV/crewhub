@@ -34,6 +34,7 @@ import { getOnboardingStatus, API_BASE } from './lib/api'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { DesktopActivityFeed, DesktopActivityFeedButton, useDesktopActivityFeed } from './components/desktop/DesktopActivityFeed'
+import { CreatorModeProvider } from './contexts/CreatorModeContext'
 
 /** Open the standalone Zen Mode Tauri window (or focus it if already open). */
 async function openZenWindow() {
@@ -881,12 +882,14 @@ function App() {
           <RoomsProvider>
             <ZenModeProvider>
               <ChatProvider>
-                {/* AppHealthGate: in Tauri desktop, shows error screen if
-                    backend on localhost:8091 is not running. In browser,
-                    passes through directly (health check skipped). */}
-                <AppHealthGate>
-                  <AppContent />
-                </AppHealthGate>
+                <CreatorModeProvider>
+                  {/* AppHealthGate: in Tauri desktop, shows error screen if
+                      backend on localhost:8091 is not running. In browser,
+                      passes through directly (health check skipped). */}
+                  <AppHealthGate>
+                    <AppContent />
+                  </AppHealthGate>
+                </CreatorModeProvider>
               </ChatProvider>
             </ZenModeProvider>
           </RoomsProvider>
