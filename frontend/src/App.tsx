@@ -33,6 +33,7 @@ import { ProjectManagerModal } from './components/zen/ProjectManagerModal'
 import { getOnboardingStatus, API_BASE } from './lib/api'
 import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
 import { Button } from './components/ui/button'
+import { DesktopActivityFeed, DesktopActivityFeedButton, useDesktopActivityFeed } from './components/desktop/DesktopActivityFeed'
 
 /** Open the standalone Zen Mode Tauri window (or focus it if already open). */
 async function openZenWindow() {
@@ -183,6 +184,9 @@ function AppContent() {
   const { windows } = useChatContext()
   const { rooms, getRoomForSession } = useRoomsContext()
   
+  // Desktop Activity Feed state
+  const activityFeed = useDesktopActivityFeed()
+
   // Zen Mode state
   const zenMode = useZenMode()
   
@@ -412,6 +416,11 @@ function AppContent() {
               </Button>
             )}
             
+            <DesktopActivityFeedButton
+              isOpen={activityFeed.isOpen}
+              onClick={activityFeed.toggle}
+            />
+
             <Button variant="ghost" size="sm" onClick={() => setSettingsOpen(true)}>
               <Settings className="h-4 w-4" />
             </Button>
@@ -486,6 +495,12 @@ function AppContent() {
           onSkip={handleOnboardingSkip}
         />
       )}
+
+      {/* Desktop Activity Feed — fixed right sidebar */}
+      <DesktopActivityFeed
+        isOpen={activityFeed.isOpen}
+        onClose={activityFeed.close}
+      />
 
       <DemoModeIndicator />
       <MobileWarning />
