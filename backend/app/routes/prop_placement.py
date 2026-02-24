@@ -52,6 +52,11 @@ class UpdatePropRequest(BaseModel):
     rotation_y: Optional[float] = None
     scale: Optional[float] = Field(default=None, ge=0.1, le=10.0)
     room_id: Optional[str] = None
+    # C2 fix: sentinel to explicitly clear room_id to NULL.
+    # Because room_id: null is indistinguishable from "not provided" in JSON
+    # (both deserialise to None), we need a separate flag. Set clear_room=true
+    # to move a prop back to the world floor (room_id → NULL).
+    clear_room: bool = False
 
 
 class PlacedPropResponse(BaseModel):
@@ -203,7 +208,12 @@ async def update_placed_prop(
         if body.scale is not None:
             updates.append("scale = ?")
             params.append(body.scale)
-        if body.room_id is not None:
+        # C2 fix: clear_room=true explicitly sets room_id to NULL;
+        # room_id alone cannot distinguish "null provided" from "not provided".
+        if body.clear_room:
+            updates.append("room_id = ?")
+            params.append(None)
+        elif body.room_id is not None:
             updates.append("room_id = ?")
             params.append(body.room_id)
 

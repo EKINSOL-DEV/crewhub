@@ -3,6 +3,7 @@ import { Maximize2, Minimize2, Palette } from 'lucide-react'
 import { useCreatorMode } from '@/contexts/CreatorModeContext'
 import { PropBrowser } from '@/components/props/PropBrowser'
 import { API_BASE } from '@/lib/api'
+import { showToast } from '@/lib/toast'
 import { Canvas } from '@react-three/fiber'
 import { CanvasErrorBoundary } from './CanvasErrorBoundary'
 import { SceneContent } from './SceneContent'
@@ -234,19 +235,29 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
       })
       if (resp.ok) {
         const placed = await resp.json()
+        // M3: capture scale so redo-place restores the correct scale
         pushAction({
           type: 'place',
           placedId: placed.id,
           propId: placed.prop_id,
           position: placed.position,
           rotation_y: placed.rotation_y,
+          scale: placed.scale ?? 1.0,
           roomId: placed.room_id,
         })
         // Clear selection after placement (one at a time)
         clearSelection()
       } else {
         const err = await resp.json().catch(() => ({ detail: 'Unknown error' }))
-        console.warn('[CreatorMode] Place prop failed:', err.detail)
+        // M2: surface auth failures visibly — non-admin users see a clear message
+        if (resp.status === 401 || resp.status === 403) {
+          showToast({
+            message: `⛔ Creator Mode requires a manage-scope API key. ${err.detail ?? ''}`.trim(),
+            duration: 6000,
+          })
+        } else {
+          console.warn('[CreatorMode] Place prop failed:', err.detail)
+        }
       }
     } catch (e) {
       console.warn('[CreatorMode] Place prop error:', e)

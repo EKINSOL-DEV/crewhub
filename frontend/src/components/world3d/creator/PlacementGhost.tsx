@@ -30,7 +30,7 @@ interface PlacementGhostProps {
 }
 
 export function PlacementGhost({ propId, rotation, onPositionChange, cellSize = 1.0 }: PlacementGhostProps) {
-  const { camera, raycaster, size } = useThree()
+  const { camera, raycaster, gl } = useThree()
   const groupRef = useRef<THREE.Group>(null)
   const mouseRef = useRef(new THREE.Vector2())
   const intersectPoint = useRef(new THREE.Vector3())
@@ -39,16 +39,18 @@ export function PlacementGhost({ propId, rotation, onPositionChange, cellSize = 
   const entry = useMemo(() => getPropEntry(propId), [propId])
 
   useEffect(() => {
+    // M4 fix: use gl.domElement.getBoundingClientRect() so NDC coords are correct
+    // when the canvas doesn't fill the full viewport (e.g. side panels open,
+    // tabbed view). Using e.clientX / window size was wrong when canvas ≠ viewport.
     const onMouseMove = (e: MouseEvent) => {
-      const canvas = e.target as HTMLElement
-      const rect = canvas.getBoundingClientRect?.()
-      const x = rect ? ((e.clientX - rect.left) / rect.width) * 2 - 1 : (e.clientX / size.width) * 2 - 1
-      const y = rect ? -((e.clientY - rect.top) / rect.height) * 2 + 1 : -(e.clientY / size.height) * 2 + 1
+      const rect = gl.domElement.getBoundingClientRect()
+      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1
       mouseRef.current.set(x, y)
     }
     window.addEventListener('mousemove', onMouseMove)
     return () => window.removeEventListener('mousemove', onMouseMove)
-  }, [size])
+  }, [gl]) // gl.domElement is stable
 
   useFrame(() => {
     if (!groupRef.current) return

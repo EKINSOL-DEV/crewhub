@@ -47,7 +47,8 @@ export interface PlacedProp {
 }
 
 export type PlacementAction =
-  | { type: 'place'; placedId: string; propId: string; position: Vec3; rotation_y: number; roomId?: string | null }
+  // M3: scale added so redo-place restores the correct scale
+  | { type: 'place'; placedId: string; propId: string; position: Vec3; rotation_y: number; scale: number; roomId?: string | null }
   | { type: 'remove'; placedId: string; snapshot: PlacedProp }
   | { type: 'move'; placedId: string; from: Placement; to: Placement }
 
@@ -301,8 +302,11 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
               headers: headers(),
             })
           } else if (action.type === 'remove') {
-            // Undo a remove → re-place it
-            await fetch(`${API_BASE}/world/props`, {
+            // Undo a remove → re-place it.
+            // C1 fix: the backend assigns a fresh UUID. After the POST, update the
+            // redo stack entry to use the new placed_id so redo-remove targets the
+            // correct row and doesn't 404.
+            const resp = await fetch(`${API_BASE}/world/props`, {
               method: 'POST',
               headers: headers(),
               body: JSON.stringify({
@@ -313,8 +317,20 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
                 room_id: action.snapshot.room_id,
               }),
             })
+            if (resp.ok) {
+              const freshPlaced = await resp.json()
+              const newPlacedId: string = freshPlaced.id
+              // Patch the entry we just pushed to redo with the new id
+              setRedoStack(prev => prev.map(a =>
+                a === action
+                  ? { ...a, placedId: newPlacedId, snapshot: { ...action.snapshot, id: newPlacedId } }
+                  : a
+              ))
+            }
           } else if (action.type === 'move') {
-            // Undo a move → move back to original position
+            // Undo a move → move back to original position.
+            // C2: use clear_room sentinel when original room_id was null so the
+            // backend actually clears the column (room_id: null is ambiguous).
             await fetch(`${API_BASE}/world/props/${action.placedId}`, {
               method: 'PATCH',
               headers: headers(),
@@ -322,7 +338,9 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
                 position: action.from.position,
                 rotation_y: action.from.rotation_y,
                 scale: action.from.scale,
-                room_id: action.from.room_id,
+                ...(action.from.room_id === null
+                  ? { clear_room: true }
+                  : { room_id: action.from.room_id }),
               }),
             })
           }
@@ -345,7 +363,7 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
       ;(async () => {
         try {
           if (action.type === 'place') {
-            // Redo a place → re-place
+            // Redo a place → re-place (M3 fix: include scale so redo restores correct size)
             await fetch(`${API_BASE}/world/props`, {
               method: 'POST',
               headers: headers(),
@@ -353,6 +371,7 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
                 prop_id: action.propId,
                 position: action.position,
                 rotation_y: action.rotation_y,
+                scale: action.scale,
                 room_id: action.roomId,
               }),
             })
@@ -363,7 +382,8 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
               headers: headers(),
             })
           } else if (action.type === 'move') {
-            // Redo a move → move to new position
+            // Redo a move → move to new position.
+            // C2: use clear_room sentinel when target room_id is null.
             await fetch(`${API_BASE}/world/props/${action.placedId}`, {
               method: 'PATCH',
               headers: headers(),
@@ -371,7 +391,9 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
                 position: action.to.position,
                 rotation_y: action.to.rotation_y,
                 scale: action.to.scale,
-                room_id: action.to.room_id,
+                ...(action.to.room_id === null
+                  ? { clear_room: true }
+                  : { room_id: action.to.room_id }),
               }),
             })
           }

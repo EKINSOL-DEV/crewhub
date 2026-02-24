@@ -19,6 +19,7 @@ import {
   type PropCategory,
   type PropMeta,
 } from './propMeta'
+import { getPropMountType } from '@/components/world3d/grid/PropRegistry'
 import { API_BASE } from '@/lib/api'
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -109,6 +110,11 @@ export function PropBrowser() {
   const filteredBuiltin = useMemo((): PropMeta[] => {
     const q = search.toLowerCase()
     return BUILTIN_PROP_META.filter(meta => {
+      // M1: Wall-mount props hidden until wall placement is supported.
+      // These props require a wall surface; placing them on the floor
+      // causes them to float in mid-air at their yOffset height.
+      if (getPropMountType(meta.propId) === 'wall') return false
+
       if (activeCategory !== 'all' && meta.category !== activeCategory) return false
       if (q) {
         return (
@@ -127,10 +133,19 @@ export function PropBrowser() {
     return generatedProps.filter(g => g.name.toLowerCase().includes(q) || g.prompt.toLowerCase().includes(q))
   }, [search, generatedProps])
 
+  // ── Browsable built-in props (floor-mount only) ───────────────
+  // M1: Wall-mount props are excluded until wall placement is supported.
+  const browsableBuiltinCount = useMemo(
+    () => BUILTIN_PROP_META.filter(m => getPropMountType(m.propId) !== 'wall').length,
+    []
+  )
+
   // ── Categories with counts ────────────────────────────────────
+  // M1: Exclude wall-mount props from counts (they are hidden from the browser).
   const categoriesWithCounts = useMemo(() => {
     const counts: Partial<Record<PropCategory, number>> = {}
     BUILTIN_PROP_META.forEach(m => {
+      if (getPropMountType(m.propId) === 'wall') return
       counts[m.category] = (counts[m.category] ?? 0) + 1
     })
     return counts
@@ -240,7 +255,7 @@ export function PropBrowser() {
         }}
       >
         {[
-          { id: 'builtin' as TabId, label: 'Built-in', icon: <Package size={12} />, count: BUILTIN_PROP_META.length },
+          { id: 'builtin' as TabId, label: 'Built-in', icon: <Package size={12} />, count: browsableBuiltinCount },
           { id: 'generated' as TabId, label: 'Generated', icon: <Sparkles size={12} />, count: generatedProps.length },
         ].map(tab => (
           <button
@@ -290,7 +305,7 @@ export function PropBrowser() {
         >
           <CategoryChip
             label="All"
-            count={BUILTIN_PROP_META.length}
+            count={browsableBuiltinCount}
             active={activeCategory === 'all'}
             onClick={() => setActiveCategory('all')}
           />
