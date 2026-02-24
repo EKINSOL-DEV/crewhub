@@ -32,6 +32,10 @@ import type { Room } from '@/hooks/useRooms'
 import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 import type { FocusLevel } from '@/contexts/WorldFocusContext'
+import type { PlacedProp } from '@/contexts/CreatorModeContext'
+import { PlacedPropsRenderer } from './creator/PlacedPropsRenderer'
+import { PlacementGhost } from './creator/PlacementGhost'
+import { PlacementClickPlane } from './creator/PlacementClickPlane'
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -67,6 +71,16 @@ export interface SceneContentProps {
   /** Session keys of bots currently in an active meeting */
   meetingParticipantKeys?: Set<string>
   gridDebugEnabled: boolean
+  /** Creator Mode: placed props to render in world */
+  placedProps?: PlacedProp[]
+  /** Creator Mode: prop currently selected for placement */
+  selectedPropId?: string | null
+  /** Creator Mode: pending rotation for ghost prop */
+  pendingRotation?: number
+  /** Creator Mode: handler for placement click */
+  onPlaceProp?: (pos: { x: number; y: number; z: number }) => void
+  /** Creator Mode: ghost position callback */
+  onGhostPosition?: (pos: { x: number; y: number; z: number } | null) => void
 }
 
 // ─── Parking Floor ──────────────────────────────────────────────
@@ -112,6 +126,11 @@ export function SceneContent({
   isRoomsLoading,
   meetingParticipantKeys,
   gridDebugEnabled,
+  placedProps = [],
+  selectedPropId = null,
+  pendingRotation = 0,
+  onPlaceProp,
+  onGhostPosition,
 }: SceneContentProps) {
   void _settings
 
@@ -415,6 +434,26 @@ export function SceneContent({
         roomObstacles={roomObstacles}
         onBotClick={onBotClick}
       />
+
+      {/* ── Creator Mode: Placed Props ── */}
+      {placedProps.length > 0 && (
+        <PlacedPropsRenderer placedProps={placedProps} />
+      )}
+
+      {/* ── Creator Mode: Ghost preview + click plane ── */}
+      {selectedPropId && onPlaceProp && (
+        <>
+          <PlacementGhost
+            propId={selectedPropId}
+            rotation={pendingRotation}
+            onPositionChange={onGhostPosition ?? (() => {})}
+          />
+          <PlacementClickPlane
+            enabled={!!selectedPropId}
+            onPlace={onPlaceProp}
+          />
+        </>
+      )}
     </>
   )
 }
