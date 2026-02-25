@@ -66,7 +66,7 @@ function IslandGrassTufts({ radius }: { radius: number }) {
   return (
     <>
       {tufts.map((t, i) => (
-        <group key={i} position={t.pos} rotation={[0, t.rot, 0]}>
+        <group key={`t-${i}`} position={t.pos} rotation={[0, t.rot, 0]}>
           {[-0.06, 0, 0.06].map((offset, j) => (
             <mesh key={j} position={[offset, 0.12, 0]} rotation={[0, 0, (j - 1) * 0.25]}>
               <boxGeometry args={[0.05, 0.24, 0.03]} />
@@ -111,7 +111,7 @@ function FloatingDebris() {
   return (
     <group ref={groupRef}>
       {debris.map((d, i) => (
-        <mesh key={i} position={d.pos} scale={d.scale} castShadow>
+        <mesh key={`d-${i}`} position={d.pos} scale={d.scale} castShadow>
           <dodecahedronGeometry args={[1, 0]} />
           <meshToonMaterial {...(i % 2 === 0 ? rockProps : darkRockProps)} />
         </mesh>
@@ -149,7 +149,7 @@ function DistantClouds() {
   return (
     <>
       {clouds.map((c, i) => (
-        <group key={i} position={c.pos}>
+        <group key={`c-${i}`} position={c.pos}>
           <mesh scale={c.scale}>
             <sphereGeometry args={[1, 8, 6]} />
             <meshToonMaterial {...cloudProps} transparent opacity={0.85} />

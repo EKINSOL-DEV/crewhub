@@ -35,7 +35,7 @@ export function Whiteboard() {
       {/* Sticky notes */}
       {STICKY_NOTES.map((note, i) => (
         <group
-          key={i}
+          key={`note-${i}`}
           position={[note.x, note.y, 0.04]}
           rotation={[0, 0, (Math.random() - 0.5) * 0.15]}
         >
@@ -65,7 +65,7 @@ export function Whiteboard() {
       </mesh>
       {/* Markers */}
       {['#ff3333', '#3366ff', '#33aa33'].map((c, i) => (
-        <mesh key={i} position={[-0.15 + i * 0.12, -0.53, 0.06]} rotation={[0, 0, Math.PI / 2]}>
+        <mesh key={`c-${i}`} position={[-0.15 + i * 0.12, -0.53, 0.06]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.015, 0.015, 0.12, 6]} />
           <meshStandardMaterial color={c} />
         </mesh>

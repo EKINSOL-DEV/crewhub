@@ -23,7 +23,7 @@ export function DeskFan() {
       <mesh position={[0, 0.1, 0]}><torusGeometry args={[0.2, 0.01, 6, 16]} /><meshStandardMaterial color="#aabbcc" flatShading /></mesh>
       <group ref={bladeRef} position={[0, 0.1, 0.02]}>
         {[0,1,2,3].map(i => (
-          <mesh key={i} rotation={[0, 0, i*Math.PI/2]}>
+          <mesh key={`item-${i}`} rotation={[0, 0, i*Math.PI/2]}>
             <boxGeometry args={[0.04, 0.16, 0.005]} />
             <meshStandardMaterial color="#ddeeff" transparent opacity={0.7} flatShading />
           </mesh>

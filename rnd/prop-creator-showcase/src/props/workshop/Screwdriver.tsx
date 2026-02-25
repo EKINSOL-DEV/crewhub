@@ -14,7 +14,7 @@ export function Screwdriver() {
       </mesh>
       {/* Handle grip lines */}
       {[0, 1, 2, 3, 4].map(i => (
-        <mesh key={i} position={[0, -0.25 + i * 0.06, 0]} rotation={[0, i * 0.5, 0]}>
+        <mesh key={`item-${i}`} position={[0, -0.25 + i * 0.06, 0]} rotation={[0, i * 0.5, 0]}>
           <torusGeometry args={[0.058, 0.004, 4, 8]} />
           <meshStandardMaterial color="#dd5511" />
         </mesh>

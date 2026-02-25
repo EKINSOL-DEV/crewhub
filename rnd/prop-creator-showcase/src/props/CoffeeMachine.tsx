@@ -60,7 +60,7 @@ export function CoffeeMachine() {
       </mesh>
       {/* Buttons */}
       {[0, 1, 2].map(i => (
-        <mesh key={i} position={[-0.2 + i * 0.15, 0.2, 0.301]}>
+        <mesh key={`item-${i}`} position={[-0.2 + i * 0.15, 0.2, 0.301]}>
           <cylinderGeometry args={[0.035, 0.035, 0.02, 8]} />
           <meshStandardMaterial color={i === 0 ? '#00ff88' : '#888888'} emissive={i === 0 ? '#00ff88' : '#000000'} emissiveIntensity={i === 0 ? 2 : 0} />
         </mesh>
@@ -68,7 +68,7 @@ export function CoffeeMachine() {
       {/* Steam particles */}
       <group ref={steamRef} position={[0, -0.25, 0.2]}>
         {steamParticles.map((p, i) => (
-          <mesh key={i} position={[p.x, 0.1 + (i * 0.04), p.z]}>
+          <mesh key={`p-${i}`} position={[p.x, 0.1 + (i * 0.04), p.z]}>
             <sphereGeometry args={[0.015 + i * 0.003, 6, 6]} />
             <meshStandardMaterial color="#ffffff" transparent opacity={0.15 - i * 0.01} />
           </mesh>

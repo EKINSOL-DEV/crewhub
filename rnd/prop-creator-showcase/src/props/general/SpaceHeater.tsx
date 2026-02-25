@@ -21,13 +21,13 @@ export function SpaceHeater() {
         <meshStandardMaterial color="#ff4422" emissive="#ff4422" emissiveIntensity={1.5} flatShading />
       </mesh>
       {[...Array(5)].map((_,i) => (
-        <mesh key={i} position={[0, -0.1+i*0.06, 0.07]}>
+        <mesh key={`item-${i}`} position={[0, -0.1+i*0.06, 0.07]}>
           <boxGeometry args={[0.25, 0.008, 0.005]} />
           <meshStandardMaterial color="#cc4422" flatShading />
         </mesh>
       ))}
       {[-0.1, 0.1].map((x,i) => (
-        <mesh key={i} position={[x, -0.27, 0]}>
+        <mesh key={`item-${i}`} position={[x, -0.27, 0]}>
           <boxGeometry args={[0.04, 0.02, 0.14]} />
           <meshStandardMaterial color="#444455" flatShading />
         </mesh>

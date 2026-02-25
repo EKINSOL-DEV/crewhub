@@ -442,6 +442,15 @@ function PropGeneratorTab() {
     return '#64748b'
   }
 
+  let saveBtnLabel: string
+  if (isSaved) {
+    saveBtnLabel = '✅ Saved!'
+  } else if (isSaving) {
+    saveBtnLabel = '💾 Saving…'
+  } else {
+    saveBtnLabel = '💾 Save to Library'
+  }
+
   return (
     <div
       style={{
@@ -623,7 +632,7 @@ function PropGeneratorTab() {
               opacity: isSaving ? 0.7 : 1,
             }}
           >
-            {isSaved ? '✅ Saved!' : isSaving ? '💾 Saving…' : '💾 Save to Library'}
+            {saveBtnLabel}
           </button>
         </div>
       )}
@@ -693,7 +702,7 @@ function PropGeneratorTab() {
             >
               {thinkingLines.map((line, i) => (
                 <div
-                  key={i}
+                  key={`line-${i}`}
                   style={{
                     color: getLineColor(line, i === thinkingLines.length - 1),
                     paddingLeft: line.type === 'thinking' ? 12 : 0,
@@ -851,7 +860,14 @@ function PropHistoryTab() {
         {records.map((record) => {
           const hasError = !!record.error
           const hasParts = !hasError && Array.isArray(record.parts) && record.parts.length > 0
-          const methodIcon = hasError ? '❌' : record.method === 'ai' ? '🤖' : '📐'
+          let methodIcon: string
+          if (hasError) {
+            methodIcon = '❌'
+          } else if (record.method === 'ai') {
+            methodIcon = '🤖'
+          } else {
+            methodIcon = '📐'
+          }
           const displayName = formatPropName(record.name) || record.prompt || 'Untitled prop'
           const promptPreview = record.prompt
             ? record.prompt.length > 72
@@ -1016,7 +1032,14 @@ function PropDetailView({ record, onBack }: PropDetailViewProps) {
 
   const hasError = !!record.error
   const hasParts = !hasError && Array.isArray(record.parts) && record.parts.length > 0
-  const methodIcon = hasError ? '❌' : record.method === 'ai' ? '🤖' : '📐'
+  let methodIcon: string
+  if (hasError) {
+    methodIcon = '❌'
+  } else if (record.method === 'ai') {
+    methodIcon = '🤖'
+  } else {
+    methodIcon = '📐'
+  }
   const displayName = formatPropName(record.name) || record.prompt || 'Untitled prop'
 
   let dateStr = ''

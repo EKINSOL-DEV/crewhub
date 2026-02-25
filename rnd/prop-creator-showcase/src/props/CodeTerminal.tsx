@@ -50,7 +50,7 @@ export function CodeTerminal() {
       <group ref={textGroupRef} position={[0, 0.1, 0.09]}>
         {CODE_LINES.slice(0, 5).map((line, i) => (
           <Text
-            key={i}
+            key={`line-${i}`}
             position={[-0.5, 0.25 - i * 0.15, 0]}
             fontSize={0.07}
             color={i === 0 ? '#66ff66' : i === 1 ? '#ffcc44' : '#44aaff'}

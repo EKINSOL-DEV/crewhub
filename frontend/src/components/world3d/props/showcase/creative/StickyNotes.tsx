@@ -23,14 +23,14 @@ export function StickyNotes() {
       </mesh>
       {/* Cork texture spots */}
       {Array.from({ length: 8 }, (_, i) => (
-        <mesh key={i} position={[(Math.random() - 0.5) * 0.7, (Math.random() - 0.5) * 0.5, -0.003]}>
+        <mesh key={`item-${i}`} position={[(Math.random() - 0.5) * 0.7, (Math.random() - 0.5) * 0.5, -0.003]}>
           <circleGeometry args={[0.03, 5]} />
           <meshStandardMaterial color="#bb9966" />
         </mesh>
       ))}
       {/* Sticky notes */}
       {notes.map((n, i) => (
-        <group key={i}>
+        <group key={`n-${i}`}>
           <mesh position={n.pos} rotation={[0, 0, n.rot]}>
             <boxGeometry args={[0.22, 0.22, 0.003]} />
             <meshStandardMaterial color={n.color} flatShading />

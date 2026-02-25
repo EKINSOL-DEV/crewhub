@@ -17,7 +17,7 @@ export function PottedSucculent() {
         <meshStandardMaterial color="#553322" flatShading />
       </mesh>
       {[0,1,2,3,4,5].map(i => (
-        <mesh key={i} position={[Math.cos(i*Math.PI/3)*0.06, -0.04, Math.sin(i*Math.PI/3)*0.06]} rotation={[0.4, i*Math.PI/3, 0]}>
+        <mesh key={`item-${i}`} position={[Math.cos(i*Math.PI/3)*0.06, -0.04, Math.sin(i*Math.PI/3)*0.06]} rotation={[0.4, i*Math.PI/3, 0]}>
           <sphereGeometry args={[0.05, 4, 4]} />
           <meshStandardMaterial color="#66cc88" flatShading />
         </mesh>

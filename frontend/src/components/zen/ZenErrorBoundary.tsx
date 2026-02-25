@@ -86,17 +86,27 @@ export function ZenSkeleton({ className = '' }: { className?: string }) {
 export function ZenSkeletonText({ lines = 3, short = false }: { lines?: number; short?: boolean }) {
   return (
     <div className="zen-skeleton-text-container">
-      {Array.from({ length: lines }).map((_, i) => (
-        <div
-          key={i}
-          className={`zen-skeleton zen-skeleton-text ${
-            short || i === lines - 1 ? 'zen-skeleton-text-short' : ''
-          }`}
-          style={{
-            width: short ? '60%' : i === lines - 1 ? `${50 + Math.random() * 30}%` : '100%',
-          }}
-        />
-      ))}
+      {Array.from({ length: lines }).map((_, i) => {
+        let skeletonWidth: string
+        if (short) {
+          skeletonWidth = '60%'
+        } else if (i === lines - 1) {
+          skeletonWidth = `${50 + Math.random() * 30}%`
+        } else {
+          skeletonWidth = '100%'
+        }
+        return (
+          <div
+            key={`item-${i}`}
+            className={`zen-skeleton zen-skeleton-text ${
+              short || i === lines - 1 ? 'zen-skeleton-text-short' : ''
+            }`}
+            style={{
+              width: skeletonWidth,
+            }}
+          />
+        )
+      })}
     </div>
   )
 }

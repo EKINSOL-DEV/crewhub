@@ -21,7 +21,7 @@ export function VRHeadset() {
       </mesh>
       {/* Lenses */}
       {[-0.15, 0.15].map((x, i) => (
-        <group key={i}>
+        <group key={`x-${i}`}>
           <mesh position={[x, 0, -0.15]}>
             <cylinderGeometry args={[0.1, 0.1, 0.05, 8]} />
             <meshStandardMaterial color="#334455" transparent opacity={0.5} />
@@ -44,7 +44,7 @@ export function VRHeadset() {
       </mesh>
       {/* Side strap */}
       {[-0.36, 0.36].map((x, i) => (
-        <mesh key={i} position={[x, 0, -0.1]}>
+        <mesh key={`x-${i}`} position={[x, 0, -0.1]}>
           <boxGeometry args={[0.02, 0.15, 0.3]} />
           <meshStandardMaterial color="#333344" />
         </mesh>
@@ -61,7 +61,7 @@ export function VRHeadset() {
         [-0.3, -0.1],
         [0.3, -0.1],
       ].map(([x, y], i) => (
-        <mesh key={i} position={[x, y, 0.19]}>
+        <mesh key={`item-${i}`} position={[x, y, 0.19]}>
           <cylinderGeometry args={[0.02, 0.02, 0.01, 6]} />
           <meshStandardMaterial color="#111111" />
         </mesh>

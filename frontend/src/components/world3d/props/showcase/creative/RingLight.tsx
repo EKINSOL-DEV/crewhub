@@ -29,7 +29,7 @@ export function RingLight() {
         const a = (i / 3) * Math.PI * 2
         return (
           <mesh
-            key={i}
+            key={`item-${i}`}
             position={[Math.sin(a) * 0.2, -0.75, -0.1 + Math.cos(a) * 0.2]}
             rotation={[Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3]}
           >

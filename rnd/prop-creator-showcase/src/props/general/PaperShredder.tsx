@@ -21,7 +21,7 @@ export function PaperShredder() {
         <meshStandardMaterial color="#ffffff" flatShading />
       </mesh>
       {[...Array(6)].map((_,i) => (
-        <mesh key={i} position={[-0.08+i*0.03, -0.25, 0]}>
+        <mesh key={`item-${i}`} position={[-0.08+i*0.03, -0.25, 0]}>
           <boxGeometry args={[0.008, 0.15, 0.002]} />
           <meshStandardMaterial color="#ffffff" flatShading />
         </mesh>

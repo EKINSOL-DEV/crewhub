@@ -177,6 +177,15 @@ export function PropControls({
     }
   }
 
+  let generateBtnLabel: string
+  if (isDemoMode) {
+    generateBtnLabel = '⚠️ Generate (Demo)'
+  } else if (isGenerating) {
+    generateBtnLabel = '⏳ Generating...'
+  } else {
+    generateBtnLabel = '⚡ Create'
+  }
+
   return (
     <div className="fpm-controls">
       <div className="fpm-controls-scroll">
@@ -295,7 +304,7 @@ export function PropControls({
               disabled={isDemoMode || isGenerating || !inputText.trim()}
               title={isDemoMode ? 'Not available in demo mode' : undefined}
             >
-              {isDemoMode ? '⚠️ Generate (Demo)' : isGenerating ? '⏳ Generating...' : '⚡ Create'}
+              {generateBtnLabel}
             </button>
 
             {/* Error */}
@@ -393,7 +402,11 @@ export function PropControls({
               <div className="fpm-quality-panel">
                 <div className="fpm-quality-header">
                   Quality: {qualityScore.overall}/100
-                  {qualityScore.overall >= 85 ? ' 🌟' : qualityScore.overall >= 70 ? ' ✨' : ' 💫'}
+                  {(() => {
+                    if (qualityScore.overall >= 85) return ' 🌟'
+                    if (qualityScore.overall >= 70) return ' ✨'
+                    return ' 💫'
+                  })()}
                 </div>
                 <div className="fpm-quality-bars">
                   {[
@@ -402,27 +415,36 @@ export function PropControls({
                     { label: 'Animation', value: qualityScore.animation_score },
                     { label: 'Detail', value: qualityScore.detail_score },
                     { label: 'Style', value: qualityScore.style_consistency },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="fpm-quality-bar-row">
-                      <span className="fpm-quality-bar-label">{label}</span>
-                      <div className="fpm-quality-bar-track">
-                        <div
-                          className="fpm-quality-bar-fill"
-                          style={{
-                            width: `${value}%`,
-                            background:
-                              value >= 80 ? '#22c55e' : value >= 50 ? '#eab308' : '#ef4444',
-                          }}
-                        />
+                  ].map(({ label, value }) => {
+                    let barColor: string
+                    if (value >= 80) {
+                      barColor = '#22c55e'
+                    } else if (value >= 50) {
+                      barColor = '#eab308'
+                    } else {
+                      barColor = '#ef4444'
+                    }
+                    return (
+                      <div key={label} className="fpm-quality-bar-row">
+                        <span className="fpm-quality-bar-label">{label}</span>
+                        <div className="fpm-quality-bar-track">
+                          <div
+                            className="fpm-quality-bar-fill"
+                            style={{
+                              width: `${value}%`,
+                              background: barColor,
+                            }}
+                          />
+                        </div>
+                        <span className="fpm-quality-bar-value">{value}</span>
                       </div>
-                      <span className="fpm-quality-bar-value">{value}</span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
                 {qualityScore.suggestions?.length > 0 && (
                   <div className="fpm-quality-suggestions">
                     {qualityScore.suggestions.map((s: string, i: number) => (
-                      <div key={i} className="fpm-quality-suggestion">
+                      <div key={`item-${i}`} className="fpm-quality-suggestion">
                         💡 {s}
                       </div>
                     ))}
@@ -527,7 +549,7 @@ export function PropControls({
                     .find((s) => s.id === selectedStyle)
                     ?.palette.map((c, i) => (
                       <div
-                        key={i}
+                        key={`c-${i}`}
                         className="fpm-style-swatch"
                         style={{ background: c }}
                         title={c}

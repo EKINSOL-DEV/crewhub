@@ -13,7 +13,7 @@ export function ControllerGrip() {
         <meshStandardMaterial color="#333344" flatShading />
       </mesh>
       {[-0.06, 0.06].map((x,i) => (
-        <mesh key={i} position={[x, -0.2, 0]} rotation={[0, 0, x > 0 ? -0.3 : 0.3]}><cylinderGeometry args={[0.025, 0.03, 0.12, 6]} /><meshStandardMaterial color="#444455" flatShading /></mesh>
+        <mesh key={`x-${i}`} position={[x, -0.2, 0]} rotation={[0, 0, x > 0 ? -0.3 : 0.3]}><cylinderGeometry args={[0.025, 0.03, 0.12, 6]} /><meshStandardMaterial color="#444455" flatShading /></mesh>
       ))}
             <mesh position={[0, -0.12, 0.06]}>
         <cylinderGeometry args={[0.015, 0.015, 0.005, 8]} />

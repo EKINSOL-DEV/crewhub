@@ -267,9 +267,12 @@ export function ZenSessionsPanel({
         </div>
         <div className="zen-sessions-footer">
           <span className="zen-sessions-count">
-            {roomFilter
-              ? `${sortedSessions.length} of ${sessions.length} session${sessions.length !== 1 ? 's' : ''}`
-              : `${sessions.length} session${sessions.length !== 1 ? 's' : ''}`}
+            {(() => {
+              const sessionSuffix = sessions.length !== 1 ? 's' : ''
+              return roomFilter
+                ? `${sortedSessions.length} of ${sessions.length} session${sessionSuffix}`
+                : `${sessions.length} session${sessionSuffix}`
+            })()}
           </span>
         </div>
       </>

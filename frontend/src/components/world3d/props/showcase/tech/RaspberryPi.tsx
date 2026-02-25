@@ -25,7 +25,7 @@ export function RaspberryPi() {
       </mesh>
       {/* USB ports */}
       {[0, 1].map((i) => (
-        <mesh key={i} position={[0.36, -0.24, -0.1 + i * 0.2]}>
+        <mesh key={`item-${i}`} position={[0.36, -0.24, -0.1 + i * 0.2]}>
           <boxGeometry args={[0.08, 0.08, 0.12]} />
           <meshStandardMaterial color="#cccccc" />
         </mesh>
@@ -37,7 +37,7 @@ export function RaspberryPi() {
       </mesh>
       {/* GPIO pins */}
       {Array.from({ length: 10 }, (_, i) => (
-        <mesh key={i} position={[-0.25 + i * 0.04, -0.24, -0.22]}>
+        <mesh key={`item-${i}`} position={[-0.25 + i * 0.04, -0.24, -0.22]}>
           <boxGeometry args={[0.015, 0.08, 0.015]} />
           <meshStandardMaterial color="#ddcc44" />
         </mesh>

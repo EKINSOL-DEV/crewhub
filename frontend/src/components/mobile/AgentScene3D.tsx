@@ -138,7 +138,7 @@ function ThinkingDots({ visible }: { visible: boolean }) {
   return (
     <group ref={ref}>
       {[-0.06, 0, 0.06].map((x, i) => (
-        <mesh key={i} position={[x, 0.56, 0.1]}>
+        <mesh key={`x-${i}`} position={[x, 0.56, 0.1]}>
           <sphereGeometry args={[0.015, 8, 8]} />
           <meshStandardMaterial color="#818cf8" emissive="#818cf8" emissiveIntensity={0.3} />
         </mesh>

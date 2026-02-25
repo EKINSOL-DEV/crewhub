@@ -24,7 +24,7 @@ export function Microscope() {
       </mesh>
       {/* Stage clips */}
       {[-0.08, 0.08].map((x, i) => (
-        <mesh key={i} position={[x, -0.33, 0.12]}>
+        <mesh key={`x-${i}`} position={[x, -0.33, 0.12]}>
           <boxGeometry args={[0.04, 0.01, 0.06]} />
           <meshStandardMaterial color="#888899" />
         </mesh>
@@ -38,7 +38,7 @@ export function Microscope() {
       {[0, 1, 2].map(i => {
         const a = (i / 3) * Math.PI - 0.5;
         return (
-          <mesh key={i} position={[Math.sin(a) * 0.05, -0.25, 0.05 + Math.cos(a) * 0.05]}>
+          <mesh key={`item-${i}`} position={[Math.sin(a) * 0.05, -0.25, 0.05 + Math.cos(a) * 0.05]}>
             <cylinderGeometry args={[0.015, 0.02, 0.08, 6]} />
             <meshStandardMaterial color={['#ddcc44', '#44aadd', '#dd4444'][i]} />
           </mesh>
@@ -56,7 +56,7 @@ export function Microscope() {
       </mesh>
       {/* Focus knobs */}
       {[-0.2, -0.1].map((x, i) => (
-        <mesh key={i} position={[x, -0.25, -0.15]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh key={`x-${i}`} position={[x, -0.25, -0.15]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.04 - i * 0.01, 0.04 - i * 0.01, 0.02, 8]} />
           <meshStandardMaterial color="#666677" />
         </mesh>

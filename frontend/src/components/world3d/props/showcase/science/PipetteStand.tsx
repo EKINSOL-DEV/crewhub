@@ -18,7 +18,7 @@ export function PipetteStand() {
         <meshStandardMaterial color="#ccccdd" flatShading />
       </mesh>
       {[-0.08, 0, 0.08].map((x, i) => (
-        <group key={i} position={[x, -0.05, 0.02]}>
+        <group key={`x-${i}`} position={[x, -0.05, 0.02]}>
           <mesh rotation={[0.3, 0, 0]}>
             <cylinderGeometry args={[0.008, 0.01, 0.25, 6]} />
             <meshStandardMaterial color={['#4488ff', '#ff4444', '#44cc44'][i]} flatShading />
@@ -26,7 +26,7 @@ export function PipetteStand() {
         </group>
       ))}
       {[-0.1, 0.1].map((x, i) => (
-        <mesh key={i} position={[x, -0.12, -0.03]}>
+        <mesh key={`x-${i}`} position={[x, -0.12, -0.03]}>
           <boxGeometry args={[0.02, 0.18, 0.02]} />
           <meshStandardMaterial color="#ddddee" flatShading />
         </mesh>

@@ -40,7 +40,7 @@ export function CoffeeMug() {
       </mesh>
       {/* Steam */}
       {steamParts.map((p, i) => (
-        <mesh key={i} position={[p.x, 0.15 + i * 0.05, p.z]}>
+        <mesh key={`p-${i}`} position={[p.x, 0.15 + i * 0.05, p.z]}>
           <sphereGeometry args={[0.02 + i * 0.003, 4, 4]} />
           <meshStandardMaterial color="#ffffff" transparent opacity={0.12 - i * 0.012} />
         </mesh>

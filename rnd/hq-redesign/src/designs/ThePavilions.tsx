@@ -110,7 +110,7 @@ function Pavilion({
         [-w / 2 + 0.3, d / 2 - 0.3], [w / 2 - 0.3, d / 2 - 0.3],
         [-w / 2 + 0.3, -d / 2 + 0.3], [w / 2 - 0.3, -d / 2 + 0.3]
       ].map(([px, pz], i) => (
-        <Pillar key={i} position={[px, 0, pz]} height={floors * floorH} radius={0.1} />
+        <Pillar key={`item-${i}`} position={[px, 0, pz]} height={floors * floorH} radius={0.1} />
       ))}
 
       {children}
@@ -204,7 +204,7 @@ export function ThePavilions() {
 
       {/* Pathway stones */}
       {[[-2, 0.02, -1], [-1, 0.02, 0], [0, 0.02, 0.5], [1, 0.02, 1.5], [2, 0.02, 2.5]].map((p, i) => (
-        <mesh key={i} position={p as [number, number, number]} rotation={[-Math.PI / 2, Math.random(), 0]}>
+        <mesh key={`p-${i}`} position={p as [number, number, number]} rotation={[-Math.PI / 2, Math.random(), 0]}>
           <circleGeometry args={[0.3 + Math.random() * 0.15, 6]} />
           <meshStandardMaterial color="#3a3d4a" roughness={0.8} />
         </mesh>

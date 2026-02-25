@@ -18,7 +18,7 @@ export function FlipchartStand() {
         <meshStandardMaterial color="#888899" flatShading />
       </mesh>
       {[-0.2, 0.2].map((x, i) => (
-        <mesh key={i} position={[x, -0.2, -0.1]} rotation={[0.15, 0, 0]}>
+        <mesh key={`x-${i}`} position={[x, -0.2, -0.1]} rotation={[0.15, 0, 0]}>
           <cylinderGeometry args={[0.012, 0.012, 0.6, 4]} />
           <meshStandardMaterial color="#888899" flatShading />
         </mesh>

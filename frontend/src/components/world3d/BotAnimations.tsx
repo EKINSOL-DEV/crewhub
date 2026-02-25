@@ -301,7 +301,7 @@ export function SleepingZs({ animRef }: { animRef: React.MutableRefObject<AnimSt
     <group ref={groupRef}>
       {[0, 1, 2].map((i) => (
         <sprite
-          key={i}
+          key={`item-${i}`}
           ref={(el: THREE.Sprite | null) => {
             if (el) spriteRefs.current[i] = el
           }}

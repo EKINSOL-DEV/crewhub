@@ -18,7 +18,7 @@ export function Dice() {
           [0, 0, 0], [-0.04, 0.04, 0], [0.04, -0.04, 0], [-0.04, -0.04, 0], [0.04, 0.04, 0], [0, 0.04, 0]
         ];
         return (
-          <mesh key={i} position={positions[i]}>
+          <mesh key={`item-${i}`} position={positions[i]}>
             <sphereGeometry args={[0.015, 4, 4]} />
             <meshStandardMaterial color="#111111" />
           </mesh>

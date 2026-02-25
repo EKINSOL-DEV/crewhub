@@ -23,7 +23,7 @@ export function PaintPalette() {
         const a = (i / colors.length) * Math.PI * 1.5 - 0.5;
         const r = 0.3;
         return (
-          <mesh key={i} position={[Math.cos(a) * r, -0.17, Math.sin(a) * r]}>
+          <mesh key={`c-${i}`} position={[Math.cos(a) * r, -0.17, Math.sin(a) * r]}>
             <sphereGeometry args={[0.04 + (i % 3) * 0.01, 5, 5]} />
             <meshStandardMaterial color={c} flatShading />
           </mesh>

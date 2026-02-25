@@ -94,7 +94,14 @@ export function ZenTooltip({
   }, [isVisible, coords, position])
 
   // Format shortcut keys
-  const formattedShortcut = shortcut ? (Array.isArray(shortcut) ? shortcut : [shortcut]) : null
+  let formattedShortcut: string[] | null
+  if (!shortcut) {
+    formattedShortcut = null
+  } else if (Array.isArray(shortcut)) {
+    formattedShortcut = shortcut
+  } else {
+    formattedShortcut = [shortcut]
+  }
 
   const tooltipStyle: React.CSSProperties = {
     position: 'fixed',
@@ -128,7 +135,7 @@ export function ZenTooltip({
             {formattedShortcut && (
               <span className="zen-tooltip-shortcut">
                 {formattedShortcut.map((key, i) => (
-                  <kbd key={i} className="zen-kbd zen-kbd-small">
+                  <kbd key={`key-${i}`} className="zen-kbd zen-kbd-small">
                     {key}
                   </kbd>
                 ))}

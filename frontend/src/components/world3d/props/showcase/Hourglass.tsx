@@ -79,7 +79,7 @@ export function Hourglass() {
       </mesh>
       {/* Falling sand stream */}
       {sandParticles.map((p, i) => (
-        <mesh key={i} position={[p.x, -0.05 - i * 0.02, p.z]}>
+        <mesh key={`p-${i}`} position={[p.x, -0.05 - i * 0.02, p.z]}>
           <sphereGeometry args={[0.008, 4, 4]} />
           <meshStandardMaterial color="#ffdd66" emissive="#ffaa22" emissiveIntensity={1} />
         </mesh>
@@ -89,7 +89,7 @@ export function Hourglass() {
         const a = (i / 4) * Math.PI * 2 + Math.PI / 4
         const r = 0.3
         return (
-          <mesh key={i} position={[Math.cos(a) * r, 0, Math.sin(a) * r]}>
+          <mesh key={`item-${i}`} position={[Math.cos(a) * r, 0, Math.sin(a) * r]}>
             <cylinderGeometry args={[0.025, 0.025, 1.35, 4]} />
             <meshStandardMaterial color="#ccaa44" metalness={0.6} roughness={0.3} />
           </mesh>

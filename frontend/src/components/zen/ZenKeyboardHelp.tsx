@@ -158,7 +158,7 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
                 </h3>
                 <div className="zen-keyboard-help-list">
                   {group.shortcuts.map((shortcut, index) => (
-                    <div key={index} className="zen-keyboard-help-item">
+                    <div key={`shortcut-${index}`} className="zen-keyboard-help-item">
                       <div className="zen-keyboard-help-keys">
                         {shortcut.keys.map((key, keyIndex) => (
                           <kbd key={keyIndex} className="zen-kbd zen-kbd-large">

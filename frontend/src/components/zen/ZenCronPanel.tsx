@@ -89,6 +89,14 @@ interface CronItemProps {
 function CronItem({ job, onToggle, onRun }: CronItemProps) {
   const hasError = job.state?.lastStatus === 'error'
   const isEnabled = job.enabled
+  let statusDotClass: string
+  if (!isEnabled) {
+    statusDotClass = 'zen-status-dot-idle'
+  } else if (hasError) {
+    statusDotClass = 'zen-status-dot-error'
+  } else {
+    statusDotClass = 'zen-status-dot-active'
+  }
 
   return (
     <div
@@ -96,7 +104,7 @@ function CronItem({ job, onToggle, onRun }: CronItemProps) {
     >
       <div className="zen-cron-status">
         <span
-          className={`zen-status-dot ${isEnabled ? (hasError ? 'zen-status-dot-error' : 'zen-status-dot-active') : 'zen-status-dot-idle'}`}
+          className={`zen-status-dot ${statusDotClass}`}
         />
       </div>
 

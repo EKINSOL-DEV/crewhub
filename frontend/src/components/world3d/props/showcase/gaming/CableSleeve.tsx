@@ -10,7 +10,7 @@ export function CableSleeve() {
   return (
     <group ref={groupRef}>
       {[...Array(8)].map((_, i) => (
-        <mesh key={i} position={[0, -0.2 + i * 0.06, 0]}>
+        <mesh key={`item-${i}`} position={[0, -0.2 + i * 0.06, 0]}>
           <torusGeometry args={[0.025, 0.01, 4, 8]} />
           <meshStandardMaterial color={i % 2 === 0 ? '#ff00ff' : '#222233'} flatShading />
         </mesh>

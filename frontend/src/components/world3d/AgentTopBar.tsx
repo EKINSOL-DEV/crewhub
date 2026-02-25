@@ -114,8 +114,22 @@ function BotFaceSVG({
   expression: string
   size?: number
 }) {
-  const pupilDx = expression === 'thoughtful' ? 1 : expression === 'talking' ? -0.5 : 0
-  const pupilDy = expression === 'thoughtful' ? 1 : expression === 'serious' ? -0.5 : 0
+  let pupilDx: number
+  if (expression === 'thoughtful') {
+    pupilDx = 1
+  } else if (expression === 'talking') {
+    pupilDx = -0.5
+  } else {
+    pupilDx = 0
+  }
+  let pupilDy: number
+  if (expression === 'thoughtful') {
+    pupilDy = 1
+  } else if (expression === 'serious') {
+    pupilDy = -0.5
+  } else {
+    pupilDy = 0
+  }
 
   return (
     <svg width={size} height={size} viewBox="0 0 36 36" fill="none">

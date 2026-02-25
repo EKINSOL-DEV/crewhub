@@ -14,7 +14,7 @@ export function ConsoleStand() {
         <meshStandardMaterial color="#111122" flatShading />
       </mesh>
       {[-0.08, 0.08].map((x, i) => (
-        <mesh key={i} position={[x, -0.18, 0]}>
+        <mesh key={`x-${i}`} position={[x, -0.18, 0]}>
           <boxGeometry args={[0.03, 0.04, 0.12]} />
           <meshStandardMaterial color="#222233" flatShading />
         </mesh>
@@ -24,7 +24,7 @@ export function ConsoleStand() {
         <meshStandardMaterial color="#4488ff" emissive="#4488ff" emissiveIntensity={1} />
       </mesh>
       {[-0.1, 0, 0.1].map((z, i) => (
-        <mesh key={i} position={[0, -0.24, z]}>
+        <mesh key={`z-${i}`} position={[0, -0.24, z]}>
           <boxGeometry args={[0.2, 0.002, 0.01]} />
           <meshStandardMaterial color="#333344" flatShading />
         </mesh>

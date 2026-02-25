@@ -17,7 +17,7 @@ export function CoolingFan() {
       </mesh>
       <group ref={bladeRef} position={[0, -0.1, 0.02]}>
         {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <mesh key={i} rotation={[0, 0, (i * Math.PI * 2) / 7]}>
+          <mesh key={`item-${i}`} rotation={[0, 0, (i * Math.PI * 2) / 7]}>
             <boxGeometry args={[0.02, 0.1, 0.003]} />
             <meshStandardMaterial color="#555577" transparent opacity={0.8} flatShading />
           </mesh>

@@ -24,7 +24,7 @@ export function Thermometer() {
       </mesh>
       {/* Scale marks */}
       {Array.from({ length: 10 }, (_, i) => (
-        <mesh key={i} position={[0.04, -0.3 + i * 0.07, 0]}>
+        <mesh key={`item-${i}`} position={[0.04, -0.3 + i * 0.07, 0]}>
           <boxGeometry args={[0.02, 0.003, 0.001]} />
           <meshStandardMaterial color="#333333" />
         </mesh>

@@ -784,7 +784,7 @@ export function ProjectDocsPanel({
                   </div>
                   {toc.map((entry, i) => (
                     <div
-                      key={i}
+                      key={`entry-${i}`}
                       style={{
                         fontSize: 11,
                         color: '#6b7280',

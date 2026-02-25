@@ -51,7 +51,7 @@ export function Plant() {
       <group ref={leavesRef}>
         {leaves.map((leaf, i) => (
           <group
-            key={i}
+            key={`leaf-${i}`}
             position={[0, leaf.y, 0]}
             rotation={[leaf.tilt, leaf.angle, 0]}
             userData={{ baseY: leaf.y }}

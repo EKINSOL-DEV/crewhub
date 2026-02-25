@@ -25,7 +25,7 @@ export function DeskClock() {
       {Array.from({ length: 12 }, (_, i) => {
         const a = (i / 12) * Math.PI * 2
         return (
-          <mesh key={i} position={[Math.sin(a) * 0.32, -0.1 + Math.cos(a) * 0.32, 0.05]}>
+          <mesh key={`item-${i}`} position={[Math.sin(a) * 0.32, -0.1 + Math.cos(a) * 0.32, 0.05]}>
             <boxGeometry args={[0.02, 0.06, 0.01]} />
             <meshStandardMaterial color="#333333" />
           </mesh>

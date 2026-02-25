@@ -69,7 +69,7 @@ export function StepScan({
         <div className="space-y-3">
           {candidates.map((candidate, index) => (
             <div
-              key={index}
+              key={`candidat-${index}`}
               className="p-4 rounded-xl border bg-card hover:bg-accent/30 transition-colors"
             >
               <div className="flex items-start gap-4">

@@ -24,7 +24,7 @@ export function ConferenceSpeakerphone() {
       </mesh>
       {[0, 1, 2].map((i) => (
         <mesh
-          key={i}
+          key={`item-${i}`}
           position={[
             Math.cos((i * Math.PI * 2) / 3) * 0.1,
             -0.215,

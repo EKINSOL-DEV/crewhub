@@ -26,7 +26,7 @@ export function LEDMatrixDisplay() {
           const x = (i % 8) - 3.5
           const y = Math.floor(i / 8) - 3.5
           return (
-            <mesh key={i} position={[x * 0.024, y * 0.024 - 0.12, 0.012]}>
+            <mesh key={`item-${i}`} position={[x * 0.024, y * 0.024 - 0.12, 0.012]}>
               <sphereGeometry args={[0.006, 4, 4]} />
               <meshStandardMaterial color="#ff2222" emissive="#ff2222" emissiveIntensity={0.5} />
             </mesh>

@@ -247,7 +247,7 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
                       {cmd.shortcut && (
                         <span className="zen-command-item-shortcut">
                           {cmd.shortcut.split('+').map((key, i) => (
-                            <span key={i} className="zen-kbd">
+                            <span key={`key-${i}`} className="zen-kbd">
                               {key}
                             </span>
                           ))}

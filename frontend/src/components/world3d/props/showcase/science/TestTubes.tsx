@@ -26,14 +26,14 @@ export function TestTubes() {
       </mesh>
       {/* Rack uprights */}
       {[-0.22, 0.22].map((x, i) => (
-        <mesh key={i} position={[x, -0.2, 0]}>
+        <mesh key={`x-${i}`} position={[x, -0.2, 0]}>
           <boxGeometry args={[0.03, 0.25, 0.03]} />
           <meshStandardMaterial color="#aa8844" flatShading />
         </mesh>
       ))}
       {/* Test tubes */}
       {tubes.map((t, i) => (
-        <group key={i}>
+        <group key={`x-${i}`}>
           {/* Glass */}
           <mesh position={[t.x, 0.05, 0]}>
             <cylinderGeometry args={[0.03, 0.03, 0.5, 8]} />
@@ -53,7 +53,7 @@ export function TestTubes() {
       ))}
       {/* Bubbles in one tube */}
       {[0, 1, 2].map((i) => (
-        <mesh key={i} position={[0.05, -0.1 + i * 0.08, 0.01]}>
+        <mesh key={`item-${i}`} position={[0.05, -0.1 + i * 0.08, 0.01]}>
           <sphereGeometry args={[0.008, 4, 4]} />
           <meshStandardMaterial color="#ffffff" transparent opacity={0.4} />
         </mesh>

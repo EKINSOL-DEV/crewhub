@@ -65,7 +65,7 @@ export function SteamParticles({
     <group position={position} ref={groupRef}>
       {particles.map((p, i) => (
         <mesh
-          key={i}
+          key={`p-${i}`}
           ref={(el) => {
             meshRefs.current[i] = el
           }}

@@ -26,7 +26,7 @@ export function RingLight() {
       {[0, 1, 2].map(i => {
         const a = (i / 3) * Math.PI * 2;
         return (
-          <mesh key={i} position={[Math.sin(a) * 0.2, -0.75, -0.1 + Math.cos(a) * 0.2]} rotation={[Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3]}>
+          <mesh key={`item-${i}`} position={[Math.sin(a) * 0.2, -0.75, -0.1 + Math.cos(a) * 0.2]} rotation={[Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3]}>
             <cylinderGeometry args={[0.015, 0.02, 0.3, 4]} />
             <meshStandardMaterial color="#333344" />
           </mesh>

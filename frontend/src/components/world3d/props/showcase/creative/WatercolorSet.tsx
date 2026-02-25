@@ -27,7 +27,7 @@ export function WatercolorSet() {
         '#ff88aa',
         '#88ddff',
       ].map((c, i) => (
-        <mesh key={i} position={[-0.13 + (i % 6) * 0.053, -0.18, -0.04 + Math.floor(i / 6) * 0.06]}>
+        <mesh key={`c-${i}`} position={[-0.13 + (i % 6) * 0.053, -0.18, -0.04 + Math.floor(i / 6) * 0.06]}>
           <boxGeometry args={[0.04, 0.01, 0.04]} />
           <meshStandardMaterial color={c} flatShading />
         </mesh>

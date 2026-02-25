@@ -14,7 +14,7 @@ export function ThumbstickCaps() {
         ['#4488ff', 0],
         ['#44ff44', 0.08],
       ].map(([c, x], i) => (
-        <group key={i} position={[x as number, -0.2, 0]}>
+        <group key={`item-${i}`} position={[x as number, -0.2, 0]}>
           <mesh>
             <cylinderGeometry args={[0.03, 0.025, 0.02, 8]} />
             <meshStandardMaterial color={c as string} flatShading />

@@ -385,7 +385,7 @@ function ProjectDetailModal({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {assignedAgents.map((agent, i) => (
                 <div
-                  key={i}
+                  key={`agent-${i}`}
                   style={{
                     padding: '6px 12px',
                     background: 'rgba(255, 255, 255, 0.03)',

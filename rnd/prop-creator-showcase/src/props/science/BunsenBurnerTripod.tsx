@@ -13,7 +13,7 @@ export function BunsenBurnerTripod() {
         <meshStandardMaterial color="#777788" flatShading />
       </mesh>
       {[0,1,2].map(i => (
-        <mesh key={i} position={[Math.cos(i*Math.PI*2/3)*0.14, -0.22, Math.sin(i*Math.PI*2/3)*0.14]}>
+        <mesh key={`item-${i}`} position={[Math.cos(i*Math.PI*2/3)*0.14, -0.22, Math.sin(i*Math.PI*2/3)*0.14]}>
           <cylinderGeometry args={[0.008, 0.008, 0.22, 4]} />
           <meshStandardMaterial color="#888899" flatShading />
         </mesh>

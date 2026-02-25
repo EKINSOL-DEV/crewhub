@@ -22,7 +22,7 @@ export function BadgeHolder() {
         <meshStandardMaterial color="#aaaacc" flatShading />
       </mesh>
       {[0,1].map(i => (
-        <mesh key={i} position={[0, -0.06-i*0.025, 0.003]}><boxGeometry args={[0.08, 0.005, 0.001]} /><meshStandardMaterial color="#333344" /></mesh>
+        <mesh key={`item-${i}`} position={[0, -0.06-i*0.025, 0.003]}><boxGeometry args={[0.08, 0.005, 0.001]} /><meshStandardMaterial color="#333344" /></mesh>
       ))}
 
     </group>

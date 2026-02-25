@@ -215,7 +215,7 @@ function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
             Round {round.roundNum}: {round.topic}
           </div>
           {round.turns.map((turn, i) => (
-            <div key={i} style={{ marginBottom: 16 }}>
+            <div key={`turn-${i}`} style={{ marginBottom: 16 }}>
               <div
                 style={{
                   fontSize: 13,

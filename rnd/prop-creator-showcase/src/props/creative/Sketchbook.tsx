@@ -33,7 +33,7 @@ export function Sketchbook() {
       </mesh>
       {/* Spiral binding */}
       {Array.from({ length: 8 }, (_, i) => (
-        <mesh key={i} position={[-0.26, -0.28, -0.28 + i * 0.08]} rotation={[0, 0, 0]}>
+        <mesh key={`item-${i}`} position={[-0.26, -0.28, -0.28 + i * 0.08]} rotation={[0, 0, 0]}>
           <torusGeometry args={[0.025, 0.005, 4, 8, Math.PI]} />
           <meshStandardMaterial color="#888888" />
         </mesh>

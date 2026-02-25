@@ -29,6 +29,15 @@ export function MeetingProgressBar({
     if (currentTurnAgentName) label += ` · ${currentTurnAgentName} speaking`
   }
 
+  let progressBarColor: string
+  if (phase === 'complete') {
+    progressBarColor = '#22c55e'
+  } else if (phase === 'synthesizing') {
+    progressBarColor = '#f59e0b'
+  } else {
+    progressBarColor = '#6366f1'
+  }
+
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -47,8 +56,7 @@ export function MeetingProgressBar({
           className="h-full rounded-full transition-all duration-500 ease-out"
           style={{
             width: `${pct}%`,
-            background:
-              phase === 'complete' ? '#22c55e' : phase === 'synthesizing' ? '#f59e0b' : '#6366f1',
+            background: progressBarColor,
           }}
         />
       </div>

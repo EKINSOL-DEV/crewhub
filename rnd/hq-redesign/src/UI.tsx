@@ -14,7 +14,7 @@ export function UI({ designs, active, onSelect }: UIProps) {
         position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 10,
       }}>
         {designs.map((d, i) => (
-          <button key={i} onClick={() => onSelect(i)} style={{
+          <button key={`d-${i}`} onClick={() => onSelect(i)} style={{
             padding: '10px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
             background: i === active ? 'rgba(79, 195, 247, 0.9)' : 'rgba(255,255,255,0.08)',
             color: i === active ? '#000' : '#ccc', fontSize: 13, fontWeight: 600,

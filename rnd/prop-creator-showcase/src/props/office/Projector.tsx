@@ -18,7 +18,7 @@ export function Projector() {
         <meshStandardMaterial color="#aaddff" transparent opacity={0.5} flatShading />
       </mesh>
       {[...Array(3)].map((_,i) => (
-        <mesh key={i} position={[-0.1+i*0.05, -0.12, 0.126]}><boxGeometry args={[0.03, 0.02, 0.002]} /><meshStandardMaterial color="#888899" flatShading /></mesh>
+        <mesh key={`item-${i}`} position={[-0.1+i*0.05, -0.12, 0.126]}><boxGeometry args={[0.03, 0.02, 0.002]} /><meshStandardMaterial color="#888899" flatShading /></mesh>
       ))}
 
     </group>

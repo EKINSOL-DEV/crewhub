@@ -14,7 +14,7 @@ export function RubberStamps() {
         ['#4488ff', 0.05],
         ['#44cc44', 0.2],
       ].map(([c, x], i) => (
-        <group key={i} position={[(x as number) - 0.05, -0.18, 0]}>
+        <group key={`item-${i}`} position={[(x as number) - 0.05, -0.18, 0]}>
           <mesh position={[0, 0.04, 0]}>
             <boxGeometry args={[0.08, 0.06, 0.04]} />
             <meshStandardMaterial color="#aa7744" flatShading />

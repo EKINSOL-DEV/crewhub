@@ -317,7 +317,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
             <div className="space-y-4">
               {filteredMessages.map((msg, idx) => (
                 <div
-                  key={idx}
+                  key={`msg-${idx}`}
                   className={cn(
                     'p-3 rounded-lg',
                     msg.role === 'user'

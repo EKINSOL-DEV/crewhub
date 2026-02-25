@@ -20,7 +20,7 @@ export function Oscilloscope() {
         <meshStandardMaterial color="#112211" />
       </mesh>
       {[...Array(4)].map((_, i) => (
-        <mesh key={i} position={[-0.05, -0.06 + i * 0.04, 0.083]}>
+        <mesh key={`item-${i}`} position={[-0.05, -0.06 + i * 0.04, 0.083]}>
           <boxGeometry args={[0.2, 0.001, 0.001]} />
           <meshStandardMaterial color="#224422" />
         </mesh>
@@ -30,7 +30,7 @@ export function Oscilloscope() {
         <meshStandardMaterial color="#44ff44" emissive="#44ff44" emissiveIntensity={2} />
       </mesh>
       {[0, 1, 2].map((i) => (
-        <mesh key={i} position={[0.14, 0.05 - i * 0.06, 0.08]}>
+        <mesh key={`item-${i}`} position={[0.14, 0.05 - i * 0.06, 0.08]}>
           <cylinderGeometry args={[0.015, 0.015, 0.01, 8]} />
           <meshStandardMaterial color={['#ff4444', '#4488ff', '#ffcc44'][i]} flatShading />
         </mesh>

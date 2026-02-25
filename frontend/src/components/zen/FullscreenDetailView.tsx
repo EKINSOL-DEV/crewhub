@@ -130,6 +130,14 @@ function ContentBlockView({
 function MessageBubble({ message, filterText }: { message: SessionMessage; filterText?: string }) {
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
+  let messageRole: string
+  if (isUser) {
+    messageRole = 'user'
+  } else if (isSystem) {
+    messageRole = 'system'
+  } else {
+    messageRole = 'assistant'
+  }
 
   const copyContent = useCallback(() => {
     const text =
@@ -142,7 +150,7 @@ function MessageBubble({ message, filterText }: { message: SessionMessage; filte
 
   return (
     <div
-      className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}
+      className={`zen-sd-message zen-sd-message-${messageRole}`}
     >
       <div className="zen-sd-message-header">
         <div className="zen-sd-message-header-top">
@@ -177,7 +185,7 @@ function MessageBubble({ message, filterText }: { message: SessionMessage; filte
       </div>
       <div className="zen-sd-message-body">
         {message.content?.map((block, i) => (
-          <ContentBlockView key={i} block={block} filterText={filterText} />
+          <ContentBlockView key={`block-${i}`} block={block} filterText={filterText} />
         ))}
       </div>
     </div>
@@ -562,7 +570,7 @@ export function FullscreenDetailView({
               </div>
             )}
             {displayMessages.map((msg, i) => (
-              <MessageBubble key={i} message={msg} filterText={filterText || undefined} />
+              <MessageBubble key={`msg-${i}`} message={msg} filterText={filterText || undefined} />
             ))}
           </div>
         </div>

@@ -78,6 +78,15 @@ function DocTreeNode({
 
   const sorted = isDir && node.children ? sortNodes(node.children, sortKey) : []
 
+  let folderIcon: string
+  if (!isDir) {
+    folderIcon = '📄'
+  } else if (isExpanded) {
+    folderIcon = '📂'
+  } else {
+    folderIcon = '📁'
+  }
+
   return (
     <div>
       <div
@@ -120,7 +129,7 @@ function DocTreeNode({
         )}
 
         {/* Icon */}
-        <span style={{ fontSize: 13 }}>{isDir ? (isExpanded ? '📂' : '📁') : '📄'}</span>
+        <span style={{ fontSize: 13 }}>{folderIcon}</span>
 
         {/* Name */}
         <span

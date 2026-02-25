@@ -168,7 +168,7 @@ function TaskLogsView({ session, onBack }: { session: CrewSession; onBack: () =>
               typeof entry.content === 'string' ? entry.content : JSON.stringify(entry.content)
             return (
               <div
-                key={i}
+                key={`entry-${i}`}
                 style={{
                   fontSize: 11,
                   color: '#475569',
@@ -214,7 +214,7 @@ function TaskLogsView({ session, onBack }: { session: CrewSession; onBack: () =>
 
           return (
             <div
-              key={i}
+              key={`item-${i}`}
               style={{
                 alignSelf: isUser ? 'flex-end' : 'flex-start',
                 maxWidth: '90%',

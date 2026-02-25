@@ -18,7 +18,7 @@ export function ConferenceSpeakerphone() {
       </mesh>
       <mesh ref={ringRef} position={[0, -0.215, 0]}><torusGeometry args={[0.15, 0.005, 4, 12]} /><meshStandardMaterial color="#44ff88" emissive="#44ff88" emissiveIntensity={0.8} /></mesh>
       {[0,1,2].map(i => (
-        <mesh key={i} position={[Math.cos(i*Math.PI*2/3)*0.1, -0.215, Math.sin(i*Math.PI*2/3)*0.1]}>
+        <mesh key={`item-${i}`} position={[Math.cos(i*Math.PI*2/3)*0.1, -0.215, Math.sin(i*Math.PI*2/3)*0.1]}>
           <cylinderGeometry args={[0.015, 0.015, 0.01, 6]} />
           <meshStandardMaterial color="#444455" flatShading />
         </mesh>

@@ -9,7 +9,7 @@ export function ThumbstickCaps() {
     <group ref={groupRef}>
 
       {[['#ff4444',-0.08],['#4488ff',0],['#44ff44',0.08]].map(([c,x],i) => (
-        <group key={i} position={[x as number, -0.2, 0]}>
+        <group key={`item-${i}`} position={[x as number, -0.2, 0]}>
           <mesh><cylinderGeometry args={[0.03, 0.025, 0.02, 8]} /><meshStandardMaterial color={c as string} flatShading /></mesh>
           <mesh position={[0, 0.015, 0]}><cylinderGeometry args={[0.028, 0.028, 0.005, 8]} /><meshStandardMaterial color={c as string} flatShading /></mesh>
         </group>

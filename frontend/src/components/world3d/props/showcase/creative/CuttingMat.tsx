@@ -14,13 +14,13 @@ export function CuttingMat() {
         <meshStandardMaterial color="#228844" flatShading />
       </mesh>
       {[...Array(6)].map((_, i) => (
-        <mesh key={i} position={[-0.25 + i * 0.1, -0.264, 0]}>
+        <mesh key={`item-${i}`} position={[-0.25 + i * 0.1, -0.264, 0]}>
           <boxGeometry args={[0.002, 0.001, 0.38]} />
           <meshStandardMaterial color="#44aa66" />
         </mesh>
       ))}
       {[...Array(4)].map((_, i) => (
-        <mesh key={i} position={[0, -0.264, -0.15 + i * 0.1]}>
+        <mesh key={`item-${i}`} position={[0, -0.264, -0.15 + i * 0.1]}>
           <boxGeometry args={[0.58, 0.001, 0.002]} />
           <meshStandardMaterial color="#44aa66" />
         </mesh>

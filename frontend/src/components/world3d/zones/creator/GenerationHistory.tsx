@@ -167,9 +167,10 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
         setDetail(null)
       }
 
+      const roomSuffix = result.deleted_from_rooms.length !== 1 ? 's' : ''
       const roomsMsg =
         result.total_instances_removed > 0
-          ? ` (removed from ${result.deleted_from_rooms.length} room${result.deleted_from_rooms.length !== 1 ? 's' : ''})`
+          ? ` (removed from ${result.deleted_from_rooms.length} room${roomSuffix})`
           : ''
       setToast({
         message: `✅ Prop "${deleteState.record.name}" deleted${roomsMsg}`,
@@ -244,7 +245,7 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
                 Tool Calls ({detail.toolCalls.length}):
               </span>
               {detail.toolCalls.map((tc, i) => (
-                <div key={i} style={{ fontSize: 10, color: '#888' }}>
+                <div key={`tc-${i}`} style={{ fontSize: 10, color: '#888' }}>
                   🔧 {tc.name}
                 </div>
               ))}

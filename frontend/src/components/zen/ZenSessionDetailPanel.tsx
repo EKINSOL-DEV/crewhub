@@ -83,6 +83,14 @@ function ContentBlockView({ block }: { block: SessionContentBlock }) {
 function MessageBubble({ message }: { message: SessionMessage }) {
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
+  let messageRole: string
+  if (isUser) {
+    messageRole = 'user'
+  } else if (isSystem) {
+    messageRole = 'system'
+  } else {
+    messageRole = 'assistant'
+  }
 
   const copyContent = useCallback(() => {
     const text =
@@ -95,7 +103,7 @@ function MessageBubble({ message }: { message: SessionMessage }) {
 
   return (
     <div
-      className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}
+      className={`zen-sd-message zen-sd-message-${messageRole}`}
     >
       <div className="zen-sd-message-header">
         <div className="zen-sd-message-header-top">
@@ -130,7 +138,7 @@ function MessageBubble({ message }: { message: SessionMessage }) {
       </div>
       <div className="zen-sd-message-body">
         {message.content?.map((block, i) => (
-          <ContentBlockView key={i} block={block} />
+          <ContentBlockView key={`block-${i}`} block={block} />
         ))}
       </div>
     </div>
@@ -342,7 +350,7 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
               <div className="zen-sd-empty">No messages in history</div>
             )}
             {[...messages].reverse().map((msg, i) => (
-              <MessageBubble key={i} message={msg} />
+              <MessageBubble key={`msg-${i}`} message={msg} />
             ))}
           </div>
         )}

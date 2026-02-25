@@ -456,6 +456,17 @@ export function ZenChatPanel({
   const stillUploading = pendingImages.some((img) => img.uploading)
   const canSend = (inputValue.trim() || uploadedImages.length > 0) && !stillUploading
 
+  let avatarStatus: 'error' | 'thinking' | 'active' | 'idle'
+  if (error) {
+    avatarStatus = 'error'
+  } else if (isSending) {
+    avatarStatus = 'thinking'
+  } else if (messages.length > 0) {
+    avatarStatus = 'active'
+  } else {
+    avatarStatus = 'idle'
+  }
+
   return (
     <div className="zen-chat-panel">
       {/* Chat header with agent info and controls */}
@@ -463,9 +474,7 @@ export function ZenChatPanel({
         <div className="zen-chat-header-left">
           <PixelAvatar
             agentName={agentName}
-            status={
-              error ? 'error' : isSending ? 'thinking' : messages.length > 0 ? 'active' : 'idle'
-            }
+            status={avatarStatus}
             stats={{
               tokens: undefined, // TODO: get from session
               uptime: undefined, // TODO: calculate from session start

@@ -184,7 +184,7 @@ function CoordinateLabels({
     <>
       {labels.map((lbl, i) => (
         <Html
-          key={i}
+          key={`lbl-${i}`}
           position={lbl.pos as [number, number, number]}
           center
           zIndexRange={[0, 1]}
@@ -236,7 +236,7 @@ function PropLabels({
     <>
       {labelCells.map((cell, i) => (
         <Html
-          key={i}
+          key={`cell-${i}`}
           position={[cell.worldX, 0.15, cell.worldZ]}
           center
           zIndexRange={[0, 1]}

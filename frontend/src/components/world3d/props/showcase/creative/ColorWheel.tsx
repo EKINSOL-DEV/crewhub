@@ -32,7 +32,7 @@ export function ColorWheel() {
           const na = ((i + 1) / colors.length) * Math.PI * 2
           const mid = (a + na) / 2
           return (
-            <mesh key={i} position={[Math.cos(mid) * 0.3, Math.sin(mid) * 0.3, 0]}>
+            <mesh key={`c-${i}`} position={[Math.cos(mid) * 0.3, Math.sin(mid) * 0.3, 0]}>
               <boxGeometry args={[0.18, 0.18, 0.04]} />
               <meshStandardMaterial color={c} flatShading />
             </mesh>

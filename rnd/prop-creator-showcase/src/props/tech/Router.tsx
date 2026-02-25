@@ -26,14 +26,14 @@ export function Router() {
       </mesh>
       {/* Ventilation */}
       {Array.from({ length: 6 }, (_, i) => (
-        <mesh key={i} position={[-0.2 + i * 0.08, -0.28, 0]}>
+        <mesh key={`item-${i}`} position={[-0.2 + i * 0.08, -0.28, 0]}>
           <boxGeometry args={[0.04, 0.005, 0.3]} />
           <meshStandardMaterial color="#111122" />
         </mesh>
       ))}
       {/* Antennas */}
       {[-0.3, 0, 0.3].map((x, i) => (
-        <group key={i}>
+        <group key={`x-${i}`}>
           <mesh position={[x, -0.05, -0.2]} rotation={[0.15, 0, (i - 1) * 0.1]}>
             <cylinderGeometry args={[0.02, 0.015, 0.6, 6]} />
             <meshStandardMaterial color="#333355" />
@@ -47,7 +47,7 @@ export function Router() {
       {/* LEDs */}
       <group ref={ledsRef}>
         {[0, 1, 2, 3, 4].map(i => (
-          <mesh key={i} position={[-0.2 + i * 0.1, -0.285, 0.24]}>
+          <mesh key={`item-${i}`} position={[-0.2 + i * 0.1, -0.285, 0.24]}>
             <sphereGeometry args={[0.012, 4, 4]} />
             <meshStandardMaterial color={i < 3 ? '#00ff66' : '#ff8800'} emissive={i < 3 ? '#00ff66' : '#ff8800'} emissiveIntensity={2} />
           </mesh>

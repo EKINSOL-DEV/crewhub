@@ -17,7 +17,7 @@ export function AirPurifier() {
         <meshStandardMaterial color="#ccccdd" flatShading />
       </mesh>
       {[0,1,2,3].map(i => (
-        <mesh key={i} position={[0, -0.1+i*0.08, 0.19]}>
+        <mesh key={`item-${i}`} position={[0, -0.1+i*0.08, 0.19]}>
           <boxGeometry args={[0.2, 0.015, 0.01]} />
           <meshStandardMaterial color="#bbbbcc" flatShading />
         </mesh>

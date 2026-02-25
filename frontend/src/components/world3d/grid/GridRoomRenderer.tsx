@@ -370,7 +370,14 @@ function SelectionIndicator({
   const shadowRef = useRef<THREE.Mesh>(null!)
 
   // Color changes based on state: red for invalid, green for dragging, orange for selected
-  const ringColor = isOverInvalid ? '#ff4444' : isDragging ? '#00ff88' : '#ffa500'
+  let ringColor: string
+  if (isOverInvalid) {
+    ringColor = '#ff4444'
+  } else if (isDragging) {
+    ringColor = '#00ff88'
+  } else {
+    ringColor = '#ffa500'
+  }
 
   // Animate shadow opacity/scale when lifted (dragging)
   useFrame(() => {

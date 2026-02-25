@@ -44,7 +44,7 @@ export function Rocket() {
         const angle = (i / 4) * Math.PI * 2
         return (
           <mesh
-            key={i}
+            key={`item-${i}`}
             position={[Math.cos(angle) * 0.22, -0.35, Math.sin(angle) * 0.22]}
             rotation={[0, -angle, 0]}
           >

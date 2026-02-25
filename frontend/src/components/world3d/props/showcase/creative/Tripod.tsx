@@ -33,7 +33,7 @@ export function Tripod() {
       {[0, 1, 2].map((i) => {
         const a = (i / 3) * Math.PI * 2
         return (
-          <group key={i}>
+          <group key={`item-${i}`}>
             <mesh
               position={[Math.sin(a) * 0.2, -0.4, Math.cos(a) * 0.2]}
               rotation={[Math.cos(a) * 0.35, 0, Math.sin(a) * 0.35]}

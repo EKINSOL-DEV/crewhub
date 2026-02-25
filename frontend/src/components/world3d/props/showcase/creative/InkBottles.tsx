@@ -14,7 +14,7 @@ export function InkBottles() {
         ['#ff2244', 0],
         ['#4488ff', 0.1],
       ].map(([c, x], i) => (
-        <group key={i} position={[x as number, -0.15, 0]}>
+        <group key={`item-${i}`} position={[x as number, -0.15, 0]}>
           <mesh>
             <cylinderGeometry args={[0.04, 0.04, 0.12, 6]} />
             <meshStandardMaterial color={c as string} transparent opacity={0.6} flatShading />

@@ -18,7 +18,7 @@ export function WiFiExtender() {
         <meshStandardMaterial color="#44ff44" emissive="#44ff44" emissiveIntensity={1.5} />
       </mesh>
       {[1, 2, 3].map((i) => (
-        <mesh key={i} position={[0, 0.05, 0.025]}>
+        <mesh key={`item-${i}`} position={[0, 0.05, 0.025]}>
           <torusGeometry args={[i * 0.03, 0.003, 4, 8, Math.PI]} />
           <meshStandardMaterial color="#44aaff" transparent opacity={0.3} />
         </mesh>

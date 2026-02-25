@@ -97,7 +97,7 @@ function LandingScene({
             📋 Coming in MVP
           </div>
           {mvpItems.map((item, i) => (
-            <div key={i} style={{ padding: '3px 0', opacity: 0.9 }}>
+            <div key={`item-${i}`} style={{ padding: '3px 0', opacity: 0.9 }}>
               {item.emoji} {item.label}
             </div>
           ))}

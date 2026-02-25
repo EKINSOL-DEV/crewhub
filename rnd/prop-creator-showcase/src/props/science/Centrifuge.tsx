@@ -22,7 +22,7 @@ export function Centrifuge() {
       </mesh>
       <group ref={rotorRef} position={[0, -0.1, 0]}>
         {[0,1,2,3].map(i => (
-          <mesh key={i} position={[Math.cos(i*Math.PI/2)*0.08, 0, Math.sin(i*Math.PI/2)*0.08]}>
+          <mesh key={`item-${i}`} position={[Math.cos(i*Math.PI/2)*0.08, 0, Math.sin(i*Math.PI/2)*0.08]}>
             <cylinderGeometry args={[0.02, 0.015, 0.06, 4]} />
             <meshStandardMaterial color="#4488ff" flatShading />
           </mesh>

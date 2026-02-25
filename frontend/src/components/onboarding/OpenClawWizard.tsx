@@ -659,7 +659,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
             {testResult.hints.length > 0 && (
               <ul className="space-y-1 mt-2">
                 {testResult.hints.map((hint, i) => (
-                  <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                  <li key={`hint-${i}`} className="text-xs text-muted-foreground flex items-start gap-1.5">
                     <span className="text-primary mt-0.5">→</span>
                     {hint}
                   </li>

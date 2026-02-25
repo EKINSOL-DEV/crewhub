@@ -29,7 +29,7 @@ export function MolecularModel() {
     <group ref={groupRef}>
       {/* Atoms */}
       {atoms.map((a, i) => (
-        <mesh key={i} position={a.pos}>
+        <mesh key={`a-${i}`} position={a.pos}>
           <sphereGeometry args={[a.r, 8, 8]} />
           <meshStandardMaterial color={a.color} flatShading />
         </mesh>
@@ -46,7 +46,7 @@ export function MolecularModel() {
           dir.normalize()
         )
         return (
-          <mesh key={i} position={[mid.x, mid.y, mid.z]} quaternion={q}>
+          <mesh key={`item-${i}`} position={[mid.x, mid.y, mid.z]} quaternion={q}>
             <cylinderGeometry args={[0.02, 0.02, len, 6]} />
             <meshStandardMaterial color="#888899" />
           </mesh>

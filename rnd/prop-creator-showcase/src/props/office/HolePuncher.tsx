@@ -21,7 +21,7 @@ export function HolePuncher() {
         <meshStandardMaterial color="#555566" flatShading />
       </mesh>
       {[-0.05, 0.05].map((x,i) => (
-        <mesh key={i} position={[x, -0.15, 0]}><cylinderGeometry args={[0.015, 0.015, 0.12, 6]} /><meshStandardMaterial color="#888899" flatShading /></mesh>
+        <mesh key={`x-${i}`} position={[x, -0.15, 0]}><cylinderGeometry args={[0.015, 0.015, 0.12, 6]} /><meshStandardMaterial color="#888899" flatShading /></mesh>
       ))}
             <mesh position={[0, -0.27, 0]}>
         <boxGeometry args={[0.15, 0.02, 0.06]} />

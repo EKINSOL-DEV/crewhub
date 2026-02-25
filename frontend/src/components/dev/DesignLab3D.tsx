@@ -177,7 +177,7 @@ function ChatIcon({ color }: { color: string }) {
         </RoundedBox>
         {/* Little dots inside */}
         {[-0.035, 0, 0.035].map((x, i) => (
-          <mesh key={i} position={[x, 0, 0.025]}>
+          <mesh key={`x-${i}`} position={[x, 0, 0.025]}>
             <sphereGeometry args={[0.012, 8, 8]} />
             <meshStandardMaterial color="white" />
           </mesh>
@@ -249,7 +249,7 @@ function SleepingZs() {
     <group>
       {[0, 1, 2].map((i) => (
         <group
-          key={i}
+          key={`item-${i}`}
           ref={(el) => {
             if (el) zRefs.current[i] = el
           }}
@@ -313,7 +313,14 @@ function ChatBubble3D({
 
   const displayText = style === 'alert' ? '❗' : text || '...'
   const bgColor = style === 'alert' ? '#fef2f2' : '#ffffff'
-  const borderColor = style === 'alert' ? '#ef4444' : style === 'thought' ? '#a5b4fc' : '#d1d5db'
+  let borderColor: string
+  if (style === 'alert') {
+    borderColor = '#ef4444'
+  } else if (style === 'thought') {
+    borderColor = '#a5b4fc'
+  } else {
+    borderColor = '#d1d5db'
+  }
 
   return (
     <group ref={groupRef} position={[0, 0.9, 0]}>
@@ -705,17 +712,27 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
           <div className="space-y-1">
             <span className={`text-xs font-medium ${textSecondary}`}>Camera</span>
             <div className="flex gap-1">
-              {(['front', 'isometric', 'top-down'] as CameraPreset[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setCameraPreset(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    cameraPreset === p ? btnActive : btnBase
-                  }`}
-                >
-                  {p === 'front' ? '📷' : p === 'isometric' ? '🔲' : '🔽'} {p}
-                </button>
-              ))}
+              {(['front', 'isometric', 'top-down'] as CameraPreset[]).map((p) => {
+                let cameraIcon: string
+                if (p === 'front') {
+                  cameraIcon = '📷'
+                } else if (p === 'isometric') {
+                  cameraIcon = '🔲'
+                } else {
+                  cameraIcon = '🔽'
+                }
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setCameraPreset(p)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      cameraPreset === p ? btnActive : btnBase
+                    }`}
+                  >
+                    {cameraIcon} {p}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -828,17 +845,27 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
 
                     {/* Bubble style */}
                     <div className="flex gap-1">
-                      {BUBBLE_STYLES.map((bs) => (
-                        <button
-                          key={bs}
-                          onClick={() => updateBot(bot.id, { bubbleStyle: bs })}
-                          className={`px-2 py-1 rounded text-[10px] font-medium capitalize transition-all ${
-                            st.bubbleStyle === bs ? btnActive : btnBase
-                          }`}
-                        >
-                          {bs === 'speech' ? '💬' : bs === 'thought' ? '💭' : '❗'} {bs}
-                        </button>
-                      ))}
+                      {BUBBLE_STYLES.map((bs) => {
+                        let bubbleIcon: string
+                        if (bs === 'speech') {
+                          bubbleIcon = '💬'
+                        } else if (bs === 'thought') {
+                          bubbleIcon = '💭'
+                        } else {
+                          bubbleIcon = '❗'
+                        }
+                        return (
+                          <button
+                            key={bs}
+                            onClick={() => updateBot(bot.id, { bubbleStyle: bs })}
+                            className={`px-2 py-1 rounded text-[10px] font-medium capitalize transition-all ${
+                              st.bubbleStyle === bs ? btnActive : btnBase
+                            }`}
+                          >
+                            {bubbleIcon} {bs}
+                          </button>
+                        )
+                      })}
                     </div>
 
                     {/* Bubble text */}

@@ -22,7 +22,7 @@ export function Bench({ position = [0, 0, 0], rotation = [0, 0, 0] }: BenchProps
     <group position={position} rotation={rotation}>
       {/* Metal legs (2 A-frame supports) */}
       {[-seatWidth / 2 + 0.2, seatWidth / 2 - 0.2].map((x, i) => (
-        <group key={i}>
+        <group key={`x-${i}`}>
           {/* Front leg */}
           <mesh position={[x, seatHeight / 2, seatDepth / 2 - 0.05]} castShadow>
             <boxGeometry args={[legWidth, seatHeight, legWidth]} />

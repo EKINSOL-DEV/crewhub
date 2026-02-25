@@ -37,7 +37,7 @@ export function Beaker() {
       </mesh>
       {/* Graduation marks */}
       {[0, 1, 2, 3].map((i) => (
-        <mesh key={i} position={[0.22, -0.35 + i * 0.12, 0]}>
+        <mesh key={`item-${i}`} position={[0.22, -0.35 + i * 0.12, 0]}>
           <boxGeometry args={[0.03, 0.005, 0.001]} />
           <meshStandardMaterial color="#ffffff" transparent opacity={0.5} />
         </mesh>
@@ -46,7 +46,7 @@ export function Beaker() {
       <group ref={bubbleRef}>
         {[0, 1, 2, 3, 4].map((i) => (
           <mesh
-            key={i}
+            key={`item-${i}`}
             position={[(Math.random() - 0.5) * 0.15, -0.1 + i * 0.08, (Math.random() - 0.5) * 0.15]}
           >
             <sphereGeometry args={[0.012 + Math.random() * 0.01, 4, 4]} />

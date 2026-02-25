@@ -178,7 +178,7 @@ function SignalAntenna({ color }: { color: string }) {
       {/* Signal waves (arcs) */}
       <group ref={wavesRef} position={[0, 0.2, 0]}>
         {[0.05, 0.075, 0.1].map((radius, i) => (
-          <mesh key={i} rotation={[0, 0, -Math.PI / 4]}>
+          <mesh key={`radius-${i}`} rotation={[0, 0, -Math.PI / 4]}>
             <torusGeometry args={[radius, 0.005, 4, 12, Math.PI / 2]} />
             <meshStandardMaterial color={color} transparent opacity={0.6} depthWrite={false} />
           </mesh>

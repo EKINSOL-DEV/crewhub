@@ -29,14 +29,14 @@ export function Toolbox() {
       </mesh>
       {/* Handle supports */}
       {[-0.18, 0.18].map((x, i) => (
-        <mesh key={i} position={[x, -0.01, 0]}>
+        <mesh key={`x-${i}`} position={[x, -0.01, 0]}>
           <boxGeometry args={[0.03, 0.1, 0.03]} />
           <meshStandardMaterial color="#333344" />
         </mesh>
       ))}
       {/* Latches */}
       {[-0.25, 0.25].map((x, i) => (
-        <mesh key={i} position={[x, -0.12, 0.21]}>
+        <mesh key={`x-${i}`} position={[x, -0.12, 0.21]}>
           <boxGeometry args={[0.06, 0.04, 0.02]} />
           <meshStandardMaterial color="#cccccc" />
         </mesh>

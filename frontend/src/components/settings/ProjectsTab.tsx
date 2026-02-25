@@ -217,7 +217,7 @@ function ProjectsSettingsSection({
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {assignedRoomNames.map((name, i) => (
                                 <span
-                                  key={i}
+                                  key={`name-${i}`}
                                   className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
                                 >
                                   {name}

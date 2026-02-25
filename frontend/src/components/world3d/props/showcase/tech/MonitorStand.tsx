@@ -41,7 +41,7 @@ export function MonitorStand() {
       </mesh>
       {/* USB ports */}
       {[0, 1, 2].map((i) => (
-        <mesh key={i} position={[0.12 + i * 0.06, -0.42, 0.045]}>
+        <mesh key={`item-${i}`} position={[0.12 + i * 0.06, -0.42, 0.045]}>
           <boxGeometry args={[0.03, 0.015, 0.01]} />
           <meshStandardMaterial color="#4488ff" emissive="#4488ff" emissiveIntensity={1} />
         </mesh>

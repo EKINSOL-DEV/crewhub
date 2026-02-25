@@ -30,7 +30,7 @@ export function ServerRack() {
       </mesh>
       {/* Server units */}
       {servers.map((y, i) => (
-        <group key={i}>
+        <group key={`y-${i}`}>
           <mesh position={[0, y, 0.05]}>
             <boxGeometry args={[0.8, 0.22, 0.45]} />
             <meshStandardMaterial color={i % 2 === 0 ? '#2a2a3e' : '#252538'} />
@@ -66,7 +66,7 @@ export function ServerRack() {
       </mesh>
       {/* Cables on side */}
       {[0, 1, 2].map(i => (
-        <mesh key={i} position={[0.46, 0.2 - i * 0.3, 0.1]}>
+        <mesh key={`item-${i}`} position={[0.46, 0.2 - i * 0.3, 0.1]}>
           <cylinderGeometry args={[0.015, 0.015, 0.5, 4]} />
           <meshStandardMaterial color={['#ff4444', '#44ff44', '#4488ff'][i]} />
         </mesh>

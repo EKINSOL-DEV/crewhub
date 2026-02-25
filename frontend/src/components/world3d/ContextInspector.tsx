@@ -581,7 +581,7 @@ function ArrayView({
         ▼
       </button>
       {items.map((item, i) => (
-        <div key={i} style={{ marginBottom: 2 }}>
+        <div key={`item-${i}`} style={{ marginBottom: 2 }}>
           <span style={{ color: '#475569', fontSize: 11, marginRight: 6 }}>{i}:</span>
           <TreeView data={item} prevData={prevItems?.[i]} depth={depth + 1} />
         </div>

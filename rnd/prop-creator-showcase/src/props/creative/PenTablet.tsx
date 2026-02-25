@@ -19,7 +19,7 @@ export function PenTablet() {
       </mesh>
       {/* Express keys */}
       {[0, 1, 2, 3].map(i => (
-        <mesh key={i} position={[-0.38, -0.32, 0.1 - i * 0.08]}>
+        <mesh key={`item-${i}`} position={[-0.38, -0.32, 0.1 - i * 0.08]}>
           <boxGeometry args={[0.06, 0.02, 0.06]} />
           <meshStandardMaterial color="#3a3a4e" />
         </mesh>

@@ -14,7 +14,7 @@ export function CableClips() {
         <meshStandardMaterial color="#aa8855" flatShading />
       </mesh>
       {[...Array(5)].map((_, i) => (
-        <group key={i} position={[-0.16 + i * 0.08, -0.22, 0.12]}>
+        <group key={`item-${i}`} position={[-0.16 + i * 0.08, -0.22, 0.12]}>
           <mesh>
             <boxGeometry args={[0.03, 0.04, 0.02]} />
             <meshStandardMaterial

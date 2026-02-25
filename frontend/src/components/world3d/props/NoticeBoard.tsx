@@ -37,7 +37,7 @@ export function NoticeBoard({ position = [0, 0, 0], rotation = [0, 0, 0] }: Noti
         { pos: [0.2, 0.1, 0.04] as [number, number, number], toon: noteToon2, rot: -0.08 },
         { pos: [-0.1, -0.15, 0.04] as [number, number, number], toon: noteToon3, rot: 0.12 },
       ].map((note, i) => (
-        <group key={i}>
+        <group key={`note-${i}`}>
           <mesh position={note.pos} rotation={[0, 0, note.rot]}>
             <boxGeometry args={[0.3, 0.25, 0.005]} />
             <meshToonMaterial {...note.toon} />

@@ -31,7 +31,7 @@ export function MeasuringTape() {
       </mesh>
       {/* Tape marks */}
       {[0, 1, 2, 3, 4].map((i) => (
-        <mesh key={i} position={[0.1 + i * 0.06, -0.01, 0.031]}>
+        <mesh key={`item-${i}`} position={[0.1 + i * 0.06, -0.01, 0.031]}>
           <boxGeometry args={[0.002, 0.015, 0.001]} />
           <meshStandardMaterial color="#111111" />
         </mesh>

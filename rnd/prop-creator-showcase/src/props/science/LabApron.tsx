@@ -21,7 +21,7 @@ export function LabApron() {
         <meshStandardMaterial color="#eeeeee" flatShading />
       </mesh>
       {[-0.2, 0.2].map((x,i) => (
-        <mesh key={i} position={[x, 0.15, 0]}><cylinderGeometry args={[0.005, 0.005, 0.2, 4]} /><meshStandardMaterial color="#ddddee" flatShading /></mesh>
+        <mesh key={`x-${i}`} position={[x, 0.15, 0]}><cylinderGeometry args={[0.005, 0.005, 0.2, 4]} /><meshStandardMaterial color="#ddddee" flatShading /></mesh>
       ))}
 
     </group>

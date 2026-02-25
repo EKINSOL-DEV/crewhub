@@ -18,7 +18,7 @@ export function GamingChairFootrest() {
         <meshStandardMaterial color="#333344" flatShading />
       </mesh>
       {[-0.14, 0.14].map((x, i) => (
-        <mesh key={i} position={[x, -0.28, 0]}>
+        <mesh key={`x-${i}`} position={[x, -0.28, 0]}>
           <boxGeometry args={[0.03, 0.02, 0.16]} />
           <meshStandardMaterial color="#ff4444" flatShading />
         </mesh>

@@ -109,10 +109,18 @@ function ContentBlockView({ block }: { block: SessionContentBlock }) {
 function MessageBubble({ message }: { message: SessionMessage }) {
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
+  let messageRole: string
+  if (isUser) {
+    messageRole = 'user'
+  } else if (isSystem) {
+    messageRole = 'system'
+  } else {
+    messageRole = 'assistant'
+  }
 
   return (
     <div
-      className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}
+      className={`zen-sd-message zen-sd-message-${messageRole}`}
     >
       <div className="zen-sd-message-header">
         <span className="zen-sd-message-role">
@@ -140,7 +148,7 @@ function MessageBubble({ message }: { message: SessionMessage }) {
       </div>
       <div className="zen-sd-message-body">
         {message.content?.map((block, i) => (
-          <ContentBlockView key={i} block={block} />
+          <ContentBlockView key={`block-${i}`} block={block} />
         ))}
       </div>
     </div>
@@ -473,7 +481,7 @@ export function ZenActivityDetailPanel({
               <div className="zen-sd-empty">No history available</div>
             )}
             {messages.map((msg, i) => (
-              <MessageBubble key={i} message={msg} />
+              <MessageBubble key={`msg-${i}`} message={msg} />
             ))}
           </div>
         )}

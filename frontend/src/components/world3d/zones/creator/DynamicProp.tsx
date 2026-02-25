@@ -308,7 +308,7 @@ export function DynamicProp({
           }
           return (
             <DynamicMesh
-              key={i}
+              key={`part-${i}`}
               part={part}
               index={i}
               editMode={editMode}

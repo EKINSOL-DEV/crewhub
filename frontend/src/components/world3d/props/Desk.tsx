@@ -38,7 +38,7 @@ export function Desk({ position = [0, 0, 0], rotation = [0, 0, 0] }: DeskProps) 
         [-legOffsetX, legHeight / 2, legOffsetZ],
         [legOffsetX, legHeight / 2, legOffsetZ],
       ].map((legPos, i) => (
-        <mesh key={i} position={legPos as [number, number, number]} castShadow>
+        <mesh key={`legPos-${i}`} position={legPos as [number, number, number]} castShadow>
           <boxGeometry args={[legSize, legHeight, legSize]} />
           <meshToonMaterial {...woodToon} />
         </mesh>

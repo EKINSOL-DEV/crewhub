@@ -17,7 +17,7 @@ export function BrushCleanerJar() {
         <meshStandardMaterial color="#8899bb" transparent opacity={0.4} flatShading />
       </mesh>
       {[0,1,2].map(i => (
-        <mesh key={i} position={[(i-1)*0.03, 0.05, 0]} rotation={[0, 0, (i-1)*0.1]}><cylinderGeometry args={[0.006, 0.006, 0.2, 4]} /><meshStandardMaterial color={['#884422','#664411','#aa6633'][i]} flatShading /></mesh>
+        <mesh key={`item-${i}`} position={[(i-1)*0.03, 0.05, 0]} rotation={[0, 0, (i-1)*0.1]}><cylinderGeometry args={[0.006, 0.006, 0.2, 4]} /><meshStandardMaterial color={['#884422','#664411','#aa6633'][i]} flatShading /></mesh>
       ))}
 
     </group>

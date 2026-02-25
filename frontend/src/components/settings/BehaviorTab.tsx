@@ -71,8 +71,18 @@ function ConfigField({
 
   const displayValue = toDisplay(value)
   const displayDefault = toDisplay(defaultVal)
-  const displayStep =
-    step ?? (unit === 'minutes' ? 0.5 : unit === 'seconds' ? 5 : unit === 'speed' ? 0.1 : 1)
+  let displayStep: number
+  if (step !== undefined && step !== null) {
+    displayStep = step
+  } else if (unit === 'minutes') {
+    displayStep = 0.5
+  } else if (unit === 'seconds') {
+    displayStep = 5
+  } else if (unit === 'speed') {
+    displayStep = 0.1
+  } else {
+    displayStep = 1
+  }
   const displayMax = max ? toDisplay(max) : undefined
   const unitLabel =
     unit === 'seconds'

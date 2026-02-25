@@ -13,7 +13,7 @@ export function CharcoalSticks() {
         <meshStandardMaterial color="#aa8855" flatShading />
       </mesh>
       {[0,1,2,3,4].map(i => (
-        <mesh key={i} position={[-0.06+i*0.03, -0.19, 0]} rotation={[0, 0, (i-2)*0.08]}><cylinderGeometry args={[0.008, 0.008, 0.15, 4]} /><meshStandardMaterial color="#222222" flatShading /></mesh>
+        <mesh key={`item-${i}`} position={[-0.06+i*0.03, -0.19, 0]} rotation={[0, 0, (i-2)*0.08]}><cylinderGeometry args={[0.008, 0.008, 0.15, 4]} /><meshStandardMaterial color="#222222" flatShading /></mesh>
       ))}
 
     </group>

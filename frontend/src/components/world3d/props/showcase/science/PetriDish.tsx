@@ -28,7 +28,7 @@ export function PetriDish() {
         [-0.18, -0.05, '#ff8844', 0.03],
         [0.05, 0.15, '#44aa44', 0.045],
       ].map(([x, z, c, r], i) => (
-        <mesh key={i} position={[x as number, -0.28, z as number]}>
+        <mesh key={`item-${i}`} position={[x as number, -0.28, z as number]}>
           <cylinderGeometry args={[r as number, (r as number) * 1.1, 0.01, 8]} />
           <meshStandardMaterial color={c as string} />
         </mesh>

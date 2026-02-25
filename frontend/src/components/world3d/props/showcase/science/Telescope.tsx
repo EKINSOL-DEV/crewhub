@@ -44,7 +44,7 @@ export function Telescope() {
         const a = (i / 3) * Math.PI * 2
         return (
           <mesh
-            key={i}
+            key={`item-${i}`}
             position={[Math.sin(a) * 0.15, -0.45, Math.cos(a) * 0.15]}
             rotation={[Math.cos(a) * 0.35, 0, Math.sin(a) * 0.35]}
           >

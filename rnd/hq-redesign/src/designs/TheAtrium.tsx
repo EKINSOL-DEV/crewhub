@@ -176,7 +176,7 @@ export function TheAtrium() {
         [-atriumW / 2, atriumD / 2],
         [atriumW / 2, atriumD / 2],
       ].map(([x, z], i) => (
-        <Pillar key={i} position={[x, 0, z]} height={floors * floorH} radius={0.15} color="#556" />
+        <Pillar key={`item-${i}`} position={[x, 0, z]} height={floors * floorH} radius={0.15} color="#556" />
       ))}
     </group>
   )

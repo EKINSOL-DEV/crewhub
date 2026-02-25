@@ -142,6 +142,14 @@ function FileTreeNode({
   const [open, setOpen] = useState(depth < 1)
   const isDir = node.type === 'directory'
   const isSelected = node.path === selectedPath
+  let folderIcon: string
+  if (!isDir) {
+    folderIcon = '📄'
+  } else if (open) {
+    folderIcon = '📂'
+  } else {
+    folderIcon = '📁'
+  }
 
   return (
     <div>
@@ -176,7 +184,7 @@ function FileTreeNode({
         }}
       >
         <span style={{ fontSize: 11, width: 14, textAlign: 'center', flexShrink: 0 }}>
-          {isDir ? (open ? '📂' : '📁') : '📄'}
+          {folderIcon}
         </span>
         <span
           style={{

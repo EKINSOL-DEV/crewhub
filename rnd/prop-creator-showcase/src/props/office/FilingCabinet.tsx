@@ -14,7 +14,7 @@ export function FilingCabinet() {
       </mesh>
       {/* Drawers */}
       {[0.35, 0.05, -0.25].map((y, i) => (
-        <group key={i}>
+        <group key={`y-${i}`}>
           <mesh position={[0, y, 0.26]}>
             <boxGeometry args={[0.55, 0.28, 0.02]} />
             <meshStandardMaterial color={i === 1 ? '#8899aa' : '#778899'} flatShading />
@@ -38,7 +38,7 @@ export function FilingCabinet() {
       </mesh>
       {/* Files inside */}
       {[-0.15, 0, 0.15].map((x, i) => (
-        <mesh key={i} position={[x, 0.12, 0.42]}>
+        <mesh key={`x-${i}`} position={[x, 0.12, 0.42]}>
           <boxGeometry args={[0.08, 0.18, 0.25]} />
           <meshStandardMaterial color={['#ff6644', '#44aa66', '#4488ff'][i]} flatShading />
         </mesh>

@@ -115,6 +115,15 @@ export function ActionsTab({
     </button>
   )
 
+  let selectCursor: string
+  if (isDemoMode) {
+    selectCursor = 'not-allowed'
+  } else if (isMoving) {
+    selectCursor = 'wait'
+  } else {
+    selectCursor = 'pointer'
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Room Management */}
@@ -134,7 +143,7 @@ export function ActionsTab({
               background: isDemoMode ? 'rgba(0, 0, 0, 0.02)' : 'rgba(0, 0, 0, 0.04)',
               border: '1px solid rgba(0, 0, 0, 0.08)',
               borderRadius: 8,
-              cursor: isDemoMode ? 'not-allowed' : isMoving ? 'wait' : 'pointer',
+              cursor: selectCursor,
               appearance: 'none',
               WebkitAppearance: 'none',
               fontFamily: 'system-ui, sans-serif',

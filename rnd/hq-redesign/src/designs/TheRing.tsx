@@ -127,7 +127,7 @@ export function TheRing() {
       {Array.from({ length: 12 }).map((_, i) => {
         const a = (i / 12) * Math.PI * 2
         const r = (outerR + innerR) / 2
-        return <Pillar key={i} position={[Math.cos(a) * r, 0, Math.sin(a) * r]} height={wallH * 2} radius={0.12} color="#556" />
+        return <Pillar key={`item-${i}`} position={[Math.cos(a) * r, 0, Math.sin(a) * r]} height={wallH * 2} radius={0.12} color="#556" />
       })}
 
       {/* ═══ GROUND FLOOR INTERIOR ═══ */}
@@ -183,7 +183,7 @@ export function TheRing() {
       {/* Small plants */}
       {Array.from({ length: 8 }).map((_, i) => {
         const a = (i / 8) * Math.PI * 2
-        return <Plant key={i} position={[Math.cos(a) * 2.8, 0, Math.sin(a) * 2.8]} variant={i} scale={0.7} />
+        return <Plant key={`item-${i}`} position={[Math.cos(a) * 2.8, 0, Math.sin(a) * 2.8]} variant={i} scale={0.7} />
       })}
     </group>
   )

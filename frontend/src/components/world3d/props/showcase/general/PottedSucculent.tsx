@@ -22,7 +22,7 @@ export function PottedSucculent() {
       </mesh>
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <mesh
-          key={i}
+          key={`item-${i}`}
           position={[Math.cos((i * Math.PI) / 3) * 0.06, -0.04, Math.sin((i * Math.PI) / 3) * 0.06]}
           rotation={[0.4, (i * Math.PI) / 3, 0]}
         >

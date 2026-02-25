@@ -9,13 +9,13 @@ export function MicroscopeSlides() {
     <group ref={groupRef}>
 
       {[0,1,2].map(i => (
-        <mesh key={i} position={[i*0.005, -0.24+i*0.005, 0]}>
+        <mesh key={`item-${i}`} position={[i*0.005, -0.24+i*0.005, 0]}>
           <boxGeometry args={[0.08, 0.003, 0.25]} />
           <meshStandardMaterial color="#ccddee" transparent opacity={0.3} flatShading />
         </mesh>
       ))}
       {[0,1,2].map(i => (
-        <mesh key={i} position={[i*0.005, -0.235+i*0.005, 0.05]}>
+        <mesh key={`item-${i}`} position={[i*0.005, -0.235+i*0.005, 0.05]}>
           <boxGeometry args={[0.02, 0.002, 0.02]} />
           <meshStandardMaterial color="#ccddee" transparent opacity={0.2} />
         </mesh>

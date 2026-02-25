@@ -12,7 +12,7 @@ export function ServoMotors() {
   return (
     <group ref={groupRef}>
       {[0, 1].map((i) => (
-        <group key={i} position={[-0.08 + i * 0.16, -0.18, 0]}>
+        <group key={`item-${i}`} position={[-0.08 + i * 0.16, -0.18, 0]}>
           <mesh>
             <boxGeometry args={[0.06, 0.05, 0.04]} />
             <meshStandardMaterial color={i === 0 ? '#4488ff' : '#222233'} flatShading />
@@ -28,7 +28,7 @@ export function ServoMotors() {
         <meshStandardMaterial color="#ffffff" flatShading />
       </mesh>
       {[...Array(3)].map((_, i) => (
-        <mesh key={i} position={[-0.08, -0.22, -0.01 + i * 0.01]}>
+        <mesh key={`item-${i}`} position={[-0.08, -0.22, -0.01 + i * 0.01]}>
           <cylinderGeometry args={[0.003, 0.003, 0.08, 3]} />
           <meshStandardMaterial color={['#ff4444', '#222222', '#ffcc44'][i]} flatShading />
         </mesh>

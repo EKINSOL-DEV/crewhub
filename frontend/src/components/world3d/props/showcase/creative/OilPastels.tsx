@@ -25,7 +25,7 @@ export function OilPastels() {
         '#884422',
         '#222222',
       ].map((c, i) => (
-        <mesh key={i} position={[-0.12 + i * 0.027, -0.16, 0]}>
+        <mesh key={`c-${i}`} position={[-0.12 + i * 0.027, -0.16, 0]}>
           <cylinderGeometry args={[0.008, 0.008, 0.06, 4]} />
           <meshStandardMaterial color={c} flatShading />
         </mesh>

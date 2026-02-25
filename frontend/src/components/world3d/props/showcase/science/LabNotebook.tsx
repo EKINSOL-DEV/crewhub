@@ -18,7 +18,7 @@ export function LabNotebook() {
         <meshStandardMaterial color="#ffffff" flatShading />
       </mesh>
       {[0, 1, 2, 3].map((i) => (
-        <mesh key={i} position={[0, -0.02 + i * 0.06, 0.014]}>
+        <mesh key={`item-${i}`} position={[0, -0.02 + i * 0.06, 0.014]}>
           <boxGeometry args={[0.15, 0.003, 0.001]} />
           <meshStandardMaterial color="#4444aa" />
         </mesh>

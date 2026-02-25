@@ -17,7 +17,7 @@ export function NASDrive() {
         <meshStandardMaterial color="#333344" flatShading />
       </mesh>
       {[0,1,2,3].map(i => (
-        <mesh key={i} position={[-0.08+i*0.02, 0.1, 0.092]}><sphereGeometry args={[0.006, 4, 4]} /><meshStandardMaterial color={i<2?'#44ff44':'#ffcc44'} emissive={i<2?'#44ff44':'#ffcc44'} emissiveIntensity={1} /></mesh>
+        <mesh key={`item-${i}`} position={[-0.08+i*0.02, 0.1, 0.092]}><sphereGeometry args={[0.006, 4, 4]} /><meshStandardMaterial color={i<2?'#44ff44':'#ffcc44'} emissive={i<2?'#44ff44':'#ffcc44'} emissiveIntensity={1} /></mesh>
       ))}
 
     </group>

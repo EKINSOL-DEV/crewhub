@@ -32,7 +32,7 @@ export function Globe() {
         [0.1, -0.4, -0.35],
         [-0.3, 0.1, 0.45],
       ].map((pos, i) => (
-        <mesh key={i} position={pos as [number, number, number]}>
+        <mesh key={`pos-${i}`} position={pos as [number, number, number]}>
           <icosahedronGeometry args={[0.15 + (i % 3) * 0.05, 0]} />
           <meshStandardMaterial color="#44aa55" flatShading />
         </mesh>
@@ -50,7 +50,7 @@ export function Globe() {
       </group>
       {/* Satellites */}
       {[0, Math.PI].map((a, i) => (
-        <mesh key={i} position={[Math.cos(a) * 0.9, 0, Math.sin(a) * 0.9]}>
+        <mesh key={`a-${i}`} position={[Math.cos(a) * 0.9, 0, Math.sin(a) * 0.9]}>
           <boxGeometry args={[0.04, 0.04, 0.04]} />
           <meshStandardMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={2} />
         </mesh>

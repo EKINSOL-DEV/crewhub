@@ -16,7 +16,7 @@ export function GameController() {
       </mesh>
       {/* Grips */}
       {[-0.3, 0.3].map((x, i) => (
-        <mesh key={i} position={[x, -0.1, 0.05]}>
+        <mesh key={`x-${i}`} position={[x, -0.1, 0.05]}>
           <cylinderGeometry args={[0.06, 0.07, 0.2, 8]} />
           <meshStandardMaterial color="#1a1a2e" flatShading />
         </mesh>
@@ -37,7 +37,7 @@ export function GameController() {
         [0.2, 0.05],
         [0.15, 0.1],
       ].map(([x, z], i) => (
-        <mesh key={i} position={[x, 0.08, z]}>
+        <mesh key={`item-${i}`} position={[x, 0.08, z]}>
           <cylinderGeometry args={[0.02, 0.02, 0.02, 8]} />
           <meshStandardMaterial
             color={['#44ff44', '#ff4444', '#4488ff', '#ffcc44'][i]}
@@ -48,7 +48,7 @@ export function GameController() {
       ))}
       {/* Analog sticks */}
       {[-0.08, 0.08].map((x, i) => (
-        <mesh key={i} position={[x, 0.1, -0.08]}>
+        <mesh key={`x-${i}`} position={[x, 0.1, -0.08]}>
           <cylinderGeometry args={[0.035, 0.03, 0.04, 8]} />
           <meshStandardMaterial color="#333344" />
         </mesh>
@@ -60,7 +60,7 @@ export function GameController() {
       </mesh>
       {/* Triggers */}
       {[-0.2, 0.2].map((x, i) => (
-        <mesh key={i} position={[x, 0.06, -0.17]}>
+        <mesh key={`x-${i}`} position={[x, 0.06, -0.17]}>
           <boxGeometry args={[0.1, 0.04, 0.04]} />
           <meshStandardMaterial color="#333344" />
         </mesh>
