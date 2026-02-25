@@ -54,6 +54,8 @@ from app.routes.threads import router as threads_router
 from app.services.connections import get_connection_manager
 from app.services.meeting_recovery import recover_stuck_meetings
 
+API_PROJECTS_PREFIX = "/api/projects"
+
 logger = logging.getLogger(__name__)
 
 
@@ -306,9 +308,9 @@ app.include_router(sse.router, prefix="/api", tags=["sse"])
 app.include_router(gateway_status.router, prefix="/api/gateway", tags=["gateway"])
 
 # New database-backed routes
-app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
-app.include_router(project_files.router, prefix="/api/projects", tags=["project-files"])
-app.include_router(project_documents.router, prefix="/api/projects", tags=["project-documents"])
+app.include_router(projects.router, prefix=API_PROJECTS_PREFIX, tags=["projects"])
+app.include_router(project_files.router, prefix=API_PROJECTS_PREFIX, tags=["project-files"])
+app.include_router(project_documents.router, prefix=API_PROJECTS_PREFIX, tags=["project-documents"])
 app.include_router(project_discover_router, prefix="/api", tags=["project-discovery"])
 app.include_router(rooms.router, prefix="/api/rooms", tags=["rooms"])
 app.include_router(assignments.router, prefix="/api/session-room-assignments", tags=["assignments"])
@@ -330,7 +332,7 @@ app.include_router(blueprints.router, prefix="/api", tags=["blueprints"])
 
 # Phase 3: Task Management
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
-app.include_router(project_history.router, prefix="/api/projects", tags=["project-history"])
+app.include_router(project_history.router, prefix=API_PROJECTS_PREFIX, tags=["project-history"])
 
 # Phase 4: Bot Context Injection
 app.include_router(context.router, prefix="/api/sessions", tags=["context"])

@@ -10,6 +10,8 @@ import logging
 import re
 from dataclasses import dataclass, field
 
+EMISSIVE_ATTR = "emissive="
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +74,7 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
         # Skip if already has flatShading, or if it's emissive/transparent
         if (
             "flatShading" in tag
-            or "emissive=" in tag
+            or EMISSIVE_ATTR in tag
             or "transparent" in tag
             or "opacity=" in tag
             or "wireframe" in tag
@@ -160,7 +162,7 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
         result.corrections.append("Added THREE import")
 
     # 6. Check for emissive elements
-    has_emissive = "emissive=" in enhanced or "emissiveIntensity" in enhanced
+    has_emissive = EMISSIVE_ATTR in enhanced or "emissiveIntensity" in enhanced
     if not has_emissive:
         result.warnings.append("No emissive elements — prop may look flat. Consider regenerating.")
 
@@ -194,7 +196,7 @@ def validate_prop_quality(code: str) -> dict:
     """Quick validation check for prop quality metrics."""
     mesh_count = len(re.findall(r"<mesh\b", code))
     has_animation = "useFrame" in code
-    has_emissive = "emissive=" in code
+    has_emissive = EMISSIVE_ATTR in code
     has_flat_shading = "flatShading" in code
     has_standard_material = "meshStandardMaterial" in code
     has_toon_material = "meshToonMaterial" in code

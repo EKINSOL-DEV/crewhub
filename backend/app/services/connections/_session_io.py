@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
 from .base import HistoryMessage
 
+OPENCLAW_DIR = ".openclaw"
+
 logger = logging.getLogger(__name__)
 
 # Validation for safe IDs (prevent path traversal)
@@ -53,7 +55,7 @@ class OpenClawSessionIOMixin:
 
             session_id = _validate_id(session.session_id)
             agent_id = _validate_id(session.agent_id)
-            base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
+            base = Path.home() / OPENCLAW_DIR / "agents" / agent_id / "sessions"
             session_file = (base / f"{session_id}.jsonl").resolve()
 
             if not str(session_file).startswith(str(base.resolve())):
@@ -103,7 +105,7 @@ class OpenClawSessionIOMixin:
                 if len(parts) > 1:
                     agent_id = _validate_id(parts[1])
 
-            base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
+            base = Path.home() / OPENCLAW_DIR / "agents" / agent_id / "sessions"
             session_file = (base / f"{session_id}.jsonl").resolve()
 
             if not str(session_file).startswith(str(base.resolve())):
@@ -146,7 +148,7 @@ class OpenClawSessionIOMixin:
 
             session_id = _validate_id(session.session_id)
             agent_id = _validate_id(session.agent_id)
-            base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
+            base = Path.home() / OPENCLAW_DIR / "agents" / agent_id / "sessions"
             session_file = (base / f"{session_id}.jsonl").resolve()
 
             if not str(session_file).startswith(str(base.resolve())):
@@ -159,7 +161,7 @@ class OpenClawSessionIOMixin:
                 return True
 
             # Check archive/
-            archive_base = Path.home() / ".openclaw" / "agents" / agent_id / "archive"
+            archive_base = Path.home() / OPENCLAW_DIR / "agents" / agent_id / "archive"
             archive_file = (archive_base / f"{session_id}.jsonl").resolve()
             if archive_base.exists() and str(archive_file).startswith(str(archive_base.resolve())):
                 if archive_file.exists():

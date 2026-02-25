@@ -15,6 +15,9 @@ from fastapi import APIRouter, HTTPException, Query
 from ..config import settings
 from ..db.database import get_db
 
+MSG_INVALID_PATH = "Invalid path"
+MSG_PATH_OUTSIDE_PROJECT = "Path outside project folder"
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -149,10 +152,10 @@ async def list_project_documents(
     scan_root = docs_dir
     if path:
         if ".." in path:
-            raise HTTPException(status_code=400, detail="Invalid path")
+            raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
         scan_root = docs_dir / path
         if not _is_safe_path(docs_dir, scan_root):
-            raise HTTPException(status_code=403, detail="Path outside project folder")
+            raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE_PROJECT)
         if not scan_root.exists():
             return {
                 "project_id": project_id,
@@ -175,7 +178,7 @@ async def list_project_documents(
 async def save_project_document(project_id: str, file_path: str, body: dict):
     """Save/update a document in a project's data directory."""
     if ".." in file_path:
-        raise HTTPException(status_code=400, detail="Invalid path")
+        raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
 
     content = body.get("content")
     if content is None:
@@ -185,7 +188,7 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
     target = (docs_dir / file_path).resolve()
 
     if not _is_safe_path(docs_dir, target):
-        raise HTTPException(status_code=403, detail="Path outside project folder")
+        raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE_PROJECT)
 
     if not target.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
@@ -223,13 +226,13 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
 async def read_project_document(project_id: str, file_path: str):
     """Read a single document from a project's data directory."""
     if ".." in file_path:
-        raise HTTPException(status_code=400, detail="Invalid path")
+        raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
 
     docs_dir, _ = await _get_project_docs_path(project_id)
     target = (docs_dir / file_path).resolve()
 
     if not _is_safe_path(docs_dir, target):
-        raise HTTPException(status_code=403, detail="Path outside project folder")
+        raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE_PROJECT)
 
     if not target.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")

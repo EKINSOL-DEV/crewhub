@@ -25,6 +25,9 @@ from ..db.models import (
 )
 from .sse import broadcast
 
+SQL_GET_BLUEPRINT = "SELECT * FROM custom_blueprints WHERE id = ?"
+MSG_BLUEPRINT_VALIDATION_FAILED = "Blueprint validation failed"
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/blueprints", tags=["blueprints"])
 
@@ -260,7 +263,7 @@ async def export_blueprint(blueprint_id: str):
     """
     async with get_db() as db:
         async with db.execute(
-            "SELECT * FROM custom_blueprints WHERE id = ?",
+            SQL_GET_BLUEPRINT,
             (blueprint_id,),
         ) as cursor:
             row = await cursor.fetchone()
@@ -295,7 +298,7 @@ async def get_blueprint(blueprint_id: str):
     """Get a single custom blueprint by ID."""
     async with get_db() as db:
         async with db.execute(
-            "SELECT * FROM custom_blueprints WHERE id = ?",
+            SQL_GET_BLUEPRINT,
             (blueprint_id,),
         ) as cursor:
             row = await cursor.fetchone()
@@ -321,7 +324,7 @@ async def create_blueprint(body: CustomBlueprintCreate):
     if errors:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"message": "Blueprint validation failed", "errors": errors, "warnings": warnings},
+            detail={"message": MSG_BLUEPRINT_VALIDATION_FAILED, "errors": errors, "warnings": warnings},
         )
 
     blueprint_id = body.blueprint.id or generate_id()
@@ -391,7 +394,7 @@ async def import_blueprint(body: BlueprintJson):
     if errors:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"message": "Blueprint validation failed", "errors": errors, "warnings": warnings},
+            detail={"message": MSG_BLUEPRINT_VALIDATION_FAILED, "errors": errors, "warnings": warnings},
         )
 
     blueprint_id = body.id or generate_id()
@@ -453,7 +456,7 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
     """
     async with get_db() as db:
         async with db.execute(
-            "SELECT * FROM custom_blueprints WHERE id = ?",
+            SQL_GET_BLUEPRINT,
             (blueprint_id,),
         ) as cursor:
             row = await cursor.fetchone()
@@ -477,7 +480,7 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
             if errors:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail={"message": "Blueprint validation failed", "errors": errors, "warnings": update_warnings},
+                    detail={"message": MSG_BLUEPRINT_VALIDATION_FAILED, "errors": errors, "warnings": update_warnings},
                 )
             bp_json = body.blueprint.model_dump()
             bp_json["id"] = blueprint_id
@@ -584,7 +587,7 @@ async def _load_blueprint(blueprint_id: str) -> tuple[dict, Optional[dict], str]
     """
     async with get_db() as db:
         async with db.execute(
-            "SELECT * FROM custom_blueprints WHERE id = ?",
+            SQL_GET_BLUEPRINT,
             (blueprint_id,),
         ) as cursor:
             row = await cursor.fetchone()

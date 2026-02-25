@@ -22,6 +22,9 @@ from app.db.thread_models import (
 from app.routes.sse import broadcast
 from app.services.connections import get_connection_manager
 
+SQL_GET_THREAD = "SELECT * FROM threads WHERE id = ?"
+MSG_THREAD_NOT_FOUND = "Thread not found"
+
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["threads"])
 
@@ -49,7 +52,7 @@ def _generate_auto_title(agent_names: list[str]) -> str:
 
 async def _get_thread_response(db: aiosqlite.Connection, thread_id: str) -> dict:
     """Build full thread response with participants."""
-    cursor = await db.execute("SELECT * FROM threads WHERE id = ?", (thread_id,))
+    cursor = await db.execute(SQL_GET_THREAD, (thread_id,))
     row = await cursor.fetchone()
     if not row:
         return None
@@ -214,7 +217,7 @@ async def get_thread(thread_id: str):
     async with get_db() as db:
         result = await _get_thread_response(db, thread_id)
         if not result:
-            raise HTTPException(status_code=404, detail="Thread not found")
+            raise HTTPException(status_code=404, detail=MSG_THREAD_NOT_FOUND)
         return result
 
 
@@ -225,7 +228,7 @@ async def update_thread(thread_id: str, body: ThreadUpdate):
     async with get_db() as db:
         cursor = await db.execute("SELECT id FROM threads WHERE id = ?", (thread_id,))
         if not await cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Thread not found")
+            raise HTTPException(status_code=404, detail=MSG_THREAD_NOT_FOUND)
 
         if body.title is not None:
             await db.execute("UPDATE threads SET title = ?, updated_at = ? WHERE id = ?", (body.title, now, thread_id))
@@ -251,10 +254,10 @@ async def add_participants(thread_id: str, body: ThreadParticipantAdd):
     """Add agents to a thread."""
     now = _now_ms()
     async with get_db() as db:
-        cursor = await db.execute("SELECT * FROM threads WHERE id = ?", (thread_id,))
+        cursor = await db.execute(SQL_GET_THREAD, (thread_id,))
         thread = await cursor.fetchone()
         if not thread:
-            raise HTTPException(status_code=404, detail="Thread not found")
+            raise HTTPException(status_code=404, detail=MSG_THREAD_NOT_FOUND)
 
         # Count current active participants
         cursor = await db.execute(
@@ -380,7 +383,7 @@ async def get_messages(
         # Verify thread exists
         cursor = await db.execute("SELECT id FROM threads WHERE id = ?", (thread_id,))
         if not await cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Thread not found")
+            raise HTTPException(status_code=404, detail=MSG_THREAD_NOT_FOUND)
 
         conditions = ["thread_id = ?"]
         params: list = [thread_id]
@@ -446,10 +449,10 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
 
     async with get_db() as db:
         # Get thread + active participants
-        cursor = await db.execute("SELECT * FROM threads WHERE id = ?", (thread_id,))
+        cursor = await db.execute(SQL_GET_THREAD, (thread_id,))
         thread = await cursor.fetchone()
         if not thread:
-            raise HTTPException(status_code=404, detail="Thread not found")
+            raise HTTPException(status_code=404, detail=MSG_THREAD_NOT_FOUND)
         if thread["archived_at"]:
             raise HTTPException(status_code=400, detail="Thread is archived")
 

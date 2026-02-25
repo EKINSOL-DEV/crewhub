@@ -30,6 +30,9 @@ from app.services.personas import (
     get_preview_response,
 )
 
+SQL_CHECK_AGENT = "SELECT id FROM agents WHERE id = ?"
+MSG_AGENT_NOT_FOUND = "Agent not found"
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -100,9 +103,9 @@ async def get_agent_persona(agent_id: str):
     """
     async with get_db() as db:
         # Verify agent exists
-        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
+        async with db.execute(SQL_CHECK_AGENT, (agent_id,)) as cur:
             if not await cur.fetchone():
-                raise HTTPException(status_code=404, detail="Agent not found")
+                raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
 
         # Get persona
         async with db.execute("SELECT * FROM agent_personas WHERE agent_id = ?", (agent_id,)) as cur:
@@ -154,9 +157,9 @@ async def update_agent_persona(agent_id: str, body: PersonaUpdate):
     """
     async with get_db() as db:
         # Verify agent exists
-        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
+        async with db.execute(SQL_CHECK_AGENT, (agent_id,)) as cur:
             if not await cur.fetchone():
-                raise HTTPException(status_code=404, detail="Agent not found")
+                raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
 
         # Validate preset if provided
         if body.preset and body.preset not in PRESETS:
@@ -260,7 +263,7 @@ async def get_agent_identity(agent_id: str):
         async with db.execute("SELECT id, name FROM agents WHERE id = ?", (agent_id,)) as cur:
             agent = await cur.fetchone()
             if not agent:
-                raise HTTPException(status_code=404, detail="Agent not found")
+                raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
 
         # Get persona (identity is stored there)
         async with db.execute(
@@ -321,9 +324,9 @@ async def update_agent_identity(agent_id: str, body: IdentityUpdate):
     """
     async with get_db() as db:
         # Verify agent exists
-        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
+        async with db.execute(SQL_CHECK_AGENT, (agent_id,)) as cur:
             if not await cur.fetchone():
-                raise HTTPException(status_code=404, detail="Agent not found")
+                raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
 
         now = int(time.time() * 1000)
 
@@ -380,9 +383,9 @@ async def get_agent_surfaces(agent_id: str):
     """
     async with get_db() as db:
         # Verify agent exists
-        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
+        async with db.execute(SQL_CHECK_AGENT, (agent_id,)) as cur:
             if not await cur.fetchone():
-                raise HTTPException(status_code=404, detail="Agent not found")
+                raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
 
         # Get configured surfaces
         configured = {}
@@ -432,9 +435,9 @@ async def update_agent_surface(agent_id: str, surface: str, body: SurfaceRuleUpd
     """
     async with get_db() as db:
         # Verify agent exists
-        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
+        async with db.execute(SQL_CHECK_AGENT, (agent_id,)) as cur:
             if not await cur.fetchone():
-                raise HTTPException(status_code=404, detail="Agent not found")
+                raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
 
         now = int(time.time() * 1000)
 

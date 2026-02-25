@@ -11,6 +11,8 @@ from fastapi.responses import FileResponse
 
 from app.db.database import get_db
 
+MSG_PATH_TRAVERSAL = "Path traversal not allowed"
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -148,7 +150,7 @@ async def list_project_files(
     # Resolve the requested subdirectory
     target = (base / path).resolve() if path else base
     if not _is_safe_path(base, target):
-        raise HTTPException(status_code=403, detail="Path traversal not allowed")
+        raise HTTPException(status_code=403, detail=MSG_PATH_TRAVERSAL)
     if not target.exists():
         raise HTTPException(status_code=404, detail="Path not found")
     if not target.is_dir():
@@ -219,7 +221,7 @@ async def read_project_file(
 
     target = (base / path).resolve()
     if not _is_safe_path(base, target):
-        raise HTTPException(status_code=403, detail="Path traversal not allowed")
+        raise HTTPException(status_code=403, detail=MSG_PATH_TRAVERSAL)
     if not target.exists():
         raise HTTPException(status_code=404, detail="File not found")
     if not target.is_file():
@@ -270,7 +272,7 @@ async def get_project_image(
 
     target = (base / path).resolve()
     if not _is_safe_path(base, target):
-        raise HTTPException(status_code=403, detail="Path traversal not allowed")
+        raise HTTPException(status_code=403, detail=MSG_PATH_TRAVERSAL)
     if not target.exists():
         raise HTTPException(status_code=404, detail="Image not found")
     if not target.is_file():

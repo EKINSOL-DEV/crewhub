@@ -30,6 +30,9 @@ GENERATION_HISTORY_PATH = Path(__file__).parent.parent / "backend" / "data" / "g
 DEMO_DOCS_PATH = Path(__file__).parent.parent / "data" / "demo-docs"
 MEETING_OUTPUT_PATH = Path(__file__).parent.parent / "data" / "meeting-outputs"
 
+AGENT_DEV_MAIN = "agent:dev:main"
+MODEL_SONNET4 = "Sonnet 4"
+
 def gen_id():
     return str(uuid.uuid4())
 
@@ -55,7 +58,7 @@ def seed_tasks(db, project_id):
             "description": "Implement JWT-based auth with login, register, and refresh tokens. Include rate limiting and CSRF protection.",
             "status": "done",
             "priority": "high",
-            "assigned_session_key": "agent:dev:main",
+            "assigned_session_key": AGENT_DEV_MAIN,
             "room_id": "dev-room",
         },
         {
@@ -71,7 +74,7 @@ def seed_tasks(db, project_id):
             "description": "Document all REST endpoints with examples, error codes, and authentication requirements.",
             "status": "review",
             "priority": "medium",
-            "assigned_session_key": "agent:dev:main",
+            "assigned_session_key": AGENT_DEV_MAIN,
             "room_id": "dev-room",
         },
         {
@@ -103,7 +106,7 @@ def seed_tasks(db, project_id):
             "description": "Set up navigation meshes between rooms for bot pathfinding. Test smooth transitions and collision avoidance.",
             "status": "todo",
             "priority": "medium",
-            "assigned_session_key": "agent:dev:main",
+            "assigned_session_key": AGENT_DEV_MAIN,
             "room_id": "dev-room",
         },
     ]
@@ -119,19 +122,19 @@ def seed_tasks(db, project_id):
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (task_id, project_id, t["room_id"], t["title"], t["description"],
              t["status"], t["priority"], t["assigned_session_key"],
-             "agent:dev:main", created_at, created_at)
+             AGENT_DEV_MAIN, created_at, created_at)
         )
 
         _add_history(cursor, project_id, task_id, "task_created", created_at,
-                     "agent:dev:main", {"title": t["title"], "status": "todo"})
+                     AGENT_DEV_MAIN, {"title": t["title"], "status": "todo"})
 
         if t["assigned_session_key"]:
             _add_history(cursor, project_id, task_id, "task_assigned", created_at + 60000,
-                         "agent:dev:main", {"assigned_to": t["assigned_session_key"]})
+                         AGENT_DEV_MAIN, {"assigned_to": t["assigned_session_key"]})
 
         if t["status"] != "todo":
             _add_history(cursor, project_id, task_id, "task_status_changed", created_at + 300000,
-                         t["assigned_session_key"] or "agent:dev:main",
+                         t["assigned_session_key"] or AGENT_DEV_MAIN,
                          {"from": "todo", "to": t["status"]})
 
     db.commit()
@@ -166,7 +169,7 @@ def seed_generation_history():
             "prompt": "A medieval treasure chest overflowing with gold coins",
             "name": "MedievalTreasureChest",
             "model": "sonnet-4",
-            "modelLabel": "Sonnet 4",
+            "modelLabel": MODEL_SONNET4,
             "method": "ai",
             "status": "success",
             "parts": [
@@ -200,7 +203,7 @@ def seed_generation_history():
             "prompt": "A cute mushroom house with a door and windows",
             "name": "MushroomHouse",
             "model": "sonnet-4",
-            "modelLabel": "Sonnet 4",
+            "modelLabel": MODEL_SONNET4,
             "method": "ai",
             "status": "success",
             "parts": [
@@ -217,7 +220,7 @@ def seed_generation_history():
             "prompt": "A working clock with moving hands",
             "name": "WorkingClock",
             "model": "sonnet-4",
-            "modelLabel": "Sonnet 4",
+            "modelLabel": MODEL_SONNET4,
             "method": "ai",
             "status": "error",
             "error": "Generation failed: Model attempted to use useFrame animation hook which is not supported in static prop generation.",

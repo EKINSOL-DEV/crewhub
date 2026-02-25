@@ -28,6 +28,8 @@ ALLOWED_PROJECT_ROOTS = [
     Path.home() / "Projects",
 ]
 
+MSG_PROJECT_NOT_FOUND = "Project not found"
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -65,7 +67,7 @@ async def get_project(project_id: str):
     try:
         project = await project_service.get_project(project_id)
         if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+            raise HTTPException(status_code=404, detail=MSG_PROJECT_NOT_FOUND)
         return project
     except HTTPException:
         raise
@@ -92,7 +94,7 @@ async def update_project(project_id: str, project: ProjectUpdate):
     try:
         result = await project_service.update_project(project_id, project)
         if result is None:
-            raise HTTPException(status_code=404, detail="Project not found")
+            raise HTTPException(status_code=404, detail=MSG_PROJECT_NOT_FOUND)
         await broadcast("rooms-refresh", {"action": "project_updated", "project_id": project_id})
         return result
     except HTTPException:
@@ -118,7 +120,7 @@ async def delete_project(project_id: str):
     try:
         deleted_id = await project_service.delete_project(project_id)
         if deleted_id is None:
-            raise HTTPException(status_code=404, detail="Project not found")
+            raise HTTPException(status_code=404, detail=MSG_PROJECT_NOT_FOUND)
         await broadcast("rooms-refresh", {"action": "project_deleted", "project_id": project_id})
         return {"success": True, "deleted": project_id}
     except HTTPException:
@@ -147,7 +149,7 @@ async def list_markdown_files(project_id: str):
     try:
         project = await project_service.get_project(project_id)
         if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
+            raise HTTPException(status_code=404, detail=MSG_PROJECT_NOT_FOUND)
 
         folder_path = project.folder_path or ""
         project_dir = None
@@ -246,7 +248,7 @@ async def upload_document(project_id: str, file: Annotated[UploadFile, File(...)
     """Upload a markdown document to a project's meetings folder."""
     project = await project_service.get_project(project_id)
     if not project:
-        raise HTTPException(404, "Project not found")
+        raise HTTPException(404, MSG_PROJECT_NOT_FOUND)
 
     if not file.filename or not file.filename.endswith(".md"):
         raise HTTPException(400, "Only .md files allowed")

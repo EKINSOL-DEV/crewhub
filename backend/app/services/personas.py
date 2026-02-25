@@ -86,6 +86,9 @@ PRESETS = {
 DEFAULT_PRESET = "executor"
 
 
+DEFAULT_HELLO_MSG = "Say Hello World"
+
+
 def get_preset_values(preset_key: str) -> Optional[dict]:
     """Get dimension values for a preset. Returns None if not found."""
     preset = PRESETS.get(preset_key)
@@ -137,15 +140,15 @@ def build_persona_prompt(
 # Preview responses for preset × prompt combinations
 PREVIEW_RESPONSES = {
     "executor": {
-        "Say Hello World": "Hello World! ✅",
+        DEFAULT_HELLO_MSG: "Hello World! ✅",
         "default": "Done. ✅",
     },
     "advisor": {
-        "Say Hello World": "Where should I print it? Terminal? File? I want to make sure I do this right.",
+        DEFAULT_HELLO_MSG: "Where should I print it? Terminal? File? I want to make sure I do this right.",
         "default": "Let me think about the best approach for this...",
     },
     "explorer": {
-        "Say Hello World": "Hello World! 🌍 Want me to try it in a few different languages too?",
+        DEFAULT_HELLO_MSG: "Hello World! 🌍 Want me to try it in a few different languages too?",
         "default": "Interesting! Let me try a creative approach...",
     },
 }

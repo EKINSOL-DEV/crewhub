@@ -6,6 +6,27 @@ import aiosqlite
 
 from .schema import DB_PATH, DEMO_MODE
 
+AGENT_MAIN = "agent:main:main"
+AGENT_DEV = "agent:dev:dev"
+AGENT_GAMEDEV = "agent:gamedev:gamedev"
+AGENT_FLOWY = "agent:flowy:flowy"
+AGENT_REVIEWER = "agent:reviewer:reviewer"
+SQL_INSERT_THREAD = """
+        INSERT OR IGNORE INTO threads
+            (id, kind, title, title_auto, created_by, created_at, updated_at, last_message_at, settings_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+SQL_INSERT_THREAD_PARTICIPANT = """
+        INSERT OR IGNORE INTO thread_participants
+            (id, thread_id, agent_id, agent_name, agent_icon, agent_color, role, is_active, joined_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+SQL_INSERT_THREAD_MESSAGE = """
+            INSERT OR IGNORE INTO thread_messages
+                (id, thread_id, role, content, agent_id, agent_name, routing_mode, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """
+
 logger = logging.getLogger(__name__)
 
 
@@ -93,7 +114,7 @@ async def _seed_demo_agents(db, now: int):
             "🎯",
             None,
             "#4f46e5",
-            "agent:main:main",
+            AGENT_MAIN,
             "sonnet",
             "headquarters",
             0,
@@ -109,7 +130,7 @@ async def _seed_demo_agents(db, now: int):
             "💻",
             None,
             "#10b981",
-            "agent:dev:dev",
+            AGENT_DEV,
             "opus",
             "headquarters",
             1,
@@ -125,7 +146,7 @@ async def _seed_demo_agents(db, now: int):
             "🎮",
             None,
             "#f59e0b",
-            "agent:gamedev:gamedev",
+            AGENT_GAMEDEV,
             "opus",
             "headquarters",
             2,
@@ -141,7 +162,7 @@ async def _seed_demo_agents(db, now: int):
             "🎨",
             None,
             "#ec4899",
-            "agent:flowy:flowy",
+            AGENT_FLOWY,
             "gpt-4o",
             "headquarters",
             3,
@@ -157,7 +178,7 @@ async def _seed_demo_agents(db, now: int):
             "🔍",
             None,
             "#8b5cf6",
-            "agent:reviewer:reviewer",
+            AGENT_REVIEWER,
             "gpt-4o",
             "headquarters",
             4,
@@ -237,8 +258,8 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "Configure GitHub Actions for auto-deploy on main branch",
             "done",
             "high",
-            "agent:dev:dev",
-            "agent:main:main",
+            AGENT_DEV,
+            AGENT_MAIN,
             now - 48 * hour,
             now - 12 * hour,
         ),
@@ -250,8 +271,8 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "Handle dropped connections gracefully with exponential backoff",
             "in_progress",
             "high",
-            "agent:dev:dev",
-            "agent:main:main",
+            AGENT_DEV,
+            AGENT_MAIN,
             now - 24 * hour,
             now - 2 * hour,
         ),
@@ -263,8 +284,8 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "Create a 3-step wizard for first-time users",
             "review",
             "medium",
-            "agent:flowy:flowy",
-            "agent:main:main",
+            AGENT_FLOWY,
+            AGENT_MAIN,
             now - 36 * hour,
             now - 4 * hour,
         ),
@@ -276,8 +297,8 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "Document all REST endpoints with examples",
             "todo",
             "medium",
-            "agent:dev:dev",
-            "agent:main:main",
+            AGENT_DEV,
+            AGENT_MAIN,
             now - 6 * hour,
             now - 6 * hour,
         ),
@@ -289,8 +310,8 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "Review the JWT auth implementation for security issues",
             "in_progress",
             "urgent",
-            "agent:reviewer:reviewer",
-            "agent:dev:dev",
+            AGENT_REVIEWER,
+            AGENT_DEV,
             now - 8 * hour,
             now - 1 * hour,
         ),
@@ -302,8 +323,8 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "Three.js scene with walls, floor, and agent avatars",
             "done",
             "high",
-            "agent:gamedev:gamedev",
-            "agent:main:main",
+            AGENT_GAMEDEV,
+            AGENT_MAIN,
             now - 72 * hour,
             now - 24 * hour,
         ),
@@ -315,8 +336,8 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "Hero section, features, pricing, and CTA",
             "todo",
             "low",
-            "agent:flowy:flowy",
-            "agent:main:main",
+            AGENT_FLOWY,
+            AGENT_MAIN,
             now - 2 * hour,
             now - 2 * hour,
         ),
@@ -329,7 +350,7 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "todo",
             "medium",
             None,
-            "agent:main:main",
+            AGENT_MAIN,
             now - 1 * hour,
             now - 1 * hour,
         ),
@@ -350,7 +371,7 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "demo-project",
             "task-6",
             "task_completed",
-            "agent:gamedev:gamedev",
+            AGENT_GAMEDEV,
             json.dumps(
                 {
                     "title": "Build 3D room renderer",
@@ -364,7 +385,7 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "demo-project",
             "task-1",
             "task_completed",
-            "agent:dev:dev",
+            AGENT_DEV,
             json.dumps(
                 {
                     "title": "Set up CI/CD pipeline",
@@ -378,7 +399,7 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "demo-project",
             "task-5",
             "task_started",
-            "agent:reviewer:reviewer",
+            AGENT_REVIEWER,
             json.dumps(
                 {"title": "Code review: auth module", "message": "Starting security review of JWT implementation 🔍"}
             ),
@@ -389,7 +410,7 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "demo-project",
             "task-3",
             "status_changed",
-            "agent:flowy:flowy",
+            AGENT_FLOWY,
             json.dumps(
                 {
                     "title": "Design onboarding wizard",
@@ -405,7 +426,7 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "demo-project",
             "task-2",
             "task_started",
-            "agent:dev:dev",
+            AGENT_DEV,
             json.dumps(
                 {
                     "title": "Implement WebSocket reconnect logic",
@@ -419,7 +440,7 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "demo-project",
             None,
             "agent_joined",
-            "agent:main:main",
+            AGENT_MAIN,
             json.dumps({"message": "Director came online and assigned sprint tasks 📋"}),
             now - 50 * hour,
         ),
@@ -428,7 +449,7 @@ async def _seed_demo_tasks_and_history(db, now: int):
             "demo-project",
             None,
             "project_created",
-            "agent:main:main",
+            AGENT_MAIN,
             json.dumps({"message": "Project 'CrewHub Launch' created. Let's ship it! 🚀"}),
             now - 72 * hour,
         ),
@@ -455,20 +476,12 @@ async def _seed_demo_threads(db, now: int):
     t1_last = now - 30 * min_
 
     await db.execute(
-        """
-        INSERT OR IGNORE INTO threads
-            (id, kind, title, title_auto, created_by, created_at, updated_at, last_message_at, settings_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
+        SQL_INSERT_THREAD,
         ("thread-dev-direct", "direct", "Developer", None, "user", t1_created, now, t1_last, "{}"),
     )
 
     await db.execute(
-        """
-        INSERT OR IGNORE INTO thread_participants
-            (id, thread_id, agent_id, agent_name, agent_icon, agent_color, role, is_active, joined_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
+        SQL_INSERT_THREAD_PARTICIPANT,
         ("tp-dev-direct-dev", "thread-dev-direct", "dev", "Developer", "💻", "#10b981", "owner", 1, t1_created),
     )
 
@@ -500,11 +513,7 @@ async def _seed_demo_threads(db, now: int):
     ]
     for ts, role, agent_id, agent_name, content in t1_messages:
         await db.execute(
-            """
-            INSERT OR IGNORE INTO thread_messages
-                (id, thread_id, role, content, agent_id, agent_name, routing_mode, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
+            SQL_INSERT_THREAD_MESSAGE,
             (str(uuid.uuid4()), "thread-dev-direct", role, content, agent_id, agent_name, "broadcast", ts),
         )
 
@@ -515,20 +524,12 @@ async def _seed_demo_threads(db, now: int):
     t2_last = now - 2 * hour
 
     await db.execute(
-        """
-        INSERT OR IGNORE INTO threads
-            (id, kind, title, title_auto, created_by, created_at, updated_at, last_message_at, settings_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
+        SQL_INSERT_THREAD,
         ("thread-flowy-direct", "direct", "Flowy", None, "user", t2_created, now, t2_last, "{}"),
     )
 
     await db.execute(
-        """
-        INSERT OR IGNORE INTO thread_participants
-            (id, thread_id, agent_id, agent_name, agent_icon, agent_color, role, is_active, joined_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
+        SQL_INSERT_THREAD_PARTICIPANT,
         ("tp-flowy-direct-flowy", "thread-flowy-direct", "flowy", "Flowy", "🎨", "#ec4899", "owner", 1, t2_created),
     )
 
@@ -560,11 +561,7 @@ async def _seed_demo_threads(db, now: int):
     ]
     for ts, role, agent_id, agent_name, content in t2_messages:
         await db.execute(
-            """
-            INSERT OR IGNORE INTO thread_messages
-                (id, thread_id, role, content, agent_id, agent_name, routing_mode, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
+            SQL_INSERT_THREAD_MESSAGE,
             (str(uuid.uuid4()), "thread-flowy-direct", role, content, agent_id, agent_name, "broadcast", ts),
         )
 
@@ -575,20 +572,12 @@ async def _seed_demo_threads(db, now: int):
     t3_last = now - 45 * min_
 
     await db.execute(
-        """
-        INSERT OR IGNORE INTO threads
-            (id, kind, title, title_auto, created_by, created_at, updated_at, last_message_at, settings_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
+        SQL_INSERT_THREAD,
         ("thread-reviewer-direct", "direct", "Reviewer", None, "user", t3_created, now, t3_last, "{}"),
     )
 
     await db.execute(
-        """
-        INSERT OR IGNORE INTO thread_participants
-            (id, thread_id, agent_id, agent_name, agent_icon, agent_color, role, is_active, joined_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
+        SQL_INSERT_THREAD_PARTICIPANT,
         (
             "tp-reviewer-direct-reviewer",
             "thread-reviewer-direct",
@@ -630,11 +619,7 @@ async def _seed_demo_threads(db, now: int):
     ]
     for ts, role, agent_id, agent_name, content in t3_messages:
         await db.execute(
-            """
-            INSERT OR IGNORE INTO thread_messages
-                (id, thread_id, role, content, agent_id, agent_name, routing_mode, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
+            SQL_INSERT_THREAD_MESSAGE,
             (str(uuid.uuid4()), "thread-reviewer-direct", role, content, agent_id, agent_name, "broadcast", ts),
         )
 
@@ -645,11 +630,7 @@ async def _seed_demo_threads(db, now: int):
     t4_last = now - 4 * hour
 
     await db.execute(
-        """
-        INSERT OR IGNORE INTO threads
-            (id, kind, title, title_auto, created_by, created_at, updated_at, last_message_at, settings_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
+        SQL_INSERT_THREAD,
         ("thread-standup-group", "group", "Team Standup", None, "user", t4_created, now, t4_last, "{}"),
     )
 
@@ -725,11 +706,7 @@ async def _seed_demo_threads(db, now: int):
     ]
     for ts, role, agent_id, agent_name, content in t4_messages:
         await db.execute(
-            """
-            INSERT OR IGNORE INTO thread_messages
-                (id, thread_id, role, content, agent_id, agent_name, routing_mode, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
+            SQL_INSERT_THREAD_MESSAGE,
             (str(uuid.uuid4()), "thread-standup-group", role, content, agent_id, agent_name, "broadcast", ts),
         )
 

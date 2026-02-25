@@ -12,6 +12,8 @@ from typing import List, Optional
 from app.db.database import get_db
 from app.db.models import ProjectCreate, ProjectResponse, ProjectUpdate, generate_id
 
+SQL_GET_PROJECT = "SELECT * FROM projects WHERE id = ?"
+
 logger = logging.getLogger(__name__)
 
 # Default base path for auto-generated folder_path values
@@ -60,7 +62,7 @@ async def list_projects() -> List[ProjectResponse]:
 async def get_project(project_id: str) -> Optional[ProjectResponse]:
     """Return a single project by ID, or None if not found."""
     async with get_db() as db:
-        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
+        async with db.execute(SQL_GET_PROJECT, (project_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -172,7 +174,7 @@ async def update_project(
             a project that still has rooms assigned.
     """
     async with get_db() as db:
-        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
+        async with db.execute(SQL_GET_PROJECT, (project_id,)) as cursor:
             existing = await cursor.fetchone()
 
         if not existing:
@@ -209,7 +211,7 @@ async def update_project(
             )
             await db.commit()
 
-        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
+        async with db.execute(SQL_GET_PROJECT, (project_id,)) as cursor:
             row = await cursor.fetchone()
 
         room_ids = await _get_room_ids(db, project_id)
@@ -226,7 +228,7 @@ async def delete_project(project_id: str) -> Optional[str]:
         ValueError("not_archived") if the project is not in archived state.
     """
     async with get_db() as db:
-        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
+        async with db.execute(SQL_GET_PROJECT, (project_id,)) as cursor:
             existing = await cursor.fetchone()
 
         if not existing:

@@ -53,6 +53,8 @@ from .creator_models import (
     StyleTransferRequest,
 )
 
+MSG_GENERATION_NOT_FOUND = "Generation record not found"
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/creator", tags=["creator"])
@@ -127,7 +129,7 @@ async def get_prop_usage(gen_id: str):
     """Check where a generated prop is used in blueprints/rooms."""
     record = next((r for r in load_generation_history() if r.get("id") == gen_id), None)
     if not record:
-        raise HTTPException(status_code=404, detail="Generation record not found")
+        raise HTTPException(status_code=404, detail=MSG_GENERATION_NOT_FOUND)
     prop_name = record.get("name", "")
     placements = await find_prop_usage_in_blueprints(prop_name)
     return {
@@ -143,7 +145,7 @@ async def get_prop_usage(gen_id: str):
 async def get_generation_record(gen_id: str):
     record = next((r for r in load_generation_history() if r.get("id") == gen_id), None)
     if not record:
-        raise HTTPException(status_code=404, detail="Generation record not found")
+        raise HTTPException(status_code=404, detail=MSG_GENERATION_NOT_FOUND)
     return record
 
 
@@ -153,7 +155,7 @@ async def delete_generation_record(gen_id: str, cascade: Annotated[bool, Query(F
     history = load_generation_history()
     record_idx = next((i for i, r in enumerate(history) if r.get("id") == gen_id), None)
     if record_idx is None:
-        raise HTTPException(status_code=404, detail="Generation record not found")
+        raise HTTPException(status_code=404, detail=MSG_GENERATION_NOT_FOUND)
 
     record = history[record_idx]
     prop_name = record.get("name", "")

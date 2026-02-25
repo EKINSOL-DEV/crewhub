@@ -13,6 +13,9 @@ from fastapi import HTTPException
 from app.db.database import get_db
 from app.db.models import Room, RoomCreate, RoomUpdate
 
+SQL_CHECK_ROOM = "SELECT id FROM rooms WHERE id = ?"
+MSG_ROOM_NOT_FOUND = "Room not found"
+
 logger = logging.getLogger(__name__)
 
 # ── SQL helpers ───────────────────────────────────────────────────────────────
@@ -63,7 +66,7 @@ async def get_room(room_id: str) -> Room:
             row = await cursor.fetchone()
 
     if not row:
-        raise HTTPException(status_code=404, detail="Room not found")
+        raise HTTPException(status_code=404, detail=MSG_ROOM_NOT_FOUND)
     return _row_to_room(row)
 
 
@@ -71,7 +74,7 @@ async def create_room(room: RoomCreate) -> Room:
     """Insert a new room. Raises 400 if ID already exists."""
     async with get_db() as db:
         # Guard against duplicate IDs
-        async with db.execute("SELECT id FROM rooms WHERE id = ?", (room.id,)) as cursor:
+        async with db.execute(SQL_CHECK_ROOM, (room.id,)) as cursor:
             if await cursor.fetchone():
                 raise HTTPException(status_code=400, detail="Room ID already exists")
 
@@ -108,9 +111,9 @@ async def create_room(room: RoomCreate) -> Room:
 async def update_room(room_id: str, room: RoomUpdate) -> Room:
     """Update an existing room. Raises 404 if not found."""
     async with get_db() as db:
-        async with db.execute("SELECT id FROM rooms WHERE id = ?", (room_id,)) as cursor:
+        async with db.execute(SQL_CHECK_ROOM, (room_id,)) as cursor:
             if not await cursor.fetchone():
-                raise HTTPException(status_code=404, detail="Room not found")
+                raise HTTPException(status_code=404, detail=MSG_ROOM_NOT_FOUND)
 
         updates = []
         values = []
@@ -145,7 +148,7 @@ async def delete_room(room_id: str) -> dict:
             row = await cursor.fetchone()
 
         if not row:
-            raise HTTPException(status_code=404, detail="Room not found")
+            raise HTTPException(status_code=404, detail=MSG_ROOM_NOT_FOUND)
         if row["is_hq"]:
             raise HTTPException(
                 status_code=403,
@@ -163,9 +166,9 @@ async def delete_room(room_id: str) -> dict:
 async def assign_project_to_room(room_id: str, project_id: str) -> Room:
     """Assign a project to a room. Raises 404 if room or project not found."""
     async with get_db() as db:
-        async with db.execute("SELECT id FROM rooms WHERE id = ?", (room_id,)) as cursor:
+        async with db.execute(SQL_CHECK_ROOM, (room_id,)) as cursor:
             if not await cursor.fetchone():
-                raise HTTPException(status_code=404, detail="Room not found")
+                raise HTTPException(status_code=404, detail=MSG_ROOM_NOT_FOUND)
 
         async with db.execute("SELECT id FROM projects WHERE id = ?", (project_id,)) as cursor:
             if not await cursor.fetchone():
@@ -187,9 +190,9 @@ async def assign_project_to_room(room_id: str, project_id: str) -> Room:
 async def clear_project_from_room(room_id: str) -> Room:
     """Clear the project assignment from a room. Raises 404 if room not found."""
     async with get_db() as db:
-        async with db.execute("SELECT id FROM rooms WHERE id = ?", (room_id,)) as cursor:
+        async with db.execute(SQL_CHECK_ROOM, (room_id,)) as cursor:
             if not await cursor.fetchone():
-                raise HTTPException(status_code=404, detail="Room not found")
+                raise HTTPException(status_code=404, detail=MSG_ROOM_NOT_FOUND)
 
         now = int(time.time() * 1000)
         await db.execute(
@@ -207,9 +210,9 @@ async def clear_project_from_room(room_id: str) -> Room:
 async def set_room_as_hq(room_id: str) -> Room:
     """Set a room as HQ (only one at a time). Raises 404 if room not found."""
     async with get_db() as db:
-        async with db.execute("SELECT id FROM rooms WHERE id = ?", (room_id,)) as cursor:
+        async with db.execute(SQL_CHECK_ROOM, (room_id,)) as cursor:
             if not await cursor.fetchone():
-                raise HTTPException(status_code=404, detail="Room not found")
+                raise HTTPException(status_code=404, detail=MSG_ROOM_NOT_FOUND)
 
         now = int(time.time() * 1000)
         await db.execute("UPDATE rooms SET is_hq = 0, updated_at = ? WHERE is_hq = 1", (now,))

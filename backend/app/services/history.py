@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+DELETED_MARKER = ".deleted."
+
 logger = logging.getLogger(__name__)
 
 # Base path for OpenClaw sessions
@@ -62,8 +64,8 @@ def _parse_session_file(file_path: Path) -> Optional[Dict[str, Any]]:
         session_id = file_path.stem
 
         # Handle deleted sessions (filename may have .deleted.timestamp suffix)
-        if ".deleted." in file_path.name:
-            session_id = session_id.split(".deleted.")[0]
+        if DELETED_MARKER in file_path.name:
+            session_id = session_id.split(DELETED_MARKER)[0]
             status = "deleted"
         elif parent_name == "archive":
             # v2026.2.17: sessions moved to archive/ folder by OpenClaw maintenance
@@ -210,10 +212,10 @@ async def get_archived_sessions(
                     continue
 
                 # Filter by extension
-                if not include_deleted and ".deleted." in file_path.name:
+                if not include_deleted and DELETED_MARKER in file_path.name:
                     continue
 
-                if not file_path.name.endswith(".jsonl") and ".deleted." not in file_path.name:
+                if not file_path.name.endswith(".jsonl") and DELETED_MARKER not in file_path.name:
                     continue
 
                 session = _parse_session_file(file_path)

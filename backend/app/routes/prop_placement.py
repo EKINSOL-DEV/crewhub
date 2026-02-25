@@ -26,6 +26,8 @@ from app.auth import APIKeyInfo, require_scope
 from app.db.database import get_db
 from app.routes.sse import broadcast
 
+SQL_GET_PLACED_PROP = "SELECT * FROM placed_props WHERE id = ?"
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/world/props", tags=["creator-mode"])
 
@@ -166,7 +168,7 @@ async def place_prop(
         )
         await db.commit()
 
-        async with db.execute("SELECT * FROM placed_props WHERE id = ?", (placed_id,)) as cursor:
+        async with db.execute(SQL_GET_PLACED_PROP, (placed_id,)) as cursor:
             row = await cursor.fetchone()
 
     placed = _row_to_response(dict(row))
@@ -187,7 +189,7 @@ async def update_placed_prop(
 ):
     """Move, rotate, or rescale an existing placed prop. Requires manage scope."""
     async with get_db() as db:
-        async with db.execute("SELECT * FROM placed_props WHERE id = ?", (placed_id,)) as cursor:
+        async with db.execute(SQL_GET_PLACED_PROP, (placed_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -227,7 +229,7 @@ async def update_placed_prop(
         )
         await db.commit()
 
-        async with db.execute("SELECT * FROM placed_props WHERE id = ?", (placed_id,)) as cursor:
+        async with db.execute(SQL_GET_PLACED_PROP, (placed_id,)) as cursor:
             updated_row = await cursor.fetchone()
 
     placed = _row_to_response(dict(updated_row))
@@ -244,7 +246,7 @@ async def delete_placed_prop(
 ):
     """Remove a placed prop from the world. Requires manage scope."""
     async with get_db() as db:
-        async with db.execute("SELECT * FROM placed_props WHERE id = ?", (placed_id,)) as cursor:
+        async with db.execute(SQL_GET_PLACED_PROP, (placed_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:

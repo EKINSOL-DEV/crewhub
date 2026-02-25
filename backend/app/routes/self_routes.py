@@ -24,6 +24,8 @@ from app.auth import (
 from app.db.database import get_db
 from app.routes.sse import broadcast
 
+MSG_NO_IDENTITY = "No identity found. Call POST /api/self/identify first."
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/self", tags=["self"])
 
@@ -322,7 +324,7 @@ async def set_display_name(
     if not agent_id:
         raise HTTPException(
             status_code=400,
-            detail="No identity found. Call POST /api/self/identify first.",
+            detail=MSG_NO_IDENTITY,
         )
 
     session_key = await _resolve_session_key(key, agent_id)
@@ -361,7 +363,7 @@ async def set_room(
     if not agent_id:
         raise HTTPException(
             status_code=400,
-            detail="No identity found. Call POST /api/self/identify first.",
+            detail=MSG_NO_IDENTITY,
         )
 
     session_key = await _resolve_session_key(key, agent_id)
@@ -415,7 +417,7 @@ async def heartbeat(
     if not agent_id:
         raise HTTPException(
             status_code=400,
-            detail="No identity found. Call POST /api/self/identify first.",
+            detail=MSG_NO_IDENTITY,
         )
 
     session_key = await _resolve_session_key(key, agent_id)

@@ -24,6 +24,8 @@ from app.db.meeting_models import (
 )
 from app.routes.sse import broadcast
 
+DEFAULT_MEETING_TITLE = "Team Meeting"
+
 logger = logging.getLogger(__name__)
 
 MAX_CONCURRENT_MEETINGS = 3
@@ -278,7 +280,7 @@ async def start_meeting(
                VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)""",
             (
                 meeting_id,
-                title or "Team Meeting",
+                title or DEFAULT_MEETING_TITLE,
                 goal,
                 MeetingState.GATHERING.value,
                 room_id,
@@ -293,7 +295,7 @@ async def start_meeting(
     orchestrator = MeetingOrchestrator(
         meeting_id=meeting_id,
         config=config,
-        title=title or "Team Meeting",
+        title=title or DEFAULT_MEETING_TITLE,
         goal=goal,
         room_id=room_id,
         project_id=project_id,
@@ -304,7 +306,7 @@ async def start_meeting(
 
     return Meeting(
         id=meeting_id,
-        title=title or "Team Meeting",
+        title=title or DEFAULT_MEETING_TITLE,
         goal=goal,
         state=MeetingState.GATHERING,
         room_id=room_id,

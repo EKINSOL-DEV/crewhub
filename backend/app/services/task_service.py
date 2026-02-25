@@ -18,6 +18,8 @@ from app.db.task_models import (
     TaskUpdate,
 )
 
+SQL_GET_TASK = "SELECT * FROM tasks WHERE id = ?"
+
 logger = logging.getLogger(__name__)
 
 
@@ -143,7 +145,7 @@ async def list_tasks(
 async def get_task(task_id: str) -> Optional[TaskResponse]:
     """Return a single task by ID, or None if not found."""
     async with get_db() as db:
-        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
+        async with db.execute(SQL_GET_TASK, (task_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -240,7 +242,7 @@ async def update_task(
     An empty dict means the payload contained no changes.
     """
     async with get_db() as db:
-        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
+        async with db.execute(SQL_GET_TASK, (task_id,)) as cursor:
             existing = await cursor.fetchone()
 
         if not existing:
@@ -290,7 +292,7 @@ async def update_task(
 
         await db.commit()
 
-        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
+        async with db.execute(SQL_GET_TASK, (task_id,)) as cursor:
             row = await cursor.fetchone()
 
         display_name = await get_display_name(db, row["assigned_session_key"])
@@ -305,7 +307,7 @@ async def delete_task(task_id: str) -> Optional[dict]:
     or None if the task was not found.
     """
     async with get_db() as db:
-        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
+        async with db.execute(SQL_GET_TASK, (task_id,)) as cursor:
             existing = await cursor.fetchone()
 
         if not existing:
@@ -371,7 +373,7 @@ async def get_task_row(task_id: str):
     Used by routes that need access to fields beyond TaskResponse (e.g. run).
     """
     async with get_db() as db:
-        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
+        async with db.execute(SQL_GET_TASK, (task_id,)) as cursor:
             return await cursor.fetchone()
 
 

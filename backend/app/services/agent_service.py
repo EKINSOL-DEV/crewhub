@@ -13,6 +13,8 @@ from fastapi import HTTPException
 
 from app.db.database import get_db
 
+MSG_AGENT_NOT_FOUND = "Agent not found"
+
 logger = logging.getLogger(__name__)
 
 # ── Default metadata for well-known agents ────────────────────────────────────
@@ -209,7 +211,7 @@ async def get_agent(agent_id: str, gateway_ids: set[str], gateway_reachable: boo
             row = await cursor.fetchone()
 
         if not row:
-            raise HTTPException(status_code=404, detail="Agent not found")
+            raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
 
         session_key = row["agent_session_key"]
         display_name = None
@@ -284,7 +286,7 @@ async def update_agent(agent_id: str, updates: dict) -> dict:
     async with get_db() as db:
         cursor = await db.execute(f"UPDATE agents SET {set_clauses} WHERE id = ?", values)
         if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Agent not found")
+            raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
         await db.commit()
 
     # Return updated fields (excluding the internally-added updated_at)
@@ -297,7 +299,7 @@ async def delete_agent(agent_id: str) -> dict:
     async with get_db() as db:
         cursor = await db.execute("DELETE FROM agents WHERE id = ?", (agent_id,))
         if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Agent not found")
+            raise HTTPException(status_code=404, detail=MSG_AGENT_NOT_FOUND)
         await db.commit()
 
     return {"status": "deleted", "id": agent_id}

@@ -22,6 +22,8 @@ from pydantic import BaseModel
 from ..db.database import get_db
 from ..services.connections import get_connection_manager
 
+OPENCLAW_DIR = ".openclaw"
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/onboarding", tags=["onboarding"])
 
@@ -123,9 +125,9 @@ async def _check_host_docker_internal() -> bool:
 def _find_token_file() -> tuple[Optional[str], bool]:
     """Find OpenClaw config file and check if token exists."""
     paths = [
-        Path.home() / ".openclaw" / "openclaw.json",
-        Path.home() / ".openclaw" / "clawdbot.json",
-        Path.home() / ".openclaw" / "config.json",
+        Path.home() / OPENCLAW_DIR / "openclaw.json",
+        Path.home() / OPENCLAW_DIR / "clawdbot.json",
+        Path.home() / OPENCLAW_DIR / "config.json",
     ]
     for p in paths:
         try:

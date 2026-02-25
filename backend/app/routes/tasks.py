@@ -15,6 +15,9 @@ from app.routes.sse import broadcast
 from app.services import task_service
 from app.services.connections import get_connection_manager
 
+MSG_FILTER_STATUS = "Filter by status (comma-separated)"
+MSG_TASK_NOT_FOUND = "Task not found"
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -35,7 +38,7 @@ async def _not_found(label: str) -> None:
 @router.get("/rooms/{room_id}/tasks", response_model=TaskListResponse)
 async def get_room_tasks(
     room_id: str,
-    status: Annotated[Optional[str], Query(None, description="Filter by status (comma-separated)")],
+    status: Annotated[Optional[str], Query(None, description=MSG_FILTER_STATUS)],
     limit: Annotated[int, Query(100, ge=1, le=500)],
     offset: Annotated[int, Query(0, ge=0)],
 ):
@@ -50,7 +53,7 @@ async def get_room_tasks(
 @router.get("/projects/{project_id}/tasks", response_model=TaskListResponse)
 async def get_project_tasks(
     project_id: str,
-    status: Annotated[Optional[str], Query(None, description="Filter by status (comma-separated)")],
+    status: Annotated[Optional[str], Query(None, description=MSG_FILTER_STATUS)],
     limit: Annotated[int, Query(100, ge=1, le=500)],
     offset: Annotated[int, Query(0, ge=0)],
 ):
@@ -71,7 +74,7 @@ async def get_project_tasks(
 async def list_tasks(
     project_id: Annotated[Optional[str], Query(None, description="Filter by project")],
     room_id: Annotated[Optional[str], Query(None, description="Filter by room")],
-    status: Annotated[Optional[str], Query(None, description="Filter by status (comma-separated)")],
+    status: Annotated[Optional[str], Query(None, description=MSG_FILTER_STATUS)],
     assigned_session_key: Annotated[Optional[str], Query(None, description="Filter by assignee")],
     limit: Annotated[int, Query(100, ge=1, le=500)],
     offset: Annotated[int, Query(0, ge=0)],
@@ -97,7 +100,7 @@ async def get_task(task_id: str):
     try:
         task = await task_service.get_task(task_id)
         if not task:
-            raise HTTPException(status_code=404, detail="Task not found")
+            raise HTTPException(status_code=404, detail=MSG_TASK_NOT_FOUND)
         return task
     except HTTPException:
         raise
@@ -138,7 +141,7 @@ async def update_task(task_id: str, task: TaskUpdate):
     try:
         result, changes = await task_service.update_task(task_id, task)
         if result is None:
-            raise HTTPException(status_code=404, detail="Task not found")
+            raise HTTPException(status_code=404, detail=MSG_TASK_NOT_FOUND)
 
         await broadcast(
             "task-updated",
@@ -163,7 +166,7 @@ async def delete_task(task_id: str):
     try:
         deleted = await task_service.delete_task(task_id)
         if deleted is None:
-            raise HTTPException(status_code=404, detail="Task not found")
+            raise HTTPException(status_code=404, detail=MSG_TASK_NOT_FOUND)
 
         await broadcast(
             "task-deleted",
@@ -217,7 +220,7 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
         # 1. Get the task
         task = await task_service.get_task_row(task_id)
         if not task:
-            raise HTTPException(status_code=404, detail="Task not found")
+            raise HTTPException(status_code=404, detail=MSG_TASK_NOT_FOUND)
 
         # 2. Get agent info
         agent = await task_service.get_agent_row(body.agent_id)

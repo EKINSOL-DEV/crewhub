@@ -19,6 +19,20 @@ import httpx
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
+MEDIA_DIR = ".crewhub"
+EXT_WEBM = ".webm"
+MIME_WEBM = "audio/webm"
+MIME_MP4 = "audio/mp4"
+MIME_OGG = "audio/ogg"
+MIME_WAV = "audio/wav"
+MIME_MPEG = "audio/mpeg"
+MIME_JPEG = "image/jpeg"
+MIME_PNG = "image/png"
+MIME_GIF = "image/gif"
+MIME_WEBP = "image/webp"
+MSG_NO_AUDIO_CONV = "Audio conversion not available"
+MSG_AUDIO_PREFIX = "audio/"
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -27,15 +41,15 @@ router = APIRouter()
 UPLOAD_DIR = Path.home() / ".openclaw" / "media" / "uploads"
 
 # Upload directory for voice messages
-AUDIO_UPLOAD_DIR = Path.home() / ".crewhub" / "media" / "audio"
+AUDIO_UPLOAD_DIR = Path.home() / MEDIA_DIR / "media" / "audio"
 
 # Allowed base directories for media files (resolved to absolute paths)
 ALLOWED_MEDIA_DIRS = [
     Path.home() / ".openclaw" / "media",
     Path.home() / ".openclaw" / "media" / "inbound",
     Path.home() / ".openclaw" / "media" / "uploads",
-    Path.home() / ".crewhub" / "media",
-    Path.home() / ".crewhub" / "media" / "audio",
+    Path.home() / MEDIA_DIR / "media",
+    Path.home() / MEDIA_DIR / "media" / "audio",
     Path("/tmp") / "crewhub-media",  # For testing
 ]
 
@@ -47,55 +61,55 @@ MAX_AUDIO_UPLOAD_SIZE = 50 * 1024 * 1024
 
 # Supported image MIME types
 IMAGE_MIME_TYPES = {
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".gif": "image/gif",
-    ".webp": "image/webp",
+    ".jpg": MIME_JPEG,
+    ".jpeg": MIME_JPEG,
+    ".png": MIME_PNG,
+    ".gif": MIME_GIF,
+    ".webp": MIME_WEBP,
 }
 
 # Supported audio MIME types
 AUDIO_MIME_TYPES = {
-    ".webm": "audio/webm",
-    ".mp4": "audio/mp4",
-    ".ogg": "audio/ogg",
-    ".wav": "audio/wav",
-    ".m4a": "audio/mp4",
+    EXT_WEBM: MIME_WEBM,
+    ".mp4": MIME_MP4,
+    ".ogg": MIME_OGG,
+    ".wav": MIME_WAV,
+    ".m4a": MIME_MP4,
 }
 
 # Allowed upload MIME types for images
 ALLOWED_UPLOAD_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
+    MIME_JPEG,
+    MIME_PNG,
+    MIME_GIF,
+    MIME_WEBP,
 }
 
 # Allowed upload MIME types for audio
 ALLOWED_AUDIO_UPLOAD_TYPES = {
-    "audio/webm",
-    "audio/mp4",
-    "audio/ogg",
-    "audio/wav",
-    "audio/mpeg",
+    MIME_WEBM,
+    MIME_MP4,
+    MIME_OGG,
+    MIME_WAV,
+    MIME_MPEG,
     "audio/x-m4a",
 }
 
 # Extension mapping for image MIME types
 MIME_TO_EXT = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/gif": ".gif",
-    "image/webp": ".webp",
+    MIME_JPEG: ".jpg",
+    MIME_PNG: ".png",
+    MIME_GIF: ".gif",
+    MIME_WEBP: ".webp",
 }
 
 # Extension mapping for audio MIME types
 AUDIO_MIME_TO_EXT = {
-    "audio/webm": ".webm",
-    "audio/mp4": ".mp4",
-    "audio/ogg": ".ogg",
-    "audio/wav": ".wav",
-    "audio/mpeg": ".mp3",
+    MIME_WEBM: EXT_WEBM,
+    MIME_MP4: ".mp4",
+    MIME_OGG: ".ogg",
+    MIME_WAV: ".wav",
+    MIME_MPEG: ".mp3",
     "audio/x-m4a": ".m4a",
 }
 
@@ -180,7 +194,7 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
 
     # Check for ffmpeg
     if not os.path.isfile(FFMPEG_PATH):
-        return None, "Audio conversion not available"
+        return None, MSG_NO_AUDIO_CONV
 
     # Convert to mp3 via ffmpeg in a temp file
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
@@ -206,11 +220,11 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
         )
         if result.returncode != 0:
             logger.warning(f"ffmpeg conversion failed: {result.stderr.decode()[:200]}")
-            return None, "Audio conversion not available"
+            return None, MSG_NO_AUDIO_CONV
     except subprocess.TimeoutExpired:
-        return None, "Audio conversion not available"
+        return None, MSG_NO_AUDIO_CONV
     except FileNotFoundError:
-        return None, "Audio conversion not available"
+        return None, MSG_NO_AUDIO_CONV
 
     # Call Groq Whisper API
     try:
@@ -219,7 +233,7 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
                 response = await client.post(
                     GROQ_TRANSCRIPTION_URL,
                     headers={"Authorization": f"Bearer {groq_api_key}"},
-                    files={"file": ("audio.mp3", mp3_file, "audio/mpeg")},
+                    files={"file": ("audio.mp3", mp3_file, MIME_MPEG)},
                     data={
                         "model": GROQ_MODEL,
                         "response_format": "json",
@@ -271,7 +285,7 @@ async def upload_audio(file: Annotated[UploadFile, File(...)]):
     raw_content_type = (file.content_type or "").split(";")[0].strip().lower()
 
     # Accept audio/* types broadly
-    if not raw_content_type.startswith("audio/") and raw_content_type not in ALLOWED_AUDIO_UPLOAD_TYPES:
+    if not raw_content_type.startswith(MSG_AUDIO_PREFIX) and raw_content_type not in ALLOWED_AUDIO_UPLOAD_TYPES:
         raise HTTPException(status_code=415, detail=f"Unsupported file type: {file.content_type}. Expected audio/*")
 
     # Read file content (with size check)
@@ -282,7 +296,7 @@ async def upload_audio(file: Annotated[UploadFile, File(...)]):
         )
 
     # Determine extension
-    ext = AUDIO_MIME_TO_EXT.get(raw_content_type, ".webm")
+    ext = AUDIO_MIME_TO_EXT.get(raw_content_type, EXT_WEBM)
 
     # Generate unique filename
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -366,7 +380,7 @@ async def serve_media(file_path: str):
     if file_path.startswith("/"):
         # Absolute path
         path = Path(file_path)
-    elif file_path.startswith("audio/"):
+    elif file_path.startswith(MSG_AUDIO_PREFIX):
         # Audio uploads → ~/.crewhub/media/audio/
         filename = file_path[len("audio/") :]
         path = AUDIO_UPLOAD_DIR / filename

@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
+OPENCLAW_DIR = ".openclaw"
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,9 +77,9 @@ class OpenClawDetector(BaseDetector):
     DEFAULT_PORT = 18789
     # OpenClaw config files in priority order
     CONFIG_PATHS = [
-        Path.home() / ".openclaw" / "openclaw.json",
-        Path.home() / ".openclaw" / "clawdbot.json",
-        Path.home() / ".openclaw" / "config.json",
+        Path.home() / OPENCLAW_DIR / "openclaw.json",
+        Path.home() / OPENCLAW_DIR / "clawdbot.json",
+        Path.home() / OPENCLAW_DIR / "config.json",
     ]
 
     async def detect(self) -> list[DiscoveryCandidate]:

@@ -24,6 +24,8 @@ from app.services.meeting_orchestrator import (
     start_meeting,
 )
 
+MSG_MEETING_NOT_FOUND = "Meeting not found"
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -98,7 +100,7 @@ async def api_meeting_status(meeting_id: str):
     """Get current state and progress of a meeting."""
     meeting = await get_meeting(meeting_id)
     if not meeting:
-        raise HTTPException(404, "Meeting not found")
+        raise HTTPException(404, MSG_MEETING_NOT_FOUND)
 
     return {
         "id": meeting["id"],
@@ -126,7 +128,7 @@ async def api_cancel_meeting(meeting_id: str):
     """Cancel a running meeting."""
     meeting = await get_meeting(meeting_id)
     if not meeting:
-        raise HTTPException(404, "Meeting not found")
+        raise HTTPException(404, MSG_MEETING_NOT_FOUND)
 
     if meeting["state"] in (MeetingState.COMPLETE.value, MeetingState.CANCELLED.value):
         raise HTTPException(409, f"Meeting already {meeting['state']}")
@@ -189,7 +191,7 @@ async def api_meeting_output(meeting_id: str):
     """Get the final meeting output (markdown)."""
     meeting = await get_meeting(meeting_id)
     if not meeting:
-        raise HTTPException(404, "Meeting not found")
+        raise HTTPException(404, MSG_MEETING_NOT_FOUND)
 
     if meeting["state"] != MeetingState.COMPLETE.value:
         raise HTTPException(409, f"Meeting not yet complete (state: {meeting['state']})")
@@ -223,7 +225,7 @@ async def api_save_action_items(meeting_id: str, req: SaveActionItemsRequest):
     """Save parsed action items for a meeting."""
     meeting = await get_meeting(meeting_id)
     if not meeting:
-        raise HTTPException(404, "Meeting not found")
+        raise HTTPException(404, MSG_MEETING_NOT_FOUND)
 
     now = _now_ms()
     async with get_db() as db:

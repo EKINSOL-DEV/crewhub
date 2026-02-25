@@ -10,6 +10,9 @@ from fastapi import APIRouter, HTTPException, Query
 
 from ..db.database import get_db
 
+MSG_INVALID_PATH = "Invalid path"
+MSG_PATH_OUTSIDE = "Path outside workspace"
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -147,10 +150,10 @@ async def list_agent_files(
     if path:
         # Validate path
         if ".." in path:
-            raise HTTPException(status_code=400, detail="Invalid path")
+            raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
         scan_root = workspace / path
         if not _is_safe_path(workspace, scan_root):
-            raise HTTPException(status_code=403, detail="Path outside workspace")
+            raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE)
         if not scan_root.exists():
             raise HTTPException(status_code=404, detail=f"Directory not found: {path}")
 
@@ -167,7 +170,7 @@ async def list_agent_files(
 async def save_agent_file(agent_id: str, file_path: str, body: dict):
     """Save/update a file in an agent's workspace."""
     if ".." in file_path:
-        raise HTTPException(status_code=400, detail="Invalid path")
+        raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
 
     content = body.get("content")
     if content is None:
@@ -177,7 +180,7 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
     target = (workspace / file_path).resolve()
 
     if not _is_safe_path(workspace, target):
-        raise HTTPException(status_code=403, detail="Path outside workspace")
+        raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE)
 
     if not target.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
@@ -226,14 +229,14 @@ async def read_agent_file(agent_id: str, file_path: str):
     """Read a single file from an agent's workspace."""
     # Security: reject path traversal
     if ".." in file_path:
-        raise HTTPException(status_code=400, detail="Invalid path")
+        raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
 
     workspace = await _get_agent_workspace(agent_id)
     target = (workspace / file_path).resolve()
 
     # Ensure file is within workspace
     if not _is_safe_path(workspace, target):
-        raise HTTPException(status_code=403, detail="Path outside workspace")
+        raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE)
 
     if not target.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")

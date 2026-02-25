@@ -13,6 +13,9 @@ from app.db.database import get_db
 from app.db.models import RoomAssignmentRule, RoomAssignmentRuleCreate, RoomAssignmentRuleUpdate
 from app.routes.sse import broadcast
 
+SQL_GET_RULE = "SELECT * FROM room_assignment_rules WHERE id = ?"
+MSG_RULE_NOT_FOUND = "Rule not found"
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -73,10 +76,10 @@ async def get_rule(rule_id: str):
     """Get a specific rule by ID."""
     try:
         async with get_db() as db:
-            async with db.execute("SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
+            async with db.execute(SQL_GET_RULE, (rule_id,)) as cursor:
                 row = await cursor.fetchone()
                 if not row:
-                    raise HTTPException(status_code=404, detail="Rule not found")
+                    raise HTTPException(status_code=404, detail=MSG_RULE_NOT_FOUND)
                 return RoomAssignmentRule(**row)
     except HTTPException:
         raise
@@ -113,7 +116,7 @@ async def create_rule(rule: RoomAssignmentRuleCreate):
             await db.commit()
 
             # Return created rule
-            async with db.execute("SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
+            async with db.execute(SQL_GET_RULE, (rule_id,)) as cursor:
                 row = await cursor.fetchone()
                 result = RoomAssignmentRule(**row)
 
@@ -144,7 +147,7 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
             # Check if rule exists
             async with db.execute("SELECT id FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
                 if not await cursor.fetchone():
-                    raise HTTPException(status_code=404, detail="Rule not found")
+                    raise HTTPException(status_code=404, detail=MSG_RULE_NOT_FOUND)
 
             # Build update query dynamically
             updates = []
@@ -162,7 +165,7 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
                 await db.commit()
 
             # Return updated rule
-            async with db.execute("SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
+            async with db.execute(SQL_GET_RULE, (rule_id,)) as cursor:
                 row = await cursor.fetchone()
                 result = RoomAssignmentRule(**row)
 
@@ -183,7 +186,7 @@ async def delete_rule(rule_id: str):
             # Check if rule exists
             async with db.execute("SELECT id FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
                 if not await cursor.fetchone():
-                    raise HTTPException(status_code=404, detail="Rule not found")
+                    raise HTTPException(status_code=404, detail=MSG_RULE_NOT_FOUND)
 
             await db.execute("DELETE FROM room_assignment_rules WHERE id = ?", (rule_id,))
             await db.commit()
