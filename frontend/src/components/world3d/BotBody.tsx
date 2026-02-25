@@ -5,10 +5,10 @@ import * as THREE from 'three'
 import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface BotBodyProps {
-  color: string
-  status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
+  readonly color: string
+  readonly status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
   /** Mutable ref for walk animation phase; >0 when walking, 0 when stopped */
-  walkPhaseRef?: React.MutableRefObject<number>
+  readonly walkPhaseRef?: React.MutableRefObject<number>
 }
 
 /**

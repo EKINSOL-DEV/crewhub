@@ -8,15 +8,15 @@ import { type LayoutNode, type LeafNode, type PanelType } from './types/layout'
 import { ZenPanel } from './ZenPanel'
 
 interface ZenPanelContainerProps {
-  node: LayoutNode
-  focusedPanelId: string
-  canClose: boolean
-  onFocus: (panelId: string) => void
-  onClose: (panelId: string) => void
-  onResize?: (panelId: string, ratio: number) => void // L3: renamed delta → ratio (absolute 0–1 value)
-  onSplit?: (panelId: string, direction: 'row' | 'col') => void
-  onChangePanelType?: (panelId: string, type: PanelType) => void
-  renderPanel: (panel: LeafNode) => ReactNode
+  readonly node: LayoutNode
+  readonly focusedPanelId: string
+  readonly canClose: boolean
+  readonly onFocus: (panelId: string) => void
+  readonly onClose: (panelId: string) => void
+  readonly onResize?: (panelId: string, ratio: number) => void // L3: renamed delta → ratio (absolute 0–1 value)
+  readonly onSplit?: (panelId: string, direction: 'row' | 'col') => void
+  readonly onChangePanelType?: (panelId: string, type: PanelType) => void
+  readonly renderPanel: (panel: LeafNode) => ReactNode
 }
 
 // Minimum panel size in pixels
@@ -104,10 +104,10 @@ export function ZenPanelContainer({
 // ── Split Container ───────────────────────────────────────────────
 
 interface SplitContainerProps {
-  direction: 'row' | 'col'
-  ratio: number
-  onRatioChange: (newRatio: number) => void
-  children: [ReactNode, ReactNode]
+  readonly direction: 'row' | 'col'
+  readonly ratio: number
+  readonly onRatioChange: (newRatio: number) => void
+  readonly children: [ReactNode, ReactNode]
 }
 
 function SplitContainer({ direction, ratio, onRatioChange, children }: SplitContainerProps) {

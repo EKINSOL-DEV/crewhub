@@ -81,9 +81,9 @@ function formatNextRun(timestamp: number | null | undefined): string {
 // ── Cron Item Component ──────────────────────────────────────────
 
 interface CronItemProps {
-  job: CronJob
-  onToggle: () => void
-  onRun: () => void
+  readonly job: CronJob
+  readonly onToggle: () => void
+  readonly onRun: () => void
 }
 
 function CronItem({ job, onToggle, onRun }: CronItemProps) {

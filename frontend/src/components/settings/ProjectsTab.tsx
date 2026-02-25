@@ -20,13 +20,13 @@ import { CollapsibleSection } from './shared'
 // ─── Projects Settings Section ────────────────────────────────────────────────
 
 interface ProjectsSettingsSectionProps {
-  projects: Project[]
-  rooms: Room[]
-  isLoading: boolean
-  onArchive: (id: string) => Promise<{ success: boolean; error?: string }>
-  onUnarchive: (id: string) => Promise<{ success: boolean; error?: string }>
-  onDelete: (id: string) => Promise<{ success: boolean; error?: string }>
-  onUpdate: (
+  readonly projects: Project[]
+  readonly rooms: Room[]
+  readonly isLoading: boolean
+  readonly onArchive: (id: string) => Promise<{ success: boolean; error?: string }>
+  readonly onUnarchive: (id: string) => Promise<{ success: boolean; error?: string }>
+  readonly onDelete: (id: string) => Promise<{ success: boolean; error?: string }>
+  readonly onUpdate: (
     id: string,
     updates: {
       name?: string

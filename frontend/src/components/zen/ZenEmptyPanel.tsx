@@ -7,7 +7,7 @@ import { type PanelType } from './types/layout'
 import { getPrimaryPanelDefs, getSecondaryPanelDefs } from './registry'
 
 interface ZenEmptyPanelProps {
-  onSelectPanelType?: (type: PanelType) => void
+  readonly onSelectPanelType?: (type: PanelType) => void
 }
 
 export function ZenEmptyPanel({ onSelectPanelType }: ZenEmptyPanelProps) {

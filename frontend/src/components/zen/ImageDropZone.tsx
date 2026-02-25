@@ -23,10 +23,10 @@ export interface PendingImage {
 }
 
 interface ImageDropZoneProps {
-  children: ReactNode
-  onImagesChange: (images: PendingImage[]) => void
-  images: PendingImage[]
-  disabled?: boolean
+  readonly children: ReactNode
+  readonly onImagesChange: (images: PendingImage[]) => void
+  readonly images: PendingImage[]
+  readonly disabled?: boolean
 }
 
 // Accepted image types
@@ -218,8 +218,8 @@ export function ImageDropZone({ children, onImagesChange, images, disabled }: Im
  * Image preview thumbnails with remove button
  */
 interface ImagePreviewsProps {
-  images: PendingImage[]
-  onRemove: (id: string) => void
+  readonly images: PendingImage[]
+  readonly onRemove: (id: string) => void
 }
 
 export function ImagePreviews({ images, onRemove }: ImagePreviewsProps) {

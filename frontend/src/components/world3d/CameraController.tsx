@@ -19,7 +19,7 @@ interface RoomPosition {
 }
 
 interface CameraControllerProps {
-  roomPositions: RoomPosition[]
+  readonly roomPositions: RoomPosition[]
 }
 
 // ─── Camera presets per focus level ────────────────────────────

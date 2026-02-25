@@ -18,17 +18,17 @@ export interface ZoneRoomTheme {
 
 interface ZoneRoomProps {
   /** Display name shown on nameplate */
-  name: string
+  readonly name: string
   /** Emoji icon for nameplate */
-  icon?: string
+  readonly icon?: string
   /** Room size in world units (default 12) */
-  size?: number
+  readonly size?: number
   /** Position in world */
-  position?: [number, number, number]
+  readonly position?: [number, number, number]
   /** Visual theme overrides */
-  theme?: ZoneRoomTheme
+  readonly theme?: ZoneRoomTheme
   /** Children rendered inside the room (machines, props, etc.) */
-  children?: React.ReactNode
+  readonly children?: React.ReactNode
 }
 
 /**

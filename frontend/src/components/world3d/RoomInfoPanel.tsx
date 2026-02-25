@@ -20,20 +20,20 @@ import { OrgChartTab } from './OrgChartTab'
 type BotStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
 
 interface RoomInfoPanelProps {
-  room: Room
-  sessions: CrewSession[]
-  isActivelyRunning: (key: string) => boolean
-  displayNames: Map<string, string | null>
-  onClose: () => void
-  onBotClick?: (session: CrewSession) => void
-  onFocusRoom?: (roomId: string) => void
-  onOpenTaskBoard?: (
+  readonly room: Room
+  readonly sessions: CrewSession[]
+  readonly isActivelyRunning: (key: string) => boolean
+  readonly displayNames: Map<string, string | null>
+  readonly onClose: () => void
+  readonly onBotClick?: (session: CrewSession) => void
+  readonly onFocusRoom?: (roomId: string) => void
+  readonly onOpenTaskBoard?: (
     projectId: string,
     roomId: string,
     agents: Array<{ session_key: string; display_name: string }>
   ) => void
-  onOpenHQBoard?: () => void
-  onOpenContext?: (roomId: string, roomName: string) => void
+  readonly onOpenHQBoard?: () => void
+  readonly onOpenContext?: (roomId: string, roomName: string) => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────

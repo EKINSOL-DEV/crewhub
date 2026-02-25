@@ -20,14 +20,14 @@ import { API_BASE } from '@/lib/api'
 // ─── Types ──────────────────────────────────────────────────────
 
 interface MeetingOutputProps {
-  meeting: MeetingState
-  onClose: () => void
-  onRetryFetch?: () => Promise<unknown>
-  outputLoading?: boolean
-  outputError?: string | null
-  mode?: 'dialog' | 'sidebar' | 'fullscreen'
-  onOpenInSidebar?: () => void
-  onStartFollowUp?: () => void
+  readonly meeting: MeetingState
+  readonly onClose: () => void
+  readonly onRetryFetch?: () => Promise<unknown>
+  readonly outputLoading?: boolean
+  readonly outputError?: string | null
+  readonly mode?: 'dialog' | 'sidebar' | 'fullscreen'
+  readonly onOpenInSidebar?: () => void
+  readonly onStartFollowUp?: () => void
 }
 
 // ─── Action Item Card ───────────────────────────────────────────

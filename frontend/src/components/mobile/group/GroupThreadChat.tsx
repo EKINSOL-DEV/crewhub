@@ -122,11 +122,11 @@ function GroupMessageBubble({ msg }: { msg: ThreadMessage }) {
 // ── Main Component ─────────────────────────────────────────────
 
 interface GroupThreadChatProps {
-  thread: Thread
-  onBack: () => void
-  onRemoveParticipant: (agentId: string) => void
-  onAddParticipants: () => void
-  onRename: () => void
+  readonly thread: Thread
+  readonly onBack: () => void
+  readonly onRemoveParticipant: (agentId: string) => void
+  readonly onAddParticipants: () => void
+  readonly onRename: () => void
 }
 
 export function GroupThreadChat({

@@ -8,9 +8,9 @@ import {
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 
 interface ProjectFilesSectionProps {
-  projectId: string
-  projectName: string
-  projectColor?: string
+  readonly projectId: string
+  readonly projectName: string
+  readonly projectColor?: string
 }
 
 /**

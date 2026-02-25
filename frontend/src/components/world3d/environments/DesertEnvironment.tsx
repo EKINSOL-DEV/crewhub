@@ -79,8 +79,8 @@ function InstancedDecoration({
 // ─── Desert Environment ──────────────────────────────────────────
 
 interface DesertEnvironmentProps {
-  buildingWidth: number
-  buildingDepth: number
+  readonly buildingWidth: number
+  readonly buildingDepth: number
 }
 
 export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnvironmentProps) {

@@ -7,9 +7,9 @@ export interface TOCHeading {
 }
 
 interface TOCSidebarProps {
-  headings: TOCHeading[]
-  activeId?: string
-  onSelect: (id: string) => void
+  readonly headings: TOCHeading[]
+  readonly activeId?: string
+  readonly onSelect: (id: string) => void
 }
 
 export function extractHeadings(content: string): TOCHeading[] {

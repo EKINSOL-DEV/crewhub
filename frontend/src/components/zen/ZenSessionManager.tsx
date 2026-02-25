@@ -50,9 +50,9 @@ const AVAILABLE_AGENTS: AgentOption[] = [
 // ── Session Details Panel ─────────────────────────────────────────
 
 interface SessionDetailsProps {
-  sessionKey: string
-  onClose: () => void
-  onKill: (sessionKey: string) => void
+  readonly sessionKey: string
+  readonly onClose: () => void
+  readonly onKill: (sessionKey: string) => void
 }
 
 export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetailsProps) {
@@ -139,9 +139,9 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
 // ── Agent Picker (Quick Modal) ────────────────────────────────────
 
 interface ZenAgentPickerProps {
-  onClose: () => void
-  onSelect: (agentId: string, agentName: string, agentIcon: string) => void
-  agents?: AgentOption[]
+  readonly onClose: () => void
+  readonly onSelect: (agentId: string, agentName: string, agentIcon: string) => void
+  readonly agents?: AgentOption[]
 }
 
 export function ZenAgentPicker({

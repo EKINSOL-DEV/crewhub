@@ -27,10 +27,10 @@ export type MobilePanel =
   | 'creator'
 
 interface MobileDrawerProps {
-  open: boolean
-  onClose: () => void
-  onNavigate: (panel: MobilePanel) => void
-  currentPanel: MobilePanel
+  readonly open: boolean
+  readonly onClose: () => void
+  readonly onNavigate: (panel: MobilePanel) => void
+  readonly currentPanel: MobilePanel
 }
 
 interface MenuItem {

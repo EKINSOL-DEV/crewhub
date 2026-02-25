@@ -4,8 +4,8 @@ import { getRuntimeIcon } from '../onboardingHelpers'
 import type { ConnectionConfig } from '../onboardingTypes'
 
 interface StepReadyProps {
-  connections: ConnectionConfig[]
-  onGoDashboard: () => void
+  readonly connections: ConnectionConfig[]
+  readonly onGoDashboard: () => void
 }
 
 export function StepReady({ connections, onGoDashboard }: StepReadyProps) {

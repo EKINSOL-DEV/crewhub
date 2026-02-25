@@ -91,14 +91,14 @@ function LoadingPlaceholder({ color }: { color: string }) {
 // ── Main component ─────────────────────────────────────────────
 
 interface ChatHeader3DAvatarProps {
-  config: BotVariantConfig
-  agentStatus: AgentStatus
+  readonly config: BotVariantConfig
+  readonly agentStatus: AgentStatus
   /** Animation mode — controls movement behaviour */
-  animation?: AvatarAnimation
+  readonly animation?: AvatarAnimation
   /** Fallback icon/emoji (if 3D unavailable) */
-  icon: string
+  readonly icon: string
   /** Container style overrides */
-  style?: CSSProperties
+  readonly style?: CSSProperties
 }
 
 export function ChatHeader3DAvatar({

@@ -1,9 +1,9 @@
 import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface BuildingFloorProps {
-  width: number
-  depth: number
-  color?: string
+  readonly width: number
+  readonly depth: number
+  readonly color?: string
 }
 
 /**

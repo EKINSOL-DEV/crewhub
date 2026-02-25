@@ -19,8 +19,8 @@ export interface Command {
 }
 
 interface ZenCommandPaletteProps {
-  commands: Command[]
-  onClose: () => void
+  readonly commands: Command[]
+  readonly onClose: () => void
 }
 
 // ── Fuzzy Search ──────────────────────────────────────────────────

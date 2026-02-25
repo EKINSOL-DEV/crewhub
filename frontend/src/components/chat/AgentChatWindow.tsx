@@ -11,13 +11,13 @@ import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 // ── Agent Chat Window ──────────────────────────────────────────
 
 interface AgentChatWindowProps {
-  sessionKey: string
-  agentName: string
-  agentIcon: string | null
-  agentColor: string | null
-  position: { x: number; y: number }
-  size: { width: number; height: number }
-  zIndex: number
+  readonly sessionKey: string
+  readonly agentName: string
+  readonly agentIcon: string | null
+  readonly agentColor: string | null
+  readonly position: { x: number; y: number }
+  readonly size: { width: number; height: number }
+  readonly zIndex: number
 }
 
 export function AgentChatWindow({
@@ -219,369 +219,369 @@ export function AgentChatWindow({
         style={{ zIndex }}
         className="chat-window-container"
       >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderRadius: 16,
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          overflow: 'hidden',
-        }}
-      >
-        {/* ── Header / Drag Handle ── */}
         <div
-          className="chat-window-drag-handle"
           style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '10px 12px',
-            cursor: 'grab',
-            userSelect: 'none',
-            borderBottom: '1px solid rgba(0,0,0,0.06)',
-            background: accentColor + '12',
+            flexDirection: 'column',
+            height: '100%',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderRadius: 16,
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            overflow: 'hidden',
           }}
         >
-          {/* Agent avatar */}
+          {/* ── Header / Drag Handle ── */}
           <div
+            className="chat-window-drag-handle"
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 18,
-              background: accentColor + '30',
-              flexShrink: 0,
+              gap: 10,
+              padding: '10px 12px',
+              cursor: 'grab',
+              userSelect: 'none',
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
+              background: accentColor + '12',
             }}
           >
-            {icon}
-          </div>
-
-          {/* Agent name */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Agent avatar */}
             <div
               style={{
-                fontWeight: 600,
-                fontSize: 14,
-                color: '#1f2937',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {agentName}
-            </div>
-            <div style={{ fontSize: 10, color: '#9ca3af' }}>
-              {isSending ? 'Thinking…' : 'Online'}
-            </div>
-          </div>
-
-          {/* Header buttons */}
-          <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
-            {onFocusAgent && (
-              <HeaderBtn onClick={() => onFocusAgent(sessionKey)} tooltip="Focus agent">
-                🎯
-              </HeaderBtn>
-            )}
-            <HeaderBtn
-              onClick={() => toggleInternals(sessionKey)}
-              tooltip={showInternals ? 'Hide thinking & tools' : 'Show thinking & tools'}
-              active={showInternals}
-              activeColor="#9333ea"
-            >
-              🧠
-            </HeaderBtn>
-            <HeaderBtn onClick={() => minimizeChat(sessionKey)} tooltip="Minimize">
-              ─
-            </HeaderBtn>
-            <HeaderBtn onClick={() => closeChat(sessionKey)} tooltip="Close">
-              ✕
-            </HeaderBtn>
-          </div>
-        </div>
-
-        {/* Accent line */}
-        <div
-          style={{
-            height: 2,
-            background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}, ${accentColor}00)`,
-          }}
-        />
-
-        {/* ── Messages ── */}
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '12px 16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-          }}
-        >
-          {hasMore && (
-            <button
-              onClick={loadOlderMessages}
-              disabled={isLoadingHistory}
-              style={{
-                alignSelf: 'center',
-                padding: '4px 12px',
-                borderRadius: 8,
-                border: 'none',
-                background: 'rgba(0,0,0,0.05)',
-                color: '#6b7280',
-                cursor: isLoadingHistory ? 'wait' : 'pointer',
-                fontSize: 11,
-                fontWeight: 500,
-                fontFamily: 'system-ui, sans-serif',
-              }}
-            >
-              {isLoadingHistory ? 'Loading…' : '↑ Load older messages'}
-            </button>
-          )}
-
-          {!isLoadingHistory && messages.length === 0 && (
-            <div
-              style={{
-                flex: 1,
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#9ca3af',
-                fontSize: 13,
-                padding: '40px 0',
-                gap: 6,
+                fontSize: 18,
+                background: accentColor + '30',
+                flexShrink: 0,
               }}
             >
-              <span style={{ fontSize: 32 }}>{icon}</span>
-              <span>Say hello to {agentName}!</span>
+              {icon}
             </div>
-          )}
 
-          {messages.map((msg) => (
-            <ChatMessageBubble
-              key={msg.id}
-              msg={msg}
-              variant="float"
-              accentColor={accentColor}
-              showThinking={showInternals}
-              showToolDetails={showInternals}
-            />
-          ))}
-
-          {isSending && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '4px 0',
-                color: '#9ca3af',
-                fontSize: 12,
-              }}
-            >
-              <span className="chat-thinking-pulse">●</span>
-              {agentName} is thinking…
+            {/* Agent name */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 14,
+                  color: '#1f2937',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {agentName}
+              </div>
+              <div style={{ fontSize: 10, color: '#9ca3af' }}>
+                {isSending ? 'Thinking…' : 'Online'}
+              </div>
             </div>
-          )}
 
-          {error && (
-            <div
-              style={{
-                padding: '6px 10px',
-                borderRadius: 8,
-                background: '#fef2f2',
-                color: '#991b1b',
-                fontSize: 12,
-                alignSelf: 'center',
-              }}
-            >
-              {error}
+            {/* Header buttons */}
+            <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
+              {onFocusAgent && (
+                <HeaderBtn onClick={() => onFocusAgent(sessionKey)} tooltip="Focus agent">
+                  🎯
+                </HeaderBtn>
+              )}
+              <HeaderBtn
+                onClick={() => toggleInternals(sessionKey)}
+                tooltip={showInternals ? 'Hide thinking & tools' : 'Show thinking & tools'}
+                active={showInternals}
+                activeColor="#9333ea"
+              >
+                🧠
+              </HeaderBtn>
+              <HeaderBtn onClick={() => minimizeChat(sessionKey)} tooltip="Minimize">
+                ─
+              </HeaderBtn>
+              <HeaderBtn onClick={() => closeChat(sessionKey)} tooltip="Close">
+                ✕
+              </HeaderBtn>
             </div>
-          )}
+          </div>
 
-          <div ref={messagesEndRef} />
-        </div>
+          {/* Accent line */}
+          <div
+            style={{
+              height: 2,
+              background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}, ${accentColor}00)`,
+            }}
+          />
 
-        {/* ── Input ── */}
-        <div
-          style={{
-            padding: '10px 16px 14px',
-            borderTop: '1px solid rgba(0,0,0,0.06)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-          }}
-        >
-          {/* Recording indicator with send/cancel buttons (WhatsApp-style) */}
-          {isRecording && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                color: '#ef4444',
-                fontFamily: 'monospace',
-                paddingBottom: 2,
-              }}
-            >
-              <span style={{ animation: 'chat-rec-blink 0.6s step-end infinite' }}>●</span>
-              {formatDuration(recDuration)}
-              <span style={{ flex: 1 }} />
-            </div>
-          )}
-          {recError && (
-            <div style={{ fontSize: 11, color: '#ef4444', paddingBottom: 2 }}>{recError}</div>
-          )}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-            <textarea
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
-              disabled={isSending || isRecording}
-              rows={1}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                borderRadius: 10,
-                border: '1px solid rgba(0,0,0,0.1)',
-                background: 'rgba(255,255,255,0.8)',
-                color: '#1f2937',
-                fontSize: 13,
-                fontFamily: 'system-ui, sans-serif',
-                resize: 'none',
-                outline: 'none',
-                maxHeight: 80,
-                lineHeight: 1.4,
-              }}
-              onInput={(e) => {
-                const el = e.currentTarget
-                el.style.height = 'auto'
-                el.style.height = Math.min(el.scrollHeight, 80) + 'px'
-              }}
-            />
-            {/* While recording: green send ↑ + ✕ cancel */}
-            {isRecording && (
-              <>
-                <button
-                  onClick={stopAndSend}
-                  title="Stop & send voice message"
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    border: 'none',
-                    background: '#22c55e',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'background 0.15s',
-                  }}
-                >
-                  <ArrowUp size={18} />
-                </button>
-                <button
-                  onClick={cancelRecording}
-                  title="Cancel recording"
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    border: 'none',
-                    background: 'rgba(0,0,0,0.06)',
-                    color: '#9ca3af',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'background 0.15s',
-                  }}
-                >
-                  <X size={16} />
-                </button>
-              </>
+          {/* ── Messages ── */}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '12px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            {hasMore && (
+              <button
+                onClick={loadOlderMessages}
+                disabled={isLoadingHistory}
+                style={{
+                  alignSelf: 'center',
+                  padding: '4px 12px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: 'rgba(0,0,0,0.05)',
+                  color: '#6b7280',
+                  cursor: isLoadingHistory ? 'wait' : 'pointer',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  fontFamily: 'system-ui, sans-serif',
+                }}
+              >
+                {isLoadingHistory ? 'Loading…' : '↑ Load older messages'}
+              </button>
             )}
-            {/* While not recording: mic + send */}
-            {!isRecording && (
-              <>
-                {micSupported && (
+
+            {!isLoadingHistory && messages.length === 0 && (
+              <div
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#9ca3af',
+                  fontSize: 13,
+                  padding: '40px 0',
+                  gap: 6,
+                }}
+              >
+                <span style={{ fontSize: 32 }}>{icon}</span>
+                <span>Say hello to {agentName}!</span>
+              </div>
+            )}
+
+            {messages.map((msg) => (
+              <ChatMessageBubble
+                key={msg.id}
+                msg={msg}
+                variant="float"
+                accentColor={accentColor}
+                showThinking={showInternals}
+                showToolDetails={showInternals}
+              />
+            ))}
+
+            {isSending && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 0',
+                  color: '#9ca3af',
+                  fontSize: 12,
+                }}
+              >
+                <span className="chat-thinking-pulse">●</span>
+                {agentName} is thinking…
+              </div>
+            )}
+
+            {error && (
+              <div
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  background: '#fef2f2',
+                  color: '#991b1b',
+                  fontSize: 12,
+                  alignSelf: 'center',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* ── Input ── */}
+          <div
+            style={{
+              padding: '10px 16px 14px',
+              borderTop: '1px solid rgba(0,0,0,0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            {/* Recording indicator with send/cancel buttons (WhatsApp-style) */}
+            {isRecording && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: 11,
+                  color: '#ef4444',
+                  fontFamily: 'monospace',
+                  paddingBottom: 2,
+                }}
+              >
+                <span style={{ animation: 'chat-rec-blink 0.6s step-end infinite' }}>●</span>
+                {formatDuration(recDuration)}
+                <span style={{ flex: 1 }} />
+              </div>
+            )}
+            {recError && (
+              <div style={{ fontSize: 11, color: '#ef4444', paddingBottom: 2 }}>{recError}</div>
+            )}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+              <textarea
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
+                disabled={isSending || isRecording}
+                rows={1}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: 10,
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  background: 'rgba(255,255,255,0.8)',
+                  color: '#1f2937',
+                  fontSize: 13,
+                  fontFamily: 'system-ui, sans-serif',
+                  resize: 'none',
+                  outline: 'none',
+                  maxHeight: 80,
+                  lineHeight: 1.4,
+                }}
+                onInput={(e) => {
+                  const el = e.currentTarget
+                  el.style.height = 'auto'
+                  el.style.height = Math.min(el.scrollHeight, 80) + 'px'
+                }}
+              />
+              {/* While recording: green send ↑ + ✕ cancel */}
+              {isRecording && (
+                <>
                   <button
-                    onClick={startRecording}
-                    disabled={micPreparing || isSending}
-                    title="Record voice message"
+                    onClick={stopAndSend}
+                    title="Stop & send voice message"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      border: 'none',
+                      background: '#22c55e',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    <ArrowUp size={18} />
+                  </button>
+                  <button
+                    onClick={cancelRecording}
+                    title="Cancel recording"
                     style={{
                       width: 36,
                       height: 36,
                       borderRadius: 10,
                       border: 'none',
                       background: 'rgba(0,0,0,0.06)',
-                      color: '#6b7280',
-                      cursor: micPreparing || isSending ? 'default' : 'pointer',
+                      color: '#9ca3af',
+                      cursor: 'pointer',
+                      flexShrink: 0,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 15,
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </>
+              )}
+              {/* While not recording: mic + send */}
+              {!isRecording && (
+                <>
+                  {micSupported && (
+                    <button
+                      onClick={startRecording}
+                      disabled={micPreparing || isSending}
+                      title="Record voice message"
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        border: 'none',
+                        background: 'rgba(0,0,0,0.06)',
+                        color: '#6b7280',
+                        cursor: micPreparing || isSending ? 'default' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 15,
+                        flexShrink: 0,
+                        transition: 'background 0.15s, color 0.15s',
+                      }}
+                    >
+                      {micPreparing ? '⏳' : '🎤'}
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSend}
+                    disabled={isSending || !inputValue.trim()}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      border: 'none',
+                      background:
+                        isSending || !inputValue.trim() ? 'rgba(0,0,0,0.08)' : accentColor + 'dd',
+                      color: isSending || !inputValue.trim() ? '#9ca3af' : '#fff',
+                      cursor: isSending || !inputValue.trim() ? 'default' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 16,
                       flexShrink: 0,
                       transition: 'background 0.15s, color 0.15s',
                     }}
                   >
-                    {micPreparing ? '⏳' : '🎤'}
+                    ➤
                   </button>
-                )}
-                <button
-                  onClick={handleSend}
-                  disabled={isSending || !inputValue.trim()}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    border: 'none',
-                    background:
-                      isSending || !inputValue.trim() ? 'rgba(0,0,0,0.08)' : accentColor + 'dd',
-                    color: isSending || !inputValue.trim() ? '#9ca3af' : '#fff',
-                    cursor: isSending || !inputValue.trim() ? 'default' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 16,
-                    flexShrink: 0,
-                    transition: 'background 0.15s, color 0.15s',
-                  }}
-                >
-                  ➤
-                </button>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        <style>{`
+          <style>{`
           @keyframes chat-rec-blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
           }
         `}</style>
 
-        {/* Tooltip fade-in animation */}
-        <style>{`
+          {/* Tooltip fade-in animation */}
+          <style>{`
           @keyframes chatTooltipFadeIn {
             from {
               opacity: 0;
@@ -593,8 +593,8 @@ export function AgentChatWindow({
             }
           }
         `}</style>
-      </div>
-    </Rnd>
+        </div>
+      </Rnd>
     </>
   )
 }

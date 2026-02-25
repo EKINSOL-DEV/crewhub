@@ -69,9 +69,9 @@ function LoadingFallback() {
 // ─── Props ─────────────────────────────────────────────────────
 
 interface World3DViewProps {
-  sessions: CrewSession[]
-  settings: SessionsSettings
-  onAliasChanged?: () => void
+  readonly sessions: CrewSession[]
+  readonly settings: SessionsSettings
+  readonly onAliasChanged?: () => void
 }
 
 // ─── Inner Component ───────────────────────────────────────────

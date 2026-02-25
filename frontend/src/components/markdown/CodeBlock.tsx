@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 
 interface CodeBlockProps {
-  className?: string
-  children: React.ReactNode
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 export function CodeBlock({ className, children }: CodeBlockProps) {

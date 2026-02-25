@@ -10,9 +10,9 @@ import { ZenContextMenu } from './ZenContextMenu'
 // ── Panel Type Picker Component ────────────────────────────────
 
 interface PanelTypePickerProps {
-  currentType: PanelType
-  onSelect: (type: PanelType) => void
-  onClose: () => void
+  readonly currentType: PanelType
+  readonly onSelect: (type: PanelType) => void
+  readonly onClose: () => void
 }
 
 function PanelTypePicker({ currentType, onSelect, onClose }: PanelTypePickerProps) {
@@ -63,15 +63,15 @@ function PanelTypePicker({ currentType, onSelect, onClose }: PanelTypePickerProp
 // ── Panel Props ────────────────────────────────────────────────
 
 interface ZenPanelProps {
-  panel: LeafNode
-  isFocused: boolean
-  canClose: boolean
-  children: ReactNode
-  onFocus: () => void
-  onClose: () => void
-  onSplitVertical?: () => void
-  onSplitHorizontal?: () => void
-  onChangePanelType?: (type: PanelType) => void
+  readonly panel: LeafNode
+  readonly isFocused: boolean
+  readonly canClose: boolean
+  readonly children: ReactNode
+  readonly onFocus: () => void
+  readonly onClose: () => void
+  readonly onSplitVertical?: () => void
+  readonly onSplitHorizontal?: () => void
+  readonly onChangePanelType?: (type: PanelType) => void
 }
 
 export function ZenPanel({

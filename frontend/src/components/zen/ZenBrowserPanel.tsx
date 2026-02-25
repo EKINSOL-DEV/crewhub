@@ -16,9 +16,9 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 
 export interface ZenBrowserPanelProps {
   /** Current URL (controlled — lifted to layout tree for persistence) */
-  url?: string
+  readonly url?: string
   /** Called whenever the displayed URL changes */
-  onUrlChange?: (url: string) => void
+  readonly onUrlChange?: (url: string) => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────

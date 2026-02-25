@@ -15,9 +15,9 @@ import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface GridRoomRendererProps {
-  blueprint: RoomBlueprint
-  roomPosition: [number, number, number] // world center of room (y = floor level)
-  onBlueprintUpdate?: (placements: PropPlacement[]) => void // callback when props are moved
+  readonly blueprint: RoomBlueprint
+  readonly roomPosition: [number, number, number] // world center of room (y = floor level)
+  readonly onBlueprintUpdate?: (placements: PropPlacement[]) => void // callback when props are moved
 }
 
 // Minimum movement threshold to start drag (in pixels, to avoid accidental drags)
@@ -346,14 +346,14 @@ const HUD_HINT_STYLE: React.CSSProperties = {
 }
 
 interface SelectionIndicatorProps {
-  position: [number, number, number]
-  isMoving: boolean
-  isDragging: boolean
-  isOverInvalid: boolean
-  onSave: () => void
-  onRotate: () => void
-  onCancel: () => void
-  onDelete: () => void
+  readonly position: [number, number, number]
+  readonly isMoving: boolean
+  readonly isDragging: boolean
+  readonly isOverInvalid: boolean
+  readonly onSave: () => void
+  readonly onRotate: () => void
+  readonly onCancel: () => void
+  readonly onDelete: () => void
 }
 
 function SelectionIndicator({

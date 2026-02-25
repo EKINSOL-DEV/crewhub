@@ -15,13 +15,13 @@ import { getRuntimeIcon, getRuntimeLabel, getStatusBadge } from '../onboardingHe
 import type { DiscoveryCandidate, ScanResult } from '@/lib/api'
 
 interface StepScanProps {
-  scanning: boolean
-  scanResult: ScanResult | null
-  candidates: DiscoveryCandidate[]
-  onScanAgain: () => void
-  onConnect: (candidate: DiscoveryCandidate, index: number) => void
-  onContinue: () => void
-  onDemo: () => void
+  readonly scanning: boolean
+  readonly scanResult: ScanResult | null
+  readonly candidates: DiscoveryCandidate[]
+  readonly onScanAgain: () => void
+  readonly onConnect: (candidate: DiscoveryCandidate, index: number) => void
+  readonly onContinue: () => void
+  readonly onDemo: () => void
 }
 
 export function StepScan({

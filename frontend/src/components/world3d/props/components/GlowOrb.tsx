@@ -3,12 +3,12 @@ import { useThrottledFrame } from '../../utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface GlowOrbProps {
-  color?: string
-  position?: [number, number, number]
-  size?: number
-  pulseSpeed?: number
-  intensity?: number
-  wireframe?: boolean
+  readonly color?: string
+  readonly position?: [number, number, number]
+  readonly size?: number
+  readonly pulseSpeed?: number
+  readonly intensity?: number
+  readonly wireframe?: boolean
 }
 
 /**

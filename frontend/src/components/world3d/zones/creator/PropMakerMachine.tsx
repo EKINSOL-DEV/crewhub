@@ -14,9 +14,9 @@ export interface GeneratedPropData {
 }
 
 interface PropMakerMachineProps {
-  position?: [number, number, number]
-  rotation?: number
-  onPropGenerated?: (prop: GeneratedPropData) => void
+  readonly position?: [number, number, number]
+  readonly rotation?: number
+  readonly onPropGenerated?: (prop: GeneratedPropData) => void
 }
 
 export function PropMakerMachine({

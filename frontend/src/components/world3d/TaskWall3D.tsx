@@ -7,13 +7,13 @@ import { TaskBoard } from '@/components/tasks/TaskBoard'
 // ── Props ──────────────────────────────────────────────────────
 
 interface TaskWall3DProps {
-  projectId: string
-  roomId: string
-  position?: [number, number, number]
-  rotation?: [number, number, number]
-  width?: number
-  height?: number
-  agents?: Array<{ session_key: string; display_name: string }>
+  readonly projectId: string
+  readonly roomId: string
+  readonly position?: [number, number, number]
+  readonly rotation?: [number, number, number]
+  readonly width?: number
+  readonly height?: number
+  readonly agents?: Array<{ session_key: string; display_name: string }>
 }
 
 // ── Component ──────────────────────────────────────────────────

@@ -14,13 +14,13 @@ import type { Agent } from '@/hooks/useAgentsRegistry'
 import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 
 interface ZenChatPanelProps {
-  sessionKey: string | null
-  agentName: string | null
-  agentIcon: string | null
-  roomId?: string // Room ID for context envelope (Zen Mode active project room)
-  onStatusChange?: (status: 'active' | 'thinking' | 'idle' | 'error') => void
-  onChangeAgent?: () => void // Callback to open agent picker
-  onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void // Direct agent selection
+  readonly sessionKey: string | null
+  readonly agentName: string | null
+  readonly agentIcon: string | null
+  readonly roomId?: string // Room ID for context envelope (Zen Mode active project room)
+  readonly onStatusChange?: (status: 'active' | 'thinking' | 'idle' | 'error') => void
+  readonly onChangeAgent?: () => void // Callback to open agent picker
+  readonly onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void // Direct agent selection
 }
 
 // (renderMarkdown, ThinkingBlock, ToolCall, Message all moved to ChatMessageBubble.tsx)
@@ -65,10 +65,10 @@ function useFixedAgents() {
 // ── Agent Dropdown Component ───────────────────────────────────
 
 interface AgentDropdownProps {
-  currentAgentName: string | null
-  currentAgentIcon: string | null
-  onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void
-  onOpenPicker?: () => void
+  readonly currentAgentName: string | null
+  readonly currentAgentIcon: string | null
+  readonly onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void
+  readonly onOpenPicker?: () => void
 }
 
 function AgentDropdown({
@@ -166,7 +166,7 @@ function AgentDropdown({
 // ── No Agent Selected State ────────────────────────────────────
 
 interface NoAgentStateProps {
-  onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void
+  readonly onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void
 }
 
 function NoAgentState({ onSelectAgent }: NoAgentStateProps) {

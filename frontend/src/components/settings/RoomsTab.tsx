@@ -109,9 +109,9 @@ const SESSION_TYPES = [
 
 interface RoomsTabProps {
   /** Active sessions for testing routing rules */
-  sessions?: CrewSession[]
+  readonly sessions?: CrewSession[]
   /** Called whenever a dialog opens or closes so parent can guard Escape key */
-  onModalStateChange?: (hasOpenModal: boolean) => void
+  readonly onModalStateChange?: (hasOpenModal: boolean) => void
 }
 
 // ─── Sortable Rule Item ───────────────────────────────────────────────────────

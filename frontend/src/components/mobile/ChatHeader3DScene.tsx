@@ -33,9 +33,9 @@ const DEBUG_CAMERA = false // set true to re-enable tuning overlay
 // ── Full-body Bot (head shown by camera framing) ───────────────
 
 interface HeaderBotProps {
-  config: BotVariantConfig
-  status: AgentStatus
-  animation: AvatarAnimation
+  readonly config: BotVariantConfig
+  readonly status: AgentStatus
+  readonly animation: AvatarAnimation
 }
 
 function HeaderBot({ config, status, animation }: HeaderBotProps) {
@@ -83,7 +83,14 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
     if (rightEyeRef.current) rightEyeRef.current.scale.y = blinkScale
   })
 
-  const glowColor = status === 'active' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#6366f1'
+  let glowColor: string
+  if (status === 'active') {
+    glowColor = '#22c55e'
+  } else if (status === 'idle') {
+    glowColor = '#f59e0b'
+  } else {
+    glowColor = '#6366f1'
+  }
 
   return (
     <group ref={groupRef} position={[0, 0, 0]} scale={2.2}>
@@ -192,10 +199,10 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
 // ── Scene export ───────────────────────────────────────────────
 
 interface ChatHeader3DSceneProps {
-  botConfig: BotVariantConfig
-  agentStatus: AgentStatus
+  readonly botConfig: BotVariantConfig
+  readonly agentStatus: AgentStatus
   /** Animation mode — drives movement behaviour */
-  animation?: AvatarAnimation
+  readonly animation?: AvatarAnimation
 }
 
 export default function ChatHeader3DScene({

@@ -124,21 +124,21 @@ const RETRY_BTN: React.CSSProperties = {
 
 interface PreviewPanelProps {
   /** The React component to preview */
-  PropComponent: React.FC<any> | null
+  readonly PropComponent: React.FC<any> | null
   /** Component name for display */
-  componentName: string
+  readonly componentName: string
   /** Render error message (if component failed) */
-  renderError?: string | null
+  readonly renderError?: string | null
   /** Called when user approves the prop */
-  onApprove: () => void
+  readonly onApprove: () => void
   /** Called when user wants to regenerate */
-  onRegenerate: () => void
+  readonly onRegenerate: () => void
   /** Called when user wants to retry after error */
-  onRetry?: () => void
+  readonly onRetry?: () => void
   /** Whether generation is in progress */
-  isGenerating?: boolean
+  readonly isGenerating?: boolean
   /** Whether save is in progress */
-  isSaving?: boolean
+  readonly isSaving?: boolean
 }
 
 export function PreviewPanel({

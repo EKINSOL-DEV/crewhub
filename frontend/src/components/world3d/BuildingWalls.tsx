@@ -2,12 +2,12 @@ import { useMemo } from 'react'
 import { useToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
 
 interface BuildingWallsProps {
-  width: number
-  depth: number
-  wallHeight?: number
-  entranceWidth?: number
+  readonly width: number
+  readonly depth: number
+  readonly wallHeight?: number
+  readonly entranceWidth?: number
   /** Position of entrance gap along front wall (0 = center) */
-  entranceOffset?: number
+  readonly entranceOffset?: number
 }
 
 type WallSegment = {

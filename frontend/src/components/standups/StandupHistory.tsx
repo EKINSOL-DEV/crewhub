@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useStandups, type StandupDetail } from '@/hooks/useStandups'
 
 interface StandupHistoryProps {
-  maxDays?: number
+  readonly maxDays?: number
 }
 
 export function StandupHistory({ maxDays = 3 }: StandupHistoryProps) {

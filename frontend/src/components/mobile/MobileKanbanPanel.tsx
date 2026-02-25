@@ -10,7 +10,7 @@ import { useProjects } from '@/hooks/useProjects'
 import { PRIORITY_CONFIG } from '@/lib/taskConstants'
 
 interface MobileKanbanPanelProps {
-  onBack: () => void
+  readonly onBack: () => void
 }
 
 // ── Column Configuration ─────────────────────────────────────
@@ -33,8 +33,8 @@ const COLUMNS: ColumnConfig[] = [
 // ── Task Card (Mobile-Optimized) ─────────────────────────────
 
 interface TaskCardProps {
-  task: Task
-  onTap: () => void
+  readonly task: Task
+  readonly onTap: () => void
 }
 
 function TaskCard({ task, onTap }: TaskCardProps) {
@@ -108,9 +108,9 @@ function TaskCard({ task, onTap }: TaskCardProps) {
 // ── Task Detail Modal ────────────────────────────────────────
 
 interface TaskDetailModalProps {
-  task: Task
-  onClose: () => void
-  onUpdateStatus: (newStatus: TaskStatus) => void
+  readonly task: Task
+  readonly onClose: () => void
+  readonly onUpdateStatus: (newStatus: TaskStatus) => void
 }
 
 function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps) {
@@ -262,10 +262,10 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
 // ── Filter Sheet ──────────────────────────────────────────────
 
 interface FilterSheetProps {
-  projects: Array<{ id: string; name: string; color?: string }>
-  selectedProjectId: string | null
-  onSelectProject: (projectId: string | null) => void
-  onClose: () => void
+  readonly projects: Array<{ id: string; name: string; color?: string }>
+  readonly selectedProjectId: string | null
+  readonly onSelectProject: (projectId: string | null) => void
+  readonly onClose: () => void
 }
 
 function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: FilterSheetProps) {

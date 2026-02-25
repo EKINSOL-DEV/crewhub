@@ -9,10 +9,10 @@ import { propRegistry } from '@/lib/modding/registries'
 export type MountType = 'floor' | 'wall'
 
 export interface PropProps {
-  position: [number, number, number]
-  rotation: number // degrees (0, 90, 180, 270)
-  cellSize: number
-  span?: { w: number; d: number }
+  readonly position: [number, number, number]
+  readonly rotation: number // degrees (0, 90, 180, 270)
+  readonly cellSize: number
+  readonly span?: { w: number; d: number }
 }
 
 export interface PropEntry {

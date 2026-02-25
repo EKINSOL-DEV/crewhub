@@ -9,8 +9,8 @@ import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface LookAndFeelTabProps {
-  settings: SessionsSettings
-  onSettingsChange: (settings: SessionsSettings) => void
+  readonly settings: SessionsSettings
+  readonly onSettingsChange: (settings: SessionsSettings) => void
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────

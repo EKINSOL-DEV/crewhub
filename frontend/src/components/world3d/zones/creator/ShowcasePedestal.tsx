@@ -10,7 +10,7 @@ import { FullscreenShowcase } from './FullscreenShowcase'
 import * as THREE from 'three'
 
 interface ShowcasePedestalProps {
-  position?: [number, number, number]
+  readonly position?: [number, number, number]
 }
 
 export function ShowcasePedestal({ position = [0, 0, 0] }: ShowcasePedestalProps) {

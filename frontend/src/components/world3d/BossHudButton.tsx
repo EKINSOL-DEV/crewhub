@@ -6,18 +6,18 @@ import type { BotVariantConfig } from './utils/botVariants'
 
 interface BossHudButtonProps {
   /** All sessions to search for the boss */
-  sessions: CrewSession[]
+  readonly sessions: CrewSession[]
   /** Get bot config from session key */
-  getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
+  readonly getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
   /** Determine which room a session belongs to */
-  getRoomForSession: (
+  readonly getRoomForSession: (
     sessionKey: string,
     sessionData?: { label?: string; model?: string; channel?: string }
   ) => string | undefined
   /** Default room ID fallback */
-  defaultRoomId?: string
+  readonly defaultRoomId?: string
   /** Is the boss actively running? */
-  isActivelyRunning: (key: string) => boolean
+  readonly isActivelyRunning: (key: string) => boolean
 }
 
 const BOSS_SESSION_KEY = 'agent:main:main'

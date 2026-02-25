@@ -3,10 +3,10 @@ import { useThrottledFrame } from '../../utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface RotatingPartProps {
-  position?: [number, number, number]
-  axis?: 'x' | 'y' | 'z'
-  speed?: number
-  children: React.ReactNode
+  readonly position?: [number, number, number]
+  readonly axis?: 'x' | 'y' | 'z'
+  readonly speed?: number
+  readonly children: React.ReactNode
 }
 
 /**

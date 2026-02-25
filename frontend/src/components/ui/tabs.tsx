@@ -12,11 +12,11 @@ const TabsContext = React.createContext<TabsContextValue>({
 })
 
 interface TabsProps {
-  defaultValue?: string
-  value?: string
-  onValueChange?: (value: string) => void
-  className?: string
-  children: React.ReactNode
+  readonly defaultValue?: string
+  readonly value?: string
+  readonly onValueChange?: (value: string) => void
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 export function Tabs({
@@ -44,8 +44,8 @@ export function Tabs({
 }
 
 interface TabsListProps {
-  className?: string
-  children: React.ReactNode
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 export function TabsList({ className, children }: TabsListProps) {
@@ -62,9 +62,9 @@ export function TabsList({ className, children }: TabsListProps) {
 }
 
 interface TabsTriggerProps {
-  value: string
-  className?: string
-  children: React.ReactNode
+  readonly value: string
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 export function TabsTrigger({ value, className, children }: TabsTriggerProps) {
@@ -86,9 +86,9 @@ export function TabsTrigger({ value, className, children }: TabsTriggerProps) {
 }
 
 interface TabsContentProps {
-  value: string
-  className?: string
-  children: React.ReactNode
+  readonly value: string
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 export function TabsContent({ value, className, children }: TabsContentProps) {

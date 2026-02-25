@@ -41,25 +41,25 @@ export class PropErrorBoundary extends React.Component<
 // ── Props ─────────────────────────────────────────────────────
 
 export interface PropPreviewProps {
-  previewParts: PropPart[] | null
-  previewName: string
-  isGenerating: boolean
-  renderError: string | null
-  previewModelLabel: string
-  selectedModel: string
-  editMode: boolean
-  selectedPartIndex: number | null
-  transformMode: TransformMode
-  isTransformDragging: boolean
-  onRenderError: (error: Error) => void
-  onRetry: () => void
-  onPartSelect: (index: number | null) => void
-  onPartTransform: (
+  readonly previewParts: PropPart[] | null
+  readonly previewName: string
+  readonly isGenerating: boolean
+  readonly renderError: string | null
+  readonly previewModelLabel: string
+  readonly selectedModel: string
+  readonly editMode: boolean
+  readonly selectedPartIndex: number | null
+  readonly transformMode: TransformMode
+  readonly isTransformDragging: boolean
+  readonly onRenderError: (error: Error) => void
+  readonly onRetry: () => void
+  readonly onPartSelect: (index: number | null) => void
+  readonly onPartTransform: (
     index: number,
     position: [number, number, number],
     rotation: [number, number, number]
   ) => void
-  onDraggingChanged: (dragging: boolean) => void
+  readonly onDraggingChanged: (dragging: boolean) => void
 }
 
 // ── Component ─────────────────────────────────────────────────

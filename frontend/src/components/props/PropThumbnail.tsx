@@ -13,13 +13,13 @@ import { useMemo } from 'react'
 import { PROP_META_BY_ID, CATEGORY_LABELS, type PropMeta } from './propMeta'
 
 interface PropThumbnailProps {
-  propId: string
-  displayName?: string // override for generated props
-  icon?: string // override for generated props
-  color?: string // override for generated props
-  size?: number // thumbnail size in px (default 72)
-  selected?: boolean
-  onClick?: () => void
+  readonly propId: string
+  readonly displayName?: string // override for generated props
+  readonly icon?: string // override for generated props
+  readonly color?: string // override for generated props
+  readonly size?: number // thumbnail size in px (default 72)
+  readonly selected?: boolean
+  readonly onClick?: () => void
 }
 
 function getPropColor(meta: PropMeta | undefined, color?: string): string {

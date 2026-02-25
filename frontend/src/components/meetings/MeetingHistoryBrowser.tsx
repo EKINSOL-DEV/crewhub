@@ -27,11 +27,11 @@ interface MeetingHistoryItem {
 }
 
 interface MeetingHistoryBrowserProps {
-  roomId?: string
-  projectId?: string
-  onViewResults: (meetingId: string) => void
-  onFollowUp: (meetingId: string) => void
-  onReuseSetup: (meeting: MeetingHistoryItem) => void
+  readonly roomId?: string
+  readonly projectId?: string
+  readonly onViewResults: (meetingId: string) => void
+  readonly onFollowUp: (meetingId: string) => void
+  readonly onReuseSetup: (meeting: MeetingHistoryItem) => void
 }
 
 function MeetingHistoryCard({

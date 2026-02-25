@@ -62,11 +62,11 @@ const columns: ColumnConfig[] = [
 // ── Props ──────────────────────────────────────────────────────
 
 interface TaskBoardOverlayProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  projectId: string
-  roomId?: string
-  agents?: Array<{ session_key: string; display_name: string }>
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly projectId: string
+  readonly roomId?: string
+  readonly agents?: Array<{ session_key: string; display_name: string }>
 }
 
 // ── Component ──────────────────────────────────────────────────
@@ -579,9 +579,9 @@ export function TaskBoardOverlay({
 // ── Compact Preview for BotInfoPanel ───────────────────────────
 
 interface TaskBoardPreviewProps {
-  projectId: string
-  roomId?: string
-  onExpand: () => void
+  readonly projectId: string
+  readonly roomId?: string
+  readonly onExpand: () => void
 }
 
 export function TaskBoardPreview({ projectId, roomId, onExpand }: TaskBoardPreviewProps) {

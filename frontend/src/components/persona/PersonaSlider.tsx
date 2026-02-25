@@ -1,12 +1,12 @@
 import { cn } from '@/lib/utils'
 
 interface PersonaSliderProps {
-  label: string
-  helper: string
-  leftLabel: string
-  rightLabel: string
-  value: number
-  onChange: (value: number) => void
+  readonly label: string
+  readonly helper: string
+  readonly leftLabel: string
+  readonly rightLabel: string
+  readonly value: number
+  readonly onChange: (value: number) => void
 }
 
 export function PersonaSlider({

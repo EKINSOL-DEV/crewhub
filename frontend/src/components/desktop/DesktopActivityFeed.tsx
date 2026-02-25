@@ -63,9 +63,9 @@ interface AgentOption {
 }
 
 interface AgentDropdownProps {
-  agents: AgentOption[]
-  selectedId: string | null
-  onChange: (id: string | null) => void
+  readonly agents: AgentOption[]
+  readonly selectedId: string | null
+  readonly onChange: (id: string | null) => void
 }
 
 function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
@@ -179,8 +179,8 @@ function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
 // ── Activity Entry Item ───────────────────────────────────────
 
 interface EntryItemProps {
-  event: ActivityEvent
-  onOpen: () => void
+  readonly event: ActivityEvent
+  readonly onOpen: () => void
 }
 
 function EntryItem({ event, onOpen }: EntryItemProps) {
@@ -234,10 +234,10 @@ function EntryItem({ event, onOpen }: EntryItemProps) {
 // ── Group Section ─────────────────────────────────────────────
 
 interface GroupSectionProps {
-  name: string
-  events: ActivityEvent[]
-  getSession: (key: string) => CrewSession | undefined
-  onOpen: (event: ActivityEvent) => void
+  readonly name: string
+  readonly events: ActivityEvent[]
+  readonly getSession: (key: string) => CrewSession | undefined
+  readonly onOpen: (event: ActivityEvent) => void
 }
 
 function GroupSection({ name, events, onOpen }: GroupSectionProps) {
@@ -269,8 +269,8 @@ function GroupSection({ name, events, onOpen }: GroupSectionProps) {
 // ── Main Panel ────────────────────────────────────────────────
 
 interface DesktopActivityFeedProps {
-  isOpen: boolean
-  onClose: () => void
+  readonly isOpen: boolean
+  readonly onClose: () => void
 }
 
 export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProps) {
@@ -560,9 +560,9 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
 // ── Toggle Button ─────────────────────────────────────────────
 
 interface DesktopActivityFeedButtonProps {
-  isOpen: boolean
-  onClick: () => void
-  eventCount?: number
+  readonly isOpen: boolean
+  readonly onClick: () => void
+  readonly eventCount?: number
 }
 
 export function DesktopActivityFeedButton({

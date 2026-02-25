@@ -64,11 +64,11 @@ const MINION_COLORS: Record<
 type AgentIcon = 'crab' | 'clock' | 'camera' | 'wave' | 'gear' | 'default'
 
 interface MinionSVGWithIconProps {
-  variant?: MinionVariant
-  agentIcon?: AgentIcon
-  size?: number
-  flipped?: boolean
-  animDelay?: number
+  readonly variant?: MinionVariant
+  readonly agentIcon?: AgentIcon
+  readonly size?: number
+  readonly flipped?: boolean
+  readonly animDelay?: number
 }
 
 export function MinionSVGWithIcon({

@@ -15,8 +15,8 @@ export const propRegistry = new Registry<PropEntry>()
 
 /** Props that every environment component receives. */
 export interface EnvironmentComponentProps {
-  buildingWidth: number
-  buildingDepth: number
+  readonly buildingWidth: number
+  readonly buildingDepth: number
 }
 
 /** Configuration for a registered environment. */

@@ -1,9 +1,9 @@
 import { useToonMaterialProps } from '../utils/toonMaterials'
 
 interface PlantProps {
-  position?: [number, number, number]
-  scale?: number
-  potColor?: string
+  readonly position?: [number, number, number]
+  readonly scale?: number
+  readonly potColor?: string
 }
 
 /**

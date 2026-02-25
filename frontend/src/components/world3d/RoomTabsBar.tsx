@@ -4,9 +4,9 @@ import { zoneRegistry } from '@/lib/zones'
 import { useZone } from '@/hooks/useZone'
 
 interface RoomTabsBarProps {
-  rooms: Room[]
-  roomBotCounts: Map<string, number>
-  parkingBotCount: number
+  readonly rooms: Room[]
+  readonly roomBotCounts: Map<string, number>
+  readonly parkingBotCount: number
 }
 
 export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsBarProps) {

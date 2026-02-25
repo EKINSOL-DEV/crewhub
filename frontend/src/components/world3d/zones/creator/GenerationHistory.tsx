@@ -18,9 +18,9 @@ interface DeleteConfirmState {
 // ── PropDeleteDialog ──────────────────────────────────────────
 
 interface PropDeleteDialogProps {
-  state: DeleteConfirmState
-  onConfirm: () => void
-  onCancel: () => void
+  readonly state: DeleteConfirmState
+  readonly onConfirm: () => void
+  readonly onCancel: () => void
 }
 
 function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps) {
@@ -85,8 +85,8 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
 // ── Props ─────────────────────────────────────────────────────
 
 export interface GenerationHistoryProps {
-  onLoadProp: (record: GenerationRecord) => void
-  refreshKey?: number
+  readonly onLoadProp: (record: GenerationRecord) => void
+  readonly refreshKey?: number
 }
 
 // ── Main Component ────────────────────────────────────────────

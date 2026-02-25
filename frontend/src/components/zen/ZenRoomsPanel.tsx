@@ -7,17 +7,17 @@ import { useCallback, useState } from 'react'
 import { useRoomsContext, type Room } from '@/contexts/RoomsContext'
 
 interface ZenRoomsPanelProps {
-  selectedRoomId?: string
-  onSelectRoom?: (roomId: string | null, roomName: string) => void
+  readonly selectedRoomId?: string
+  readonly onSelectRoom?: (roomId: string | null, roomName: string) => void
 }
 
 // ── Room Item Component ──────────────────────────────────────────
 
 interface RoomItemProps {
-  room: Room
-  isSelected: boolean
-  sessionCount: number
-  onSelect: () => void
+  readonly room: Room
+  readonly isSelected: boolean
+  readonly sessionCount: number
+  readonly onSelect: () => void
 }
 
 function RoomItem({ room, isSelected, sessionCount, onSelect }: RoomItemProps) {

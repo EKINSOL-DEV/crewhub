@@ -22,10 +22,10 @@ import {
 } from '@/lib/personaTypes'
 
 interface PersonaStepProps {
-  agentName?: string
-  agentId?: string
-  onComplete: (config: PersonaConfig) => void
-  onSkip: () => void
+  readonly agentName?: string
+  readonly agentId?: string
+  readonly onComplete: (config: PersonaConfig) => void
+  readonly onSkip: () => void
 }
 
 export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaStepProps) {

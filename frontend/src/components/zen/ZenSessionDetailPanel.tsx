@@ -10,9 +10,9 @@ import { FullscreenDetailView } from './FullscreenDetailView'
 import { formatTimestamp, formatTokens, formatMessageTime } from '@/lib/formatters'
 
 interface ZenSessionDetailPanelProps {
-  session: CrewSession
-  onClose: () => void
-  onOpenChat?: (sessionKey: string, agentName: string, agentIcon?: string) => void
+  readonly session: CrewSession
+  readonly onClose: () => void
+  readonly onOpenChat?: (sessionKey: string, agentName: string, agentIcon?: string) => void
 }
 
 // ── Format helpers (local) ────────────────────────────────────────

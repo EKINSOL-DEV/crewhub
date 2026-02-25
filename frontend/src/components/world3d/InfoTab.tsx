@@ -6,13 +6,13 @@ import { useState } from 'react'
 import { formatTokens } from '@/lib/formatters'
 
 interface InfoTabProps {
-  session: CrewSession
-  botConfig: BotVariantConfig
-  status: BotStatus
-  bio?: string | null
-  agentId?: string | null
-  displayName: string
-  onBioUpdated?: () => void
+  readonly session: CrewSession
+  readonly botConfig: BotVariantConfig
+  readonly status: BotStatus
+  readonly bio?: string | null
+  readonly agentId?: string | null
+  readonly displayName: string
+  readonly onBioUpdated?: () => void
 }
 
 function formatTimeSince(updatedAt: number): string {

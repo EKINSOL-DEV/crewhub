@@ -15,8 +15,8 @@ import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 import type { FileNode } from '@/hooks/useAgentFiles'
 
 interface ZenDocumentsPanelProps {
-  projectId: string | null
-  projectName?: string | null
+  readonly projectId: string | null
+  readonly projectName?: string | null
 }
 
 // Breadcrumb for folder navigation

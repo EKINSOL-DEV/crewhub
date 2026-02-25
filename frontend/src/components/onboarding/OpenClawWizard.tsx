@@ -54,14 +54,14 @@ interface BotTemplate {
 }
 
 interface OpenClawWizardProps {
-  onComplete: (connectionConfig: {
+  readonly onComplete: (connectionConfig: {
     name: string
     url: string
     token: string
     botTemplate?: string
     displayName?: string
   }) => void
-  onSkip: () => void
+  readonly onSkip: () => void
 }
 
 // ─── Constants ──────────────────────────────────────────────────

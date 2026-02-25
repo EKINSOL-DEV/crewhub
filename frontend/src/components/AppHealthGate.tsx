@@ -52,8 +52,8 @@ function CheckingScreen() {
 }
 
 interface DownScreenProps {
-  onRetry: () => void
-  retrying: boolean
+  readonly onRetry: () => void
+  readonly retrying: boolean
 }
 
 function BackendDownScreen({ onRetry, retrying }: DownScreenProps) {
@@ -100,7 +100,7 @@ function BackendDownScreen({ onRetry, retrying }: DownScreenProps) {
 // ── AppHealthGate ─────────────────────────────────────────────────────────────
 
 interface AppHealthGateProps {
-  children: ReactNode
+  readonly children: ReactNode
 }
 
 /**

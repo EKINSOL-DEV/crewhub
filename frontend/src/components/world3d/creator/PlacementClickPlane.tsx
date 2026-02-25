@@ -23,8 +23,8 @@ function snapToGrid(v: number): number {
 }
 
 interface PlacementClickPlaneProps {
-  enabled: boolean
-  onPlace: (position: { x: number; y: number; z: number }) => void
+  readonly enabled: boolean
+  readonly onPlace: (position: { x: number; y: number; z: number }) => void
 }
 
 export function PlacementClickPlane({ enabled, onPlace }: PlacementClickPlaneProps) {

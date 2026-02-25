@@ -12,9 +12,9 @@ import { MeetingProgressBar } from './MeetingProgressBar'
 import type { MeetingState, MeetingRound, MeetingTurn } from '@/hooks/useMeeting'
 
 interface MeetingProgressViewProps {
-  meeting: MeetingState
-  onCancel: () => void
-  onViewOutput: () => void
+  readonly meeting: MeetingState
+  readonly onCancel: () => void
+  readonly onViewOutput: () => void
 }
 
 function TurnEntry({ turn }: { turn: MeetingTurn }) {

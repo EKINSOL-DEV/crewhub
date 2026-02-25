@@ -97,8 +97,8 @@ class PropErrorBoundary extends React.Component<
 // ── 3D Preview Component ────────────────────────────────────────────
 
 interface PropPreview3DProps {
-  parts: PropPart[]
-  name: string
+  readonly parts: PropPart[]
+  readonly name: string
 }
 
 function PropPreview3D({ parts, name }: PropPreview3DProps) {
@@ -175,7 +175,7 @@ function PropPreview3D({ parts, name }: PropPreview3DProps) {
 // ── Main Component ────────────────────────────────────────────────
 
 interface MobileCreatorViewProps {
-  onBack: () => void
+  readonly onBack: () => void
 }
 
 export function MobileCreatorView({ onBack }: MobileCreatorViewProps) {
@@ -1007,8 +1007,8 @@ function PropHistoryTab() {
 // ── Prop Detail View ──────────────────────────────────────────────
 
 interface PropDetailViewProps {
-  record: GenerationRecord
-  onBack: () => void
+  readonly record: GenerationRecord
+  readonly onBack: () => void
 }
 
 function PropDetailView({ record, onBack }: PropDetailViewProps) {

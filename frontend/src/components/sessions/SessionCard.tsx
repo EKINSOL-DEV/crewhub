@@ -21,8 +21,8 @@ import { cn } from '@/lib/utils'
 import { EditableSessionName } from './EditableSessionName'
 
 interface SessionCardProps {
-  session: CrewSession
-  onViewLogs?: () => void
+  readonly session: CrewSession
+  readonly onViewLogs?: () => void
 }
 
 const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/

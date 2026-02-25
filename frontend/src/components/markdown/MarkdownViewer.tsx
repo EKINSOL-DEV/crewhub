@@ -20,9 +20,9 @@ function extractText(node: any): string {
 }
 
 interface MarkdownViewerProps {
-  content: string
-  className?: string
-  maxHeight?: string
+  readonly content: string
+  readonly className?: string
+  readonly maxHeight?: string
 }
 
 export function MarkdownViewer({ content, className, maxHeight }: MarkdownViewerProps) {

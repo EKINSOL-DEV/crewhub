@@ -1,8 +1,8 @@
 import { useToonMaterialProps } from '../utils/toonMaterials'
 
 interface SpaceshipProps {
-  position?: [number, number, number]
-  scale?: number
+  readonly position?: [number, number, number]
+  readonly scale?: number
 }
 
 export function Spaceship({ position = [0, 0, 0], scale = 1 }: SpaceshipProps) {

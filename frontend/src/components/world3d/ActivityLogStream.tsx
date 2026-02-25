@@ -6,8 +6,8 @@ import {
 } from '@/services/activityService'
 
 interface ActivityLogStreamProps {
-  sessionKey: string
-  onOpenFullLog?: () => void
+  readonly sessionKey: string
+  readonly onOpenFullLog?: () => void
 }
 
 // ── Helper: Format Time ──────────────────────────────────────

@@ -3,8 +3,8 @@ import { useState } from 'react'
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 interface DocumentUploadZoneProps {
-  projectId: string
-  onUploadComplete: (path: string) => void
+  readonly projectId: string
+  readonly onUploadComplete: (path: string) => void
 }
 
 export function DocumentUploadZone({ projectId, onUploadComplete }: DocumentUploadZoneProps) {

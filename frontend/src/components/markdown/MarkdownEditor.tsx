@@ -17,11 +17,11 @@ import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 interface MarkdownEditorProps {
-  initialContent: string
-  onSave: (content: string) => Promise<void>
-  onCancel: () => void
-  onDirtyChange?: (dirty: boolean) => void
-  autoSaveMs?: number
+  readonly initialContent: string
+  readonly onSave: (content: string) => Promise<void>
+  readonly onCancel: () => void
+  readonly onDirtyChange?: (dirty: boolean) => void
+  readonly autoSaveMs?: number
 }
 
 // Dark theme matching CrewHub

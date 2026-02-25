@@ -13,10 +13,10 @@ interface MenuItem {
 }
 
 interface MeetingViewMenuProps {
-  activeView: MeetingView
-  onSelect: (view: MeetingView) => void
-  actionCount?: number
-  roundCount?: number
+  readonly activeView: MeetingView
+  readonly onSelect: (view: MeetingView) => void
+  readonly actionCount?: number
+  readonly roundCount?: number
 }
 
 export function MeetingViewMenu({

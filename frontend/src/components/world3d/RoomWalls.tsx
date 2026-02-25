@@ -5,12 +5,12 @@ import { useToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
 import type { WallStyle } from '@/contexts/RoomsContext'
 
 interface RoomWallsProps {
-  color?: string // accent color strip
-  size?: number // room size in units (default 12)
-  wallHeight?: number // default 1.5
-  hovered?: boolean
-  wallStyle?: WallStyle
-  isHQ?: boolean // HQ gets taller walls
+  readonly color?: string // accent color strip
+  readonly size?: number // room size in units (default 12)
+  readonly wallHeight?: number // default 1.5
+  readonly hovered?: boolean
+  readonly wallStyle?: WallStyle
+  readonly isHQ?: boolean // HQ gets taller walls
 }
 
 type WallSegment = {

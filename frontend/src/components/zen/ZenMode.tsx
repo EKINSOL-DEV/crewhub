@@ -65,17 +65,17 @@ import {
 import './ZenMode.css'
 
 interface ZenModeProps {
-  sessionKey: string | null
-  agentName: string | null
-  agentIcon: string | null
-  agentColor: string | null
-  roomName?: string
-  connected: boolean
-  onExit: () => void
-  exitLabel?: string // "World" (CrewHub) or "Projects" (standalone)
-  exitIcon?: string // "🌍" or "📋"
-  projectFilter?: ZenProjectFilter | null // Filter tasks to specific project
-  onClearProjectFilter?: () => void
+  readonly sessionKey: string | null
+  readonly agentName: string | null
+  readonly agentIcon: string | null
+  readonly agentColor: string | null
+  readonly roomName?: string
+  readonly connected: boolean
+  readonly onExit: () => void
+  readonly exitLabel?: string // "World" (CrewHub) or "Projects" (standalone)
+  readonly exitIcon?: string // "🌍" or "📋"
+  readonly projectFilter?: ZenProjectFilter | null // Filter tasks to specific project
+  readonly onClearProjectFilter?: () => void
 }
 
 // ── Layout Presets ────────────────────────────────────────────────
@@ -844,7 +844,7 @@ export function ZenMode({
 // ── Zen Mode Entry Button ──────────────────────────────────────
 
 interface ZenModeButtonProps {
-  onClick: () => void
+  readonly onClick: () => void
 }
 
 export function ZenModeButton({ onClick }: ZenModeButtonProps) {

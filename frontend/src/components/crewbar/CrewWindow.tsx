@@ -6,17 +6,17 @@ import { CrewAvatar } from './CrewAvatar'
 import type { CrewAgent, CrewMessage, CrewBarConfig } from './types'
 
 interface CrewWindowProps {
-  agent: CrewAgent
-  config: CrewBarConfig
-  onClose: () => void
-  initialPosition?: { x: number; y: number }
-  initialSize?: { width: number; height: number }
-  onFocus: () => void
-  onStateChange?: (
+  readonly agent: CrewAgent
+  readonly config: CrewBarConfig
+  readonly onClose: () => void
+  readonly initialPosition?: { x: number; y: number }
+  readonly initialSize?: { width: number; height: number }
+  readonly onFocus: () => void
+  readonly onStateChange?: (
     position: { x: number; y: number },
     size: { width: number; height: number }
   ) => void
-  zIndex: number
+  readonly zIndex: number
 }
 
 const DEFAULT_SIZE = { width: 380, height: 500 }

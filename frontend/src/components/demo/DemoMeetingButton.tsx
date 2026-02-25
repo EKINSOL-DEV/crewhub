@@ -9,9 +9,9 @@ import { useState } from 'react'
 import { Play, Loader2 } from 'lucide-react'
 
 interface DemoMeetingButtonProps {
-  onClick: () => void
-  isActive: boolean
-  isComplete: boolean
+  readonly onClick: () => void
+  readonly isActive: boolean
+  readonly isComplete: boolean
 }
 
 export function DemoMeetingButton({ onClick, isActive, isComplete }: DemoMeetingButtonProps) {

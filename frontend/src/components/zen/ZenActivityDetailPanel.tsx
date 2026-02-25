@@ -30,10 +30,10 @@ interface ActivityEvent {
 }
 
 interface ZenActivityDetailPanelProps {
-  task: ActiveTask
-  session: CrewSession | null
-  events: ActivityEvent[]
-  onClose: () => void
+  readonly task: ActiveTask
+  readonly session: CrewSession | null
+  readonly events: ActivityEvent[]
+  readonly onClose: () => void
 }
 
 // ── Status helpers ────────────────────────────────────────────

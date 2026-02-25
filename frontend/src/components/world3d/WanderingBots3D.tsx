@@ -41,16 +41,16 @@ interface WanderState {
 
 interface WanderingBots3DProps {
   /** All sleeping/parked sessions to pick wanderers from */
-  sleepingSessions: CrewSession[]
+  readonly sleepingSessions: CrewSession[]
   /** Display names map */
-  displayNames: Map<string, string | null>
+  readonly displayNames: Map<string, string | null>
   /** Building dimensions to determine outdoor area */
-  buildingWidth: number
-  buildingDepth: number
+  readonly buildingWidth: number
+  readonly buildingDepth: number
   /** Room obstacles to avoid (rooms + parking area) */
-  roomObstacles?: RoomObstacle[]
+  readonly roomObstacles?: RoomObstacle[]
   /** On bot click handler */
-  onBotClick?: (session: CrewSession) => void
+  readonly onBotClick?: (session: CrewSession) => void
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -163,15 +163,15 @@ function pushOutsideRooms(x: number, z: number, obstacles: RoomObstacle[]): [num
 // ─── Single Wandering Bot Component ──────────────────────────────
 
 interface OutdoorBotProps {
-  session: CrewSession
-  config: BotVariantConfig
-  name: string
-  initialX: number
-  initialZ: number
-  buildingWidth: number
-  buildingDepth: number
-  roomObstacles?: RoomObstacle[]
-  onBotClick?: (session: CrewSession) => void
+  readonly session: CrewSession
+  readonly config: BotVariantConfig
+  readonly name: string
+  readonly initialX: number
+  readonly initialZ: number
+  readonly buildingWidth: number
+  readonly buildingDepth: number
+  readonly roomObstacles?: RoomObstacle[]
+  readonly onBotClick?: (session: CrewSession) => void
 }
 
 function OutdoorBot({

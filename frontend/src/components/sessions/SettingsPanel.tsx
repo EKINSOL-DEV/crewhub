@@ -55,12 +55,12 @@ const DEFAULT_SETTINGS: SessionsSettings = {
 }
 
 interface SettingsPanelProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  settings: SessionsSettings
-  onSettingsChange: (settings: SessionsSettings) => void
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly settings: SessionsSettings
+  readonly onSettingsChange: (settings: SessionsSettings) => void
   /** Active sessions for testing routing rules */
-  sessions?: import('@/lib/api').CrewSession[]
+  readonly sessions?: import('@/lib/api').CrewSession[]
 }
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────

@@ -10,11 +10,11 @@ export interface ShowcaseProp {
 }
 
 interface PropShowcaseProps {
-  props: ShowcaseProp[]
-  position?: [number, number, number]
-  radius?: number
-  onSelectProp?: (propId: string) => void
-  onDeleteProp?: (propId: string) => void
+  readonly props: ShowcaseProp[]
+  readonly position?: [number, number, number]
+  readonly radius?: number
+  readonly onSelectProp?: (propId: string) => void
+  readonly onDeleteProp?: (propId: string) => void
 }
 
 function Pedestal({

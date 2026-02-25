@@ -1,9 +1,9 @@
 import type { ThreadParticipant } from '@/lib/threads.api'
 
 interface ParticipantAvatarStackProps {
-  participants: ThreadParticipant[]
-  maxShow?: number
-  size?: number
+  readonly participants: ThreadParticipant[]
+  readonly maxShow?: number
+  readonly size?: number
 }
 
 export function ParticipantAvatarStack({

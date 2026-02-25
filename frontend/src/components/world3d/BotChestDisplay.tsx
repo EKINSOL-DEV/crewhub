@@ -4,8 +4,8 @@ import * as THREE from 'three'
 import type { BotChestType } from './utils/botVariants'
 
 interface BotChestDisplayProps {
-  type: BotChestType
-  color: string
+  readonly type: BotChestType
+  readonly color: string
 }
 
 /**

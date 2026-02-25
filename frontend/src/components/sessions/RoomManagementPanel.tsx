@@ -16,8 +16,8 @@ import { Plus, Trash2, GripVertical, Edit2, Check, X } from 'lucide-react'
 import { EditRoomDialog, ROOM_ICONS, ROOM_COLORS } from '@/components/shared/EditRoomDialog'
 
 interface RoomManagementPanelProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
 }
 
 export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelProps) {

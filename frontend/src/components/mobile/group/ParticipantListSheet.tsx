@@ -2,12 +2,12 @@ import { UserMinus, UserPlus, Pencil } from 'lucide-react'
 import type { ThreadParticipant } from '@/lib/threads.api'
 
 interface ParticipantListSheetProps {
-  participants: ThreadParticipant[]
-  threadTitle?: string | null
-  onClose: () => void
-  onRemoveParticipant: (agentId: string) => void
-  onAddParticipants: () => void
-  onRename: () => void
+  readonly participants: ThreadParticipant[]
+  readonly threadTitle?: string | null
+  readonly onClose: () => void
+  readonly onRemoveParticipant: (agentId: string) => void
+  readonly onAddParticipants: () => void
+  readonly onRename: () => void
 }
 
 export function ParticipantListSheet({

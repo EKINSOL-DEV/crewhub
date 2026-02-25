@@ -15,12 +15,12 @@ import { API_BASE } from '@/lib/api'
 import { Sparkles, Loader2 } from 'lucide-react'
 
 interface EditBioDialogProps {
-  agentId: string | null
-  agentName: string
-  currentBio: string | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSaved?: () => void
+  readonly agentId: string | null
+  readonly agentName: string
+  readonly currentBio: string | null
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly onSaved?: () => void
 }
 
 /**

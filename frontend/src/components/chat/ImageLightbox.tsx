@@ -2,9 +2,9 @@ import { useEffect, useCallback, type CSSProperties } from 'react'
 import { X } from 'lucide-react'
 
 interface ImageLightboxProps {
-  src: string
-  alt?: string
-  onClose: () => void
+  readonly src: string
+  readonly alt?: string
+  readonly onClose: () => void
 }
 
 /**

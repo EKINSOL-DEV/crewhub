@@ -3,13 +3,13 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface DataStreamProps {
-  position?: [number, number, number]
-  count?: number
-  radius?: number
-  height?: number
-  color?: string
-  speed?: number
-  particleSize?: number
+  readonly position?: [number, number, number]
+  readonly count?: number
+  readonly radius?: number
+  readonly height?: number
+  readonly color?: string
+  readonly speed?: number
+  readonly particleSize?: number
 }
 
 /**

@@ -6,11 +6,11 @@ import type { CrewSession } from '@/lib/api'
 // ── Types ──────────────────────────────────────────────────────
 
 interface TaskTickerProps {
-  sessions: CrewSession[]
+  readonly sessions: CrewSession[]
   /** Callback to get room ID for a session (for focus navigation) */
-  getRoomForSession: (sessionKey: string) => string | undefined
+  readonly getRoomForSession: (sessionKey: string) => string | undefined
   /** Default room ID if none found */
-  defaultRoomId?: string
+  readonly defaultRoomId?: string
 }
 
 // ── Constants ──────────────────────────────────────────────────
@@ -243,9 +243,9 @@ export function TaskTicker({ sessions, getRoomForSession, defaultRoomId }: TaskT
 // ── TaskItem Sub-Component ─────────────────────────────────────
 
 interface TaskItemProps {
-  task: ActiveTask
-  opacity: number
-  onClick: () => void
+  readonly task: ActiveTask
+  readonly opacity: number
+  readonly onClick: () => void
 }
 
 function TaskItem({ task, opacity, onClick }: TaskItemProps) {

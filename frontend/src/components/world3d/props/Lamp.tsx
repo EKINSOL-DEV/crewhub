@@ -1,10 +1,10 @@
 import { useToonMaterialProps } from '../utils/toonMaterials'
 
 interface LampProps {
-  position?: [number, number, number]
-  lightEnabled?: boolean
-  lightColor?: string
-  lightIntensity?: number
+  readonly position?: [number, number, number]
+  readonly lightEnabled?: boolean
+  readonly lightColor?: string
+  readonly lightIntensity?: number
 }
 
 /**

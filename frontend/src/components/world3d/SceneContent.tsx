@@ -57,39 +57,39 @@ interface BotPlacement {
 }
 
 export interface SceneContentProps {
-  visibleSessions: CrewSession[]
-  parkingSessions: CrewSession[]
-  settings: SessionsSettings
-  isActivelyRunning: (key: string) => boolean
-  displayNames: Map<string, string | null>
-  onBotClick?: (session: CrewSession) => void
-  focusLevel: FocusLevel
-  focusedRoomId: string | null
-  focusedBotKey: string | null
-  onEnterRoom?: (roomName: string) => void
-  onLeaveRoom?: () => void
+  readonly visibleSessions: CrewSession[]
+  readonly parkingSessions: CrewSession[]
+  readonly settings: SessionsSettings
+  readonly isActivelyRunning: (key: string) => boolean
+  readonly displayNames: Map<string, string | null>
+  readonly onBotClick?: (session: CrewSession) => void
+  readonly focusLevel: FocusLevel
+  readonly focusedRoomId: string | null
+  readonly focusedBotKey: string | null
+  readonly onEnterRoom?: (roomName: string) => void
+  readonly onLeaveRoom?: () => void
   /** Debug bot room overrides: session key → room ID */
-  debugRoomMap?: Map<string, string>
+  readonly debugRoomMap?: Map<string, string>
   /** Rooms data passed from outside Canvas (hooks don't work reliably inside R3F Canvas) */
-  rooms: Room[]
-  getRoomForSession: (
+  readonly rooms: Room[]
+  readonly getRoomForSession: (
     sessionKey: string,
     sessionData?: { label?: string; model?: string; channel?: string }
   ) => string | undefined
-  isRoomsLoading: boolean
+  readonly isRoomsLoading: boolean
   /** Session keys of bots currently in an active meeting */
-  meetingParticipantKeys?: Set<string>
-  gridDebugEnabled: boolean
+  readonly meetingParticipantKeys?: Set<string>
+  readonly gridDebugEnabled: boolean
   /** Creator Mode: placed props to render in world */
-  placedProps?: PlacedProp[]
+  readonly placedProps?: PlacedProp[]
   /** Creator Mode: prop currently selected for placement */
-  selectedPropId?: string | null
+  readonly selectedPropId?: string | null
   /** Creator Mode: pending rotation for ghost prop */
-  pendingRotation?: number
+  readonly pendingRotation?: number
   /** Creator Mode: handler for placement click */
-  onPlaceProp?: (pos: { x: number; y: number; z: number }) => void
+  readonly onPlaceProp?: (pos: { x: number; y: number; z: number }) => void
   /** Creator Mode: ghost position callback */
-  onGhostPosition?: (pos: { x: number; y: number; z: number } | null) => void
+  readonly onGhostPosition?: (pos: { x: number; y: number; z: number } | null) => void
 }
 
 // ─── Parking Floor ──────────────────────────────────────────────
@@ -433,7 +433,12 @@ export function SceneContent({
 
         return (
           <group key={room.id}>
-            <Room3D room={room} position={position} size={roomSize} isCreatorMode={!!selectedPropId && !!onPlaceProp} />
+            <Room3D
+              room={room}
+              position={position}
+              size={roomSize}
+              isCreatorMode={!!selectedPropId && !!onPlaceProp}
+            />
             {visibleBots.map((bot, i) => (
               <Bot3D
                 key={bot.key}

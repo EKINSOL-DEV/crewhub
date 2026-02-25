@@ -145,7 +145,7 @@ function MobileDocTreeNode({
 // ── Main Component ────────────────────────────────────────────────
 
 interface MobileDocsPanelProps {
-  onBack: () => void
+  readonly onBack: () => void
 }
 
 export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {

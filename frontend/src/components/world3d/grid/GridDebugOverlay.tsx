@@ -41,8 +41,8 @@ interface CellInstance {
 type CellCategory = 'walkable' | 'blocked' | 'interaction' | 'door'
 
 interface GridDebugOverlayProps {
-  blueprint: RoomBlueprint
-  showLabels?: boolean
+  readonly blueprint: RoomBlueprint
+  readonly showLabels?: boolean
 }
 
 // ─── Helpers ────────────────────────────────────────────────────

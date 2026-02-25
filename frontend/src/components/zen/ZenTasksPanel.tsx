@@ -9,11 +9,11 @@ import { PRIORITY_CONFIG, STATUS_CONFIG } from '@/lib/taskConstants'
 import { ProjectFilterSelect } from './ProjectFilterSelect'
 
 interface ZenTasksPanelProps {
-  projectId?: string
-  roomId?: string
-  roomFocusName?: string // Name of the focused room's project (for display)
-  onTaskClick?: (task: Task) => void
-  onProjectFilterChange?: (
+  readonly projectId?: string
+  readonly roomId?: string
+  readonly roomFocusName?: string // Name of the focused room's project (for display)
+  readonly onTaskClick?: (task: Task) => void
+  readonly onProjectFilterChange?: (
     projectId: string | null,
     projectName: string,
     projectColor?: string
@@ -31,10 +31,10 @@ const COLUMNS: { status: TaskStatus; label: string; icon: string }[] = [
 // ── Task Item Component ──────────────────────────────────────────
 
 interface TaskItemProps {
-  task: Task
-  onStatusChange: (newStatus: TaskStatus) => void
-  onClick?: () => void
-  isSelected?: boolean
+  readonly task: Task
+  readonly onStatusChange: (newStatus: TaskStatus) => void
+  readonly onClick?: () => void
+  readonly isSelected?: boolean
 }
 
 function TaskItem({ task, onStatusChange, onClick, isSelected }: TaskItemProps) {
@@ -110,9 +110,9 @@ function TaskItem({ task, onStatusChange, onClick, isSelected }: TaskItemProps) 
 // ── Status Filter Tabs ───────────────────────────────────────────
 
 interface StatusTabsProps {
-  activeStatus: TaskStatus | 'all'
-  counts: Record<TaskStatus, number>
-  onChange: (status: TaskStatus | 'all') => void
+  readonly activeStatus: TaskStatus | 'all'
+  readonly counts: Record<TaskStatus, number>
+  readonly onChange: (status: TaskStatus | 'all') => void
 }
 
 function StatusTabs({ activeStatus, counts, onChange }: StatusTabsProps) {
@@ -173,9 +173,9 @@ function LoadingState() {
 // ── Task Detail Pane ─────────────────────────────────────────────
 
 interface TaskDetailPaneProps {
-  task: Task
-  onClose: () => void
-  onMove: (newStatus: TaskStatus) => void
+  readonly task: Task
+  readonly onClose: () => void
+  readonly onMove: (newStatus: TaskStatus) => void
 }
 
 function TaskDetailPane({ task, onClose, onMove }: TaskDetailPaneProps) {

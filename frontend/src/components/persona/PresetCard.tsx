@@ -3,10 +3,10 @@ import { cn } from '@/lib/utils'
 import type { PresetDefinition } from '@/lib/personaTypes'
 
 interface PresetCardProps {
-  presetKey: string
-  preset: PresetDefinition
-  selected: boolean
-  onClick: () => void
+  readonly presetKey: string
+  readonly preset: PresetDefinition
+  readonly selected: boolean
+  readonly onClick: () => void
 }
 
 export function PresetCard({ presetKey: _presetKey, preset, selected, onClick }: PresetCardProps) {

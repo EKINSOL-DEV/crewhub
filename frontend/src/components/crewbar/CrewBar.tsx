@@ -10,22 +10,22 @@ interface CrewBarProps {
   /**
    * List of agents to display in the bar
    */
-  agents: CrewAgent[]
+  readonly agents: CrewAgent[]
 
   /**
    * Configuration for chat functionality
    */
-  config: CrewBarConfig
+  readonly config: CrewBarConfig
 
   /**
    * Callback when an agent's pinned state changes
    */
-  onTogglePin?: (agentId: string) => void
+  readonly onTogglePin?: (agentId: string) => void
 
   /**
    * Custom class name for the bar container
    */
-  className?: string
+  readonly className?: string
 }
 
 // Memoized agent button to prevent unnecessary re-renders

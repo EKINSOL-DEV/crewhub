@@ -28,21 +28,21 @@ import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface BehaviorTabProps {
-  settings: SessionsSettings
-  onSettingsChange: (settings: SessionsSettings) => void
+  readonly settings: SessionsSettings
+  readonly onSettingsChange: (settings: SessionsSettings) => void
 }
 
 // ─── Config Field ─────────────────────────────────────────────────────────────
 
 interface ConfigFieldProps {
-  label: string
-  description?: string
-  configKey: SessionConfigKey
-  value: number
-  unit: 'seconds' | 'minutes' | 'count' | 'speed' | 'ms'
-  min?: number
-  max?: number
-  step?: number
+  readonly label: string
+  readonly description?: string
+  readonly configKey: SessionConfigKey
+  readonly value: number
+  readonly unit: 'seconds' | 'minutes' | 'count' | 'speed' | 'ms'
+  readonly min?: number
+  readonly max?: number
+  readonly step?: number
 }
 
 function ConfigField({

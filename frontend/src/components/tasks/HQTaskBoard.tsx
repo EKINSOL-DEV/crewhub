@@ -36,12 +36,12 @@ const columns: ColumnConfig[] = [
 // ── Props ──────────────────────────────────────────────────────
 
 interface HQTaskBoardProps {
-  tasks: Task[]
-  projects: Project[]
-  onTaskClick?: (task: Task) => void
-  onStatusChange?: (task: Task, newStatus: TaskStatus) => void
-  collapsedProjects?: Set<string>
-  onToggleProject?: (projectId: string) => void
+  readonly tasks: Task[]
+  readonly projects: Project[]
+  readonly onTaskClick?: (task: Task) => void
+  readonly onStatusChange?: (task: Task, newStatus: TaskStatus) => void
+  readonly collapsedProjects?: Set<string>
+  readonly onToggleProject?: (projectId: string) => void
 }
 
 // ── Component ──────────────────────────────────────────────────

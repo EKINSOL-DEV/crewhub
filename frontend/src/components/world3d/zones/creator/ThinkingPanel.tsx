@@ -9,10 +9,10 @@ import type { ThinkingLine } from './propMakerTypes'
 // ── Props ─────────────────────────────────────────────────────
 
 export interface ThinkingPanelProps {
-  thinkingLines: ThinkingLine[]
-  isGenerating: boolean
-  fullPrompt: string | null
-  toolCalls: { name: string; input: string }[]
+  readonly thinkingLines: ThinkingLine[]
+  readonly isGenerating: boolean
+  readonly fullPrompt: string | null
+  readonly toolCalls: { name: string; input: string }[]
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -31,9 +31,9 @@ function getLineColor(line: ThinkingLine, isLast: boolean): string {
 // ── ExpandableSection ─────────────────────────────────────────
 
 interface ExpandableSectionProps {
-  label: string
-  content: string
-  color?: string
+  readonly label: string
+  readonly content: string
+  readonly color?: string
 }
 
 export function ExpandableSection({ label, content, color }: ExpandableSectionProps) {

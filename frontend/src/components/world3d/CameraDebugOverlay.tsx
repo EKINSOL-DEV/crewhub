@@ -59,7 +59,7 @@ export function CameraDebugTracker({ enabled }: { enabled: boolean }) {
 // ─── HUD Component (outside Canvas) ────────────────────────────
 
 interface CameraDebugHUDProps {
-  visible: boolean
+  readonly visible: boolean
 }
 
 export function CameraDebugHUD({ visible }: CameraDebugHUDProps) {

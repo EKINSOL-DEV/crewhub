@@ -7,13 +7,13 @@ import { useRooms } from '@/hooks/useRooms'
 import { useDemoMode } from '@/contexts/DemoContext'
 
 interface ActionsTabProps {
-  session: CrewSession
-  displayName: string
-  botConfig: BotVariantConfig
-  currentRoomId?: string | null
-  canChat: boolean
-  onOpenLog: (session: CrewSession) => void
-  onAssignmentChanged?: () => void
+  readonly session: CrewSession
+  readonly displayName: string
+  readonly botConfig: BotVariantConfig
+  readonly currentRoomId?: string | null
+  readonly canChat: boolean
+  readonly onOpenLog: (session: CrewSession) => void
+  readonly onAssignmentChanged?: () => void
 }
 
 export function ActionsTab({

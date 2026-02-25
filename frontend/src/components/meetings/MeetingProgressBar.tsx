@@ -4,11 +4,11 @@
  */
 
 interface MeetingProgressBarProps {
-  progressPct: number
-  currentRound: number
-  totalRounds: number
-  currentTurnAgentName?: string | null
-  phase: string
+  readonly progressPct: number
+  readonly currentRound: number
+  readonly totalRounds: number
+  readonly currentTurnAgentName?: string | null
+  readonly phase: string
 }
 
 export function MeetingProgressBar({

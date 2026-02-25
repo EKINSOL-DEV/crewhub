@@ -3,11 +3,11 @@ import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
 
 interface BotQuickActionsProps {
-  session: CrewSession
-  displayName: string
-  botConfig: BotVariantConfig
-  canChat: boolean
-  onOpenLog: (session: CrewSession) => void
+  readonly session: CrewSession
+  readonly displayName: string
+  readonly botConfig: BotVariantConfig
+  readonly canChat: boolean
+  readonly onOpenLog: (session: CrewSession) => void
 }
 
 export function BotQuickActions({

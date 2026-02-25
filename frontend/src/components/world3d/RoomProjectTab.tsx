@@ -11,16 +11,16 @@ import { formatSessionKeyAsName } from '@/lib/friendlyNames'
 import type { CrewSession } from '@/lib/api'
 
 interface RoomProjectTabProps {
-  room: Room
-  sessions: CrewSession[]
-  displayNames: Map<string, string | null>
-  isActivelyRunning: (key: string) => boolean
-  onOpenTaskBoard?: (
+  readonly room: Room
+  readonly sessions: CrewSession[]
+  readonly displayNames: Map<string, string | null>
+  readonly isActivelyRunning: (key: string) => boolean
+  readonly onOpenTaskBoard?: (
     projectId: string,
     roomId: string,
     agents: Array<{ session_key: string; display_name: string }>
   ) => void
-  onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void // reserved for future use
+  readonly onOpenDocs?: (projectId: string, projectName: string, projectColor?: string) => void // reserved for future use
 }
 
 function getProjectStatusBadge(status: string): { label: string; color: string; bg: string } {

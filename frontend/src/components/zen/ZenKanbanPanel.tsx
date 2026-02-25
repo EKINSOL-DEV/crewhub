@@ -9,11 +9,11 @@ import { PRIORITY_CONFIG } from '@/lib/taskConstants'
 import { ProjectFilterSelect } from './ProjectFilterSelect'
 
 interface ZenKanbanPanelProps {
-  projectId?: string
-  roomId?: string
-  roomFocusName?: string
-  onTaskClick?: (task: Task) => void
-  onProjectFilterChange?: (
+  readonly projectId?: string
+  readonly roomId?: string
+  readonly roomFocusName?: string
+  readonly onTaskClick?: (task: Task) => void
+  readonly onProjectFilterChange?: (
     projectId: string | null,
     projectName: string,
     projectColor?: string
@@ -40,12 +40,12 @@ const COLUMNS: ColumnConfig[] = [
 // ── Kanban Card Component ────────────────────────────────────────
 
 interface KanbanCardProps {
-  task: Task
-  onMove: (newStatus: TaskStatus) => void
-  onExpand: () => void
-  isDragging?: boolean
-  onDragStart?: () => void
-  onDragEnd?: () => void
+  readonly task: Task
+  readonly onMove: (newStatus: TaskStatus) => void
+  readonly onExpand: () => void
+  readonly isDragging?: boolean
+  readonly onDragStart?: () => void
+  readonly onDragEnd?: () => void
 }
 
 function KanbanCard({
@@ -137,13 +137,13 @@ function KanbanCard({
 // ── Kanban Column Component ──────────────────────────────────────
 
 interface KanbanColumnProps {
-  config: ColumnConfig
-  tasks: Task[]
-  onMoveTask: (taskId: string, newStatus: TaskStatus) => void
-  onExpandTask: (task: Task) => void
-  draggingTaskId: string | null
-  onDragOver: (e: React.DragEvent) => void
-  onDrop: (e: React.DragEvent) => void
+  readonly config: ColumnConfig
+  readonly tasks: Task[]
+  readonly onMoveTask: (taskId: string, newStatus: TaskStatus) => void
+  readonly onExpandTask: (task: Task) => void
+  readonly draggingTaskId: string | null
+  readonly onDragOver: (e: React.DragEvent) => void
+  readonly onDrop: (e: React.DragEvent) => void
 }
 
 function KanbanColumn({
@@ -212,9 +212,9 @@ function KanbanColumn({
 // ── Task Detail Modal ────────────────────────────────────────────
 
 interface TaskDetailModalProps {
-  task: Task
-  onClose: () => void
-  onMove: (newStatus: TaskStatus) => void
+  readonly task: Task
+  readonly onClose: () => void
+  readonly onMove: (newStatus: TaskStatus) => void
 }
 
 function TaskDetailModal({ task, onClose, onMove }: TaskDetailModalProps) {

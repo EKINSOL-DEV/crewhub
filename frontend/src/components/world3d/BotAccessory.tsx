@@ -5,8 +5,8 @@ import { useToonMaterialProps } from './utils/toonMaterials'
 import type { BotAccessoryType } from './utils/botVariants'
 
 interface BotAccessoryProps {
-  type: BotAccessoryType
-  color: string
+  readonly type: BotAccessoryType
+  readonly color: string
 }
 
 /**

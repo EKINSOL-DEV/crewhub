@@ -8,7 +8,7 @@ import { ProjectFilesSection } from '../files/ProjectFilesSection'
 import type { Room } from '@/hooks/useRooms'
 
 interface RoomFilesTabProps {
-  room: Room
+  readonly room: Room
 }
 
 export function RoomFilesTab({ room }: RoomFilesTabProps) {

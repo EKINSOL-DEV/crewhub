@@ -23,10 +23,10 @@ function snapToGrid(v: number): number {
 }
 
 interface PlacementGhostProps {
-  propId: string
-  rotation: number // degrees, from CreatorModeContext.pendingRotation
-  onPositionChange: (pos: { x: number; y: number; z: number } | null) => void
-  cellSize?: number
+  readonly propId: string
+  readonly rotation: number // degrees, from CreatorModeContext.pendingRotation
+  readonly onPositionChange: (pos: { x: number; y: number; z: number } | null) => void
+  readonly cellSize?: number
 }
 
 export function PlacementGhost({

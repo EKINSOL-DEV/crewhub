@@ -9,12 +9,12 @@ import { createPortal } from 'react-dom'
 type TooltipPosition = 'top' | 'bottom' | 'left' | 'right'
 
 interface ZenTooltipProps {
-  content: ReactNode
-  children: ReactNode
-  position?: TooltipPosition
-  delay?: number
-  disabled?: boolean
-  shortcut?: string | string[]
+  readonly content: ReactNode
+  readonly children: ReactNode
+  readonly position?: TooltipPosition
+  readonly delay?: number
+  readonly disabled?: boolean
+  readonly shortcut?: string | string[]
 }
 
 export function ZenTooltip({
@@ -144,14 +144,14 @@ export function ZenTooltip({
 // ── Tooltip Button Wrapper ────────────────────────────────────────
 
 interface ZenTooltipButtonProps {
-  tooltip: string
-  shortcut?: string | string[]
-  onClick?: () => void
-  disabled?: boolean
-  className?: string
-  icon?: string
-  label?: string
-  children?: ReactNode
+  readonly tooltip: string
+  readonly shortcut?: string | string[]
+  readonly onClick?: () => void
+  readonly disabled?: boolean
+  readonly className?: string
+  readonly icon?: string
+  readonly label?: string
+  readonly children?: ReactNode
 }
 
 export function ZenTooltipButton({

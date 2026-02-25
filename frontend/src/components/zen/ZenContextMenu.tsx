@@ -12,13 +12,13 @@ interface ContextMenuPosition {
 }
 
 interface ZenContextMenuProps {
-  position: ContextMenuPosition
-  canClose: boolean
-  onClose: () => void
-  onSplitVertical?: () => void
-  onSplitHorizontal?: () => void
-  onChangePanelType?: (type: PanelType) => void
-  onClosePanel?: () => void
+  readonly position: ContextMenuPosition
+  readonly canClose: boolean
+  readonly onClose: () => void
+  readonly onSplitVertical?: () => void
+  readonly onSplitHorizontal?: () => void
+  readonly onChangePanelType?: (type: PanelType) => void
+  readonly onClosePanel?: () => void
 }
 
 export function ZenContextMenu({

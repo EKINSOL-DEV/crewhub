@@ -29,8 +29,8 @@ function getRoomType(roomName: string): string {
 // ─── Main Component ─────────────────────────────────────────────
 
 interface RoomPropsProps {
-  roomName: string
-  roomSize: number
+  readonly roomName: string
+  readonly roomSize: number
 }
 
 export function RoomProps({ roomName, roomSize }: RoomPropsProps) {
@@ -1144,8 +1144,8 @@ function DrawingTablet({
 // ─── Room Type Components ───────────────────────────────────────
 
 interface RoomTypeProps {
-  s: number // scale factor
-  size: number // room size
+  readonly s: number // scale factor
+  readonly size: number // room size
 }
 
 const Y = 0.16 // floor surface y offset

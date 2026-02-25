@@ -8,17 +8,17 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 
 interface AudioMessageProps {
-  url: string
-  duration?: number
+  readonly url: string
+  readonly duration?: number
   /** Visual variant to match parent chat bubble */
-  variant?: 'zen' | 'float' | 'mobile'
+  readonly variant?: 'zen' | 'float' | 'mobile'
   /** Whether this is a user message (affects color) */
-  isUser?: boolean
-  accentColor?: string
+  readonly isUser?: boolean
+  readonly accentColor?: string
   /** Whisper transcript (shown below player) */
-  transcript?: string
+  readonly transcript?: string
   /** Transcription error message */
-  transcriptError?: string
+  readonly transcriptError?: string
 }
 
 export function AudioMessage({

@@ -18,11 +18,11 @@ import './PixelAvatar.css'
 
 interface PixelAvatarProps {
   /** Agent name (used to determine type/color) */
-  agentName: string | null
+  readonly agentName: string | null
   /** Current status */
-  status: 'active' | 'thinking' | 'idle' | 'error'
+  readonly status: 'active' | 'thinking' | 'idle' | 'error'
   /** Optional stats to show on hover */
-  stats?: {
+  readonly stats?: {
     tokens?: number
     uptime?: number // in milliseconds
     model?: string

@@ -9,16 +9,16 @@ const DEFAULT_PROJECTS_BASE = '~/Projects'
 // ── Types ──────────────────────────────────────────────────────
 
 interface ProjectPickerProps {
-  projects: Project[]
-  currentProjectId: string | null
-  onSelect: (projectId: string) => void
-  onCreate: (project: {
+  readonly projects: Project[]
+  readonly currentProjectId: string | null
+  readonly onSelect: (projectId: string) => void
+  readonly onCreate: (project: {
     name: string
     icon?: string
     color?: string
     folder_path?: string
   }) => Promise<{ success: boolean; project?: Project }>
-  onClose: () => void
+  readonly onClose: () => void
 }
 
 // ── Color presets ──────────────────────────────────────────────

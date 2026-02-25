@@ -42,11 +42,11 @@ function useId(prefix: string) {
 
 // Dialog Root
 interface DialogProps {
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  defaultOpen?: boolean
-  children: React.ReactNode
-  modal?: boolean
+  readonly open?: boolean
+  readonly onOpenChange?: (open: boolean) => void
+  readonly defaultOpen?: boolean
+  readonly children: React.ReactNode
+  readonly modal?: boolean
 }
 
 function Dialog({
@@ -93,7 +93,7 @@ function Dialog({
 
 // Dialog Trigger
 interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean
+  readonly asChild?: boolean
 }
 
 const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
@@ -141,8 +141,8 @@ DialogTrigger.displayName = 'DialogTrigger'
 
 // Dialog Portal - just renders children (portal handled by dialog element)
 interface DialogPortalProps {
-  children: React.ReactNode
-  container?: HTMLElement | null
+  readonly children: React.ReactNode
+  readonly container?: HTMLElement | null
 }
 
 function DialogPortal({ children }: DialogPortalProps) {
@@ -161,7 +161,7 @@ DialogOverlay.displayName = 'DialogOverlay'
 
 // Dialog Close
 interface DialogCloseProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean
+  readonly asChild?: boolean
 }
 
 const DialogClose = React.forwardRef<HTMLButtonElement, DialogCloseProps>(
@@ -194,10 +194,10 @@ DialogClose.displayName = 'DialogClose'
 
 // Dialog Content
 interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
-  onEscapeKeyDown?: (event: KeyboardEvent) => void
-  onPointerDownOutside?: (event: PointerEvent) => void
-  onInteractOutside?: (event: Event) => void
-  forceMount?: boolean
+  readonly onEscapeKeyDown?: (event: KeyboardEvent) => void
+  readonly onPointerDownOutside?: (event: PointerEvent) => void
+  readonly onInteractOutside?: (event: Event) => void
+  readonly forceMount?: boolean
 }
 
 const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(

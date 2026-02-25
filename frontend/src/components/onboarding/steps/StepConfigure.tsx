@@ -9,11 +9,11 @@ import { getRuntimeIcon, getRuntimeLabel } from '../onboardingHelpers'
 import type { ConnectionConfig } from '../onboardingTypes'
 
 interface StepConfigureProps {
-  connections: ConnectionConfig[]
-  onUpdateConnection: (id: string, updates: Partial<ConnectionConfig>) => void
-  onTestConnection: (id: string) => void
-  onAddManual: () => void
-  onRemoveConnection: (id: string) => void
+  readonly connections: ConnectionConfig[]
+  readonly onUpdateConnection: (id: string, updates: Partial<ConnectionConfig>) => void
+  readonly onTestConnection: (id: string) => void
+  readonly onAddManual: () => void
+  readonly onRemoveConnection: (id: string) => void
 }
 
 export function StepConfigure({

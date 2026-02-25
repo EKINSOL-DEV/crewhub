@@ -4,8 +4,8 @@ import { RefreshCw } from 'lucide-react'
 import { captureReactError } from '@/lib/devErrorStore'
 
 interface ErrorBoundaryProps {
-  children: ReactNode
-  fallback?: ReactNode
+  readonly children: ReactNode
+  readonly fallback?: ReactNode
 }
 
 interface ErrorBoundaryState {

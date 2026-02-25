@@ -53,9 +53,9 @@ const DragActionsContext = createContext<DragActions>({
 // ─── Provider ──────────────────────────────────────────────────
 
 interface DragDropProviderProps {
-  children: ReactNode
+  readonly children: ReactNode
   /** Called after a successful drop to refresh room assignments */
-  onAssignmentChanged?: () => void
+  readonly onAssignmentChanged?: () => void
 }
 
 export function DragDropProvider({ children, onAssignmentChanged }: DragDropProviderProps) {

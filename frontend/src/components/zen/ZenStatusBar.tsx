@@ -6,13 +6,13 @@
 import { useState, useEffect } from 'react'
 
 interface ZenStatusBarProps {
-  agentName: string | null
-  agentStatus: 'active' | 'thinking' | 'idle' | 'error'
-  roomName?: string
-  connected: boolean
-  panelCount?: number
-  focusedPanelIndex?: number
-  themeName?: string
+  readonly agentName: string | null
+  readonly agentStatus: 'active' | 'thinking' | 'idle' | 'error'
+  readonly roomName?: string
+  readonly connected: boolean
+  readonly panelCount?: number
+  readonly focusedPanelIndex?: number
+  readonly themeName?: string
 }
 
 function formatTime(date: Date): string {

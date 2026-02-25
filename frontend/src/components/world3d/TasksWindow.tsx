@@ -4,9 +4,9 @@ import { useTasks, type Task, type TaskStatus, type TaskPriority } from '@/hooks
 // ── Types ──────────────────────────────────────────────────────
 
 interface TasksWindowProps {
-  projectId?: string
-  roomId?: string
-  onClose: () => void
+  readonly projectId?: string
+  readonly roomId?: string
+  readonly onClose: () => void
 }
 
 interface Position {
@@ -298,7 +298,7 @@ export function TasksWindow({ projectId, roomId, onClose }: TasksWindowProps) {
 // ── TaskItem Sub-Component ─────────────────────────────────────
 
 interface TaskItemProps {
-  task: Task
+  readonly task: Task
 }
 
 function TaskItem({ task }: TaskItemProps) {

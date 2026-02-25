@@ -277,7 +277,7 @@ const ZenModeContext = createContext<UseZenModeReturn | null>(null)
 // ── Provider ───────────────────────────────────────────────────
 
 interface ZenModeProviderProps {
-  children: ReactNode
+  readonly children: ReactNode
 }
 
 export function ZenModeProvider({ children }: ZenModeProviderProps) {

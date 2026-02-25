@@ -208,13 +208,13 @@ function FilePreviewBar({
 // ── Main Component ─────────────────────────────────────────────
 
 interface MobileAgentChatProps {
-  sessionKey: string
-  agentName: string
-  agentIcon: string | null
-  agentColor: string | null
-  subagentSessions: CrewSession[]
-  onBack: () => void
-  onOpenSettings?: () => void
+  readonly sessionKey: string
+  readonly agentName: string
+  readonly agentIcon: string | null
+  readonly agentColor: string | null
+  readonly subagentSessions: CrewSession[]
+  readonly onBack: () => void
+  readonly onOpenSettings?: () => void
 }
 
 export function MobileAgentChat({

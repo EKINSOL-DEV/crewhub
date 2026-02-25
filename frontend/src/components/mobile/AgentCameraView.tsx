@@ -164,10 +164,10 @@ export function AgentCameraButton({
 // ── Floating Mini Viewport ─────────────────────────────────────
 
 interface AgentMiniViewportProps {
-  isVisible: boolean
-  agentName: string
-  agentStatus: AgentStatus
-  botConfig: BotVariantConfig
+  readonly isVisible: boolean
+  readonly agentName: string
+  readonly agentStatus: AgentStatus
+  readonly botConfig: BotVariantConfig
 }
 
 export function AgentMiniViewport({
@@ -288,11 +288,11 @@ export function AgentMiniViewport({
 // ── Legacy export for backwards compat (redirects to mini viewport) ──
 
 interface AgentCameraViewProps {
-  isOpen: boolean
-  onClose: () => void
-  agentName: string
-  agentStatus: AgentStatus
-  botConfig: BotVariantConfig
+  readonly isOpen: boolean
+  readonly onClose: () => void
+  readonly agentName: string
+  readonly agentStatus: AgentStatus
+  readonly botConfig: BotVariantConfig
 }
 
 export function AgentCameraOverlay(props: AgentCameraViewProps) {

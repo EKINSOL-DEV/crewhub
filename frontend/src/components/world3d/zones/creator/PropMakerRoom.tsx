@@ -5,8 +5,8 @@ import { ShowcasePedestal } from './ShowcasePedestal'
 import { ZoneRoom } from '../../ZoneRoom'
 
 interface PropMakerRoomProps {
-  position?: [number, number, number]
-  size?: number
+  readonly position?: [number, number, number]
+  readonly size?: number
 }
 
 /**

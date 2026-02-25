@@ -78,10 +78,10 @@ interface EditRoomForm {
 }
 
 interface EditRoomDialogProps {
-  room: Room | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSave: (
+  readonly room: Room | null
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly onSave: (
     roomId: string,
     updates: {
       name?: string

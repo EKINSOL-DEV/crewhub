@@ -2,11 +2,11 @@ import { useState, useCallback } from 'react'
 import type { FileNode } from '@/hooks/useAgentFiles'
 
 interface FileTreeProps {
-  files: FileNode[]
-  selectedPath?: string
-  onSelect: (file: FileNode) => void
-  onExpand?: (file: FileNode) => void
-  loading?: boolean
+  readonly files: FileNode[]
+  readonly selectedPath?: string
+  readonly onSelect: (file: FileNode) => void
+  readonly onExpand?: (file: FileNode) => void
+  readonly loading?: boolean
 }
 
 function FileIcon({ type, name }: { type: string; name: string }) {

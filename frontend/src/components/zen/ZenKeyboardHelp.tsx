@@ -92,7 +92,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
 ]
 
 interface ZenKeyboardHelpProps {
-  onClose: () => void
+  readonly onClose: () => void
 }
 
 export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {

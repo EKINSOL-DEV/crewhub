@@ -11,9 +11,9 @@ import { cn } from '@/lib/utils'
 import { EditableSessionName } from './EditableSessionName'
 
 interface LogViewerProps {
-  session: MinionSession | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  readonly session: MinionSession | null
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
 }
 
 /**

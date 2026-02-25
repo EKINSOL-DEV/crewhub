@@ -3,9 +3,9 @@ import { X, Check } from 'lucide-react'
 import type { AgentRuntime } from '@/hooks/useAgentsRegistry'
 
 interface AgentMultiSelectSheetProps {
-  agents: AgentRuntime[]
-  onConfirm: (agentIds: string[]) => void
-  onClose: () => void
+  readonly agents: AgentRuntime[]
+  readonly onConfirm: (agentIds: string[]) => void
+  readonly onClose: () => void
 }
 
 const MIN_AGENTS = 2

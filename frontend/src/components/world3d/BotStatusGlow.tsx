@@ -3,7 +3,7 @@ import { useThrottledFrame } from './utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface BotStatusGlowProps {
-  status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
+  readonly status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
 }
 
 const STATUS_GLOW_COLOR: Record<string, string> = {

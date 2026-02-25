@@ -2,12 +2,12 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 
 interface CableProps {
-  from: [number, number, number]
-  to: [number, number, number]
-  color?: string
-  thickness?: number
-  sag?: number
-  segments?: number
+  readonly from: [number, number, number]
+  readonly to: [number, number, number]
+  readonly color?: string
+  readonly thickness?: number
+  readonly sag?: number
+  readonly segments?: number
 }
 
 /**

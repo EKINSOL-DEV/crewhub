@@ -2,7 +2,7 @@ import type { MinionSession } from '@/lib/api'
 import { getSessionStatus, getSessionCost, formatCost } from '@/lib/minionUtils'
 
 interface StatsHeaderProps {
-  sessions: MinionSession[]
+  readonly sessions: MinionSession[]
 }
 
 export function StatsHeader({ sessions }: StatsHeaderProps) {

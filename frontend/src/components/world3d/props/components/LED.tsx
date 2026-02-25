@@ -3,12 +3,12 @@ import { useThrottledFrame } from '../../utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface LEDProps {
-  color?: string
-  position?: [number, number, number]
-  size?: number
-  pulse?: boolean
-  blinkSpeed?: number
-  intensity?: number
+  readonly color?: string
+  readonly position?: [number, number, number]
+  readonly size?: number
+  readonly pulse?: boolean
+  readonly blinkSpeed?: number
+  readonly intensity?: number
 }
 
 /**

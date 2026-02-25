@@ -20,9 +20,9 @@ function degToEuler(deg: number): [number, number, number] {
 
 interface MeetingTableProps extends PropProps {
   /** Whether a meeting is currently in progress */
-  meetingActive?: boolean
+  readonly meetingActive?: boolean
   /** Called when user clicks the table */
-  onTableClick?: () => void
+  readonly onTableClick?: () => void
 }
 
 export function MeetingTable({

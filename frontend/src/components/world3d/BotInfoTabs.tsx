@@ -9,17 +9,17 @@ import { ActionsTab } from './ActionsTab'
 type TabId = 'activity' | 'info' | 'actions'
 
 interface BotInfoTabsProps {
-  session: CrewSession
-  displayName: string
-  botConfig: BotVariantConfig
-  status: BotStatus
-  bio?: string | null
-  agentId?: string | null
-  currentRoomId?: string | null
-  canChat: boolean
-  onOpenLog: (session: CrewSession) => void
-  onAssignmentChanged?: () => void
-  onBioUpdated?: () => void
+  readonly session: CrewSession
+  readonly displayName: string
+  readonly botConfig: BotVariantConfig
+  readonly status: BotStatus
+  readonly bio?: string | null
+  readonly agentId?: string | null
+  readonly currentRoomId?: string | null
+  readonly canChat: boolean
+  readonly onOpenLog: (session: CrewSession) => void
+  readonly onAssignmentChanged?: () => void
+  readonly onBioUpdated?: () => void
 }
 
 const TABS: { id: TabId; label: string; icon: string }[] = [

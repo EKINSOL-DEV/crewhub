@@ -3,13 +3,17 @@ import { Plant } from './props/Plant'
 import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface HallwayProps {
-  roomPositions: { room?: { is_hq?: boolean }; position: [number, number, number]; size?: number }[]
-  roomSize: number
-  hallwayWidth: number
-  cols: number
-  rows: number
-  gridOriginX: number
-  gridOriginZ: number
+  readonly roomPositions: {
+    room?: { is_hq?: boolean }
+    position: [number, number, number]
+    size?: number
+  }[]
+  readonly roomSize: number
+  readonly hallwayWidth: number
+  readonly cols: number
+  readonly rows: number
+  readonly gridOriginX: number
+  readonly gridOriginZ: number
 }
 
 /**

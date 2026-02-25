@@ -13,29 +13,29 @@ interface ProjectFilterInfo {
 }
 
 interface ZenTopBarProps {
-  onExit: () => void
-  exitLabel?: string // Default "World" — standalone uses "Projects"
-  exitIcon?: string // Default "🌍"
-  isMaximized?: boolean
-  onRestore?: () => void
-  layoutName?: string
-  themeName?: string
-  onOpenThemePicker?: () => void
-  onOpenCommandPalette?: () => void
-  onOpenKeyboardHelp?: () => void
-  onAddBrowserPanel?: () => void
-  projectFilter?: ProjectFilterInfo
-  onClearProjectFilter?: () => void
+  readonly onExit: () => void
+  readonly exitLabel?: string // Default "World" — standalone uses "Projects"
+  readonly exitIcon?: string // Default "🌍"
+  readonly isMaximized?: boolean
+  readonly onRestore?: () => void
+  readonly layoutName?: string
+  readonly themeName?: string
+  readonly onOpenThemePicker?: () => void
+  readonly onOpenCommandPalette?: () => void
+  readonly onOpenKeyboardHelp?: () => void
+  readonly onAddBrowserPanel?: () => void
+  readonly projectFilter?: ProjectFilterInfo
+  readonly onClearProjectFilter?: () => void
   // Tab bar props
-  tabs?: ZenTab[]
-  activeTabId?: string
-  canAddTab?: boolean
-  closedTabsCount?: number
-  onSwitchTab?: (tabId: string) => void
-  onCloseTab?: (tabId: string) => void
-  onAddTab?: (projectFilter?: ZenProjectFilter) => void
-  onReopenClosedTab?: () => void
-  onRenameTab?: (tabId: string, newLabel: string) => void
+  readonly tabs?: ZenTab[]
+  readonly activeTabId?: string
+  readonly canAddTab?: boolean
+  readonly closedTabsCount?: number
+  readonly onSwitchTab?: (tabId: string) => void
+  readonly onCloseTab?: (tabId: string) => void
+  readonly onAddTab?: (projectFilter?: ZenProjectFilter) => void
+  readonly onReopenClosedTab?: () => void
+  readonly onRenameTab?: (tabId: string, newLabel: string) => void
 }
 
 /**

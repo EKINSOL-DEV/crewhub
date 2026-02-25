@@ -15,7 +15,7 @@ import {
 } from '@/services/activityService'
 
 interface MobileActivityPanelProps {
-  onBack: () => void
+  readonly onBack: () => void
 }
 
 // ── Time Grouping Helpers ────────────────────────────────────
@@ -45,8 +45,8 @@ function formatTime(timestamp: number): string {
 // ── Activity Event Item ──────────────────────────────────────
 
 interface ActivityEventItemProps {
-  event: ActivityEvent
-  showTime: boolean
+  readonly event: ActivityEvent
+  readonly showTime: boolean
 }
 
 function ActivityEventItem({ event, showTime }: ActivityEventItemProps) {
@@ -107,15 +107,15 @@ function ActivityEventItem({ event, showTime }: ActivityEventItemProps) {
 // ── Filter Sheet ──────────────────────────────────────────────
 
 interface FilterSheetProps {
-  agents: Array<{ id: string; name: string }>
-  projects: Array<{ id: string; name: string; color?: string }>
-  selectedAgentId: string | null
-  selectedProjectId: string | null
-  selectedEventType: string | null
-  onSelectAgent: (agentId: string | null) => void
-  onSelectProject: (projectId: string | null) => void
-  onSelectEventType: (type: string | null) => void
-  onClose: () => void
+  readonly agents: Array<{ id: string; name: string }>
+  readonly projects: Array<{ id: string; name: string; color?: string }>
+  readonly selectedAgentId: string | null
+  readonly selectedProjectId: string | null
+  readonly selectedEventType: string | null
+  readonly onSelectAgent: (agentId: string | null) => void
+  readonly onSelectProject: (projectId: string | null) => void
+  readonly onSelectEventType: (type: string | null) => void
+  readonly onClose: () => void
 }
 
 function FilterSheet({

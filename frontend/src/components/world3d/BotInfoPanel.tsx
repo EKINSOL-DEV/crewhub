@@ -5,17 +5,17 @@ import type { BotStatus } from './botConstants'
 import { BotInfoTabs } from './BotInfoTabs'
 
 interface BotInfoPanelProps {
-  session: CrewSession | null
-  displayName: string
-  botConfig: BotVariantConfig
-  status: BotStatus
-  bio?: string | null
-  agentId?: string | null
-  currentRoomId?: string | null
-  onClose: () => void
-  onOpenLog: (session: CrewSession) => void
-  onAssignmentChanged?: () => void
-  onBioUpdated?: () => void
+  readonly session: CrewSession | null
+  readonly displayName: string
+  readonly botConfig: BotVariantConfig
+  readonly status: BotStatus
+  readonly bio?: string | null
+  readonly agentId?: string | null
+  readonly currentRoomId?: string | null
+  readonly onClose: () => void
+  readonly onOpenLog: (session: CrewSession) => void
+  readonly onAssignmentChanged?: () => void
+  readonly onBioUpdated?: () => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────

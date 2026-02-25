@@ -9,11 +9,11 @@ import { API_BASE } from '@/lib/api'
 // ── Types ────────────────────────────────────────────────────
 
 interface ProjectManagerModalProps {
-  isOpen: boolean
-  onClose: () => void
+  readonly isOpen: boolean
+  readonly onClose: () => void
   /** Pre-select a project for viewing/editing */
-  initialProjectId?: string | null
-  onProjectSelect?: (projectId: string, projectName: string, projectColor?: string) => void
+  readonly initialProjectId?: string | null
+  readonly onProjectSelect?: (projectId: string, projectName: string, projectColor?: string) => void
 }
 
 type ModalView = 'list' | 'create' | 'edit' | 'details' | 'delete-confirm'

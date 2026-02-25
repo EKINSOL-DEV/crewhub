@@ -6,11 +6,11 @@ import { fetchPreview } from '@/lib/personaApi'
 import type { PersonaDimensions, PreviewResponse } from '@/lib/personaTypes'
 
 interface PersonaPreviewProps {
-  dimensions: PersonaDimensions
-  preset: string | null
-  customInstructions?: string
+  readonly dimensions: PersonaDimensions
+  readonly preset: string | null
+  readonly customInstructions?: string
   /** Which preset to contrast against (auto-picked if not provided) */
-  contrastPreset?: string
+  readonly contrastPreset?: string
 }
 
 function getContrastPreset(preset: string | null): string {

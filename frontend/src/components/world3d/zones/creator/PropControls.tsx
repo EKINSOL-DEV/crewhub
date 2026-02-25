@@ -21,84 +21,84 @@ import type {
 
 export interface PropControlsProps {
   // Tab state
-  activeTab: TabId
-  onTabChange: (tab: TabId) => void
+  readonly activeTab: TabId
+  readonly onTabChange: (tab: TabId) => void
 
   // Demo
-  isDemoMode: boolean
+  readonly isDemoMode: boolean
 
   // Input / generation
-  inputText: string
-  onInputChange: (value: string) => void
-  isGenerating: boolean
-  onGenerate: () => void
-  onRegenerate: () => void
-  onRetry: () => void
-  error: string | null
+  readonly inputText: string
+  readonly onInputChange: (value: string) => void
+  readonly isGenerating: boolean
+  readonly onGenerate: () => void
+  readonly onRegenerate: () => void
+  readonly onRetry: () => void
+  readonly error: string | null
 
   // Model selection
-  models: ModelOption[]
-  selectedModel: string
-  onModelChange: (model: string) => void
+  readonly models: ModelOption[]
+  readonly selectedModel: string
+  readonly onModelChange: (model: string) => void
 
   // Generation mode
-  generationMode: GenerationMode
-  onGenerationModeChange: (mode: GenerationMode) => void
-  templateBase: string
-  onTemplateBaseChange: (base: string) => void
-  availableTemplates: { id: string; name: string }[]
+  readonly generationMode: GenerationMode
+  readonly onGenerationModeChange: (mode: GenerationMode) => void
+  readonly templateBase: string
+  readonly onTemplateBaseChange: (base: string) => void
+  readonly availableTemplates: { id: string; name: string }[]
 
   // Examples
-  showExamples: boolean
-  onToggleExamples: () => void
-  onSelectExample: (prompt: string) => void
+  readonly showExamples: boolean
+  readonly onToggleExamples: () => void
+  readonly onSelectExample: (prompt: string) => void
 
   // Preview state (needed for badges + action buttons)
-  previewParts: PropPart[] | null
-  previewMethod: 'ai' | 'template'
-  previewModelLabel: string
-  previewName: string
-  previewCode: string
-  renderError: string | null
-  isSaving: boolean
-  onApprove: () => void
+  readonly previewParts: PropPart[] | null
+  readonly previewMethod: 'ai' | 'template'
+  readonly previewModelLabel: string
+  readonly previewName: string
+  readonly previewCode: string
+  readonly renderError: string | null
+  readonly isSaving: boolean
+  readonly onApprove: () => void
 
   // Part editor
-  editMode: boolean
-  onToggleEditMode: () => void
-  selectedPartIndex: number | null
-  transformMode: TransformMode
-  onTransformModeChange: (mode: TransformMode) => void
-  onApplyPartEdits: () => void
+  readonly editMode: boolean
+  readonly onToggleEditMode: () => void
+  readonly selectedPartIndex: number | null
+  readonly transformMode: TransformMode
+  readonly onTransformModeChange: (mode: TransformMode) => void
+  readonly onApplyPartEdits: () => void
 
   // Quality score
-  qualityScore: any | null
+  readonly qualityScore: any | null
 
   // Iteration
-  iterationFeedback: string
-  onIterationFeedbackChange: (v: string) => void
-  isIterating: boolean
-  onIterate: () => void
-  iterationHistory: { version: number; feedback: string; score: number; code: string }[]
-  onRollback: (version: number) => void
+  readonly iterationFeedback: string
+  readonly onIterationFeedbackChange: (v: string) => void
+  readonly isIterating: boolean
+  readonly onIterate: () => void
+  readonly iterationHistory: { version: number; feedback: string; score: number; code: string }[]
+  readonly onRollback: (version: number) => void
 
   // Refinement (Phase 2)
-  generationId: string
-  refinementOptions: any | null
-  isRefining: boolean
-  onRefine: (changes: RefineChanges) => void
-  onRefineReset: () => void
+  readonly generationId: string
+  readonly refinementOptions: any | null
+  readonly isRefining: boolean
+  readonly onRefine: (changes: RefineChanges) => void
+  readonly onRefineReset: () => void
 
   // Style transfer (Advanced tab)
-  availableStyles: { id: string; name: string; palette: string[] }[]
-  selectedStyle: string
-  onStyleChange: (style: string) => void
-  isApplyingStyle: boolean
-  onApplyStyle: () => void
+  readonly availableStyles: { id: string; name: string; palette: string[] }[]
+  readonly selectedStyle: string
+  readonly onStyleChange: (style: string) => void
+  readonly isApplyingStyle: boolean
+  readonly onApplyStyle: () => void
 
   // History tab
-  historyRefreshKey: number
-  onLoadFromHistory: (record: GenerationRecord) => void
+  readonly historyRefreshKey: number
+  readonly onLoadFromHistory: (record: GenerationRecord) => void
 }
 
 // ── Example Prompts ───────────────────────────────────────────

@@ -42,7 +42,7 @@ function formatTime(timestamp: number): string {
 // ── Log Entry Component ──────────────────────────────────────────
 
 interface LogEntryItemProps {
-  entry: LogEntry
+  readonly entry: LogEntry
 }
 
 function LogEntryItem({ entry }: LogEntryItemProps) {
@@ -63,12 +63,12 @@ function LogEntryItem({ entry }: LogEntryItemProps) {
 // ── Filter Controls ──────────────────────────────────────────────
 
 interface FilterControlsProps {
-  levels: Set<LogLevel>
-  onToggleLevel: (level: LogLevel) => void
-  search: string
-  onSearchChange: (value: string) => void
-  autoScroll: boolean
-  onAutoScrollChange: (value: boolean) => void
+  readonly levels: Set<LogLevel>
+  readonly onToggleLevel: (level: LogLevel) => void
+  readonly search: string
+  readonly onSearchChange: (value: string) => void
+  readonly autoScroll: boolean
+  readonly onAutoScrollChange: (value: boolean) => void
 }
 
 function FilterControls({

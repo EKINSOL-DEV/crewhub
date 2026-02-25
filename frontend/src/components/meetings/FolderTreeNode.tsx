@@ -8,11 +8,11 @@ export interface TreeNode {
 }
 
 interface FolderTreeNodeProps {
-  node: TreeNode
-  onSelectFile: (path: string) => void
-  selectedPath?: string
-  searchFilter?: string
-  depth?: number
+  readonly node: TreeNode
+  readonly onSelectFile: (path: string) => void
+  readonly selectedPath?: string
+  readonly searchFilter?: string
+  readonly depth?: number
 }
 
 function matchesSearch(node: TreeNode, filter: string): boolean {

@@ -69,8 +69,8 @@ export function useEnvironmentList() {
 // ─── Environment Switcher Component ──────────────────────────────
 
 interface EnvironmentSwitcherProps {
-  buildingWidth: number
-  buildingDepth: number
+  readonly buildingWidth: number
+  readonly buildingDepth: number
 }
 
 export function EnvironmentSwitcher({ buildingWidth, buildingDepth }: EnvironmentSwitcherProps) {

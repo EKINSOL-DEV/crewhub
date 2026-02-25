@@ -15,13 +15,13 @@ interface MvpBoardItem {
 }
 
 interface ZoneLandingViewProps {
-  zone: Zone
-  mvpItems: MvpBoardItem[]
-  className?: string
+  readonly zone: Zone
+  readonly mvpItems: MvpBoardItem[]
+  readonly className?: string
   /** Extra 3D elements to render inside the scene */
-  sceneExtras?: ReactNode
+  readonly sceneExtras?: ReactNode
   /** Hide the center marker box */
-  hideCenterMarker?: boolean
+  readonly hideCenterMarker?: boolean
 }
 
 function LandingScene({

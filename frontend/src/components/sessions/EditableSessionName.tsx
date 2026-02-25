@@ -4,11 +4,11 @@ import { useSessionDisplayName } from '@/hooks/useSessionDisplayNames'
 import { useToast } from '@/hooks/use-toast'
 
 interface EditableSessionNameProps {
-  sessionKey: string
-  fallbackName: string
-  className?: string
-  showEditIcon?: boolean
-  onNameChange?: () => void
+  readonly sessionKey: string
+  readonly fallbackName: string
+  readonly className?: string
+  readonly showEditIcon?: boolean
+  readonly onNameChange?: () => void
 }
 
 /**

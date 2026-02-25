@@ -3,8 +3,8 @@ import { ImageLightbox } from './ImageLightbox'
 import { getMediaUrl, type MediaAttachment } from '@/utils/mediaParser'
 
 interface ImageThumbnailProps {
-  attachment: MediaAttachment
-  maxWidth?: number
+  readonly attachment: MediaAttachment
+  readonly maxWidth?: number
 }
 
 /**

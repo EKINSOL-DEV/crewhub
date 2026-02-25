@@ -7,10 +7,10 @@ import { useProjects, type Project } from '@/hooks/useProjects'
 import { ProjectManagerModal } from './ProjectManagerModal'
 
 interface ProjectFilterSelectProps {
-  currentProjectId: string | null | undefined
-  currentProjectName?: string | null
-  onSelect: (projectId: string | null, projectName: string, projectColor?: string) => void
-  compact?: boolean
+  readonly currentProjectId: string | null | undefined
+  readonly currentProjectName?: string | null
+  readonly onSelect: (projectId: string | null, projectName: string, projectColor?: string) => void
+  readonly compact?: boolean
 }
 
 export function ProjectFilterSelect({

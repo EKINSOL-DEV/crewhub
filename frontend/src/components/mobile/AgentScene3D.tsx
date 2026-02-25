@@ -239,10 +239,10 @@ function ExpressiveBot({ config, status }: { config: BotVariantConfig; status: A
 // ── Main Scene ─────────────────────────────────────────────────
 
 interface AgentScene3DProps {
-  botConfig: BotVariantConfig
-  agentName: string
-  agentStatus: AgentStatus
-  mini?: boolean
+  readonly botConfig: BotVariantConfig
+  readonly agentName: string
+  readonly agentStatus: AgentStatus
+  readonly mini?: boolean
 }
 
 export default function AgentScene3D({ botConfig, agentStatus, mini }: AgentScene3DProps) {

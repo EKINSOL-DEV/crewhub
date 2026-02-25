@@ -6,28 +6,28 @@ import { useZenMode } from '@/components/zen'
 
 interface ActionBarProps {
   /** Number of running tasks (for badge display) */
-  runningTaskCount: number
+  readonly runningTaskCount: number
   /** Whether the tasks window is currently open */
-  tasksWindowOpen: boolean
+  readonly tasksWindowOpen: boolean
   /** Callback to toggle the tasks window */
-  onToggleTasksWindow: () => void
+  readonly onToggleTasksWindow: () => void
   /** Whether creator mode is active */
-  isCreatorMode: boolean
+  readonly isCreatorMode: boolean
   /** Callback to toggle creator mode */
-  onToggleCreatorMode: () => void
+  readonly onToggleCreatorMode: () => void
   /** Only show creator button if admin */
-  isAdmin?: boolean
+  readonly isAdmin?: boolean
 }
 
 interface ActionButtonProps {
-  icon: string
-  label: string
-  onClick: () => void
-  isActive?: boolean
-  badge?: number
-  badgeColor?: string
-  activeBackground?: string
-  activeBorder?: string
+  readonly icon: string
+  readonly label: string
+  readonly onClick: () => void
+  readonly isActive?: boolean
+  readonly badge?: number
+  readonly badgeColor?: string
+  readonly activeBackground?: string
+  readonly activeBorder?: string
 }
 
 // ── ActionButton Sub-Component ─────────────────────────────────

@@ -32,8 +32,8 @@ import type {
 // ── Props ─────────────────────────────────────────────────────
 
 export interface FullscreenPropMakerProps {
-  onClose: () => void
-  onPropGenerated?: (prop: {
+  readonly onClose: () => void
+  readonly onPropGenerated?: (prop: {
     name: string
     filename: string
     parts: PropPart[]

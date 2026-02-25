@@ -10,13 +10,13 @@ interface RefinementOptions {
 }
 
 interface PropRefinerProps {
-  propName: string
-  propId: string
-  currentCode: string
-  refinementOptions?: RefinementOptions | null
-  onApplyChanges: (changes: RefineChanges) => void
-  onReset: () => void
-  disabled?: boolean
+  readonly propName: string
+  readonly propId: string
+  readonly currentCode: string
+  readonly refinementOptions?: RefinementOptions | null
+  readonly onApplyChanges: (changes: RefineChanges) => void
+  readonly onReset: () => void
+  readonly disabled?: boolean
 }
 
 export interface RefineChanges {

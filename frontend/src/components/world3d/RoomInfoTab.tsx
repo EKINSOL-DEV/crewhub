@@ -9,10 +9,10 @@ import { formatSessionKeyAsName } from '@/lib/friendlyNames'
 type BotStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
 
 interface RoomInfoTabProps {
-  sessions: CrewSession[]
-  isActivelyRunning: (key: string) => boolean
-  displayNames: Map<string, string | null>
-  onBotClick?: (session: CrewSession) => void
+  readonly sessions: CrewSession[]
+  readonly isActivelyRunning: (key: string) => boolean
+  readonly displayNames: Map<string, string | null>
+  readonly onBotClick?: (session: CrewSession) => void
 }
 
 function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatus {

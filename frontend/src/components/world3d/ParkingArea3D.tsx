@@ -9,9 +9,9 @@ import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface ParkingArea3DProps {
   /** Center position of the parking area */
-  position: [number, number, number]
-  width: number
-  depth: number
+  readonly position: [number, number, number]
+  readonly width: number
+  readonly depth: number
 }
 
 /**

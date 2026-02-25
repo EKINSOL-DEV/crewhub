@@ -11,9 +11,9 @@ import { ZenSessionDetailPanel } from './ZenSessionDetailPanel'
 import type { CrewSession } from '@/lib/api'
 
 interface ZenSessionsPanelProps {
-  selectedSessionKey?: string
-  onSelectSession: (sessionKey: string, agentName: string, agentIcon?: string) => void
-  roomFilter?: string | null // Filter sessions by room ID (null = show all)
+  readonly selectedSessionKey?: string
+  readonly onSelectSession: (sessionKey: string, agentName: string, agentIcon?: string) => void
+  readonly roomFilter?: string | null // Filter sessions by room ID (null = show all)
 }
 
 // ── Agent icon mapping ────────────────────────────────────────────
@@ -50,11 +50,11 @@ function formatRelativeTime(timestamp: number): string {
 // ── Session Item Component ────────────────────────────────────────
 
 interface SessionItemProps {
-  session: CrewSession
-  displayName: string | null
-  isActive: boolean
-  isSelected: boolean
-  onSelect: () => void
+  readonly session: CrewSession
+  readonly displayName: string | null
+  readonly isActive: boolean
+  readonly isSelected: boolean
+  readonly onSelect: () => void
 }
 
 function SessionItem({ session, displayName, isActive, isSelected, onSelect }: SessionItemProps) {
@@ -100,7 +100,7 @@ function SessionItem({ session, displayName, isActive, isSelected, onSelect }: S
 // ── Empty State ───────────────────────────────────────────────────
 
 interface EmptyStateProps {
-  isFiltered?: boolean
+  readonly isFiltered?: boolean
 }
 
 function EmptyState({ isFiltered }: EmptyStateProps) {

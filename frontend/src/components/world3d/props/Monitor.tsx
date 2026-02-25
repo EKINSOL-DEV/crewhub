@@ -1,8 +1,8 @@
 import { useToonMaterialProps } from '../utils/toonMaterials'
 
 interface MonitorProps {
-  position?: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position?: [number, number, number]
+  readonly rotation?: [number, number, number]
 }
 
 /**

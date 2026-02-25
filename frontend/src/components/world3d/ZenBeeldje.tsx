@@ -13,10 +13,10 @@ import type { ThreeEvent } from '@react-three/fiber'
 import type { Group } from 'three'
 
 interface ZenBeeldjeProps {
-  position?: [number, number, number]
-  projectName: string
-  projectColor?: string
-  onActivate: () => void
+  readonly position?: [number, number, number]
+  readonly projectName: string
+  readonly projectColor?: string
+  readonly onActivate: () => void
 }
 
 /**

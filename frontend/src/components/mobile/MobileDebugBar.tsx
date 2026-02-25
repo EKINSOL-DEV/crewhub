@@ -30,7 +30,7 @@ const STATE_ICONS: Record<string, string> = {
 
 interface MobileDebugBarProps {
   /** Whether debug mode is active (bar is shown only when true) */
-  enabled: boolean
+  readonly enabled: boolean
 }
 
 export function MobileDebugBar({ enabled }: MobileDebugBarProps) {

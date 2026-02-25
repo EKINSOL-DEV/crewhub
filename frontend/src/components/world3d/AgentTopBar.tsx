@@ -11,18 +11,18 @@ import type { AgentRuntime } from '@/hooks/useAgentsRegistry'
 // ─── Types ─────────────────────────────────────────────────────
 
 interface AgentTopBarProps {
-  sessions: CrewSession[]
-  getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
-  getRoomForSession: (
+  readonly sessions: CrewSession[]
+  readonly getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
+  readonly getRoomForSession: (
     sessionKey: string,
     sessionData?: { label?: string; model?: string; channel?: string }
   ) => string | undefined
-  defaultRoomId?: string
-  isActivelyRunning: (key: string) => boolean
-  displayNames: Map<string, string | null>
-  rooms: Array<{ id: string; name: string }>
+  readonly defaultRoomId?: string
+  readonly isActivelyRunning: (key: string) => boolean
+  readonly displayNames: Map<string, string | null>
+  readonly rooms: Array<{ id: string; name: string }>
   /** All agent runtimes from useAgentsRegistry — passed from outside Canvas context */
-  agentRuntimes?: AgentRuntime[]
+  readonly agentRuntimes?: AgentRuntime[]
 }
 
 type AgentStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline'
@@ -174,13 +174,13 @@ function BotFaceSVG({
 // ─── Agent Portrait Button ─────────────────────────────────────
 
 interface AgentPortraitButtonProps {
-  config: BotVariantConfig
-  name: string
-  isActive: boolean
-  onClick: () => void
-  title: string
-  onUnpin?: () => void
-  showUnpin?: boolean
+  readonly config: BotVariantConfig
+  readonly name: string
+  readonly isActive: boolean
+  readonly onClick: () => void
+  readonly title: string
+  readonly onUnpin?: () => void
+  readonly showUnpin?: boolean
 }
 
 function AgentPortraitButton({
@@ -382,12 +382,17 @@ interface DropdownEntry {
 }
 
 interface AgentPickerDropdownProps {
-  fixedAgents: DropdownEntry[]
-  recentSubagents: DropdownEntry[]
-  pinnedKey: string | null
-  onSelect: (session: CrewSession, roomId: string, name: string, config: BotVariantConfig) => void
-  onPin: (sessionKey: string) => void
-  onClose: () => void
+  readonly fixedAgents: DropdownEntry[]
+  readonly recentSubagents: DropdownEntry[]
+  readonly pinnedKey: string | null
+  readonly onSelect: (
+    session: CrewSession,
+    roomId: string,
+    name: string,
+    config: BotVariantConfig
+  ) => void
+  readonly onPin: (sessionKey: string) => void
+  readonly onClose: () => void
 }
 
 function AgentPickerDropdown({

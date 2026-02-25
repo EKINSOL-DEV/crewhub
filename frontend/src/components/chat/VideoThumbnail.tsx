@@ -2,8 +2,8 @@ import { useState, type CSSProperties } from 'react'
 import { getMediaUrl, type MediaAttachment } from '@/utils/mediaParser'
 
 interface VideoThumbnailProps {
-  attachment: MediaAttachment
-  maxWidth?: number
+  readonly attachment: MediaAttachment
+  readonly maxWidth?: number
 }
 
 /**

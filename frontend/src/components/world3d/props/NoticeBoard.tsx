@@ -2,8 +2,8 @@ import { Html } from '@react-three/drei'
 import { useToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
 
 interface NoticeBoardProps {
-  position?: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position?: [number, number, number]
+  readonly rotation?: [number, number, number]
 }
 
 /**

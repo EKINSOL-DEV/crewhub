@@ -15,10 +15,10 @@ const AccordionContext = React.createContext<AccordionContextValue>({
 })
 
 interface AccordionProps {
-  type?: 'single' | 'multiple'
-  defaultValue?: string | string[]
-  className?: string
-  children: React.ReactNode
+  readonly type?: 'single' | 'multiple'
+  readonly defaultValue?: string | string[]
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 export function Accordion({ type = 'single', defaultValue, className, children }: AccordionProps) {
@@ -51,9 +51,9 @@ export function Accordion({ type = 'single', defaultValue, className, children }
 }
 
 interface AccordionItemProps {
-  value: string
-  className?: string
-  children: React.ReactNode
+  readonly value: string
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 const AccordionItemContext = React.createContext<{ value: string; isOpen: boolean }>({
@@ -73,8 +73,8 @@ export function AccordionItem({ value, className, children }: AccordionItemProps
 }
 
 interface AccordionTriggerProps {
-  className?: string
-  children: React.ReactNode
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 export function AccordionTrigger({ className, children }: AccordionTriggerProps) {
@@ -99,8 +99,8 @@ export function AccordionTrigger({ className, children }: AccordionTriggerProps)
 }
 
 interface AccordionContentProps {
-  className?: string
-  children: React.ReactNode
+  readonly className?: string
+  readonly children: React.ReactNode
 }
 
 export function AccordionContent({ className, children }: AccordionContentProps) {

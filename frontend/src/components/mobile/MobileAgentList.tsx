@@ -4,21 +4,21 @@ import type { Thread } from '@/lib/threads.api'
 import { ParticipantAvatarStack } from './group/ParticipantAvatarStack'
 
 interface MobileAgentListProps {
-  agents: AgentRuntime[]
-  loading: boolean
-  connected: boolean
-  onSelectAgent: (
+  readonly agents: AgentRuntime[]
+  readonly loading: boolean
+  readonly connected: boolean
+  readonly onSelectAgent: (
     agentId: string,
     name: string,
     icon: string | null,
     color: string | null,
     sessionKey: string
   ) => void
-  onRefresh: () => void
-  threads?: Thread[]
-  onNewGroup?: () => void
-  onSelectThread?: (thread: Thread) => void
-  onOpenDrawer?: () => void
+  readonly onRefresh: () => void
+  readonly threads?: Thread[]
+  readonly onNewGroup?: () => void
+  readonly onSelectThread?: (thread: Thread) => void
+  readonly onOpenDrawer?: () => void
 }
 
 // Deterministic color from agent id

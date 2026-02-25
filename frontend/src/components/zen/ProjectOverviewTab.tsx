@@ -6,9 +6,9 @@ import { useProjects, type ProjectOverview } from '@/hooks/useProjects'
 import { useTasks } from '@/hooks/useTasks'
 
 interface ProjectOverviewTabProps {
-  projectId: string
-  projectName?: string | null
-  onSwitchToDocuments?: () => void
+  readonly projectId: string
+  readonly projectName?: string | null
+  readonly onSwitchToDocuments?: () => void
 }
 
 export function ProjectOverviewTab({

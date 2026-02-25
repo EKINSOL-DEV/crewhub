@@ -3,8 +3,8 @@ import { SessionCard } from './SessionCard'
 import { EmptyState } from './EmptyState'
 
 interface ActiveSessionsViewProps {
-  sessions: CrewSession[]
-  onSessionClick?: (session: CrewSession) => void
+  readonly sessions: CrewSession[]
+  readonly onSessionClick?: (session: CrewSession) => void
 }
 
 export function ActiveSessionsView({ sessions, onSessionClick }: ActiveSessionsViewProps) {

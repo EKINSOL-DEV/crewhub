@@ -27,10 +27,10 @@ interface FileContent {
 }
 
 interface ProjectDocsPanelProps {
-  projectId: string
-  projectName: string
-  projectColor?: string
-  onClose: () => void
+  readonly projectId: string
+  readonly projectName: string
+  readonly projectColor?: string
+  readonly onClose: () => void
 }
 
 // ── File Icons ─────────────────────────────────────────────────

@@ -13,21 +13,21 @@ export interface PropPart {
 }
 
 interface DynamicPropProps {
-  parts: PropPart[]
-  position?: [number, number, number]
-  scale?: number
-  onClick?: () => void
+  readonly parts: PropPart[]
+  readonly position?: [number, number, number]
+  readonly scale?: number
+  readonly onClick?: () => void
   /** Part editor mode */
-  editMode?: boolean
-  selectedPartIndex?: number | null
-  onPartSelect?: (index: number | null) => void
-  onPartTransform?: (
+  readonly editMode?: boolean
+  readonly selectedPartIndex?: number | null
+  readonly onPartSelect?: (index: number | null) => void
+  readonly onPartTransform?: (
     index: number,
     position: [number, number, number],
     rotation: [number, number, number]
   ) => void
-  transformMode?: 'translate' | 'rotate' | 'scale'
-  onDraggingChanged?: (dragging: boolean) => void
+  readonly transformMode?: 'translate' | 'rotate' | 'scale'
+  readonly onDraggingChanged?: (dragging: boolean) => void
 }
 
 function DynamicMesh({

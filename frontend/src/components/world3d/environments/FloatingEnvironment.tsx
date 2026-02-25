@@ -6,8 +6,8 @@ import { useToonMaterialProps } from '../utils/toonMaterials'
 // ─── Floating Sky Platform Environment ───────────────────────────
 
 interface FloatingEnvironmentProps {
-  buildingWidth: number
-  buildingDepth: number
+  readonly buildingWidth: number
+  readonly buildingDepth: number
 }
 
 /** Create a hexagonal prism geometry with top surface at y = 0 in local space */

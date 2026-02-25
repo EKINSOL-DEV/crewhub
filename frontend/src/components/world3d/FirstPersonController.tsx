@@ -24,19 +24,19 @@ interface RoomCollisionData {
 
 interface FirstPersonControllerProps {
   /** Room positions from the building layout */
-  roomPositions: { roomId: string; roomName: string; position: [number, number, number] }[]
+  readonly roomPositions: { roomId: string; roomName: string; position: [number, number, number] }[]
   /** Room size (default 12) */
-  roomSize?: number
+  readonly roomSize?: number
   /** Building width for perimeter bounds */
-  buildingWidth: number
+  readonly buildingWidth: number
   /** Building depth for perimeter bounds */
-  buildingDepth: number
+  readonly buildingDepth: number
   /** Callback when entering a room (for room name HUD) */
-  onEnterRoom?: (roomName: string) => void
+  readonly onEnterRoom?: (roomName: string) => void
   /** Callback when leaving a room */
-  onLeaveRoom?: () => void
+  readonly onLeaveRoom?: () => void
   /** Callback when pointer lock state changes */
-  onLockChange?: (locked: boolean) => void
+  readonly onLockChange?: (locked: boolean) => void
 }
 
 // ─── Constants ─────────────────────────────────────────────────
@@ -320,8 +320,8 @@ export function FirstPersonController({
 // ─── HUD Overlay (rendered outside Canvas) ─────────────────────
 
 interface FirstPersonHUDProps {
-  currentRoom: string | null
-  showRoomLabel: boolean
+  readonly currentRoom: string | null
+  readonly showRoomLabel: boolean
 }
 
 export function FirstPersonHUD({ currentRoom, showRoomLabel }: FirstPersonHUDProps) {

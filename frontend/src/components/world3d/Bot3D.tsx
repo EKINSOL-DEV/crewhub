@@ -39,33 +39,33 @@ import type { BotStatus } from './botConstants'
 
 interface Bot3DProps {
   /** Position in 3D space (bot bottom on floor) */
-  position: [number, number, number]
+  readonly position: [number, number, number]
   /** Bot variant config (color, accessory type, etc.) */
-  config: BotVariantConfig
+  readonly config: BotVariantConfig
   /** Current status */
-  status: BotStatus
+  readonly status: BotStatus
   /** Display name shown below bot */
-  name: string
+  readonly name: string
   /** Scale factor (1.0 = main agent, 0.6 = subagent) */
-  scale?: number
+  readonly scale?: number
   /** Session data (for click handler) */
-  session?: CrewSession
+  readonly session?: CrewSession
   /** Click handler (called in addition to focusBot) */
-  onClick?: (session: CrewSession) => void
+  readonly onClick?: (session: CrewSession) => void
   /** Room bounds for wandering */
-  roomBounds?: RoomBounds
+  readonly roomBounds?: RoomBounds
   /** Whether to show the floating name label (controlled by focus level) */
-  showLabel?: boolean
+  readonly showLabel?: boolean
   /** Whether to show the activity bubble above the bot */
-  showActivity?: boolean
+  readonly showActivity?: boolean
   /** Current activity text (e.g. "🔧 web_search", "Working...", "💤 Idle") */
-  activity?: string
+  readonly activity?: string
   /** Whether the bot is actively running (tokens changing in last 30s) */
-  isActive?: boolean
+  readonly isActive?: boolean
   /** Room ID this bot belongs to (for focus navigation) */
-  roomId?: string
+  readonly roomId?: string
   /** Room name (for determining furniture interaction points) */
-  roomName?: string
+  readonly roomName?: string
 }
 
 /**

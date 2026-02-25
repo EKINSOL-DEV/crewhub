@@ -4,9 +4,9 @@ import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import type { BotVariantConfig } from './utils/botVariants'
 
 interface AgentChatPanelProps {
-  sessionKey: string
-  botConfig: BotVariantConfig
-  displayName: string
+  readonly sessionKey: string
+  readonly botConfig: BotVariantConfig
+  readonly displayName: string
 }
 
 // ── Main Panel ─────────────────────────────────────────────────

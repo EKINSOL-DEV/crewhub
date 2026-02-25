@@ -24,13 +24,13 @@ const statusConfig: Record<TaskStatus, { color: string; bg: string; label: strin
 // ── Props ──────────────────────────────────────────────────────
 
 interface TaskCardProps {
-  task: Task
-  compact?: boolean
-  showStatus?: boolean
-  hideRunWithAgent?: boolean
-  onClick?: (task: Task) => void
-  onStatusChange?: (task: Task, newStatus: TaskStatus) => void
-  onSpawnAgent?: (task: Task, agentId: string, sessionKey: string) => void
+  readonly task: Task
+  readonly compact?: boolean
+  readonly showStatus?: boolean
+  readonly hideRunWithAgent?: boolean
+  readonly onClick?: (task: Task) => void
+  readonly onStatusChange?: (task: Task, newStatus: TaskStatus) => void
+  readonly onSpawnAgent?: (task: Task, agentId: string, sessionKey: string) => void
 }
 
 // ── Component ──────────────────────────────────────────────────

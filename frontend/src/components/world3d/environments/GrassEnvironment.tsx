@@ -58,8 +58,8 @@ function InstancedDecoration({
 // ─── Grass Environment (classic) ─────────────────────────────────
 
 interface GrassEnvironmentProps {
-  buildingWidth: number
-  buildingDepth: number
+  readonly buildingWidth: number
+  readonly buildingDepth: number
 }
 
 export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironmentProps) {

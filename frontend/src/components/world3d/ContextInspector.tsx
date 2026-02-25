@@ -6,9 +6,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 interface ContextInspectorProps {
-  roomId: string
-  roomName: string
-  onClose: () => void
+  readonly roomId: string
+  readonly roomName: string
+  readonly onClose: () => void
 }
 
 type PrivacyTier = 'crewhub-ui' | 'external'

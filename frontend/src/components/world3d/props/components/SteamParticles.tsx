@@ -3,13 +3,13 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface SteamParticlesProps {
-  position?: [number, number, number]
-  count?: number
-  spread?: number
-  height?: number
-  color?: string
-  speed?: number
-  size?: number
+  readonly position?: [number, number, number]
+  readonly count?: number
+  readonly spread?: number
+  readonly height?: number
+  readonly color?: string
+  readonly speed?: number
+  readonly size?: number
 }
 
 /**

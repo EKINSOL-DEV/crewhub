@@ -2,10 +2,10 @@ import { Button } from '@/components/ui/button'
 import { Search, Zap, Cable, Sparkles } from 'lucide-react'
 
 interface StepWelcomeProps {
-  onScan: () => void
-  onDemo: () => void
-  onManual: () => void
-  onOpenClawWizard: () => void
+  readonly onScan: () => void
+  readonly onDemo: () => void
+  readonly onManual: () => void
+  readonly onOpenClawWizard: () => void
 }
 
 export function StepWelcome({ onScan, onDemo, onManual, onOpenClawWizard }: StepWelcomeProps) {

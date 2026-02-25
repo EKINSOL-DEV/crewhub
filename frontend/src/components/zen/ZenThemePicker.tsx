@@ -7,9 +7,9 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { themeInfo, type ThemeInfo } from './themes'
 
 interface ZenThemePickerProps {
-  currentThemeId: string
-  onSelectTheme: (themeId: string) => void
-  onClose: () => void
+  readonly currentThemeId: string
+  readonly onSelectTheme: (themeId: string) => void
+  readonly onClose: () => void
 }
 
 export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenThemePickerProps) {
@@ -164,10 +164,10 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
 }
 
 interface ThemeOptionProps {
-  theme: ThemeInfo
-  isSelected: boolean
-  isCurrent: boolean
-  onClick: () => void
+  readonly theme: ThemeInfo
+  readonly isSelected: boolean
+  readonly isCurrent: boolean
+  readonly onClick: () => void
 }
 
 function ThemeOption({ theme, isSelected, isCurrent, onClick }: ThemeOptionProps) {

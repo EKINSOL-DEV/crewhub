@@ -5,7 +5,7 @@ import { PropMakerRoom } from './zones/creator/PropMakerRoom'
 // ShowcasePedestal is rendered inside PropMakerRoom
 
 interface CreatorCenterViewProps {
-  className?: string
+  readonly className?: string
 }
 
 export function CreatorCenterView({ className }: CreatorCenterViewProps) {

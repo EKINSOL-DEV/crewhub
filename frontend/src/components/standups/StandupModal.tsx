@@ -10,9 +10,9 @@ interface Agent {
 }
 
 interface StandupModalProps {
-  open: boolean
-  onClose: () => void
-  onComplete?: () => void
+  readonly open: boolean
+  readonly onClose: () => void
+  readonly onComplete?: () => void
 }
 
 type Step = 'select' | 'entries' | 'done'

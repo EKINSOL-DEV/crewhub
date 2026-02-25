@@ -36,19 +36,19 @@ export interface FollowUpContext {
 }
 
 interface MeetingDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  agents: AgentRuntime[]
-  roomId?: string
-  projectId?: string
-  projectName?: string
-  onStart: (params: StartMeetingParams) => Promise<void>
-  meetingInProgress?: boolean
-  onViewProgress?: () => void
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly agents: AgentRuntime[]
+  readonly roomId?: string
+  readonly projectId?: string
+  readonly projectName?: string
+  readonly onStart: (params: StartMeetingParams) => Promise<void>
+  readonly meetingInProgress?: boolean
+  readonly onViewProgress?: () => void
   /** F4: Pre-fill for follow-up meeting */
-  followUpContext?: FollowUpContext | null
+  readonly followUpContext?: FollowUpContext | null
   /** F5: View results of a meeting */
-  onViewResults?: (meetingId: string) => void
+  readonly onViewResults?: (meetingId: string) => void
 }
 
 // ─── Component ──────────────────────────────────────────────────

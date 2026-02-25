@@ -2,11 +2,11 @@ import { useState } from 'react'
 import type { ThreadParticipant } from '@/lib/threads.api'
 
 interface RoutingSelectorProps {
-  participants: ThreadParticipant[]
-  mode: 'broadcast' | 'targeted'
-  targetAgentIds: string[]
-  onModeChange: (mode: 'broadcast' | 'targeted') => void
-  onTargetChange: (agentIds: string[]) => void
+  readonly participants: ThreadParticipant[]
+  readonly mode: 'broadcast' | 'targeted'
+  readonly targetAgentIds: string[]
+  readonly onModeChange: (mode: 'broadcast' | 'targeted') => void
+  readonly onTargetChange: (agentIds: string[]) => void
 }
 
 export function RoutingSelector({

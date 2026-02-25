@@ -10,7 +10,7 @@ import { Search, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react'
 import { LogViewer } from './LogViewer'
 
 interface AllSessionsViewProps {
-  sessions: MinionSession[]
+  readonly sessions: MinionSession[]
 }
 
 type SortField = 'name' | 'status' | 'model' | 'tokens' | 'lastActive'

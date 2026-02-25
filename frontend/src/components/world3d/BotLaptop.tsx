@@ -5,7 +5,7 @@ import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface BotLaptopProps {
   /** Whether the laptop should be visible (true when bot is actively working) */
-  visible: boolean
+  readonly visible: boolean
 }
 
 /**

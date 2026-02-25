@@ -11,7 +11,7 @@ import { useRooms } from '@/hooks/useRooms'
 import { cn } from '@/lib/utils'
 
 interface CardsViewProps {
-  sessions: CrewSession[]
+  readonly sessions: CrewSession[]
 }
 
 type SortOption = 'recent' | 'name' | 'tokens' | 'status'

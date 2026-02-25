@@ -6,8 +6,8 @@ import { MarkdownViewer } from '../markdown/MarkdownViewer'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 
 interface FilesTabProps {
-  agentId: string
-  agentName?: string
+  readonly agentId: string
+  readonly agentName?: string
 }
 
 export function FilesTab({ agentId, agentName }: FilesTabProps) {

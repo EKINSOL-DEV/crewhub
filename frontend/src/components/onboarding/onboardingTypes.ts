@@ -15,6 +15,6 @@ export interface ConnectionConfig {
 }
 
 export interface OnboardingWizardProps {
-  onComplete: () => void
-  onSkip: () => void
+  readonly onComplete: () => void
+  readonly onSkip: () => void
 }

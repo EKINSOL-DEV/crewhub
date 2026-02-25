@@ -123,9 +123,9 @@ export function renderMarkdown(
 // ─────────────────────────────────────────────────────────────────
 
 interface ThinkingBlockProps {
-  content: string
+  readonly content: string
   /** If true, use Zen Mode CSS classes; otherwise use inline styles */
-  zenMode?: boolean
+  readonly zenMode?: boolean
 }
 
 export function ThinkingBlock({ content, zenMode }: ThinkingBlockProps) {
@@ -206,9 +206,9 @@ export function ThinkingBlock({ content, zenMode }: ThinkingBlockProps) {
 // ─────────────────────────────────────────────────────────────────
 
 interface ToolCallBlockProps {
-  tool: ToolCallData
-  showDetails?: boolean
-  zenMode?: boolean
+  readonly tool: ToolCallData
+  readonly showDetails?: boolean
+  readonly zenMode?: boolean
 }
 
 export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps) {
@@ -309,19 +309,19 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
 export type ChatVariant = 'zen' | 'float' | 'mobile'
 
 export interface ChatMessageBubbleProps {
-  msg: ChatMessageData
+  readonly msg: ChatMessageData
   /**
    * Visual variant:
    * - "zen"    → Zen Mode CSS classes, terminal-like UI
    * - "float"  → Floating window (light bg)
    * - "mobile" → Mobile chat (dark bg)
    */
-  variant?: ChatVariant
-  accentColor?: string
+  readonly variant?: ChatVariant
+  readonly accentColor?: string
   /** Show thinking blocks (LLM chain-of-thought) */
-  showThinking?: boolean
+  readonly showThinking?: boolean
   /** Show tool call input/result details */
-  showToolDetails?: boolean
+  readonly showToolDetails?: boolean
 }
 
 const ChatMessageBubbleInner = memo(

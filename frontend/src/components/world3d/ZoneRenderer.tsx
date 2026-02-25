@@ -13,9 +13,9 @@ import type { CrewSession } from '@/lib/api'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
 interface ZoneRendererProps {
-  sessions: CrewSession[]
-  settings: SessionsSettings
-  onAliasChanged?: () => void
+  readonly sessions: CrewSession[]
+  readonly settings: SessionsSettings
+  readonly onAliasChanged?: () => void
 }
 
 export function ZoneRenderer({ sessions, settings, onAliasChanged }: ZoneRendererProps) {

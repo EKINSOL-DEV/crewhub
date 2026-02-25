@@ -6,8 +6,8 @@ import { useToonMaterialProps } from '../utils/toonMaterials'
 // ─── Floating Island Environment (Monument Valley style) ─────────
 
 interface IslandEnvironmentProps {
-  buildingWidth: number
-  buildingDepth: number
+  readonly buildingWidth: number
+  readonly buildingDepth: number
 }
 
 /**

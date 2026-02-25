@@ -9,9 +9,9 @@ import { ProjectOverviewTab } from './ProjectOverviewTab'
 import { ZenDocumentsPanel } from './ZenDocumentsPanel'
 
 interface ProjectsPanelProps {
-  projectId?: string | null
-  projectName?: string | null
-  onProjectFilterChange?: (
+  readonly projectId?: string | null
+  readonly projectName?: string | null
+  readonly onProjectFilterChange?: (
     projectId: string | null,
     projectName: string,
     projectColor?: string

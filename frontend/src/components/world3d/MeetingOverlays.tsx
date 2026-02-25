@@ -9,8 +9,8 @@ import type { AgentRuntime } from '@/hooks/useAgentsRegistry'
 import type { Room } from '@/hooks/useRooms'
 
 interface MeetingOverlaysProps {
-  agentRuntimes: AgentRuntime[]
-  rooms: Room[]
+  readonly agentRuntimes: AgentRuntime[]
+  readonly rooms: Room[]
 }
 
 export function MeetingOverlays({ agentRuntimes, rooms }: MeetingOverlaysProps) {

@@ -163,8 +163,8 @@ function getEffectiveUrl(): string {
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 interface SectionProps {
-  title: string
-  children: React.ReactNode
+  readonly title: string
+  readonly children: React.ReactNode
 }
 function Section({ title, children }: SectionProps) {
   return (
@@ -243,11 +243,11 @@ function Segmented<T extends string>({
 }
 
 interface ToggleProps {
-  value: boolean
-  onChange: (v: boolean) => void
-  label: string
-  description?: string
-  accentColor?: string
+  readonly value: boolean
+  readonly onChange: (v: boolean) => void
+  readonly label: string
+  readonly description?: string
+  readonly accentColor?: string
 }
 function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }: ToggleProps) {
   return (
@@ -308,8 +308,8 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
 // ── Main Panel ─────────────────────────────────────────────────────────────
 
 interface MobileSettingsPanelProps {
-  open: boolean
-  onClose: () => void
+  readonly open: boolean
+  readonly onClose: () => void
 }
 
 export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps) {

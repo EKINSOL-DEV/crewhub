@@ -16,12 +16,12 @@ import {
 import type { FloorStyle } from '@/contexts/RoomsContext'
 
 interface RoomFloorProps {
-  color?: string
-  size?: number // units (default 12)
-  hovered?: boolean
-  projectColor?: string | null
-  isHQ?: boolean
-  floorStyle?: FloorStyle
+  readonly color?: string
+  readonly size?: number // units (default 12)
+  readonly hovered?: boolean
+  readonly projectColor?: string | null
+  readonly isHQ?: boolean
+  readonly floorStyle?: FloorStyle
 }
 
 /**

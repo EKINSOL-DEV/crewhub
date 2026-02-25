@@ -6,9 +6,9 @@
 import { Component, type ReactNode } from 'react'
 
 interface ZenErrorBoundaryProps {
-  children: ReactNode
-  panelType?: string
-  onReset?: () => void
+  readonly children: ReactNode
+  readonly panelType?: string
+  readonly onReset?: () => void
 }
 
 interface ZenErrorBoundaryState {
@@ -141,10 +141,10 @@ export function ZenSkeletonActivityItem() {
 // ── Empty State Components ────────────────────────────────────────
 
 interface ZenEmptyStateProps {
-  icon: string
-  title: string
-  description?: string
-  action?: {
+  readonly icon: string
+  readonly title: string
+  readonly description?: string
+  readonly action?: {
     label: string
     onClick: () => void
   }
@@ -168,7 +168,7 @@ export function ZenEmptyState({ icon, title, description, action }: ZenEmptyStat
 // ── Loading State Component ───────────────────────────────────────
 
 interface ZenLoadingStateProps {
-  message?: string
+  readonly message?: string
 }
 
 export function ZenLoadingState({ message = 'Loading...' }: ZenLoadingStateProps) {
@@ -183,9 +183,9 @@ export function ZenLoadingState({ message = 'Loading...' }: ZenLoadingStateProps
 // ── Connection Status Component ───────────────────────────────────
 
 interface ZenConnectionStatusProps {
-  connected: boolean
-  reconnecting?: boolean
-  lastConnected?: number
+  readonly connected: boolean
+  readonly reconnecting?: boolean
+  readonly lastConnected?: number
 }
 
 export function ZenConnectionStatus({

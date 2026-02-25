@@ -12,9 +12,9 @@ import { getPropEntry } from '../grid/PropRegistry'
 import type { PlacedProp } from '@/contexts/CreatorModeContext'
 
 interface PlacedPropsRendererProps {
-  placedProps: PlacedProp[]
+  readonly placedProps: PlacedProp[]
   /** Cell size passed to each prop component (default 1.0 — world-coordinate props) */
-  cellSize?: number
+  readonly cellSize?: number
 }
 
 export function PlacedPropsRenderer({ placedProps, cellSize = 1.0 }: PlacedPropsRendererProps) {

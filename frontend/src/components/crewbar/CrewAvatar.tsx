@@ -2,10 +2,10 @@ import { cn } from '@/lib/utils'
 import type { CrewAgent, CrewStatus } from './types'
 
 interface CrewAvatarProps {
-  agent: CrewAgent
-  size?: 'sm' | 'md' | 'lg'
-  showStatus?: boolean
-  onClick?: () => void
+  readonly agent: CrewAgent
+  readonly size?: 'sm' | 'md' | 'lg'
+  readonly showStatus?: boolean
+  readonly onClick?: () => void
 }
 
 const statusColors: Record<CrewStatus, string> = {

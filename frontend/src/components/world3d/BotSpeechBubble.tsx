@@ -14,11 +14,11 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface BotSpeechBubbleProps {
-  text: string
+  readonly text: string
   /** Position offset above the bot (world units) */
-  yOffset?: number
+  readonly yOffset?: number
   /** Max chars to show (default 60) */
-  maxChars?: number
+  readonly maxChars?: number
 }
 
 // Reusable vectors to avoid allocations in the render loop

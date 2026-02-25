@@ -3,8 +3,8 @@ import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import type { Room } from '@/hooks/useRooms'
 
 interface WorldNavigationProps {
-  rooms: Room[]
-  isCreatorMode?: boolean
+  readonly rooms: Room[]
+  readonly isCreatorMode?: boolean
 }
 
 export function WorldNavigation({ rooms, isCreatorMode }: WorldNavigationProps) {
@@ -35,58 +35,60 @@ export function WorldNavigation({ rooms, isCreatorMode }: WorldNavigationProps) 
   return (
     <>
       {/* Back button (bottom-center, above RoomTabsBar) — hidden in creator mode */}
-      {!isCreatorMode && <div
-        style={{
-          position: 'absolute',
-          bottom: 80,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 35,
-          textAlign: 'center',
-        }}
-      >
-        <button
-          onClick={goBack}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 16px',
-            borderRadius: 12,
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 14,
-            fontWeight: 600,
-            color: '#374151',
-            background: 'rgba(255,255,255,0.75)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            transition: 'all 0.2s ease',
-            fontFamily: 'system-ui, sans-serif',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.9)'
-            e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.75)'
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
-          }}
-        >
-          {label}
-        </button>
+      {!isCreatorMode && (
         <div
           style={{
-            marginTop: 4,
-            fontSize: 11,
-            color: 'rgba(0,0,0,0.4)',
-            fontFamily: 'system-ui, sans-serif',
+            position: 'absolute',
+            bottom: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 35,
+            textAlign: 'center',
           }}
         >
-          Press Esc to go back
+          <button
+            onClick={goBack}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 16px',
+              borderRadius: 12,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#374151',
+              background: 'rgba(255,255,255,0.75)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease',
+              fontFamily: 'system-ui, sans-serif',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.9)'
+              e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.75)'
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
+            }}
+          >
+            {label}
+          </button>
+          <div
+            style={{
+              marginTop: 4,
+              fontSize: 11,
+              color: 'rgba(0,0,0,0.4)',
+              fontFamily: 'system-ui, sans-serif',
+            }}
+          >
+            Press Esc to go back
+          </div>
         </div>
-      </div>}
+      )}
     </>
   )
 }

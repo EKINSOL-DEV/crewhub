@@ -25,11 +25,11 @@ interface ActivityEvent {
 }
 
 interface FullscreenDetailViewProps {
-  type: 'activity' | 'session'
-  task?: ActiveTask
-  session: CrewSession | null
-  events?: ActivityEvent[]
-  onClose: () => void
+  readonly type: 'activity' | 'session'
+  readonly task?: ActiveTask
+  readonly session: CrewSession | null
+  readonly events?: ActivityEvent[]
+  readonly onClose: () => void
 }
 
 function getStatusConfig(status: string): { color: string; label: string; dot: string } {

@@ -3,14 +3,14 @@ import { Html } from '@react-three/drei'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 
 interface RoomNameplateProps {
-  name: string
-  icon?: string | null
-  color?: string
-  size?: number
-  hovered?: boolean
-  projectName?: string | null
-  projectColor?: string | null
-  isHQ?: boolean
+  readonly name: string
+  readonly icon?: string | null
+  readonly color?: string
+  readonly size?: number
+  readonly hovered?: boolean
+  readonly projectName?: string | null
+  readonly projectColor?: string | null
+  readonly isHQ?: boolean
 }
 
 /**

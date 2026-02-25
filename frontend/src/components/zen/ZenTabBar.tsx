@@ -7,24 +7,24 @@ import { useState, useCallback, useRef, useEffect, type KeyboardEvent } from 're
 import type { ZenTab, ZenProjectFilter } from './hooks/useZenMode'
 
 interface ZenTabBarProps {
-  tabs: ZenTab[]
-  activeTabId: string
-  canAddTab: boolean
-  closedTabsCount: number
-  onSwitchTab: (tabId: string) => void
-  onCloseTab: (tabId: string) => void
-  onAddTab: (projectFilter?: ZenProjectFilter) => void
-  onReopenClosedTab?: () => void
-  onRenameTab?: (tabId: string, newLabel: string) => void
+  readonly tabs: ZenTab[]
+  readonly activeTabId: string
+  readonly canAddTab: boolean
+  readonly closedTabsCount: number
+  readonly onSwitchTab: (tabId: string) => void
+  readonly onCloseTab: (tabId: string) => void
+  readonly onAddTab: (projectFilter?: ZenProjectFilter) => void
+  readonly onReopenClosedTab?: () => void
+  readonly onRenameTab?: (tabId: string, newLabel: string) => void
 }
 
 interface TabItemProps {
-  tab: ZenTab
-  isActive: boolean
-  isOnly: boolean
-  onSelect: () => void
-  onClose: () => void
-  onRename?: (newLabel: string) => void
+  readonly tab: ZenTab
+  readonly isActive: boolean
+  readonly isOnly: boolean
+  readonly onSelect: () => void
+  readonly onClose: () => void
+  readonly onRename?: (newLabel: string) => void
 }
 
 function TabItem({ tab, isActive, isOnly, onSelect, onClose, onRename }: TabItemProps) {

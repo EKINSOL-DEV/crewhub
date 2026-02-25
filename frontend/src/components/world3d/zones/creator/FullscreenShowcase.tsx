@@ -38,7 +38,7 @@ async function loadPropSource(id: string): Promise<string> {
 // ── Main Showcase Component ───────────────────────────────────
 
 interface FullscreenShowcaseProps {
-  onClose: () => void
+  readonly onClose: () => void
 }
 
 export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {

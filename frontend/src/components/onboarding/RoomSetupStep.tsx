@@ -66,7 +66,7 @@ const TEMPLATES: Template[] = [
 // ─── Component ──────────────────────────────────────────────────
 
 interface RoomSetupStepProps {
-  onComplete: () => void
+  readonly onComplete: () => void
 }
 
 export function RoomSetupStep({ onComplete }: RoomSetupStepProps) {

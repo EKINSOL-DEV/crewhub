@@ -5,18 +5,18 @@ import { MarkdownEditor } from './MarkdownEditor'
 import { TOCSidebar, extractHeadings, useActiveHeading } from './TOCSidebar'
 
 interface FullscreenOverlayProps {
-  open: boolean
-  onClose: () => void
-  title: string
-  subtitle?: string
-  content: string
-  metadata?: {
+  readonly open: boolean
+  readonly onClose: () => void
+  readonly title: string
+  readonly subtitle?: string
+  readonly content: string
+  readonly metadata?: {
     size: number
     modified: string
     lines: number
   }
-  editable?: boolean
-  onSave?: (content: string) => Promise<void>
+  readonly editable?: boolean
+  readonly onSave?: (content: string) => Promise<void>
 }
 
 function formatBytes(bytes: number): string {

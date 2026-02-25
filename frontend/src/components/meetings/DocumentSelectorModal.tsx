@@ -13,11 +13,11 @@ import { FolderTreeNode, type TreeNode } from './FolderTreeNode'
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 interface DocumentSelectorModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  projectId: string
-  projectName?: string
-  onSelect: (path: string) => void
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly projectId: string
+  readonly projectName?: string
+  readonly onSelect: (path: string) => void
 }
 
 export function DocumentSelectorModal({

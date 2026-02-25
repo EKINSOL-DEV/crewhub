@@ -4,14 +4,14 @@ import type { Task, TaskStatus, TaskPriority, TaskCreate, TaskUpdate } from '@/h
 // ── Types ──────────────────────────────────────────────────────
 
 interface TaskFormProps {
-  mode: 'create' | 'edit'
-  projectId: string
-  roomId?: string
-  initialData?: Task
-  agents?: Array<{ session_key: string; display_name: string }>
-  onSubmit: (data: TaskCreate | TaskUpdate) => Promise<void>
-  onCancel: () => void
-  isLoading?: boolean
+  readonly mode: 'create' | 'edit'
+  readonly projectId: string
+  readonly roomId?: string
+  readonly initialData?: Task
+  readonly agents?: Array<{ session_key: string; display_name: string }>
+  readonly onSubmit: (data: TaskCreate | TaskUpdate) => Promise<void>
+  readonly onCancel: () => void
+  readonly isLoading?: boolean
 }
 
 // ── Status/Priority Options ────────────────────────────────────

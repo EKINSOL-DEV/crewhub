@@ -9,8 +9,8 @@ const TaskBoardContext = createContext<TaskBoardContextValue>({
 })
 
 interface TaskBoardProviderProps {
-  children: ReactNode
-  onOpen: () => void
+  readonly children: ReactNode
+  readonly onOpen: () => void
 }
 
 export function TaskBoardProvider({ children, onOpen }: TaskBoardProviderProps) {

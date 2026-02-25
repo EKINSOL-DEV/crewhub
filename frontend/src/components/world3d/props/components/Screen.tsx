@@ -3,14 +3,14 @@ import { useThrottledFrame } from '../../utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface ScreenProps {
-  position?: [number, number, number]
-  rotation?: [number, number, number]
-  width?: number
-  height?: number
-  color?: string
-  bezelColor?: string
-  scanlines?: boolean
-  flicker?: boolean
+  readonly position?: [number, number, number]
+  readonly rotation?: [number, number, number]
+  readonly width?: number
+  readonly height?: number
+  readonly color?: string
+  readonly bezelColor?: string
+  readonly scanlines?: boolean
+  readonly flicker?: boolean
 }
 
 /**

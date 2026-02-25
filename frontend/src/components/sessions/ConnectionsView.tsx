@@ -174,10 +174,10 @@ function getTypeIcon(type: ConnectionType) {
 // ============================================================================
 
 interface ConnectionDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  connection?: Connection | null
-  onSave: (data: ConnectionFormData, id?: string) => Promise<void>
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly connection?: Connection | null
+  readonly onSave: (data: ConnectionFormData, id?: string) => Promise<void>
 }
 
 function ConnectionDialog({ open, onOpenChange, connection, onSave }: ConnectionDialogProps) {

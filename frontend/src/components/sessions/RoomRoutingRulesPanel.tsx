@@ -24,9 +24,9 @@ import { useToast } from '@/hooks/use-toast'
 import { Plus, Trash2, ChevronUp, ChevronDown, Eye, AlertCircle } from 'lucide-react'
 
 interface RoomRoutingRulesPanelProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  testSessions?: { key: string; label?: string; model?: string; channel?: string }[]
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
+  readonly testSessions?: { key: string; label?: string; model?: string; channel?: string }[]
 }
 
 const RULE_TYPES = [

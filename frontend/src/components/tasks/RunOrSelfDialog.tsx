@@ -1,11 +1,11 @@
 import type { Task } from '@/hooks/useTasks'
 
 interface RunOrSelfDialogProps {
-  task: Task
-  isOpen: boolean
-  onClose: () => void
-  onRunWithAgent: () => void
-  onDoItMyself: () => void
+  readonly task: Task
+  readonly isOpen: boolean
+  readonly onClose: () => void
+  readonly onRunWithAgent: () => void
+  readonly onDoItMyself: () => void
 }
 
 export function RunOrSelfDialog({

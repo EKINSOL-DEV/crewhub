@@ -129,10 +129,10 @@ function getLayoutSummary(layout: LayoutNode): LayoutSummary {
 // ── Save Layout Modal ─────────────────────────────────────────────
 
 interface ZenSaveLayoutModalProps {
-  layout: LayoutNode
-  onClose: () => void
-  onSave: (savedLayout: SavedLayout) => void
-  existingLayout?: SavedLayout
+  readonly layout: LayoutNode
+  readonly onClose: () => void
+  readonly onSave: (savedLayout: SavedLayout) => void
+  readonly existingLayout?: SavedLayout
 }
 
 export function ZenSaveLayoutModal({
@@ -308,11 +308,11 @@ export function ZenSaveLayoutModal({
 // ── Layout Picker Modal ───────────────────────────────────────────
 
 interface ZenLayoutPickerProps {
-  currentPreset?: LayoutPreset
-  onClose: () => void
-  onSelectPreset: (preset: LayoutPreset) => void
-  onSelectSaved: (layout: SavedLayout) => void
-  onDeleteSaved: (layoutId: string) => void
+  readonly currentPreset?: LayoutPreset
+  readonly onClose: () => void
+  readonly onSelectPreset: (preset: LayoutPreset) => void
+  readonly onSelectSaved: (layout: SavedLayout) => void
+  readonly onDeleteSaved: (layoutId: string) => void
 }
 
 const PRESET_DESCRIPTIONS: Record<

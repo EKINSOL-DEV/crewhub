@@ -9,17 +9,17 @@ import { useProjects, type Project } from '@/hooks/useProjects'
 import { useTasks } from '@/hooks/useTasks'
 
 interface MobileProjectsPanelProps {
-  onBack: () => void
+  readonly onBack: () => void
 }
 
 // ── Project Card ──────────────────────────────────────────────
 
 interface ProjectCardProps {
-  project: Project
-  taskCount: number
-  completedCount: number
-  assignedAgents: string[]
-  onTap: () => void
+  readonly project: Project
+  readonly taskCount: number
+  readonly completedCount: number
+  readonly assignedAgents: string[]
+  readonly onTap: () => void
 }
 
 function ProjectCard({
@@ -162,13 +162,13 @@ function ProjectCard({
 // ── Project Detail Modal ──────────────────────────────────────
 
 interface ProjectDetailModalProps {
-  project: Project
-  taskCount: number
-  completedCount: number
-  inProgressCount: number
-  blockedCount: number
-  assignedAgents: string[]
-  onClose: () => void
+  readonly project: Project
+  readonly taskCount: number
+  readonly completedCount: number
+  readonly inProgressCount: number
+  readonly blockedCount: number
+  readonly assignedAgents: string[]
+  readonly onClose: () => void
 }
 
 function ProjectDetailModal({

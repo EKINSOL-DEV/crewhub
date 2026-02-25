@@ -6,9 +6,9 @@
 // ── Props ─────────────────────────────────────────────────────
 
 export interface PropMakerToolbarProps {
-  isGenerating: boolean
-  successMessage: string | null
-  onClose: () => void
+  readonly isGenerating: boolean
+  readonly successMessage: string | null
+  readonly onClose: () => void
 }
 
 // ── Component ─────────────────────────────────────────────────

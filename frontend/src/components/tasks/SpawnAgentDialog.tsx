@@ -9,11 +9,11 @@ interface Agent {
 }
 
 interface SpawnAgentDialogProps {
-  task: Task
-  isOpen: boolean
-  onClose: () => void
-  onSpawn: (agentId: string, sessionKey: string) => void
-  onRun?: (agentId: string, sessionKey: string) => void
+  readonly task: Task
+  readonly isOpen: boolean
+  readonly onClose: () => void
+  readonly onSpawn: (agentId: string, sessionKey: string) => void
+  readonly onRun?: (agentId: string, sessionKey: string) => void
 }
 
 export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: SpawnAgentDialogProps) {

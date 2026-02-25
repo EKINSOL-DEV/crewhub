@@ -4,10 +4,10 @@ import { useToonMaterialProps } from './utils/toonMaterials'
 
 interface EntranceLobbyProps {
   /** X position of entrance center */
-  entranceX: number
+  readonly entranceX: number
   /** Z position of building front wall */
-  buildingFrontZ: number
-  entranceWidth?: number
+  readonly buildingFrontZ: number
+  readonly entranceWidth?: number
 }
 
 /**

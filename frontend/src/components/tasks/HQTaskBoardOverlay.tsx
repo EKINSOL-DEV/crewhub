@@ -10,8 +10,8 @@ import { formatSessionKeyAsName, isFixedAgent } from '@/lib/friendlyNames'
 // ── Props ──────────────────────────────────────────────────────
 
 interface HQTaskBoardOverlayProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  readonly open: boolean
+  readonly onOpenChange: (open: boolean) => void
 }
 
 // ── Sorting Options ────────────────────────────────────────────

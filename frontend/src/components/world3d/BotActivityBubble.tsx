@@ -6,11 +6,11 @@ import type { BotStatus } from './botConstants'
 
 interface BotActivityBubbleProps {
   /** Current activity text to display */
-  activity: string
+  readonly activity: string
   /** Bot status */
-  status: BotStatus
+  readonly status: BotStatus
   /** Whether the bot is actively running (tokens changing recently) */
-  isActive: boolean
+  readonly isActive: boolean
 }
 
 /** Max characters before truncating with ellipsis */
