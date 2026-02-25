@@ -60,6 +60,8 @@ export function AgentChatWindow({
     isLoadingHistory,
   } = useStreamingChat(sessionKey, showInternals)
 
+  const [isDragging, setIsDragging] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -164,7 +166,8 @@ export function AgentChatWindow({
     return () => window.removeEventListener('keydown', handler)
   }, [isRecording, cancelRecording])
 
-  const handleDragStop = (_: unknown, d: { x: number; y: number }) => {
+  const handleDragStop = (_e: unknown, d: { x: number; y: number }) => {
+    setIsDragging(false)
     updatePosition(sessionKey, { x: d.x, y: d.y })
   }
 
@@ -175,6 +178,7 @@ export function AgentChatWindow({
     ___: unknown,
     pos: { x: number; y: number }
   ) => {
+    setIsResizing(false)
     updateSize(sessionKey, {
       width: parseInt(ref.style.width),
       height: parseInt(ref.style.height),
@@ -183,20 +187,38 @@ export function AgentChatWindow({
   }
 
   return (
-    <Rnd
-      size={size}
-      position={position}
-      minWidth={MIN_SIZE.width}
-      minHeight={MIN_SIZE.height}
-      onDragStop={handleDragStop}
-      onResizeStop={handleResizeStop}
-      onDragStart={() => focusChat(sessionKey)}
-      onMouseDown={() => focusChat(sessionKey)}
-      bounds="window"
-      dragHandleClassName="chat-window-drag-handle"
-      style={{ zIndex }}
-      className="chat-window-container"
-    >
+    <>
+      {/* Fullscreen overlay during drag/resize — blocks WebGL canvas from stealing pointer events */}
+      {(isDragging || isResizing) && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: zIndex - 1,
+            pointerEvents: 'all',
+            cursor: isDragging ? 'grabbing' : 'nwse-resize',
+          }}
+        />
+      )}
+      <Rnd
+        size={size}
+        position={position}
+        minWidth={MIN_SIZE.width}
+        minHeight={MIN_SIZE.height}
+        onDragStart={() => {
+          setIsDragging(true)
+          focusChat(sessionKey)
+        }}
+        onDragStop={handleDragStop}
+        onResizeStart={() => setIsResizing(true)}
+        onResizeStop={handleResizeStop}
+        onMouseDown={() => focusChat(sessionKey)}
+        bounds="window"
+        dragHandleClassName="chat-window-drag-handle"
+        enableUserSelectHack={true}
+        style={{ zIndex }}
+        className="chat-window-container"
+      >
       <div
         style={{
           display: 'flex',
@@ -573,6 +595,7 @@ export function AgentChatWindow({
         `}</style>
       </div>
     </Rnd>
+    </>
   )
 }
 
