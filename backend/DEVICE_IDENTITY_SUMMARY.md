@@ -60,7 +60,7 @@ const pairDevices = async () => {
       method: 'POST'
     });
     const result = await response.json();
-    
+
     if (result.success && result.paired > 0) {
       console.log(`✓ Paired ${result.paired} connection(s)`);
     }
@@ -176,7 +176,7 @@ if (error.message.includes('scope')) {
    ```bash
    # Development
    uvicorn app.main:app --reload
-   
+
    # Production
    systemctl restart crewhub
    ```

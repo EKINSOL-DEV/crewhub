@@ -1,6 +1,6 @@
-import { CheckCircle2, Star } from "lucide-react"
-import { cn } from "@/lib/utils"
-import type { PresetDefinition } from "@/lib/personaTypes"
+import { CheckCircle2, Star } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import type { PresetDefinition } from '@/lib/personaTypes'
 
 interface PresetCardProps {
   presetKey: string
@@ -15,11 +15,11 @@ export function PresetCard({ presetKey: _presetKey, preset, selected, onClick }:
       type="button"
       onClick={onClick}
       className={cn(
-        "relative flex flex-col items-center text-center p-5 rounded-xl border-2 transition-all cursor-pointer",
-        "hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        'relative flex flex-col items-center text-center p-5 rounded-xl border-2 transition-all cursor-pointer',
+        'hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         selected
-          ? "border-primary bg-primary/5 shadow-sm"
-          : "border-border bg-card hover:border-primary/40"
+          ? 'border-primary bg-primary/5 shadow-sm'
+          : 'border-border bg-card hover:border-primary/40'
       )}
       aria-pressed={selected}
       aria-label={`${preset.name} preset: ${preset.tagline}`}
@@ -51,9 +51,7 @@ export function PresetCard({ presetKey: _presetKey, preset, selected, onClick }:
       <span className="text-sm text-muted-foreground mt-1">{preset.tagline}</span>
 
       {/* Audience hint */}
-      <span className="text-xs text-muted-foreground mt-2 opacity-70">
-        {preset.description}
-      </span>
+      <span className="text-xs text-muted-foreground mt-2 opacity-70">{preset.description}</span>
     </button>
   )
 }

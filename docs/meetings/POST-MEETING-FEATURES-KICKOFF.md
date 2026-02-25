@@ -1,7 +1,7 @@
 # AI Meetings - Post-Meeting Workflow Features
 
-> **Date:** 2026-02-13  
-> **Goal:** Implement complete post-meeting workflow  
+> **Date:** 2026-02-13
+> **Goal:** Implement complete post-meeting workflow
 > **Strategy:** Opus implementation + GPT-5.2 review
 
 ---
@@ -18,7 +18,7 @@ Transform meeting results from static markdown into an actionable workflow syste
 ## 📋 Features to Implement
 
 ### Feature #1: Action Items → Tasks Conversion
-**Priority:** High  
+**Priority:** High
 **Effort:** Medium (2-3h)
 
 **User Story:**
@@ -81,7 +81,7 @@ As a user, when a meeting ends with action items, I want to see those as interac
 function parseActionItems(markdown: string): ActionItem[] {
   const lines = markdown.split('\n');
   const items: ActionItem[] = [];
-  
+
   for (const line of lines) {
     // Match: - [ ] **Name**: Description
     const match = line.match(/^- \[ \] \*\*(.+?)\*\*:? (.+)$/);
@@ -100,7 +100,7 @@ function parseActionItems(markdown: string): ActionItem[] {
 ---
 
 ### Feature #2: Open Results in Sidebar
-**Priority:** Medium  
+**Priority:** Medium
 **Effort:** Low (1h)
 
 **User Story:**
@@ -124,9 +124,9 @@ As a user, I want to open meeting results in a sidebar panel so I can see them a
 **UI:**
 ```
 [3D World]  │  [Meeting Results Panel]
-            │  
+            │
 Bots moving │  # Meeting — 2026-02-13
-Table etc.  │  
+Table etc.  │
             │  ## Action Items
             │  [cards...]
 ```
@@ -134,7 +134,7 @@ Table etc.  │
 ---
 
 ### Feature #3: Enhanced Results UI with Action Cards
-**Priority:** High  
+**Priority:** High
 **Effort:** Medium (2h)
 
 **User Story:**
@@ -196,7 +196,7 @@ As a user, I want a beautiful, scannable interface for meeting results with clea
 ---
 
 ### Feature #4: Start Follow-up Meeting
-**Priority:** High  
+**Priority:** High
 **Effort:** Medium (2-3h)
 
 **User Story:**
@@ -247,7 +247,7 @@ function startFollowUp(previousMeeting: Meeting) {
 ---
 
 ### Feature #5: Meeting History Browser
-**Priority:** Medium  
+**Priority:** Medium
 **Effort:** Medium (2-3h)
 
 **User Story:**
@@ -306,7 +306,7 @@ As a user, when I click a meeting table, I want to see a history of previous mee
 ---
 
 ### Feature #6: Meeting Filename with Context
-**Priority:** High (prevents confusion)  
+**Priority:** High (prevents confusion)
 **Effort:** Low (30m)
 
 **User Story:**
@@ -343,14 +343,14 @@ def generate_meeting_filename(meeting: Meeting) -> str:
     date_str = datetime.now().strftime("%Y-%m-%d")
     topic_slug = slugify(meeting.goal)
     base_name = f"{date_str}-{topic_slug}"
-    
+
     # Handle duplicates
     counter = 1
     filename = f"{base_name}.md"
     while (output_dir / filename).exists():
         filename = f"{base_name}-{counter}.md"
         counter += 1
-    
+
     return filename
 ```
 

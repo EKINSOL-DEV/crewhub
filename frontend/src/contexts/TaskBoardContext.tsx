@@ -20,11 +20,7 @@ export function TaskBoardProvider({ children, onOpen }: TaskBoardProviderProps) 
 
   const value = useMemo(() => ({ openTaskBoard }), [openTaskBoard])
 
-  return (
-    <TaskBoardContext.Provider value={value}>
-      {children}
-    </TaskBoardContext.Provider>
-  )
+  return <TaskBoardContext.Provider value={value}>{children}</TaskBoardContext.Provider>
 }
 
 export function useTaskBoard() {

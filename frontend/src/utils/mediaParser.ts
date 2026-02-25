@@ -22,20 +22,10 @@ export interface ParsedMessage {
 }
 
 // Supported image MIME types
-const SUPPORTED_IMAGE_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-])
+const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
 // Supported video MIME types
-const SUPPORTED_VIDEO_TYPES = new Set([
-  'video/mp4',
-  'video/webm',
-  'video/ogg',
-  'video/quicktime',
-])
+const SUPPORTED_VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'])
 
 // Supported audio MIME types
 const SUPPORTED_AUDIO_TYPES = new Set([
@@ -112,7 +102,7 @@ export function parseMediaAttachments(content: string): ParsedMessage {
     if (isAudioMimeType(baseMime)) {
       // Look for transcript line immediately after the audio tag
       const afterTag = content.slice(match.index + fullMatch.length)
-      
+
       let transcript: string | undefined
       let transcriptError: string | undefined
       let transcriptMatchText = ''
@@ -149,10 +139,10 @@ export function parseMediaAttachments(content: string): ParsedMessage {
 
   // Parse [media attached: /path/to/file.jpg (image/jpeg)] pattern
   const mediaAttachedRegex = new RegExp(MEDIA_ATTACHED_REGEX)
-  
+
   while ((match = mediaAttachedRegex.exec(content)) !== null) {
     const [fullMatch, path, mimeType] = match
-    
+
     if (isImageMimeType(mimeType)) {
       attachments.push({
         type: 'image',
@@ -174,15 +164,15 @@ export function parseMediaAttachments(content: string): ParsedMessage {
 
   // Parse MEDIA: /path/to/file.jpg pattern (infer MIME from extension)
   const mediaPrefixRegex = new RegExp(MEDIA_PREFIX_REGEX)
-  
+
   while ((match = mediaPrefixRegex.exec(content)) !== null) {
     const [fullMatch, path] = match
-    
+
     // Infer MIME type from extension
     const ext = path.split('.').pop()?.toLowerCase()
     let mimeType: string | null = null
     let mediaType: 'image' | 'video' = 'image'
-    
+
     switch (ext) {
       case 'jpg':
       case 'jpeg':
@@ -210,10 +200,10 @@ export function parseMediaAttachments(content: string): ParsedMessage {
         mediaType = 'video'
         break
     }
-    
+
     if (mimeType) {
       // Check if we already added this attachment (avoid duplicates)
-      const alreadyAdded = attachments.some(a => a.path === path)
+      const alreadyAdded = attachments.some((a) => a.path === path)
       if (!alreadyAdded) {
         attachments.push({
           type: mediaType,
@@ -229,12 +219,12 @@ export function parseMediaAttachments(content: string): ParsedMessage {
   // Remove OpenClaw media instruction hint (injected context for AI)
   const mediaHintPattern = /To send an image back,.*?Keep caption in the text body\.\n?/gs
   text = text.replace(mediaHintPattern, '')
-  
+
   // Remove WhatsApp/channel metadata (timestamp, message_id)
   // Pattern: [WhatsApp +324... +1m 2026-02-07 11:41 GMT+1]
   const channelMetaPattern = /\[(WhatsApp|Telegram|Signal|Discord|iMessage|Slack)[^\]]*\]\n?/gi
   text = text.replace(channelMetaPattern, '')
-  
+
   // Pattern: [message_id: ...]
   const messageIdPattern = /\[message_id:\s*[^\]]+\]\n?/gi
   text = text.replace(messageIdPattern, '')

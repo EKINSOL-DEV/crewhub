@@ -77,7 +77,7 @@ export function FirstPersonController({
   // ─── Build collision data from room positions ────────────────
 
   const collisionRooms: RoomCollisionData[] = useMemo(() => {
-    return roomPositions.map(rp => {
+    return roomPositions.map((rp) => {
       const blueprint = getBlueprintForRoom(rp.roomName)
       const mask = getWalkableMask(blueprint.cells)
       return {
@@ -96,47 +96,53 @@ export function FirstPersonController({
 
   // ─── Collision check ─────────────────────────────────────────
 
-  const canMoveTo = useCallback((worldX: number, worldZ: number): boolean => {
-    // Check if inside any room
-    for (const room of collisionRooms) {
-      const dx = worldX - room.centerX
-      const dz = worldZ - room.centerZ
-      const hs = room.halfSize
+  const canMoveTo = useCallback(
+    (worldX: number, worldZ: number): boolean => {
+      // Check if inside any room
+      for (const room of collisionRooms) {
+        const dx = worldX - room.centerX
+        const dz = worldZ - room.centerZ
+        const hs = room.halfSize
 
-      if (dx >= -hs && dx <= hs && dz >= -hs && dz <= hs) {
-        // Inside this room's bounds — use walkable mask
-        const gridPos = worldToGrid(dx, dz, room.cellSize, room.gridWidth, room.gridDepth)
-        const isWalkable = room.walkableMask[gridPos.z]?.[gridPos.x] ?? false
-        if (isWalkable) return true
-        // Check nearby cells (3x3) — makes doors easier to find
-        for (let oz = -1; oz <= 1; oz++) {
-          for (let ox = -1; ox <= 1; ox++) {
-            if (room.walkableMask[gridPos.z + oz]?.[gridPos.x + ox]) return true
+        if (dx >= -hs && dx <= hs && dz >= -hs && dz <= hs) {
+          // Inside this room's bounds — use walkable mask
+          const gridPos = worldToGrid(dx, dz, room.cellSize, room.gridWidth, room.gridDepth)
+          const isWalkable = room.walkableMask[gridPos.z]?.[gridPos.x] ?? false
+          if (isWalkable) return true
+          // Check nearby cells (3x3) — makes doors easier to find
+          for (let oz = -1; oz <= 1; oz++) {
+            for (let ox = -1; ox <= 1; ox++) {
+              if (room.walkableMask[gridPos.z + oz]?.[gridPos.x + ox]) return true
+            }
           }
+          return false
         }
-        return false
       }
-    }
 
-    // Outside all rooms — hallway/exterior
-    // Allow movement within building perimeter with some margin
-    const halfBW = buildingWidth / 2 - 0.5
-    const halfBD = buildingDepth / 2 - 0.5
-    return worldX >= -halfBW && worldX <= halfBW && worldZ >= -halfBD && worldZ <= halfBD
-  }, [collisionRooms, buildingWidth, buildingDepth])
+      // Outside all rooms — hallway/exterior
+      // Allow movement within building perimeter with some margin
+      const halfBW = buildingWidth / 2 - 0.5
+      const halfBD = buildingDepth / 2 - 0.5
+      return worldX >= -halfBW && worldX <= halfBW && worldZ >= -halfBD && worldZ <= halfBD
+    },
+    [collisionRooms, buildingWidth, buildingDepth]
+  )
 
   // ─── Detect which room the player is in ──────────────────────
 
-  const detectRoom = useCallback((worldX: number, worldZ: number): string | null => {
-    for (const room of collisionRooms) {
-      const dx = Math.abs(worldX - room.centerX)
-      const dz = Math.abs(worldZ - room.centerZ)
-      if (dx < room.halfSize - 0.5 && dz < room.halfSize - 0.5) {
-        return room.roomName
+  const detectRoom = useCallback(
+    (worldX: number, worldZ: number): string | null => {
+      for (const room of collisionRooms) {
+        const dx = Math.abs(worldX - room.centerX)
+        const dz = Math.abs(worldZ - room.centerZ)
+        if (dx < room.halfSize - 0.5 && dz < room.halfSize - 0.5) {
+          return room.roomName
+        }
       }
-    }
-    return null
-  }, [collisionRooms])
+      return null
+    },
+    [collisionRooms]
+  )
 
   // ─── Keyboard listeners ──────────────────────────────────────
 
@@ -308,13 +314,7 @@ export function FirstPersonController({
 
   if (!enabled) return null
 
-  return (
-    <PointerLockControls
-      ref={controlsRef}
-      onLock={handleLock}
-      onUnlock={handleUnlock}
-    />
-  )
+  return <PointerLockControls ref={controlsRef} onLock={handleLock} onUnlock={handleUnlock} />
 }
 
 // ─── HUD Overlay (rendered outside Canvas) ─────────────────────
@@ -348,20 +348,24 @@ export function FirstPersonHUD({ currentRoom, showRoomLabel }: FirstPersonHUDPro
           justifyContent: 'center',
         }}
       >
-        <div style={{
-          position: 'absolute',
-          width: 2,
-          height: 12,
-          background: 'rgba(255,255,255,0.6)',
-          borderRadius: 1,
-        }} />
-        <div style={{
-          position: 'absolute',
-          width: 12,
-          height: 2,
-          background: 'rgba(255,255,255,0.6)',
-          borderRadius: 1,
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            width: 2,
+            height: 12,
+            background: 'rgba(255,255,255,0.6)',
+            borderRadius: 1,
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            width: 12,
+            height: 2,
+            background: 'rgba(255,255,255,0.6)',
+            borderRadius: 1,
+          }}
+        />
       </div>
 
       {/* ESC hint (top-center) */}
@@ -382,7 +386,8 @@ export function FirstPersonHUD({ currentRoom, showRoomLabel }: FirstPersonHUDPro
           animation: 'fpHudFadeOut 4s forwards',
         }}
       >
-        Press <strong>ESC</strong> to exit · <strong>WASD</strong> to move · <strong>Shift</strong> to run
+        Press <strong>ESC</strong> to exit · <strong>WASD</strong> to move · <strong>Shift</strong>{' '}
+        to run
       </div>
 
       {/* Room label (bottom-center, appears on room entry) */}

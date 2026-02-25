@@ -81,16 +81,18 @@ export function AudioMessage({
     }
   }, [isPlaying])
 
-  const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const audio = audioRef.current
-    if (!audio || !isLoaded) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-    audio.currentTime = ratio * (isFinite(audio.duration) ? audio.duration : 0)
-  }, [isLoaded])
+  const handleSeek = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const audio = audioRef.current
+      if (!audio || !isLoaded) return
+      const rect = e.currentTarget.getBoundingClientRect()
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+      audio.currentTime = ratio * (isFinite(audio.duration) ? audio.duration : 0)
+    },
+    [isLoaded]
+  )
 
-  const progress =
-    totalDuration > 0 ? Math.min(1, currentTime / totalDuration) : 0
+  const progress = totalDuration > 0 ? Math.min(1, currentTime / totalDuration) : 0
 
   // ── Style variables based on variant ──────────────────────────
   const isDark = variant === 'mobile'

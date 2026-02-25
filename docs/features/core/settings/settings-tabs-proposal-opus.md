@@ -1,8 +1,8 @@
 # Settings Panel Tab Structure — Proposal
 
-> **Author:** Opus (subagent)  
-> **Date:** 2026-02-04  
-> **Status:** Proposal — no code changes  
+> **Author:** Opus (subagent)
+> **Date:** 2026-02-04
+> **Status:** Proposal — no code changes
 > **File:** `frontend/src/components/sessions/SettingsPanel.tsx` (1609 lines)
 
 ---
@@ -40,7 +40,7 @@ The settings panel is a full-screen overlay with a 3-column grid layout containi
 - 📺 Display (animations toggle, achievement badges)
 - 🎉 Fun & Playfulness (easter eggs, sound effects)
 
-**Reasoning:**  
+**Reasoning:**
 All four sections answer the same question: *"How does it look and feel?"* Theme, world style, visual toggles, and playfulness are all aesthetic/experiential. Users who want to customize the vibe land here once and tweak everything in one place.
 
 **Layout suggestion:** 2-column within this tab. Left: Appearance + World Environment (visual/heavy). Right: Display + Fun (toggle-light).
@@ -54,7 +54,7 @@ All four sections answer the same question: *"How does it look and feel?"* Theme
 - 🏢 Room Management (CRUD rooms with icons, colors, reordering)
 - 🔀 Routing Rules (session→room mapping rules with priorities)
 
-**Reasoning:**  
+**Reasoning:**
 These two sections are tightly coupled — you create rooms, then define rules that route sessions into them. They already sit together in the current center column. This is the "spatial organization" tab: *"Where do sessions go?"*
 
 This tab will feel like a mini-admin panel for workspace topology. It's the most complex tab (dialogs for create/edit/delete), so isolating it keeps the other tabs clean.
@@ -69,7 +69,7 @@ This tab will feel like a mini-admin panel for workspace topology. It's the most
 - 🎮 Playground (parking idle threshold, movement speed)
 - ⏱️ Thresholds & Timing (all ConfigField groups: status thresholds, bot thresholds, activity detection, parking limits, bot movement speeds, polling intervals)
 
-**Reasoning:**  
+**Reasoning:**
 These sections all control *how the system behaves over time* — polling, timing, speed, thresholds. They're the "knobs and dials" that tune runtime behavior. A user adjusting how quickly sessions go idle will also want to tweak bot movement speed and refresh rates.
 
 **Rename suggestion:** Consider renaming "Playground" to something like "3D World" or "World Behavior" since "Playground" is ambiguous (could mean a code playground). The current content (parking threshold + movement speed) is really about the 3D world simulation.
@@ -83,7 +83,7 @@ These sections all control *how the system behaves over time* — polling, timin
 - 💾 Data & Backup (export, import, snapshots, backup history)
 - 🔧 Developer (grid overlay, lighting editor, debug bots)
 
-**Reasoning:**  
+**Reasoning:**
 These are maintenance/power-user sections that most users touch rarely. Backups are an admin concern; developer toggles are for debugging. Grouping them prevents them from cluttering the everyday tabs.
 
 **Layout suggestion:** Data & Backup on top (more commonly used for exports). Developer section below.

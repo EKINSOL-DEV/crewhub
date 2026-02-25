@@ -163,13 +163,7 @@ export function PreviewPanel({
   // Create a wrapper that renders the component with default props
   const PreviewWrapper = useMemo(() => {
     if (!PropComponent) return null
-    return () => (
-      <PropComponent
-        position={[0, 0, 0]}
-        rotation={0}
-        cellSize={1}
-      />
-    )
+    return () => <PropComponent position={[0, 0, 0]} rotation={0} cellSize={1} />
   }, [PropComponent])
 
   return (
@@ -184,10 +178,16 @@ export function PreviewPanel({
       {/* 3D Preview Canvas */}
       <div style={CANVAS_CONTAINER}>
         {isGenerating ? (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', color: 'hsl(45 93% 58%)', fontSize: '14px',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              color: 'hsl(45 93% 58%)',
+              fontSize: '14px',
+            }}
+          >
             ⚙️ Generating prop...
           </div>
         ) : canPreview && PreviewWrapper ? (
@@ -199,31 +199,36 @@ export function PreviewPanel({
                 </Stage>
               </Suspense>
             </PropErrorBoundary>
-            <OrbitControls
-              makeDefault
-              enablePan
-              enableZoom
-              minDistance={1}
-              maxDistance={10}
-            />
+            <OrbitControls makeDefault enablePan enableZoom minDistance={1} maxDistance={10} />
             <ambientLight intensity={0.4} />
             <directionalLight position={[5, 5, 5]} intensity={0.8} />
           </Canvas>
         ) : displayError ? (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', padding: '20px',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              padding: '20px',
+            }}
+          >
             <div style={{ textAlign: 'center', color: 'hsl(var(--destructive))' }}>
               <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚠️</div>
               <div style={{ fontSize: '13px' }}>Render failed</div>
             </div>
           </div>
         ) : (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', color: 'hsl(var(--muted-foreground))', fontSize: '13px',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              color: 'hsl(var(--muted-foreground))',
+              fontSize: '13px',
+            }}
+          >
             No preview available
           </div>
         )}
@@ -232,19 +237,12 @@ export function PreviewPanel({
       {/* Controls */}
       <div style={CONTROLS_STYLE}>
         {/* Error display */}
-        {displayError && (
-          <div style={ERROR_BOX}>
-            {displayError}
-          </div>
-        )}
+        {displayError && <div style={ERROR_BOX}>{displayError}</div>}
 
         {/* Buttons */}
         <div style={BUTTON_ROW}>
           {displayError ? (
-            <button
-              style={RETRY_BTN}
-              onClick={onRetry || onRegenerate}
-            >
+            <button style={RETRY_BTN} onClick={onRetry || onRegenerate}>
               🔄 Retry
             </button>
           ) : (

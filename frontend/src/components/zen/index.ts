@@ -21,7 +21,12 @@ export { ZenThemePicker } from './ZenThemePicker'
 export { ZenCommandPalette, useCommandRegistry, type Command } from './ZenCommandPalette'
 
 // ── Hooks ─────────────────────────────────────────────────────────
-export { useZenMode, ZenModeProvider, type UseZenModeReturn, type ZenProjectFilter } from './hooks/useZenMode'
+export {
+  useZenMode,
+  ZenModeProvider,
+  type UseZenModeReturn,
+  type ZenProjectFilter,
+} from './hooks/useZenMode'
 export { useZenLayout, LAYOUT_PRESETS, type UseZenLayoutReturn } from './hooks/useZenLayout'
 export { useZenKeyboard, KEYBOARD_SHORTCUTS, type ShortcutHint } from './hooks/useZenKeyboard'
 export { useZenTheme, type UseZenThemeReturn } from './hooks/useZenTheme'

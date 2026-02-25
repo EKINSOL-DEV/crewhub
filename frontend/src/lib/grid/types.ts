@@ -8,11 +8,11 @@ export type Direction = 'north' | 'south' | 'east' | 'west'
 export interface GridCell {
   type: CellType
   walkable: boolean
-  propId?: string                          // e.g., 'desk', 'monitor', 'server-rack', 'plant'
+  propId?: string // e.g., 'desk', 'monitor', 'server-rack', 'plant'
   interactionType?: InteractionType
-  rotation?: 0 | 90 | 180 | 270           // degrees
-  span?: { w: number; d: number }          // multi-cell props (desk = 2x1)
-  spanParent?: { x: number; z: number }    // points to top-left cell of multi-cell prop
+  rotation?: 0 | 90 | 180 | 270 // degrees
+  span?: { w: number; d: number } // multi-cell props (desk = 2x1)
+  spanParent?: { x: number; z: number } // points to top-left cell of multi-cell prop
 }
 
 export interface PropPlacement {
@@ -26,13 +26,13 @@ export interface PropPlacement {
 }
 
 export interface RoomBlueprint {
-  id: string                               // e.g., 'headquarters', 'dev-room'
-  name: string                             // display name
-  gridWidth: number                        // cells (20)
-  gridDepth: number                        // cells (20)
-  cellSize: number                         // world units per cell (0.6)
-  cells: GridCell[][]                      // [z][x] — row-major
-  placements?: PropPlacement[]             // original placements from JSON (for editing)
+  id: string // e.g., 'headquarters', 'dev-room'
+  name: string // display name
+  gridWidth: number // cells (20)
+  gridDepth: number // cells (20)
+  cellSize: number // world units per cell (0.6)
+  cells: GridCell[][] // [z][x] — row-major
+  placements?: PropPlacement[] // original placements from JSON (for editing)
   doorPositions: { x: number; z: number; facing: Direction }[]
   walkableCenter: { x: number; z: number } // grid coords of center walkable area
   interactionPoints: {
@@ -44,5 +44,5 @@ export interface RoomBlueprint {
 
 export interface BuildingLayout {
   rooms: { blueprintId: string; gridX: number; gridZ: number }[]
-  hallways: { fromRoom: number; toRoom: number }[]  // indices into rooms array
+  hallways: { fromRoom: number; toRoom: number }[] // indices into rooms array
 }

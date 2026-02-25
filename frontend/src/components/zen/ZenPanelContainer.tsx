@@ -13,7 +13,7 @@ interface ZenPanelContainerProps {
   canClose: boolean
   onFocus: (panelId: string) => void
   onClose: (panelId: string) => void
-  onResize?: (panelId: string, ratio: number) => void  // L3: renamed delta → ratio (absolute 0–1 value)
+  onResize?: (panelId: string, ratio: number) => void // L3: renamed delta → ratio (absolute 0–1 value)
   onSplit?: (panelId: string, direction: 'row' | 'col') => void
   onChangePanelType?: (panelId: string, type: PanelType) => void
   renderPanel: (panel: LeafNode) => ReactNode
@@ -41,14 +41,17 @@ export function ZenPanelContainer({
 }: ZenPanelContainerProps) {
   // C1: Stabilize onRatioChange with useCallback so SplitContainer memoization isn't defeated.
   // Must be called unconditionally (before the leaf early-return) per Rules of Hooks.
-  const handleRatioChange = useCallback((newRatio: number) => {
-    if (node.kind === 'split') {
-      const panelId = findFirstLeafPanelId(node.a)
-      if (panelId && onResize) {
-        onResize(panelId, newRatio)
+  const handleRatioChange = useCallback(
+    (newRatio: number) => {
+      if (node.kind === 'split') {
+        const panelId = findFirstLeafPanelId(node.a)
+        if (panelId && onResize) {
+          onResize(panelId, newRatio)
+        }
       }
-    }
-  }, [node, onResize])
+    },
+    [node, onResize]
+  )
 
   if (node.kind === 'leaf') {
     return (
@@ -60,7 +63,9 @@ export function ZenPanelContainer({
         onClose={() => onClose(node.panelId)}
         onSplitVertical={_onSplit ? () => _onSplit(node.panelId, 'row') : undefined}
         onSplitHorizontal={_onSplit ? () => _onSplit(node.panelId, 'col') : undefined}
-        onChangePanelType={onChangePanelType ? (type) => onChangePanelType(node.panelId, type) : undefined}
+        onChangePanelType={
+          onChangePanelType ? (type) => onChangePanelType(node.panelId, type) : undefined
+        }
       >
         {renderPanel(node)}
       </ZenPanel>
@@ -69,11 +74,7 @@ export function ZenPanelContainer({
 
   // Split node - render both children with a resize handle between them
   return (
-    <SplitContainer
-      direction={node.dir}
-      ratio={node.ratio}
-      onRatioChange={handleRatioChange}
-    >
+    <SplitContainer direction={node.dir} ratio={node.ratio} onRatioChange={handleRatioChange}>
       <ZenPanelContainer
         node={node.a}
         focusedPanelId={focusedPanelId}
@@ -117,7 +118,11 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
   const isDraggingRef = useRef(false)
   const activePointerIdRef = useRef<number | null>(null)
   // L1: Remember the body styles that were active before drag so we restore them exactly
-  const prevBodyStylesRef = useRef<{ cursor: string; userSelect: string; webkitUserSelect: string } | null>(null)
+  const prevBodyStylesRef = useRef<{
+    cursor: string
+    userSelect: string
+    webkitUserSelect: string
+  } | null>(null)
   // M3: rAF handle for throttling pointer-move processing to one update per frame
   const rafRef = useRef<number | null>(null)
 
@@ -173,94 +178,106 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
 
   // ── Pointer event handlers (all on the handle element via pointer capture) ──
 
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    // L2: Ignore a second pointer while a drag is already in progress
-    if (isDraggingRef.current) return
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      // L2: Ignore a second pointer while a drag is already in progress
+      if (isDraggingRef.current) return
 
-    e.preventDefault()
-    // Stop propagation so nested SplitContainers don't both start dragging
-    e.stopPropagation()
+      e.preventDefault()
+      // Stop propagation so nested SplitContainers don't both start dragging
+      e.stopPropagation()
 
-    // Capture the pointer: ALL subsequent pointermove/pointerup events for this
-    // pointer will be delivered to this element even if the cursor leaves the
-    // window. This is the key fix — no more document-level mousemove/mouseup.
-    e.currentTarget.setPointerCapture(e.pointerId)
-    activePointerIdRef.current = e.pointerId
-    isDraggingRef.current = true
-    setIsDragging(true)
-
-    const isRow = direction === 'row'
-    // L1: Snapshot current body styles so we can restore them exactly on drag end
-    prevBodyStylesRef.current = {
-      cursor: document.body.style.cursor,
-      userSelect: document.body.style.userSelect,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      webkitUserSelect: (document.body.style as any).webkitUserSelect ?? '',
-    }
-    document.body.style.cursor = isRow ? 'col-resize' : 'row-resize'
-    document.body.style.userSelect = 'none'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(document.body.style as any).webkitUserSelect = 'none'
-  }, [direction])
-
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    // Ignore events from other pointers (e.g. multi-touch)
-    if (!isDraggingRef.current || e.pointerId !== activePointerIdRef.current) return
-    e.preventDefault()
-
-    // M3: Capture coordinates immediately — the synthetic event object is recycled
-    // by React and must not be accessed inside the rAF callback.
-    const clientX = e.clientX
-    const clientY = e.clientY
-
-    // M3: Throttle to one layout recalculation per animation frame
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current)
-    }
-
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null
-      const container = containerRef.current
-      if (!container) return
+      // Capture the pointer: ALL subsequent pointermove/pointerup events for this
+      // pointer will be delivered to this element even if the cursor leaves the
+      // window. This is the key fix — no more document-level mousemove/mouseup.
+      e.currentTarget.setPointerCapture(e.pointerId)
+      activePointerIdRef.current = e.pointerId
+      isDraggingRef.current = true
+      setIsDragging(true)
 
       const isRow = direction === 'row'
-      // Always read a fresh rect — no stale-closure issue because we call this on each move
-      const rect = container.getBoundingClientRect()
-      const handleSize = 4 // resize handle width/height in pixels
-      const totalSize = isRow ? rect.width : rect.height
-      const availableSize = totalSize - handleSize
-
-      if (availableSize <= 0) return
-
-      // Mouse position relative to the container
-      const mousePos = isRow ? clientX - rect.left : clientY - rect.top
-      // Make the handle center follow the cursor
-      const panelSize = mousePos - handleSize / 2
-
-      const minRatio = MIN_PANEL_SIZE / availableSize
-      const maxRatio = 1 - MIN_PANEL_SIZE / availableSize
-
-      let newRatio = panelSize / availableSize
-      newRatio = Math.max(minRatio, Math.min(maxRatio, newRatio))
-
-      if (Math.abs(newRatio - ratioRef.current) > 0.001) {
-        onRatioChange(newRatio)
-        ratioRef.current = newRatio
+      // L1: Snapshot current body styles so we can restore them exactly on drag end
+      prevBodyStylesRef.current = {
+        cursor: document.body.style.cursor,
+        userSelect: document.body.style.userSelect,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        webkitUserSelect: (document.body.style as any).webkitUserSelect ?? '',
       }
-    })
-  }, [direction, onRatioChange])
+      document.body.style.cursor = isRow ? 'col-resize' : 'row-resize'
+      document.body.style.userSelect = 'none'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(document.body.style as any).webkitUserSelect = 'none'
+    },
+    [direction]
+  )
 
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerId !== activePointerIdRef.current) return
-    endDrag()
-  }, [endDrag])
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      // Ignore events from other pointers (e.g. multi-touch)
+      if (!isDraggingRef.current || e.pointerId !== activePointerIdRef.current) return
+      e.preventDefault()
+
+      // M3: Capture coordinates immediately — the synthetic event object is recycled
+      // by React and must not be accessed inside the rAF callback.
+      const clientX = e.clientX
+      const clientY = e.clientY
+
+      // M3: Throttle to one layout recalculation per animation frame
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+      }
+
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null
+        const container = containerRef.current
+        if (!container) return
+
+        const isRow = direction === 'row'
+        // Always read a fresh rect — no stale-closure issue because we call this on each move
+        const rect = container.getBoundingClientRect()
+        const handleSize = 4 // resize handle width/height in pixels
+        const totalSize = isRow ? rect.width : rect.height
+        const availableSize = totalSize - handleSize
+
+        if (availableSize <= 0) return
+
+        // Mouse position relative to the container
+        const mousePos = isRow ? clientX - rect.left : clientY - rect.top
+        // Make the handle center follow the cursor
+        const panelSize = mousePos - handleSize / 2
+
+        const minRatio = MIN_PANEL_SIZE / availableSize
+        const maxRatio = 1 - MIN_PANEL_SIZE / availableSize
+
+        let newRatio = panelSize / availableSize
+        newRatio = Math.max(minRatio, Math.min(maxRatio, newRatio))
+
+        if (Math.abs(newRatio - ratioRef.current) > 0.001) {
+          onRatioChange(newRatio)
+          ratioRef.current = newRatio
+        }
+      })
+    },
+    [direction, onRatioChange]
+  )
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.pointerId !== activePointerIdRef.current) return
+      endDrag()
+    },
+    [endDrag]
+  )
 
   // pointercancel fires when the browser forcibly cancels the pointer
   // (e.g. touch interrupted by a phone call, permission dialog, etc.)
-  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerId !== activePointerIdRef.current) return
-    endDrag()
-  }, [endDrag])
+  const handlePointerCancel = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.pointerId !== activePointerIdRef.current) return
+      endDrag()
+    },
+    [endDrag]
+  )
 
   const isRow = direction === 'row'
 

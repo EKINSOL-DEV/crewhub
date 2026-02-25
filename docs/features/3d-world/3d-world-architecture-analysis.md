@@ -919,7 +919,7 @@ interface ModManifest {
 
 class ModLoader {
   private mods = new Map<string, LoadedMod>()
-  
+
   async loadMod(manifest: ModManifest): Promise<void> { /* ... */ }
   unloadMod(modId: string): void { /* ... */ }
   getLoadedMods(): LoadedMod[] { /* ... */ }

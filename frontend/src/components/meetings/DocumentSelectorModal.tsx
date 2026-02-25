@@ -42,8 +42,8 @@ export function DocumentSelectorModal({
     setWarning(undefined)
     setFlatFiles([])
     fetch(`${API_BASE}/api/projects/${projectId}/markdown-files`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         const treeData = data.tree || []
         setTree(treeData)
         setFlatFiles(data.files || [])
@@ -84,21 +84,25 @@ export function DocumentSelectorModal({
         />
 
         <div className="border rounded-md p-2 flex-1 min-h-[300px] max-h-[50vh] overflow-y-auto">
-          {loading && <div className="text-sm text-muted-foreground p-4 text-center">Loading files...</div>}
+          {loading && (
+            <div className="text-sm text-muted-foreground p-4 text-center">Loading files...</div>
+          )}
           {!loading && tree && tree.length === 0 && (
             <div className="text-sm text-muted-foreground p-4 text-center">
               {warning || 'No markdown files found'}
             </div>
           )}
-          {!loading && tree && tree.map((node, i) => (
-            <FolderTreeNode
-              key={node.path || node.name + i}
-              node={node}
-              onSelectFile={setSelectedPath}
-              selectedPath={selectedPath}
-              searchFilter={search}
-            />
-          ))}
+          {!loading &&
+            tree &&
+            tree.map((node, i) => (
+              <FolderTreeNode
+                key={node.path || node.name + i}
+                node={node}
+                onSelectFile={setSelectedPath}
+                selectedPath={selectedPath}
+                searchFilter={search}
+              />
+            ))}
         </div>
 
         {selectedPath && (
@@ -108,8 +112,12 @@ export function DocumentSelectorModal({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSelect} disabled={!selectedPath}>Select</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSelect} disabled={!selectedPath}>
+            Select
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

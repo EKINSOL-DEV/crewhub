@@ -1,7 +1,8 @@
 """Pydantic models for AI-orchestrated meetings."""
 
 from enum import Enum
-from typing import Optional, Literal
+from typing import Literal, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -31,11 +32,13 @@ ROUND_STATES = {
 class MeetingConfig(BaseModel):
     participants: list[str]  # agent IDs or session keys, in speaking order
     num_rounds: int = Field(default=3, ge=1, le=5)
-    round_topics: list[str] = Field(default_factory=lambda: [
-        "What have you been working on?",
-        "What will you focus on next?",
-        "Any blockers, risks, or things you need help with?",
-    ])
+    round_topics: list[str] = Field(
+        default_factory=lambda: [
+            "What have you been working on?",
+            "What will you focus on next?",
+            "Any blockers, risks, or things you need help with?",
+        ]
+    )
     max_tokens_per_turn: int = 200
     synthesis_max_tokens: int = 500
     document_path: Optional[str] = None

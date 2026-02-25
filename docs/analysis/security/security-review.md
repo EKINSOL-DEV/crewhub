@@ -1,7 +1,7 @@
 # Security Review: CrewHub Hardening Plan
 
-**Reviewed document:** `docs/security-hardening-plan.md` (v1.0, 2026-02-09)  
-**Reviewer date:** 2026-02-09  
+**Reviewed document:** `docs/security-hardening-plan.md` (v1.0, 2026-02-09)
+**Reviewer date:** 2026-02-09
 **Scope:** Threat model, auth/session design, token handling, HTTPS/TLS, Docker hardening, migration safety, defense-in-depth, OWASP coverage
 
 ---

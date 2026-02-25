@@ -31,7 +31,7 @@ function TabItem({ tab, isActive, isOnly, onSelect, onClose, onRename }: TabItem
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(tab.label)
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
   // Focus input when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -39,15 +39,18 @@ function TabItem({ tab, isActive, isOnly, onSelect, onClose, onRename }: TabItem
       inputRef.current.select()
     }
   }, [isEditing])
-  
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (onRename) {
-      setEditValue(tab.label)
-      setIsEditing(true)
-    }
-  }, [onRename, tab.label])
-  
+
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (onRename) {
+        setEditValue(tab.label)
+        setIsEditing(true)
+      }
+    },
+    [onRename, tab.label]
+  )
+
   const handleRenameSubmit = useCallback(() => {
     const trimmed = editValue.trim()
     if (trimmed && trimmed !== tab.label) {
@@ -55,25 +58,31 @@ function TabItem({ tab, isActive, isOnly, onSelect, onClose, onRename }: TabItem
     }
     setIsEditing(false)
   }, [editValue, tab.label, onRename])
-  
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleRenameSubmit()
-    } else if (e.key === 'Escape') {
-      setEditValue(tab.label)
-      setIsEditing(false)
-    }
-  }, [handleRenameSubmit, tab.label])
-  
-  const handleClose = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!isOnly) {
-      onClose()
-    }
-  }, [isOnly, onClose])
-  
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        handleRenameSubmit()
+      } else if (e.key === 'Escape') {
+        setEditValue(tab.label)
+        setIsEditing(false)
+      }
+    },
+    [handleRenameSubmit, tab.label]
+  )
+
+  const handleClose = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (!isOnly) {
+        onClose()
+      }
+    },
+    [isOnly, onClose]
+  )
+
   const projectColor = tab.projectFilter?.projectColor
-  
+
   return (
     <div
       className={`zen-tab ${isActive ? 'zen-tab-active' : ''}`}
@@ -93,7 +102,7 @@ function TabItem({ tab, isActive, isOnly, onSelect, onClose, onRename }: TabItem
           }}
         />
       )}
-      
+
       {/* Tab label */}
       {isEditing ? (
         <input
@@ -109,7 +118,7 @@ function TabItem({ tab, isActive, isOnly, onSelect, onClose, onRename }: TabItem
       ) : (
         <span className="zen-tab-label">{tab.label}</span>
       )}
-      
+
       {/* Close button */}
       {!isOnly && (
         <button
@@ -139,7 +148,7 @@ export function ZenTabBar({
 }: ZenTabBarProps) {
   const tabListRef = useRef<HTMLDivElement>(null)
   const [showScrollButtons, setShowScrollButtons] = useState(false)
-  
+
   // Check if scroll buttons are needed
   useEffect(() => {
     const checkScroll = () => {
@@ -148,22 +157,22 @@ export function ZenTabBar({
         setShowScrollButtons(scrollWidth > clientWidth)
       }
     }
-    
+
     checkScroll()
     window.addEventListener('resize', checkScroll)
-    
+
     // Also check when tabs change
     const observer = new ResizeObserver(checkScroll)
     if (tabListRef.current) {
       observer.observe(tabListRef.current)
     }
-    
+
     return () => {
       window.removeEventListener('resize', checkScroll)
       observer.disconnect()
     }
   }, [tabs.length])
-  
+
   // Scroll active tab into view
   useEffect(() => {
     const activeEl = tabListRef.current?.querySelector('.zen-tab-active')
@@ -171,38 +180,41 @@ export function ZenTabBar({
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
     }
   }, [activeTabId])
-  
+
   const scrollLeft = useCallback(() => {
     if (tabListRef.current) {
       tabListRef.current.scrollBy({ left: -150, behavior: 'smooth' })
     }
   }, [])
-  
+
   const scrollRight = useCallback(() => {
     if (tabListRef.current) {
       tabListRef.current.scrollBy({ left: 150, behavior: 'smooth' })
     }
   }, [])
-  
+
   const handleAddTab = useCallback(() => {
     onAddTab()
   }, [onAddTab])
-  
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    // Keyboard navigation within tab bar
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      const currentIndex = tabs.findIndex(t => t.id === activeTabId)
-      if (currentIndex === -1) return
-      
-      const delta = e.key === 'ArrowLeft' ? -1 : 1
-      const newIndex = (currentIndex + delta + tabs.length) % tabs.length
-      onSwitchTab(tabs[newIndex].id)
-      e.preventDefault()
-    }
-  }, [tabs, activeTabId, onSwitchTab])
-  
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      // Keyboard navigation within tab bar
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const currentIndex = tabs.findIndex((t) => t.id === activeTabId)
+        if (currentIndex === -1) return
+
+        const delta = e.key === 'ArrowLeft' ? -1 : 1
+        const newIndex = (currentIndex + delta + tabs.length) % tabs.length
+        onSwitchTab(tabs[newIndex].id)
+        e.preventDefault()
+      }
+    },
+    [tabs, activeTabId, onSwitchTab]
+  )
+
   const isOnly = tabs.length === 1
-  
+
   return (
     <div className="zen-tab-bar" role="tablist" onKeyDown={handleKeyDown}>
       {/* Scroll left button */}
@@ -216,10 +228,10 @@ export function ZenTabBar({
           ◀
         </button>
       )}
-      
+
       {/* Tab list */}
       <div className="zen-tab-list" ref={tabListRef}>
-        {tabs.map(tab => (
+        {tabs.map((tab) => (
           <TabItem
             key={tab.id}
             tab={tab}
@@ -231,7 +243,7 @@ export function ZenTabBar({
           />
         ))}
       </div>
-      
+
       {/* Scroll right button */}
       {showScrollButtons && (
         <button
@@ -243,7 +255,7 @@ export function ZenTabBar({
           ▶
         </button>
       )}
-      
+
       {/* Add tab button */}
       <button
         type="button"
@@ -255,7 +267,7 @@ export function ZenTabBar({
       >
         +
       </button>
-      
+
       {/* Reopen closed tab button */}
       {closedTabsCount > 0 && onReopenClosedTab && (
         <button

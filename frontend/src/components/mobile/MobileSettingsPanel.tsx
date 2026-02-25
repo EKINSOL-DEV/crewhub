@@ -62,7 +62,10 @@ function applyThemeClassOnly(isDark: boolean): void {
   root.style.setProperty('--mobile-msg-assistant-bg', isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9')
   root.style.setProperty('--mobile-msg-assistant-text', isDark ? '#e2e8f0' : '#1e293b')
   root.style.setProperty('--mobile-input-bg', isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9')
-  root.style.setProperty('--mobile-input-border', isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.15)')
+  root.style.setProperty(
+    '--mobile-input-border',
+    isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.15)'
+  )
   root.style.setProperty('--mobile-divider', isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)')
   root.style.setProperty('--mobile-overlay-bg', isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)')
   root.style.setProperty('--mobile-attach-btn-bg', isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0')
@@ -128,8 +131,8 @@ export function initAppSettings(): void {
   const cTheme = (localStorage.getItem('crewhub-theme') as AppTheme | null) ?? 'dark'
 
   const isDark = zenThemeId
-    ? !ZEN_LIGHT_THEMES.includes(zenThemeId)   // derive from zen-theme type
-    : resolveThemeToDark(cTheme)                // fall back to crewhub-theme
+    ? !ZEN_LIGHT_THEMES.includes(zenThemeId) // derive from zen-theme type
+    : resolveThemeToDark(cTheme) // fall back to crewhub-theme
 
   applyThemeClassOnly(isDark)
 
@@ -140,8 +143,10 @@ export function initAppSettings(): void {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function isTauri(): boolean {
-  return typeof (window as any).__TAURI_INTERNALS__ !== 'undefined' ||
-         typeof (window as any).__TAURI__ !== 'undefined'
+  return (
+    typeof (window as any).__TAURI_INTERNALS__ !== 'undefined' ||
+    typeof (window as any).__TAURI__ !== 'undefined'
+  )
 }
 
 function getEffectiveUrl(): string {
@@ -164,11 +169,17 @@ interface SectionProps {
 function Section({ title, children }: SectionProps) {
   return (
     <div style={{ marginBottom: 28 }}>
-      <div style={{
-        fontSize: 11, fontWeight: 600, letterSpacing: '0.07em',
-        textTransform: 'uppercase', color: '#475569',
-        marginBottom: 10, paddingLeft: 2,
-      }}>
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.07em',
+          textTransform: 'uppercase',
+          color: '#475569',
+          marginBottom: 10,
+          paddingLeft: 2,
+        }}
+      >
         {title}
       </div>
       {children}
@@ -182,28 +193,44 @@ interface SegmentedProps<T extends string> {
   onChange: (v: T) => void
   accentColor?: string
 }
-function Segmented<T extends string>({ value, options, onChange, accentColor = '#6366f1' }: SegmentedProps<T>) {
+function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+  accentColor = '#6366f1',
+}: SegmentedProps<T>) {
   return (
-    <div style={{
-      display: 'flex', gap: 4,
-      background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
-      borderRadius: 12, padding: 4,
-      border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
-    }}>
-      {options.map(opt => {
+    <div
+      style={{
+        display: 'flex',
+        gap: 4,
+        background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+        borderRadius: 12,
+        padding: 4,
+        border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+      }}
+    >
+      {options.map((opt) => {
         const active = opt.value === value
         return (
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
             style={{
-              flex: 1, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', gap: 5,
-              padding: '8px 6px', borderRadius: 9, border: 'none',
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 5,
+              padding: '8px 6px',
+              borderRadius: 9,
+              border: 'none',
               background: active ? accentColor : 'transparent',
               color: active ? '#fff' : 'var(--mobile-text-muted, #94a3b8)',
-              fontSize: 13, fontWeight: active ? 600 : 400,
-              cursor: 'pointer', transition: 'all 0.15s',
+              fontSize: 13,
+              fontWeight: active ? 600 : 400,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
             }}
           >
             {opt.icon}
@@ -226,8 +253,11 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
   return (
     <div
       style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 14px', borderRadius: 12,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 14px',
+        borderRadius: 12,
         background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
         border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
         cursor: 'pointer',
@@ -235,25 +265,41 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
       onClick={() => onChange(!value)}
     >
       <div>
-        <div style={{ fontSize: 14, color: 'var(--mobile-text, #e2e8f0)', fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 14, color: 'var(--mobile-text, #e2e8f0)', fontWeight: 500 }}>
+          {label}
+        </div>
         {description && (
-          <div style={{ fontSize: 11, color: 'var(--mobile-text-muted, #64748b)', marginTop: 2 }}>{description}</div>
+          <div style={{ fontSize: 11, color: 'var(--mobile-text-muted, #64748b)', marginTop: 2 }}>
+            {description}
+          </div>
         )}
       </div>
       {/* Track */}
-      <div style={{
-        width: 44, height: 26, borderRadius: 13, flexShrink: 0,
-        background: value ? accentColor : 'var(--mobile-surface2, rgba(255,255,255,0.1))',
-        position: 'relative', transition: 'background 0.2s',
-      }}>
+      <div
+        style={{
+          width: 44,
+          height: 26,
+          borderRadius: 13,
+          flexShrink: 0,
+          background: value ? accentColor : 'var(--mobile-surface2, rgba(255,255,255,0.1))',
+          position: 'relative',
+          transition: 'background 0.2s',
+        }}
+      >
         {/* Thumb */}
-        <div style={{
-          position: 'absolute', top: 3,
-          left: value ? 21 : 3,
-          width: 20, height: 20, borderRadius: 10,
-          background: '#fff', transition: 'left 0.2s',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            top: 3,
+            left: value ? 21 : 3,
+            width: 20,
+            height: 20,
+            borderRadius: 10,
+            background: '#fff',
+            transition: 'left 0.2s',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+          }}
+        />
       </div>
     </div>
   )
@@ -274,9 +320,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
   const [backendUrl, setBackendUrl] = useState(
     () => localStorage.getItem('crewhub_backend_url') ?? ''
   )
-  const [debugMode, setDebugMode] = useState(
-    () => localStorage.getItem('crewhub-debug') === 'true'
-  )
+  const [debugMode, setDebugMode] = useState(() => localStorage.getItem('crewhub-debug') === 'true')
   const [fontSize, setFontSizeState] = useState<FontSize>(
     () => (localStorage.getItem('crewhub-font-size') as FontSize | null) ?? 'normal'
   )
@@ -294,15 +338,15 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
     setMicEnumerating(true)
     try {
       // Request permission first so labels are populated
-      await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
-        s.getTracks().forEach(t => t.stop())
+      await navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => {
+        s.getTracks().forEach((t) => t.stop())
       })
       const devices = await navigator.mediaDevices.enumerateDevices()
-      setMicDevices(devices.filter(d => d.kind === 'audioinput'))
+      setMicDevices(devices.filter((d) => d.kind === 'audioinput'))
     } catch {
       // Permission denied — list may be empty; that's fine
       const devices = await navigator.mediaDevices.enumerateDevices().catch(() => [])
-      setMicDevices(devices.filter(d => d.kind === 'audioinput'))
+      setMicDevices(devices.filter((d) => d.kind === 'audioinput'))
     } finally {
       setMicEnumerating(false)
     }
@@ -319,10 +363,15 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
 
   // Enumerate mics when panel opens
   useEffect(() => {
-    if (open && micDevices.length === 0 && typeof navigator !== 'undefined' && navigator.mediaDevices) {
+    if (
+      open &&
+      micDevices.length === 0 &&
+      typeof navigator !== 'undefined' &&
+      navigator.mediaDevices
+    ) {
       void handleEnumerateMics()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   // ── Apply changes reactively ────
@@ -372,7 +421,9 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
   // Close on escape
   useEffect(() => {
     if (!open) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [open, onClose])
@@ -386,7 +437,9 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
       <div
         onClick={handleBackdropClick}
         style={{
-          position: 'fixed', inset: 0, zIndex: 10000,
+          position: 'fixed',
+          inset: 0,
+          zIndex: 10000,
           background: 'rgba(0,0,0,0.55)',
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
@@ -397,40 +450,60 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
       {/* Drawer – slides up from the bottom */}
       <div
         style={{
-          position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10001,
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 10001,
           maxHeight: '90dvh',
           background: 'var(--mobile-surface, #1e293b)',
           borderRadius: '20px 20px 0 0',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
-          display: 'flex', flexDirection: 'column',
+          display: 'flex',
+          flexDirection: 'column',
           boxShadow: '0 -8px 40px rgba(0,0,0,0.5)',
         }}
       >
         {/* Drag handle */}
-        <div style={{
-          width: 36, height: 4, borderRadius: 2,
-          background: 'rgba(255,255,255,0.15)',
-          margin: '12px auto 4px',
-          flexShrink: 0,
-        }} />
+        <div
+          style={{
+            width: 36,
+            height: 4,
+            borderRadius: 2,
+            background: 'rgba(255,255,255,0.15)',
+            margin: '12px auto 4px',
+            flexShrink: 0,
+          }}
+        />
 
         {/* Header */}
-        <div style={{
-          padding: '8px 20px 16px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
-          flexShrink: 0,
-        }}>
+        <div
+          style={{
+            padding: '8px 20px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
+            flexShrink: 0,
+          }}
+        >
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>
             ⚙️ Settings
           </h2>
           <button
             onClick={onClose}
             style={{
-              width: 32, height: 32, borderRadius: 8, border: 'none',
-              background: 'var(--mobile-surface2, rgba(255,255,255,0.06))', color: 'var(--mobile-text-secondary, #94a3b8)',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
+              color: 'var(--mobile-text-secondary, #94a3b8)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <X size={16} />
@@ -438,12 +511,15 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
         </div>
 
         {/* Scrollable content */}
-        <div style={{
-          flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch',
-          padding: '20px 20px',
-          paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
-        }}>
-
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: '20px 20px',
+            paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           {/* ── 1. Theme ─────────────────────────────────────────── */}
           <Section title="Theme">
             <Segmented<AppTheme>
@@ -462,19 +538,26 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
 
           {/* ── 2. Backend URL ────────────────────────────────────── */}
           <Section title="Backend URL">
-            <div style={{
-              background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
-              borderRadius: 12, padding: '12px 14px',
-              border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
-              marginBottom: 8,
-            }}>
+            <div
+              style={{
+                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+                borderRadius: 12,
+                padding: '12px 14px',
+                border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+                marginBottom: 8,
+              }}
+            >
               <div style={{ fontSize: 10, color: '#475569', marginBottom: 4 }}>
                 CURRENT EFFECTIVE URL
               </div>
-              <div style={{
-                fontSize: 12, color: 'var(--mobile-text-secondary, #94a3b8)',
-                wordBreak: 'break-all', fontFamily: 'monospace',
-              }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: 'var(--mobile-text-secondary, #94a3b8)',
+                  wordBreak: 'break-all',
+                  fontFamily: 'monospace',
+                }}
+              >
                 {effectiveUrl}
               </div>
               {!inTauri && (
@@ -488,14 +571,19 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
               ref={inputRef}
               type="url"
               value={backendUrl}
-              onChange={e => setBackendUrl(e.target.value)}
+              onChange={(e) => setBackendUrl(e.target.value)}
               placeholder="http://hostname:8091"
               style={{
-                width: '100%', padding: '10px 14px',
-                borderRadius: 10, border: '1px solid var(--mobile-border, rgba(255,255,255,0.12))',
-                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))', color: 'var(--mobile-text, #e2e8f0)',
-                fontSize: 14, fontFamily: 'monospace',
-                outline: 'none', boxSizing: 'border-box',
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 10,
+                border: '1px solid var(--mobile-border, rgba(255,255,255,0.12))',
+                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+                color: 'var(--mobile-text, #e2e8f0)',
+                fontSize: 14,
+                fontFamily: 'monospace',
+                outline: 'none',
+                boxSizing: 'border-box',
                 marginBottom: 8,
               }}
             />
@@ -504,22 +592,40 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
               <button
                 onClick={handleSaveUrl}
                 style={{
-                  flex: 1, padding: '10px 14px', borderRadius: 10,
-                  border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                  background: urlSaved ? '#22c55e' : '#6366f1', color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  background: urlSaved ? '#22c55e' : '#6366f1',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
                   transition: 'background 0.2s',
                 }}
               >
-                {urlSaved ? <><Check size={14} /> Saved!</> : 'Save'}
+                {urlSaved ? (
+                  <>
+                    <Check size={14} /> Saved!
+                  </>
+                ) : (
+                  'Save'
+                )}
               </button>
               <button
                 onClick={handleClearUrl}
                 style={{
-                  padding: '10px 18px', borderRadius: 10,
+                  padding: '10px 18px',
+                  borderRadius: 10,
                   border: '1px solid var(--mobile-border, rgba(255,255,255,0.1))',
-                  background: 'transparent', color: 'var(--mobile-text-secondary, #94a3b8)',
-                  cursor: 'pointer', fontSize: 13,
+                  background: 'transparent',
+                  color: 'var(--mobile-text-secondary, #94a3b8)',
+                  cursor: 'pointer',
+                  fontSize: 13,
                 }}
               >
                 Clear
@@ -557,23 +663,40 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
 
           {/* ── 4b. Microphone ───────────────────────────────────── */}
           <Section title="Microphone">
-            <div style={{
-              background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
-              borderRadius: 12, padding: '12px 14px',
-              border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
-            }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
-              }}>
-                <Mic size={14} style={{ color: 'var(--mobile-text-secondary, #94a3b8)', flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: 'var(--mobile-text, #e2e8f0)', flex: 1 }}>Input Device</span>
+            <div
+              style={{
+                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+                borderRadius: 12,
+                padding: '12px 14px',
+                border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  marginBottom: 10,
+                }}
+              >
+                <Mic
+                  size={14}
+                  style={{ color: 'var(--mobile-text-secondary, #94a3b8)', flexShrink: 0 }}
+                />
+                <span style={{ fontSize: 13, color: 'var(--mobile-text, #e2e8f0)', flex: 1 }}>
+                  Input Device
+                </span>
                 <button
                   onClick={handleEnumerateMics}
                   disabled={micEnumerating}
                   style={{
-                    padding: '4px 10px', borderRadius: 7, border: 'none',
-                    background: 'rgba(99,102,241,0.2)', color: '#a5b4fc',
-                    fontSize: 11, cursor: micEnumerating ? 'wait' : 'pointer',
+                    padding: '4px 10px',
+                    borderRadius: 7,
+                    border: 'none',
+                    background: 'rgba(99,102,241,0.2)',
+                    color: '#a5b4fc',
+                    fontSize: 11,
+                    cursor: micEnumerating ? 'wait' : 'pointer',
                   }}
                 >
                   {micEnumerating ? 'Scanning…' : 'Refresh'}
@@ -582,21 +705,28 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
 
               {micDevices.length === 0 ? (
                 <div style={{ fontSize: 12, color: '#475569' }}>
-                  {micEnumerating ? 'Scanning for microphones…' : 'Click Refresh to list microphones'}
+                  {micEnumerating
+                    ? 'Scanning for microphones…'
+                    : 'Click Refresh to list microphones'}
                 </div>
               ) : (
                 <select
                   value={selectedMicId}
-                  onChange={e => handleMicChange(e.target.value)}
+                  onChange={(e) => handleMicChange(e.target.value)}
                   style={{
-                    width: '100%', padding: '8px 10px', borderRadius: 8,
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 8,
                     border: '1px solid var(--mobile-border, rgba(255,255,255,0.12))',
-                    background: 'var(--mobile-surface2, rgba(255,255,255,0.06))', color: 'var(--mobile-text, #e2e8f0)',
-                    fontSize: 13, outline: 'none', cursor: 'pointer',
+                    background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
+                    color: 'var(--mobile-text, #e2e8f0)',
+                    fontSize: 13,
+                    outline: 'none',
+                    cursor: 'pointer',
                   }}
                 >
                   <option value="">Default microphone</option>
-                  {micDevices.map(d => (
+                  {micDevices.map((d) => (
                     <option key={d.deviceId} value={d.deviceId}>
                       {d.label || `Microphone ${d.deviceId.slice(0, 8)}`}
                     </option>
@@ -612,11 +742,14 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
 
           {/* ── 5. App Info ───────────────────────────────────────── */}
           <Section title="App Info">
-            <div style={{
-              background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
-              borderRadius: 12, overflow: 'hidden',
-              border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
-            }}>
+            <div
+              style={{
+                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+                borderRadius: 12,
+                overflow: 'hidden',
+                border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+              }}
+            >
               {[
                 { label: 'Version', value: `v${APP_VERSION}` },
                 {
@@ -632,28 +765,33 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                 <div
                   key={row.label}
                   style={{
-                    display: 'flex', alignItems: 'flex-start',
-                    justifyContent: 'space-between', padding: '11px 14px',
-                    borderBottom: i < arr.length - 1
-                      ? '1px solid var(--mobile-border, rgba(255,255,255,0.06))' : 'none',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    padding: '11px 14px',
+                    borderBottom:
+                      i < arr.length - 1
+                        ? '1px solid var(--mobile-border, rgba(255,255,255,0.06))'
+                        : 'none',
                     gap: 12,
                   }}
                 >
-                  <span style={{ fontSize: 13, color: '#64748b', flexShrink: 0 }}>
-                    {row.label}
-                  </span>
-                  <span style={{
-                    fontSize: 12, color: 'var(--mobile-text, #e2e8f0)', textAlign: 'right',
-                    wordBreak: 'break-all',
-                    fontFamily: row.mono ? 'monospace' : 'inherit',
-                  }}>
+                  <span style={{ fontSize: 13, color: '#64748b', flexShrink: 0 }}>{row.label}</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--mobile-text, #e2e8f0)',
+                      textAlign: 'right',
+                      wordBreak: 'break-all',
+                      fontFamily: row.mono ? 'monospace' : 'inherit',
+                    }}
+                  >
                     {row.value}
                   </span>
                 </div>
               ))}
             </div>
           </Section>
-
         </div>
       </div>
     </>

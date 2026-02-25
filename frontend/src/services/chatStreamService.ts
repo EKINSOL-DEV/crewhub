@@ -27,15 +27,12 @@ export function streamMessage(
   const run = async () => {
     let resp: Response
     try {
-      resp = await fetch(
-        `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/stream`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, ...(roomId ? { room_id: roomId } : {}) }),
-          signal: abort.signal,
-        }
-      )
+      resp = await fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, ...(roomId ? { room_id: roomId } : {}) }),
+        signal: abort.signal,
+      })
     } catch (e: unknown) {
       if ((e as Error).name === 'AbortError') return
       callbacks.onError((e as Error).message || 'Network error')
@@ -59,11 +56,11 @@ export function streamMessage(
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-        
+
         // Split on SSE event boundary (double newline)
         const eventBlocks = buffer.split('\n\n')
         buffer = eventBlocks.pop() ?? ''
-        
+
         // Use a flag instead of `return` inside the loop so we always
         // process ALL events in this batch before acting on `done`.
         // Prevents edge-cases where `done` arrives mid-buffer while
@@ -75,7 +72,7 @@ export function streamMessage(
           const lines = eventBlock.split('\n')
           let eventType = 'message'
           let dataLine = ''
-          
+
           for (const line of lines) {
             if (line.startsWith('event: ')) {
               eventType = line.slice(7).trim()
@@ -83,7 +80,7 @@ export function streamMessage(
               dataLine = line.slice(6).trim()
             }
           }
-          
+
           if (eventType === 'delta' && dataLine) {
             // Only deliver delta chunks when we haven't seen `done` yet
             if (!batchDone) {
@@ -138,14 +135,11 @@ export function streamMessage(
  */
 export async function isStreamingAvailable(sessionKey: string): Promise<boolean> {
   try {
-    const resp = await fetch(
-      `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/stream`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: '' }),
-      }
-    )
+    const resp = await fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '' }),
+    })
     // 400 (empty message) means endpoint exists; 404 means not available
     return resp.status !== 404
   } catch {

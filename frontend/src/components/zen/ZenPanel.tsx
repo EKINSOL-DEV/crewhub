@@ -17,7 +17,7 @@ interface PanelTypePickerProps {
 
 function PanelTypePicker({ currentType, onSelect, onClose }: PanelTypePickerProps) {
   const menuRef = useRef<HTMLDivElement>(null)
-  
+
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -28,7 +28,7 @@ function PanelTypePicker({ currentType, onSelect, onClose }: PanelTypePickerProp
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [onClose])
-  
+
   // Close on escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,10 +37,10 @@ function PanelTypePicker({ currentType, onSelect, onClose }: PanelTypePickerProp
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
-  
+
   return (
     <div className="zen-panel-type-menu" ref={menuRef}>
-      {getSelectablePanelIds().map(panelId => {
+      {getSelectablePanelIds().map((panelId) => {
         const def = getPanelDef(panelId)
         return (
           <button
@@ -88,40 +88,52 @@ export function ZenPanel({
   const [showTypePicker, setShowTypePicker] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const info = PANEL_INFO[panel.panelType]
-  
+
   // Build the display label
   let displayLabel = info.label
   if (panel.panelType === 'chat' && panel.agentName) {
     displayLabel = panel.agentName
   }
-  
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    // Don't focus if clicking on a button or interactive element
-    const target = e.target as HTMLElement
-    if (target.tagName === 'BUTTON' || target.closest('button')) {
-      return
-    }
-    onFocus()
-  }, [onFocus])
-  
-  const handleClose = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    onClose()
-  }, [onClose])
-  
-  const handleChangeType = useCallback((type: PanelType) => {
-    onChangePanelType?.(type)
-  }, [onChangePanelType])
-  
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setContextMenu({ x: e.clientX, y: e.clientY })
-    onFocus()
-  }, [onFocus])
-  
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Don't focus if clicking on a button or interactive element
+      const target = e.target as HTMLElement
+      if (target.tagName === 'BUTTON' || target.closest('button')) {
+        return
+      }
+      onFocus()
+    },
+    [onFocus]
+  )
+
+  const handleClose = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      onClose()
+    },
+    [onClose]
+  )
+
+  const handleChangeType = useCallback(
+    (type: PanelType) => {
+      onChangePanelType?.(type)
+    },
+    [onChangePanelType]
+  )
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setContextMenu({ x: e.clientX, y: e.clientY })
+      onFocus()
+    },
+    [onFocus]
+  )
+
   return (
-    <div 
+    <div
       className={`zen-panel ${isFocused ? 'zen-panel-focused' : ''}`}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
@@ -140,7 +152,11 @@ export function ZenPanel({
               <button
                 type="button"
                 className={`zen-panel-title zen-panel-title-btn ${showTypePicker ? 'active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); setShowTypePicker(!showTypePicker); if (showTypePicker) (e.currentTarget as HTMLButtonElement).blur() }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowTypePicker(!showTypePicker)
+                  if (showTypePicker) (e.currentTarget as HTMLButtonElement).blur()
+                }}
                 title="Change panel type"
               >
                 {displayLabel}
@@ -150,7 +166,10 @@ export function ZenPanel({
                 <PanelTypePicker
                   currentType={panel.panelType}
                   onSelect={handleChangeType}
-                  onClose={() => { setShowTypePicker(false); document.activeElement instanceof HTMLElement && document.activeElement.blur() }}
+                  onClose={() => {
+                    setShowTypePicker(false)
+                    document.activeElement instanceof HTMLElement && document.activeElement.blur()
+                  }}
                 />
               )}
             </div>
@@ -158,34 +177,40 @@ export function ZenPanel({
             <span className="zen-panel-title">{displayLabel}</span>
           )}
         </div>
-        
+
         <div className="zen-panel-header-right">
           {/* Split Vertical (top/bottom) - calls onSplitHorizontal internally */}
           {onSplitHorizontal && (
             <button
               type="button"
               className="zen-btn zen-btn-icon zen-panel-split"
-              onClick={(e) => { e.stopPropagation(); onSplitHorizontal(); }}
+              onClick={(e) => {
+                e.stopPropagation()
+                onSplitHorizontal()
+              }}
               title="Split vertical (Ctrl+\)"
               aria-label="Split panel vertically"
             >
               ⬍
             </button>
           )}
-          
+
           {/* Split Horizontal (left/right) - calls onSplitVertical internally */}
           {onSplitVertical && (
             <button
               type="button"
               className="zen-btn zen-btn-icon zen-panel-split"
-              onClick={(e) => { e.stopPropagation(); onSplitVertical(); }}
+              onClick={(e) => {
+                e.stopPropagation()
+                onSplitVertical()
+              }}
               title="Split horizontal (Ctrl+Shift+\)"
               aria-label="Split panel horizontally"
             >
               ⬌
             </button>
           )}
-          
+
           {/* Close button */}
           {canClose && (
             <button
@@ -200,12 +225,10 @@ export function ZenPanel({
           )}
         </div>
       </div>
-      
+
       {/* Panel Content */}
-      <div className="zen-panel-content">
-        {children}
-      </div>
-      
+      <div className="zen-panel-content">{children}</div>
+
       {/* Context Menu */}
       {contextMenu && (
         <ZenContextMenu

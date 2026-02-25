@@ -24,7 +24,13 @@ import { CameraController } from './CameraController'
 import { FirstPersonController } from './FirstPersonController'
 import { CameraDebugTracker } from './CameraDebugOverlay'
 import { meetingGatheringState } from '@/lib/meetingStore'
-import { calculateBuildingLayout, getRoomBounds, getParkingBounds, ROOM_SIZE, HALLWAY_WIDTH } from './utils/buildingLayout'
+import {
+  calculateBuildingLayout,
+  getRoomBounds,
+  getParkingBounds,
+  ROOM_SIZE,
+  HALLWAY_WIDTH,
+} from './utils/buildingLayout'
 import { getAccurateBotStatus, getActivityText } from './utils/botActivity'
 import { getBotPositionsInRoom, getBotPositionsInParking } from './utils/botPositions'
 import type { RoomBounds } from './utils/buildingLayout'
@@ -66,7 +72,10 @@ export interface SceneContentProps {
   debugRoomMap?: Map<string, string>
   /** Rooms data passed from outside Canvas (hooks don't work reliably inside R3F Canvas) */
   rooms: Room[]
-  getRoomForSession: (sessionKey: string, sessionData?: { label?: string; model?: string; channel?: string }) => string | undefined
+  getRoomForSession: (
+    sessionKey: string,
+    sessionData?: { label?: string; model?: string; channel?: string }
+  ) => string | undefined
   isRoomsLoading: boolean
   /** Session keys of bots currently in an active meeting */
   meetingParticipantKeys?: Set<string>
@@ -85,7 +94,17 @@ export interface SceneContentProps {
 
 // ─── Parking Floor ──────────────────────────────────────────────
 
-function ParkingAreaFloor({ x, z, width, depth }: { x: number; z: number; width: number; depth: number }) {
+function ParkingAreaFloor({
+  x,
+  z,
+  width,
+  depth,
+}: {
+  x: number
+  z: number
+  width: number
+  depth: number
+}) {
   const floorToon = useToonMaterialProps('#BFB090')
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.08, z]} receiveShadow>
@@ -136,7 +155,7 @@ export function SceneContent({
 
   const allSessions = useMemo(
     () => [...visibleSessions, ...parkingSessions],
-    [visibleSessions, parkingSessions],
+    [visibleSessions, parkingSessions]
   )
   const { agents: agentRuntimes } = useAgentsRegistry(allSessions)
 
@@ -199,17 +218,19 @@ export function SceneContent({
     }
 
     const placedKeys = new Set<string>()
-    const visibleKeys = new Set(visibleSessions.map(s => s.key))
+    const visibleKeys = new Set(visibleSessions.map((s) => s.key))
 
     for (const runtime of agentRuntimes) {
       if (runtime.session && visibleKeys.has(runtime.session.key)) {
-        const roomId = getRoomForSession(runtime.session.key, {
-          label: runtime.session.label,
-          model: runtime.session.model,
-          channel: runtime.session.lastChannel || runtime.session.channel,
-        })
-          || runtime.agent.default_room_id
-          || rooms[0]?.id || 'headquarters'
+        const roomId =
+          getRoomForSession(runtime.session.key, {
+            label: runtime.session.label,
+            model: runtime.session.model,
+            channel: runtime.session.lastChannel || runtime.session.channel,
+          }) ||
+          runtime.agent.default_room_id ||
+          rooms[0]?.id ||
+          'headquarters'
         const placement = buildBotPlacement(runtime.session, runtime)
         if (roomBots.has(roomId)) {
           roomBots.get(roomId)!.push(placement)
@@ -222,13 +243,15 @@ export function SceneContent({
 
       for (const child of runtime.childSessions) {
         if (placedKeys.has(child.key) || !visibleKeys.has(child.key)) continue
-        const roomId = getRoomForSession(child.key, {
-          label: child.label,
-          model: child.model,
-          channel: child.lastChannel || child.channel,
-        })
-          || runtime.agent.default_room_id
-          || rooms[0]?.id || 'headquarters'
+        const roomId =
+          getRoomForSession(child.key, {
+            label: child.label,
+            model: child.model,
+            channel: child.lastChannel || child.channel,
+          }) ||
+          runtime.agent.default_room_id ||
+          rooms[0]?.id ||
+          'headquarters'
 
         const placement = buildBotPlacement(child)
         if (roomBots.has(roomId)) {
@@ -244,13 +267,15 @@ export function SceneContent({
     for (const session of visibleSessions) {
       if (placedKeys.has(session.key)) continue
       const debugRoom = debugRoomMap?.get(session.key)
-      const roomId = debugRoom
-        || getRoomForSession(session.key, {
+      const roomId =
+        debugRoom ||
+        getRoomForSession(session.key, {
           label: session.label,
           model: session.model,
           channel: session.lastChannel || session.channel,
-        })
-        || rooms[0]?.id || 'headquarters'
+        }) ||
+        rooms[0]?.id ||
+        'headquarters'
 
       const placement = buildBotPlacement(session)
       if (roomBots.has(roomId)) {
@@ -267,8 +292,17 @@ export function SceneContent({
     }
 
     return { roomBots, parkingBots }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames, debugRoomMap])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    visibleSessions,
+    parkingSessions,
+    rooms,
+    agentRuntimes,
+    getRoomForSession,
+    isActivelyRunning,
+    displayNames,
+    debugRoomMap,
+  ])
 
   // ─── Populate meeting store with room layout for pathfinding ──
   useEffect(() => {
@@ -295,8 +329,13 @@ export function SceneContent({
   }, [layout, roomBots])
 
   const cameraRoomPositions = useMemo(
-    () => layout?.roomPositions.map(rp => ({ roomId: rp.room.id, position: rp.position, size: rp.size })) ?? [],
-    [layout],
+    () =>
+      layout?.roomPositions.map((rp) => ({
+        roomId: rp.room.id,
+        position: rp.position,
+        size: rp.size,
+      })) ?? [],
+    [layout]
   )
 
   const shouldShowLabel = (botStatus: BotStatus, botRoomId: string): boolean => {
@@ -313,7 +352,19 @@ export function SceneContent({
 
   if (isRoomsLoading || !layout) return null
 
-  const { roomPositions, buildingWidth, buildingDepth, buildingCenterX, buildingCenterZ, parkingArea, entranceX, cols, rows, gridOriginX, gridOriginZ } = layout
+  const {
+    roomPositions,
+    buildingWidth,
+    buildingDepth,
+    buildingCenterX,
+    buildingCenterZ,
+    parkingArea,
+    entranceX,
+    cols,
+    rows,
+    gridOriginX,
+    gridOriginZ,
+  } = layout
 
   return (
     <>
@@ -321,18 +372,47 @@ export function SceneContent({
       <EnvironmentSwitcher buildingWidth={buildingWidth} buildingDepth={buildingDepth} />
       <group position={[buildingCenterX, 0, buildingCenterZ]}>
         <BuildingFloor width={buildingWidth} depth={buildingDepth} />
-        <BuildingWalls width={buildingWidth} depth={buildingDepth} entranceWidth={5} entranceOffset={entranceX - buildingCenterX} />
+        <BuildingWalls
+          width={buildingWidth}
+          depth={buildingDepth}
+          entranceWidth={5}
+          entranceOffset={entranceX - buildingCenterX}
+        />
       </group>
-      <ParkingAreaFloor x={parkingArea.x} z={parkingArea.z} width={parkingArea.width} depth={parkingArea.depth} />
-      <ParkingArea3D position={[parkingArea.x, 0, parkingArea.z]} width={parkingArea.width} depth={parkingArea.depth} />
-      <HallwayFloorLines roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
-      <Hallway roomPositions={roomPositions} roomSize={ROOM_SIZE} hallwayWidth={HALLWAY_WIDTH} cols={cols} rows={rows} gridOriginX={gridOriginX} gridOriginZ={gridOriginZ} />
+      <ParkingAreaFloor
+        x={parkingArea.x}
+        z={parkingArea.z}
+        width={parkingArea.width}
+        depth={parkingArea.depth}
+      />
+      <ParkingArea3D
+        position={[parkingArea.x, 0, parkingArea.z]}
+        width={parkingArea.width}
+        depth={parkingArea.depth}
+      />
+      <HallwayFloorLines
+        roomSize={ROOM_SIZE}
+        hallwayWidth={HALLWAY_WIDTH}
+        cols={cols}
+        rows={rows}
+        gridOriginX={gridOriginX}
+        gridOriginZ={gridOriginZ}
+      />
+      <Hallway
+        roomPositions={roomPositions}
+        roomSize={ROOM_SIZE}
+        hallwayWidth={HALLWAY_WIDTH}
+        cols={cols}
+        rows={rows}
+        gridOriginX={gridOriginX}
+        gridOriginZ={gridOriginZ}
+      />
 
       <CameraController roomPositions={cameraRoomPositions} />
       <CameraDebugTracker enabled={gridDebugEnabled} />
 
       <FirstPersonController
-        roomPositions={roomPositions.map(rp => ({
+        roomPositions={roomPositions.map((rp) => ({
           roomId: rp.room.id,
           roomName: rp.room.name,
           position: rp.position,
@@ -381,16 +461,18 @@ export function SceneContent({
                 zIndexRange={[1, 5]}
                 style={{ pointerEvents: 'none' }}
               >
-                <div style={{
-                  background: 'rgba(0,0,0,0.55)',
-                  color: '#fff',
-                  padding: '3px 8px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                  fontFamily: 'system-ui, sans-serif',
-                }}>
+                <div
+                  style={{
+                    background: 'rgba(0,0,0,0.55)',
+                    color: '#fff',
+                    padding: '3px 8px',
+                    borderRadius: '10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    fontFamily: 'system-ui, sans-serif',
+                  }}
+                >
                   +{overflowCount} more
                 </div>
               </Html>
@@ -399,32 +481,35 @@ export function SceneContent({
         )
       })}
 
-      {parkingBots.length > 0 && (() => {
-        const positions = getBotPositionsInParking(
-          parkingArea.x, parkingArea.z,
-          parkingArea.width, parkingArea.depth,
-          parkingBots.length,
-        )
-        const bounds = parkingBoundsStable!
-        return parkingBots.map((bot, i) => (
-          <Bot3D
-            key={bot.key}
-            position={positions[i] || [parkingArea.x, 0.14, parkingArea.z]}
-            config={bot.config}
-            status={bot.status}
-            name={bot.name}
-            scale={bot.scale}
-            session={bot.session}
-            onClick={onBotClick}
-            roomBounds={bounds}
-            showLabel={focusLevel === 'overview' ? bot.status === 'active' : false}
-            showActivity={shouldShowActivity(bot.status, 'parking', bot.key)}
-            activity={bot.activity}
-            isActive={bot.isActive}
-            roomId="parking"
-          />
-        ))
-      })()}
+      {parkingBots.length > 0 &&
+        (() => {
+          const positions = getBotPositionsInParking(
+            parkingArea.x,
+            parkingArea.z,
+            parkingArea.width,
+            parkingArea.depth,
+            parkingBots.length
+          )
+          const bounds = parkingBoundsStable!
+          return parkingBots.map((bot, i) => (
+            <Bot3D
+              key={bot.key}
+              position={positions[i] || [parkingArea.x, 0.14, parkingArea.z]}
+              config={bot.config}
+              status={bot.status}
+              name={bot.name}
+              scale={bot.scale}
+              session={bot.session}
+              onClick={onBotClick}
+              roomBounds={bounds}
+              showLabel={focusLevel === 'overview' ? bot.status === 'active' : false}
+              showActivity={shouldShowActivity(bot.status, 'parking', bot.key)}
+              activity={bot.activity}
+              isActive={bot.isActive}
+              roomId="parking"
+            />
+          ))
+        })()}
 
       <WanderingBots3D
         sleepingSessions={parkingSessions}
@@ -436,9 +521,7 @@ export function SceneContent({
       />
 
       {/* ── Creator Mode: Placed Props ── */}
-      {placedProps.length > 0 && (
-        <PlacedPropsRenderer placedProps={placedProps} />
-      )}
+      {placedProps.length > 0 && <PlacedPropsRenderer placedProps={placedProps} />}
 
       {/* ── Creator Mode: Ghost preview + click plane ── */}
       {selectedPropId && onPlaceProp && (
@@ -448,10 +531,7 @@ export function SceneContent({
             rotation={pendingRotation}
             onPositionChange={onGhostPosition ?? (() => {})}
           />
-          <PlacementClickPlane
-            enabled={!!selectedPropId}
-            onPlace={onPlaceProp}
-          />
+          <PlacementClickPlane enabled={!!selectedPropId} onPlace={onPlaceProp} />
         </>
       )}
     </>

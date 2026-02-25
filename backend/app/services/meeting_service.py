@@ -21,7 +21,6 @@ from app.db.meeting_models import (
     MeetingConfig,
     MeetingState,
     Turn,
-    ROUND_STATES,
 )
 from app.routes.sse import broadcast
 
@@ -30,12 +29,13 @@ logger = logging.getLogger(__name__)
 MAX_CONCURRENT_MEETINGS = 3
 
 # Active orchestrators (meeting_id -> asyncio.Task) — shared with orchestrator module
-_active_meetings: dict[str, "asyncio.Task[None]"] = {}
+_active_meetings: dict[str, asyncio.Task[None]] = {}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Time / ID helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
@@ -49,13 +49,13 @@ def _generate_id() -> str:
 # Agent lookup
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 async def resolve_agent_info(agent_id: str) -> dict:
     """Look up agent name/icon/color from DB. Falls back gracefully."""
     try:
         async with get_db() as db:
             async with db.execute(
-                "SELECT id, name, icon, color, agent_session_key "
-                "FROM agents WHERE id = ? OR agent_session_key = ?",
+                "SELECT id, name, icon, color, agent_session_key FROM agents WHERE id = ? OR agent_session_key = ?",
                 (agent_id, agent_id),
             ) as cur:
                 row = await cur.fetchone()
@@ -78,6 +78,7 @@ async def resolve_agent_info(agent_id: str) -> dict:
 # DB write helpers (called by MeetingOrchestrator)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 async def db_set_state(
     meeting_id: str,
     state: MeetingState,
@@ -92,19 +93,26 @@ async def db_set_state(
         updates = ["state = ?"]
         params: list = [state.value]
         if current_round is not None:
-            updates += ["current_round = ?"]; params.append(current_round)
+            updates += ["current_round = ?"]
+            params.append(current_round)
         if output_md is not None:
-            updates += ["output_md = ?"]; params.append(output_md)
+            updates += ["output_md = ?"]
+            params.append(output_md)
         if output_path is not None:
-            updates += ["output_path = ?"]; params.append(output_path)
+            updates += ["output_path = ?"]
+            params.append(output_path)
         if error_message is not None:
-            updates += ["error_message = ?"]; params.append(error_message)
+            updates += ["error_message = ?"]
+            params.append(error_message)
         if state == MeetingState.COMPLETE:
-            updates += ["completed_at = ?"]; params.append(now)
+            updates += ["completed_at = ?"]
+            params.append(now)
         if state == MeetingState.CANCELLED:
-            updates += ["cancelled_at = ?"]; params.append(now)
+            updates += ["cancelled_at = ?"]
+            params.append(now)
         if state == MeetingState.GATHERING:
-            updates += ["started_at = ?"]; params.append(now)
+            updates += ["started_at = ?"]
+            params.append(now)
         params.append(meeting_id)
         await db.execute(f"UPDATE meetings SET {', '.join(updates)} WHERE id = ?", params)
         await db.commit()
@@ -141,9 +149,19 @@ async def db_save_turn(turn: Turn) -> None:
                (id, meeting_id, round_num, turn_index, agent_id, agent_name,
                 response_text, prompt_tokens, response_tokens, started_at, completed_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (turn.id, turn.meeting_id, turn.round_num, turn.turn_index,
-             turn.agent_id, turn.agent_name, turn.response,
-             turn.prompt_tokens, response_tokens, turn.started_at, turn.completed_at),
+            (
+                turn.id,
+                turn.meeting_id,
+                turn.round_num,
+                turn.turn_index,
+                turn.agent_id,
+                turn.agent_name,
+                turn.response,
+                turn.prompt_tokens,
+                response_tokens,
+                turn.started_at,
+                turn.completed_at,
+            ),
         )
         await db.commit()
 
@@ -169,9 +187,7 @@ async def db_load_all_turns(meeting_id: str) -> list[dict]:
 
 async def db_get_started_at(meeting_id: str) -> int:
     async with get_db() as db:
-        async with db.execute(
-            "SELECT started_at FROM meetings WHERE id = ?", (meeting_id,)
-        ) as cur:
+        async with db.execute("SELECT started_at FROM meetings WHERE id = ?", (meeting_id,)) as cur:
             row = await cur.fetchone()
             return row["started_at"] if row and row["started_at"] else _now_ms()
 
@@ -184,7 +200,8 @@ async def db_save_action_items(meeting_id: str, output_md: str) -> None:
     for line in lines:
         stripped = line.strip()
         if re.match(r"^##\s+(Action Items|Next Steps)", stripped, re.IGNORECASE):
-            in_section = True; continue
+            in_section = True
+            continue
         if in_section and stripped.startswith("## "):
             break
         if not in_section:
@@ -201,25 +218,21 @@ async def db_save_action_items(meeting_id: str, output_md: str) -> None:
         pm = re.search(r"\[priority:\s*(high|medium|low)\]\s*$", text)
         if pm:
             priority = pm.group(1)
-            text = text[:pm.start()].strip()
-        items.append({"id": f"ai_{uuid.uuid4().hex[:8]}", "text": text,
-                      "assignee": assignee, "priority": priority})
+            text = text[: pm.start()].strip()
+        items.append({"id": f"ai_{uuid.uuid4().hex[:8]}", "text": text, "assignee": assignee, "priority": priority})
     if not items:
         return
     now = _now_ms()
     try:
         async with get_db() as db:
-            await db.execute(
-                "DELETE FROM meeting_action_items WHERE meeting_id = ?", (meeting_id,)
-            )
+            await db.execute("DELETE FROM meeting_action_items WHERE meeting_id = ?", (meeting_id,))
             for i, item in enumerate(items):
                 await db.execute(
                     """INSERT INTO meeting_action_items
                        (id, meeting_id, text, assignee_agent_id, priority, status,
                         sort_order, created_at, updated_at)
                        VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)""",
-                    (item["id"], meeting_id, item["text"], item["assignee"],
-                     item["priority"], i, now, now),
+                    (item["id"], meeting_id, item["text"], item["assignee"], item["priority"], i, now, now),
                 )
             await db.commit()
         logger.info(f"Saved {len(items)} action items for meeting {meeting_id}")
@@ -230,6 +243,7 @@ async def db_save_action_items(meeting_id: str, output_md: str) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 async def start_meeting(
     config: MeetingConfig,
@@ -248,8 +262,7 @@ async def start_meeting(
     if room_id:
         async with get_db() as db:
             async with db.execute(
-                "SELECT id FROM meetings WHERE room_id = ? "
-                "AND state NOT IN ('complete', 'cancelled', 'error')",
+                "SELECT id FROM meetings WHERE room_id = ? AND state NOT IN ('complete', 'cancelled', 'error')",
                 (room_id,),
             ) as cur:
                 if await cur.fetchone():
@@ -263,24 +276,41 @@ async def start_meeting(
                (id, title, goal, state, room_id, project_id, config_json,
                 current_round, current_turn, parent_meeting_id, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)""",
-            (meeting_id, title or "Team Meeting", goal, MeetingState.GATHERING.value,
-             room_id, project_id, config.model_dump_json(), parent_meeting_id, now),
+            (
+                meeting_id,
+                title or "Team Meeting",
+                goal,
+                MeetingState.GATHERING.value,
+                room_id,
+                project_id,
+                config.model_dump_json(),
+                parent_meeting_id,
+                now,
+            ),
         )
         await db.commit()
 
     orchestrator = MeetingOrchestrator(
-        meeting_id=meeting_id, config=config,
-        title=title or "Team Meeting", goal=goal,
-        room_id=room_id, project_id=project_id,
+        meeting_id=meeting_id,
+        config=config,
+        title=title or "Team Meeting",
+        goal=goal,
+        room_id=room_id,
+        project_id=project_id,
         parent_meeting_id=parent_meeting_id,
     )
     task = asyncio.create_task(orchestrator.run())
     _active_meetings[meeting_id] = task
 
     return Meeting(
-        id=meeting_id, title=title or "Team Meeting", goal=goal,
-        state=MeetingState.GATHERING, room_id=room_id, project_id=project_id,
-        config=config, created_at=now,
+        id=meeting_id,
+        title=title or "Team Meeting",
+        goal=goal,
+        state=MeetingState.GATHERING,
+        room_id=room_id,
+        project_id=project_id,
+        config=config,
+        created_at=now,
     )
 
 
@@ -291,9 +321,7 @@ async def cancel_meeting(meeting_id: str) -> bool:
         task.cancel()
         return True
     async with get_db() as db:
-        async with db.execute(
-            "SELECT state FROM meetings WHERE id = ?", (meeting_id,)
-        ) as cur:
+        async with db.execute("SELECT state FROM meetings WHERE id = ?", (meeting_id,)) as cur:
             row = await cur.fetchone()
             if not row:
                 return False
@@ -304,9 +332,14 @@ async def cancel_meeting(meeting_id: str) -> bool:
             (MeetingState.CANCELLED.value, _now_ms(), meeting_id),
         )
         await db.commit()
-    await broadcast("meeting-cancelled", {
-        "meeting_id": meeting_id, "state": "cancelled", "cancelled_at": _now_ms(),
-    })
+    await broadcast(
+        "meeting-cancelled",
+        {
+            "meeting_id": meeting_id,
+            "state": "cancelled",
+            "cancelled_at": _now_ms(),
+        },
+    )
     return True
 
 
@@ -347,17 +380,23 @@ async def get_meeting(meeting_id: str) -> Optional[dict]:
             status = "in_progress"
         else:
             status = "pending"
-        rounds.append({
-            "round_num": rn, "topic": topic, "status": status,
-            "turns": [
-                {
-                    "agent_id": t["agent_id"], "agent_name": t["agent_name"],
-                    "response": t["response_text"],
-                    "started_at": t["started_at"], "completed_at": t["completed_at"],
-                }
-                for t in round_turns
-            ],
-        })
+        rounds.append(
+            {
+                "round_num": rn,
+                "topic": topic,
+                "status": status,
+                "turns": [
+                    {
+                        "agent_id": t["agent_id"],
+                        "agent_name": t["agent_name"],
+                        "response": t["response_text"],
+                        "started_at": t["started_at"],
+                        "completed_at": t["completed_at"],
+                    }
+                    for t in round_turns
+                ],
+            }
+        )
 
     total_turns = num_rounds * len(meeting["participants"])
     completed_turns = len(turns)
@@ -370,10 +409,15 @@ async def get_meeting(meeting_id: str) -> Optional[dict]:
     else:
         progress_pct = 0
 
-    meeting.update({
-        "rounds": rounds, "config": config, "progress_pct": progress_pct,
-        "total_rounds": num_rounds, "total_participants": len(meeting["participants"]),
-    })
+    meeting.update(
+        {
+            "rounds": rounds,
+            "config": config,
+            "progress_pct": progress_pct,
+            "total_rounds": num_rounds,
+            "total_participants": len(meeting["participants"]),
+        }
+    )
     return meeting
 
 
@@ -390,11 +434,14 @@ async def list_meetings(
     where = "WHERE created_at > ?"
     params: list = [cutoff]
     if room_id:
-        where += " AND room_id = ?"; params.append(room_id)
+        where += " AND room_id = ?"
+        params.append(room_id)
     if project_id:
-        where += " AND project_id = ?"; params.append(project_id)
+        where += " AND project_id = ?"
+        params.append(project_id)
     if state_filter:
-        where += " AND state = ?"; params.append(state_filter)
+        where += " AND state = ?"
+        params.append(state_filter)
 
     async with get_db() as db:
         async with db.execute(f"SELECT COUNT(*) AS total FROM meetings {where}", params) as cur:
@@ -409,8 +456,7 @@ async def list_meetings(
         for row in rows:
             m = dict(row)
             async with db.execute(
-                "SELECT agent_name FROM meeting_participants "
-                "WHERE meeting_id = ? ORDER BY sort_order",
+                "SELECT agent_name FROM meeting_participants WHERE meeting_id = ? ORDER BY sort_order",
                 (m["id"],),
             ) as cur2:
                 participant_names = [r["agent_name"] for r in await cur2.fetchall()]
@@ -418,18 +464,24 @@ async def list_meetings(
             duration = None
             if m.get("started_at") and m.get("completed_at"):
                 duration = (m["completed_at"] - m["started_at"]) // 1000
-            results.append({
-                "id": m["id"], "title": m["title"], "goal": m.get("goal", ""),
-                "state": m["state"],
-                "participant_count": len(participant_names),
-                "participant_names": participant_names,
-                "num_rounds": config.get("num_rounds", 3),
-                "room_id": m.get("room_id"), "project_id": m.get("project_id"),
-                "output_path": m.get("output_path"),
-                "parent_meeting_id": m.get("parent_meeting_id"),
-                "duration_seconds": duration,
-                "created_at": m["created_at"], "completed_at": m.get("completed_at"),
-            })
+            results.append(
+                {
+                    "id": m["id"],
+                    "title": m["title"],
+                    "goal": m.get("goal", ""),
+                    "state": m["state"],
+                    "participant_count": len(participant_names),
+                    "participant_names": participant_names,
+                    "num_rounds": config.get("num_rounds", 3),
+                    "room_id": m.get("room_id"),
+                    "project_id": m.get("project_id"),
+                    "output_path": m.get("output_path"),
+                    "parent_meeting_id": m.get("parent_meeting_id"),
+                    "duration_seconds": duration,
+                    "created_at": m["created_at"],
+                    "completed_at": m.get("completed_at"),
+                }
+            )
 
     return {"meetings": results, "total": total, "has_more": (offset + limit) < total}
 
@@ -451,20 +503,21 @@ async def load_document(
         return None
     if ".." in document_path or document_path.startswith("/"):
         logger.warning(f"Rejected document path (traversal attempt): {document_path}")
-        await broadcast("meeting-warning", {
-            "meeting_id": meeting_id,
-            "message": f"Invalid document path: {document_path}",
-            "severity": "warning",
-        })
+        await broadcast(
+            "meeting-warning",
+            {
+                "meeting_id": meeting_id,
+                "message": f"Invalid document path: {document_path}",
+                "severity": "warning",
+            },
+        )
         return None
 
     project_dir = None
     if project_id:
         try:
             async with get_db() as db:
-                async with db.execute(
-                    "SELECT folder_path, name FROM projects WHERE id = ?", (project_id,)
-                ) as cur:
+                async with db.execute("SELECT folder_path, name FROM projects WHERE id = ?", (project_id,)) as cur:
                     row = await cur.fetchone()
                     if row and row["folder_path"]:
                         expanded = Path(os.path.expanduser(row["folder_path"]))
@@ -472,18 +525,21 @@ async def load_document(
                             project_dir = expanded
                     if not project_dir and row:
                         slug = re.sub(r"[^a-zA-Z0-9]+", "-", row["name"]).strip("-")
-                        candidate = (
-                            Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects" / slug
-                        )
+                        candidate = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects" / slug
                         if candidate.exists():
                             project_dir = candidate
         except Exception as exc:
             logger.warning(f"Could not resolve project folder: {exc}")
 
     async def _warn(msg: str) -> None:
-        await broadcast("meeting-warning", {
-            "meeting_id": meeting_id, "message": msg, "severity": "warning",
-        })
+        await broadcast(
+            "meeting-warning",
+            {
+                "meeting_id": meeting_id,
+                "message": msg,
+                "severity": "warning",
+            },
+        )
 
     if not project_dir:
         await _warn(f"Project folder not found for document: {document_path}")

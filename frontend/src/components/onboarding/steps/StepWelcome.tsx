@@ -35,11 +35,21 @@ export function StepWelcome({ onScan, onDemo, onManual, onOpenClawWizard }: Step
           Auto-scan for agents
         </Button>
         <div className="flex gap-2">
-          <Button variant="ghost" size="lg" className="flex-1 gap-2 h-10 text-muted-foreground" onClick={onDemo}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="flex-1 gap-2 h-10 text-muted-foreground"
+            onClick={onDemo}
+          >
             <Sparkles className="h-4 w-4" />
             Demo mode
           </Button>
-          <Button variant="ghost" size="lg" className="flex-1 gap-2 h-10 text-muted-foreground" onClick={onManual}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="flex-1 gap-2 h-10 text-muted-foreground"
+            onClick={onManual}
+          >
             <Cable className="h-4 w-4" />
             Manual setup
           </Button>

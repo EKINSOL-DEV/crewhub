@@ -12,7 +12,7 @@ import { hasActiveSubagents } from '@/lib/minionUtils'
 export function getAccurateBotStatus(
   session: CrewSession,
   isActive: boolean,
-  allSessions?: CrewSession[],
+  allSessions?: CrewSession[]
 ): BotStatus {
   if (isActive) return 'active'
   const idleMs = Date.now() - session.updatedAt
@@ -29,20 +29,40 @@ export function getAccurateBotStatus(
  * e.g. "fix-wall-alignment" → "Fixing wall alignment"
  */
 export function humanizeLabel(label: string): string {
-  let text = label.replace(/[-_]+/g, ' ').trim()
+  const text = label.replace(/[-_]+/g, ' ').trim()
   if (!text) return ''
 
   const gerundMap: Record<string, string> = {
-    'fix': 'Fixing', 'review': 'Reviewing', 'write': 'Writing',
-    'build': 'Building', 'add': 'Adding', 'update': 'Updating',
-    'debug': 'Debugging', 'test': 'Testing', 'refactor': 'Refactoring',
-    'deploy': 'Deploying', 'check': 'Checking', 'create': 'Creating',
-    'implement': 'Implementing', 'remove': 'Removing', 'delete': 'Deleting',
-    'move': 'Moving', 'merge': 'Merging', 'setup': 'Setting up',
-    'clean': 'Cleaning', 'analyze': 'Analyzing', 'design': 'Designing',
-    'optimize': 'Optimizing', 'migrate': 'Migrating', 'scan': 'Scanning',
-    'fetch': 'Fetching', 'parse': 'Parsing', 'monitor': 'Monitoring',
-    'install': 'Installing', 'configure': 'Configuring', 'research': 'Researching',
+    fix: 'Fixing',
+    review: 'Reviewing',
+    write: 'Writing',
+    build: 'Building',
+    add: 'Adding',
+    update: 'Updating',
+    debug: 'Debugging',
+    test: 'Testing',
+    refactor: 'Refactoring',
+    deploy: 'Deploying',
+    check: 'Checking',
+    create: 'Creating',
+    implement: 'Implementing',
+    remove: 'Removing',
+    delete: 'Deleting',
+    move: 'Moving',
+    merge: 'Merging',
+    setup: 'Setting up',
+    clean: 'Cleaning',
+    analyze: 'Analyzing',
+    design: 'Designing',
+    optimize: 'Optimizing',
+    migrate: 'Migrating',
+    scan: 'Scanning',
+    fetch: 'Fetching',
+    parse: 'Parsing',
+    monitor: 'Monitoring',
+    install: 'Installing',
+    configure: 'Configuring',
+    research: 'Researching',
   }
 
   const words = text.split(' ')
@@ -53,7 +73,21 @@ export function humanizeLabel(label: string): string {
     words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1)
   }
 
-  const acronyms = new Set(['pr', 'ui', 'ux', 'api', 'css', 'html', 'db', 'ci', 'cd', 'ssr', 'seo', 'jwt', 'sdk'])
+  const acronyms = new Set([
+    'pr',
+    'ui',
+    'ux',
+    'api',
+    'css',
+    'html',
+    'db',
+    'ci',
+    'cd',
+    'ssr',
+    'seo',
+    'jwt',
+    'sdk',
+  ])
   for (let i = 1; i < words.length; i++) {
     if (acronyms.has(words[i].toLowerCase())) {
       words[i] = words[i].toUpperCase()
@@ -94,17 +128,19 @@ export function extractTaskSummary(messages: CrewSession['messages']): string | 
 export function getActivityText(
   session: CrewSession,
   isActive: boolean,
-  allSessions?: CrewSession[],
+  allSessions?: CrewSession[]
 ): string {
   if (!isActive && allSessions && hasActiveSubagents(session, allSessions)) {
     const agentId = (session.key || '').split(':')[1]
     const now = Date.now()
     const activeChild = allSessions
-      .filter(s => {
+      .filter((s) => {
         const parts = s.key.split(':')
-        return parts[1] === agentId
-          && (parts[2]?.includes('subagent') || parts[2]?.includes('spawn'))
-          && (now - s.updatedAt) < SESSION_CONFIG.statusActiveThresholdMs
+        return (
+          parts[1] === agentId &&
+          (parts[2]?.includes('subagent') || parts[2]?.includes('spawn')) &&
+          now - s.updatedAt < SESSION_CONFIG.statusActiveThresholdMs
+        )
       })
       .sort((a, b) => b.updatedAt - a.updatedAt)[0]
     if (activeChild) {

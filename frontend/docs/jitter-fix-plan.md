@@ -1,7 +1,7 @@
 # Bot Jitter Fix Plan — Detailed Code Changes
 
-> **Status:** PLAN ONLY — do not apply yet  
-> **Date:** 2026-02-04  
+> **Status:** PLAN ONLY — do not apply yet
+> **Date:** 2026-02-04
 > **Files involved:**
 > - `Bot3D.tsx` — main bot component
 > - `BotAnimations.tsx` — animation state machine
@@ -11,7 +11,7 @@
 
 ## Fix 1: React Props vs useFrame Conflict (CRITICAL)
 
-**File:** `Bot3D.tsx`  
+**File:** `Bot3D.tsx`
 **Problem:** The `<group>` JSX at ~line 280 has declarative `position={[...]}` and `scale={scale}`. On every React re-render, React/R3F reconciles these props and snaps the group transform back to the prop values *before* useFrame runs the next tick. This causes a single-frame visual snap.
 
 **Root cause code (Bot3D.tsx ~line 280-282):**
@@ -83,7 +83,7 @@ if (!hasInitialized.current) {
 
 ## Fix 2: roomBounds Object Identity → Animation Resets (CRITICAL)
 
-**File:** `World3DView.tsx`  
+**File:** `World3DView.tsx`
 **Problem:** `getRoomBounds(position, ROOM_SIZE)` is called inside the `.map()` render callback (line ~474). It returns a **new object every render**. This new object flows as `roomBounds` prop to `Bot3D`, which uses it in the `interactionPoints` useMemo dependency (Bot3D.tsx line ~134). A new `roomBounds` → new `interactionPoints` → `useBotAnimation`'s useEffect re-fires → resets `phase` and `arrived`. This causes bots to jerk back to walking state on every parent re-render.
 
 **Root cause code (World3DView.tsx ~line 474):**
@@ -186,7 +186,7 @@ const walkableCenter = useMemo(() => {
 
 ## Fix 3: Grid Direction Oscillation Near Target (HIGH)
 
-**File:** `Bot3D.tsx`  
+**File:** `Bot3D.tsx`
 **Problem:** In the "walking toward animation target" block (~line 224-258), when the bot is close to the target, the dot-product direction picker flips between adjacent grid directions each frame, causing visible zigzag.
 
 **Root cause code (~line 233-249):**
@@ -262,7 +262,7 @@ Note: need to move `const cellSize = gridData.blueprint.cellSize` before the `if
 
 ## Fix 4: Stale targetX/Z for Bounce Detection (HIGH)
 
-**File:** `Bot3D.tsx`  
+**File:** `Bot3D.tsx`
 **Problem:** `isMoving` is computed from `targetX/Z` distance (~line 166-170), but during random walk mode `targetX/Z` aren't maintained. They stay at the initial/old value, causing the bounce animation to flicker.
 
 **Root cause code (~line 166-170):**
@@ -321,7 +321,7 @@ state.prevZ = spawnZ
 
 ## Fix 5: Unnormalized Diagonal Directions (MEDIUM)
 
-**File:** `Bot3D.tsx`  
+**File:** `Bot3D.tsx`
 **Problem:** `DIRECTIONS` array (~line 23-31) has diagonal entries like `{x:1, z:1}` with magnitude √2 ≈ 1.414, while cardinal entries like `{x:1, z:0}` have magnitude 1. The movement code uses `bestDir.x * step` (line ~249), so diagonals move √2× faster.
 
 **Root cause code (~line 23-31):**
@@ -409,12 +409,12 @@ This way, DIRECTIONS stay as integers for grid checks but movement is always nor
 
 ## Fix 6: Rotation Lerp Never Settles (MEDIUM)
 
-**File:** `Bot3D.tsx`  
+**File:** `Bot3D.tsx`
 **Problem:** Multiple places use `rotation.y += angleDiff * factor` (0.18 or 0.15 or 0.2), which asymptotically approaches the target but never reaches it. Each frame the bot micro-rotates, which can be visible as subtle wobble, especially when idle.
 
 **Locations:**
 - Line ~254: `groupRef.current.rotation.y = currentRotY + angleDiff * 0.18` (grid-targeted walking)
-- Line ~227 (no-grid direct wander): `groupRef.current.rotation.y = currentRotY + angleDiff * 0.2`  
+- Line ~227 (no-grid direct wander): `groupRef.current.rotation.y = currentRotY + angleDiff * 0.2`
 - Line ~270 (random walk waiting): `groupRef.current.rotation.y = currentRotY + angleDiff * 0.15`
 - Line ~290 (random walk moving): `groupRef.current.rotation.y = currentRotY + angleDiff * 0.18`
 
@@ -442,7 +442,7 @@ Apply at all 4 locations with their respective factors (0.2, 0.15, 0.18, 0.18).
 
 ## Fix 7: Bounce Threshold = Arrived Threshold (MEDIUM)
 
-**File:** `Bot3D.tsx`  
+**File:** `Bot3D.tsx`
 **Problem:** Both the "has arrived at target" check and the "is moving for bounce animation" check use 0.3 as the threshold. When a bot oscillates near 0.3 distance, `isMoving` and `arrived` flicker, causing the bounce animation to turn on/off rapidly.
 
 **Arrived checks at 0.3:**
@@ -495,7 +495,7 @@ This makes bots "arrive" slightly earlier (0.4 units ≈ less than half a cell),
 ## Recommended Implementation Order
 
 1. **Fix 2** (roomBounds stability) — eliminates the most disruptive resets
-2. **Fix 1** (remove declarative props) — eliminates re-render snap-backs  
+2. **Fix 1** (remove declarative props) — eliminates re-render snap-backs
 3. **Fix 4** (isMoving from actual delta) — fixes bounce flicker
 4. **Fix 7** (arrival threshold) — widens arrival zone
 5. **Fix 3** (direct movement near target) — removes zigzag

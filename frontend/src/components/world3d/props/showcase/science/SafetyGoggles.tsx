@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function SafetyGoggles() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2
+  })
   return (
     <group ref={groupRef}>
       {/* Frame */}
@@ -45,7 +47,7 @@ export function SafetyGoggles() {
       {/* Vents */}
       {[-0.28, 0.28].map((x, i) => (
         <group key={i}>
-          {[0, 1, 2].map(j => (
+          {[0, 1, 2].map((j) => (
             <mesh key={j} position={[x, -0.02 + j * 0.04, 0.08]}>
               <boxGeometry args={[0.02, 0.02, 0.01]} />
               <meshStandardMaterial color="#888899" />
@@ -54,5 +56,5 @@ export function SafetyGoggles() {
         </group>
       ))}
     </group>
-  );
+  )
 }

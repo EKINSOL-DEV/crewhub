@@ -31,9 +31,7 @@ async def recover_stuck_meetings() -> int:
         for row in rows:
             meeting_id = row["id"]
             old_state = row["state"]
-            logger.warning(
-                f"Recovering stuck meeting {meeting_id} (was {old_state})"
-            )
+            logger.warning(f"Recovering stuck meeting {meeting_id} (was {old_state})")
             await db.execute(
                 "UPDATE meetings SET state = ?, error_message = ? WHERE id = ?",
                 (MeetingState.ERROR.value, "orchestrator_restart", meeting_id),
@@ -42,12 +40,15 @@ async def recover_stuck_meetings() -> int:
 
             # Notify frontend
             try:
-                await broadcast("meeting-error", {
-                    "meeting_id": meeting_id,
-                    "state": "error",
-                    "error": "orchestrator_restart",
-                    "previous_state": old_state,
-                })
+                await broadcast(
+                    "meeting-error",
+                    {
+                        "meeting_id": meeting_id,
+                        "state": "error",
+                        "error": "orchestrator_restart",
+                        "previous_state": old_state,
+                    },
+                )
             except Exception:
                 pass  # SSE may not have clients yet at startup
 

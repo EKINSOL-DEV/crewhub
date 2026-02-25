@@ -4,14 +4,24 @@ import type { Zone } from '../lib/zones/types'
 // We test the class directly (not the singleton) to avoid cross-test pollution
 class ZoneRegistry {
   private zones = new Map<string, Zone>()
-  register(zone: Zone): void { this.zones.set(zone.id, zone) }
-  get(zoneId: string): Zone | null { return this.zones.get(zoneId) ?? null }
+  register(zone: Zone): void {
+    this.zones.set(zone.id, zone)
+  }
+  get(zoneId: string): Zone | null {
+    return this.zones.get(zoneId) ?? null
+  }
   getDefault(): Zone {
-    for (const z of this.zones.values()) { if (z.isDefault) return z }
+    for (const z of this.zones.values()) {
+      if (z.isDefault) return z
+    }
     return this.zones.values().next().value!
   }
-  getAll(): Zone[] { return Array.from(this.zones.values()) }
-  has(zoneId: string): boolean { return this.zones.has(zoneId) }
+  getAll(): Zone[] {
+    return Array.from(this.zones.values())
+  }
+  has(zoneId: string): boolean {
+    return this.zones.has(zoneId)
+  }
 }
 
 const makeZone = (overrides: Partial<Zone> = {}): Zone => ({

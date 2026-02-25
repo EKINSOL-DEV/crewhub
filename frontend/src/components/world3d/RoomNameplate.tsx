@@ -15,12 +15,12 @@ interface RoomNameplateProps {
 
 /**
  * Subtle nameplate floating above the room center.
- * 
+ *
  * Uses <Html> in screen-space (no transform) so it stays readable at any
  * camera angle, but with a small fixed size that doesn't dominate the scene.
  * NOT billboard — we use `transform` with a flat horizontal rotation
  * so it doesn't rotate with the camera.
- * 
+ *
  * Design: small semi-transparent pill, normal case, room color accent.
  */
 export function RoomNameplate({
@@ -39,7 +39,8 @@ export function RoomNameplate({
 
   const { subtitleText, subtitleColor } = useMemo(() => {
     if (isHQ) return { subtitleText: '★ Command Center', subtitleColor: '#FFD700' }
-    if (projectName) return { subtitleText: `● ${projectName}`, subtitleColor: projectColor || '#94a3b8' }
+    if (projectName)
+      return { subtitleText: `● ${projectName}`, subtitleColor: projectColor || '#94a3b8' }
     return { subtitleText: null, subtitleColor: '#94a3b8' }
   }, [isHQ, projectName, projectColor])
 
@@ -83,9 +84,7 @@ export function RoomNameplate({
               borderBottom: `2px solid ${accentColor}80`,
             }}
           >
-            {icon && (
-              <span style={{ fontSize: 10, lineHeight: 1 }}>{icon}</span>
-            )}
+            {icon && <span style={{ fontSize: 10, lineHeight: 1 }}>{icon}</span>}
             <span
               style={{
                 color: 'rgba(255, 255, 255, 0.9)',

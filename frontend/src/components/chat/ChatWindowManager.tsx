@@ -3,19 +3,19 @@ import { AgentChatWindow } from './AgentChatWindow'
 
 /**
  * ChatWindowManager
- * 
+ *
  * Renders all open (non-minimized) chat windows as draggable/resizable panels.
  * The left-side minimized bar has been replaced by the AgentTopBar navigation.
  */
 export function ChatWindowManager() {
   const { windows } = useChatContext()
 
-  const openWindows = windows.filter(w => !w.isMinimized)
+  const openWindows = windows.filter((w) => !w.isMinimized)
 
   return (
     <>
       {/* ── Open chat windows ── */}
-      {openWindows.map(w => (
+      {openWindows.map((w) => (
         <AgentChatWindow
           key={w.sessionKey}
           sessionKey={w.sessionKey}

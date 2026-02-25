@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function VRHeadset() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2
+  })
   return (
     <group ref={groupRef}>
       {/* Main body */}
@@ -53,12 +55,17 @@ export function VRHeadset() {
         <meshStandardMaterial color="#4488ff" emissive="#4488ff" emissiveIntensity={2} />
       </mesh>
       {/* Cameras */}
-      {[[-0.3, 0.1], [0.3, 0.1], [-0.3, -0.1], [0.3, -0.1]].map(([x, y], i) => (
+      {[
+        [-0.3, 0.1],
+        [0.3, 0.1],
+        [-0.3, -0.1],
+        [0.3, -0.1],
+      ].map(([x, y], i) => (
         <mesh key={i} position={[x, y, 0.19]}>
           <cylinderGeometry args={[0.02, 0.02, 0.01, 6]} />
           <meshStandardMaterial color="#111111" />
         </mesh>
       ))}
     </group>
-  );
+  )
 }

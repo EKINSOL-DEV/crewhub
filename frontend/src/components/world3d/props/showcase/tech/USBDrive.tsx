@@ -1,14 +1,16 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function USBDrive() {
-  const groupRef = useRef<THREE.Group>(null);
-  const ledRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const ledRef = useRef<THREE.Mesh>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.5;
-    if (ledRef.current) (ledRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = Math.sin(s.clock.elapsedTime * 6) > 0 ? 3 : 0.2;
-  });
+    if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.5
+    if (ledRef.current)
+      (ledRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        Math.sin(s.clock.elapsedTime * 6) > 0 ? 3 : 0.2
+  })
   return (
     <group ref={groupRef}>
       {/* Body */}
@@ -37,5 +39,5 @@ export function USBDrive() {
         <meshStandardMaterial color="#888888" />
       </mesh>
     </group>
-  );
+  )
 }

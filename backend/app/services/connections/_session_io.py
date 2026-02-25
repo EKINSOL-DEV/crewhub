@@ -12,7 +12,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     pass
@@ -62,7 +62,7 @@ class OpenClawSessionIOMixin:
                 return []
 
             messages: list[HistoryMessage] = []
-            with open(session_file, "r") as f:
+            with open(session_file) as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -88,9 +88,7 @@ class OpenClawSessionIOMixin:
         """Return raw JSONL history dicts (legacy format)."""
         try:
             sessions = await self.get_sessions_raw()  # type: ignore[attr-defined]
-            session = next(
-                (s for s in sessions if s.get("key") == session_key), None
-            )
+            session = next((s for s in sessions if s.get("key") == session_key), None)
             if not session:
                 return []
 
@@ -114,7 +112,7 @@ class OpenClawSessionIOMixin:
                 return []
 
             messages: list[dict[str, Any]] = []
-            with open(session_file, "r") as f:
+            with open(session_file) as f:
                 for line in f:
                     line = line.strip()
                     if line:
@@ -143,10 +141,7 @@ class OpenClawSessionIOMixin:
             session = next((s for s in sessions if s.key == session_key), None)
 
             if not session:
-                logger.info(
-                    f"kill_session: {session_key} not in active sessions — "
-                    "already removed/archived"
-                )
+                logger.info(f"kill_session: {session_key} not in active sessions — already removed/archived")
                 return True
 
             session_id = _validate_id(session.session_id)
@@ -201,10 +196,7 @@ class OpenClawSessionIOMixin:
                 role=role,
                 content=content,
                 timestamp=raw.get("timestamp"),
-                metadata={
-                    k: v for k, v in raw.items()
-                    if k not in {"role", "content", "timestamp"}
-                },
+                metadata={k: v for k, v in raw.items() if k not in {"role", "content", "timestamp"}},
             )
         except Exception as exc:
             logger.error(f"Error parsing history message: {exc}")

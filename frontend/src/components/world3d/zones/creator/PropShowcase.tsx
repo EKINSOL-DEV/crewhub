@@ -17,7 +17,12 @@ interface PropShowcaseProps {
   onDeleteProp?: (propId: string) => void
 }
 
-function Pedestal({ position, name, selected, onClick }: {
+function Pedestal({
+  position,
+  name,
+  selected,
+  onClick,
+}: {
   position: [number, number, number]
   name: string
   selected: boolean
@@ -26,7 +31,13 @@ function Pedestal({ position, name, selected, onClick }: {
   const baseToon = useToonMaterialProps('#1a1a2e')
 
   return (
-    <group position={position} onClick={(e) => { e.stopPropagation(); onClick() }}>
+    <group
+      position={position}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
+    >
       {/* Pedestal base */}
       <mesh position={[0, 0.15, 0]} castShadow>
         <cylinderGeometry args={[0.35, 0.4, 0.3, 8]} />
@@ -56,17 +67,19 @@ function Pedestal({ position, name, selected, onClick }: {
 
       {/* Nameplate */}
       <Html position={[0, -0.05, 0.45]} center>
-        <div style={{
-          background: 'rgba(10, 10, 30, 0.9)',
-          border: `1px solid ${selected ? 'rgba(255, 215, 0, 0.6)' : 'rgba(0, 255, 204, 0.3)'}`,
-          borderRadius: '8px',
-          padding: '3px 10px',
-          fontSize: '11px',
-          fontFamily: 'system-ui, sans-serif',
-          color: selected ? '#ffd700' : '#00ffcc',
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-        }}>
+        <div
+          style={{
+            background: 'rgba(10, 10, 30, 0.9)',
+            border: `1px solid ${selected ? 'rgba(255, 215, 0, 0.6)' : 'rgba(0, 255, 204, 0.3)'}`,
+            borderRadius: '8px',
+            padding: '3px 10px',
+            fontSize: '11px',
+            fontFamily: 'system-ui, sans-serif',
+            color: selected ? '#ffd700' : '#00ffcc',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+          }}
+        >
           {name}
         </div>
       </Html>
@@ -98,16 +111,17 @@ export function PropShowcase({
   if (props.length === 0) return null
 
   // Place props in a semi-circle behind the machine (negative Z)
-  const startAngle = Math.PI * 0.25  // start at 45 degrees
-  const endAngle = Math.PI * 0.75    // end at 135 degrees
+  const startAngle = Math.PI * 0.25 // start at 45 degrees
+  const endAngle = Math.PI * 0.75 // end at 135 degrees
   const count = Math.min(props.length, 6)
 
   return (
     <group position={position}>
       {props.slice(0, 6).map((prop, i) => {
-        const angle = count === 1
-          ? (startAngle + endAngle) / 2
-          : startAngle + (endAngle - startAngle) * (i / (count - 1))
+        const angle =
+          count === 1
+            ? (startAngle + endAngle) / 2
+            : startAngle + (endAngle - startAngle) * (i / (count - 1))
         const x = Math.cos(angle) * radius
         const z = -Math.sin(angle) * radius
         const isSelected = selectedId === prop.propId
@@ -124,11 +138,7 @@ export function PropShowcase({
               }}
             />
             {/* Prop on top of pedestal */}
-            <DynamicProp
-              parts={prop.parts}
-              position={[x, 0.32, z]}
-              scale={0.8}
-            />
+            <DynamicProp parts={prop.parts} position={[x, 0.32, z]} scale={0.8} />
           </group>
         )
       })}

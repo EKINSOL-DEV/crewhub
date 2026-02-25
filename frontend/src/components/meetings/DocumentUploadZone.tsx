@@ -57,7 +57,10 @@ export function DocumentUploadZone({ projectId, onUploadComplete }: DocumentUplo
       className={`border-2 border-dashed rounded-md p-4 text-center transition-colors ${
         dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
       }`}
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        setDragOver(true)
+      }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
     >
@@ -69,12 +72,7 @@ export function DocumentUploadZone({ projectId, onUploadComplete }: DocumentUplo
           <div className="text-xs text-muted-foreground mb-1">or</div>
           <label className="cursor-pointer text-xs text-primary hover:underline">
             click to browse
-            <input
-              type="file"
-              accept=".md"
-              onChange={handleFileInput}
-              className="hidden"
-            />
+            <input type="file" accept=".md" onChange={handleFileInput} className="hidden" />
           </label>
         </>
       )}

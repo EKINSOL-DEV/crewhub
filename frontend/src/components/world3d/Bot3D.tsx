@@ -24,13 +24,13 @@ import type { RoomBounds } from './World3DView'
 
 // ─── Cardinal + diagonal directions for random walk ──
 const DIRECTIONS = [
-  { x: 0, z: -1 },  // N
-  { x: 1, z: -1 },  // NE
-  { x: 1, z: 0 },   // E
-  { x: 1, z: 1 },   // SE
-  { x: 0, z: 1 },   // S
-  { x: -1, z: 1 },  // SW
-  { x: -1, z: 0 },  // W
+  { x: 0, z: -1 }, // N
+  { x: 1, z: -1 }, // NE
+  { x: 1, z: 0 }, // E
+  { x: 1, z: 1 }, // SE
+  { x: 0, z: 1 }, // S
+  { x: -1, z: 1 }, // SW
+  { x: -1, z: 0 }, // W
   { x: -1, z: -1 }, // NW
 ]
 
@@ -73,17 +73,33 @@ interface Bot3DProps {
  * Includes body, face, accessory, chest display, status glow, laptop (when active),
  * animations, wandering, and floating name tag.
  */
-export const Bot3D = memo(function Bot3D({ position, config, status, name, scale = 1.0, session, onClick, roomBounds, showLabel = true, showActivity = false, activity, isActive = false, roomId, roomName }: Bot3DProps) {
+export const Bot3D = memo(function Bot3D({
+  position,
+  config,
+  status,
+  name,
+  scale = 1.0,
+  session,
+  onClick,
+  roomBounds,
+  showLabel = true,
+  showActivity = false,
+  activity,
+  isActive = false,
+  roomId,
+  roomName,
+}: Bot3DProps) {
   const groupRef = useRef<THREE.Group>(null)
   const walkPhaseRef = useRef(0)
   const wasMovingRef = useRef(false)
   const { state: focusState, focusBot } = useWorldFocus()
   const { startDrag: _startDrag, endDrag: _endDrag } = useDragActions()
-  void _startDrag; void _endDrag // Reserved for drag functionality
+  void _startDrag
+  void _endDrag // Reserved for drag functionality
   const [_hovered, setHovered] = useState(false)
   void _hovered // Used only via setHovered for hover state
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  
+
   // Demo mode: disable drag functionality
   const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
@@ -99,8 +115,8 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
     const blueprint = getBlueprintForRoom(roomName)
     const walkableMask = getWalkableMask(blueprint.cells)
     // Bot-specific mask: door cells are NOT walkable (prevents bots escaping rooms)
-    const botWalkableMask = blueprint.cells.map(row =>
-      row.map(cell => cell.walkable && cell.type !== 'door')
+    const botWalkableMask = blueprint.cells.map((row) =>
+      row.map((cell) => cell.walkable && cell.type !== 'door')
     )
     return { blueprint, walkableMask, botWalkableMask }
   }, [roomName])
@@ -111,7 +127,9 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
     targetZ: position[2],
     currentX: position[0],
     currentZ: position[2],
-    waitTimer: SESSION_CONFIG.wanderMinWaitS + Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS),
+    waitTimer:
+      SESSION_CONFIG.wanderMinWaitS +
+      Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS),
     baseX: position[0],
     baseZ: position[2],
     sessionKey: session?.key || '',
@@ -169,7 +187,9 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
       state.currentZ = spawnZ
       state.targetX = spawnX
       state.targetZ = spawnZ
-      state.waitTimer = SESSION_CONFIG.wanderMinWaitS + Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
+      state.waitTimer =
+        SESSION_CONFIG.wanderMinWaitS +
+        Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
       state.sessionKey = newKey
       state.stepsRemaining = 0
       state.cellProgress = 0
@@ -194,7 +214,7 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
     if (!roomName || !roomBounds) return null
     const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
     const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
-    const roomSize = (roomBounds.maxX - roomBounds.minX) + 5 // re-add margin (2.5 × 2)
+    const roomSize = roomBounds.maxX - roomBounds.minX + 5 // re-add margin (2.5 × 2)
     return getRoomInteractionPoints(roomName, roomSize, [roomCenterX, 0, roomCenterZ])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomName, roomBoundsKey])
@@ -203,7 +223,7 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
     if (!roomName || !roomBounds) return null
     const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
     const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
-    const roomSize = (roomBounds.maxX - roomBounds.minX) + 5 // re-add margin (2.5 × 2)
+    const roomSize = roomBounds.maxX - roomBounds.minX + 5 // re-add margin (2.5 × 2)
     return getWalkableCenter(roomName, roomSize, [roomCenterX, 0, roomCenterZ])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomName, roomBoundsKey])
@@ -291,13 +311,13 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
           // Clone materials on first opacity change to avoid shared-material side effects
           if (!materialsClonable.current) {
             if (Array.isArray(mesh.material)) {
-              mesh.material = (mesh.material as THREE.Material[]).map(m => m.clone())
+              mesh.material = (mesh.material as THREE.Material[]).map((m) => m.clone())
             } else {
               mesh.material = (mesh.material as THREE.Material).clone()
             }
           }
           const mats = Array.isArray(mesh.material)
-            ? mesh.material as THREE.Material[]
+            ? (mesh.material as THREE.Material[])
             : [mesh.material as THREE.Material]
           for (const mat of mats) {
             if ('opacity' in mat) {
@@ -326,12 +346,16 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
     if (meetingPos && meetingGatheringState.active) {
       // Compute waypoints once when meeting gathering starts
       if (!state.meetingPathComputed) {
-        const botRoomId = session?.key ? meetingGatheringState.agentRooms.get(session.key) : undefined
+        const botRoomId = session?.key
+          ? meetingGatheringState.agentRooms.get(session.key)
+          : undefined
         state.meetingWaypoints = calculateMeetingPath(
-          state.currentX, state.currentZ,
-          meetingPos.x, meetingPos.z,
+          state.currentX,
+          state.currentZ,
+          meetingPos.x,
+          meetingPos.z,
           botRoomId,
-          meetingGatheringState,
+          meetingGatheringState
         )
         state.meetingWaypointIndex = 0
         state.meetingPathComputed = true
@@ -341,9 +365,8 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
       const waypoints = state.meetingWaypoints
       const wpIdx = state.meetingWaypointIndex
       const isLastWaypoint = wpIdx >= waypoints.length - 1
-      const currentTarget = wpIdx < waypoints.length
-        ? waypoints[wpIdx]
-        : { x: meetingPos.x, z: meetingPos.z }
+      const currentTarget =
+        wpIdx < waypoints.length ? waypoints[wpIdx] : { x: meetingPos.x, z: meetingPos.z }
 
       const dx = currentTarget.x - state.currentX
       const dz = currentTarget.z - state.currentZ
@@ -381,7 +404,9 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
 
       if (session?.key) {
         botPositionRegistry.set(session.key, {
-          x: state.currentX, y: groupRef.current.position.y, z: state.currentZ,
+          x: state.currentX,
+          y: groupRef.current.position.y,
+          z: state.currentZ,
         })
       }
 
@@ -391,7 +416,10 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
       const isMoving2 = Math.sqrt(frameDx2 * frameDx2 + frameDz2 * frameDz2) > 0.001
       wasMovingRef.current = isMoving2
       if (isMoving2) walkPhaseRef.current += delta * 8
-      else { walkPhaseRef.current *= 0.85; if (Math.abs(walkPhaseRef.current) < 0.01) walkPhaseRef.current = 0 }
+      else {
+        walkPhaseRef.current *= 0.85
+        if (Math.abs(walkPhaseRef.current) < 0.01) walkPhaseRef.current = 0
+      }
 
       return // Skip normal wandering
     } else if (!meetingGatheringState.active && state.meetingPathComputed) {
@@ -436,7 +464,12 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
     const isWalkableAt = (wx: number, wz: number): boolean => {
       if (!gridData) return true // No grid = open area, always walkable
       // Hard room bounds check first — reject anything outside room bounds
-      if (wx < roomBounds.minX || wx > roomBounds.maxX || wz < roomBounds.minZ || wz > roomBounds.maxZ) {
+      if (
+        wx < roomBounds.minX ||
+        wx > roomBounds.maxX ||
+        wz < roomBounds.minZ ||
+        wz > roomBounds.maxZ
+      ) {
         return false
       }
       const { cellSize, gridWidth, gridDepth } = gridData.blueprint
@@ -484,7 +517,9 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
             groupRef.current.position.z = state.currentZ
             if (session?.key) {
               botPositionRegistry.set(session.key, {
-                x: state.currentX, y: groupRef.current.position.y, z: state.currentZ,
+                x: state.currentX,
+                y: groupRef.current.position.y,
+                z: state.currentZ,
               })
             }
             return
@@ -501,7 +536,9 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
             state.targetX = roomCenterX + (Math.random() - 0.5) * 2
             state.targetZ = roomCenterZ + (Math.random() - 0.5) * 2
           }
-          state.waitTimer = SESSION_CONFIG.wanderMinWaitS + Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
+          state.waitTimer =
+            SESSION_CONFIG.wanderMinWaitS +
+            Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
         }
       } else {
         // Skip movement if in typing pause
@@ -536,7 +573,9 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
           groupRef.current.position.z = state.currentZ
           if (session?.key) {
             botPositionRegistry.set(session.key, {
-              x: state.currentX, y: groupRef.current.position.y, z: state.currentZ,
+              x: state.currentX,
+              y: groupRef.current.position.y,
+              z: state.currentZ,
             })
           }
           return
@@ -635,7 +674,11 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
           if (dir) {
             state.dirX = dir.x
             state.dirZ = dir.z
-            state.stepsRemaining = SESSION_CONFIG.wanderMinSteps + Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1))
+            state.stepsRemaining =
+              SESSION_CONFIG.wanderMinSteps +
+              Math.floor(
+                Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1)
+              )
             state.cellProgress = 0
             state.waitTimer = 1 + Math.random() * 2 // pause 1-3s before walking
           } else {
@@ -652,7 +695,11 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
             if (dir) {
               state.dirX = dir.x
               state.dirZ = dir.z
-              state.stepsRemaining = Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) + Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps))
+              state.stepsRemaining =
+                Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) +
+                Math.floor(
+                  Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps)
+                )
               state.cellProgress = 0
             }
             state.waitTimer = 0.5 // brief pause after redirect
@@ -754,7 +801,10 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
         if (onClick && session) onClick(session)
       }}
       onPointerOver={() => {
-        if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null }
+        if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current)
+          hoverTimeoutRef.current = null
+        }
         setHovered(true)
         // Don't show grab cursor in demo mode (drag doesn't work properly)
         if (session && onClick && !isDemoMode) document.body.style.cursor = 'pointer'
@@ -792,51 +842,50 @@ export const Bot3D = memo(function Bot3D({ position, config, status, name, scale
 
         {/* Activity bubble (above head) */}
         {showActivity && activity && status !== 'sleeping' && status !== 'offline' && (
-          <BotActivityBubble
-            activity={activity}
-            status={status}
-            isActive={isActive}
-          />
+          <BotActivityBubble activity={activity} status={status} isActive={isActive} />
         )}
 
         {/* Meeting: Speech bubble above active speaker */}
-        {session?.key && meetingGatheringState.active &&
+        {session?.key &&
+          meetingGatheringState.active &&
           meetingGatheringState.activeSpeaker === session.key &&
           meetingGatheringState.activeSpeakerText && (
-          <BotSpeechBubble text={meetingGatheringState.activeSpeakerText} />
-        )}
+            <BotSpeechBubble text={meetingGatheringState.activeSpeakerText} />
+          )}
 
         {/* Meeting: Completed turn checkmark */}
-        {session?.key && meetingGatheringState.active &&
+        {session?.key &&
+          meetingGatheringState.active &&
           meetingGatheringState.completedTurns.has(session.key) &&
           meetingGatheringState.activeSpeaker !== session.key && (
-          <Html
-            position={[0, 1.2, 0]}
-            center
-            distanceFactor={10}
-            zIndexRange={[5, 10]}
-            style={{ pointerEvents: 'none' }}
-          >
-            <div style={{ fontSize: '16px', opacity: 0.8 }}>✓</div>
-          </Html>
-        )}
+            <Html
+              position={[0, 1.2, 0]}
+              center
+              distanceFactor={10}
+              zIndexRange={[5, 10]}
+              style={{ pointerEvents: 'none' }}
+            >
+              <div style={{ fontSize: '16px', opacity: 0.8 }}>✓</div>
+            </Html>
+          )}
 
         {/* Meeting: Active speaker glow ring */}
-        {session?.key && meetingGatheringState.active &&
+        {session?.key &&
+          meetingGatheringState.active &&
           meetingGatheringState.activeSpeaker === session.key && (
-          <mesh position={[0, -0.34, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.28, 0.42, 24]} />
-            <meshStandardMaterial
-              color="#60a5fa"
-              emissive="#60a5fa"
-              emissiveIntensity={1.2}
-              transparent
-              opacity={0.8}
-              side={THREE.DoubleSide}
-              depthWrite={false}
-            />
-          </mesh>
-        )}
+            <mesh position={[0, -0.34, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[0.28, 0.42, 24]} />
+              <meshStandardMaterial
+                color="#60a5fa"
+                emissive="#60a5fa"
+                emissiveIntensity={1.2}
+                transparent
+                opacity={0.8}
+                side={THREE.DoubleSide}
+                depthWrite={false}
+              />
+            </mesh>
+          )}
 
         {/* Name tag (conditionally shown based on focus level, always shown when focused) */}
         {/* Hidden for spawned agents (subagents) — activity bubble already shows their task */}

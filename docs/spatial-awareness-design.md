@@ -259,7 +259,7 @@ Already works this way for rendering — spatial API just reads the same data.
 | Full layout every turn (C) | ~120 | ~120 | Wasteful |
 | Single prop query | ~15 | ~35 | Cheapest targeted query |
 
-**Typical bot turn:** Most turns, bots don't need spatial info → **15 tokens overhead** with Strategy A. When they do interact (~20% of turns), it costs ~135 tokens total. 
+**Typical bot turn:** Most turns, bots don't need spatial info → **15 tokens overhead** with Strategy A. When they do interact (~20% of turns), it costs ~135 tokens total.
 
 **Comparison with naive approach:** Dumping all prop data with coordinates, types, and metadata every turn would cost **300-500 tokens**. Our approach saves **~85% of tokens** on average.
 
@@ -279,7 +279,7 @@ Already works this way for rendering — spatial API just reads the same data.
 
 - [ ] Implement `get_room_layout()` skill handler
 - [ ] Implement `get_prop_location(name)` with fuzzy matching
-- [ ] Implement `list_nearby_props(radius)` 
+- [ ] Implement `list_nearby_props(radius)`
 - [ ] Implement `navigate_to(target)` — resolve target, emit SSE event
 - [ ] Track bot grid positions in memory (session → position map)
 

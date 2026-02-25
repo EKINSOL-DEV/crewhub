@@ -46,7 +46,7 @@ export function loadBlueprintFromJSON(json: BlueprintJSON): RoomBlueprint {
   }
 
   // Convert placements to PropPlacement type
-  const placements: PropPlacement[] = json.placements.map(p => ({
+  const placements: PropPlacement[] = json.placements.map((p) => ({
     propId: p.propId,
     x: p.x,
     z: p.z,

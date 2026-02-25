@@ -60,17 +60,17 @@ No central SSE manager. Each hook manages its own connection independently.
 class SSEManager {
   private eventSource: EventSource | null = null;
   private listeners: Map<string, Set<(data: any) => void>> = new Map();
-  
+
   connect(url: string) {
     if (this.eventSource) return;
     this.eventSource = new EventSource(url);
     // Route events to registered listeners
   }
-  
+
   subscribe(event: string, callback: (data: any) => void) {
     // Register callback
   }
-  
+
   unsubscribe(event: string, callback: (data: any) => void) {
     // Unregister callback
   }
@@ -116,7 +116,7 @@ const debugBots = useMemo(() => {
 }, [/* stable dependencies */]);
 
 // OR in World3DView - stabilize with JSON comparison:
-const debugBotsStable = useMemo(() => debugBots, 
+const debugBotsStable = useMemo(() => debugBots,
   [JSON.stringify(debugBots)]);
 ```
 
@@ -155,13 +155,13 @@ class DisplayNameService {
   private nextSubscriberId = 0;
   private fetchPromise: Promise<void> | null = null;
   private fetchDone = false;
-  
+
   subscribe(callback: Subscriber): () => void {
     const id = this.nextSubscriberId++;
     this.subscribers.set(id, callback);
     return () => this.subscribers.delete(id);
   }
-  
+
   // ... rest of implementation
 }
 
@@ -186,7 +186,7 @@ const fetchRooms = useCallback(async () => {
   try {
     const [roomsResponse, assignmentsResponse, rulesResponse] = await Promise.all([
       fetch(`${API_BASE}/rooms`),           // ⚠️ No abort
-      fetch(`${API_BASE}/session-room-assignments`), // ⚠️ No abort  
+      fetch(`${API_BASE}/session-room-assignments`), // ⚠️ No abort
       fetch(`${API_BASE}/room-assignment-rules`),    // ⚠️ No abort
     ])
 ```
@@ -203,7 +203,7 @@ If one of these requests hangs:
 const fetchRooms = useCallback(async () => {
   const controller = new AbortController();
   const signal = controller.signal;
-  
+
   try {
     const [roomsResponse, ...] = await Promise.all([
       fetch(`${API_BASE}/rooms`, { signal }),
@@ -215,7 +215,7 @@ const fetchRooms = useCallback(async () => {
     if (err instanceof Error && err.name === 'AbortError') return;
     // handle real error
   }
-  
+
   return () => controller.abort();
 }, []);
 ```
@@ -231,11 +231,11 @@ const fetchRooms = useCallback(async () => {
 const { roomBots, parkingBots } = useMemo(() => {
   const roomBots = new Map<string, BotPlacement[]>()
   // ... 80+ lines of computation
-  
+
   for (const runtime of agentRuntimes) {
     // ... complex placement logic
   }
-  
+
   return { roomBots, parkingBots }
 }, [visibleSessions, parkingSessions, rooms, agentRuntimes, getRoomForSession, isActivelyRunning, displayNames, debugRoomMap])
 ```
@@ -254,7 +254,7 @@ Dependencies analysis:
 **Fix:**
 ```typescript
 // Stabilize all Map/Array dependencies:
-const visibleSessionsStable = useMemo(() => visibleSessions, 
+const visibleSessionsStable = useMemo(() => visibleSessions,
   [sessions.map(s => s.key).join(',')]);
 
 const displayNamesStable = useMemo(() => displayNames,
@@ -328,7 +328,7 @@ If `fetchAgents` dependency changes (new function reference), the interval is re
 ```typescript
 export function useSessionDisplayNames(sessionKeys: string[]) {
   const keysString = sessionKeys.sort().join(",")  // ⚠️ sort() mutates, join creates new string
-  
+
   useEffect(() => {
     const keys = keysString.split(",").filter(Boolean)  // ⚠️ Creates new array every effect run
     // ...

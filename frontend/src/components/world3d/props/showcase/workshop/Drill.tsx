@@ -1,14 +1,14 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Drill() {
-  const bitRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
+  const bitRef = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.35) * 0.15;
-    if (bitRef.current) bitRef.current.rotation.y += 0.15;
-  });
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.35) * 0.15
+    if (bitRef.current) bitRef.current.rotation.y += 0.15
+  })
   return (
     <group ref={groupRef} rotation={[0, 0, -0.4]}>
       {/* Body */}
@@ -52,5 +52,5 @@ export function Drill() {
         <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={2} />
       </mesh>
     </group>
-  );
+  )
 }

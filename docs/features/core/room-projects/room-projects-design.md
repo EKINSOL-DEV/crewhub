@@ -1,7 +1,7 @@
 # Room Projects & Interaction Overhaul — Design Document
 
-**Date:** 2026-02-04  
-**Status:** Draft  
+**Date:** 2026-02-04
+**Status:** Draft
 **Author:** Ekinbot (design analysis)
 
 ---

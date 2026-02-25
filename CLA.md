@@ -29,6 +29,6 @@ This CLA applies to all past, present, and future contributions you submit to th
 
 ---
 
-**Project Owner:** EKINSOL BV  
-**Project:** CrewHub  
+**Project Owner:** EKINSOL BV
+**Project:** CrewHub
 **Accepted by:** submitting a contribution (e.g. Pull Request, patch, or commit)

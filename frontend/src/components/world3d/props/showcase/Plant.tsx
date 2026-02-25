@@ -1,19 +1,19 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Plant() {
-  const groupRef = useRef<THREE.Group>(null);
-  const leavesRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const leavesRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
     if (leavesRef.current) {
-      leavesRef.current.rotation.y += 0.003;
+      leavesRef.current.rotation.y += 0.003
       leavesRef.current.children.forEach((child, i) => {
-        child.position.y = child.userData.baseY + Math.sin(state.clock.elapsedTime * 1.5 + i) * 0.02;
-      });
+        child.position.y = child.userData.baseY + Math.sin(state.clock.elapsedTime * 1.5 + i) * 0.02
+      })
     }
-  });
+  })
 
   const leaves = [
     { angle: 0, tilt: 0.4, scale: 1, y: 0.3 },
@@ -23,7 +23,7 @@ export function Plant() {
     { angle: Math.PI * 1.6, tilt: 0.45, scale: 0.9, y: 0.28 },
     { angle: Math.PI * 0.2, tilt: 0.3, scale: 0.7, y: 0.45 },
     { angle: Math.PI * 1.0, tilt: 0.55, scale: 0.75, y: 0.42 },
-  ];
+  ]
 
   return (
     <group ref={groupRef}>
@@ -69,5 +69,5 @@ export function Plant() {
         ))}
       </group>
     </group>
-  );
+  )
 }

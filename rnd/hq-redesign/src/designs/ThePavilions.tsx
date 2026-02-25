@@ -4,11 +4,11 @@ import { Workstation, MeetingTable, Sofa, CoffeeTable, Plant, TallPlant, Floor, 
 
 /**
  * THE PAVILIONS - Inspired by Google Campus / Renzo Piano
- * 
+ *
  * A campus of connected pavilions at varying heights, linked by enclosed
  * sky bridges. Each pavilion has a distinct character and purpose.
  * The layout creates sheltered courtyards between buildings.
- * 
+ *
  * Architectural features:
  * - 4 distinct pavilions of different sizes and heights
  * - Enclosed sky bridges connecting upper floors
@@ -17,14 +17,14 @@ import { Workstation, MeetingTable, Sofa, CoffeeTable, Plant, TallPlant, Floor, 
  * - Each building has unique materiality
  */
 
-function SkyBridge({ from, to, height, width = 1.5 }: { 
-  from: [number, number, number], to: [number, number, number], height: number, width?: number 
+function SkyBridge({ from, to, height, width = 1.5 }: {
+  from: [number, number, number], to: [number, number, number], height: number, width?: number
 }) {
   const dx = to[0] - from[0], dz = to[2] - from[2]
   const len = Math.sqrt(dx * dx + dz * dz)
   const mx = (from[0] + to[0]) / 2, mz = (from[2] + to[2]) / 2
   const angle = Math.atan2(dz, dx)
-  
+
   return (
     <group position={[mx, height, mz]} rotation={[0, -angle + Math.PI / 2, 0]}>
       {/* Floor */}
@@ -44,9 +44,9 @@ function SkyBridge({ from, to, height, width = 1.5 }: {
   )
 }
 
-function Pavilion({ 
-  position, size, floors, color, roofType = 'flat', children 
-}: { 
+function Pavilion({
+  position, size, floors, color, roofType = 'flat', children
+}: {
   position: [number, number, number]
   size: [number, number] // width, depth
   floors: number
@@ -56,7 +56,7 @@ function Pavilion({
 }) {
   const floorH = 3
   const [w, d] = size
-  
+
   return (
     <group position={position}>
       {Array.from({ length: floors }).map((_, fi) => {
@@ -76,7 +76,7 @@ function Pavilion({
           </group>
         )
       })}
-      
+
       {/* Roof */}
       {roofType === 'flat' && (
         <mesh position={[0, floors * floorH, 0]}>
@@ -104,7 +104,7 @@ function Pavilion({
           </mesh>
         </group>
       )}
-      
+
       {/* Pillars */}
       {[
         [-w / 2 + 0.3, d / 2 - 0.3], [w / 2 - 0.3, d / 2 - 0.3],
@@ -112,7 +112,7 @@ function Pavilion({
       ].map(([px, pz], i) => (
         <Pillar key={i} position={[px, 0, pz]} height={floors * floorH} radius={0.1} />
       ))}
-      
+
       {children}
     </group>
   )
@@ -122,7 +122,7 @@ export function ThePavilions() {
   return (
     <group>
       <Floor size={[30, 30]} color="#1e2430" />
-      
+
       {/* ═══ PAVILION A: Main Office (largest, 2 floors) ═══ */}
       <Pavilion position={[-5, 0, -4]} size={[7, 5]} floors={2} color="#6a7a8a" roofType="flat">
         {/* Ground floor */}
@@ -134,7 +134,7 @@ export function ThePavilions() {
         <Workstation position={[2, 0, 1]} rotation={[0, Math.PI, 0]} />
         <HangingLight position={[-1, 2.9, 0]} />
         <HangingLight position={[1, 2.9, 0]} />
-        
+
         {/* Upper floor */}
         <Workstation position={[-2, 3, -1]} />
         <Workstation position={[0, 3, -1]} />
@@ -142,7 +142,7 @@ export function ThePavilions() {
         <Sofa position={[0, 3, 1.5]} color="#3a4a5a" />
         <HangingLight position={[0, 5.9, 0]} />
       </Pavilion>
-      
+
       {/* ═══ PAVILION B: Creative Hub (1 floor, tall ceiling) ═══ */}
       <Pavilion position={[4, 0, -3]} size={[5, 5]} floors={1} color="#7a6a5a" roofType="butterfly">
         <MeetingTable position={[0, 0, 0]} seats={8} />
@@ -152,7 +152,7 @@ export function ThePavilions() {
         <Plant position={[-1.8, 0, 1.8]} variant={1} />
         <HangingLight position={[0, 2.9, 0]} color="#ffccaa" />
       </Pavilion>
-      
+
       {/* ═══ PAVILION C: Tech Lab (2 floors, compact) ═══ */}
       <Pavilion position={[5, 0, 4]} size={[4, 4]} floors={2} color="#5a6a7a" roofType="angled">
         {/* Server room ground floor */}
@@ -160,14 +160,14 @@ export function ThePavilions() {
         <ServerRack position={[0, 0, -1]} />
         <ServerRack position={[1, 0, -1]} />
         <Workstation position={[0, 0, 1]} rotation={[0, Math.PI, 0]} />
-        
+
         {/* Upper floor - dev space */}
         <Workstation position={[-0.8, 3, -0.5]} />
         <Workstation position={[0.8, 3, -0.5]} />
         <Plant position={[0, 3, 1.2]} variant={2} />
         <HangingLight position={[0, 5.9, 0]} color="#aaddff" />
       </Pavilion>
-      
+
       {/* ═══ PAVILION D: Lounge / Social (1 floor, wide) ═══ */}
       <Pavilion position={[-4, 0, 5]} size={[6, 4]} floors={1} color="#6a8a7a" roofType="flat">
         <Sofa position={[-1.5, 0, -0.5]} rotation={[0, 0, 0]} color="#4a3728" />
@@ -180,7 +180,7 @@ export function ThePavilions() {
         <HangingLight position={[-1, 2.9, 0]} color="#ffddaa" />
         <HangingLight position={[1, 2.9, 0]} color="#ffddaa" />
       </Pavilion>
-      
+
       {/* ═══ SKY BRIDGES ═══ */}
       {/* A to B */}
       <SkyBridge from={[-1.5, 0, -4]} to={[1.5, 0, -3]} height={3} />
@@ -188,20 +188,20 @@ export function ThePavilions() {
       <SkyBridge from={[4, 0, -0.5]} to={[5, 0, 2]} height={3} />
       {/* A to D */}
       <SkyBridge from={[-5, 0, -1.5]} to={[-4, 0, 3]} height={3} />
-      
+
       {/* ═══ COURTYARDS ═══ */}
       {/* Central courtyard */}
       <mesh position={[0, 0.01, 1]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[2.5, 24]} />
         <meshStandardMaterial color="#2a4a2a" roughness={0.95} />
       </mesh>
-      
+
       <TallPlant position={[0, 0, 0.5]} />
       <TallPlant position={[-1, 0, 2]} />
       <TallPlant position={[1.2, 0, 1.8]} />
       <Plant position={[0.5, 0, -0.5]} variant={1} scale={0.9} />
       <Plant position={[-0.8, 0, 1]} variant={2} scale={0.9} />
-      
+
       {/* Pathway stones */}
       {[[-2, 0.02, -1], [-1, 0.02, 0], [0, 0.02, 0.5], [1, 0.02, 1.5], [2, 0.02, 2.5]].map((p, i) => (
         <mesh key={i} position={p as [number, number, number]} rotation={[-Math.PI / 2, Math.random(), 0]}>
@@ -209,7 +209,7 @@ export function ThePavilions() {
           <meshStandardMaterial color="#3a3d4a" roughness={0.8} />
         </mesh>
       ))}
-      
+
       {/* Bench in courtyard */}
       <mesh position={[-1.5, 0.3, 0.5]}>
         <boxGeometry args={[1.5, 0.06, 0.4]} />

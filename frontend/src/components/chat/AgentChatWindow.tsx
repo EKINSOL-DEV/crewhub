@@ -42,7 +42,7 @@ export function AgentChatWindow({
   } = useChatContext()
   void _togglePin // Reserved for future use
 
-  const windowState = windows.find(w => w.sessionKey === sessionKey)
+  const windowState = windows.find((w) => w.sessionKey === sessionKey)
   const _isPinned = windowState?.isPinned ?? false
   void _isPinned // Reserved for future use
   const showInternals = windowState?.showInternals ?? false
@@ -130,15 +130,18 @@ export function AgentChatWindow({
   }
 
   // ── Voice recording ────────────────────────────────────────────
-  const handleAudioReady = useCallback((url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
-    let msg = `[audio attached: ${url} (audio/webm) ${duration}s]`
-    if (transcript) {
-      msg += `\nTranscript: "${transcript}"`
-    } else if (transcriptError) {
-      msg += `\n[Voice transcription unavailable: ${transcriptError}]`
-    }
-    void sendMessage(msg)
-  }, [sendMessage])
+  const handleAudioReady = useCallback(
+    (url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
+      let msg = `[audio attached: ${url} (audio/webm) ${duration}s]`
+      if (transcript) {
+        msg += `\nTranscript: "${transcript}"`
+      } else if (transcriptError) {
+        msg += `\n[Voice transcription unavailable: ${transcriptError}]`
+      }
+      void sendMessage(msg)
+    },
+    [sendMessage]
+  )
 
   const {
     isRecording,
@@ -262,10 +265,7 @@ export function AgentChatWindow({
           {/* Header buttons */}
           <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
             {onFocusAgent && (
-              <HeaderBtn
-                onClick={() => onFocusAgent(sessionKey)}
-                tooltip="Focus agent"
-              >
+              <HeaderBtn onClick={() => onFocusAgent(sessionKey)} tooltip="Focus agent">
                 🎯
               </HeaderBtn>
             )}
@@ -347,7 +347,7 @@ export function AgentChatWindow({
             </div>
           )}
 
-          {messages.map(msg => (
+          {messages.map((msg) => (
             <ChatMessageBubble
               key={msg.id}
               msg={msg}
@@ -404,11 +404,17 @@ export function AgentChatWindow({
         >
           {/* Recording indicator with send/cancel buttons (WhatsApp-style) */}
           {isRecording && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontSize: 11, color: '#ef4444', fontFamily: 'monospace',
-              paddingBottom: 2,
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 11,
+                color: '#ef4444',
+                fontFamily: 'monospace',
+                paddingBottom: 2,
+              }}
+            >
               <span style={{ animation: 'chat-rec-blink 0.6s step-end infinite' }}>●</span>
               {formatDuration(recDuration)}
               <span style={{ flex: 1 }} />
@@ -421,7 +427,7 @@ export function AgentChatWindow({
             <textarea
               ref={inputRef}
               value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
+              onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
               disabled={isSending || isRecording}
@@ -440,7 +446,7 @@ export function AgentChatWindow({
                 maxHeight: 80,
                 lineHeight: 1.4,
               }}
-              onInput={e => {
+              onInput={(e) => {
                 const el = e.currentTarget
                 el.style.height = 'auto'
                 el.style.height = Math.min(el.scrollHeight, 80) + 'px'
@@ -453,10 +459,17 @@ export function AgentChatWindow({
                   onClick={stopAndSend}
                   title="Stop & send voice message"
                   style={{
-                    width: 36, height: 36, borderRadius: 10, border: 'none',
-                    background: '#22c55e', color: '#fff',
-                    cursor: 'pointer', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    border: 'none',
+                    background: '#22c55e',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     transition: 'background 0.15s',
                   }}
                 >
@@ -466,10 +479,17 @@ export function AgentChatWindow({
                   onClick={cancelRecording}
                   title="Cancel recording"
                   style={{
-                    width: 36, height: 36, borderRadius: 10, border: 'none',
-                    background: 'rgba(0,0,0,0.06)', color: '#9ca3af',
-                    cursor: 'pointer', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    border: 'none',
+                    background: 'rgba(0,0,0,0.06)',
+                    color: '#9ca3af',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     transition: 'background 0.15s',
                   }}
                 >
@@ -486,11 +506,19 @@ export function AgentChatWindow({
                     disabled={micPreparing || isSending}
                     title="Record voice message"
                     style={{
-                      width: 36, height: 36, borderRadius: 10, border: 'none',
-                      background: 'rgba(0,0,0,0.06)', color: '#6b7280',
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      border: 'none',
+                      background: 'rgba(0,0,0,0.06)',
+                      color: '#6b7280',
                       cursor: micPreparing || isSending ? 'default' : 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 15, flexShrink: 0, transition: 'background 0.15s, color 0.15s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 15,
+                      flexShrink: 0,
+                      transition: 'background 0.15s, color 0.15s',
                     }}
                   >
                     {micPreparing ? '⏳' : '🎤'}
@@ -500,12 +528,20 @@ export function AgentChatWindow({
                   onClick={handleSend}
                   disabled={isSending || !inputValue.trim()}
                   style={{
-                    width: 36, height: 36, borderRadius: 10, border: 'none',
-                    background: isSending || !inputValue.trim() ? 'rgba(0,0,0,0.08)' : accentColor + 'dd',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    border: 'none',
+                    background:
+                      isSending || !inputValue.trim() ? 'rgba(0,0,0,0.08)' : accentColor + 'dd',
                     color: isSending || !inputValue.trim() ? '#9ca3af' : '#fff',
                     cursor: isSending || !inputValue.trim() ? 'default' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 16, flexShrink: 0, transition: 'background 0.15s, color 0.15s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 16,
+                    flexShrink: 0,
+                    transition: 'background 0.15s, color 0.15s',
                   }}
                 >
                   ➤
@@ -560,11 +596,11 @@ function HeaderBtn({
   return (
     <div style={{ position: 'relative' }}>
       <button
-        onClick={e => {
+        onClick={(e) => {
           e.stopPropagation()
           onClick()
         }}
-        onTouchEnd={e => {
+        onTouchEnd={(e) => {
           e.preventDefault()
           e.stopPropagation()
           onClick()
@@ -577,11 +613,13 @@ function HeaderBtn({
           borderRadius: 7,
           border: 'none',
           background: active
-            ? (activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)')
+            ? activeColor
+              ? activeColor + '20'
+              : 'rgba(0,0,0,0.08)'
             : isHovered
               ? 'rgba(0, 0, 0, 0.1)'
               : 'rgba(0,0,0,0.04)',
-          color: active ? (activeColor || '#374151') : '#6b7280',
+          color: active ? activeColor || '#374151' : '#6b7280',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',

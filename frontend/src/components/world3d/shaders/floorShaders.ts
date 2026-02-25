@@ -35,7 +35,7 @@ const FLOOR_VERTEX = /* glsl */ `
 // ─── Helper: create a ShaderMaterial with common setup ───────────────
 function makeFloorMaterial(
   fragmentShader: string,
-  uniforms: Record<string, THREE.IUniform>,
+  uniforms: Record<string, THREE.IUniform>
 ): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     vertexShader: FLOOR_VERTEX,
@@ -317,8 +317,8 @@ const MARBLE_FRAGMENT = /* glsl */ `
 
 export function createMarbleFloorMaterial(): THREE.ShaderMaterial {
   return makeFloorMaterial(MARBLE_FRAGMENT, {
-    uBaseColor: { value: new THREE.Color('#F5F2EE') },  // warm white
-    uVeinColor: { value: new THREE.Color('#C8C0B8') },  // light warm grey
+    uBaseColor: { value: new THREE.Color('#F5F2EE') }, // warm white
+    uVeinColor: { value: new THREE.Color('#C8C0B8') }, // light warm grey
   })
 }
 
@@ -365,8 +365,8 @@ const LIGHT_WOOD_FRAGMENT = /* glsl */ `
 
 export function createLightWoodFloorMaterial(): THREE.ShaderMaterial {
   return makeFloorMaterial(LIGHT_WOOD_FRAGMENT, {
-    uColor1: { value: new THREE.Color('#E2D3B8') },  // light birch
-    uColor2: { value: new THREE.Color('#D4C4A0') },  // warm pine
+    uColor1: { value: new THREE.Color('#E2D3B8') }, // light birch
+    uColor2: { value: new THREE.Color('#D4C4A0') }, // warm pine
     uScale: { value: 10.0 },
   })
 }
@@ -406,9 +406,9 @@ const LIGHT_TILES_FRAGMENT = /* glsl */ `
 
 export function createLightTilesFloorMaterial(): THREE.ShaderMaterial {
   return makeFloorMaterial(LIGHT_TILES_FRAGMENT, {
-    uColor1: { value: new THREE.Color('#F7F4F0') },  // near white
-    uColor2: { value: new THREE.Color('#EDE8E0') },  // cream
-    uGroutColor: { value: new THREE.Color('#D0CBC4') },  // light warm grey grout
+    uColor1: { value: new THREE.Color('#F7F4F0') }, // near white
+    uColor2: { value: new THREE.Color('#EDE8E0') }, // cream
+    uGroutColor: { value: new THREE.Color('#D0CBC4') }, // light warm grey grout
     uScale: { value: 12.0 },
   })
 }
@@ -452,6 +452,6 @@ const SAND_FRAGMENT = /* glsl */ `
 
 export function createSandFloorMaterial(): THREE.ShaderMaterial {
   return makeFloorMaterial(SAND_FRAGMENT, {
-    uBaseColor: { value: new THREE.Color('#E8DCC8') },  // warm beige
+    uBaseColor: { value: new THREE.Color('#E8DCC8') }, // warm beige
   })
 }

@@ -1,8 +1,8 @@
 # OpenClaw Docker Compatibility Masterplan
 
-**Author:** Ekinbot  
-**Date:** 2026-02-07  
-**Status:** Draft  
+**Author:** Ekinbot
+**Date:** 2026-02-07
+**Status:** Draft
 **Purpose:** Guide the implementation of full Docker compatibility between CrewHub and OpenClaw Gateway
 
 ---
@@ -75,7 +75,7 @@ extra_hosts:
   - "host.docker.internal:host-gateway"
 ```
 
-**What works:** Connecting to host-based OpenClaw  
+**What works:** Connecting to host-based OpenClaw
 **What's missing:** Container-to-container communication, shared volumes, full containerized deployment
 
 ---
@@ -110,7 +110,7 @@ services:
     image: openclaw:local
     networks:
       - crewhub-network
-    
+
   backend:
     environment:
       - OPENCLAW_GATEWAY_URL=ws://openclaw-gateway:18789
@@ -175,12 +175,12 @@ class OpenClawDetector(BaseDetector):
         # Allow override via environment
         self.data_dir = Path(os.getenv("OPENCLAW_DATA_DIR", str(Path.home() / ".openclaw")))
         self.DEFAULT_PORT = int(os.getenv("OPENCLAW_PORT", "18789"))
-        
+
     @property
     def CONFIG_PATHS(self) -> list[Path]:
         return [
             self.data_dir / "openclaw.json",
-            self.data_dir / "clawdbot.json", 
+            self.data_dir / "clawdbot.json",
             self.data_dir / "config.json",
         ]
 ```
@@ -219,7 +219,7 @@ services:
     volumes:
       - openclaw-data:/home/node/.openclaw
       - openclaw-workspace:/home/node/.openclaw/workspace
-      
+
   crewhub-backend:
     volumes:
       - openclaw-data:/openclaw-data:ro  # Read-only for CrewHub
@@ -487,12 +487,12 @@ from pathlib import Path
 class OpenClawDetector(BaseDetector):
     def __init__(self):
         self.data_dir = Path(os.getenv(
-            "OPENCLAW_DATA_DIR", 
+            "OPENCLAW_DATA_DIR",
             str(Path.home() / ".openclaw")
         ))
         self.DEFAULT_PORT = int(os.getenv("OPENCLAW_PORT", "18789"))
         self.gateway_host = os.getenv("OPENCLAW_HOST", "127.0.0.1")
-    
+
     @property
     def CONFIG_PATHS(self) -> list[Path]:
         return [
@@ -500,7 +500,7 @@ class OpenClawDetector(BaseDetector):
             self.data_dir / "clawdbot.json",
             self.data_dir / "config.json",
         ]
-    
+
     async def _probe_websocket(self, url: str = None, token: str = None):
         if url is None:
             url = f"ws://{self.gateway_host}:{self.DEFAULT_PORT}"
@@ -513,28 +513,28 @@ class OpenClawConnection(AgentConnection):
     def __init__(self, connection_id: str, name: str, config: dict = None):
         config = config or {}
         super().__init__(...)
-        
+
         # Configurable data directory
         self.data_dir = Path(config.get("data_dir") or os.getenv(
             "OPENCLAW_DATA_DIR",
             str(Path.home() / ".openclaw")
         ))
-        
+
         # Session access mode: 'file' or 'api'
         self.session_access = config.get("session_access") or os.getenv(
             "OPENCLAW_SESSION_ACCESS", "file"
         )
-    
+
     async def get_session_history(self, session_key: str, limit: int = 50):
         if self.session_access == "api":
             return await self._get_history_via_api(session_key, limit)
         return await self._get_history_via_file(session_key, limit)
-    
+
     async def _get_history_via_file(self, session_key: str, limit: int):
         # ... existing file-based implementation
         base = self.data_dir / "agents" / agent_id / "sessions"
         # ...
-    
+
     async def _get_history_via_api(self, session_key: str, limit: int):
         # Future: use sessions.history API when available
         result = await self.call("sessions.history", {
@@ -570,15 +570,15 @@ echo "🚀 Starting CrewHub in $MODE mode..."
 if [ "$MODE" == "full" ]; then
     # Full containerized stack
     docker compose -f docker-compose.full.yml up -d
-    
+
     echo "📋 Running OpenClaw onboarding..."
     docker compose -f docker-compose.full.yml run --rm openclaw-cli onboard
-    
+
     echo "✅ Full stack started!"
     echo "   - CrewHub: http://localhost:5180"
     echo "   - Backend: http://localhost:8090"
     echo "   - OpenClaw Gateway: ws://localhost:18789"
-    
+
 elif [ "$MODE" == "hybrid" ]; then
     # CrewHub in Docker, OpenClaw on host
     if ! pgrep -f "openclaw" > /dev/null; then
@@ -586,9 +586,9 @@ elif [ "$MODE" == "hybrid" ]; then
         echo "   Start it with: openclaw gateway start"
         exit 1
     fi
-    
+
     docker compose up -d
-    
+
     echo "✅ Hybrid stack started!"
     echo "   - CrewHub: http://localhost:5180"
     echo "   - Backend: http://localhost:8090"
@@ -647,16 +647,16 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build images
         run: docker compose build
-      
+
       - name: Start services (hybrid mode)
         run: |
           # Mock OpenClaw for testing
@@ -669,15 +669,15 @@ jobs:
                     await ws.send(msg)
             asyncio.run(websockets.serve(echo, '0.0.0.0', 18789))
             "
-          
+
           docker compose up -d
           sleep 10
-      
+
       - name: Health checks
         run: |
           curl -f http://localhost:8090/health
           curl -f http://localhost:5180
-      
+
       - name: Cleanup
         if: always()
         run: |
@@ -717,7 +717,7 @@ async def detect(self) -> list[DiscoveryCandidate]:
         if probe["reachable"]:
             candidate.status = "reachable"
         return [candidate]
-    
+
     # ... existing auto-discovery logic
 ```
 
@@ -732,7 +732,7 @@ async def get_session_history(self, session_key: str, limit: int = 50):
             return await self._get_history_via_file(session_key, limit)
     except (FileNotFoundError, PermissionError) as e:
         logger.warning(f"File access failed, falling back to API: {e}")
-    
+
     # Fallback to API
     return await self._get_history_via_api(session_key, limit)
 ```
@@ -745,10 +745,10 @@ async def get_session_history(self, session_key: str, limit: int = 50):
 @router.get("/health")
 async def health_check():
     status = {"status": "healthy", "checks": {}}
-    
+
     # Database check
     status["checks"]["database"] = await check_database()
-    
+
     # OpenClaw connectivity check
     try:
         conn = get_openclaw_connection()
@@ -758,11 +758,11 @@ async def health_check():
             status["checks"]["openclaw"] = {"status": "disconnected"}
     except Exception as e:
         status["checks"]["openclaw"] = {"status": "error", "message": str(e)}
-    
+
     # Determine overall status
     if any(c.get("status") == "error" for c in status["checks"].values()):
         status["status"] = "degraded"
-    
+
     return status
 ```
 
@@ -778,10 +778,10 @@ class OpenClawSettings(BaseSettings):
     gateway_token: Optional[str] = None
     data_dir: str = "~/.openclaw"
     session_access: str = "file"  # file | api
-    
+
     class Config:
         env_prefix = "OPENCLAW_"
-        
+
     @property
     def resolved_data_dir(self) -> Path:
         return Path(self.data_dir).expanduser()
@@ -831,57 +831,57 @@ import os
 
 @pytest.mark.integration
 class TestDockerConnectivity:
-    
+
     @pytest.fixture
     def openclaw_url(self):
         return os.getenv("OPENCLAW_GATEWAY_URL", "ws://localhost:18789")
-    
+
     async def test_websocket_connection(self, openclaw_url):
         """Test WebSocket connection to OpenClaw Gateway."""
         from app.services.connections.openclaw import OpenClawConnection
-        
+
         conn = OpenClawConnection(
             connection_id="test",
             name="Test Connection",
             config={"url": openclaw_url}
         )
-        
+
         connected = await conn.connect()
         assert connected, "Failed to connect to OpenClaw Gateway"
-        
+
         await conn.disconnect()
-    
+
     async def test_session_list(self, openclaw_url):
         """Test session list retrieval."""
         from app.services.connections.openclaw import OpenClawConnection
-        
+
         conn = OpenClawConnection(
             connection_id="test",
             name="Test Connection",
             config={"url": openclaw_url}
         )
-        
+
         await conn.connect()
         sessions = await conn.get_sessions()
-        
+
         assert isinstance(sessions, list)
         await conn.disconnect()
-    
+
     async def test_session_history_fallback(self):
         """Test session history with file/API fallback."""
         from app.services.connections.openclaw import OpenClawConnection
-        
+
         # Force API mode (no file access)
         conn = OpenClawConnection(
             connection_id="test",
             name="Test Connection",
             config={"session_access": "api"}
         )
-        
+
         await conn.connect()
         # This should use API, not file access
         history = await conn.get_session_history("agent:main:test:123")
-        
+
         # Should gracefully handle missing session
         assert isinstance(history, list)
         await conn.disconnect()

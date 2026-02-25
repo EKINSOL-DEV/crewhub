@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react"
-import { sessionDisplayNameApi, API_BASE } from "@/lib/api"
-import { sseManager } from "@/lib/sseManager"
+import { useState, useEffect, useCallback } from 'react'
+import { sessionDisplayNameApi, API_BASE } from '@/lib/api'
+import { sseManager } from '@/lib/sseManager'
 
 const displayNameCache = new Map<string, string | null>()
 type Subscriber = () => void
@@ -11,7 +11,7 @@ let bulkFetchPromise: Promise<void> | null = null
 let bulkFetchDone = false
 
 function notifySubscribers() {
-  subscribers.forEach(fn => fn())
+  subscribers.forEach((fn) => fn())
 }
 
 // ── SSE integration ────────────────────────────────────────────────────────
@@ -22,18 +22,18 @@ function ensureSSESubscription() {
   if (_sseSubscribed) return
   _sseSubscribed = true
 
-  sseManager.subscribe("display-name-updated", (event: MessageEvent) => {
+  sseManager.subscribe('display-name-updated', (event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data) as {
         session_key: string
         display_name: string | null
-        action: "set" | "deleted"
+        action: 'set' | 'deleted'
       }
       // Update cache in-place; null means "no display name"
       displayNameCache.set(data.session_key, data.display_name)
       notifySubscribers()
     } catch (err) {
-      console.error("[useSessionDisplayNames] SSE parse error:", err)
+      console.error('[useSessionDisplayNames] SSE parse error:', err)
     }
   })
 }
@@ -64,10 +64,9 @@ async function fetchAllDisplayNames(): Promise<void> {
       bulkFetchPromise = null
     }
   })()
-  
+
   return bulkFetchPromise
 }
-
 
 export async function setDisplayName(sessionKey: string, displayName: string): Promise<boolean> {
   try {
@@ -98,7 +97,9 @@ export function clearDisplayNameCache(sessionKey?: string) {
 }
 
 export function useSessionDisplayName(sessionKey: string) {
-  const [displayName, setDisplayNameState] = useState<string | null>(() => displayNameCache.get(sessionKey) ?? null)
+  const [displayName, setDisplayNameState] = useState<string | null>(
+    () => displayNameCache.get(sessionKey) ?? null
+  )
   const [loading, setLoading] = useState(!bulkFetchDone)
 
   useEffect(() => {
@@ -107,7 +108,9 @@ export function useSessionDisplayName(sessionKey: string) {
       setDisplayNameState(cached ?? null)
     }
     subscribers.add(subscriber)
-    return () => { subscribers.delete(subscriber) }
+    return () => {
+      subscribers.delete(subscriber)
+    }
   }, [sessionKey])
 
   useEffect(() => {
@@ -118,7 +121,10 @@ export function useSessionDisplayName(sessionKey: string) {
     })
   }, [sessionKey])
 
-  const update = useCallback(async (newName: string) => setDisplayName(sessionKey, newName), [sessionKey])
+  const update = useCallback(
+    async (newName: string) => setDisplayName(sessionKey, newName),
+    [sessionKey]
+  )
   const remove = useCallback(async () => deleteDisplayName(sessionKey), [sessionKey])
   const refresh = useCallback(async () => {
     // For refresh, fetch the individual name via API
@@ -141,10 +147,10 @@ export function useSessionDisplayName(sessionKey: string) {
 }
 
 export function useSessionDisplayNames(sessionKeys: string[]) {
-  const keysString = sessionKeys.sort().join(",")
+  const keysString = sessionKeys.sort().join(',')
   const [displayNames, setDisplayNames] = useState<Map<string, string | null>>(() => {
     const map = new Map<string, string | null>()
-    sessionKeys.forEach(key => {
+    sessionKeys.forEach((key) => {
       if (displayNameCache.has(key)) map.set(key, displayNameCache.get(key) ?? null)
     })
     return map
@@ -152,26 +158,31 @@ export function useSessionDisplayNames(sessionKeys: string[]) {
   const [loading, setLoading] = useState(!bulkFetchDone)
 
   useEffect(() => {
-    const keys = keysString.split(",").filter(Boolean)
+    const keys = keysString.split(',').filter(Boolean)
     const subscriber = () => {
       const map = new Map<string, string | null>()
-      keys.forEach(key => {
+      keys.forEach((key) => {
         map.set(key, displayNameCache.get(key) ?? null)
       })
       setDisplayNames(map)
     }
     subscribers.add(subscriber)
-    return () => { subscribers.delete(subscriber) }
+    return () => {
+      subscribers.delete(subscriber)
+    }
   }, [keysString])
 
   useEffect(() => {
-    const keys = keysString.split(",").filter(Boolean)
-    if (keys.length === 0) { setLoading(false); return }
-    
+    const keys = keysString.split(',').filter(Boolean)
+    if (keys.length === 0) {
+      setLoading(false)
+      return
+    }
+
     // Fetch all display names once (bulk), then read from cache
     fetchAllDisplayNames().then(() => {
       const map = new Map<string, string | null>()
-      keys.forEach(key => map.set(key, displayNameCache.get(key) ?? null))
+      keys.forEach((key) => map.set(key, displayNameCache.get(key) ?? null))
       setDisplayNames(map)
       setLoading(false)
     })

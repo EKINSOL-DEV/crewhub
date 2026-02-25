@@ -13,30 +13,30 @@ export interface ZenTheme {
     bgPanel: string
     bgHover: string
     bgActive: string
-    
+
     // Foreground
     fg: string
     fgMuted: string
     fgDim: string
-    
+
     // Borders
     border: string
     borderFocus: string
-    
+
     // Accent colors
     accent: string
     accentHover: string
-    
+
     // Status colors
     success: string
     warning: string
     error: string
     info: string
-    
+
     // Chat-specific
     userBubble: string
     assistantBubble: string
-    
+
     // Syntax highlighting
     syntax: {
       keyword: string
@@ -58,30 +58,30 @@ export const tokyoNight: ZenTheme = {
     bgPanel: '#24283b',
     bgHover: '#2f3549',
     bgActive: '#3d4560',
-    
+
     // Foreground
     fg: '#c0caf5',
     fgMuted: '#565f89',
     fgDim: '#3d4560',
-    
+
     // Borders
     border: '#3d4560',
     borderFocus: '#7aa2f7',
-    
+
     // Accent
     accent: '#7aa2f7',
     accentHover: '#89b4fa',
-    
+
     // Status
     success: '#9ece6a',
     warning: '#e0af68',
     error: '#f7768e',
     info: '#7dcfff',
-    
+
     // Chat
     userBubble: '#3d4560',
     assistantBubble: '#1e2030',
-    
+
     // Syntax
     syntax: {
       keyword: '#bb9af7',
@@ -89,8 +89,8 @@ export const tokyoNight: ZenTheme = {
       comment: '#565f89',
       function: '#7aa2f7',
       variable: '#c0caf5',
-    }
-  }
+    },
+  },
 }
 
 /**
@@ -113,9 +113,15 @@ function hexToHSL(hex: string): string {
     const d = max - min
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
     switch (max) {
-      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break
-      case g: h = ((b - r) / d + 2) / 6; break
-      case b: h = ((r - g) / d + 4) / 6; break
+      case r:
+        h = ((g - b) / d + (g < b ? 6 : 0)) / 6
+        break
+      case g:
+        h = ((b - r) / d + 2) / 6
+        break
+      case b:
+        h = ((r - g) / d + 4) / 6
+        break
     }
   }
 

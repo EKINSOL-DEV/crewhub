@@ -4,7 +4,7 @@ import { API_BASE } from '@/lib/api'
 import { useDemoMode } from '@/contexts/DemoContext'
 
 /** Default projects base path (overridden by settings) */
-const DEFAULT_PROJECTS_BASE = "~/Projects"
+const DEFAULT_PROJECTS_BASE = '~/Projects'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -12,26 +12,58 @@ interface ProjectPickerProps {
   projects: Project[]
   currentProjectId: string | null
   onSelect: (projectId: string) => void
-  onCreate: (project: { name: string; icon?: string; color?: string; folder_path?: string }) => Promise<{ success: boolean; project?: Project }>
+  onCreate: (project: {
+    name: string
+    icon?: string
+    color?: string
+    folder_path?: string
+  }) => Promise<{ success: boolean; project?: Project }>
   onClose: () => void
 }
 
 // ── Color presets ──────────────────────────────────────────────
 
 const COLOR_PRESETS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e',
-  '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899',
-  '#6b7280', '#78716c',
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#06b6d4',
+  '#3b82f6',
+  '#8b5cf6',
+  '#ec4899',
+  '#6b7280',
+  '#78716c',
 ]
 
 const ICON_PRESETS = [
-  '🚀', '🏗️', '🎨', '📊', '🔬', '💡', '📱', '🌐',
-  '🛡️', '📝', '🎯', '⚡', '🔧', '📦', '🎬', '🧪',
+  '🚀',
+  '🏗️',
+  '🎨',
+  '📊',
+  '🔬',
+  '💡',
+  '📱',
+  '🌐',
+  '🛡️',
+  '📝',
+  '🎯',
+  '⚡',
+  '🔧',
+  '📦',
+  '🎬',
+  '🧪',
 ]
 
 // ── Component ──────────────────────────────────────────────────
 
-export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, onClose }: ProjectPickerProps) {
+export function ProjectPicker({
+  projects,
+  currentProjectId,
+  onSelect,
+  onCreate,
+  onClose,
+}: ProjectPickerProps) {
   const { isDemoMode } = useDemoMode()
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
@@ -41,14 +73,16 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
   const [newFolderPath, setNewFolderPath] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [discoveredFolders, setDiscoveredFolders] = useState<{ name: string; path: string; file_count: number; has_readme: boolean; has_docs: boolean }[]>([])
+  const [discoveredFolders, setDiscoveredFolders] = useState<
+    { name: string; path: string; file_count: number; has_readme: boolean; has_docs: boolean }[]
+  >([])
   const [projectsBasePath, setProjectsBasePath] = useState(DEFAULT_PROJECTS_BASE)
 
   // Fetch configured projects base path from settings
   useEffect(() => {
     fetch(`${API_BASE}/settings/projects_base_path`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
         if (data?.value) setProjectsBasePath(data.value)
       })
       .catch(() => {})
@@ -58,8 +92,8 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
   useEffect(() => {
     if (!showCreate) return
     fetch(`${API_BASE}/project-folders/discover`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
         if (data?.folders) setDiscoveredFolders(data.folders)
       })
       .catch(() => {})
@@ -98,23 +132,25 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
   // Filter and sort projects
   const filteredProjects = useMemo(() => {
     const q = search.toLowerCase().trim()
-    let list = projects.filter(p => p.status === 'active' || p.status === 'paused')
+    let list = projects.filter((p) => p.status === 'active' || p.status === 'paused')
     if (q) {
-      list = list.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        (p.description && p.description.toLowerCase().includes(q))
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.description && p.description.toLowerCase().includes(q))
       )
     }
     // Sort: recently updated first, current project excluded
-    return list
-      .filter(p => p.id !== currentProjectId)
-      .sort((a, b) => b.updated_at - a.updated_at)
+    return list.filter((p) => p.id !== currentProjectId).sort((a, b) => b.updated_at - a.updated_at)
   }, [projects, search, currentProjectId])
 
   // Auto-generated folder path preview
   const autoFolderPath = useMemo(() => {
     if (!newName.trim()) return ''
-    const slug = newName.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const slug = newName
+      .trim()
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
     return `${projectsBasePath}/${slug}`
   }, [newName, projectsBasePath])
 
@@ -122,16 +158,23 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
     if (!newName.trim()) return
     setIsCreating(true)
     setCreateError(null)
-    
+
     try {
       const folderPath = newFolderPath.trim() || undefined
-      const result = await onCreate({ name: newName.trim(), icon: newIcon, color: newColor, folder_path: folderPath })
-      
+      const result = await onCreate({
+        name: newName.trim(),
+        icon: newIcon,
+        color: newColor,
+        folder_path: folderPath,
+      })
+
       setIsCreating(false)
       if (result && result.success && result.project) {
         onSelect(result.project.id)
       } else if (result) {
-        setCreateError('error' in result ? (result as { error: string }).error : 'Failed to create project')
+        setCreateError(
+          'error' in result ? (result as { error: string }).error : 'Failed to create project'
+        )
       } else {
         setCreateError('No response from create - please try again')
       }
@@ -164,28 +207,35 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
     >
       {/* Demo mode warning */}
       {isDemoMode && (
-        <div style={{
-          padding: '8px 16px',
-          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-          borderBottom: '1px solid #fcd34d',
-          fontSize: 12,
-          color: '#92400e',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}>
+        <div
+          style={{
+            padding: '8px 16px',
+            background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+            borderBottom: '1px solid #fcd34d',
+            fontSize: 12,
+            color: '#92400e',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
           <span>🎮</span>
-          <span><strong>Demo Mode</strong> — Changes won't persist. Two rooms already have projects linked for you to explore!</span>
+          <span>
+            <strong>Demo Mode</strong> — Changes won't persist. Two rooms already have projects
+            linked for you to explore!
+          </span>
         </div>
       )}
 
       {/* Header */}
-      <div style={{
-        padding: '16px 20px 12px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
+      <div
+        style={{
+          padding: '16px 20px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <span style={{ fontSize: 14, fontWeight: 700, color: '#1f2937' }}>
           {showCreate ? '✨ New Project' : '📋 Select Project'}
         </span>
@@ -219,7 +269,7 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
               type="text"
               placeholder="Search projects…"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -231,28 +281,36 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                 fontFamily: 'inherit',
                 boxSizing: 'border-box',
               }}
-              onFocus={e => { e.currentTarget.style.borderColor = '#3b82f6' }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#3b82f6'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
+              }}
             />
           </div>
 
           {/* Project list */}
-          <div style={{
-            flex: 1,
-            overflow: 'auto',
-            padding: '0 12px',
-          }}>
+          <div
+            style={{
+              flex: 1,
+              overflow: 'auto',
+              padding: '0 12px',
+            }}
+          >
             {filteredProjects.length === 0 && (
-              <div style={{
-                padding: '20px 8px',
-                textAlign: 'center',
-                fontSize: 13,
-                color: '#9ca3af',
-              }}>
+              <div
+                style={{
+                  padding: '20px 8px',
+                  textAlign: 'center',
+                  fontSize: 13,
+                  color: '#9ca3af',
+                }}
+              >
                 {search ? 'No projects match your search' : 'No projects available'}
               </div>
             )}
-            {filteredProjects.map(project => (
+            {filteredProjects.map((project) => (
               <button
                 key={project.id}
                 onClick={() => onSelect(project.id)}
@@ -270,44 +328,52 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                   textAlign: 'left',
                   transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
               >
                 {/* Color dot */}
-                <span style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  background: project.color || '#6b7280',
-                  flexShrink: 0,
-                }} />
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: project.color || '#6b7280',
+                    flexShrink: 0,
+                  }}
+                />
 
                 {/* Icon */}
-                <span style={{ fontSize: 18, flexShrink: 0 }}>
-                  {project.icon || '📋'}
-                </span>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{project.icon || '📋'}</span>
 
                 {/* Name & description */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#1f2937',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {project.name}
-                  </div>
-                  {project.description && (
-                    <div style={{
-                      fontSize: 11,
-                      color: '#9ca3af',
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: '#1f2937',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      marginTop: 1,
-                    }}>
+                    }}
+                  >
+                    {project.name}
+                  </div>
+                  {project.description && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: '#9ca3af',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginTop: 1,
+                      }}
+                    >
                       {project.description}
                     </div>
                   )}
@@ -315,15 +381,16 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
 
                 {/* Folder indicator */}
                 {project.folder_path && (
-                  <span style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: '#059669',
-                    background: '#ecfdf5',
-                    padding: '2px 6px',
-                    borderRadius: 4,
-                    flexShrink: 0,
-                  }}
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#059669',
+                      background: '#ecfdf5',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      flexShrink: 0,
+                    }}
                     title={project.folder_path}
                   >
                     📂
@@ -332,15 +399,17 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
 
                 {/* Status badge */}
                 {project.status === 'paused' && (
-                  <span style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: '#a16207',
-                    background: '#fef9c3',
-                    padding: '2px 6px',
-                    borderRadius: 4,
-                    flexShrink: 0,
-                  }}>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#a16207',
+                      background: '#fef9c3',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      flexShrink: 0,
+                    }}
+                  >
                     Paused
                   </span>
                 )}
@@ -349,10 +418,12 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
           </div>
 
           {/* Create new project button */}
-          <div style={{
-            padding: '8px 12px 12px',
-            borderTop: '1px solid rgba(0,0,0,0.06)',
-          }}>
+          <div
+            style={{
+              padding: '8px 12px 12px',
+              borderTop: '1px solid rgba(0,0,0,0.06)',
+            }}
+          >
             <button
               onClick={() => setShowCreate(true)}
               style={{
@@ -368,8 +439,12 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                 fontFamily: 'inherit',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.05)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(59,130,246,0.05)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+              }}
             >
               + Create New Project
             </button>
@@ -377,24 +452,34 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
         </>
       ) : (
         /* Create new project form */
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: '0 20px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 14,
-        }}>
+        <div
+          style={{
+            flex: 1,
+            overflow: 'auto',
+            padding: '0 20px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+          }}
+        >
           {/* Name */}
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4, display: 'block' }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#6b7280',
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Project Name *
             </label>
             <input
               type="text"
               placeholder="e.g. Website Redesign"
               value={newName}
-              onChange={e => setNewName(e.target.value)}
+              onChange={(e) => setNewName(e.target.value)}
               autoFocus
               style={{
                 width: '100%',
@@ -407,19 +492,33 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                 fontFamily: 'inherit',
                 boxSizing: 'border-box',
               }}
-              onFocus={e => { e.currentTarget.style.borderColor = '#3b82f6' }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' }}
-              onKeyDown={e => { if (e.key === 'Enter' && newName.trim()) handleCreate() }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#3b82f6'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newName.trim()) handleCreate()
+              }}
             />
           </div>
 
           {/* Icon selector */}
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6, display: 'block' }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#6b7280',
+                marginBottom: 6,
+                display: 'block',
+              }}
+            >
               Icon
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {ICON_PRESETS.map(icon => (
+              {ICON_PRESETS.map((icon) => (
                 <button
                   key={icon}
                   onClick={() => setNewIcon(icon)}
@@ -444,11 +543,19 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
 
           {/* Color selector */}
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6, display: 'block' }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#6b7280',
+                marginBottom: 6,
+                display: 'block',
+              }}
+            >
               Color
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {COLOR_PRESETS.map(color => (
+              {COLOR_PRESETS.map((color) => (
                 <button
                   key={color}
                   onClick={() => setNewColor(color)}
@@ -469,14 +576,22 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
 
           {/* Folder Path */}
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4, display: 'block' }}>
+            <label
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#6b7280',
+                marginBottom: 4,
+                display: 'block',
+              }}
+            >
               Project Folder
             </label>
             <input
               type="text"
               placeholder={autoFolderPath || `${projectsBasePath}/MyProject`}
               value={newFolderPath}
-              onChange={e => setNewFolderPath(e.target.value)}
+              onChange={(e) => setNewFolderPath(e.target.value)}
               style={{
                 width: '100%',
                 padding: '8px 12px',
@@ -488,8 +603,12 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                 fontFamily: 'ui-monospace, SFMono-Regular, monospace',
                 boxSizing: 'border-box',
               }}
-              onFocus={e => { e.currentTarget.style.borderColor = '#3b82f6' }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)' }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#3b82f6'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
+              }}
             />
             {!newFolderPath && autoFolderPath && (
               <div style={{ fontSize: 10, color: '#059669', marginTop: 3 }}>
@@ -500,9 +619,9 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
             {discoveredFolders.length > 0 && !newFolderPath && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
                 {discoveredFolders
-                  .filter(f => f.name.toLowerCase().includes(newName.toLowerCase()) || !newName)
+                  .filter((f) => f.name.toLowerCase().includes(newName.toLowerCase()) || !newName)
                   .slice(0, 5)
-                  .map(folder => (
+                  .map((folder) => (
                     <button
                       key={folder.path}
                       type="button"
@@ -528,8 +647,7 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
                       📂 {folder.name}
                       {folder.has_docs && <span style={{ color: '#059669' }}>📝</span>}
                     </button>
-                  ))
-                }
+                  ))}
               </div>
             )}
             {!discoveredFolders.length && (
@@ -541,13 +659,15 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
 
           {/* Error */}
           {createError && (
-            <div style={{
-              padding: '8px 12px',
-              borderRadius: 8,
-              background: '#fef2f2',
-              color: '#991b1b',
-              fontSize: 12,
-            }}>
+            <div
+              style={{
+                padding: '8px 12px',
+                borderRadius: 8,
+                background: '#fef2f2',
+                color: '#991b1b',
+                fontSize: 12,
+              }}
+            >
               {createError}
             </div>
           )}
@@ -555,7 +675,10 @@ export function ProjectPicker({ projects, currentProjectId, onSelect, onCreate, 
           {/* Buttons */}
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
             <button
-              onClick={() => { setShowCreate(false); setCreateError(null) }}
+              onClick={() => {
+                setShowCreate(false)
+                setCreateError(null)
+              }}
               style={{
                 flex: 1,
                 padding: '8px 14px',

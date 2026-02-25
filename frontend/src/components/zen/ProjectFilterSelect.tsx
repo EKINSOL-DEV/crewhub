@@ -46,19 +46,22 @@ export function ProjectFilterSelect({
     }
   }, [isOpen])
 
-  const filteredProjects = projects.filter(p =>
-    p.status === 'active' && p.name.toLowerCase().includes(search.toLowerCase())
+  const filteredProjects = projects.filter(
+    (p) => p.status === 'active' && p.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleSelect = useCallback((project: Project | null) => {
-    if (project) {
-      onSelect(project.id, project.name, project.color || undefined)
-    } else {
-      onSelect(null, 'All Projects')
-    }
-    setIsOpen(false)
-    setSearch('')
-  }, [onSelect])
+  const handleSelect = useCallback(
+    (project: Project | null) => {
+      if (project) {
+        onSelect(project.id, project.name, project.color || undefined)
+      } else {
+        onSelect(null, 'All Projects')
+      }
+      setIsOpen(false)
+      setSearch('')
+    },
+    [onSelect]
+  )
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -68,12 +71,10 @@ export function ProjectFilterSelect({
   }, [])
 
   const displayLabel = currentProjectId
-    ? (currentProjectName || projects.find(p => p.id === currentProjectId)?.name || 'Project')
+    ? currentProjectName || projects.find((p) => p.id === currentProjectId)?.name || 'Project'
     : 'All Projects'
 
-  const currentProject = currentProjectId
-    ? projects.find(p => p.id === currentProjectId)
-    : null
+  const currentProject = currentProjectId ? projects.find((p) => p.id === currentProjectId) : null
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }} onKeyDown={handleKeyDown}>
@@ -101,19 +102,23 @@ export function ProjectFilterSelect({
         }}
       >
         {currentProject?.color && (
-          <span style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: currentProject.color,
-            flexShrink: 0,
-          }} />
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: currentProject.color,
+              flexShrink: 0,
+            }}
+          />
         )}
-        <span style={{
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
+        <span
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {displayLabel}
         </span>
         <span style={{ fontSize: 10, opacity: 0.6, flexShrink: 0 }}>▼</span>
@@ -149,7 +154,7 @@ export function ProjectFilterSelect({
               type="text"
               placeholder="Search projects..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: '100%',
                 padding: '6px 8px',
@@ -180,7 +185,9 @@ export function ProjectFilterSelect({
                 padding: '8px 10px',
                 borderRadius: 6,
                 border: 'none',
-                background: !currentProjectId ? 'var(--zen-bg-active, rgba(59,130,246,0.1))' : 'transparent',
+                background: !currentProjectId
+                  ? 'var(--zen-bg-active, rgba(59,130,246,0.1))'
+                  : 'transparent',
                 color: 'var(--zen-fg, inherit)',
                 fontSize: 12,
                 fontWeight: !currentProjectId ? 700 : 500,
@@ -189,26 +196,50 @@ export function ProjectFilterSelect({
                 textAlign: 'left',
                 transition: 'background 0.1s',
               }}
-              onMouseEnter={e => { if (currentProjectId) e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))' }}
-              onMouseLeave={e => { if (currentProjectId) e.currentTarget.style.background = 'transparent' }}
+              onMouseEnter={(e) => {
+                if (currentProjectId)
+                  e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))'
+              }}
+              onMouseLeave={(e) => {
+                if (currentProjectId) e.currentTarget.style.background = 'transparent'
+              }}
             >
               <span style={{ fontSize: 14 }}>🌐</span>
               <span>All Projects</span>
             </button>
 
             {/* Divider */}
-            <div style={{ borderTop: '1px solid var(--zen-border, rgba(0,0,0,0.06))', margin: '4px 8px' }} />
+            <div
+              style={{
+                borderTop: '1px solid var(--zen-border, rgba(0,0,0,0.06))',
+                margin: '4px 8px',
+              }}
+            />
 
             {isLoading ? (
-              <div style={{ padding: '12px', fontSize: 12, color: 'var(--zen-fg-muted, #9ca3af)', textAlign: 'center' }}>
+              <div
+                style={{
+                  padding: '12px',
+                  fontSize: 12,
+                  color: 'var(--zen-fg-muted, #9ca3af)',
+                  textAlign: 'center',
+                }}
+              >
                 Loading...
               </div>
             ) : filteredProjects.length === 0 ? (
-              <div style={{ padding: '12px', fontSize: 12, color: 'var(--zen-fg-muted, #9ca3af)', textAlign: 'center' }}>
+              <div
+                style={{
+                  padding: '12px',
+                  fontSize: 12,
+                  color: 'var(--zen-fg-muted, #9ca3af)',
+                  textAlign: 'center',
+                }}
+              >
                 {search ? 'No projects match' : 'No active projects'}
               </div>
             ) : (
-              filteredProjects.map(project => {
+              filteredProjects.map((project) => {
                 const isSelected = project.id === currentProjectId
                 return (
                   <button
@@ -224,7 +255,9 @@ export function ProjectFilterSelect({
                       padding: '8px 10px',
                       borderRadius: 6,
                       border: 'none',
-                      background: isSelected ? 'var(--zen-bg-active, rgba(59,130,246,0.1))' : 'transparent',
+                      background: isSelected
+                        ? 'var(--zen-bg-active, rgba(59,130,246,0.1))'
+                        : 'transparent',
                       color: 'var(--zen-fg, inherit)',
                       fontSize: 12,
                       fontWeight: isSelected ? 700 : 500,
@@ -233,23 +266,32 @@ export function ProjectFilterSelect({
                       textAlign: 'left',
                       transition: 'background 0.1s',
                     }}
-                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))' }}
-                    onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected)
+                        e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))'
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = 'transparent'
+                    }}
                   >
-                    <span style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: project.color || '#6b7280',
-                      flexShrink: 0,
-                    }} />
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: project.color || '#6b7280',
+                        flexShrink: 0,
+                      }}
+                    />
                     <span style={{ fontSize: 14, flexShrink: 0 }}>{project.icon || '📋'}</span>
-                    <span style={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      flex: 1,
-                    }}>
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        flex: 1,
+                      }}
+                    >
                       {project.name}
                     </span>
                   </button>
@@ -259,9 +301,18 @@ export function ProjectFilterSelect({
           </div>
 
           {/* Manage Projects button */}
-          <div style={{ borderTop: '1px solid var(--zen-border, rgba(0,0,0,0.06))', padding: '4px 4px 4px' }}>
+          <div
+            style={{
+              borderTop: '1px solid var(--zen-border, rgba(0,0,0,0.06))',
+              padding: '4px 4px 4px',
+            }}
+          >
             <button
-              onClick={() => { setIsOpen(false); setSearch(''); setShowManager(true) }}
+              onClick={() => {
+                setIsOpen(false)
+                setSearch('')
+                setShowManager(true)
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -279,8 +330,10 @@ export function ProjectFilterSelect({
                 textAlign: 'left',
                 transition: 'background 0.1s',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))')
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               <span style={{ fontSize: 14 }}>⚙️</span>
               <span>Manage Projects...</span>

@@ -20,16 +20,18 @@ export function CodeBlock({ className, children }: CodeBlockProps) {
   return (
     <div style={{ position: 'relative', marginBottom: 16 }}>
       {language && (
-        <div style={{
-          position: 'absolute',
-          top: 8,
-          left: 12,
-          fontSize: 10,
-          color: 'hsl(var(--muted-foreground))',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          fontWeight: 600,
-        }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 12,
+            fontSize: 10,
+            color: 'hsl(var(--muted-foreground))',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            fontWeight: 600,
+          }}
+        >
           {language}
         </div>
       )}
@@ -50,20 +52,22 @@ export function CodeBlock({ className, children }: CodeBlockProps) {
           transition: 'opacity 0.15s',
           zIndex: 1,
         }}
-        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-        onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
+        onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+        onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
       >
         {copied ? '✓ Copied' : 'Copy'}
       </button>
-      <pre style={{
-        background: 'hsl(var(--secondary))',
-        borderRadius: 8,
-        padding: language ? '32px 16px 16px' : '16px',
-        overflow: 'auto',
-        fontSize: 13,
-        lineHeight: 1.5,
-        border: '1px solid hsl(var(--border))',
-      }}>
+      <pre
+        style={{
+          background: 'hsl(var(--secondary))',
+          borderRadius: 8,
+          padding: language ? '32px 16px 16px' : '16px',
+          overflow: 'auto',
+          fontSize: 13,
+          lineHeight: 1.5,
+          border: '1px solid hsl(var(--border))',
+        }}
+      >
         <code className={className}>{children}</code>
       </pre>
     </div>

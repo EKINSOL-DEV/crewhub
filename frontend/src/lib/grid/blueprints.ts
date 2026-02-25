@@ -76,5 +76,7 @@ export function getBlueprintForRoom(roomName: string): RoomBlueprint {
 
   // 4. Emergency fallback: generate a minimal default
   // This should never happen if blueprintLoader.ts is imported
-  throw new Error(`[getBlueprintForRoom] No blueprint found for "${roomName}" and no default registered`)
+  throw new Error(
+    `[getBlueprintForRoom] No blueprint found for "${roomName}" and no default registered`
+  )
 }

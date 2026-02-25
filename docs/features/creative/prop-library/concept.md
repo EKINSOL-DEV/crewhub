@@ -1,7 +1,7 @@
 # Prop Library - Concept
 
-**Version**: v0.16.0 (Planned)  
-**Status**: 📋 Design phase  
+**Version**: v0.16.0 (Planned)
+**Status**: 📋 Design phase
 **Category**: Creative & Customization
 
 ---
@@ -27,7 +27,7 @@ A curated, self-improving library of 50-100+ prop templates that serves as a bas
 ### 1. Prop Library Database
 - **Location**: `backend/data/prop-library/`
 - **Format**: JSON or TSX files with structured prop definitions
-- **Categories**: 
+- **Categories**:
   - Furniture (desk, chair, shelf, table, lamp)
   - Electronics (computer, phone, monitor, keyboard)
   - Office (pen, notebook, stapler, coffee mug)
@@ -160,5 +160,5 @@ Now generate a prop for: [user prompt]
 
 ---
 
-*Created: 2026-02-11*  
+*Created: 2026-02-11*
 *Last updated: 2026-02-11*

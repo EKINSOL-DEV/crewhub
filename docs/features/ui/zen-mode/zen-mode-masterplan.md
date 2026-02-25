@@ -1,7 +1,7 @@
 # Zen Mode Implementation Masterplan
 
-**Date:** 2026-02-07  
-**Status:** Ready for Implementation  
+**Date:** 2026-02-07
+**Status:** Ready for Implementation
 **Based on:** zen-mode-design.md + zen-mode-review.md
 
 ---

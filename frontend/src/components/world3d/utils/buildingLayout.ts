@@ -73,8 +73,8 @@ export interface BuildingLayout {
 export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
   const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
 
-  const hqRoom = sorted.find(r => r.is_hq)
-  const otherRooms = sorted.filter(r => !r.is_hq)
+  const hqRoom = sorted.find((r) => r.is_hq)
+  const otherRooms = sorted.filter((r) => !r.is_hq)
   const centerRoom = hqRoom || sorted[0]
   const peripheralRooms = hqRoom ? otherRooms : sorted.slice(1)
 
@@ -90,22 +90,38 @@ export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
   let gridCells: [number, number][]
 
   if (totalRooms <= 1) {
-    cols = 1; rows = 1; hqCol = 0; hqRow = 0
+    cols = 1
+    rows = 1
+    hqCol = 0
+    hqRow = 0
     gridCells = []
   } else if (totalRooms <= 4) {
-    cols = 2; rows = 2; hqCol = 0; hqRow = 0
+    cols = 2
+    rows = 2
+    hqCol = 0
+    hqRow = 0
     gridCells = [
       [1, 0],
-      [0, 1], [1, 1],
+      [0, 1],
+      [1, 1],
     ]
   } else if (totalRooms <= 6) {
-    cols = 3; rows = 2; hqCol = 1; hqRow = 0
+    cols = 3
+    rows = 2
+    hqCol = 1
+    hqRow = 0
     gridCells = [
-      [0, 0], [2, 0],
-      [0, 1], [1, 1], [2, 1],
+      [0, 0],
+      [2, 0],
+      [0, 1],
+      [1, 1],
+      [2, 1],
     ]
   } else {
-    cols = 3; rows = 3; hqCol = 1; hqRow = 1
+    cols = 3
+    rows = 3
+    hqCol = 1
+    hqRow = 1
     gridCells = []
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -115,8 +131,8 @@ export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
     }
   }
 
-  const gridOffsetX = -(cols - 1) * cellPitch / 2
-  const gridOffsetZ = -(rows - 1) * cellPitch / 2
+  const gridOffsetX = (-(cols - 1) * cellPitch) / 2
+  const gridOffsetZ = (-(rows - 1) * cellPitch) / 2
 
   const roomPositions: BuildingLayout['roomPositions'] = []
 
@@ -139,8 +155,10 @@ export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
     })
   }
 
-  let minX = Infinity, maxX = -Infinity
-  let minZ = Infinity, maxZ = -Infinity
+  let minX = Infinity,
+    maxX = -Infinity
+  let minZ = Infinity,
+    maxZ = -Infinity
   for (const rp of roomPositions) {
     const half = rp.size / 2
     minX = Math.min(minX, rp.position[0] - half)
@@ -155,11 +173,14 @@ export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
   const leftEdge = minX - BUILDING_PADDING
 
   const buildingWidth = parkingRightEdge - leftEdge
-  const buildingDepth = (maxZ - minZ) + BUILDING_PADDING * 2
+  const buildingDepth = maxZ - minZ + BUILDING_PADDING * 2
   const buildingCenterX = (leftEdge + parkingRightEdge) / 2
   const buildingCenterZ = (minZ - BUILDING_PADDING + maxZ + BUILDING_PADDING) / 2
 
-  const parkingDepth = Math.min(Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2), buildingDepth - BUILDING_PADDING * 2)
+  const parkingDepth = Math.min(
+    Math.max(PARKING_DEPTH_MIN, ROOM_SIZE * 2),
+    buildingDepth - BUILDING_PADDING * 2
+  )
   const parkingArea = { x: parkingX, z: parkingZ, width: PARKING_WIDTH, depth: parkingDepth }
 
   const entranceX = 0

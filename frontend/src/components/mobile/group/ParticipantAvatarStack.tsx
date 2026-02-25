@@ -20,11 +20,16 @@ export function ParticipantAvatarStack({
         <div
           key={p.id}
           style={{
-            width: size, height: size, borderRadius: size * 0.4,
+            width: size,
+            height: size,
+            borderRadius: size * 0.4,
             background: (p.agent_color || '#6366f1') + '30',
             color: p.agent_color || '#6366f1',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: size * 0.5, fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: size * 0.5,
+            fontWeight: 600,
             border: '2px solid #0f172a',
             marginLeft: i > 0 ? -(size * 0.3) : 0,
             zIndex: shown.length - i,
@@ -36,16 +41,23 @@ export function ParticipantAvatarStack({
         </div>
       ))}
       {overflow > 0 && (
-        <div style={{
-          width: size, height: size, borderRadius: size * 0.4,
-          background: 'rgba(255,255,255,0.1)',
-          color: '#94a3b8',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: size * 0.38, fontWeight: 600,
-          border: '2px solid #0f172a',
-          marginLeft: -(size * 0.3),
-          position: 'relative',
-        }}>
+        <div
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size * 0.4,
+            background: 'rgba(255,255,255,0.1)',
+            color: '#94a3b8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: size * 0.38,
+            fontWeight: 600,
+            border: '2px solid #0f172a',
+            marginLeft: -(size * 0.3),
+            position: 'relative',
+          }}
+        >
           +{overflow}
         </div>
       )}

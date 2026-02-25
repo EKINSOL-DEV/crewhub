@@ -23,7 +23,11 @@ import {
 } from './mockSessions'
 import { lsGet, jsonResponse, okResponse } from './mockUtils'
 
-export function handleMockRequest(pathname: string, method: string, _body?: BodyInit | null): Response | null {
+export function handleMockRequest(
+  pathname: string,
+  method: string,
+  _body?: BodyInit | null
+): Response | null {
   // === CRITICAL — Required for 3D world ===
 
   // GET /api/sessions
@@ -43,7 +47,9 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
   // GET /api/session-room-assignments
   if (pathname === '/api/session-room-assignments' && method === 'GET') {
     const assignments = lsGet('assignments', MOCK_ROOM_ASSIGNMENTS)
-    console.log(`[MockAPI] GET /api/session-room-assignments → 200 (${assignments.length} assignments)`)
+    console.log(
+      `[MockAPI] GET /api/session-room-assignments → 200 (${assignments.length} assignments)`
+    )
     return jsonResponse({ assignments })
   }
 
@@ -85,10 +91,12 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
 
   // GET /api/projects/overview
   if (pathname === '/api/projects/overview' && method === 'GET') {
-    const overview = MOCK_PROJECTS.map(p => ({
+    const overview = MOCK_PROJECTS.map((p) => ({
       ...p,
       room_count: p.rooms.length,
-      agent_count: MOCK_AGENTS.filter(a => a.default_room_id && p.rooms.includes(a.default_room_id)).length,
+      agent_count: MOCK_AGENTS.filter(
+        (a) => a.default_room_id && p.rooms.includes(a.default_room_id)
+      ).length,
     }))
     console.log('[MockAPI] GET /api/projects/overview → 200')
     return jsonResponse({ projects: overview })
@@ -129,10 +137,50 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
         archived_at: null,
         participant_count: 4,
         participants: [
-          { id: 'p1', thread_id: 'thread-standup-group', agent_id: 'main', agent_name: 'Director', agent_icon: '🎯', agent_color: '#4f46e5', role: 'owner', is_active: true, joined_at: Date.now() - 6 * 3_600_000 },
-          { id: 'p2', thread_id: 'thread-standup-group', agent_id: 'dev', agent_name: 'Developer', agent_icon: '💻', agent_color: '#10b981', role: 'member', is_active: true, joined_at: Date.now() - 6 * 3_600_000 },
-          { id: 'p3', thread_id: 'thread-standup-group', agent_id: 'flowy', agent_name: 'Flowy', agent_icon: '🎨', agent_color: '#ec4899', role: 'member', is_active: true, joined_at: Date.now() - 6 * 3_600_000 },
-          { id: 'p4', thread_id: 'thread-standup-group', agent_id: 'reviewer', agent_name: 'Reviewer', agent_icon: '🔍', agent_color: '#8b5cf6', role: 'member', is_active: true, joined_at: Date.now() - 6 * 3_600_000 },
+          {
+            id: 'p1',
+            thread_id: 'thread-standup-group',
+            agent_id: 'main',
+            agent_name: 'Director',
+            agent_icon: '🎯',
+            agent_color: '#4f46e5',
+            role: 'owner',
+            is_active: true,
+            joined_at: Date.now() - 6 * 3_600_000,
+          },
+          {
+            id: 'p2',
+            thread_id: 'thread-standup-group',
+            agent_id: 'dev',
+            agent_name: 'Developer',
+            agent_icon: '💻',
+            agent_color: '#10b981',
+            role: 'member',
+            is_active: true,
+            joined_at: Date.now() - 6 * 3_600_000,
+          },
+          {
+            id: 'p3',
+            thread_id: 'thread-standup-group',
+            agent_id: 'flowy',
+            agent_name: 'Flowy',
+            agent_icon: '🎨',
+            agent_color: '#ec4899',
+            role: 'member',
+            is_active: true,
+            joined_at: Date.now() - 6 * 3_600_000,
+          },
+          {
+            id: 'p4',
+            thread_id: 'thread-standup-group',
+            agent_id: 'reviewer',
+            agent_name: 'Reviewer',
+            agent_icon: '🔍',
+            agent_color: '#8b5cf6',
+            role: 'member',
+            is_active: true,
+            joined_at: Date.now() - 6 * 3_600_000,
+          },
         ],
         settings: {},
       },
@@ -145,7 +193,17 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
   if (pathname.startsWith('/api/threads/') && method === 'GET' && !pathname.includes('/messages')) {
     const threadId = pathname.split('/')[3]
     console.log(`[MockAPI] GET /api/threads/${threadId} → 200`)
-    return okResponse({ id: threadId, kind: 'group', title: 'Team Standup', participants: [], participant_count: 0, settings: {}, created_by: 'user', created_at: Date.now(), updated_at: Date.now() })
+    return okResponse({
+      id: threadId,
+      kind: 'group',
+      title: 'Team Standup',
+      participants: [],
+      participant_count: 0,
+      settings: {},
+      created_by: 'user',
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    })
   }
 
   // GET /api/threads/:id/messages
@@ -153,16 +211,86 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
     const threadId = pathname.split('/')[3]
     const hour = 3_600_000
     const mockMessages = [
-      { id: 'msg-1', thread_id: threadId, role: 'user', content: 'Morning everyone! Quick standup — what\'s everyone working on today?', agent_id: null, agent_name: 'You', created_at: Date.now() - 6 * hour },
-      { id: 'msg-2', thread_id: threadId, role: 'assistant', content: 'Director here. Coordinating the v1.0 release checklist. Reviewing the roadmap items and making sure we\'re on track 🎯', agent_id: 'main', agent_name: 'Director', created_at: Date.now() - 6 * hour + 30_000 },
-      { id: 'msg-3', thread_id: threadId, role: 'assistant', content: 'Finishing up the WebSocket reconnect logic, then moving to auth module. Should have both done by EOD 💻', agent_id: 'dev', agent_name: 'Developer', created_at: Date.now() - 6 * hour + 60_000 },
-      { id: 'msg-4', thread_id: threadId, role: 'assistant', content: 'Landing page copy rewrite + finishing the onboarding wizard designs. Almost ready for review 🎨', agent_id: 'flowy', agent_name: 'Flowy', created_at: Date.now() - 6 * hour + 90_000 },
-      { id: 'msg-5', thread_id: threadId, role: 'assistant', content: 'Wrapping up the auth review. Found some good stuff. Will post the summary in #dev 🔍', agent_id: 'reviewer', agent_name: 'Reviewer', created_at: Date.now() - 6 * hour + 120_000 },
-      { id: 'msg-6', thread_id: threadId, role: 'user', content: 'Great! Any blockers?', agent_id: null, agent_name: 'You', created_at: Date.now() - 5 * hour },
-      { id: 'msg-7', thread_id: threadId, role: 'assistant', content: 'No blockers. The backoff algorithm was the tricky part, that\'s done now. 💻', agent_id: 'dev', agent_name: 'Developer', created_at: Date.now() - 5 * hour + 30_000 },
-      { id: 'msg-8', thread_id: threadId, role: 'user', content: 'Let\'s ship it 🚀', agent_id: null, agent_name: 'You', created_at: Date.now() - 4 * hour },
+      {
+        id: 'msg-1',
+        thread_id: threadId,
+        role: 'user',
+        content: "Morning everyone! Quick standup — what's everyone working on today?",
+        agent_id: null,
+        agent_name: 'You',
+        created_at: Date.now() - 6 * hour,
+      },
+      {
+        id: 'msg-2',
+        thread_id: threadId,
+        role: 'assistant',
+        content:
+          "Director here. Coordinating the v1.0 release checklist. Reviewing the roadmap items and making sure we're on track 🎯",
+        agent_id: 'main',
+        agent_name: 'Director',
+        created_at: Date.now() - 6 * hour + 30_000,
+      },
+      {
+        id: 'msg-3',
+        thread_id: threadId,
+        role: 'assistant',
+        content:
+          'Finishing up the WebSocket reconnect logic, then moving to auth module. Should have both done by EOD 💻',
+        agent_id: 'dev',
+        agent_name: 'Developer',
+        created_at: Date.now() - 6 * hour + 60_000,
+      },
+      {
+        id: 'msg-4',
+        thread_id: threadId,
+        role: 'assistant',
+        content:
+          'Landing page copy rewrite + finishing the onboarding wizard designs. Almost ready for review 🎨',
+        agent_id: 'flowy',
+        agent_name: 'Flowy',
+        created_at: Date.now() - 6 * hour + 90_000,
+      },
+      {
+        id: 'msg-5',
+        thread_id: threadId,
+        role: 'assistant',
+        content:
+          'Wrapping up the auth review. Found some good stuff. Will post the summary in #dev 🔍',
+        agent_id: 'reviewer',
+        agent_name: 'Reviewer',
+        created_at: Date.now() - 6 * hour + 120_000,
+      },
+      {
+        id: 'msg-6',
+        thread_id: threadId,
+        role: 'user',
+        content: 'Great! Any blockers?',
+        agent_id: null,
+        agent_name: 'You',
+        created_at: Date.now() - 5 * hour,
+      },
+      {
+        id: 'msg-7',
+        thread_id: threadId,
+        role: 'assistant',
+        content: "No blockers. The backoff algorithm was the tricky part, that's done now. 💻",
+        agent_id: 'dev',
+        agent_name: 'Developer',
+        created_at: Date.now() - 5 * hour + 30_000,
+      },
+      {
+        id: 'msg-8',
+        thread_id: threadId,
+        role: 'user',
+        content: "Let's ship it 🚀",
+        agent_id: null,
+        agent_name: 'You',
+        created_at: Date.now() - 4 * hour,
+      },
     ]
-    console.log(`[MockAPI] GET /api/threads/${threadId}/messages → 200 (${mockMessages.length} messages)`)
+    console.log(
+      `[MockAPI] GET /api/threads/${threadId}/messages → 200 (${mockMessages.length} messages)`
+    )
     return okResponse({ messages: mockMessages, total: mockMessages.length })
   }
 
@@ -190,13 +318,48 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
     console.log('[MockAPI] GET /api/docs/tree → 200')
     return okResponse({
       tree: [
-        { path: 'getting-started.md', name: 'Getting Started', type: 'file', size: 1200, modified: Date.now() - 86_400_000 },
-        { path: 'configuration.md', name: 'Configuration', type: 'file', size: 3400, modified: Date.now() - 172_800_000 },
-        { path: 'agents/', name: 'Agents', type: 'directory', children: [
-          { path: 'agents/overview.md', name: 'Overview', type: 'file', size: 2100, modified: Date.now() - 259_200_000 },
-          { path: 'agents/rooms.md', name: 'Rooms', type: 'file', size: 1800, modified: Date.now() - 345_600_000 },
-        ]},
-        { path: 'api-reference.md', name: 'API Reference', type: 'file', size: 8900, modified: Date.now() - 432_000_000 },
+        {
+          path: 'getting-started.md',
+          name: 'Getting Started',
+          type: 'file',
+          size: 1200,
+          modified: Date.now() - 86_400_000,
+        },
+        {
+          path: 'configuration.md',
+          name: 'Configuration',
+          type: 'file',
+          size: 3400,
+          modified: Date.now() - 172_800_000,
+        },
+        {
+          path: 'agents/',
+          name: 'Agents',
+          type: 'directory',
+          children: [
+            {
+              path: 'agents/overview.md',
+              name: 'Overview',
+              type: 'file',
+              size: 2100,
+              modified: Date.now() - 259_200_000,
+            },
+            {
+              path: 'agents/rooms.md',
+              name: 'Rooms',
+              type: 'file',
+              size: 1800,
+              modified: Date.now() - 345_600_000,
+            },
+          ],
+        },
+        {
+          path: 'api-reference.md',
+          name: 'API Reference',
+          type: 'file',
+          size: 8900,
+          modified: Date.now() - 432_000_000,
+        },
       ],
     })
   }
@@ -204,7 +367,10 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
   // GET /api/docs/content
   if (pathname === '/api/docs/content' && method === 'GET') {
     console.log('[MockAPI] GET /api/docs/content → 200')
-    return okResponse({ content: '# CrewHub Docs\n\nThis is a demo. Connect your own CrewHub backend to see your actual documentation.' })
+    return okResponse({
+      content:
+        '# CrewHub Docs\n\nThis is a demo. Connect your own CrewHub backend to see your actual documentation.',
+    })
   }
 
   // GET /api/session-display-names
@@ -216,7 +382,7 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
   // GET /api/session-display-names/:key
   if (pathname.match(/^\/api\/session-display-names\//) && method === 'GET') {
     const key = decodeURIComponent(pathname.replace('/api/session-display-names/', ''))
-    const entry = MOCK_DISPLAY_NAMES.find(d => d.session_key === key)
+    const entry = MOCK_DISPLAY_NAMES.find((d) => d.session_key === key)
     console.log(`[MockAPI] GET /api/session-display-names/${key} → 200`)
     return jsonResponse({
       session_key: key,
@@ -275,7 +441,13 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
           type: 'directory',
           children: [
             { name: 'index.ts', path: 'src/index.ts', type: 'code', extension: '.ts', size: 512 },
-            { name: 'config.json', path: 'src/config.json', type: 'config', extension: '.json', size: 256 },
+            {
+              name: 'config.json',
+              path: 'src/config.json',
+              type: 'config',
+              extension: '.json',
+              size: 256,
+            },
           ],
           child_count: 2,
         },
@@ -292,7 +464,8 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
       type: 'document',
       extension: '.md',
       size: 2048,
-      content: '# CrewHub\n\n> Multi-agent orchestration platform with 3D visualization\n\n## Features\n\n- 🏢 **3D Room System** — Organize agents into themed rooms\n- 🤖 **Agent Management** — Monitor and control AI agents in real-time\n- 🔄 **Live Updates** — SSE-powered real-time session tracking\n- 🎨 **Customizable** — Themes, layouts, and room configurations\n\n## Getting Started\n\n```bash\nnpm install\nnpm run dev\n```\n',
+      content:
+        '# CrewHub\n\n> Multi-agent orchestration platform with 3D visualization\n\n## Features\n\n- 🏢 **3D Room System** — Organize agents into themed rooms\n- 🤖 **Agent Management** — Monitor and control AI agents in real-time\n- 🔄 **Live Updates** — SSE-powered real-time session tracking\n- 🎨 **Customizable** — Themes, layouts, and room configurations\n\n## Getting Started\n\n```bash\nnpm install\nnpm run dev\n```\n',
     })
   }
 
@@ -302,14 +475,20 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
     const match = pathname.match(/^\/api\/sessions\/(.+)\/history/)
     const sessionKey = match ? decodeURIComponent(match[1]) : ''
     const messages = createMockSessionHistory(sessionKey)
-    console.log(`[MockAPI] GET /api/sessions/${sessionKey}/history → 200 (${messages.length} messages)`)
+    console.log(
+      `[MockAPI] GET /api/sessions/${sessionKey}/history → 200 (${messages.length} messages)`
+    )
     return jsonResponse({ messages })
   }
 
   // GET /api/chat/:key/history
   if (pathname.match(/^\/api\/chat\/.*\/history/) && method === 'GET') {
     console.log('[MockAPI] GET /api/chat/:key/history → 200')
-    return jsonResponse({ messages: MOCK_CHAT_HISTORY, hasMore: false, oldestTimestamp: Date.now() - 120000 })
+    return jsonResponse({
+      messages: MOCK_CHAT_HISTORY,
+      hasMore: false,
+      oldestTimestamp: Date.now() - 120000,
+    })
   }
 
   // GET /api/backup/list
@@ -378,7 +557,10 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
   }
 
   // POST/PUT/DELETE /api/projects
-  if (pathname.match(/^\/api\/projects/) && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
+  if (
+    pathname.match(/^\/api\/projects/) &&
+    (method === 'POST' || method === 'PUT' || method === 'DELETE')
+  ) {
     console.log(`[MockAPI] ${method} ${pathname} → 200`)
     if (method === 'POST') {
       return jsonResponse({
@@ -447,7 +629,10 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
   }
 
   // POST/DELETE /api/session-display-names
-  if (pathname.match(/^\/api\/session-display-names\//) && (method === 'POST' || method === 'DELETE')) {
+  if (
+    pathname.match(/^\/api\/session-display-names\//) &&
+    (method === 'POST' || method === 'DELETE')
+  ) {
     console.log(`[MockAPI] ${method} ${pathname} → 200`)
     return okResponse()
   }
@@ -475,7 +660,8 @@ export function handleMockRequest(pathname: string, method: string, _body?: Body
     console.log('[MockAPI] POST /api/chat/:key/send → 200')
     return jsonResponse({
       success: true,
-      response: 'This is a demo — I can\'t actually process messages, but in a real CrewHub setup I\'d be an AI agent working on your tasks! 🤖',
+      response:
+        "This is a demo — I can't actually process messages, but in a real CrewHub setup I'd be an AI agent working on your tasks! 🤖",
       tokens: 42,
     })
   }

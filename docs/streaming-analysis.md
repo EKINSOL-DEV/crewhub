@@ -1,7 +1,7 @@
 # CrewHub Streaming Analysis
 
-**Datum:** 18 februari 2026  
-**Auteur:** Ekinbot Dev (subagent)  
+**Datum:** 18 februari 2026
+**Auteur:** Ekinbot Dev (subagent)
 **Doel:** Onderzoek of OpenClaw streaming ondersteunt voor agent chat, en hoe we dat kunnen integreren in CrewHub.
 
 ---
@@ -50,7 +50,7 @@ Tijdens een agent-run worden ook `agent` events gestuurd voor tool calls:
 
 ```json
 {
-  "type": "event", 
+  "type": "event",
   "event": "agent",
   "payload": {
     "sessionKey": "agent:main:main",
@@ -223,11 +223,11 @@ async def send_chat_streaming(
     """Send a chat message and yield text chunks as they arrive."""
     import asyncio
     import uuid
-    
+
     idempotency_key = str(uuid.uuid4())
     chunk_queue: asyncio.Queue = asyncio.Queue()
     sent_length = 0
-    
+
     def on_chat_event(payload: dict):
         nonlocal sent_length
         if payload.get("sessionKey") != f"agent:{agent_id}:main":
@@ -243,9 +243,9 @@ async def send_chat_streaming(
                 chunk_queue.put_nowait(("delta", new_chunk))
         elif state in ("final", "error", "aborted"):
             chunk_queue.put_nowait(("done", state))
-    
+
     self.subscribe("chat", on_chat_event)
-    
+
     try:
         # Fire-and-forget the agent call (don't await final result here)
         asyncio.create_task(self.call(
@@ -260,7 +260,7 @@ async def send_chat_streaming(
             timeout=timeout,
             wait_for_final_agent_result=True,
         ))
-        
+
         while True:
             try:
                 kind, data = await asyncio.wait_for(
@@ -288,25 +288,25 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
     """Send a message and stream back the response via SSE."""
     _validate_session_key(session_key)
     _check_rate_limit(session_key)
-    
+
     message = body.message.strip()
     if not message:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
-    
+
     agent_id = _get_agent_id(session_key)
-    
+
     manager = await get_connection_manager()
     conn = manager.get_default_openclaw()
     if not conn:
         raise HTTPException(status_code=503, detail="No OpenClaw connection")
-    
+
     async def generate():
         yield "event: start\ndata: {}\n\n"
         async for chunk in conn.send_chat_streaming(message, agent_id=agent_id):
             import json
             yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
         yield "event: done\ndata: {}\n\n"
-    
+
     return StreamingResponse(
         generate(),
         media_type="text/event-stream",
@@ -327,7 +327,7 @@ Voeg toe naast `sendMessage`:
 const sendMessageStream = useCallback(async (text: string) => {
   const trimmed = text.trim()
   if (!trimmed || isSending) return
-  
+
   // Optimistically add user message
   const userMsg: ChatMessageData = {
     id: `user-${Date.now()}`,
@@ -338,7 +338,7 @@ const sendMessageStream = useCallback(async (text: string) => {
   setMessages(prev => [...prev, userMsg])
   setIsSending(true)
   setError(null)
-  
+
   // Add empty assistant message (will be filled progressively)
   const assistantId = `assistant-${Date.now()}`
   const assistantMsg: ChatMessageData = {
@@ -348,7 +348,7 @@ const sendMessageStream = useCallback(async (text: string) => {
     timestamp: Date.now(),
   }
   setMessages(prev => [...prev, assistantMsg])
-  
+
   try {
     const resp = await fetch(
       `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/stream`,
@@ -358,26 +358,26 @@ const sendMessageStream = useCallback(async (text: string) => {
         body: JSON.stringify({ message: trimmed }),
       }
     )
-    
+
     const reader = resp.body!.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
     let accumulated = ''
-    
+
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      
+
       buffer += decoder.decode(value, { stream: true })
       const lines = buffer.split('\n')
       buffer = lines.pop() ?? ''
-      
+
       for (const line of lines) {
         if (line.startsWith('data: ') && line.includes('"text"')) {
           const data = JSON.parse(line.slice(6))
           accumulated += data.text
-          setMessages(prev => prev.map(m => 
-            m.id === assistantId 
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId
               ? { ...m, content: accumulated }
               : m
           ))
@@ -427,7 +427,7 @@ In plaats van de `send_chat_streaming()` generator, kan je ook:
 2. Frontend luistert via bestaande SSE verbinding (`/events`) op `chat_delta` events
 3. Frontend koppelt ontvangen chunks aan lopende chatvensters
 
-**Voordeel:** Hergebruikt bestaande SSE infra, minder code.  
+**Voordeel:** Hergebruikt bestaande SSE infra, minder code.
 **Nadeel:** Iedereen die verbonden is ontvangt delta's van iedereen (privacy/security issue bij meerdere users). Vereist session-key filtering op frontend.
 
 ### Aanbeveling

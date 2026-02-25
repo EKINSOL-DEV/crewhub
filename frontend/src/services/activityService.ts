@@ -1,12 +1,12 @@
 /**
  * Centralized Activity Service
- * 
+ *
  * Single source of truth for all activity/event data in CrewHub.
  * Used by:
  * - Desktop: ZenActivityPanel, ActivityLogStream
  * - Mobile: Activity Panel, ActiveTasksOverlay
  * - 3D World: ActivityLogStream
- * 
+ *
  * This service ensures no duplicate fetches and consistent data across the app.
  */
 
@@ -17,7 +17,15 @@ import { sseManager } from '@/lib/sseManager'
 
 export interface ActivityEvent {
   id: string
-  type: 'created' | 'updated' | 'removed' | 'status' | 'message' | 'tool_call' | 'tool_result' | 'thinking'
+  type:
+    | 'created'
+    | 'updated'
+    | 'removed'
+    | 'status'
+    | 'message'
+    | 'tool_call'
+    | 'tool_result'
+    | 'thinking'
   timestamp: number
   sessionKey: string
   sessionName?: string
@@ -60,7 +68,12 @@ function humanizeToolCall(
   switch (name) {
     case 'exec': {
       const cmd = argStr('command')
-      if (cmd) return { text: `Running: ${cmd.slice(0, 80)}${cmd.length > 80 ? '…' : ''}`, icon: '🔧', color: '#6b7280' }
+      if (cmd)
+        return {
+          text: `Running: ${cmd.slice(0, 80)}${cmd.length > 80 ? '…' : ''}`,
+          icon: '🔧',
+          color: '#6b7280',
+        }
       return { text: 'Executing command', icon: '🔧', color: '#6b7280' }
     }
     case 'Read':
@@ -87,15 +100,27 @@ function humanizeToolCall(
     }
     case 'web_search': {
       const query = argStr('query')
-      return { text: query ? `Searching: ${query.slice(0, 60)}` : 'Searching the web', icon: '🔍', color: '#f59e0b' }
+      return {
+        text: query ? `Searching: ${query.slice(0, 60)}` : 'Searching the web',
+        icon: '🔍',
+        color: '#f59e0b',
+      }
     }
     case 'web_fetch': {
       const url = argStr('url')
-      return { text: url ? `Fetching: ${url.slice(0, 60)}` : 'Fetching webpage', icon: '🌐', color: '#f59e0b' }
+      return {
+        text: url ? `Fetching: ${url.slice(0, 60)}` : 'Fetching webpage',
+        icon: '🌐',
+        color: '#f59e0b',
+      }
     }
     case 'message': {
       const action = argStr('action')
-      return { text: action ? `Message: ${action}` : 'Sending message', icon: '💬', color: '#06b6d4' }
+      return {
+        text: action ? `Message: ${action}` : 'Sending message',
+        icon: '💬',
+        color: '#06b6d4',
+      }
     }
     case 'browser': {
       const action = argStr('action')
@@ -251,19 +276,21 @@ export async function fetchSessionHistory(
   }
 
   try {
-    const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`)
+    const res = await fetch(
+      `${API_BASE}/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`
+    )
     if (!res.ok) {
       throw new Error(`Failed to fetch history: ${res.status}`)
     }
     const data = await res.json()
     const messages = parseMessagesToLogEntries(data.messages || [])
-    
+
     const result: SessionHistory = {
       sessionKey,
       messages,
       lastFetch: Date.now(),
     }
-    
+
     historyCache.set(sessionKey, result)
     return result
   } catch (error) {
@@ -281,18 +308,20 @@ export async function fetchActivityEntries(
   const { limit = 50 } = options
 
   try {
-    const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`)
+    const res = await fetch(
+      `${API_BASE}/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`
+    )
     if (!res.ok) {
       throw new Error(`Failed to fetch activity: ${res.status}`)
     }
     const data = await res.json()
     const entries = parseMessagesToActivityEntries(data.messages || [])
-    
+
     // Set sessionKey for all entries
-    entries.forEach(e => {
+    entries.forEach((e) => {
       e.sessionKey = sessionKey
     })
-    
+
     return entries
   } catch (error) {
     console.error(`[activityService] Failed to fetch activity for ${sessionKey}:`, error)
@@ -302,10 +331,7 @@ export async function fetchActivityEntries(
 
 // ── SSE: Subscribe to Activity Updates ───────────────────────
 
-export function subscribeToActivityUpdates(
-  sessionKey: string,
-  callback: () => void
-): () => void {
+export function subscribeToActivityUpdates(sessionKey: string, callback: () => void): () => void {
   const handler = (event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data)
@@ -320,7 +346,7 @@ export function subscribeToActivityUpdates(
       // ignore parse errors
     }
   }
-  
+
   return sseManager.subscribe('sessions-refresh', handler)
 }
 

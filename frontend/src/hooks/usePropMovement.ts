@@ -60,7 +60,14 @@ interface UsePropMovementReturn {
   isMoving: boolean
   isDragging: boolean
   isOverInvalid: boolean
-  startLongPress: (key: string, propId: string, gridX: number, gridZ: number, rotation: number, span?: { w: number; d: number }) => void
+  startLongPress: (
+    key: string,
+    propId: string,
+    gridX: number,
+    gridZ: number,
+    rotation: number,
+    span?: { w: number; d: number }
+  ) => void
   cancelLongPress: () => void
   handlePointerUp: () => void
   /** Call when pointer moves while dragging (from useFrame or pointer event) */
@@ -105,7 +112,7 @@ export function usePropMovement({
     rotation: number
     span?: { w: number; d: number }
   } | null>(null)
-  
+
   // Drag state
   const dragPlane = useRef<THREE.Plane>(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0))
   const raycaster = useRef<THREE.Raycaster>(new THREE.Raycaster())
@@ -122,38 +129,41 @@ export function usePropMovement({
   }, [])
 
   // Start long-press detection
-  const startLongPress = useCallback((
-    key: string,
-    propId: string,
-    gridX: number,
-    gridZ: number,
-    rotation: number,
-    span?: { w: number; d: number }
-  ) => {
-    cancelLongPress()
-    
-    pendingSelect.current = { key, propId, gridX, gridZ, rotation, span }
-    _isLongPressPending = true
-    
-    longPressTimer.current = setTimeout(() => {
-      _isLongPressPending = false
-      if (pendingSelect.current) {
-        const { key, propId, gridX, gridZ, rotation, span } = pendingSelect.current
-        setSelectedProp({
-          key,
-          propId,
-          gridX,
-          gridZ,
-          originalX: gridX,
-          originalZ: gridZ,
-          rotation,
-          span,
-        })
-        setIsMoving(true)
-        pendingSelect.current = null
-      }
-    }, LONG_PRESS_MS)
-  }, [cancelLongPress])
+  const startLongPress = useCallback(
+    (
+      key: string,
+      propId: string,
+      gridX: number,
+      gridZ: number,
+      rotation: number,
+      span?: { w: number; d: number }
+    ) => {
+      cancelLongPress()
+
+      pendingSelect.current = { key, propId, gridX, gridZ, rotation, span }
+      _isLongPressPending = true
+
+      longPressTimer.current = setTimeout(() => {
+        _isLongPressPending = false
+        if (pendingSelect.current) {
+          const { key, propId, gridX, gridZ, rotation, span } = pendingSelect.current
+          setSelectedProp({
+            key,
+            propId,
+            gridX,
+            gridZ,
+            originalX: gridX,
+            originalZ: gridZ,
+            rotation,
+            span,
+          })
+          setIsMoving(true)
+          pendingSelect.current = null
+        }
+      }, LONG_PRESS_MS)
+    },
+    [cancelLongPress]
+  )
 
   // Handle pointer up - cancel if it was a short press
   const handlePointerUp = useCallback(() => {
@@ -162,70 +172,76 @@ export function usePropMovement({
 
   // Check if a position is valid (within bounds and not overlapping)
   // Uses selectedProp.key to uniquely identify the prop being moved (handles duplicate propIds)
-  const isValidPosition = useCallback((
-    x: number, 
-    z: number,
-    span: { w: number; d: number } = { w: 1, d: 1 },
-    excludeKey?: string
-  ): boolean => {
-    // Check bounds — cells 0 and gridSize-1 are wall cells (from createEmptyGrid).
-    // Props must stay in the interior: cells 1 to gridSize-2.
-    if (x < 1 || z < 1) return false
-    if (x + span.w > gridWidth - 1) return false
-    if (z + span.d > gridDepth - 1) return false
+  const isValidPosition = useCallback(
+    (
+      x: number,
+      z: number,
+      span: { w: number; d: number } = { w: 1, d: 1 },
+      excludeKey?: string
+    ): boolean => {
+      // Check bounds — cells 0 and gridSize-1 are wall cells (from createEmptyGrid).
+      // Props must stay in the interior: cells 1 to gridSize-2.
+      if (x < 1 || z < 1) return false
+      if (x + span.w > gridWidth - 1) return false
+      if (z + span.d > gridDepth - 1) return false
 
-    // Check for overlaps with other props (excluding interaction-type props)
-    for (const p of placements) {
-      // Use unique key (propId-x-z) to exclude the prop being moved
-      if (excludeKey) {
-        const pKey = `${p.propId}-${p.x}-${p.z}`
-        if (pKey === excludeKey) continue
-      }
-      if (p.type === 'interaction') continue // Interaction markers can overlap
-      
-      const pSpan = p.span || { w: 1, d: 1 }
-      
-      // Check for overlap
-      const overlapsX = x < p.x + pSpan.w && x + span.w > p.x
-      const overlapsZ = z < p.z + pSpan.d && z + span.d > p.z
-      
-      if (overlapsX && overlapsZ) {
-        return false
-      }
-    }
+      // Check for overlaps with other props (excluding interaction-type props)
+      for (const p of placements) {
+        // Use unique key (propId-x-z) to exclude the prop being moved
+        if (excludeKey) {
+          const pKey = `${p.propId}-${p.x}-${p.z}`
+          if (pKey === excludeKey) continue
+        }
+        if (p.type === 'interaction') continue // Interaction markers can overlap
 
-    return true
-  }, [gridWidth, gridDepth, placements])
+        const pSpan = p.span || { w: 1, d: 1 }
+
+        // Check for overlap
+        const overlapsX = x < p.x + pSpan.w && x + span.w > p.x
+        const overlapsZ = z < p.z + pSpan.d && z + span.d > p.z
+
+        if (overlapsX && overlapsZ) {
+          return false
+        }
+      }
+
+      return true
+    },
+    [gridWidth, gridDepth, placements]
+  )
 
   // Move prop by delta
-  const moveProp = useCallback((dx: number, dz: number) => {
-    if (!selectedProp) return
+  const moveProp = useCallback(
+    (dx: number, dz: number) => {
+      if (!selectedProp) return
 
-    const newX = selectedProp.gridX + dx
-    const newZ = selectedProp.gridZ + dz
-    const span = selectedProp.span || { w: 1, d: 1 }
+      const newX = selectedProp.gridX + dx
+      const newZ = selectedProp.gridZ + dz
+      const span = selectedProp.span || { w: 1, d: 1 }
 
-    if (isValidPosition(newX, newZ, span, selectedProp.key)) {
-      setSelectedProp(prev => prev ? { ...prev, gridX: newX, gridZ: newZ } : null)
-    }
-  }, [selectedProp, isValidPosition])
+      if (isValidPosition(newX, newZ, span, selectedProp.key)) {
+        setSelectedProp((prev) => (prev ? { ...prev, gridX: newX, gridZ: newZ } : null))
+      }
+    },
+    [selectedProp, isValidPosition]
+  )
 
   // Rotate prop by 90 degrees (swap span.w and span.d for 90°/270°)
   const rotateProp = useCallback(() => {
     if (!selectedProp) return
-    
+
     const newRotation = ((selectedProp.rotation || 0) + 90) % 360
     const currentSpan = selectedProp.span || { w: 1, d: 1 }
     // Swap width and depth on each 90° rotation
     const newSpan = { w: currentSpan.d, d: currentSpan.w }
-    
+
     // Validate that the rotated span fits at the current position
     if (!isValidPosition(selectedProp.gridX, selectedProp.gridZ, newSpan, selectedProp.key)) {
       // Can't rotate here — span doesn't fit
       return
     }
-    
-    setSelectedProp(prev => prev ? { ...prev, rotation: newRotation, span: newSpan } : null)
+
+    setSelectedProp((prev) => (prev ? { ...prev, rotation: newRotation, span: newSpan } : null))
   }, [selectedProp, isValidPosition])
 
   // Confirm movement and save to API
@@ -233,15 +249,15 @@ export function usePropMovement({
     if (!selectedProp) return
 
     const { propId, gridX, gridZ, originalX, originalZ, rotation, span } = selectedProp
-    
+
     // Stop dragging first
     setIsDragging(false)
-    
+
     // Use ref to get latest placements (avoids stale closure if placements changed during drag)
     const currentPlacements = placementsRef.current
 
     // Update placements array (including span which may have changed due to rotation)
-    const updatedPlacements = currentPlacements.map(p => {
+    const updatedPlacements = currentPlacements.map((p) => {
       if (p.propId === propId && p.x === originalX && p.z === originalZ) {
         return { ...p, x: gridX, z: gridZ, rotation: rotation as 0 | 90 | 180 | 270, span }
       }
@@ -298,77 +314,89 @@ export function usePropMovement({
   // ─── Mouse Drag Handlers ──────────────────────────────────────
 
   // Convert world position to grid position with snapping
-  const worldToGrid = useCallback((worldX: number, worldZ: number): { gridX: number; gridZ: number } => {
-    // World coordinates are relative to room center
-    // Grid origin is at top-left corner of the grid
-    const halfGridWidth = (gridWidth * cellSize) / 2
-    const halfGridDepth = (gridDepth * cellSize) / 2
-    
-    // Convert from room-relative world coords to grid coords
-    const localX = worldX + halfGridWidth
-    const localZ = worldZ + halfGridDepth
-    
-    // Snap to grid — use Math.floor because gridToWorld places cell centers at
-    // gridX * cellSize + cellSize/2, so the cell boundary is at gridX * cellSize.
-    const gridX = Math.max(0, Math.min(gridWidth - 1, Math.floor(localX / cellSize)))
-    const gridZ = Math.max(0, Math.min(gridDepth - 1, Math.floor(localZ / cellSize)))
-    
-    return { gridX, gridZ }
-  }, [gridWidth, gridDepth, cellSize])
+  const worldToGrid = useCallback(
+    (worldX: number, worldZ: number): { gridX: number; gridZ: number } => {
+      // World coordinates are relative to room center
+      // Grid origin is at top-left corner of the grid
+      const halfGridWidth = (gridWidth * cellSize) / 2
+      const halfGridDepth = (gridDepth * cellSize) / 2
+
+      // Convert from room-relative world coords to grid coords
+      const localX = worldX + halfGridWidth
+      const localZ = worldZ + halfGridDepth
+
+      // Snap to grid — use Math.floor because gridToWorld places cell centers at
+      // gridX * cellSize + cellSize/2, so the cell boundary is at gridX * cellSize.
+      const gridX = Math.max(0, Math.min(gridWidth - 1, Math.floor(localX / cellSize)))
+      const gridZ = Math.max(0, Math.min(gridDepth - 1, Math.floor(localZ / cellSize)))
+
+      return { gridX, gridZ }
+    },
+    [gridWidth, gridDepth, cellSize]
+  )
 
   // Start dragging (called when pointer moves after long-press activates)
-  const startDrag = useCallback((_e: ThreeEvent<PointerEvent>) => {
-    if (!isMoving || !selectedProp) return
-    
-    // Set up drag plane at prop's current Y height (floor level = 0.16)
-    // Use roomPosition Y so the plane is in world space where the raycaster operates
-    const propY = 0.16
-    dragPlane.current.setFromNormalAndCoplanarPoint(
-      new THREE.Vector3(0, 1, 0),
-      new THREE.Vector3(roomPosition[0], roomPosition[1] + propY, roomPosition[2])
-    )
-    
-    setIsDragging(true)
-  }, [isMoving, selectedProp, roomPosition])
+  const startDrag = useCallback(
+    (_e: ThreeEvent<PointerEvent>) => {
+      if (!isMoving || !selectedProp) return
+
+      // Set up drag plane at prop's current Y height (floor level = 0.16)
+      // Use roomPosition Y so the plane is in world space where the raycaster operates
+      const propY = 0.16
+      dragPlane.current.setFromNormalAndCoplanarPoint(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(roomPosition[0], roomPosition[1] + propY, roomPosition[2])
+      )
+
+      setIsDragging(true)
+    },
+    [isMoving, selectedProp, roomPosition]
+  )
 
   // Handle drag movement
-  const handleDragMove = useCallback((e: ThreeEvent<PointerEvent>) => {
-    if (!isDragging || !selectedProp || !e.camera) return
-    
-    // Get mouse position in normalized device coordinates
-    const pointer = e.pointer
-    
-    // Re-align drag plane to camera each frame to handle camera movement during drag
-    const propY = 0.16
-    dragPlane.current.setFromNormalAndCoplanarPoint(
-      new THREE.Vector3(0, 1, 0),
-      new THREE.Vector3(roomPosition[0], roomPosition[1] + propY, roomPosition[2])
-    )
-    
-    // Update raycaster
-    raycaster.current.setFromCamera(pointer, e.camera)
-    
-    // Intersect with horizontal plane
-    const intersects = raycaster.current.ray.intersectPlane(dragPlane.current, intersectPoint.current)
-    if (!intersects) return
-    
-    // Convert world position to room-local coordinates
-    const localX = intersectPoint.current.x - roomPosition[0]
-    const localZ = intersectPoint.current.z - roomPosition[2]
-    
-    // Convert to grid coordinates with snapping
-    const { gridX: newGridX, gridZ: newGridZ } = worldToGrid(localX, localZ)
-    
-    // Check if position is valid and update
-    const span = selectedProp.span || { w: 1, d: 1 }
-    const valid = isValidPosition(newGridX, newGridZ, span, selectedProp.key)
-    setIsOverInvalid(!valid)
-    if (valid) {
-      if (newGridX !== selectedProp.gridX || newGridZ !== selectedProp.gridZ) {
-        setSelectedProp(prev => prev ? { ...prev, gridX: newGridX, gridZ: newGridZ } : null)
+  const handleDragMove = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      if (!isDragging || !selectedProp || !e.camera) return
+
+      // Get mouse position in normalized device coordinates
+      const pointer = e.pointer
+
+      // Re-align drag plane to camera each frame to handle camera movement during drag
+      const propY = 0.16
+      dragPlane.current.setFromNormalAndCoplanarPoint(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(roomPosition[0], roomPosition[1] + propY, roomPosition[2])
+      )
+
+      // Update raycaster
+      raycaster.current.setFromCamera(pointer, e.camera)
+
+      // Intersect with horizontal plane
+      const intersects = raycaster.current.ray.intersectPlane(
+        dragPlane.current,
+        intersectPoint.current
+      )
+      if (!intersects) return
+
+      // Convert world position to room-local coordinates
+      const localX = intersectPoint.current.x - roomPosition[0]
+      const localZ = intersectPoint.current.z - roomPosition[2]
+
+      // Convert to grid coordinates with snapping
+      const { gridX: newGridX, gridZ: newGridZ } = worldToGrid(localX, localZ)
+
+      // Check if position is valid and update
+      const span = selectedProp.span || { w: 1, d: 1 }
+      const valid = isValidPosition(newGridX, newGridZ, span, selectedProp.key)
+      setIsOverInvalid(!valid)
+      if (valid) {
+        if (newGridX !== selectedProp.gridX || newGridZ !== selectedProp.gridZ) {
+          setSelectedProp((prev) => (prev ? { ...prev, gridX: newGridX, gridZ: newGridZ } : null))
+        }
       }
-    }
-  }, [isDragging, selectedProp, roomPosition, worldToGrid, isValidPosition])
+    },
+    [isDragging, selectedProp, roomPosition, worldToGrid, isValidPosition]
+  )
 
   // End dragging
   const endDrag = useCallback(() => {
@@ -382,10 +410,10 @@ export function usePropMovement({
 
     const { propId, originalX, originalZ } = selectedProp
     const currentPlacements = placementsRef.current
-    
+
     // Remove from placements
-    const updatedPlacements = currentPlacements.filter(p => 
-      !(p.propId === propId && p.x === originalX && p.z === originalZ)
+    const updatedPlacements = currentPlacements.filter(
+      (p) => !(p.propId === propId && p.x === originalX && p.z === originalZ)
     )
 
     // Optimistically update UI

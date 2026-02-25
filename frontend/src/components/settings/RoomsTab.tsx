@@ -1,20 +1,27 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select'
 import {
-  Plus, Trash2, Edit2, Check, X,
-  ChevronUp, ChevronDown,
-  AlertCircle, Eye, GripVertical,
-} from "lucide-react"
+  Plus,
+  Trash2,
+  Edit2,
+  Check,
+  X,
+  ChevronUp,
+  ChevronDown,
+  AlertCircle,
+  Eye,
+  GripVertical,
+} from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -23,44 +30,79 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from "@dnd-kit/core"
+} from '@dnd-kit/core'
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
-import { useRooms, type Room } from "@/hooks/useRooms"
-import { useRoomAssignmentRules, type RoomAssignmentRule } from "@/hooks/useRoomAssignmentRules"
-import { useToast } from "@/hooks/use-toast"
-import type { CrewSession } from "@/lib/api"
-import { CollapsibleSection } from "./shared"
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { useRooms, type Room } from '@/hooks/useRooms'
+import { useRoomAssignmentRules, type RoomAssignmentRule } from '@/hooks/useRoomAssignmentRules'
+import { useToast } from '@/hooks/use-toast'
+import type { CrewSession } from '@/lib/api'
+import { CollapsibleSection } from './shared'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ROOM_ICONS = ["🏛️", "💻", "🎨", "🧠", "⚙️", "📡", "🛠️", "📢", "🚀", "📊", "🔬", "📝", "🎯", "💡", "🔧", "📦"]
+const ROOM_ICONS = [
+  '🏛️',
+  '💻',
+  '🎨',
+  '🧠',
+  '⚙️',
+  '📡',
+  '🛠️',
+  '📢',
+  '🚀',
+  '📊',
+  '🔬',
+  '📝',
+  '🎯',
+  '💡',
+  '🔧',
+  '📦',
+]
 const ROOM_COLORS = [
-  "#4f46e5", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#14b8a6", "#f97316", "#ec4899",
-  "#3b82f6", "#ef4444", "#84cc16", "#a855f7", "#0ea5e9", "#f43f5e", "#22c55e", "#6366f1",
+  '#4f46e5',
+  '#10b981',
+  '#f59e0b',
+  '#8b5cf6',
+  '#06b6d4',
+  '#14b8a6',
+  '#f97316',
+  '#ec4899',
+  '#3b82f6',
+  '#ef4444',
+  '#84cc16',
+  '#a855f7',
+  '#0ea5e9',
+  '#f43f5e',
+  '#22c55e',
+  '#6366f1',
 ]
 
 const RULE_TYPES = [
-  { value: "session_key_contains", label: "Session Key Contains", description: "Match if session key includes text" },
-  { value: "keyword", label: "Label Keyword", description: "Match if label contains keyword" },
-  { value: "model", label: "Model Name", description: "Match if model includes text" },
-  { value: "label_pattern", label: "Regex Pattern", description: "Match label with regex" },
-  { value: "session_type", label: "Session Type", description: "Match by session type" },
+  {
+    value: 'session_key_contains',
+    label: 'Session Key Contains',
+    description: 'Match if session key includes text',
+  },
+  { value: 'keyword', label: 'Label Keyword', description: 'Match if label contains keyword' },
+  { value: 'model', label: 'Model Name', description: 'Match if model includes text' },
+  { value: 'label_pattern', label: 'Regex Pattern', description: 'Match label with regex' },
+  { value: 'session_type', label: 'Session Type', description: 'Match by session type' },
 ] as const
 
 const SESSION_TYPES = [
-  { value: "main", label: "Main Session" },
-  { value: "cron", label: "Cron Job" },
-  { value: "subagent", label: "Subagent/Spawn" },
-  { value: "slack", label: "Slack" },
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "telegram", label: "Telegram" },
-  { value: "discord", label: "Discord" },
+  { value: 'main', label: 'Main Session' },
+  { value: 'cron', label: 'Cron Job' },
+  { value: 'subagent', label: 'Subagent/Spawn' },
+  { value: 'slack', label: 'Slack' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'telegram', label: 'Telegram' },
+  { value: 'discord', label: 'Discord' },
 ]
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -87,14 +129,9 @@ function SortableRuleItem({
   onDelete: (ruleId: string) => void
   getRuleTypeLabel: (type: string) => string
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: rule.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: rule.id,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -107,7 +144,7 @@ function SortableRuleItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 rounded-lg border bg-background hover:bg-accent/20 transition-colors ${isDragging ? "shadow-lg ring-2 ring-primary/20" : ""}`}
+      className={`p-3 rounded-lg border bg-background hover:bg-accent/20 transition-colors ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}
     >
       <div className="flex items-start gap-2.5">
         {/* Drag handle */}
@@ -157,9 +194,9 @@ function SortableRuleItem({
               <span
                 className="px-1.5 py-0.5 rounded text-[10px] font-medium"
                 style={{
-                  backgroundColor: `${room.color || "#4f46e5"}20`,
-                  color: room.color || "#4f46e5",
-                  border: `1px solid ${room.color || "#4f46e5"}40`,
+                  backgroundColor: `${room.color || '#4f46e5'}20`,
+                  color: room.color || '#4f46e5',
+                  border: `1px solid ${room.color || '#4f46e5'}40`,
                 }}
               >
                 {room.icon} {room.name}
@@ -183,24 +220,38 @@ function SortableRuleItem({
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function RoomsTab({ sessions: activeSessions, onModalStateChange }: RoomsTabProps) {
-  const { rooms, createRoom, updateRoom, deleteRoom, reorderRooms, isLoading: roomsLoading, getRoomFromRules } = useRooms()
-  const { rules, createRule, deleteRule, updateRule, isLoading: rulesLoading } = useRoomAssignmentRules()
+  const {
+    rooms,
+    createRoom,
+    updateRoom,
+    deleteRoom,
+    reorderRooms,
+    isLoading: roomsLoading,
+    getRoomFromRules,
+  } = useRooms()
+  const {
+    rules,
+    createRule,
+    deleteRule,
+    updateRule,
+    isLoading: rulesLoading,
+  } = useRoomAssignmentRules()
   const { toast } = useToast()
 
   // ─── Room management state ───
   const [showCreateRoomDialog, setShowCreateRoomDialog] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [deleteRoomConfirm, setDeleteRoomConfirm] = useState<string | null>(null)
-  const [newRoom, setNewRoom] = useState({ name: "", icon: "🏛️", color: "#4f46e5" })
+  const [newRoom, setNewRoom] = useState({ name: '', icon: '🏛️', color: '#4f46e5' })
 
   // ─── Routing rules state ───
   const [showCreateRuleDialog, setShowCreateRuleDialog] = useState(false)
   const [deleteRuleConfirm, setDeleteRuleConfirm] = useState<string | null>(null)
   const [showTestRulesDialog, setShowTestRulesDialog] = useState(false)
   const [newRule, setNewRule] = useState({
-    rule_type: "session_key_contains" as RoomAssignmentRule["rule_type"],
-    rule_value: "",
-    room_id: "",
+    rule_type: 'session_key_contains' as RoomAssignmentRule['rule_type'],
+    rule_value: '',
+    room_id: '',
     priority: 50,
   })
 
@@ -220,55 +271,83 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       !!deleteRuleConfirm ||
       showTestRulesDialog
     onModalStateChange?.(hasOpenModal)
-  }, [showCreateRoomDialog, deleteRoomConfirm, showCreateRuleDialog, deleteRuleConfirm, showTestRulesDialog, onModalStateChange])
+  }, [
+    showCreateRoomDialog,
+    deleteRoomConfirm,
+    showCreateRuleDialog,
+    deleteRuleConfirm,
+    showTestRulesDialog,
+    onModalStateChange,
+  ])
 
   // ─── Sync native dialogs ───
   useEffect(() => {
     const dialog = createRoomDialogRef.current
     if (!dialog) return
-    if (showCreateRoomDialog) { if (!dialog.open) dialog.showModal() }
-    else { if (dialog.open) dialog.close() }
+    if (showCreateRoomDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
   }, [showCreateRoomDialog])
 
   useEffect(() => {
     const dialog = deleteRoomDialogRef.current
     if (!dialog) return
-    if (deleteRoomConfirm) { if (!dialog.open) dialog.showModal() }
-    else { if (dialog.open) dialog.close() }
+    if (deleteRoomConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
   }, [deleteRoomConfirm])
 
   useEffect(() => {
     const dialog = createRuleDialogRef.current
     if (!dialog) return
-    if (showCreateRuleDialog) { if (!dialog.open) dialog.showModal() }
-    else { if (dialog.open) dialog.close() }
+    if (showCreateRuleDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
   }, [showCreateRuleDialog])
 
   useEffect(() => {
     const dialog = deleteRuleDialogRef.current
     if (!dialog) return
-    if (deleteRuleConfirm) { if (!dialog.open) dialog.showModal() }
-    else { if (dialog.open) dialog.close() }
+    if (deleteRuleConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
   }, [deleteRuleConfirm])
 
   useEffect(() => {
     const dialog = testRulesDialogRef.current
     if (!dialog) return
-    if (showTestRulesDialog) { if (!dialog.open) dialog.showModal() }
-    else { if (dialog.open) dialog.close() }
+    if (showTestRulesDialog) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
   }, [showTestRulesDialog])
 
   // ─── Helpers ───
   const generateRoomId = (name: string) =>
-    name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-room"
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') + '-room'
 
-  const getRuleTypeLabel = (type: string) =>
-    RULE_TYPES.find(t => t.value === type)?.label || type
+  const getRuleTypeLabel = (type: string) => RULE_TYPES.find((t) => t.value === type)?.label || type
 
   // ─── Room handlers ───
   const handleCreateRoom = async () => {
     if (!newRoom.name.trim()) {
-      toast({ title: "Name required", description: "Please enter a room name", variant: "destructive" })
+      toast({
+        title: 'Name required',
+        description: 'Please enter a room name',
+        variant: 'destructive',
+      })
       return
     }
     const roomId = generateRoomId(newRoom.name)
@@ -280,11 +359,11 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       sort_order: rooms.length,
     })
     if (result.success) {
-      toast({ title: "Room Created!", description: `${newRoom.icon} ${newRoom.name} is ready` })
+      toast({ title: 'Room Created!', description: `${newRoom.icon} ${newRoom.name} is ready` })
       setShowCreateRoomDialog(false)
-      setNewRoom({ name: "", icon: "🏛️", color: "#4f46e5" })
+      setNewRoom({ name: '', icon: '🏛️', color: '#4f46e5' })
     } else {
-      toast({ title: "Failed to create room", description: result.error, variant: "destructive" })
+      toast({ title: 'Failed to create room', description: result.error, variant: 'destructive' })
     }
   }
 
@@ -295,30 +374,30 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       color: room.color || undefined,
     })
     if (result.success) {
-      toast({ title: "Room Updated!", description: `${room.icon} ${room.name} saved` })
+      toast({ title: 'Room Updated!', description: `${room.icon} ${room.name} saved` })
       setEditingRoom(null)
     } else {
-      toast({ title: "Failed to update room", description: result.error, variant: "destructive" })
+      toast({ title: 'Failed to update room', description: result.error, variant: 'destructive' })
     }
   }
 
   const handleDeleteRoom = async (roomId: string) => {
-    const room = rooms.find(r => r.id === roomId)
+    const room = rooms.find((r) => r.id === roomId)
     const result = await deleteRoom(roomId)
     if (result.success) {
-      toast({ title: "Room Deleted", description: `${room?.icon} ${room?.name} removed` })
+      toast({ title: 'Room Deleted', description: `${room?.icon} ${room?.name} removed` })
       setDeleteRoomConfirm(null)
     } else {
-      toast({ title: "Failed to delete room", description: result.error, variant: "destructive" })
+      toast({ title: 'Failed to delete room', description: result.error, variant: 'destructive' })
     }
   }
 
-  const moveRoom = async (roomId: string, direction: "up" | "down") => {
-    const currentIndex = sortedRooms.findIndex(r => r.id === roomId)
+  const moveRoom = async (roomId: string, direction: 'up' | 'down') => {
+    const currentIndex = sortedRooms.findIndex((r) => r.id === roomId)
     if (currentIndex === -1) return
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
     if (newIndex < 0 || newIndex >= rooms.length) return
-    const newOrder = [...sortedRooms.map(r => r.id)]
+    const newOrder = [...sortedRooms.map((r) => r.id)]
     ;[newOrder[currentIndex], newOrder[newIndex]] = [newOrder[newIndex], newOrder[currentIndex]]
     await reorderRooms(newOrder)
   }
@@ -326,11 +405,19 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
   // ─── Rule handlers ───
   const handleCreateRule = async () => {
     if (!newRule.rule_value.trim()) {
-      toast({ title: "Value required", description: "Please enter a rule value", variant: "destructive" })
+      toast({
+        title: 'Value required',
+        description: 'Please enter a rule value',
+        variant: 'destructive',
+      })
       return
     }
     if (!newRule.room_id) {
-      toast({ title: "Room required", description: "Please select a target room", variant: "destructive" })
+      toast({
+        title: 'Room required',
+        description: 'Please select a target room',
+        variant: 'destructive',
+      })
       return
     }
     const success = await createRule({
@@ -340,26 +427,31 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       priority: newRule.priority,
     })
     if (success) {
-      toast({ title: "Rule Created!", description: "New routing rule is active" })
+      toast({ title: 'Rule Created!', description: 'New routing rule is active' })
       setShowCreateRuleDialog(false)
-      setNewRule({ rule_type: "session_key_contains", rule_value: "", room_id: rooms[0]?.id || "", priority: 50 })
+      setNewRule({
+        rule_type: 'session_key_contains',
+        rule_value: '',
+        room_id: rooms[0]?.id || '',
+        priority: 50,
+      })
     } else {
-      toast({ title: "Failed to create rule", variant: "destructive" })
+      toast({ title: 'Failed to create rule', variant: 'destructive' })
     }
   }
 
   const handleDeleteRule = async (ruleId: string) => {
     const success = await deleteRule(ruleId)
     if (success) {
-      toast({ title: "Rule Deleted" })
+      toast({ title: 'Rule Deleted' })
       setDeleteRuleConfirm(null)
     } else {
-      toast({ title: "Failed to delete rule", variant: "destructive" })
+      toast({ title: 'Failed to delete rule', variant: 'destructive' })
     }
   }
 
   const adjustPriority = async (ruleId: string, delta: number) => {
-    const rule = rules.find(r => r.id === ruleId)
+    const rule = rules.find((r) => r.id === ruleId)
     if (!rule) return
     const newPriority = Math.max(0, Math.min(100, rule.priority + delta))
     await updateRule(ruleId, { priority: newPriority })
@@ -371,29 +463,32 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
 
-    const currentOrder = [...rules].sort((a, b) => b.priority - a.priority)
-    const oldIndex = currentOrder.findIndex(r => r.id === active.id)
-    const newIndex = currentOrder.findIndex(r => r.id === over.id)
-    if (oldIndex === -1 || newIndex === -1) return
+      const currentOrder = [...rules].sort((a, b) => b.priority - a.priority)
+      const oldIndex = currentOrder.findIndex((r) => r.id === active.id)
+      const newIndex = currentOrder.findIndex((r) => r.id === over.id)
+      if (oldIndex === -1 || newIndex === -1) return
 
-    const reordered = [...currentOrder]
-    const [moved] = reordered.splice(oldIndex, 1)
-    reordered.splice(newIndex, 0, moved)
+      const reordered = [...currentOrder]
+      const [moved] = reordered.splice(oldIndex, 1)
+      reordered.splice(newIndex, 0, moved)
 
-    const maxPriority = reordered.length * 10
-    const updates = reordered.map((rule, index) => ({
-      id: rule.id,
-      priority: maxPriority - (index * 10),
-    }))
+      const maxPriority = reordered.length * 10
+      const updates = reordered.map((rule, index) => ({
+        id: rule.id,
+        priority: maxPriority - index * 10,
+      }))
 
-    for (const update of updates) {
-      await updateRule(update.id, { priority: update.priority })
-    }
-  }, [rules, updateRule])
+      for (const update of updates) {
+        await updateRule(update.id, { priority: update.priority })
+      }
+    },
+    [rules, updateRule]
+  )
 
   // ─── Computed ───
   const sortedRooms = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
@@ -401,31 +496,50 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
 
   const testRulesResults = useMemo(() => {
     if (!showTestRulesDialog || !activeSessions?.length) return []
-    return activeSessions.map(session => {
+    return activeSessions.map((session) => {
       const matchedRoomId = getRoomFromRules(session.key, {
         label: session.label,
         model: session.model,
-        channel: (session as unknown as Record<string, unknown>).lastChannel as string || session.channel,
+        channel:
+          ((session as unknown as Record<string, unknown>).lastChannel as string) ||
+          session.channel,
       })
-      const matchedRoom = matchedRoomId ? rooms.find(r => r.id === matchedRoomId) : null
-      const matchedRule = rules.find(rule => {
+      const matchedRoom = matchedRoomId ? rooms.find((r) => r.id === matchedRoomId) : null
+      const matchedRule = rules.find((rule) => {
         switch (rule.rule_type) {
-          case "session_key_contains": return session.key.includes(rule.rule_value)
-          case "keyword": return session.label?.toLowerCase().includes(rule.rule_value.toLowerCase())
-          case "model": return session.model?.toLowerCase().includes(rule.rule_value.toLowerCase())
-          case "label_pattern": try { return new RegExp(rule.rule_value, "i").test(session.label || "") || new RegExp(rule.rule_value, "i").test(session.key) } catch { return false }
-          case "session_type":
-            if (rule.rule_value === "cron") return session.key.includes(":cron:")
-            if (rule.rule_value === "subagent") return session.key.includes(":subagent:") || session.key.includes(":spawn:")
-            if (rule.rule_value === "main") return session.key === "agent:main:main"
+          case 'session_key_contains':
+            return session.key.includes(rule.rule_value)
+          case 'keyword':
+            return session.label?.toLowerCase().includes(rule.rule_value.toLowerCase())
+          case 'model':
+            return session.model?.toLowerCase().includes(rule.rule_value.toLowerCase())
+          case 'label_pattern':
+            try {
+              return (
+                new RegExp(rule.rule_value, 'i').test(session.label || '') ||
+                new RegExp(rule.rule_value, 'i').test(session.key)
+              )
+            } catch {
+              return false
+            }
+          case 'session_type':
+            if (rule.rule_value === 'cron') return session.key.includes(':cron:')
+            if (rule.rule_value === 'subagent')
+              return session.key.includes(':subagent:') || session.key.includes(':spawn:')
+            if (rule.rule_value === 'main') return session.key === 'agent:main:main'
             return session.key.includes(rule.rule_value) || session.channel === rule.rule_value
-          default: return false
+          default:
+            return false
         }
       })
       return {
         session,
-        matchedRoom: matchedRoom ? `${matchedRoom.icon || ""} ${matchedRoom.name}`.trim() : "No match (default)",
-        matchedRule: matchedRule ? `${getRuleTypeLabel(matchedRule.rule_type)}: ${matchedRule.rule_value}` : null,
+        matchedRoom: matchedRoom
+          ? `${matchedRoom.icon || ''} ${matchedRoom.name}`.trim()
+          : 'No match (default)',
+        matchedRule: matchedRule
+          ? `${getRuleTypeLabel(matchedRule.rule_type)}: ${matchedRule.rule_value}`
+          : null,
       }
     })
   }, [showTestRulesDialog, activeSessions, getRoomFromRules, rooms, rules])
@@ -434,15 +548,8 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
     <>
       {/* ─── Tab content ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <CollapsibleSection
-          title="🏢 Room Management"
-          badge={`${rooms.length} rooms`}
-        >
-          <Button
-            onClick={() => setShowCreateRoomDialog(true)}
-            size="sm"
-            className="w-full gap-2"
-          >
+        <CollapsibleSection title="🏢 Room Management" badge={`${rooms.length} rooms`}>
+          <Button onClick={() => setShowCreateRoomDialog(true)} size="sm" className="w-full gap-2">
             <Plus className="h-4 w-4" />
             Create New Room
           </Button>
@@ -463,14 +570,14 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                   {/* Reorder buttons */}
                   <div className="flex flex-col gap-0.5">
                     <button
-                      onClick={() => moveRoom(room.id, "up")}
+                      onClick={() => moveRoom(room.id, 'up')}
                       disabled={index === 0}
                       className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                     >
                       <ChevronUp className="h-3 w-3" />
                     </button>
                     <button
-                      onClick={() => moveRoom(room.id, "down")}
+                      onClick={() => moveRoom(room.id, 'down')}
                       disabled={index === sortedRooms.length - 1}
                       className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                     >
@@ -481,7 +588,10 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                   {/* Room icon */}
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: `${room.color}20`, border: `2px solid ${room.color}` }}
+                    style={{
+                      backgroundColor: `${room.color}20`,
+                      border: `2px solid ${room.color}`,
+                    }}
                   >
                     {room.icon}
                   </div>
@@ -496,8 +606,8 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                           className="h-8 text-sm"
                           autoFocus
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") handleUpdateRoom(editingRoom)
-                            if (e.key === "Escape") setEditingRoom(null)
+                            if (e.key === 'Enter') handleUpdateRoom(editingRoom)
+                            if (e.key === 'Escape') setEditingRoom(null)
                           }}
                         />
                         <button
@@ -544,14 +654,11 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
           )}
         </CollapsibleSection>
 
-        <CollapsibleSection
-          title="🔀 Routing Rules"
-          badge={`${rules.length} rules`}
-        >
+        <CollapsibleSection title="🔀 Routing Rules" badge={`${rules.length} rules`}>
           <div className="flex gap-2">
             <Button
               onClick={() => {
-                setNewRule(r => ({ ...r, room_id: rooms[0]?.id || "" }))
+                setNewRule((r) => ({ ...r, room_id: rooms[0]?.id || '' }))
                 setShowCreateRuleDialog(true)
               }}
               size="sm"
@@ -593,15 +700,15 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={sortedRules.map(r => r.id)}
+                items={sortedRules.map((r) => r.id)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
-                  {sortedRules.map(rule => (
+                  {sortedRules.map((rule) => (
                     <SortableRuleItem
                       key={rule.id}
                       rule={rule}
-                      room={rooms.find(r => r.id === rule.room_id)}
+                      room={rooms.find((r) => r.id === rule.room_id)}
                       onAdjustPriority={adjustPriority}
                       onDelete={(id) => setDeleteRuleConfirm(id)}
                       getRuleTypeLabel={getRuleTypeLabel}
@@ -639,7 +746,9 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                 value={newRoom.name}
                 onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
                 placeholder="e.g., Research Lab"
-                onKeyDown={(e) => { if (e.key === "Enter") handleCreateRoom() }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateRoom()
+                }}
               />
               {newRoom.name && (
                 <p className="text-xs text-muted-foreground">ID: {generateRoomId(newRoom.name)}</p>
@@ -648,14 +757,14 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
             <div className="space-y-2">
               <Label>Icon</Label>
               <div className="flex flex-wrap gap-2">
-                {ROOM_ICONS.map(icon => (
+                {ROOM_ICONS.map((icon) => (
                   <button
                     key={icon}
                     onClick={() => setNewRoom({ ...newRoom, icon })}
                     className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
                       newRoom.icon === icon
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-muted-foreground"
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-muted-foreground'
                     }`}
                   >
                     {icon}
@@ -666,14 +775,14 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
             <div className="space-y-2">
               <Label>Color</Label>
               <div className="flex flex-wrap gap-2">
-                {ROOM_COLORS.map(color => (
+                {ROOM_COLORS.map((color) => (
                   <button
                     key={color}
                     onClick={() => setNewRoom({ ...newRoom, color })}
                     className={`w-8 h-8 rounded-full transition-all ${
                       newRoom.color === color
-                        ? "ring-2 ring-offset-2 ring-primary"
-                        : "hover:scale-110"
+                        ? 'ring-2 ring-offset-2 ring-primary'
+                        : 'hover:scale-110'
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -685,21 +794,26 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
               <div className="flex items-center gap-3">
                 <div
                   className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                  style={{ backgroundColor: `${newRoom.color}20`, border: `2px solid ${newRoom.color}` }}
+                  style={{
+                    backgroundColor: `${newRoom.color}20`,
+                    border: `2px solid ${newRoom.color}`,
+                  }}
                 >
                   {newRoom.icon}
                 </div>
                 <div>
-                  <div className="font-semibold">{newRoom.name || "Room Name"}</div>
+                  <div className="font-semibold">{newRoom.name || 'Room Name'}</div>
                   <div className="text-xs text-muted-foreground">
-                    {newRoom.name ? generateRoomId(newRoom.name) : "room-id"}
+                    {newRoom.name ? generateRoomId(newRoom.name) : 'room-id'}
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setShowCreateRoomDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreateRoomDialog(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreateRoom}>Create Room</Button>
           </div>
         </div>
@@ -719,12 +833,18 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Delete Room?</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              This will remove the room and unassign any sessions from it. This action cannot be undone.
+              This will remove the room and unassign any sessions from it. This action cannot be
+              undone.
             </p>
           </div>
           <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setDeleteRoomConfirm(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deleteRoomConfirm && handleDeleteRoom(deleteRoomConfirm)}>
+            <Button variant="outline" onClick={() => setDeleteRoomConfirm(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteRoomConfirm && handleDeleteRoom(deleteRoomConfirm)}
+            >
               Delete Room
             </Button>
           </div>
@@ -756,14 +876,16 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                 onValueChange={(value) =>
                   setNewRule({
                     ...newRule,
-                    rule_type: value as RoomAssignmentRule["rule_type"],
-                    rule_value: value === "session_type" ? SESSION_TYPES[0].value : "",
+                    rule_type: value as RoomAssignmentRule['rule_type'],
+                    rule_value: value === 'session_type' ? SESSION_TYPES[0].value : '',
                   })
                 }
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {RULE_TYPES.map(type => (
+                  {RULE_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       <div>
                         <div>{type.label}</div>
@@ -775,16 +897,20 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{newRule.rule_type === "session_type" ? "Session Type" : "Match Value"}</Label>
-              {newRule.rule_type === "session_type" ? (
+              <Label>{newRule.rule_type === 'session_type' ? 'Session Type' : 'Match Value'}</Label>
+              {newRule.rule_type === 'session_type' ? (
                 <Select
                   value={newRule.rule_value}
                   onValueChange={(value) => setNewRule({ ...newRule, rule_value: value })}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select session type" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select session type" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {SESSION_TYPES.map(type => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                    {SESSION_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -793,10 +919,13 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                   value={newRule.rule_value}
                   onChange={(e) => setNewRule({ ...newRule, rule_value: e.target.value })}
                   placeholder={
-                    newRule.rule_type === "session_key_contains" ? "e.g., :cron:" :
-                    newRule.rule_type === "keyword" ? "e.g., implement" :
-                    newRule.rule_type === "model" ? "e.g., opus" :
-                    "Enter pattern..."
+                    newRule.rule_type === 'session_key_contains'
+                      ? 'e.g., :cron:'
+                      : newRule.rule_type === 'keyword'
+                        ? 'e.g., implement'
+                        : newRule.rule_type === 'model'
+                          ? 'e.g., opus'
+                          : 'Enter pattern...'
                   }
                 />
               )}
@@ -807,9 +936,11 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                 value={newRule.room_id}
                 onValueChange={(value) => setNewRule({ ...newRule, room_id: value })}
               >
-                <SelectTrigger><SelectValue placeholder="Select room" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select room" />
+                </SelectTrigger>
                 <SelectContent>
-                  {rooms.map(room => (
+                  {rooms.map((room) => (
                     <SelectItem key={room.id} value={room.id}>
                       <div className="flex items-center gap-2">
                         <span>{room.icon}</span>
@@ -832,7 +963,9 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                   onChange={(e) => setNewRule({ ...newRule, priority: parseInt(e.target.value) })}
                   className="flex-1 accent-primary"
                 />
-                <span className="text-sm text-muted-foreground w-12 text-right font-mono">{newRule.priority}</span>
+                <span className="text-sm text-muted-foreground w-12 text-right font-mono">
+                  {newRule.priority}
+                </span>
               </div>
               <p className="text-xs text-muted-foreground">
                 Higher priority rules are evaluated first (100 = highest, 0 = lowest)
@@ -840,7 +973,9 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
             </div>
           </div>
           <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setShowCreateRuleDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreateRuleDialog(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreateRule}>Create Rule</Button>
           </div>
         </div>
@@ -864,8 +999,13 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
             </p>
           </div>
           <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setDeleteRuleConfirm(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deleteRuleConfirm && handleDeleteRule(deleteRuleConfirm)}>
+            <Button variant="outline" onClick={() => setDeleteRuleConfirm(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteRuleConfirm && handleDeleteRule(deleteRuleConfirm)}
+            >
               Delete Rule
             </Button>
           </div>
@@ -886,7 +1026,8 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">🧪 Test Routing Rules</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Preview how current rules would route your {activeSessions?.length || 0} active session{(activeSessions?.length || 0) !== 1 ? "s" : ""}
+              Preview how current rules would route your {activeSessions?.length || 0} active
+              session{(activeSessions?.length || 0) !== 1 ? 's' : ''}
             </p>
           </div>
           <div className="px-6 pb-4 max-h-96 overflow-y-auto space-y-2">
@@ -899,7 +1040,9 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                     <div className="min-w-0 flex-1">
                       <div className="font-mono text-sm truncate">{session.key}</div>
                       {session.label && (
-                        <div className="text-xs text-muted-foreground truncate">{session.label}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {session.label}
+                        </div>
                       )}
                     </div>
                     <div className="text-right shrink-0">

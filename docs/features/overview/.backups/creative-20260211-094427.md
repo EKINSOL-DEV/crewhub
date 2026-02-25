@@ -5,7 +5,7 @@ Tools for creating and modding CrewHub.
 ---
 
 ## Creator Zone
-**Status:** 🚧 In Progress (v0.13.0)  
+**Status:** 🚧 In Progress (v0.13.0)
 **Description:** In-app prop maker with AI-powered generation. PropMakerRoom with PropMakerMachine, chat-based prop requests ("make me a coffee mug"), live preview, and save to registry. Supports ultra-focused subagent prompts.
 
 **Docs:**
@@ -14,7 +14,7 @@ Tools for creating and modding CrewHub.
 ---
 
 ## Modding System
-**Status:** ✅ Released in **v0.6.0**  
+**Status:** ✅ Released in **v0.6.0**
 **Description:** Data-driven modding with Registry<T> pattern, namespaced IDs (`core:desk`, `desert:cactus`), JSON blueprints (rooms, props, environments), Zod validation, and import/export API.
 
 **Docs:**
@@ -26,7 +26,7 @@ Tools for creating and modding CrewHub.
 ---
 
 ## Pixel Avatars
-**Status:** 🔬 Research  
+**Status:** 🔬 Research
 **Description:** Pixel art bot designs as alternative to 3D geometric bots. Includes sprite animation, emotes, and retro aesthetic. Research phase exploring art style and technical feasibility.
 
 **Docs:**

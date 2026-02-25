@@ -14,7 +14,7 @@ export function ZoneSwitcher() {
         onChange={(e) => switchZone(e.target.value)}
         disabled={isTransitioning}
       >
-        {zones.map(z => (
+        {zones.map((z) => (
           <option key={z.id} value={z.id}>
             {z.icon} {z.name}
           </option>

@@ -1,8 +1,8 @@
 # Markdown Viewer/Editor — Implementation Kickoff
 
-**Date:** 2026-02-10 14:58  
-**Assigned:** Dev (Opus)  
-**Scope:** All 4 phases (16-23h total)  
+**Date:** 2026-02-10 14:58
+**Assigned:** Dev (Opus)
+**Scope:** All 4 phases (16-23h total)
 **Target:** v0.13.0
 
 ---
@@ -12,8 +12,8 @@
 This is too large for a single session. Break into iterative phases:
 
 ### Iteration 1 (Phase 1) — MVP
-**Goal:** Agent file viewing + fullscreen  
-**Estimate:** 4-6h  
+**Goal:** Agent file viewing + fullscreen
+**Estimate:** 4-6h
 **Subagent:** Dev (Opus)
 
 **Deliverables:**
@@ -28,8 +28,8 @@ This is too large for a single session. Break into iterative phases:
 ---
 
 ### Iteration 2 (Phase 2) — Project Documents
-**Goal:** Browse project docs from mounted data directory  
-**Estimate:** 3-4h  
+**Goal:** Browse project docs from mounted data directory
+**Estimate:** 3-4h
 **Subagent:** Dev (Opus)
 
 **Deliverables:**
@@ -43,8 +43,8 @@ This is too large for a single session. Break into iterative phases:
 ---
 
 ### Iteration 3 (Phase 3) — Editing
-**Goal:** Edit markdown with CodeMirror 6 + auto-save  
-**Estimate:** 5-7h  
+**Goal:** Edit markdown with CodeMirror 6 + auto-save
+**Estimate:** 5-7h
 **Subagent:** Dev (Opus)
 
 **Deliverables:**
@@ -58,8 +58,8 @@ This is too large for a single session. Break into iterative phases:
 ---
 
 ### Iteration 4 (Phase 4) — Polish
-**Goal:** Search, bookmarks, UX refinements  
-**Estimate:** 4-6h  
+**Goal:** Search, bookmarks, UX refinements
+**Estimate:** 4-6h
 **Subagent:** Dev (Opus) + Reviewer (GPT-5.2)
 
 **Deliverables:**

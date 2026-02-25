@@ -19,7 +19,11 @@ interface PropMakerMachineProps {
   onPropGenerated?: (prop: GeneratedPropData) => void
 }
 
-export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGenerated }: PropMakerMachineProps) {
+export function PropMakerMachine({
+  position = [0, 0, 0],
+  rotation = 0,
+  onPropGenerated,
+}: PropMakerMachineProps) {
   const [hovered, setHovered] = useState(false)
   const [showFullscreen, setShowFullscreen] = useState(false)
 
@@ -46,9 +50,18 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGen
     <group
       position={position}
       rotation={[0, (rotation * Math.PI) / 180, 0]}
-      onPointerOver={() => { setHovered(true); document.body.style.cursor = 'pointer' }}
-      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto' }}
-      onClick={(e) => { e.stopPropagation(); setShowFullscreen(true) }}
+      onPointerOver={() => {
+        setHovered(true)
+        document.body.style.cursor = 'pointer'
+      }}
+      onPointerOut={() => {
+        setHovered(false)
+        document.body.style.cursor = 'auto'
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        setShowFullscreen(true)
+      }}
     >
       {/* Base */}
       <mesh position={[0, 0.1, 0]} castShadow>
@@ -94,9 +107,12 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGen
       <mesh ref={ringRef} position={[0, 1.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.45, 0.02, 8, 32]} />
         <meshStandardMaterial
-          color="#00ffcc" emissive="#00ffcc"
+          color="#00ffcc"
+          emissive="#00ffcc"
           emissiveIntensity={hovered ? 3 : 1.2}
-          transparent opacity={hovered ? 0.9 : 0.5} toneMapped={false}
+          transparent
+          opacity={hovered ? 0.9 : 0.5}
+          toneMapped={false}
         />
       </mesh>
 
@@ -104,9 +120,12 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGen
       <mesh ref={coreRef} position={[0, 1.6, 0]}>
         <octahedronGeometry args={[0.15, 0]} />
         <meshStandardMaterial
-          color="#00ffcc" emissive="#00ffcc"
+          color="#00ffcc"
+          emissive="#00ffcc"
           emissiveIntensity={hovered ? 4 : 2}
-          transparent opacity={0.85} toneMapped={false}
+          transparent
+          opacity={0.85}
+          toneMapped={false}
         />
       </mesh>
 
@@ -123,7 +142,8 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGen
               <meshStandardMaterial
                 color={['#00ffcc', '#e94560', '#ffd700'][i]}
                 emissive={['#00ffcc', '#e94560', '#ffd700'][i]}
-                emissiveIntensity={1.5} toneMapped={false}
+                emissiveIntensity={1.5}
+                toneMapped={false}
               />
             </mesh>
           ))}
@@ -131,21 +151,29 @@ export function PropMakerMachine({ position = [0, 0, 0], rotation = 0, onPropGen
       ))}
 
       {/* Point light */}
-      <pointLight position={[0, 1.6, 0]} color="#00ffcc" intensity={hovered ? 3 : 1} distance={4} decay={2} />
+      <pointLight
+        position={[0, 1.6, 0]}
+        color="#00ffcc"
+        intensity={hovered ? 3 : 1}
+        distance={4}
+        decay={2}
+      />
 
       {/* Hover tooltip */}
       {hovered && !showFullscreen && (
         <Html position={[0, 2.2, 0]} center>
-          <div style={{
-            background: 'rgba(0,0,0,0.8)',
-            color: '#00ffcc',
-            padding: '4px 10px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            fontFamily: 'system-ui, sans-serif',
-            whiteSpace: 'nowrap',
-            pointerEvents: 'none',
-          }}>
+          <div
+            style={{
+              background: 'rgba(0,0,0,0.8)',
+              color: '#00ffcc',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontFamily: 'system-ui, sans-serif',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+            }}
+          >
             Click to open Prop Maker
           </div>
         </Html>

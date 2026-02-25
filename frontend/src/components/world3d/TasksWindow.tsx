@@ -48,11 +48,7 @@ const PRIORITY_ORDER: Record<TaskPriority, number> = {
 
 // ── Main Component ─────────────────────────────────────────────
 
-export function TasksWindow({
-  projectId,
-  roomId,
-  onClose,
-}: TasksWindowProps) {
+export function TasksWindow({ projectId, roomId, onClose }: TasksWindowProps) {
   const { tasks, isLoading } = useTasks({ projectId, roomId })
   const [position, setPosition] = useState<Position>({ x: 80, y: 120 })
   const [size, setSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT })
@@ -65,7 +61,7 @@ export function TasksWindow({
   const activeTasks = useMemo(() => {
     const activeStatuses: TaskStatus[] = ['in_progress', 'review', 'blocked']
     return tasks
-      .filter(t => activeStatuses.includes(t.status))
+      .filter((t) => activeStatuses.includes(t.status))
       .sort((a, b) => {
         const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
         if (priorityDiff !== 0) return priorityDiff
@@ -73,15 +69,18 @@ export function TasksWindow({
       })
   }, [tasks])
 
-  const inProgressCount = activeTasks.filter(t => t.status === 'in_progress').length
+  const inProgressCount = activeTasks.filter((t) => t.status === 'in_progress').length
 
   // Drag handlers
-  const handleDragStart = useCallback((e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('[data-resize-handle]')) return
-    e.preventDefault()
-    setIsDragging(true)
-    dragStartRef.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y }
-  }, [position])
+  const handleDragStart = useCallback(
+    (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).closest('[data-resize-handle]')) return
+      e.preventDefault()
+      setIsDragging(true)
+      dragStartRef.current = { x: e.clientX, y: e.clientY, posX: position.x, posY: position.y }
+    },
+    [position]
+  )
 
   useEffect(() => {
     if (!isDragging) return
@@ -106,32 +105,40 @@ export function TasksWindow({
   }, [isDragging])
 
   // Resize handlers
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    resizingRef.current = 'both'
-    resizeStartRef.current = { x: e.clientX, y: e.clientY, width: size.width, height: size.height }
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      resizingRef.current = 'both'
+      resizeStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        width: size.width,
+        height: size.height,
+      }
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!resizingRef.current) return
-      const dx = e.clientX - resizeStartRef.current.x
-      const dy = e.clientY - resizeStartRef.current.y
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!resizingRef.current) return
+        const dx = e.clientX - resizeStartRef.current.x
+        const dy = e.clientY - resizeStartRef.current.y
 
-      setSize({
-        width: Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, resizeStartRef.current.width + dx)),
-        height: Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, resizeStartRef.current.height + dy)),
-      })
-    }
+        setSize({
+          width: Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, resizeStartRef.current.width + dx)),
+          height: Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, resizeStartRef.current.height + dy)),
+        })
+      }
 
-    const handleMouseUp = () => {
-      resizingRef.current = null
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
+      const handleMouseUp = () => {
+        resizingRef.current = null
+        window.removeEventListener('mousemove', handleMouseMove)
+        window.removeEventListener('mouseup', handleMouseUp)
+      }
 
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-  }, [size])
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+    },
+    [size]
+  )
 
   return (
     <div
@@ -264,9 +271,7 @@ export function TasksWindow({
             </span>
           </div>
         ) : (
-          activeTasks.map((task) => (
-            <TaskItem key={task.id} task={task} />
-          ))
+          activeTasks.map((task) => <TaskItem key={task.id} task={task} />)
         )}
       </div>
 
@@ -300,8 +305,7 @@ function TaskItem({ task }: TaskItemProps) {
   const statusIcon = STATUS_ICONS[task.status]
   const statusColor = STATUS_COLORS[task.status]
 
-  const displayTitle =
-    task.title.length > 50 ? task.title.slice(0, 48) + '…' : task.title
+  const displayTitle = task.title.length > 50 ? task.title.slice(0, 48) + '…' : task.title
 
   return (
     <div
@@ -312,15 +316,17 @@ function TaskItem({ task }: TaskItemProps) {
         width: '100%',
         padding: '6px 10px',
         borderRadius: 8,
-        background: task.status === 'in_progress' ? 'rgba(59, 130, 246, 0.08)' : 
-                    task.status === 'blocked' ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
+        background:
+          task.status === 'in_progress'
+            ? 'rgba(59, 130, 246, 0.08)'
+            : task.status === 'blocked'
+              ? 'rgba(239, 68, 68, 0.08)'
+              : 'transparent',
         marginBottom: 2,
       }}
     >
       {/* Status indicator */}
-      <span style={{ fontSize: 14, flexShrink: 0 }}>
-        {statusIcon}
-      </span>
+      <span style={{ fontSize: 14, flexShrink: 0 }}>{statusIcon}</span>
 
       {/* Task info */}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -360,7 +366,8 @@ function TaskItem({ task }: TaskItemProps) {
             fontSize: 9,
             fontWeight: 600,
             color: task.priority === 'urgent' ? '#ef4444' : '#f59e0b',
-            background: task.priority === 'urgent' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+            background:
+              task.priority === 'urgent' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
             padding: '1px 4px',
             borderRadius: 3,
             flexShrink: 0,

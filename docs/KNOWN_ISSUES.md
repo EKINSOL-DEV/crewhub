@@ -6,7 +6,7 @@
 
 ### Active Tasks Panel - Empty Task Details (v0.14.0)
 
-**Severity:** Medium  
+**Severity:** Medium
 **Status:** Known, will fix after AI Meetings feature
 
 **Problem:**
@@ -49,7 +49,7 @@
 
 ### PropMaker Part Editor - TransformControls Position (v0.14.0)
 
-**Severity:** Medium  
+**Severity:** Medium
 **Status:** Known, will fix in v0.14.1 hotfix (no announcement)
 
 **Problem:**

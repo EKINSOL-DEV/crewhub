@@ -1,7 +1,7 @@
 # Prop Editor - Concept
 
-**Version**: v0.19.0 (Planned)  
-**Status**: 📋 Design phase  
+**Version**: v0.19.0 (Planned)
+**Status**: 📋 Design phase
 **Category**: Creative & Customization
 
 ---
@@ -130,11 +130,11 @@ interface PropEditorProps {
 export function PropEditor({ propData, onSave, onCancel }: PropEditorProps) {
   const [parts, setParts] = useState(propData)
   const [selectedPart, setSelectedPart] = useState<number>(0)
-  
+
   // Transform gizmos with @react-three/drei
   // Property inspector with sliders/inputs
   // Hierarchy tree with mesh selection
-  
+
   return (
     <div className="prop-editor">
       <MeshHierarchy parts={parts} onSelect={setSelectedPart} />
@@ -142,8 +142,8 @@ export function PropEditor({ propData, onSave, onCancel }: PropEditorProps) {
         <TransformControls object={parts[selectedPart]} />
         <DynamicProp parts={parts} />
       </Canvas>
-      <PropertyInspector 
-        part={parts[selectedPart]} 
+      <PropertyInspector
+        part={parts[selectedPart]}
         onChange={(updated) => updatePart(selectedPart, updated)}
       />
     </div>
@@ -156,7 +156,7 @@ Use `@react-three/drei` TransformControls:
 ```tsx
 import { TransformControls } from '@react-three/drei'
 
-<TransformControls 
+<TransformControls
   object={meshRef.current}
   mode="translate" // or "rotate" or "scale"
   onObjectChange={(e) => handleTransform(e)}
@@ -189,7 +189,7 @@ export function EditedProp({ position = [0, 0, 0], scale = 1 }) {
 ### 2. Complex Props
 Props with custom logic (animations, conditional rendering) can't be edited easily.
 
-**Solution**: 
+**Solution**:
 - Mark "simple" vs "complex" props
 - Only allow editing of simple props (pure PARTS_DATA)
 - For complex props, offer "Regenerate" instead
@@ -256,5 +256,5 @@ Instead of visual UI, provide a **code editor** for TSX:
 
 ---
 
-*Created: 2026-02-11*  
+*Created: 2026-02-11*
 *Last updated: 2026-02-11*

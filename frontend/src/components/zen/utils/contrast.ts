@@ -23,11 +23,9 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
  * https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests
  */
 function getLuminance(r: number, g: number, b: number): number {
-  const [rs, gs, bs] = [r, g, b].map(c => {
+  const [rs, gs, bs] = [r, g, b].map((c) => {
     const sRGB = c / 255
-    return sRGB <= 0.03928
-      ? sRGB / 12.92
-      : Math.pow((sRGB + 0.055) / 1.055, 2.4)
+    return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4)
   })
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
 }
@@ -40,13 +38,13 @@ function getLuminance(r: number, g: number, b: number): number {
 export function getContrastRatio(color1: string, color2: string): number {
   const rgb1 = hexToRgb(color1)
   const rgb2 = hexToRgb(color2)
-  
+
   const lum1 = getLuminance(rgb1.r, rgb1.g, rgb1.b)
   const lum2 = getLuminance(rgb2.r, rgb2.g, rgb2.b)
-  
+
   const lighter = Math.max(lum1, lum2)
   const darker = Math.min(lum1, lum2)
-  
+
   return (lighter + 0.05) / (darker + 0.05)
 }
 
@@ -80,7 +78,7 @@ export function meetsWCAG_AAA(fg: string, bg: string): boolean {
  */
 export function getContrastLevel(fg: string, bg: string): 'fail' | 'AA-large' | 'AA' | 'AAA' {
   const ratio = getContrastRatio(fg, bg)
-  
+
   if (ratio >= 7.0) return 'AAA'
   if (ratio >= 4.5) return 'AA'
   if (ratio >= 3.0) return 'AA-large'
@@ -104,7 +102,7 @@ import type { ZenTheme } from '../themes/tokyo-night'
 
 export function validateThemeContrast(theme: ZenTheme): ContrastIssue[] {
   const issues: ContrastIssue[] = []
-  
+
   // Check main text on backgrounds
   const pairs: Array<{ name: string; fg: string; bg: string; largeText?: boolean }> = [
     { name: 'fg on bg', fg: theme.colors.fg, bg: theme.colors.bg },
@@ -113,16 +111,21 @@ export function validateThemeContrast(theme: ZenTheme): ContrastIssue[] {
     { name: 'fgMuted on bg', fg: theme.colors.fgMuted, bg: theme.colors.bg },
     { name: 'fgMuted on bgPanel', fg: theme.colors.fgMuted, bg: theme.colors.bgPanel },
     { name: 'accent on bg', fg: theme.colors.accent, bg: theme.colors.bg, largeText: true },
-    { name: 'accent on bgPanel', fg: theme.colors.accent, bg: theme.colors.bgPanel, largeText: true },
+    {
+      name: 'accent on bgPanel',
+      fg: theme.colors.accent,
+      bg: theme.colors.bgPanel,
+      largeText: true,
+    },
     { name: 'success on bg', fg: theme.colors.success, bg: theme.colors.bg, largeText: true },
     { name: 'warning on bg', fg: theme.colors.warning, bg: theme.colors.bg, largeText: true },
     { name: 'error on bg', fg: theme.colors.error, bg: theme.colors.bg, largeText: true },
   ]
-  
+
   for (const pair of pairs) {
     const ratio = getContrastRatio(pair.fg, pair.bg)
     const required = pair.largeText ? 3.0 : 4.5
-    
+
     if (ratio < required) {
       issues.push({
         pair: pair.name,
@@ -134,6 +137,6 @@ export function validateThemeContrast(theme: ZenTheme): ContrastIssue[] {
       })
     }
   }
-  
+
   return issues
 }

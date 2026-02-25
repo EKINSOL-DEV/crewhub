@@ -17,7 +17,14 @@ import { threadsApi, type Thread } from '@/lib/threads.api'
 
 type View =
   | { type: 'list' }
-  | { type: 'chat'; sessionKey: string; agentId: string; agentName: string; agentIcon: string | null; agentColor: string | null }
+  | {
+      type: 'chat'
+      sessionKey: string
+      agentId: string
+      agentName: string
+      agentIcon: string | null
+      agentColor: string | null
+    }
   | { type: 'new-group' }
   | { type: 'group-chat'; thread: Thread }
   | { type: 'docs' }
@@ -41,9 +48,7 @@ export function MobileLayout() {
   const [threads, setThreads] = useState<Thread[]>([])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [debugMode, setDebugMode] = useState(
-    () => localStorage.getItem('crewhub-debug') === 'true'
-  )
+  const [debugMode, setDebugMode] = useState(() => localStorage.getItem('crewhub-debug') === 'true')
 
   // Initialize theme + font size on first render
   useEffect(() => {
@@ -64,28 +69,50 @@ export function MobileLayout() {
   useEffect(() => {
     const interval = setInterval(() => {
       const current = localStorage.getItem('crewhub-debug') === 'true'
-      setDebugMode(prev => prev !== current ? current : prev)
+      setDebugMode((prev) => (prev !== current ? current : prev))
     }, 500)
     return () => clearInterval(interval)
   }, [])
 
   // Filter to fixed agents only
-  const fixedAgents = agents.filter(r => FIXED_AGENT_IDS.includes(r.agent.id))
+  const fixedAgents = agents.filter((r) => FIXED_AGENT_IDS.includes(r.agent.id))
 
   // Load threads
   useEffect(() => {
-    threadsApi.list('group').then(r => setThreads(r.threads)).catch(() => {})
+    threadsApi
+      .list('group')
+      .then((r) => setThreads(r.threads))
+      .catch(() => {})
   }, [view.type === 'list' ? 'list' : ''])
 
   // Get subagent sessions for a given agent id
-  const getSubagentSessions = useCallback((agentId: string) => {
-    const prefix = `agent:${agentId}:subagent:`
-    return sessions.filter(s => s.key.startsWith(prefix))
-  }, [sessions])
+  const getSubagentSessions = useCallback(
+    (agentId: string) => {
+      const prefix = `agent:${agentId}:subagent:`
+      return sessions.filter((s) => s.key.startsWith(prefix))
+    },
+    [sessions]
+  )
 
-  const handleSelectAgent = useCallback((agentId: string, name: string, icon: string | null, color: string | null, sessionKey: string) => {
-    setView({ type: 'chat', sessionKey, agentId, agentName: name, agentIcon: icon, agentColor: color })
-  }, [])
+  const handleSelectAgent = useCallback(
+    (
+      agentId: string,
+      name: string,
+      icon: string | null,
+      color: string | null,
+      sessionKey: string
+    ) => {
+      setView({
+        type: 'chat',
+        sessionKey,
+        agentId,
+        agentName: name,
+        agentIcon: icon,
+        agentColor: color,
+      })
+    },
+    []
+  )
 
   const handleBack = useCallback(() => {
     setView({ type: 'list' })
@@ -104,16 +131,19 @@ export function MobileLayout() {
     setView({ type: 'group-chat', thread })
   }, [])
 
-  const handleRemoveParticipant = useCallback(async (threadId: string, agentId: string) => {
-    try {
-      const updated = await threadsApi.removeParticipant(threadId, agentId)
-      if (view.type === 'group-chat') {
-        setView({ type: 'group-chat', thread: updated })
+  const handleRemoveParticipant = useCallback(
+    async (threadId: string, agentId: string) => {
+      try {
+        const updated = await threadsApi.removeParticipant(threadId, agentId)
+        if (view.type === 'group-chat') {
+          setView({ type: 'group-chat', thread: updated })
+        }
+      } catch (e) {
+        console.error('Failed to remove participant:', e)
       }
-    } catch (e) {
-      console.error('Failed to remove participant:', e)
-    }
-  }, [view])
+    },
+    [view]
+  )
 
   // Drawer navigation
   const handleDrawerNavigate = useCallback((panel: MobilePanel) => {
@@ -146,24 +176,31 @@ export function MobileLayout() {
 
   // Determine current panel for drawer highlight
   const currentPanel: MobilePanel =
-    view.type === 'docs' ? 'docs' :
-    view.type === 'kanban' ? 'kanban' :
-    view.type === 'activity' ? 'activity' :
-    view.type === 'projects' ? 'projects' :
-    view.type === 'creator' ? 'creator' :
-    'chat'
+    view.type === 'docs'
+      ? 'docs'
+      : view.type === 'kanban'
+        ? 'kanban'
+        : view.type === 'activity'
+          ? 'activity'
+          : view.type === 'projects'
+            ? 'projects'
+            : view.type === 'creator'
+              ? 'creator'
+              : 'chat'
 
   return (
-    <div style={{
-      height: '100dvh',
-      width: '100vw',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'var(--mobile-bg, #0f172a)',
-      color: 'var(--mobile-text, #e2e8f0)',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      overflow: 'hidden',
-    }}>
+    <div
+      style={{
+        height: '100dvh',
+        width: '100vw',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--mobile-bg, #0f172a)',
+        color: 'var(--mobile-text, #e2e8f0)',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        overflow: 'hidden',
+      }}
+    >
       {/* Drawer */}
       <MobileDrawer
         open={drawerOpen}
@@ -206,8 +243,12 @@ export function MobileLayout() {
           thread={view.thread}
           onBack={handleBack}
           onRemoveParticipant={(agentId) => handleRemoveParticipant(view.thread.id, agentId)}
-          onAddParticipants={() => {/* Phase 2: group management — add participants flow */}}
-          onRename={() => {/* Phase 2: group management — rename flow */}}
+          onAddParticipants={() => {
+            /* Phase 2: group management — add participants flow */
+          }}
+          onRename={() => {
+            /* Phase 2: group management — rename flow */
+          }}
         />
       ) : view.type === 'docs' ? (
         <MobileDocsPanel onBack={handleBack} />

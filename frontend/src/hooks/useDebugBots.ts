@@ -23,17 +23,44 @@ const ENABLED_STORAGE_KEY = 'crewhub-debug-enabled'
 const EVENT_NAME = 'crewhub-debug-bots-changed'
 
 const BOT_NAMES = [
-  'TestBot Alpha', 'TestBot Beta', 'TestBot Gamma', 'TestBot Delta',
-  'TestBot Epsilon', 'TestBot Zeta', 'TestBot Eta', 'TestBot Theta',
-  'TestBot Iota', 'TestBot Kappa', 'TestBot Lambda', 'TestBot Mu',
-  'TestBot Nu', 'TestBot Xi', 'TestBot Omicron', 'TestBot Pi',
-  'TestBot Rho', 'TestBot Sigma', 'TestBot Tau', 'TestBot Upsilon',
+  'TestBot Alpha',
+  'TestBot Beta',
+  'TestBot Gamma',
+  'TestBot Delta',
+  'TestBot Epsilon',
+  'TestBot Zeta',
+  'TestBot Eta',
+  'TestBot Theta',
+  'TestBot Iota',
+  'TestBot Kappa',
+  'TestBot Lambda',
+  'TestBot Mu',
+  'TestBot Nu',
+  'TestBot Xi',
+  'TestBot Omicron',
+  'TestBot Pi',
+  'TestBot Rho',
+  'TestBot Sigma',
+  'TestBot Tau',
+  'TestBot Upsilon',
 ]
 
 const BOT_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-  '#F1948A', '#82E0AA', '#F8C471', '#AED6F1', '#D2B4DE',
+  '#FF6B6B',
+  '#4ECDC4',
+  '#45B7D1',
+  '#96CEB4',
+  '#FFEAA7',
+  '#DDA0DD',
+  '#98D8C8',
+  '#F7DC6F',
+  '#BB8FCE',
+  '#85C1E9',
+  '#F1948A',
+  '#82E0AA',
+  '#F8C471',
+  '#AED6F1',
+  '#D2B4DE',
 ]
 
 // ─── Helpers ────────────────────────────────────────────────────
@@ -68,7 +95,7 @@ function writeEnabled(val: boolean): void {
 }
 
 function pickName(existing: DebugBot[]): string {
-  const usedNames = new Set(existing.map(b => b.name))
+  const usedNames = new Set(existing.map((b) => b.name))
   for (const name of BOT_NAMES) {
     if (!usedNames.has(name)) return name
   }
@@ -145,13 +172,13 @@ export function useDebugBots(): UseDebugBotsReturn {
   }, [])
 
   const removeBot = useCallback((id: string) => {
-    const updated = readBots().filter(b => b.id !== id)
+    const updated = readBots().filter((b) => b.id !== id)
     writeBots(updated)
     setDebugBots(updated)
   }, [])
 
   const updateStatus = useCallback((id: string, status: DebugBotStatus) => {
-    const updated = readBots().map(b => b.id === id ? { ...b, status } : b)
+    const updated = readBots().map((b) => (b.id === id ? { ...b, status } : b))
     writeBots(updated)
     setDebugBots(updated)
   }, [])
@@ -163,30 +190,39 @@ export function useDebugBots(): UseDebugBotsReturn {
 
   // ─── Presets ──────────────────────────────────────────────────
 
-  const createBotsForRooms = useCallback((roomIds: string[], status: DebugBotStatus, countPerRoom: number) => {
-    const bots: DebugBot[] = []
-    for (const roomId of roomIds) {
-      for (let i = 0; i < countPerRoom; i++) {
-        bots.push({
-          id: generateId(),
-          name: pickName(bots),
-          roomId,
-          status,
-          color: pickColor(),
-        })
+  const createBotsForRooms = useCallback(
+    (roomIds: string[], status: DebugBotStatus, countPerRoom: number) => {
+      const bots: DebugBot[] = []
+      for (const roomId of roomIds) {
+        for (let i = 0; i < countPerRoom; i++) {
+          bots.push({
+            id: generateId(),
+            name: pickName(bots),
+            roomId,
+            status,
+            color: pickColor(),
+          })
+        }
       }
-    }
-    writeBots(bots)
-    setDebugBots(bots)
-  }, [])
+      writeBots(bots)
+      setDebugBots(bots)
+    },
+    []
+  )
 
-  const allWorking = useCallback((roomIds: string[]) => {
-    createBotsForRooms(roomIds, 'active', 2)
-  }, [createBotsForRooms])
+  const allWorking = useCallback(
+    (roomIds: string[]) => {
+      createBotsForRooms(roomIds, 'active', 2)
+    },
+    [createBotsForRooms]
+  )
 
-  const allSleeping = useCallback((roomIds: string[]) => {
-    createBotsForRooms(roomIds, 'sleeping', 2)
-  }, [createBotsForRooms])
+  const allSleeping = useCallback(
+    (roomIds: string[]) => {
+      createBotsForRooms(roomIds, 'sleeping', 2)
+    },
+    [createBotsForRooms]
+  )
 
   const mixed = useCallback((roomIds: string[]) => {
     const statuses: DebugBotStatus[] = ['active', 'idle', 'sleeping', 'offline']
@@ -248,7 +284,7 @@ export function useDebugBots(): UseDebugBotsReturn {
     const current = readBots()
     const newBots: DebugBot[] = []
     for (const roomId of roomIds) {
-      const existing = current.filter(b => b.roomId === roomId).length
+      const existing = current.filter((b) => b.roomId === roomId).length
       const toAdd = Math.max(0, 3 - existing)
       for (let i = 0; i < toAdd; i++) {
         newBots.push({

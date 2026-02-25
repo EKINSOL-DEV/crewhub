@@ -28,11 +28,15 @@ interface SavedPropEntry {
  * Displays a small error cube so the user can see where the broken prop is.
  */
 const FallbackProp: React.FC<PropProps> = ({ position }) => {
-  return React.createElement('group', { position },
-    React.createElement('mesh', { position: [0, 0.25, 0] },
+  return React.createElement(
+    'group',
+    { position },
+    React.createElement(
+      'mesh',
+      { position: [0, 0.25, 0] },
       React.createElement('boxGeometry', { args: [0.3, 0.3, 0.3] }),
-      React.createElement('meshStandardMaterial', { color: '#ff4444', wireframe: true }),
-    ),
+      React.createElement('meshStandardMaterial', { color: '#ff4444', wireframe: true })
+    )
   )
 }
 
@@ -71,21 +75,26 @@ export async function loadSavedCustomProps(): Promise<number> {
 
     const data = await res.json()
     // Backend returns array directly or { props: [...] }
-    const props: SavedPropEntry[] = Array.isArray(data) ? data : (data.props || [])
+    const props: SavedPropEntry[] = Array.isArray(data) ? data : data.props || []
 
     let registered = 0
     for (const prop of props) {
       const propId = `custom:${prop.propId}`
-      
+
       // Skip if already registered
       if (propRegistry.get(propId)) continue
 
       const component = createCustomPropComponent(prop.parts)
-      propRegistry.register(propId, {
-        component,
-        mountType: prop.mountType || 'floor',
-        yOffset: prop.yOffset ?? 0.16,
-      }, 'mod', 'custom-props')
+      propRegistry.register(
+        propId,
+        {
+          component,
+          mountType: prop.mountType || 'floor',
+          yOffset: prop.yOffset ?? 0.16,
+        },
+        'mod',
+        'custom-props'
+      )
 
       registered++
     }

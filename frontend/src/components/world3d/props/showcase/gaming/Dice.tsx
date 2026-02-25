@@ -1,16 +1,22 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Dice() {
-  const d1Ref = useRef<THREE.Mesh>(null);
-  const d2Ref = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
+  const d1Ref = useRef<THREE.Mesh>(null)
+  const d2Ref = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2;
-    if (d1Ref.current) { d1Ref.current.rotation.x += 0.01; d1Ref.current.rotation.z += 0.005; }
-    if (d2Ref.current) { d2Ref.current.rotation.y += 0.008; d2Ref.current.rotation.z += 0.012; }
-  });
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2
+    if (d1Ref.current) {
+      d1Ref.current.rotation.x += 0.01
+      d1Ref.current.rotation.z += 0.005
+    }
+    if (d2Ref.current) {
+      d2Ref.current.rotation.y += 0.008
+      d2Ref.current.rotation.z += 0.012
+    }
+  })
   return (
     <group ref={groupRef}>
       {/* Die 1 */}
@@ -34,5 +40,5 @@ export function Dice() {
         <meshStandardMaterial color="#ffffff" />
       </mesh>
     </group>
-  );
+  )
 }

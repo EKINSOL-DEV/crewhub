@@ -35,8 +35,11 @@ export function MobileWarning() {
       <h1 style={{ color: '#fff', fontSize: 24, fontWeight: 700, marginBottom: 12 }}>
         Desktop Only
       </h1>
-      <p style={{ color: '#94a3b8', fontSize: 16, lineHeight: 1.6, maxWidth: 320, marginBottom: 24 }}>
-        CrewHub's 3D world is optimized for larger screens. Please visit on a desktop or tablet for the full experience.
+      <p
+        style={{ color: '#94a3b8', fontSize: 16, lineHeight: 1.6, maxWidth: 320, marginBottom: 24 }}
+      >
+        CrewHub's 3D world is optimized for larger screens. Please visit on a desktop or tablet for
+        the full experience.
       </p>
       <button
         onClick={() => setDismissed(true)}

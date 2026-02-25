@@ -16,8 +16,20 @@ interface ColumnConfig {
 
 const columns: ColumnConfig[] = [
   { status: 'todo', label: 'To Do', icon: '📋', color: 'text-gray-600', bgColor: 'bg-gray-100' },
-  { status: 'in_progress', label: 'In Progress', icon: '🔄', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-  { status: 'review', label: 'Review', icon: '👀', color: 'text-purple-600', bgColor: 'bg-purple-50' },
+  {
+    status: 'in_progress',
+    label: 'In Progress',
+    icon: '🔄',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+  },
+  {
+    status: 'review',
+    label: 'Review',
+    icon: '👀',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+  },
   { status: 'done', label: 'Done', icon: '✅', color: 'text-green-600', bgColor: 'bg-green-50' },
 ]
 
@@ -45,12 +57,12 @@ export function HQTaskBoard({
   // Group tasks by project
   const tasksByProject = useMemo(() => {
     const grouped = new Map<string, Task[]>()
-    
+
     // Initialize with all projects (even empty ones)
     for (const project of projects) {
       grouped.set(project.id, [])
     }
-    
+
     // Add tasks to their projects
     for (const task of tasks) {
       const projectTasks = grouped.get(task.project_id)
@@ -63,7 +75,7 @@ export function HQTaskBoard({
         grouped.set('_orphan', orphan)
       }
     }
-    
+
     return grouped
   }, [tasks, projects])
 
@@ -72,8 +84,8 @@ export function HQTaskBoard({
     return [...projects].sort((a, b) => {
       const aTasks = tasksByProject.get(a.id) || []
       const bTasks = tasksByProject.get(b.id) || []
-      const aActive = aTasks.filter(t => t.status !== 'done').length
-      const bActive = bTasks.filter(t => t.status !== 'done').length
+      const aActive = aTasks.filter((t) => t.status !== 'done').length
+      const bActive = bTasks.filter((t) => t.status !== 'done').length
       return bActive - aActive
     })
   }, [projects, tasksByProject])
@@ -81,33 +93,36 @@ export function HQTaskBoard({
   // Handle local collapse toggle if no external handler
   const [localCollapsed, setLocalCollapsed] = useState<Set<string>>(new Set())
   const effectiveCollapsed = onToggleProject ? collapsedProjects : localCollapsed
-  
-  const handleToggle = useCallback((projectId: string) => {
-    if (onToggleProject) {
-      onToggleProject(projectId)
-    } else {
-      setLocalCollapsed(prev => {
-        const next = new Set(prev)
-        if (next.has(projectId)) {
-          next.delete(projectId)
-        } else {
-          next.add(projectId)
-        }
-        return next
-      })
-    }
-  }, [onToggleProject])
+
+  const handleToggle = useCallback(
+    (projectId: string) => {
+      if (onToggleProject) {
+        onToggleProject(projectId)
+      } else {
+        setLocalCollapsed((prev) => {
+          const next = new Set(prev)
+          if (next.has(projectId)) {
+            next.delete(projectId)
+          } else {
+            next.add(projectId)
+          }
+          return next
+        })
+      }
+    },
+    [onToggleProject]
+  )
 
   return (
     <div className="flex flex-col gap-3 h-full overflow-auto">
-      {sortedProjects.map(project => {
+      {sortedProjects.map((project) => {
         const projectTasks = tasksByProject.get(project.id) || []
         const isCollapsed = effectiveCollapsed.has(project.id)
-        
+
         // Task counts
-        const todoCount = projectTasks.filter(t => t.status === 'todo').length
-        const inProgressCount = projectTasks.filter(t => t.status === 'in_progress').length
-        const blockedCount = projectTasks.filter(t => t.status === 'blocked').length
+        const todoCount = projectTasks.filter((t) => t.status === 'todo').length
+        const inProgressCount = projectTasks.filter((t) => t.status === 'in_progress').length
+        const blockedCount = projectTasks.filter((t) => t.status === 'blocked').length
         const totalActive = todoCount + inProgressCount + blockedCount
 
         return (
@@ -160,31 +175,29 @@ export function HQTaskBoard({
             {/* Project Lane Content (collapsible) */}
             {!isCollapsed && (
               <div className="grid grid-cols-3 gap-0.5 bg-gray-100 dark:bg-gray-800 p-0.5">
-                {columns.map(col => {
-                  const columnTasks = projectTasks.filter(t => t.status === col.status)
-                  
+                {columns.map((col) => {
+                  const columnTasks = projectTasks.filter((t) => t.status === col.status)
+
                   return (
-                    <div
-                      key={col.status}
-                      className="bg-white dark:bg-gray-900 p-2 min-h-[100px]"
-                    >
+                    <div key={col.status} className="bg-white dark:bg-gray-900 p-2 min-h-[100px]">
                       {/* Column header (compact) */}
-                      <div className={cn(
-                        "flex items-center gap-1.5 px-2 py-1 rounded-md mb-2",
-                        col.bgColor, "dark:bg-opacity-20"
-                      )}>
+                      <div
+                        className={cn(
+                          'flex items-center gap-1.5 px-2 py-1 rounded-md mb-2',
+                          col.bgColor,
+                          'dark:bg-opacity-20'
+                        )}
+                      >
                         <span className="text-sm">{col.icon}</span>
-                        <span className={cn("text-xs font-semibold", col.color)}>
-                          {col.label}
-                        </span>
-                        <span className={cn("text-xs font-medium ml-auto", col.color)}>
+                        <span className={cn('text-xs font-semibold', col.color)}>{col.label}</span>
+                        <span className={cn('text-xs font-medium ml-auto', col.color)}>
                           {columnTasks.length}
                         </span>
                       </div>
 
                       {/* Task cards */}
                       <div className="flex flex-col gap-1.5">
-                        {columnTasks.slice(0, 5).map(task => (
+                        {columnTasks.slice(0, 5).map((task) => (
                           <CompactTaskCard
                             key={task.id}
                             task={task}
@@ -249,8 +262,8 @@ function CompactTaskCard({
     <div
       onClick={() => onClick?.(task)}
       className={cn(
-        "group px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded border-l-2 cursor-pointer",
-        "hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors",
+        'group px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded border-l-2 cursor-pointer',
+        'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
         priorityColors[task.priority] || 'border-l-gray-300'
       )}
     >

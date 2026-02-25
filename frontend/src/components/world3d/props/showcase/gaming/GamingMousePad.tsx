@@ -1,19 +1,19 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function GamingMousePad() {
-  const groupRef = useRef<THREE.Group>(null);
-  const rgbRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const rgbRef = useRef<THREE.Mesh>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12;
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12
     if (rgbRef.current) {
-      const hue = (s.clock.elapsedTime * 0.2) % 1;
-      const c = new THREE.Color().setHSL(hue, 1, 0.5);
-      (rgbRef.current.material as THREE.MeshStandardMaterial).color.copy(c);
-      (rgbRef.current.material as THREE.MeshStandardMaterial).emissive.copy(c);
+      const hue = (s.clock.elapsedTime * 0.2) % 1
+      const c = new THREE.Color().setHSL(hue, 1, 0.5)
+      ;(rgbRef.current.material as THREE.MeshStandardMaterial).color.copy(c)
+      ;(rgbRef.current.material as THREE.MeshStandardMaterial).emissive.copy(c)
     }
-  });
+  })
   return (
     <group ref={groupRef}>
       {/* Pad */}
@@ -56,5 +56,5 @@ export function GamingMousePad() {
         <meshStandardMaterial color="#666677" />
       </mesh>
     </group>
-  );
+  )
 }

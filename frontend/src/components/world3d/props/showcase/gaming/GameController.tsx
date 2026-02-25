@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function GameController() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2
+  })
   return (
     <group ref={groupRef}>
       {/* Body */}
@@ -29,10 +31,19 @@ export function GameController() {
         <meshStandardMaterial color="#444455" />
       </mesh>
       {/* Face buttons */}
-      {[[0.1, 0.05], [0.15, 0], [0.2, 0.05], [0.15, 0.1]].map(([x, z], i) => (
+      {[
+        [0.1, 0.05],
+        [0.15, 0],
+        [0.2, 0.05],
+        [0.15, 0.1],
+      ].map(([x, z], i) => (
         <mesh key={i} position={[x, 0.08, z]}>
           <cylinderGeometry args={[0.02, 0.02, 0.02, 8]} />
-          <meshStandardMaterial color={['#44ff44', '#ff4444', '#4488ff', '#ffcc44'][i]} emissive={['#44ff44', '#ff4444', '#4488ff', '#ffcc44'][i]} emissiveIntensity={0.5} />
+          <meshStandardMaterial
+            color={['#44ff44', '#ff4444', '#4488ff', '#ffcc44'][i]}
+            emissive={['#44ff44', '#ff4444', '#4488ff', '#ffcc44'][i]}
+            emissiveIntensity={0.5}
+          />
         </mesh>
       ))}
       {/* Analog sticks */}
@@ -60,5 +71,5 @@ export function GameController() {
         <meshStandardMaterial color="#4488ff" emissive="#4488ff" emissiveIntensity={3} />
       </mesh>
     </group>
-  );
+  )
 }

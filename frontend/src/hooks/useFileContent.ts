@@ -27,11 +27,11 @@ export function useFileContent(agentId: string | null | undefined, path: string 
     setError(null)
 
     fetch(`${API_BASE}/agents/${agentId}/files/${path}`)
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error(`Failed to load file: ${res.status}`)
         return res.json()
       })
-      .then(data => {
+      .then((data) => {
         if (cancelled) return
         setContent(data.content)
         setMetadata({
@@ -42,14 +42,16 @@ export function useFileContent(agentId: string | null | undefined, path: string 
           language: data.language,
         })
       })
-      .catch(e => {
+      .catch((e) => {
         if (!cancelled) setError(e.message)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [agentId, path])
 
   const setContentManual = useCallback((newContent: string) => {

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { fetchActivityEntries, subscribeToActivityUpdates, type ActivityEvent } from '@/services/activityService'
+import {
+  fetchActivityEntries,
+  subscribeToActivityUpdates,
+  type ActivityEvent,
+} from '@/services/activityService'
 
 interface ActivityLogStreamProps {
   sessionKey: string
@@ -54,7 +58,16 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af', fontSize: 13 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: '#9ca3af',
+          fontSize: 13,
+        }}
+      >
         Loading activity…
       </div>
     )
@@ -62,7 +75,16 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
 
   if (entries.length === 0) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          gap: 8,
+        }}
+      >
         <span style={{ fontSize: 32 }}>💤</span>
         <span style={{ color: '#9ca3af', fontSize: 13 }}>No recent activity</span>
       </div>
@@ -91,13 +113,15 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
           return (
             <div key={entry.id}>
               {showTime && (
-                <div style={{
-                  fontSize: 10,
-                  color: '#9ca3af',
-                  textAlign: 'center',
-                  padding: '4px 0 2px',
-                  fontWeight: 500,
-                }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: '#9ca3af',
+                    textAlign: 'center',
+                    padding: '4px 0 2px',
+                    fontWeight: 500,
+                  }}
+                >
                   {thisTime}
                 </div>
               )}
@@ -111,16 +135,18 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
                 }}
               >
                 <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{entry.icon}</span>
-                <div style={{
-                  flex: 1,
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                  color: entry.color || '#374151',
-                  background: 'rgba(0, 0, 0, 0.03)',
-                  padding: '6px 10px',
-                  borderRadius: 10,
-                  wordBreak: 'break-word',
-                }}>
+                <div
+                  style={{
+                    flex: 1,
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    color: entry.color || '#374151',
+                    background: 'rgba(0, 0, 0, 0.03)',
+                    padding: '6px 10px',
+                    borderRadius: 10,
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {entry.description}
                 </div>
               </div>
@@ -146,8 +172,12 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
             fontFamily: 'system-ui, sans-serif',
             transition: 'color 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#374151' }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#6b7280' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#374151'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#6b7280'
+          }}
         >
           View Full Log →
         </button>

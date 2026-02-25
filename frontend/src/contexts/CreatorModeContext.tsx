@@ -48,7 +48,15 @@ export interface PlacedProp {
 
 export type PlacementAction =
   // M3: scale added so redo-place restores the correct scale
-  | { type: 'place'; placedId: string; propId: string; position: Vec3; rotation_y: number; scale: number; roomId?: string | null }
+  | {
+      type: 'place'
+      placedId: string
+      propId: string
+      position: Vec3
+      rotation_y: number
+      scale: number
+      roomId?: string | null
+    }
   | { type: 'remove'; placedId: string; snapshot: PlacedProp }
   | { type: 'move'; placedId: string; from: Placement; to: Placement }
 
@@ -145,26 +153,30 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
       // Don't fire inside text inputs
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+        return
 
       if (e.key.toLowerCase() === 'e' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault()
-        setIsCreatorMode(prev => !prev)
+        setIsCreatorMode((prev) => !prev)
       }
       if (e.key.toLowerCase() === 'b' && !e.ctrlKey && !e.metaKey) {
-        setIsBrowserOpen(prev => !prev)
+        setIsBrowserOpen((prev) => !prev)
       }
-      if ((e.key === 'Escape') && selectedPropId) {
+      if (e.key === 'Escape' && selectedPropId) {
         setSelectedPropId(null)
       }
       if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && selectedPropId) {
-        setPendingRotation(prev => (prev + 90) % 360)
+        setPendingRotation((prev) => (prev + 90) % 360)
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault()
         undoRef.current()
       }
-      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))
+      ) {
         e.preventDefault()
         redoRef.current()
       }
@@ -210,27 +222,38 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
         }
 
         if (data.action === 'place') {
-          setPlacedProps(prev => {
-            if (prev.some(p => p.id === data.placed_id)) return prev
-            return [...prev, {
-              id: data.placed_id,
-              prop_id: data.prop_id,
-              position: data.position,
-              rotation_y: data.rotation_y,
-              scale: data.scale,
-              room_id: data.room_id,
-              placed_by: data.placed_by,
-              placed_at: data.placed_at,
-            }]
+          setPlacedProps((prev) => {
+            if (prev.some((p) => p.id === data.placed_id)) return prev
+            return [
+              ...prev,
+              {
+                id: data.placed_id,
+                prop_id: data.prop_id,
+                position: data.position,
+                rotation_y: data.rotation_y,
+                scale: data.scale,
+                room_id: data.room_id,
+                placed_by: data.placed_by,
+                placed_at: data.placed_at,
+              },
+            ]
           })
         } else if (data.action === 'move') {
-          setPlacedProps(prev => prev.map(p =>
-            p.id === data.placed_id
-              ? { ...p, position: data.position, rotation_y: data.rotation_y, scale: data.scale, room_id: data.room_id }
-              : p
-          ))
+          setPlacedProps((prev) =>
+            prev.map((p) =>
+              p.id === data.placed_id
+                ? {
+                    ...p,
+                    position: data.position,
+                    rotation_y: data.rotation_y,
+                    scale: data.scale,
+                    room_id: data.room_id,
+                  }
+                : p
+            )
+          )
         } else if (data.action === 'remove') {
-          setPlacedProps(prev => prev.filter(p => p.id !== data.placed_id))
+          setPlacedProps((prev) => prev.filter((p) => p.id !== data.placed_id))
         }
       } catch (err) {
         console.warn('[CreatorMode] Failed to parse prop_update SSE event:', err)
@@ -247,7 +270,7 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
   // ── Actions ────────────────────────────────────────────────────
 
   const toggleCreatorMode = useCallback(() => {
-    setIsCreatorMode(prev => {
+    setIsCreatorMode((prev) => {
       if (prev) {
         // Turning off: clear selection
         setSelectedPropId(null)
@@ -267,13 +290,13 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const rotatePending = useCallback(() => {
-    setPendingRotation(prev => (prev + 90) % 360)
+    setPendingRotation((prev) => (prev + 90) % 360)
   }, [])
 
   const resetRotation = useCallback(() => setPendingRotation(0), [])
 
   const pushAction = useCallback((action: PlacementAction) => {
-    setUndoStack(prev => [...prev.slice(-49), action])
+    setUndoStack((prev) => [...prev.slice(-49), action])
     setRedoStack([]) // new action clears redo
   }, [])
 
@@ -283,11 +306,13 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
 
   const headers = useCallback((): HeadersInit => {
     const key = localStorage.getItem(LS_API_KEY)
-    return key ? { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
+    return key
+      ? { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }
+      : { 'Content-Type': 'application/json' }
   }, [])
 
   const undo = useCallback(async () => {
-    setUndoStack(prev => {
+    setUndoStack((prev) => {
       if (prev.length === 0) return prev
       const action = prev[prev.length - 1]
       const next = prev.slice(0, -1)
@@ -321,11 +346,17 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
               const freshPlaced = await resp.json()
               const newPlacedId: string = freshPlaced.id
               // Patch the entry we just pushed to redo with the new id
-              setRedoStack(prev => prev.map(a =>
-                a === action
-                  ? { ...a, placedId: newPlacedId, snapshot: { ...action.snapshot, id: newPlacedId } }
-                  : a
-              ))
+              setRedoStack((prev) =>
+                prev.map((a) =>
+                  a === action
+                    ? {
+                        ...a,
+                        placedId: newPlacedId,
+                        snapshot: { ...action.snapshot, id: newPlacedId },
+                      }
+                    : a
+                )
+              )
             }
           } else if (action.type === 'move') {
             // Undo a move → move back to original position.
@@ -349,13 +380,13 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
         }
       })()
 
-      setRedoStack(r => [...r, action])
+      setRedoStack((r) => [...r, action])
       return next
     })
   }, [headers])
 
   const redo = useCallback(async () => {
-    setRedoStack(prev => {
+    setRedoStack((prev) => {
       if (prev.length === 0) return prev
       const action = prev[prev.length - 1]
       const next = prev.slice(0, -1)
@@ -402,7 +433,7 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
         }
       })()
 
-      setUndoStack(u => [...u, action])
+      setUndoStack((u) => [...u, action])
       return next
     })
   }, [headers])
@@ -419,7 +450,7 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
 
   const openBrowser = useCallback(() => setIsBrowserOpen(true), [])
   const closeBrowser = useCallback(() => setIsBrowserOpen(false), [])
-  const toggleBrowser = useCallback(() => setIsBrowserOpen(p => !p), [])
+  const toggleBrowser = useCallback(() => setIsBrowserOpen((p) => !p), [])
 
   return (
     <CreatorModeContext.Provider

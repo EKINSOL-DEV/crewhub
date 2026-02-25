@@ -33,7 +33,12 @@ import type {
 
 export interface FullscreenPropMakerProps {
   onClose: () => void
-  onPropGenerated?: (prop: { name: string; filename: string; parts: PropPart[]; timestamp: number }) => void
+  onPropGenerated?: (prop: {
+    name: string
+    filename: string
+    parts: PropPart[]
+    timestamp: number
+  }) => void
 }
 
 // ── Component ─────────────────────────────────────────────────
@@ -91,7 +96,9 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   >([])
   const [generationMode, setGenerationMode] = useState<GenerationMode>('standard')
   const [templateBase, setTemplateBase] = useState<string>('')
-  const [availableStyles, setAvailableStyles] = useState<{ id: string; name: string; palette: string[] }[]>([])
+  const [availableStyles, setAvailableStyles] = useState<
+    { id: string; name: string; palette: string[] }[]
+  >([])
   const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([])
   const [selectedStyle, setSelectedStyle] = useState('')
   const [isApplyingStyle, setIsApplyingStyle] = useState(false)
@@ -101,8 +108,8 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   // Load models, styles, templates
   useEffect(() => {
     fetch('/api/creator/models')
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         if (data.models) {
           setModels(data.models)
           setSelectedModel(data.default || 'sonnet-4-5')
@@ -110,18 +117,36 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       })
       .catch(() => {
         setModels([
-          { key: 'opus-4-6', id: 'anthropic/claude-opus-4-6', label: 'Opus 4-6', provider: 'anthropic' },
-          { key: 'sonnet-4-5', id: 'anthropic/claude-sonnet-4-5', label: 'Sonnet 4.5', provider: 'anthropic' },
+          {
+            key: 'opus-4-6',
+            id: 'anthropic/claude-opus-4-6',
+            label: 'Opus 4-6',
+            provider: 'anthropic',
+          },
+          {
+            key: 'sonnet-4-5',
+            id: 'anthropic/claude-sonnet-4-5',
+            label: 'Sonnet 4.5',
+            provider: 'anthropic',
+          },
           { key: 'gpt-5-2', id: 'openai/gpt-5.2', label: 'GPT-5.2', provider: 'openai' },
         ])
       })
-    fetch('/api/creator/props/styles').then(r => r.json()).then(d => setAvailableStyles(d.styles || [])).catch(() => {})
-    fetch('/api/creator/props/templates').then(r => r.json()).then(d => setAvailableTemplates(d.templates || [])).catch(() => {})
+    fetch('/api/creator/props/styles')
+      .then((r) => r.json())
+      .then((d) => setAvailableStyles(d.styles || []))
+      .catch(() => {})
+    fetch('/api/creator/props/templates')
+      .then((r) => r.json())
+      .then((d) => setAvailableTemplates(d.templates || []))
+      .catch(() => {})
   }, [])
 
   // Escape key to close
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
@@ -132,125 +157,135 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     document.body.style.overflow = 'hidden'
     const canvases = document.querySelectorAll('canvas')
     const prevPE: string[] = []
-    canvases.forEach((c, i) => { prevPE[i] = c.style.pointerEvents; c.style.pointerEvents = 'none' })
+    canvases.forEach((c, i) => {
+      prevPE[i] = c.style.pointerEvents
+      c.style.pointerEvents = 'none'
+    })
     window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: true } }))
     return () => {
       document.body.style.overflow = prev
-      canvases.forEach((c, i) => { c.style.pointerEvents = prevPE[i] })
+      canvases.forEach((c, i) => {
+        c.style.pointerEvents = prevPE[i]
+      })
       window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: false } }))
     }
   }, [])
 
   // Clean up EventSource on unmount
   useEffect(() => {
-    return () => { eventSourceRef.current?.close() }
+    return () => {
+      eventSourceRef.current?.close()
+    }
   }, [])
 
   // ── Handlers ────────────────────────────────────────────────
 
-  const handleGenerate = useCallback(async (prompt?: string) => {
-    const text = (prompt || inputText).trim()
-    if (!text || isGenerating) return
+  const handleGenerate = useCallback(
+    async (prompt?: string) => {
+      const text = (prompt || inputText).trim()
+      if (!text || isGenerating) return
 
-    eventSourceRef.current?.close()
-    eventSourceRef.current = null
+      eventSourceRef.current?.close()
+      eventSourceRef.current = null
 
-    setIsGenerating(true)
-    setError(null)
-    setSuccessMessage(null)
-    setRenderError(null)
-    setPreviewParts(null)
-    setThinkingLines([])
-    setFullPrompt(null)
-    setToolCalls([])
-    setLastPrompt(text)
-    setInputText('')
+      setIsGenerating(true)
+      setError(null)
+      setSuccessMessage(null)
+      setRenderError(null)
+      setPreviewParts(null)
+      setThinkingLines([])
+      setFullPrompt(null)
+      setToolCalls([])
+      setLastPrompt(text)
+      setInputText('')
 
-    const addLine = (line: ThinkingLine) => setThinkingLines(prev => [...prev, line])
+      const addLine = (line: ThinkingLine) => setThinkingLines((prev) => [...prev, line])
 
-    try {
-      const url = `/api/creator/generate-prop-stream?prompt=${encodeURIComponent(text)}&model=${encodeURIComponent(selectedModel)}`
-      const es = new EventSource(url)
-      eventSourceRef.current = es
+      try {
+        const url = `/api/creator/generate-prop-stream?prompt=${encodeURIComponent(text)}&model=${encodeURIComponent(selectedModel)}`
+        const es = new EventSource(url)
+        eventSourceRef.current = es
 
-      es.addEventListener('status', (e) => {
-        addLine({ text: JSON.parse(e.data).message, type: 'status' })
-      })
-      es.addEventListener('model', (e) => {
-        const data = JSON.parse(e.data)
-        addLine({ text: `🎯 Model: ${data.modelLabel}`, type: 'model' })
-        setPreviewModelLabel(data.modelLabel)
-      })
-      es.addEventListener('full_prompt', (e) => {
-        const data = JSON.parse(e.data)
-        setFullPrompt(data.prompt)
-        addLine({ text: `📜 Full prompt loaded (${data.prompt.length} chars)`, type: 'prompt' })
-      })
-      es.addEventListener('thinking', (e) => {
-        addLine({ text: `💭 ${JSON.parse(e.data).text}`, type: 'thinking' })
-      })
-      es.addEventListener('text', (e) => {
-        addLine({ text: `📝 ${JSON.parse(e.data).text}`, type: 'text' })
-      })
-      es.addEventListener('tool', (e) => {
-        const data = JSON.parse(e.data)
-        setToolCalls(prev => [...prev, { name: data.name, input: data.input || '' }])
-        addLine({ text: data.message, type: 'tool' })
-      })
-      es.addEventListener('tool_result', (e) => {
-        addLine({ text: JSON.parse(e.data).message, type: 'tool_result' })
-      })
-      es.addEventListener('correction', (e) => {
-        addLine({ text: JSON.parse(e.data).message, type: 'correction' })
-      })
-      es.addEventListener('complete', (e) => {
-        const data = JSON.parse(e.data)
-        es.close()
-        eventSourceRef.current = null
-        addLine({ text: '✅ Prop generated successfully!', type: 'complete' })
+        es.addEventListener('status', (e) => {
+          addLine({ text: JSON.parse(e.data).message, type: 'status' })
+        })
+        es.addEventListener('model', (e) => {
+          const data = JSON.parse(e.data)
+          addLine({ text: `🎯 Model: ${data.modelLabel}`, type: 'model' })
+          setPreviewModelLabel(data.modelLabel)
+        })
+        es.addEventListener('full_prompt', (e) => {
+          const data = JSON.parse(e.data)
+          setFullPrompt(data.prompt)
+          addLine({ text: `📜 Full prompt loaded (${data.prompt.length} chars)`, type: 'prompt' })
+        })
+        es.addEventListener('thinking', (e) => {
+          addLine({ text: `💭 ${JSON.parse(e.data).text}`, type: 'thinking' })
+        })
+        es.addEventListener('text', (e) => {
+          addLine({ text: `📝 ${JSON.parse(e.data).text}`, type: 'text' })
+        })
+        es.addEventListener('tool', (e) => {
+          const data = JSON.parse(e.data)
+          setToolCalls((prev) => [...prev, { name: data.name, input: data.input || '' }])
+          addLine({ text: data.message, type: 'tool' })
+        })
+        es.addEventListener('tool_result', (e) => {
+          addLine({ text: JSON.parse(e.data).message, type: 'tool_result' })
+        })
+        es.addEventListener('correction', (e) => {
+          addLine({ text: JSON.parse(e.data).message, type: 'correction' })
+        })
+        es.addEventListener('complete', (e) => {
+          const data = JSON.parse(e.data)
+          es.close()
+          eventSourceRef.current = null
+          addLine({ text: '✅ Prop generated successfully!', type: 'complete' })
 
-        if (!data.parts || !Array.isArray(data.parts) || data.parts.length === 0) {
-          setError('Generated prop has no geometry parts')
-          setIsGenerating(false)
-          return
-        }
-
-        setPreviewParts(data.parts)
-        setPreviewName(data.name)
-        setPreviewFilename(data.filename)
-        setPreviewCode(data.code || '')
-        setPreviewMethod(data.method || 'template')
-        setPreviewModelLabel(data.modelLabel || '')
-        setRefinementOptions(data.refinementOptions || null)
-        setGenerationId(data.generationId || '')
-        setIsGenerating(false)
-        setHistoryRefreshKey(k => k + 1)
-        setIterationHistory([])
-        if (data.code) scoreQuality(data.code)
-      })
-      es.addEventListener('error', (e) => {
-        if (e instanceof MessageEvent) {
-          try {
-            const data = JSON.parse(e.data)
-            addLine({ text: `❌ ${data.message}`, type: 'error' })
-            setError(data.message)
-          } catch {
-            addLine({ text: '❌ Connection error', type: 'error' })
-            setError('Connection error')
+          if (!data.parts || !Array.isArray(data.parts) || data.parts.length === 0) {
+            setError('Generated prop has no geometry parts')
+            setIsGenerating(false)
+            return
           }
-        } else {
-          addLine({ text: '❌ Connection lost', type: 'error' })
-          setError('Connection to server lost')
-        }
-        es.close()
-        eventSourceRef.current = null
+
+          setPreviewParts(data.parts)
+          setPreviewName(data.name)
+          setPreviewFilename(data.filename)
+          setPreviewCode(data.code || '')
+          setPreviewMethod(data.method || 'template')
+          setPreviewModelLabel(data.modelLabel || '')
+          setRefinementOptions(data.refinementOptions || null)
+          setGenerationId(data.generationId || '')
+          setIsGenerating(false)
+          setHistoryRefreshKey((k) => k + 1)
+          setIterationHistory([])
+          if (data.code) scoreQuality(data.code)
+        })
+        es.addEventListener('error', (e) => {
+          if (e instanceof MessageEvent) {
+            try {
+              const data = JSON.parse(e.data)
+              addLine({ text: `❌ ${data.message}`, type: 'error' })
+              setError(data.message)
+            } catch {
+              addLine({ text: '❌ Connection error', type: 'error' })
+              setError('Connection error')
+            }
+          } else {
+            addLine({ text: '❌ Connection lost', type: 'error' })
+            setError('Connection to server lost')
+          }
+          es.close()
+          eventSourceRef.current = null
+          setIsGenerating(false)
+        })
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Generation failed')
         setIsGenerating(false)
-      })
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Generation failed')
-      setIsGenerating(false)
-    }
-  }, [inputText, isGenerating, selectedModel])
+      }
+    },
+    [inputText, isGenerating, selectedModel]
+  )
 
   const handleApprove = useCallback(async () => {
     if (!previewParts || !previewName || isSaving) return
@@ -263,8 +298,12 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: previewName, propId: kebabName, code: previewCode,
-          parts: previewParts, mountType: 'floor', yOffset: 0.16,
+          name: previewName,
+          propId: kebabName,
+          code: previewCode,
+          parts: previewParts,
+          mountType: 'floor',
+          yOffset: 0.16,
         }),
       })
       if (!res.ok) {
@@ -274,8 +313,10 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
 
       setSuccessMessage(`✅ "${previewName}" saved!`)
       onPropGenerated?.({
-        name: previewName, filename: previewFilename,
-        parts: previewParts, timestamp: Date.now(),
+        name: previewName,
+        filename: previewFilename,
+        parts: previewParts,
+        timestamp: Date.now(),
       })
 
       setTimeout(() => {
@@ -309,7 +350,9 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
         body: JSON.stringify({ code }),
       })
       if (res.ok) setQualityScore(await res.json())
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   // Phase 3: iterate on prop
@@ -330,12 +373,15 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       if (!res.ok) throw new Error((await res.json()).detail || 'Iteration failed')
       const data = await res.json()
 
-      setIterationHistory(prev => [...prev, {
-        version: prev.length + 1,
-        feedback: iterationFeedback.trim(),
-        score: data.qualityScore?.overall || 0,
-        code: previewCode,
-      }])
+      setIterationHistory((prev) => [
+        ...prev,
+        {
+          version: prev.length + 1,
+          feedback: iterationFeedback.trim(),
+          score: data.qualityScore?.overall || 0,
+          code: previewCode,
+        },
+      ])
       setPreviewCode(data.code)
       setQualityScore(data.qualityScore)
       setIterationFeedback('')
@@ -373,13 +419,16 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   }, [selectedStyle, previewCode, previewName, isApplyingStyle])
 
   // Phase 3: rollback to earlier iteration
-  const handleRollback = useCallback((version: number) => {
-    const entry = iterationHistory.find(h => h.version === version)
-    if (entry) {
-      setPreviewCode(entry.code)
-      scoreQuality(entry.code)
-    }
-  }, [iterationHistory, scoreQuality])
+  const handleRollback = useCallback(
+    (version: number) => {
+      const entry = iterationHistory.find((h) => h.version === version)
+      if (entry) {
+        setPreviewCode(entry.code)
+        scoreQuality(entry.code)
+      }
+    },
+    [iterationHistory, scoreQuality]
+  )
 
   // Load record from history into preview
   const handleLoadFromHistory = useCallback((record: GenerationRecord) => {
@@ -394,40 +443,48 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   }, [])
 
   // Visual refinement (Phase 2)
-  const handleRefine = useCallback(async (changes: RefineChanges) => {
-    if (!generationId || isRefining) return
-    setIsRefining(true)
-    try {
-      const res = await fetch('/api/creator/props/refine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ propId: generationId, changes }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.code) {
-          setPreviewCode(data.code)
-          if (data.parts?.length) setPreviewParts(data.parts)
-          if (data.refinementOptions) setRefinementOptions(data.refinementOptions)
-          setThinkingLines(prev => [
-            ...prev,
-            { text: '🎨 Refinements applied:', type: 'correction' as const },
-            ...data.diagnostics.map((d: string) => ({ text: `  ${d}`, type: 'correction' as const })),
-          ])
+  const handleRefine = useCallback(
+    async (changes: RefineChanges) => {
+      if (!generationId || isRefining) return
+      setIsRefining(true)
+      try {
+        const res = await fetch('/api/creator/props/refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ propId: generationId, changes }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.code) {
+            setPreviewCode(data.code)
+            if (data.parts?.length) setPreviewParts(data.parts)
+            if (data.refinementOptions) setRefinementOptions(data.refinementOptions)
+            setThinkingLines((prev) => [
+              ...prev,
+              { text: '🎨 Refinements applied:', type: 'correction' as const },
+              ...data.diagnostics.map((d: string) => ({
+                text: `  ${d}`,
+                type: 'correction' as const,
+              })),
+            ])
+          }
         }
+      } catch (err) {
+        console.error('Refine error:', err)
+      } finally {
+        setIsRefining(false)
       }
-    } catch (err) {
-      console.error('Refine error:', err)
-    } finally {
-      setIsRefining(false)
-    }
-  }, [generationId, isRefining])
+    },
+    [generationId, isRefining]
+  )
 
   const handleRefineReset = useCallback(() => {
     if (generationId) {
       fetch(`/api/creator/generation-history/${generationId}`)
-        .then(r => r.json())
-        .then(data => { if (data.code) setPreviewCode(data.code) })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.code) setPreviewCode(data.code)
+        })
         .catch(() => {})
     }
   }, [generationId])
@@ -439,7 +496,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
 
   const handlePartTransform = useCallback(
     (index: number, position: [number, number, number], rotation: [number, number, number]) => {
-      setPreviewParts(prev => {
+      setPreviewParts((prev) => {
         if (!prev) return prev
         const updated = [...prev]
         updated[index] = { ...updated[index], position, rotation }
@@ -452,11 +509,14 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const handleApplyPartEdits = useCallback(() => {
     setEditMode(false)
     setSelectedPartIndex(null)
-    setThinkingLines(prev => [...prev, { text: '✏️ Part transforms applied', type: 'correction' as const }])
+    setThinkingLines((prev) => [
+      ...prev,
+      { text: '✏️ Part transforms applied', type: 'correction' as const },
+    ])
   }, [])
 
   const handleToggleEditMode = useCallback(() => {
-    setEditMode(prev => !prev)
+    setEditMode((prev) => !prev)
     setSelectedPartIndex(null)
   }, [])
 
@@ -467,7 +527,12 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   // ── Render ───────────────────────────────────────────────────
 
   const overlay = (
-    <div className="fpm-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div
+      className="fpm-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <PropMakerToolbar
         isGenerating={isGenerating}
         successMessage={successMessage}
@@ -497,8 +562,11 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
             onTemplateBaseChange={setTemplateBase}
             availableTemplates={availableTemplates}
             showExamples={showExamples}
-            onToggleExamples={() => setShowExamples(v => !v)}
-            onSelectExample={(p) => { setInputText(p); setShowExamples(false) }}
+            onToggleExamples={() => setShowExamples((v) => !v)}
+            onSelectExample={(p) => {
+              setInputText(p)
+              setShowExamples(false)
+            }}
             previewParts={previewParts}
             previewMethod={previewMethod}
             previewModelLabel={previewModelLabel}

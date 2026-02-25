@@ -53,22 +53,17 @@ export class ZenErrorBoundary extends Component<ZenErrorBoundaryProps, ZenErrorB
             <div className="zen-error-boundary-icon">⚠️</div>
             <h3 className="zen-error-boundary-title">Something went wrong</h3>
             <p className="zen-error-boundary-message">
-              {this.props.panelType 
+              {this.props.panelType
                 ? `The ${this.props.panelType} panel encountered an error.`
                 : 'This panel encountered an error.'}
             </p>
             {this.state.error && (
               <div className="zen-error-boundary-details">
-                <code className="zen-error-boundary-error">
-                  {this.state.error.message}
-                </code>
+                <code className="zen-error-boundary-error">{this.state.error.message}</code>
               </div>
             )}
             <div className="zen-error-boundary-actions">
-              <button 
-                className="zen-btn zen-btn-primary"
-                onClick={this.handleReset}
-              >
+              <button className="zen-btn zen-btn-primary" onClick={this.handleReset}>
                 <span>🔄</span>
                 Try Again
               </button>
@@ -92,13 +87,13 @@ export function ZenSkeletonText({ lines = 3, short = false }: { lines?: number; 
   return (
     <div className="zen-skeleton-text-container">
       {Array.from({ length: lines }).map((_, i) => (
-        <div 
-          key={i} 
+        <div
+          key={i}
           className={`zen-skeleton zen-skeleton-text ${
             short || i === lines - 1 ? 'zen-skeleton-text-short' : ''
           }`}
-          style={{ 
-            width: short ? '60%' : i === lines - 1 ? `${50 + Math.random() * 30}%` : '100%' 
+          style={{
+            width: short ? '60%' : i === lines - 1 ? `${50 + Math.random() * 30}%` : '100%',
           }}
         />
       ))}
@@ -107,12 +102,7 @@ export function ZenSkeletonText({ lines = 3, short = false }: { lines?: number; 
 }
 
 export function ZenSkeletonAvatar({ size = 32 }: { size?: number }) {
-  return (
-    <div 
-      className="zen-skeleton zen-skeleton-avatar"
-      style={{ width: size, height: size }}
-    />
-  )
+  return <div className="zen-skeleton zen-skeleton-avatar" style={{ width: size, height: size }} />
 }
 
 export function ZenSkeletonSessionItem() {
@@ -165,14 +155,9 @@ export function ZenEmptyState({ icon, title, description, action }: ZenEmptyStat
     <div className="zen-empty-state">
       <div className="zen-empty-state-icon">{icon}</div>
       <h3 className="zen-empty-state-title">{title}</h3>
-      {description && (
-        <p className="zen-empty-state-description">{description}</p>
-      )}
+      {description && <p className="zen-empty-state-description">{description}</p>}
       {action && (
-        <button 
-          className="zen-btn zen-btn-primary zen-empty-state-action"
-          onClick={action.onClick}
-        >
+        <button className="zen-btn zen-btn-primary zen-empty-state-action" onClick={action.onClick}>
           {action.label}
         </button>
       )}
@@ -203,18 +188,24 @@ interface ZenConnectionStatusProps {
   lastConnected?: number
 }
 
-export function ZenConnectionStatus({ connected, reconnecting, lastConnected }: ZenConnectionStatusProps) {
+export function ZenConnectionStatus({
+  connected,
+  reconnecting,
+  lastConnected,
+}: ZenConnectionStatusProps) {
   if (connected && !reconnecting) {
     return null
   }
-  
+
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp)
     return date.toLocaleTimeString()
   }
-  
+
   return (
-    <div className={`zen-connection-status ${reconnecting ? 'zen-connection-reconnecting' : 'zen-connection-disconnected'}`}>
+    <div
+      className={`zen-connection-status ${reconnecting ? 'zen-connection-reconnecting' : 'zen-connection-disconnected'}`}
+    >
       <span className="zen-connection-status-icon">
         {reconnecting ? (
           <span className="zen-thinking-dots">
@@ -222,13 +213,14 @@ export function ZenConnectionStatus({ connected, reconnecting, lastConnected }: 
             <span />
             <span />
           </span>
-        ) : '⚠️'}
+        ) : (
+          '⚠️'
+        )}
       </span>
       <span className="zen-connection-status-text">
-        {reconnecting 
+        {reconnecting
           ? 'Reconnecting...'
-          : `Disconnected${lastConnected ? ` at ${formatTime(lastConnected)}` : ''}`
-        }
+          : `Disconnected${lastConnected ? ` at ${formatTime(lastConnected)}` : ''}`}
       </span>
     </div>
   )

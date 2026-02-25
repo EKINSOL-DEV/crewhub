@@ -62,7 +62,8 @@ export function RunOrSelfDialog({
           <div style={{ fontSize: 14, fontWeight: 500, color: '#1f2937' }}>{task.title}</div>
           {task.description && (
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-              {task.description.slice(0, 100)}{task.description.length > 100 ? '…' : ''}
+              {task.description.slice(0, 100)}
+              {task.description.length > 100 ? '…' : ''}
             </div>
           )}
         </div>
@@ -95,9 +96,7 @@ export function RunOrSelfDialog({
           >
             <span style={{ fontSize: 28 }}>🚀</span>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#1d4ed8' }}>
-                Run with Agent
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#1d4ed8' }}>Run with Agent</div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
                 Let an AI agent work on this task
               </div>
@@ -130,9 +129,7 @@ export function RunOrSelfDialog({
           >
             <span style={{ fontSize: 28 }}>👤</span>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#374151' }}>
-                Do it myself
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#374151' }}>Do it myself</div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
                 I'll work on this task manually
               </div>

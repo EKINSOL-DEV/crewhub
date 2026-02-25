@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import re
 import logging
+import re
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -37,8 +37,8 @@ def build_crossbreed_prompt(
         trait_instructions = [
             f"- Take STRUCTURE from {parent_a_name}",
             f"- Take COLOR PALETTE & EFFECTS from {parent_b_name}",
-            f"- Combine animations from both",
-            f"- Merge detail elements creatively",
+            "- Combine animations from both",
+            "- Merge detail elements creatively",
         ]
 
     traits_text = "\n".join(trait_instructions)
@@ -99,7 +99,7 @@ class PropGenetics:
             traits=traits or [],
         )
 
-        from .connections import get_connection_manager, OpenClawConnection
+        from .connections import OpenClawConnection, get_connection_manager
 
         manager = await get_connection_manager()
         conn = None
@@ -121,10 +121,10 @@ class PropGenetics:
             raise RuntimeError("AI returned empty response")
 
         raw = raw.strip()
-        raw = re.sub(r'^```\w*\n', '', raw)
-        raw = re.sub(r'\n```\s*$', '', raw)
+        raw = re.sub(r"^```\w*\n", "", raw)
+        raw = re.sub(r"\n```\s*$", "", raw)
 
-        if 'export function' not in raw:
+        if "export function" not in raw:
             raise ValueError("Crossbreeding produced invalid component")
 
         return raw

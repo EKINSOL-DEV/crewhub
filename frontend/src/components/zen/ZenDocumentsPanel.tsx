@@ -3,7 +3,12 @@
  * Reuses FileTree, MarkdownViewer, FullscreenOverlay from Phase 1.
  */
 import { useState, useCallback, useMemo } from 'react'
-import { useProjectDocuments, useProjectDocumentContent, saveProjectDocument, type DocFileNode } from '@/hooks/useProjectDocuments'
+import {
+  useProjectDocuments,
+  useProjectDocumentContent,
+  saveProjectDocument,
+  type DocFileNode,
+} from '@/hooks/useProjectDocuments'
 import { FileTree } from '../files/FileTree'
 import { MarkdownViewer } from '../markdown/MarkdownViewer'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
@@ -15,21 +20,29 @@ interface ZenDocumentsPanelProps {
 }
 
 // Breadcrumb for folder navigation
-function Breadcrumbs({ path, onNavigate }: { path: string | null; onNavigate: (path: string | null) => void }) {
+function Breadcrumbs({
+  path,
+  onNavigate,
+}: {
+  path: string | null
+  onNavigate: (path: string | null) => void
+}) {
   if (!path) return null
   const parts = path.replace(/\/$/, '').split('/')
-  
+
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 4,
-      padding: '6px 12px',
-      fontSize: 11,
-      color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
-      borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
-      flexWrap: 'wrap',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '6px 12px',
+        fontSize: 11,
+        color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+        flexWrap: 'wrap',
+      }}
+    >
       <span
         onClick={() => onNavigate(null)}
         style={{ cursor: 'pointer', color: 'var(--zen-accent, hsl(var(--primary)))' }}
@@ -41,7 +54,10 @@ function Breadcrumbs({ path, onNavigate }: { path: string | null; onNavigate: (p
           <span style={{ opacity: 0.5 }}>/</span>
           <span
             onClick={() => onNavigate(parts.slice(0, i + 1).join('/') + '/')}
-            style={{ cursor: 'pointer', color: i === parts.length - 1 ? 'hsl(var(--foreground))' : 'hsl(var(--primary))' }}
+            style={{
+              cursor: 'pointer',
+              color: i === parts.length - 1 ? 'hsl(var(--foreground))' : 'hsl(var(--primary))',
+            }}
           >
             {part}
           </span>
@@ -52,19 +68,30 @@ function Breadcrumbs({ path, onNavigate }: { path: string | null; onNavigate: (p
 }
 
 export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelProps) {
-  const { files, projectName: fetchedName, loading, error, refresh } = useProjectDocuments(projectId)
+  const {
+    files,
+    projectName: fetchedName,
+    loading,
+    error,
+    refresh,
+  } = useProjectDocuments(projectId)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [currentFolder, setCurrentFolder] = useState<string | null>(null)
   const [fullscreenOpen, setFullscreenOpen] = useState(false)
 
-  const { content, metadata, loading: contentLoading, setContent } = useProjectDocumentContent(projectId, selectedPath)
+  const {
+    content,
+    metadata,
+    loading: contentLoading,
+    setContent,
+  } = useProjectDocumentContent(projectId, selectedPath)
 
   const displayName = projectName || fetchedName || 'Project'
 
   // Adapt DocFileNode to FileNode for FileTree compatibility
   const adaptedFiles = useMemo(() => {
     function adapt(nodes: DocFileNode[]): FileNode[] {
-      return nodes.map(n => ({
+      return nodes.map((n) => ({
         name: n.name,
         path: n.path,
         type: n.type,
@@ -90,16 +117,18 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
 
   if (!projectId) {
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
-        fontSize: 13,
-        flexDirection: 'column',
-        gap: 8,
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+          fontSize: 13,
+          flexDirection: 'column',
+          gap: 8,
+        }}
+      >
         <span style={{ fontSize: 32 }}>📂</span>
         <span>Select a project to browse documents</span>
       </div>
@@ -133,17 +162,25 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Header */}
-      <div style={{
-        padding: '8px 12px',
-        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-      }}>
+      <div
+        style={{
+          padding: '8px 12px',
+          borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 14 }}>📂</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--zen-fg, hsl(var(--foreground)))',
+            }}
+          >
             {displayName} — Documents
           </span>
         </div>
@@ -168,12 +205,14 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
       <Breadcrumbs path={currentFolder} onNavigate={setCurrentFolder} />
 
       {/* File Tree */}
-      <div style={{
-        maxHeight: selectedPath ? '40%' : '100%',
-        overflow: 'auto',
-        borderBottom: selectedPath ? '1px solid hsl(var(--border))' : 'none',
-        flexShrink: 0,
-      }}>
+      <div
+        style={{
+          maxHeight: selectedPath ? '40%' : '100%',
+          overflow: 'auto',
+          borderBottom: selectedPath ? '1px solid hsl(var(--border))' : 'none',
+          flexShrink: 0,
+        }}
+      >
         <FileTree
           files={adaptedFiles}
           selectedPath={selectedPath ?? undefined}
@@ -186,13 +225,21 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
       {/* Preview */}
       {selectedPath && (
         <div style={{ flex: 1, overflow: 'auto', padding: '8px 12px', minHeight: 0 }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 8,
-          }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--zen-fg, hsl(var(--foreground)))' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--zen-fg, hsl(var(--foreground)))',
+              }}
+            >
               {selectedPath.split('/').pop()}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
@@ -212,7 +259,9 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
                 ⤢ Fullscreen
               </button>
               <button
-                onClick={() => { setSelectedPath(null) }}
+                onClick={() => {
+                  setSelectedPath(null)
+                }}
                 title="Close preview"
                 style={{
                   background: 'none',
@@ -230,7 +279,14 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
           </div>
 
           {contentLoading && (
-            <div style={{ padding: 12, fontSize: 12, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', textAlign: 'center' }}>
+            <div
+              style={{
+                padding: 12,
+                fontSize: 12,
+                color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+                textAlign: 'center',
+              }}
+            >
               Loading…
             </div>
           )}

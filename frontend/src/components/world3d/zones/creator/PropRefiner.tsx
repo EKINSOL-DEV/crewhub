@@ -5,7 +5,6 @@
 
 import { useState, useCallback } from 'react'
 
-
 interface RefinementOptions {
   suggestedColors: string[]
 }
@@ -28,9 +27,18 @@ export interface RefineChanges {
 }
 
 const DEFAULT_PALETTE = [
-  '#cc3333', '#3366cc', '#33aa33', '#ccaa33',
-  '#aa44ff', '#00ffcc', '#ff4488', '#ffaa33',
-  '#1a1a2e', '#ffffff', '#ff6644', '#00aaff',
+  '#cc3333',
+  '#3366cc',
+  '#33aa33',
+  '#ccaa33',
+  '#aa44ff',
+  '#00ffcc',
+  '#ff4488',
+  '#ffaa33',
+  '#1a1a2e',
+  '#ffffff',
+  '#ff6644',
+  '#00aaff',
 ]
 
 export function PropRefiner({
@@ -46,15 +54,13 @@ export function PropRefiner({
   const [colorChanges, setColorChanges] = useState<Record<string, string>>({})
   // Extract colors used in the current code
   const usedColors = Array.from(
-    new Set(
-      (currentCode.match(/#[0-9a-fA-F]{6}/g) || []).map(c => c.toLowerCase())
-    )
+    new Set((currentCode.match(/#[0-9a-fA-F]{6}/g) || []).map((c) => c.toLowerCase()))
   ).slice(0, 8)
 
   const palette = refinementOptions?.suggestedColors || DEFAULT_PALETTE
 
   const handleColorSwap = useCallback((oldColor: string, newColor: string) => {
-    setColorChanges(prev => ({ ...prev, [oldColor]: newColor }))
+    setColorChanges((prev) => ({ ...prev, [oldColor]: newColor }))
   }, [])
 
   const handleApply = useCallback(() => {
@@ -74,15 +80,13 @@ export function PropRefiner({
 
   return (
     <div className="pr-container">
-      <div className="pr-header">
-        🎨 Refine: {propName}
-      </div>
+      <div className="pr-header">🎨 Refine: {propName}</div>
 
       {/* Color Section */}
       <div className="pr-section">
         <div className="pr-section-label">Colors in Prop</div>
         <div className="pr-color-row">
-          {usedColors.map(c => (
+          {usedColors.map((c) => (
             <button
               key={c}
               className={`pr-color-swatch ${selectedColor === c ? 'pr-color-selected' : ''}`}
@@ -100,7 +104,7 @@ export function PropRefiner({
               Replace <span style={{ color: selectedColor }}>■</span> with:
             </div>
             <div className="pr-color-row">
-              {palette.map(c => (
+              {palette.map((c) => (
                 <button
                   key={c}
                   className="pr-color-swatch pr-color-option"
@@ -117,25 +121,15 @@ export function PropRefiner({
 
       {/* Action Buttons */}
       <div className="pr-actions">
-        <button
-          className="pr-apply-btn"
-          onClick={handleApply}
-          disabled={disabled || !hasChanges}
-        >
+        <button className="pr-apply-btn" onClick={handleApply} disabled={disabled || !hasChanges}>
           ✅ Apply Changes
         </button>
-        <button
-          className="pr-reset-btn"
-          onClick={handleReset}
-          disabled={disabled}
-        >
+        <button className="pr-reset-btn" onClick={handleReset} disabled={disabled}>
           ↩️ Reset
         </button>
       </div>
 
-      {!hasChanges && (
-        <div className="pr-hint">Select options above to refine your prop</div>
-      )}
+      {!hasChanges && <div className="pr-hint">Select options above to refine your prop</div>}
 
       <style>{propRefinerStyles}</style>
     </div>

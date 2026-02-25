@@ -1,7 +1,7 @@
 # 🎮 Road to Steam: CrewHub Early Access Analysis
 
-**Date:** February 7, 2026  
-**Status:** Strategic Planning Document  
+**Date:** February 7, 2026
+**Status:** Strategic Planning Document
 **Confidential:** Private Document - Not for Repository
 
 ---
@@ -55,7 +55,7 @@ The indie game market on Steam has evolved significantly:
 
 **Secondary Audience (Growth):**
 - Gamers who enjoyed Zachtronics games
-- Cyberpunk/hacking aesthetic enthusiasts  
+- Cyberpunk/hacking aesthetic enthusiasts
 - Productivity tool users seeking gamification
 - Students learning about AI/ML concepts
 
@@ -348,12 +348,12 @@ const greenworks = require('greenworks');
 
 if (greenworks.initAPI()) {
   console.log('Steam API initialized');
-  
+
   // Unlock achievement
   greenworks.activateAchievement('FIRST_TASK', () => {
     console.log('Achievement unlocked!');
   });
-  
+
   // Cloud save
   greenworks.saveTextToFile('savegame.json', saveData, () => {
     console.log('Game saved to Steam Cloud');
@@ -560,7 +560,7 @@ class AchievementService {
    - Full dashboard functionality
    - Self-hostable
    - Community contributions welcome
-   
+
 2. **crewhub-steam** (Private): Proprietary
    - Thin wrapper around core
    - Adds Steam-specific features

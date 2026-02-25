@@ -40,7 +40,7 @@ export function placeOnGrid(
     interactionType?: InteractionType
     rotation?: 0 | 90 | 180 | 270
     span?: { w: number; d: number }
-  },
+  }
 ): void {
   const cellType = options?.type ?? 'furniture'
   const walkable = cellType === 'interaction' || cellType === 'decoration'
@@ -60,7 +60,7 @@ export function placeOnGrid(
       if (import.meta.env?.DEV && cell.propId && cell.propId !== propId) {
         console.warn(
           `[placeOnGrid] Overwriting prop '${cell.propId}' with '${propId}' at cell (${cx}, ${cz}). ` +
-          `Use composite props (e.g. 'desk-with-monitor') to avoid collisions.`
+            `Use composite props (e.g. 'desk-with-monitor') to avoid collisions.`
         )
       }
 
@@ -85,11 +85,7 @@ export function placeOnGrid(
  * Place a door on the grid.
  * Sets the cell type to 'door' and makes it walkable.
  */
-export function placeDoor(
-  grid: GridCell[][],
-  x: number,
-  z: number,
-): void {
+export function placeDoor(grid: GridCell[][], x: number, z: number): void {
   if (z < 0 || z >= grid.length || x < 0 || x >= grid[0].length) return
   grid[z][x] = { type: 'door', walkable: true }
 }
@@ -99,7 +95,7 @@ export function placeDoor(
  * Returns grid[z][x] = true if the cell is walkable.
  */
 export function getWalkableMask(grid: GridCell[][]): boolean[][] {
-  return grid.map(row => row.map(cell => cell.walkable))
+  return grid.map((row) => row.map((cell) => cell.walkable))
 }
 
 /**
@@ -107,7 +103,7 @@ export function getWalkableMask(grid: GridCell[][]): boolean[][] {
  */
 export function findInteractionCells(
   grid: GridCell[][],
-  type: InteractionType,
+  type: InteractionType
 ): { x: number; z: number }[] {
   const results: { x: number; z: number }[] = []
   for (let z = 0; z < grid.length; z++) {
@@ -130,7 +126,7 @@ export function gridToWorld(
   gridZ: number,
   cellSize: number,
   gridWidth: number,
-  gridDepth: number,
+  gridDepth: number
 ): [number, number, number] {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
@@ -148,7 +144,7 @@ export function worldToGrid(
   worldZ: number,
   cellSize: number,
   gridWidth: number,
-  gridDepth: number,
+  gridDepth: number
 ): { x: number; z: number } {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2

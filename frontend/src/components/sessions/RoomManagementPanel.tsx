@@ -1,19 +1,19 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from 'react'
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { useRooms, type Room } from "@/hooks/useRooms"
-import { useToast } from "@/hooks/use-toast"
-import { Plus, Trash2, GripVertical, Edit2, Check, X } from "lucide-react"
-import { EditRoomDialog, ROOM_ICONS, ROOM_COLORS } from "@/components/shared/EditRoomDialog"
+} from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { useRooms, type Room } from '@/hooks/useRooms'
+import { useToast } from '@/hooks/use-toast'
+import { Plus, Trash2, GripVertical, Edit2, Check, X } from 'lucide-react'
+import { EditRoomDialog, ROOM_ICONS, ROOM_COLORS } from '@/components/shared/EditRoomDialog'
 
 interface RoomManagementPanelProps {
   open: boolean
@@ -23,21 +23,21 @@ interface RoomManagementPanelProps {
 export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelProps) {
   const { rooms, createRoom, updateRoom, deleteRoom, reorderRooms, isLoading } = useRooms()
   const { toast } = useToast()
-  
+
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  
+
   // Native dialog refs
   const createDialogRef = useRef<HTMLDialogElement>(null)
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
-  
+
   // New room form state
   const [newRoom, setNewRoom] = useState({
-    name: "",
-    icon: "🏛️",
-    color: "#4f46e5"
+    name: '',
+    icon: '🏛️',
+    color: '#4f46e5',
   })
 
   // Sync create dialog
@@ -63,30 +63,39 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
   }, [deleteConfirm])
 
   const generateRoomId = (name: string) => {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-room"
+    return (
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') + '-room'
+    )
   }
 
   const handleCreateRoom = async () => {
     if (!newRoom.name.trim()) {
-      toast({ title: "Name required", description: "Please enter a room name", variant: "destructive" })
+      toast({
+        title: 'Name required',
+        description: 'Please enter a room name',
+        variant: 'destructive',
+      })
       return
     }
-    
+
     const roomId = generateRoomId(newRoom.name)
     const result = await createRoom({
       id: roomId,
       name: newRoom.name.trim(),
       icon: newRoom.icon,
       color: newRoom.color,
-      sort_order: rooms.length
+      sort_order: rooms.length,
     })
-    
+
     if (result.success) {
-      toast({ title: "Room Created!", description: `${newRoom.icon} ${newRoom.name} is ready` })
+      toast({ title: 'Room Created!', description: `${newRoom.icon} ${newRoom.name} is ready` })
       setShowCreateDialog(false)
-      setNewRoom({ name: "", icon: "🏛️", color: "#4f46e5" })
+      setNewRoom({ name: '', icon: '🏛️', color: '#4f46e5' })
     } else {
-      toast({ title: "Failed to create room", description: result.error, variant: "destructive" })
+      toast({ title: 'Failed to create room', description: result.error, variant: 'destructive' })
     }
   }
 
@@ -94,26 +103,36 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
     const result = await updateRoom(room.id, {
       name: room.name,
       icon: room.icon || undefined,
-      color: room.color || undefined
+      color: room.color || undefined,
     })
-    
+
     if (result.success) {
-      toast({ title: "Room Updated!", description: `${room.icon} ${room.name} saved` })
+      toast({ title: 'Room Updated!', description: `${room.icon} ${room.name} saved` })
       setEditingRoom(null)
     } else {
-      toast({ title: "Failed to update room", description: result.error, variant: "destructive" })
+      toast({ title: 'Failed to update room', description: result.error, variant: 'destructive' })
     }
   }
 
-  const handleEditRoomSave = async (roomId: string, updates: {
-    name?: string; icon?: string; color?: string; floor_style?: string; wall_style?: string
-  }) => {
+  const handleEditRoomSave = async (
+    roomId: string,
+    updates: {
+      name?: string
+      icon?: string
+      color?: string
+      floor_style?: string
+      wall_style?: string
+    }
+  ) => {
     const result = await updateRoom(roomId, updates)
     if (result.success) {
-      toast({ title: "Room Updated!", description: `${updates.icon || '🏠'} ${updates.name || ''} saved` })
+      toast({
+        title: 'Room Updated!',
+        description: `${updates.icon || '🏠'} ${updates.name || ''} saved`,
+      })
       setEditingRoom(null)
     } else {
-      toast({ title: "Failed to update room", description: result.error, variant: "destructive" })
+      toast({ title: 'Failed to update room', description: result.error, variant: 'destructive' })
     }
     return result
   }
@@ -124,27 +143,27 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
   }
 
   const handleDeleteRoom = async (roomId: string) => {
-    const room = rooms.find(r => r.id === roomId)
+    const room = rooms.find((r) => r.id === roomId)
     const result = await deleteRoom(roomId)
-    
+
     if (result.success) {
-      toast({ title: "Room Deleted", description: `${room?.icon} ${room?.name} removed` })
+      toast({ title: 'Room Deleted', description: `${room?.icon} ${room?.name} removed` })
       setDeleteConfirm(null)
     } else {
-      toast({ title: "Failed to delete room", description: result.error, variant: "destructive" })
+      toast({ title: 'Failed to delete room', description: result.error, variant: 'destructive' })
     }
   }
 
-  const moveRoom = async (roomId: string, direction: "up" | "down") => {
-    const currentIndex = rooms.findIndex(r => r.id === roomId)
+  const moveRoom = async (roomId: string, direction: 'up' | 'down') => {
+    const currentIndex = rooms.findIndex((r) => r.id === roomId)
     if (currentIndex === -1) return
-    
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
     if (newIndex < 0 || newIndex >= rooms.length) return
-    
-    const newOrder = [...rooms.map(r => r.id)]
+
+    const newOrder = [...rooms.map((r) => r.id)]
     ;[newOrder[currentIndex], newOrder[newIndex]] = [newOrder[newIndex], newOrder[currentIndex]]
-    
+
     await reorderRooms(newOrder)
   }
 
@@ -169,11 +188,13 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
 
             <div className="space-y-2">
               <Label className="text-sm font-semibold">Rooms ({rooms.length})</Label>
-              
+
               {isLoading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading rooms...</div>
               ) : sortedRooms.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">No rooms yet. Create one!</div>
+                <div className="text-center py-8 text-muted-foreground">
+                  No rooms yet. Create one!
+                </div>
               ) : (
                 <div className="space-y-2">
                   {sortedRooms.map((room, index) => (
@@ -183,34 +204,39 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
                     >
                       <div className="flex flex-col gap-0.5">
                         <button
-                          onClick={() => moveRoom(room.id, "up")}
+                          onClick={() => moveRoom(room.id, 'up')}
                           disabled={index === 0}
                           className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                         >
                           <GripVertical className="h-3 w-3 rotate-90" />
                         </button>
                         <button
-                          onClick={() => moveRoom(room.id, "down")}
+                          onClick={() => moveRoom(room.id, 'down')}
                           disabled={index === sortedRooms.length - 1}
                           className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                         >
                           <GripVertical className="h-3 w-3 -rotate-90" />
                         </button>
                       </div>
-                      
+
                       <div
                         className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                        style={{ backgroundColor: `${room.color}20`, border: `2px solid ${room.color}` }}
+                        style={{
+                          backgroundColor: `${room.color}20`,
+                          border: `2px solid ${room.color}`,
+                        }}
                       >
                         {room.icon}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         {editingRoom?.id === room.id ? (
                           <div className="flex gap-2">
                             <Input
                               value={editingRoom.name}
-                              onChange={(e) => setEditingRoom({ ...editingRoom, name: e.target.value })}
+                              onChange={(e) =>
+                                setEditingRoom({ ...editingRoom, name: e.target.value })
+                              }
                               className="h-8"
                               autoFocus
                             />
@@ -245,7 +271,7 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
                           </>
                         )}
                       </div>
-                      
+
                       {editingRoom?.id !== room.id && (
                         <div className="flex gap-1">
                           <button
@@ -291,7 +317,7 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
               Add a new workspace room for organizing your agents and sessions
             </p>
           </div>
-          
+
           <div className="px-6 pb-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="room-name">Room Name</Label>
@@ -302,23 +328,21 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
                 placeholder="e.g., Research Lab"
               />
               {newRoom.name && (
-                <p className="text-xs text-muted-foreground">
-                  ID: {generateRoomId(newRoom.name)}
-                </p>
+                <p className="text-xs text-muted-foreground">ID: {generateRoomId(newRoom.name)}</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label>Icon</Label>
               <div className="flex flex-wrap gap-2">
-                {ROOM_ICONS.map(icon => (
+                {ROOM_ICONS.map((icon) => (
                   <button
                     key={icon}
                     onClick={() => setNewRoom({ ...newRoom, icon })}
                     className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
-                      newRoom.icon === icon 
-                        ? "border-primary bg-primary/10" 
-                        : "border-border hover:border-muted-foreground"
+                      newRoom.icon === icon
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-muted-foreground'
                     }`}
                   >
                     {icon}
@@ -326,47 +350,52 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
                 ))}
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Color</Label>
               <div className="flex flex-wrap gap-2">
-                {ROOM_COLORS.map(color => (
+                {ROOM_COLORS.map((color) => (
                   <button
                     key={color}
                     onClick={() => setNewRoom({ ...newRoom, color })}
                     className={`w-8 h-8 rounded-full transition-all ${
-                      newRoom.color === color 
-                        ? "ring-2 ring-offset-2 ring-primary" 
-                        : "hover:scale-110"
+                      newRoom.color === color
+                        ? 'ring-2 ring-offset-2 ring-primary'
+                        : 'hover:scale-110'
                     }`}
                     style={{ backgroundColor: color }}
                   />
                 ))}
               </div>
             </div>
-            
+
             <div className="p-4 rounded-lg border bg-muted/30">
               <Label className="text-xs text-muted-foreground mb-2 block">Preview</Label>
               <div className="flex items-center gap-3">
                 <div
                   className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                  style={{ backgroundColor: `${newRoom.color}20`, border: `2px solid ${newRoom.color}` }}
+                  style={{
+                    backgroundColor: `${newRoom.color}20`,
+                    border: `2px solid ${newRoom.color}`,
+                  }}
                 >
                   {newRoom.icon}
                 </div>
                 <div>
-                  <div className="font-semibold">{newRoom.name || "Room Name"}</div>
+                  <div className="font-semibold">{newRoom.name || 'Room Name'}</div>
                   <div className="text-xs text-muted-foreground">
-                    {newRoom.name ? generateRoomId(newRoom.name) : "room-id"}
+                    {newRoom.name ? generateRoomId(newRoom.name) : 'room-id'}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
+
           {/* Footer */}
           <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreateRoom}>Create Room</Button>
           </div>
         </div>
@@ -376,7 +405,10 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
       <EditRoomDialog
         room={editingRoom}
         open={showEditDialog}
-        onOpenChange={(open) => { setShowEditDialog(open); if (!open) setEditingRoom(null) }}
+        onOpenChange={(open) => {
+          setShowEditDialog(open)
+          if (!open) setEditingRoom(null)
+        }}
         onSave={handleEditRoomSave}
       />
 
@@ -395,14 +427,20 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Delete Room?</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              This will remove the room and unassign any sessions from it. This action cannot be undone.
+              This will remove the room and unassign any sessions from it. This action cannot be
+              undone.
             </p>
           </div>
-          
+
           {/* Footer */}
           <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deleteConfirm && handleDeleteRoom(deleteConfirm)}>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirm && handleDeleteRoom(deleteConfirm)}
+            >
               Delete Room
             </Button>
           </div>

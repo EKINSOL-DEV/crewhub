@@ -305,7 +305,7 @@ Each room type has a **blueprint** — a data-driven template that defines:
 #### Dev Room (24×24 grid, 0.5u cells, 12×12 real units)
 
 ```
-Legend: . = empty/walkable  # = wall  D = door  
+Legend: . = empty/walkable  # = wall  D = door
         d = desk  m = monitor  c = chair  s = server rack
         w = whiteboard (wall-mounted)  L = lamp  C = cables
         i = interaction point
@@ -392,22 +392,22 @@ interface RoomBlueprint {
   gridWidth: number                   // Cells wide (24 for 12-unit room)
   gridHeight: number                  // Cells deep (24)
   cellSize: number                    // World units per cell (0.5)
-  
+
   // Cell map — flattened row-major array
   cells: CellType[]                   // length = gridWidth * gridHeight
-  
+
   // Props placed in this blueprint
   props: BlueprintProp[]
-  
+
   // Auto-generated or manually-defined waypoints
   waypoints: RoomWaypoint[]
-  
+
   // Door positions (relative to room grid)
   doors: DoorDefinition[]
-  
+
   // Wall-mounted decorations (not on grid, attached to walls)
   wallDecor: WallDecoration[]
-  
+
   // Metadata
   defaultSize: number                 // Real-world units (12)
   minBots: number                     // Minimum bots before room feels empty
@@ -500,18 +500,18 @@ interface InteractionCell {
 interface BuildingLayout {
   id: string
   name: string
-  
+
   // Building grid (coarse — room-level placement)
   gridWidth: number         // Building grid columns
   gridHeight: number        // Building grid rows
   cellSize: number          // World units per building cell (e.g., 14 = room + padding)
-  
+
   // Room placements
   rooms: RoomPlacement[]
-  
+
   // Hallway segments
   hallways: HallwaySegment[]
-  
+
   // Shared facilities
   sharedAreas: SharedArea[]
 }
@@ -633,13 +633,13 @@ const PROP_REGISTRY: Record<string, PropDefinition> = {
 interface RuntimeRoomState {
   roomId: string
   blueprint: RoomBlueprint
-  
+
   // Live grid state (cells may change if props are moved at runtime)
   grid: GridCell[][]
-  
+
   // Waypoint graph (generated from blueprint)
   waypoints: Map<string, RoomWaypoint>
-  
+
   // Current bot assignments
   botAssignments: Map<string, {
     waypointId: string      // Which waypoint/interaction point the bot is using
@@ -702,12 +702,12 @@ function GridRoom({ blueprint, roomPosition }: { blueprint: RoomBlueprint; roomP
   return (
     <group position={roomPosition}>
       <RoomFloor color={roomColor} size={blueprint.defaultSize} />
-      
+
       {/* Generated walls from grid edges */}
       {walls.map((segment, i) => (
         <WallSegment key={i} {...segment} />
       ))}
-      
+
       {/* Props from blueprint */}
       {props.map((prop, i) => {
         const Component = PROP_COMPONENTS[prop.type]

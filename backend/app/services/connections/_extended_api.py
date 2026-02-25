@@ -16,7 +16,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
-from typing import Any, AsyncGenerator, Optional
+from collections.abc import AsyncGenerator
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,10 @@ class OpenClawExtendedMixin:
             params["sessionId"] = session_id
 
         result = await self.call(  # type: ignore[attr-defined]
-            "agent", params, timeout=timeout, wait_for_final_agent_result=True,
+            "agent",
+            params,
+            timeout=timeout,
+            wait_for_final_agent_result=True,
         )
         return _extract_text(result)
 
@@ -82,7 +86,10 @@ class OpenClawExtendedMixin:
             params["model"] = model
 
         result = await self.call(  # type: ignore[attr-defined]
-            "agent", params, timeout=timeout, wait_for_final_agent_result=True,
+            "agent",
+            params,
+            timeout=timeout,
+            wait_for_final_agent_result=True,
         )
         return _extract_text(result)
 
@@ -113,11 +120,7 @@ class OpenClawExtendedMixin:
                 return
             if state == "delta":
                 content = payload.get("message", {}).get("content", [])
-                text = (
-                    content[0].get("text", "")
-                    if content and isinstance(content[0], dict)
-                    else ""
-                )
+                text = content[0].get("text", "") if content and isinstance(content[0], dict) else ""
                 new_chunk = text[sent_length:]
                 sent_length = len(text)
                 if new_chunk:
@@ -128,18 +131,20 @@ class OpenClawExtendedMixin:
         self.subscribe("chat", on_chat_event)  # type: ignore[attr-defined]
         self._stream_queues[stream_id] = chunk_queue  # type: ignore[attr-defined]
 
-        agent_task = asyncio.create_task(self.call(  # type: ignore[attr-defined]
-            "agent",
-            {
-                "message": message,
-                "agentId": agent_id,
-                "deliver": False,
-                "idempotencyKey": idempotency_key,
-                **({"sessionId": session_id} if session_id else {}),
-            },
-            timeout=timeout,
-            wait_for_final_agent_result=True,
-        ))
+        agent_task = asyncio.create_task(
+            self.call(  # type: ignore[attr-defined]
+                "agent",
+                {
+                    "message": message,
+                    "agentId": agent_id,
+                    "deliver": False,
+                    "idempotencyKey": idempotency_key,
+                    **({"sessionId": session_id} if session_id else {}),
+                },
+                timeout=timeout,
+                wait_for_final_agent_result=True,
+            )
+        )
 
         try:
             start_time = asyncio.get_event_loop().time()
@@ -149,9 +154,7 @@ class OpenClawExtendedMixin:
                 if remaining <= 0:
                     break
                 try:
-                    kind, data = await asyncio.wait_for(
-                        chunk_queue.get(), timeout=min(30.0, remaining)
-                    )
+                    kind, data = await asyncio.wait_for(chunk_queue.get(), timeout=min(30.0, remaining))
                     if kind == "delta":
                         yield data
                     elif kind == "error":
@@ -159,7 +162,7 @@ class OpenClawExtendedMixin:
                         break
                     else:
                         break  # "done"
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning(f"No chunk received in 30s for agent {agent_id}")
                     break
         finally:
@@ -172,9 +175,7 @@ class OpenClawExtendedMixin:
             self.unsubscribe("chat", on_chat_event)  # type: ignore[attr-defined]
             self._stream_queues.pop(stream_id, None)  # type: ignore[attr-defined]
 
-    async def patch_session(
-        self, session_id: str, model: Optional[str] = None
-    ) -> bool:
+    async def patch_session(self, session_id: str, model: Optional[str] = None) -> bool:
         """Update session configuration (e.g., switch model)."""
         params: dict[str, Any] = {"sessionId": session_id}
         if model:
@@ -224,9 +225,7 @@ class OpenClawExtendedMixin:
             params["name"] = name
         return await self.call("cron.add", params)  # type: ignore[attr-defined]
 
-    async def update_cron_job(
-        self, job_id: str, patch: dict[str, Any]
-    ) -> Optional[dict[str, Any]]:
+    async def update_cron_job(self, job_id: str, patch: dict[str, Any]) -> Optional[dict[str, Any]]:
         """Update an existing cron job."""
         return await self.call("cron.update", {"jobId": job_id, "patch": patch})  # type: ignore[attr-defined]
 
@@ -270,6 +269,7 @@ class OpenClawExtendedMixin:
 # ------------------------------------------------------------------
 # Shared helper (used by send_message + send_chat)
 # ------------------------------------------------------------------
+
 
 def _extract_text(result: Any) -> Optional[str]:
     """Extract the assistant reply text from a Gateway agent response."""

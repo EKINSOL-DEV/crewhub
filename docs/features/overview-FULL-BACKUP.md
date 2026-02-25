@@ -1,6 +1,6 @@
 # CrewHub Features Overview
 
-*Last updated: 2026-02-10*  
+*Last updated: 2026-02-10*
 *Current version: v0.12.0*
 
 This document provides a complete overview of all CrewHub features, organized by category. Each feature includes its implementation status and the version where it was introduced or is planned.
@@ -23,7 +23,7 @@ This document provides a complete overview of all CrewHub features, organized by
 Fundamental features that power the CrewHub platform.
 
 ### Agent Persona Tuning
-**Status:** ✅ Released in **persona-system-v1** (v0.12.0)  
+**Status:** ✅ Released in **persona-system-v1** (v0.12.0)
 **Description:** Customize agent behavior with presets (Executor, Advisor, Explorer) or fine-tune individual traits (start behavior, check-in frequency, response detail, approach style). Includes migration guide for existing agents.
 
 **Docs:**
@@ -35,7 +35,7 @@ Fundamental features that power the CrewHub platform.
 ---
 
 ### Onboarding
-**Status:** ✅ Released in **v0.4.0**  
+**Status:** ✅ Released in **v0.4.0**
 **Description:** Initial setup wizard with auto-discovery of OpenClaw, Claude Code, and Codex installations. Configures gateway connection, agent workspaces, and persona preferences. Zero-config experience for supported platforms.
 
 **Docs:**
@@ -47,7 +47,7 @@ Fundamental features that power the CrewHub platform.
 ---
 
 ### Settings
-**Status:** ✅ Released in **v0.4.0**  
+**Status:** ✅ Released in **v0.4.0**
 **Description:** App-wide configuration UI with 5 tabs: Look & Feel, Rooms, Behavior, Data, Advanced. Includes backup/restore system, persistent state in localStorage, and database-driven settings API.
 
 **Docs:**
@@ -57,7 +57,7 @@ Fundamental features that power the CrewHub platform.
 ---
 
 ### Room Projects
-**Status:** ✅ Released in **v0.5.0**  
+**Status:** ✅ Released in **v0.5.0**
 **Description:** Organize agents by project. HQ room acts as command center with visibility into all projects. Project-specific rooms show only relevant agents. Visual indicators (nameplate badges, floor tints, tab dots) show project membership.
 
 **Docs:**
@@ -72,7 +72,7 @@ Fundamental features that power the CrewHub platform.
 Features for the immersive 3D agent world.
 
 ### 3D World Core
-**Status:** ✅ Released in **v0.3.0**  
+**Status:** ✅ Released in **v0.3.0**
 **Description:** Toon-shaded 3D campus with 20×20 grid, animated bots, 3 zoom levels (Overview → Room focus → Bot focus), draggable agents, and activity bubbles. Uses React Three Fiber, CameraControls, and instanced meshes for performance.
 
 **Docs:**
@@ -83,7 +83,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Zones
-**Status:** 🚧 In Progress (v0.16.0)  
+**Status:** 🚧 In Progress (v0.16.0)
 **Description:** Thematic campus areas with specialized props, environments, and activities. Three zones planned: Creator Center (film studio), Academy (Hogwarts meets MIT), Game Center (arcade meets indie studio). Each zone includes unique props, interactive elements, and Easter eggs.
 
 **Docs:**
@@ -97,7 +97,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Academy Zone
-**Status:** 📋 Planned (v0.16.0)  
+**Status:** 📋 Planned (v0.16.0)
 **Description:** Learning-focused zone with Great Library, Research Lab, Lecture Hall, Sandbox, Study Pods, and Map Room. Features: Knowledge Tree (grows with agent learning), flying books, owl mascot, scholar ranking system.
 
 **Docs:**
@@ -106,7 +106,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Spatial Awareness
-**Status:** 🔬 Research (v0.14.0)  
+**Status:** 🔬 Research (v0.14.0)
 **Description:** Agent awareness of their surroundings in the 3D world. Includes vision system (what agents "see"), proximity detection, pathfinding around obstacles, and context-aware behavior (agents mention nearby bots in conversation).
 
 **Docs:**
@@ -115,7 +115,7 @@ Features for the immersive 3D agent world.
 ---
 
 ### Multi-Zone System
-**Status:** 📋 Planned (v0.16.0)  
+**Status:** 📋 Planned (v0.16.0)
 **Description:** Architecture for supporting multiple themed zones on the campus. Includes zone switcher UI, persistent navigation, and zone-specific environments/props.
 
 **Docs:**
@@ -128,7 +128,7 @@ Features for the immersive 3D agent world.
 UI elements and interaction patterns.
 
 ### Bot Panel
-**Status:** ✅ Released in **v0.7.0**  
+**Status:** ✅ Released in **v0.7.0**
 **Description:** Draggable info panel for inspecting agents. Includes tabs: Info (bio, status, stats), Chat (Planner-style messaging), Files (workspace browser), and Sessions (history).
 
 **Docs:**
@@ -138,7 +138,7 @@ UI elements and interaction patterns.
 ---
 
 ### Grid System
-**Status:** ✅ Released in **v0.3.0**  
+**Status:** ✅ Released in **v0.3.0**
 **Description:** 20×20 tile grid system for room layout. Simplified bot movement (snap to grid), drag-and-drop between rooms, and collision detection. Replaced complex pathfinding with straightforward tile-based logic.
 
 **Docs:**
@@ -148,7 +148,7 @@ UI elements and interaction patterns.
 ---
 
 ### Debug Panel
-**Status:** ✅ Released in **v0.4.0**  
+**Status:** ✅ Released in **v0.4.0**
 **Description:** Developer tools for testing and debugging. Features: F2/F3/F4 test bot spawning, camera position HUD, lighting controls, environment switcher, and performance metrics.
 
 **Docs:**
@@ -157,7 +157,7 @@ UI elements and interaction patterns.
 ---
 
 ### Room Focus Mode
-**Status:** ✅ Released in **v0.3.0**  
+**Status:** ✅ Released in **v0.3.0**
 **Description:** Zoom into a room for closer inspection. Camera flies to room, disables orbit during drag, and shows TaskWall3D when room has a project. Escape or back button returns to overview.
 
 **Docs:**
@@ -166,7 +166,7 @@ UI elements and interaction patterns.
 ---
 
 ### Agent Chat
-**Status:** ✅ Released in **v0.7.0**  
+**Status:** ✅ Released in **v0.7.0**
 **Description:** Direct messaging interface with agents in the 3D world. Planner-style chat windows (draggable, resizable, minimizable), markdown support, and only available for fixed agents (agent:*:main).
 
 **Docs:**
@@ -175,7 +175,7 @@ UI elements and interaction patterns.
 ---
 
 ### Zen Mode
-**Status:** ✅ Released in **v0.11.0**  
+**Status:** ✅ Released in **v0.11.0**
 **Description:** Distraction-free focus mode with multi-tab workspaces, Zen Statue interaction (click statue in project rooms), persistent state (localStorage), and Activity Panel showing active tasks with icons.
 
 **Docs:**
@@ -187,7 +187,7 @@ UI elements and interaction patterns.
 ---
 
 ### HQ Visual Redesign
-**Status:** 📋 Planned (v0.15.0)  
+**Status:** 📋 Planned (v0.15.0)
 **Description:** Visual redesign of the HQ command center room. Design to be determined — potential directions include: elevated platform, holographic displays, mission control aesthetic, wall-mounted dashboards, or central strategy table.
 
 **Docs:**
@@ -200,7 +200,7 @@ UI elements and interaction patterns.
 Features that help teams work more effectively.
 
 ### Markdown Viewer/Editor
-**Status:** 📋 Planned (v0.13.0)  
+**Status:** 📋 Planned (v0.13.0)
 **Description:** View and edit markdown files from agent workspaces and project directories. Phase 1: Files tab in bot panel, fullscreen viewer with TOC. Phase 2: Live editing with CodeMirror 6, auto-save, side-by-side view.
 
 **Docs:**
@@ -212,7 +212,7 @@ Features that help teams work more effectively.
 ---
 
 ### Stand-Up Meetings
-**Status:** 📋 Planned (v0.14.0)  
+**Status:** 📋 Planned (v0.14.0)
 **Description:** Automated stand-up meetings in the 3D world. Bots walk to meeting room, form circle, take turns speaking, and generate meeting summaries. Integrates with project task boards.
 
 **Docs:**
@@ -224,7 +224,7 @@ Features that help teams work more effectively.
 ---
 
 ### Task Management
-**Status:** ✅ Released in **v0.9.0**  
+**Status:** ✅ Released in **v0.9.0**
 **Description:** Visual task board with drag-and-drop Kanban columns. TaskWall3D embeds full board in 3D rooms. "Run with Agent" spawns subagent for task execution. HQ command center shows all tasks across projects.
 
 **Docs:**
@@ -238,7 +238,7 @@ Features that help teams work more effectively.
 Tools for creating and modding CrewHub.
 
 ### Creator Zone
-**Status:** 🚧 In Progress (v0.13.0)  
+**Status:** 🚧 In Progress (v0.13.0)
 **Description:** In-app prop maker with AI-powered generation. PropMakerRoom with PropMakerMachine, chat-based prop requests ("make me a coffee mug"), live preview, and save to registry. Supports ultra-focused subagent prompts.
 
 **Docs:**
@@ -247,7 +247,7 @@ Tools for creating and modding CrewHub.
 ---
 
 ### Modding System
-**Status:** ✅ Released in **v0.6.0**  
+**Status:** ✅ Released in **v0.6.0**
 **Description:** Data-driven modding with Registry<T> pattern, namespaced IDs (`core:desk`, `desert:cactus`), JSON blueprints (rooms, props, environments), Zod validation, and import/export API.
 
 **Docs:**
@@ -259,7 +259,7 @@ Tools for creating and modding CrewHub.
 ---
 
 ### Pixel Avatars
-**Status:** 🔬 Research  
+**Status:** 🔬 Research
 **Description:** Pixel art bot designs as alternative to 3D geometric bots. Includes sprite animation, emotes, and retro aesthetic. Research phase exploring art style and technical feasibility.
 
 **Docs:**
@@ -272,7 +272,7 @@ Tools for creating and modding CrewHub.
 Deployment, demos, and platform-level features.
 
 ### Demo Site
-**Status:** ✅ Released (demo.crewhub.dev)  
+**Status:** ✅ Released (demo.crewhub.dev)
 **Description:** Public demo with mock API layer, simulated agents/rooms, and no OpenClaw dependency. Uses Docker with demo.yml config, deployed via Coolify.
 
 **Docs:**
@@ -344,5 +344,5 @@ Each feature folder contains design docs, implementation plans, and reviews. For
 
 ---
 
-*For technical architecture and analysis, see `../analysis/`*  
+*For technical architecture and analysis, see `../analysis/`*
 *For internal planning documents, see `../internal/`*

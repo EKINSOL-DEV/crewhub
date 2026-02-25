@@ -20,7 +20,7 @@ interface PlacedPropsRendererProps {
 export function PlacedPropsRenderer({ placedProps, cellSize = 1.0 }: PlacedPropsRendererProps) {
   return (
     <>
-      {placedProps.map(placed => (
+      {placedProps.map((placed) => (
         <PlacedPropMesh key={placed.id} placed={placed} cellSize={cellSize} />
       ))}
     </>
@@ -43,11 +43,7 @@ function PlacedPropMesh({ placed, cellSize }: { placed: PlacedProp; cellSize: nu
       rotation={[0, (rotationDeg * Math.PI) / 180, 0]}
       scale={[scale, scale, scale]}
     >
-      <PropComponent
-        position={[0, 0, 0]}
-        rotation={0}
-        cellSize={cellSize}
-      />
+      <PropComponent position={[0, 0, 0]} rotation={0} cellSize={cellSize} />
     </group>
   )
 }

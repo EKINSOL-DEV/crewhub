@@ -9,9 +9,7 @@ Each detector returns DiscoveryCandidate objects with evidence.
 import asyncio
 import json
 import logging
-import os
 import shutil
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,15 +22,17 @@ logger = logging.getLogger(__name__)
 # Models
 # =============================================================================
 
+
 @dataclass
 class DiscoveryCandidate:
     """Result of a runtime discovery probe."""
-    runtime_type: str       # openclaw | claude_code | codex_cli
-    discovery_method: str   # port_probe | config_file | cli_detect
-    target: dict = field(default_factory=dict)    # {url, host, port, transport}
-    auth: dict = field(default_factory=dict)       # {required, token_hint, has_token}
-    confidence: str = "low"     # high | medium | low
-    status: str = "not_found"   # reachable | unreachable | auth_required | installed_only | not_found
+
+    runtime_type: str  # openclaw | claude_code | codex_cli
+    discovery_method: str  # port_probe | config_file | cli_detect
+    target: dict = field(default_factory=dict)  # {url, host, port, transport}
+    auth: dict = field(default_factory=dict)  # {required, token_hint, has_token}
+    confidence: str = "low"  # high | medium | low
+    status: str = "not_found"  # reachable | unreachable | auth_required | installed_only | not_found
     evidence: list[str] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
 
@@ -54,6 +54,7 @@ class DiscoveryCandidate:
 # Base detector
 # =============================================================================
 
+
 class BaseDetector(ABC):
     """Abstract base class for runtime detectors."""
 
@@ -66,6 +67,7 @@ class BaseDetector(ABC):
 # =============================================================================
 # OpenClaw detector
 # =============================================================================
+
 
 class OpenClawDetector(BaseDetector):
     """Detect local OpenClaw Gateway instances."""
@@ -96,10 +98,7 @@ class OpenClawDetector(BaseDetector):
                     gateway = raw.get("gateway", {})
                     config_port = gateway.get("port", self.DEFAULT_PORT)
                     # Token can be at gateway.auth.token or gateway.token
-                    config_token = (
-                        gateway.get("auth", {}).get("token")
-                        or gateway.get("token")
-                    )
+                    config_token = gateway.get("auth", {}).get("token") or gateway.get("token")
                     if config_token:
                         break  # Found token, stop searching
             except Exception as e:
@@ -141,9 +140,7 @@ class OpenClawDetector(BaseDetector):
             candidate.evidence.append(f"WebSocket reachable at {url}")
             if probe_result.get("sessions") is not None:
                 candidate.metadata["sessions_count"] = probe_result["sessions"]
-                candidate.evidence.append(
-                    f"Found {probe_result['sessions']} active session(s)"
-                )
+                candidate.evidence.append(f"Found {probe_result['sessions']} active session(s)")
             if probe_result.get("version"):
                 candidate.metadata["version"] = probe_result["version"]
         elif probe_result.get("auth_required"):
@@ -170,7 +167,9 @@ class OpenClawDetector(BaseDetector):
         """Check if an OpenClaw gateway process is running."""
         try:
             proc = await asyncio.create_subprocess_exec(
-                "pgrep", "-f", "openclaw",
+                "pgrep",
+                "-f",
+                "openclaw",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -179,14 +178,13 @@ class OpenClawDetector(BaseDetector):
         except Exception:
             return False
 
-    async def _probe_websocket(
-        self, url: str, token: Optional[str] = None
-    ) -> dict[str, Any]:
+    async def _probe_websocket(self, url: str, token: Optional[str] = None) -> dict[str, Any]:
         """Probe a WebSocket endpoint for OpenClaw Gateway."""
         result: dict[str, Any] = {"reachable": False}
         try:
-            import websockets  # noqa: F811
             import uuid
+
+            import websockets  # noqa: F811
 
             ws = await asyncio.wait_for(
                 websockets.connect(url, ping_interval=None),
@@ -241,7 +239,7 @@ class OpenClawDetector(BaseDetector):
             finally:
                 await ws.close()
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.debug(f"WebSocket probe timed out: {url}")
         except Exception as e:
             logger.debug(f"WebSocket probe failed: {url} - {e}")
@@ -252,6 +250,7 @@ class OpenClawDetector(BaseDetector):
         """Try to get session count from connected gateway."""
         try:
             import uuid
+
             req = {
                 "type": "req",
                 "id": f"sessions-{uuid.uuid4()}",
@@ -273,6 +272,7 @@ class OpenClawDetector(BaseDetector):
 # =============================================================================
 # Claude Code detector
 # =============================================================================
+
 
 class ClaudeCodeDetector(BaseDetector):
     """Detect local Claude Code CLI installation."""
@@ -315,7 +315,8 @@ class ClaudeCodeDetector(BaseDetector):
                 return None
 
             proc = await asyncio.create_subprocess_exec(
-                "claude", "--version",
+                "claude",
+                "--version",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -330,6 +331,7 @@ class ClaudeCodeDetector(BaseDetector):
 # =============================================================================
 # Codex CLI detector
 # =============================================================================
+
 
 class CodexDetector(BaseDetector):
     """Detect local Codex CLI installation."""
@@ -362,7 +364,8 @@ class CodexDetector(BaseDetector):
                 return None
 
             proc = await asyncio.create_subprocess_exec(
-                "codex", "--version",
+                "codex",
+                "--version",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -378,10 +381,11 @@ class CodexDetector(BaseDetector):
 # Discovery Service
 # =============================================================================
 
+
 class DiscoveryService:
     """
     Pluggable discovery service that runs all registered detectors.
-    
+
     Usage:
         svc = DiscoveryService()
         candidates = await svc.scan(mode="local")
@@ -399,10 +403,10 @@ class DiscoveryService:
     async def scan(self, mode: str = "local") -> list[DiscoveryCandidate]:
         """
         Run all detectors for the given mode.
-        
+
         Args:
             mode: Discovery mode ('local' or future 'lan')
-            
+
         Returns:
             List of all discovered candidates.
         """
@@ -432,12 +436,12 @@ class DiscoveryService:
     ) -> dict[str, Any]:
         """
         Test connectivity to a specific runtime endpoint.
-        
+
         Args:
             runtime_type: Type of runtime to test
             url: WebSocket/HTTP URL to probe
             token: Auth token (optional)
-            
+
         Returns:
             Dict with reachable, sessions, error fields.
         """

@@ -19,30 +19,30 @@ from pathlib import Path
 from typing import Optional
 
 from app.db.meeting_models import (
+    ROUND_STATES,
     MeetingConfig,
     MeetingState,
     Turn,
-    ROUND_STATES,
 )
 from app.routes.sse import broadcast
 from app.services.connections import get_connection_manager
 from app.services.meeting_service import (
     _active_meetings,
     _now_ms,
-    resolve_agent_info,
-    db_set_state,
-    db_update_current_turn,
+    cancel_meeting,  # noqa: F401
+    db_get_started_at,
+    db_load_all_turns,
+    db_save_action_items,
     db_save_participants,
     db_save_turn,
-    db_load_all_turns,
-    db_get_started_at,
-    db_save_action_items,
+    db_set_state,
+    db_update_current_turn,
+    get_meeting,  # noqa: F401
+    list_meetings,  # noqa: F401
     load_document,
+    resolve_agent_info,
     # Re-export public API so existing imports keep working
-    start_meeting,   # noqa: F401
-    cancel_meeting,  # noqa: F401
-    get_meeting,     # noqa: F401
-    list_meetings,   # noqa: F401
+    start_meeting,  # noqa: F401
 )
 
 logger = logging.getLogger(__name__)
@@ -83,26 +83,32 @@ class MeetingOrchestrator:
             self.participants = [await resolve_agent_info(p) for p in self.config.participants]
             if self.config.document_path:
                 self._document_content = await load_document(
-                    self.config.document_path, self.project_id, self.meeting_id,
+                    self.config.document_path,
+                    self.project_id,
+                    self.meeting_id,
                     self.config.document_context,
                 )
             if self.parent_meeting_id:
                 from app.services.meeting_service import get_meeting as _get
+
                 parent = await _get(self.parent_meeting_id)
                 if parent and parent.get("output_md"):
-                    self._document_content = (
-                        f"## Previous Meeting Results\n\n{parent['output_md']}\n\n---\n\n"
-                        + (self._document_content or "")
+                    self._document_content = f"## Previous Meeting Results\n\n{parent['output_md']}\n\n---\n\n" + (
+                        self._document_content or ""
                     )
             await db_save_participants(self.meeting_id, self.participants)
             await db_set_state(self.meeting_id, MeetingState.GATHERING)
-            await broadcast("meeting-started", {
-                "meeting_id": self.meeting_id, "title": self.title,
-                "state": MeetingState.GATHERING.value,
-                "participants": [p["session_key"] for p in self.participants],
-                "num_rounds": self.config.num_rounds,
-                "total_rounds": self.config.num_rounds,
-            })
+            await broadcast(
+                "meeting-started",
+                {
+                    "meeting_id": self.meeting_id,
+                    "title": self.title,
+                    "state": MeetingState.GATHERING.value,
+                    "participants": [p["session_key"] for p in self.participants],
+                    "num_rounds": self.config.num_rounds,
+                    "total_rounds": self.config.num_rounds,
+                },
+            )
             await asyncio.sleep(3)
             if self._cancelled:
                 return
@@ -113,50 +119,82 @@ class MeetingOrchestrator:
                 round_state = ROUND_STATES.get(round_num, MeetingState.ROUND_1)
                 round_topic = (
                     self.config.round_topics[round_num - 1]
-                    if round_num <= len(self.config.round_topics) else f"Round {round_num}"
+                    if round_num <= len(self.config.round_topics)
+                    else f"Round {round_num}"
                 )
                 await db_set_state(self.meeting_id, round_state, current_round=round_num)
-                prev_state = ROUND_STATES.get(round_num - 1, MeetingState.GATHERING).value if round_num > 1 else MeetingState.GATHERING.value
-                await broadcast("meeting-state", {
-                    "meeting_id": self.meeting_id, "state": round_state.value,
-                    "previous_state": prev_state, "current_round": round_num,
-                    "round_topic": round_topic,
-                    "progress_pct": self._calc_progress(round_num, 0),
-                })
+                prev_state = (
+                    ROUND_STATES.get(round_num - 1, MeetingState.GATHERING).value
+                    if round_num > 1
+                    else MeetingState.GATHERING.value
+                )
+                await broadcast(
+                    "meeting-state",
+                    {
+                        "meeting_id": self.meeting_id,
+                        "state": round_state.value,
+                        "previous_state": prev_state,
+                        "current_round": round_num,
+                        "round_topic": round_topic,
+                        "progress_pct": self._calc_progress(round_num, 0),
+                    },
+                )
                 await self._run_round(round_num, round_topic)
 
             if self._cancelled:
                 return
 
             await db_set_state(self.meeting_id, MeetingState.SYNTHESIZING)
-            await broadcast("meeting-synthesis", {
-                "meeting_id": self.meeting_id, "state": "synthesizing", "progress_pct": 90,
-            })
+            await broadcast(
+                "meeting-synthesis",
+                {
+                    "meeting_id": self.meeting_id,
+                    "state": "synthesizing",
+                    "progress_pct": 90,
+                },
+            )
             output_md = await self._synthesize()
             output_path = await self._save_output(output_md)
             await db_save_action_items(self.meeting_id, output_md)
             duration = (_now_ms() - (await db_get_started_at(self.meeting_id))) // 1000
             await db_set_state(
-                self.meeting_id, MeetingState.COMPLETE,
-                output_md=output_md, output_path=output_path,
+                self.meeting_id,
+                MeetingState.COMPLETE,
+                output_md=output_md,
+                output_path=output_path,
             )
-            await broadcast("meeting-complete", {
-                "meeting_id": self.meeting_id, "state": "complete",
-                "output_path": output_path, "progress_pct": 100,
-                "duration_seconds": duration,
-            })
+            await broadcast(
+                "meeting-complete",
+                {
+                    "meeting_id": self.meeting_id,
+                    "state": "complete",
+                    "output_path": output_path,
+                    "progress_pct": 100,
+                    "duration_seconds": duration,
+                },
+            )
         except asyncio.CancelledError:
             logger.info(f"Meeting {self.meeting_id} cancelled")
             await db_set_state(self.meeting_id, MeetingState.CANCELLED)
-            await broadcast("meeting-cancelled", {
-                "meeting_id": self.meeting_id, "state": "cancelled", "cancelled_at": _now_ms(),
-            })
+            await broadcast(
+                "meeting-cancelled",
+                {
+                    "meeting_id": self.meeting_id,
+                    "state": "cancelled",
+                    "cancelled_at": _now_ms(),
+                },
+            )
         except Exception as exc:
             logger.error(f"Meeting {self.meeting_id} failed: {exc}", exc_info=True)
             await db_set_state(self.meeting_id, MeetingState.ERROR, error_message=str(exc))
-            await broadcast("meeting-error", {
-                "meeting_id": self.meeting_id, "state": "error", "error": str(exc),
-            })
+            await broadcast(
+                "meeting-error",
+                {
+                    "meeting_id": self.meeting_id,
+                    "state": "error",
+                    "error": str(exc),
+                },
+            )
         finally:
             _active_meetings.pop(self.meeting_id, None)
 
@@ -172,38 +210,61 @@ class MeetingOrchestrator:
             if self._cancelled:
                 return
             turn_id = f"{self.meeting_id}_r{round_num}_t{i}"
-            await broadcast("meeting-turn-start", {
-                "meeting_id": self.meeting_id, "round": round_num,
-                "agent_id": participant["id"], "agent_name": participant["name"],
-                "turn_index": i, "total_turns": len(self.participants),
-            })
+            await broadcast(
+                "meeting-turn-start",
+                {
+                    "meeting_id": self.meeting_id,
+                    "round": round_num,
+                    "agent_id": participant["id"],
+                    "agent_name": participant["name"],
+                    "turn_index": i,
+                    "total_turns": len(self.participants),
+                },
+            )
             await db_update_current_turn(self.meeting_id, round_num, i)
             prompt = self._build_turn_prompt(
-                participant=participant, round_num=round_num,
-                round_topic=round_topic, previous_responses=cumulative_context,
+                participant=participant,
+                round_num=round_num,
+                round_topic=round_topic,
+                previous_responses=cumulative_context,
             )
             started_at = _now_ms()
             response = await self._get_bot_response_with_retry(participant, prompt)
             completed_at = _now_ms()
             cumulative_context.append({"bot_name": participant["name"], "response": response})
-            await db_save_turn(Turn(
-                id=turn_id, meeting_id=self.meeting_id,
-                round_num=round_num, turn_index=i,
-                agent_id=participant["id"], agent_name=participant["name"],
-                response=response,
-                prompt_tokens=max(1, len(prompt) // 4),
-                started_at=started_at, completed_at=completed_at,
-            ))
-            await broadcast("meeting-turn", {
-                "meeting_id": self.meeting_id, "round": round_num,
-                "agent_id": participant["id"], "agent_name": participant["name"],
-                "response": response, "turn_index": i,
-                "total_turns": len(self.participants),
-                "progress_pct": self._calc_progress(round_num, i + 1),
-            })
+            await db_save_turn(
+                Turn(
+                    id=turn_id,
+                    meeting_id=self.meeting_id,
+                    round_num=round_num,
+                    turn_index=i,
+                    agent_id=participant["id"],
+                    agent_name=participant["name"],
+                    response=response,
+                    prompt_tokens=max(1, len(prompt) // 4),
+                    started_at=started_at,
+                    completed_at=completed_at,
+                )
+            )
+            await broadcast(
+                "meeting-turn",
+                {
+                    "meeting_id": self.meeting_id,
+                    "round": round_num,
+                    "agent_id": participant["id"],
+                    "agent_name": participant["name"],
+                    "response": response,
+                    "turn_index": i,
+                    "total_turns": len(self.participants),
+                    "progress_pct": self._calc_progress(round_num, i + 1),
+                },
+            )
 
     def _build_turn_prompt(
-        self, participant: dict, round_num: int, round_topic: str,
+        self,
+        participant: dict,
+        round_num: int,
+        round_topic: str,
         previous_responses: list[dict],
     ) -> str:
         lines = [f"You are {participant['name']} in a meeting."]
@@ -242,7 +303,9 @@ class MeetingOrchestrator:
     async def _get_bot_response(self, participant: dict, prompt: str) -> Optional[str]:
         manager = await get_connection_manager()
         return await manager.send_message(
-            session_key=participant["session_key"], message=prompt, timeout=TURN_TIMEOUT,
+            session_key=participant["session_key"],
+            message=prompt,
+            timeout=TURN_TIMEOUT,
         )
 
     # ── Synthesis ─────────────────────────────────────────────────────────────
@@ -254,7 +317,8 @@ class MeetingOrchestrator:
         for round_num in range(1, self.config.num_rounds + 1):
             topic = (
                 self.config.round_topics[round_num - 1]
-                if round_num <= len(self.config.round_topics) else f"Round {round_num}"
+                if round_num <= len(self.config.round_topics)
+                else f"Round {round_num}"
             )
             round_turns = [t for t in all_turns if t["round_num"] == round_num]
             if not round_turns:
@@ -285,7 +349,8 @@ class MeetingOrchestrator:
                 manager = await get_connection_manager()
                 response = await manager.send_message(
                     session_key=participant["session_key"],
-                    message=synthesis_prompt, timeout=60.0,
+                    message=synthesis_prompt,
+                    timeout=60.0,
                 )
                 if response:
                     return response
@@ -293,7 +358,8 @@ class MeetingOrchestrator:
                 logger.warning(f"Synthesis failed via {participant['name']}: {exc}")
         return (
             f"# Meeting — {today}\n\n## Goal\n{self.goal or self.title}\n\n"
-            f"## Participants\n" + "\n".join(f"- {p['name']}" for p in self.participants)
+            f"## Participants\n"
+            + "\n".join(f"- {p['name']}" for p in self.participants)
             + f"\n\n## Discussion\n\n{all_rounds}\n"
         )
 

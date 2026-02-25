@@ -18,7 +18,11 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { X, RefreshCw, ChevronDown, Zap } from 'lucide-react'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useAgentsRegistry } from '@/hooks/useAgentsRegistry'
-import { fetchActivityEntries, subscribeToActivityUpdates, type ActivityEvent } from '@/services/activityService'
+import {
+  fetchActivityEntries,
+  subscribeToActivityUpdates,
+  type ActivityEvent,
+} from '@/services/activityService'
 import { useChatContext } from '@/contexts/ChatContext'
 import type { CrewSession } from '@/lib/api'
 
@@ -77,12 +81,14 @@ function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  const selectedName = selectedId ? (agents.find(a => a.id === selectedId)?.name ?? 'Agent') : 'All Agents'
+  const selectedName = selectedId
+    ? (agents.find((a) => a.id === selectedId)?.name ?? 'Agent')
+    : 'All Agents'
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
-        onClick={() => setOpen(v => !v)}
+        onClick={() => setOpen((v) => !v)}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -100,8 +106,17 @@ function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
           textOverflow: 'ellipsis',
         }}
       >
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedName}</span>
-        <ChevronDown size={12} style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {selectedName}
+        </span>
+        <ChevronDown
+          size={12}
+          style={{
+            flexShrink: 0,
+            transform: open ? 'rotate(180deg)' : 'none',
+            transition: 'transform 0.15s',
+          }}
+        />
       </button>
 
       {open && (
@@ -121,10 +136,16 @@ function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
             padding: '4px',
           }}
         >
-          {[{ id: null, name: 'All Agents' }, ...agents.map(a => ({ id: a.id, name: a.name }))].map(opt => (
+          {[
+            { id: null, name: 'All Agents' },
+            ...agents.map((a) => ({ id: a.id, name: a.name })),
+          ].map((opt) => (
             <button
               key={opt.id ?? '__all__'}
-              onClick={() => { onChange(opt.id); setOpen(false) }}
+              onClick={() => {
+                onChange(opt.id)
+                setOpen(false)
+              }}
               style={{
                 display: 'block',
                 width: '100%',
@@ -137,8 +158,14 @@ function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
                 textAlign: 'left',
                 cursor: 'pointer',
               }}
-              onMouseEnter={e => { if (selectedId !== opt.id) (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.background = selectedId === opt.id ? 'rgba(139, 92, 246, 0.2)' : 'transparent' }}
+              onMouseEnter={(e) => {
+                if (selectedId !== opt.id)
+                  (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.05)'
+              }}
+              onMouseLeave={(e) => {
+                ;(e.target as HTMLElement).style.background =
+                  selectedId === opt.id ? 'rgba(139, 92, 246, 0.2)' : 'transparent'
+              }}
             >
               {opt.name}
             </button>
@@ -197,9 +224,7 @@ function EntryItem({ event, onOpen }: EntryItemProps) {
               {event.sessionName}
             </span>
           )}
-          <span style={{ fontSize: 10, color: '#334155' }}>
-            {formatTime(event.timestamp)}
-          </span>
+          <span style={{ fontSize: 10, color: '#334155' }}>{formatTime(event.timestamp)}</span>
         </div>
       </div>
     </button>
@@ -233,7 +258,7 @@ function GroupSection({ name, events, onOpen }: GroupSectionProps) {
         {name}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {events.map(ev => (
+        {events.map((ev) => (
           <EntryItem key={ev.id} event={ev} onOpen={() => onOpen(ev)} />
         ))}
       </div>
@@ -259,33 +284,36 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
 
   // Fetch activity from all recent sessions
-  const fetchAll = useCallback(async (showLoading = true) => {
-    if (showLoading) setLoading(true)
+  const fetchAll = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) setLoading(true)
 
-    const activeSessions = sessions.filter(s => (Date.now() - s.updatedAt) < 3_600_000)
-    try {
-      const arrays = await Promise.all(
-        activeSessions.map(s => fetchActivityEntries(s.key, { limit: 20 }))
-      )
-      const flat = arrays.flat()
-      flat.sort((a, b) => b.timestamp - a.timestamp)
+      const activeSessions = sessions.filter((s) => Date.now() - s.updatedAt < 3_600_000)
+      try {
+        const arrays = await Promise.all(
+          activeSessions.map((s) => fetchActivityEntries(s.key, { limit: 20 }))
+        )
+        const flat = arrays.flat()
+        flat.sort((a, b) => b.timestamp - a.timestamp)
 
-      // Annotate with session name
-      flat.forEach(ev => {
-        const sess = sessions.find(s => s.key === ev.sessionKey)
-        if (sess) {
-          ev.sessionName = sess.label || sess.displayName || sess.key.split(':').pop()
-        }
-      })
+        // Annotate with session name
+        flat.forEach((ev) => {
+          const sess = sessions.find((s) => s.key === ev.sessionKey)
+          if (sess) {
+            ev.sessionName = sess.label || sess.displayName || sess.key.split(':').pop()
+          }
+        })
 
-      setAllEvents(flat)
-    } catch (err) {
-      console.error('[DesktopActivityFeed] fetch error:', err)
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }, [sessions])
+        setAllEvents(flat)
+      } catch (err) {
+        console.error('[DesktopActivityFeed] fetch error:', err)
+      } finally {
+        setLoading(false)
+        setRefreshing(false)
+      }
+    },
+    [sessions]
+  )
 
   // Initial fetch when panel opens
   useEffect(() => {
@@ -295,11 +323,11 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
   // SSE subscription
   useEffect(() => {
     if (!isOpen) return
-    const activeSessions = sessions.filter(s => (Date.now() - s.updatedAt) < 3_600_000)
-    const unsubscribers = activeSessions.map(s =>
+    const activeSessions = sessions.filter((s) => Date.now() - s.updatedAt < 3_600_000)
+    const unsubscribers = activeSessions.map((s) =>
       subscribeToActivityUpdates(s.key, () => fetchAll(false))
     )
-    return () => unsubscribers.forEach(fn => fn())
+    return () => unsubscribers.forEach((fn) => fn())
   }, [isOpen, sessions, fetchAll])
 
   const handleRefresh = useCallback(async () => {
@@ -311,7 +339,7 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
   const filteredEvents = useMemo(() => {
     if (!selectedAgentId) return allEvents
     const prefix = `agent:${selectedAgentId}:`
-    return allEvents.filter(ev => ev.sessionKey.startsWith(prefix))
+    return allEvents.filter((ev) => ev.sessionKey.startsWith(prefix))
   }, [allEvents, selectedAgentId])
 
   // Group
@@ -326,17 +354,20 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
   }, [filteredEvents])
 
   // Open session on entry click
-  const handleOpenEvent = useCallback((event: ActivityEvent) => {
-    const sess = sessions.find(s => s.key === event.sessionKey)
-    if (!sess) return
-    const name = sess.displayName || sess.label || sess.key.split(':').pop() || 'Agent'
-    openChat(sess.key, name, undefined, undefined)
-  }, [sessions, openChat])
+  const handleOpenEvent = useCallback(
+    (event: ActivityEvent) => {
+      const sess = sessions.find((s) => s.key === event.sessionKey)
+      if (!sess) return
+      const name = sess.displayName || sess.label || sess.key.split(':').pop() || 'Agent'
+      openChat(sess.key, name, undefined, undefined)
+    },
+    [sessions, openChat]
+  )
 
-  const getSession = useCallback((key: string) => sessions.find(s => s.key === key), [sessions])
+  const getSession = useCallback((key: string) => sessions.find((s) => s.key === key), [sessions])
 
   const agentOptions: AgentOption[] = useMemo(
-    () => agents.map(r => ({ id: r.agent.id, name: r.agent.name })),
+    () => agents.map((r) => ({ id: r.agent.id, name: r.agent.name })),
     [agents]
   )
 
@@ -444,7 +475,9 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
             flexShrink: 0,
           }}
         >
-          {loading ? 'Loading…' : `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''}`}
+          {loading
+            ? 'Loading…'
+            : `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''}`}
           {selectedAgentId && ' (filtered)'}
         </div>
 
@@ -498,7 +531,7 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
             </div>
           )}
 
-          {GROUP_ORDER.map(groupName => {
+          {GROUP_ORDER.map((groupName) => {
             const events = groupedEvents.get(groupName)
             if (!events || events.length === 0) return null
             return (
@@ -532,7 +565,11 @@ interface DesktopActivityFeedButtonProps {
   eventCount?: number
 }
 
-export function DesktopActivityFeedButton({ isOpen, onClick, eventCount }: DesktopActivityFeedButtonProps) {
+export function DesktopActivityFeedButton({
+  isOpen,
+  onClick,
+  eventCount,
+}: DesktopActivityFeedButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -582,16 +619,24 @@ export function useDesktopActivityFeed() {
   })
 
   const toggle = useCallback(() => {
-    setIsOpen(prev => {
+    setIsOpen((prev) => {
       const next = !prev
-      try { localStorage.setItem(STORAGE_KEY, String(next)) } catch { /* ignore */ }
+      try {
+        localStorage.setItem(STORAGE_KEY, String(next))
+      } catch {
+        /* ignore */
+      }
       return next
     })
   }, [])
 
   const close = useCallback(() => {
     setIsOpen(false)
-    try { localStorage.setItem(STORAGE_KEY, 'false') } catch { /* ignore */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, 'false')
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   return { isOpen, toggle, close }

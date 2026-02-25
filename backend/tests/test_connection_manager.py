@@ -1,18 +1,15 @@
 """Tests for the ConnectionManager service."""
 
+from unittest.mock import MagicMock
+
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 
 # Import through main app to resolve circular imports
 import app.main  # noqa: F401
-
 from app.services.connections.base import (
     AgentConnection,
     ConnectionStatus,
     ConnectionType,
-    SessionInfo,
-    HistoryMessage,
 )
 from app.services.connections.connection_manager import ConnectionManager
 

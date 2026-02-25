@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Figurine() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.5; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.5
+  })
   return (
     <group ref={groupRef}>
       {/* Base */}
@@ -58,5 +60,5 @@ export function Figurine() {
         <meshStandardMaterial color="#aa8833" />
       </mesh>
     </group>
-  );
+  )
 }

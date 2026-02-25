@@ -1,14 +1,20 @@
 import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { version } from '../package.json'
 import { notificationManager } from './lib/notificationManager'
-const ZoneRenderer = lazy(() => import('./components/world3d/ZoneRenderer').then(m => ({ default: m.ZoneRenderer })))
+const ZoneRenderer = lazy(() =>
+  import('./components/world3d/ZoneRenderer').then((m) => ({ default: m.ZoneRenderer }))
+)
 import { AllSessionsView } from './components/sessions/AllSessionsView'
 import { CardsView } from './components/sessions/CardsView'
 import { CronView } from './components/sessions/CronView'
 import { HistoryView } from './components/sessions/HistoryView'
 // ConnectionsView is now inside Settings > Connections tab
 import { StatsHeader } from './components/sessions/StatsHeader'
-import { SettingsPanel, DEFAULT_SETTINGS, type SessionsSettings } from './components/sessions/SettingsPanel'
+import {
+  SettingsPanel,
+  DEFAULT_SETTINGS,
+  type SessionsSettings,
+} from './components/sessions/SettingsPanel'
 import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -27,13 +33,28 @@ import { DevDesigns } from './components/dev/DevDesigns'
 import { BackendStatus } from './components/dev/BackendStatus'
 import { DevToolbar } from './components/dev/DevErrorViewer'
 import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
-import { ZenMode, ZenModeButton, useZenMode, ZenModeProvider } from './components/zen'
+import { ZenMode, useZenMode, ZenModeProvider } from './components/zen'
 import type { ZenProjectFilter } from './components/zen/hooks/useZenMode'
 import { ProjectManagerModal } from './components/zen/ProjectManagerModal'
 import { getOnboardingStatus, API_BASE } from './lib/api'
-import { Settings, RefreshCw, Wifi, WifiOff, LayoutGrid, Grid3X3, List, Clock, History, Cable } from 'lucide-react'
+import {
+  Settings,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  LayoutGrid,
+  Grid3X3,
+  List,
+  Clock,
+  History,
+  Cable,
+} from 'lucide-react'
 import { Button } from './components/ui/button'
-import { DesktopActivityFeed, DesktopActivityFeedButton, useDesktopActivityFeed } from './components/desktop/DesktopActivityFeed'
+import {
+  DesktopActivityFeed,
+  DesktopActivityFeedButton,
+  useDesktopActivityFeed,
+} from './components/desktop/DesktopActivityFeed'
 import { CreatorModeProvider } from './contexts/CreatorModeContext'
 
 /** Open the standalone Zen Mode Tauri window (or focus it if already open). */
@@ -81,13 +102,13 @@ function isTauriSettingsView(): boolean {
 // Simple path-based routing for dev pages
 function useRoute() {
   const [path, setPath] = useState(window.location.pathname)
-  
+
   useEffect(() => {
     const handlePopState = () => setPath(window.location.pathname)
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
-  
+
   return path
 }
 
@@ -150,8 +171,8 @@ function NoConnectionView({
             <div className="text-5xl mb-4">📡</div>
             <h2 className="text-xl font-semibold mb-2">No Active Sessions</h2>
             <p className="text-muted-foreground mb-6">
-              CrewHub is connected but no agent sessions are running.
-              Configure a gateway connection or start an agent to see the 3D world.
+              CrewHub is connected but no agent sessions are running. Configure a gateway connection
+              or start an agent to see the 3D world.
             </p>
           </>
         ) : (
@@ -159,8 +180,7 @@ function NoConnectionView({
             <WifiOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">No Connection</h2>
             <p className="text-muted-foreground mb-6">
-              Unable to reach the CrewHub backend.
-              Make sure the server is running and try again.
+              Unable to reach the CrewHub backend. Make sure the server is running and try again.
             </p>
           </>
         )}
@@ -180,29 +200,36 @@ function NoConnectionView({
 }
 
 function AppContent() {
-  const { sessions: realSessions, loading, error, connected, connectionMethod, refresh } = useSessionsStream(true)
+  const {
+    sessions: realSessions,
+    loading,
+    error,
+    connected,
+    connectionMethod,
+    refresh,
+  } = useSessionsStream(true)
   const { isDemoMode, demoSessions } = useDemoMode()
   const { windows } = useChatContext()
   const { rooms, getRoomForSession } = useRoomsContext()
-  
+
   // Desktop Activity Feed state
   const activityFeed = useDesktopActivityFeed()
 
   // Zen Mode state
   const zenMode = useZenMode()
-  
+
   // Get the last active chat window for Zen Mode context
   const lastActiveWindow = windows.length > 0 ? windows[windows.length - 1] : null
-  
+
   // Get room name for the selected agent
   const zenRoomName = useMemo(() => {
     if (!zenMode.selectedAgentId) return undefined
     const roomId = getRoomForSession(zenMode.selectedAgentId)
     if (!roomId) return undefined
-    const room = rooms.find(r => r.id === roomId)
+    const room = rooms.find((r) => r.id === roomId)
     return room?.name
   }, [zenMode.selectedAgentId, getRoomForSession, rooms])
-  
+
   // Global keyboard listener for Zen Mode toggle (Ctrl+Shift+Z)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -210,7 +237,7 @@ function AppContent() {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
         e.preventDefault()
         e.stopPropagation()
-        
+
         if (zenMode.isActive) {
           zenMode.exit()
         } else {
@@ -229,7 +256,7 @@ function AppContent() {
         }
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [zenMode, lastActiveWindow])
@@ -243,20 +270,6 @@ function AppContent() {
       zenMode.enter()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  
-  // Handle entering Zen Mode via button
-  const handleEnterZenMode = useCallback(() => {
-    if (lastActiveWindow) {
-      zenMode.enter(
-        lastActiveWindow.sessionKey,
-        lastActiveWindow.agentName,
-        lastActiveWindow.agentIcon ?? undefined,
-        lastActiveWindow.agentColor ?? undefined
-      )
-    } else {
-      zenMode.enter()
-    }
-  }, [zenMode, lastActiveWindow])
 
   // When demo mode is active, replace real sessions with demo data.
   // Demo sessions completely replace real ones so the 3D world looks
@@ -264,8 +277,8 @@ function AppContent() {
   const sessions = useMemo(() => {
     if (!isDemoMode || demoSessions.length === 0) return realSessions
     // Build a set of demo keys to replace any matching real sessions
-    const demoKeys = new Set(demoSessions.map(s => s.key))
-    const nonOverlapping = realSessions.filter(s => !demoKeys.has(s.key))
+    const demoKeys = new Set(demoSessions.map((s) => s.key))
+    const nonOverlapping = realSessions.filter((s) => !demoKeys.has(s.key))
     return [...demoSessions, ...nonOverlapping]
   }, [isDemoMode, demoSessions, realSessions])
 
@@ -363,29 +376,31 @@ function AppContent() {
   }, [refresh])
 
   const refreshClass = loading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'
-  const tabClass = (isActive: boolean) => 
+  const tabClass = (isActive: boolean) =>
     `flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-      isActive 
-        ? 'bg-background text-foreground shadow-sm' 
+      isActive
+        ? 'bg-background text-foreground shadow-sm'
         : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
     }`
 
   return (
-    <div 
-      className="h-dvh bg-background flex flex-col overflow-hidden"
-      
-      
-    >
+    <div className="h-dvh bg-background flex flex-col overflow-hidden">
       <header className="border-b bg-card shrink-0">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/logo.svg" alt="CrewHub" className="h-10 w-10" />
             <div>
-              <h1 className="text-xl font-bold">CrewHub <span className="text-xs font-normal text-muted-foreground ml-1">v{version}</span></h1>
-              <p className="text-xs text-muted-foreground">Multi-agent orchestration<BackendStatus /></p>
+              <h1 className="text-xl font-bold">
+                CrewHub{' '}
+                <span className="text-xs font-normal text-muted-foreground ml-1">v{version}</span>
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Multi-agent orchestration
+                <BackendStatus />
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {connected ? (
@@ -400,7 +415,7 @@ function AppContent() {
                 </>
               )}
             </div>
-            
+
             <Button variant="ghost" size="sm" onClick={refresh} disabled={loading}>
               <RefreshCw className={refreshClass} />
             </Button>
@@ -416,22 +431,19 @@ function AppContent() {
                 <span style={{ fontSize: '14px', lineHeight: 1 }}>🧘</span>
               </Button>
             )}
-            
-            <DesktopActivityFeedButton
-              isOpen={activityFeed.isOpen}
-              onClick={activityFeed.toggle}
-            />
+
+            <DesktopActivityFeedButton isOpen={activityFeed.isOpen} onClick={activityFeed.toggle} />
 
             <Button variant="ghost" size="sm" onClick={() => setSettingsOpen(true)}>
               <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
-        
+
         <div className="px-4 pb-3">
           <StatsHeader sessions={sessions} />
         </div>
-        
+
         <div className="px-4 pb-2">
           <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit">
             {tabs.map((tab) => (
@@ -451,31 +463,45 @@ function AppContent() {
       <main className="flex-1 flex flex-col overflow-hidden">
         <ErrorBoundary>
           <div className="flex-1 overflow-hidden flex flex-col">
-            {activeTab === 'active' && (
-              sessions.length === 0
-                ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={openConnectionsSettings} />
-                : <Suspense fallback={<div className="flex-1 flex items-center justify-center text-muted-foreground">Loading 3D view…</div>}>
-                    <ZoneRenderer
-                      sessions={sessions}
-                      settings={settings}
-                      onAliasChanged={handleAliasChanged}
-                    />
-                  </Suspense>
-            )}
-            {activeTab === 'cards' && (
-              sessions.length === 0
-                ? <NoConnectionView connected={connected} loading={loading} error={error} onRetry={refresh} onOpenConnections={openConnectionsSettings} />
-                : <CardsView sessions={sessions} />
-            )}
-            {activeTab === 'all' && (
-              <AllSessionsView sessions={sessions} />
-            )}
-            {activeTab === 'cron' && (
-              <CronView />
-            )}
-            {activeTab === 'history' && (
-              <HistoryView />
-            )}
+            {activeTab === 'active' &&
+              (sessions.length === 0 ? (
+                <NoConnectionView
+                  connected={connected}
+                  loading={loading}
+                  error={error}
+                  onRetry={refresh}
+                  onOpenConnections={openConnectionsSettings}
+                />
+              ) : (
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                      Loading 3D view…
+                    </div>
+                  }
+                >
+                  <ZoneRenderer
+                    sessions={sessions}
+                    settings={settings}
+                    onAliasChanged={handleAliasChanged}
+                  />
+                </Suspense>
+              ))}
+            {activeTab === 'cards' &&
+              (sessions.length === 0 ? (
+                <NoConnectionView
+                  connected={connected}
+                  loading={loading}
+                  error={error}
+                  onRetry={refresh}
+                  onOpenConnections={openConnectionsSettings}
+                />
+              ) : (
+                <CardsView sessions={sessions} />
+              ))}
+            {activeTab === 'all' && <AllSessionsView sessions={sessions} />}
+            {activeTab === 'cron' && <CronView />}
+            {activeTab === 'history' && <HistoryView />}
           </div>
         </ErrorBoundary>
       </main>
@@ -491,27 +517,16 @@ function AppContent() {
       <ChatWindowManager />
 
       {showOnboarding && onboardingChecked && (
-        <OnboardingWizard
-          onComplete={handleOnboardingComplete}
-          onSkip={handleOnboardingSkip}
-        />
+        <OnboardingWizard onComplete={handleOnboardingComplete} onSkip={handleOnboardingSkip} />
       )}
 
       {/* Desktop Activity Feed — fixed right sidebar */}
-      <DesktopActivityFeed
-        isOpen={activityFeed.isOpen}
-        onClose={activityFeed.close}
-      />
+      <DesktopActivityFeed isOpen={activityFeed.isOpen} onClose={activityFeed.close} />
 
       <DemoModeIndicator />
       <MobileWarning />
       <DevToolbar />
-      
-      {/* Zen Mode Entry Button - shown when not in Zen Mode */}
-      {!zenMode.isActive && sessions.length > 0 && (
-        <ZenModeButton onClick={handleEnterZenMode} />
-      )}
-      
+
       {/* Zen Mode Overlay - full-screen when active */}
       {zenMode.isActive && (
         <ZenMode
@@ -539,9 +554,12 @@ interface ZenProject {
   description: string | null
 }
 
-function ZenWorkspaceSelector({ onSelect, onEnterAll }: { 
+function ZenWorkspaceSelector({
+  onSelect,
+  onEnterAll,
+}: {
   onSelect: (project: ZenProject) => void
-  onEnterAll: () => void 
+  onEnterAll: () => void
 }) {
   const [projects, setProjects] = useState<ZenProject[]>([])
   const [loading, setLoading] = useState(true)
@@ -549,8 +567,8 @@ function ZenWorkspaceSelector({ onSelect, onEnterAll }: {
 
   const refreshProjects = useCallback(() => {
     fetch(`${API_BASE}/projects`)
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         setProjects(data.projects || [])
         setLoading(false)
       })
@@ -562,24 +580,28 @@ function ZenWorkspaceSelector({ onSelect, onEnterAll }: {
   }, [refreshProjects])
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100vh',
-      background: '#1a1b26',
-      color: '#a9b1d6',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#1a1b26',
+        color: '#a9b1d6',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
+    >
       <div style={{ textAlign: 'center', maxWidth: 600, padding: '0 24px' }}>
-        <h1 style={{ 
-          fontSize: '2rem', 
-          fontWeight: 300, 
-          color: '#c0caf5',
-          marginBottom: '0.5rem',
-          letterSpacing: '-0.02em',
-        }}>
+        <h1
+          style={{
+            fontSize: '2rem',
+            fontWeight: 300,
+            color: '#c0caf5',
+            marginBottom: '0.5rem',
+            letterSpacing: '-0.02em',
+          }}
+        >
           ⚡ Zen Mode
         </h1>
         <p style={{ fontSize: '0.875rem', color: '#565f89', marginBottom: '2rem' }}>
@@ -603,11 +625,11 @@ function ZenWorkspaceSelector({ onSelect, onEnterAll }: {
             textAlign: 'left',
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             e.currentTarget.style.background = '#2a2e45'
             e.currentTarget.style.borderColor = '#7aa2f7'
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             e.currentTarget.style.background = '#24283b'
             e.currentTarget.style.borderColor = '#3b4261'
           }}
@@ -620,60 +642,75 @@ function ZenWorkspaceSelector({ onSelect, onEnterAll }: {
 
         {loading ? (
           <p style={{ color: '#565f89', fontSize: '0.875rem' }}>Loading projects...</p>
-        ) : projects.length > 0 && (
-          <>
-            <div style={{ 
-              fontSize: '0.75rem', 
-              color: '#565f89', 
-              margin: '20px 0 12px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}>
-              Or focus on a project
-            </div>
-            {projects.map(project => (
-              <button
-                key={project.id}
-                onClick={() => onSelect(project)}
+        ) : (
+          projects.length > 0 && (
+            <>
+              <div
                 style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '12px 20px',
-                  marginBottom: '8px',
-                  background: '#24283b',
-                  border: '1px solid #3b4261',
-                  borderRadius: '8px',
-                  color: '#c0caf5',
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = '#2a2e45'
-                  e.currentTarget.style.borderColor = project.color || '#7aa2f7'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = '#24283b'
-                  e.currentTarget.style.borderColor = '#3b4261'
+                  fontSize: '0.75rem',
+                  color: '#565f89',
+                  margin: '20px 0 12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                 }}
               >
-                <span style={{ 
-                  display: 'inline-block',
-                  width: 8, height: 8, 
-                  borderRadius: '50%', 
-                  background: project.color || '#7aa2f7',
-                  marginRight: 10,
-                }} />
-                {project.name}
-                {project.description && (
-                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#565f89', marginTop: 2, marginLeft: 18 }}>
-                    {project.description}
-                  </span>
-                )}
-              </button>
-            ))}
-          </>
+                Or focus on a project
+              </div>
+              {projects.map((project) => (
+                <button
+                  key={project.id}
+                  onClick={() => onSelect(project)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '12px 20px',
+                    marginBottom: '8px',
+                    background: '#24283b',
+                    border: '1px solid #3b4261',
+                    borderRadius: '8px',
+                    color: '#c0caf5',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#2a2e45'
+                    e.currentTarget.style.borderColor = project.color || '#7aa2f7'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#24283b'
+                    e.currentTarget.style.borderColor = '#3b4261'
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: project.color || '#7aa2f7',
+                      marginRight: 10,
+                    }}
+                  />
+                  {project.name}
+                  {project.description && (
+                    <span
+                      style={{
+                        display: 'block',
+                        fontSize: '0.75rem',
+                        color: '#565f89',
+                        marginTop: 2,
+                        marginLeft: 18,
+                      }}
+                    >
+                      {project.description}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </>
+          )
         )}
 
         <button
@@ -692,11 +729,11 @@ function ZenWorkspaceSelector({ onSelect, onEnterAll }: {
             textAlign: 'center',
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = '#7aa2f7'
             e.currentTarget.style.color = '#7aa2f7'
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = '#3b4261'
             e.currentTarget.style.color = '#565f89'
           }}
@@ -715,8 +752,12 @@ function ZenWorkspaceSelector({ onSelect, onEnterAll }: {
             textDecoration: 'none',
             transition: 'color 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#7aa2f7' }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#565f89' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#7aa2f7'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#565f89'
+          }}
         >
           🌍 Exit to Full CrewHub
         </a>
@@ -724,7 +765,10 @@ function ZenWorkspaceSelector({ onSelect, onEnterAll }: {
 
       <ProjectManagerModal
         isOpen={showManager}
-        onClose={() => { setShowManager(false); refreshProjects() }}
+        onClose={() => {
+          setShowManager(false)
+          refreshProjects()
+        }}
         onProjectSelect={(id, name, color) => {
           setShowManager(false)
           onSelect({ id, name, color: color || null, description: null })
@@ -745,17 +789,20 @@ function ZenModeAppContent() {
     if (!zenMode.selectedAgentId) return undefined
     const roomId = getRoomForSession(zenMode.selectedAgentId)
     if (!roomId) return undefined
-    return rooms.find(r => r.id === roomId)?.name
+    return rooms.find((r) => r.id === roomId)?.name
   }, [zenMode.selectedAgentId, getRoomForSession, rooms])
 
-  const handleSelectProject = useCallback((project: ZenProject) => {
-    const filter: ZenProjectFilter = {
-      projectId: project.id,
-      projectName: project.name,
-      projectColor: project.color || undefined,
-    }
-    zenMode.enterWithProject(filter)
-  }, [zenMode])
+  const handleSelectProject = useCallback(
+    (project: ZenProject) => {
+      const filter: ZenProjectFilter = {
+        projectId: project.id,
+        projectName: project.name,
+        projectColor: project.color || undefined,
+      }
+      zenMode.enterWithProject(filter)
+    },
+    [zenMode]
+  )
 
   const handleEnterAll = useCallback(() => {
     zenMode.enter()
@@ -766,12 +813,7 @@ function ZenModeAppContent() {
   }, [zenMode])
 
   if (!zenMode.isActive) {
-    return (
-      <ZenWorkspaceSelector
-        onSelect={handleSelectProject}
-        onEnterAll={handleEnterAll}
-      />
-    )
+    return <ZenWorkspaceSelector onSelect={handleSelectProject} onEnterAll={handleEnterAll} />
   }
 
   return (
@@ -811,9 +853,9 @@ function App() {
   // Only runs once on mount; safe no-op in browser.
   useEffect(() => {
     if (window.__TAURI_INTERNALS__) {
-      notificationManager.init().catch(err =>
-        console.warn('[App] NotificationManager init failed:', err)
-      )
+      notificationManager
+        .init()
+        .catch((err) => console.warn('[App] NotificationManager init failed:', err))
     }
     return () => {
       if (window.__TAURI_INTERNALS__) {
@@ -821,7 +863,7 @@ function App() {
       }
     }
   }, [])
-  
+
   if (route === '/dev/designs') {
     return <DevDesigns />
   }
@@ -874,7 +916,7 @@ function App() {
       </ThemeProvider>
     )
   }
-  
+
   return (
     <ThemeProvider>
       <DemoProvider>

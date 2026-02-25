@@ -4,7 +4,11 @@ import { SpatialNavigator, gridToZone, smoothPath } from '../navigation'
 import type { GridCell } from '@/lib/grid/types'
 
 /** Create a simple test grid (same helper as vision tests) */
-function makeGrid(width: number, depth: number, blocked?: { x: number; z: number }[]): GridCell[][] {
+function makeGrid(
+  width: number,
+  depth: number,
+  blocked?: { x: number; z: number }[]
+): GridCell[][] {
   const grid: GridCell[][] = []
   for (let z = 0; z < depth; z++) {
     const row: GridCell[] = []
@@ -167,7 +171,10 @@ describe('smoothPath', () => {
   })
 
   it('returns same for paths of length 2', () => {
-    const path = [{ x: 1, z: 1 }, { x: 5, z: 5 }]
+    const path = [
+      { x: 1, z: 1 },
+      { x: 5, z: 5 },
+    ]
     const mask = Array.from({ length: 10 }, () => Array.from({ length: 10 }, () => true))
     const smoothed = smoothPath(path, mask)
 

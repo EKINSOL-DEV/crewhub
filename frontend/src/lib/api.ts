@@ -74,10 +74,15 @@ export type MinionMessage = SessionMessage
 export type MinionContentBlock = SessionContentBlock
 
 const _isInTauri = typeof (window as any).__TAURI__ !== 'undefined'
-const _rawConfiguredBackend = localStorage.getItem('crewhub_backend_url') || (window as any).__CREWHUB_BACKEND_URL__ || import.meta.env.VITE_API_URL || ''
+const _rawConfiguredBackend =
+  localStorage.getItem('crewhub_backend_url') ||
+  (window as any).__CREWHUB_BACKEND_URL__ ||
+  import.meta.env.VITE_API_URL ||
+  ''
 // In browser mode, ignore localhost-based URLs — they only make sense in Tauri.
-const _isLocalUrl = _rawConfiguredBackend.includes('localhost') || _rawConfiguredBackend.includes('127.0.0.1')
-const _configuredBackend = (!_isInTauri && _isLocalUrl) ? '' : _rawConfiguredBackend
+const _isLocalUrl =
+  _rawConfiguredBackend.includes('localhost') || _rawConfiguredBackend.includes('127.0.0.1')
+const _configuredBackend = !_isInTauri && _isLocalUrl ? '' : _rawConfiguredBackend
 export const API_BASE = _configuredBackend ? `${_configuredBackend}/api` : '/api'
 
 // ─── Discovery Types ──────────────────────────────────────────────
@@ -181,17 +186,25 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   getSessions: (activeMinutes?: number) =>
-    fetchJSON<SessionsResponse>(`/sessions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`),
+    fetchJSON<SessionsResponse>(
+      `/sessions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`
+    ),
 
   getSessionHistory: (sessionKey: string, limit: number = 50) =>
-    fetchJSON<SessionHistoryResponse>(`/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`),
+    fetchJSON<SessionHistoryResponse>(
+      `/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`
+    ),
 
   // Backwards compatibility aliases
   getMinions: (activeMinutes?: number) =>
-    fetchJSON<SessionsResponse>(`/sessions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`),
+    fetchJSON<SessionsResponse>(
+      `/sessions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`
+    ),
 
   getMinionHistory: (sessionKey: string, limit: number = 50) =>
-    fetchJSON<SessionHistoryResponse>(`/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`),
+    fetchJSON<SessionHistoryResponse>(
+      `/sessions/${encodeURIComponent(sessionKey)}/history?limit=${limit}`
+    ),
 }
 
 // ─── Discovery API ──────────────────────────────────────────────
@@ -224,9 +237,7 @@ export async function updateSetting(key: string, value: string): Promise<void> {
   })
 }
 
-export async function updateSettingsBatch(
-  settings: Record<string, string>
-): Promise<void> {
+export async function updateSettingsBatch(settings: Record<string, string>): Promise<void> {
   await fetchJSON<{ settings: Record<string, string> }>('/settings/batch', {
     method: 'PUT',
     body: JSON.stringify({ settings }),
@@ -293,19 +304,27 @@ export interface SessionDisplayNameResponse {
 
 export const sessionDisplayNameApi = {
   get: (sessionKey: string) =>
-    fetchJSON<SessionDisplayNameResponse>(`/session-display-names/${encodeURIComponent(sessionKey)}`),
-  
+    fetchJSON<SessionDisplayNameResponse>(
+      `/session-display-names/${encodeURIComponent(sessionKey)}`
+    ),
+
   set: (sessionKey: string, displayName: string) =>
-    fetchJSON<SessionDisplayNameResponse>(`/session-display-names/${encodeURIComponent(sessionKey)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ display_name: displayName })
-    }),
-  
+    fetchJSON<SessionDisplayNameResponse>(
+      `/session-display-names/${encodeURIComponent(sessionKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ display_name: displayName }),
+      }
+    ),
+
   delete: (sessionKey: string) =>
-    fetchJSON<{ success: boolean; deleted: string }>(`/session-display-names/${encodeURIComponent(sessionKey)}`, {
-      method: 'DELETE'
-    }),
+    fetchJSON<{ success: boolean; deleted: string }>(
+      `/session-display-names/${encodeURIComponent(sessionKey)}`,
+      {
+        method: 'DELETE',
+      }
+    ),
 }
 
 // ─── API Key Management ──────────────────────────────────────────────
@@ -357,7 +376,7 @@ export interface CreateApiKeyRequest {
 
 export interface CreateApiKeyResponse {
   id: string
-  key: string  // raw key — shown once
+  key: string // raw key — shown once
   name: string
   scopes: string[]
   agent_id: string | null
@@ -405,6 +424,6 @@ export const apiKeyApi = {
   getSelf: (rawKey: string) => {
     return fetch(`${API_BASE}/auth/keys/self`, {
       headers: { 'X-API-Key': rawKey, 'Content-Type': 'application/json' },
-    }).then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+    }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
   },
 }

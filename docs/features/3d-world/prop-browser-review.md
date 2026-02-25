@@ -1,7 +1,7 @@
 # Code Review: Prop Browser + Creator Mode
-**Reviewer:** ekinbot (GPT-5 code review subagent)  
-**Date:** 2026-02-24  
-**Branch:** develop  
+**Reviewer:** ekinbot (GPT-5 code review subagent)
+**Date:** 2026-02-24
+**Branch:** develop
 **Commits reviewed:** `b468247` → `0dc4318` (phases 1–7)
 
 ---
@@ -20,7 +20,7 @@ The implementation is architecturally solid — good separation of concerns, pro
 
 #### C1: Undo/Redo 'remove' creates new UUID, redo breaks permanently
 
-**File:** `frontend/src/contexts/CreatorModeContext.tsx` → `undo()` / `redo()`  
+**File:** `frontend/src/contexts/CreatorModeContext.tsx` → `undo()` / `redo()`
 
 When undoing a 'remove' action, the code POSTs to `/api/world/props` to re-place the prop. But the backend generates a **fresh UUID** for the re-placed prop. The stored `PlacementAction` snapshot still holds the original `placed_id`. When the user then does Redo (redo-remove), the DELETE call targets the old, non-existent UUID → `404 Not Found`. The re-placed prop is now permanently orphaned in the database with no way to remove it via undo/redo.
 
@@ -89,7 +89,7 @@ Or alternatively use `model_fields_set` in Pydantic v2 to distinguish "not provi
 
 #### M1: Wall props float in mid-air when placed via Creator Mode
 
-**File:** `frontend/src/components/world3d/creator/PlacedPropsRenderer.tsx`  
+**File:** `frontend/src/components/world3d/creator/PlacedPropsRenderer.tsx`
 **Affected props:** notice-board, whiteboard, mood-board, presentation-screen, wall-clock, small-screen, gear-mechanism, satellite-dish, signal-waves, status-lights (10 props in propMeta.ts)
 
 `PlacedPropsRenderer` uses `entry.yOffset` for vertical positioning but makes no distinction between `mountType: 'floor'` and `mountType: 'wall'`. Wall props have yOffsets of 1.2–2.2m and require a backing wall surface. When placed via Creator Mode on the open world floor, they render floating at their yOffset height with nothing behind them — visually broken.
@@ -203,7 +203,7 @@ import { memo } from 'react'
 
 const PlacedPropMesh = memo(function PlacedPropMesh({ placed, cellSize }: ...) {
   ...
-}, (prev, next) => 
+}, (prev, next) =>
   prev.placed.id === next.placed.id &&
   prev.placed.position.x === next.placed.position.x &&
   prev.placed.position.z === next.placed.position.z &&

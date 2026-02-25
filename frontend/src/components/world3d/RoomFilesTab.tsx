@@ -16,15 +16,24 @@ export function RoomFilesTab({ room }: RoomFilesTabProps) {
 
   const currentProject = useMemo(() => {
     if (!room.project_id) return null
-    return projects.find(p => p.id === room.project_id) ?? null
+    return projects.find((p) => p.id === room.project_id) ?? null
   }, [room.project_id, projects])
 
   if (!currentProject) {
     return (
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        height: '100%', color: '#9ca3af', fontSize: 13, gap: 8, padding: 24,
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: '#9ca3af',
+          fontSize: 13,
+          gap: 8,
+          padding: 24,
+        }}
+      >
         <span style={{ fontSize: 32 }}>📂</span>
         <span>No project assigned</span>
       </div>
@@ -33,10 +42,19 @@ export function RoomFilesTab({ room }: RoomFilesTabProps) {
 
   if (!currentProject.folder_path) {
     return (
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        height: '100%', color: '#9ca3af', fontSize: 13, gap: 8, padding: 24,
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: '#9ca3af',
+          fontSize: 13,
+          gap: 8,
+          padding: 24,
+        }}
+      >
         <span style={{ fontSize: 32 }}>📂</span>
         <span>No folder configured for this project</span>
       </div>

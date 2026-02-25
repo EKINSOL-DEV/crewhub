@@ -7,7 +7,8 @@ export const MOCK_TASKS: MockTask[] = [
     project_id: 'proj-crewhub',
     room_id: 'dev-room',
     title: 'Design new agent avatar styles',
-    description: 'Create distinct visual styles for different agent types — main agents get detailed avatars, subagents get compact versions.',
+    description:
+      'Create distinct visual styles for different agent types — main agents get detailed avatars, subagents get compact versions.',
     status: 'todo',
     priority: 'medium',
     assigned_session_key: 'agent:gamedev:main',
@@ -21,7 +22,8 @@ export const MOCK_TASKS: MockTask[] = [
     project_id: 'proj-crewhub',
     room_id: 'dev-room',
     title: 'Research voice chat integration',
-    description: 'Evaluate WebRTC + TTS options for real-time voice communication between user and agents.',
+    description:
+      'Evaluate WebRTC + TTS options for real-time voice communication between user and agents.',
     status: 'todo',
     priority: 'low',
     assigned_session_key: null,
@@ -35,7 +37,8 @@ export const MOCK_TASKS: MockTask[] = [
     project_id: 'proj-crewhub',
     room_id: 'dev-room',
     title: 'Implement spatial awareness system',
-    description: 'Bots should be aware of their room context, nearby agents, and available props for richer interactions.',
+    description:
+      'Bots should be aware of their room context, nearby agents, and available props for richer interactions.',
     status: 'in_progress',
     priority: 'high',
     assigned_session_key: 'agent:dev:main',
@@ -49,7 +52,8 @@ export const MOCK_TASKS: MockTask[] = [
     project_id: 'proj-crewhub',
     room_id: 'dev-room',
     title: 'Build PropMaker AI refinement',
-    description: 'Let users describe furniture in natural language and have AI generate/refine 3D props iteratively.',
+    description:
+      'Let users describe furniture in natural language and have AI generate/refine 3D props iteratively.',
     status: 'in_progress',
     priority: 'high',
     assigned_session_key: 'agent:gamedev:main',
@@ -63,7 +67,8 @@ export const MOCK_TASKS: MockTask[] = [
     project_id: 'proj-crewhub',
     room_id: 'thinking-room',
     title: 'Code review: Meeting pathfinding',
-    description: 'Review the pathfinding implementation for bots walking to the meeting table through hallways.',
+    description:
+      'Review the pathfinding implementation for bots walking to the meeting table through hallways.',
     status: 'review',
     priority: 'urgent',
     assigned_session_key: 'agent:reviewer:main',
@@ -77,7 +82,8 @@ export const MOCK_TASKS: MockTask[] = [
     project_id: 'proj-crewhub',
     room_id: 'dev-room',
     title: 'AI Meetings feature complete',
-    description: 'Multi-agent meetings with round-robin discussion, synthesis, and action item extraction — shipped!',
+    description:
+      'Multi-agent meetings with round-robin discussion, synthesis, and action item extraction — shipped!',
     status: 'done',
     priority: 'high',
     assigned_session_key: 'agent:dev:main',
@@ -91,7 +97,8 @@ export const MOCK_TASKS: MockTask[] = [
     project_id: 'proj-crewhub',
     room_id: 'dev-room',
     title: 'Bot navigation improvements',
-    description: 'Improved pathfinding: bots now walk through doors and hallways instead of clipping through walls.',
+    description:
+      'Improved pathfinding: bots now walk through doors and hallways instead of clipping through walls.',
     status: 'done',
     priority: 'medium',
     assigned_session_key: 'agent:gamedev:main',

@@ -1,7 +1,7 @@
 # Streaming Architecture Review
 
-**Datum:** 19 februari 2026  
-**Reviewer:** Reviewer Agent (subagent)  
+**Datum:** 19 februari 2026
+**Reviewer:** Reviewer Agent (subagent)
 **Bronbestanden:** `docs/streaming-analysis.md`, `backend/app/services/connections/openclaw.py`, `backend/app/routes/chat.py`
 
 ---
@@ -20,7 +20,7 @@ De geplande streaming architectuur is een solide en pragmatische aanpak die de b
 
 #### 🔴 1. runId-filtering ontbreekt → corruptie bij gelijktijdige requests op dezelfde agent
 
-**Probleem:**  
+**Probleem:**
 De `on_chat_event` handler filtert alleen op `sessionKey`:
 
 ```python
@@ -30,7 +30,7 @@ if payload.get("sessionKey") != f"agent:{agent_id}:main":
 
 Dit is onvoldoende. De gateway stuurt events voor **alle lopende runs** van dezelfde agent, en meerdere gelijktijdige requests op bijv. `agent:main:main` (2 browservensters, of een cron + gebruiker) produceren events die allemaal door dezelfde sessiekey-check komen.
 
-**Wat er fout gaat:**  
+**Wat er fout gaat:**
 Stel User A en User B sturen tegelijk een bericht naar `agent:main:main`:
 - Run A produceert cumulatieve tekst: `"Hallo"`, `"Hallo hoe"`, `"Hallo hoe gaat"` (sent_length A: 0→5→9→13)
 - Run B start: cumulatieve tekst reset naar `"Goed"` (2 chars)
@@ -39,7 +39,7 @@ Stel User A en User B sturen tegelijk een bericht naar `agent:main:main`:
 
 Het gevolg: willekeurige stukken tekst worden weggegooid of dubbel getoond, afhankelijk van race-timing.
 
-**Oplossing:**  
+**Oplossing:**
 Stap 1 — geef de `agent` call een `idempotencyKey` mee en filter events op `runId`:
 
 ```python
@@ -55,11 +55,11 @@ async def send_chat_streaming(self, message, agent_id="main", session_id=None, t
             return
 
         run_id = payload.get("runId")
-        
+
         # Latch de run_id bij eerste delta die we ontvangen
         if active_run_id is None and payload.get("state") == "delta":
             active_run_id = run_id
-        
+
         # Negeer events van andere runs
         if run_id and active_run_id and run_id != active_run_id:
             return
@@ -84,7 +84,7 @@ Als alternatief: geef de `idempotencyKey` als correlatie-ID mee en verwacht dat 
 
 #### 🔴 2. Gateway disconnect signaleert chunk_queue niet → silent hang van 30 seconden
 
-**Probleem:**  
+**Probleem:**
 Wanneer de gateway disconnecteert, stuurt `_listen_loop` alleen fout-berichten naar `_response_queues`:
 
 ```python
@@ -96,7 +96,7 @@ self._response_queues.clear()
 
 De lokale `chunk_queue` in `send_chat_streaming()` staat **niet** in `_response_queues`. Bij gateway disconnect komen er geen events meer binnen, maar de while-loop wacht gewoon de volledige 30s timeout af. De gebruiker ziet een speldenknop-achtige freeze.
 
-**Oplossing:**  
+**Oplossing:**
 Registreer chunk_queues in een apart dict zodat ze bij disconnect gesignaleerd worden:
 
 ```python
@@ -132,7 +132,7 @@ if kind == "error":
 
 #### 🔴 3. Frontend checkt `resp.ok` niet voor streamen → crash bij HTTP errors
 
-**Probleem:**  
+**Probleem:**
 In het voorgestelde frontend-patroon:
 
 ```typescript
@@ -161,7 +161,7 @@ const reader = resp.body!.getReader()
 
 #### 🟡 4. Rate limiter blokkeert follow-up berichten tijdens/na streaming
 
-**Probleem:**  
+**Probleem:**
 `_check_rate_limit()` heeft een cooldown van **3 seconden** per session_key. Een streaming response duurt 5–30 seconden. De cooldown-timer start op het moment van de POST, niet bij het einde van de response. Dit betekent: zodra de stream klaar is, heeft de gebruiker al ruim 3s gewacht → rate limit is vervallen. OK voor `/send`, maar bij `/stream` is de timing irrelevant — de request duurt zolang als de stream duurt.
 
 **Risico:** Als dezelfde sessie twee overlappende `/stream` POST's stuurt (browservenster refresh tijdens streaming), lopen twee simultane streams voor dezelfde agent. De rate limiter helpt hier niet: de tweede request komt 3s na de eerste binnen, terwijl de eerste nog actief is.
@@ -205,7 +205,7 @@ async def generate():
 
 #### 🟡 5. asyncio.create_task fire-and-forget loopt 120s door na client disconnect
 
-**Probleem:**  
+**Probleem:**
 ```python
 asyncio.create_task(self.call(
     "agent", {...}, timeout=timeout, wait_for_final_agent_result=True
@@ -238,7 +238,7 @@ finally:
 
 #### 🟡 6. SSE partial-read parser is fragiel voor multi-chunk events
 
-**Probleem:**  
+**Probleem:**
 Het voorgestelde frontend SSE-parsing patroon:
 
 ```typescript
@@ -263,27 +263,27 @@ let currentEvent = ''
 while (true) {
     const { done, value } = await reader.read()
     if (done) break
-    
+
     buffer += decoder.decode(value, { stream: true })
-    
+
     // Split op SSE event boundary (double newline)
     const events = buffer.split('\n\n')
     buffer = events.pop() ?? ''  // laatste incomplete event bewaren
-    
+
     for (const eventBlock of events) {
         const lines = eventBlock.split('\n')
         let eventType = 'message'
         let dataLine = ''
-        
+
         for (const line of lines) {
             if (line.startsWith('event: ')) eventType = line.slice(7).trim()
             else if (line.startsWith('data: ')) dataLine = line.slice(6).trim()
         }
-        
+
         if (eventType === 'delta' && dataLine) {
             const data = JSON.parse(dataLine)
             accumulated += data.text
-            setMessages(prev => prev.map(m => 
+            setMessages(prev => prev.map(m =>
                 m.id === assistantId ? { ...m, content: accumulated } : m
             ))
         } else if (eventType === 'done') {
@@ -297,7 +297,7 @@ while (true) {
 
 #### 🟡 7. Context envelope bouwt asyncio.Queue vooraf — latency onnodig
 
-**Probleem:**  
+**Probleem:**
 In `send_chat_message()` (het huidige `/send` endpoint) wordt de context envelope gesynchroniseerd gebouwd vóór het bericht verstuurd wordt. Voor het nieuwe `/stream` endpoint is dit patroon potentieel traag: de envelope-bouw (database queries + API calls) kan 50–200ms duren vóórdat de SSE response start, wat de "first byte" latency verhoogt.
 
 **Aanbeveling:** Start de SSE response onmiddellijk met een `event: start`, bouw de envelope asynchroon, en inject die in het eerste agent-bericht. Of bouw de envelope concurrent met het opbouwen van de WebSocket call.
@@ -447,26 +447,26 @@ async def send_chat_streaming(
     sent_length = 0
     active_run_id: Optional[str] = None
     stream_id = str(uuid.uuid4())
-    
+
     expected_session_key = f"agent:{agent_id}:main"
-    
+
     def on_chat_event(payload: dict):
         nonlocal sent_length, active_run_id
-        
+
         if payload.get("sessionKey") != expected_session_key:
             return
-        
+
         run_id = payload.get("runId")
         state = payload.get("state")
-        
+
         # Latch de run_id bij het eerste delta event
         if active_run_id is None and state == "delta":
             active_run_id = run_id
-        
+
         # Negeer events van andere runs (bijv. gelijktijdige requests)
         if run_id and active_run_id and run_id != active_run_id:
             return
-        
+
         if state == "delta":
             text = (payload.get("message", {})
                     .get("content", [{}])[0]
@@ -477,10 +477,10 @@ async def send_chat_streaming(
                 chunk_queue.put_nowait(("delta", new_chunk))
         elif state in ("final", "error", "aborted"):
             chunk_queue.put_nowait(("done", state))
-    
+
     self.subscribe("chat", on_chat_event)
     self._stream_queues[stream_id] = chunk_queue  # voor disconnect signaling
-    
+
     agent_task = asyncio.create_task(self.call(
         "agent",
         {
@@ -493,7 +493,7 @@ async def send_chat_streaming(
         timeout=timeout,
         wait_for_final_agent_result=True,
     ))
-    
+
     try:
         start_time = asyncio.get_event_loop().time()
         while True:
@@ -501,7 +501,7 @@ async def send_chat_streaming(
             remaining = timeout - elapsed
             if remaining <= 0:
                 break
-            
+
             try:
                 kind, data = await asyncio.wait_for(
                     chunk_queue.get(),
@@ -550,7 +550,7 @@ for stream_id, sq in list(self._stream_queues.items()):
 ```typescript
 const sendMessageStream = useCallback(async (text: string) => {
     // ... optimistic updates ...
-    
+
     try {
         const resp = await fetch(
             `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/stream`,
@@ -560,20 +560,20 @@ const sendMessageStream = useCallback(async (text: string) => {
                 body: JSON.stringify({ message: trimmed }),
             }
         )
-        
+
         // ← Kritisch: check HTTP status vóór streamen
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({ detail: resp.statusText }))
             throw new Error(err.detail ?? `HTTP ${resp.status}`)
         }
-        
+
         const reader = resp.body!.getReader()
         const decoder = new TextDecoder()
         let buffer = ''
         let accumulated = ''
         let throttleTimer: ReturnType<typeof setTimeout> | null = null
         let pendingContent = ''
-        
+
         const flushUpdate = () => {
             if (pendingContent !== accumulated) {
                 accumulated = pendingContent
@@ -582,31 +582,31 @@ const sendMessageStream = useCallback(async (text: string) => {
                 ))
             }
         }
-        
+
         while (true) {
             const { done, value } = await reader.read()
             if (done) break
-            
+
             buffer += decoder.decode(value, { stream: true })
-            
+
             // Split op SSE event boundary (double newline)
             const events = buffer.split('\n\n')
             buffer = events.pop() ?? ''
-            
+
             for (const eventBlock of events) {
                 const lines = eventBlock.split('\n')
                 let eventType = 'message'
                 let dataLine = ''
-                
+
                 for (const line of lines) {
                     if (line.startsWith('event: ')) eventType = line.slice(7).trim()
                     else if (line.startsWith('data: ')) dataLine = line.slice(6).trim()
                 }
-                
+
                 if (eventType === 'delta' && dataLine) {
                     const data = JSON.parse(dataLine)
                     pendingContent += data.text
-                    
+
                     // 80ms throttling: debounce state updates
                     if (!throttleTimer) {
                         throttleTimer = setTimeout(() => {
@@ -621,11 +621,11 @@ const sendMessageStream = useCallback(async (text: string) => {
                 }
             }
         }
-        
+
         // Finale flush
         if (throttleTimer) clearTimeout(throttleTimer)
         flushUpdate()
-        
+
     } catch (e) {
         setError(e instanceof Error ? e.message : 'Streaming mislukt')
         // Verwijder lege assistant message bij fout

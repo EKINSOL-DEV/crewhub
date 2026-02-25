@@ -9,27 +9,27 @@ Key format: ch_live_<32hexchars>  (128-bit entropy)
 """
 
 import hashlib
+import json
 import logging
 import os
-import json
 import secrets
 import time
 from enum import IntEnum
-from pathlib import Path
 from typing import Optional
 
-import aiosqlite
 from fastapi import Depends, HTTPException, Request, Security
 from fastapi.security import APIKeyHeader
 
-from app.db.database import DB_DIR, DB_PATH, get_db
+from app.db.database import DB_DIR, get_db
 
 logger = logging.getLogger(__name__)
 
 # ── Scopes ────────────────────────────────────────────────────────────
 
+
 class Scope(IntEnum):
     """Permission scopes, ordered by privilege level."""
+
     READ = 0
     SELF = 1
     MANAGE = 2
@@ -45,6 +45,7 @@ SCOPE_NAMES = {
 
 SCOPE_BY_NAME = {v: k for k, v in SCOPE_NAMES.items()}
 
+
 # Scope hierarchy: higher scopes include all lower ones
 # admin >= manage >= self >= read
 def scope_includes(held: list[str], required: str) -> bool:
@@ -54,6 +55,7 @@ def scope_includes(held: list[str], required: str) -> bool:
 
 
 # ── Key format helpers ────────────────────────────────────────────────
+
 
 def generate_api_key(env: str = "live") -> str:
     """Generate a new API key: ch_<env>_<32hexchars> (128-bit entropy)."""
@@ -81,13 +83,22 @@ def mask_key(raw_key: str) -> str:
 
 # ── Key data model ────────────────────────────────────────────────────
 
+
 class APIKeyInfo:
     """Resolved API key information."""
+
     __slots__ = ("key_id", "name", "scopes", "agent_id", "created_at", "last_used_at", "expires_at")
 
-    def __init__(self, key_id: str, name: str, scopes: list[str],
-                 agent_id: Optional[str] = None, created_at: int = 0,
-                 last_used_at: Optional[int] = None, expires_at: Optional[int] = None):
+    def __init__(
+        self,
+        key_id: str,
+        name: str,
+        scopes: list[str],
+        agent_id: Optional[str] = None,
+        created_at: int = 0,
+        last_used_at: Optional[int] = None,
+        expires_at: Optional[int] = None,
+    ):
         self.key_id = key_id
         self.name = name
         self.scopes = scopes
@@ -104,8 +115,8 @@ class APIKeyInfo:
 
 # General API rate limiting: {key_id: [timestamp_ms, ...]}
 _rate_limit_log: dict[str, list[float]] = {}
-RATE_LIMIT_REQUESTS = 200   # requests
-RATE_LIMIT_WINDOW = 60      # seconds (200 req/min default)
+RATE_LIMIT_REQUESTS = 200  # requests
+RATE_LIMIT_WINDOW = 60  # seconds (200 req/min default)
 
 # Identity creation rate limit
 _identity_creation_log: dict[str, list[tuple[float, str]]] = {}
@@ -113,8 +124,7 @@ IDENTITY_CREATION_LIMIT = 10  # per hour per key
 IDENTITY_CREATION_WINDOW = 3600  # seconds
 
 
-def check_rate_limit(key_id: str, limit: int = RATE_LIMIT_REQUESTS,
-                     window: int = RATE_LIMIT_WINDOW) -> bool:
+def check_rate_limit(key_id: str, limit: int = RATE_LIMIT_REQUESTS, window: int = RATE_LIMIT_WINDOW) -> bool:
     """Return True if request is allowed (not rate-limited)."""
     now = time.time()
     entries = _rate_limit_log.get(key_id, [])
@@ -149,8 +159,7 @@ def record_identity_creation(key_id: str, agent_id: str):
 AUDIT_RETENTION_MS = 90 * 24 * 60 * 60 * 1000  # 90 days in milliseconds
 
 
-async def log_key_usage(key_id: str, endpoint: str, method: str,
-                        status_code: int = 200, ip: Optional[str] = None):
+async def log_key_usage(key_id: str, endpoint: str, method: str, status_code: int = 200, ip: Optional[str] = None):
     """Write an audit log entry for API key usage."""
     now = int(time.time() * 1000)
     try:
@@ -171,15 +180,14 @@ async def cleanup_audit_log():
     cutoff = int(time.time() * 1000) - AUDIT_RETENTION_MS
     try:
         async with get_db() as db:
-            await db.execute(
-                "DELETE FROM api_key_audit_log WHERE used_at < ?", (cutoff,)
-            )
+            await db.execute("DELETE FROM api_key_audit_log WHERE used_at < ?", (cutoff,))
             await db.commit()
     except Exception as exc:
         logger.warning("Failed to clean up audit log: %s", exc)
 
 
 # ── Key resolution from DB ────────────────────────────────────────────
+
 
 async def resolve_api_key(raw_key: str) -> Optional[APIKeyInfo]:
     """Look up an API key in the database. Returns None if not found or expired."""
@@ -305,6 +313,7 @@ def require_scope(scope: str):
         async def endpoint(key: APIKeyInfo = Depends(require_scope("manage"))):
             ...
     """
+
     async def _check(
         key: Optional[APIKeyInfo] = Depends(get_current_key),
     ) -> APIKeyInfo:
@@ -313,8 +322,7 @@ def require_scope(scope: str):
         if not key.has_scope(scope):
             raise HTTPException(
                 status_code=403,
-                detail=f"Insufficient permissions. Required scope: {scope}. "
-                       f"Your scopes: {key.scopes}",
+                detail=f"Insufficient permissions. Required scope: {scope}. Your scopes: {key.scopes}",
             )
         return key
 
@@ -322,6 +330,7 @@ def require_scope(scope: str):
 
 
 # ── Startup: generate default keys ───────────────────────────────────
+
 
 async def init_api_keys():
     """
@@ -429,8 +438,16 @@ async def _generate_default_keys(db):
     await db.execute(
         """INSERT INTO api_keys (id, key_hash, key_prefix, name, scopes, agent_id, created_at, expires_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (admin_id, hash_key(admin_raw), mask_key(admin_raw), "Default Local Admin",
-         json.dumps(["read", "self", "manage", "admin"]), None, now, None),
+        (
+            admin_id,
+            hash_key(admin_raw),
+            mask_key(admin_raw),
+            "Default Local Admin",
+            json.dumps(["read", "self", "manage", "admin"]),
+            None,
+            now,
+            None,
+        ),
     )
 
     # Self key (for agents), expires in 90 days
@@ -439,8 +456,16 @@ async def _generate_default_keys(db):
     await db.execute(
         """INSERT INTO api_keys (id, key_hash, key_prefix, name, scopes, agent_id, created_at, expires_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (self_id, hash_key(self_raw), mask_key(self_raw), "Default Agent Key",
-         json.dumps(["read", "self"]), None, now, default_expiry),
+        (
+            self_id,
+            hash_key(self_raw),
+            mask_key(self_raw),
+            "Default Agent Key",
+            json.dumps(["read", "self"]),
+            None,
+            now,
+            default_expiry,
+        ),
     )
 
     await db.commit()

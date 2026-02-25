@@ -1,18 +1,18 @@
 # Code Review Feedback — OpenClaw v2026.2.17 Fixes
 ## CrewHub commit `9668c14` — branch `develop`
 
-**Reviewer:** GPT-5.2 (Reviewer agent)  
-**Datum:** 2026-02-18  
-**Op basis van plan:** `docs/openclaw-v2026217-impact-plan.md`  
+**Reviewer:** GPT-5.2 (Reviewer agent)
+**Datum:** 2026-02-18
+**Op basis van plan:** `docs/openclaw-v2026217-impact-plan.md`
 **Bestanden gereviewed:** 8 bestanden, +1217 / -33 regels
 
 ---
 
 ## TL;DR Eindoordeel
 
-> **⚠️ Bijna klaar voor merge — 1 kritiek issue moet eerst gefixed worden.**  
-> De implementatie dekt ~90% van het plan correct en voegt waardevolle defensieve lagen toe.  
-> Er is echter een kleine memory leak in de poll loop die voor productie gefixed moet worden.  
+> **⚠️ Bijna klaar voor merge — 1 kritiek issue moet eerst gefixed worden.**
+> De implementatie dekt ~90% van het plan correct en voegt waardevolle defensieve lagen toe.
+> Er is echter een kleine memory leak in de poll loop die voor productie gefixed moet worden.
 > Iteratie 2-problemen (overly broad sibling check, heuristic patterns) zijn acceptabel voor iteratie 1.
 
 ---
@@ -343,9 +343,9 @@ for removed_key in removed_keys:
 
 ### Aanbevolen (kan ook in iteratie 2):
 
-2. `console.log` → `console.debug` + DEV guard in `useSessionsStream.ts`  
-3. `_isLikelyAnnounceRouting()` voorzien van DEV console.warn bij match  
-4. Sibling subagent check evalueren na eerste productieobservaties  
+2. `console.log` → `console.debug` + DEV guard in `useSessionsStream.ts`
+3. `_isLikelyAnnounceRouting()` voorzien van DEV console.warn bij match
+4. Sibling subagent check evalueren na eerste productieobservaties
 5. Unit tests schrijven (Iteratie 4 uit plan)
 
 ---
@@ -361,5 +361,5 @@ Deze zijn niet beantwoord in de implementatie en moeten nog geobserveerd worden 
 
 ---
 
-*Review geschreven door Reviewer (GPT-5.2) subagent — 2026-02-18*  
+*Review geschreven door Reviewer (GPT-5.2) subagent — 2026-02-18*
 *Codebase: commit `9668c14`, branch `develop`, `~/ekinapps/crewhub/`*

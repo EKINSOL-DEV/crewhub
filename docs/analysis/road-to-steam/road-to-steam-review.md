@@ -1,6 +1,6 @@
 # Road to Steam (CrewHub) — Strategic Review
-**Reviewer:** Subagent (OpenClaw)  
-**Date:** 2026-02-07  
+**Reviewer:** Subagent (OpenClaw)
+**Date:** 2026-02-07
 **Input doc:** `road-to-steam-analysis.md`
 
 This is a strong, well-structured plan. The core positioning (“AI agent dashboard as a game”) is differentiated, and the doc does a good job translating Steam-native features (achievements, cloud saves, workshop) into a coherent product. Below are specific critiques and suggested additions, aligned to your requested focus areas.

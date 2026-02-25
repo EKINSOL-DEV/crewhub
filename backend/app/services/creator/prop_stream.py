@@ -12,9 +12,9 @@ import json
 import logging
 import re
 import uuid as _uuid_mod
+from collections.abc import AsyncGenerator
 from datetime import datetime
 from pathlib import Path
-from typing import AsyncGenerator
 
 from .prop_generator import (
     add_generation_record,
@@ -43,7 +43,7 @@ async def stream_prop_generation(
 
     Yields SSE-formatted strings. Caller wraps this in StreamingResponse.
     """
-    from ..connections import get_connection_manager, OpenClawConnection  # lazy import
+    from ..connections import OpenClawConnection, get_connection_manager  # lazy import
 
     model_id, model_label = resolve_model(model_key)
     gen_id = str(_uuid_mod.uuid4())[:8]
@@ -120,43 +120,53 @@ async def stream_prop_generation(
             payload = accepted.get("payload", {})
             if isinstance(payload, dict):
                 session_id = payload.get("sessionId") or (
-                    payload.get("session", {}).get("sessionId")
-                    if isinstance(payload.get("session"), dict)
-                    else None
+                    payload.get("session", {}).get("sessionId") if isinstance(payload.get("session"), dict) else None
                 )
         else:
             error_info = accepted.get("error", {})
-            err_msg = (
-                error_info.get("message", str(error_info))
-                if isinstance(error_info, dict)
-                else str(error_info)
-            )
+            err_msg = error_info.get("message", str(error_info)) if isinstance(error_info, dict) else str(error_info)
             logger.error(f"[PropGen:{gen_id}] Agent rejected: {err_msg}")
             conn._response_queues.pop(req_id, None)
             code = generate_template_code(name, prompt)
             parts = extract_parts(prompt)
-            add_generation_record(_template_record(gen_id, prompt, name, model_key, model_label,
-                                                   full_prompt, parts, code,
-                                                   f"Agent error: {err_msg}"))
+            add_generation_record(
+                _template_record(
+                    gen_id, prompt, name, model_key, model_label, full_prompt, parts, code, f"Agent error: {err_msg}"
+                )
+            )
             yield _sse_event("error", {"message": f"Agent error: {err_msg}"})
             yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
             return
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning(f"[PropGen:{gen_id}] Timeout waiting for accepted response (15s)")
         conn._response_queues.pop(req_id, None)
         code = generate_template_code(name, prompt)
         parts = extract_parts(prompt)
-        add_generation_record(_template_record(gen_id, prompt, name, model_key, model_label,
-                                               full_prompt, parts, code, "Agent acceptance timeout",
-                                               extra_diags=["Timeout waiting for agent acceptance"]))
+        add_generation_record(
+            _template_record(
+                gen_id,
+                prompt,
+                name,
+                model_key,
+                model_label,
+                full_prompt,
+                parts,
+                code,
+                "Agent acceptance timeout",
+                extra_diags=["Timeout waiting for agent acceptance"],
+            )
+        )
         yield _sse_event("error", {"message": "Agent did not respond in time"})
         yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
         return
 
-    yield _sse_event("status", {
-        "message": f"🧠 AI agent ({model_label}) started thinking...",
-        "phase": "thinking",
-    })
+    yield _sse_event(
+        "status",
+        {
+            "message": f"🧠 AI agent ({model_label}) started thinking...",
+            "phase": "thinking",
+        },
+    )
 
     # ── Poll transcript ───────────────────────────────────────────
     transcript_path: Path | None = None
@@ -182,8 +192,7 @@ async def stream_prop_generation(
             final_msg = q.get_nowait()
             queue_messages_seen += 1
             logger.info(
-                f"[PropGen:{gen_id}] Queue msg #{queue_messages_seen} at poll {poll_count}: "
-                f"ok={final_msg.get('ok')}"
+                f"[PropGen:{gen_id}] Queue msg #{queue_messages_seen} at poll {poll_count}: ok={final_msg.get('ok')}"
             )
             if final_msg.get("ok"):
                 payload = final_msg.get("payload")
@@ -194,13 +203,24 @@ async def stream_prop_generation(
                 err_msg = str(final_msg.get("error", {}).get("message", "Agent error"))
                 logger.error(f"[PropGen:{gen_id}] Agent error: {err_msg}")
                 yield _sse_event("error", {"message": err_msg})
-                add_generation_record({
-                    "id": gen_id, "prompt": prompt, "name": name,
-                    "model": model_key, "modelLabel": model_label, "method": "error",
-                    "fullPrompt": full_prompt, "toolCalls": tool_calls_collected,
-                    "corrections": [], "diagnostics": [], "parts": [], "code": "",
-                    "createdAt": datetime.utcnow().isoformat(), "error": err_msg,
-                })
+                add_generation_record(
+                    {
+                        "id": gen_id,
+                        "prompt": prompt,
+                        "name": name,
+                        "model": model_key,
+                        "modelLabel": model_label,
+                        "method": "error",
+                        "fullPrompt": full_prompt,
+                        "toolCalls": tool_calls_collected,
+                        "corrections": [],
+                        "diagnostics": [],
+                        "parts": [],
+                        "code": "",
+                        "createdAt": datetime.utcnow().isoformat(),
+                        "error": err_msg,
+                    }
+                )
                 conn._response_queues.pop(req_id, None)
                 return
             else:
@@ -213,7 +233,7 @@ async def stream_prop_generation(
         # Read new transcript lines
         if transcript_path and transcript_path.exists():
             try:
-                with open(transcript_path, "r") as f:
+                with open(transcript_path) as f:
                     all_lines = f.readlines()
                 new_lines = all_lines[lines_read:]
                 lines_read = len(all_lines)
@@ -244,15 +264,20 @@ async def stream_prop_generation(
                                 elif bt == "tool_use":
                                     tool_name = block.get("name", "unknown")
                                     tool_input = block.get("input", {})
-                                    tool_calls_collected.append({
-                                        "name": tool_name,
-                                        "input": str(tool_input)[:500],
-                                    })
-                                    yield _sse_event("tool", {
-                                        "name": tool_name,
-                                        "input": str(tool_input)[:200],
-                                        "message": f"🔧 Using tool: {tool_name}",
-                                    })
+                                    tool_calls_collected.append(
+                                        {
+                                            "name": tool_name,
+                                            "input": str(tool_input)[:500],
+                                        }
+                                    )
+                                    yield _sse_event(
+                                        "tool",
+                                        {
+                                            "name": tool_name,
+                                            "input": str(tool_input)[:200],
+                                            "message": f"🔧 Using tool: {tool_name}",
+                                        },
+                                    )
                         elif role == "assistant" and isinstance(content, str) and content:
                             yield _sse_event("text", {"text": content[:200]})
                         elif role == "user" and lines_read > 1:
@@ -262,7 +287,7 @@ async def stream_prop_generation(
                                         yield _sse_event("tool_result", {"message": "📋 Tool result received"})
                     except json.JSONDecodeError:
                         continue
-            except (OSError, IOError):
+            except OSError:
                 pass
 
         await asyncio.sleep(0.2)
@@ -283,7 +308,7 @@ async def stream_prop_generation(
             if final_msg.get("ok"):
                 final_result = final_msg.get("payload")
             conn._response_queues.pop(req_id, None)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"[PropGen:{gen_id}] Final 30s wait also timed out")
             conn._response_queues.pop(req_id, None)
         except Exception as e:
@@ -317,8 +342,8 @@ async def stream_prop_generation(
         code = strip_parts_block(raw_text)
 
         if "export function" in code and ("<mesh" in code or "mesh" in code.lower()):
-            from ..prop_post_processor import enhance_generated_prop, validate_prop_quality
             from ..multi_pass_generator import MultiPassGenerator
+            from ..prop_post_processor import enhance_generated_prop, validate_prop_quality
 
             # Phase 1: Post-processor
             pp_result = enhance_generated_prop(code)
@@ -327,9 +352,7 @@ async def stream_prop_generation(
             diagnostics_collected = []
 
             if pp_result.corrections:
-                diagnostics_collected.append(
-                    f"✅ Post-processor applied {len(pp_result.corrections)} fixes"
-                )
+                diagnostics_collected.append(f"✅ Post-processor applied {len(pp_result.corrections)} fixes")
                 for fix in pp_result.corrections:
                     diagnostics_collected.append(f"  → {fix}")
             else:
@@ -363,40 +386,69 @@ async def stream_prop_generation(
             # Validate final quality
             validation = validate_prop_quality(code)
 
-            add_generation_record({
-                "id": gen_id, "prompt": prompt, "name": name,
-                "model": model_key, "modelLabel": model_label, "method": "ai",
-                "fullPrompt": full_prompt, "toolCalls": tool_calls_collected,
-                "corrections": corrections_collected, "diagnostics": diagnostics_collected,
-                "parts": parts, "code": code,
-                "createdAt": datetime.utcnow().isoformat(), "error": None,
-                "qualityScore": pp_result.quality_score, "validation": validation,
-            })
+            add_generation_record(
+                {
+                    "id": gen_id,
+                    "prompt": prompt,
+                    "name": name,
+                    "model": model_key,
+                    "modelLabel": model_label,
+                    "method": "ai",
+                    "fullPrompt": full_prompt,
+                    "toolCalls": tool_calls_collected,
+                    "corrections": corrections_collected,
+                    "diagnostics": diagnostics_collected,
+                    "parts": parts,
+                    "code": code,
+                    "createdAt": datetime.utcnow().isoformat(),
+                    "error": None,
+                    "qualityScore": pp_result.quality_score,
+                    "validation": validation,
+                }
+            )
 
             try:
                 refinement_options = mp_gen.get_refinement_options(prompt)
             except Exception:
                 refinement_options = {}
 
-            yield _sse_event("complete", {
-                "name": name, "filename": f"{name}.tsx", "code": code,
-                "method": "ai", "parts": parts,
-                "model": model_key, "modelLabel": model_label, "generationId": gen_id,
-                "qualityScore": pp_result.quality_score, "validation": validation,
-                "refinementOptions": refinement_options,
-            })
+            yield _sse_event(
+                "complete",
+                {
+                    "name": name,
+                    "filename": f"{name}.tsx",
+                    "code": code,
+                    "method": "ai",
+                    "parts": parts,
+                    "model": model_key,
+                    "modelLabel": model_label,
+                    "generationId": gen_id,
+                    "qualityScore": pp_result.quality_score,
+                    "validation": validation,
+                    "refinementOptions": refinement_options,
+                },
+            )
             return
 
         # AI output invalid → template fallback
         logger.warning(f"AI output invalid for {name}, using template fallback")
         code = generate_template_code(name, prompt)
         parts = extract_parts(prompt)
-        add_generation_record(_template_record(
-            gen_id, prompt, name, model_key, model_label, full_prompt, parts, code,
-            "AI output validation failed",
-            extra_diags=["AI output invalid, used template"],
-            extra_tool_calls=tool_calls_collected,
-        ))
+        add_generation_record(
+            _template_record(
+                gen_id,
+                prompt,
+                name,
+                model_key,
+                model_label,
+                full_prompt,
+                parts,
+                code,
+                "AI output validation failed",
+                extra_diags=["AI output invalid, used template"],
+                extra_tool_calls=tool_calls_collected,
+            )
+        )
         yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
         return
 
@@ -404,12 +456,21 @@ async def stream_prop_generation(
     logger.warning(f"No AI result for {name}, using template fallback")
     code = generate_template_code(name, prompt)
     parts = extract_parts(prompt)
-    add_generation_record(_template_record(
-        gen_id, prompt, name, model_key, model_label, full_prompt, parts, code,
-        "No AI response received",
-        extra_diags=["No AI result, used template"],
-        extra_tool_calls=tool_calls_collected,
-    ))
+    add_generation_record(
+        _template_record(
+            gen_id,
+            prompt,
+            name,
+            model_key,
+            model_label,
+            full_prompt,
+            parts,
+            code,
+            "No AI response received",
+            extra_diags=["No AI result, used template"],
+            extra_tool_calls=tool_calls_collected,
+        )
+    )
     yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
 
 
@@ -430,13 +491,18 @@ def _template_record(
     extra_tool_calls: list[dict] | None = None,
 ) -> dict:
     return {
-        "id": gen_id, "prompt": prompt, "name": name,
-        "model": model_key, "modelLabel": model_label, "method": "template",
+        "id": gen_id,
+        "prompt": prompt,
+        "name": name,
+        "model": model_key,
+        "modelLabel": model_label,
+        "method": "template",
         "fullPrompt": full_prompt,
         "toolCalls": extra_tool_calls or [],
         "corrections": [],
         "diagnostics": extra_diags or [],
-        "parts": parts, "code": code,
+        "parts": parts,
+        "code": code,
         "createdAt": datetime.utcnow().isoformat(),
         "error": error,
     }
@@ -451,7 +517,12 @@ def _template_complete(
     gen_id: str,
 ) -> dict:
     return {
-        "name": name, "filename": f"{name}.tsx", "code": code,
-        "method": "template", "parts": parts,
-        "model": model_key, "modelLabel": model_label, "generationId": gen_id,
+        "name": name,
+        "filename": f"{name}.tsx",
+        "code": code,
+        "method": "template",
+        "parts": parts,
+        "model": model_key,
+        "modelLabel": model_label,
+        "generationId": gen_id,
     }

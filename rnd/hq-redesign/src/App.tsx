@@ -27,29 +27,29 @@ export default function App() {
       <Canvas shadows camera={{ position: designs[0].cameraPos, fov: 45 }}>
         <color attach="background" args={['#0d1117']} />
         <fog attach="fog" args={['#0d1117', 30, 60]} />
-        
+
         {/* Lighting */}
         <ambientLight intensity={0.35} />
-        <directionalLight 
-          position={[15, 20, 10]} intensity={1.2} castShadow 
+        <directionalLight
+          position={[15, 20, 10]} intensity={1.2} castShadow
           shadow-mapSize={2048} shadow-camera-far={50}
           shadow-camera-left={-15} shadow-camera-right={15}
           shadow-camera-top={15} shadow-camera-bottom={-15}
         />
         <directionalLight position={[-8, 12, -8]} intensity={0.3} color="#4fc3f7" />
         <pointLight position={[0, 8, 0]} intensity={0.4} color="#ffe8cc" />
-        
+
         <WallProvider buildingCenter={[0, 3, 0]}>
           <Design />
         </WallProvider>
-        
+
         {/* Ground grid */}
         <gridHelper args={[50, 50, '#1a2030', '#151c28']} position={[0, -0.02, 0]} />
-        
-        <OrbitControls 
+
+        <OrbitControls
           ref={controlsRef}
-          makeDefault 
-          minDistance={5} 
+          makeDefault
+          minDistance={5}
           maxDistance={45}
           target={[0, 3, 0]}
           enableDamping

@@ -1,25 +1,25 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function ServerRack() {
-  const groupRef = useRef<THREE.Group>(null);
-  const ledsRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const ledsRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.15;
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.15
     }
     if (ledsRef.current) {
       ledsRef.current.children.forEach((led, i) => {
-        const mat = (led as THREE.Mesh).material as THREE.MeshStandardMaterial;
-        const blink = Math.sin(state.clock.elapsedTime * (3 + i * 1.7) + i * 2) > 0;
-        mat.emissiveIntensity = blink ? 3 : 0.2;
-      });
+        const mat = (led as THREE.Mesh).material as THREE.MeshStandardMaterial
+        const blink = Math.sin(state.clock.elapsedTime * (3 + i * 1.7) + i * 2) > 0
+        mat.emissiveIntensity = blink ? 3 : 0.2
+      })
     }
-  });
+  })
 
-  const servers = [0.5, 0.2, -0.1, -0.4];
+  const servers = [0.5, 0.2, -0.1, -0.4]
 
   return (
     <group ref={groupRef}>
@@ -47,7 +47,7 @@ export function ServerRack() {
       {/* LEDs */}
       <group ref={ledsRef}>
         {servers.flatMap((y, si) =>
-          [0, 1, 2, 3].map(li => (
+          [0, 1, 2, 3].map((li) => (
             <mesh key={`${si}-${li}`} position={[0.28 + li * 0.04, y + 0.07, 0.276]}>
               <sphereGeometry args={[0.012, 4, 4]} />
               <meshStandardMaterial
@@ -65,12 +65,12 @@ export function ServerRack() {
         <meshStandardMaterial color="#333344" />
       </mesh>
       {/* Cables on side */}
-      {[0, 1, 2].map(i => (
+      {[0, 1, 2].map((i) => (
         <mesh key={i} position={[0.46, 0.2 - i * 0.3, 0.1]}>
           <cylinderGeometry args={[0.015, 0.015, 0.5, 4]} />
           <meshStandardMaterial color={['#ff4444', '#44ff44', '#4488ff'][i]} />
         </mesh>
       ))}
     </group>
-  );
+  )
 }

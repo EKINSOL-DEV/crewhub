@@ -8,7 +8,13 @@
 
 import { VisionSystem, type VisionConfig, type VisionResult } from './vision'
 import { ProximityGrid } from './proximity'
-import { SpatialNavigator, type NavigationPath, type NavigationConfig, gridToZone, type ZoneName } from './navigation'
+import {
+  SpatialNavigator,
+  type NavigationPath,
+  type NavigationConfig,
+  gridToZone,
+  type ZoneName,
+} from './navigation'
 import type { RoomBlueprint } from '@/lib/grid/types'
 
 export interface BotSpatialInfo {
@@ -74,7 +80,7 @@ export class SpatialManager {
     roomName: string,
     blueprint: RoomBlueprint,
     visionConfig?: Partial<VisionConfig>,
-    navConfig?: Partial<NavigationConfig>,
+    navConfig?: Partial<NavigationConfig>
   ) {
     this.roomId = roomId
     this.roomName = roomName
@@ -84,7 +90,7 @@ export class SpatialManager {
     this.proximity = new ProximityGrid(
       blueprint.gridWidth,
       blueprint.gridDepth,
-      4, // 4×4 cell hash buckets
+      4 // 4×4 cell hash buckets
     )
     this.navigator = new SpatialNavigator(blueprint.cells, navConfig)
 
@@ -146,9 +152,9 @@ export class SpatialManager {
     // Update visible props
     const visibleProps = this.vision.getVisibleProps(
       { x: info.gridX, z: info.gridZ },
-      info.facingAngle,
+      info.facingAngle
     )
-    info.visibleProps = visibleProps.map(p => p.propId)
+    info.visibleProps = visibleProps.map((p) => p.propId)
 
     // Update nearby bots
     const nearbyEntities = this.proximity.queryRadius({
@@ -158,7 +164,7 @@ export class SpatialManager {
       type: 'bot',
       excludeId: sessionKey,
     })
-    info.nearbyBots = nearbyEntities.map(e => ({
+    info.nearbyBots = nearbyEntities.map((e) => ({
       sessionKey: e.id,
       distance: e.distance,
     }))
@@ -177,7 +183,7 @@ export class SpatialManager {
     return this.vision.canSee(
       { x: observer.gridX, z: observer.gridZ },
       { x: target.gridX, z: target.gridZ },
-      observer.facingAngle,
+      observer.facingAngle
     )
   }
 
@@ -186,10 +192,7 @@ export class SpatialManager {
     const info = this.bots.get(sessionKey)
     if (!info) return []
 
-    return this.vision.getVisibleCells(
-      { x: info.gridX, z: info.gridZ },
-      info.facingAngle,
-    )
+    return this.vision.getVisibleCells({ x: info.gridX, z: info.gridZ }, info.facingAngle)
   }
 
   // ─── Navigation ─────────────────────────────────────────────
@@ -199,11 +202,7 @@ export class SpatialManager {
     const info = this.bots.get(sessionKey)
     if (!info) return null
 
-    const path = this.navigator.navigateToProp(
-      { x: info.gridX, z: info.gridZ },
-      target,
-      speed,
-    )
+    const path = this.navigator.navigateToProp({ x: info.gridX, z: info.gridZ }, target, speed)
 
     if (path) info.activePath = path
     return path
@@ -214,11 +213,7 @@ export class SpatialManager {
     const info = this.bots.get(sessionKey)
     if (!info) return null
 
-    const path = this.navigator.navigateToZone(
-      { x: info.gridX, z: info.gridZ },
-      zone,
-      speed,
-    )
+    const path = this.navigator.navigateToZone({ x: info.gridX, z: info.gridZ }, zone, speed)
 
     if (path) info.activePath = path
     return path

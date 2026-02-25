@@ -1,7 +1,7 @@
 # Strategic Review: CrewHub 3D World — Modding, Extensibility & Best Practices
 
-*Author: GPT-5.2 (strategic review subagent)*  
-*Date: 2026-02-04*  
+*Author: GPT-5.2 (strategic review subagent)*
+*Date: 2026-02-04*
 *Scope: 3D World (Three.js / @react-three/fiber) content extensibility: rooms, props, environments, bot variants; distribution; security; phased roadmap.*
 
 ---
@@ -78,12 +78,12 @@ A mod system succeeds when users can answer:
   - author, version, description
   - enabled/disabled toggle
   - dependencies/conflicts
-  - “overrides” summary (e.g., “overrides prop ‘desk’”) 
+  - “overrides” summary (e.g., “overrides prop ‘desk’”)
 
 ### 2.2 Sandboxing (default-deny)
 **Opinion:** Do not allow arbitrary JS by default. In a dashboard app, the security bar is closer to “browser extension” than “game mod”.
 
-- **Default tier:** data-only mods (safe) 
+- **Default tier:** data-only mods (safe)
 - **Advanced tier:** code mods, explicitly permissioned and sandboxed (see §6)
 
 ### 2.3 Versioning + compatibility

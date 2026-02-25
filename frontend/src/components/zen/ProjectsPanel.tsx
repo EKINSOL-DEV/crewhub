@@ -11,34 +11,47 @@ import { ZenDocumentsPanel } from './ZenDocumentsPanel'
 interface ProjectsPanelProps {
   projectId?: string | null
   projectName?: string | null
-  onProjectFilterChange?: (projectId: string | null, projectName: string, projectColor?: string) => void
+  onProjectFilterChange?: (
+    projectId: string | null,
+    projectName: string,
+    projectColor?: string
+  ) => void
 }
 
 type ViewTab = 'overview' | 'documents'
 
-export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }: ProjectsPanelProps) {
+export function ProjectsPanel({
+  projectId,
+  projectName,
+  onProjectFilterChange,
+}: ProjectsPanelProps) {
   const [activeView, setActiveView] = useState<ViewTab>('overview')
   const { projects } = useProjects()
 
-  const handleFilterSelect = useCallback((id: string | null, name: string, color?: string) => {
-    onProjectFilterChange?.(id, name, color)
-    // Switch to overview when selecting a new project
-    if (id) setActiveView('overview')
-  }, [onProjectFilterChange])
+  const handleFilterSelect = useCallback(
+    (id: string | null, name: string, color?: string) => {
+      onProjectFilterChange?.(id, name, color)
+      // Switch to overview when selecting a new project
+      if (id) setActiveView('overview')
+    },
+    [onProjectFilterChange]
+  )
 
   // No project selected → show project list
   if (!projectId) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Header with filter */}
-        <div style={{
-          padding: '8px 12px',
-          borderBottom: '1px solid var(--zen-border, var(--zen-border))',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-        }}>
+        <div
+          style={{
+            padding: '8px 12px',
+            borderBottom: '1px solid var(--zen-border, var(--zen-border))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexShrink: 0,
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 14 }}>📂</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--zen-fg, var(--zen-fg))' }}>
@@ -57,29 +70,35 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
 
         {/* Project list */}
         <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
-          {projects.filter(p => p.status === 'active').length === 0 ? (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: 'var(--zen-fg-muted)',
-              fontSize: 13,
-              gap: 8,
-            }}>
+          {projects.filter((p) => p.status === 'active').length === 0 ? (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: 'var(--zen-fg-muted)',
+                fontSize: 13,
+                gap: 8,
+              }}
+            >
               <span style={{ fontSize: 32 }}>📋</span>
               <span>No active projects</span>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {projects.filter(p => p.status === 'active').map(project => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onClick={() => handleFilterSelect(project.id, project.name, project.color || undefined)}
-                />
-              ))}
+              {projects
+                .filter((p) => p.status === 'active')
+                .map((project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onClick={() =>
+                      handleFilterSelect(project.id, project.name, project.color || undefined)
+                    }
+                  />
+                ))}
             </div>
           )}
         </div>
@@ -91,14 +110,16 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* Header with filter */}
-      <div style={{
-        padding: '8px 12px',
-        borderBottom: '1px solid var(--zen-border, var(--zen-border))',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-      }}>
+      <div
+        style={{
+          padding: '8px 12px',
+          borderBottom: '1px solid var(--zen-border, var(--zen-border))',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 14 }}>📂</span>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--zen-fg, var(--zen-fg))' }}>
@@ -116,18 +137,36 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
       </div>
 
       {/* Tab bar */}
-      <div style={{
-        display: 'flex',
-        borderBottom: '1px solid var(--zen-border, var(--zen-border))',
-        padding: '0 12px',
-        flexShrink: 0,
-      }}>
-        <TabButton active={activeView === 'overview'} onClick={() => setActiveView('overview')} label="📋 Overview" />
-        <TabButton active={activeView === 'documents'} onClick={() => setActiveView('documents')} label="📂 Documents" />
+      <div
+        style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--zen-border, var(--zen-border))',
+          padding: '0 12px',
+          flexShrink: 0,
+        }}
+      >
+        <TabButton
+          active={activeView === 'overview'}
+          onClick={() => setActiveView('overview')}
+          label="📋 Overview"
+        />
+        <TabButton
+          active={activeView === 'documents'}
+          onClick={() => setActiveView('documents')}
+          label="📂 Documents"
+        />
       </div>
 
       {/* Tab content */}
-      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {activeView === 'overview' ? (
           <ProjectOverviewTab
             projectId={projectId}
@@ -135,17 +174,22 @@ export function ProjectsPanel({ projectId, projectName, onProjectFilterChange }:
             onSwitchToDocuments={() => setActiveView('documents')}
           />
         ) : (
-          <ZenDocumentsPanel
-            projectId={projectId}
-            projectName={projectName}
-          />
+          <ZenDocumentsPanel projectId={projectId} projectName={projectName} />
         )}
       </div>
     </div>
   )
 }
 
-function TabButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+function TabButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+}) {
   return (
     <button
       onClick={onClick}
@@ -187,37 +231,47 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
         width: '100%',
         transition: 'background 0.15s, border-color 0.15s',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--zen-bg-elevated)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'var(--zen-bg-hover)' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--zen-bg-elevated)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'var(--zen-bg-hover)'
+      }}
     >
-      <span style={{
-        width: 10,
-        height: 10,
-        borderRadius: '50%',
-        background: project.color || '#6b7280',
-        flexShrink: 0,
-      }} />
+      <span
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: '50%',
+          background: project.color || '#6b7280',
+          flexShrink: 0,
+        }}
+      />
       <span style={{ fontSize: 16, flexShrink: 0 }}>{project.icon || '📋'}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: 'var(--zen-fg)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
-          {project.name}
-        </div>
-        {project.description && (
-          <div style={{
-            fontSize: 11,
-            color: 'var(--zen-fg-muted)',
-            marginTop: 2,
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: 'var(--zen-fg)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-          }}>
+          }}
+        >
+          {project.name}
+        </div>
+        {project.description && (
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--zen-fg-muted)',
+              marginTop: 2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {project.description}
           </div>
         )}

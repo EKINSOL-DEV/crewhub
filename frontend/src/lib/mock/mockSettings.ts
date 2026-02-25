@@ -21,12 +21,36 @@ export const MOCK_ROOM_ASSIGNMENTS = [
   { session_key: 'agent:dev:main', room_id: 'dev-room', assigned_at: Date.now() - 3600000 },
   { session_key: 'agent:gamedev:main', room_id: 'dev-room', assigned_at: Date.now() - 3600000 },
   { session_key: 'agent:flowy:main', room_id: 'marketing-room', assigned_at: Date.now() - 3600000 },
-  { session_key: 'agent:reviewer:main', room_id: 'thinking-room', assigned_at: Date.now() - 3600000 },
-  { session_key: 'agent:dev:subagent:fix-auth-middleware', room_id: 'dev-room', assigned_at: Date.now() - 1800000 },
-  { session_key: 'agent:dev:subagent:design-landing-page', room_id: 'creative-room', assigned_at: Date.now() - 1800000 },
-  { session_key: 'agent:dev:subagent:database-migration-v3', room_id: 'ops-room', assigned_at: Date.now() - 1800000 },
-  { session_key: 'agent:dev:subagent:unit-test-coverage', room_id: 'dev-room', assigned_at: Date.now() - 1800000 },
-  { session_key: 'agent:flowy:subagent:social-media-campaign', room_id: 'marketing-room', assigned_at: Date.now() - 1200000 },
+  {
+    session_key: 'agent:reviewer:main',
+    room_id: 'thinking-room',
+    assigned_at: Date.now() - 3600000,
+  },
+  {
+    session_key: 'agent:dev:subagent:fix-auth-middleware',
+    room_id: 'dev-room',
+    assigned_at: Date.now() - 1800000,
+  },
+  {
+    session_key: 'agent:dev:subagent:design-landing-page',
+    room_id: 'creative-room',
+    assigned_at: Date.now() - 1800000,
+  },
+  {
+    session_key: 'agent:dev:subagent:database-migration-v3',
+    room_id: 'ops-room',
+    assigned_at: Date.now() - 1800000,
+  },
+  {
+    session_key: 'agent:dev:subagent:unit-test-coverage',
+    room_id: 'dev-room',
+    assigned_at: Date.now() - 1800000,
+  },
+  {
+    session_key: 'agent:flowy:subagent:social-media-campaign',
+    room_id: 'marketing-room',
+    assigned_at: Date.now() - 1200000,
+  },
 ]
 
 export const MOCK_RULES = [
@@ -61,7 +85,10 @@ export const MOCK_CRON_JOBS = [
     id: 'cron-heartbeat',
     name: 'Heartbeat Check',
     schedule: { kind: 'every', everyMs: 1800000 },
-    payload: { kind: 'agentTurn', message: 'Heartbeat check — review inbox, calendar, and notifications' },
+    payload: {
+      kind: 'agentTurn',
+      message: 'Heartbeat check — review inbox, calendar, and notifications',
+    },
     enabled: true,
     state: {
       lastRunAtMs: Date.now() - 900000,

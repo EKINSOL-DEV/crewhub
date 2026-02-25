@@ -1,8 +1,8 @@
 """Tests for sessions endpoints."""
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
+import pytest
 
 # Defer imports to avoid triggering circular imports at collection time.
 # SessionInfo is imported inside tests that need it.
@@ -12,7 +12,8 @@ from unittest.mock import AsyncMock, patch, MagicMock
 async def test_list_sessions(client):
     """Test GET /api/sessions returns session list."""
     from app.services.connections.base import SessionInfo
-    with patch('app.routes.sessions.get_connection_manager') as mock_get_mgr:
+
+    with patch("app.routes.sessions.get_connection_manager") as mock_get_mgr:
         mock_mgr = AsyncMock()
         mock_mgr.get_all_sessions.return_value = [
             SessionInfo(

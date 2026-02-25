@@ -1,29 +1,39 @@
 """Tests for Agent Persona Tuning system."""
 
-import pytest
 import time
 
+import pytest
+
 from app.services.personas import (
+    APPROACH_STYLE_PROMPTS,
+    CHECKIN_FREQUENCY_PROMPTS,
     PRESETS,
+    RESPONSE_DETAIL_PROMPTS,
+    START_BEHAVIOR_PROMPTS,
     build_persona_prompt,
     get_default_persona,
     get_preset_values,
     get_preview_response,
-    START_BEHAVIOR_PROMPTS,
-    CHECKIN_FREQUENCY_PROMPTS,
-    RESPONSE_DETAIL_PROMPTS,
-    APPROACH_STYLE_PROMPTS,
 )
-
 
 # ========================================
 # Unit tests for personas service
 # ========================================
 
+
 class TestPresets:
     def test_all_presets_have_required_fields(self):
-        required = {"name", "icon", "tagline", "description", "recommended",
-                     "start_behavior", "checkin_frequency", "response_detail", "approach_style"}
+        required = {
+            "name",
+            "icon",
+            "tagline",
+            "description",
+            "recommended",
+            "start_behavior",
+            "checkin_frequency",
+            "response_detail",
+            "approach_style",
+        }
         for key, preset in PRESETS.items():
             assert required.issubset(preset.keys()), f"Preset {key} missing fields"
 
@@ -108,6 +118,7 @@ class TestPreviewResponses:
 # API integration tests
 # ========================================
 
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
@@ -117,8 +128,8 @@ def anyio_backend():
 async def test_db(tmp_path):
     """Create a temporary database with schema for testing."""
     import aiosqlite
-    import app.db.database as db_mod
 
+    import app.db.database as db_mod
     import app.routes.personas as personas_mod
 
     db_path = tmp_path / "test.db"
@@ -186,9 +197,10 @@ async def test_db(tmp_path):
 @pytest.fixture
 def client(test_db):
     """Create a test client with temporary DB."""
-    from fastapi.testclient import TestClient
-    from app.routes.personas import router
     from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.routes.personas import router
 
     app = FastAPI()
     app.include_router(router, prefix="/api")
@@ -209,43 +221,55 @@ class TestPersonaAPI:
         assert resp.status_code == 404
 
     def test_put_persona(self, client):
-        resp = client.put("/api/agents/test-agent/persona", json={
-            "preset": "advisor",
-            "start_behavior": 4,
-            "checkin_frequency": 2,
-            "response_detail": 4,
-            "approach_style": 2,
-        })
+        resp = client.put(
+            "/api/agents/test-agent/persona",
+            json={
+                "preset": "advisor",
+                "start_behavior": 4,
+                "checkin_frequency": 2,
+                "response_detail": 4,
+                "approach_style": 2,
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["preset"] == "advisor"
         assert data["start_behavior"] == 4
 
     def test_put_then_get(self, client):
-        client.put("/api/agents/test-agent/persona", json={
-            "preset": "explorer",
-            "start_behavior": 2,
-            "checkin_frequency": 4,
-            "response_detail": 3,
-            "approach_style": 5,
-            "custom_instructions": "Be creative!",
-        })
+        client.put(
+            "/api/agents/test-agent/persona",
+            json={
+                "preset": "explorer",
+                "start_behavior": 2,
+                "checkin_frequency": 4,
+                "response_detail": 3,
+                "approach_style": 5,
+                "custom_instructions": "Be creative!",
+            },
+        )
         resp = client.get("/api/agents/test-agent/persona")
         data = resp.json()
         assert data["preset"] == "explorer"
         assert data["custom_instructions"] == "Be creative!"
 
     def test_put_invalid_preset(self, client):
-        resp = client.put("/api/agents/test-agent/persona", json={
-            "preset": "invalid_preset",
-            "start_behavior": 1,
-        })
+        resp = client.put(
+            "/api/agents/test-agent/persona",
+            json={
+                "preset": "invalid_preset",
+                "start_behavior": 1,
+            },
+        )
         assert resp.status_code == 400
 
     def test_put_invalid_range(self, client):
-        resp = client.put("/api/agents/test-agent/persona", json={
-            "start_behavior": 6,
-        })
+        resp = client.put(
+            "/api/agents/test-agent/persona",
+            json={
+                "start_behavior": 6,
+            },
+        )
         assert resp.status_code == 422  # Pydantic validation
 
     def test_list_presets(self, client):
@@ -257,10 +281,13 @@ class TestPersonaAPI:
         assert "explorer" in data["presets"]
 
     def test_preview(self, client):
-        resp = client.post("/api/personas/preview", json={
-            "prompt": "Say Hello World",
-            "preset": "executor",
-        })
+        resp = client.post(
+            "/api/personas/preview",
+            json={
+                "prompt": "Say Hello World",
+                "preset": "executor",
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert "system_prompt_fragment" in data
@@ -269,14 +296,20 @@ class TestPersonaAPI:
 
     def test_upsert_updates_existing(self, client):
         # Create
-        client.put("/api/agents/test-agent/persona", json={
-            "preset": "executor",
-            "start_behavior": 1,
-        })
+        client.put(
+            "/api/agents/test-agent/persona",
+            json={
+                "preset": "executor",
+                "start_behavior": 1,
+            },
+        )
         # Update
-        resp = client.put("/api/agents/test-agent/persona", json={
-            "preset": "advisor",
-            "start_behavior": 4,
-        })
+        resp = client.put(
+            "/api/agents/test-agent/persona",
+            json={
+                "preset": "advisor",
+                "start_behavior": 4,
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()["preset"] == "advisor"

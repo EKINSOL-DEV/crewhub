@@ -43,11 +43,7 @@ function findScreenPositions(scene: THREE.Scene): THREE.Vector3[] {
   return positions
 }
 
-export function BotSpeechBubble({
-  text,
-  yOffset = 1.4,
-  maxChars = 60,
-}: BotSpeechBubbleProps) {
+export function BotSpeechBubble({ text, yOffset = 1.4, maxChars = 60 }: BotSpeechBubbleProps) {
   const [zRange, setZRange] = useState<[number, number]>([50, 40])
   const groupRef = useRef<THREE.Group>(null)
   const { scene } = useThree()
@@ -81,11 +77,9 @@ export function BotSpeechBubble({
       const botInFront = botDist < closestScreenDist
       const newRange: [number, number] = botInFront ? [50, 40] : [1, 0]
 
-      setZRange((prev) =>
-        prev[0] === newRange[0] && prev[1] === newRange[1] ? prev : newRange,
-      )
+      setZRange((prev) => (prev[0] === newRange[0] && prev[1] === newRange[1] ? prev : newRange))
     },
-    [scene],
+    [scene]
   )
 
   useFrame(({ camera }) => {
@@ -97,8 +91,7 @@ export function BotSpeechBubble({
 
   if (!text) return null
 
-  const truncated =
-    text.length > maxChars ? text.slice(0, maxChars) + '…' : text
+  const truncated = text.length > maxChars ? text.slice(0, maxChars) + '…' : text
 
   return (
     <group ref={groupRef}>

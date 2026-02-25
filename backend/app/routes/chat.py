@@ -4,9 +4,9 @@ Handles message history retrieval, sending messages, and session info.
 Phase 1: non-streaming (send message, get full response).
 """
 
+import logging
 import re
 import time
-import logging
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
@@ -109,7 +109,7 @@ async def get_chat_history(
     raw: bool = Query(default=False),
 ):
     """Get chat history for a session with pagination.
-    
+
     Args:
         raw: If True, include thinking blocks and detailed tool calls in response.
     """
@@ -139,6 +139,7 @@ async def get_chat_history(
         if isinstance(timestamp, str):
             # ISO format like "2026-01-31T16:20:59.818Z"
             from datetime import datetime
+
             try:
                 dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
                 timestamp = int(dt.timestamp() * 1000)
@@ -220,9 +221,11 @@ async def get_chat_history(
                         "## Persona",
                     )
                     real_segments = [
-                        s for s in segments
+                        s
+                        for s in segments
                         if not any(s.startswith(p) for p in CONTEXT_PREFIXES)
-                        and not s.startswith("```") and "crewhub-context" not in s
+                        and not s.startswith("```")
+                        and "crewhub-context" not in s
                     ]
                     content = real_segments[-1] if real_segments else ""
 
@@ -258,7 +261,7 @@ async def get_chat_history(
             "tokens": tokens,
             "tools": tools if tools else [],
         }
-        
+
         # Include thinking blocks in raw mode
         if raw and thinking_blocks:
             message_data["thinking"] = thinking_blocks
@@ -297,7 +300,6 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
 
     # Build context envelope for agent awareness
     try:
-        import aiosqlite
         from app.db.database import get_db
         from app.services.context_envelope import build_crewhub_context, format_context_block
 
@@ -305,9 +307,7 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         ctx_room_id = body.room_id
         if not ctx_room_id:
             async with get_db() as db:
-                cursor = await db.execute(
-                    "SELECT default_room_id FROM agents WHERE id = ?", (agent_id,)
-                )
+                cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
                 row = await cursor.fetchone()
                 if row:
                     ctx_room_id = row["default_room_id"]
@@ -323,7 +323,7 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
     conn = manager.get_default_openclaw()
     if not conn:
         return {"response": None, "tokens": 0, "success": False, "error": "No OpenClaw connection"}
-    
+
     try:
         response_text = await conn.send_chat(
             message=message,
@@ -338,6 +338,7 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         # Broadcast session-updated so other open chat windows can refresh
         try:
             from app.routes.sse import broadcast
+
             await broadcast("session-updated", {"key": session_key})
         except Exception as e:
             logger.warning(f"Failed to broadcast session-updated: {e}")
@@ -349,8 +350,9 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
 @router.post("/api/chat/{session_key}/stream")
 async def stream_chat_message(session_key: str, body: SendMessageBody):
     """Send a message to an agent and stream back the response via SSE."""
-    from fastapi.responses import StreamingResponse
     import json
+
+    from fastapi.responses import StreamingResponse
 
     _validate_session_key(session_key)
     _check_rate_limit_stream(session_key)
@@ -366,16 +368,13 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
 
     # Build context envelope (same as /send)
     try:
-        import aiosqlite
         from app.db.database import get_db
         from app.services.context_envelope import build_crewhub_context, format_context_block
 
         ctx_room_id = body.room_id
         if not ctx_room_id:
             async with get_db() as db:
-                cursor = await db.execute(
-                    "SELECT default_room_id FROM agents WHERE id = ?", (agent_id,)
-                )
+                cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
                 row = await cursor.fetchone()
                 if row:
                     ctx_room_id = row["default_room_id"]
@@ -402,6 +401,7 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
             # Direct await after yield is valid in an async generator.
             try:
                 from app.routes.sse import broadcast
+
                 await broadcast("session-updated", {"key": session_key})
             except Exception as e:
                 logger.warning(f"Failed to broadcast session-updated after stream: {e}")

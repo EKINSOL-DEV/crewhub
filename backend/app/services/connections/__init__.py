@@ -8,10 +8,10 @@ Provides a unified interface for connecting to different AI agent systems:
 """
 
 from .base import AgentConnection, ConnectionStatus, SessionInfo
-from .openclaw import OpenClawConnection
 from .claude_code import ClaudeCodeConnection
 from .codex import CodexConnection
 from .connection_manager import ConnectionManager, get_connection_manager
+from .openclaw import OpenClawConnection
 
 __all__ = [
     # Base

@@ -60,21 +60,18 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
           </mesh>
 
           {/* Text */}
-          <Html zIndexRange={[1, 5]}
-            position={[0, 0, 0.08]}
-            center
-            transform
-            distanceFactor={4}
-          >
-            <span style={{
-              color: '#4A3520',
-              fontSize: '14px',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              fontWeight: 700,
-              whiteSpace: 'nowrap',
-              userSelect: 'none',
-              pointerEvents: 'none',
-            }}>
+          <Html zIndexRange={[1, 5]} position={[0, 0, 0.08]} center transform distanceFactor={4}>
+            <span
+              style={{
+                color: '#4A3520',
+                fontSize: '14px',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                userSelect: 'none',
+                pointerEvents: 'none',
+              }}
+            >
               🤖 Another AI took my job zone
             </span>
           </Html>
@@ -94,33 +91,20 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
       {/* ─── Props (compact layout for smaller break room) ─── */}
 
       {/* Bench — center of break area */}
-      <Bench
-        position={[0, 0.16, -0.5]}
-        rotation={[0, 0, 0]}
-      />
+      <Bench position={[0, 0.16, -0.5]} rotation={[0, 0, 0]} />
 
       {/* Coffee machine — back corner */}
-      <CoffeeMachine
-        position={[halfW - 1.2, 0.16, -halfD + 1.5]}
-        rotation={[0, -Math.PI / 6, 0]}
-      />
+      <CoffeeMachine position={[halfW - 1.2, 0.16, -halfD + 1.5]} rotation={[0, -Math.PI / 6, 0]} />
 
       {/* Water cooler — opposite corner */}
-      <WaterCooler
-        position={[-halfW + 1.2, 0.16, -halfD + 1.5]}
-        rotation={[0, Math.PI / 4, 0]}
-      />
+      <WaterCooler position={[-halfW + 1.2, 0.16, -halfD + 1.5]} rotation={[0, Math.PI / 4, 0]} />
 
       {/* Plants — two corners only */}
       <Plant position={[halfW - 0.8, 0.16, halfD - 1]} scale={0.8} />
       <Plant position={[-halfW + 0.8, 0.16, halfD - 1]} scale={0.7} />
 
       {/* Lamp for ambient lighting */}
-      <Lamp
-        position={[halfW - 1, 0.16, 0.5]}
-        lightColor="#FFA500"
-        lightIntensity={0.3}
-      />
+      <Lamp position={[halfW - 1, 0.16, 0.5]} lightColor="#FFA500" lightIntensity={0.3} />
 
       {/* Small table between benches */}
       <group position={[0, 0.16, 0.5]}>

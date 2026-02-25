@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import re
 import logging
-from typing import Optional
-from pathlib import Path
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -144,10 +142,7 @@ SHOWCASE_STYLES = {
 
 def get_available_styles() -> list[dict]:
     """Return list of available style sources."""
-    return [
-        {"id": sid, "name": s["name"], "palette": s["palette"]}
-        for sid, s in SHOWCASE_STYLES.items()
-    ]
+    return [{"id": sid, "name": s["name"], "palette": s["palette"]} for sid, s in SHOWCASE_STYLES.items()]
 
 
 def build_style_transfer_prompt(
@@ -168,14 +163,14 @@ def build_style_transfer_prompt(
 ```
 
 ## Target Style: {style["name"]}
-- **Color Palette:** {', '.join(style['palette'])}
-- **Material Approach:** {style['material_mix']}
-- **Detail Level:** {style['detail_density']}
-- **Animation:** {style['animation_style']}
-- **Composition Notes:** {style['composition']}
+- **Color Palette:** {", ".join(style["palette"])}
+- **Material Approach:** {style["material_mix"]}
+- **Detail Level:** {style["detail_density"]}
+- **Animation:** {style["animation_style"]}
+- **Composition Notes:** {style["composition"]}
 
 ## Style Application Guide
-{style['prompt_modifier']}
+{style["prompt_modifier"]}
 
 ## Rules
 1. Keep the same concept/shape — only change the STYLE
@@ -213,7 +208,7 @@ class StyleTransfer:
             component_name=component_name,
         )
 
-        from .connections import get_connection_manager, OpenClawConnection
+        from .connections import OpenClawConnection, get_connection_manager
 
         manager = await get_connection_manager()
         conn = None
@@ -235,10 +230,10 @@ class StyleTransfer:
             raise RuntimeError("AI returned empty response")
 
         raw = raw.strip()
-        raw = re.sub(r'^```\w*\n', '', raw)
-        raw = re.sub(r'\n```\s*$', '', raw)
+        raw = re.sub(r"^```\w*\n", "", raw)
+        raw = re.sub(r"\n```\s*$", "", raw)
 
-        if 'export function' not in raw:
+        if "export function" not in raw:
             raise ValueError("Style transfer produced invalid component")
 
         return raw

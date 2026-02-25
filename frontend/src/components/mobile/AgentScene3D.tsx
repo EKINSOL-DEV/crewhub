@@ -7,7 +7,15 @@ import type { BotVariantConfig } from '@/components/world3d/utils/botVariants'
 
 // ── Expressive Bot Face ────────────────────────────────────────
 
-function BotEye({ position, status, side }: { position: [number, number, number]; status: AgentStatus; side: 'left' | 'right' }) {
+function BotEye({
+  position,
+  status,
+  side,
+}: {
+  position: [number, number, number]
+  status: AgentStatus
+  side: 'left' | 'right'
+}) {
   const pupilRef = useRef<THREE.Mesh>(null)
   const lidRef = useRef<THREE.Mesh>(null)
 
@@ -34,7 +42,7 @@ function BotEye({ position, status, side }: { position: [number, number, number]
       lidRef.current.scale.y = 1
     } else {
       // Blink every ~4 seconds
-      const blinkCycle = (t % 4)
+      const blinkCycle = t % 4
       lidRef.current.scale.y = blinkCycle > 3.85 && blinkCycle < 3.95 ? 1 : 0
     }
   })
@@ -181,19 +189,21 @@ function ExpressiveBot({ config, status }: { config: BotVariantConfig; status: A
       <ThinkingDots visible={status === 'active'} />
 
       {/* Body */}
-      <RoundedBox args={[0.40, 0.28, 0.34]} radius={0.06} smoothness={3} position={[0, -0.02, 0]}>
+      <RoundedBox args={[0.4, 0.28, 0.34]} radius={0.06} smoothness={3} position={[0, -0.02, 0]}>
         <meshToonMaterial color={config.color} />
       </RoundedBox>
       {/* Lower body */}
-      <RoundedBox args={[0.40, 0.12, 0.34]} radius={0.04} smoothness={3} position={[0, -0.14, 0]}>
+      <RoundedBox args={[0.4, 0.12, 0.34]} radius={0.04} smoothness={3} position={[0, -0.14, 0]}>
         <meshToonMaterial color={darkHex} />
       </RoundedBox>
       {/* Arms */}
       <mesh position={[-0.26, 0, 0]} rotation={[0, 0, 0.2]}>
-        <capsuleGeometry args={[0.04, 0.12, 4, 6]} /><meshToonMaterial color={config.color} />
+        <capsuleGeometry args={[0.04, 0.12, 4, 6]} />
+        <meshToonMaterial color={config.color} />
       </mesh>
       <mesh position={[0.26, 0, 0]} rotation={[0, 0, -0.2]}>
-        <capsuleGeometry args={[0.04, 0.12, 4, 6]} /><meshToonMaterial color={config.color} />
+        <capsuleGeometry args={[0.04, 0.12, 4, 6]} />
+        <meshToonMaterial color={config.color} />
       </mesh>
 
       {/* Status glow ring */}
@@ -203,7 +213,8 @@ function ExpressiveBot({ config, status }: { config: BotVariantConfig; status: A
           color={status === 'active' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#6366f1'}
           emissive={status === 'active' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#6366f1'}
           emissiveIntensity={0.6}
-          transparent opacity={0.5}
+          transparent
+          opacity={0.5}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -216,7 +227,7 @@ function ExpressiveBot({ config, status }: { config: BotVariantConfig; status: A
             <meshStandardMaterial color="#334155" />
           </mesh>
           <mesh position={[0, 0.06, -0.06]} rotation={[0.8, 0, 0]}>
-            <boxGeometry args={[0.16, 0.10, 0.006]} />
+            <boxGeometry args={[0.16, 0.1, 0.006]} />
             <meshStandardMaterial color="#1e40af" emissive="#1e40af" emissiveIntensity={0.3} />
           </mesh>
         </group>
@@ -236,9 +247,7 @@ interface AgentScene3DProps {
 
 export default function AgentScene3D({ botConfig, agentStatus, mini }: AgentScene3DProps) {
   // Mini mode: closer camera focused on face, no controls
-  const cameraPos: [number, number, number] = mini
-    ? [0, 1.1, 2.0]
-    : [1.5, 2, 2.5]
+  const cameraPos: [number, number, number] = mini ? [0, 1.1, 2.0] : [1.5, 2, 2.5]
 
   return (
     <Canvas

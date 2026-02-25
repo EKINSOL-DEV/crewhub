@@ -5,12 +5,12 @@ import { useToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
 import type { WallStyle } from '@/contexts/RoomsContext'
 
 interface RoomWallsProps {
-  color?: string   // accent color strip
-  size?: number    // room size in units (default 12)
+  color?: string // accent color strip
+  size?: number // room size in units (default 12)
   wallHeight?: number // default 1.5
   hovered?: boolean
   wallStyle?: WallStyle
-  isHQ?: boolean   // HQ gets taller walls
+  isHQ?: boolean // HQ gets taller walls
 }
 
 type WallSegment = {
@@ -191,7 +191,7 @@ const GLASS_FRAGMENT = /* glsl */ `
 function createWallShaderMaterial(
   style: WallStyle,
   wallColor: string,
-  accentColor: string,
+  accentColor: string
 ): THREE.ShaderMaterial | null {
   const lightDir = new THREE.Vector3(0.5, 1.0, 0.3).normalize()
   const wc = new THREE.Color(wallColor)
@@ -249,7 +249,7 @@ function createWallShaderMaterial(
         vertexShader: WALL_VERTEX,
         fragmentShader: LIGHT_WALL_FRAGMENT,
         uniforms: {
-          uWallColor: { value: new THREE.Color('#F5F0EA') },  // warm white/cream
+          uWallColor: { value: new THREE.Color('#F5F0EA') }, // warm white/cream
           uLightDir: { value: lightDir },
         },
       })
@@ -259,7 +259,7 @@ function createWallShaderMaterial(
         vertexShader: WALL_VERTEX,
         fragmentShader: PASTEL_BAND_FRAGMENT,
         uniforms: {
-          uWallColor: { value: new THREE.Color('#F2EDE7') },  // light cream base
+          uWallColor: { value: new THREE.Color('#F2EDE7') }, // light cream base
           uAccentColor: { value: ac },
           uBandCenter: { value: 0.35 },
           uBandWidth: { value: 0.07 },
@@ -272,8 +272,8 @@ function createWallShaderMaterial(
         vertexShader: WALL_VERTEX,
         fragmentShader: GLASS_FRAGMENT,
         uniforms: {
-          uBaseColor: { value: new THREE.Color('#E8F0F8') },  // very light blue-white
-          uTintColor: { value: new THREE.Color('#B8D4E8') },  // soft sky blue
+          uBaseColor: { value: new THREE.Color('#E8F0F8') }, // very light blue-white
+          uTintColor: { value: new THREE.Color('#B8D4E8') }, // soft sky blue
           uLightDir: { value: lightDir },
         },
       })
@@ -374,24 +374,40 @@ export function RoomWalls({
     // Front-left segment
     segs.push({
       key: 'front-left-wall',
-      position: [-halfSize + sideWidth / 2, floorTop + wallHeight / 2, -halfSize + wallThickness / 2],
+      position: [
+        -halfSize + sideWidth / 2,
+        floorTop + wallHeight / 2,
+        -halfSize + wallThickness / 2,
+      ],
       size: [sideWidth, wallHeight, wallThickness],
     })
     segs.push({
       key: 'front-left-accent',
-      position: [-halfSize + sideWidth / 2, floorTop + wallHeight + accentHeight / 2, -halfSize + wallThickness / 2],
+      position: [
+        -halfSize + sideWidth / 2,
+        floorTop + wallHeight + accentHeight / 2,
+        -halfSize + wallThickness / 2,
+      ],
       size: [sideWidth, accentHeight, wallThickness + 0.02],
       isAccent: true,
     })
     // Front-right segment
     segs.push({
       key: 'front-right-wall',
-      position: [halfSize - sideWidth / 2, floorTop + wallHeight / 2, -halfSize + wallThickness / 2],
+      position: [
+        halfSize - sideWidth / 2,
+        floorTop + wallHeight / 2,
+        -halfSize + wallThickness / 2,
+      ],
       size: [sideWidth, wallHeight, wallThickness],
     })
     segs.push({
       key: 'front-right-accent',
-      position: [halfSize - sideWidth / 2, floorTop + wallHeight + accentHeight / 2, -halfSize + wallThickness / 2],
+      position: [
+        halfSize - sideWidth / 2,
+        floorTop + wallHeight + accentHeight / 2,
+        -halfSize + wallThickness / 2,
+      ],
       size: [sideWidth, accentHeight, wallThickness + 0.02],
       isAccent: true,
     })
@@ -472,12 +488,7 @@ export function RoomWalls({
         const useShader = !isDefault && !isAccent && wallShaderMat
 
         return (
-          <mesh
-            key={seg.key}
-            position={seg.position}
-            castShadow
-            receiveShadow
-          >
+          <mesh key={seg.key} position={seg.position} castShadow receiveShadow>
             <boxGeometry args={seg.size} />
             {useShader ? (
               <primitive object={wallShaderMat!.clone()} attach="material" />
@@ -498,11 +509,7 @@ export function RoomWalls({
 
       {/* Rounded caps on top of walls at corners and gap edges */}
       {caps.map((cap) => (
-        <mesh
-          key={cap.key}
-          position={cap.position}
-          rotation={[Math.PI / 2, 0, 0]}
-        >
+        <mesh key={cap.key} position={cap.position} rotation={[Math.PI / 2, 0, 0]}>
           <sphereGeometry args={[capRadius, 12, 12]} />
           <meshToonMaterial {...accentToon} />
         </mesh>

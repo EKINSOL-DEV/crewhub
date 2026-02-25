@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Headphones() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2
+  })
   return (
     <group ref={groupRef}>
       {/* Headband */}
@@ -38,12 +40,22 @@ export function Headphones() {
       {/* RGB accents */}
       <mesh position={[-0.35, 0.25, 0.06]}>
         <ringGeometry args={[0.12, 0.15, 8]} />
-        <meshStandardMaterial color="#44ffaa" emissive="#44ffaa" emissiveIntensity={1.5} side={THREE.DoubleSide} />
+        <meshStandardMaterial
+          color="#44ffaa"
+          emissive="#44ffaa"
+          emissiveIntensity={1.5}
+          side={THREE.DoubleSide}
+        />
       </mesh>
       <mesh position={[0.35, 0.25, 0.06]}>
         <ringGeometry args={[0.12, 0.15, 8]} />
-        <meshStandardMaterial color="#44ffaa" emissive="#44ffaa" emissiveIntensity={1.5} side={THREE.DoubleSide} />
+        <meshStandardMaterial
+          color="#44ffaa"
+          emissive="#44ffaa"
+          emissiveIntensity={1.5}
+          side={THREE.DoubleSide}
+        />
       </mesh>
     </group>
-  );
+  )
 }

@@ -1,6 +1,6 @@
 # Session Visibility Logic — Complete Analysis
 
-> **Generated:** 2026-02-03  
+> **Generated:** 2026-02-03
 > **Scope:** CrewHub frontend — how sessions flow from SSE to the Active view and Parking Lane
 
 ---

@@ -26,13 +26,14 @@ export function WorldLighting() {
   const dirLightRef = useRef<THREE.DirectionalLight>(null)
   const { config } = useLightingConfig()
   const { gl } = useThree()
-  
+
   // DEBUG
 
   // Apply tone mapping to renderer
   const mapping = TONE_MAP[config.toneMapping] ?? THREE.ACESFilmicToneMapping
   if (gl.toneMapping !== mapping) gl.toneMapping = mapping
-  if (gl.toneMappingExposure !== config.toneMappingExposure) gl.toneMappingExposure = config.toneMappingExposure
+  if (gl.toneMappingExposure !== config.toneMappingExposure)
+    gl.toneMappingExposure = config.toneMappingExposure
 
   // Apply shadow map settings to renderer
   const shadowEnabled = config.shadows.enabled && config.sun.castShadow
@@ -86,7 +87,11 @@ export function WorldLighting() {
 
       {/* Hemisphere light: sky/ground */}
       <hemisphereLight
-        args={[config.hemisphere.skyColor, config.hemisphere.groundColor, config.hemisphere.intensity]}
+        args={[
+          config.hemisphere.skyColor,
+          config.hemisphere.groundColor,
+          config.hemisphere.intensity,
+        ]}
       />
 
       {/* Main directional (sun) */}

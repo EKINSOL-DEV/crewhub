@@ -1,14 +1,16 @@
 """Tests for CrewHub context envelope."""
+
 import asyncio
 import time
-import pytest
+
 import aiosqlite
+import pytest
 
 from app.services.context_envelope import (
+    _canonical_json,
+    _compute_hash,
     build_crewhub_context,
     format_context_block,
-    _compute_hash,
-    _canonical_json,
 )
 
 
@@ -177,6 +179,7 @@ async def test_envelope_under_2kb(test_db):
     """Envelope should be under 2KB."""
     envelope = await build_crewhub_context(room_id="dev-room", channel="crewhub-ui")
     import json
+
     size = len(json.dumps(envelope, separators=(",", ":")))
     assert size < 2048, f"Envelope is {size} bytes, exceeds 2KB limit"
 

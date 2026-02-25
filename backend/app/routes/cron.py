@@ -2,9 +2,11 @@
 Cron job management routes.
 Full CRUD operations for OpenClaw cron jobs via ConnectionManager.
 """
+
+from typing import Literal, Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, model_validator
-from typing import Optional, Literal
 
 from ..services.connections import get_connection_manager
 
@@ -18,7 +20,7 @@ class ScheduleConfig(BaseModel):
     anchorMs: Optional[int] = None  # for kind="every"
     expr: Optional[str] = None  # for kind="cron"
     tz: Optional[str] = None  # for kind="cron"
-    
+
     @model_validator(mode="after")
     def validate_kind_fields(self):
         if self.kind == "at" and self.atMs is None:
@@ -37,7 +39,7 @@ class PayloadConfig(BaseModel):
     model: Optional[str] = None  # for kind="agentTurn"
     thinking: Optional[str] = None  # for kind="agentTurn"
     timeoutSeconds: Optional[int] = None  # for kind="agentTurn"
-    
+
     @model_validator(mode="after")
     def validate_payload_fields(self):
         if self.kind == "systemEvent" and not self.text:
@@ -84,11 +86,11 @@ async def list_cron_jobs(all: bool = True):
 async def create_cron_job(job: CronJobCreate):
     """Create a new cron job."""
     conn = await _get_openclaw()
-    
+
     # Convert Pydantic models to dicts, excluding None values
     schedule_dict = {k: v for k, v in job.schedule.model_dump().items() if v is not None}
     payload_dict = {k: v for k, v in job.payload.model_dump().items() if v is not None}
-    
+
     result = await conn.create_cron_job(
         schedule=schedule_dict,
         payload=payload_dict,
@@ -96,10 +98,10 @@ async def create_cron_job(job: CronJobCreate):
         name=job.name,
         enabled=job.enabled,
     )
-    
+
     if result is None:
         raise HTTPException(status_code=500, detail="Failed to create cron job")
-    
+
     return result
 
 
@@ -108,12 +110,12 @@ async def get_cron_job(job_id: str):
     """Get a specific cron job by ID."""
     conn = await _get_openclaw()
     jobs = await conn.list_cron_jobs(all_jobs=True)
-    
+
     job = next((j for j in jobs if j.get("id") == job_id), None)
-    
+
     if job is None:
         raise HTTPException(status_code=404, detail="Cron job not found")
-    
+
     return job
 
 
@@ -121,30 +123,30 @@ async def get_cron_job(job_id: str):
 async def update_cron_job(job_id: str, update: CronJobUpdate):
     """Update a cron job."""
     conn = await _get_openclaw()
-    
+
     # Build patch dict with only provided fields
     patch = {}
-    
+
     if update.schedule is not None:
         patch["schedule"] = {k: v for k, v in update.schedule.model_dump().items() if v is not None}
-    
+
     if update.payload is not None:
         patch["payload"] = {k: v for k, v in update.payload.model_dump().items() if v is not None}
-    
+
     if update.sessionTarget is not None:
         patch["sessionTarget"] = update.sessionTarget
-    
+
     if update.name is not None:
         patch["name"] = update.name
-    
+
     if update.enabled is not None:
         patch["enabled"] = update.enabled
-    
+
     result = await conn.update_cron_job(job_id, patch)
-    
+
     if result is None:
         raise HTTPException(status_code=500, detail="Failed to update cron job")
-    
+
     return result
 
 
@@ -153,10 +155,10 @@ async def delete_cron_job(job_id: str):
     """Delete a cron job."""
     conn = await _get_openclaw()
     success = await conn.delete_cron_job(job_id)
-    
+
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete cron job")
-    
+
     return {"success": True}
 
 
@@ -165,10 +167,10 @@ async def enable_cron_job(job_id: str):
     """Enable a cron job."""
     conn = await _get_openclaw()
     success = await conn.enable_cron_job(job_id)
-    
+
     if not success:
         raise HTTPException(status_code=500, detail="Failed to enable cron job")
-    
+
     return {"success": True}
 
 
@@ -177,10 +179,10 @@ async def disable_cron_job(job_id: str):
     """Disable a cron job."""
     conn = await _get_openclaw()
     success = await conn.disable_cron_job(job_id)
-    
+
     if not success:
         raise HTTPException(status_code=500, detail="Failed to disable cron job")
-    
+
     return {"success": True}
 
 
@@ -189,8 +191,8 @@ async def run_cron_job(job_id: str, force: bool = True):
     """Trigger a cron job to run immediately."""
     conn = await _get_openclaw()
     success = await conn.run_cron_job(job_id, force=force)
-    
+
     if not success:
         raise HTTPException(status_code=500, detail="Failed to run cron job")
-    
+
     return {"success": True}

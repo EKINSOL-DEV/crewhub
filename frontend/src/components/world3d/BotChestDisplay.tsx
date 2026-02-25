@@ -19,8 +19,8 @@ interface BotChestDisplayProps {
  * - Dev: "</>" code display
  */
 export function BotChestDisplay({ type, color }: BotChestDisplayProps) {
-  const displayY = 0.0   // On the body (body center = -0.02)
-  const displayZ = 0.18  // Front face of body (pushed forward to avoid clipping)
+  const displayY = 0.0 // On the body (body center = -0.02)
+  const displayZ = 0.18 // Front face of body (pushed forward to avoid clipping)
 
   return (
     <group position={[0, displayY, displayZ]}>
@@ -79,7 +79,15 @@ function ThreeDotsIcon({ color }: { color: string }) {
  * Simple 7-segment style digit using boxes.
  * Much lighter than Troika Text and avoids shader injection issues.
  */
-function SevenSegmentDigit({ digit, position, color }: { digit: string; position: [number, number, number]; color: string }) {
+function SevenSegmentDigit({
+  digit,
+  position,
+  color,
+}: {
+  digit: string
+  position: [number, number, number]
+  color: string
+}) {
   // Segment configuration for each digit (top, top-left, top-right, middle, bottom-left, bottom-right, bottom)
   const segments: Record<string, boolean[]> = {
     '0': [true, true, true, false, true, true, true],
@@ -110,19 +118,54 @@ function SevenSegmentDigit({ digit, position, color }: { digit: string; position
   return (
     <group position={position}>
       {/* Top horizontal */}
-      {seg[0] && <mesh position={[0, h, 0]}><boxGeometry args={[w, s, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {seg[0] && (
+        <mesh position={[0, h, 0]}>
+          <boxGeometry args={[w, s, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
       {/* Top-left vertical */}
-      {seg[1] && <mesh position={[-w/2 - s/4, h/2, 0]}><boxGeometry args={[s, h, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {seg[1] && (
+        <mesh position={[-w / 2 - s / 4, h / 2, 0]}>
+          <boxGeometry args={[s, h, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
       {/* Top-right vertical */}
-      {seg[2] && <mesh position={[w/2 + s/4, h/2, 0]}><boxGeometry args={[s, h, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {seg[2] && (
+        <mesh position={[w / 2 + s / 4, h / 2, 0]}>
+          <boxGeometry args={[s, h, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
       {/* Middle horizontal */}
-      {seg[3] && <mesh position={[0, 0, 0]}><boxGeometry args={[w, s, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {seg[3] && (
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[w, s, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
       {/* Bottom-left vertical */}
-      {seg[4] && <mesh position={[-w/2 - s/4, -h/2, 0]}><boxGeometry args={[s, h, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {seg[4] && (
+        <mesh position={[-w / 2 - s / 4, -h / 2, 0]}>
+          <boxGeometry args={[s, h, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
       {/* Bottom-right vertical */}
-      {seg[5] && <mesh position={[w/2 + s/4, -h/2, 0]}><boxGeometry args={[s, h, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {seg[5] && (
+        <mesh position={[w / 2 + s / 4, -h / 2, 0]}>
+          <boxGeometry args={[s, h, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
       {/* Bottom horizontal */}
-      {seg[6] && <mesh position={[0, -h, 0]}><boxGeometry args={[w, s, 0.002]} /><meshBasicMaterial color={color} /></mesh>}
+      {seg[6] && (
+        <mesh position={[0, -h, 0]}>
+          <boxGeometry args={[w, s, 0.002]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+      )}
     </group>
   )
 }
@@ -140,7 +183,7 @@ function ClockDisplay() {
       </mesh>
       {/* Border */}
       <mesh position={[0, 0, -0.003]}>
-        <planeGeometry args={[0.20, 0.11]} />
+        <planeGeometry args={[0.2, 0.11]} />
         <meshStandardMaterial color="#4a6a1a" />
       </mesh>
       {/* "12:00" using 7-segment style digits */}
@@ -193,18 +236,18 @@ function AnimatedDot({ x, delay }: { x: number; delay: number }) {
  */
 function CodeBrackets({ color }: { color: string }) {
   const t = 0.008 // line thickness
-  const h = 0.04  // bracket height
+  const h = 0.04 // bracket height
   const w = 0.015 // bracket width
 
   return (
     <group>
       {/* Left angle bracket "<" */}
       <group position={[-0.04, 0, 0]}>
-        <mesh position={[-w/4, h/4, 0]} rotation={[0, 0, -0.5]}>
+        <mesh position={[-w / 4, h / 4, 0]} rotation={[0, 0, -0.5]}>
           <boxGeometry args={[w * 1.2, t, 0.002]} />
           <meshBasicMaterial color={color} />
         </mesh>
-        <mesh position={[-w/4, -h/4, 0]} rotation={[0, 0, 0.5]}>
+        <mesh position={[-w / 4, -h / 4, 0]} rotation={[0, 0, 0.5]}>
           <boxGeometry args={[w * 1.2, t, 0.002]} />
           <meshBasicMaterial color={color} />
         </mesh>
@@ -218,11 +261,11 @@ function CodeBrackets({ color }: { color: string }) {
 
       {/* Right angle bracket ">" */}
       <group position={[0.04, 0, 0]}>
-        <mesh position={[w/4, h/4, 0]} rotation={[0, 0, 0.5]}>
+        <mesh position={[w / 4, h / 4, 0]} rotation={[0, 0, 0.5]}>
           <boxGeometry args={[w * 1.2, t, 0.002]} />
           <meshBasicMaterial color={color} />
         </mesh>
-        <mesh position={[w/4, -h/4, 0]} rotation={[0, 0, -0.5]}>
+        <mesh position={[w / 4, -h / 4, 0]} rotation={[0, 0, -0.5]}>
           <boxGeometry args={[w * 1.2, t, 0.002]} />
           <meshBasicMaterial color={color} />
         </mesh>
@@ -236,7 +279,7 @@ function CodeDisplay() {
     <group>
       {/* Dark background panel */}
       <mesh position={[0, 0, -0.002]}>
-        <planeGeometry args={[0.20, 0.09]} />
+        <planeGeometry args={[0.2, 0.09]} />
         <meshStandardMaterial color="#2a0a0a" />
       </mesh>
       {/* Border */}

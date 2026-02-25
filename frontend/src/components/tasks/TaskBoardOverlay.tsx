@@ -1,5 +1,11 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
-import { useTasks, type Task, type TaskStatus, type TaskCreate, type TaskUpdate } from '@/hooks/useTasks'
+import {
+  useTasks,
+  type Task,
+  type TaskStatus,
+  type TaskCreate,
+  type TaskUpdate,
+} from '@/hooks/useTasks'
 import { TaskCard } from './TaskCard'
 import { TaskForm } from './TaskForm'
 import { RunOrSelfDialog } from './RunOrSelfDialog'
@@ -19,10 +25,38 @@ interface ColumnConfig {
 }
 
 const columns: ColumnConfig[] = [
-  { status: 'todo', label: 'To Do', icon: '📋', headerBg: 'bg-gray-100 dark:bg-gray-800', headerColor: 'text-gray-600 dark:text-gray-300', borderColor: 'border-gray-300' },
-  { status: 'in_progress', label: 'In Progress', icon: '🔄', headerBg: 'bg-blue-50 dark:bg-blue-950', headerColor: 'text-blue-600 dark:text-blue-400', borderColor: 'border-blue-300' },
-  { status: 'review', label: 'Review', icon: '👀', headerBg: 'bg-purple-50 dark:bg-purple-950', headerColor: 'text-purple-600 dark:text-purple-400', borderColor: 'border-purple-300' },
-  { status: 'done', label: 'Done', icon: '✅', headerBg: 'bg-green-50 dark:bg-green-950', headerColor: 'text-green-600 dark:text-green-400', borderColor: 'border-green-300' },
+  {
+    status: 'todo',
+    label: 'To Do',
+    icon: '📋',
+    headerBg: 'bg-gray-100 dark:bg-gray-800',
+    headerColor: 'text-gray-600 dark:text-gray-300',
+    borderColor: 'border-gray-300',
+  },
+  {
+    status: 'in_progress',
+    label: 'In Progress',
+    icon: '🔄',
+    headerBg: 'bg-blue-50 dark:bg-blue-950',
+    headerColor: 'text-blue-600 dark:text-blue-400',
+    borderColor: 'border-blue-300',
+  },
+  {
+    status: 'review',
+    label: 'Review',
+    icon: '👀',
+    headerBg: 'bg-purple-50 dark:bg-purple-950',
+    headerColor: 'text-purple-600 dark:text-purple-400',
+    borderColor: 'border-purple-300',
+  },
+  {
+    status: 'done',
+    label: 'Done',
+    icon: '✅',
+    headerBg: 'bg-green-50 dark:bg-green-950',
+    headerColor: 'text-green-600 dark:text-green-400',
+    borderColor: 'border-green-300',
+  },
 ]
 
 // ── Props ──────────────────────────────────────────────────────
@@ -44,16 +78,8 @@ export function TaskBoardOverlay({
   roomId,
   agents = [],
 }: TaskBoardOverlayProps) {
-  const {
-    tasks,
-    isLoading,
-    error,
-    refresh,
-    createTask,
-    updateTask,
-    deleteTask,
-    taskCounts,
-  } = useTasks({ projectId, roomId })
+  const { tasks, isLoading, error, refresh, createTask, updateTask, deleteTask, taskCounts } =
+    useTasks({ projectId, roomId })
 
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -61,7 +87,7 @@ export function TaskBoardOverlay({
   const [_isRefreshing, setIsRefreshing] = useState(false)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null)
-  
+
   // State for the "Run or Self" dialog when dragging todo → in_progress
   const [pendingDropTask, setPendingDropTask] = useState<Task | null>(null)
   const [showRunOrSelfDialog, setShowRunOrSelfDialog] = useState(false)
@@ -95,53 +121,65 @@ export function TaskBoardOverlay({
   const blockedTasks = tasksByStatus.blocked
 
   // Handle status change
-  const handleStatusChange = useCallback(async (task: Task, newStatus: TaskStatus) => {
-    const result = await updateTask(task.id, { status: newStatus })
-    if (!result.success) {
-      console.error('Failed to update task status:', result.error)
-    }
-  }, [updateTask])
+  const handleStatusChange = useCallback(
+    async (task: Task, newStatus: TaskStatus) => {
+      const result = await updateTask(task.id, { status: newStatus })
+      if (!result.success) {
+        console.error('Failed to update task status:', result.error)
+      }
+    },
+    [updateTask]
+  )
 
   // Handle create task
-  const handleCreateTask = useCallback(async (data: TaskCreate | TaskUpdate) => {
-    setFormLoading(true)
-    try {
-      const result = await createTask(data as TaskCreate)
-      if (result.success) {
-        setShowCreateForm(false)
-      } else {
-        throw new Error(result.error)
+  const handleCreateTask = useCallback(
+    async (data: TaskCreate | TaskUpdate) => {
+      setFormLoading(true)
+      try {
+        const result = await createTask(data as TaskCreate)
+        if (result.success) {
+          setShowCreateForm(false)
+        } else {
+          throw new Error(result.error)
+        }
+      } finally {
+        setFormLoading(false)
       }
-    } finally {
-      setFormLoading(false)
-    }
-  }, [createTask])
+    },
+    [createTask]
+  )
 
   // Handle edit task
-  const handleEditTask = useCallback(async (data: TaskCreate | TaskUpdate) => {
-    if (!editingTask) return
-    setFormLoading(true)
-    try {
-      const result = await updateTask(editingTask.id, data as TaskUpdate)
-      if (result.success) {
-        setEditingTask(null)
-      } else {
-        throw new Error(result.error)
+  const handleEditTask = useCallback(
+    async (data: TaskCreate | TaskUpdate) => {
+      if (!editingTask) return
+      setFormLoading(true)
+      try {
+        const result = await updateTask(editingTask.id, data as TaskUpdate)
+        if (result.success) {
+          setEditingTask(null)
+        } else {
+          throw new Error(result.error)
+        }
+      } finally {
+        setFormLoading(false)
       }
-    } finally {
-      setFormLoading(false)
-    }
-  }, [editingTask, updateTask])
+    },
+    [editingTask, updateTask]
+  )
 
   // Handle delete task
-  const handleDeleteTask = useCallback(async (task: Task) => {
-    if (!confirm(`Delete task "${task.title}"?`)) return
-    const result = await deleteTask(task.id)
-    if (!result.success) {
-      console.error('Failed to delete task:', result.error)
-    }
-    setEditingTask(null)
-  }, [deleteTask])
+  const handleDeleteTask = useCallback(
+    async (task: Task) => {
+      if (!confirm(`Delete task "${task.title}"?`)) return
+      const result = await deleteTask(task.id)
+      if (!result.success) {
+        console.error('Failed to delete task:', result.error)
+      }
+      setEditingTask(null)
+    },
+    [deleteTask]
+  )
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -167,7 +205,7 @@ export function TaskBoardOverlay({
   const handleDrop = async (e: React.DragEvent, newStatus: TaskStatus) => {
     e.preventDefault()
     setDragOverColumn(null)
-    
+
     if (!draggedTask || draggedTask.status === newStatus) {
       setDraggedTask(null)
       return
@@ -246,11 +284,20 @@ export function TaskBoardOverlay({
   }, [onOpenChange, showCreateForm, editingTask, showRunOrSelfDialog, showSpawnDialogForDrop])
 
   // Handle backdrop click
-  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
-    if (e.target === e.currentTarget && !showCreateForm && !editingTask && !showRunOrSelfDialog && !showSpawnDialogForDrop) {
-      onOpenChange(false)
-    }
-  }, [onOpenChange, showCreateForm, editingTask, showRunOrSelfDialog, showSpawnDialogForDrop])
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDialogElement>) => {
+      if (
+        e.target === e.currentTarget &&
+        !showCreateForm &&
+        !editingTask &&
+        !showRunOrSelfDialog &&
+        !showSpawnDialogForDrop
+      ) {
+        onOpenChange(false)
+      }
+    },
+    [onOpenChange, showCreateForm, editingTask, showRunOrSelfDialog, showSpawnDialogForDrop]
+  )
 
   const totalTasks = tasks.length
   const activeTasks = taskCounts.todo + taskCounts.in_progress + taskCounts.review
@@ -268,7 +315,7 @@ export function TaskBoardOverlay({
       "
     >
       {/* Dialog content panel */}
-      <div 
+      <div
         className="w-[calc(100vw-3rem)] max-w-[1600px] h-[calc(100vh-3rem)] max-h-[900px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
@@ -308,13 +355,14 @@ export function TaskBoardOverlay({
                 {blockedTasks.length} blocked task{blockedTasks.length > 1 ? 's' : ''}
               </span>
               <div className="flex gap-2 mt-1 flex-wrap">
-                {blockedTasks.slice(0, 3).map(task => (
+                {blockedTasks.slice(0, 3).map((task) => (
                   <button
                     key={task.id}
                     onClick={() => setEditingTask(task)}
                     className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                   >
-                    {task.title.slice(0, 30)}{task.title.length > 30 ? '…' : ''}
+                    {task.title.slice(0, 30)}
+                    {task.title.length > 30 ? '…' : ''}
                   </button>
                 ))}
                 {blockedTasks.length > 3 && (
@@ -353,27 +401,35 @@ export function TaskBoardOverlay({
                   <div
                     key={col.status}
                     className={cn(
-                      "flex flex-col rounded-xl border bg-muted/30 min-h-[400px] transition-all",
-                      isDropTarget && "ring-2 ring-blue-500 ring-offset-2 bg-blue-50/50 dark:bg-blue-950/50"
+                      'flex flex-col rounded-xl border bg-muted/30 min-h-[400px] transition-all',
+                      isDropTarget &&
+                        'ring-2 ring-blue-500 ring-offset-2 bg-blue-50/50 dark:bg-blue-950/50'
                     )}
                     onDragOver={(e) => handleDragOver(e, col.status)}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, col.status)}
                   >
                     {/* Column Header */}
-                    <div className={cn("flex items-center justify-between px-4 py-3 rounded-t-xl", col.headerBg)}>
+                    <div
+                      className={cn(
+                        'flex items-center justify-between px-4 py-3 rounded-t-xl',
+                        col.headerBg
+                      )}
+                    >
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{col.icon}</span>
-                        <span className={cn("font-semibold text-sm", col.headerColor)}>
+                        <span className={cn('font-semibold text-sm', col.headerColor)}>
                           {col.label}
                         </span>
                       </div>
-                      <span className={cn(
-                        "text-xs font-medium px-2 py-0.5 rounded-full",
-                        col.headerBg,
-                        col.headerColor,
-                        "bg-white/60 dark:bg-black/20"
-                      )}>
+                      <span
+                        className={cn(
+                          'text-xs font-medium px-2 py-0.5 rounded-full',
+                          col.headerBg,
+                          col.headerColor,
+                          'bg-white/60 dark:bg-black/20'
+                        )}
+                      >
                         {taskCounts[col.status]}
                       </span>
                     </div>
@@ -400,8 +456,8 @@ export function TaskBoardOverlay({
                             onDragStart={() => handleDragStart(task)}
                             onDragEnd={handleDragEnd}
                             className={cn(
-                              "cursor-grab active:cursor-grabbing transition-opacity",
-                              draggedTask?.id === task.id && "opacity-50"
+                              'cursor-grab active:cursor-grabbing transition-opacity',
+                              draggedTask?.id === task.id && 'opacity-50'
                             )}
                           >
                             <TaskCard
@@ -530,16 +586,13 @@ interface TaskBoardPreviewProps {
 
 export function TaskBoardPreview({ projectId, roomId, onExpand }: TaskBoardPreviewProps) {
   const { tasks, taskCounts, isLoading } = useTasks({ projectId, roomId })
-  
-  const activeTasks = tasks.filter(t => t.status !== 'done').slice(0, 3)
-  const totalActive = taskCounts.todo + taskCounts.in_progress + taskCounts.review + taskCounts.blocked
+
+  const activeTasks = tasks.filter((t) => t.status !== 'done').slice(0, 3)
+  const totalActive =
+    taskCounts.todo + taskCounts.in_progress + taskCounts.review + taskCounts.blocked
 
   if (isLoading) {
-    return (
-      <div className="py-4 text-center text-sm text-muted-foreground">
-        Loading tasks...
-      </div>
-    )
+    return <div className="py-4 text-center text-sm text-muted-foreground">Loading tasks...</div>
   }
 
   return (
@@ -550,39 +603,32 @@ export function TaskBoardPreview({ projectId, roomId, onExpand }: TaskBoardPrevi
         <span className="text-blue-500">🔄 {taskCounts.in_progress}</span>
         <span className="text-purple-500">👀 {taskCounts.review}</span>
         <span className="text-green-500">✅ {taskCounts.done}</span>
-        {taskCounts.blocked > 0 && (
-          <span className="text-red-500">🚫 {taskCounts.blocked}</span>
-        )}
+        {taskCounts.blocked > 0 && <span className="text-red-500">🚫 {taskCounts.blocked}</span>}
       </div>
 
       {/* Task preview */}
       {activeTasks.length > 0 ? (
         <div className="space-y-2">
           {activeTasks.map((task) => (
-            <div
-              key={task.id}
-              className="text-xs p-2 bg-muted/50 rounded-lg truncate"
-            >
-              <span className={cn(
-                "inline-block w-1.5 h-1.5 rounded-full mr-2",
-                task.priority === 'urgent' && "bg-red-500",
-                task.priority === 'high' && "bg-orange-500",
-                task.priority === 'medium' && "bg-blue-500",
-                task.priority === 'low' && "bg-gray-400",
-              )} />
+            <div key={task.id} className="text-xs p-2 bg-muted/50 rounded-lg truncate">
+              <span
+                className={cn(
+                  'inline-block w-1.5 h-1.5 rounded-full mr-2',
+                  task.priority === 'urgent' && 'bg-red-500',
+                  task.priority === 'high' && 'bg-orange-500',
+                  task.priority === 'medium' && 'bg-blue-500',
+                  task.priority === 'low' && 'bg-gray-400'
+                )}
+              />
               {task.title}
             </div>
           ))}
           {totalActive > 3 && (
-            <div className="text-xs text-muted-foreground text-center">
-              +{totalActive - 3} more
-            </div>
+            <div className="text-xs text-muted-foreground text-center">+{totalActive - 3} more</div>
           )}
         </div>
       ) : (
-        <div className="text-xs text-muted-foreground text-center py-2 italic">
-          No active tasks
-        </div>
+        <div className="text-xs text-muted-foreground text-center py-2 italic">No active tasks</div>
       )}
 
       {/* Expand button */}

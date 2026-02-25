@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  assignRoom,
-  DEFAULT_ASSIGNMENT_CONFIG,
-  type AssignmentInput,
-} from '../lib/roomAssignment'
+import { assignRoom, DEFAULT_ASSIGNMENT_CONFIG, type AssignmentInput } from '../lib/roomAssignment'
 
 describe('assignRoom', () => {
   it('returns explicit room when provided', () => {
@@ -135,7 +131,7 @@ describe('DEFAULT_ASSIGNMENT_CONFIG', () => {
   })
 
   it('has keyword rules for all major room types', () => {
-    const roomTypes = DEFAULT_ASSIGNMENT_CONFIG.keywordRules.map(r => r.room)
+    const roomTypes = DEFAULT_ASSIGNMENT_CONFIG.keywordRules.map((r) => r.room)
     expect(roomTypes).toContain('thinking')
     expect(roomTypes).toContain('dev')
     expect(roomTypes).toContain('marketing')

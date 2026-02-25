@@ -5,7 +5,7 @@ UI elements and interaction patterns.
 ---
 
 ## Bot Panel
-**Status:** ✅ Released in **v0.7.0**  
+**Status:** ✅ Released in **v0.7.0**
 **Description:** Draggable info panel for inspecting agents. Includes tabs: Info (bio, status, stats), Chat (Planner-style messaging), Files (workspace browser), and Sessions (history).
 
 **Docs:**
@@ -15,7 +15,7 @@ UI elements and interaction patterns.
 ---
 
 ## Grid System
-**Status:** ✅ Released in **v0.3.0**  
+**Status:** ✅ Released in **v0.3.0**
 **Description:** 20×20 tile grid system for room layout. Simplified bot movement (snap to grid), drag-and-drop between rooms, and collision detection. Replaced complex pathfinding with straightforward tile-based logic.
 
 **Docs:**
@@ -25,7 +25,7 @@ UI elements and interaction patterns.
 ---
 
 ## Debug Panel
-**Status:** ✅ Released in **v0.4.0**  
+**Status:** ✅ Released in **v0.4.0**
 **Description:** Developer tools for testing and debugging. Features: F2/F3/F4 test bot spawning, camera position HUD, lighting controls, environment switcher, and performance metrics.
 
 **Docs:**
@@ -34,7 +34,7 @@ UI elements and interaction patterns.
 ---
 
 ## Room Focus Mode
-**Status:** ✅ Released in **v0.3.0**  
+**Status:** ✅ Released in **v0.3.0**
 **Description:** Zoom into a room for closer inspection. Camera flies to room, disables orbit during drag, and shows TaskWall3D when room has a project. Escape or back button returns to overview.
 
 **Docs:**
@@ -43,7 +43,7 @@ UI elements and interaction patterns.
 ---
 
 ## Agent Chat
-**Status:** ✅ Released in **v0.7.0**  
+**Status:** ✅ Released in **v0.7.0**
 **Description:** Direct messaging interface with agents in the 3D world. Planner-style chat windows (draggable, resizable, minimizable), markdown support, and only available for fixed agents (agent:*:main).
 
 **Docs:**
@@ -52,7 +52,7 @@ UI elements and interaction patterns.
 ---
 
 ## Zen Mode
-**Status:** ✅ Released in **v0.11.0**  
+**Status:** ✅ Released in **v0.11.0**
 **Description:** Distraction-free focus mode with multi-tab workspaces, Zen Statue interaction (click statue in project rooms), persistent state (localStorage), and Activity Panel showing active tasks with icons.
 
 **Docs:**
@@ -64,7 +64,7 @@ UI elements and interaction patterns.
 ---
 
 ## HQ Visual Redesign
-**Status:** 📋 Planned (v0.15.0)  
+**Status:** 📋 Planned (v0.15.0)
 **Description:** Visual redesign of the HQ command center room. Design to be determined — potential directions include: elevated platform, holographic displays, mission control aesthetic, wall-mounted dashboards, or central strategy table.
 
 **Docs:**

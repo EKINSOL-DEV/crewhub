@@ -1,4 +1,5 @@
 """Schema creation and migrations for CrewHub database."""
+
 import logging
 
 from .schema import SCHEMA_VERSION
@@ -256,11 +257,11 @@ async def run_migrations(db) -> None:
         pass  # Column already exists
 
     agent_bios = {
-        'main': 'Director of Bots. Keeps the crew running, manages schedules, and always has an answer. Runs on coffee and Sonnet.',
-        'dev': 'Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus.',
-        'gamedev': '3D world architect. Builds rooms, animates bots, and makes pixels dance. Three.js whisperer on Opus.',
-        'flowy': 'Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2.',
-        'reviewer': 'Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions.',
+        "main": "Director of Bots. Keeps the crew running, manages schedules, and always has an answer. Runs on coffee and Sonnet.",
+        "dev": "Senior developer. Lives in the codebase, speaks fluent TypeScript, and ships features at light speed. Powered by Opus.",
+        "gamedev": "3D world architect. Builds rooms, animates bots, and makes pixels dance. Three.js whisperer on Opus.",
+        "flowy": "Marketing maestro and product visionary. Turns ideas into campaigns and roadmaps into reality. Creative force on GPT-5.2.",
+        "reviewer": "Code critic and quality guardian. Reviews PRs with surgical precision. Runs on GPT-5.2 and strong opinions.",
     }
     for agent_id, bio in agent_bios.items():
         await db.execute(
@@ -615,10 +616,13 @@ async def run_migrations(db) -> None:
     """)
 
     # Advance schema version
-    await db.execute("""
+    await db.execute(
+        """
         INSERT OR REPLACE INTO schema_version (version)
         VALUES (?)
-    """, (SCHEMA_VERSION,))
+    """,
+        (SCHEMA_VERSION,),
+    )
 
     await db.commit()
     logger.debug("Schema migrations applied (version %d)", SCHEMA_VERSION)

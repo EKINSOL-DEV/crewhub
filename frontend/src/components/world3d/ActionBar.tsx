@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
+import { useZenMode } from '@/components/zen'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -10,6 +11,12 @@ interface ActionBarProps {
   tasksWindowOpen: boolean
   /** Callback to toggle the tasks window */
   onToggleTasksWindow: () => void
+  /** Whether creator mode is active */
+  isCreatorMode: boolean
+  /** Callback to toggle creator mode */
+  onToggleCreatorMode: () => void
+  /** Only show creator button if admin */
+  isAdmin?: boolean
 }
 
 interface ActionButtonProps {
@@ -19,11 +26,22 @@ interface ActionButtonProps {
   isActive?: boolean
   badge?: number
   badgeColor?: string
+  activeBackground?: string
+  activeBorder?: string
 }
 
 // ── ActionButton Sub-Component ─────────────────────────────────
 
-function ActionButton({ icon, label, onClick, isActive, badge, badgeColor = '#3b82f6' }: ActionButtonProps) {
+function ActionButton({
+  icon,
+  label,
+  onClick,
+  isActive,
+  badge,
+  badgeColor = '#3b82f6',
+  activeBackground,
+  activeBorder,
+}: ActionButtonProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
@@ -39,14 +57,14 @@ function ActionButton({ icon, label, onClick, isActive, badge, badgeColor = '#3b
           width: 40,
           height: 40,
           borderRadius: 10,
-          border: 'none',
           cursor: 'pointer',
           fontSize: 18,
           background: isActive
-            ? 'rgba(59, 130, 246, 0.25)'
+            ? (activeBackground ?? 'rgba(59, 130, 246, 0.25)')
             : isHovered
               ? 'rgba(255, 255, 255, 0.3)'
               : 'transparent',
+          border: isActive && activeBorder ? activeBorder : 'none',
           transition: 'all 0.15s ease',
           position: 'relative',
         }}
@@ -130,9 +148,13 @@ export function ActionBar({
   runningTaskCount,
   tasksWindowOpen,
   onToggleTasksWindow,
+  isCreatorMode,
+  onToggleCreatorMode,
+  isAdmin = false,
 }: ActionBarProps) {
   const { state, enterFirstPerson, goBack } = useWorldFocus()
-  
+  const zenMode = useZenMode()
+
   const isFirstPerson = state.level === 'firstperson'
 
   const handleWalkAroundClick = useCallback(() => {
@@ -182,6 +204,29 @@ export function ActionBar({
           isActive={tasksWindowOpen}
           badge={runningTaskCount > 0 ? runningTaskCount : undefined}
           badgeColor={runningTaskCount > 0 ? '#3b82f6' : '#6b7280'}
+        />
+
+        {/* Creator Mode Button — admin only */}
+        {isAdmin && (
+          <ActionButton
+            icon="🎨"
+            label="Creator Mode [E]"
+            onClick={onToggleCreatorMode}
+            isActive={isCreatorMode}
+            badgeColor="gold"
+            activeBackground="rgba(255,215,0,0.2)"
+            activeBorder="1.5px solid gold"
+          />
+        )}
+
+        {/* Zen Mode Button */}
+        <ActionButton
+          icon="🧘"
+          label="Zen Mode"
+          onClick={() => zenMode.enter()}
+          isActive={zenMode.isActive}
+          activeBackground="rgba(99,102,241,0.2)"
+          activeBorder="1.5px solid #6366f1"
         />
       </div>
 

@@ -22,9 +22,16 @@ interface ProjectCardProps {
   onTap: () => void
 }
 
-function ProjectCard({ project, taskCount, completedCount, assignedAgents, onTap }: ProjectCardProps) {
+function ProjectCard({
+  project,
+  taskCount,
+  completedCount,
+  assignedAgents,
+  onTap,
+}: ProjectCardProps) {
   const progress = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0
-  const statusColor = project.status === 'active' ? '#22c55e' : project.status === 'archived' ? '#64748b' : '#f59e0b'
+  const statusColor =
+    project.status === 'active' ? '#22c55e' : project.status === 'archived' ? '#64748b' : '#f59e0b'
 
   return (
     <button
@@ -64,7 +71,7 @@ function ProjectCard({ project, taskCount, completedCount, assignedAgents, onTap
             <Folder size={20} color={project.color} />
           </div>
         )}
-        
+
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>
             {project.name}
@@ -86,7 +93,7 @@ function ProjectCard({ project, taskCount, completedCount, assignedAgents, onTap
             </div>
           )}
         </div>
-        
+
         <div
           style={{
             padding: '4px 8px',
@@ -107,7 +114,9 @@ function ProjectCard({ project, taskCount, completedCount, assignedAgents, onTap
       <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#94a3b8' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span>📋</span>
-          <span>{taskCount} task{taskCount !== 1 ? 's' : ''}</span>
+          <span>
+            {taskCount} task{taskCount !== 1 ? 's' : ''}
+          </span>
         </div>
         {taskCount > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -118,7 +127,9 @@ function ProjectCard({ project, taskCount, completedCount, assignedAgents, onTap
         {assignedAgents.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span>👥</span>
-            <span>{assignedAgents.length} agent{assignedAgents.length !== 1 ? 's' : ''}</span>
+            <span>
+              {assignedAgents.length} agent{assignedAgents.length !== 1 ? 's' : ''}
+            </span>
           </div>
         )}
       </div>
@@ -170,7 +181,8 @@ function ProjectDetailModal({
   onClose,
 }: ProjectDetailModalProps) {
   const progress = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0
-  const statusColor = project.status === 'active' ? '#22c55e' : project.status === 'archived' ? '#64748b' : '#f59e0b'
+  const statusColor =
+    project.status === 'active' ? '#22c55e' : project.status === 'archived' ? '#64748b' : '#f59e0b'
 
   return (
     <div
@@ -350,7 +362,15 @@ function ProjectDetailModal({
                 }}
               />
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', minWidth: 50, textAlign: 'right' }}>
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#f1f5f9',
+                minWidth: 50,
+                textAlign: 'right',
+              }}
+            >
               {progress}%
             </div>
           </div>
@@ -399,20 +419,25 @@ export function MobileProjectsPanel({ onBack }: MobileProjectsPanelProps) {
 
   // Calculate stats for each project
   const projectStats = useMemo(() => {
-    const stats = new Map<string, {
-      taskCount: number
-      completedCount: number
-      inProgressCount: number
-      blockedCount: number
-      assignedAgents: string[]
-    }>()
+    const stats = new Map<
+      string,
+      {
+        taskCount: number
+        completedCount: number
+        inProgressCount: number
+        blockedCount: number
+        assignedAgents: string[]
+      }
+    >()
 
     for (const project of projects) {
-      const projectTasks = tasks.filter(t => t.project_id === project.id)
-      const completed = projectTasks.filter(t => t.status === 'done').length
-      const inProgress = projectTasks.filter(t => t.status === 'in_progress').length
-      const blocked = projectTasks.filter(t => t.status === 'blocked').length
-      const agents = Array.from(new Set(projectTasks.map(t => t.assigned_display_name).filter(Boolean)))
+      const projectTasks = tasks.filter((t) => t.project_id === project.id)
+      const completed = projectTasks.filter((t) => t.status === 'done').length
+      const inProgress = projectTasks.filter((t) => t.status === 'in_progress').length
+      const blocked = projectTasks.filter((t) => t.status === 'blocked').length
+      const agents = Array.from(
+        new Set(projectTasks.map((t) => t.assigned_display_name).filter(Boolean))
+      )
 
       stats.set(project.id, {
         taskCount: projectTasks.length,
@@ -426,8 +451,8 @@ export function MobileProjectsPanel({ onBack }: MobileProjectsPanelProps) {
     return stats
   }, [projects, tasks])
 
-  const activeProjects = projects.filter(p => p.status === 'active')
-  const archivedProjects = projects.filter(p => p.status === 'archived')
+  const activeProjects = projects.filter((p) => p.status === 'active')
+  const archivedProjects = projects.filter((p) => p.status === 'archived')
 
   return (
     <div
@@ -469,11 +494,9 @@ export function MobileProjectsPanel({ onBack }: MobileProjectsPanelProps) {
         >
           <ArrowLeft size={20} />
         </button>
-        
+
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>
-            Projects
-          </div>
+          <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>Projects</div>
           <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
             {activeProjects.length} active · {archivedProjects.length} archived
           </div>

@@ -45,7 +45,19 @@ function getStatusBadge(status: BotStatus): { label: string; color: string; bg: 
 
 // ── Component ──────────────────────────────────────────────────
 
-export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, botConfig, status, bio, agentId, currentRoomId, onClose, onOpenLog, onAssignmentChanged, onBioUpdated }: BotInfoPanelProps) {
+export const BotInfoPanel = memo(function BotInfoPanel({
+  session,
+  displayName,
+  botConfig,
+  status,
+  bio,
+  agentId,
+  currentRoomId,
+  onClose,
+  onOpenLog,
+  onAssignmentChanged,
+  onBioUpdated,
+}: BotInfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const canChat = session ? isFixedAgent(session.key) : false
 
@@ -100,62 +112,74 @@ export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, b
       }}
     >
       {/* Header */}
-      <div style={{
-        padding: '20px 20px 0',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 12,
-      }}>
-        {/* Bot icon */}
-        <div style={{
-          width: 48,
-          height: 48,
-          borderRadius: 14,
-          background: botConfig.color + '20',
+      <div
+        style={{
+          padding: '20px 20px 0',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 24,
-          flexShrink: 0,
-        }}>
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        {/* Bot icon */}
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 14,
+            background: botConfig.color + '20',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 24,
+            flexShrink: 0,
+          }}
+        >
           {botConfig.icon}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 16,
-            fontWeight: 700,
-            color: '#1f2937',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: '#1f2937',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {displayName || session.key.split(':')[1] || session.key}
           </div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginTop: 4,
-          }}>
-            <span style={{
-              display: 'inline-flex',
+          <div
+            style={{
+              display: 'flex',
               alignItems: 'center',
-              gap: 4,
-              padding: '2px 8px',
-              borderRadius: 8,
-              fontSize: 11,
-              fontWeight: 600,
-              color: statusBadge.color,
-              background: statusBadge.bg,
-            }}>
-              <span style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: statusBadge.color,
-                display: 'inline-block',
-              }} />
+              gap: 8,
+              marginTop: 4,
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '2px 8px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                color: statusBadge.color,
+                background: statusBadge.bg,
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: statusBadge.color,
+                  display: 'inline-block',
+                }}
+              />
               {statusBadge.label}
             </span>
           </div>
@@ -164,7 +188,10 @@ export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, b
         {/* Close button */}
         <button
           onClick={onClose}
-          onTouchEnd={e => { e.preventDefault(); onClose() }}
+          onTouchEnd={(e) => {
+            e.preventDefault()
+            onClose()
+          }}
           style={{
             width: 28,
             height: 28,
@@ -181,8 +208,12 @@ export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, b
             flexShrink: 0,
             transition: 'background 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
+          }}
         >
           ✕
         </button>
@@ -213,7 +244,6 @@ export const BotInfoPanel = memo(function BotInfoPanel({ session, displayName, b
           to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
-
     </div>
   )
 })

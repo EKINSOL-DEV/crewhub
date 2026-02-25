@@ -126,11 +126,7 @@ export function ChatHeader3DAvatar({
     <div style={containerStyle}>
       {has3D ? (
         <Suspense fallback={<LoadingPlaceholder color={config.color} />}>
-          <ChatHeader3DScene
-            botConfig={config}
-            agentStatus={agentStatus}
-            animation={animation}
-          />
+          <ChatHeader3DScene botConfig={config} agentStatus={agentStatus} animation={animation} />
         </Suspense>
       ) : (
         <StaticAvatar config={config} icon={icon} />

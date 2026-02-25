@@ -1,6 +1,8 @@
 """Session Room Assignments API routes."""
-import time
+
 import logging
+import time
+
 from fastapi import APIRouter, HTTPException
 
 from app.db.database import get_db
@@ -16,9 +18,7 @@ async def list_assignments():
     """Get all session room assignments."""
     try:
         async with get_db() as db:
-            async with db.execute(
-                "SELECT * FROM session_room_assignments ORDER BY assigned_at DESC"
-            ) as cursor:
+            async with db.execute("SELECT * FROM session_room_assignments ORDER BY assigned_at DESC") as cursor:
                 rows = await cursor.fetchall()
                 assignments = [SessionRoomAssignment(**row) for row in rows]
             return {"assignments": [a.model_dump() for a in assignments]}
@@ -33,8 +33,7 @@ async def get_assignment(session_key: str):
     try:
         async with get_db() as db:
             async with db.execute(
-                "SELECT * FROM session_room_assignments WHERE session_key = ?",
-                (session_key,)
+                "SELECT * FROM session_room_assignments WHERE session_key = ?", (session_key,)
             ) as cursor:
                 row = await cursor.fetchone()
                 if not row:
@@ -53,37 +52,40 @@ async def create_or_update_assignment(assignment: SessionRoomAssignmentCreate):
     try:
         async with get_db() as db:
             now = int(time.time() * 1000)
-            
+
             # Verify room exists
-            async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (assignment.room_id,)
-            ) as cursor:
+            async with db.execute("SELECT id FROM rooms WHERE id = ?", (assignment.room_id,)) as cursor:
                 if not await cursor.fetchone():
                     raise HTTPException(status_code=400, detail="Room not found")
-            
+
             # Upsert assignment
-            await db.execute("""
+            await db.execute(
+                """
                 INSERT INTO session_room_assignments (session_key, room_id, assigned_at)
                 VALUES (?, ?, ?)
                 ON CONFLICT(session_key) DO UPDATE SET
                     room_id = excluded.room_id,
                     assigned_at = excluded.assigned_at
-            """, (assignment.session_key, assignment.room_id, now))
+            """,
+                (assignment.session_key, assignment.room_id, now),
+            )
             await db.commit()
-            
+
             # Return the assignment
             async with db.execute(
-                "SELECT * FROM session_room_assignments WHERE session_key = ?",
-                (assignment.session_key,)
+                "SELECT * FROM session_room_assignments WHERE session_key = ?", (assignment.session_key,)
             ) as cursor:
                 row = await cursor.fetchone()
                 result = SessionRoomAssignment(**row)
-            
-            await broadcast("rooms-refresh", {
-                "action": "assignment_changed",
-                "session_key": assignment.session_key,
-                "room_id": assignment.room_id,
-            })
+
+            await broadcast(
+                "rooms-refresh",
+                {
+                    "action": "assignment_changed",
+                    "session_key": assignment.session_key,
+                    "room_id": assignment.room_id,
+                },
+            )
             return result
     except HTTPException:
         raise
@@ -99,22 +101,21 @@ async def delete_assignment(session_key: str):
         async with get_db() as db:
             # Check if exists
             async with db.execute(
-                "SELECT session_key FROM session_room_assignments WHERE session_key = ?",
-                (session_key,)
+                "SELECT session_key FROM session_room_assignments WHERE session_key = ?", (session_key,)
             ) as cursor:
                 if not await cursor.fetchone():
                     raise HTTPException(status_code=404, detail="Assignment not found")
-            
-            await db.execute(
-                "DELETE FROM session_room_assignments WHERE session_key = ?",
-                (session_key,)
-            )
+
+            await db.execute("DELETE FROM session_room_assignments WHERE session_key = ?", (session_key,))
             await db.commit()
-            
-            await broadcast("rooms-refresh", {
-                "action": "assignment_removed",
-                "session_key": session_key,
-            })
+
+            await broadcast(
+                "rooms-refresh",
+                {
+                    "action": "assignment_removed",
+                    "session_key": session_key,
+                },
+            )
             return {"success": True, "deleted": session_key}
     except HTTPException:
         raise
@@ -129,8 +130,7 @@ async def get_assignments_for_room(room_id: str):
     try:
         async with get_db() as db:
             async with db.execute(
-                "SELECT * FROM session_room_assignments WHERE room_id = ? ORDER BY assigned_at DESC",
-                (room_id,)
+                "SELECT * FROM session_room_assignments WHERE room_id = ? ORDER BY assigned_at DESC", (room_id,)
             ) as cursor:
                 rows = await cursor.fetchall()
                 assignments = [SessionRoomAssignment(**row) for row in rows]
@@ -147,31 +147,35 @@ async def batch_assign(assignments: list[SessionRoomAssignmentCreate]):
         async with get_db() as db:
             now = int(time.time() * 1000)
             created = []
-            
+
             for assignment in assignments:
                 # Verify room exists
-                async with db.execute(
-                    "SELECT id FROM rooms WHERE id = ?", (assignment.room_id,)
-                ) as cursor:
+                async with db.execute("SELECT id FROM rooms WHERE id = ?", (assignment.room_id,)) as cursor:
                     if not await cursor.fetchone():
                         continue  # Skip invalid rooms
-                
-                await db.execute("""
+
+                await db.execute(
+                    """
                     INSERT INTO session_room_assignments (session_key, room_id, assigned_at)
                     VALUES (?, ?, ?)
                     ON CONFLICT(session_key) DO UPDATE SET
                         room_id = excluded.room_id,
                         assigned_at = excluded.assigned_at
-                """, (assignment.session_key, assignment.room_id, now))
+                """,
+                    (assignment.session_key, assignment.room_id, now),
+                )
                 created.append(assignment.session_key)
-            
+
             await db.commit()
-            
+
             if created:
-                await broadcast("rooms-refresh", {
-                    "action": "assignments_batch_changed",
-                    "session_keys": created,
-                })
+                await broadcast(
+                    "rooms-refresh",
+                    {
+                        "action": "assignments_batch_changed",
+                        "session_keys": created,
+                    },
+                )
             return {"success": True, "assigned": created, "count": len(created)}
     except Exception as e:
         logger.error(f"Failed to batch assign: {e}")

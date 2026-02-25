@@ -1,5 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useLightingConfig, useLightingPanelVisibility, type LightingConfig, type ShadowMapType } from '@/hooks/useLightingConfig'
+import {
+  useLightingConfig,
+  useLightingPanelVisibility,
+  type LightingConfig,
+  type ShadowMapType,
+} from '@/hooks/useLightingConfig'
 
 // ─── Slider Component ───────────────────────────────────────────
 
@@ -20,7 +25,9 @@ function Slider({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] text-gray-400 w-14 shrink-0 truncate" title={label}>{label}</span>
+      <span className="text-[10px] text-gray-400 w-14 shrink-0 truncate" title={label}>
+        {label}
+      </span>
       <input
         type="range"
         min={min}
@@ -31,17 +38,29 @@ function Slider({
         className="flex-1 h-1 accent-blue-400"
         style={{ minWidth: 60 }}
       />
-      <span className="text-[10px] text-gray-300 font-mono w-10 text-right">{step < 0.01 ? value.toFixed(4) : step < 0.1 ? value.toFixed(2) : value.toFixed(1)}</span>
+      <span className="text-[10px] text-gray-300 font-mono w-10 text-right">
+        {step < 0.01 ? value.toFixed(4) : step < 0.1 ? value.toFixed(2) : value.toFixed(1)}
+      </span>
     </div>
   )
 }
 
 // ─── Color Picker ───────────────────────────────────────────────
 
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+}) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] text-gray-400 w-14 shrink-0 truncate" title={label}>{label}</span>
+      <span className="text-[10px] text-gray-400 w-14 shrink-0 truncate" title={label}>
+        {label}
+      </span>
       <input
         type="color"
         value={value}
@@ -55,7 +74,15 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
 
 // ─── Toggle ─────────────────────────────────────────────────────
 
-function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-[10px] text-gray-400 w-14 shrink-0">{label}</span>
@@ -63,7 +90,9 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
         onClick={() => onChange(!checked)}
         className={`w-8 h-4 rounded-full transition-colors ${checked ? 'bg-blue-500' : 'bg-gray-600'}`}
       >
-        <div className={`w-3 h-3 rounded-full bg-white transition-transform mx-0.5 ${checked ? 'translate-x-4' : ''}`} />
+        <div
+          className={`w-3 h-3 rounded-full bg-white transition-transform mx-0.5 ${checked ? 'translate-x-4' : ''}`}
+        />
       </button>
     </div>
   )
@@ -124,13 +153,18 @@ export function LightingDebugPanel() {
 
   // Dragging
   const [pos, setPos] = useState({ x: 16, y: 80 })
-  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null)
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(
+    null
+  )
   const panelRef = useRef<HTMLDivElement>(null)
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y }
-  }, [pos])
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y }
+    },
+    [pos]
+  )
 
   useEffect(() => {
     const handleMove = (e: MouseEvent) => {
@@ -140,7 +174,9 @@ export function LightingDebugPanel() {
         y: dragRef.current.origY + (e.clientY - dragRef.current.startY),
       })
     }
-    const handleUp = () => { dragRef.current = null }
+    const handleUp = () => {
+      dragRef.current = null
+    }
     window.addEventListener('mousemove', handleMove)
     window.addEventListener('mouseup', handleUp)
     return () => {
@@ -207,29 +243,32 @@ export function LightingDebugPanel() {
 
   // Helpers to update nested config
   const setAmbient = (patch: Partial<LightingConfig['ambient']>) =>
-    setConfig(prev => ({ ...prev, ambient: { ...prev.ambient, ...patch } }))
+    setConfig((prev) => ({ ...prev, ambient: { ...prev.ambient, ...patch } }))
   const setHemi = (patch: Partial<LightingConfig['hemisphere']>) =>
-    setConfig(prev => ({ ...prev, hemisphere: { ...prev.hemisphere, ...patch } }))
+    setConfig((prev) => ({ ...prev, hemisphere: { ...prev.hemisphere, ...patch } }))
   const setSun = (patch: Partial<LightingConfig['sun']>) =>
-    setConfig(prev => ({ ...prev, sun: { ...prev.sun, ...patch } }))
+    setConfig((prev) => ({ ...prev, sun: { ...prev.sun, ...patch } }))
   const setFill = (patch: Partial<LightingConfig['fill']>) =>
-    setConfig(prev => ({ ...prev, fill: { ...prev.fill, ...patch } }))
+    setConfig((prev) => ({ ...prev, fill: { ...prev.fill, ...patch } }))
   const setSunPos = (axis: 0 | 1 | 2, val: number) =>
-    setConfig(prev => {
+    setConfig((prev) => {
       const p = [...prev.sun.position] as [number, number, number]
       p[axis] = val
       return { ...prev, sun: { ...prev.sun, position: p } }
     })
   const setFillPos = (axis: 0 | 1 | 2, val: number) =>
-    setConfig(prev => {
+    setConfig((prev) => {
       const p = [...prev.fill.position] as [number, number, number]
       p[axis] = val
       return { ...prev, fill: { ...prev.fill, position: p } }
     })
   const setShadows = (patch: Partial<LightingConfig['shadows']>) =>
-    setConfig(prev => ({ ...prev, shadows: { ...prev.shadows, ...patch } }))
+    setConfig((prev) => ({ ...prev, shadows: { ...prev.shadows, ...patch } }))
   const setShadowCamera = (patch: Partial<LightingConfig['shadows']['camera']>) =>
-    setConfig(prev => ({ ...prev, shadows: { ...prev.shadows, camera: { ...prev.shadows.camera, ...patch } } }))
+    setConfig((prev) => ({
+      ...prev,
+      shadows: { ...prev.shadows, camera: { ...prev.shadows.camera, ...patch } },
+    }))
 
   if (!visible) return null
 
@@ -244,7 +283,10 @@ export function LightingDebugPanel() {
         maxHeight: 'calc(100vh - 100px)',
       }}
     >
-      <div className="bg-gray-900/90 backdrop-blur-md rounded-xl border border-gray-700/60 shadow-2xl overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 100px)' }}>
+      <div
+        className="bg-gray-900/90 backdrop-blur-md rounded-xl border border-gray-700/60 shadow-2xl overflow-hidden flex flex-col"
+        style={{ maxHeight: 'calc(100vh - 100px)' }}
+      >
         {/* Header (drag handle) */}
         <div
           className="flex items-center justify-between px-3 py-2 cursor-move bg-gray-800/80 border-b border-gray-700/60"
@@ -252,9 +294,9 @@ export function LightingDebugPanel() {
         >
           <span className="text-xs font-semibold text-gray-200">💡 Lighting Editor</span>
           <button
-            onClick={() => setMinimized(m => !m)}
+            onClick={() => setMinimized((m) => !m)}
             className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700/60 transition-colors text-xs"
-            title={minimized ? "Expand" : "Minimize"}
+            title={minimized ? 'Expand' : 'Minimize'}
           >
             {minimized ? '□' : '—'}
           </button>
@@ -262,117 +304,288 @@ export function LightingDebugPanel() {
 
         {/* Scrollable content */}
         {!minimized && (
-        <div className="overflow-y-auto p-3 space-y-1" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+          <div
+            className="overflow-y-auto p-3 space-y-1"
+            style={{ maxHeight: 'calc(100vh - 180px)' }}
+          >
+            {/* ── Ambient ── */}
+            <SectionHeader title="☀️ Ambient" />
+            <Slider
+              label="Intensity"
+              value={config.ambient.intensity}
+              min={0}
+              max={3}
+              step={0.1}
+              onChange={(v) => setAmbient({ intensity: v })}
+            />
+            <ColorField
+              label="Color"
+              value={config.ambient.color}
+              onChange={(v) => setAmbient({ color: v })}
+            />
 
-          {/* ── Ambient ── */}
-          <SectionHeader title="☀️ Ambient" />
-          <Slider label="Intensity" value={config.ambient.intensity} min={0} max={3} step={0.1} onChange={v => setAmbient({ intensity: v })} />
-          <ColorField label="Color" value={config.ambient.color} onChange={v => setAmbient({ color: v })} />
+            {/* ── Hemisphere ── */}
+            <SectionHeader title="🌗 Hemisphere" />
+            <Slider
+              label="Intensity"
+              value={config.hemisphere.intensity}
+              min={0}
+              max={3}
+              step={0.1}
+              onChange={(v) => setHemi({ intensity: v })}
+            />
+            <ColorField
+              label="Sky"
+              value={config.hemisphere.skyColor}
+              onChange={(v) => setHemi({ skyColor: v })}
+            />
+            <ColorField
+              label="Ground"
+              value={config.hemisphere.groundColor}
+              onChange={(v) => setHemi({ groundColor: v })}
+            />
 
-          {/* ── Hemisphere ── */}
-          <SectionHeader title="🌗 Hemisphere" />
-          <Slider label="Intensity" value={config.hemisphere.intensity} min={0} max={3} step={0.1} onChange={v => setHemi({ intensity: v })} />
-          <ColorField label="Sky" value={config.hemisphere.skyColor} onChange={v => setHemi({ skyColor: v })} />
-          <ColorField label="Ground" value={config.hemisphere.groundColor} onChange={v => setHemi({ groundColor: v })} />
+            {/* ── Sun (Directional) ── */}
+            <SectionHeader title="🌞 Sun (Directional)" />
+            <Slider
+              label="Intensity"
+              value={config.sun.intensity}
+              min={0}
+              max={5}
+              step={0.1}
+              onChange={(v) => setSun({ intensity: v })}
+            />
+            <ColorField
+              label="Color"
+              value={config.sun.color}
+              onChange={(v) => setSun({ color: v })}
+            />
+            <Slider
+              label="Pos X"
+              value={config.sun.position[0]}
+              min={-50}
+              max={50}
+              step={1}
+              onChange={(v) => setSunPos(0, v)}
+            />
+            <Slider
+              label="Pos Y"
+              value={config.sun.position[1]}
+              min={-50}
+              max={50}
+              step={1}
+              onChange={(v) => setSunPos(1, v)}
+            />
+            <Slider
+              label="Pos Z"
+              value={config.sun.position[2]}
+              min={-50}
+              max={50}
+              step={1}
+              onChange={(v) => setSunPos(2, v)}
+            />
+            <Toggle
+              label="Shadows"
+              checked={config.sun.castShadow}
+              onChange={(v) => setSun({ castShadow: v })}
+            />
 
-          {/* ── Sun (Directional) ── */}
-          <SectionHeader title="🌞 Sun (Directional)" />
-          <Slider label="Intensity" value={config.sun.intensity} min={0} max={5} step={0.1} onChange={v => setSun({ intensity: v })} />
-          <ColorField label="Color" value={config.sun.color} onChange={v => setSun({ color: v })} />
-          <Slider label="Pos X" value={config.sun.position[0]} min={-50} max={50} step={1} onChange={v => setSunPos(0, v)} />
-          <Slider label="Pos Y" value={config.sun.position[1]} min={-50} max={50} step={1} onChange={v => setSunPos(1, v)} />
-          <Slider label="Pos Z" value={config.sun.position[2]} min={-50} max={50} step={1} onChange={v => setSunPos(2, v)} />
-          <Toggle label="Shadows" checked={config.sun.castShadow} onChange={v => setSun({ castShadow: v })} />
+            {/* ── Shadows ── */}
+            <SectionHeader title="☁️ Shadows" />
+            <Toggle
+              label="Enabled"
+              checked={config.shadows.enabled}
+              onChange={(v) => setShadows({ enabled: v })}
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-gray-400 w-14 shrink-0">Type</span>
+              <select
+                value={config.shadows.type}
+                onChange={(e) => setShadows({ type: e.target.value as ShadowMapType })}
+                className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
+              >
+                {SHADOW_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {SHADOW_TYPE_LABELS[opt]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-gray-400 w-14 shrink-0">Map Size</span>
+              <select
+                value={config.shadows.mapSize}
+                onChange={(e) => setShadows({ mapSize: parseInt(e.target.value, 10) })}
+                className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
+              >
+                {SHADOW_MAP_SIZES.map((size) => (
+                  <option key={size} value={size}>
+                    {size}×{size}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Slider
+              label="Bias"
+              value={config.shadows.bias}
+              min={-0.005}
+              max={0.005}
+              step={0.0001}
+              onChange={(v) => setShadows({ bias: v })}
+            />
+            <Slider
+              label="N. Bias"
+              value={config.shadows.normalBias}
+              min={0}
+              max={0.1}
+              step={0.001}
+              onChange={(v) => setShadows({ normalBias: v })}
+            />
+            {config.shadows.type === 'PCFSoftShadowMap' && (
+              <Slider
+                label="Radius"
+                value={config.shadows.radius}
+                min={0}
+                max={10}
+                step={0.1}
+                onChange={(v) => setShadows({ radius: v })}
+              />
+            )}
+            <Slider
+              label="Darkness"
+              value={config.shadows.darkness}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(v) => setShadows({ darkness: v })}
+            />
+            <Slider
+              label="Cam Near"
+              value={config.shadows.camera.near}
+              min={0.1}
+              max={10}
+              step={0.1}
+              onChange={(v) => setShadowCamera({ near: v })}
+            />
+            <Slider
+              label="Cam Far"
+              value={config.shadows.camera.far}
+              min={10}
+              max={500}
+              step={5}
+              onChange={(v) => setShadowCamera({ far: v })}
+            />
+            <Slider
+              label="Cam Size"
+              value={config.shadows.camera.size}
+              min={5}
+              max={100}
+              step={1}
+              onChange={(v) => setShadowCamera({ size: v })}
+            />
 
-          {/* ── Shadows ── */}
-          <SectionHeader title="☁️ Shadows" />
-          <Toggle label="Enabled" checked={config.shadows.enabled} onChange={v => setShadows({ enabled: v })} />
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-400 w-14 shrink-0">Type</span>
-            <select
-              value={config.shadows.type}
-              onChange={e => setShadows({ type: e.target.value as ShadowMapType })}
-              className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
-            >
-              {SHADOW_TYPE_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{SHADOW_TYPE_LABELS[opt]}</option>
-              ))}
-            </select>
+            {/* ── Fill Light ── */}
+            <SectionHeader title="🔆 Fill Light" />
+            <Slider
+              label="Intensity"
+              value={config.fill.intensity}
+              min={0}
+              max={3}
+              step={0.1}
+              onChange={(v) => setFill({ intensity: v })}
+            />
+            <ColorField
+              label="Color"
+              value={config.fill.color}
+              onChange={(v) => setFill({ color: v })}
+            />
+            <Slider
+              label="Pos X"
+              value={config.fill.position[0]}
+              min={-50}
+              max={50}
+              step={1}
+              onChange={(v) => setFillPos(0, v)}
+            />
+            <Slider
+              label="Pos Y"
+              value={config.fill.position[1]}
+              min={-50}
+              max={50}
+              step={1}
+              onChange={(v) => setFillPos(1, v)}
+            />
+            <Slider
+              label="Pos Z"
+              value={config.fill.position[2]}
+              min={-50}
+              max={50}
+              step={1}
+              onChange={(v) => setFillPos(2, v)}
+            />
+
+            {/* ── Environment ── */}
+            <SectionHeader title="🎬 Tone Mapping" />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-gray-400 w-14 shrink-0">Type</span>
+              <select
+                value={config.toneMapping}
+                onChange={(e) =>
+                  setConfig({ toneMapping: e.target.value as LightingConfig['toneMapping'] })
+                }
+                className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
+              >
+                {TONE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {TONE_LABELS[opt]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Slider
+              label="Exposure"
+              value={config.toneMappingExposure}
+              min={0}
+              max={3}
+              step={0.1}
+              onChange={(v) => setConfig({ toneMappingExposure: v })}
+            />
+            <Slider
+              label="Env Int."
+              value={config.environmentIntensity}
+              min={0}
+              max={3}
+              step={0.1}
+              onChange={(v) => setConfig({ environmentIntensity: v })}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-400 w-14 shrink-0">Map Size</span>
-            <select
-              value={config.shadows.mapSize}
-              onChange={e => setShadows({ mapSize: parseInt(e.target.value, 10) })}
-              className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
-            >
-              {SHADOW_MAP_SIZES.map(size => (
-                <option key={size} value={size}>{size}×{size}</option>
-              ))}
-            </select>
-          </div>
-          <Slider label="Bias" value={config.shadows.bias} min={-0.005} max={0.005} step={0.0001} onChange={v => setShadows({ bias: v })} />
-          <Slider label="N. Bias" value={config.shadows.normalBias} min={0} max={0.1} step={0.001} onChange={v => setShadows({ normalBias: v })} />
-          {config.shadows.type === 'PCFSoftShadowMap' && (
-            <Slider label="Radius" value={config.shadows.radius} min={0} max={10} step={0.1} onChange={v => setShadows({ radius: v })} />
-          )}
-          <Slider label="Darkness" value={config.shadows.darkness} min={0} max={1} step={0.05} onChange={v => setShadows({ darkness: v })} />
-          <Slider label="Cam Near" value={config.shadows.camera.near} min={0.1} max={10} step={0.1} onChange={v => setShadowCamera({ near: v })} />
-          <Slider label="Cam Far" value={config.shadows.camera.far} min={10} max={500} step={5} onChange={v => setShadowCamera({ far: v })} />
-          <Slider label="Cam Size" value={config.shadows.camera.size} min={5} max={100} step={1} onChange={v => setShadowCamera({ size: v })} />
-
-          {/* ── Fill Light ── */}
-          <SectionHeader title="🔆 Fill Light" />
-          <Slider label="Intensity" value={config.fill.intensity} min={0} max={3} step={0.1} onChange={v => setFill({ intensity: v })} />
-          <ColorField label="Color" value={config.fill.color} onChange={v => setFill({ color: v })} />
-          <Slider label="Pos X" value={config.fill.position[0]} min={-50} max={50} step={1} onChange={v => setFillPos(0, v)} />
-          <Slider label="Pos Y" value={config.fill.position[1]} min={-50} max={50} step={1} onChange={v => setFillPos(1, v)} />
-          <Slider label="Pos Z" value={config.fill.position[2]} min={-50} max={50} step={1} onChange={v => setFillPos(2, v)} />
-
-          {/* ── Environment ── */}
-          <SectionHeader title="🎬 Tone Mapping" />
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-400 w-14 shrink-0">Type</span>
-            <select
-              value={config.toneMapping}
-              onChange={e => setConfig({ toneMapping: e.target.value as LightingConfig['toneMapping'] })}
-              className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
-            >
-              {TONE_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{TONE_LABELS[opt]}</option>
-              ))}
-            </select>
-          </div>
-          <Slider label="Exposure" value={config.toneMappingExposure} min={0} max={3} step={0.1} onChange={v => setConfig({ toneMappingExposure: v })} />
-          <Slider label="Env Int." value={config.environmentIntensity} min={0} max={3} step={0.1} onChange={v => setConfig({ environmentIntensity: v })} />
-        </div>
         )}
 
         {/* Footer buttons */}
         {!minimized && (
-        <div className="border-t border-gray-700/60 p-2 flex flex-wrap gap-1.5">
-          <button
-            onClick={handleCopy}
-            className="flex-1 text-[10px] px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors"
-          >
-            {copyLabel}
-          </button>
-          <button
-            onClick={handlePaste}
-            className="flex-1 text-[10px] px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors"
-          >
-            📥 Paste JSON
-          </button>
-          <button
-            onClick={resetConfig}
-            className="flex-1 text-[10px] px-2 py-1.5 rounded bg-red-900/50 hover:bg-red-800/60 text-red-300 transition-colors"
-          >
-            ↻ Reset
-          </button>
-          {pasteError && (
-            <div className="w-full text-[9px] text-red-400 text-center">{pasteError}</div>
-          )}
-        </div>
+          <div className="border-t border-gray-700/60 p-2 flex flex-wrap gap-1.5">
+            <button
+              onClick={handleCopy}
+              className="flex-1 text-[10px] px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors"
+            >
+              {copyLabel}
+            </button>
+            <button
+              onClick={handlePaste}
+              className="flex-1 text-[10px] px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors"
+            >
+              📥 Paste JSON
+            </button>
+            <button
+              onClick={resetConfig}
+              className="flex-1 text-[10px] px-2 py-1.5 rounded bg-red-900/50 hover:bg-red-800/60 text-red-300 transition-colors"
+            >
+              ↻ Reset
+            </button>
+            {pasteError && (
+              <div className="w-full text-[9px] text-red-400 text-center">{pasteError}</div>
+            )}
+          </div>
         )}
       </div>
     </div>

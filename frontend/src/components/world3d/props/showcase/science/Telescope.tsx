@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Telescope() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12
+  })
   return (
     <group ref={groupRef} scale={0.8}>
       {/* Main tube */}
@@ -38,15 +40,19 @@ export function Telescope() {
         <meshStandardMaterial color="#333344" />
       </mesh>
       {/* Tripod legs */}
-      {[0, 1, 2].map(i => {
-        const a = (i / 3) * Math.PI * 2;
+      {[0, 1, 2].map((i) => {
+        const a = (i / 3) * Math.PI * 2
         return (
-          <mesh key={i} position={[Math.sin(a) * 0.15, -0.45, Math.cos(a) * 0.15]} rotation={[Math.cos(a) * 0.35, 0, Math.sin(a) * 0.35]}>
+          <mesh
+            key={i}
+            position={[Math.sin(a) * 0.15, -0.45, Math.cos(a) * 0.15]}
+            rotation={[Math.cos(a) * 0.35, 0, Math.sin(a) * 0.35]}
+          >
             <cylinderGeometry args={[0.02, 0.015, 0.65, 6]} />
             <meshStandardMaterial color="#444455" />
           </mesh>
-        );
+        )
       })}
     </group>
-  );
+  )
 }

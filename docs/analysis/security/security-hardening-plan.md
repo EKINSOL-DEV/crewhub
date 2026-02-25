@@ -1,8 +1,8 @@
 # CrewHub Security Hardening Plan
 
-**Version:** 1.0  
-**Date:** 2026-02-09  
-**Status:** Draft — Pending Security Review  
+**Version:** 1.0
+**Date:** 2026-02-09
+**Status:** Draft — Pending Security Review
 **Author:** Ekinbot (Opus)
 
 ---
@@ -122,7 +122,7 @@ CREWHUB_DB_PATH=/data/crewhub.db
 # app/config.py additions
 class Settings(BaseSettings):
     # ... existing ...
-    
+
     # Auth: "auto" | "on" | "off"
     # auto = enabled when not localhost/127.0.0.1/private IP
     crewhub_auth_enabled: str = "auto"
@@ -154,7 +154,7 @@ def is_auth_required(request: Request) -> bool:
 async def login(body: LoginRequest):
     if not verify_password(body.password, settings.crewhub_admin_password):
         raise HTTPException(401, "Invalid credentials")
-    
+
     token = create_jwt({"sub": "admin", "iat": now, "exp": now + 86400})
     response = JSONResponse({"ok": True})
     response.set_cookie(
@@ -185,7 +185,7 @@ Extend `get_current_key()` to also accept JWT session cookies:
 ```python
 async def get_current_key(request, api_key=...):
     # Existing API key logic ...
-    
+
     # NEW: Also check session cookie for UI auth
     if not api_key:
         cookie = request.cookies.get("crewhub_session")
@@ -198,11 +198,11 @@ async def get_current_key(request, api_key=...):
                     name="Web Session",
                     scopes=["read", "self", "manage", "admin"],
                 )
-    
+
     # For non-public paths: check if auth is required
     if not _is_public(path) and is_auth_required(request):
         raise HTTPException(401, "Authentication required")
-    
+
     return None  # Public path, no auth needed
 ```
 
@@ -253,14 +253,14 @@ export async function checkAuth(): Promise<{required: boolean, authenticated: bo
 // src/App.tsx — wrap existing app
 function App() {
   const [authState, setAuthState] = useState<'loading' | 'login' | 'ready'>('loading')
-  
+
   useEffect(() => {
     checkAuth().then(({required, authenticated}) => {
       if (!required || authenticated) setAuthState('ready')
       else setAuthState('login')
     })
   }, [])
-  
+
   if (authState === 'loading') return <LoadingSpinner />
   if (authState === 'login') return <LoginPage onSuccess={() => setAuthState('ready')} />
   return <MainApp />

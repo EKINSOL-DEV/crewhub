@@ -5,7 +5,7 @@
   <circle cx="18" cy="5" r="1" fill="white"/>
   <line x1="16" y1="0" x2="16" y2="2" stroke="#82B30E" stroke-width="1.5"/>
   <circle cx="16" cy="0" r="1" fill="#82B30E"/>
-  
+
   <!-- Colored hub ring -->
   <path d="M16 10 A8 8 0 0 1 24 18" fill="none" stroke="#82B30E" stroke-width="3"/>
   <path d="M24 18 A8 8 0 0 1 16 26" fill="none" stroke="#FE9600" stroke-width="3"/>

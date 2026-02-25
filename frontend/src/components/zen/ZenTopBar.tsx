@@ -14,8 +14,8 @@ interface ProjectFilterInfo {
 
 interface ZenTopBarProps {
   onExit: () => void
-  exitLabel?: string       // Default "World" — standalone uses "Projects"
-  exitIcon?: string        // Default "🌍"
+  exitLabel?: string // Default "World" — standalone uses "Projects"
+  exitIcon?: string // Default "🌍"
   isMaximized?: boolean
   onRestore?: () => void
   layoutName?: string
@@ -47,8 +47,8 @@ function useAlwaysOnTop() {
   const [pinned, setPinned] = useState(false)
   const isStandalone = useRef(
     typeof window !== 'undefined' &&
-    !!window.__TAURI_INTERNALS__ &&
-    new URLSearchParams(window.location.search).get('mode') === 'zen'
+      !!window.__TAURI_INTERNALS__ &&
+      new URLSearchParams(window.location.search).get('mode') === 'zen'
   )
 
   const toggle = useCallback(async () => {
@@ -68,13 +68,13 @@ function useAlwaysOnTop() {
 
 function useFullscreen() {
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement)
-  
+
   useEffect(() => {
     const handleChange = () => setIsFullscreen(!!document.fullscreenElement)
     document.addEventListener('fullscreenchange', handleChange)
     return () => document.removeEventListener('fullscreenchange', handleChange)
   }, [])
-  
+
   const toggle = useCallback(() => {
     if (document.fullscreenElement) {
       document.exitFullscreen()
@@ -82,16 +82,16 @@ function useFullscreen() {
       document.documentElement.requestFullscreen()
     }
   }, [])
-  
+
   return { isFullscreen, toggle }
 }
 
-export function ZenTopBar({ 
+export function ZenTopBar({
   onExit,
   exitLabel = 'World',
   exitIcon = '🌍',
-  isMaximized, 
-  onRestore, 
+  isMaximized,
+  onRestore,
   layoutName,
   themeName,
   onOpenThemePicker,
@@ -114,7 +114,7 @@ export function ZenTopBar({
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
   const { pinned, toggle: togglePin, isStandalone: showPinButton } = useAlwaysOnTop()
   const showTabBar = tabs && tabs.length > 0 && onSwitchTab && onCloseTab && onAddTab
-  
+
   // Keyboard shortcut for fullscreen (F11 or Ctrl+Shift+F)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -126,7 +126,7 @@ export function ZenTopBar({
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [toggleFullscreen])
-  
+
   return (
     <div className="zen-top-bar-wrapper">
       {/* Main Top Bar (Title) */}
@@ -136,26 +136,26 @@ export function ZenTopBar({
             <span className="zen-top-bar-title-icon">🧘</span>
             <span>Zen Mode</span>
           </div>
-          
+
           {layoutName && (
             <>
               <span className="zen-top-bar-separator">•</span>
               <span className="zen-top-bar-layout">{layoutName}</span>
             </>
           )}
-          
+
           {/* Project Focus Indicator (only if no tab bar, else it's shown in tab) */}
           {projectFilter && !showTabBar && (
             <>
               <span className="zen-top-bar-separator">•</span>
-              <div 
+              <div
                 className="zen-top-bar-project"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
                   padding: '4px 10px',
-                  background: projectFilter.color 
+                  background: projectFilter.color
                     ? `${projectFilter.color}20`
                     : 'var(--zen-bg-hover)',
                   borderRadius: '6px',
@@ -164,17 +164,15 @@ export function ZenTopBar({
                     : '1px solid var(--zen-border)',
                 }}
               >
-                <span 
-                  style={{ 
-                    width: '8px', 
-                    height: '8px', 
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
                     borderRadius: '50%',
                     background: projectFilter.color || 'var(--zen-accent)',
                   }}
                 />
-                <span style={{ fontSize: '12px', fontWeight: 500 }}>
-                  {projectFilter.name}
-                </span>
+                <span style={{ fontSize: '12px', fontWeight: 500 }}>{projectFilter.name}</span>
                 {onClearProjectFilter && (
                   <button
                     type="button"
@@ -202,7 +200,7 @@ export function ZenTopBar({
             </>
           )}
         </div>
-        
+
         <div className="zen-top-bar-center">
           <div className="zen-top-bar-hints">
             <span className="zen-top-bar-hint">
@@ -216,7 +214,7 @@ export function ZenTopBar({
             </span>
           </div>
         </div>
-        
+
         <div className="zen-top-bar-right">
           {/* Theme Button */}
           {themeName && onOpenThemePicker && (
@@ -230,7 +228,7 @@ export function ZenTopBar({
               <span className="zen-btn-theme-name">{themeName}</span>
             </button>
           )}
-          
+
           {/* Keyboard Help Button */}
           {onOpenKeyboardHelp && (
             <button
@@ -243,7 +241,7 @@ export function ZenTopBar({
               ⌨️
             </button>
           )}
-          
+
           {/* Command Palette Button */}
           {onOpenCommandPalette && (
             <button
@@ -256,7 +254,7 @@ export function ZenTopBar({
               🔍
             </button>
           )}
-          
+
           {/* Restore from maximized */}
           {isMaximized && onRestore && (
             <button
@@ -269,7 +267,7 @@ export function ZenTopBar({
               ⊡
             </button>
           )}
-          
+
           {/* Add Browser Panel button */}
           {onAddBrowserPanel && (
             <button
@@ -306,12 +304,12 @@ export function ZenTopBar({
             type="button"
             className="zen-btn zen-btn-icon"
             onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit fullscreen (F11)" : "Fullscreen (F11)"}
-            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            title={isFullscreen ? 'Exit fullscreen (F11)' : 'Fullscreen (F11)'}
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
           >
             {isFullscreen ? '⊙' : '⛶'}
           </button>
-          
+
           {/* Exit button (World in CrewHub, Projects in standalone) */}
           <button
             type="button"
@@ -333,7 +331,7 @@ export function ZenTopBar({
           </button>
         </div>
       </header>
-      
+
       {/* Tab Bar (below title bar) */}
       {showTabBar && (
         <ZenTabBar

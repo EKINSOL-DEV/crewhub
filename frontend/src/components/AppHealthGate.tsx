@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import { Button } from './ui/button'
 
-const BACKEND_URL = localStorage.getItem('crewhub_backend_url') || (window as any).__CREWHUB_BACKEND_URL__ || import.meta.env.VITE_API_URL || 'http://localhost:8091'
+const BACKEND_URL =
+  localStorage.getItem('crewhub_backend_url') ||
+  (window as any).__CREWHUB_BACKEND_URL__ ||
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:8091'
 const HEALTH_ENDPOINT = `${BACKEND_URL}/api/health`
 const RECHECK_INTERVAL_MS = 10_000
 
@@ -137,12 +141,7 @@ export function AppHealthGate({ children }: AppHealthGateProps) {
 
   if (status === 'checking') return <CheckingScreen />
   if (status === 'down') {
-    return (
-      <BackendDownScreen
-        onRetry={() => runCheck(true)}
-        retrying={retrying}
-      />
-    )
+    return <BackendDownScreen onRetry={() => runCheck(true)} retrying={retrying} />
   }
 
   return <>{children}</>

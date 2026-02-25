@@ -13,7 +13,10 @@ import type { AgentRuntime } from '@/hooks/useAgentsRegistry'
 interface AgentTopBarProps {
   sessions: CrewSession[]
   getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
-  getRoomForSession: (sessionKey: string, sessionData?: { label?: string; model?: string; channel?: string }) => string | undefined
+  getRoomForSession: (
+    sessionKey: string,
+    sessionData?: { label?: string; model?: string; channel?: string }
+  ) => string | undefined
   defaultRoomId?: string
   isActivelyRunning: (key: string) => boolean
   displayNames: Map<string, string | null>
@@ -38,24 +41,37 @@ function getAgentStatus(session: CrewSession, isActive: boolean): AgentStatus {
 
 function getStatusColor(status: AgentStatus): string {
   switch (status) {
-    case 'active': return '#22c55e'
-    case 'idle': return '#9ca3af'
-    case 'supervising': return '#a78bfa'
-    case 'sleeping': return '#ef4444'
-    case 'offline': return '#6b7280'
+    case 'active':
+      return '#22c55e'
+    case 'idle':
+      return '#9ca3af'
+    case 'supervising':
+      return '#a78bfa'
+    case 'sleeping':
+      return '#ef4444'
+    case 'offline':
+      return '#6b7280'
   }
 }
 
-function getRoomId(session: CrewSession, getRoomForSession: AgentTopBarProps['getRoomForSession'], defaultRoomId?: string): string {
-  return getRoomForSession(session.key, {
-    label: session.label,
-    model: session.model,
-    channel: session.lastChannel || session.channel,
-  }) || defaultRoomId || 'headquarters'
+function getRoomId(
+  session: CrewSession,
+  getRoomForSession: AgentTopBarProps['getRoomForSession'],
+  defaultRoomId?: string
+): string {
+  return (
+    getRoomForSession(session.key, {
+      label: session.label,
+      model: session.model,
+      channel: session.lastChannel || session.channel,
+    }) ||
+    defaultRoomId ||
+    'headquarters'
+  )
 }
 
 function getRoomName(roomId: string, rooms: Array<{ id: string; name: string }>): string {
-  const room = rooms.find(r => r.id === roomId)
+  const room = rooms.find((r) => r.id === roomId)
   return room?.name || roomId
 }
 
@@ -65,19 +81,39 @@ function darken(hex: string, factor: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
-  return `#${Math.round(r * factor).toString(16).padStart(2, '0')}${Math.round(g * factor).toString(16).padStart(2, '0')}${Math.round(b * factor).toString(16).padStart(2, '0')}`
+  return `#${Math.round(r * factor)
+    .toString(16)
+    .padStart(2, '0')}${Math.round(g * factor)
+    .toString(16)
+    .padStart(2, '0')}${Math.round(b * factor)
+    .toString(16)
+    .padStart(2, '0')}`
 }
 
 function lighten(hex: string, factor: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
-  return `#${Math.min(255, Math.round(r + (255 - r) * factor)).toString(16).padStart(2, '0')}${Math.min(255, Math.round(g + (255 - g) * factor)).toString(16).padStart(2, '0')}${Math.min(255, Math.round(b + (255 - b) * factor)).toString(16).padStart(2, '0')}`
+  return `#${Math.min(255, Math.round(r + (255 - r) * factor))
+    .toString(16)
+    .padStart(2, '0')}${Math.min(255, Math.round(g + (255 - g) * factor))
+    .toString(16)
+    .padStart(2, '0')}${Math.min(255, Math.round(b + (255 - b) * factor))
+    .toString(16)
+    .padStart(2, '0')}`
 }
 
 // ─── Bot Face SVG ──────────────────────────────────────────────
 
-function BotFaceSVG({ color, expression, size = 36 }: { color: string; expression: string; size?: number }) {
+function BotFaceSVG({
+  color,
+  expression,
+  size = 36,
+}: {
+  color: string
+  expression: string
+  size?: number
+}) {
   const pupilDx = expression === 'thoughtful' ? 1 : expression === 'talking' ? -0.5 : 0
   const pupilDy = expression === 'thoughtful' ? 1 : expression === 'serious' ? -0.5 : 0
 
@@ -92,19 +128,43 @@ function BotFaceSVG({ color, expression, size = 36 }: { color: string; expressio
       <circle cx={24 + pupilDx} cy={14 + pupilDy} r="2.8" fill="#1a1a1a" />
       <circle cx={25.2 + pupilDx} cy={12.8 + pupilDy} r="1" fill="white" />
       {expression === 'happy' && (
-        <path d="M12 22 Q18 27 24 22" stroke="#333" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path
+          d="M12 22 Q18 27 24 22"
+          stroke="#333"
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        />
       )}
       {expression === 'thoughtful' && (
-        <path d="M14 23 Q18 25 22 23" stroke="#333" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <path
+          d="M14 23 Q18 25 22 23"
+          stroke="#333"
+          strokeWidth="1.2"
+          fill="none"
+          strokeLinecap="round"
+        />
       )}
       {expression === 'determined' && (
-        <line x1="13" y1="23" x2="23" y2="23" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
+        <line
+          x1="13"
+          y1="23"
+          x2="23"
+          y2="23"
+          stroke="#333"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
       )}
-      {expression === 'talking' && (
-        <ellipse cx="18" cy="23" rx="3" ry="2" fill="#e05080" />
-      )}
+      {expression === 'talking' && <ellipse cx="18" cy="23" rx="3" ry="2" fill="#e05080" />}
       {expression === 'serious' && (
-        <path d="M13 24 Q18 22 23 24" stroke="#333" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <path
+          d="M13 24 Q18 22 23 24"
+          stroke="#333"
+          strokeWidth="1.2"
+          fill="none"
+          strokeLinecap="round"
+        />
       )}
       <rect x="6" y="27" width="24" height="8" rx="4" fill={darken(color, 0.85)} />
     </svg>
@@ -123,7 +183,15 @@ interface AgentPortraitButtonProps {
   showUnpin?: boolean
 }
 
-function AgentPortraitButton({ config, name, isActive, onClick, title, onUnpin, showUnpin }: AgentPortraitButtonProps) {
+function AgentPortraitButton({
+  config,
+  name,
+  isActive,
+  onClick,
+  title,
+  onUnpin,
+  showUnpin,
+}: AgentPortraitButtonProps) {
   const [hovered, setHovered] = useState(false)
 
   return (
@@ -165,17 +233,19 @@ function AgentPortraitButton({ config, name, isActive, onClick, title, onUnpin, 
       >
         <BotFaceSVG color={config.color} expression={config.expression} />
         {isActive && (
-          <div style={{
-            position: 'absolute',
-            bottom: 2,
-            right: 2,
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            background: '#22c55e',
-            border: '2px solid white',
-            animation: 'agentTopBarActivePulse 1.5s ease-in-out infinite',
-          }} />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 2,
+              right: 2,
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              background: '#22c55e',
+              border: '2px solid white',
+              animation: 'agentTopBarActivePulse 1.5s ease-in-out infinite',
+            }}
+          />
         )}
       </div>
 
@@ -264,9 +334,7 @@ function AgentPickerToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () =
           width: 56,
           height: 56,
           borderRadius: '50%',
-          background: isOpen
-            ? 'rgba(0,0,0,0.5)'
-            : 'rgba(0,0,0,0.3)',
+          background: isOpen ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)',
           border: `3px solid ${isOpen ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'}`,
           boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           display: 'flex',
@@ -322,7 +390,14 @@ interface AgentPickerDropdownProps {
   onClose: () => void
 }
 
-function AgentPickerDropdown({ fixedAgents, recentSubagents, pinnedKey, onSelect, onPin, onClose }: AgentPickerDropdownProps) {
+function AgentPickerDropdown({
+  fixedAgents,
+  recentSubagents,
+  pinnedKey,
+  onSelect,
+  onPin,
+  onClose,
+}: AgentPickerDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close on click outside
@@ -376,18 +451,20 @@ function AgentPickerDropdown({ fixedAgents, recentSubagents, pinnedKey, onSelect
       {/* Fixed Agents */}
       {fixedAgents.length > 0 && (
         <>
-          <div style={{
-            padding: '6px 14px 4px',
-            fontSize: 10,
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.4)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            fontFamily: 'system-ui, sans-serif',
-          }}>
+          <div
+            style={{
+              padding: '6px 14px 4px',
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.4)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontFamily: 'system-ui, sans-serif',
+            }}
+          >
             Fixed Agents
           </div>
-          {fixedAgents.map(entry => (
+          {fixedAgents.map((entry) => (
             <DropdownItem
               key={entry.session.key}
               entry={entry}
@@ -402,20 +479,22 @@ function AgentPickerDropdown({ fixedAgents, recentSubagents, pinnedKey, onSelect
       {/* Recently Active Subagents */}
       {recentSubagents.length > 0 && (
         <>
-          <div style={{
-            padding: '10px 14px 4px',
-            fontSize: 10,
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.4)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            fontFamily: 'system-ui, sans-serif',
-            borderTop: fixedAgents.length > 0 ? '1px solid rgba(255,255,255,0.08)' : undefined,
-            marginTop: fixedAgents.length > 0 ? 4 : 0,
-          }}>
+          <div
+            style={{
+              padding: '10px 14px 4px',
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.4)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontFamily: 'system-ui, sans-serif',
+              borderTop: fixedAgents.length > 0 ? '1px solid rgba(255,255,255,0.08)' : undefined,
+              marginTop: fixedAgents.length > 0 ? 4 : 0,
+            }}
+          >
             Recently Active
           </div>
-          {recentSubagents.map(entry => (
+          {recentSubagents.map((entry) => (
             <DropdownItem
               key={entry.session.key}
               entry={entry}
@@ -428,13 +507,15 @@ function AgentPickerDropdown({ fixedAgents, recentSubagents, pinnedKey, onSelect
       )}
 
       {fixedAgents.length === 0 && recentSubagents.length === 0 && (
-        <div style={{
-          padding: '16px 14px',
-          textAlign: 'center',
-          fontSize: 12,
-          color: 'rgba(255,255,255,0.35)',
-          fontFamily: 'system-ui, sans-serif',
-        }}>
+        <div
+          style={{
+            padding: '16px 14px',
+            textAlign: 'center',
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.35)',
+            fontFamily: 'system-ui, sans-serif',
+          }}
+        >
           No agents found
         </div>
       )}
@@ -489,40 +570,46 @@ function DropdownItem({
       >
         <BotFaceSVG color={entry.config.color} expression={entry.config.expression} size={22} />
         {/* Status dot */}
-        <div style={{
-          position: 'absolute',
-          bottom: -1,
-          right: -1,
-          width: 10,
-          height: 10,
-          borderRadius: '50%',
-          background: getStatusColor(entry.status),
-          border: '2px solid rgba(15, 15, 20, 0.88)',
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: -1,
+            right: -1,
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            background: getStatusColor(entry.status),
+            border: '2px solid rgba(15, 15, 20, 0.88)',
+          }}
+        />
       </div>
 
       {/* Name + room */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: 'rgba(255,255,255,0.9)',
-          fontFamily: 'system-ui, sans-serif',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: 'rgba(255,255,255,0.9)',
+            fontFamily: 'system-ui, sans-serif',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {entry.name}
           {isPinned && <span style={{ marginLeft: 4, fontSize: 10 }}>📌</span>}
         </div>
-        <div style={{
-          fontSize: 10,
-          color: 'rgba(255,255,255,0.35)',
-          fontFamily: 'system-ui, sans-serif',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
+        <div
+          style={{
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.35)',
+            fontFamily: 'system-ui, sans-serif',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {entry.roomName}
         </div>
       </div>
@@ -594,14 +681,11 @@ export function AgentTopBar({
 
   // ─── Boss session ──────────────────────────────────────────────
 
-  const bossSession = useMemo(
-    () => sessions.find(s => s.key === BOSS_SESSION_KEY),
-    [sessions],
-  )
+  const bossSession = useMemo(() => sessions.find((s) => s.key === BOSS_SESSION_KEY), [sessions])
 
   const bossConfig = useMemo(
     () => getBotConfig(BOSS_SESSION_KEY, bossSession?.label),
-    [getBotConfig, bossSession?.label],
+    [getBotConfig, bossSession?.label]
   )
 
   const bossRoomId = useMemo(() => {
@@ -614,13 +698,13 @@ export function AgentTopBar({
   // ─── Pinned agent ──────────────────────────────────────────────
 
   const pinnedSession = useMemo(
-    () => pinnedKey ? sessions.find(s => s.key === pinnedKey) : null,
-    [sessions, pinnedKey],
+    () => (pinnedKey ? sessions.find((s) => s.key === pinnedKey) : null),
+    [sessions, pinnedKey]
   )
 
   const pinnedConfig = useMemo(
-    () => pinnedSession ? getBotConfig(pinnedSession.key, pinnedSession.label) : null,
-    [getBotConfig, pinnedSession],
+    () => (pinnedSession ? getBotConfig(pinnedSession.key, pinnedSession.label) : null),
+    [getBotConfig, pinnedSession]
   )
 
   const pinnedRoomId = useMemo(() => {
@@ -713,7 +797,7 @@ export function AgentTopBar({
     for (const session of sessions) {
       if (session.key === BOSS_SESSION_KEY) continue
       if (session.key.startsWith('debug:')) continue
-      if (isSubagent(session.key) && (now - session.updatedAt) < RECENT_THRESHOLD_MS) {
+      if (isSubagent(session.key) && now - session.updatedAt < RECENT_THRESHOLD_MS) {
         const config = getBotConfig(session.key, session.label)
         const name = getSessionDisplayName(session, displayNames.get(session.key))
         const isActive = isActivelyRunning(session.key)
@@ -730,7 +814,16 @@ export function AgentTopBar({
     recentSubagents.sort((a, b) => b.session.updatedAt - a.session.updatedAt)
 
     return { fixedAgents, recentSubagents }
-  }, [sessions, agentRuntimes, getBotConfig, isActivelyRunning, getRoomForSession, defaultRoomId, rooms, displayNames])
+  }, [
+    sessions,
+    agentRuntimes,
+    getBotConfig,
+    isActivelyRunning,
+    getRoomForSession,
+    defaultRoomId,
+    rooms,
+    displayNames,
+  ])
 
   // ─── Handlers ──────────────────────────────────────────────────
 
@@ -750,14 +843,17 @@ export function AgentTopBar({
     setPinnedKey(null)
   }, [])
 
-  const handleDropdownSelect = useCallback((session: CrewSession, roomId: string, name: string, config: BotVariantConfig) => {
-    // Only fly to the bot if it has a real session (updatedAt > 0 means it exists)
-    if (session.updatedAt > 0) {
-      focusBot(session.key, roomId)
-    }
-    openChat(session.key, name, config.icon, config.color)
-    setPickerOpen(false)
-  }, [focusBot, openChat])
+  const handleDropdownSelect = useCallback(
+    (session: CrewSession, roomId: string, name: string, config: BotVariantConfig) => {
+      // Only fly to the bot if it has a real session (updatedAt > 0 means it exists)
+      if (session.updatedAt > 0) {
+        focusBot(session.key, roomId)
+      }
+      openChat(session.key, name, config.icon, config.color)
+      setPickerOpen(false)
+    },
+    [focusBot, openChat]
+  )
 
   const handlePin = useCallback((sessionKey: string) => {
     setPinnedKey(sessionKey)
@@ -765,7 +861,7 @@ export function AgentTopBar({
   }, [])
 
   const handlePickerToggle = useCallback(() => {
-    setPickerOpen(prev => !prev)
+    setPickerOpen((prev) => !prev)
   }, [])
 
   const handleDropdownClose = useCallback(() => {

@@ -23,14 +23,14 @@ import websockets
 from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State
 
+from ._extended_api import OpenClawExtendedMixin
+from ._session_io import OpenClawSessionIOMixin
 from .base import (
     AgentConnection,
     ConnectionStatus,
     ConnectionType,
     SessionInfo,
 )
-from ._extended_api import OpenClawExtendedMixin
-from ._session_io import OpenClawSessionIOMixin
 
 logger = logging.getLogger(__name__)
 
@@ -68,9 +68,7 @@ class OpenClawConnection(
             config=config,
         )
 
-        self.uri = config.get("url") or os.getenv(
-            "OPENCLAW_GATEWAY_URL", "ws://127.0.0.1:18789"
-        )
+        self.uri = config.get("url") or os.getenv("OPENCLAW_GATEWAY_URL", "ws://127.0.0.1:18789")
         self.token = config.get("token") or os.getenv("OPENCLAW_GATEWAY_TOKEN", "")
 
         self.auto_reconnect = config.get("auto_reconnect", True)
@@ -91,10 +89,7 @@ class OpenClawConnection(
         self._identity_manager = None
         self._device_identity = None
 
-        logger.info(
-            f"OpenClawConnection initialized: uri={self.uri}, "
-            f"token={'set' if self.token else 'none'}"
-        )
+        logger.info(f"OpenClawConnection initialized: uri={self.uri}, token={'set' if self.token else 'none'}")
 
     # -- Helpers --
 
@@ -139,6 +134,7 @@ class OpenClawConnection(
     async def _do_connect(self) -> bool:
         """Delegate actual handshake to the focused _handshake module."""
         from ._handshake import perform_handshake
+
         return await perform_handshake(self)
 
     async def disconnect(self) -> None:
@@ -166,9 +162,10 @@ class OpenClawConnection(
 
         self.status = ConnectionStatus.DISCONNECTED
         logger.info(f"Gateway {self.name} disconnected")
-    #---
+
+    # ---
     # Background listener
-    #---
+    # ---
     async def _listen_loop(self) -> None:
         """Receive and route messages from the Gateway."""
         logger.debug(f"Listener loop started for {self.name}")
@@ -216,7 +213,8 @@ class OpenClawConnection(
             self.status = ConnectionStatus.DISCONNECTED
 
             disconnect_err = {
-                "type": "res", "ok": False,
+                "type": "res",
+                "ok": False,
                 "error": {"code": "DISCONNECTED", "message": "Gateway disconnected"},
             }
             for req_id, q in list(self._response_queues.items()):
@@ -243,16 +241,12 @@ class OpenClawConnection(
 
         async def _reconnect():
             self.status = ConnectionStatus.RECONNECTING
-            logger.info(
-                f"Reconnecting {self.name} in {self._current_reconnect_delay:.1f}s"
-            )
+            logger.info(f"Reconnecting {self.name} in {self._current_reconnect_delay:.1f}s")
             await asyncio.sleep(self._current_reconnect_delay)
             if await self.connect():
                 self._current_reconnect_delay = self.reconnect_delay
             else:
-                self._current_reconnect_delay = min(
-                    self._current_reconnect_delay * 2, self.max_reconnect_delay
-                )
+                self._current_reconnect_delay = min(self._current_reconnect_delay * 2, self.max_reconnect_delay)
                 self._schedule_reconnect()
 
         self._reconnect_task = asyncio.create_task(_reconnect())
@@ -266,9 +260,10 @@ class OpenClawConnection(
                     self._notify_session_update(session)
         except Exception as exc:
             logger.error(f"Error handling session event: {exc}")
-    #---
+
+    # ---
     # Core API call
-    #---
+    # ---
     async def call(
         self,
         method: str,
@@ -287,10 +282,16 @@ class OpenClawConnection(
         self._response_queues[req_id] = q
 
         try:
-            await self.ws.send(json.dumps({
-                "type": "req", "id": req_id,
-                "method": method, "params": params or {},
-            }))
+            await self.ws.send(
+                json.dumps(
+                    {
+                        "type": "req",
+                        "id": req_id,
+                        "method": method,
+                        "params": params or {},
+                    }
+                )
+            )
             response = await asyncio.wait_for(q.get(), timeout=timeout)
 
             if wait_for_final_agent_result and response.get("ok"):
@@ -303,7 +304,7 @@ class OpenClawConnection(
             logger.warning(f"Gateway call {method} failed: {response.get('error', {})}")
             return None
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Gateway call {method} timed out after {timeout}s")
             return None
         except Exception as exc:
@@ -311,9 +312,10 @@ class OpenClawConnection(
             return None
         finally:
             self._response_queues.pop(req_id, None)
-    #---
+
+    # ---
     # AgentConnection interface
-    #---
+    # ---
     async def get_sessions(self) -> list[SessionInfo]:
         """Get active sessions from the Gateway."""
         result = await self.call("sessions.list")
@@ -353,10 +355,17 @@ class OpenClawConnection(
                 created_at=raw.get("createdAt"),
                 last_activity=raw.get("lastActivity"),
                 metadata={
-                    k: v for k, v in raw.items()
-                    if k not in {
-                        "key", "sessionId", "label", "model",
-                        "status", "createdAt", "lastActivity",
+                    k: v
+                    for k, v in raw.items()
+                    if k
+                    not in {
+                        "key",
+                        "sessionId",
+                        "label",
+                        "model",
+                        "status",
+                        "createdAt",
+                        "lastActivity",
                     }
                 },
             )
@@ -382,9 +391,10 @@ class OpenClawConnection(
             return await self.call("status", timeout=5.0) is not None
         except Exception:
             return False
-    #---
+
+    # ---
     # Event subscription
-    #---
+    # ---
     def subscribe(self, event_name: str, handler) -> None:
         handlers = self._event_handlers.setdefault(event_name, [])
         if handler not in handlers:

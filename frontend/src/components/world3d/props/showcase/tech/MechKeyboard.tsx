@@ -1,11 +1,24 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function MechKeyboard() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.15; });
-  const rgbColors = ['#ff0044', '#ff8800', '#ffff00', '#00ff44', '#0088ff', '#8800ff', '#ff00aa', '#00ffff', '#ff4400', '#44ff88'];
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.15
+  })
+  const rgbColors = [
+    '#ff0044',
+    '#ff8800',
+    '#ffff00',
+    '#00ff44',
+    '#0088ff',
+    '#8800ff',
+    '#ff00aa',
+    '#00ffff',
+    '#ff4400',
+    '#44ff88',
+  ]
   return (
     <group ref={groupRef}>
       {/* Case */}
@@ -19,7 +32,7 @@ export function MechKeyboard() {
         <meshStandardMaterial color="#cccccc" />
       </mesh>
       {/* Keycaps with RGB */}
-      {[0, 1, 2, 3].map(row =>
+      {[0, 1, 2, 3].map((row) =>
         Array.from({ length: 10 }, (_, col) => (
           <group key={`${row}-${col}`}>
             <mesh position={[-0.45 + col * 0.1, -0.28, 0.14 - row * 0.09]}>
@@ -29,7 +42,11 @@ export function MechKeyboard() {
             {/* RGB underglow */}
             <mesh position={[-0.45 + col * 0.1, -0.33, 0.14 - row * 0.09]}>
               <boxGeometry args={[0.09, 0.005, 0.08]} />
-              <meshStandardMaterial color={rgbColors[(row + col) % rgbColors.length]} emissive={rgbColors[(row + col) % rgbColors.length]} emissiveIntensity={2} />
+              <meshStandardMaterial
+                color={rgbColors[(row + col) % rgbColors.length]}
+                emissive={rgbColors[(row + col) % rgbColors.length]}
+                emissiveIntensity={2}
+              />
             </mesh>
           </group>
         ))
@@ -45,5 +62,5 @@ export function MechKeyboard() {
         <meshStandardMaterial color="#444444" flatShading />
       </mesh>
     </group>
-  );
+  )
 }

@@ -24,12 +24,17 @@ function snapToGrid(v: number): number {
 
 interface PlacementGhostProps {
   propId: string
-  rotation: number          // degrees, from CreatorModeContext.pendingRotation
+  rotation: number // degrees, from CreatorModeContext.pendingRotation
   onPositionChange: (pos: { x: number; y: number; z: number } | null) => void
   cellSize?: number
 }
 
-export function PlacementGhost({ propId, rotation, onPositionChange, cellSize = 1.0 }: PlacementGhostProps) {
+export function PlacementGhost({
+  propId,
+  rotation,
+  onPositionChange,
+  cellSize = 1.0,
+}: PlacementGhostProps) {
   const { camera, raycaster, gl } = useThree()
   const groupRef = useRef<THREE.Group>(null)
   const mouseRef = useRef(new THREE.Vector2())
@@ -86,11 +91,7 @@ export function PlacementGhost({ propId, rotation, onPositionChange, cellSize = 
     <group ref={groupRef}>
       {/* Green ghost overlay */}
       <GhostOverlay scale={entry.yOffset ?? 0.16} />
-      <PropComponent
-        position={[0, 0, 0]}
-        rotation={rotation}
-        cellSize={cellSize}
-      />
+      <PropComponent position={[0, 0, 0]} rotation={rotation} cellSize={cellSize} />
     </group>
   )
 }

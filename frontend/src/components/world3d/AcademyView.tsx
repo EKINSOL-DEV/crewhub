@@ -10,5 +10,7 @@ const MVP_ITEMS = [
 ]
 
 export function AcademyView({ className }: { className?: string }) {
-  return <ZoneLandingView zone={ACADEMY} mvpItems={MVP_ITEMS} className={className} hideCenterMarker />
+  return (
+    <ZoneLandingView zone={ACADEMY} mvpItems={MVP_ITEMS} className={className} hideCenterMarker />
+  )
 }

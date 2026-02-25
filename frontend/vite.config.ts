@@ -41,22 +41,22 @@ export default defineConfig(({ mode }) => {
           if (id.includes('node_modules/react/') && !id.includes('react-')) {
             return 'vendor-react';
           }
-          
+
           // Three.js and related
           if (id.includes('@react-three/') || id.includes('node_modules/three')) {
             return 'vendor-three';
           }
-          
+
           // CodeMirror
           if (id.includes('@codemirror/')) {
             return 'vendor-codemirror';
           }
-          
+
           // Markdown
           if (id.includes('react-markdown') || id.includes('rehype-') || id.includes('remark-') || id.includes('highlight.js')) {
             return 'vendor-markdown';
           }
-          
+
           // DnD Kit - keep separate from React
           if (id.includes('@dnd-kit/')) {
             return 'vendor-dnd';

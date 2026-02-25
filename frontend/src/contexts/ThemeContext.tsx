@@ -22,7 +22,15 @@ import { useZenTheme, type UseZenThemeReturn } from '@/components/zen/hooks/useZ
 // ── Legacy compat types (kept so existing imports don't break) ─────────────
 
 export type ThemeMode = 'light' | 'dark' | 'system'
-export type AccentColor = 'blue' | 'purple' | 'green' | 'orange' | 'pink' | 'cyan' | 'rose' | 'amber'
+export type AccentColor =
+  | 'blue'
+  | 'purple'
+  | 'green'
+  | 'orange'
+  | 'pink'
+  | 'cyan'
+  | 'rose'
+  | 'amber'
 
 /** @deprecated — use zen.currentTheme instead */
 export interface ThemeConfig {
@@ -31,15 +39,18 @@ export interface ThemeConfig {
 }
 
 /** @deprecated — accent colors are now derived from the active theme */
-export const accentColors: Record<AccentColor, { name: string; hue: number; primary: string; preview: string }> = {
-  blue:   { name: 'Blue',   hue: 217, primary: '217 91% 60%', preview: '#3b82f6' },
+export const accentColors: Record<
+  AccentColor,
+  { name: string; hue: number; primary: string; preview: string }
+> = {
+  blue: { name: 'Blue', hue: 217, primary: '217 91% 60%', preview: '#3b82f6' },
   purple: { name: 'Purple', hue: 262, primary: '262 83% 58%', preview: '#8b5cf6' },
-  green:  { name: 'Green',  hue: 142, primary: '142 71% 45%', preview: '#22c55e' },
-  orange: { name: 'Orange', hue: 25,  primary: '25 95% 53%',  preview: '#f97316' },
-  pink:   { name: 'Pink',   hue: 330, primary: '330 81% 60%', preview: '#ec4899' },
-  cyan:   { name: 'Cyan',   hue: 189, primary: '189 94% 43%', preview: '#06b6d4' },
-  rose:   { name: 'Rose',   hue: 347, primary: '347 77% 50%', preview: '#e11d48' },
-  amber:  { name: 'Amber',  hue: 38,  primary: '38 92% 50%',  preview: '#f59e0b' },
+  green: { name: 'Green', hue: 142, primary: '142 71% 45%', preview: '#22c55e' },
+  orange: { name: 'Orange', hue: 25, primary: '25 95% 53%', preview: '#f97316' },
+  pink: { name: 'Pink', hue: 330, primary: '330 81% 60%', preview: '#ec4899' },
+  cyan: { name: 'Cyan', hue: 189, primary: '189 94% 43%', preview: '#06b6d4' },
+  rose: { name: 'Rose', hue: 347, primary: '347 77% 50%', preview: '#e11d48' },
+  amber: { name: 'Amber', hue: 38, primary: '38 92% 50%', preview: '#f59e0b' },
 }
 
 // ── Context value ─────────────────────────────────────────────────
@@ -102,10 +113,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [current, resolvedMode])
 
   // Legacy compat shim
-  const legacyTheme: ThemeConfig = useMemo(() => ({
-    mode: resolvedMode,
-    accentColor: 'purple', // no longer meaningful
-  }), [resolvedMode])
+  const legacyTheme: ThemeConfig = useMemo(
+    () => ({
+      mode: resolvedMode,
+      accentColor: 'purple', // no longer meaningful
+    }),
+    [resolvedMode]
+  )
 
   const legacySetTheme = useMemo(() => {
     return (_partial: Partial<ThemeConfig>) => {
@@ -114,19 +128,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const value: ThemeContextValue = useMemo(() => ({
-    zen,
-    themeInfo,
-    resolvedMode,
-    theme: legacyTheme,
-    setTheme: legacySetTheme,
-  }), [zen, resolvedMode, legacyTheme, legacySetTheme])
-
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+  const value: ThemeContextValue = useMemo(
+    () => ({
+      zen,
+      themeInfo,
+      resolvedMode,
+      theme: legacyTheme,
+      setTheme: legacySetTheme,
+    }),
+    [zen, resolvedMode, legacyTheme, legacySetTheme]
   )
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
 // ── Hook ──────────────────────────────────────────────────────────

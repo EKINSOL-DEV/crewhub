@@ -11,21 +11,21 @@
       <stop offset="100%" style="stop-color:#4A7308"/>
     </linearGradient>
   </defs>
-  
+
   <!-- Antenna with clock -->
   <circle cx="64" cy="14" r="12" fill="white" stroke="url(#cronDark)" stroke-width="3"/>
   <line x1="64" y1="14" x2="64" y2="8" stroke="#333" stroke-width="2" stroke-linecap="round"/>
   <line x1="64" y1="14" x2="70" y2="16" stroke="#333" stroke-width="2" stroke-linecap="round"/>
   <circle cx="64" cy="14" r="2" fill="#333"/>
   <rect x="61" y="24" width="6" height="12" rx="3" fill="url(#cronDark)"/>
-  
+
   <!-- Head -->
   <rect x="24" y="36" width="80" height="60" rx="18" fill="url(#cronGradient)"/>
-  
+
   <!-- Clock display on forehead -->
   <rect x="44" y="42" width="40" height="16" rx="4" fill="#1a1a1a"/>
   <text x="64" y="54" text-anchor="middle" fill="#00FF00" font-family="monospace" font-size="12" font-weight="bold">12:00</text>
-  
+
   <!-- Eyes -->
   <ellipse cx="44" cy="72" rx="12" ry="12" fill="white"/>
   <ellipse cx="84" cy="72" rx="12" ry="12" fill="white"/>
@@ -33,13 +33,13 @@
   <circle cx="86" cy="72" r="6" fill="#333"/>
   <circle cx="48" cy="70" r="2" fill="white"/>
   <circle cx="88" cy="70" r="2" fill="white"/>
-  
+
   <!-- Happy smile -->
   <path d="M48 86 Q64 96 80 86" stroke="#4A7308" stroke-width="4" fill="none" stroke-linecap="round"/>
-  
+
   <!-- Body hint -->
   <rect x="40" y="96" width="48" height="24" rx="8" fill="url(#cronDark)"/>
-  
+
   <!-- Timer dots on body -->
   <circle cx="52" cy="106" r="3" fill="#8BC34A"/>
   <circle cx="64" cy="106" r="3" fill="#8BC34A"/>

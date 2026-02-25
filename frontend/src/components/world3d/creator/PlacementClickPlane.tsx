@@ -42,19 +42,22 @@ export function PlacementClickPlane({ enabled, onPlace }: PlacementClickPlanePro
     }
   }, [])
 
-  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
-    if (!enabled) return
-    if (didDrag.current) return
+  const handleClick = useCallback(
+    (e: ThreeEvent<MouseEvent>) => {
+      if (!enabled) return
+      if (didDrag.current) return
 
-    // Prevent the event from bubbling to room-click handlers
-    e.stopPropagation()
+      // Prevent the event from bubbling to room-click handlers
+      e.stopPropagation()
 
-    const point = e.point as THREE.Vector3
-    const sx = snapToGrid(point.x)
-    const sz = snapToGrid(point.z)
+      const point = e.point as THREE.Vector3
+      const sx = snapToGrid(point.x)
+      const sz = snapToGrid(point.z)
 
-    onPlace({ x: sx, y: 0, z: sz })
-  }, [enabled, onPlace])
+      onPlace({ x: sx, y: 0, z: sz })
+    },
+    [enabled, onPlace]
+  )
 
   if (!enabled) return null
 

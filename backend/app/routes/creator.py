@@ -34,22 +34,21 @@ from ..services.creator import (
     resolve_model,
     save_generation_history,
     save_props_to_disk,
-    strip_parts_block,
     stream_prop_generation,
+    strip_parts_block,
 )
 from .creator_models import (
     CrossbreedRequest,
     GeneratePropRequest,
     GeneratePropResponse,
-    GenerationRecord,
     HybridGenerateRequest,
     IteratePropRequest,
     PropPart,
     PropRefinementRequest,
     PropRefinementResponse,
     QualityScoreRequest,
-    SavePropRequest,
     SavedPropResponse,
+    SavePropRequest,
     StyleTransferRequest,
 )
 
@@ -106,7 +105,10 @@ async def generate_prop(req: GeneratePropRequest):
 
     parts = ai_parts if ai_parts else extract_parts(req.prompt)
     return GeneratePropResponse(
-        name=name, filename=filename, code=code, method=method,
+        name=name,
+        filename=filename,
+        code=code,
+        method=method,
         parts=[PropPart(**p) for p in parts],
     )
 
@@ -128,8 +130,11 @@ async def get_prop_usage(gen_id: str):
     prop_name = record.get("name", "")
     placements = await find_prop_usage_in_blueprints(prop_name)
     return {
-        "propId": gen_id, "propName": prop_name, "canDelete": True,
-        "placements": placements, "totalInstances": sum(p["instanceCount"] for p in placements),
+        "propId": gen_id,
+        "propName": prop_name,
+        "canDelete": True,
+        "placements": placements,
+        "totalInstances": sum(p["instanceCount"] for p in placements),
     }
 
 
@@ -154,11 +159,14 @@ async def delete_generation_record(gen_id: str, cascade: bool = Query(False)):
     placements = await find_prop_usage_in_blueprints(prop_name)
 
     if placements and not cascade:
-        raise HTTPException(status_code=409, detail={
-            "message": "Prop is used in rooms. Use cascade=true to delete anyway.",
-            "placements": placements,
-            "totalInstances": sum(p["instanceCount"] for p in placements),
-        })
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "Prop is used in rooms. Use cascade=true to delete anyway.",
+                "placements": placements,
+                "totalInstances": sum(p["instanceCount"] for p in placements),
+            },
+        )
 
     deleted_rooms, total_removed = [], 0
     if placements and cascade:
@@ -178,8 +186,11 @@ async def delete_generation_record(gen_id: str, cascade: bool = Query(False)):
 
     logger.info(f"Deleted prop '{prop_name}' (gen_id={gen_id}), cascade={cascade}, rooms={len(deleted_rooms)}")
     return {
-        "success": True, "propId": gen_id, "propName": prop_name,
-        "deleted_from_rooms": deleted_rooms, "total_instances_removed": total_removed,
+        "success": True,
+        "propId": gen_id,
+        "propName": prop_name,
+        "deleted_from_rooms": deleted_rooms,
+        "total_instances_removed": total_removed,
     }
 
 
@@ -190,9 +201,11 @@ async def delete_generation_record(gen_id: str, cascade: bool = Query(False)):
 async def save_prop(req: SavePropRequest):
     props = [p for p in load_saved_props() if p["propId"] != req.propId]
     entry = {
-        "propId": req.propId, "name": req.name,
+        "propId": req.propId,
+        "name": req.name,
         "parts": [p.model_dump() for p in req.parts],
-        "mountType": req.mountType, "yOffset": req.yOffset,
+        "mountType": req.mountType,
+        "yOffset": req.yOffset,
         "createdAt": datetime.utcnow().isoformat(),
     }
     props.append(entry)
@@ -224,11 +237,17 @@ async def list_showcase_props():
     if SHOWCASE_PROPS_DIR.exists():
         for f in sorted(SHOWCASE_PROPS_DIR.glob("*.tsx")):
             code = f.read_text()
-            props.append({
-                "name": f.stem, "filename": f.name, "code": code, "isShowcase": True,
-                "meshCount": len(re.findall(r"<mesh\b", code)),
-                "hasAnimation": "useFrame" in code, "hasEmissive": "emissive=" in code,
-            })
+            props.append(
+                {
+                    "name": f.stem,
+                    "filename": f.name,
+                    "code": code,
+                    "isShowcase": True,
+                    "meshCount": len(re.findall(r"<mesh\b", code)),
+                    "hasAnimation": "useFrame" in code,
+                    "hasEmissive": "emissive=" in code,
+                }
+            )
     return {"props": props, "count": len(props)}
 
 
@@ -260,15 +279,18 @@ async def refine_prop(req: PropRefinementRequest):
     persist_refined_prop(req.propId, refined_code, parts)
 
     return PropRefinementResponse(
-        propId=req.propId, code=refined_code,
+        propId=req.propId,
+        code=refined_code,
         parts=[PropPart(**p) for p in parts],
-        diagnostics=diagnostics, refinementOptions=options,
+        diagnostics=diagnostics,
+        refinementOptions=options,
     )
 
 
 @router.get("/props/refinement-options")
 async def get_refinement_options(prompt: str = Query("", min_length=0)):
     from ..services.multi_pass_generator import MultiPassGenerator
+
     return MultiPassGenerator().get_refinement_options(prompt)
 
 
@@ -283,7 +305,9 @@ async def iterate_prop(req: IteratePropRequest):
 
     try:
         improved_code, feedback_type = await PropIterator().iterate_prop(
-            original_code=req.code, feedback=req.feedback, component_name=req.componentName,
+            original_code=req.code,
+            feedback=req.feedback,
+            component_name=req.componentName,
         )
         score = QualityScorer().score_prop(improved_code)
         return {"code": improved_code, "feedbackType": feedback_type, "qualityScore": score.to_dict()}
@@ -295,12 +319,14 @@ async def iterate_prop(req: IteratePropRequest):
 @router.post("/props/style-transfer")
 async def apply_style_transfer(req: StyleTransferRequest):
     """Apply a showcase style to a generated prop."""
-    from ..services.style_transfer import StyleTransfer
     from ..services.prop_quality_scorer import QualityScorer
+    from ..services.style_transfer import StyleTransfer
 
     try:
         styled_code = await StyleTransfer().apply_style(
-            generated_code=req.code, style_source=req.styleSource, component_name=req.componentName,
+            generated_code=req.code,
+            style_source=req.styleSource,
+            component_name=req.componentName,
         )
         score = QualityScorer().score_prop(styled_code)
         return {"code": styled_code, "styleSource": req.styleSource, "qualityScore": score.to_dict()}
@@ -312,6 +338,7 @@ async def apply_style_transfer(req: StyleTransferRequest):
 @router.get("/props/styles")
 async def list_styles():
     from ..services.style_transfer import get_available_styles
+
     return {"styles": get_available_styles()}
 
 
@@ -324,7 +351,9 @@ async def hybrid_generate(req: HybridGenerateRequest):
     name, filename = prompt_to_filename(req.prompt.strip())
     try:
         code = await HybridGenerator().generate_hybrid(
-            description=req.prompt, component_name=name, template_base=req.templateBase,
+            description=req.prompt,
+            component_name=name,
+            template_base=req.templateBase,
         )
         score = QualityScorer().score_prop(code)
         ai_parts = parse_ai_parts(code)
@@ -332,17 +361,32 @@ async def hybrid_generate(req: HybridGenerateRequest):
         parts = ai_parts if ai_parts else extract_parts(req.prompt)
         method = "hybrid" if req.templateBase else "ai-enhanced"
         gen_id = uuid.uuid4().hex[:8]
-        add_generation_record({
-            "id": gen_id, "prompt": req.prompt, "name": name,
-            "model": req.model, "modelLabel": "Hybrid", "method": method,
-            "fullPrompt": "", "toolCalls": [], "corrections": [],
-            "diagnostics": [f"Template: {req.templateBase or 'none'}"],
-            "parts": parts, "code": clean_code,
-            "createdAt": datetime.utcnow().isoformat(), "error": None,
-        })
+        add_generation_record(
+            {
+                "id": gen_id,
+                "prompt": req.prompt,
+                "name": name,
+                "model": req.model,
+                "modelLabel": "Hybrid",
+                "method": method,
+                "fullPrompt": "",
+                "toolCalls": [],
+                "corrections": [],
+                "diagnostics": [f"Template: {req.templateBase or 'none'}"],
+                "parts": parts,
+                "code": clean_code,
+                "createdAt": datetime.utcnow().isoformat(),
+                "error": None,
+            }
+        )
         return {
-            "name": name, "filename": filename, "code": clean_code, "method": method,
-            "parts": parts, "qualityScore": score.to_dict(), "generationId": gen_id,
+            "name": name,
+            "filename": filename,
+            "code": clean_code,
+            "method": method,
+            "parts": parts,
+            "qualityScore": score.to_dict(),
+            "generationId": gen_id,
         }
     except Exception as exc:
         logger.error(f"Hybrid generation failed: {exc}")
@@ -352,6 +396,7 @@ async def hybrid_generate(req: HybridGenerateRequest):
 @router.get("/props/templates")
 async def list_templates():
     from ..services.hybrid_generator import HybridGenerator
+
     return {"templates": HybridGenerator().get_templates()}
 
 
@@ -363,16 +408,22 @@ async def crossbreed_props(req: CrossbreedRequest):
 
     try:
         offspring_code = await PropGenetics().crossbreed(
-            parent_a_code=req.parentACode, parent_b_code=req.parentBCode,
-            parent_a_name=req.parentAName, parent_b_name=req.parentBName,
-            component_name=req.componentName, traits=req.traits,
+            parent_a_code=req.parentACode,
+            parent_b_code=req.parentBCode,
+            parent_a_name=req.parentAName,
+            parent_b_name=req.parentBName,
+            component_name=req.componentName,
+            traits=req.traits,
         )
         score = QualityScorer().score_prop(offspring_code)
         ai_parts = parse_ai_parts(offspring_code)
         clean_code = strip_parts_block(offspring_code)
         return {
-            "code": clean_code, "name": req.componentName, "parts": ai_parts or [],
-            "qualityScore": score.to_dict(), "parents": [req.parentAName, req.parentBName],
+            "code": clean_code,
+            "name": req.componentName,
+            "parts": ai_parts or [],
+            "qualityScore": score.to_dict(),
+            "parents": [req.parentAName, req.parentBName],
         }
     except Exception as exc:
         logger.error(f"Crossbreeding failed: {exc}")
@@ -382,4 +433,5 @@ async def crossbreed_props(req: CrossbreedRequest):
 @router.post("/props/quality-score")
 async def score_prop_quality(req: QualityScoreRequest):
     from ..services.prop_quality_scorer import QualityScorer
+
     return QualityScorer().score_prop(req.code).to_dict()

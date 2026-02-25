@@ -1,7 +1,9 @@
 """Pydantic models for CrewHub database entities."""
-from pydantic import BaseModel
-from typing import Literal, Optional, List
+
 import uuid
+from typing import List, Literal, Optional
+
+from pydantic import BaseModel
 
 
 def generate_id() -> str:
@@ -13,8 +15,10 @@ def generate_id() -> str:
 # PROJECTS
 # ========================================
 
+
 class ProjectCreate(BaseModel):
     """Request model for creating a new project."""
+
     name: str
     description: Optional[str] = None
     icon: Optional[str] = None
@@ -24,6 +28,7 @@ class ProjectCreate(BaseModel):
 
 class ProjectUpdate(BaseModel):
     """Request model for updating a project."""
+
     name: Optional[str] = None
     description: Optional[str] = None
     icon: Optional[str] = None
@@ -34,6 +39,7 @@ class ProjectUpdate(BaseModel):
 
 class ProjectResponse(BaseModel):
     """Response model for a project."""
+
     id: str
     name: str
     description: Optional[str] = None
@@ -49,6 +55,7 @@ class ProjectResponse(BaseModel):
 
 class RoomProjectAssign(BaseModel):
     """Request model for assigning a project to a room."""
+
     project_id: str
 
 
@@ -56,8 +63,10 @@ class RoomProjectAssign(BaseModel):
 # ROOMS
 # ========================================
 
+
 class Room(BaseModel):
     """Workspace area for organizing agents/sessions."""
+
     id: str
     name: str
     icon: Optional[str] = None
@@ -77,6 +86,7 @@ class Room(BaseModel):
 
 class RoomCreate(BaseModel):
     """Request model for creating a new room."""
+
     id: str
     name: str
     icon: Optional[str] = None
@@ -90,6 +100,7 @@ class RoomCreate(BaseModel):
 
 class RoomUpdate(BaseModel):
     """Request model for updating a room."""
+
     name: Optional[str] = None
     icon: Optional[str] = None
     color: Optional[str] = None
@@ -104,8 +115,10 @@ class RoomUpdate(BaseModel):
 # AGENTS
 # ========================================
 
+
 class Agent(BaseModel):
     """Permanent top-level agent definition."""
+
     id: str
     name: str
     icon: Optional[str] = None
@@ -124,6 +137,7 @@ class Agent(BaseModel):
 
 class AgentCreate(BaseModel):
     """Request model for creating a new agent."""
+
     id: str
     name: str
     icon: Optional[str] = None
@@ -140,6 +154,7 @@ class AgentCreate(BaseModel):
 
 class AgentUpdate(BaseModel):
     """Request model for updating an agent."""
+
     name: Optional[str] = None
     icon: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -157,8 +172,10 @@ class AgentUpdate(BaseModel):
 # SESSION ROOM ASSIGNMENTS
 # ========================================
 
+
 class SessionRoomAssignment(BaseModel):
     """Override assignment of a session to a room."""
+
     session_key: str
     room_id: str
     assigned_at: int
@@ -166,6 +183,7 @@ class SessionRoomAssignment(BaseModel):
 
 class SessionRoomAssignmentCreate(BaseModel):
     """Request model for assigning a session to a room."""
+
     session_key: str
     room_id: str
 
@@ -174,8 +192,10 @@ class SessionRoomAssignmentCreate(BaseModel):
 # SESSION DISPLAY NAMES
 # ========================================
 
+
 class SessionDisplayName(BaseModel):
     """Custom display name for a session."""
+
     session_key: str
     display_name: str
     updated_at: int
@@ -183,6 +203,7 @@ class SessionDisplayName(BaseModel):
 
 class SessionDisplayNameUpdate(BaseModel):
     """Request model for updating a session display name."""
+
     display_name: str
 
 
@@ -190,8 +211,10 @@ class SessionDisplayNameUpdate(BaseModel):
 # ROOM ASSIGNMENT RULES
 # ========================================
 
+
 class RoomAssignmentRule(BaseModel):
     """Heuristic rule for auto-assigning sessions to rooms."""
+
     id: str
     room_id: str
     rule_type: str  # 'keyword', 'model', 'label_pattern', 'session_type'
@@ -202,6 +225,7 @@ class RoomAssignmentRule(BaseModel):
 
 class RoomAssignmentRuleCreate(BaseModel):
     """Request model for creating a room assignment rule."""
+
     room_id: str
     rule_type: str
     rule_value: str
@@ -210,6 +234,7 @@ class RoomAssignmentRuleCreate(BaseModel):
 
 class RoomAssignmentRuleUpdate(BaseModel):
     """Request model for updating a room assignment rule."""
+
     room_id: Optional[str] = None
     rule_type: Optional[str] = None
     rule_value: Optional[str] = None
@@ -220,8 +245,10 @@ class RoomAssignmentRuleUpdate(BaseModel):
 # SETTINGS
 # ========================================
 
+
 class Setting(BaseModel):
     """Global key-value setting."""
+
     key: str
     value: str
     updated_at: int
@@ -229,6 +256,7 @@ class Setting(BaseModel):
 
 class SettingUpdate(BaseModel):
     """Request model for updating a setting."""
+
     value: str
 
 
@@ -236,13 +264,15 @@ class SettingUpdate(BaseModel):
 # CONNECTIONS
 # ========================================
 
+
 class Connection(BaseModel):
     """
     Agent connection configuration.
-    
+
     Stores connection details for different agent systems
     (OpenClaw, Claude Code, Codex, etc.)
     """
+
     id: str
     name: str
     type: str  # 'openclaw', 'claude_code', 'codex'
@@ -254,6 +284,7 @@ class Connection(BaseModel):
 
 class ConnectionCreate(BaseModel):
     """Request model for creating a new connection."""
+
     id: Optional[str] = None  # Auto-generated if not provided
     name: str
     type: str  # 'openclaw', 'claude_code', 'codex'
@@ -263,6 +294,7 @@ class ConnectionCreate(BaseModel):
 
 class ConnectionUpdate(BaseModel):
     """Request model for updating a connection."""
+
     name: Optional[str] = None
     config: Optional[dict] = None
     enabled: Optional[bool] = None
@@ -272,14 +304,17 @@ class ConnectionUpdate(BaseModel):
 # CUSTOM BLUEPRINTS (modding)
 # ========================================
 
+
 class BlueprintPlacementSpan(BaseModel):
     """Span dimensions for a blueprint placement."""
+
     w: int = 1
     d: int = 1
 
 
 class BlueprintPlacement(BaseModel):
     """A single prop placement in a blueprint."""
+
     propId: str
     x: int
     z: int
@@ -290,6 +325,7 @@ class BlueprintPlacement(BaseModel):
 
 class BlueprintDoor(BaseModel):
     """Door position in a blueprint."""
+
     x: int
     z: int
     facing: Optional[str] = None
@@ -297,12 +333,14 @@ class BlueprintDoor(BaseModel):
 
 class BlueprintPoint(BaseModel):
     """A point on the grid (x, z)."""
+
     x: int
     z: int
 
 
 class BlueprintInteractionPoints(BaseModel):
     """Interaction points grouped by type."""
+
     work: List[BlueprintPoint] = []
     coffee: List[BlueprintPoint] = []
     sleep: List[BlueprintPoint] = []
@@ -310,6 +348,7 @@ class BlueprintInteractionPoints(BaseModel):
 
 class BlueprintJson(BaseModel):
     """The full blueprint JSON structure."""
+
     id: Optional[str] = None
     name: str
     gridWidth: int
@@ -325,6 +364,7 @@ class BlueprintJson(BaseModel):
 
 class CustomBlueprintCreate(BaseModel):
     """Request model for creating a custom blueprint."""
+
     name: str
     room_id: Optional[str] = None
     blueprint: BlueprintJson
@@ -333,6 +373,7 @@ class CustomBlueprintCreate(BaseModel):
 
 class CustomBlueprintUpdate(BaseModel):
     """Request model for updating a custom blueprint."""
+
     name: Optional[str] = None
     room_id: Optional[str] = None
     blueprint: Optional[BlueprintJson] = None
@@ -341,6 +382,7 @@ class CustomBlueprintUpdate(BaseModel):
 
 class CustomBlueprintResponse(BaseModel):
     """Response model for a custom blueprint."""
+
     id: str
     name: str
     room_id: Optional[str] = None

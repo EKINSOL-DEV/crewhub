@@ -1,7 +1,7 @@
 # AI Meetings UX Improvements - Kickoff
 
-> **Date:** 2026-02-13  
-> **Goal:** Improve meeting UX based on user feedback  
+> **Date:** 2026-02-13
+> **Goal:** Improve meeting UX based on user feedback
 > **Strategy:** Opus implementation + GPT-5.2 review
 
 ---
@@ -91,10 +91,10 @@ Optional: Attach Document
    ```
    Optional: Attach Document
    [Select markdown file...] ⬇️
-   
+
    If selected:
    "We'll discuss: analysis/market-research.md"
-   
+
    Additional context (before document):
    [Text area: Add intro/questions before document content...]
    ```
@@ -105,13 +105,13 @@ Optional: Attach Document
      ```
      Meeting topic: [user topic]
      Document: [filename]
-     
+
      [additional context if provided]
-     
+
      --- Document Content ---
      [full markdown content]
      ---
-     
+
      [cumulative context from previous speakers]
      ```
 

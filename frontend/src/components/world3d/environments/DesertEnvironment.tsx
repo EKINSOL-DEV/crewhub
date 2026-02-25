@@ -8,9 +8,9 @@ import { useToonMaterialProps } from '../utils/toonMaterials'
 const seedFn = (x: number, z: number) =>
   Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1
 
-const TILE_SIZE = 8          // was 4 → bigger tiles, 75% fewer objects
-const GRID_RANGE = 30        // was 60 → same coverage (30×8 = 240)
-const DECORATION_MAX_DIST = 80  // cull decorations beyond this radius
+const TILE_SIZE = 8 // was 4 → bigger tiles, 75% fewer objects
+const GRID_RANGE = 30 // was 60 → same coverage (30×8 = 240)
+const DECORATION_MAX_DIST = 80 // cull decorations beyond this radius
 
 // ─── Animated Tumbleweed (max 6, kept individual) ────────────────
 
@@ -121,17 +121,15 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
     // Reusable temporaries
     const mat4 = new THREE.Matrix4()
     const groundQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(1, 0, 0), -Math.PI / 2,
+      new THREE.Vector3(1, 0, 0),
+      -Math.PI / 2
     )
     const identityQuat = new THREE.Quaternion()
-    const rotZ90 = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 0, 1), Math.PI / 2,
-    )
-    const pricklyLeftQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 0, 1), 0.2,
-    )
+    const rotZ90 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2)
+    const pricklyLeftQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.2)
     const pricklyRightQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 0, 1), -0.15,
+      new THREE.Vector3(0, 0, 1),
+      -0.15
     )
     const tmpVec = new THREE.Vector3()
     const tmpQuat = new THREE.Quaternion()
@@ -147,21 +145,16 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
         mat4.compose(
           tmpVec.set(wx, -0.08, wz),
           groundQuat,
-          new THREE.Vector3(1, 1, thickness / 0.1),
+          new THREE.Vector3(1, 1, thickness / 0.1)
         )
         groundMatrices.push(mat4.clone())
-        groundColors.push(new THREE.Color(
-          0.75 + s * 0.12,
-          0.62 + s * 0.10,
-          0.42 + s * 0.08,
-        ))
+        groundColors.push(new THREE.Color(0.75 + s * 0.12, 0.62 + s * 0.1, 0.42 + s * 0.08))
 
         // ── Distance + building-zone gating ─────────
         const dist = Math.sqrt(wx * wx + wz * wz)
         if (dist > DECORATION_MAX_DIST) continue
         const inBuilding =
-          Math.abs(wx) < buildingWidth / 2 + 2 &&
-          Math.abs(wz) < buildingDepth / 2 + 2
+          Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2
         if (inBuilding) continue
 
         // ── Saguaro cactus (s > 0.92, dist > 15) ───
@@ -248,7 +241,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
           mat4.compose(
             tmpVec.set(wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75),
             tmpQuat,
-            new THREE.Vector3(sc, sc, sc),
+            new THREE.Vector3(sc, sc, sc)
           )
           rocks.push(mat4.clone())
         }
@@ -260,7 +253,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
           mat4.compose(
             tmpVec.set(wx, -0.15, wz),
             identityQuat,
-            new THREE.Vector3(scaleXZ, height, scaleXZ * 0.7),
+            new THREE.Vector3(scaleXZ, height, scaleXZ * 0.7)
           )
           dunes.push(mat4.clone())
         }
@@ -276,13 +269,25 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
     }
 
     return {
-      groundCount: groundMatrices.length, groundMatrices, groundColors,
-      saguaroTrunk, saguaroTrunkCap,
-      saguaroLeftHoriz, saguaroLeftVert, saguaroLeftCap,
-      saguaroRightHoriz, saguaroRightVert, saguaroRightCap,
-      barrelBody, barrelFlower,
-      pricklyBase, pricklyLeft, pricklyRight,
-      rocks, dunes, tumbleweeds,
+      groundCount: groundMatrices.length,
+      groundMatrices,
+      groundColors,
+      saguaroTrunk,
+      saguaroTrunkCap,
+      saguaroLeftHoriz,
+      saguaroLeftVert,
+      saguaroLeftCap,
+      saguaroRightHoriz,
+      saguaroRightVert,
+      saguaroRightCap,
+      barrelBody,
+      barrelFlower,
+      pricklyBase,
+      pricklyLeft,
+      pricklyRight,
+      rocks,
+      dunes,
+      tumbleweeds,
     }
   }, [buildingWidth, buildingDepth])
 

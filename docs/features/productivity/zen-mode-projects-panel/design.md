@@ -1,8 +1,8 @@
 # Zen Mode Projects Panel — Design Document
 
-> **Version:** 1.1  
-> **Date:** 2026-02-10  
-> **Status:** Draft  
+> **Version:** 1.1
+> **Date:** 2026-02-10
+> **Status:** Draft
 > **CrewHub Version:** v0.12.0 → v0.13.0
 
 ---
@@ -221,13 +221,13 @@ function useProjects(): {
 
 Current panel types in `types/layout.ts`:
 ```ts
-type PanelType = 'chat' | 'sessions' | 'activity' | 'rooms' | 'tasks' | 
+type PanelType = 'chat' | 'sessions' | 'activity' | 'rooms' | 'tasks' |
                  'kanban' | 'cron' | 'logs' | 'documents' | 'empty'
 ```
 
 Change to:
 ```ts
-type PanelType = 'chat' | 'sessions' | 'activity' | 'rooms' | 'tasks' | 
+type PanelType = 'chat' | 'sessions' | 'activity' | 'rooms' | 'tasks' |
                  'kanban' | 'cron' | 'logs' | 'projects' | 'empty'
 ```
 

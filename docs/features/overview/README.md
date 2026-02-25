@@ -1,6 +1,6 @@
 # CrewHub Features Overview
 
-*Last updated: 2026-02-10*  
+*Last updated: 2026-02-10*
 *Current version: v0.12.0*
 
 Complete feature documentation organized by category. Each category file includes detailed descriptions, implementation status, version history, and documentation links.
@@ -82,10 +82,10 @@ Complete feature documentation organized by category. Each category file include
 
 ## 🗺️ Quick Roadmap
 
-**v0.13.0** — Markdown viewer + editor, Creator Zone MVP  
-**v0.14.0** — Spatial awareness, Stand-up meetings  
-**v0.15.0** — HQ visual redesign  
-**v0.16.0** — Zones system, Academy Zone  
+**v0.13.0** — Markdown viewer + editor, Creator Zone MVP
+**v0.14.0** — Spatial awareness, Stand-up meetings
+**v0.15.0** — HQ visual redesign
+**v0.16.0** — Zones system, Academy Zone
 **v0.17.0+** — Voice chat, Agent Teams
 
 For detailed roadmap, see [../matrix.md](../matrix.md)
@@ -94,7 +94,7 @@ For detailed roadmap, see [../matrix.md](../matrix.md)
 
 ## 🔄 Maintenance
 
-These files are **auto-generated daily at 8:00** from [matrix.md](../matrix.md).  
+These files are **auto-generated daily at 8:00** from [matrix.md](../matrix.md).
 Manual edits will be preserved in the "Description" and "Docs" sections.
 
 **Last sync:** 2026-02-25 08:00

@@ -62,7 +62,13 @@ export function RoomProps({ roomName, roomSize }: RoomPropsProps) {
 // ─── Shared Mini-Props ──────────────────────────────────────────
 
 /** Simple whiteboard on a wall */
-function Whiteboard({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function Whiteboard({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const frameToon = useToonMaterialProps('#888888')
   const boardToon = useToonMaterialProps('#F5F5F5')
   const trayToon = useToonMaterialProps('#666666')
@@ -89,7 +95,13 @@ function Whiteboard({ position, rotation }: { position: [number, number, number]
 }
 
 /** Server rack (tall box with blinking light indicators) */
-function ServerRack({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function ServerRack({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const bodyToon = useToonMaterialProps('#2A2A2A')
   const rackToon = useToonMaterialProps('#1A1A1A')
 
@@ -147,7 +159,13 @@ function ServerLED({ position, color }: { position: [number, number, number]; co
 }
 
 /** Desk lamp (smaller, sits on desk) */
-function DeskLamp({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function DeskLamp({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const baseToon = useToonMaterialProps('#444444')
   const armToon = useToonMaterialProps('#555555')
   const shadeToon = useToonMaterialProps('#888888')
@@ -181,10 +199,30 @@ function CableMess({ position }: { position: [number, number, number] }) {
   const cableBlueToon = useToonMaterialProps('#334499')
 
   const cables = [
-    { pos: [0, 0.01, 0] as [number, number, number], rot: [Math.PI / 2, 0, 0.3] as [number, number, number], toon: cableToon, len: 0.8 },
-    { pos: [0.15, 0.01, 0.1] as [number, number, number], rot: [Math.PI / 2, 0, -0.5] as [number, number, number], toon: cableRedToon, len: 0.6 },
-    { pos: [-0.1, 0.01, -0.05] as [number, number, number], rot: [Math.PI / 2, 0, 1.2] as [number, number, number], toon: cableBlueToon, len: 0.5 },
-    { pos: [0.05, 0.015, 0.15] as [number, number, number], rot: [Math.PI / 2, 0, -0.1] as [number, number, number], toon: cableToon, len: 0.7 },
+    {
+      pos: [0, 0.01, 0] as [number, number, number],
+      rot: [Math.PI / 2, 0, 0.3] as [number, number, number],
+      toon: cableToon,
+      len: 0.8,
+    },
+    {
+      pos: [0.15, 0.01, 0.1] as [number, number, number],
+      rot: [Math.PI / 2, 0, -0.5] as [number, number, number],
+      toon: cableRedToon,
+      len: 0.6,
+    },
+    {
+      pos: [-0.1, 0.01, -0.05] as [number, number, number],
+      rot: [Math.PI / 2, 0, 1.2] as [number, number, number],
+      toon: cableBlueToon,
+      len: 0.5,
+    },
+    {
+      pos: [0.05, 0.015, 0.15] as [number, number, number],
+      rot: [Math.PI / 2, 0, -0.1] as [number, number, number],
+      toon: cableToon,
+      len: 0.7,
+    },
   ]
 
   return (
@@ -200,7 +238,13 @@ function CableMess({ position }: { position: [number, number, number] }) {
 }
 
 /** Easel with canvas */
-function Easel({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function Easel({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const woodToon = useToonMaterialProps(WARM_COLORS.wood)
   const canvasToon = useToonMaterialProps('#FFFFF0')
 
@@ -253,7 +297,13 @@ function Easel({ position, rotation }: { position: [number, number, number]; rot
 }
 
 /** Color palette (flat disc with colored dots) */
-function ColorPalette({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function ColorPalette({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const baseToon = useToonMaterialProps(WARM_COLORS.woodLight)
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#34D399', '#F97316', '#FFFFFF']
 
@@ -280,7 +330,13 @@ function ColorPalette({ position, rotation }: { position: [number, number, numbe
 }
 
 /** Mood board on wall */
-function MoodBoard({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function MoodBoard({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const frameToon = useToonMaterialProps('#555555')
   const boardToon = useToonMaterialProps('#333333')
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#F97316', '#60A5FA']
@@ -311,7 +367,13 @@ function MoodBoard({ position, rotation }: { position: [number, number, number];
 }
 
 /** Presentation screen on wall */
-function PresentationScreen({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function PresentationScreen({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const frameToon = useToonMaterialProps('#333333')
 
   return (
@@ -331,7 +393,13 @@ function PresentationScreen({ position, rotation }: { position: [number, number,
 }
 
 /** 3D bar chart prop */
-function BarChart({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function BarChart({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const baseToon = useToonMaterialProps('#555555')
   const bars = [
     { h: 0.3, color: '#FF6B6B' },
@@ -360,7 +428,13 @@ function BarChart({ position, rotation }: { position: [number, number, number]; 
 }
 
 /** Megaphone prop */
-function Megaphone({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function Megaphone({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const bodyToon = useToonMaterialProps('#FF8C00')
   const bellToon = useToonMaterialProps('#FFB347')
 
@@ -381,7 +455,13 @@ function Megaphone({ position, rotation }: { position: [number, number, number];
 }
 
 /** Standing desk (taller desk) */
-function StandingDesk({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function StandingDesk({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const topToon = useToonMaterialProps(WARM_COLORS.woodLight)
   const metalToon = useToonMaterialProps('#666666')
 
@@ -419,7 +499,13 @@ function StandingDesk({ position, rotation }: { position: [number, number, numbe
 }
 
 /** Round table */
-function RoundTable({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function RoundTable({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const topToon = useToonMaterialProps(WARM_COLORS.woodLight)
   const legToon = useToonMaterialProps(WARM_COLORS.wood)
 
@@ -445,7 +531,13 @@ function RoundTable({ position, rotation }: { position: [number, number, number]
 }
 
 /** Bean bag (squashed sphere) */
-function BeanBag({ position, color = '#6366F1' }: { position: [number, number, number]; color?: string }) {
+function BeanBag({
+  position,
+  color = '#6366F1',
+}: {
+  position: [number, number, number]
+  color?: string
+}) {
   const toon = useToonMaterialProps(color)
 
   return (
@@ -464,9 +556,24 @@ function BeanBag({ position, color = '#6366F1' }: { position: [number, number, n
 }
 
 /** Bookshelf (stacked boxes) */
-function Bookshelf({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function Bookshelf({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const shelfToon = useToonMaterialProps(WARM_COLORS.wood)
-  const bookColors = ['#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#2980B9']
+  const bookColors = [
+    '#E74C3C',
+    '#3498DB',
+    '#2ECC71',
+    '#F39C12',
+    '#9B59B6',
+    '#1ABC9C',
+    '#E67E22',
+    '#2980B9',
+  ]
 
   return (
     <group position={position} rotation={rotation}>
@@ -502,7 +609,13 @@ function Bookshelf({ position, rotation }: { position: [number, number, number];
 }
 
 /** Wall clock */
-function WallClock({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function WallClock({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const frameToon = useToonMaterialProps('#333333')
   const faceToon = useToonMaterialProps('#FFFFF0')
   const handRef1 = useRef<THREE.Mesh>(null)
@@ -560,7 +673,13 @@ function WallClock({ position, rotation }: { position: [number, number, number];
 }
 
 /** Small monitor screen (for dashboards) */
-function SmallScreen({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function SmallScreen({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const frameToon = useToonMaterialProps('#2A2A2A')
 
   return (
@@ -578,7 +697,13 @@ function SmallScreen({ position, rotation }: { position: [number, number, number
 }
 
 /** Conveyor belt with small boxes */
-function ConveyorBelt({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function ConveyorBelt({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const beltToon = useToonMaterialProps('#444444')
   const frameToon = useToonMaterialProps('#666666')
   const boxColors = ['#FF8C00', '#4ECDC4', '#A78BFA']
@@ -618,7 +743,13 @@ function ConveyorBelt({ position, rotation }: { position: [number, number, numbe
 }
 
 /** Gear mechanism */
-function GearMechanism({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function GearMechanism({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const gearToon = useToonMaterialProps('#777777')
   const gear1Ref = useRef<THREE.Group>(null)
   const gear2Ref = useRef<THREE.Group>(null)
@@ -680,7 +811,13 @@ function GearMechanism({ position, rotation }: { position: [number, number, numb
 }
 
 /** Control panel (angled box with buttons) */
-function ControlPanel({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function ControlPanel({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const bodyToon = useToonMaterialProps('#3A3A3A')
   const panelToon = useToonMaterialProps('#4A4A4A')
   const buttonColors = ['#44AA44', '#CC3333', '#FFAA00', '#4488CC', '#44AA44', '#CC3333']
@@ -717,7 +854,13 @@ function ControlPanel({ position, rotation }: { position: [number, number, numbe
 }
 
 /** Satellite dish */
-function SatelliteDish({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function SatelliteDish({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const dishToon = useToonMaterialProps('#CCCCCC')
   const armToon = useToonMaterialProps('#888888')
 
@@ -777,7 +920,13 @@ function AntennaTower({ position }: { position: [number, number, number] }) {
 }
 
 /** Headset on desk */
-function Headset({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function Headset({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const bandToon = useToonMaterialProps('#333333')
   const earToon = useToonMaterialProps('#444444')
   const cushionToon = useToonMaterialProps('#555555')
@@ -888,7 +1037,13 @@ function StatusLights({ position }: { position: [number, number, number] }) {
 }
 
 /** Filing cabinet */
-function FilingCabinet({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function FilingCabinet({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const bodyToon = useToonMaterialProps('#777777')
   const drawerToon = useToonMaterialProps('#888888')
   const handleToon = useToonMaterialProps('#AAAAAA')
@@ -955,7 +1110,13 @@ function FireExtinguisher({ position }: { position: [number, number, number] }) 
 }
 
 /** Drawing tablet on desk */
-function DrawingTablet({ position, rotation }: { position: [number, number, number]; rotation?: [number, number, number] }) {
+function DrawingTablet({
+  position,
+  rotation,
+}: {
+  position: [number, number, number]
+  rotation?: [number, number, number]
+}) {
   const baseToon = useToonMaterialProps('#2A2A2A')
   const penToon = useToonMaterialProps('#555555')
 
@@ -1006,10 +1167,7 @@ function HeadquartersProps({ s, size }: RoomTypeProps) {
       <Plant position={[h - 1.2 * s, Y, h - 1.2 * s]} scale={1.2 * s} />
 
       {/* Notice board on back wall */}
-      <NoticeBoard
-        position={[0, 1.8 * s + Y, h - 0.5 * s]}
-        rotation={[0, Math.PI, 0]}
-      />
+      <NoticeBoard position={[0, 1.8 * s + Y, h - 0.5 * s]} rotation={[0, Math.PI, 0]} />
 
       {/* Coffee machine — side wall */}
       <CoffeeMachine position={[h - 1.5 * s, Y, -h + 2 * s]} rotation={[0, -Math.PI / 2, 0]} />
@@ -1042,10 +1200,7 @@ function DevRoomProps({ s, size }: RoomTypeProps) {
       <ServerRack position={[h - 1.2 * s, Y, h - 1 * s]} rotation={[0, Math.PI, 0]} />
 
       {/* Whiteboard on back wall */}
-      <Whiteboard
-        position={[0, 1.6 * s + Y, h - 0.5 * s]}
-        rotation={[0, Math.PI, 0]}
-      />
+      <Whiteboard position={[0, 1.6 * s + Y, h - 0.5 * s]} rotation={[0, Math.PI, 0]} />
 
       {/* Cable mess on floor between desks */}
       <CableMess position={[0, Y, h - 3 * s]} />
@@ -1068,17 +1223,17 @@ function CreativeRoomProps({ s, size }: RoomTypeProps) {
       {/* Desk with monitor and drawing tablet — right side */}
       <Desk position={[h - 2.5 * s, Y, h - 2.5 * s]} rotation={[0, -Math.PI / 4, 0]} />
       <Monitor position={[h - 2.5 * s, Y + 0.78, h - 2.5 * s]} rotation={[0, -Math.PI / 4, 0]} />
-      <DrawingTablet position={[h - 2.8 * s, Y + 0.78, h - 2.2 * s]} rotation={[0, -Math.PI / 4, 0]} />
+      <DrawingTablet
+        position={[h - 2.8 * s, Y + 0.78, h - 2.2 * s]}
+        rotation={[0, -Math.PI / 4, 0]}
+      />
       <Chair position={[h - 1.8 * s, Y, h - 3.2 * s]} rotation={[0, Math.PI - Math.PI / 4, 0]} />
 
       {/* Color palette on small table near easel */}
       <ColorPalette position={[-h + 3.5 * s, Y + 0.5, 0.3 * s]} />
 
       {/* Mood board on wall */}
-      <MoodBoard
-        position={[0, 1.6 * s + Y, h - 0.5 * s]}
-        rotation={[0, Math.PI, 0]}
-      />
+      <MoodBoard position={[0, 1.6 * s + Y, h - 0.5 * s]} rotation={[0, Math.PI, 0]} />
 
       {/* Plants for inspiration */}
       <Plant position={[h - 1.2 * s, Y, -h + 1.5 * s]} scale={1.0 * s} />
@@ -1098,10 +1253,7 @@ function MarketingRoomProps({ s, size }: RoomTypeProps) {
       <Monitor position={[-h + 3 * s, Y + 1.1, h - 2.5 * s]} rotation={[0, Math.PI / 6, 0]} />
 
       {/* Presentation screen on wall */}
-      <PresentationScreen
-        position={[0, 1.8 * s + Y, h - 0.5 * s]}
-        rotation={[0, Math.PI, 0]}
-      />
+      <PresentationScreen position={[0, 1.8 * s + Y, h - 0.5 * s]} rotation={[0, Math.PI, 0]} />
 
       {/* Bar chart prop — on a small table */}
       <BarChart position={[h - 2.5 * s, Y, 0]} rotation={[0, -Math.PI / 4, 0]} />
@@ -1137,17 +1289,10 @@ function ThinkingRoomProps({ s, size }: RoomTypeProps) {
       <Bookshelf position={[h - 1.2 * s, Y, h - 1 * s]} rotation={[0, Math.PI, 0]} />
 
       {/* Lamp — warm ambient light */}
-      <Lamp
-        position={[-h + 1.5 * s, Y, -h + 1.5 * s]}
-        lightColor="#FFD700"
-        lightIntensity={0.5}
-      />
+      <Lamp position={[-h + 1.5 * s, Y, -h + 1.5 * s]} lightColor="#FFD700" lightIntensity={0.5} />
 
       {/* Whiteboard */}
-      <Whiteboard
-        position={[-h + 0.5 * s, 1.6 * s + Y, 0]}
-        rotation={[0, Math.PI / 2, 0]}
-      />
+      <Whiteboard position={[-h + 0.5 * s, 1.6 * s + Y, 0]} rotation={[0, Math.PI / 2, 0]} />
     </group>
   )
 }
@@ -1159,10 +1304,7 @@ function AutomationRoomProps({ s, size }: RoomTypeProps) {
   return (
     <group>
       {/* Large wall clock — prominent on back wall */}
-      <WallClock
-        position={[0, 2.2 * s + Y, h - 0.5 * s]}
-        rotation={[Math.PI / 2, 0, Math.PI]}
-      />
+      <WallClock position={[0, 2.2 * s + Y, h - 0.5 * s]} rotation={[Math.PI / 2, 0, Math.PI]} />
 
       {/* Dashboard wall — multiple small screens */}
       <SmallScreen position={[-1.2 * s, 1.6 * s + Y, h - 0.5 * s]} rotation={[0, Math.PI, 0]} />
@@ -1174,10 +1316,7 @@ function AutomationRoomProps({ s, size }: RoomTypeProps) {
       <ConveyorBelt position={[0, Y, -0.5 * s]} rotation={[0, 0, 0]} />
 
       {/* Gear mechanism on side wall */}
-      <GearMechanism
-        position={[h - 0.5 * s, 1.2 * s + Y, 0]}
-        rotation={[0, -Math.PI / 2, 0]}
-      />
+      <GearMechanism position={[h - 0.5 * s, 1.2 * s + Y, 0]} rotation={[0, -Math.PI / 2, 0]} />
 
       {/* Control panel — front area */}
       <ControlPanel position={[-h + 2 * s, Y, -h + 2 * s]} rotation={[0, Math.PI / 4, 0]} />
@@ -1192,7 +1331,10 @@ function CommsRoomProps({ s, size }: RoomTypeProps) {
   return (
     <group>
       {/* Satellite dish — top corner */}
-      <SatelliteDish position={[h - 1.5 * s, 2 * s + Y, h - 1.5 * s]} rotation={[0, -Math.PI / 4, 0]} />
+      <SatelliteDish
+        position={[h - 1.5 * s, 2 * s + Y, h - 1.5 * s]}
+        rotation={[0, -Math.PI / 4, 0]}
+      />
 
       {/* Antenna tower — back corner */}
       <AntennaTower position={[-h + 1.2 * s, Y, h - 1.2 * s]} />
@@ -1206,7 +1348,7 @@ function CommsRoomProps({ s, size }: RoomTypeProps) {
       <Desk position={[h - 2.5 * s, Y, -h + 2.5 * s]} rotation={[0, -Math.PI / 3, 0]} />
       <Monitor position={[h - 2.5 * s, Y + 0.78, -h + 2.5 * s]} rotation={[0, -Math.PI / 3, 0]} />
       <Headset position={[h - 2.0 * s, Y + 0.82, -h + 2.2 * s]} rotation={[0, -Math.PI / 3, 0]} />
-      <Chair position={[h - 3.2 * s, Y, -h + 3.2 * s]} rotation={[0, Math.PI * 2 / 3, 0]} />
+      <Chair position={[h - 3.2 * s, Y, -h + 3.2 * s]} rotation={[0, (Math.PI * 2) / 3, 0]} />
 
       {/* Signal waves emanating from antenna */}
       <SignalWaves position={[-h + 1.2 * s, 2 * s + Y, h - 1.2 * s]} />

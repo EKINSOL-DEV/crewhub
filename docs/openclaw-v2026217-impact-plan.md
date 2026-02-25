@@ -1,8 +1,8 @@
 # OpenClaw v2026.2.17 Impact Plan — CrewHub
 
-**Datum:** 2026-02-18  
-**Reviewer:** GPT-5.2 (Reviewer agent)  
-**Status:** Implementatieplan — 4 iteraties  
+**Datum:** 2026-02-18
+**Reviewer:** GPT-5.2 (Reviewer agent)
+**Status:** Implementatieplan — 4 iteraties
 **Categorie:** Impact analyse + fixes voor twee kritieke OpenClaw gedragswijzigingen
 
 ---
@@ -117,17 +117,17 @@ T=1:00   Sub-subagent's result announce → gaat naar PARENT session
 T=2:30   isActivelyRunning(sub-subagent) = false (> 30s sinds lastChangeTime)
          idleSeconds(sub-subagent) = 120s → shouldBeInParkingLane() = true → PARKED!
          hasActiveSubagents(parent) = false (childAge = 90s < 5min? Wacht... ja nog geen issue)
-         
+
 Maar:
 T=6:01   hasActiveSubagents(parent) = false (childAge = 331s > 300s statusActiveThresholdMs)
          Parent toont "idle" terwijl het eigenlijk had moeten supervisen tot einde van work
-         
+
 T=31:30  Sub-subagent verdwijnt uit parking lot (parkingExpiryMs = 30min vanaf T30, niet T0)
          → vroeger weg dan verwacht
-         
+
 Parallel:
 T=1:00   Parent.messages bevat nu het announce-result van sub-subagent
-         BotActivityBubble(parent) toont: "Task completed: fix-3d-view" 
+         BotActivityBubble(parent) toont: "Task completed: fix-3d-view"
          ← tekst van subagent result, niet van parent's eigen werk
 ```
 
@@ -165,7 +165,7 @@ async def kill_session(self, session_key: str) -> bool:
     # ...
     base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
     session_file = (base / f"{session_id}.jsonl").resolve()
-    
+
     if session_file.exists():
         ts = datetime.utcnow().isoformat().replace(':', '-')
         session_file.rename(session_file.with_suffix(f".jsonl.deleted.{ts}"))
@@ -223,12 +223,12 @@ T=1:00   OpenClaw pruning maintenance → sessie → archief
          Scenario A (best case): OpenClaw verwijdert uit sessions.list
            → volgende 5s poll bevat sessie niet → fingerprint verandert → frontend update ✓
            → in parking lot: na 30min (vanaf updatedAt) → verdwijnt ook ✓
-         
+
          Scenario B (probleem): OpenClaw houdt sessie in sessions.list met status:"archived"
            → sessions-refresh bevat sessie nog steeds → fingerprint NIET veranderd
            → frontend: sessie zit in parking lot, blijft staan tot parkingExpiryMs
            → GHOST SESSION: zichtbaar in parking lot voor maximaal 30min na updatedAt
-         
+
          Scenario C (edge case): sessions.list bevat sessie NIET maar kill_session() aanroep mislukt
            → HTTP 500 voor wat eigenlijk een succesvolle archive was
            → UI toont foutmelding, maar sessie verdwijnt toch bij volgende poll
@@ -266,7 +266,7 @@ async def poll_sessions_loop():
             if sessions_data:
                 current_keys = {s.key for s in sessions_data}
                 current_dicts = [s.to_dict() for s in sessions_data]
-                
+
                 # Detecteer verdwenen sessies
                 removed_keys = _prev_session_keys - current_keys
                 added_keys = current_keys - _prev_session_keys
@@ -274,13 +274,13 @@ async def poll_sessions_loop():
                     logger.info(f"[DIAG] Sessions REMOVED from list: {removed_keys}")
                 if added_keys:
                     logger.info(f"[DIAG] Sessions ADDED to list: {added_keys}")
-                
+
                 # Detecteer archived/non-active statuses
                 for s in current_dicts:
                     status = s.get("status", "active")
                     if status not in ("active", ""):
                         logger.warning(f"[DIAG] Session {s.get('key')} has non-active status: {status!r}")
-                
+
                 # Detecteer stale updatedAt (geen beweging over meerdere polls)
                 for s in current_dicts:
                     key = s.get("key")
@@ -293,9 +293,9 @@ async def poll_sessions_loop():
                     else:
                         _stale_count.pop(key, None)
                     _prev_session_updatedAt[key] = updated_at
-                
+
                 _prev_session_keys = current_keys
-                
+
                 await broadcast(
                     "sessions-refresh",
                     {"sessions": current_dicts},
@@ -373,9 +373,9 @@ Het kernprobleem is dat sub-subagents' `updatedAt` niet meer gebumpt wordt door 
 
 ```typescript
 export function shouldBeInParkingLane(
-  session: MinionSession, 
-  isActivelyRunning?: boolean, 
-  idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD, 
+  session: MinionSession,
+  isActivelyRunning?: boolean,
+  idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD,
   allSessions?: MinionSession[]
 ): boolean {
   // Fixed agents (agent:*:main) always stay in their room
@@ -383,12 +383,12 @@ export function shouldBeInParkingLane(
 
   const idleSeconds = getIdleTimeSeconds(session)
   const status = getSessionStatus(session, allSessions)
-  
+
   // Supervising sessions should NOT be parked
   if (status === "supervising") return false
   if (status === "sleeping") return true
   if (isActivelyRunning) return false
-  
+
   // NEW: OpenClaw v2026.2.17 — nested announce routing compensation
   // Sub-subagent sessions don't get their updatedAt bumped by their own result announce
   // (the announce is routed to the parent session instead).
@@ -399,7 +399,7 @@ export function shouldBeInParkingLane(
     const keyParts = session.key.split(':')
     const agentId = keyParts[1]
     const ANNOUNCE_ROUTING_GRACE_MS = SESSION_CONFIG.parkingIdleThresholdS * 1000 * 2  // 2x parking threshold
-    
+
     const parentMainSession = allSessions.find(s => s.key === `agent:${agentId}:main`)
     if (parentMainSession) {
       const parentAge = Date.now() - parentMainSession.updatedAt
@@ -409,12 +409,12 @@ export function shouldBeInParkingLane(
         return false
       }
     }
-    
+
     // Also check parent subagent (one level up) — for depth-2 sub-subagents
     // Pattern: if our parent subagent session recently updated, hold off parking
     const parentSubagentSessions = allSessions.filter(s => {
       const sParts = s.key.split(':')
-      return sParts[1] === agentId && 
+      return sParts[1] === agentId &&
              (sParts[2]?.includes('subagent') || sParts[2]?.includes('spawn')) &&
              s.key !== session.key &&
              (Date.now() - s.updatedAt) < ANNOUNCE_ROUTING_GRACE_MS
@@ -423,7 +423,7 @@ export function shouldBeInParkingLane(
       return false  // A sibling/parent subagent recently updated — be conservative
     }
   }
-  
+
   return idleSeconds > idleThresholdSeconds
 }
 ```
@@ -440,7 +440,7 @@ export function hasActiveSubagents(session: MinionSession, allSessions: MinionSe
   if (sessionType !== "main" && sessionType !== "cron") return false
 
   const now = Date.now()
-  
+
   // Primary check: child session's updatedAt within threshold (original logic)
   const hasRecentChild = allSessions.some(s => {
     if (s.key === key) return false
@@ -451,10 +451,10 @@ export function hasActiveSubagents(session: MinionSession, allSessions: MinionSe
     const childAge = now - s.updatedAt
     return childAge < SESSION_CONFIG.statusActiveThresholdMs
   })
-  
+
   if (hasRecentChild) return true
-  
-  // Secondary check (v2026.2.17 compensation): 
+
+  // Secondary check (v2026.2.17 compensation):
   // This session's own updatedAt recently bumped AND it has child sessions of any age.
   // Rationale: announce routing from sub-subagents bumps THIS session's updatedAt.
   // If we recently got a bump AND we have children → we're still supervising.
@@ -464,13 +464,13 @@ export function hasActiveSubagents(session: MinionSession, allSessions: MinionSe
     const hasAnyChild = allSessions.some(s => {
       if (s.key === key) return false
       const childParts = s.key.split(":")
-      return childParts.length >= 3 && 
+      return childParts.length >= 3 &&
              childParts[1] === agentId &&
              (childParts[2]?.includes("subagent") || childParts[2]?.includes("spawn"))
     })
     if (hasAnyChild) return true
   }
-  
+
   return false
 }
 ```
@@ -495,13 +495,13 @@ export function parseRecentActivities(session: MinionSession, limit = 5): Activi
         if (block.type === "text" && block.text && block.text.trim()) {
           const text = block.text.trim()
           if (text === "NO_REPLY" || text === "HEARTBEAT_OK") continue
-          
+
           // NEW: skip routed announce messages from sub-subagents
           // These are injected into the parent session by OpenClaw's announce routing.
           // Heuristic: if role is "user" and text starts with typical announce patterns,
           // skip to avoid showing sub-subagent results as parent activity.
           if (msg.role === "user" && _isLikelyAnnounceRouting(text)) continue
-          
+
           activities.push({ /* ... same as before ... */ })
         }
         // ... rest of block handling
@@ -588,13 +588,13 @@ async def poll_sessions_loop():
     """Background task that polls all connections for sessions and broadcasts to SSE clients."""
     global _poll_prev_session_keys
     manager = await get_connection_manager()
-    
+
     while True:
         try:
             sessions_data = await manager.get_all_sessions()
             if sessions_data:
                 raw_dicts = [s.to_dict() for s in sessions_data]
-                
+
                 # Issue 2 fix: Filter out archived/pruned sessions
                 # OpenClaw v2026.2.17 may include archived sessions in sessions.list
                 # with status != "active". We don't want to display ghost sessions.
@@ -602,17 +602,17 @@ async def poll_sessions_loop():
                     s for s in raw_dicts
                     if s.get("status", "active") not in _INACTIVE_STATUSES
                 ]
-                
+
                 current_keys = {s.get("key") for s in active_dicts if s.get("key")}
-                
+
                 # Detect removed sessions and emit session-removed events
                 removed_keys = _poll_prev_session_keys - current_keys
                 for removed_key in removed_keys:
                     logger.info(f"Session removed from active list: {removed_key}")
                     await broadcast("session-removed", {"key": removed_key})
-                
+
                 _poll_prev_session_keys = current_keys
-                
+
                 await broadcast(
                     "sessions-refresh",
                     {"sessions": active_dicts},
@@ -634,44 +634,44 @@ async def poll_sessions_loop():
 ```python
 async def kill_session(self, session_key: str) -> bool:
     """Kill a session.
-    
+
     Tries multiple strategies in order:
     1. OpenClaw API kill/archive call (preferred — API-stable)
     2. Direct file rename in sessions/ folder (legacy, may fail after v2026.2.17)
     3. Check if session is already gone/archived (treat as success)
     """
     from datetime import datetime
-    
+
     try:
         sessions = await self.get_sessions()
         session = next((s for s in sessions if s.key == session_key), None)
-        
+
         # Strategy 1: If session is not in active list, it may already be archived.
         # Treat as success — the session is gone from the active view.
         if not session:
             logger.info(f"kill_session: {session_key} not in active sessions — already removed/archived")
             return True
-        
+
         session_id = _safe_id(session.session_id)
         if not session_id:
             return False
-        
+
         agent_id = _safe_id(session.agent_id)
-        
+
         # Strategy 2: Direct file manipulation (legacy approach)
         # This works when sessions are in ~/.openclaw/agents/{agent_id}/sessions/
         base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
         session_file = (base / f"{session_id}.jsonl").resolve()
-        
+
         if not str(session_file).startswith(str(base.resolve())):
             return False
-        
+
         if session_file.exists():
             ts = datetime.utcnow().isoformat().replace(':', '-')
             session_file.rename(session_file.with_suffix(f".jsonl.deleted.{ts}"))
             logger.info(f"kill_session: renamed {session_file.name} → .deleted")
             return True
-        
+
         # Strategy 3: File not in sessions/ folder — check archive folder
         # OpenClaw v2026.2.17 may have moved it to archive/ already
         archive_base = Path.home() / ".openclaw" / "agents" / agent_id / "archive"
@@ -680,10 +680,10 @@ async def kill_session(self, session_key: str) -> bool:
             if archive_file.exists():
                 logger.info(f"kill_session: {session_key} already in archive — treating as success")
                 return True
-        
+
         logger.warning(f"kill_session: could not find session file for {session_key}")
         return False
-        
+
     except (ValueError, OSError) as e:
         logger.error(f"Error killing session: {e}")
         return False
@@ -695,9 +695,9 @@ async def kill_session(self, session_key: str) -> bool:
 
 ```typescript
 export function shouldBeInParkingLane(
-  session: MinionSession, 
-  isActivelyRunning?: boolean, 
-  idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD, 
+  session: MinionSession,
+  isActivelyRunning?: boolean,
+  idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD,
   allSessions?: MinionSession[]
 ): boolean {
   // Fixed agents (agent:*:main) always stay in their room
@@ -741,7 +741,7 @@ for agent_path in OPENCLAW_BASE.iterdir():
         sessions_path = agent_path / "sessions"
         if sessions_path.exists():
             agent_dirs.append(sessions_path)
-        
+
         # NEW: v2026.2.17 archive folder support
         archive_path = agent_path / "archive"
         if archive_path.exists():
@@ -937,5 +937,5 @@ async def test_archived_sessions_filtered():
 
 ---
 
-*Plan opgesteld door Reviewer (GPT-5.2) subagent — 2026-02-18*  
+*Plan opgesteld door Reviewer (GPT-5.2) subagent — 2026-02-18*
 *Codebase versie: gecheckt op datum van analyse*

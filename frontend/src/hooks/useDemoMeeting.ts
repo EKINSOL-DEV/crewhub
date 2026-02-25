@@ -22,11 +22,7 @@ interface FakeRound {
   turns: FakeTurn[]
 }
 
-const FAKE_PARTICIPANTS = [
-  'agent:dev:main',
-  'agent:main:main',
-  'agent:flowy:main',
-]
+const FAKE_PARTICIPANTS = ['agent:dev:main', 'agent:main:main', 'agent:flowy:main']
 
 const FAKE_SCRIPT: FakeRound[] = [
   {
@@ -35,17 +31,20 @@ const FAKE_SCRIPT: FakeRound[] = [
       {
         agentId: 'agent:dev:main',
         agentName: 'Dev',
-        response: "I've completed the authentication middleware refactoring and the new REST API endpoints are passing all tests. The main blocker is the database migration for v3 — there's a schema conflict with the user preferences table that needs careful handling. I've drafted a migration plan that preserves existing data.",
+        response:
+          "I've completed the authentication middleware refactoring and the new REST API endpoints are passing all tests. The main blocker is the database migration for v3 — there's a schema conflict with the user preferences table that needs careful handling. I've drafted a migration plan that preserves existing data.",
       },
       {
         agentId: 'agent:main:main',
         agentName: 'Assistent',
-        response: "Good progress on the API. I've been reviewing incoming support tickets and there are 3 high-priority items related to the webhook reliability issue. I suggest we prioritize the database migration since it's blocking two other features. I can help coordinate the rollout plan.",
+        response:
+          "Good progress on the API. I've been reviewing incoming support tickets and there are 3 high-priority items related to the webhook reliability issue. I suggest we prioritize the database migration since it's blocking two other features. I can help coordinate the rollout plan.",
       },
       {
         agentId: 'agent:flowy:main',
         agentName: 'Flowy',
-        response: "From the marketing side, the landing page redesign is 80% complete. I'm waiting on the final API documentation from Dev to update the developer portal. The blog post about our new features is drafted and ready for review. Social media campaign for the launch is scheduled for next Thursday.",
+        response:
+          "From the marketing side, the landing page redesign is 80% complete. I'm waiting on the final API documentation from Dev to update the developer portal. The blog post about our new features is drafted and ready for review. Social media campaign for the launch is scheduled for next Thursday.",
       },
     ],
   },
@@ -55,17 +54,20 @@ const FAKE_SCRIPT: FakeRound[] = [
       {
         agentId: 'agent:dev:main',
         agentName: 'Dev',
-        response: "For the real-time collaboration feature, I propose using WebSocket connections with a message queue backend. This gives us better scalability than polling. I've benchmarked both approaches — WebSockets reduce latency by 85% and server load by 60%. The trade-off is slightly more complex client-side code.",
+        response:
+          "For the real-time collaboration feature, I propose using WebSocket connections with a message queue backend. This gives us better scalability than polling. I've benchmarked both approaches — WebSockets reduce latency by 85% and server load by 60%. The trade-off is slightly more complex client-side code.",
       },
       {
         agentId: 'agent:main:main',
         agentName: 'Assistent',
-        response: "The WebSocket approach makes sense. I'd recommend we also implement a fallback to long-polling for environments where WebSockets are blocked. For the deployment strategy, I suggest a blue-green deployment with feature flags so we can gradually roll out to users. This minimizes risk.",
+        response:
+          "The WebSocket approach makes sense. I'd recommend we also implement a fallback to long-polling for environments where WebSockets are blocked. For the deployment strategy, I suggest a blue-green deployment with feature flags so we can gradually roll out to users. This minimizes risk.",
       },
       {
         agentId: 'agent:flowy:main',
         agentName: 'Flowy',
-        response: "From a user communication perspective, we should announce the real-time features in phases. First a beta announcement to power users, then a general release. I'll prepare the announcement materials and documentation. Also, we should update the pricing page if this affects our tier structure.",
+        response:
+          "From a user communication perspective, we should announce the real-time features in phases. First a beta announcement to power users, then a general release. I'll prepare the announcement materials and documentation. Also, we should update the pricing page if this affects our tier structure.",
       },
     ],
   },
@@ -75,17 +77,20 @@ const FAKE_SCRIPT: FakeRound[] = [
       {
         agentId: 'agent:dev:main',
         agentName: 'Dev',
-        response: "I'll finalize the database migration plan by EOD tomorrow and start implementing the WebSocket infrastructure. I need a review of the migration SQL from the team. I'll also set up the feature flag system so we can safely deploy incremental changes.",
+        response:
+          "I'll finalize the database migration plan by EOD tomorrow and start implementing the WebSocket infrastructure. I need a review of the migration SQL from the team. I'll also set up the feature flag system so we can safely deploy incremental changes.",
       },
       {
         agentId: 'agent:main:main',
         agentName: 'Assistent',
-        response: "I'll review the migration plan, coordinate with Dev on the rollout timeline, and handle the 3 high-priority support tickets. I'll also draft the feature flag configuration and set up monitoring dashboards for the new WebSocket connections.",
+        response:
+          "I'll review the migration plan, coordinate with Dev on the rollout timeline, and handle the 3 high-priority support tickets. I'll also draft the feature flag configuration and set up monitoring dashboards for the new WebSocket connections.",
       },
       {
         agentId: 'agent:flowy:main',
         agentName: 'Flowy',
-        response: "I'll finalize the landing page, prepare beta announcement emails, and complete the developer portal updates once the API docs are ready. I'll also create a content calendar for the phased launch communication strategy.",
+        response:
+          "I'll finalize the landing page, prepare beta announcement emails, and complete the developer portal updates once the API docs are ready. I'll also create a content calendar for the phased launch communication strategy.",
       },
     ],
   },
@@ -189,36 +194,39 @@ export function useDemoMeeting() {
 
       // Round start
       const roundStartDelay = delay
-      timersRef.current.push(setTimeout(() => {
-        setState(prev => {
-          const newRounds = [...prev.rounds]
-          newRounds[ri] = {
-            roundNum,
-            topic: round.topic,
-            turns: round.turns.map((t, ti) => ({
-              round: roundNum,
-              agentId: t.agentId,
-              agentName: t.agentName,
-              response: null,
-              turnIndex: ti,
-              totalTurns: round.turns.length,
-              status: 'waiting' as const,
-            })),
-            status: 'in_progress',
-          }
-          // Mark previous rounds as complete
-          for (let i = 0; i < ri; i++) {
-            if (newRounds[i]) newRounds[i].status = 'complete'
-          }
-          return {
-            ...prev,
-            phase: 'round',
-            currentRound: roundNum,
-            progressPct: Math.round(((ri * round.turns.length) / (FAKE_SCRIPT.length * 3)) * 90) + 5,
-            rounds: newRounds,
-          }
-        })
-      }, roundStartDelay))
+      timersRef.current.push(
+        setTimeout(() => {
+          setState((prev) => {
+            const newRounds = [...prev.rounds]
+            newRounds[ri] = {
+              roundNum,
+              topic: round.topic,
+              turns: round.turns.map((t, ti) => ({
+                round: roundNum,
+                agentId: t.agentId,
+                agentName: t.agentName,
+                response: null,
+                turnIndex: ti,
+                totalTurns: round.turns.length,
+                status: 'waiting' as const,
+              })),
+              status: 'in_progress',
+            }
+            // Mark previous rounds as complete
+            for (let i = 0; i < ri; i++) {
+              if (newRounds[i]) newRounds[i].status = 'complete'
+            }
+            return {
+              ...prev,
+              phase: 'round',
+              currentRound: roundNum,
+              progressPct:
+                Math.round(((ri * round.turns.length) / (FAKE_SCRIPT.length * 3)) * 90) + 5,
+              rounds: newRounds,
+            }
+          })
+        }, roundStartDelay)
+      )
       delay += 1000
 
       // Each turn: speaking → done
@@ -227,46 +235,50 @@ export function useDemoMeeting() {
         const speakingDelay = delay
 
         // Turn start (speaking)
-        timersRef.current.push(setTimeout(() => {
-          setState(prev => {
-            const newRounds = [...prev.rounds]
-            if (newRounds[ri]) {
-              const turns = [...newRounds[ri].turns]
-              turns[ti] = { ...turns[ti], status: 'speaking' }
-              newRounds[ri] = { ...newRounds[ri], turns }
-            }
-            return {
-              ...prev,
-              currentTurnAgentId: turn.agentId,
-              currentTurnAgentName: turn.agentName,
-              rounds: newRounds,
-            }
-          })
-        }, speakingDelay))
+        timersRef.current.push(
+          setTimeout(() => {
+            setState((prev) => {
+              const newRounds = [...prev.rounds]
+              if (newRounds[ri]) {
+                const turns = [...newRounds[ri].turns]
+                turns[ti] = { ...turns[ti], status: 'speaking' }
+                newRounds[ri] = { ...newRounds[ri], turns }
+              }
+              return {
+                ...prev,
+                currentTurnAgentId: turn.agentId,
+                currentTurnAgentName: turn.agentName,
+                rounds: newRounds,
+              }
+            })
+          }, speakingDelay)
+        )
 
         // Turn complete (done with response) — 4-6 seconds per turn
         const turnDuration = 4000 + Math.random() * 2000
         delay += turnDuration
 
-        timersRef.current.push(setTimeout(() => {
-          setState(prev => {
-            const newRounds = [...prev.rounds]
-            if (newRounds[ri]) {
-              const turns = [...newRounds[ri].turns]
-              turns[ti] = { ...turns[ti], status: 'done', response: turn.response }
-              newRounds[ri] = { ...newRounds[ri], turns }
-            }
-            const totalTurns = FAKE_SCRIPT.length * 3
-            const doneTurns = ri * 3 + ti + 1
-            return {
-              ...prev,
-              currentTurnAgentId: null,
-              currentTurnAgentName: null,
-              progressPct: Math.round((doneTurns / totalTurns) * 90) + 5,
-              rounds: newRounds,
-            }
-          })
-        }, delay))
+        timersRef.current.push(
+          setTimeout(() => {
+            setState((prev) => {
+              const newRounds = [...prev.rounds]
+              if (newRounds[ri]) {
+                const turns = [...newRounds[ri].turns]
+                turns[ti] = { ...turns[ti], status: 'done', response: turn.response }
+                newRounds[ri] = { ...newRounds[ri], turns }
+              }
+              const totalTurns = FAKE_SCRIPT.length * 3
+              const doneTurns = ri * 3 + ti + 1
+              return {
+                ...prev,
+                currentTurnAgentId: null,
+                currentTurnAgentName: null,
+                progressPct: Math.round((doneTurns / totalTurns) * 90) + 5,
+                rounds: newRounds,
+              }
+            })
+          }, delay)
+        )
 
         delay += 500 // brief pause between turns
       }
@@ -275,34 +287,38 @@ export function useDemoMeeting() {
     }
 
     // Synthesizing phase
-    timersRef.current.push(setTimeout(() => {
-      setState(prev => ({
-        ...prev,
-        phase: 'synthesizing',
-        progressPct: 92,
-        currentTurnAgentId: null,
-        currentTurnAgentName: null,
-      }))
-    }, delay))
+    timersRef.current.push(
+      setTimeout(() => {
+        setState((prev) => ({
+          ...prev,
+          phase: 'synthesizing',
+          progressPct: 92,
+          currentTurnAgentId: null,
+          currentTurnAgentName: null,
+        }))
+      }, delay)
+    )
     delay += 5000
 
     // Complete
-    timersRef.current.push(setTimeout(() => {
-      setState(prev => ({
-        ...prev,
-        phase: 'complete',
-        progressPct: 100,
-        outputMd: FAKE_OUTPUT_MD,
-        durationSeconds: Math.round(delay / 1000),
-      }))
-      isRunningRef.current = false
-    }, delay))
+    timersRef.current.push(
+      setTimeout(() => {
+        setState((prev) => ({
+          ...prev,
+          phase: 'complete',
+          progressPct: 100,
+          outputMd: FAKE_OUTPUT_MD,
+          durationSeconds: Math.round(delay / 1000),
+        }))
+        isRunningRef.current = false
+      }, delay)
+    )
   }, [clearTimers])
 
   const cancelDemoMeeting = useCallback(() => {
     clearTimers()
     isRunningRef.current = false
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       phase: 'cancelled',
       currentTurnAgentId: null,
@@ -316,7 +332,11 @@ export function useDemoMeeting() {
     setState(INITIAL_STATE)
   }, [clearTimers])
 
-  const isActive = state.phase !== 'idle' && state.phase !== 'complete' && state.phase !== 'error' && state.phase !== 'cancelled'
+  const isActive =
+    state.phase !== 'idle' &&
+    state.phase !== 'complete' &&
+    state.phase !== 'error' &&
+    state.phase !== 'cancelled'
 
   return {
     demoMeeting: {
@@ -324,9 +344,13 @@ export function useDemoMeeting() {
       isActive,
       // Stub actions matching useMeeting shape
       startMeeting: async () => {},
-      cancelMeeting: async () => { cancelDemoMeeting() },
+      cancelMeeting: async () => {
+        cancelDemoMeeting()
+      },
       fetchOutput: async () => {},
-      reset: () => { resetDemoMeeting() },
+      reset: () => {
+        resetDemoMeeting()
+      },
     },
     startDemoMeeting,
     cancelDemoMeeting,

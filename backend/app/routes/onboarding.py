@@ -14,7 +14,7 @@ import os
 import platform
 import socket
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -30,8 +30,10 @@ router = APIRouter(prefix="/onboarding", tags=["onboarding"])
 # Response Models
 # =============================================================================
 
+
 class OnboardingStatusResponse(BaseModel):
     """Onboarding completion status."""
+
     completed: bool
     connections_count: int
     has_active_connection: bool
@@ -39,6 +41,7 @@ class OnboardingStatusResponse(BaseModel):
 
 class EnvironmentInfo(BaseModel):
     """Server environment detection results."""
+
     is_docker: bool
     lan_ip: Optional[str] = None
     hostname: str = ""
@@ -51,12 +54,14 @@ class EnvironmentInfo(BaseModel):
 
 class TestOpenClawRequest(BaseModel):
     """Request for testing OpenClaw connection."""
+
     url: str
     token: Optional[str] = None
 
 
 class TestOpenClawResponse(BaseModel):
     """Structured test result with error classification."""
+
     ok: bool
     category: Optional[str] = None  # dns | tcp | ws | auth | protocol | timeout | None
     message: str
@@ -67,6 +72,7 @@ class TestOpenClawResponse(BaseModel):
 # =============================================================================
 # Docker / Environment Detection
 # =============================================================================
+
 
 def _detect_docker() -> bool:
     """Check if we're running inside a Docker container."""
@@ -125,8 +131,7 @@ def _find_token_file() -> tuple[Optional[str], bool]:
         try:
             if p.exists():
                 raw = json.loads(p.read_text())
-                token = raw.get("gateway", {}).get("auth", {}).get("token") or \
-                        raw.get("gateway", {}).get("token")
+                token = raw.get("gateway", {}).get("auth", {}).get("token") or raw.get("gateway", {}).get("token")
                 return str(p), bool(token)
         except Exception:
             continue
@@ -152,10 +157,11 @@ def _build_suggested_urls(is_docker: bool, lan_ip: Optional[str], host_docker_re
 # OpenClaw Connection Test with Error Classification
 # =============================================================================
 
+
 async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenClawResponse:
     """
     Test an OpenClaw gateway connection with detailed error classification.
-    
+
     Categories: dns, tcp, ws, auth, protocol, timeout
     """
     import urllib.parse
@@ -196,7 +202,7 @@ async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenC
         )
         writer.close()
         await writer.wait_closed()
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return TestOpenClawResponse(
             ok=False,
             category="tcp",
@@ -221,8 +227,9 @@ async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenC
 
     # Step 3: WebSocket + protocol handshake
     try:
-        import websockets
         import uuid
+
+        import websockets
 
         ws = await asyncio.wait_for(
             websockets.connect(url, ping_interval=None),
@@ -290,7 +297,8 @@ async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenC
 
                 return TestOpenClawResponse(
                     ok=True,
-                    message="Connected successfully!" + (f" ({sessions} active sessions)" if sessions is not None else ""),
+                    message="Connected successfully!"
+                    + (f" ({sessions} active sessions)" if sessions is not None else ""),
                     sessions=sessions,
                 )
             else:
@@ -302,7 +310,7 @@ async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenC
                     hints = ["Check your API token is correct."]
                     if token_path:
                         hints.append(f"Token can be found in: {token_path}")
-                        hints.append('Look for gateway.auth.token in the JSON file.')
+                        hints.append("Look for gateway.auth.token in the JSON file.")
                     elif not token:
                         hints.append("No token was provided. The gateway requires authentication.")
                     return TestOpenClawResponse(
@@ -322,7 +330,7 @@ async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenC
         finally:
             await ws.close()
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return TestOpenClawResponse(
             ok=False,
             category="timeout",
@@ -360,20 +368,19 @@ async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenC
 # Routes
 # =============================================================================
 
+
 @router.get("/status", response_model=OnboardingStatusResponse)
 async def get_onboarding_status():
     """
     Check onboarding completion status.
-    
+
     Onboarding is considered complete if:
     - The 'onboardingCompleted' setting is 'true', OR
     - There is at least one active (connected) connection.
     """
     completed_setting = False
     async with get_db() as db:
-        async with db.execute(
-            "SELECT value FROM settings WHERE key = 'onboardingCompleted'"
-        ) as cursor:
+        async with db.execute("SELECT value FROM settings WHERE key = 'onboardingCompleted'") as cursor:
             row = await cursor.fetchone()
             if row and row["value"].lower() in ("true", "1", "yes"):
                 completed_setting = True
@@ -382,9 +389,7 @@ async def get_onboarding_status():
     has_active = False
 
     async with get_db() as db:
-        async with db.execute(
-            "SELECT COUNT(*) as cnt FROM connections WHERE enabled = 1"
-        ) as cursor:
+        async with db.execute("SELECT COUNT(*) as cnt FROM connections WHERE enabled = 1") as cursor:
             row = await cursor.fetchone()
             connections_count = row["cnt"] if row else 0
 
@@ -405,7 +410,7 @@ async def get_onboarding_status():
 async def get_environment_info():
     """
     Detect server environment: Docker, LAN IP, suggested URLs, token location.
-    
+
     Used by the frontend wizard to pre-fill connection details and show warnings.
     """
     is_docker = _detect_docker()
@@ -430,7 +435,7 @@ async def get_environment_info():
 async def test_openclaw_connection(body: TestOpenClawRequest):
     """
     Test an OpenClaw gateway connection with detailed error classification.
-    
+
     Returns structured error info with category and actionable hints.
     Categories: dns, tcp, ws, auth, protocol, timeout.
     """

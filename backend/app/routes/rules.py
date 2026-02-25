@@ -1,9 +1,11 @@
 """Room Assignment Rules API routes."""
+
+import logging
 import re
 import time
 import uuid
-import logging
 from typing import List
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -20,6 +22,7 @@ VALID_RULE_TYPES = {"keyword", "model", "label_pattern", "session_type", "sessio
 
 class BulkRuleItem(BaseModel):
     """A single rule in a bulk update request."""
+
     room_id: str
     rule_type: str
     rule_value: str
@@ -28,6 +31,7 @@ class BulkRuleItem(BaseModel):
 
 class BulkRulesRequest(BaseModel):
     """Request model for bulk updating all rules."""
+
     rules: List[BulkRuleItem]
 
 
@@ -35,8 +39,7 @@ def _validate_rule_type(rule_type: str) -> None:
     """Validate that a rule type is one of the allowed values."""
     if rule_type not in VALID_RULE_TYPES:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid rule_type '{rule_type}'. Allowed: {', '.join(sorted(VALID_RULE_TYPES))}"
+            status_code=400, detail=f"Invalid rule_type '{rule_type}'. Allowed: {', '.join(sorted(VALID_RULE_TYPES))}"
         )
 
 
@@ -46,10 +49,7 @@ def _validate_regex_pattern(rule_type: str, rule_value: str) -> None:
         try:
             re.compile(rule_value)
         except re.error as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid regex pattern '{rule_value}': {e}"
-            )
+            raise HTTPException(status_code=400, detail=f"Invalid regex pattern '{rule_value}': {e}")
 
 
 @router.get("", response_model=dict)
@@ -73,9 +73,7 @@ async def get_rule(rule_id: str):
     """Get a specific rule by ID."""
     try:
         async with get_db() as db:
-            async with db.execute(
-                "SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)
-            ) as cursor:
+            async with db.execute("SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
                 row = await cursor.fetchone()
                 if not row:
                     raise HTTPException(status_code=404, detail="Rule not found")
@@ -94,32 +92,31 @@ async def create_rule(rule: RoomAssignmentRuleCreate):
     _validate_rule_type(rule.rule_type)
     # Validate regex if label_pattern
     _validate_regex_pattern(rule.rule_type, rule.rule_value)
-    
+
     try:
         async with get_db() as db:
             now = int(time.time() * 1000)
             rule_id = str(uuid.uuid4())
-            
+
             # Verify room exists
-            async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (rule.room_id,)
-            ) as cursor:
+            async with db.execute("SELECT id FROM rooms WHERE id = ?", (rule.room_id,)) as cursor:
                 if not await cursor.fetchone():
                     raise HTTPException(status_code=400, detail="Room not found")
-            
-            await db.execute("""
+
+            await db.execute(
+                """
                 INSERT INTO room_assignment_rules (id, room_id, rule_type, rule_value, priority, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (rule_id, rule.room_id, rule.rule_type, rule.rule_value, rule.priority, now))
+            """,
+                (rule_id, rule.room_id, rule.rule_type, rule.rule_value, rule.priority, now),
+            )
             await db.commit()
-            
+
             # Return created rule
-            async with db.execute(
-                "SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)
-            ) as cursor:
+            async with db.execute("SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
                 row = await cursor.fetchone()
                 result = RoomAssignmentRule(**row)
-            
+
             await broadcast("rooms-refresh", {"action": "rule_created", "rule_id": rule_id})
             return result
     except HTTPException:
@@ -141,41 +138,34 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
     rule_value = update_data.get("rule_value")
     if rule_type == "label_pattern" and rule_value is not None:
         _validate_regex_pattern(rule_type, rule_value)
-    
+
     try:
         async with get_db() as db:
             # Check if rule exists
-            async with db.execute(
-                "SELECT id FROM room_assignment_rules WHERE id = ?", (rule_id,)
-            ) as cursor:
+            async with db.execute("SELECT id FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
                 if not await cursor.fetchone():
                     raise HTTPException(status_code=404, detail="Rule not found")
-            
+
             # Build update query dynamically
             updates = []
             values = []
             update_data = rule.model_dump(exclude_unset=True)
-            
+
             for field, value in update_data.items():
                 if value is not None:
                     updates.append(f"{field} = ?")
                     values.append(value)
-            
+
             if updates:
                 values.append(rule_id)
-                await db.execute(
-                    f"UPDATE room_assignment_rules SET {', '.join(updates)} WHERE id = ?",
-                    values
-                )
+                await db.execute(f"UPDATE room_assignment_rules SET {', '.join(updates)} WHERE id = ?", values)
                 await db.commit()
-            
+
             # Return updated rule
-            async with db.execute(
-                "SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)
-            ) as cursor:
+            async with db.execute("SELECT * FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
                 row = await cursor.fetchone()
                 result = RoomAssignmentRule(**row)
-            
+
             await broadcast("rooms-refresh", {"action": "rule_updated", "rule_id": rule_id})
             return result
     except HTTPException:
@@ -191,17 +181,13 @@ async def delete_rule(rule_id: str):
     try:
         async with get_db() as db:
             # Check if rule exists
-            async with db.execute(
-                "SELECT id FROM room_assignment_rules WHERE id = ?", (rule_id,)
-            ) as cursor:
+            async with db.execute("SELECT id FROM room_assignment_rules WHERE id = ?", (rule_id,)) as cursor:
                 if not await cursor.fetchone():
                     raise HTTPException(status_code=404, detail="Rule not found")
-            
-            await db.execute(
-                "DELETE FROM room_assignment_rules WHERE id = ?", (rule_id,)
-            )
+
+            await db.execute("DELETE FROM room_assignment_rules WHERE id = ?", (rule_id,))
             await db.commit()
-            
+
             await broadcast("rooms-refresh", {"action": "rule_deleted", "rule_id": rule_id})
             return {"success": True, "deleted": rule_id}
     except HTTPException:
@@ -223,14 +209,9 @@ async def bulk_update_rules(request: BulkRulesRequest):
         async with get_db() as db:
             # Validate all room_ids exist
             for rule in request.rules:
-                async with db.execute(
-                    "SELECT id FROM rooms WHERE id = ?", (rule.room_id,)
-                ) as cursor:
+                async with db.execute("SELECT id FROM rooms WHERE id = ?", (rule.room_id,)) as cursor:
                     if not await cursor.fetchone():
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"Room not found: {rule.room_id}"
-                        )
+                        raise HTTPException(status_code=400, detail=f"Room not found: {rule.room_id}")
 
             # Delete all existing rules
             await db.execute("DELETE FROM room_assignment_rules")
@@ -239,10 +220,13 @@ async def bulk_update_rules(request: BulkRulesRequest):
             now = int(time.time() * 1000)
             for rule in request.rules:
                 rule_id = str(uuid.uuid4())
-                await db.execute("""
+                await db.execute(
+                    """
                     INSERT INTO room_assignment_rules (id, room_id, rule_type, rule_value, priority, created_at)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (rule_id, rule.room_id, rule.rule_type, rule.rule_value, rule.priority, now))
+                """,
+                    (rule_id, rule.room_id, rule.rule_type, rule.rule_value, rule.priority, now),
+                )
 
             await db.commit()
 
@@ -268,8 +252,7 @@ async def get_rules_for_room(room_id: str):
     try:
         async with get_db() as db:
             async with db.execute(
-                "SELECT * FROM room_assignment_rules WHERE room_id = ? ORDER BY priority DESC",
-                (room_id,)
+                "SELECT * FROM room_assignment_rules WHERE room_id = ? ORDER BY priority DESC", (room_id,)
             ) as cursor:
                 rows = await cursor.fetchall()
                 rules = [RoomAssignmentRule(**row) for row in rows]

@@ -1,15 +1,15 @@
-import * as React from "react"
-import { createContext, useContext, useCallback, useEffect, useRef, useState } from "react"
-import { X } from "lucide-react"
-import { cn } from "@/lib/utils"
+import * as React from 'react'
+import { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react'
+import { X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 /**
  * Native Dialog Implementation for React 19 Compatibility
- * 
- * This replaces Radix UI Dialog to work around a critical bug in 
+ *
+ * This replaces Radix UI Dialog to work around a critical bug in
  * @radix-ui/react-compose-refs that causes infinite update loops with React 19.
  * See: https://github.com/radix-ui/primitives/issues/3799
- * 
+ *
  * API is compatible with the shadcn/ui Dialog component.
  */
 
@@ -28,7 +28,7 @@ const DialogContext = createContext<DialogContextValue | null>(null)
 function useDialogContext() {
   const context = useContext(DialogContext)
   if (!context) {
-    throw new Error("Dialog components must be used within a Dialog")
+    throw new Error('Dialog components must be used within a Dialog')
   }
   return context
 }
@@ -49,38 +49,43 @@ interface DialogProps {
   modal?: boolean
 }
 
-function Dialog({ 
-  open: controlledOpen, 
+function Dialog({
+  open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   defaultOpen = false,
   children,
 }: DialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
   const triggerRef = useRef<HTMLButtonElement>(null)
-  
-  const contentId = useId("dialog-content")
-  const titleId = useId("dialog-title")
-  const descriptionId = useId("dialog-description")
-  
+
+  const contentId = useId('dialog-content')
+  const titleId = useId('dialog-title')
+  const descriptionId = useId('dialog-description')
+
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : uncontrolledOpen
-  
-  const onOpenChange = useCallback((newOpen: boolean) => {
-    if (!isControlled) {
-      setUncontrolledOpen(newOpen)
-    }
-    controlledOnOpenChange?.(newOpen)
-  }, [isControlled, controlledOnOpenChange])
+
+  const onOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (!isControlled) {
+        setUncontrolledOpen(newOpen)
+      }
+      controlledOnOpenChange?.(newOpen)
+    },
+    [isControlled, controlledOnOpenChange]
+  )
 
   return (
-    <DialogContext.Provider value={{ 
-      open, 
-      onOpenChange, 
-      triggerRef,
-      contentId,
-      titleId,
-      descriptionId,
-    }}>
+    <DialogContext.Provider
+      value={{
+        open,
+        onOpenChange,
+        triggerRef,
+        contentId,
+        titleId,
+        descriptionId,
+      }}
+    >
       {children}
     </DialogContext.Provider>
   )
@@ -94,18 +99,21 @@ interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
   ({ asChild, children, onClick, ...props }, forwardedRef) => {
     const { onOpenChange, triggerRef } = useDialogContext()
-    
+
     // Combine refs manually without compose-refs
-    const ref = useCallback((node: HTMLButtonElement | null) => {
-      // Update forwarded ref
-      if (typeof forwardedRef === 'function') {
-        forwardedRef(node)
-      } else if (forwardedRef) {
-        (forwardedRef as React.MutableRefObject<HTMLButtonElement | null>).current = node
-      }
-      // Update internal ref
-      (triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node
-    }, [forwardedRef, triggerRef])
+    const ref = useCallback(
+      (node: HTMLButtonElement | null) => {
+        // Update forwarded ref
+        if (typeof forwardedRef === 'function') {
+          forwardedRef(node)
+        } else if (forwardedRef) {
+          ;(forwardedRef as React.MutableRefObject<HTMLButtonElement | null>).current = node
+        }
+        // Update internal ref
+        ;(triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node
+      },
+      [forwardedRef, triggerRef]
+    )
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       onClick?.(e)
@@ -129,7 +137,7 @@ const DialogTrigger = React.forwardRef<HTMLButtonElement, DialogTriggerProps>(
     )
   }
 )
-DialogTrigger.displayName = "DialogTrigger"
+DialogTrigger.displayName = 'DialogTrigger'
 
 // Dialog Portal - just renders children (portal handled by dialog element)
 interface DialogPortalProps {
@@ -144,14 +152,12 @@ function DialogPortal({ children }: DialogPortalProps) {
 // Dialog Overlay - handled by native dialog backdrop
 interface DialogOverlayProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-const DialogOverlay = React.forwardRef<HTMLDivElement, DialogOverlayProps>(
-  (_props, _ref) => {
-    // Native dialog handles overlay via ::backdrop pseudo-element
-    // This component exists for API compatibility but renders nothing
-    return null
-  }
-)
-DialogOverlay.displayName = "DialogOverlay"
+const DialogOverlay = React.forwardRef<HTMLDivElement, DialogOverlayProps>((_props, _ref) => {
+  // Native dialog handles overlay via ::backdrop pseudo-element
+  // This component exists for API compatibility but renders nothing
+  return null
+})
+DialogOverlay.displayName = 'DialogOverlay'
 
 // Dialog Close
 interface DialogCloseProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -184,7 +190,7 @@ const DialogClose = React.forwardRef<HTMLButtonElement, DialogCloseProps>(
     )
   }
 )
-DialogClose.displayName = "DialogClose"
+DialogClose.displayName = 'DialogClose'
 
 // Dialog Content
 interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -201,14 +207,17 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
     const contentRef = useRef<HTMLDivElement>(null)
 
     // Combine content refs
-    const setContentRef = useCallback((node: HTMLDivElement | null) => {
-      (contentRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-      if (typeof ref === 'function') {
-        ref(node)
-      } else if (ref) {
-        ref.current = node
-      }
-    }, [ref])
+    const setContentRef = useCallback(
+      (node: HTMLDivElement | null) => {
+        ;(contentRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+        if (typeof ref === 'function') {
+          ref(node)
+        } else if (ref) {
+          ref.current = node
+        }
+      },
+      [ref]
+    )
 
     // Sync open state with native dialog
     useEffect(() => {
@@ -234,16 +243,19 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
     }, [onOpenChange])
 
     // Handle backdrop click
-    const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDialogElement>) => {
-      if (e.target === e.currentTarget) {
-        onOpenChange(false)
-      }
-    }, [onOpenChange])
+    const handleBackdropClick = useCallback(
+      (e: React.MouseEvent<HTMLDialogElement>) => {
+        if (e.target === e.currentTarget) {
+          onOpenChange(false)
+        }
+      },
+      [onOpenChange]
+    )
 
     // Handle ESC key with custom handler
     useEffect(() => {
       if (!open) return
-      
+
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           onEscapeKeyDown?.(e)
@@ -276,9 +288,9 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           aria-modal="true"
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            "relative w-full max-w-lg mx-4 my-4",
-            "grid gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
-            "animate-in fade-in-0 zoom-in-95 duration-200",
+            'relative w-full max-w-lg mx-4 my-4',
+            'grid gap-4 border bg-background p-6 shadow-lg sm:rounded-lg',
+            'animate-in fade-in-0 zoom-in-95 duration-200',
             className
           )}
           {...props}
@@ -293,35 +305,26 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
     )
   }
 )
-DialogContent.displayName = "DialogContent"
+DialogContent.displayName = 'DialogContent'
 
 // Dialog Header
 interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
-  <div
-    className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
-      className
-    )}
-    {...props}
-  />
+  <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
 )
-DialogHeader.displayName = "DialogHeader"
+DialogHeader.displayName = 'DialogHeader'
 
 // Dialog Footer
 interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
   <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className
-    )}
+    className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)}
     {...props}
   />
 )
-DialogFooter.displayName = "DialogFooter"
+DialogFooter.displayName = 'DialogFooter'
 
 // Dialog Title
 interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
@@ -333,16 +336,13 @@ const DialogTitle = React.forwardRef<HTMLHeadingElement, DialogTitleProps>(
       <h2
         ref={ref}
         id={titleId}
-        className={cn(
-          "text-lg font-semibold leading-none tracking-tight",
-          className
-        )}
+        className={cn('text-lg font-semibold leading-none tracking-tight', className)}
         {...props}
       />
     )
   }
 )
-DialogTitle.displayName = "DialogTitle"
+DialogTitle.displayName = 'DialogTitle'
 
 // Dialog Description
 interface DialogDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {}
@@ -354,13 +354,13 @@ const DialogDescription = React.forwardRef<HTMLParagraphElement, DialogDescripti
       <p
         ref={ref}
         id={descriptionId}
-        className={cn("text-sm text-muted-foreground", className)}
+        className={cn('text-sm text-muted-foreground', className)}
         {...props}
       />
     )
   }
 )
-DialogDescription.displayName = "DialogDescription"
+DialogDescription.displayName = 'DialogDescription'
 
 export {
   Dialog,

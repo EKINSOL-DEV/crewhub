@@ -91,11 +91,16 @@ export function BotFace({ status, expression }: BotFaceProps) {
 
 function getPupilOffset(expression: BotExpression): { x: number; y: number } {
   switch (expression) {
-    case 'happy':      return { x: 0, y: 0 }        // centered, confident
-    case 'thoughtful': return { x: 0.01, y: 0.01 }   // looking up-right (thinking)
-    case 'determined': return { x: 0, y: 0 }         // centered, focused
-    case 'talking':    return { x: -0.005, y: 0 }    // slightly left (engaging)
-    case 'serious':    return { x: 0, y: -0.005 }    // centered, slightly down
+    case 'happy':
+      return { x: 0, y: 0 } // centered, confident
+    case 'thoughtful':
+      return { x: 0.01, y: 0.01 } // looking up-right (thinking)
+    case 'determined':
+      return { x: 0, y: 0 } // centered, focused
+    case 'talking':
+      return { x: -0.005, y: 0 } // slightly left (engaging)
+    case 'serious':
+      return { x: 0, y: -0.005 } // centered, slightly down
   }
 }
 

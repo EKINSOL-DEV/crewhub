@@ -4,7 +4,11 @@ import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
 import { useDragState } from '@/contexts/DragDropContext'
 import { botPositionRegistry } from './botConstants'
-import { getIsPropBeingMoved, getIsPropBeingDragged, getIsLongPressPending } from '@/hooks/usePropMovement'
+import {
+  getIsPropBeingMoved,
+  getIsPropBeingDragged,
+  getIsLongPressPending,
+} from '@/hooks/usePropMovement'
 import CameraControlsImpl from 'camera-controls'
 import * as THREE from 'three'
 
@@ -21,8 +25,12 @@ interface CameraControllerProps {
 // ─── Camera presets per focus level ────────────────────────────
 
 const OVERVIEW_CAMERA = {
-  posX: -45, posY: 40, posZ: -45,
-  targetX: 0, targetY: 0, targetZ: 0,
+  posX: -45,
+  posY: 40,
+  posZ: -45,
+  targetX: 0,
+  targetY: 0,
+  targetZ: 0,
 }
 
 function getRoomCamera(roomPos: [number, number, number], roomSize: number = 12) {
@@ -141,10 +149,10 @@ const _wasdKeys = {
   fast: false,
 }
 
-const WASD_SPEED = 15        // units per second (base)
-const WASD_FAST_MULT = 2.5   // shift multiplier
+const WASD_SPEED = 15 // units per second (base)
+const WASD_FAST_MULT = 2.5 // shift multiplier
 const WASD_ROTATE_SPEED = 1.2 // radians per second
-const WASD_SMOOTHING = 0.12  // lerp factor for velocity smoothing
+const WASD_SMOOTHING = 0.12 // lerp factor for velocity smoothing
 
 /** Returns true if an interactive input element is focused */
 function isInputFocused(): boolean {
@@ -203,24 +211,24 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   // During prop DRAG: disable all camera controls (pointer conflicts).
   // During long-press pending: disable all (to avoid accidental camera moves).
   const prevPropStateRef = useRef<'none' | 'moving' | 'dragging' | 'pending'>('none')
-  
+
   useFrame(() => {
     const controls = controlsRef.current
     if (!controls) return
     const propMoving = getIsPropBeingMoved()
     const propDragging = getIsPropBeingDragged()
     const longPressPending = getIsLongPressPending()
-    
+
     // Determine current prop interaction state
     let propState: 'none' | 'moving' | 'dragging' | 'pending' = 'none'
     if (longPressPending) propState = 'pending'
     else if (propDragging) propState = 'dragging'
     else if (propMoving) propState = 'moving'
-    
+
     // Only update when state changes
     if (propState === prevPropStateRef.current) return
     prevPropStateRef.current = propState
-    
+
     if (propState === 'none') {
       // Restore full controls (if not disabled by drag-drop context)
       if (!isDragging && !isInteractingWithUI) {
@@ -232,7 +240,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       controls.enabled = true
       controls.mouseButtons.wheel = ACTION.NONE
       controls.mouseButtons.right = ACTION.NONE
-      controls.touches.two = ACTION.TOUCH_ROTATE  // allow 2-finger rotate, no zoom
+      controls.touches.two = ACTION.TOUCH_ROTATE // allow 2-finger rotate, no zoom
       controls.touches.three = ACTION.NONE
     } else {
       // Dragging or long-press pending — disable all camera controls
@@ -262,25 +270,63 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       // Don't move camera when a prop is selected for movement, being dragged, or long-press pending
       if (getIsPropBeingMoved() || getIsPropBeingDragged() || getIsLongPressPending()) return
       switch (e.code) {
-        case 'KeyW': case 'ArrowUp':    _wasdKeys.forward = true; break
-        case 'KeyS': case 'ArrowDown':  _wasdKeys.backward = true; break
-        case 'KeyA': case 'ArrowLeft':  _wasdKeys.left = true; break
-        case 'KeyD': case 'ArrowRight': _wasdKeys.right = true; break
-        case 'KeyQ':                    _wasdKeys.rotateLeft = true; break
-        case 'KeyE':                    _wasdKeys.rotateRight = true; break
-        case 'ShiftLeft': case 'ShiftRight': _wasdKeys.fast = true; break
+        case 'KeyW':
+        case 'ArrowUp':
+          _wasdKeys.forward = true
+          break
+        case 'KeyS':
+        case 'ArrowDown':
+          _wasdKeys.backward = true
+          break
+        case 'KeyA':
+        case 'ArrowLeft':
+          _wasdKeys.left = true
+          break
+        case 'KeyD':
+        case 'ArrowRight':
+          _wasdKeys.right = true
+          break
+        case 'KeyQ':
+          _wasdKeys.rotateLeft = true
+          break
+        case 'KeyE':
+          _wasdKeys.rotateRight = true
+          break
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          _wasdKeys.fast = true
+          break
       }
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
       switch (e.code) {
-        case 'KeyW': case 'ArrowUp':    _wasdKeys.forward = false; break
-        case 'KeyS': case 'ArrowDown':  _wasdKeys.backward = false; break
-        case 'KeyA': case 'ArrowLeft':  _wasdKeys.left = false; break
-        case 'KeyD': case 'ArrowRight': _wasdKeys.right = false; break
-        case 'KeyQ':                    _wasdKeys.rotateLeft = false; break
-        case 'KeyE':                    _wasdKeys.rotateRight = false; break
-        case 'ShiftLeft': case 'ShiftRight': _wasdKeys.fast = false; break
+        case 'KeyW':
+        case 'ArrowUp':
+          _wasdKeys.forward = false
+          break
+        case 'KeyS':
+        case 'ArrowDown':
+          _wasdKeys.backward = false
+          break
+        case 'KeyA':
+        case 'ArrowLeft':
+          _wasdKeys.left = false
+          break
+        case 'KeyD':
+        case 'ArrowRight':
+          _wasdKeys.right = false
+          break
+        case 'KeyQ':
+          _wasdKeys.rotateLeft = false
+          break
+        case 'KeyE':
+          _wasdKeys.rotateRight = false
+          break
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          _wasdKeys.fast = false
+          break
       }
     }
 
@@ -336,9 +382,13 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       cam.getWorldDirection(lookDir)
       const target = lookDir.multiplyScalar(5).add(cam.position.clone())
       controls.setLookAt(
-        cam.position.x, cam.position.y, cam.position.z,
-        target.x, target.y, target.z,
-        false, // instant — update both current and end
+        cam.position.x,
+        cam.position.y,
+        cam.position.z,
+        target.x,
+        target.y,
+        target.z,
+        false // instant — update both current and end
       )
       controls.enabled = true
     }
@@ -371,17 +421,33 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
     } else if (state.level === 'room' && state.focusedRoomId) {
       isFollowing.current = false
-      const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
+      const roomEntry = roomPositions.find((rp) => rp.roomId === state.focusedRoomId)
       if (roomEntry) {
         const c = getRoomCamera(roomEntry.position, roomEntry.size)
-        controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
+        controls.setLookAt(
+          c.posX,
+          c.posY,
+          c.posZ,
+          c.targetX,
+          c.targetY,
+          c.targetZ,
+          enableTransition
+        )
       }
     } else if (state.level === 'board' && state.focusedRoomId) {
       isFollowing.current = false
-      const roomEntry = roomPositions.find(rp => rp.roomId === state.focusedRoomId)
+      const roomEntry = roomPositions.find((rp) => rp.roomId === state.focusedRoomId)
       if (roomEntry) {
         const c = getBoardCamera(roomEntry.position, roomEntry.size)
-        controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
+        controls.setLookAt(
+          c.posX,
+          c.posY,
+          c.posZ,
+          c.targetX,
+          c.targetY,
+          c.targetZ,
+          enableTransition
+        )
       }
     } else if (state.level === 'bot' && state.focusedBotKey) {
       // Fly-to the bot's orbital position, preserving current camera azimuth
@@ -391,11 +457,11 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
         const currentAzimuth = controls.azimuthAngle
         const distance = 7 // orbital distance from bot
         const height = BOT_CAM_OFFSET.y
-        
+
         // Calculate camera position using current azimuth (no 180° flip)
         const camX = botPos.x + Math.sin(currentAzimuth) * distance
         const camZ = botPos.z + Math.cos(currentAzimuth) * distance
-        
+
         controls.setLookAt(camX, height, camZ, botPos.x, 0.5, botPos.z, true)
         followTarget.current.set(botPos.x, 0.5, botPos.z)
       }
@@ -427,10 +493,10 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       const targetVel = new THREE.Vector3()
       const speed = _wasdKeys.fast ? WASD_SPEED * WASD_FAST_MULT : WASD_SPEED
 
-      if (_wasdKeys.forward)  targetVel.z -= speed
+      if (_wasdKeys.forward) targetVel.z -= speed
       if (_wasdKeys.backward) targetVel.z += speed
-      if (_wasdKeys.left)     targetVel.x -= speed
-      if (_wasdKeys.right)    targetVel.x += speed
+      if (_wasdKeys.left) targetVel.x -= speed
+      if (_wasdKeys.right) targetVel.x += speed
 
       // Smooth velocity (lerp toward target)
       wasdVelocity.current.lerp(targetVel, WASD_SMOOTHING)
@@ -449,7 +515,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
 
       // Q/E rotation
       let targetRot = 0
-      if (_wasdKeys.rotateLeft)  targetRot += WASD_ROTATE_SPEED
+      if (_wasdKeys.rotateLeft) targetRot += WASD_ROTATE_SPEED
       if (_wasdKeys.rotateRight) targetRot -= WASD_ROTATE_SPEED
       wasdRotVelocity.current += (targetRot - wasdRotVelocity.current) * WASD_SMOOTHING
       if (Math.abs(wasdRotVelocity.current) < 0.001) wasdRotVelocity.current = 0
@@ -474,7 +540,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       followTarget.current.x,
       followTarget.current.y,
       followTarget.current.z,
-      false,
+      false
     )
   })
 

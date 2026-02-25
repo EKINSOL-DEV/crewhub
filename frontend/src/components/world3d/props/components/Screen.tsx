@@ -45,7 +45,7 @@ export function Screen({
     }
     if (scanRef.current) {
       // Scroll scanline overlay
-      scanRef.current.position.y = ((t * 0.3) % 1 - 0.5) * height * 0.8
+      scanRef.current.position.y = (((t * 0.3) % 1) - 0.5) * height * 0.8
     }
   }, 2)
 
@@ -75,12 +75,7 @@ export function Screen({
       {scanlines && (
         <mesh ref={scanRef} position={[0, 0, bezelDepth / 2 + 0.006]}>
           <boxGeometry args={[width * 0.95, 0.01, 0.001]} />
-          <meshStandardMaterial
-            color="#ffffff"
-            transparent
-            opacity={0.08}
-            depthWrite={false}
-          />
+          <meshStandardMaterial color="#ffffff" transparent opacity={0.08} depthWrite={false} />
         </mesh>
       )}
     </group>

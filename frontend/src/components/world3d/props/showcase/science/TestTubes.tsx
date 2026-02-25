@@ -1,16 +1,18 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function TestTubes() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.15; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.15
+  })
   const tubes = [
     { x: -0.15, color: '#ff4466', level: 0.6 },
     { x: -0.05, color: '#44ff88', level: 0.4 },
     { x: 0.05, color: '#4488ff', level: 0.7 },
     { x: 0.15, color: '#ffcc44', level: 0.3 },
-  ];
+  ]
   return (
     <group ref={groupRef}>
       {/* Rack */}
@@ -50,12 +52,12 @@ export function TestTubes() {
         </group>
       ))}
       {/* Bubbles in one tube */}
-      {[0, 1, 2].map(i => (
+      {[0, 1, 2].map((i) => (
         <mesh key={i} position={[0.05, -0.1 + i * 0.08, 0.01]}>
           <sphereGeometry args={[0.008, 4, 4]} />
           <meshStandardMaterial color="#ffffff" transparent opacity={0.4} />
         </mesh>
       ))}
     </group>
-  );
+  )
 }

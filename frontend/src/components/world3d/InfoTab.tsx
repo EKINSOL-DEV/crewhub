@@ -46,7 +46,15 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
   )
 }
 
-export function InfoTab({ session, botConfig, status: _, bio, agentId, displayName, onBioUpdated }: InfoTabProps) {
+export function InfoTab({
+  session,
+  botConfig,
+  status: _,
+  bio,
+  agentId,
+  displayName,
+  onBioUpdated,
+}: InfoTabProps) {
   const [bioDialogOpen, setBioDialogOpen] = useState(false)
 
   return (
@@ -54,17 +62,19 @@ export function InfoTab({ session, botConfig, status: _, bio, agentId, displayNa
       {/* Bio */}
       <div>
         {bio && (
-          <div style={{
-            fontSize: 13,
-            color: '#6b7280',
-            lineHeight: 1.5,
-            fontStyle: 'italic',
-            padding: '8px 12px',
-            background: `${botConfig.color}08`,
-            borderRadius: 10,
-            borderLeft: `3px solid ${botConfig.color}40`,
-            marginBottom: 8,
-          }}>
+          <div
+            style={{
+              fontSize: 13,
+              color: '#6b7280',
+              lineHeight: 1.5,
+              fontStyle: 'italic',
+              padding: '8px 12px',
+              background: `${botConfig.color}08`,
+              borderRadius: 10,
+              borderLeft: `3px solid ${botConfig.color}40`,
+              marginBottom: 8,
+            }}
+          >
             {bio}
           </div>
         )}
@@ -86,11 +96,11 @@ export function InfoTab({ session, botConfig, status: _, bio, agentId, displayNa
               fontFamily: 'system-ui, sans-serif',
               transition: 'all 0.15s',
             }}
-            onMouseEnter={e => {
+            onMouseEnter={(e) => {
               e.currentTarget.style.background = 'rgba(0, 0, 0, 0.08)'
               e.currentTarget.style.color = '#374151'
             }}
-            onMouseLeave={e => {
+            onMouseLeave={(e) => {
               e.currentTarget.style.background = 'rgba(0, 0, 0, 0.04)'
               e.currentTarget.style.color = '#6b7280'
             }}
@@ -102,7 +112,15 @@ export function InfoTab({ session, botConfig, status: _, bio, agentId, displayNa
 
       <InfoRow label="Type">
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: botConfig.color, display: 'inline-block' }} />
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: botConfig.color,
+              display: 'inline-block',
+            }}
+          />
           {botConfig.label}
         </span>
       </InfoRow>
@@ -111,9 +129,7 @@ export function InfoTab({ session, botConfig, status: _, bio, agentId, displayNa
       <InfoRow label="Model">{formatModel(session.model)}</InfoRow>
       <InfoRow label="Tokens">{formatTokens(session.totalTokens)}</InfoRow>
 
-      {session.lastChannel && (
-        <InfoRow label="Channel">{session.lastChannel}</InfoRow>
-      )}
+      {session.lastChannel && <InfoRow label="Channel">{session.lastChannel}</InfoRow>}
 
       <EditBioDialog
         agentId={agentId || null}

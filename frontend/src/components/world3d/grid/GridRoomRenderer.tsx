@@ -16,8 +16,8 @@ import * as THREE from 'three'
 
 interface GridRoomRendererProps {
   blueprint: RoomBlueprint
-  roomPosition: [number, number, number]  // world center of room (y = floor level)
-  onBlueprintUpdate?: (placements: PropPlacement[]) => void  // callback when props are moved
+  roomPosition: [number, number, number] // world center of room (y = floor level)
+  onBlueprintUpdate?: (placements: PropPlacement[]) => void // callback when props are moved
 }
 
 // Minimum movement threshold to start drag (in pixels, to avoid accidental drags)
@@ -44,7 +44,7 @@ function getWallPlacement(
   gridZ: number,
   gridWidth: number,
   gridDepth: number,
-  cellSize: number,
+  cellSize: number
 ): { x: number; z: number; wallRotation: number } | null {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
@@ -52,9 +52,9 @@ function getWallPlacement(
   // Distance in grid cells from each wall edge.
   // Walls are visual 3D geometry at ±halfSize; grid cells go from 0 to gridSize-1.
   const distNorth = gridZ
-  const distSouth = (gridDepth - 1) - gridZ
+  const distSouth = gridDepth - 1 - gridZ
   const distWest = gridX
-  const distEast = (gridWidth - 1) - gridX
+  const distEast = gridWidth - 1 - gridX
 
   const minDist = Math.min(distNorth, distSouth, distWest, distEast)
 
@@ -107,7 +107,7 @@ function clampToRoomBounds(
   gridWidth: number,
   gridDepth: number,
   cellSize: number,
-  span: { w: number; d: number } = { w: 1, d: 1 },
+  span: { w: number; d: number } = { w: 1, d: 1 }
 ): [number, number] {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
@@ -124,9 +124,9 @@ function clampToRoomBounds(
 
   // Distance in grid cells from each wall edge (cells 0 and gridSize-1 are wall cells)
   const distWest = gridX
-  const distEast = (gridWidth - 1) - (gridX + span.w - 1)
+  const distEast = gridWidth - 1 - (gridX + span.w - 1)
   const distNorth = gridZ
-  const distSouth = (gridDepth - 1) - (gridZ + span.d - 1)
+  const distSouth = gridDepth - 1 - (gridZ + span.d - 1)
 
   // Wall inner face positions
   const westFace = -halfW + WALL_THICKNESS
@@ -168,36 +168,41 @@ const LABEL_STYLE: React.CSSProperties = {
   letterSpacing: '0.02em',
 }
 
-function PropDebugLabel({ propId, position }: { propId: string; position: [number, number, number] }) {
+function PropDebugLabel({
+  propId,
+  position,
+}: {
+  propId: string
+  position: [number, number, number]
+}) {
   // Position label above the prop (Y + 1.2 units above placement)
   const labelPos: [number, number, number] = [position[0], position[1] + 1.2, position[2]]
 
   return (
-    <Html
-      position={labelPos}
-      center
-      zIndexRange={[10, 20]}
-      style={{ pointerEvents: 'none' }}
-    >
-      <span style={LABEL_STYLE}>
-        {propId}
-      </span>
+    <Html position={labelPos} center zIndexRange={[10, 20]} style={{ pointerEvents: 'none' }}>
+      <span style={LABEL_STYLE}>{propId}</span>
     </Html>
   )
 }
 
 // ─── Hover Glow Effect ──────────────────────────────────────────
 
-function HoverGlow({ position, span }: { position: [number, number, number]; span?: { w: number; d: number } }) {
+function HoverGlow({
+  position,
+  span,
+}: {
+  position: [number, number, number]
+  span?: { w: number; d: number }
+}) {
   const ringRef = useRef<THREE.Mesh>(null!)
   const glowRef = useRef<THREE.Mesh>(null!)
   const outerRef = useRef<THREE.Mesh>(null!)
-  
+
   // Scale glow to match prop footprint
   const scaleX = (span?.w ?? 1) * 0.7
   const scaleZ = (span?.d ?? 1) * 0.7
   const avgScale = (scaleX + scaleZ) / 2
-  
+
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
     if (ringRef.current) {
@@ -216,26 +221,62 @@ function HoverGlow({ position, span }: { position: [number, number, number]; spa
       mat.opacity = 0.15 + Math.sin(t * 2.5 + 1) * 0.1
     }
   })
-  
+
   return (
     <group>
       {/* Outer soft glow ring */}
-      <mesh ref={outerRef} position={[position[0], 0.025, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        ref={outerRef}
+        position={[position[0], 0.025, position[2]]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <ringGeometry args={[0.7 * avgScale, 0.9 * avgScale, 32]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} />
+        <meshBasicMaterial
+          color="#60a5fa"
+          transparent
+          opacity={0.15}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
       </mesh>
       {/* Pulsing outline ring */}
-      <mesh ref={ringRef} position={[position[0], 0.03, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        ref={ringRef}
+        position={[position[0], 0.03, position[2]]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <ringGeometry args={[0.55 * avgScale, 0.7 * avgScale, 32]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.45} side={THREE.DoubleSide} depthWrite={false} />
+        <meshBasicMaterial
+          color="#60a5fa"
+          transparent
+          opacity={0.45}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
       </mesh>
       {/* Inner glow */}
-      <mesh ref={glowRef} position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        ref={glowRef}
+        position={[position[0], 0.02, position[2]]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <circleGeometry args={[0.6 * avgScale, 32]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false} />
+        <meshBasicMaterial
+          color="#60a5fa"
+          transparent
+          opacity={0.12}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
       </mesh>
       {/* Upward point light for subtle highlight on prop geometry */}
-      <pointLight position={[position[0], 0.5, position[2]]} color="#60a5fa" intensity={0.8} distance={2 * avgScale} decay={2} />
+      <pointLight
+        position={[position[0], 0.5, position[2]]}
+        color="#60a5fa"
+        intensity={0.8}
+        distance={2 * avgScale}
+        decay={2}
+      />
     </group>
   )
 }
@@ -315,13 +356,22 @@ interface SelectionIndicatorProps {
   onDelete: () => void
 }
 
-function SelectionIndicator({ position, isMoving, isDragging, isOverInvalid, onSave, onRotate, onCancel, onDelete }: SelectionIndicatorProps) {
+function SelectionIndicator({
+  position,
+  isMoving,
+  isDragging,
+  isOverInvalid,
+  onSave,
+  onRotate,
+  onCancel,
+  onDelete,
+}: SelectionIndicatorProps) {
   const hudPos: [number, number, number] = [position[0], position[1] + 1.8, position[2]]
   const shadowRef = useRef<THREE.Mesh>(null!)
-  
+
   // Color changes based on state: red for invalid, green for dragging, orange for selected
   const ringColor = isOverInvalid ? '#ff4444' : isDragging ? '#00ff88' : '#ffa500'
-  
+
   // Animate shadow opacity/scale when lifted (dragging)
   useFrame(() => {
     if (!shadowRef.current) return
@@ -334,40 +384,36 @@ function SelectionIndicator({ position, isMoving, isDragging, isOverInvalid, onS
   return (
     <>
       {/* Drop shadow on floor (grows when prop is lifted) */}
-      <mesh ref={shadowRef} position={[position[0], 0.005, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        ref={shadowRef}
+        position={[position[0], 0.005, position[2]]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <circleGeometry args={[0.7, 24]} />
-        <meshBasicMaterial color="#000000" transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
+        <meshBasicMaterial
+          color="#000000"
+          transparent
+          opacity={0.1}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
       </mesh>
-      
+
       {/* Pulsing ring on the floor around the prop */}
       <mesh position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.8, 1.0, 32]} />
-        <meshBasicMaterial 
-          color={ringColor} 
-          transparent 
-          opacity={0.7}
-          side={THREE.DoubleSide}
-        />
+        <meshBasicMaterial color={ringColor} transparent opacity={0.7} side={THREE.DoubleSide} />
       </mesh>
-      
+
       {/* Inner glow circle */}
       <mesh position={[position[0], 0.01, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.85, 32]} />
-        <meshBasicMaterial 
-          color={ringColor} 
-          transparent 
-          opacity={0.15}
-          side={THREE.DoubleSide}
-        />
+        <meshBasicMaterial color={ringColor} transparent opacity={0.15} side={THREE.DoubleSide} />
       </mesh>
-      
+
       {/* HUD Buttons floating above the prop */}
       {isMoving && (
-        <Html
-          position={hudPos}
-          center
-          zIndexRange={[100, 110]}
-        >
+        <Html position={hudPos} center zIndexRange={[100, 110]}>
           <div
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
             onPointerDown={(e) => e.stopPropagation()}
@@ -383,47 +429,67 @@ function SelectionIndicator({ position, isMoving, isDragging, isOverInvalid, onS
               {/* Save Button */}
               <button
                 style={HUD_SAVE_STYLE}
-                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onSave(); }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onSave()
+                }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Save position"
               >
                 ✓
               </button>
-              
+
               {/* Rotate Button */}
               <button
                 style={HUD_ROTATE_STYLE}
-                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onRotate(); }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onRotate()
+                }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Rotate 90°"
               >
                 🔄
               </button>
-              
+
               {/* Delete Button */}
               <button
                 style={HUD_DELETE_STYLE}
-                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(); }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onDelete()
+                }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Delete prop"
               >
                 🗑️
               </button>
-              
+
               {/* Cancel Button */}
               <button
                 style={HUD_CANCEL_STYLE}
-                onClick={(e) => { e.stopPropagation(); e.preventDefault(); onCancel(); }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  onCancel()
+                }}
                 onPointerDown={(e) => e.stopPropagation()}
                 title="Cancel"
               >
                 ✕
               </button>
             </div>
-            
+
             {/* Hint text */}
             <div style={HUD_HINT_STYLE}>
-              {isOverInvalid ? '⛔ Can\'t place here' : isDragging ? 'Release to drop' : 'Drag to move • Arrows/WASD'}
+              {isOverInvalid
+                ? "⛔ Can't place here"
+                : isDragging
+                  ? 'Release to drop'
+                  : 'Drag to move • Arrows/WASD'}
             </div>
           </div>
         </Html>
@@ -448,14 +514,22 @@ function SelectionIndicator({ position, isMoving, isDragging, isOverInvalid, onS
  * Use arrow keys / WASD to move, R to rotate, Enter to confirm, Escape to cancel.
  */
 // ─── Lifted/Bobbing Animation Constants ─────────────────────────
-const LIFT_HEIGHT = 0.4        // How high the prop lifts when selected
-const BOB_AMPLITUDE = 0.05    // Subtle bobbing amplitude
-const BOB_SPEED = 2           // Bobbing speed multiplier
+const LIFT_HEIGHT = 0.4 // How high the prop lifts when selected
+const BOB_AMPLITUDE = 0.05 // Subtle bobbing amplitude
+const BOB_SPEED = 2 // Bobbing speed multiplier
 
 /** Wrapper that animates Y position via ref (no re-renders). */
-function BobbingWrapper({ children, active, baseY }: { children: React.ReactNode; active: boolean; baseY: number }) {
+function BobbingWrapper({
+  children,
+  active,
+  baseY,
+}: {
+  children: React.ReactNode
+  active: boolean
+  baseY: number
+}) {
   const groupRef = useRef<THREE.Group>(null!)
-  
+
   useFrame((state) => {
     if (!groupRef.current) return
     if (active) {
@@ -465,19 +539,34 @@ function BobbingWrapper({ children, active, baseY }: { children: React.ReactNode
       groupRef.current.position.y = baseY
     }
   })
-  
-  return <group ref={groupRef} position={[0, baseY, 0]}>{children}</group>
+
+  return (
+    <group ref={groupRef} position={[0, baseY, 0]}>
+      {children}
+    </group>
+  )
 }
 
-export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }: GridRoomRendererProps) {
-  const { cells, cellSize, gridWidth, gridDepth, id: blueprintId, placements: blueprintPlacements } = blueprint
+export function GridRoomRenderer({
+  blueprint,
+  roomPosition,
+  onBlueprintUpdate,
+}: GridRoomRendererProps) {
+  const {
+    cells,
+    cellSize,
+    gridWidth,
+    gridDepth,
+    id: blueprintId,
+    placements: blueprintPlacements,
+  } = blueprint
   const [gridDebugEnabled] = useGridDebug()
   const [hoveredPropKey, setHoveredPropKey] = useState<string | null>(null)
-  
+
   // Track pointer position for drag threshold detection
   const pointerStartPos = useRef<{ x: number; y: number } | null>(null)
   const hasDragStarted = useRef(false)
-  
+
   // Use placements from blueprint if available, otherwise extract from cells
   const placements = useMemo<PropPlacement[]>(() => {
     if (blueprintPlacements && blueprintPlacements.length > 0) {
@@ -530,111 +619,126 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   })
 
   // Stable callbacks — key is passed via event.object.userData
-  const handlePointerEnter = useCallback((e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
-    const obj = e.eventObject
-    if (obj?.userData?.propKey) {
-      setHoveredPropKey(obj.userData.propKey)
-      // Show grab cursor when hovering a movable prop (or pointer if already moving)
-      if (isMoving) {
-        document.body.style.cursor = isDragging ? 'grabbing' : 'grab'
-      } else {
-        document.body.style.cursor = 'grab'
+  const handlePointerEnter = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation()
+      const obj = e.eventObject
+      if (obj?.userData?.propKey) {
+        setHoveredPropKey(obj.userData.propKey)
+        // Show grab cursor when hovering a movable prop (or pointer if already moving)
+        if (isMoving) {
+          document.body.style.cursor = isDragging ? 'grabbing' : 'grab'
+        } else {
+          document.body.style.cursor = 'grab'
+        }
+      } else if (obj?.userData?.debugPropKey) {
+        setHoveredPropKey(obj.userData.debugPropKey)
       }
-    } else if (obj?.userData?.debugPropKey) {
-      setHoveredPropKey(obj.userData.debugPropKey)
-    }
-  }, [isMoving, isDragging])
+    },
+    [isMoving, isDragging]
+  )
 
   // Long-press handlers for prop selection and mouse drag
-  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
-    const obj = e.eventObject
-    if (obj?.userData?.propKey && obj?.userData?.propId !== undefined) {
-      const { propKey, propId, gridX, gridZ, rotation, span } = obj.userData
-      
-      // If this prop is already selected and in moving mode, skip long-press
-      // and allow immediate drag
-      if (isMoving && selectedProp?.key === propKey) {
-        // Already selected — just set up for immediate drag
+  const handlePointerDown = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation()
+      const obj = e.eventObject
+      if (obj?.userData?.propKey && obj?.userData?.propId !== undefined) {
+        const { propKey, propId, gridX, gridZ, rotation, span } = obj.userData
+
+        // If this prop is already selected and in moving mode, skip long-press
+        // and allow immediate drag
+        if (isMoving && selectedProp?.key === propKey) {
+          // Already selected — just set up for immediate drag
+          pointerStartPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
+          hasDragStarted.current = false
+          return
+        }
+
+        startLongPress(propKey, propId, gridX, gridZ, rotation || 0, span)
+        // Store pointer position for drag threshold detection
         pointerStartPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
         hasDragStarted.current = false
-        return
       }
-      
-      startLongPress(propKey, propId, gridX, gridZ, rotation || 0, span)
-      // Store pointer position for drag threshold detection
-      pointerStartPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
-      hasDragStarted.current = false
-    }
-  }, [startLongPress, isMoving, selectedProp])
-  
-  const handlePointerMoveEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
-    // Only process if a prop is selected for moving
-    if (!isMoving) return
-    
-    // Check drag threshold before starting drag
-    if (!hasDragStarted.current && pointerStartPos.current) {
-      const dx = e.nativeEvent.clientX - pointerStartPos.current.x
-      const dy = e.nativeEvent.clientY - pointerStartPos.current.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
-      if (distance >= DRAG_THRESHOLD) {
-        hasDragStarted.current = true
+    },
+    [startLongPress, isMoving, selectedProp]
+  )
+
+  const handlePointerMoveEvent = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      // Only process if a prop is selected for moving
+      if (!isMoving) return
+
+      // Check drag threshold before starting drag
+      if (!hasDragStarted.current && pointerStartPos.current) {
+        const dx = e.nativeEvent.clientX - pointerStartPos.current.x
+        const dy = e.nativeEvent.clientY - pointerStartPos.current.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        if (distance >= DRAG_THRESHOLD) {
+          hasDragStarted.current = true
+          startDrag(e)
+          document.body.style.cursor = 'grabbing'
+        }
+      }
+
+      // If threshold was met by window handler but drag not yet started in R3F,
+      // start it now that we have a ThreeEvent with camera data
+      if (hasDragStarted.current && !isDragging) {
         startDrag(e)
         document.body.style.cursor = 'grabbing'
       }
-    }
-    
-    // If threshold was met by window handler but drag not yet started in R3F,
-    // start it now that we have a ThreeEvent with camera data
-    if (hasDragStarted.current && !isDragging) {
-      startDrag(e)
-      document.body.style.cursor = 'grabbing'
-    }
-    
-    // If dragging, update position and cursor
-    if (isDragging) {
-      handleDragMove(e)
-      document.body.style.cursor = isOverInvalid ? 'not-allowed' : 'grabbing'
-    }
-  }, [isMoving, isDragging, isOverInvalid, startDrag, handleDragMove])
-  
-  const handlePointerUpEvent = useCallback((e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
-    // Only cancel long-press if we're not already in moving mode
-    // (the timer might have just fired, putting us into moving mode)
-    if (!isMoving) {
-      handlePointerUp()
-    }
-    // End drag if we were dragging
-    if (isDragging) {
-      endDrag()
-      document.body.style.cursor = isMoving ? 'grab' : 'auto'
-    }
-    pointerStartPos.current = null
-    hasDragStarted.current = false
-  }, [handlePointerUp, isDragging, isMoving, endDrag])
-  
-  const handlePointerLeaveForLongPress = useCallback((e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation()
-    // Don't cancel long-press on pointer leave — R3F fires pointerLeave too aggressively
-    // on small 3D meshes, making it nearly impossible to hold for the long-press duration.
-    // The long-press timer will be cancelled by pointerUp if the user releases early.
-    // Only reset cursor if not in a moving/dragging state.
-    if (!isMoving && !isDragging) {
-      document.body.style.cursor = 'auto'
-    }
-    // Always clear hover for this specific prop (allows clean transitions between props)
-    const obj = e.eventObject
-    const key = obj?.userData?.propKey || obj?.userData?.debugPropKey
-    if (key) {
-      // Use a microtask so that if pointerEnter fires on a new prop in the same frame,
-      // the new hover takes precedence over this clear
-      queueMicrotask(() => {
-        setHoveredPropKey((prev) => prev === key ? null : prev)
-      })
-    }
-  }, [isDragging, isMoving])
+
+      // If dragging, update position and cursor
+      if (isDragging) {
+        handleDragMove(e)
+        document.body.style.cursor = isOverInvalid ? 'not-allowed' : 'grabbing'
+      }
+    },
+    [isMoving, isDragging, isOverInvalid, startDrag, handleDragMove]
+  )
+
+  const handlePointerUpEvent = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation()
+      // Only cancel long-press if we're not already in moving mode
+      // (the timer might have just fired, putting us into moving mode)
+      if (!isMoving) {
+        handlePointerUp()
+      }
+      // End drag if we were dragging
+      if (isDragging) {
+        endDrag()
+        document.body.style.cursor = isMoving ? 'grab' : 'auto'
+      }
+      pointerStartPos.current = null
+      hasDragStarted.current = false
+    },
+    [handlePointerUp, isDragging, isMoving, endDrag]
+  )
+
+  const handlePointerLeaveForLongPress = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation()
+      // Don't cancel long-press on pointer leave — R3F fires pointerLeave too aggressively
+      // on small 3D meshes, making it nearly impossible to hold for the long-press duration.
+      // The long-press timer will be cancelled by pointerUp if the user releases early.
+      // Only reset cursor if not in a moving/dragging state.
+      if (!isMoving && !isDragging) {
+        document.body.style.cursor = 'auto'
+      }
+      // Always clear hover for this specific prop (allows clean transitions between props)
+      const obj = e.eventObject
+      const key = obj?.userData?.propKey || obj?.userData?.debugPropKey
+      if (key) {
+        // Use a microtask so that if pointerEnter fires on a new prop in the same frame,
+        // the new hover takes precedence over this clear
+        queueMicrotask(() => {
+          setHoveredPropKey((prev) => (prev === key ? null : prev))
+        })
+      }
+    },
+    [isDragging, isMoving]
+  )
 
   // Build list of prop instances from placements (uses optimistic data, avoids flash-back on confirm)
   const propInstances = useMemo(() => {
@@ -654,8 +758,8 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
       const [relX, , relZ] = gridToWorld(p.x, p.z, cellSize, gridWidth, gridDepth)
       const spanW = p.span?.w ?? 1
       const spanD = p.span?.d ?? 1
-      const spanOffsetX = (spanW - 1) * cellSize / 2
-      const spanOffsetZ = (spanD - 1) * cellSize / 2
+      const spanOffsetX = ((spanW - 1) * cellSize) / 2
+      const spanOffsetZ = ((spanD - 1) * cellSize) / 2
 
       instances.push({
         key: `${p.propId}-${p.x}-${p.z}`,
@@ -673,37 +777,43 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
 
   // Global drag handler for when mouse moves outside the prop
   // Handles both pre-drag threshold detection and active dragging
-  const handleGlobalPointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
-    if (isDragging) {
-      handleDragMove(e)
-      document.body.style.cursor = isOverInvalid ? 'not-allowed' : 'grabbing'
-      return
-    }
-    // Pre-drag: detect threshold even when pointer left the prop mesh
-    if (isMoving && !hasDragStarted.current && pointerStartPos.current) {
-      const dx = e.nativeEvent.clientX - pointerStartPos.current.x
-      const dy = e.nativeEvent.clientY - pointerStartPos.current.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
-      if (distance >= DRAG_THRESHOLD) {
-        hasDragStarted.current = true
-        startDrag(e)
-        document.body.style.cursor = 'grabbing'
+  const handleGlobalPointerMove = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      if (isDragging) {
+        handleDragMove(e)
+        document.body.style.cursor = isOverInvalid ? 'not-allowed' : 'grabbing'
+        return
       }
-    }
-  }, [isDragging, isMoving, isOverInvalid, handleDragMove, startDrag])
+      // Pre-drag: detect threshold even when pointer left the prop mesh
+      if (isMoving && !hasDragStarted.current && pointerStartPos.current) {
+        const dx = e.nativeEvent.clientX - pointerStartPos.current.x
+        const dy = e.nativeEvent.clientY - pointerStartPos.current.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        if (distance >= DRAG_THRESHOLD) {
+          hasDragStarted.current = true
+          startDrag(e)
+          document.body.style.cursor = 'grabbing'
+        }
+      }
+    },
+    [isDragging, isMoving, isOverInvalid, handleDragMove, startDrag]
+  )
 
-  const handleGlobalPointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
-    if (isDragging) {
-      e.stopPropagation()
-      endDrag()
-      pointerStartPos.current = null
-      hasDragStarted.current = false
-    } else if (isMoving) {
-      // Release during pre-drag phase (pointer was down but didn't pass threshold)
-      pointerStartPos.current = null
-      hasDragStarted.current = false
-    }
-  }, [isDragging, isMoving, endDrag])
+  const handleGlobalPointerUp = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      if (isDragging) {
+        e.stopPropagation()
+        endDrag()
+        pointerStartPos.current = null
+        hasDragStarted.current = false
+      } else if (isMoving) {
+        // Release during pre-drag phase (pointer was down but didn't pass threshold)
+        pointerStartPos.current = null
+        hasDragStarted.current = false
+      }
+    },
+    [isDragging, isMoving, endDrag]
+  )
 
   // Window-level pointer tracking for pre-drag threshold detection.
   // When a prop is selected (isMoving) but not yet dragging, the cursor might
@@ -711,7 +821,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
   // we can still detect when the threshold is crossed and set hasDragStarted.
   useEffect(() => {
     if (!isMoving || isDragging) return
-    
+
     const handleWindowPointerMove = (e: PointerEvent) => {
       if (hasDragStarted.current || !pointerStartPos.current) return
       const dx = e.clientX - pointerStartPos.current.x
@@ -725,12 +835,12 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
         // For now, mark the drag as pending.
       }
     }
-    
+
     const handleWindowPointerUp = (_e: PointerEvent) => {
       pointerStartPos.current = null
       hasDragStarted.current = false
     }
-    
+
     window.addEventListener('pointermove', handleWindowPointerMove)
     window.addEventListener('pointerup', handleWindowPointerUp)
     return () => {
@@ -767,46 +877,57 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
       )}
-      
+
       {propInstances.map(({ key, propId, gridX, gridZ, position, rotation, span }) => {
         const entry = getPropEntry(propId)
         if (!entry) return null
 
         const Component = entry.component
-        
+
         // Check if this prop is currently selected and being moved
         const isSelected = selectedProp?.key === key
         const isBeingMoved = isSelected && isMoving
-        
+
         // Use the selected position if this prop is being moved
         const effectiveGridX = isBeingMoved ? selectedProp!.gridX : gridX
         const effectiveGridZ = isBeingMoved ? selectedProp!.gridZ : gridZ
         const effectiveRotation = isBeingMoved ? selectedProp!.rotation : rotation
-        
+
         // Recalculate world position if being moved (including span centering)
         let worldX: number
         let worldZ: number
         if (isBeingMoved) {
-          const [newRelX, , newRelZ] = gridToWorld(effectiveGridX, effectiveGridZ, cellSize, gridWidth, gridDepth)
-          const effectiveSpanW = (selectedProp!.span?.w ?? 1)
-          const effectiveSpanD = (selectedProp!.span?.d ?? 1)
-          worldX = newRelX + (effectiveSpanW - 1) * cellSize / 2
-          worldZ = newRelZ + (effectiveSpanD - 1) * cellSize / 2
+          const [newRelX, , newRelZ] = gridToWorld(
+            effectiveGridX,
+            effectiveGridZ,
+            cellSize,
+            gridWidth,
+            gridDepth
+          )
+          const effectiveSpanW = selectedProp!.span?.w ?? 1
+          const effectiveSpanD = selectedProp!.span?.d ?? 1
+          worldX = newRelX + ((effectiveSpanW - 1) * cellSize) / 2
+          worldZ = newRelZ + ((effectiveSpanD - 1) * cellSize) / 2
         } else {
-          worldX = position[0]  // already includes span centering from propInstances
+          worldX = position[0] // already includes span centering from propInstances
           worldZ = position[2]
         }
-        
+
         let finalRotation = effectiveRotation
 
         // Y position from prop metadata (room-local space; parent group handles world Y)
-        let yPos = entry.yOffset
+        const yPos = entry.yOffset
 
         if (entry.mountType === 'wall') {
           // Wall-mounted props: snap toward nearest wall + auto-rotate
           const wallPlacement = getWallPlacement(
-            worldX, worldZ, effectiveGridX, effectiveGridZ,
-            gridWidth, gridDepth, cellSize,
+            worldX,
+            worldZ,
+            effectiveGridX,
+            effectiveGridZ,
+            gridWidth,
+            gridDepth,
+            cellSize
           )
           if (wallPlacement) {
             worldX = wallPlacement.x
@@ -818,10 +939,18 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
           }
         } else {
           // Floor props: clamp to room bounds to prevent wall clipping
-          const effectiveSpan = isBeingMoved ? (selectedProp!.span || { w: 1, d: 1 }) : (span || { w: 1, d: 1 })
+          const effectiveSpan = isBeingMoved
+            ? selectedProp!.span || { w: 1, d: 1 }
+            : span || { w: 1, d: 1 }
           const [clampedX, clampedZ] = clampToRoomBounds(
-            worldX, worldZ, effectiveGridX, effectiveGridZ,
-            gridWidth, gridDepth, cellSize, effectiveSpan,
+            worldX,
+            worldZ,
+            effectiveGridX,
+            effectiveGridZ,
+            gridWidth,
+            gridDepth,
+            cellSize,
+            effectiveSpan
           )
           worldX = clampedX
           worldZ = clampedZ
@@ -838,12 +967,12 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
             onPointerUp={handlePointerUpEvent}
             onPointerEnter={handlePointerEnter}
             onPointerLeave={handlePointerLeaveForLongPress}
-            userData={{ 
-              propKey: key, 
-              propId, 
-              gridX: effectiveGridX, 
-              gridZ: effectiveGridZ, 
-              rotation: effectiveRotation, 
+            userData={{
+              propKey: key,
+              propId,
+              gridX: effectiveGridX,
+              gridZ: effectiveGridZ,
+              rotation: effectiveRotation,
               span,
               ...(gridDebugEnabled ? { debugPropKey: key } : {}),
             }}
@@ -858,9 +987,9 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
             </BobbingWrapper>
             {/* Selection indicator when prop is being moved */}
             {isSelected && (
-              <SelectionIndicator 
-                position={worldPos} 
-                isMoving={isMoving} 
+              <SelectionIndicator
+                position={worldPos}
+                isMoving={isMoving}
                 isDragging={isDragging}
                 isOverInvalid={isOverInvalid}
                 onSave={confirmMovement}
@@ -870,9 +999,7 @@ export function GridRoomRenderer({ blueprint, roomPosition, onBlueprintUpdate }:
               />
             )}
             {/* Hover glow when not selected */}
-            {isHovered && !isSelected && (
-              <HoverGlow position={worldPos} span={span} />
-            )}
+            {isHovered && !isSelected && <HoverGlow position={worldPos} span={span} />}
             {gridDebugEnabled && isHovered && (
               <PropDebugLabel propId={propId} position={worldPos} />
             )}

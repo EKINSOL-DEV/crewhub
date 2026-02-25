@@ -7,9 +7,9 @@ import { useToonMaterialProps } from '../utils/toonMaterials'
 const seedFn = (x: number, z: number) =>
   Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1
 
-const TILE_SIZE = 8          // was 4 → bigger tiles, 75% fewer objects
-const GRID_RANGE = 30        // was 60 → same coverage (30×8 = 240)
-const DECORATION_MAX_DIST = 80  // cull decorations beyond this radius
+const TILE_SIZE = 8 // was 4 → bigger tiles, 75% fewer objects
+const GRID_RANGE = 30 // was 60 → same coverage (30×8 = 240)
+const DECORATION_MAX_DIST = 80 // cull decorations beyond this radius
 
 // ─── Generic instanced decoration batch ──────────────────────────
 
@@ -74,7 +74,8 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
 
     const mat4 = new THREE.Matrix4()
     const groundQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(1, 0, 0), -Math.PI / 2,
+      new THREE.Vector3(1, 0, 0),
+      -Math.PI / 2
     )
     const identityQuat = new THREE.Quaternion()
     const unitScale = new THREE.Vector3(1, 1, 1)
@@ -99,21 +100,16 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
         mat4.compose(
           tmpVec.set(wx, -0.08, wz),
           groundQuat,
-          new THREE.Vector3(1, 1, thickness / 0.1),
+          new THREE.Vector3(1, 1, thickness / 0.1)
         )
         groundMatrices.push(mat4.clone())
-        groundColors.push(new THREE.Color(
-          0.38 + s * 0.06,
-          0.50 + s * 0.05,
-          0.32 + s * 0.04,
-        ))
+        groundColors.push(new THREE.Color(0.38 + s * 0.06, 0.5 + s * 0.05, 0.32 + s * 0.04))
 
         // ── Distance + building-zone gating ─────────
         const dist = Math.sqrt(wx * wx + wz * wz)
         if (dist > DECORATION_MAX_DIST) continue
         const inBuilding =
-          Math.abs(wx) < buildingWidth / 2 + 2 &&
-          Math.abs(wz) < buildingDepth / 2 + 2
+          Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2
         if (inBuilding) continue
 
         // ── Grass tufts (3 blades per tuft) ─────────
@@ -122,11 +118,7 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
           const py = -0.1
           const pz = wz + (1 - s) * 1.5 - 0.75
           for (let b = 0; b < 3; b++) {
-            mat4.compose(
-              tmpVec.set(px + bladeOffsets[b], py + 0.15, pz),
-              bladeQuats[b],
-              unitScale,
-            )
+            mat4.compose(tmpVec.set(px + bladeOffsets[b], py + 0.15, pz), bladeQuats[b], unitScale)
             grassBlades.push(mat4.clone())
           }
         }
@@ -137,7 +129,7 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
           mat4.compose(
             tmpVec.set(wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75),
             identityQuat,
-            new THREE.Vector3(sc, sc, sc),
+            new THREE.Vector3(sc, sc, sc)
           )
           rocks.push(mat4.clone())
         }
@@ -145,8 +137,11 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
     }
 
     return {
-      groundCount: groundMatrices.length, groundMatrices, groundColors,
-      grassBlades, rocks,
+      groundCount: groundMatrices.length,
+      groundMatrices,
+      groundColors,
+      grassBlades,
+      rocks,
     }
   }, [buildingWidth, buildingDepth])
 

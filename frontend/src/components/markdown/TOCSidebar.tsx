@@ -20,14 +20,20 @@ export function extractHeadings(content: string): TOCHeading[] {
     if (match) {
       const level = match[1].length
       const text = match[2].replace(/[*_`~]/g, '').trim()
-      const id = text.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '')
+      const id = text
+        .toLowerCase()
+        .replace(/[^\w]+/g, '-')
+        .replace(/^-|-$/g, '')
       headings.push({ id, text, level })
     }
   }
   return headings
 }
 
-export function useActiveHeading(headings: TOCHeading[], containerRef?: RefObject<HTMLElement | null>): string | undefined {
+export function useActiveHeading(
+  headings: TOCHeading[],
+  containerRef?: RefObject<HTMLElement | null>
+): string | undefined {
   const [activeId, setActiveId] = useState<string | undefined>()
 
   useEffect(() => {
@@ -36,7 +42,7 @@ export function useActiveHeading(headings: TOCHeading[], containerRef?: RefObjec
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries.filter(e => e.isIntersecting)
+        const visible = entries.filter((e) => e.isIntersecting)
         if (visible.length > 0) {
           setActiveId(visible[0].target.id)
         }
@@ -57,20 +63,32 @@ export function useActiveHeading(headings: TOCHeading[], containerRef?: RefObjec
 
 export function TOCSidebar({ headings, activeId, onSelect }: TOCSidebarProps) {
   return (
-    <div style={{
-      width: 240,
-      minWidth: 240,
-      borderRight: '1px solid hsl(var(--border))',
-      overflow: 'auto',
-      padding: '12px 0',
-      background: 'hsl(var(--card))',
-    }}>
-      <div style={{
-        padding: '0 12px 8px',
-        borderBottom: '1px solid hsl(var(--border))',
-        marginBottom: 8,
-      }}>
-        <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--muted-foreground))' }}>
+    <div
+      style={{
+        width: 240,
+        minWidth: 240,
+        borderRight: '1px solid hsl(var(--border))',
+        overflow: 'auto',
+        padding: '12px 0',
+        background: 'hsl(var(--card))',
+      }}
+    >
+      <div
+        style={{
+          padding: '0 12px 8px',
+          borderBottom: '1px solid hsl(var(--border))',
+          marginBottom: 8,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: 'hsl(var(--muted-foreground))',
+          }}
+        >
           Contents
         </span>
       </div>
@@ -98,10 +116,10 @@ export function TOCSidebar({ headings, activeId, onSelect }: TOCSidebarProps) {
               transition: 'all 0.1s',
               fontFamily: 'system-ui, sans-serif',
             }}
-            onMouseEnter={e => {
+            onMouseEnter={(e) => {
               if (!isActive) e.currentTarget.style.background = 'hsl(var(--secondary))'
             }}
-            onMouseLeave={e => {
+            onMouseLeave={(e) => {
               if (!isActive) e.currentTarget.style.background = 'transparent'
             }}
           >

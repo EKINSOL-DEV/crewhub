@@ -16,7 +16,15 @@ interface ActionsTabProps {
   onAssignmentChanged?: () => void
 }
 
-export function ActionsTab({ session, displayName, botConfig, currentRoomId, canChat, onOpenLog, onAssignmentChanged }: ActionsTabProps) {
+export function ActionsTab({
+  session,
+  displayName,
+  botConfig,
+  currentRoomId,
+  canChat,
+  onOpenLog,
+  onAssignmentChanged,
+}: ActionsTabProps) {
   const { openChat } = useChatContext()
   const { rooms, refresh: refreshRooms } = useRooms()
   const { isDemoMode } = useDemoMode()
@@ -29,7 +37,10 @@ export function ActionsTab({ session, displayName, botConfig, currentRoomId, can
     setMoveError(null)
     try {
       if (targetRoomId === 'parking') {
-        const response = await fetch(`${API_BASE}/session-room-assignments/${encodeURIComponent(session.key)}`, { method: 'DELETE' })
+        const response = await fetch(
+          `${API_BASE}/session-room-assignments/${encodeURIComponent(session.key)}`,
+          { method: 'DELETE' }
+        )
         if (!response.ok && response.status !== 404) {
           const err = await response.json().catch(() => ({}))
           throw new Error(err.detail || 'Failed to unassign bot')
@@ -57,19 +68,25 @@ export function ActionsTab({ session, displayName, botConfig, currentRoomId, can
   }
 
   const sectionLabel = (text: string) => (
-    <div style={{
-      fontSize: 11,
-      fontWeight: 600,
-      color: '#9ca3af',
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.05em',
-      marginBottom: 6,
-    }}>
+    <div
+      style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: '#9ca3af',
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.05em',
+        marginBottom: 6,
+      }}
+    >
       {text}
     </div>
   )
 
-  const actionButton = (label: string, onClick: () => void, opts?: { primary?: boolean; disabled?: boolean }) => (
+  const actionButton = (
+    label: string,
+    onClick: () => void,
+    opts?: { primary?: boolean; disabled?: boolean }
+  ) => (
     <button
       onClick={onClick}
       disabled={opts?.disabled}
@@ -87,8 +104,12 @@ export function ActionsTab({ session, displayName, botConfig, currentRoomId, can
         transition: 'opacity 0.15s',
         opacity: opts?.disabled ? 0.5 : 1,
       }}
-      onMouseEnter={e => { if (!opts?.disabled) e.currentTarget.style.opacity = '0.85' }}
-      onMouseLeave={e => { e.currentTarget.style.opacity = opts?.disabled ? '0.5' : '1' }}
+      onMouseEnter={(e) => {
+        if (!opts?.disabled) e.currentTarget.style.opacity = '0.85'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.opacity = opts?.disabled ? '0.5' : '1'
+      }}
     >
       {label}
     </button>
@@ -121,29 +142,35 @@ export function ActionsTab({ session, displayName, botConfig, currentRoomId, can
             }}
           >
             <option value="parking">🅿️ Parking (unassigned)</option>
-            {rooms.map(room => (
+            {rooms.map((room) => (
               <option key={room.id} value={room.id}>
                 {room.icon || '📦'} {room.name}
               </option>
             ))}
           </select>
-          <div style={{
-            position: 'absolute',
-            right: 10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            pointerEvents: 'none',
-            fontSize: 10,
-            color: '#9ca3af',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              right: 10,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+              fontSize: 10,
+              color: '#9ca3af',
+            }}
+          >
             {isMoving ? '⏳' : '▼'}
           </div>
         </div>
         {moveError && (
-          <div style={{ marginTop: 4, fontSize: 11, color: '#dc2626', fontWeight: 500 }}>{moveError}</div>
+          <div style={{ marginTop: 4, fontSize: 11, color: '#dc2626', fontWeight: 500 }}>
+            {moveError}
+          </div>
         )}
         {isDemoMode && (
-          <div style={{ marginTop: 4, fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Disabled in demo mode</div>
+          <div style={{ marginTop: 4, fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>
+            Disabled in demo mode
+          </div>
         )}
       </div>
 
@@ -151,7 +178,12 @@ export function ActionsTab({ session, displayName, botConfig, currentRoomId, can
       <div>
         {sectionLabel('Communication')}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {canChat && actionButton('💬 Open Chat', () => openChat(session.key, displayName, botConfig.icon, botConfig.color), { primary: true })}
+          {canChat &&
+            actionButton(
+              '💬 Open Chat',
+              () => openChat(session.key, displayName, botConfig.icon, botConfig.color),
+              { primary: true }
+            )}
           {actionButton('📋 Open Full Log', () => onOpenLog(session), { primary: !canChat })}
         </div>
       </div>

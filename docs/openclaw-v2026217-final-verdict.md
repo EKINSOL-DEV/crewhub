@@ -1,8 +1,8 @@
 # Finale Verdict — CrewHub iteratie 2 changes
 
-**Reviewer:** GPT-5.2 (Reviewer subagent)  
-**Datum:** 2026-02-18  
-**Commit:** `296c61c` — branch `develop`  
+**Reviewer:** GPT-5.2 (Reviewer subagent)
+**Datum:** 2026-02-18
+**Commit:** `296c61c` — branch `develop`
 **Gebaseerd op:** review-feedback `openclaw-v2026217-review-feedback.md`
 
 ---

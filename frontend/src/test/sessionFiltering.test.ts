@@ -24,17 +24,17 @@ describe('splitSessionsForDisplay', () => {
     const { visibleSessions, parkingSessions } = splitSessionsForDisplay(
       sessions,
       isActive,
-      120,  // idle threshold 2 min
-      15,   // maxVisible
-      30 * 60 * 1000, // parkingExpiryMs 30 min
+      120, // idle threshold 2 min
+      15, // maxVisible
+      30 * 60 * 1000 // parkingExpiryMs 30 min
     )
 
     // Main agent never parks
-    expect(visibleSessions.some(s => s.key === 'agent:main:main')).toBe(true)
+    expect(visibleSessions.some((s) => s.key === 'agent:main:main')).toBe(true)
     // Recent subagent stays visible
-    expect(visibleSessions.some(s => s.key === 'agent:main:subagent:1')).toBe(true)
+    expect(visibleSessions.some((s) => s.key === 'agent:main:subagent:1')).toBe(true)
     // Idle subagent (>2min idle) goes to parking
-    expect(parkingSessions.some(s => s.key === 'agent:main:subagent:2')).toBe(true)
+    expect(parkingSessions.some((s) => s.key === 'agent:main:subagent:2')).toBe(true)
   })
 
   it('respects maxVisible limit', () => {
@@ -47,33 +47,28 @@ describe('splitSessionsForDisplay', () => {
       sessions,
       () => true,
       600, // idle threshold
-      10,  // maxVisible
+      10 // maxVisible
     )
 
     expect(visibleSessions.length).toBeLessThanOrEqual(10)
   })
 
   it('returns empty arrays for empty input', () => {
-    const { visibleSessions, parkingSessions } = splitSessionsForDisplay(
-      [],
-      () => false,
-    )
+    const { visibleSessions, parkingSessions } = splitSessionsForDisplay([], () => false)
     expect(visibleSessions).toEqual([])
     expect(parkingSessions).toEqual([])
   })
 
   it('expires very old sessions from parking', () => {
     const longAgo = Date.now() - 365 * 24 * 60 * 60 * 1000 // 1 year ago
-    const sessions = [
-      makeMockSession('agent:main:subagent:ancient', longAgo),
-    ]
+    const sessions = [makeMockSession('agent:main:subagent:ancient', longAgo)]
 
     const { parkingSessions } = splitSessionsForDisplay(
       sessions,
       () => false,
       600,
       100,
-      24 * 60 * 60 * 1000, // 24h parking expiry
+      24 * 60 * 60 * 1000 // 24h parking expiry
     )
 
     // Ancient session should be expired from parking
@@ -88,10 +83,7 @@ describe('splitSessionsForDisplay', () => {
       makeMockSession('agent:main:subagent:newest', now),
     ]
 
-    const { visibleSessions } = splitSessionsForDisplay(
-      sessions,
-      () => true,
-    )
+    const { visibleSessions } = splitSessionsForDisplay(sessions, () => true)
 
     // Should be sorted newest first
     expect(visibleSessions[0].key).toBe('agent:main:subagent:newest')

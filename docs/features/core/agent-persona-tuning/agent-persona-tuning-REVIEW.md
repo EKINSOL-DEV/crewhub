@@ -1,8 +1,8 @@
 # Agent Persona Tuning UX Review (Second Pair of Eyes)
 
-**Reviewer:** GPT-5.2 (UX critique)  
-**Date:** 2026-02-10  
-**Reviewed doc:** `agent-persona-tuning.md`  
+**Reviewer:** GPT-5.2 (UX critique)
+**Date:** 2026-02-10
+**Reviewed doc:** `agent-persona-tuning.md`
 **Scope:** UX flow, mental model clarity, alternatives, edge cases, simplification, accessibility, copy
 
 ---
@@ -177,16 +177,16 @@ Yes:
 
 ## 10) Ratings
 
-- **Simplicity:** **7/10**  
+- **Simplicity:** **7/10**
   Good structure, but still too many choices during onboarding.
 
-- **Learnability:** **6.5/10**  
+- **Learnability:** **6.5/10**
   Presets help; dimension overlap and abstract labels hurt first-time understanding.
 
-- **Effectiveness (Boingz problem):** **8.5/10**  
+- **Effectiveness (Boingz problem):** **8.5/10**
   Strong direct fix via Action Bias + Executor default + preview around “Hello World”.
 
-- **Overall grade:** **B+**  
+- **Overall grade:** **B+**
   Strong product direction with clear user value; needs onboarding simplification and clearer mental model to become excellent.
 
 ---

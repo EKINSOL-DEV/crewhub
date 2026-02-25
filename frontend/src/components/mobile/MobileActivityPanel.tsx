@@ -8,7 +8,11 @@ import { ArrowLeft, Filter, RefreshCw } from 'lucide-react'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
 import { useAgentsRegistry } from '@/hooks/useAgentsRegistry'
 import { useProjects } from '@/hooks/useProjects'
-import { fetchActivityEntries, subscribeToActivityUpdates, type ActivityEvent } from '@/services/activityService'
+import {
+  fetchActivityEntries,
+  subscribeToActivityUpdates,
+  type ActivityEvent,
+} from '@/services/activityService'
 
 interface MobileActivityPanelProps {
   onBack: () => void
@@ -19,12 +23,12 @@ interface MobileActivityPanelProps {
 function getTimeGroup(timestamp: number): string {
   const now = Date.now()
   const diff = now - timestamp
-  
+
   const minute = 60 * 1000
   const hour = 60 * minute
   const day = 24 * hour
   const week = 7 * day
-  
+
   if (diff < minute) return 'Just Now'
   if (diff < hour) return 'Last Hour'
   if (diff < day) return 'Today'
@@ -181,7 +185,9 @@ function FilterSheet({
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div
+          style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}
+        >
           {tab === 'agent' && (
             <>
               <button
@@ -192,7 +198,10 @@ function FilterSheet({
                 style={{
                   width: '100%',
                   padding: '12px',
-                  background: selectedAgentId === null ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                  background:
+                    selectedAgentId === null
+                      ? 'rgba(139, 92, 246, 0.2)'
+                      : 'rgba(255, 255, 255, 0.03)',
                   border: `1px solid ${selectedAgentId === null ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
                   borderRadius: 10,
                   color: selectedAgentId === null ? '#c4b5fd' : '#cbd5e1',
@@ -214,7 +223,10 @@ function FilterSheet({
                   style={{
                     width: '100%',
                     padding: '12px',
-                    background: selectedAgentId === agent.id ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                    background:
+                      selectedAgentId === agent.id
+                        ? 'rgba(139, 92, 246, 0.2)'
+                        : 'rgba(255, 255, 255, 0.03)',
                     border: `1px solid ${selectedAgentId === agent.id ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
                     borderRadius: 10,
                     color: selectedAgentId === agent.id ? '#c4b5fd' : '#cbd5e1',
@@ -240,7 +252,10 @@ function FilterSheet({
                 style={{
                   width: '100%',
                   padding: '12px',
-                  background: selectedProjectId === null ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                  background:
+                    selectedProjectId === null
+                      ? 'rgba(139, 92, 246, 0.2)'
+                      : 'rgba(255, 255, 255, 0.03)',
                   border: `1px solid ${selectedProjectId === null ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
                   borderRadius: 10,
                   color: selectedProjectId === null ? '#c4b5fd' : '#cbd5e1',
@@ -262,7 +277,10 @@ function FilterSheet({
                   style={{
                     width: '100%',
                     padding: '12px',
-                    background: selectedProjectId === proj.id ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                    background:
+                      selectedProjectId === proj.id
+                        ? 'rgba(139, 92, 246, 0.2)'
+                        : 'rgba(255, 255, 255, 0.03)',
                     border: `1px solid ${selectedProjectId === proj.id ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
                     borderRadius: 10,
                     color: selectedProjectId === proj.id ? '#c4b5fd' : '#cbd5e1',
@@ -276,7 +294,9 @@ function FilterSheet({
                   }}
                 >
                   {proj.color && (
-                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: proj.color }} />
+                    <span
+                      style={{ width: 12, height: 12, borderRadius: '50%', background: proj.color }}
+                    />
                   )}
                   <span>{proj.name}</span>
                 </button>
@@ -302,7 +322,10 @@ function FilterSheet({
                   style={{
                     width: '100%',
                     padding: '12px',
-                    background: selectedEventType === t.value ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                    background:
+                      selectedEventType === t.value
+                        ? 'rgba(139, 92, 246, 0.2)'
+                        : 'rgba(255, 255, 255, 0.03)',
                     border: `1px solid ${selectedEventType === t.value ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
                     borderRadius: 10,
                     color: selectedEventType === t.value ? '#c4b5fd' : '#cbd5e1',
@@ -329,46 +352,49 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
   const { sessions } = useSessionsStream(true)
   const { agents } = useAgentsRegistry(sessions)
   const { projects } = useProjects()
-  
+
   const [allEvents, setAllEvents] = useState<ActivityEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
-  
+
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [selectedEventType, setSelectedEventType] = useState<string | null>(null)
 
   // Fetch activity from all active sessions
-  const fetchAllActivity = useCallback(async (showLoading = true) => {
-    if (showLoading) setLoading(true)
-    
-    const activeSessions = sessions.filter(s => (Date.now() - s.updatedAt) < 3600000) // Last hour
-    const eventsPromises = activeSessions.map(s => fetchActivityEntries(s.key, { limit: 20 }))
-    
-    try {
-      const eventsArrays = await Promise.all(eventsPromises)
-      const allEventsFlat = eventsArrays.flat()
-      
-      // Sort by timestamp descending
-      allEventsFlat.sort((a, b) => b.timestamp - a.timestamp)
-      
-      // Add session names from registry
-      allEventsFlat.forEach(event => {
-        const session = sessions.find(s => s.key === event.sessionKey)
-        if (session) {
-          event.sessionName = session.label || session.key.split(':').pop()
-        }
-      })
-      
-      setAllEvents(allEventsFlat)
-    } catch (error) {
-      console.error('[MobileActivityPanel] Failed to fetch activity:', error)
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }, [sessions])
+  const fetchAllActivity = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) setLoading(true)
+
+      const activeSessions = sessions.filter((s) => Date.now() - s.updatedAt < 3600000) // Last hour
+      const eventsPromises = activeSessions.map((s) => fetchActivityEntries(s.key, { limit: 20 }))
+
+      try {
+        const eventsArrays = await Promise.all(eventsPromises)
+        const allEventsFlat = eventsArrays.flat()
+
+        // Sort by timestamp descending
+        allEventsFlat.sort((a, b) => b.timestamp - a.timestamp)
+
+        // Add session names from registry
+        allEventsFlat.forEach((event) => {
+          const session = sessions.find((s) => s.key === event.sessionKey)
+          if (session) {
+            event.sessionName = session.label || session.key.split(':').pop()
+          }
+        })
+
+        setAllEvents(allEventsFlat)
+      } catch (error) {
+        console.error('[MobileActivityPanel] Failed to fetch activity:', error)
+      } finally {
+        setLoading(false)
+        setRefreshing(false)
+      }
+    },
+    [sessions]
+  )
 
   // Initial fetch
   useEffect(() => {
@@ -377,13 +403,13 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
 
   // Subscribe to SSE updates
   useEffect(() => {
-    const activeSessions = sessions.filter(s => (Date.now() - s.updatedAt) < 3600000)
-    const unsubscribers = activeSessions.map(s =>
+    const activeSessions = sessions.filter((s) => Date.now() - s.updatedAt < 3600000)
+    const unsubscribers = activeSessions.map((s) =>
       subscribeToActivityUpdates(s.key, () => fetchAllActivity(false))
     )
-    
+
     return () => {
-      unsubscribers.forEach(unsub => unsub())
+      unsubscribers.forEach((unsub) => unsub())
     }
   }, [sessions, fetchAllActivity])
 
@@ -400,12 +426,12 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
     // Filter by agent
     if (selectedAgentId) {
       const agentPrefix = `agent:${selectedAgentId}:`
-      filtered = filtered.filter(e => e.sessionKey.startsWith(agentPrefix))
+      filtered = filtered.filter((e) => e.sessionKey.startsWith(agentPrefix))
     }
 
     // Filter by event type
     if (selectedEventType) {
-      filtered = filtered.filter(e => e.type === selectedEventType)
+      filtered = filtered.filter((e) => e.type === selectedEventType)
     }
 
     // TODO: Filter by project (requires project metadata in events)
@@ -416,7 +442,7 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
   // Group events by time
   const groupedEvents = useMemo(() => {
     const groups = new Map<string, ActivityEvent[]>()
-    
+
     for (const event of filteredEvents) {
       const group = getTimeGroup(event.timestamp)
       if (!groups.has(group)) {
@@ -424,12 +450,13 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
       }
       groups.get(group)!.push(event)
     }
-    
+
     return groups
   }, [filteredEvents])
 
   const groupOrder = ['Just Now', 'Last Hour', 'Today', 'Yesterday', 'This Week', 'Older']
-  const hasActiveFilters = selectedAgentId !== null || selectedProjectId !== null || selectedEventType !== null
+  const hasActiveFilters =
+    selectedAgentId !== null || selectedProjectId !== null || selectedEventType !== null
 
   return (
     <div
@@ -471,11 +498,9 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
         >
           <ArrowLeft size={20} />
         </button>
-        
+
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>
-            Activity Feed
-          </div>
+          <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>Activity Feed</div>
           <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
             {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
           </div>
@@ -497,7 +522,10 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
             justifyContent: 'center',
           }}
         >
-          <RefreshCw size={18} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+          <RefreshCw
+            size={18}
+            style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }}
+          />
         </button>
 
         <button
@@ -567,10 +595,9 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
                     {groupEvents.map((event, i) => {
                       const prevEvent = i > 0 ? groupEvents[i - 1] : null
                       const showTime =
-                        !prevEvent || formatTime(event.timestamp) !== formatTime(prevEvent.timestamp)
-                      return (
-                        <ActivityEventItem key={event.id} event={event} showTime={showTime} />
-                      )
+                        !prevEvent ||
+                        formatTime(event.timestamp) !== formatTime(prevEvent.timestamp)
+                      return <ActivityEventItem key={event.id} event={event} showTime={showTime} />
                     })}
                   </div>
                 </div>
@@ -583,8 +610,8 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
       {/* Filter Sheet */}
       {showFilter && (
         <FilterSheet
-          agents={agents.map(r => ({ id: r.agent.id, name: r.agent.name }))}
-          projects={projects.map(p => ({ id: p.id, name: p.name, color: p.color || undefined }))}
+          agents={agents.map((r) => ({ id: r.agent.id, name: r.agent.name }))}
+          projects={projects.map((p) => ({ id: p.id, name: p.name, color: p.color || undefined }))}
           selectedAgentId={selectedAgentId}
           selectedProjectId={selectedProjectId}
           selectedEventType={selectedEventType}

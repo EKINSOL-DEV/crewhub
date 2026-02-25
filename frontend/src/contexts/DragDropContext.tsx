@@ -1,11 +1,20 @@
-import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+  type ReactNode,
+} from 'react'
 import { API_BASE } from '@/lib/api'
 
 // ─── Types ─────────────────────────────────────────────────────
 
 export interface DragState {
   isDragging: boolean
-  isInteractingWithUI: boolean  // Blocks camera when user interacts with UI overlays
+  isInteractingWithUI: boolean // Blocks camera when user interacts with UI overlays
   sessionKey: string | null
   sessionName: string | null
   sourceRoomId: string | null
@@ -70,55 +79,58 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
   }, [])
 
   const endDrag = useCallback(() => {
-    setDrag(prev => ({ ...defaultDrag, error: prev.error }))
+    setDrag((prev) => ({ ...defaultDrag, error: prev.error }))
   }, [])
 
   const clearError = useCallback(() => {
-    setDrag(prev => ({ ...prev, error: null }))
+    setDrag((prev) => ({ ...prev, error: null }))
   }, [])
 
   const setInteractingWithUI = useCallback((value: boolean) => {
-    setDrag(prev => ({ ...prev, isInteractingWithUI: value }))
+    setDrag((prev) => ({ ...prev, isInteractingWithUI: value }))
   }, [])
 
   const setErrorWithAutoClear = useCallback((message: string) => {
     setDrag({ ...defaultDrag, error: message })
-    setTimeout(() => setDrag(s => s.error === message ? { ...s, error: null } : s), 4000)
+    setTimeout(() => setDrag((s) => (s.error === message ? { ...s, error: null } : s)), 4000)
   }, [])
 
-  const dropOnRoom = useCallback(async (targetRoomId: string) => {
-    // Read from ref to avoid stale closures
-    const { sessionKey, sourceRoomId } = dragRef.current
-    if (!sessionKey || targetRoomId === sourceRoomId) {
-      endDrag()
-      return
-    }
+  const dropOnRoom = useCallback(
+    async (targetRoomId: string) => {
+      // Read from ref to avoid stale closures
+      const { sessionKey, sourceRoomId } = dragRef.current
+      if (!sessionKey || targetRoomId === sourceRoomId) {
+        endDrag()
+        return
+      }
 
-    try {
-      const response = await fetch(`${API_BASE}/session-room-assignments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_key: sessionKey,
-          room_id: targetRoomId,
-        }),
-      })
+      try {
+        const response = await fetch(`${API_BASE}/session-room-assignments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_key: sessionKey,
+            room_id: targetRoomId,
+          }),
+        })
 
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        const message = err?.detail || err?.message || 'Failed to move bot. Please try again.'
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}))
+          const message = err?.detail || err?.message || 'Failed to move bot. Please try again.'
+          console.error('Failed to assign bot to room:', err)
+          setErrorWithAutoClear(message)
+        } else {
+          onAssignmentChangedRef.current?.()
+          setDrag(defaultDrag)
+        }
+      } catch (err) {
+        const message = "Network error — couldn't move bot. Please retry."
         console.error('Failed to assign bot to room:', err)
         setErrorWithAutoClear(message)
-      } else {
-        onAssignmentChangedRef.current?.()
-        setDrag(defaultDrag)
       }
-    } catch (err) {
-      const message = 'Network error — couldn\'t move bot. Please retry.'
-      console.error('Failed to assign bot to room:', err)
-      setErrorWithAutoClear(message)
-    }
-  }, [endDrag, setErrorWithAutoClear])
+    },
+    [endDrag, setErrorWithAutoClear]
+  )
 
   const dropOnParking = useCallback(async () => {
     // Read from ref to avoid stale closures
@@ -130,9 +142,12 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
 
     try {
       // DELETE the assignment to unassign from room (moves to parking)
-      const response = await fetch(`${API_BASE}/session-room-assignments/${encodeURIComponent(sessionKey)}`, {
-        method: 'DELETE',
-      })
+      const response = await fetch(
+        `${API_BASE}/session-room-assignments/${encodeURIComponent(sessionKey)}`,
+        {
+          method: 'DELETE',
+        }
+      )
 
       if (!response.ok && response.status !== 404) {
         const err = await response.json().catch(() => ({}))
@@ -144,7 +159,7 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
         setDrag(defaultDrag)
       }
     } catch (err) {
-      const message = 'Network error — couldn\'t unassign bot. Please retry.'
+      const message = "Network error — couldn't unassign bot. Please retry."
       console.error('Failed to unassign bot from room:', err)
       setErrorWithAutoClear(message)
     }
@@ -166,14 +181,17 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
   }, [drag.isDragging, endDrag])
 
   // Actions are now truly stable (no dependency on `drag` state)
-  const actions = useMemo<DragActions>(() => ({
-    startDrag,
-    endDrag,
-    dropOnRoom,
-    dropOnParking,
-    clearError,
-    setInteractingWithUI,
-  }), [startDrag, endDrag, dropOnRoom, dropOnParking, clearError, setInteractingWithUI])
+  const actions = useMemo<DragActions>(
+    () => ({
+      startDrag,
+      endDrag,
+      dropOnRoom,
+      dropOnParking,
+      clearError,
+      setInteractingWithUI,
+    }),
+    [startDrag, endDrag, dropOnRoom, dropOnParking, clearError, setInteractingWithUI]
+  )
 
   return (
     <DragStateContext.Provider value={drag}>

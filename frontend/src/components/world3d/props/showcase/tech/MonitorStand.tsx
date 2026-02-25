@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function MonitorStand() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12
+  })
   return (
     <group ref={groupRef}>
       {/* Base platform */}
@@ -38,12 +40,12 @@ export function MonitorStand() {
         <meshStandardMaterial color="#222233" />
       </mesh>
       {/* USB ports */}
-      {[0, 1, 2].map(i => (
+      {[0, 1, 2].map((i) => (
         <mesh key={i} position={[0.12 + i * 0.06, -0.42, 0.045]}>
           <boxGeometry args={[0.03, 0.015, 0.01]} />
           <meshStandardMaterial color="#4488ff" emissive="#4488ff" emissiveIntensity={1} />
         </mesh>
       ))}
     </group>
-  );
+  )
 }

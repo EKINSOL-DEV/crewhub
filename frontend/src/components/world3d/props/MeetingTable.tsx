@@ -107,11 +107,7 @@ export function MeetingTable({
       </mesh>
 
       {/* Hover glow ring (on table surface) */}
-      <mesh
-        ref={glowRef}
-        position={[0, 0.64, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      >
+      <mesh ref={glowRef} position={[0, 0.64, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.9, 1.25, 32]} />
         <meshStandardMaterial
           color="#60a5fa"
@@ -125,11 +121,7 @@ export function MeetingTable({
       </mesh>
 
       {/* Active meeting indicator ring */}
-      <mesh
-        ref={activeRingRef}
-        position={[0, 0.65, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      >
+      <mesh ref={activeRingRef} position={[0, 0.65, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[1.0, 1.3, 32]} />
         <meshStandardMaterial
           color="#4ade80"
@@ -207,11 +199,25 @@ export function MeetingTableProp(props: PropProps) {
 }
 
 /** Standalone meeting table for project rooms (not from blueprint). */
-export function ProjectMeetingTable({ roomId, projectId, projectName, ...props }: PropProps & { roomId: string; projectId: string; projectName?: string }) {
-  return <MeetingTableConnected {...props} roomId={roomId} projectId={projectId} projectName={projectName} />
+export function ProjectMeetingTable({
+  roomId,
+  projectId,
+  projectName,
+  ...props
+}: PropProps & { roomId: string; projectId: string; projectName?: string }) {
+  return (
+    <MeetingTableConnected
+      {...props}
+      roomId={roomId}
+      projectId={projectId}
+      projectName={projectName}
+    />
+  )
 }
 
-function MeetingTableConnected(props: PropProps & { roomId?: string; projectId?: string; projectName?: string }) {
+function MeetingTableConnected(
+  props: PropProps & { roomId?: string; projectId?: string; projectName?: string }
+) {
   const meetingCtx = useMeetingContextSafe()
   const groupRef = useRef<THREE.Group>(null)
 
@@ -222,8 +228,12 @@ function MeetingTableConnected(props: PropProps & { roomId?: string; projectId?:
     if (groupRef.current) {
       const worldPos = new THREE.Vector3()
       groupRef.current.getWorldPosition(worldPos)
-      console.log('[MeetingTable] World position on click:', worldPos.x.toFixed(2), worldPos.z.toFixed(2),
-        props.roomId ? `room=${props.roomId}` : 'HQ')
+      console.log(
+        '[MeetingTable] World position on click:',
+        worldPos.x.toFixed(2),
+        worldPos.z.toFixed(2),
+        props.roomId ? `room=${props.roomId}` : 'HQ'
+      )
       meetingCtx.setTablePosition(worldPos.x, worldPos.z)
     }
 
@@ -249,8 +259,12 @@ function MeetingTableConnected(props: PropProps & { roomId?: string; projectId?:
       if (groupRef.current) {
         const worldPos = new THREE.Vector3()
         groupRef.current.getWorldPosition(worldPos)
-        console.log('[MeetingTable] World position registered:', worldPos.x.toFixed(2), worldPos.z.toFixed(2),
-          props.roomId ? `room=${props.roomId}` : 'HQ')
+        console.log(
+          '[MeetingTable] World position registered:',
+          worldPos.x.toFixed(2),
+          worldPos.z.toFixed(2),
+          props.roomId ? `room=${props.roomId}` : 'HQ'
+        )
         meetingCtx.setTablePosition(worldPos.x, worldPos.z)
       }
     })
@@ -258,7 +272,11 @@ function MeetingTableConnected(props: PropProps & { roomId?: string; projectId?:
   }, [meetingCtx, props.position, props.roomId])
 
   return (
-    <group ref={groupRef} position={props.position} rotation={props.rotation ? [0, (props.rotation * Math.PI) / 180, 0] : undefined}>
+    <group
+      ref={groupRef}
+      position={props.position}
+      rotation={props.rotation ? [0, (props.rotation * Math.PI) / 180, 0] : undefined}
+    >
       <MeetingTable
         {...props}
         position={[0, 0, 0]}

@@ -1,16 +1,18 @@
-import type { MinionSession } from "@/lib/api"
-import { getSessionStatus, getSessionCost, formatCost } from "@/lib/minionUtils"
+import type { MinionSession } from '@/lib/api'
+import { getSessionStatus, getSessionCost, formatCost } from '@/lib/minionUtils'
 
 interface StatsHeaderProps {
   sessions: MinionSession[]
 }
 
 export function StatsHeader({ sessions }: StatsHeaderProps) {
-  const activeCount = sessions.filter(s => getSessionStatus(s, sessions) === "active").length
-  const supervisingCount = sessions.filter(s => getSessionStatus(s, sessions) === "supervising").length
-  const idleCount = sessions.filter(s => getSessionStatus(s, sessions) === "idle").length
-  const sleepingCount = sessions.filter(s => getSessionStatus(s, sessions) === "sleeping").length
-  
+  const activeCount = sessions.filter((s) => getSessionStatus(s, sessions) === 'active').length
+  const supervisingCount = sessions.filter(
+    (s) => getSessionStatus(s, sessions) === 'supervising'
+  ).length
+  const idleCount = sessions.filter((s) => getSessionStatus(s, sessions) === 'idle').length
+  const sleepingCount = sessions.filter((s) => getSessionStatus(s, sessions) === 'sleeping').length
+
   const totalTokens = sessions.reduce((sum, s) => sum + (s.totalTokens || 0), 0)
   const totalCost = sessions.reduce((sum, s) => sum + getSessionCost(s), 0)
 
@@ -20,7 +22,7 @@ export function StatsHeader({ sessions }: StatsHeaderProps) {
         <span className="text-lg">👥</span>
         <span className="text-sm font-medium">{sessions.length} Agents</span>
       </div>
-      
+
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1">
           <span className="text-green-500">●</span>
@@ -41,7 +43,7 @@ export function StatsHeader({ sessions }: StatsHeaderProps) {
           <span>{sleepingCount} sleeping</span>
         </div>
       </div>
-      
+
       <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">
         <span>{totalTokens.toLocaleString()} tokens</span>
         {totalCost > 0 && <span>{formatCost(totalCost)}</span>}

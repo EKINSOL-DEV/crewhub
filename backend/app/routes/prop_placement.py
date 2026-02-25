@@ -32,6 +32,7 @@ router = APIRouter(prefix="/api/world/props", tags=["creator-mode"])
 
 # ── Pydantic models ───────────────────────────────────────────────
 
+
 class Vec3(BaseModel):
     x: float = 0.0
     y: float = 0.0
@@ -107,6 +108,7 @@ def _to_broadcast_data(placed: PlacedPropResponse, action: str) -> dict:
 
 # ── Routes ─────────────────────────────────────────────────────────
 
+
 @router.get("", response_model=dict)
 async def list_placed_props(
     room_id: Optional[str] = None,
@@ -164,15 +166,15 @@ async def place_prop(
         )
         await db.commit()
 
-        async with db.execute(
-            "SELECT * FROM placed_props WHERE id = ?", (placed_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM placed_props WHERE id = ?", (placed_id,)) as cursor:
             row = await cursor.fetchone()
 
     placed = _row_to_response(dict(row))
 
     await broadcast("prop_update", _to_broadcast_data(placed, "place"))
-    logger.info(f"[Creator] Placed prop {body.prop_id} at ({body.position.x},{body.position.y},{body.position.z}) room={body.room_id}")
+    logger.info(
+        f"[Creator] Placed prop {body.prop_id} at ({body.position.x},{body.position.y},{body.position.z}) room={body.room_id}"
+    )
 
     return placed
 
@@ -185,9 +187,7 @@ async def update_placed_prop(
 ):
     """Move, rotate, or rescale an existing placed prop. Requires manage scope."""
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM placed_props WHERE id = ?", (placed_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM placed_props WHERE id = ?", (placed_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -227,9 +227,7 @@ async def update_placed_prop(
         )
         await db.commit()
 
-        async with db.execute(
-            "SELECT * FROM placed_props WHERE id = ?", (placed_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM placed_props WHERE id = ?", (placed_id,)) as cursor:
             updated_row = await cursor.fetchone()
 
     placed = _row_to_response(dict(updated_row))
@@ -246,9 +244,7 @@ async def delete_placed_prop(
 ):
     """Remove a placed prop from the world. Requires manage scope."""
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM placed_props WHERE id = ?", (placed_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM placed_props WHERE id = ?", (placed_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -260,8 +256,11 @@ async def delete_placed_prop(
         await db.execute("DELETE FROM placed_props WHERE id = ?", (placed_id,))
         await db.commit()
 
-    await broadcast("prop_update", {
-        **_to_broadcast_data(placed, "remove"),
-        "action": "remove",
-    })
+    await broadcast(
+        "prop_update",
+        {
+            **_to_broadcast_data(placed, "remove"),
+            "action": "remove",
+        },
+    )
     logger.info(f"[Creator] Deleted placed prop {placed_id}")

@@ -7,7 +7,12 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'
-import { showcaseCategories, showcaseProps, type ShowcaseProp, type ShowcaseCategory } from './showcaseProps'
+import {
+  showcaseCategories,
+  showcaseProps,
+  type ShowcaseProp,
+  type ShowcaseCategory,
+} from './showcaseProps'
 
 // ── Prop source code (loaded on demand) ───────────────────────
 
@@ -22,8 +27,11 @@ async function loadPropSource(id: string): Promise<string> {
       propSourceCache[id] = data.source
       return data.source
     }
-  } catch { /* fallback */ }
-  propSourceCache[id] = '// Source code not available in this build.\n// Check rnd/prop-creator-showcase/src/props/'
+  } catch {
+    /* fallback */
+  }
+  propSourceCache[id] =
+    '// Source code not available in this build.\n// Check rnd/prop-creator-showcase/src/props/'
   return propSourceCache[id]
 }
 
@@ -56,11 +64,16 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
     document.body.style.overflow = 'hidden'
     const canvases = document.querySelectorAll('canvas')
     const prevPE: string[] = []
-    canvases.forEach((c, i) => { prevPE[i] = c.style.pointerEvents; c.style.pointerEvents = 'none' })
+    canvases.forEach((c, i) => {
+      prevPE[i] = c.style.pointerEvents
+      c.style.pointerEvents = 'none'
+    })
     window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: true } }))
     return () => {
       document.body.style.overflow = prev
-      canvases.forEach((c, i) => { c.style.pointerEvents = prevPE[i] })
+      canvases.forEach((c, i) => {
+        c.style.pointerEvents = prevPE[i]
+      })
       window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: false } }))
     }
   }, [])
@@ -78,25 +91,44 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
   }, [codeContent])
 
   const overlay = (
-    <div className="psc-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div
+      className="psc-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <div className="psc-topbar">
         <div className="psc-topbar-left">
-          <button className="psc-back-btn" onClick={() => {
-            if (showCode) setShowCode(false)
-            else if (selectedProp) setSelectedProp(null)
-            else onClose()
-          }}>
-            ← {showCode ? 'Back to Detail' : selectedProp ? 'Back to Showcase' : 'Back to Creator Center'}
+          <button
+            className="psc-back-btn"
+            onClick={() => {
+              if (showCode) setShowCode(false)
+              else if (selectedProp) setSelectedProp(null)
+              else onClose()
+            }}
+          >
+            ←{' '}
+            {showCode
+              ? 'Back to Detail'
+              : selectedProp
+                ? 'Back to Showcase'
+                : 'Back to Creator Center'}
           </button>
         </div>
         <div className="psc-topbar-center">
           <span className="psc-topbar-icon">🎨</span>
           <span className="psc-topbar-title">
-            {showCode ? `${selectedProp?.name} — Source` : selectedProp ? selectedProp.name : 'PropCreator Design Showcase'}
+            {showCode
+              ? `${selectedProp?.name} — Source`
+              : selectedProp
+                ? selectedProp.name
+                : 'PropCreator Design Showcase'}
           </span>
           <span className="psc-topbar-count">{showcaseProps.length} props</span>
         </div>
-        <button className="psc-close" onClick={onClose} title="Close (Esc)">✕</button>
+        <button className="psc-close" onClick={onClose} title="Close (Esc)">
+          ✕
+        </button>
       </div>
 
       <div className="psc-content">
@@ -114,10 +146,7 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
             onViewCode={() => handleViewCode(selectedProp)}
           />
         ) : (
-          <CategoryGridView
-            categories={showcaseCategories}
-            onSelect={setSelectedProp}
-          />
+          <CategoryGridView categories={showcaseCategories} onSelect={setSelectedProp} />
         )}
       </div>
 
@@ -132,25 +161,30 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
 
 const PROPS_PER_PAGE = 6
 
-function CategoryGridView({ categories, onSelect }: {
+function CategoryGridView({
+  categories,
+  onSelect,
+}: {
   categories: ShowcaseCategory[]
   onSelect: (p: ShowcaseProp) => void
 }) {
   const [activeTab, setActiveTab] = useState(categories[0].id)
   const [currentPage, setCurrentPage] = useState(0)
 
-  const activeCategory = categories.find(c => c.id === activeTab)!
+  const activeCategory = categories.find((c) => c.id === activeTab)!
   const totalPages = Math.ceil(activeCategory.props.length / PROPS_PER_PAGE)
   const startIdx = currentPage * PROPS_PER_PAGE
   const visibleProps = activeCategory.props.slice(startIdx, startIdx + PROPS_PER_PAGE)
 
-  useEffect(() => { setCurrentPage(0) }, [activeTab])
+  useEffect(() => {
+    setCurrentPage(0)
+  }, [activeTab])
 
   return (
     <div className="psc-category-view">
       {/* Category Tabs */}
       <div className="psc-tabs">
-        {categories.map(cat => (
+        {categories.map((cat) => (
           <button
             key={cat.id}
             className={`psc-tab ${activeTab === cat.id ? 'psc-tab-active' : ''}`}
@@ -176,17 +210,18 @@ function CategoryGridView({ categories, onSelect }: {
       <div className="psc-pagination">
         <button
           className="psc-btn psc-btn-secondary"
-          onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+          onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
           disabled={currentPage === 0}
         >
           ← Previous
         </button>
         <span className="psc-pagination-info">
-          Page {currentPage + 1} of {totalPages} • {activeCategory.props.length} props in {activeCategory.name}
+          Page {currentPage + 1} of {totalPages} • {activeCategory.props.length} props in{' '}
+          {activeCategory.name}
         </span>
         <button
           className="psc-btn psc-btn-secondary"
-          onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+          onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
           disabled={currentPage >= totalPages - 1}
         >
           Next →
@@ -217,7 +252,12 @@ function ShowcaseCard({ prop, onClick }: { prop: ShowcaseProp; onClick: () => vo
           <Suspense fallback={null}>
             <Comp />
           </Suspense>
-          <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={hovered ? 4 : 1.5} />
+          <OrbitControls
+            enableZoom={false}
+            enablePan={false}
+            autoRotate
+            autoRotateSpeed={hovered ? 4 : 1.5}
+          />
         </Canvas>
       </div>
       <div className="psc-card-label" style={{ color: hovered ? prop.color : '#aaaacc' }}>
@@ -229,7 +269,11 @@ function ShowcaseCard({ prop, onClick }: { prop: ShowcaseProp; onClick: () => vo
 
 // ── Detail View ───────────────────────────────────────────────
 
-function DetailView({ prop, onBack: _onBack, onViewCode }: {
+function DetailView({
+  prop,
+  onBack: _onBack,
+  onViewCode,
+}: {
   prop: ShowcaseProp
   onBack: () => void
   onViewCode: () => void
@@ -245,7 +289,15 @@ function DetailView({ prop, onBack: _onBack, onViewCode }: {
               <Comp />
             </Stage>
           </Suspense>
-          <OrbitControls makeDefault enablePan enableZoom autoRotate autoRotateSpeed={1} minDistance={1} maxDistance={10} />
+          <OrbitControls
+            makeDefault
+            enablePan
+            enableZoom
+            autoRotate
+            autoRotateSpeed={1}
+            minDistance={1}
+            maxDistance={10}
+          />
           <ambientLight intensity={0.4} />
           <directionalLight position={[5, 5, 5]} intensity={0.8} />
         </Canvas>
@@ -265,7 +317,12 @@ function DetailView({ prop, onBack: _onBack, onViewCode }: {
 
 // ── Code View ─────────────────────────────────────────────────
 
-function CodeViewContent({ code, loading, propName, onCopy }: {
+function CodeViewContent({
+  code,
+  loading,
+  propName,
+  onCopy,
+}: {
   code: string
   loading: boolean
   propName: string

@@ -1,6 +1,6 @@
 # CrewHub Features Matrix
 
-*Last updated: 2026-02-19*  
+*Last updated: 2026-02-19*
 *Current version: v0.17.0*
 
 Quick-reference table showing all CrewHub features, their status, and implementation versions.

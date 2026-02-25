@@ -44,7 +44,12 @@ export interface UseVoiceRecorderReturn {
 }
 
 export function useVoiceRecorder(
-  onAudioReady: (url: string, duration: number, transcript: string | null, transcriptError: string | null) => void,
+  onAudioReady: (
+    url: string,
+    duration: number,
+    transcript: string | null,
+    transcriptError: string | null
+  ) => void
 ): UseVoiceRecorderReturn {
   const [isRecording, setIsRecording] = useState(false)
   const [isPreparing, setIsPreparing] = useState(false)
@@ -64,11 +69,12 @@ export function useVoiceRecorder(
   const sendImmediatelyRef = useRef(false)
   // Keep onAudioReady in a ref so uploadAudio can call the latest version
   const onAudioReadyRef = useRef(onAudioReady)
-  useEffect(() => { onAudioReadyRef.current = onAudioReady }, [onAudioReady])
+  useEffect(() => {
+    onAudioReadyRef.current = onAudioReady
+  }, [onAudioReady])
 
   const isSupported =
-    typeof navigator !== 'undefined' &&
-    typeof navigator.mediaDevices?.getUserMedia === 'function'
+    typeof navigator !== 'undefined' && typeof navigator.mediaDevices?.getUserMedia === 'function'
 
   // ── Cleanup helper ──────────────────────────────────────────────
   const cleanup = useCallback(() => {
@@ -81,7 +87,7 @@ export function useVoiceRecorder(
       maxTimerRef.current = null
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop())
+      streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
     chunksRef.current = []
@@ -89,57 +95,59 @@ export function useVoiceRecorder(
   }, [])
 
   // ── Upload audio blob — sets pendingAudio instead of sending ───
-  const uploadAudio = useCallback(
-    async (blob: Blob, dur: number) => {
-      try {
-        const ext = blob.type.includes('mp4') ? 'm4a' : 'webm'
-        const file = new File([blob], `voice-${Date.now()}.${ext}`, {
-          type: blob.type,
-        })
-        const formData = new FormData()
-        formData.append('file', file)
+  const uploadAudio = useCallback(async (blob: Blob, dur: number) => {
+    try {
+      const ext = blob.type.includes('mp4') ? 'm4a' : 'webm'
+      const file = new File([blob], `voice-${Date.now()}.${ext}`, {
+        type: blob.type,
+      })
+      const formData = new FormData()
+      formData.append('file', file)
 
-        const resp = await fetch(`${API_BASE}/media/audio`, {
-          method: 'POST',
-          body: formData,
-        })
+      const resp = await fetch(`${API_BASE}/media/audio`, {
+        method: 'POST',
+        body: formData,
+      })
 
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({ detail: 'Upload failed' }))
-          throw new Error(err.detail || `Upload failed (${resp.status})`)
-        }
-
-        const data = await resp.json()
-        const transcript: string | null = data.transcript ?? null
-        const transcriptError: string | null = data.transcriptError ?? null
-        const roundedDur = Math.round(dur * 10) / 10
-
-        if (sendImmediatelyRef.current) {
-          // WhatsApp-style: send immediately, skip preview
-          sendImmediatelyRef.current = false
-          onAudioReadyRef.current(data.url, roundedDur, transcript, transcriptError)
-          setPendingAudio(null)
-        } else {
-          // Stage as pending for manual confirm
-          setPendingAudio({
-            url: data.url,
-            duration: roundedDur,
-            transcript,
-            transcriptError,
-          })
-        }
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Upload failed'
-        setError(msg)
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: 'Upload failed' }))
+        throw new Error(err.detail || `Upload failed (${resp.status})`)
       }
-    },
-    [],
-  )
+
+      const data = await resp.json()
+      const transcript: string | null = data.transcript ?? null
+      const transcriptError: string | null = data.transcriptError ?? null
+      const roundedDur = Math.round(dur * 10) / 10
+
+      if (sendImmediatelyRef.current) {
+        // WhatsApp-style: send immediately, skip preview
+        sendImmediatelyRef.current = false
+        onAudioReadyRef.current(data.url, roundedDur, transcript, transcriptError)
+        setPendingAudio(null)
+      } else {
+        // Stage as pending for manual confirm
+        setPendingAudio({
+          url: data.url,
+          duration: roundedDur,
+          transcript,
+          transcriptError,
+        })
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Upload failed'
+      setError(msg)
+    }
+  }, [])
 
   // ── Confirm: send pending audio and clear it ────────────────────
   const confirmAudio = useCallback(() => {
     if (!pendingAudio) return
-    onAudioReady(pendingAudio.url, pendingAudio.duration, pendingAudio.transcript, pendingAudio.transcriptError)
+    onAudioReady(
+      pendingAudio.url,
+      pendingAudio.duration,
+      pendingAudio.transcript,
+      pendingAudio.transcriptError
+    )
     setPendingAudio(null)
   }, [pendingAudio, onAudioReady])
 
@@ -209,9 +217,7 @@ export function useVoiceRecorder(
 
       mimeTypeRef.current = mimeType || 'audio/webm'
 
-      const mr = mimeType
-        ? new MediaRecorder(stream, { mimeType })
-        : new MediaRecorder(stream)
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
 
       mediaRecorderRef.current = mr
       chunksRef.current = []

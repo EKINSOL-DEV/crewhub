@@ -122,7 +122,7 @@ There are **two** separate mechanisms in the backend:
 
 ### 2) What happens if that connection drops? Does it auto-reconnect?
 
-- For **`GatewayClient`**: 
+- For **`GatewayClient`**:
   - When the socket drops, `_listen_loop()` ends and sets `_connected = False`.
   - There is **no background reconnect loop**.
   - Reconnect only happens when the next `call()` happens (e.g., the poll loop 5s later).

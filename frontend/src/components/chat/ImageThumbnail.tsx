@@ -82,11 +82,7 @@ export function ImageThumbnail({ attachment, maxWidth = 200 }: ImageThumbnailPro
       </div>
 
       {lightboxOpen && (
-        <ImageLightbox
-          src={mediaUrl}
-          alt="Attached image"
-          onClose={() => setLightboxOpen(false)}
-        />
+        <ImageLightbox src={mediaUrl} alt="Attached image" onClose={() => setLightboxOpen(false)} />
       )}
     </>
   )

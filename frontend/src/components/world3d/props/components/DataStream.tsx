@@ -31,14 +31,17 @@ export function DataStream({
 }: DataStreamProps) {
   const meshRefs = useRef<(THREE.Mesh | null)[]>([])
 
-  const bits = useMemo(() =>
-    Array.from({ length: count }, (_, i) => ({
-      angle: (i / count) * Math.PI * 2,
-      yOffset: (i / count) * height,
-      speedMul: 0.8 + Math.random() * 0.4,
-      sizeMul: 0.7 + Math.random() * 0.6,
-      isBox: Math.random() > 0.5,
-    })), [count, height])
+  const bits = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        angle: (i / count) * Math.PI * 2,
+        yOffset: (i / count) * height,
+        speedMul: 0.8 + Math.random() * 0.4,
+        sizeMul: 0.7 + Math.random() * 0.6,
+        isBox: Math.random() > 0.5,
+      })),
+    [count, height]
+  )
 
   useFrame((state) => {
     const t = state.clock.elapsedTime * speed
@@ -63,10 +66,14 @@ export function DataStream({
       {bits.map((b, i) => (
         <mesh
           key={i}
-          ref={(el) => { meshRefs.current[i] = el }}
+          ref={(el) => {
+            meshRefs.current[i] = el
+          }}
         >
           {b.isBox ? (
-            <boxGeometry args={[particleSize * b.sizeMul, particleSize * b.sizeMul, particleSize * b.sizeMul]} />
+            <boxGeometry
+              args={[particleSize * b.sizeMul, particleSize * b.sizeMul, particleSize * b.sizeMul]}
+            />
           ) : (
             <octahedronGeometry args={[particleSize * b.sizeMul * 0.7, 0]} />
           )}

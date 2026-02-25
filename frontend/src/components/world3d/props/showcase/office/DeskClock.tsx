@@ -1,14 +1,14 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function DeskClock() {
-  const handRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
+  const handRef = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.1;
-    if (handRef.current) handRef.current.rotation.z = -s.clock.elapsedTime * 0.5;
-  });
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.1
+    if (handRef.current) handRef.current.rotation.z = -s.clock.elapsedTime * 0.5
+  })
   return (
     <group ref={groupRef}>
       {/* Clock face */}
@@ -23,13 +23,13 @@ export function DeskClock() {
       </mesh>
       {/* Hour markers */}
       {Array.from({ length: 12 }, (_, i) => {
-        const a = (i / 12) * Math.PI * 2;
+        const a = (i / 12) * Math.PI * 2
         return (
           <mesh key={i} position={[Math.sin(a) * 0.32, -0.1 + Math.cos(a) * 0.32, 0.05]}>
             <boxGeometry args={[0.02, 0.06, 0.01]} />
             <meshStandardMaterial color="#333333" />
           </mesh>
-        );
+        )
       })}
       {/* Hour hand */}
       <mesh position={[0, 0, 0.05]} rotation={[0, 0, -0.8]}>
@@ -52,5 +52,5 @@ export function DeskClock() {
         <meshStandardMaterial color="#cc8833" flatShading />
       </mesh>
     </group>
-  );
+  )
 }

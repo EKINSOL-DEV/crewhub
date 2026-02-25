@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/hooks/use-toast"
-import { API_BASE } from "@/lib/api"
-import { Loader2, Edit2, Check, X, Sparkles, Trash2, Plus, AlertTriangle } from "lucide-react"
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/hooks/use-toast'
+import { API_BASE } from '@/lib/api'
+import { Loader2, Edit2, Check, X, Sparkles, Trash2, Plus, AlertTriangle } from 'lucide-react'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -38,7 +38,7 @@ interface Room {
 
 async function fetchAgents(): Promise<Agent[]> {
   const res = await fetch(`${API_BASE}/agents`)
-  if (!res.ok) throw new Error("Failed to fetch agents")
+  if (!res.ok) throw new Error('Failed to fetch agents')
   const data = await res.json()
   return data.agents
 }
@@ -52,16 +52,16 @@ async function fetchRooms(): Promise<Room[]> {
 
 async function updateAgent(agentId: string, updates: Partial<Agent>): Promise<void> {
   const res = await fetch(`${API_BASE}/agents/${agentId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
   })
-  if (!res.ok) throw new Error("Failed to update agent")
+  if (!res.ok) throw new Error('Failed to update agent')
 }
 
 async function deleteAgent(agentId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/agents/${agentId}`, { method: "DELETE" })
-  if (!res.ok) throw new Error("Failed to delete agent")
+  const res = await fetch(`${API_BASE}/agents/${agentId}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Failed to delete agent')
 }
 
 async function createAgent(payload: {
@@ -73,19 +73,19 @@ async function createAgent(payload: {
   bio?: string
 }): Promise<void> {
   const res = await fetch(`${API_BASE}/agents`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail ?? "Failed to create agent")
+    throw new Error(err.detail ?? 'Failed to create agent')
   }
 }
 
 async function generateAgentBio(agentId: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/agents/${agentId}/generate-bio`, { method: "POST" })
-  if (!res.ok) throw new Error("Failed to generate bio")
+  const res = await fetch(`${API_BASE}/agents/${agentId}/generate-bio`, { method: 'POST' })
+  if (!res.ok) throw new Error('Failed to generate bio')
   const data = await res.json()
   return data.bio
 }
@@ -117,12 +117,12 @@ function AddAgentModal({
   onClose: () => void
   onCreated: () => void
 }) {
-  const [name, setName] = useState("")
-  const [agentId, setAgentId] = useState("")
-  const [icon, setIcon] = useState("🤖")
-  const [color, setColor] = useState("#6b7280")
-  const [roomId, setRoomId] = useState("headquarters")
-  const [bio, setBio] = useState("")
+  const [name, setName] = useState('')
+  const [agentId, setAgentId] = useState('')
+  const [icon, setIcon] = useState('🤖')
+  const [color, setColor] = useState('#6b7280')
+  const [roomId, setRoomId] = useState('headquarters')
+  const [bio, setBio] = useState('')
   const [saving, setSaving] = useState(false)
   const [idManual, setIdManual] = useState(false)
   const { toast } = useToast()
@@ -135,7 +135,12 @@ function AddAgentModal({
   // Auto-slug from name
   useEffect(() => {
     if (!idManual && name) {
-      setAgentId(name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))
+      setAgentId(
+        name
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+      )
     }
   }, [name, idManual])
 
@@ -144,13 +149,24 @@ function AddAgentModal({
     if (!name.trim() || !agentId.trim()) return
     setSaving(true)
     try {
-      await createAgent({ id: agentId, name, icon, color, default_room_id: roomId, bio: bio || undefined })
-      toast({ title: "Agent created", description: `${icon} ${name} added to CrewHub` })
+      await createAgent({
+        id: agentId,
+        name,
+        icon,
+        color,
+        default_room_id: roomId,
+        bio: bio || undefined,
+      })
+      toast({ title: 'Agent created', description: `${icon} ${name} added to CrewHub` })
       onCreated()
       dialogRef.current?.close()
       onClose()
     } catch (err: unknown) {
-      toast({ title: "Failed to create agent", description: String(err instanceof Error ? err.message : err), variant: "destructive" })
+      toast({
+        title: 'Failed to create agent',
+        description: String(err instanceof Error ? err.message : err),
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
@@ -161,24 +177,38 @@ function AddAgentModal({
       ref={dialogRef}
       onClose={onClose}
       style={{
-        border: "1px solid var(--zen-border, hsl(var(--border)))",
-        borderRadius: "12px",
-        background: "hsl(var(--background))",
-        color: "hsl(var(--foreground))",
-        padding: "0",
-        maxWidth: "440px",
-        width: "calc(100vw - 32px)",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+        border: '1px solid var(--zen-border, hsl(var(--border)))',
+        borderRadius: '12px',
+        background: 'hsl(var(--background))',
+        color: 'hsl(var(--foreground))',
+        padding: '0',
+        maxWidth: '440px',
+        width: 'calc(100vw - 32px)',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
       }}
     >
       <form onSubmit={handleSubmit}>
-        <div style={{ padding: "24px" }}>
-          <h2 style={{ margin: "0 0 20px 0", fontSize: "1.1em", fontWeight: 600 }}>➕ Add New Agent</h2>
+        <div style={{ padding: '24px' }}>
+          <h2 style={{ margin: '0 0 20px 0', fontSize: '1.1em', fontWeight: 600 }}>
+            ➕ Add New Agent
+          </h2>
 
           {/* Icon + Color row */}
-          <div style={{ display: "flex", gap: "12px", marginBottom: "16px", alignItems: "flex-end" }}>
+          <div
+            style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'flex-end' }}
+          >
             <div>
-              <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Icon</label>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.75em',
+                  fontWeight: 500,
+                  marginBottom: '6px',
+                  opacity: 0.7,
+                }}
+              >
+                Icon
+              </label>
               <Input
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
@@ -188,13 +218,30 @@ function AddAgentModal({
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Color</label>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.75em',
+                  fontWeight: 500,
+                  marginBottom: '6px',
+                  opacity: 0.7,
+                }}
+              >
+                Color
+              </label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input
                   type="color"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  style={{ width: "36px", height: "36px", borderRadius: "6px", border: "1px solid hsl(var(--border))", cursor: "pointer", background: "transparent" }}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '6px',
+                    border: '1px solid hsl(var(--border))',
+                    cursor: 'pointer',
+                    background: 'transparent',
+                  }}
                 />
                 <Input
                   value={color}
@@ -208,8 +255,18 @@ function AddAgentModal({
           </div>
 
           {/* Name */}
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Name *</label>
+          <div style={{ marginBottom: '12px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.75em',
+                fontWeight: 500,
+                marginBottom: '6px',
+                opacity: 0.7,
+              }}
+            >
+              Name *
+            </label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -219,11 +276,24 @@ function AddAgentModal({
           </div>
 
           {/* Agent ID / slug */}
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Agent ID (slug) *</label>
+          <div style={{ marginBottom: '12px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.75em',
+                fontWeight: 500,
+                marginBottom: '6px',
+                opacity: 0.7,
+              }}
+            >
+              Agent ID (slug) *
+            </label>
             <Input
               value={agentId}
-              onChange={(e) => { setAgentId(e.target.value); setIdManual(true) }}
+              onChange={(e) => {
+                setAgentId(e.target.value)
+                setIdManual(true)
+              }}
               placeholder="my-agent"
               className="font-mono text-sm"
               required
@@ -231,59 +301,93 @@ function AddAgentModal({
           </div>
 
           {/* Room */}
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Default Room</label>
+          <div style={{ marginBottom: '12px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.75em',
+                fontWeight: 500,
+                marginBottom: '6px',
+                opacity: 0.7,
+              }}
+            >
+              Default Room
+            </label>
             <select
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
               style={{
-                width: "100%",
-                height: "36px",
-                borderRadius: "6px",
-                border: "1px solid hsl(var(--border))",
-                background: "hsl(var(--background))",
-                color: "hsl(var(--foreground))",
-                padding: "0 8px",
-                fontSize: "0.875rem",
+                width: '100%',
+                height: '36px',
+                borderRadius: '6px',
+                border: '1px solid hsl(var(--border))',
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))',
+                padding: '0 8px',
+                fontSize: '0.875rem',
               }}
             >
               <option value="headquarters">🏠 Headquarters</option>
               {rooms.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.icon ? `${r.icon} ` : ""}{r.name}
+                  {r.icon ? `${r.icon} ` : ''}
+                  {r.name}
                 </option>
               ))}
             </select>
           </div>
 
           {/* Bio */}
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", fontSize: "0.75em", fontWeight: 500, marginBottom: "6px", opacity: 0.7 }}>Bio (optional)</label>
+          <div style={{ marginBottom: '20px' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.75em',
+                fontWeight: 500,
+                marginBottom: '6px',
+                opacity: 0.7,
+              }}
+            >
+              Bio (optional)
+            </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               style={{
-                width: "100%",
-                height: "64px",
-                borderRadius: "6px",
-                border: "1px solid hsl(var(--border))",
-                background: "hsl(var(--background))",
-                color: "hsl(var(--foreground))",
-                padding: "8px 12px",
-                fontSize: "0.875rem",
-                resize: "none",
-                fontFamily: "inherit",
+                width: '100%',
+                height: '64px',
+                borderRadius: '6px',
+                border: '1px solid hsl(var(--border))',
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))',
+                padding: '8px 12px',
+                fontSize: '0.875rem',
+                resize: 'none',
+                fontFamily: 'inherit',
               }}
               placeholder="Short description of this agent…"
             />
           </div>
 
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-            <Button type="button" variant="ghost" size="sm" onClick={() => { dialogRef.current?.close(); onClose() }} disabled={saving}>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                dialogRef.current?.close()
+                onClose()
+              }}
+              disabled={saving}
+            >
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={saving || !name.trim() || !agentId.trim()}>
-              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4 mr-1" />
+              )}
               Create Agent
             </Button>
           </div>
@@ -307,23 +411,23 @@ function AgentCard({
   onDelete: (agent: Agent) => void
 }) {
   const [editing, setEditing] = useState(false)
-  const [color, setColor] = useState(agent.color || "#6b7280")
-  const [bio, setBio] = useState(agent.bio || "")
-  const [roomId, setRoomId] = useState(agent.default_room_id || "headquarters")
+  const [color, setColor] = useState(agent.color || '#6b7280')
+  const [bio, setBio] = useState(agent.bio || '')
+  const [roomId, setRoomId] = useState(agent.default_room_id || 'headquarters')
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   // Inline icon editing
   const [editingIcon, setEditingIcon] = useState(false)
-  const [iconValue, setIconValue] = useState(agent.icon || "🤖")
+  const [iconValue, setIconValue] = useState(agent.icon || '🤖')
   const [savingIcon, setSavingIcon] = useState(false)
   const { toast } = useToast()
 
   // Reset local state when agent prop changes
   useEffect(() => {
-    setColor(agent.color || "#6b7280")
-    setBio(agent.bio || "")
-    setRoomId(agent.default_room_id || "headquarters")
-    setIconValue(agent.icon || "🤖")
+    setColor(agent.color || '#6b7280')
+    setBio(agent.bio || '')
+    setRoomId(agent.default_room_id || 'headquarters')
+    setIconValue(agent.icon || '🤖')
   }, [agent.color, agent.bio, agent.default_room_id, agent.icon])
 
   const handleSave = async () => {
@@ -331,9 +435,12 @@ function AgentCard({
     try {
       await onSave(agent.id, { color, bio: bio || null, default_room_id: roomId })
       setEditing(false)
-      toast({ title: "Agent Updated", description: `${agent.icon} ${agent.display_name || agent.name} saved` })
+      toast({
+        title: 'Agent Updated',
+        description: `${agent.icon} ${agent.display_name || agent.name} saved`,
+      })
     } catch {
-      toast({ title: "Failed to save", variant: "destructive" })
+      toast({ title: 'Failed to save', variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -345,16 +452,16 @@ function AgentCard({
       const generatedBio = await generateAgentBio(agent.id)
       setBio(generatedBio)
     } catch {
-      toast({ title: "Failed to generate bio", variant: "destructive" })
+      toast({ title: 'Failed to generate bio', variant: 'destructive' })
     } finally {
       setGenerating(false)
     }
   }
 
   const handleCancel = () => {
-    setColor(agent.color || "#6b7280")
-    setBio(agent.bio || "")
-    setRoomId(agent.default_room_id || "headquarters")
+    setColor(agent.color || '#6b7280')
+    setBio(agent.bio || '')
+    setRoomId(agent.default_room_id || 'headquarters')
     setEditing(false)
   }
 
@@ -364,44 +471,50 @@ function AgentCard({
     try {
       await onSave(agent.id, { icon: iconValue.trim() })
       setEditingIcon(false)
-      toast({ title: "Icon updated" })
+      toast({ title: 'Icon updated' })
     } catch {
-      toast({ title: "Failed to save icon", variant: "destructive" })
+      toast({ title: 'Failed to save icon', variant: 'destructive' })
     } finally {
       setSavingIcon(false)
     }
   }
 
   const lastSeen = agent.updated_at
-    ? new Date(agent.updated_at).toLocaleDateString("en-GB", {
-        day: "numeric", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
+    ? new Date(agent.updated_at).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
       })
-    : "Unknown"
+    : 'Unknown'
 
-  const roomName = rooms.find((r) => r.id === agent.default_room_id)?.name ?? agent.default_room_id ?? "—"
+  const roomName =
+    rooms.find((r) => r.id === agent.default_room_id)?.name ?? agent.default_room_id ?? '—'
 
   return (
     <div
       className="rounded-xl border bg-card/80 p-5 shadow-sm hover:shadow-md transition-shadow min-h-[200px]"
-      style={agent.is_stale ? { opacity: 0.65, borderColor: "hsl(var(--muted-foreground) / 0.3)" } : {}}
+      style={
+        agent.is_stale ? { opacity: 0.65, borderColor: 'hsl(var(--muted-foreground) / 0.3)' } : {}
+      }
     >
       <div className="flex items-start gap-4">
         {/* Color sphere with icon */}
         <div className="relative shrink-0">
-          <ColorSphere color={editing ? color : (agent.color || "#6b7280")} size={48} />
+          <ColorSphere color={editing ? color : agent.color || '#6b7280'} size={48} />
           {/* Icon overlay — clickable to edit inline */}
           {editingIcon ? (
             <div
               style={{
-                position: "absolute",
+                position: 'absolute',
                 inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "hsl(var(--background) / 0.9)",
-                borderRadius: "50%",
-                gap: "2px",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'hsl(var(--background) / 0.9)',
+                borderRadius: '50%',
+                gap: '2px',
               }}
             >
               <input
@@ -411,17 +524,20 @@ function AgentCard({
                 maxLength={4}
                 autoFocus
                 style={{
-                  width: "32px",
-                  textAlign: "center",
-                  fontSize: "1.2em",
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  color: "hsl(var(--foreground))",
+                  width: '32px',
+                  textAlign: 'center',
+                  fontSize: '1.2em',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: 'hsl(var(--foreground))',
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveIcon()
-                  if (e.key === "Escape") { setEditingIcon(false); setIconValue(agent.icon || "🤖") }
+                  if (e.key === 'Enter') handleSaveIcon()
+                  if (e.key === 'Escape') {
+                    setEditingIcon(false)
+                    setIconValue(agent.icon || '🤖')
+                  }
                 }}
               />
             </div>
@@ -438,7 +554,7 @@ function AgentCard({
                 onClick={() => setEditingIcon(true)}
                 className="text-lg hover:scale-110 transition-transform"
               >
-                {agent.icon || "🤖"}
+                {agent.icon || '🤖'}
               </button>
             ) : (
               <div className="flex items-center gap-1">
@@ -448,10 +564,17 @@ function AgentCard({
                   className="p-1 hover:bg-muted rounded text-green-500"
                   title="Save icon"
                 >
-                  {savingIcon ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                  {savingIcon ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
                 </button>
                 <button
-                  onClick={() => { setEditingIcon(false); setIconValue(agent.icon || "🤖") }}
+                  onClick={() => {
+                    setEditingIcon(false)
+                    setIconValue(agent.icon || '🤖')
+                  }}
                   className="p-1 hover:bg-muted rounded text-muted-foreground"
                   title="Cancel"
                 >
@@ -460,7 +583,11 @@ function AgentCard({
               </div>
             )}
             <h3 className="font-semibold text-sm truncate">{agent.display_name || agent.name}</h3>
-            {agent.is_pinned && <Badge variant="secondary" className="text-[10px]">Pinned</Badge>}
+            {agent.is_pinned && (
+              <Badge variant="secondary" className="text-[10px]">
+                Pinned
+              </Badge>
+            )}
             {agent.is_stale && (
               <Badge
                 variant="outline"
@@ -546,20 +673,21 @@ function AgentCard({
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
               style={{
-                width: "100%",
-                height: "36px",
-                borderRadius: "6px",
-                border: "1px solid hsl(var(--border))",
-                background: "hsl(var(--background))",
-                color: "hsl(var(--foreground))",
-                padding: "0 8px",
-                fontSize: "0.875rem",
+                width: '100%',
+                height: '36px',
+                borderRadius: '6px',
+                border: '1px solid hsl(var(--border))',
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))',
+                padding: '0 8px',
+                fontSize: '0.875rem',
               }}
             >
               <option value="headquarters">🏠 Headquarters</option>
               {rooms.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.icon ? `${r.icon} ` : ""}{r.name}
+                  {r.icon ? `${r.icon} ` : ''}
+                  {r.name}
                 </option>
               ))}
             </select>
@@ -576,7 +704,11 @@ function AgentCard({
                 disabled={generating}
                 className="h-7 text-xs gap-1"
               >
-                {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                {generating ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3" />
+                )}
                 Generate
               </Button>
             </div>
@@ -594,7 +726,11 @@ function AgentCard({
               <X className="h-4 w-4 mr-1" /> Cancel
             </Button>
             <Button size="sm" onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Check className="h-4 w-4 mr-1" />}
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4 mr-1" />
+              )}
               Save
             </Button>
           </div>
@@ -626,55 +762,77 @@ function DeleteConfirmDialog({
       ref={dialogRef}
       onClose={onCancel}
       style={{
-        border: "1px solid hsl(var(--border))",
-        borderRadius: "12px",
-        background: "hsl(var(--background))",
-        color: "hsl(var(--foreground))",
-        padding: "24px",
-        maxWidth: "360px",
-        width: "calc(100vw - 32px)",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+        border: '1px solid hsl(var(--border))',
+        borderRadius: '12px',
+        background: 'hsl(var(--background))',
+        color: 'hsl(var(--foreground))',
+        padding: '24px',
+        maxWidth: '360px',
+        width: 'calc(100vw - 32px)',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Trash2 style={{ color: "hsl(var(--destructive))", width: 20, height: 20, flexShrink: 0 }} />
-          <h3 style={{ margin: 0, fontSize: "1em", fontWeight: 600 }}>
-            Delete {agent.icon || "🤖"} {agent.display_name || agent.name}?
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Trash2
+            style={{ color: 'hsl(var(--destructive))', width: 20, height: 20, flexShrink: 0 }}
+          />
+          <h3 style={{ margin: 0, fontSize: '1em', fontWeight: 600 }}>
+            Delete {agent.icon || '🤖'} {agent.display_name || agent.name}?
           </h3>
         </div>
 
         {!agent.is_stale && (
           <div
             style={{
-              background: "hsl(var(--muted))",
-              border: "1px solid hsl(38 92% 50% / 0.4)",
-              borderRadius: "8px",
-              padding: "12px",
-              display: "flex",
-              gap: "8px",
-              alignItems: "flex-start",
+              background: 'hsl(var(--muted))',
+              border: '1px solid hsl(38 92% 50% / 0.4)',
+              borderRadius: '8px',
+              padding: '12px',
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'flex-start',
             }}
           >
-            <AlertTriangle style={{ color: "hsl(38 92% 50%)", width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
-            <p style={{ margin: 0, fontSize: "0.8em", lineHeight: 1.5, opacity: 0.85 }}>
-              This agent is still active in OpenClaw. Only removing from CrewHub — the agent will still run.
+            <AlertTriangle
+              style={{
+                color: 'hsl(38 92% 50%)',
+                width: 16,
+                height: 16,
+                flexShrink: 0,
+                marginTop: 1,
+              }}
+            />
+            <p style={{ margin: 0, fontSize: '0.8em', lineHeight: 1.5, opacity: 0.85 }}>
+              This agent is still active in OpenClaw. Only removing from CrewHub — the agent will
+              still run.
             </p>
           </div>
         )}
 
-        <p style={{ margin: 0, fontSize: "0.85em", opacity: 0.7 }}>
-          Agent <code style={{ fontFamily: "monospace" }}>{agent.id}</code> will be permanently removed from CrewHub. This cannot be undone.
+        <p style={{ margin: 0, fontSize: '0.85em', opacity: 0.7 }}>
+          Agent <code style={{ fontFamily: 'monospace' }}>{agent.id}</code> will be permanently
+          removed from CrewHub. This cannot be undone.
         </p>
 
-        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-          <Button variant="ghost" size="sm" onClick={() => { dialogRef.current?.close(); onCancel() }}>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              dialogRef.current?.close()
+              onCancel()
+            }}
+          >
             Cancel
           </Button>
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => { dialogRef.current?.close(); onConfirm() }}
+            onClick={() => {
+              dialogRef.current?.close()
+              onConfirm()
+            }}
           >
             <Trash2 className="h-4 w-4 mr-1" />
             Delete
@@ -701,35 +859,40 @@ export function AgentsSettingsTab() {
       setAgents(agentData)
       setRooms(roomData)
     } catch {
-      toast({ title: "Failed to load agents", variant: "destructive" })
+      toast({ title: 'Failed to load agents', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
   }, [toast])
 
-  useEffect(() => { loadAgents() }, [loadAgents])
+  useEffect(() => {
+    loadAgents()
+  }, [loadAgents])
 
   const handleSave = async (agentId: string, updates: Partial<Agent>) => {
     await updateAgent(agentId, updates)
-    window.dispatchEvent(new CustomEvent("agents-updated"))
-    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, ...updates } : a))
+    window.dispatchEvent(new CustomEvent('agents-updated'))
+    setAgents((prev) => prev.map((a) => (a.id === agentId ? { ...a, ...updates } : a)))
   }
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return
     try {
       await deleteAgent(deleteTarget.id)
-      setAgents(prev => prev.filter(a => a.id !== deleteTarget.id))
-      window.dispatchEvent(new CustomEvent("agents-updated"))
-      toast({ title: "Agent deleted", description: `${deleteTarget.icon || "🤖"} ${deleteTarget.display_name || deleteTarget.name} removed` })
+      setAgents((prev) => prev.filter((a) => a.id !== deleteTarget.id))
+      window.dispatchEvent(new CustomEvent('agents-updated'))
+      toast({
+        title: 'Agent deleted',
+        description: `${deleteTarget.icon || '🤖'} ${deleteTarget.display_name || deleteTarget.name} removed`,
+      })
     } catch {
-      toast({ title: "Failed to delete agent", variant: "destructive" })
+      toast({ title: 'Failed to delete agent', variant: 'destructive' })
     } finally {
       setDeleteTarget(null)
     }
   }
 
-  const staleCount = agents.filter(a => a.is_stale).length
+  const staleCount = agents.filter((a) => a.is_stale).length
 
   if (loading) {
     return (
@@ -745,12 +908,13 @@ export function AgentsSettingsTab() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            Manage your crew's appearance and personality. Color changes reflect in the 3D world after save.
+            Manage your crew's appearance and personality. Color changes reflect in the 3D world
+            after save.
           </p>
           {staleCount > 0 && (
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
-              {staleCount} agent{staleCount > 1 ? "s" : ""} not found in OpenClaw gateway
+              {staleCount} agent{staleCount > 1 ? 's' : ''} not found in OpenClaw gateway
             </p>
           )}
         </div>
@@ -761,32 +925,43 @@ export function AgentsSettingsTab() {
       </div>
 
       {/* How to create agents info box */}
-      <div style={{
-        background: 'var(--zen-bg-elevated, hsl(var(--muted)))',
-        border: '1px solid var(--zen-border, hsl(var(--border)))',
-        borderRadius: '6px',
-        padding: '16px',
-        marginBottom: '16px',
-      }}>
+      <div
+        style={{
+          background: 'var(--zen-bg-elevated, hsl(var(--muted)))',
+          border: '1px solid var(--zen-border, hsl(var(--border)))',
+          borderRadius: '6px',
+          padding: '16px',
+          marginBottom: '16px',
+        }}
+      >
         <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95em' }}>💡 Creating Agents</h4>
         <p style={{ margin: '0 0 12px 0', fontSize: '0.9em', lineHeight: '1.5', opacity: 0.8 }}>
-          You can create new agents by talking to your existing agent. Just ask it to create a new agent for you!
+          You can create new agents by talking to your existing agent. Just ask it to create a new
+          agent for you!
         </p>
         <details>
-          <summary style={{ cursor: 'pointer', fontSize: '0.85em', color: 'var(--zen-accent, hsl(var(--primary)))' }}>
+          <summary
+            style={{
+              cursor: 'pointer',
+              fontSize: '0.85em',
+              color: 'var(--zen-accent, hsl(var(--primary)))',
+            }}
+          >
             Advanced: CLI Options
           </summary>
           <div style={{ marginTop: '8px', fontSize: '0.85em', fontFamily: 'monospace' }}>
             <p style={{ margin: '0 0 4px 0' }}>Using OpenClaw CLI:</p>
-            <code style={{
-              display: 'block',
-              background: 'var(--zen-bg, hsl(var(--background)))',
-              padding: '8px',
-              borderRadius: '4px',
-              marginTop: '4px',
-              whiteSpace: 'pre-wrap',
-              lineHeight: '1.6',
-            }}>
+            <code
+              style={{
+                display: 'block',
+                background: 'var(--zen-bg, hsl(var(--background)))',
+                padding: '8px',
+                borderRadius: '4px',
+                marginTop: '4px',
+                whiteSpace: 'pre-wrap',
+                lineHeight: '1.6',
+              }}
+            >
               {`# Add a new agent\nopenclaw agents add\n\n# List all agents\nopenclaw agents list\n\n# Update identity\nopenclaw agents set-identity`}
             </code>
           </div>
@@ -794,7 +969,7 @@ export function AgentsSettingsTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {agents.map(agent => (
+        {agents.map((agent) => (
           <AgentCard
             key={agent.id}
             agent={agent}

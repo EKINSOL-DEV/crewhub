@@ -39,7 +39,7 @@ interface TaskCardProps {
 
 function TaskCard({ task, onTap }: TaskCardProps) {
   const priority = PRIORITY_CONFIG[task.priority]
-  
+
   return (
     <button
       onClick={onTap}
@@ -75,24 +75,28 @@ function TaskCard({ task, onTap }: TaskCardProps) {
       </div>
 
       {/* Title */}
-      <div style={{
-        fontSize: 14,
-        fontWeight: 500,
-        lineHeight: 1.4,
-        color: '#f1f5f9',
-      }}>
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 500,
+          lineHeight: 1.4,
+          color: '#f1f5f9',
+        }}
+      >
         {task.title}
       </div>
 
       {/* Assignee */}
       {task.assigned_display_name && (
-        <div style={{
-          fontSize: 11,
-          color: '#94a3b8',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-        }}>
+        <div
+          style={{
+            fontSize: 11,
+            color: '#94a3b8',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
           <span>👤</span>
           <span>{task.assigned_display_name}</span>
         </div>
@@ -111,7 +115,7 @@ interface TaskDetailModalProps {
 
 function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps) {
   const priority = PRIORITY_CONFIG[task.priority]
-  const currentColumn = COLUMNS.find(c => c.status === task.status)
+  const currentColumn = COLUMNS.find((c) => c.status === task.status)
 
   return (
     <div
@@ -142,9 +146,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <h3 style={{ fontSize: 18, fontWeight: 600, color: '#f1f5f9', flex: 1 }}>
-            {task.title}
-          </h3>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: '#f1f5f9', flex: 1 }}>{task.title}</h3>
           <button
             onClick={onClose}
             style={{
@@ -195,7 +197,15 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
         {task.assigned_display_name && (
           <div>
             <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>Assignee</div>
-            <div style={{ fontSize: 14, color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div
+              style={{
+                fontSize: 14,
+                color: '#cbd5e1',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
               <span>👤</span>
               <span>{task.assigned_display_name}</span>
             </div>
@@ -216,7 +226,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
         <div>
           <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>Move to:</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {COLUMNS.filter(col => col.status !== task.status).map(col => (
+            {COLUMNS.filter((col) => col.status !== task.status).map((col) => (
               <button
                 key={col.status}
                 onClick={() => {
@@ -294,7 +304,10 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
             style={{
               width: '100%',
               padding: '12px',
-              background: selectedProjectId === null ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+              background:
+                selectedProjectId === null
+                  ? 'rgba(139, 92, 246, 0.2)'
+                  : 'rgba(255, 255, 255, 0.03)',
               border: `1px solid ${selectedProjectId === null ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
               borderRadius: 10,
               color: selectedProjectId === null ? '#c4b5fd' : '#cbd5e1',
@@ -316,7 +329,10 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
               style={{
                 width: '100%',
                 padding: '12px',
-                background: selectedProjectId === proj.id ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                background:
+                  selectedProjectId === proj.id
+                    ? 'rgba(139, 92, 246, 0.2)'
+                    : 'rgba(255, 255, 255, 0.03)',
                 border: `1px solid ${selectedProjectId === proj.id ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
                 borderRadius: 10,
                 color: selectedProjectId === proj.id ? '#c4b5fd' : '#cbd5e1',
@@ -355,8 +371,10 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
   const [selectedColumn, setSelectedColumn] = useState<TaskStatus>('todo')
   const [expandedTask, setExpandedTask] = useState<Task | null>(null)
   const [showFilter, setShowFilter] = useState(false)
-  
-  const { tasks, isLoading, error, updateTask, refresh } = useTasks({ projectId: selectedProjectId || undefined })
+
+  const { tasks, isLoading, error, updateTask, refresh } = useTasks({
+    projectId: selectedProjectId || undefined,
+  })
   const { projects } = useProjects()
 
   // Group tasks by status, sorted by priority
@@ -368,13 +386,13 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
       blocked: [],
       done: [],
     }
-    
+
     for (const task of tasks) {
       if (grouped[task.status]) {
         grouped[task.status].push(task)
       }
     }
-    
+
     // Sort each column by priority
     for (const status of Object.keys(grouped) as TaskStatus[]) {
       grouped[status].sort((a, b) => {
@@ -383,17 +401,20 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
         return b.updated_at - a.updated_at
       })
     }
-    
+
     return grouped
   }, [tasks])
 
-  const handleUpdateStatus = useCallback(async (taskId: string, newStatus: TaskStatus) => {
-    await updateTask(taskId, { status: newStatus })
-  }, [updateTask])
+  const handleUpdateStatus = useCallback(
+    async (taskId: string, newStatus: TaskStatus) => {
+      await updateTask(taskId, { status: newStatus })
+    },
+    [updateTask]
+  )
 
-  const currentColumnConfig = COLUMNS.find(c => c.status === selectedColumn)
+  const currentColumnConfig = COLUMNS.find((c) => c.status === selectedColumn)
   const currentTasks = tasksByStatus[selectedColumn]
-  const selectedProject = projects.find(p => p.id === selectedProjectId)
+  const selectedProject = projects.find((p) => p.id === selectedProjectId)
 
   return (
     <div
@@ -435,11 +456,9 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
         >
           <ArrowLeft size={20} />
         </button>
-        
+
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>
-            Kanban Board
-          </div>
+          <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>Kanban Board</div>
           {selectedProject && (
             <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
               {selectedProject.name}
@@ -554,11 +573,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
         {!isLoading && !error && currentTasks.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {currentTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onTap={() => setExpandedTask(task)}
-              />
+              <TaskCard key={task.id} task={task} onTap={() => setExpandedTask(task)} />
             ))}
           </div>
         )}
@@ -592,7 +607,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
       {/* Filter Sheet */}
       {showFilter && (
         <FilterSheet
-          projects={projects.map(p => ({ id: p.id, name: p.name, color: p.color || undefined }))}
+          projects={projects.map((p) => ({ id: p.id, name: p.name, color: p.color || undefined }))}
           selectedProjectId={selectedProjectId}
           onSelectProject={setSelectedProjectId}
           onClose={() => setShowFilter(false)}

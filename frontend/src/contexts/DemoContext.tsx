@@ -3,7 +3,16 @@
 // Toggle with F5. Persists state in localStorage.
 // Does NOT make any API calls — purely frontend overlay.
 
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react'
 import type { CrewSession } from '@/lib/api'
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -36,7 +45,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'whatsapp',
       displayName: 'Assistent',
       label: 'Reviewing pull request #127',
-      updatedAt: now - 5_000,        // 5s ago — active
+      updatedAt: now - 5_000, // 5s ago — active
       sessionId: 'demo-main',
       model: 'claude-sonnet-4-20250514',
       totalTokens: 48_200,
@@ -48,7 +57,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: 'Dev',
       label: 'Building REST API endpoints',
-      updatedAt: now - 3_000,        // 3s ago — active
+      updatedAt: now - 3_000, // 3s ago — active
       sessionId: 'demo-dev',
       model: 'claude-opus-4-20250514',
       totalTokens: 127_500,
@@ -60,7 +69,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: 'Game Dev',
       label: 'Optimizing 3D render pipeline',
-      updatedAt: now - 8_000,        // 8s ago — active
+      updatedAt: now - 8_000, // 8s ago — active
       sessionId: 'demo-gamedev',
       model: 'claude-opus-4-20250514',
       totalTokens: 89_300,
@@ -72,7 +81,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: 'Flowy',
       label: 'Writing blog post draft',
-      updatedAt: now - 12_000,       // 12s ago — active
+      updatedAt: now - 12_000, // 12s ago — active
       sessionId: 'demo-flowy',
       model: 'claude-sonnet-4-20250514',
       totalTokens: 34_600,
@@ -84,7 +93,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: 'Reviewer',
       label: 'Waiting for code review',
-      updatedAt: now - 90_000,       // 90s ago — idle
+      updatedAt: now - 90_000, // 90s ago — idle
       sessionId: 'demo-reviewer',
       model: 'gpt-5.2',
       totalTokens: 15_800,
@@ -97,7 +106,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: undefined,
       label: 'fix-auth-middleware',
-      updatedAt: now - 4_000,        // 4s ago — active
+      updatedAt: now - 4_000, // 4s ago — active
       sessionId: 'demo-sub-auth',
       model: 'claude-opus-4-20250514',
       totalTokens: 41_200,
@@ -109,7 +118,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: undefined,
       label: 'design-landing-page',
-      updatedAt: now - 7_000,        // 7s ago — active
+      updatedAt: now - 7_000, // 7s ago — active
       sessionId: 'demo-sub-landing',
       model: 'claude-sonnet-4-20250514',
       totalTokens: 28_400,
@@ -121,7 +130,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: undefined,
       label: 'database-migration-v3',
-      updatedAt: now - 120_000,      // 2 min ago — idle
+      updatedAt: now - 120_000, // 2 min ago — idle
       sessionId: 'demo-sub-migration',
       model: 'claude-opus-4-20250514',
       totalTokens: 19_800,
@@ -133,7 +142,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: undefined,
       label: 'unit-test-coverage',
-      updatedAt: now - 2_000,        // 2s ago — active
+      updatedAt: now - 2_000, // 2s ago — active
       sessionId: 'demo-sub-tests',
       model: 'claude-opus-4-20250514',
       totalTokens: 55_700,
@@ -145,7 +154,7 @@ function createDemoSessions(): CrewSession[] {
       channel: 'internal',
       displayName: undefined,
       label: 'social-media-campaign',
-      updatedAt: now - 6_000,        // 6s ago — active
+      updatedAt: now - 6_000, // 6s ago — active
       sessionId: 'demo-sub-social',
       model: 'claude-sonnet-4-20250514',
       totalTokens: 22_100,
@@ -321,15 +330,17 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const value = useMemo<DemoContextValue>(() => ({
-    isDemoMode, toggleDemoMode, demoSessions, demoRoomAssignments,
-  }), [isDemoMode, toggleDemoMode, demoSessions, demoRoomAssignments])
-
-  return (
-    <DemoContext.Provider value={value}>
-      {children}
-    </DemoContext.Provider>
+  const value = useMemo<DemoContextValue>(
+    () => ({
+      isDemoMode,
+      toggleDemoMode,
+      demoSessions,
+      demoRoomAssignments,
+    }),
+    [isDemoMode, toggleDemoMode, demoSessions, demoRoomAssignments]
   )
+
+  return <DemoContext.Provider value={value}>{children}</DemoContext.Provider>
 }
 
 // ─── Hook ───────────────────────────────────────────────────────
@@ -416,8 +427,12 @@ export function DemoModeIndicator() {
             lineHeight: 1,
             transition: 'background 0.15s',
           }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.3)' }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.15)' }}
+          onMouseEnter={(e) => {
+            ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.3)'
+          }}
+          onMouseLeave={(e) => {
+            ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.15)'
+          }}
         >
           ✕
         </button>
@@ -437,8 +452,12 @@ export function DemoModeIndicator() {
             fontWeight: '700',
             transition: 'background 0.15s',
           }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)' }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)' }}
+          onMouseEnter={(e) => {
+            ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)'
+          }}
+          onMouseLeave={(e) => {
+            ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)'
+          }}
         >
           Website →
         </a>
@@ -456,8 +475,12 @@ export function DemoModeIndicator() {
             fontWeight: '700',
             transition: 'background 0.15s',
           }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)' }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)' }}
+          onMouseEnter={(e) => {
+            ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)'
+          }}
+          onMouseLeave={(e) => {
+            ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)'
+          }}
         >
           GitHub →
         </a>

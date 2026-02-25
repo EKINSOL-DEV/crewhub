@@ -34,21 +34,21 @@ function RoomItem({ room, isSelected, sessionCount, onSelect }: RoomItemProps) {
         }
       }}
     >
-      <div 
+      <div
         className="zen-room-icon"
-        style={{ 
+        style={{
           background: room.color ? `${room.color}22` : 'var(--zen-bg-hover)',
-          color: room.color || 'var(--zen-fg-muted)'
+          color: room.color || 'var(--zen-fg-muted)',
         }}
       >
         {room.icon || '🏠'}
       </div>
-      
+
       <div className="zen-room-info">
         <div className="zen-room-name">{room.name}</div>
         {room.project_name && (
           <div className="zen-room-project">
-            <span 
+            <span
               className="zen-room-project-dot"
               style={{ background: room.project_color || 'var(--zen-accent)' }}
             />
@@ -56,13 +56,13 @@ function RoomItem({ room, isSelected, sessionCount, onSelect }: RoomItemProps) {
           </div>
         )}
       </div>
-      
-      {sessionCount > 0 && (
-        <div className="zen-room-badge">{sessionCount}</div>
-      )}
-      
+
+      {sessionCount > 0 && <div className="zen-room-badge">{sessionCount}</div>}
+
       {room.is_hq && (
-        <div className="zen-room-hq" title="Headquarters">⭐</div>
+        <div className="zen-room-hq" title="Headquarters">
+          ⭐
+        </div>
       )}
     </div>
   )
@@ -75,9 +75,7 @@ function EmptyState() {
     <div className="zen-rooms-empty">
       <div className="zen-empty-icon">🏠</div>
       <div className="zen-empty-title">No rooms</div>
-      <div className="zen-empty-subtitle">
-        Create rooms to organize your sessions
-      </div>
+      <div className="zen-empty-subtitle">Create rooms to organize your sessions</div>
     </div>
   )
 }
@@ -102,29 +100,33 @@ function LoadingState() {
 export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelProps) {
   const { rooms, sessionAssignments, isLoading, error, refresh } = useRoomsContext()
   const [filter, setFilter] = useState('')
-  
+
   // Count sessions per room
   const sessionCounts = new Map<string, number>()
   sessionAssignments.forEach((roomId) => {
     sessionCounts.set(roomId, (sessionCounts.get(roomId) || 0) + 1)
   })
-  
+
   // Filter rooms
-  const filteredRooms = rooms.filter(room => 
-    room.name.toLowerCase().includes(filter.toLowerCase()) ||
-    room.project_name?.toLowerCase().includes(filter.toLowerCase())
+  const filteredRooms = rooms.filter(
+    (room) =>
+      room.name.toLowerCase().includes(filter.toLowerCase()) ||
+      room.project_name?.toLowerCase().includes(filter.toLowerCase())
   )
-  
+
   // Sort: HQ first, then by sort_order
   const sortedRooms = [...filteredRooms].sort((a, b) => {
     if (a.is_hq !== b.is_hq) return a.is_hq ? -1 : 1
     return a.sort_order - b.sort_order
   })
-  
-  const handleSelect = useCallback((room: Room | null) => {
-    onSelectRoom?.(room?.id || null, room?.name || 'All')
-  }, [onSelectRoom])
-  
+
+  const handleSelect = useCallback(
+    (room: Room | null) => {
+      onSelectRoom?.(room?.id || null, room?.name || 'All')
+    },
+    [onSelectRoom]
+  )
+
   // Error state
   if (error) {
     return (
@@ -132,12 +134,14 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
         <div className="zen-rooms-error">
           <div className="zen-empty-icon">⚠️</div>
           <div className="zen-empty-title">Failed to load rooms</div>
-          <button className="zen-btn" onClick={refresh}>Retry</button>
+          <button className="zen-btn" onClick={refresh}>
+            Retry
+          </button>
         </div>
       </div>
     )
   }
-  
+
   // Loading state
   if (isLoading && rooms.length === 0) {
     return (
@@ -146,7 +150,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
       </div>
     )
   }
-  
+
   // Empty state
   if (rooms.length === 0) {
     return (
@@ -155,7 +159,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
       </div>
     )
   }
-  
+
   return (
     <div className="zen-rooms-panel">
       {/* Search filter */}
@@ -182,7 +186,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
           🔄
         </button>
       </div>
-      
+
       {/* All rooms option */}
       <div className="zen-rooms-list">
         <div
@@ -205,9 +209,9 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
           </div>
           <div className="zen-room-badge">{sessionAssignments.size}</div>
         </div>
-        
+
         {/* Room list */}
-        {sortedRooms.map(room => (
+        {sortedRooms.map((room) => (
           <RoomItem
             key={room.id}
             room={room}
@@ -217,7 +221,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
           />
         ))}
       </div>
-      
+
       {/* Footer with count */}
       <div className="zen-rooms-footer">
         <span className="zen-rooms-count">

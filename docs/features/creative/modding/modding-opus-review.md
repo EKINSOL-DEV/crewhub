@@ -393,14 +393,14 @@ This is a sync bug waiting to happen. A modder adds a work point in `placements`
 ```typescript
 function loadBlueprintFromJSON(json: BlueprintJSON): RoomBlueprint {
   // ... build grid from placements
-  
+
   // AUTO-derive interaction points from placements
   const interactionPoints = {
     work: json.placements.filter(p => p.interactionType === 'work').map(p => ({ x: p.x, z: p.z })),
     coffee: json.placements.filter(p => p.interactionType === 'coffee').map(p => ({ x: p.x, z: p.z })),
     sleep: json.placements.filter(p => p.interactionType === 'sleep').map(p => ({ x: p.x, z: p.z })),
   }
-  
+
   return { ...blueprint, interactionPoints }
 }
 ```

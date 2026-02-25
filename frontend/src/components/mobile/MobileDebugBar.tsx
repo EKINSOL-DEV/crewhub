@@ -10,8 +10,10 @@ import { API_BASE } from '@/lib/api'
 const APP_VERSION = '0.12.0'
 
 function isTauri(): boolean {
-  return typeof (window as any).__TAURI_INTERNALS__ !== 'undefined' ||
-         typeof (window as any).__TAURI__ !== 'undefined'
+  return (
+    typeof (window as any).__TAURI_INTERNALS__ !== 'undefined' ||
+    typeof (window as any).__TAURI__ !== 'undefined'
+  )
 }
 
 const STATE_COLORS: Record<string, string> = {
@@ -73,7 +75,14 @@ export function MobileDebugBar({ enabled }: MobileDebugBarProps) {
       <span style={{ color: 'var(--mobile-border, rgba(255,255,255,0.1))' }}>│</span>
 
       {/* API base */}
-      <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span
+        style={{
+          maxWidth: 200,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
         API: {API_BASE}
       </span>
 

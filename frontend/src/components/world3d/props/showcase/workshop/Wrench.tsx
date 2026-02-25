@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Wrench() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.4; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.4
+  })
   return (
     <group ref={groupRef} rotation={[0, 0, -0.2]}>
       {/* Shaft */}
@@ -32,5 +34,5 @@ export function Wrench() {
         <meshStandardMaterial color="#777788" />
       </mesh>
     </group>
-  );
+  )
 }

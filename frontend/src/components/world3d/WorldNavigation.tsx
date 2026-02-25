@@ -25,10 +25,11 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
   // Hide navigation in first person mode (HUD takes over) or overview (no back button needed)
   if (state.level === 'firstperson' || state.level === 'overview') return null
 
-  const focusedRoom = rooms.find(r => r.id === state.focusedRoomId)
-  const label = (state.level === 'bot' || state.level === 'board') && focusedRoom
-    ? `← ${focusedRoom.icon || '📦'} ${focusedRoom.name}`
-    : '← Overview'
+  const focusedRoom = rooms.find((r) => r.id === state.focusedRoomId)
+  const label =
+    (state.level === 'bot' || state.level === 'board') && focusedRoom
+      ? `← ${focusedRoom.icon || '📦'} ${focusedRoom.name}`
+      : '← Overview'
 
   return (
     <>
@@ -63,11 +64,11 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
             transition: 'all 0.2s ease',
             fontFamily: 'system-ui, sans-serif',
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(255,255,255,0.9)'
             e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)'
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             e.currentTarget.style.background = 'rgba(255,255,255,0.75)'
             e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
           }}

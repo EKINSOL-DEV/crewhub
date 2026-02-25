@@ -17,12 +17,16 @@ interface StepConfigureProps {
 }
 
 export function StepConfigure({
-  connections, onUpdateConnection, onTestConnection, onAddManual, onRemoveConnection,
+  connections,
+  onUpdateConnection,
+  onTestConnection,
+  onAddManual,
+  onRemoveConnection,
 }: StepConfigureProps) {
   const [showTokens, setShowTokens] = useState<Set<string>>(new Set())
 
   const toggleToken = (id: string) => {
-    setShowTokens(prev => {
+    setShowTokens((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
@@ -57,7 +61,9 @@ export function StepConfigure({
               <div className="flex-1 space-y-4">
                 <div className="flex items-center gap-2">
                   {getRuntimeIcon(conn.type)}
-                  <span className="text-sm font-medium text-muted-foreground">{getRuntimeLabel(conn.type)}</span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {getRuntimeLabel(conn.type)}
+                  </span>
                   {conn.testStatus === 'success' && (
                     <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px]">
                       <CheckCircle2 className="h-3 w-3 mr-0.5" />
@@ -100,8 +106,17 @@ export function StepConfigure({
                         placeholder="API token"
                         className="h-9 flex-1"
                       />
-                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={() => toggleToken(conn.id)}>
-                        {showTokens.has(conn.id) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 w-9 p-0"
+                        onClick={() => toggleToken(conn.id)}
+                      >
+                        {showTokens.has(conn.id) ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -121,9 +136,11 @@ export function StepConfigure({
                     disabled={conn.testStatus === 'testing' || !conn.enabled}
                     className="gap-1.5"
                   >
-                    {conn.testStatus === 'testing'
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <Zap className="h-3.5 w-3.5" />}
+                    {conn.testStatus === 'testing' ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Zap className="h-3.5 w-3.5" />
+                    )}
                     Test connection
                   </Button>
                   <Button

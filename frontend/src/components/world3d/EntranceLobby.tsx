@@ -42,23 +42,26 @@ export function EntranceLobby({
         </mesh>
 
         {/* Welcome text */}
-        <Html zIndexRange={[1, 5]}
+        <Html
+          zIndexRange={[1, 5]}
           position={[0, 0.06, 0]}
           center
           transform
           distanceFactor={5}
           rotation={[-Math.PI / 2, 0, 0]}
         >
-          <span style={{
-            color: '#FFF8E8',
-            fontSize: '10px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
-            userSelect: 'none',
-            pointerEvents: 'none',
-            letterSpacing: '2px',
-          }}>
+          <span
+            style={{
+              color: '#FFF8E8',
+              fontSize: '10px',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              letterSpacing: '2px',
+            }}
+          >
             WELCOME
           </span>
         </Html>
@@ -88,16 +91,8 @@ export function EntranceLobby({
       />
 
       {/* Additional plants flanking the path */}
-      <Plant
-        position={[entranceX - 2.5, 0.03, lobbyZ - 3]}
-        scale={0.9}
-        potColor="#6B4F12"
-      />
-      <Plant
-        position={[entranceX + 2.5, 0.03, lobbyZ - 3]}
-        scale={0.9}
-        potColor="#6B4F12"
-      />
+      <Plant position={[entranceX - 2.5, 0.03, lobbyZ - 3]} scale={0.9} potColor="#6B4F12" />
+      <Plant position={[entranceX + 2.5, 0.03, lobbyZ - 3]} scale={0.9} potColor="#6B4F12" />
     </group>
   )
 }

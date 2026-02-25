@@ -42,9 +42,9 @@ private createDeferredDispatcher(eventType: string): (event: MessageEvent) => vo
     // Only capture references synchronously (instant)
     const handlers = this.subscriptions.get(eventType)
     if (!handlers || handlers.size === 0) return
-    
+
     const handlersCopy = Array.from(handlers)
-    
+
     // ALL processing deferred to microtask
     queueMicrotask(() => {
       for (const handler of handlersCopy) {
@@ -83,7 +83,7 @@ function computeSessionsFingerprint(sessions: CrewSession[]): string {
 ```typescript
 // Skip full fingerprint if single session is unchanged
 function isSessionUnchanged(existing: CrewSession, updated: CrewSession): boolean {
-  return existing.updatedAt === updated.updatedAt && 
+  return existing.updatedAt === updated.updatedAt &&
          existing.totalTokens === updated.totalTokens
 }
 ```

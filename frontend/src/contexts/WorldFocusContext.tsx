@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react'
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -52,70 +60,101 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
   // Priority: zoom-in actions should not be overridden by zoom-out actions within the debounce window
   const ZOOM_IN_CALLERS = new Set(['focusRoom', 'focusBoard', 'focusBot'])
 
-  const setWithAnimation = useCallback((updater: (prev: WorldFocusState) => WorldFocusState, _caller?: string) => {
-    // Don't let goBack override a pending zoom-in action (race condition from click-outside handlers)
-    if (debounceRef.current && pendingCallerRef.current && ZOOM_IN_CALLERS.has(pendingCallerRef.current) && _caller === 'goBack') {
-      if (import.meta.env.DEV) {
-        console.log(`[WorldFocus] Blocked goBack — pending ${pendingCallerRef.current} has priority`)
-      }
-      return
-    }
-    // Debounce rapid clicks (50ms)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    pendingCallerRef.current = _caller || null
-    debounceRef.current = setTimeout(() => {
-      pendingCallerRef.current = null
-      setState(prev => {
-        // Guard: don't change state during camera animation to prevent glitches
-        if (prev.isAnimating) return prev
-        const next = { ...updater(prev), isAnimating: true }
+  const setWithAnimation = useCallback(
+    (updater: (prev: WorldFocusState) => WorldFocusState, _caller?: string) => {
+      // Don't let goBack override a pending zoom-in action (race condition from click-outside handlers)
+      if (
+        debounceRef.current &&
+        pendingCallerRef.current &&
+        ZOOM_IN_CALLERS.has(pendingCallerRef.current) &&
+        _caller === 'goBack'
+      ) {
         if (import.meta.env.DEV) {
-          console.log(`[WorldFocus] ${_caller || '?'}: ${prev.level}→${next.level} room=${next.focusedRoomId} bot=${next.focusedBotKey}`)
+          console.log(
+            `[WorldFocus] Blocked goBack — pending ${pendingCallerRef.current} has priority`
+          )
         }
-        return next
-      })
-      // Clear animating after camera transition (~900ms)
-      setTimeout(() => setState(prev => ({ ...prev, isAnimating: false })), 900)
-    }, 50)
-  }, [])
-
-  const focusRoom = useCallback((roomId: string) => {
-    setWithAnimation(prev => {
-      // Already at room level for this room → no-op (use goOverview to leave)
-      if (prev.level === 'room' && prev.focusedRoomId === roomId) {
-        return prev
+        return
       }
-      return {
-        level: 'room',
-        focusedRoomId: roomId,
-        focusedBotKey: null,
-        isAnimating: false,
-      }
-    }, 'focusRoom')
-  }, [setWithAnimation])
+      // Debounce rapid clicks (50ms)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      pendingCallerRef.current = _caller || null
+      debounceRef.current = setTimeout(() => {
+        pendingCallerRef.current = null
+        setState((prev) => {
+          // Guard: don't change state during camera animation to prevent glitches
+          if (prev.isAnimating) return prev
+          const next = { ...updater(prev), isAnimating: true }
+          if (import.meta.env.DEV) {
+            console.log(
+              `[WorldFocus] ${_caller || '?'}: ${prev.level}→${next.level} room=${next.focusedRoomId} bot=${next.focusedBotKey}`
+            )
+          }
+          return next
+        })
+        // Clear animating after camera transition (~900ms)
+        setTimeout(() => setState((prev) => ({ ...prev, isAnimating: false })), 900)
+      }, 50)
+    },
+    []
+  )
 
-  const focusBoard = useCallback((roomId: string) => {
-    setWithAnimation(() => ({
-      level: 'board',
-      focusedRoomId: roomId,
-      focusedBotKey: null,
-      isAnimating: false,
-    }), 'focusBoard')
-  }, [setWithAnimation])
+  const focusRoom = useCallback(
+    (roomId: string) => {
+      setWithAnimation((prev) => {
+        // Already at room level for this room → no-op (use goOverview to leave)
+        if (prev.level === 'room' && prev.focusedRoomId === roomId) {
+          return prev
+        }
+        return {
+          level: 'room',
+          focusedRoomId: roomId,
+          focusedBotKey: null,
+          isAnimating: false,
+        }
+      }, 'focusRoom')
+    },
+    [setWithAnimation]
+  )
 
-  const focusBot = useCallback((botKey: string, roomId: string) => {
-    setWithAnimation(() => ({
-      level: 'bot',
-      focusedRoomId: roomId,
-      focusedBotKey: botKey,
-      isAnimating: false,
-    }), 'focusBot')
-  }, [setWithAnimation])
+  const focusBoard = useCallback(
+    (roomId: string) => {
+      setWithAnimation(
+        () => ({
+          level: 'board',
+          focusedRoomId: roomId,
+          focusedBotKey: null,
+          isAnimating: false,
+        }),
+        'focusBoard'
+      )
+    },
+    [setWithAnimation]
+  )
+
+  const focusBot = useCallback(
+    (botKey: string, roomId: string) => {
+      setWithAnimation(
+        () => ({
+          level: 'bot',
+          focusedRoomId: roomId,
+          focusedBotKey: botKey,
+          isAnimating: false,
+        }),
+        'focusBot'
+      )
+    },
+    [setWithAnimation]
+  )
 
   const goBack = useCallback(() => {
-    setWithAnimation(prev => {
+    setWithAnimation((prev) => {
       if (prev.level === 'firstperson') {
-        const restored = prev.previousState || { level: 'overview' as FocusLevel, focusedRoomId: null, focusedBotKey: null }
+        const restored = prev.previousState || {
+          level: 'overview' as FocusLevel,
+          focusedRoomId: null,
+          focusedBotKey: null,
+        }
         return {
           level: restored.level,
           focusedRoomId: restored.focusedRoomId,
@@ -140,7 +179,7 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
   }, [setWithAnimation])
 
   const enterFirstPerson = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       level: 'firstperson',
       focusedRoomId: null,
       focusedBotKey: null,
@@ -154,8 +193,12 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const exitFirstPerson = useCallback(() => {
-    setState(prev => {
-      const restored = prev.previousState || { level: 'overview' as FocusLevel, focusedRoomId: null, focusedBotKey: null }
+    setState((prev) => {
+      const restored = prev.previousState || {
+        level: 'overview' as FocusLevel,
+        focusedRoomId: null,
+        focusedBotKey: null,
+      }
       return {
         level: restored.level,
         focusedRoomId: restored.focusedRoomId,
@@ -164,18 +207,24 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
       }
     })
     // Clear animating after camera transition
-    setTimeout(() => setState(prev => ({ ...prev, isAnimating: false })), 900)
+    setTimeout(() => setState((prev) => ({ ...prev, isAnimating: false })), 900)
   }, [])
 
-  const value = useMemo<WorldFocusContextValue>(() => ({
-    state, focusRoom, focusBoard, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson,
-  }), [state, focusRoom, focusBoard, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson])
-
-  return (
-    <WorldFocusContext.Provider value={value}>
-      {children}
-    </WorldFocusContext.Provider>
+  const value = useMemo<WorldFocusContextValue>(
+    () => ({
+      state,
+      focusRoom,
+      focusBoard,
+      focusBot,
+      goBack,
+      goOverview,
+      enterFirstPerson,
+      exitFirstPerson,
+    }),
+    [state, focusRoom, focusBoard, focusBot, goBack, goOverview, enterFirstPerson, exitFirstPerson]
   )
+
+  return <WorldFocusContext.Provider value={value}>{children}</WorldFocusContext.Provider>
 }
 
 // ─── Hook ──────────────────────────────────────────────────────

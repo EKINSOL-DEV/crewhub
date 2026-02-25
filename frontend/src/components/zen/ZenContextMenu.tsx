@@ -31,7 +31,7 @@ export function ZenContextMenu({
   onClosePanel,
 }: ZenContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
-  
+
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -42,7 +42,7 @@ export function ZenContextMenu({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [onClose])
-  
+
   // Close on escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -51,34 +51,34 @@ export function ZenContextMenu({
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
-  
+
   // Adjust position to stay within viewport
   useEffect(() => {
     const menu = menuRef.current
     if (!menu) return
-    
+
     const rect = menu.getBoundingClientRect()
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
-    
+
     // Adjust horizontally if needed
     if (rect.right > viewportWidth) {
       menu.style.left = `${position.x - rect.width}px`
     }
-    
+
     // Adjust vertically if needed
     if (rect.bottom > viewportHeight) {
       menu.style.top = `${position.y - rect.height}px`
     }
   }, [position])
-  
+
   return (
-    <div 
+    <div
       className="zen-context-menu"
       ref={menuRef}
-      style={{ 
-        left: position.x, 
-        top: position.y 
+      style={{
+        left: position.x,
+        top: position.y,
       }}
       role="menu"
     >
@@ -86,38 +86,47 @@ export function ZenContextMenu({
       {onSplitVertical && (
         <button
           className="zen-context-menu-item"
-          onClick={() => { onSplitVertical(); onClose() }}
+          onClick={() => {
+            onSplitVertical()
+            onClose()
+          }}
           role="menuitem"
         >
           <span className="zen-context-menu-item-icon">⬍</span>
           <span>Split Vertical</span>
         </button>
       )}
-      
+
       {onSplitHorizontal && (
         <button
           className="zen-context-menu-item"
-          onClick={() => { onSplitHorizontal(); onClose() }}
+          onClick={() => {
+            onSplitHorizontal()
+            onClose()
+          }}
           role="menuitem"
         >
           <span className="zen-context-menu-item-icon">⬌</span>
           <span>Split Horizontal</span>
         </button>
       )}
-      
+
       {/* Panel type submenu */}
       {onChangePanelType && (
         <>
           <div className="zen-context-menu-separator" />
           <div className="zen-context-menu-submenu">
             <div className="zen-context-menu-label">Change Panel Type</div>
-            {getSelectablePanelIds().map(panelId => {
+            {getSelectablePanelIds().map((panelId) => {
               const def = getPanelDef(panelId)
               return (
                 <button
                   key={panelId}
                   className="zen-context-menu-item"
-                  onClick={() => { onChangePanelType(panelId as PanelType); onClose() }}
+                  onClick={() => {
+                    onChangePanelType(panelId as PanelType)
+                    onClose()
+                  }}
                   role="menuitem"
                 >
                   <span className="zen-context-menu-item-icon">{def.icon}</span>
@@ -128,14 +137,17 @@ export function ZenContextMenu({
           </div>
         </>
       )}
-      
+
       {/* Close action */}
       {canClose && onClosePanel && (
         <>
           <div className="zen-context-menu-separator" />
           <button
             className="zen-context-menu-item zen-context-menu-item-danger"
-            onClick={() => { onClosePanel(); onClose() }}
+            onClick={() => {
+              onClosePanel()
+              onClose()
+            }}
             role="menuitem"
           >
             <span className="zen-context-menu-item-icon">✕</span>

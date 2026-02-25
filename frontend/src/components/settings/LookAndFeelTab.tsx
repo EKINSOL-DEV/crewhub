@@ -1,10 +1,10 @@
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Sun, Moon } from "lucide-react"
-import { useTheme } from "@/contexts/ThemeContext"
-import { useEnvironment, useEnvironmentList } from "@/components/world3d/environments"
-import { Section } from "./shared"
-import type { SessionsSettings } from "@/components/sessions/SettingsPanel"
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Sun, Moon } from 'lucide-react'
+import { useTheme } from '@/contexts/ThemeContext'
+import { useEnvironment, useEnvironmentList } from '@/components/world3d/environments'
+import { Section } from './shared'
+import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -24,8 +24,8 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
     onSettingsChange({ ...settings, [key]: value })
   }
 
-  const darkThemes = availableThemes.filter(t => t.type === "dark")
-  const lightThemes = availableThemes.filter(t => t.type === "light")
+  const darkThemes = availableThemes.filter((t) => t.type === 'dark')
+  const lightThemes = availableThemes.filter((t) => t.type === 'light')
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
@@ -36,23 +36,33 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
             <Moon className="h-3.5 w-3.5" /> Dark Themes
           </Label>
           <div className="space-y-1.5">
-            {darkThemes.map(t => (
+            {darkThemes.map((t) => (
               <button
                 key={t.id}
                 onClick={() => zen.setTheme(t.id)}
                 className={`
                   w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-left
-                  ${zen.currentTheme.id === t.id
-                    ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30"
-                    : "border-border bg-background hover:bg-muted"
+                  ${
+                    zen.currentTheme.id === t.id
+                      ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30'
+                      : 'border-border bg-background hover:bg-muted'
                   }
                 `}
               >
                 {/* Color preview dots */}
                 <div className="flex gap-1 shrink-0">
-                  <div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ background: t.preview.bg }} />
-                  <div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ background: t.preview.accent }} />
-                  <div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ background: t.preview.fg }} />
+                  <div
+                    className="w-5 h-5 rounded-full shadow-sm border border-white/10"
+                    style={{ background: t.preview.bg }}
+                  />
+                  <div
+                    className="w-5 h-5 rounded-full shadow-sm border border-white/10"
+                    style={{ background: t.preview.accent }}
+                  />
+                  <div
+                    className="w-5 h-5 rounded-full shadow-sm border border-white/10"
+                    style={{ background: t.preview.fg }}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{t.name}</div>
@@ -72,22 +82,32 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
             <Sun className="h-3.5 w-3.5" /> Light Themes
           </Label>
           <div className="space-y-1.5">
-            {lightThemes.map(t => (
+            {lightThemes.map((t) => (
               <button
                 key={t.id}
                 onClick={() => zen.setTheme(t.id)}
                 className={`
                   w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all text-left
-                  ${zen.currentTheme.id === t.id
-                    ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30"
-                    : "border-border bg-background hover:bg-muted"
+                  ${
+                    zen.currentTheme.id === t.id
+                      ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30'
+                      : 'border-border bg-background hover:bg-muted'
                   }
                 `}
               >
                 <div className="flex gap-1 shrink-0">
-                  <div className="w-5 h-5 rounded-full shadow-sm border border-black/10" style={{ background: t.preview.bg }} />
-                  <div className="w-5 h-5 rounded-full shadow-sm border border-black/10" style={{ background: t.preview.accent }} />
-                  <div className="w-5 h-5 rounded-full shadow-sm border border-black/10" style={{ background: t.preview.fg }} />
+                  <div
+                    className="w-5 h-5 rounded-full shadow-sm border border-black/10"
+                    style={{ background: t.preview.bg }}
+                  />
+                  <div
+                    className="w-5 h-5 rounded-full shadow-sm border border-black/10"
+                    style={{ background: t.preview.accent }}
+                  />
+                  <div
+                    className="w-5 h-5 rounded-full shadow-sm border border-black/10"
+                    style={{ background: t.preview.fg }}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{t.name}</div>
@@ -102,8 +122,9 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Theme applies to entire app — 3D world, panels, and Zen Mode.
-          Use <span className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">Ctrl+Shift+T</span> to cycle themes.
+          Theme applies to entire app — 3D world, panels, and Zen Mode. Use{' '}
+          <span className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">Ctrl+Shift+T</span>{' '}
+          to cycle themes.
         </p>
       </Section>
 
@@ -111,15 +132,16 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
         <div className="space-y-3">
           <Label className="text-sm font-medium">Environment Style</Label>
           <div className="space-y-2">
-            {environmentEntries.map(entry => (
+            {environmentEntries.map((entry) => (
               <button
                 key={entry.id}
                 onClick={() => setEnvironment(entry.id)}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-left
-                  ${environment === entry.id
-                    ? "border-primary bg-primary/10 shadow-sm"
-                    : "border-border bg-background hover:bg-muted"
+                  ${
+                    environment === entry.id
+                      ? 'border-primary bg-primary/10 shadow-sm'
+                      : 'border-border bg-background hover:bg-muted'
                   }
                 `}
               >
@@ -141,23 +163,27 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
           <div className="flex items-center justify-between">
             <Label htmlFor="show-animations" className="flex flex-col gap-1">
               <span className="text-sm">Animations</span>
-              <span className="text-xs text-muted-foreground font-normal">Show wiggle and bounce effects</span>
+              <span className="text-xs text-muted-foreground font-normal">
+                Show wiggle and bounce effects
+              </span>
             </Label>
             <Switch
               id="show-animations"
               checked={settings.showAnimations}
-              onCheckedChange={(checked) => updateSetting("showAnimations", checked)}
+              onCheckedChange={(checked) => updateSetting('showAnimations', checked)}
             />
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="show-badges" className="flex flex-col gap-1">
               <span className="text-sm">Achievement Badges</span>
-              <span className="text-xs text-muted-foreground font-normal">Display earned badges</span>
+              <span className="text-xs text-muted-foreground font-normal">
+                Display earned badges
+              </span>
             </Label>
             <Switch
               id="show-badges"
               checked={settings.showBadges}
-              onCheckedChange={(checked) => updateSetting("showBadges", checked)}
+              onCheckedChange={(checked) => updateSetting('showBadges', checked)}
             />
           </div>
         </Section>
@@ -166,23 +192,27 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
           <div className="flex items-center justify-between">
             <Label htmlFor="easter-eggs" className="flex flex-col gap-1">
               <span className="text-sm">Easter Eggs</span>
-              <span className="text-xs text-muted-foreground font-normal">Enable hidden surprises</span>
+              <span className="text-xs text-muted-foreground font-normal">
+                Enable hidden surprises
+              </span>
             </Label>
             <Switch
               id="easter-eggs"
               checked={settings.easterEggsEnabled}
-              onCheckedChange={(checked) => updateSetting("easterEggsEnabled", checked)}
+              onCheckedChange={(checked) => updateSetting('easterEggsEnabled', checked)}
             />
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="play-sound" className="flex flex-col gap-1">
               <span className="text-sm">Sound Effects</span>
-              <span className="text-xs text-muted-foreground font-normal">Play sounds for easter eggs</span>
+              <span className="text-xs text-muted-foreground font-normal">
+                Play sounds for easter eggs
+              </span>
             </Label>
             <Switch
               id="play-sound"
               checked={settings.playSound}
-              onCheckedChange={(checked) => updateSetting("playSound", checked)}
+              onCheckedChange={(checked) => updateSetting('playSound', checked)}
               disabled={!settings.easterEggsEnabled}
             />
           </div>

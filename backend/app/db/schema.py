@@ -1,4 +1,5 @@
 """Database constants and schema version for CrewHub."""
+
 import os
 from pathlib import Path
 

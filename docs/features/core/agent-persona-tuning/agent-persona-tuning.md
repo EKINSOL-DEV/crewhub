@@ -1,6 +1,6 @@
 # Agent Persona Tuning — Onboarding UX Design
 
-> **Status:** Draft v2 · 2026-02-10  
+> **Status:** Draft v2 · 2026-02-10
 > **Context:** Agent "Boingz" executed context envelope perfectly but was too hesitant on simple tasks. Users need control over agent behavior from day one.
 
 ---
@@ -209,7 +209,7 @@ Each dimension at each level maps to a prompt fragment. The fragments are concat
 - Response Detail: 2 (Brief)
 - Approach Style: 3 (Balanced)
 
-**Best for:** Developers, power users, automation-heavy workflows.  
+**Best for:** Developers, power users, automation-heavy workflows.
 **Solves the Boingz problem directly.**
 
 🔒 *Still respects safety rules and dangerous-action safeguards.*
@@ -263,22 +263,22 @@ The preview panel is part of the persona step (not a separate wizard step).
 CREATE TABLE agent_persona (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_id INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-    
+
     -- Dimensions (1-5 scale), renamed from v1
     start_behavior INTEGER NOT NULL DEFAULT 1,      -- was: action_bias
     checkin_frequency INTEGER NOT NULL DEFAULT 4,    -- was: autonomy
     response_detail INTEGER NOT NULL DEFAULT 2,      -- was: communication
     approach_style INTEGER NOT NULL DEFAULT 3,       -- was: risk_tolerance
-    
+
     -- Preset name if one was selected, NULL if custom
     preset TEXT,  -- 'executor' | 'advisor' | 'explorer' | NULL
-    
+
     -- User's custom prompt additions
     custom_instructions TEXT DEFAULT '',
-    
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     UNIQUE(agent_id)
 );
 ```
@@ -316,10 +316,10 @@ def build_persona_prompt(persona: AgentPersona) -> str:
     fragments.append(CHECKIN_FREQUENCY_PROMPTS[persona.checkin_frequency])
     fragments.append(RESPONSE_DETAIL_PROMPTS[persona.response_detail])
     fragments.append(APPROACH_STYLE_PROMPTS[persona.approach_style])
-    
+
     if persona.custom_instructions:
         fragments.append(f"\nAdditional instructions from your user:\n{persona.custom_instructions}")
-    
+
     return "\n\n".join(fragments)
 ```
 
@@ -387,7 +387,7 @@ Placed **after** the core system prompt but **before** task-specific context. Th
 
 ### Multiple Agents
 Each agent has its own persona. When creating a second agent, the wizard offers:
-- "Copy from {existing_agent}" 
+- "Copy from {existing_agent}"
 - "Start fresh"
 
 ### Persona Conflicts with Custom Instructions

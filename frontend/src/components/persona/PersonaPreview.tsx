@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Loader2 } from "lucide-react"
-import { fetchPreview } from "@/lib/personaApi"
-import type { PersonaDimensions, PreviewResponse } from "@/lib/personaTypes"
+import { useState, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Loader2 } from 'lucide-react'
+import { fetchPreview } from '@/lib/personaApi'
+import type { PersonaDimensions, PreviewResponse } from '@/lib/personaTypes'
 
 interface PersonaPreviewProps {
   dimensions: PersonaDimensions
@@ -14,8 +14,8 @@ interface PersonaPreviewProps {
 }
 
 function getContrastPreset(preset: string | null): string {
-  if (preset === "executor" || preset === null) return "advisor"
-  return "executor"
+  if (preset === 'executor' || preset === null) return 'advisor'
+  return 'executor'
 }
 
 export function PersonaPreview({
@@ -24,7 +24,7 @@ export function PersonaPreview({
   customInstructions,
   contrastPreset: contrastPresetProp,
 }: PersonaPreviewProps) {
-  const [prompt, setPrompt] = useState("Say Hello World")
+  const [prompt, setPrompt] = useState('Say Hello World')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<PreviewResponse | null>(null)
   const [contrastResult, setContrastResult] = useState<PreviewResponse | null>(null)
@@ -49,7 +49,11 @@ export function PersonaPreview({
   }, [prompt, dimensions, preset, customInstructions, contrastPreset])
 
   const presetLabel = (p: string) => {
-    const labels: Record<string, string> = { executor: "Executor", advisor: "Advisor", explorer: "Explorer" }
+    const labels: Record<string, string> = {
+      executor: 'Executor',
+      advisor: 'Advisor',
+      explorer: 'Explorer',
+    }
     return labels[p] || p
   }
 
@@ -61,7 +65,9 @@ export function PersonaPreview({
 
       <div className="flex gap-2">
         <div className="flex-1">
-          <label className="sr-only" htmlFor="persona-preview-prompt">Try a prompt</label>
+          <label className="sr-only" htmlFor="persona-preview-prompt">
+            Try a prompt
+          </label>
           <Input
             id="persona-preview-prompt"
             value={prompt}
@@ -69,7 +75,7 @@ export function PersonaPreview({
             placeholder="Try a prompt..."
             className="h-9"
             onKeyDown={(e) => {
-              if (e.key === "Enter") handlePreview()
+              if (e.key === 'Enter') handlePreview()
             }}
           />
         </div>

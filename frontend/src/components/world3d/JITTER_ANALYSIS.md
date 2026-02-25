@@ -1,7 +1,7 @@
 # Bot Jitter Analysis — Iteration 1
 
-**Date:** 2026-02-04  
-**Analyst:** Opus sub-agent  
+**Date:** 2026-02-04
+**Analyst:** Opus sub-agent
 **Status:** Investigation only (no code changes)
 
 ---
@@ -103,7 +103,7 @@ for (const d of DIRECTIONS) {
 }
 ```
 
-When the bot is **close to the target** (but not yet within 0.3 threshold), tiny position changes between frames can change which direction has the highest dot product. For example, at a position slightly NE of the target, one frame might pick SW direction, the next frame (after moving slightly) might pick S or W. 
+When the bot is **close to the target** (but not yet within 0.3 threshold), tiny position changes between frames can change which direction has the highest dot product. For example, at a position slightly NE of the target, one frame might pick SW direction, the next frame (after moving slightly) might pick S or W.
 
 The movement then applies:
 

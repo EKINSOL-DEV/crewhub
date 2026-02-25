@@ -2,14 +2,16 @@
 SSE (Server-Sent Events) routes and broadcast logic.
 Handles real-time updates to connected clients.
 """
-from fastapi import APIRouter, Request
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import Optional
+
 import asyncio
 import json
 import logging
 import time
+from typing import Optional
+
+from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -31,7 +33,7 @@ async def _sse_generator(queue: asyncio.Queue, request: Request):
                 # Use shorter timeout so we check is_disconnected more frequently
                 event = await asyncio.wait_for(queue.get(), timeout=15)
                 yield f"event: {event['type']}\ndata: {json.dumps(event['data'])}\n\n"
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Send keepalive comment to detect broken pipe early
                 yield ": keepalive\n\n"
     finally:
@@ -65,10 +67,7 @@ async def broadcast(event_type: str, data: dict):
             _sse_clients.remove(q)
 
     if dead_clients:
-        logger.info(
-            f"Removed {len(dead_clients)} stale SSE client(s). "
-            f"Active clients remaining: {len(_sse_clients)}"
-        )
+        logger.info(f"Removed {len(dead_clients)} stale SSE client(s). Active clients remaining: {len(_sse_clients)}")
 
 
 def get_client_count() -> int:

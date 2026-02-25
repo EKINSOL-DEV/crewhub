@@ -23,16 +23,16 @@ export function useProjectMarkdownFiles(projectId?: string) {
     setError(null)
 
     fetch(`${API_BASE}/api/projects/${projectId}/markdown-files`)
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
-      .then(data => {
+      .then((data) => {
         if (!cancelled) {
           setFiles(data.files || [])
         }
       })
-      .catch(err => {
+      .catch((err) => {
         if (!cancelled) {
           setError(err.message)
           setFiles([])
@@ -42,10 +42,12 @@ export function useProjectMarkdownFiles(projectId?: string) {
         if (!cancelled) setLoading(false)
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [projectId, refreshKey])
 
-  const refetch = () => setRefreshKey(k => k + 1)
+  const refetch = () => setRefreshKey((k) => k + 1)
 
   return { files, loading, error, refetch }
 }

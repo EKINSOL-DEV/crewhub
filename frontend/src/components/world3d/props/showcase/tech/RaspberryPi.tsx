@@ -1,14 +1,16 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function RaspberryPi() {
-  const groupRef = useRef<THREE.Group>(null);
-  const ledRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const ledRef = useRef<THREE.Mesh>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.15;
-    if (ledRef.current) (ledRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = Math.sin(s.clock.elapsedTime * 4) > 0 ? 3 : 0.3;
-  });
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.15
+    if (ledRef.current)
+      (ledRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        Math.sin(s.clock.elapsedTime * 4) > 0 ? 3 : 0.3
+  })
   return (
     <group ref={groupRef}>
       {/* PCB */}
@@ -22,7 +24,7 @@ export function RaspberryPi() {
         <meshStandardMaterial color="#222222" />
       </mesh>
       {/* USB ports */}
-      {[0, 1].map(i => (
+      {[0, 1].map((i) => (
         <mesh key={i} position={[0.36, -0.24, -0.1 + i * 0.2]}>
           <boxGeometry args={[0.08, 0.08, 0.12]} />
           <meshStandardMaterial color="#cccccc" />
@@ -56,5 +58,5 @@ export function RaspberryPi() {
         <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={2} />
       </mesh>
     </group>
-  );
+  )
 }

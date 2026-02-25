@@ -1,4 +1,13 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -9,7 +18,7 @@ export interface ChatWindowState {
   agentColor: string | null
   isMinimized: boolean
   isPinned: boolean
-  showInternals: boolean  // Show thinking blocks & tool details
+  showInternals: boolean // Show thinking blocks & tool details
   position: { x: number; y: number }
   size: { width: number; height: number }
   zIndex: number
@@ -66,7 +75,7 @@ function loadStoredWindows(): StoredWindow[] {
 
 function saveStoredWindows(windows: ChatWindowState[]): void {
   try {
-    const toStore: StoredWindow[] = windows.map(w => ({
+    const toStore: StoredWindow[] = windows.map((w) => ({
       sessionKey: w.sessionKey,
       agentName: w.agentName,
       agentIcon: w.agentIcon,
@@ -113,7 +122,7 @@ function getInitialWindows(): ChatWindowState[] {
   const stored = loadStoredWindows()
   // Only restore chat windows for fixed agents (agent:*:main)
   return stored
-    .filter(w => isFixedAgent(w.sessionKey))
+    .filter((w) => isFixedAgent(w.sessionKey))
     .map((w, i) => ({
       ...w,
       zIndex: getNextZIndex(),
@@ -135,7 +144,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const setFocusHandler = useCallback((handler: ((sessionKey: string) => void) | null) => {
     focusHandlerRef.current = handler
-    setFocusHandlerVersion(v => v + 1)
+    setFocusHandlerVersion((v) => v + 1)
   }, [])
 
   const onFocusAgent = focusHandlerRef.current
@@ -150,14 +159,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Only allow chat for fixed agents (agent:*:main)
       if (!isFixedAgent(sessionKey)) return
 
-      setWindows(prev => {
-        const existing = prev.find(w => w.sessionKey === sessionKey)
+      setWindows((prev) => {
+        const existing = prev.find((w) => w.sessionKey === sessionKey)
         if (existing) {
           // Already open — restore if minimized and bring to front
-          return prev.map(w =>
-            w.sessionKey === sessionKey
-              ? { ...w, isMinimized: false, zIndex: getNextZIndex() }
-              : w
+          return prev.map((w) =>
+            w.sessionKey === sessionKey ? { ...w, isMinimized: false, zIndex: getNextZIndex() } : w
           )
         }
         // New window
@@ -180,62 +187,50 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   )
 
   const closeChat = useCallback((sessionKey: string) => {
-    setWindows(prev => prev.filter(w => w.sessionKey !== sessionKey))
+    setWindows((prev) => prev.filter((w) => w.sessionKey !== sessionKey))
   }, [])
 
   const minimizeChat = useCallback((sessionKey: string) => {
-    setWindows(prev =>
-      prev.map(w =>
-        w.sessionKey === sessionKey ? { ...w, isMinimized: true } : w
-      )
+    setWindows((prev) =>
+      prev.map((w) => (w.sessionKey === sessionKey ? { ...w, isMinimized: true } : w))
     )
   }, [])
 
   const restoreChat = useCallback((sessionKey: string) => {
-    setWindows(prev =>
-      prev.map(w =>
-        w.sessionKey === sessionKey
-          ? { ...w, isMinimized: false, zIndex: getNextZIndex() }
-          : w
+    setWindows((prev) =>
+      prev.map((w) =>
+        w.sessionKey === sessionKey ? { ...w, isMinimized: false, zIndex: getNextZIndex() } : w
       )
     )
   }, [])
 
   const togglePin = useCallback((sessionKey: string) => {
-    setWindows(prev =>
-      prev.map(w =>
-        w.sessionKey === sessionKey ? { ...w, isPinned: !w.isPinned } : w
-      )
+    setWindows((prev) =>
+      prev.map((w) => (w.sessionKey === sessionKey ? { ...w, isPinned: !w.isPinned } : w))
     )
   }, [])
 
   const toggleInternals = useCallback((sessionKey: string) => {
-    setWindows(prev =>
-      prev.map(w =>
-        w.sessionKey === sessionKey ? { ...w, showInternals: !w.showInternals } : w
-      )
+    setWindows((prev) =>
+      prev.map((w) => (w.sessionKey === sessionKey ? { ...w, showInternals: !w.showInternals } : w))
     )
   }, [])
 
   const focusChat = useCallback((sessionKey: string) => {
-    setWindows(prev =>
-      prev.map(w =>
-        w.sessionKey === sessionKey ? { ...w, zIndex: getNextZIndex() } : w
-      )
+    setWindows((prev) =>
+      prev.map((w) => (w.sessionKey === sessionKey ? { ...w, zIndex: getNextZIndex() } : w))
     )
   }, [])
 
   const updatePosition = useCallback((sessionKey: string, pos: { x: number; y: number }) => {
-    setWindows(prev =>
-      prev.map(w =>
-        w.sessionKey === sessionKey ? { ...w, position: pos } : w
-      )
+    setWindows((prev) =>
+      prev.map((w) => (w.sessionKey === sessionKey ? { ...w, position: pos } : w))
     )
   }, [])
 
   const updateSize = useCallback((sessionKey: string, size: { width: number; height: number }) => {
-    setWindows(prev =>
-      prev.map(w =>
+    setWindows((prev) =>
+      prev.map((w) =>
         w.sessionKey === sessionKey
           ? {
               ...w,
@@ -249,26 +244,38 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     )
   }, [])
 
-  const value = useMemo<ChatContextValue>(() => ({
-    windows,
-    openChat,
-    closeChat,
-    minimizeChat,
-    restoreChat,
-    togglePin,
-    toggleInternals,
-    focusChat,
-    updatePosition,
-    updateSize,
-    onFocusAgent,
-    setFocusHandler,
-  }), [windows, openChat, closeChat, minimizeChat, restoreChat, togglePin, toggleInternals, focusChat, updatePosition, updateSize, onFocusAgent, setFocusHandler])
-
-  return (
-    <ChatContext.Provider value={value}>
-      {children}
-    </ChatContext.Provider>
+  const value = useMemo<ChatContextValue>(
+    () => ({
+      windows,
+      openChat,
+      closeChat,
+      minimizeChat,
+      restoreChat,
+      togglePin,
+      toggleInternals,
+      focusChat,
+      updatePosition,
+      updateSize,
+      onFocusAgent,
+      setFocusHandler,
+    }),
+    [
+      windows,
+      openChat,
+      closeChat,
+      minimizeChat,
+      restoreChat,
+      togglePin,
+      toggleInternals,
+      focusChat,
+      updatePosition,
+      updateSize,
+      onFocusAgent,
+      setFocusHandler,
+    ]
   )
+
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
 }
 
 export function useChatContext(): ChatContextValue {

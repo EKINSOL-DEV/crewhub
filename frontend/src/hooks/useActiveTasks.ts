@@ -37,13 +37,13 @@ const IDLE_THRESHOLD_MS = 60_000
 
 export function useActiveTasks(options: UseActiveTasksOptions) {
   const { sessions, fadeOutDuration = DEFAULT_FADE_OUT_DURATION, enabled = true } = options
-  
+
   const [tasks, setTasks] = useState<ActiveTask[]>([])
   const previousSessionKeysRef = useRef<Set<string>>(new Set())
   const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Main effect: Track sessions and detect completions ───────
-  
+
   useEffect(() => {
     if (!enabled) {
       setTasks([])
@@ -57,7 +57,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
         sessionMap.set(s.key, s)
       }
     }
-    
+
     const currentKeys = new Set(sessionMap.keys())
     const previousKeys = previousSessionKeysRef.current
 
@@ -71,21 +71,21 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
     const isSessionStillRunning = (sessionKey: string): boolean => {
       const session = sessionMap.get(sessionKey)
       if (!session) return false
-      
+
       // Check 1: If sleeping, it's definitely done
       const status = getSessionStatus(session)
       if (status === 'sleeping') return false
-      
+
       // Check 2: If updatedAt is stale (>60s ago), consider done
       // This catches subagents that finished but haven't been parked yet
       const now = Date.now()
       const lastUpdate = session.updatedAt
       if (now - lastUpdate > IDLE_THRESHOLD_MS) return false
-      
+
       return true
     }
 
-    setTasks(prevTasks => {
+    setTasks((prevTasks) => {
       const newTasks: ActiveTask[] = []
       const seenIds = new Set<string>()
 
@@ -93,7 +93,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
       // 2. Mark tasks as done if their session disappeared OR became sleeping
       for (const task of prevTasks) {
         if (task.source !== 'session') continue
-        
+
         const sessionKey = task.sessionKey
         if (!sessionKey) continue
 
@@ -101,7 +101,10 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
           // Still running (exists and not sleeping)
           newTasks.push(task)
           seenIds.add(task.id)
-        } else if (task.status === 'running' && (previousKeys.has(sessionKey) || currentKeys.has(sessionKey))) {
+        } else if (
+          task.status === 'running' &&
+          (previousKeys.has(sessionKey) || currentKeys.has(sessionKey))
+        ) {
           // Session disappeared OR became sleeping → mark as done
           newTasks.push({
             ...task,
@@ -121,7 +124,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
         if (!isSubagentSession(session.key)) continue
         const taskId = `session:${session.key}`
         if (seenIds.has(taskId)) continue
-        
+
         // Don't add sessions that aren't actively running
         if (!isSessionStillRunning(session.key)) continue
 
@@ -143,7 +146,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
   }, [sessions, enabled])
 
   // ── Cleanup timer: Remove done tasks after fadeOutDuration ───
-  
+
   useEffect(() => {
     if (!enabled) return
 
@@ -154,11 +157,9 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
 
       cleanupTimerRef.current = setTimeout(() => {
         const now = Date.now()
-        setTasks(prevTasks => 
-          prevTasks.filter(task => 
-            task.status !== 'done' || 
-            !task.doneAt || 
-            (now - task.doneAt) < fadeOutDuration
+        setTasks((prevTasks) =>
+          prevTasks.filter(
+            (task) => task.status !== 'done' || !task.doneAt || now - task.doneAt < fadeOutDuration
           )
         )
         scheduleCleanup() // Reschedule
@@ -175,7 +176,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
   }, [enabled, fadeOutDuration])
 
   // ── SSE: Listen for session removal events ───────────────────
-  
+
   useEffect(() => {
     if (!enabled) return
 
@@ -184,8 +185,8 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
         const { key } = JSON.parse(event.data)
         if (!isSubagentSession(key)) return
 
-        setTasks(prevTasks =>
-          prevTasks.map(task =>
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
             task.sessionKey === key && task.status === 'running'
               ? { ...task, status: 'done', doneAt: Date.now() }
               : task
@@ -202,22 +203,19 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
 
   // ── Computed values ──────────────────────────────────────────
 
-  const runningTasks = useMemo(
-    () => tasks.filter(t => t.status === 'running'),
-    [tasks]
-  )
+  const runningTasks = useMemo(() => tasks.filter((t) => t.status === 'running'), [tasks])
 
-  const doneTasks = useMemo(
-    () => tasks.filter(t => t.status === 'done'),
-    [tasks]
-  )
+  const doneTasks = useMemo(() => tasks.filter((t) => t.status === 'done'), [tasks])
 
-  const getTaskOpacity = useCallback((task: ActiveTask): number => {
-    if (task.status !== 'done' || !task.doneAt) return 1
-    const elapsed = Date.now() - task.doneAt
-    const progress = Math.min(elapsed / fadeOutDuration, 1)
-    return 1 - progress
-  }, [fadeOutDuration])
+  const getTaskOpacity = useCallback(
+    (task: ActiveTask): number => {
+      if (task.status !== 'done' || !task.doneAt) return 1
+      const elapsed = Date.now() - task.doneAt
+      const progress = Math.min(elapsed / fadeOutDuration, 1)
+      return 1 - progress
+    },
+    [fadeOutDuration]
+  )
 
   return {
     tasks,
@@ -249,7 +247,7 @@ function extractTaskTitle(session: CrewSession): string {
       .replace(/model=[^\s]+/g, '')
       .replace(/^(subagent|spawn):?\s*/i, '')
       .trim()
-    
+
     if (cleanLabel && cleanLabel.length > 0) {
       return cleanLabel
     }
@@ -286,12 +284,12 @@ function extractAgentIcon(sessionKey: string): string {
   const agentName = extractAgentName(sessionKey)
   // Common agent icons
   const iconMap: Record<string, string> = {
-    'main': '🤖',
-    'dev': '👨‍💻',
-    'assistant': '🧑‍💼',
-    'ops': '⚙️',
-    'data': '📊',
-    'test': '🧪',
+    main: '🤖',
+    dev: '👨‍💻',
+    assistant: '🧑‍💼',
+    ops: '⚙️',
+    data: '📊',
+    test: '🧪',
   }
   return iconMap[agentName.toLowerCase()] || '🤖'
 }

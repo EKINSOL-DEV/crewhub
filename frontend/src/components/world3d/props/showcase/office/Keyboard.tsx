@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Keyboard() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.35) * 0.12; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.35) * 0.12
+  })
   return (
     <group ref={groupRef}>
       {/* Base */}
@@ -13,11 +15,14 @@ export function Keyboard() {
         <meshStandardMaterial color="#2a2a3a" flatShading />
       </mesh>
       {/* Keys - rows */}
-      {[0, 1, 2, 3].map(row =>
+      {[0, 1, 2, 3].map((row) =>
         Array.from({ length: 10 }, (_, col) => (
           <mesh key={`${row}-${col}`} position={[-0.45 + col * 0.1, -0.35, 0.12 - row * 0.08]}>
             <boxGeometry args={[0.08, 0.04, 0.06]} />
-            <meshStandardMaterial color={row === 0 && col < 4 ? '#444466' : '#3a3a4e'} flatShading />
+            <meshStandardMaterial
+              color={row === 0 && col < 4 ? '#444466' : '#3a3a4e'}
+              flatShading
+            />
           </mesh>
         ))
       )}
@@ -37,5 +42,5 @@ export function Keyboard() {
         <meshStandardMaterial color="#222222" />
       </mesh>
     </group>
-  );
+  )
 }

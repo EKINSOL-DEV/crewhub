@@ -20,8 +20,10 @@ router = APIRouter()
 
 # ── Pydantic models ──────────────────────────────────────────────────
 
+
 class AgentUpdate(BaseModel):
     """Fields the frontend may PATCH/PUT on an agent."""
+
     name: Optional[str] = None
     icon: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -37,6 +39,7 @@ class AgentUpdate(BaseModel):
 
 class AgentCreate(BaseModel):
     """Fields required / optional when creating a new agent."""
+
     id: str  # slug, e.g. "mybot"
     name: str
     icon: Optional[str] = "🤖"
@@ -47,6 +50,7 @@ class AgentCreate(BaseModel):
 
 
 # ── Routes ────────────────────────────────────────────────────────────
+
 
 @router.get("")
 async def list_agents():
@@ -109,14 +113,13 @@ async def generate_bio(agent_id: str):
     Falls back to basic generation if context isn't available.
     """
     from pathlib import Path
-    from app.services.connections import get_connection_manager
+
     from app.db.database import get_db
+    from app.services.connections import get_connection_manager
 
     # 1. Get agent info from DB
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM agents WHERE id = ?", (agent_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM agents WHERE id = ?", (agent_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -135,7 +138,7 @@ async def generate_bio(agent_id: str):
     for soul_path in soul_paths:
         if soul_path and soul_path.exists():
             try:
-                with open(soul_path, "r") as f:
+                with open(soul_path) as f:
                     soul_content = f.read()[:2000]
                 logger.info(f"Read SOUL.md for {agent_id} from {soul_path}")
                 break

@@ -1,7 +1,7 @@
 # AI Meetings - Document Selector Improvements
 
-> **Date:** 2026-02-13  
-> **Goal:** Fix + improve document selector based on user feedback  
+> **Date:** 2026-02-13
+> **Goal:** Fix + improve document selector based on user feedback
 > **Strategy:** Opus implementation + GPT-5.2 review
 
 ---
@@ -85,7 +85,7 @@
 - POST `/api/projects/{id}/upload-document`
 - Accepts multipart/form-data
 - Validates .md extension
-- Saves to `{project}/meetings/{YYYY-MM-DD}/` 
+- Saves to `{project}/meetings/{YYYY-MM-DD}/`
 - Auto-creates meetings folder if not exists
 - Returns file path
 
@@ -195,7 +195,7 @@ const FolderNode = ({ folder }) => {
         {expanded ? '📂' : '📁'} {folder.name}
       </div>
       {expanded && folder.children.map(child =>
-        child.type === 'folder' 
+        child.type === 'folder'
           ? <FolderNode folder={child} />
           : <FileNode file={child} />
       )}

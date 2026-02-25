@@ -37,12 +37,7 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
   const isSourceRoom = drag.sourceRoomId === roomId
 
   return (
-    <Html
-      position={[0, 0.5, 0]}
-      center
-      zIndexRange={[10, 15]}
-      style={{ pointerEvents: 'auto' }}
-    >
+    <Html position={[0, 0.5, 0]} center zIndexRange={[10, 15]} style={{ pointerEvents: 'auto' }}>
       <div
         onDragOver={(e) => {
           e.preventDefault()
@@ -60,7 +55,12 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
           // Only unset if actually leaving the element (not entering a child)
           const rect = e.currentTarget.getBoundingClientRect()
           const { clientX, clientY } = e
-          if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) {
+          if (
+            clientX < rect.left ||
+            clientX > rect.right ||
+            clientY < rect.top ||
+            clientY > rect.bottom
+          ) {
             setIsDropTarget(false)
           }
         }}
@@ -96,26 +96,30 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
         }}
       >
         {isDropTarget && (
-          <div style={{
-            color: 'rgba(255, 165, 0, 0.95)',
-            fontSize: '16px',
-            fontWeight: 700,
-            fontFamily: 'system-ui, sans-serif',
-            textShadow: '0 1px 4px rgba(0,0,0,0.3)',
-            background: 'rgba(0,0,0,0.4)',
-            padding: '6px 14px',
-            borderRadius: '10px',
-          }}>
+          <div
+            style={{
+              color: 'rgba(255, 165, 0, 0.95)',
+              fontSize: '16px',
+              fontWeight: 700,
+              fontFamily: 'system-ui, sans-serif',
+              textShadow: '0 1px 4px rgba(0,0,0,0.3)',
+              background: 'rgba(0,0,0,0.4)',
+              padding: '6px 14px',
+              borderRadius: '10px',
+            }}
+          >
             📥 Drop here
           </div>
         )}
         {isSourceRoom && (
-          <div style={{
-            color: 'rgba(100, 100, 100, 0.6)',
-            fontSize: '12px',
-            fontWeight: 500,
-            fontFamily: 'system-ui, sans-serif',
-          }}>
+          <div
+            style={{
+              color: 'rgba(100, 100, 100, 0.6)',
+              fontSize: '12px',
+              fontWeight: 500,
+              fontFamily: 'system-ui, sans-serif',
+            }}
+          >
             (current room)
           </div>
         )}
@@ -150,7 +154,7 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
   const { state, focusRoom } = useWorldFocus()
   const isRoomFocused = state.focusedRoomId === room.id && state.level === 'room'
   const zenMode = useZenMode()
-  
+
   // Handler for Zen Beeldje activation
   const handleZenActivate = useCallback(() => {
     if (room.project_id && room.project_name) {
@@ -165,7 +169,7 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
   // ─── Hover state with 80ms debounce/hysteresis ──────────────
   const [hovered, setHovered] = useState(false)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  
+
   // Track pointer down position to detect drag vs click
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
 
@@ -188,35 +192,38 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
       hoverTimerRef.current = null
     }, 80)
   }, [])
-  
+
   const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     pointerDownPos.current = { x: e.clientX, y: e.clientY }
   }, [])
 
   // ─── Click handler (focus-level aware) ──────────────────────
-  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation()
-    
-    // Ignore clicks that were actually drags (camera rotation)
-    if (pointerDownPos.current) {
-      const dx = Math.abs(e.clientX - pointerDownPos.current.x)
-      const dy = Math.abs(e.clientY - pointerDownPos.current.y)
-      const dragThreshold = 5 // pixels
-      
-      if (dx > dragThreshold || dy > dragThreshold) {
-        // This was a drag, not a click - ignore
-        pointerDownPos.current = null
-        return
-      }
-    }
-    pointerDownPos.current = null
+  const handleClick = useCallback(
+    (e: ThreeEvent<MouseEvent>) => {
+      e.stopPropagation()
 
-    // Only allow room clicks from overview or firstperson to zoom in
-    // At room/board/bot level: no click action (use back button or Escape to navigate)
-    if (state.level === 'overview' || state.level === 'firstperson') {
-      focusRoom(room.id)
-    }
-  }, [state.level, room.id, focusRoom])
+      // Ignore clicks that were actually drags (camera rotation)
+      if (pointerDownPos.current) {
+        const dx = Math.abs(e.clientX - pointerDownPos.current.x)
+        const dy = Math.abs(e.clientY - pointerDownPos.current.y)
+        const dragThreshold = 5 // pixels
+
+        if (dx > dragThreshold || dy > dragThreshold) {
+          // This was a drag, not a click - ignore
+          pointerDownPos.current = null
+          return
+        }
+      }
+      pointerDownPos.current = null
+
+      // Only allow room clicks from overview or firstperson to zoom in
+      // At room/board/bot level: no click action (use back button or Escape to navigate)
+      if (state.level === 'overview' || state.level === 'firstperson') {
+        focusRoom(room.id)
+      }
+    },
+    [state.level, room.id, focusRoom]
+  )
 
   return (
     <group
@@ -233,7 +240,7 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
         hovered={hovered}
         projectColor={room.project_color}
         isHQ={room.is_hq}
-        floorStyle={room.is_hq ? 'marble' : (room.floor_style || 'default')}
+        floorStyle={room.is_hq ? 'marble' : room.floor_style || 'default'}
       />
 
       {/* Perimeter walls */}
@@ -241,7 +248,7 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
         color={roomColor}
         size={size}
         hovered={hovered}
-        wallStyle={room.is_hq ? 'glass' : (room.wall_style || 'default')}
+        wallStyle={room.is_hq ? 'glass' : room.wall_style || 'default'}
         isHQ={room.is_hq}
       />
 
@@ -261,7 +268,11 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
       <RoomDropZone roomId={room.id} size={size} />
 
       {/* ─── Grid-based furniture props ────────────────────────────── */}
-      <GridRoomRenderer blueprint={blueprint} roomPosition={position} onBlueprintUpdate={handleBlueprintUpdate} />
+      <GridRoomRenderer
+        blueprint={blueprint}
+        roomPosition={position}
+        onBlueprintUpdate={handleBlueprintUpdate}
+      />
 
       {/* ─── HQ Command Center overlay (hologram, monitors, data pillars) ── */}
       {room.is_hq && <HQCommandOverlay size={size} />}

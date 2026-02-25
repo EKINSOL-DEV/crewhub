@@ -106,7 +106,7 @@ When in Room Focus, show contextual info:
 - Small cards next to each bot showing current task
 - Room stats panel in corner (total tokens, active count, etc.)
 
-**Option B: Side panel overlay (React, outside Canvas)**  
+**Option B: Side panel overlay (React, outside Canvas)**
 - Slide-in panel from right side
 - Lists all bots in the room with:
   - Name, status indicator
@@ -166,7 +166,7 @@ interface WorldFocusContextValue {
 ```
 overview → room:  setFocusedRoom(roomId) → animate camera → constrain controls
 room → bot:       setFocusedBot(botKey) → animate camera → follow mode
-room → overview:  clearFocus() → animate camera → restore controls  
+room → overview:  clearFocus() → animate camera → restore controls
 bot → room:       clearBot() → animate to room overview
 bot → overview:   clearFocus() → animate to overview
 room → room:      setFocusedRoom(newId) → animate between rooms
@@ -202,7 +202,7 @@ controls.maxDistance = 120
 controls.minPolarAngle = Math.PI / 6
 controls.maxPolarAngle = Math.PI / 3
 
-// Room Focus  
+// Room Focus
 controls.minDistance = 8
 controls.maxDistance = 25
 
@@ -225,7 +225,7 @@ controls.maxDistance = 15
 function RoomFocusButton({ room, position, onClick }) {
   return (
     <Html position={[position[0], 3, position[2]]} center>
-      <button 
+      <button
         onClick={() => onClick(room.id)}
         className="room-focus-btn"
       >
@@ -246,7 +246,7 @@ useFrame(() => {
     // Smoothly follow bot
     controls.target.lerp(new Vector3(botPos.x, 0.5, botPos.z), 0.05)
     camera.position.lerp(
-      new Vector3(botPos.x + 4, 8, botPos.z + 4), 
+      new Vector3(botPos.x + 4, 8, botPos.z + 4),
       0.05
     )
   }
@@ -269,12 +269,12 @@ useFrame(() => {
     </SceneContent>
     <CameraController />      ← NEW: manages animations + constraints
   </Canvas>
-  
+
   {/* Overlays (outside Canvas) */}
   <RoomTabsBar />             ← NEW: bottom navigation tabs
   <BackButton />              ← NEW: contextual back navigation
   <RoomDetailPanel />         ← NEW: side panel when room focused
-  <BotInfoPanel />            ← NEW: side panel when bot focused  
+  <BotInfoPanel />            ← NEW: side panel when bot focused
   <LogViewer />               (existing)
 </World3DView>
 ```

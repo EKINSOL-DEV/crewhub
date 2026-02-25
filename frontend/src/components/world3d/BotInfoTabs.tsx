@@ -46,13 +46,15 @@ export function BotInfoTabs({
   return (
     <>
       {/* Tab Bar */}
-      <div style={{
-        display: 'flex',
-        gap: 2,
-        padding: '0 16px',
-        marginBottom: 0,
-      }}>
-        {TABS.map(tab => {
+      <div
+        style={{
+          display: 'flex',
+          gap: 2,
+          padding: '0 16px',
+          marginBottom: 0,
+        }}
+      >
+        {TABS.map((tab) => {
           const isActive = activeTab === tab.id
           return (
             <button
@@ -75,10 +77,10 @@ export function BotInfoTabs({
                 justifyContent: 'center',
                 gap: 4,
               }}
-              onMouseEnter={e => {
+              onMouseEnter={(e) => {
                 if (!isActive) e.currentTarget.style.color = '#6b7280'
               }}
-              onMouseLeave={e => {
+              onMouseLeave={(e) => {
                 if (!isActive) e.currentTarget.style.color = '#9ca3af'
               }}
             >
@@ -90,16 +92,15 @@ export function BotInfoTabs({
       </div>
 
       {/* Tab Content */}
-      <div style={{
-        flex: 1,
-        overflow: 'auto',
-        padding: '12px 16px',
-      }}>
+      <div
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: '12px 16px',
+        }}
+      >
         {activeTab === 'activity' && (
-          <ActivityLogStream
-            sessionKey={session.key}
-            onOpenFullLog={() => onOpenLog(session)}
-          />
+          <ActivityLogStream sessionKey={session.key} onOpenFullLog={() => onOpenLog(session)} />
         )}
         {activeTab === 'info' && (
           <InfoTab

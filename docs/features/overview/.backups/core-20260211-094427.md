@@ -5,7 +5,7 @@ Fundamental features that power the CrewHub platform.
 ---
 
 ## Agent Persona Tuning
-**Status:** ✅ Released in **persona-system-v1** (v0.12.0)  
+**Status:** ✅ Released in **persona-system-v1** (v0.12.0)
 **Description:** Customize agent behavior with presets (Executor, Advisor, Explorer) or fine-tune individual traits (start behavior, check-in frequency, response detail, approach style). Includes migration guide for existing agents.
 
 **Docs:**
@@ -17,7 +17,7 @@ Fundamental features that power the CrewHub platform.
 ---
 
 ## Onboarding
-**Status:** ✅ Released in **v0.4.0**  
+**Status:** ✅ Released in **v0.4.0**
 **Description:** Initial setup wizard with auto-discovery of OpenClaw, Claude Code, and Codex installations. Configures gateway connection, agent workspaces, and persona preferences. Zero-config experience for supported platforms.
 
 **Docs:**
@@ -29,7 +29,7 @@ Fundamental features that power the CrewHub platform.
 ---
 
 ## Settings
-**Status:** ✅ Released in **v0.4.0**  
+**Status:** ✅ Released in **v0.4.0**
 **Description:** App-wide configuration UI with 5 tabs: Look & Feel, Rooms, Behavior, Data, Advanced. Includes backup/restore system, persistent state in localStorage, and database-driven settings API.
 
 **Docs:**
@@ -39,7 +39,7 @@ Fundamental features that power the CrewHub platform.
 ---
 
 ## Room Projects
-**Status:** ✅ Released in **v0.5.0**  
+**Status:** ✅ Released in **v0.5.0**
 **Description:** Organize agents by project. HQ room acts as command center with visibility into all projects. Project-specific rooms show only relevant agents. Visual indicators (nameplate badges, floor tints, tab dots) show project membership.
 
 **Docs:**

@@ -14,10 +14,10 @@ import { PROP_META_BY_ID, CATEGORY_LABELS, type PropMeta } from './propMeta'
 
 interface PropThumbnailProps {
   propId: string
-  displayName?: string     // override for generated props
-  icon?: string            // override for generated props
-  color?: string           // override for generated props
-  size?: number            // thumbnail size in px (default 72)
+  displayName?: string // override for generated props
+  icon?: string // override for generated props
+  color?: string // override for generated props
+  size?: number // thumbnail size in px (default 72)
   selected?: boolean
   onClick?: () => void
 }
@@ -77,13 +77,13 @@ export function PropThumbnail({
         gap: '6px',
         textAlign: 'center',
       }}
-      onMouseEnter={e => {
+      onMouseEnter={(e) => {
         if (!selected) {
           e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
           e.currentTarget.style.transform = 'scale(1.03)'
         }
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         if (!selected) {
           e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
           e.currentTarget.style.transform = 'scale(1)'

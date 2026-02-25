@@ -1,6 +1,8 @@
 """Session Display Names API routes."""
-import time
+
 import logging
+import time
+
 from fastapi import APIRouter, HTTPException
 
 from app.db.database import get_db
@@ -16,9 +18,7 @@ async def list_display_names():
     """Get all session display names."""
     try:
         async with get_db() as db:
-            async with db.execute(
-                "SELECT * FROM session_display_names ORDER BY updated_at DESC"
-            ) as cursor:
+            async with db.execute("SELECT * FROM session_display_names ORDER BY updated_at DESC") as cursor:
                 rows = await cursor.fetchall()
                 names = [SessionDisplayName(**row) for row in rows]
             return {"display_names": [n.model_dump() for n in names]}
@@ -33,8 +33,7 @@ async def get_display_name(session_key: str):
     try:
         async with get_db() as db:
             async with db.execute(
-                "SELECT * FROM session_display_names WHERE session_key = ?",
-                (session_key,)
+                "SELECT * FROM session_display_names WHERE session_key = ?", (session_key,)
             ) as cursor:
                 row = await cursor.fetchone()
                 if not row:
@@ -53,31 +52,36 @@ async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
     try:
         async with get_db() as db:
             now = int(time.time() * 1000)
-            
+
             # Upsert display name
-            await db.execute("""
+            await db.execute(
+                """
                 INSERT INTO session_display_names (session_key, display_name, updated_at)
                 VALUES (?, ?, ?)
                 ON CONFLICT(session_key) DO UPDATE SET
                     display_name = excluded.display_name,
                     updated_at = excluded.updated_at
-            """, (session_key, data.display_name, now))
+            """,
+                (session_key, data.display_name, now),
+            )
             await db.commit()
-            
+
             # Return the display name
             async with db.execute(
-                "SELECT * FROM session_display_names WHERE session_key = ?",
-                (session_key,)
+                "SELECT * FROM session_display_names WHERE session_key = ?", (session_key,)
             ) as cursor:
                 row = await cursor.fetchone()
                 result = SessionDisplayName(**row)
 
             # Broadcast SSE event so other clients update their cache
-            await broadcast("display-name-updated", {
-                "session_key": session_key,
-                "display_name": data.display_name,
-                "action": "set",
-            })
+            await broadcast(
+                "display-name-updated",
+                {
+                    "session_key": session_key,
+                    "display_name": data.display_name,
+                    "action": "set",
+                },
+            )
             return result
     except Exception as e:
         logger.error(f"Failed to set display name for {session_key}: {e}")
@@ -91,24 +95,23 @@ async def delete_display_name(session_key: str):
         async with get_db() as db:
             # Check if exists
             async with db.execute(
-                "SELECT session_key FROM session_display_names WHERE session_key = ?",
-                (session_key,)
+                "SELECT session_key FROM session_display_names WHERE session_key = ?", (session_key,)
             ) as cursor:
                 if not await cursor.fetchone():
                     raise HTTPException(status_code=404, detail="Display name not found")
-            
-            await db.execute(
-                "DELETE FROM session_display_names WHERE session_key = ?",
-                (session_key,)
-            )
+
+            await db.execute("DELETE FROM session_display_names WHERE session_key = ?", (session_key,))
             await db.commit()
 
             # Broadcast SSE event so other clients update their cache
-            await broadcast("display-name-updated", {
-                "session_key": session_key,
-                "display_name": None,
-                "action": "deleted",
-            })
+            await broadcast(
+                "display-name-updated",
+                {
+                    "session_key": session_key,
+                    "display_name": None,
+                    "action": "deleted",
+                },
+            )
             return {"success": True, "deleted": session_key}
     except HTTPException:
         raise

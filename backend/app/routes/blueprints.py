@@ -19,8 +19,8 @@ from ..db.database import get_db
 from ..db.models import (
     BlueprintJson,
     CustomBlueprintCreate,
-    CustomBlueprintUpdate,
     CustomBlueprintResponse,
+    CustomBlueprintUpdate,
     generate_id,
 )
 from .sse import broadcast
@@ -40,23 +40,64 @@ MIN_GRID_SIZE = 4
 # since custom props may be added by mods.
 KNOWN_PROP_IDS = {
     # Furniture
-    "desk-with-monitor", "desk-with-dual-monitors", "desk-small", "desk-large",
-    "conference-table", "round-table", "chair", "office-chair", "couch", "couch-l-shaped",
-    "bookshelf", "bookshelf-tall", "filing-cabinet", "locker", "wardrobe",
-    "bed", "bunk-bed", "workbench", "standing-desk",
+    "desk-with-monitor",
+    "desk-with-dual-monitors",
+    "desk-small",
+    "desk-large",
+    "conference-table",
+    "round-table",
+    "chair",
+    "office-chair",
+    "couch",
+    "couch-l-shaped",
+    "bookshelf",
+    "bookshelf-tall",
+    "filing-cabinet",
+    "locker",
+    "wardrobe",
+    "bed",
+    "bunk-bed",
+    "workbench",
+    "standing-desk",
     # Tech
-    "server-rack", "monitor-wall", "projector-screen", "cable-mess",
-    "satellite-dish", "antenna", "router-hub",
+    "server-rack",
+    "monitor-wall",
+    "projector-screen",
+    "cable-mess",
+    "satellite-dish",
+    "antenna",
+    "router-hub",
     # Decoration
-    "plant", "plant-large", "plant-hanging", "flower-pot",
-    "lamp", "lamp-floor", "lamp-desk", "ceiling-light",
-    "rug", "rug-large", "painting", "notice-board", "whiteboard",
-    "clock", "trophy", "globe",
+    "plant",
+    "plant-large",
+    "plant-hanging",
+    "flower-pot",
+    "lamp",
+    "lamp-floor",
+    "lamp-desk",
+    "ceiling-light",
+    "rug",
+    "rug-large",
+    "painting",
+    "notice-board",
+    "whiteboard",
+    "clock",
+    "trophy",
+    "globe",
     # Kitchen / break
-    "coffee-machine", "water-cooler", "vending-machine", "fridge", "microwave",
+    "coffee-machine",
+    "water-cooler",
+    "vending-machine",
+    "fridge",
+    "microwave",
     # Interaction markers
-    "work-point", "work-point-1", "work-point-2", "work-point-3", "work-point-4",
-    "coffee-point", "sleep-corner",
+    "work-point",
+    "work-point-1",
+    "work-point-2",
+    "work-point-3",
+    "work-point-4",
+    "coffee-point",
+    "sleep-corner",
 }
 
 VALID_INTERACTION_TYPES = {"work", "coffee", "sleep"}
@@ -66,10 +107,11 @@ VALID_INTERACTION_TYPES = {"work", "coffee", "sleep"}
 # Validation
 # =============================================================================
 
+
 def validate_blueprint(bp: BlueprintJson) -> tuple[list[str], list[str]]:
     """
     Validate a blueprint JSON structure.
-    
+
     Returns a tuple of (errors, warnings).
     Empty errors list = valid. Warnings are informational.
     """
@@ -78,13 +120,9 @@ def validate_blueprint(bp: BlueprintJson) -> tuple[list[str], list[str]]:
 
     # Grid dimensions
     if bp.gridWidth < MIN_GRID_SIZE or bp.gridWidth > MAX_GRID_SIZE:
-        errors.append(
-            f"gridWidth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridWidth}"
-        )
+        errors.append(f"gridWidth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridWidth}")
     if bp.gridDepth < MIN_GRID_SIZE or bp.gridDepth > MAX_GRID_SIZE:
-        errors.append(
-            f"gridDepth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridDepth}"
-        )
+        errors.append(f"gridDepth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridDepth}")
 
     # Must have at least one door
     if not bp.doors and not bp.doorPositions:
@@ -92,35 +130,25 @@ def validate_blueprint(bp: BlueprintJson) -> tuple[list[str], list[str]]:
 
     # Validate walkable center unconditionally (it's a required field)
     if bp.walkableCenter.x < 0 or bp.walkableCenter.x >= bp.gridWidth:
-        errors.append(
-            f"walkableCenter.x ({bp.walkableCenter.x}) out of grid bounds (0-{bp.gridWidth - 1})"
-        )
+        errors.append(f"walkableCenter.x ({bp.walkableCenter.x}) out of grid bounds (0-{bp.gridWidth - 1})")
     if bp.walkableCenter.z < 0 or bp.walkableCenter.z >= bp.gridDepth:
-        errors.append(
-            f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})"
-        )
+        errors.append(f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})")
 
     # Validate placements
     occupied: dict[tuple[int, int], str] = {}
     for i, p in enumerate(bp.placements):
         # Check bounds
         if p.x < 0 or p.x >= bp.gridWidth or p.z < 0 or p.z >= bp.gridDepth:
-            errors.append(
-                f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds"
-            )
+            errors.append(f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds")
             continue
 
         # Check span bounds
         span_w = p.span.w if p.span else 1
         span_d = p.span.d if p.span else 1
         if p.x + span_w > bp.gridWidth:
-            errors.append(
-                f"Placement [{i}] propId='{p.propId}' span exceeds grid width at x={p.x}, span.w={span_w}"
-            )
+            errors.append(f"Placement [{i}] propId='{p.propId}' span exceeds grid width at x={p.x}, span.w={span_w}")
         if p.z + span_d > bp.gridDepth:
-            errors.append(
-                f"Placement [{i}] propId='{p.propId}' span exceeds grid depth at z={p.z}, span.d={span_d}"
-            )
+            errors.append(f"Placement [{i}] propId='{p.propId}' span exceeds grid depth at z={p.z}, span.d={span_d}")
 
         # Check for overlap (only for non-interaction props)
         if p.type != "interaction":
@@ -141,23 +169,17 @@ def validate_blueprint(bp: BlueprintJson) -> tuple[list[str], list[str]]:
         # Validate interaction type if present
         if p.interactionType and p.interactionType not in VALID_INTERACTION_TYPES:
             errors.append(
-                f"Placement [{i}] has unknown interactionType '{p.interactionType}'. "
-                f"Valid: {VALID_INTERACTION_TYPES}"
+                f"Placement [{i}] has unknown interactionType '{p.interactionType}'. Valid: {VALID_INTERACTION_TYPES}"
             )
 
     # Helper to validate doors are on wall edges
     def _validate_doors(door_list: list, label: str):
         for i, door in enumerate(door_list):
-            on_edge = (
-                door.x == 0
-                or door.x == bp.gridWidth - 1
-                or door.z == 0
-                or door.z == bp.gridDepth - 1
-            )
+            on_edge = door.x == 0 or door.x == bp.gridWidth - 1 or door.z == 0 or door.z == bp.gridDepth - 1
             if not on_edge:
                 errors.append(
                     f"{label}[{i}] at ({door.x},{door.z}) must be on a wall edge "
-                    f"(x=0, x={bp.gridWidth-1}, z=0, or z={bp.gridDepth-1})"
+                    f"(x=0, x={bp.gridWidth - 1}, z=0, or z={bp.gridDepth - 1})"
                 )
 
     # Validate both door fields
@@ -178,6 +200,7 @@ def validate_blueprint(bp: BlueprintJson) -> tuple[list[str], list[str]]:
 # Helper
 # =============================================================================
 
+
 def row_to_response(row: dict) -> dict:
     """Convert a database row to a response dict."""
     bp_json = json.loads(row["blueprint_json"]) if isinstance(row["blueprint_json"], str) else row["blueprint_json"]
@@ -196,6 +219,7 @@ def row_to_response(row: dict) -> dict:
 # Routes
 # =============================================================================
 
+
 @router.get("")
 async def list_blueprints(
     source: Optional[str] = None,
@@ -203,13 +227,12 @@ async def list_blueprints(
 ) -> list[CustomBlueprintResponse]:
     """
     List all custom blueprints.
-    
+
     Optional filters:
     - source: filter by source ('user', 'import', 'mod')
     - room_id: filter by associated room
     """
     async with get_db() as db:
-
         query = "SELECT * FROM custom_blueprints WHERE 1=1"
         params: list = []
 
@@ -232,7 +255,7 @@ async def list_blueprints(
 async def export_blueprint(blueprint_id: str):
     """
     Export a blueprint as a downloadable JSON file.
-    
+
     Returns the blueprint JSON with Content-Disposition header for download.
     """
     async with get_db() as db:
@@ -249,7 +272,7 @@ async def export_blueprint(blueprint_id: str):
         )
 
     bp_json = json.loads(row["blueprint_json"]) if isinstance(row["blueprint_json"], str) else row["blueprint_json"]
-    
+
     # Pretty-print JSON for readable export
     content = json.dumps(bp_json, indent=2, ensure_ascii=False)
     # Strict sanitize: only allow [a-z0-9-_], strip everything else
@@ -290,7 +313,7 @@ async def get_blueprint(blueprint_id: str):
 async def create_blueprint(body: CustomBlueprintCreate):
     """
     Create a new custom blueprint.
-    
+
     Validates the blueprint JSON structure before storing.
     """
     # Validate blueprint
@@ -359,7 +382,7 @@ async def create_blueprint(body: CustomBlueprintCreate):
 async def import_blueprint(body: BlueprintJson):
     """
     Import a blueprint from a raw JSON blueprint file.
-    
+
     Accepts the blueprint JSON directly (as exported by /export/{id}).
     Sets source to 'import'.
     """
@@ -425,7 +448,7 @@ async def import_blueprint(body: BlueprintJson):
 async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
     """
     Update an existing custom blueprint.
-    
+
     Only provided fields are updated (partial update).
     """
     async with get_db() as db:
@@ -465,7 +488,7 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
 
         await db.execute(
             """
-            UPDATE custom_blueprints 
+            UPDATE custom_blueprints
             SET name = ?, room_id = ?, blueprint_json = ?, source = ?, updated_at = ?
             WHERE id = ?
             """,
@@ -511,8 +534,10 @@ async def delete_blueprint(blueprint_id: str):
 # Prop Movement & Deletion (Interactive Editing)
 # =============================================================================
 
+
 class MovePropRequest(BaseModel):
     """Request body for moving a prop within a blueprint."""
+
     propId: str
     fromX: int
     fromZ: int
@@ -524,6 +549,7 @@ class MovePropRequest(BaseModel):
 
 class DeletePropRequest(BaseModel):
     """Request body for deleting a prop from a blueprint."""
+
     propId: str
     x: int
     z: int
@@ -536,14 +562,13 @@ import os
 # =============================================================================
 
 _BLUEPRINT_DIR = os.path.join(
-    os.path.dirname(__file__),
-    "..", "..", "..", "frontend", "src", "lib", "grid", "blueprints"
+    os.path.dirname(__file__), "..", "..", "..", "frontend", "src", "lib", "grid", "blueprints"
 )
 
 
 def _sanitize_blueprint_id(blueprint_id: str) -> str:
     """Sanitize blueprint_id to prevent path traversal."""
-    safe_id = re.sub(r'[^a-zA-Z0-9_-]', '', blueprint_id)
+    safe_id = re.sub(r"[^a-zA-Z0-9_-]", "", blueprint_id)
     if not safe_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blueprint ID")
     return safe_id
@@ -552,7 +577,7 @@ def _sanitize_blueprint_id(blueprint_id: str) -> str:
 async def _load_blueprint(blueprint_id: str) -> tuple[dict, Optional[dict], str]:
     """
     Load a blueprint by ID.
-    
+
     Returns (bp_json, db_row_or_None, source).
     source is 'db' or 'file'.
     Raises HTTPException if not found.
@@ -582,7 +607,7 @@ async def _load_blueprint(blueprint_id: str) -> tuple[dict, Optional[dict], str]
             detail=f"Blueprint not found: {blueprint_id}",
         )
 
-    with open(blueprint_path, "r") as f:
+    with open(blueprint_path) as f:
         bp_json = json.load(f)
     return bp_json, None, "file"
 
@@ -606,19 +631,29 @@ async def _save_blueprint(blueprint_id: str, bp_json: dict, db_row: Optional[dic
 
 def _validate_bounds(x: int, z: int, grid_width: int, grid_depth: int, span_w: int = 1, span_d: int = 1) -> None:
     """Validate that position + span is within grid bounds.
-    
+
     Props can be placed at any cell 0..gridSize-1 (walls are visual 3D geometry,
     not grid occupants).
     """
     if x < 0 or z < 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Position ({x},{z}) is outside room bounds")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Position ({x},{z}) is outside room bounds"
+        )
     if x + span_w > grid_width:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Position x={x} + span w={span_w} exceeds grid width {grid_width}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Position x={x} + span w={span_w} exceeds grid width {grid_width}",
+        )
     if z + span_d > grid_depth:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Position z={z} + span d={span_d} exceeds grid depth {grid_depth}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Position z={z} + span d={span_d} exceeds grid depth {grid_depth}",
+        )
 
 
-def _check_overlap(placements: list[dict], x: int, z: int, span_w: int, span_d: int, exclude_index: Optional[int] = None) -> None:
+def _check_overlap(
+    placements: list[dict], x: int, z: int, span_w: int, span_d: int, exclude_index: Optional[int] = None
+) -> None:
     """Check for overlap with other props. exclude_index is the index of the prop being moved."""
     for i, p in enumerate(placements):
         if i == exclude_index:
@@ -640,7 +675,7 @@ def _check_overlap(placements: list[dict], x: int, z: int, span_w: int, span_d: 
 async def move_prop(blueprint_id: str, body: MovePropRequest):
     """
     Move a prop to a new position within a blueprint.
-    
+
     Updates the placement in the blueprint JSON and broadcasts the change via SSE.
     Works with both custom blueprints (database) and built-in blueprints (JSON files).
     """
@@ -688,20 +723,25 @@ async def move_prop(blueprint_id: str, body: MovePropRequest):
         prop["span"] = {"w": span_w, "d": span_d}
 
     await _save_blueprint(blueprint_id, bp_json, db_row, source)
-    logger.info(f"Prop moved in blueprint {blueprint_id}: {body.propId} from ({body.fromX},{body.fromZ}) to ({body.toX},{body.toZ})")
+    logger.info(
+        f"Prop moved in blueprint {blueprint_id}: {body.propId} from ({body.fromX},{body.fromZ}) to ({body.toX},{body.toZ})"
+    )
 
     # Broadcast update to all clients
-    await broadcast("blueprint-update", {
-        "blueprintId": blueprint_id,
-        "action": "prop-moved",
-        "propId": body.propId,
-        "fromX": body.fromX,
-        "fromZ": body.fromZ,
-        "toX": body.toX,
-        "toZ": body.toZ,
-        "rotation": body.rotation,
-    })
-    
+    await broadcast(
+        "blueprint-update",
+        {
+            "blueprintId": blueprint_id,
+            "action": "prop-moved",
+            "propId": body.propId,
+            "fromX": body.fromX,
+            "fromZ": body.fromZ,
+            "toX": body.toX,
+            "toZ": body.toZ,
+            "rotation": body.rotation,
+        },
+    )
+
     return {"success": True, "blueprintId": blueprint_id}
 
 
@@ -709,7 +749,7 @@ async def move_prop(blueprint_id: str, body: MovePropRequest):
 async def delete_prop(blueprint_id: str, body: DeletePropRequest):
     """
     Delete a prop from a blueprint.
-    
+
     Removes the placement from the blueprint JSON and broadcasts the change via SSE.
     """
     bp_json, db_row, source = await _load_blueprint(blueprint_id)
@@ -718,8 +758,7 @@ async def delete_prop(blueprint_id: str, body: DeletePropRequest):
     # Find and remove the placement
     original_len = len(placements)
     placements = [
-        p for p in placements
-        if not (p.get("propId") == body.propId and p.get("x") == body.x and p.get("z") == body.z)
+        p for p in placements if not (p.get("propId") == body.propId and p.get("x") == body.x and p.get("z") == body.z)
     ]
 
     if len(placements) == original_len:
@@ -733,12 +772,15 @@ async def delete_prop(blueprint_id: str, body: DeletePropRequest):
     logger.info(f"Prop deleted from blueprint {blueprint_id}: {body.propId} at ({body.x},{body.z})")
 
     # Broadcast update to all clients
-    await broadcast("blueprint-update", {
-        "blueprintId": blueprint_id,
-        "action": "prop-deleted",
-        "propId": body.propId,
-        "x": body.x,
-        "z": body.z,
-    })
-    
+    await broadcast(
+        "blueprint-update",
+        {
+            "blueprintId": blueprint_id,
+            "action": "prop-deleted",
+            "propId": body.propId,
+            "x": body.x,
+            "z": body.z,
+        },
+    )
+
     return {"success": True, "blueprintId": blueprint_id}

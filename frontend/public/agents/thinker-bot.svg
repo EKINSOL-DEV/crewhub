@@ -15,19 +15,19 @@
       <stop offset="100%" style="stop-color:#FFC107"/>
     </linearGradient>
   </defs>
-  
+
   <!-- Lightbulb antenna -->
   <ellipse cx="64" cy="14" rx="10" ry="12" fill="url(#bulbGlow)"/>
   <rect x="60" y="22" width="8" height="6" fill="#FFA000"/>
   <rect x="58" y="26" width="12" height="4" rx="2" fill="#FFA000"/>
   <rect x="61" y="28" width="6" height="12" rx="3" fill="url(#thinkerDark)"/>
-  
+
   <!-- Head -->
   <rect x="24" y="40" width="80" height="60" rx="18" fill="url(#thinkerGradient)"/>
-  
+
   <!-- Brain pattern on forehead -->
   <path d="M40 52 Q48 48 56 52 Q64 56 72 52 Q80 48 88 52" stroke="#0D5C99" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
-  
+
   <!-- Eyes - thinking look -->
   <ellipse cx="44" cy="68" rx="12" ry="14" fill="white"/>
   <ellipse cx="84" cy="68" rx="12" ry="14" fill="white"/>
@@ -35,14 +35,14 @@
   <circle cx="88" cy="66" r="6" fill="#333"/>
   <circle cx="50" cy="64" r="2" fill="white"/>
   <circle cx="90" cy="64" r="2" fill="white"/>
-  
+
   <!-- Thinking eyebrows -->
   <path d="M32 56 Q44 52 52 58" stroke="#0A4A7A" stroke-width="3" fill="none" stroke-linecap="round"/>
   <path d="M96 56 Q84 52 76 58" stroke="#0A4A7A" stroke-width="3" fill="none" stroke-linecap="round"/>
-  
+
   <!-- Thoughtful expression -->
   <path d="M52 86 Q64 90 76 86" stroke="#0A4A7A" stroke-width="3" fill="none" stroke-linecap="round"/>
-  
+
   <!-- Body hint -->
   <rect x="40" y="100" width="48" height="20" rx="8" fill="url(#thinkerDark)"/>
 </svg>

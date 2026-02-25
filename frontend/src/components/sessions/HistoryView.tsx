@@ -1,22 +1,22 @@
-import { useState, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
-import { 
-  History, 
-  RefreshCw, 
-  Search, 
+import { useState, useEffect, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Input } from '@/components/ui/input'
+import {
+  History,
+  RefreshCw,
+  Search,
   Archive,
-  CheckCircle2, 
-  XCircle, 
+  CheckCircle2,
+  XCircle,
   Clock,
   ChevronRight,
   Filter,
   ChevronDown,
   MessageSquare,
-  Bot
-} from "lucide-react"
+  Bot,
+} from 'lucide-react'
 
 interface ArchivedSession {
   session_key: string
@@ -26,8 +26,8 @@ interface ArchivedSession {
   minion_type: string
   model: string | null
   channel: string | null
-  started_at: string   // ISO string
-  ended_at: string     // ISO string
+  started_at: string // ISO string
+  ended_at: string // ISO string
   message_count: number
   status: string
   summary: string
@@ -49,8 +49,8 @@ function parseTimestamp(iso: string): number {
 
 function formatDuration(startIso: string, endIso: string): string {
   const diff = parseTimestamp(endIso) - parseTimestamp(startIso)
-  if (diff < 0) return "—"
-  if (diff < 1000) return "< 1s"
+  if (diff < 0) return '—'
+  if (diff < 1000) return '< 1s'
   if (diff < 60000) return `${Math.floor(diff / 1000)}s`
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ${Math.floor((diff % 60000) / 1000)}s`
   return `${Math.floor(diff / 3600000)}h ${Math.floor((diff % 3600000) / 60000)}m`
@@ -58,13 +58,15 @@ function formatDuration(startIso: string, endIso: string): string {
 
 function formatDate(iso: string): string {
   const timestamp = parseTimestamp(iso)
-  if (isNaN(timestamp)) return "—"
+  if (isNaN(timestamp)) return '—'
   const date = new Date(timestamp)
   const now = new Date()
   const diffDays = Math.floor((now.getTime() - timestamp) / 86400000)
-  
-  if (diffDays === 0) return `Today ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-  if (diffDays === 1) return `Yesterday ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+
+  if (diffDays === 0)
+    return `Today ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  if (diffDays === 1)
+    return `Yesterday ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
   if (diffDays < 7) return `${diffDays}d ago`
   return date.toLocaleDateString()
 }
@@ -81,21 +83,26 @@ function formatTotal(n: number): string {
 
 function getStatusIcon(status: string) {
   switch (status) {
-    case "archived": return <Archive className="h-4 w-4 text-blue-500" />
-    case "completed":
-    case "success": return <CheckCircle2 className="h-4 w-4 text-green-500" />
-    case "error":
-    case "failed": return <XCircle className="h-4 w-4 text-red-500" />
-    case "timeout": return <Clock className="h-4 w-4 text-orange-500" />
-    default: return <Archive className="h-4 w-4 text-muted-foreground" />
+    case 'archived':
+      return <Archive className="h-4 w-4 text-blue-500" />
+    case 'completed':
+    case 'success':
+      return <CheckCircle2 className="h-4 w-4 text-green-500" />
+    case 'error':
+    case 'failed':
+      return <XCircle className="h-4 w-4 text-red-500" />
+    case 'timeout':
+      return <Clock className="h-4 w-4 text-orange-500" />
+    default:
+      return <Archive className="h-4 w-4 text-muted-foreground" />
   }
 }
 
 function getStatusBadge(status: string) {
-  let variant: "default" | "secondary" | "destructive" | "outline" = "secondary"
-  if (status === "error" || status === "failed") variant = "destructive"
-  else if (status === "completed" || status === "success") variant = "default"
-  else if (status === "timeout") variant = "outline"
+  let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'secondary'
+  if (status === 'error' || status === 'failed') variant = 'destructive'
+  else if (status === 'completed' || status === 'success') variant = 'default'
+  else if (status === 'timeout') variant = 'outline'
   return <Badge variant={variant}>{status}</Badge>
 }
 
@@ -105,8 +112,8 @@ export function HistoryView() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const fetchHistory = useCallback(async (offset = 0, append = false) => {
     if (!append) setLoading(true)
@@ -126,7 +133,7 @@ export function HistoryView() {
       } else {
         const data: ArchivedResponse = await response.json()
         if (append) {
-          setSessions(prev => [...prev, ...(data.sessions || [])])
+          setSessions((prev) => [...prev, ...(data.sessions || [])])
         } else {
           setSessions(data.sessions || [])
         }
@@ -154,8 +161,8 @@ export function HistoryView() {
 
   const hasMore = sessions.length < total
 
-  const filteredSessions = sessions.filter(s => {
-    if (statusFilter !== "all" && s.status !== statusFilter) return false
+  const filteredSessions = sessions.filter((s) => {
+    if (statusFilter !== 'all' && s.status !== statusFilter) return false
     if (search.trim()) {
       const searchLower = search.toLowerCase()
       return (
@@ -181,22 +188,22 @@ export function HistoryView() {
               <p className="text-sm text-muted-foreground">
                 {total > 0
                   ? `${formatTotal(total)} archived sessions`
-                  : "Archived and completed sessions"}
+                  : 'Archived and completed sessions'}
               </p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => fetchHistory()}
             disabled={loading}
             className="gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -245,8 +252,8 @@ export function HistoryView() {
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">No History Yet</h3>
             <p className="text-muted-foreground max-w-md">
-              Completed and archived sessions will appear here.
-              Sessions are automatically archived after completion or timeout.
+              Completed and archived sessions will appear here. Sessions are automatically archived
+              after completion or timeout.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-4 text-center">
               <div className="p-4 rounded-lg bg-muted border border-border">
@@ -262,7 +269,7 @@ export function HistoryView() {
         ) : (
           <div className="p-4 space-y-2">
             {filteredSessions.map((session) => (
-              <div 
+              <div
                 key={session.session_id}
                 className="p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors cursor-pointer group"
               >
@@ -278,7 +285,9 @@ export function HistoryView() {
                       </div>
                       <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                         <span>{formatDate(session.ended_at)}</span>
-                        <span>Duration: {formatDuration(session.started_at, session.ended_at)}</span>
+                        <span>
+                          Duration: {formatDuration(session.started_at, session.ended_at)}
+                        </span>
                         <span className="inline-flex items-center gap-1">
                           <MessageSquare className="h-3 w-3" />
                           {formatCount(session.message_count)} messages

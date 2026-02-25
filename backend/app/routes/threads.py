@@ -4,22 +4,23 @@ Handles thread CRUD, participants, and message routing.
 """
 
 import json
-import time
 import logging
+import time
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
 import aiosqlite
+from fastapi import APIRouter, HTTPException, Query
 
 from app.db.database import get_db
 from app.db.thread_models import (
-    ThreadCreate, ThreadUpdate, ThreadParticipantAdd,
-    ThreadMessageSend, ThreadResponse, ThreadParticipantResponse,
-    ThreadMessageResponse,
+    ThreadCreate,
+    ThreadMessageSend,
+    ThreadParticipantAdd,
+    ThreadUpdate,
 )
-from app.services.connections import get_connection_manager
 from app.routes.sse import broadcast
+from app.services.connections import get_connection_manager
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["threads"])
@@ -54,8 +55,7 @@ async def _get_thread_response(db: aiosqlite.Connection, thread_id: str) -> dict
         return None
 
     cursor = await db.execute(
-        "SELECT * FROM thread_participants WHERE thread_id = ? AND is_active = 1 ORDER BY joined_at",
-        (thread_id,)
+        "SELECT * FROM thread_participants WHERE thread_id = ? AND is_active = 1 ORDER BY joined_at", (thread_id,)
     )
     participants = [dict(r) for r in await cursor.fetchall()]
 
@@ -121,13 +121,9 @@ async def create_thread(body: ThreadCreate):
     settings_json = json.dumps(body.settings or {"maxParticipants": MAX_PARTICIPANTS})
 
     async with get_db() as db:
-
         # Resolve agent info
         placeholders = ",".join("?" * len(agent_ids))
-        cursor = await db.execute(
-            f"SELECT id, name, icon, color FROM agents WHERE id IN ({placeholders})",
-            agent_ids
-        )
+        cursor = await db.execute(f"SELECT id, name, icon, color FROM agents WHERE id IN ({placeholders})", agent_ids)
         agents = {r["id"]: dict(r) for r in await cursor.fetchall()}
 
         # Validate all agents exist
@@ -143,7 +139,7 @@ async def create_thread(body: ThreadCreate):
         await db.execute(
             """INSERT INTO threads (id, kind, title, title_auto, created_by, created_at, updated_at, settings_json)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (thread_id, body.kind, body.title, title_auto, "user", now, now, settings_json)
+            (thread_id, body.kind, body.title, title_auto, "user", now, now, settings_json),
         )
 
         # Insert participants
@@ -153,14 +149,14 @@ async def create_thread(body: ThreadCreate):
             await db.execute(
                 """INSERT INTO thread_participants (id, thread_id, agent_id, agent_name, agent_icon, agent_color, role, is_active, joined_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)""",
-                (_gen_id(), thread_id, aid, agent["name"], agent.get("icon"), agent.get("color"), role, now)
+                (_gen_id(), thread_id, aid, agent["name"], agent.get("icon"), agent.get("color"), role, now),
             )
 
         # System message
         await db.execute(
             """INSERT INTO thread_messages (id, thread_id, role, content, created_at)
                VALUES (?, ?, 'system', ?, ?)""",
-            (_gen_id(), thread_id, f"Group created with {', '.join(agent_names)}", now)
+            (_gen_id(), thread_id, f"Group created with {', '.join(agent_names)}", now),
         )
 
         await db.commit()
@@ -181,7 +177,6 @@ async def list_threads(
 ):
     """List threads, optionally filtered by kind."""
     async with get_db() as db:
-
         conditions = []
         params = []
 
@@ -200,7 +195,7 @@ async def list_threads(
             f"""SELECT t.* FROM threads t {where}
                 ORDER BY COALESCE(t.last_message_at, t.created_at) DESC
                 LIMIT ?""",
-            params + [limit]
+            params + [limit],
         )
         threads = await cursor.fetchall()
 
@@ -233,16 +228,12 @@ async def update_thread(thread_id: str, body: ThreadUpdate):
             raise HTTPException(status_code=404, detail="Thread not found")
 
         if body.title is not None:
-            await db.execute(
-                "UPDATE threads SET title = ?, updated_at = ? WHERE id = ?",
-                (body.title, now, thread_id)
-            )
+            await db.execute("UPDATE threads SET title = ?, updated_at = ? WHERE id = ?", (body.title, now, thread_id))
 
         if body.archived is not None:
             archived_at = now if body.archived else None
             await db.execute(
-                "UPDATE threads SET archived_at = ?, updated_at = ? WHERE id = ?",
-                (archived_at, now, thread_id)
+                "UPDATE threads SET archived_at = ?, updated_at = ? WHERE id = ?", (archived_at, now, thread_id)
             )
 
         await db.commit()
@@ -260,7 +251,6 @@ async def add_participants(thread_id: str, body: ThreadParticipantAdd):
     """Add agents to a thread."""
     now = _now_ms()
     async with get_db() as db:
-
         cursor = await db.execute("SELECT * FROM threads WHERE id = ?", (thread_id,))
         thread = await cursor.fetchone()
         if not thread:
@@ -268,22 +258,17 @@ async def add_participants(thread_id: str, body: ThreadParticipantAdd):
 
         # Count current active participants
         cursor = await db.execute(
-            "SELECT COUNT(*) as cnt FROM thread_participants WHERE thread_id = ? AND is_active = 1",
-            (thread_id,)
+            "SELECT COUNT(*) as cnt FROM thread_participants WHERE thread_id = ? AND is_active = 1", (thread_id,)
         )
         current_count = (await cursor.fetchone())["cnt"]
 
         if current_count + len(body.agent_ids) > MAX_PARTICIPANTS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Would exceed max {MAX_PARTICIPANTS} participants"
-            )
+            raise HTTPException(status_code=400, detail=f"Would exceed max {MAX_PARTICIPANTS} participants")
 
         # Resolve agents
         placeholders = ",".join("?" * len(body.agent_ids))
         cursor = await db.execute(
-            f"SELECT id, name, icon, color FROM agents WHERE id IN ({placeholders})",
-            body.agent_ids
+            f"SELECT id, name, icon, color FROM agents WHERE id IN ({placeholders})", body.agent_ids
         )
         agents = {r["id"]: dict(r) for r in await cursor.fetchall()}
 
@@ -295,8 +280,7 @@ async def add_participants(thread_id: str, body: ThreadParticipantAdd):
             agent = agents[aid]
             # Check if already exists (reactivate if inactive)
             cursor = await db.execute(
-                "SELECT id, is_active FROM thread_participants WHERE thread_id = ? AND agent_id = ?",
-                (thread_id, aid)
+                "SELECT id, is_active FROM thread_participants WHERE thread_id = ? AND agent_id = ?", (thread_id, aid)
             )
             existing = await cursor.fetchone()
 
@@ -304,28 +288,26 @@ async def add_participants(thread_id: str, body: ThreadParticipantAdd):
                 if not existing["is_active"]:
                     await db.execute(
                         "UPDATE thread_participants SET is_active = 1, left_at = NULL, joined_at = ? WHERE id = ?",
-                        (now, existing["id"])
+                        (now, existing["id"]),
                     )
                     added.append(aid)
             else:
                 await db.execute(
                     """INSERT INTO thread_participants (id, thread_id, agent_id, agent_name, agent_icon, agent_color, role, is_active, joined_at)
                        VALUES (?, ?, ?, ?, ?, ?, 'member', 1, ?)""",
-                    (_gen_id(), thread_id, aid, agent["name"], agent.get("icon"), agent.get("color"), now)
+                    (_gen_id(), thread_id, aid, agent["name"], agent.get("icon"), agent.get("color"), now),
                 )
                 added.append(aid)
 
         if added:
             # Update auto title
             cursor = await db.execute(
-                "SELECT agent_name FROM thread_participants WHERE thread_id = ? AND is_active = 1",
-                (thread_id,)
+                "SELECT agent_name FROM thread_participants WHERE thread_id = ? AND is_active = 1", (thread_id,)
             )
             names = [r["agent_name"] for r in await cursor.fetchall()]
             title_auto = _generate_auto_title(names)
             await db.execute(
-                "UPDATE threads SET title_auto = ?, updated_at = ? WHERE id = ?",
-                (title_auto, now, thread_id)
+                "UPDATE threads SET title_auto = ?, updated_at = ? WHERE id = ?", (title_auto, now, thread_id)
             )
 
             # System message
@@ -333,7 +315,7 @@ async def add_participants(thread_id: str, body: ThreadParticipantAdd):
             await db.execute(
                 """INSERT INTO thread_messages (id, thread_id, role, content, created_at)
                    VALUES (?, ?, 'system', ?, ?)""",
-                (_gen_id(), thread_id, f"{', '.join(added_names)} joined the group", now)
+                (_gen_id(), thread_id, f"{', '.join(added_names)} joined the group", now),
             )
 
         await db.commit()
@@ -350,37 +332,31 @@ async def remove_participant(thread_id: str, agent_id: str):
     """Remove an agent from a thread (soft delete)."""
     now = _now_ms()
     async with get_db() as db:
-
         cursor = await db.execute(
             "SELECT id, agent_name FROM thread_participants WHERE thread_id = ? AND agent_id = ? AND is_active = 1",
-            (thread_id, agent_id)
+            (thread_id, agent_id),
         )
         participant = await cursor.fetchone()
         if not participant:
             raise HTTPException(status_code=404, detail="Participant not found or already removed")
 
         await db.execute(
-            "UPDATE thread_participants SET is_active = 0, left_at = ? WHERE id = ?",
-            (now, participant["id"])
+            "UPDATE thread_participants SET is_active = 0, left_at = ? WHERE id = ?", (now, participant["id"])
         )
 
         # Update auto title
         cursor = await db.execute(
-            "SELECT agent_name FROM thread_participants WHERE thread_id = ? AND is_active = 1",
-            (thread_id,)
+            "SELECT agent_name FROM thread_participants WHERE thread_id = ? AND is_active = 1", (thread_id,)
         )
         names = [r["agent_name"] for r in await cursor.fetchall()]
         title_auto = _generate_auto_title(names)
-        await db.execute(
-            "UPDATE threads SET title_auto = ?, updated_at = ? WHERE id = ?",
-            (title_auto, now, thread_id)
-        )
+        await db.execute("UPDATE threads SET title_auto = ?, updated_at = ? WHERE id = ?", (title_auto, now, thread_id))
 
         # System message
         await db.execute(
             """INSERT INTO thread_messages (id, thread_id, role, content, created_at)
                VALUES (?, ?, 'system', ?, ?)""",
-            (_gen_id(), thread_id, f"{participant['agent_name']} left the group", now)
+            (_gen_id(), thread_id, f"{participant['agent_name']} left the group", now),
         )
 
         await db.commit()
@@ -401,7 +377,6 @@ async def get_messages(
 ):
     """Get messages for a thread with pagination."""
     async with get_db() as db:
-
         # Verify thread exists
         cursor = await db.execute("SELECT id FROM threads WHERE id = ?", (thread_id,))
         if not await cursor.fetchone():
@@ -420,7 +395,7 @@ async def get_messages(
                 WHERE {where}
                 ORDER BY created_at DESC
                 LIMIT ?""",
-            params + [limit + 1]
+            params + [limit + 1],
         )
         rows = await cursor.fetchall()
 
@@ -437,17 +412,19 @@ async def get_messages(
             except (json.JSONDecodeError, TypeError):
                 pass
 
-        messages.append({
-            "id": r["id"],
-            "thread_id": r["thread_id"],
-            "role": r["role"],
-            "content": r["content"],
-            "agent_id": r["agent_id"],
-            "agent_name": r["agent_name"],
-            "routing_mode": r["routing_mode"],
-            "target_agent_ids": target_ids,
-            "created_at": r["created_at"],
-        })
+        messages.append(
+            {
+                "id": r["id"],
+                "thread_id": r["thread_id"],
+                "role": r["role"],
+                "content": r["content"],
+                "agent_id": r["agent_id"],
+                "agent_name": r["agent_name"],
+                "routing_mode": r["routing_mode"],
+                "target_agent_ids": target_ids,
+                "created_at": r["created_at"],
+            }
+        )
 
     return {
         "messages": messages,
@@ -468,7 +445,6 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
     now = _now_ms()
 
     async with get_db() as db:
-
         # Get thread + active participants
         cursor = await db.execute("SELECT * FROM threads WHERE id = ?", (thread_id,))
         thread = await cursor.fetchone()
@@ -478,8 +454,7 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
             raise HTTPException(status_code=400, detail="Thread is archived")
 
         cursor = await db.execute(
-            "SELECT * FROM thread_participants WHERE thread_id = ? AND is_active = 1",
-            (thread_id,)
+            "SELECT * FROM thread_participants WHERE thread_id = ? AND is_active = 1", (thread_id,)
         )
         participants = [dict(r) for r in await cursor.fetchall()]
 
@@ -501,13 +476,10 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
         await db.execute(
             """INSERT INTO thread_messages (id, thread_id, role, content, routing_mode, target_agent_ids_json, created_at)
                VALUES (?, ?, 'user', ?, ?, ?, ?)""",
-            (user_msg_id, thread_id, content, body.routing_mode, target_json, now)
+            (user_msg_id, thread_id, content, body.routing_mode, target_json, now),
         )
 
-        await db.execute(
-            "UPDATE threads SET last_message_at = ?, updated_at = ? WHERE id = ?",
-            (now, now, thread_id)
-        )
+        await db.execute("UPDATE threads SET last_message_at = ?, updated_at = ? WHERE id = ?", (now, now, thread_id))
         await db.commit()
 
     # Broadcast user message event
@@ -555,11 +527,11 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
                         await db.execute(
                             """INSERT INTO thread_messages (id, thread_id, role, content, agent_id, agent_name, created_at)
                                VALUES (?, ?, 'assistant', ?, ?, ?, ?)""",
-                            (msg_id, thread_id, response_text, agent_id, agent_name, msg_now)
+                            (msg_id, thread_id, response_text, agent_id, agent_name, msg_now),
                         )
                         await db.execute(
                             "UPDATE threads SET last_message_at = ?, updated_at = ? WHERE id = ?",
-                            (msg_now, msg_now, thread_id)
+                            (msg_now, msg_now, thread_id),
                         )
                         await db.commit()
 
@@ -588,7 +560,7 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
                     await db.execute(
                         """INSERT INTO thread_messages (id, thread_id, role, content, agent_id, agent_name, created_at)
                            VALUES (?, ?, 'system', ?, ?, ?, ?)""",
-                        (err_msg_id, thread_id, f"Failed to reach agent", agent_id, agent_id, err_now)
+                        (err_msg_id, thread_id, "Failed to reach agent", agent_id, agent_id, err_now),
                     )
                     await db.commit()
     else:

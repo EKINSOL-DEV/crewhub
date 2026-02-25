@@ -1,7 +1,7 @@
 # Migration Guide: Agent Persona Tuning System
 
-**Date:** 2026-02-10  
-**Schema Version:** v10  
+**Date:** 2026-02-10
+**Schema Version:** v10
 **Tag:** `persona-system-v1`
 
 ---

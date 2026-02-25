@@ -39,14 +39,14 @@ interface HeaderBotProps {
 }
 
 function HeaderBot({ config, status, animation }: HeaderBotProps) {
-  const groupRef    = useRef<THREE.Group>(null)
-  const leftEyeRef  = useRef<THREE.Group>(null)
+  const groupRef = useRef<THREE.Group>(null)
+  const leftEyeRef = useRef<THREE.Group>(null)
   const rightEyeRef = useRef<THREE.Group>(null)
 
   const darkColor = new THREE.Color(config.color).multiplyScalar(0.65)
-  const darkHex   = '#' + darkColor.getHexString()
+  const darkHex = '#' + darkColor.getHexString()
   const footColor = new THREE.Color(config.color).multiplyScalar(0.5)
-  const footHex   = '#' + footColor.getHexString()
+  const footHex = '#' + footColor.getHexString()
 
   useFrame(({ clock }) => {
     if (!groupRef.current) return
@@ -56,7 +56,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
     if (animation === 'thinking') {
       // Faster bob + slight side tilt = "processing" feel
       groupRef.current.position.y = Math.sin(t * 2.5) * 0.04
-      groupRef.current.rotation.y = Math.sin(t * 0.8) * 0.10
+      groupRef.current.rotation.y = Math.sin(t * 0.8) * 0.1
       groupRef.current.rotation.z = Math.sin(t * 1.5) * 0.02
     } else {
       // idle — gentle float
@@ -78,22 +78,18 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
 
     // ── Eye blink every ~4 s ──
     const blinkPhase = t % 4
-    const blinkScale = blinkPhase > 3.80 && blinkPhase < 3.95 ? 0.05 : 1.0
-    if (leftEyeRef.current)  leftEyeRef.current.scale.y  = blinkScale
+    const blinkScale = blinkPhase > 3.8 && blinkPhase < 3.95 ? 0.05 : 1.0
+    if (leftEyeRef.current) leftEyeRef.current.scale.y = blinkScale
     if (rightEyeRef.current) rightEyeRef.current.scale.y = blinkScale
   })
 
-  const glowColor =
-    status === 'active'   ? '#22c55e' :
-    status === 'idle'     ? '#f59e0b' :
-                            '#6366f1'
+  const glowColor = status === 'active' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#6366f1'
 
   return (
     <group ref={groupRef} position={[0, 0, 0]} scale={2.2}>
-
       {/* ── Head ── */}
       <group position={[0, 0.34, 0]}>
-        <RoundedBox args={[0.34, 0.30, 0.30]} radius={0.07} smoothness={3}>
+        <RoundedBox args={[0.34, 0.3, 0.3]} radius={0.07} smoothness={3}>
           <meshToonMaterial color={config.color} />
         </RoundedBox>
 
@@ -129,22 +125,12 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
       </group>
 
       {/* ── Body ── */}
-      <RoundedBox
-        args={[0.38, 0.26, 0.30]}
-        radius={0.06}
-        smoothness={3}
-        position={[0, 0.0, 0]}
-      >
+      <RoundedBox args={[0.38, 0.26, 0.3]} radius={0.06} smoothness={3} position={[0, 0.0, 0]}>
         <meshToonMaterial color={config.color} />
       </RoundedBox>
 
       {/* ── Waist / Lower body ── */}
-      <RoundedBox
-        args={[0.34, 0.10, 0.28]}
-        radius={0.04}
-        smoothness={3}
-        position={[0, -0.16, 0]}
-      >
+      <RoundedBox args={[0.34, 0.1, 0.28]} radius={0.04} smoothness={3} position={[0, -0.16, 0]}>
         <meshToonMaterial color={darkHex} />
       </RoundedBox>
 
@@ -159,12 +145,12 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
       </mesh>
 
       {/* ── Legs ── */}
-      <mesh position={[-0.10, -0.30, 0]}>
-        <capsuleGeometry args={[0.045, 0.10, 4, 6]} />
+      <mesh position={[-0.1, -0.3, 0]}>
+        <capsuleGeometry args={[0.045, 0.1, 4, 6]} />
         <meshToonMaterial color={darkHex} />
       </mesh>
-      <mesh position={[0.10, -0.30, 0]}>
-        <capsuleGeometry args={[0.045, 0.10, 4, 6]} />
+      <mesh position={[0.1, -0.3, 0]}>
+        <capsuleGeometry args={[0.045, 0.1, 4, 6]} />
         <meshToonMaterial color={darkHex} />
       </mesh>
 
@@ -173,7 +159,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
         args={[0.12, 0.07, 0.16]}
         radius={0.03}
         smoothness={2}
-        position={[-0.10, -0.40, 0.03]}
+        position={[-0.1, -0.4, 0.03]}
       >
         <meshToonMaterial color={footHex} />
       </RoundedBox>
@@ -181,7 +167,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
         args={[0.12, 0.07, 0.16]}
         radius={0.03}
         smoothness={2}
-        position={[0.10, -0.40, 0.03]}
+        position={[0.1, -0.4, 0.03]}
       >
         <meshToonMaterial color={footHex} />
       </RoundedBox>
@@ -220,8 +206,12 @@ export default function ChatHeader3DScene({
   // Production path — no debug state allocated
   if (!DEBUG_CAMERA) {
     return (
-      <Canvas dpr={[1, 1.5]} style={{ width: '100%', height: '100%', touchAction: 'none' }}
-        frameloop="always" gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}>
+      <Canvas
+        dpr={[1, 1.5]}
+        style={{ width: '100%', height: '100%', touchAction: 'none' }}
+        frameloop="always"
+        gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
+      >
         <group position={[0, HEAD_WORLD_Y, 0]}>
           <PerspectiveCamera makeDefault position={[0, 0, CAM_Z]} fov={50} near={0.1} far={20} />
         </group>
@@ -235,28 +225,51 @@ export default function ChatHeader3DScene({
   }
 
   // Unreachable when DEBUG_CAMERA=false, but kept for future tuning sessions.
-  return <ChatHeader3DSceneDebug botConfig={botConfig} agentStatus={agentStatus} animation={animation} />
+  return (
+    <ChatHeader3DSceneDebug botConfig={botConfig} agentStatus={agentStatus} animation={animation} />
+  )
 }
 
 /** Debug-only component — only rendered when DEBUG_CAMERA=true. Separated to avoid hook rules violation. */
-function ChatHeader3DSceneDebug({ botConfig, agentStatus, animation }: {
-  botConfig: BotVariantConfig; agentStatus: AgentStatus; animation: AvatarAnimation
+function ChatHeader3DSceneDebug({
+  botConfig,
+  agentStatus,
+  animation,
+}: {
+  botConfig: BotVariantConfig
+  agentStatus: AgentStatus
+  animation: AvatarAnimation
 }) {
   const [pivotY, setPivotY] = useState(HEAD_WORLD_Y)
   const [camZ, setCamZ] = useState(CAM_Z)
   const step = 0.05
 
   const btn = (label: string, onClick: () => void) => (
-    <button onClick={onClick} style={{
-      background: '#334155', color: '#e2e8f0', border: 'none', borderRadius: 4,
-      padding: '2px 6px', fontSize: 11, cursor: 'pointer', touchAction: 'manipulation',
-    }}>{label}</button>
+    <button
+      onClick={onClick}
+      style={{
+        background: '#334155',
+        color: '#e2e8f0',
+        border: 'none',
+        borderRadius: 4,
+        padding: '2px 6px',
+        fontSize: 11,
+        cursor: 'pointer',
+        touchAction: 'manipulation',
+      }}
+    >
+      {label}
+    </button>
   )
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
-      <Canvas dpr={[1, 1.5]} style={{ width: '100%', height: 150, touchAction: 'none' }}
-        frameloop="always" gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}>
+      <Canvas
+        dpr={[1, 1.5]}
+        style={{ width: '100%', height: 150, touchAction: 'none' }}
+        frameloop="always"
+        gl={{ antialias: true, powerPreference: 'low-power', alpha: true }}
+      >
         <group position={[0, pivotY, 0]}>
           <PerspectiveCamera makeDefault position={[0, 0, camZ]} fov={50} near={0.1} far={20} />
         </group>
@@ -267,16 +280,28 @@ function ChatHeader3DSceneDebug({ botConfig, agentStatus, animation }: {
         <pointLight position={[-2, 2, 1]} intensity={0.3} color="#6366f1" />
         <HeaderBot config={botConfig} status={agentStatus} animation={animation} />
       </Canvas>
-      <div style={{ background: '#0f172a', padding: '4px 8px', fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>
+      <div
+        style={{
+          background: '#0f172a',
+          padding: '4px 8px',
+          fontSize: 11,
+          color: '#94a3b8',
+          fontFamily: 'monospace',
+        }}
+      >
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 3 }}>
           <span style={{ color: '#a6e3a1', minWidth: 60 }}>Y: {pivotY.toFixed(2)}</span>
-          {btn('▲', () => setPivotY(v => +(v + step).toFixed(2)))}
-          {btn('▼', () => setPivotY(v => +(v - step).toFixed(2)))}
-          <span style={{ color: '#89b4fa', minWidth: 60, marginLeft: 8 }}>Z: {camZ.toFixed(2)}</span>
-          {btn('+', () => setCamZ(v => +(v + step).toFixed(2)))}
-          {btn('−', () => setCamZ(v => +(v - step).toFixed(2)))}
+          {btn('▲', () => setPivotY((v) => +(v + step).toFixed(2)))}
+          {btn('▼', () => setPivotY((v) => +(v - step).toFixed(2)))}
+          <span style={{ color: '#89b4fa', minWidth: 60, marginLeft: 8 }}>
+            Z: {camZ.toFixed(2)}
+          </span>
+          {btn('+', () => setCamZ((v) => +(v + step).toFixed(2)))}
+          {btn('−', () => setCamZ((v) => +(v - step).toFixed(2)))}
         </div>
-        <div style={{ color: '#64748b', fontSize: 10 }}>HEAD_WORLD_Y={pivotY.toFixed(2)} camZ={camZ.toFixed(2)}</div>
+        <div style={{ color: '#64748b', fontSize: 10 }}>
+          HEAD_WORLD_Y={pivotY.toFixed(2)} camZ={camZ.toFixed(2)}
+        </div>
       </div>
     </div>
   )

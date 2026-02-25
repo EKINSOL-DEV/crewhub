@@ -85,7 +85,11 @@ function ContentBlockView({ block }: { block: SessionContentBlock }) {
   }
 
   if (block.type === 'tool_result') {
-    const text = block.content?.map(c => c.text).filter(Boolean).join('\n') || ''
+    const text =
+      block.content
+        ?.map((c) => c.text)
+        .filter(Boolean)
+        .join('\n') || ''
     if (!text) return null
     return (
       <div className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}>
@@ -107,17 +111,27 @@ function MessageBubble({ message }: { message: SessionMessage }) {
   const isSystem = message.role === 'system'
 
   return (
-    <div className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}>
+    <div
+      className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}
+    >
       <div className="zen-sd-message-header">
         <span className="zen-sd-message-role">
-          {isUser ? '👤 User' : isSystem ? '⚙️ System' : message.role === 'toolResult' ? '🔧 Tool' : '🤖 Assistant'}
+          {isUser
+            ? '👤 User'
+            : isSystem
+              ? '⚙️ System'
+              : message.role === 'toolResult'
+                ? '🔧 Tool'
+                : '🤖 Assistant'}
         </span>
         <div className="zen-sd-message-actions">
           {message.timestamp && (
             <span className="zen-sd-message-timestamp">{formatMessageTime(message.timestamp)}</span>
           )}
           {message.usage && (
-            <span className="zen-sd-message-tokens">{formatTokens(message.usage.totalTokens)} tok</span>
+            <span className="zen-sd-message-tokens">
+              {formatTokens(message.usage.totalTokens)} tok
+            </span>
           )}
           {message.model && (
             <span className="zen-sd-message-model">{message.model.split('/').pop()}</span>
@@ -125,7 +139,9 @@ function MessageBubble({ message }: { message: SessionMessage }) {
         </div>
       </div>
       <div className="zen-sd-message-body">
-        {message.content?.map((block, i) => <ContentBlockView key={i} block={block} />)}
+        {message.content?.map((block, i) => (
+          <ContentBlockView key={i} block={block} />
+        ))}
       </div>
     </div>
   )
@@ -144,7 +160,10 @@ function TimelineEvent({ event, isOngoing }: { event: ActivityEvent; isOngoing?:
   return (
     <div className={`zen-ad-timeline-event ${isOngoing ? 'zen-ad-timeline-ongoing' : ''}`}>
       <div className="zen-ad-timeline-time">{formatEventTime(event.timestamp)}</div>
-      <div className="zen-ad-timeline-dot" style={{ background: typeColors[event.type] || 'var(--zen-fg-muted)' }} />
+      <div
+        className="zen-ad-timeline-dot"
+        style={{ background: typeColors[event.type] || 'var(--zen-fg-muted)' }}
+      />
       <div className="zen-ad-timeline-content">
         <span className="zen-ad-timeline-icon">{event.icon}</span>
         <span className="zen-ad-timeline-desc">{event.description}</span>
@@ -156,7 +175,12 @@ function TimelineEvent({ event, isOngoing }: { event: ActivityEvent; isOngoing?:
 
 // ── Main Component ────────────────────────────────────────────
 
-export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenActivityDetailPanelProps) {
+export function ZenActivityDetailPanel({
+  task,
+  session,
+  events,
+  onClose,
+}: ZenActivityDetailPanelProps) {
   const [messages, setMessages] = useState<SessionMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -172,8 +196,9 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
     setLoading(true)
     setError(null)
 
-    api.getSessionHistory(task.sessionKey, 200)
-      .then(res => {
+    api
+      .getSessionHistory(task.sessionKey, 200)
+      .then((res) => {
         if (cancelled) return
         const raw = res.messages || []
         const parsed: SessionMessage[] = raw
@@ -195,21 +220,23 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
         setMessages(parsed)
         setLoading(false)
       })
-      .catch(err => {
+      .catch((err) => {
         if (!cancelled) {
           setError(err.message)
           setLoading(false)
         }
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [task.sessionKey])
 
   // Filter events relevant to this task
   const taskEvents = useMemo(() => {
     if (!task.sessionKey) return events.slice(0, 20)
     return events
-      .filter(e => e.sessionKey === task.sessionKey)
+      .filter((e) => e.sessionKey === task.sessionKey)
       .sort((a, b) => b.timestamp - a.timestamp)
   }, [events, task.sessionKey])
 
@@ -218,7 +245,10 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
 
   // Token totals from history
   const totalUsage = useMemo(() => {
-    let input = 0, output = 0, total = 0, cost = 0
+    let input = 0,
+      output = 0,
+      total = 0,
+      cost = 0
     for (const m of messages) {
       if (m.usage) {
         input += m.usage.input || 0
@@ -242,8 +272,17 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
           </span>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
-          <button className="zen-sd-close" onClick={() => setFullscreen(true)} title="Fullscreen" style={{ fontSize: 13 }}>⛶</button>
-          <button className="zen-sd-close" onClick={onClose} title="Close">✕</button>
+          <button
+            className="zen-sd-close"
+            onClick={() => setFullscreen(true)}
+            title="Fullscreen"
+            style={{ fontSize: 13 }}
+          >
+            ⛶
+          </button>
+          <button className="zen-sd-close" onClick={onClose} title="Close">
+            ✕
+          </button>
         </div>
       </div>
 
@@ -291,7 +330,9 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
               </div>
               <div className="zen-sd-meta-item">
                 <span className="zen-sd-meta-label">Agent</span>
-                <span className="zen-sd-meta-value">{task.agentIcon} {task.agentName || '—'}</span>
+                <span className="zen-sd-meta-value">
+                  {task.agentIcon} {task.agentName || '—'}
+                </span>
               </div>
               {task.sessionKey && (
                 <div className="zen-sd-meta-item">
@@ -340,11 +381,15 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
                     <>
                       <div className="zen-sd-meta-item">
                         <span className="zen-sd-meta-label">Context</span>
-                        <span className="zen-sd-meta-value">{formatTokens(session.contextTokens)}</span>
+                        <span className="zen-sd-meta-value">
+                          {formatTokens(session.contextTokens)}
+                        </span>
                       </div>
                       <div className="zen-sd-meta-item">
                         <span className="zen-sd-meta-label">Total (session)</span>
-                        <span className="zen-sd-meta-value">{formatTokens(session.totalTokens)}</span>
+                        <span className="zen-sd-meta-value">
+                          {formatTokens(session.totalTokens)}
+                        </span>
                       </div>
                     </>
                   )}
@@ -375,8 +420,12 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
               <>
                 <div className="zen-sd-section-title">Recent Events</div>
                 <div className="zen-ad-events-mini">
-                  {taskEvents.slice(0, 5).map(event => (
-                    <TimelineEvent key={event.id} event={event} isOngoing={event === ongoingEvent} />
+                  {taskEvents.slice(0, 5).map((event) => (
+                    <TimelineEvent
+                      key={event.id}
+                      event={event}
+                      isOngoing={event === ongoingEvent}
+                    />
                   ))}
                 </div>
               </>
@@ -389,7 +438,11 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
             {/* Ongoing indicator */}
             {task.status === 'running' && (
               <div className="zen-ad-ongoing-banner">
-                <span className="zen-thinking-dots"><span /><span /><span /></span>
+                <span className="zen-thinking-dots">
+                  <span />
+                  <span />
+                  <span />
+                </span>
                 Task is actively running...
               </div>
             )}
@@ -398,7 +451,7 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
             {taskEvents.length > 0 && (
               <div className="zen-ad-timeline-section">
                 <div className="zen-ad-timeline-title">Activity Timeline</div>
-                {taskEvents.map(event => (
+                {taskEvents.map((event) => (
                   <TimelineEvent key={event.id} event={event} isOngoing={event === ongoingEvent} />
                 ))}
               </div>
@@ -407,7 +460,11 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
             {/* Session history (messages) */}
             {loading && (
               <div className="zen-sd-loading">
-                <div className="zen-thinking-dots"><span /><span /><span /></div>
+                <div className="zen-thinking-dots">
+                  <span />
+                  <span />
+                  <span />
+                </div>
                 Loading session history...
               </div>
             )}
@@ -415,7 +472,9 @@ export function ZenActivityDetailPanel({ task, session, events, onClose }: ZenAc
             {!loading && !error && messages.length === 0 && taskEvents.length === 0 && (
               <div className="zen-sd-empty">No history available</div>
             )}
-            {messages.map((msg, i) => <MessageBubble key={i} message={msg} />)}
+            {messages.map((msg, i) => (
+              <MessageBubble key={i} message={msg} />
+            ))}
           </div>
         )}
       </div>

@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function RingLight() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.1; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.1
+  })
   return (
     <group ref={groupRef}>
       {/* Ring */}
@@ -23,14 +25,18 @@ export function RingLight() {
         <meshStandardMaterial color="#222233" />
       </mesh>
       {/* Stand base (tripod) */}
-      {[0, 1, 2].map(i => {
-        const a = (i / 3) * Math.PI * 2;
+      {[0, 1, 2].map((i) => {
+        const a = (i / 3) * Math.PI * 2
         return (
-          <mesh key={i} position={[Math.sin(a) * 0.2, -0.75, -0.1 + Math.cos(a) * 0.2]} rotation={[Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3]}>
+          <mesh
+            key={i}
+            position={[Math.sin(a) * 0.2, -0.75, -0.1 + Math.cos(a) * 0.2]}
+            rotation={[Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3]}
+          >
             <cylinderGeometry args={[0.015, 0.02, 0.3, 4]} />
             <meshStandardMaterial color="#333344" />
           </mesh>
-        );
+        )
       })}
       {/* Phone holder */}
       <mesh position={[0, 0.2, 0.02]}>
@@ -48,5 +54,5 @@ export function RingLight() {
       </mesh>
       <pointLight position={[0, 0.2, 0.3]} intensity={0.5} color="#ffffdd" distance={2} />
     </group>
-  );
+  )
 }

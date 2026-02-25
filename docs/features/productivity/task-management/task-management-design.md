@@ -1,8 +1,8 @@
 # CrewHub — Task Management & Project Context Injection (Design)
 
-**Date:** 2026-02-06  
-**Author:** subagent: reviewer (GPT-5.2)  
-**Scope:** Bot context injection, per-room task board, project history, and 3D task visualization.  
+**Date:** 2026-02-06
+**Author:** subagent: reviewer (GPT-5.2)
+**Scope:** Bot context injection, per-room task board, project history, and 3D task visualization.
 
 > This doc builds on `docs/room-projects-masterplan.md` (projects + room assignment) and the current DB schema (`backend/app/db/database.py`) + existing UI patterns (e.g. `BotInfoPanel.tsx`).
 

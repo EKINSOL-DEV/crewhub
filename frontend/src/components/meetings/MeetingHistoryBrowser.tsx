@@ -46,14 +46,19 @@ function MeetingHistoryCard({
   onReuseSetup: () => void
 }) {
   const date = new Date(meeting.created_at)
-  const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const dateStr = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
   const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
-  const stateColor = {
-    complete: 'bg-green-500/15 text-green-700 dark:text-green-400',
-    error: 'bg-red-500/15 text-red-700 dark:text-red-400',
-    cancelled: 'bg-gray-500/15 text-gray-700 dark:text-gray-400',
-  }[meeting.state] || 'bg-blue-500/15 text-blue-700 dark:text-blue-400'
+  const stateColor =
+    {
+      complete: 'bg-green-500/15 text-green-700 dark:text-green-400',
+      error: 'bg-red-500/15 text-red-700 dark:text-red-400',
+      cancelled: 'bg-gray-500/15 text-gray-700 dark:text-gray-400',
+    }[meeting.state] || 'bg-blue-500/15 text-blue-700 dark:text-blue-400'
 
   return (
     <Card className="hover:bg-muted/30 transition-colors">
@@ -71,7 +76,9 @@ function MeetingHistoryCard({
         </div>
 
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-          <span>{dateStr} {timeStr}</span>
+          <span>
+            {dateStr} {timeStr}
+          </span>
           <span>{meeting.num_rounds} rounds</span>
           {meeting.duration_seconds && <span>{Math.round(meeting.duration_seconds)}s</span>}
           {meeting.parent_meeting_id && <span>🔄 follow-up</span>}
@@ -115,35 +122,38 @@ export function MeetingHistoryBrowser({
   const [offset, setOffset] = useState(0)
   const limit = 20
 
-  const fetchHistory = useCallback(async (newOffset: number) => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        limit: String(limit),
-        offset: String(newOffset),
-        days: '365',
-      })
-      if (roomId) params.set('room_id', roomId)
-      if (projectId) params.set('project_id', projectId)
+  const fetchHistory = useCallback(
+    async (newOffset: number) => {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams({
+          limit: String(limit),
+          offset: String(newOffset),
+          days: '365',
+        })
+        if (roomId) params.set('room_id', roomId)
+        if (projectId) params.set('project_id', projectId)
 
-      const res = await fetch(`${API_BASE}/meetings/history?${params}`)
-      if (!res.ok) return
+        const res = await fetch(`${API_BASE}/meetings/history?${params}`)
+        if (!res.ok) return
 
-      const data = await res.json()
-      if (newOffset === 0) {
-        setMeetings(data.meetings)
-      } else {
-        setMeetings(prev => [...prev, ...data.meetings])
+        const data = await res.json()
+        if (newOffset === 0) {
+          setMeetings(data.meetings)
+        } else {
+          setMeetings((prev) => [...prev, ...data.meetings])
+        }
+        setTotal(data.total)
+        setHasMore(data.has_more)
+        setOffset(newOffset)
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false)
       }
-      setTotal(data.total)
-      setHasMore(data.has_more)
-      setOffset(newOffset)
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false)
-    }
-  }, [roomId, projectId])
+    },
+    [roomId, projectId]
+  )
 
   useEffect(() => {
     fetchHistory(0)
@@ -173,7 +183,7 @@ export function MeetingHistoryBrowser({
       </div>
       <ScrollArea className="max-h-[60vh]">
         <div className="space-y-2 pr-2">
-          {meetings.map(m => (
+          {meetings.map((m) => (
             <MeetingHistoryCard
               key={m.id}
               meeting={m}

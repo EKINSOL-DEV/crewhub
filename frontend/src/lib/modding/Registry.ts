@@ -43,7 +43,9 @@ export class Registry<T> {
    */
   register(id: string, data: T, source: 'builtin' | 'mod' = 'builtin', modId?: string): void {
     if (!isNamespacedId(id)) {
-      console.warn(`[Registry] ID '${id}' is not namespaced (expected 'namespace:id'). Auto-qualifying as '${BUILTIN_NS}:${id}'.`)
+      console.warn(
+        `[Registry] ID '${id}' is not namespaced (expected 'namespace:id'). Auto-qualifying as '${BUILTIN_NS}:${id}'.`
+      )
       id = `${BUILTIN_NS}:${id}`
     }
     this.entries.set(id, { id, data, source, modId })
@@ -60,13 +62,15 @@ export class Registry<T> {
    * Much more efficient than calling register() in a loop.
    */
   registerBatch(
-    entries: Array<{ id: string; data: T; source?: 'builtin' | 'mod'; modId?: string }>,
+    entries: Array<{ id: string; data: T; source?: 'builtin' | 'mod'; modId?: string }>
   ): void {
     for (const entry of entries) {
       let id = entry.id
       const source = entry.source ?? 'builtin'
       if (!isNamespacedId(id)) {
-        console.warn(`[Registry] ID '${id}' is not namespaced (expected 'namespace:id'). Auto-qualifying as '${BUILTIN_NS}:${id}'.`)
+        console.warn(
+          `[Registry] ID '${id}' is not namespaced (expected 'namespace:id'). Auto-qualifying as '${BUILTIN_NS}:${id}'.`
+        )
         id = `${BUILTIN_NS}:${id}`
       }
       this.entries.set(id, { id, data: entry.data, source, modId: entry.modId })

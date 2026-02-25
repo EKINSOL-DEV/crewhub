@@ -7,9 +7,18 @@ import * as THREE from 'three'
  */
 export function createToonGradientMap(): THREE.DataTexture {
   const colors = new Uint8Array([
-    90, 90, 90, 255,      // shadow
-    170, 170, 170, 255,   // mid-tone
-    255, 255, 255, 255,   // highlight
+    90,
+    90,
+    90,
+    255, // shadow
+    170,
+    170,
+    170,
+    255, // mid-tone
+    255,
+    255,
+    255,
+    255, // highlight
   ])
   const gradientMap = new THREE.DataTexture(colors, 3, 1, THREE.RGBAFormat)
   gradientMap.minFilter = THREE.NearestFilter

@@ -69,11 +69,7 @@ export function BuildingWalls({
     if (leftSegWidth > 0.1) {
       segs.push({
         key: 'front-left',
-        position: [
-          -halfW + leftSegWidth / 2,
-          wallHeight / 2,
-          -halfD + wallThickness / 2,
-        ],
+        position: [-halfW + leftSegWidth / 2, wallHeight / 2, -halfD + wallThickness / 2],
         size: [leftSegWidth, wallHeight, wallThickness],
       })
     }
@@ -83,11 +79,7 @@ export function BuildingWalls({
     if (rightSegWidth > 0.1) {
       segs.push({
         key: 'front-right',
-        position: [
-          halfW - rightSegWidth / 2,
-          wallHeight / 2,
-          -halfD + wallThickness / 2,
-        ],
+        position: [halfW - rightSegWidth / 2, wallHeight / 2, -halfD + wallThickness / 2],
         size: [rightSegWidth, wallHeight, wallThickness],
       })
     }
@@ -119,26 +111,19 @@ export function BuildingWalls({
       ))}
 
       {/* Entrance pillars on either side of the gap */}
-      {[entranceOffset - entranceWidth / 2, entranceOffset + entranceWidth / 2].map(
-        (x, i) => (
-          <group key={`pillar-${i}`}>
-            <mesh
-              position={[x, wallHeight / 2, -halfD + wallThickness / 2]}
-              castShadow
-            >
-              <boxGeometry args={[0.6, wallHeight + 0.3, 0.6]} />
-              <meshToonMaterial {...accentToon} />
-            </mesh>
-            {/* Pillar cap */}
-            <mesh
-              position={[x, wallHeight + 0.3, -halfD + wallThickness / 2]}
-            >
-              <boxGeometry args={[0.75, 0.1, 0.75]} />
-              <meshToonMaterial {...wallToon} />
-            </mesh>
-          </group>
-        )
-      )}
+      {[entranceOffset - entranceWidth / 2, entranceOffset + entranceWidth / 2].map((x, i) => (
+        <group key={`pillar-${i}`}>
+          <mesh position={[x, wallHeight / 2, -halfD + wallThickness / 2]} castShadow>
+            <boxGeometry args={[0.6, wallHeight + 0.3, 0.6]} />
+            <meshToonMaterial {...accentToon} />
+          </mesh>
+          {/* Pillar cap */}
+          <mesh position={[x, wallHeight + 0.3, -halfD + wallThickness / 2]}>
+            <boxGeometry args={[0.75, 0.1, 0.75]} />
+            <meshToonMaterial {...wallToon} />
+          </mesh>
+        </group>
+      ))}
     </group>
   )
 }

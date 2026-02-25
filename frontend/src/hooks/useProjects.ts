@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react"
-import { API_BASE } from "@/lib/api"
-import { sseManager } from "@/lib/sseManager"
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { API_BASE } from '@/lib/api'
+import { sseManager } from '@/lib/sseManager'
 
 export interface Project {
   id: string
@@ -9,7 +9,7 @@ export interface Project {
   icon: string | null
   color: string | null
   folder_path: string | null
-  status: "active" | "paused" | "completed" | "archived"
+  status: 'active' | 'paused' | 'completed' | 'archived'
   created_at: number
   updated_at: number
   rooms: string[]
@@ -34,7 +34,7 @@ export function useProjects() {
   const [error, setError] = useState<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   // Data deduplication
-  const projectsFingerprintRef = useRef<string>("")
+  const projectsFingerprintRef = useRef<string>('')
 
   const fetchProjects = useCallback(async () => {
     // Cancel any in-flight request
@@ -46,11 +46,13 @@ export function useProjects() {
 
     try {
       const response = await fetch(`${API_BASE}/projects`, { signal })
-      if (!response.ok) throw new Error("Failed to fetch projects")
+      if (!response.ok) throw new Error('Failed to fetch projects')
       const data: ProjectsResponse = await response.json()
       const newProjects = data.projects || []
       // Deduplicate: only update state if projects actually changed
-      const fingerprint = JSON.stringify(newProjects.map(p => `${p.id}:${p.updated_at}:${p.status}`))
+      const fingerprint = JSON.stringify(
+        newProjects.map((p) => `${p.id}:${p.updated_at}:${p.status}`)
+      )
       if (fingerprint !== projectsFingerprintRef.current) {
         projectsFingerprintRef.current = fingerprint
         setProjects(newProjects)
@@ -59,8 +61,8 @@ export function useProjects() {
     } catch (err) {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') return
-      console.error("Failed to fetch projects:", err)
-      setError(err instanceof Error ? err.message : "Unknown error")
+      console.error('Failed to fetch projects:', err)
+      setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setIsLoading(false)
     }
@@ -84,7 +86,7 @@ export function useProjects() {
     }
 
     // Subscribe to rooms-refresh events using the central SSE manager
-    const unsubscribe = sseManager.subscribe("rooms-refresh", handleRoomsRefresh)
+    const unsubscribe = sseManager.subscribe('rooms-refresh', handleRoomsRefresh)
 
     return () => {
       unsubscribe()
@@ -102,34 +104,34 @@ export function useProjects() {
       // Use AbortController for timeout (Vite proxy can sometimes hang)
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000)
-      
+
       try {
         const response = await fetch(`${API_BASE}/projects`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(project),
           signal: controller.signal,
         })
         clearTimeout(timeoutId)
-        
+
         if (!response.ok) {
           const err = await response.json().catch(() => ({}))
-          throw new Error(err.detail || "Failed to create project")
+          throw new Error(err.detail || 'Failed to create project')
         }
-        
+
         const created: Project = await response.json()
         await fetchProjects()
         return { success: true as const, project: created }
       } catch (err) {
         clearTimeout(timeoutId)
-        
+
         // If aborted due to timeout, check if project was actually created
         if (err instanceof Error && err.name === 'AbortError') {
           // Refresh projects and look for the new one
           await fetchProjects()
           // Wait a moment for state to update, then check
-          await new Promise(resolve => setTimeout(resolve, 100))
-          
+          await new Promise((resolve) => setTimeout(resolve, 100))
+
           // Try to find the project by name in current projects state
           // Note: This is a fallback - the project might be in the refreshed list
           const refreshResponse = await fetch(`${API_BASE}/projects`)
@@ -140,16 +142,19 @@ export function useProjects() {
               return { success: true as const, project: found }
             }
           }
-          return { success: false as const, error: "Request timed out - please check if project was created" }
+          return {
+            success: false as const,
+            error: 'Request timed out - please check if project was created',
+          }
         }
-        
+
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : "Unknown error",
+          error: err instanceof Error ? err.message : 'Unknown error',
         }
       }
     },
-    [fetchProjects],
+    [fetchProjects]
   )
 
   const updateProject = useCallback(
@@ -162,102 +167,102 @@ export function useProjects() {
         color?: string
         status?: string
         folder_path?: string
-      },
+      }
     ) => {
       try {
         const response = await fetch(`${API_BASE}/projects/${projectId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updates),
         })
         if (!response.ok) {
           const err = await response.json().catch(() => ({}))
-          throw new Error(err.detail || "Failed to update project")
+          throw new Error(err.detail || 'Failed to update project')
         }
         await fetchProjects()
         return { success: true as const }
       } catch (err) {
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : "Unknown error",
+          error: err instanceof Error ? err.message : 'Unknown error',
         }
       }
     },
-    [fetchProjects],
+    [fetchProjects]
   )
 
   const deleteProject = useCallback(
     async (projectId: string) => {
       try {
         const response = await fetch(`${API_BASE}/projects/${projectId}`, {
-          method: "DELETE",
+          method: 'DELETE',
         })
         if (!response.ok) {
           const err = await response.json().catch(() => ({}))
-          throw new Error(err.detail || "Failed to delete project")
+          throw new Error(err.detail || 'Failed to delete project')
         }
         await fetchProjects()
         return { success: true as const }
       } catch (err) {
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : "Unknown error",
+          error: err instanceof Error ? err.message : 'Unknown error',
         }
       }
     },
-    [fetchProjects],
+    [fetchProjects]
   )
 
   const assignProjectToRoom = useCallback(
     async (roomId: string, projectId: string) => {
       try {
         const response = await fetch(`${API_BASE}/rooms/${roomId}/project`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ project_id: projectId }),
         })
-        if (!response.ok) throw new Error("Failed to assign project to room")
+        if (!response.ok) throw new Error('Failed to assign project to room')
         await fetchProjects()
         return { success: true as const }
       } catch (err) {
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : "Unknown error",
+          error: err instanceof Error ? err.message : 'Unknown error',
         }
       }
     },
-    [fetchProjects],
+    [fetchProjects]
   )
 
   const clearRoomProject = useCallback(
     async (roomId: string) => {
       try {
         const response = await fetch(`${API_BASE}/rooms/${roomId}/project`, {
-          method: "DELETE",
+          method: 'DELETE',
         })
-        if (!response.ok) throw new Error("Failed to clear room project")
+        if (!response.ok) throw new Error('Failed to clear room project')
         await fetchProjects()
         return { success: true as const }
       } catch (err) {
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : "Unknown error",
+          error: err instanceof Error ? err.message : 'Unknown error',
         }
       }
     },
-    [fetchProjects],
+    [fetchProjects]
   )
 
   const fetchOverview = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/projects/overview`)
-      if (!response.ok) throw new Error("Failed to fetch projects overview")
+      if (!response.ok) throw new Error('Failed to fetch projects overview')
       const data: ProjectsOverviewResponse = await response.json()
       return { success: true as const, projects: data.projects }
     } catch (err) {
       return {
         success: false as const,
-        error: err instanceof Error ? err.message : "Unknown error",
+        error: err instanceof Error ? err.message : 'Unknown error',
         projects: [] as ProjectOverview[],
       }
     }

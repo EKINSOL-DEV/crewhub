@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  type ReactNode,
+} from 'react'
 import type { Zone } from '../lib/zones'
 import { zoneRegistry, zonePersistence } from '../lib/zones'
 
@@ -62,37 +70,41 @@ export function ZoneProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
-  const switchZone = useCallback((zoneId: string) => {
-    if (isTransitioning) return
-    if (activeZone.id === zoneId) return
+  const switchZone = useCallback(
+    (zoneId: string) => {
+      if (isTransitioning) return
+      if (activeZone.id === zoneId) return
 
-    let target = zoneRegistry.get(zoneId)
-    if (!target) {
-      console.warn(`[Zone] Zone "${zoneId}" not found, falling back to default`)
-      target = zoneRegistry.getDefault()
-    }
+      let target = zoneRegistry.get(zoneId)
+      if (!target) {
+        console.warn(`[Zone] Zone "${zoneId}" not found, falling back to default`)
+        target = zoneRegistry.getDefault()
+      }
 
-    setIsTransitioning(true)
+      setIsTransitioning(true)
 
-    // Phase 1: we don't yet have access to the active camera position from here.
-    // We still persist last-visit metadata so Phase 2 can start restoring positions.
-    zonePersistence.saveActiveZone(target.id)
+      // Phase 1: we don't yet have access to the active camera position from here.
+      // We still persist last-visit metadata so Phase 2 can start restoring positions.
+      zonePersistence.saveActiveZone(target.id)
 
-    setActiveZone(target)
+      setActiveZone(target)
 
-    // Minimal debounce to avoid rapid double-switching.
-    setTimeout(() => setIsTransitioning(false), 100)
-  }, [activeZone.id, isTransitioning])
-
-  const value = useMemo<ZoneContextValue>(() => ({
-    activeZone, isTransitioning, switchZone,
-  }), [activeZone, isTransitioning, switchZone])
-
-  return (
-    <ZoneContext.Provider value={value}>
-      {children}
-    </ZoneContext.Provider>
+      // Minimal debounce to avoid rapid double-switching.
+      setTimeout(() => setIsTransitioning(false), 100)
+    },
+    [activeZone.id, isTransitioning]
   )
+
+  const value = useMemo<ZoneContextValue>(
+    () => ({
+      activeZone,
+      isTransitioning,
+      switchZone,
+    }),
+    [activeZone, isTransitioning, switchZone]
+  )
+
+  return <ZoneContext.Provider value={value}>{children}</ZoneContext.Provider>
 }
 
 export function useZoneContext(): ZoneContextValue {

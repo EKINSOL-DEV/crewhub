@@ -1,14 +1,17 @@
 """Pydantic models for CrewHub Group Chat / Threads."""
-from pydantic import BaseModel
-from typing import Optional, List, Literal
 
+from typing import List, Literal, Optional
+
+from pydantic import BaseModel
 
 # ========================================
 # THREADS
 # ========================================
 
+
 class ThreadCreate(BaseModel):
     """Request model for creating a thread."""
+
     kind: Literal["direct", "group"] = "group"
     title: Optional[str] = None
     participant_agent_ids: List[str]  # agent IDs to add
@@ -17,17 +20,20 @@ class ThreadCreate(BaseModel):
 
 class ThreadUpdate(BaseModel):
     """Request model for updating a thread."""
+
     title: Optional[str] = None
     archived: Optional[bool] = None
 
 
 class ThreadParticipantAdd(BaseModel):
     """Request to add participants."""
+
     agent_ids: List[str]
 
 
 class ThreadMessageSend(BaseModel):
     """Request to send a message in a thread."""
+
     content: str
     routing_mode: Literal["broadcast", "targeted"] = "broadcast"
     target_agent_ids: Optional[List[str]] = None
@@ -35,6 +41,7 @@ class ThreadMessageSend(BaseModel):
 
 class ThreadResponse(BaseModel):
     """Response model for a thread."""
+
     id: str
     kind: str
     title: Optional[str] = None
@@ -51,6 +58,7 @@ class ThreadResponse(BaseModel):
 
 class ThreadParticipantResponse(BaseModel):
     """Response model for a participant."""
+
     id: str
     thread_id: str
     agent_id: str
@@ -65,6 +73,7 @@ class ThreadParticipantResponse(BaseModel):
 
 class ThreadMessageResponse(BaseModel):
     """Response model for a thread message."""
+
     id: str
     thread_id: str
     role: str

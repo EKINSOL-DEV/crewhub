@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function MeasuringTape() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.2
+  })
   return (
     <group ref={groupRef}>
       {/* Housing */}
@@ -28,7 +30,7 @@ export function MeasuringTape() {
         <meshStandardMaterial color="#ffee88" />
       </mesh>
       {/* Tape marks */}
-      {[0, 1, 2, 3, 4].map(i => (
+      {[0, 1, 2, 3, 4].map((i) => (
         <mesh key={i} position={[0.1 + i * 0.06, -0.01, 0.031]}>
           <boxGeometry args={[0.002, 0.015, 0.001]} />
           <meshStandardMaterial color="#111111" />
@@ -45,5 +47,5 @@ export function MeasuringTape() {
         <meshStandardMaterial color="#888888" />
       </mesh>
     </group>
-  );
+  )
 }

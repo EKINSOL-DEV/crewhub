@@ -5,7 +5,7 @@ Features that help teams work more effectively.
 ---
 
 ## Markdown Viewer/Editor
-**Status:** 📋 Planned (v0.13.0)  
+**Status:** 📋 Planned (v0.13.0)
 **Description:** View and edit markdown files from agent workspaces and project directories. Phase 1: Files tab in bot panel, fullscreen viewer with TOC. Phase 2: Live editing with CodeMirror 6, auto-save, side-by-side view.
 
 **Docs:**
@@ -17,7 +17,7 @@ Features that help teams work more effectively.
 ---
 
 ## Stand-Up Meetings
-**Status:** 📋 Planned (v0.14.0)  
+**Status:** 📋 Planned (v0.14.0)
 **Description:** Automated stand-up meetings in the 3D world. Bots walk to meeting room, form circle, take turns speaking, and generate meeting summaries. Integrates with project task boards.
 
 **Docs:**
@@ -29,7 +29,7 @@ Features that help teams work more effectively.
 ---
 
 ## Task Management
-**Status:** ✅ Released in **v0.9.0**  
+**Status:** ✅ Released in **v0.9.0**
 **Description:** Visual task board with drag-and-drop Kanban columns. TaskWall3D embeds full board in 3D rooms. "Run with Agent" spawns subagent for task execution. HQ command center shows all tasks across projects.
 
 **Docs:**

@@ -1,7 +1,7 @@
 # Task Management Implementation Plan
 
-**Date:** 2026-02-06  
-**Status:** Draft  
+**Date:** 2026-02-06
+**Status:** Draft
 **Author:** Dev (Subagent Analysis)
 
 ---
@@ -67,18 +67,18 @@ CREATE TABLE IF NOT EXISTS tasks (
     description TEXT,
     status TEXT DEFAULT 'todo',        -- todo | in_progress | review | done | cancelled
     priority TEXT DEFAULT 'normal',    -- low | normal | high | urgent
-    
+
     -- Assignments
     project_id TEXT REFERENCES projects(id),
     room_id TEXT REFERENCES rooms(id),
     assigned_agent_id TEXT REFERENCES agents(id),
     created_by TEXT,                   -- agent_id or 'human'
-    
+
     -- Metadata
     estimated_minutes INTEGER,
     actual_minutes INTEGER,
     tags TEXT,                         -- JSON array: ["frontend", "bug"]
-    
+
     -- Timestamps
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
@@ -100,21 +100,21 @@ CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(created_at DESC);
 CREATE TABLE IF NOT EXISTS project_history (
     id TEXT PRIMARY KEY,
     project_id TEXT NOT NULL REFERENCES projects(id),
-    
+
     -- Event details
     event_type TEXT NOT NULL,          -- task_created | task_completed | task_assigned |
                                        -- agent_joined | agent_left | status_changed |
                                        -- message | note
     event_data TEXT NOT NULL,          -- JSON blob with event-specific data
-    
+
     -- Actor
     actor_type TEXT NOT NULL,          -- agent | human | system
     actor_id TEXT,                     -- agent_id or null for system
-    
+
     -- References
     task_id TEXT REFERENCES tasks(id),
     room_id TEXT REFERENCES rooms(id),
-    
+
     -- Timestamp
     created_at INTEGER NOT NULL
 );
@@ -346,7 +346,7 @@ OpenClaw moet deze context injecteren in de system prompt van de bot:
 context = await fetch_session_context(session_key)
 if context["room"]["project"]:
     system_prompt += f"""
-    
+
 ## Current Assignment
 You are working in {context["room"]["name"]} on project: {context["room"]["project"]["name"]}
 Project description: {context["room"]["project"]["description"]}
@@ -412,7 +412,7 @@ Uitbreiden van `RoomInfoPanel.tsx` met task board sectie:
 
 <section className="tasks-section">
   <h3>📋 Tasks</h3>
-  <TaskBoardMini 
+  <TaskBoardMini
     roomId={room.id}
     projectId={room.project_id}
     maxVisible={5}
@@ -456,7 +456,7 @@ export function useTasks(filters?: { roomId?: string, projectId?: string, agentI
   // Fetch tasks with SSE updates
 }
 
-// hooks/useProjectHistory.ts  
+// hooks/useProjectHistory.ts
 export function useProjectHistory(projectId: string, limit?: number) {
   // Fetch history with SSE updates
 }
@@ -513,14 +513,14 @@ import * as THREE from 'three'
 
 export function TaskWall3D({ tasks, position, width = 4, height = 2.5 }: TaskWall3DProps) {
   const columns = ['todo', 'in_progress', 'review', 'done']
-  
+
   const tasksByStatus = useMemo(() => {
     return columns.reduce((acc, status) => {
       acc[status] = tasks.filter(t => t.status === status)
       return acc
     }, {} as Record<string, Task[]>)
   }, [tasks])
-  
+
   return (
     <group position={position}>
       {/* Board backing */}
@@ -528,7 +528,7 @@ export function TaskWall3D({ tasks, position, width = 4, height = 2.5 }: TaskWal
         <planeGeometry args={[width, height]} />
         <meshStandardMaterial color="#1e293b" />
       </mesh>
-      
+
       {/* Column headers */}
       {columns.map((col, i) => (
         <Text
@@ -540,7 +540,7 @@ export function TaskWall3D({ tasks, position, width = 4, height = 2.5 }: TaskWal
           {col.toUpperCase()} ({tasksByStatus[col].length})
         </Text>
       ))}
-      
+
       {/* Task cards */}
       {columns.map((col, colIdx) => (
         tasksByStatus[col].slice(0, 5).map((task, taskIdx) => (
@@ -562,20 +562,20 @@ function TaskCard3D({ task, position }: { task: Task, position: [number, number,
     normal: '#3b82f6',
     low: '#6b7280',
   }[task.priority]
-  
+
   return (
     <group position={position}>
       <mesh>
         <planeGeometry args={[0.8, 0.35]} />
         <meshStandardMaterial color="#334155" />
       </mesh>
-      
+
       {/* Priority indicator */}
       <mesh position={[-0.35, 0, 0.01]}>
         <planeGeometry args={[0.04, 0.35]} />
         <meshStandardMaterial color={priorityColor} />
       </mesh>
-      
+
       {/* Task title (using Html for text readability) */}
       <Html position={[0, 0, 0.02]} center>
         <div style={{

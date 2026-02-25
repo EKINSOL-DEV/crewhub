@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react"
-import { Pencil, Check, X, Trash2 } from "lucide-react"
-import { useSessionDisplayName } from "@/hooks/useSessionDisplayNames"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useRef, useEffect } from 'react'
+import { Pencil, Check, X, Trash2 } from 'lucide-react'
+import { useSessionDisplayName } from '@/hooks/useSessionDisplayNames'
+import { useToast } from '@/hooks/use-toast'
 
 interface EditableSessionNameProps {
   sessionKey: string
@@ -19,37 +19,37 @@ interface EditableSessionNameProps {
 export function EditableSessionName({
   sessionKey,
   fallbackName,
-  className = "",
+  className = '',
   showEditIcon = true,
-  onNameChange
+  onNameChange,
 }: EditableSessionNameProps) {
   const { displayName, loading, update, remove } = useSessionDisplayName(sessionKey)
   const { toast } = useToast()
-  
+
   const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState("")
+  const [editValue, setEditValue] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
   const currentName = displayName || fallbackName
-  
+
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
       inputRef.current.select()
     }
   }, [isEditing])
-  
+
   const startEditing = () => {
-    setEditValue(displayName || "")
+    setEditValue(displayName || '')
     setIsEditing(true)
   }
-  
+
   const cancelEditing = () => {
     setIsEditing(false)
-    setEditValue("")
+    setEditValue('')
   }
-  
+
   const saveEdit = async () => {
     const trimmed = editValue.trim()
     if (!trimmed) {
@@ -57,49 +57,47 @@ export function EditableSessionName({
       await handleDelete()
       return
     }
-    
+
     setIsSaving(true)
     try {
       const success = await update(trimmed)
       if (success) {
-        toast({ title: "✏️ Name Updated", description: `Session renamed to "${trimmed}"` })
+        toast({ title: '✏️ Name Updated', description: `Session renamed to "${trimmed}"` })
         onNameChange?.()
       } else {
-        toast({ title: "Failed to update name", variant: "destructive" })
+        toast({ title: 'Failed to update name', variant: 'destructive' })
       }
     } finally {
       setIsSaving(false)
       setIsEditing(false)
     }
   }
-  
+
   const handleDelete = async () => {
     setIsSaving(true)
     try {
       const success = await remove()
       if (success) {
-        toast({ title: "🗑️ Custom Name Removed", description: "Using default name" })
+        toast({ title: '🗑️ Custom Name Removed', description: 'Using default name' })
         onNameChange?.()
       } else {
-        toast({ title: "Failed to remove name", variant: "destructive" })
+        toast({ title: 'Failed to remove name', variant: 'destructive' })
       }
     } finally {
       setIsSaving(false)
       setIsEditing(false)
     }
   }
-  
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") saveEdit()
-    else if (e.key === "Escape") cancelEditing()
+    if (e.key === 'Enter') saveEdit()
+    else if (e.key === 'Escape') cancelEditing()
   }
-  
+
   if (loading) {
-    return (
-      <span className={`opacity-50 ${className}`}>{fallbackName}</span>
-    )
+    return <span className={`opacity-50 ${className}`}>{fallbackName}</span>
   }
-  
+
   if (isEditing) {
     return (
       <div className="flex items-center gap-1">
@@ -142,23 +140,25 @@ export function EditableSessionName({
       </div>
     )
   }
-  
+
   return (
-    <span 
+    <span
       className={`group cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 ${className}`}
       onClick={startEditing}
-      title={displayName ? `Custom name: ${displayName}\nSession: ${sessionKey}` : `Click to set custom name\nSession: ${sessionKey}`}
+      title={
+        displayName
+          ? `Custom name: ${displayName}\nSession: ${sessionKey}`
+          : `Click to set custom name\nSession: ${sessionKey}`
+      }
     >
       {currentName}
       {showEditIcon && (
-        <Pencil 
-          size={12} 
-          className="inline-block ml-1 opacity-0 group-hover:opacity-50 transition-opacity" 
+        <Pencil
+          size={12}
+          className="inline-block ml-1 opacity-0 group-hover:opacity-50 transition-opacity"
         />
       )}
-      {displayName && (
-        <span className="ml-1 text-xs opacity-50">(custom)</span>
-      )}
+      {displayName && <span className="ml-1 text-xs opacity-50">(custom)</span>}
     </span>
   )
 }

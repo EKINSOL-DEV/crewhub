@@ -16,11 +16,11 @@ from pydantic import BaseModel, Field
 
 from app.auth import (
     APIKeyInfo,
+    cleanup_audit_log,
     generate_api_key,
     hash_key,
     mask_key,
     require_scope,
-    cleanup_audit_log,
 )
 from app.db.database import get_db
 
@@ -32,6 +32,7 @@ DEFAULT_EXPIRES_DAYS = 90
 
 
 # ── Models ────────────────────────────────────────────────────────────
+
 
 class CreateKeyRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=256)
@@ -46,8 +47,7 @@ class CreateKeyRequest(BaseModel):
         default="live",
         description="Key environment prefix: 'live' or 'test'",
     )
-    agent_id: Optional[str] = Field(None, max_length=128,
-                                     description="Bind key to specific agent_id")
+    agent_id: Optional[str] = Field(None, max_length=128, description="Bind key to specific agent_id")
 
 
 class CreateKeyResponse(BaseModel):
@@ -97,6 +97,7 @@ VALID_ENVS = {"live", "test"}
 
 # ── Routes ────────────────────────────────────────────────────────────
 
+
 @router.post("/keys", response_model=CreateKeyResponse)
 async def create_key(
     body: CreateKeyRequest,
@@ -132,13 +133,20 @@ async def create_key(
             """INSERT INTO api_keys
                (id, key_hash, key_prefix, name, scopes, agent_id, created_at, expires_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (key_id, hash_key(raw_key), mask_key(raw_key),
-             body.name, json.dumps(body.scopes), body.agent_id, now, expires_at),
+            (
+                key_id,
+                hash_key(raw_key),
+                mask_key(raw_key),
+                body.name,
+                json.dumps(body.scopes),
+                body.agent_id,
+                now,
+                expires_at,
+            ),
         )
         await db.commit()
 
-    logger.info(f"Created API key '{body.name}' (id={key_id}, scopes={body.scopes}, "
-                f"expires_at={expires_at})")
+    logger.info(f"Created API key '{body.name}' (id={key_id}, scopes={body.scopes}, expires_at={expires_at})")
 
     return CreateKeyResponse(
         id=key_id,
@@ -174,18 +182,20 @@ async def list_keys(
             scopes = json.loads(row["scopes"]) if isinstance(row["scopes"], str) else row["scopes"]
             expires_at = row.get("expires_at")
             is_expired = bool(expires_at and now > expires_at)
-            items.append(KeyListItem(
-                id=row["id"],
-                key_prefix=row["key_prefix"],
-                name=row["name"],
-                scopes=scopes,
-                agent_id=row.get("agent_id"),
-                created_at=row["created_at"],
-                expires_at=expires_at,
-                last_used_at=row.get("last_used_at"),
-                revoked=bool(row["revoked"]),
-                is_expired=is_expired,
-            ).model_dump())
+            items.append(
+                KeyListItem(
+                    id=row["id"],
+                    key_prefix=row["key_prefix"],
+                    name=row["name"],
+                    scopes=scopes,
+                    agent_id=row.get("agent_id"),
+                    created_at=row["created_at"],
+                    expires_at=expires_at,
+                    last_used_at=row.get("last_used_at"),
+                    revoked=bool(row["revoked"]),
+                    is_expired=is_expired,
+                ).model_dump()
+            )
 
         return {"keys": items}
 
@@ -201,9 +211,7 @@ async def revoke_key(
         raise HTTPException(status_code=400, detail="Cannot revoke the key you're currently using.")
 
     async with get_db() as db:
-        cursor = await db.execute(
-            "UPDATE api_keys SET revoked = 1 WHERE id = ?", (key_id,)
-        )
+        cursor = await db.execute("UPDATE api_keys SET revoked = 1 WHERE id = ?", (key_id,))
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Key not found.")
         await db.commit()
@@ -251,10 +259,7 @@ async def get_key_audit_log(
         ) as cursor:
             rows = await cursor.fetchall()
 
-        async with db.execute(
-            "SELECT COUNT(*) as cnt FROM api_key_audit_log WHERE key_id = ?",
-            (key_id,)
-        ) as cursor:
+        async with db.execute("SELECT COUNT(*) as cnt FROM api_key_audit_log WHERE key_id = ?", (key_id,)) as cursor:
             total = (await cursor.fetchone())["cnt"]
 
     entries = [AuditLogEntry(**row).model_dump() for row in rows]
@@ -275,9 +280,7 @@ async def clear_key_audit_log(
 ):
     """Clear audit log for a specific key (admin only)."""
     async with get_db() as db:
-        await db.execute(
-            "DELETE FROM api_key_audit_log WHERE key_id = ?", (key_id,)
-        )
+        await db.execute("DELETE FROM api_key_audit_log WHERE key_id = ?", (key_id,))
         await db.commit()
 
     return {"ok": True, "cleared": key_id}

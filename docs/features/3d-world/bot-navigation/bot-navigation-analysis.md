@@ -235,46 +235,46 @@ When the bot calls `navigate_to("server rack")`, the backend needs to match the 
 def resolve_prop(query: str, room_props: list[dict]) -> dict | None:
     """
     Resolve a natural language prop name to a specific prop placement.
-    
+
     Strategy:
     1. Exact propId match (e.g., "server-rack" → server-rack)
     2. Normalized match (strip hyphens, lowercase)
     3. Partial/substring match (e.g., "server" → server-rack)
     4. Word overlap scoring (e.g., "standing desk" → standing-desk-with-monitor)
     5. Zone-qualified match (e.g., "desk on the west wall" → standing-desk @ zone W)
-    
+
     Returns best match or None.
     """
     query_normalized = query.lower().strip()
     query_words = set(re.split(r'[\s\-_]+', query_normalized))
-    
+
     candidates = []
     for prop in room_props:
         prop_id = prop['propId']
         prop_words = set(re.split(r'[\s\-_]+', prop_id.lower()))
-        
+
         # Exact match
         if query_normalized == prop_id.lower():
             return prop  # Perfect match, return immediately
-        
+
         # Normalized match (remove hyphens, underscores)
         if query_normalized.replace(' ', '-') == prop_id.lower():
             return prop
-        
+
         # Word overlap score
         overlap = len(query_words & prop_words)
         if overlap > 0:
             # Score: overlap count / max(query words, prop words) for precision
             score = overlap / max(len(query_words), len(prop_words))
             candidates.append((score, prop))
-    
+
     # Return highest scoring candidate above threshold
     if candidates:
         candidates.sort(key=lambda x: x[0], reverse=True)
         best_score, best_prop = candidates[0]
         if best_score >= 0.3:  # At least 30% word overlap
             return best_prop
-    
+
     return None
 ```
 
@@ -342,12 +342,12 @@ export function computeNavigationPath(
   targetGrid: { x: number; z: number },
 ): PathNode[] | null {
   const walkableMask = getWalkableMask(blueprint.cells)
-  
+
   // Make door cells non-walkable for bots
   const botMask = blueprint.cells.map(row =>
     row.map(cell => cell.walkable && cell.type !== 'door')
   )
-  
+
   return findPath(botMask, botGridPos, targetGrid)
 }
 ```
@@ -362,24 +362,24 @@ The key change to Bot3D: when a navigation request is active, instead of random 
 if (anim.phase === 'navigating-to-prop' && navState.path) {
   const path = navState.path
   const idx = navState.currentPathIndex
-  
+
   if (idx >= path.length) {
     // Arrived at final waypoint
     anim.arrived = true
     navState.status = 'arrived'
     return
   }
-  
+
   // Current waypoint in world coords
   const waypoint = gridToWorld(path[idx].x, path[idx].z, cellSize, gridWidth, gridDepth)
   const wpWorldX = roomCenterX + waypoint[0]
   const wpWorldZ = roomCenterZ + waypoint[2]
-  
+
   // Move toward waypoint
   const dx = wpWorldX - state.currentX
   const dz = wpWorldZ - state.currentZ
   const dist = Math.sqrt(dx * dx + dz * dz)
-  
+
   if (dist < 0.05) {
     // Reached waypoint, advance to next
     navState.currentPathIndex++
@@ -391,7 +391,7 @@ if (anim.phase === 'navigating-to-prop' && navState.path) {
     const step = Math.min(speed, dist)
     state.currentX += (dx / dist) * step
     state.currentZ += (dz / dist) * step
-    
+
     // Rotate to face movement direction
     const targetAngle = Math.atan2(dx, dz)
     // Smooth rotation...
@@ -418,7 +418,7 @@ export function findPropApproachCell(
   const botMask = blueprint.cells.map(row =>
     row.map(cell => cell.walkable && cell.type !== 'door')
   )
-  
+
   // Collect all walkable cells adjacent to the prop's footprint
   const candidates: PathNode[] = []
   for (let px = x; px < x + w; px++) {
@@ -435,9 +435,9 @@ export function findPropApproachCell(
       }
     }
   }
-  
+
   if (candidates.length === 0) return null
-  
+
   // Prefer cells that are toward the room center (more accessible)
   const cx = blueprint.walkableCenter.x
   const cz = blueprint.walkableCenter.z
@@ -446,7 +446,7 @@ export function findPropApproachCell(
     const distB = Math.abs(b.x - cx) + Math.abs(b.z - cz)
     return distA - distB
   })
-  
+
   return candidates[0]
 }
 ```
@@ -474,7 +474,7 @@ export type BotAnimState =
 ```typescript
 export interface AnimState {
   // ... existing fields ...
-  
+
   // Navigation state
   isNavigating: boolean               // true when following a navigation command
   navigationPath: PathNode[] | null   // A* path waypoints (grid coords)
@@ -627,18 +627,18 @@ When navigation is resolved, backend broadcasts:
 @router.post("/api/rooms/{room_id}/navigate")
 async def navigate_bot(room_id: str, request: NavigateRequest):
     """Navigate a bot to a prop or location in its room."""
-    
+
     # 1. Get room + blueprint data
     room = await get_room(room_id)
     if not room:
         raise HTTPException(404, "Room not found")
-    
+
     blueprint_data = await get_room_blueprint(room_id)
     if not blueprint_data:
         raise HTTPException(404, "No blueprint data for room")
-    
+
     props = blueprint_data.get("placements", [])
-    
+
     # 2. Resolve target
     if request.target_type == "prop":
         match = resolve_prop(request.target, props)
@@ -650,7 +650,7 @@ async def navigate_bot(room_id: str, request: NavigateRequest):
                 message=f"Can't find '{request.target}'. Available: {', '.join(available)}",
                 available_props=available,
             )
-        
+
         # 3. Find approach cell (walkable cell adjacent to prop)
         approach = find_approach_cell(blueprint_data, match)
         if not approach:
@@ -659,7 +659,7 @@ async def navigate_bot(room_id: str, request: NavigateRequest):
                 error="unreachable",
                 message=f"Can't reach {match['propId']} — no walkable space nearby.",
             )
-        
+
         # 4. Broadcast SSE event
         await sse_manager.broadcast({
             "type": "bot_navigate",
@@ -672,7 +672,7 @@ async def navigate_bot(room_id: str, request: NavigateRequest):
                 "zone": grid_to_zone(match["x"], match["z"]),
             }
         })
-        
+
         return NavigateResponse(
             status="navigating",
             resolved_prop=match,
@@ -700,7 +700,7 @@ This feature **depends on** the spatial awareness backend work from v0.14.0:
 
 export function useNavigationEvents() {
   const navigationStore = useRef(new Map<string, NavigationState>())
-  
+
   useEffect(() => {
     const handler = (event: SSEEvent) => {
       if (event.type === 'bot_navigate') {
@@ -719,7 +719,7 @@ export function useNavigationEvents() {
         navigationStore.current.delete(event.data.session_key)
       }
     }
-    
+
     sseManager.on('bot_navigate', handler)
     sseManager.on('bot_navigate_cancel', handler)
     return () => {
@@ -727,7 +727,7 @@ export function useNavigationEvents() {
       sseManager.off('bot_navigate_cancel', handler)
     }
   }, [])
-  
+
   return navigationStore
 }
 ```
@@ -759,12 +759,12 @@ if (navRequest && navRequest.status === 'pending') {
     cellSize, gridWidth, gridDepth,
   )
   const path = findPath(gridData.botWalkableMask, botGrid, navRequest.targetGrid)
-  
+
   if (path) {
     navRequest.path = path
     navRequest.currentPathIndex = 1  // Skip first node (current position)
     navRequest.status = 'walking'
-    
+
     // Trigger animation phase change
     anim.phase = 'navigating-to-prop'
     anim.isNavigating = true
@@ -807,15 +807,15 @@ A subtle visual indicator at the target position:
 ```typescript
 function DestinationMarker({ position, visible }: { position: [number, number, number]; visible: boolean }) {
   const ringRef = useRef<THREE.Mesh>(null)
-  
+
   useFrame(({ clock }) => {
     if (!ringRef.current || !visible) return
     ringRef.current.rotation.y = clock.getElapsedTime()
     ringRef.current.material.opacity = 0.3 + Math.sin(clock.getElapsedTime() * 2) * 0.15
   })
-  
+
   if (!visible) return null
-  
+
   return (
     <mesh ref={ringRef} position={position} rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[0.2, 0.3, 16]} />

@@ -159,7 +159,7 @@ Each bot receives the full context of all previous speakers in the current round
 async def run_round(self, round_num: int, round_topic: str):
     """Execute one round of the standup."""
     cumulative_context = []
-    
+
     for i, bot in enumerate(self.participants):
         # Build prompt with cumulative context
         prompt = self._build_turn_prompt(
@@ -170,21 +170,21 @@ async def run_round(self, round_num: int, round_topic: str):
             meeting_goal=self.config.goal,
             project_context=self.project_summary,
         )
-        
+
         # Send to bot via gateway connection
         response = await self._get_bot_response(
             bot=bot,
             prompt=prompt,
             max_tokens=200,
         )
-        
+
         # Add to cumulative context for next speakers
         cumulative_context.append({
             "bot_name": bot.display_name,
             "bot_role": bot.role,
             "response": response,
         })
-        
+
         # Broadcast turn completion via SSE
         await broadcast("meeting-turn", {
             "meeting_id": self.meeting_id,
@@ -195,7 +195,7 @@ async def run_round(self, round_num: int, round_topic: str):
             "turn_index": i,
             "total_turns": len(self.participants),
         })
-        
+
         # Store in DB
         await self._save_turn(round_num, bot.id, response)
 ```
@@ -310,43 +310,43 @@ After all rounds complete, the orchestrator generates a summary:
 async def synthesize(self) -> str:
     """Generate structured meeting summary."""
     all_turns = await self._get_all_turns()
-    
+
     synthesis_prompt = f"""
     Synthesize this stand-up meeting into a structured summary.
-    
+
     Meeting: {self.config.goal}
     Participants: {', '.join(p.display_name for p in self.participants)}
-    
+
     {self._format_all_turns(all_turns)}
-    
+
     Output format (Markdown):
     # Stand-Up Meeting — {date}
-    
+
     ## Goal
     {self.config.goal}
-    
+
     ## Participants
     - List each with role
-    
+
     ## Discussion Summary
     Key points organized by theme (not by person)
-    
+
     ## Action Items
     - [ ] Specific, assigned action items extracted from discussion
-    
+
     ## Decisions
     - Any decisions or agreements reached
-    
+
     ## Blockers
     - Unresolved blockers that need attention
     """
-    
+
     response = await self._get_bot_response(
         bot=self.synthesis_bot,  # Use first participant or designated lead
         prompt=synthesis_prompt,
         max_tokens=500,
     )
-    
+
     return response
 ```
 
@@ -381,7 +381,7 @@ CREATE TABLE IF NOT EXISTS meetings (
     error_message TEXT,
     created_by TEXT DEFAULT 'user',
     created_at INTEGER NOT NULL,
-    
+
     FOREIGN KEY (room_id) REFERENCES rooms(id),
     FOREIGN KEY (project_id) REFERENCES projects(id)
 );
@@ -390,7 +390,7 @@ CREATE TABLE IF NOT EXISTS meeting_participants (
     meeting_id TEXT NOT NULL,
     agent_id TEXT NOT NULL,
     sort_order INTEGER DEFAULT 0,
-    
+
     PRIMARY KEY (meeting_id, agent_id),
     FOREIGN KEY (meeting_id) REFERENCES meetings(id),
     FOREIGN KEY (agent_id) REFERENCES agents(id)
@@ -408,7 +408,7 @@ CREATE TABLE IF NOT EXISTS meeting_turns (
     response_text TEXT,
     started_at INTEGER,
     completed_at INTEGER,
-    
+
     FOREIGN KEY (meeting_id) REFERENCES meetings(id)
 );
 ```

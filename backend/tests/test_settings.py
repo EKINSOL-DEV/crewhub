@@ -38,9 +38,12 @@ async def test_get_setting_not_found(client):
 @pytest.mark.asyncio
 async def test_update_setting(client):
     """Test PUT /api/settings/{key} creates or updates a setting."""
-    response = await client.put("/api/settings/test_key", json={
-        "value": "test_value",
-    })
+    response = await client.put(
+        "/api/settings/test_key",
+        json={
+            "value": "test_value",
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["key"] == "test_key"
@@ -66,13 +69,16 @@ async def test_update_setting_upsert(client):
 @pytest.mark.asyncio
 async def test_update_settings_batch(client):
     """Test PUT /api/settings/batch updates multiple settings."""
-    response = await client.put("/api/settings/batch", json={
-        "settings": {
-            "batch_key_1": "value_1",
-            "batch_key_2": "value_2",
-            "batch_key_3": "value_3",
-        }
-    })
+    response = await client.put(
+        "/api/settings/batch",
+        json={
+            "settings": {
+                "batch_key_1": "value_1",
+                "batch_key_2": "value_2",
+                "batch_key_3": "value_3",
+            }
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["batch_key_1"] == "value_1"
@@ -83,9 +89,7 @@ async def test_update_settings_batch(client):
 @pytest.mark.asyncio
 async def test_update_settings_batch_empty(client):
     """Test PUT /api/settings/batch rejects empty settings."""
-    response = await client.put("/api/settings/batch", json={
-        "settings": {}
-    })
+    response = await client.put("/api/settings/batch", json={"settings": {}})
     assert response.status_code == 400
 
 

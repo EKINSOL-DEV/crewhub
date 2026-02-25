@@ -1,7 +1,7 @@
 # CrewHub Group Chat Design
 
-**Created:** 2026-02-16  
-**Status:** Design Complete — Ready for Implementation  
+**Created:** 2026-02-16
+**Status:** Design Complete — Ready for Implementation
 **Author:** Reviewer (GPT-5.2)
 
 ---
@@ -22,7 +22,7 @@ Group chat systeem voor CrewHub mobile (desktop-compatible) dat bestaande sessio
 ## 1) Data Model (TypeScript)
 
 ### Design Choice
-Use **one generic thread/session model** with `kind: 'direct' | 'group'` instead of completely new resource.  
+Use **one generic thread/session model** with `kind: 'direct' | 'group'` instead of completely new resource.
 This keeps existing infrastructure usable and limits migration risk.
 
 ### Core Types
@@ -138,7 +138,7 @@ Don't rewrite everything. Introduce thread semantics within existing sessions.
 ### Recommended Endpoints
 
 #### Create thread
-`POST /v1/threads`  
+`POST /v1/threads`
 (can map internally to `POST /v1/sessions`)
 
 ```json
@@ -181,7 +181,7 @@ Response: `201 Thread + participants`
   "content": [{ "type": "text", "text": "What's the plan for launch?" }],
   "routing": {
     "mode": "broadcast",
-    "targetAgentIds": ["agent_a", "agent_c"] 
+    "targetAgentIds": ["agent_a", "agent_c"]
   }
 }
 ```

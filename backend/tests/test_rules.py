@@ -69,20 +69,26 @@ async def test_create_rule(client):
 @pytest.mark.asyncio
 async def test_create_rule_invalid_room(client):
     """Test POST /api/room-assignment-rules rejects invalid room_id."""
-    response = await client.post("/api/room-assignment-rules", json={
-        "room_id": "nonexistent-room",
-        "rule_type": "keyword",
-        "rule_value": "test",
-    })
+    response = await client.post(
+        "/api/room-assignment-rules",
+        json={
+            "room_id": "nonexistent-room",
+            "rule_type": "keyword",
+            "rule_value": "test",
+        },
+    )
     assert response.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_update_rule(client):
     """Test PUT /api/room-assignment-rules/{id} updates a rule."""
-    response = await client.put("/api/room-assignment-rules/rule-main-hq", json={
-        "priority": 200,
-    })
+    response = await client.put(
+        "/api/room-assignment-rules/rule-main-hq",
+        json={
+            "priority": 200,
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["priority"] == 200
@@ -91,9 +97,12 @@ async def test_update_rule(client):
 @pytest.mark.asyncio
 async def test_update_rule_not_found(client):
     """Test PUT /api/room-assignment-rules/{id} returns 404 for missing."""
-    response = await client.put("/api/room-assignment-rules/nonexistent", json={
-        "priority": 50,
-    })
+    response = await client.put(
+        "/api/room-assignment-rules/nonexistent",
+        json={
+            "priority": 50,
+        },
+    )
     assert response.status_code == 404
 
 
@@ -101,11 +110,14 @@ async def test_update_rule_not_found(client):
 async def test_delete_rule(client):
     """Test DELETE /api/room-assignment-rules/{id} deletes a rule."""
     # Create a rule to delete
-    response = await client.post("/api/room-assignment-rules", json={
-        "room_id": "dev-lab",
-        "rule_type": "keyword",
-        "rule_value": "to-delete",
-    })
+    response = await client.post(
+        "/api/room-assignment-rules",
+        json={
+            "room_id": "dev-lab",
+            "rule_type": "keyword",
+            "rule_value": "to-delete",
+        },
+    )
     rule_id = response.json()["id"]
 
     response = await client.delete(f"/api/room-assignment-rules/{rule_id}")
