@@ -1,4 +1,4 @@
-.PHONY: up down dev dev-backend dev-frontend build logs clean prod-up prod-down prod-logs prod-build
+.PHONY: up down dev dev-backend dev-frontend build logs clean prod-up prod-down prod-logs prod-build lint lint-fix lint-backend lint-backend-fix lint-frontend lint-frontend-fix
 
 # ============================================
 # PRODUCTION (Docker) - Branch: main
@@ -127,3 +127,39 @@ status:
 	@echo ""
 	@echo "=== Local processes ==="
 	@lsof -i :8090 -i :8091 -i :5180 -i :5181 -i :5183 -i :8445 2>/dev/null | grep LISTEN || echo "None"
+
+# ============================================
+# LINTING
+# ============================================
+
+# Run all linters (check mode)
+lint:
+	@echo "=== Backend (Ruff) ==="
+	@cd backend && python3 -m ruff check app/ --statistics
+	@echo ""
+	@echo "=== Frontend (ESLint) ==="
+	@cd frontend && npm run lint
+
+# Auto-fix all fixable issues
+lint-fix:
+	@echo "=== Backend (Ruff fix) ==="
+	@cd backend && python3 -m ruff check app/ --fix
+	@cd backend && python3 -m ruff format app/
+	@echo ""
+	@echo "=== Frontend (ESLint fix) ==="
+	@cd frontend && npm run lint:fix
+	@cd frontend && npm run format
+
+# Backend lint only
+lint-backend:
+	@cd backend && python3 -m ruff check app/ --statistics
+
+lint-backend-fix:
+	@cd backend && python3 -m ruff check app/ --fix && python3 -m ruff format app/
+
+# Frontend lint only
+lint-frontend:
+	@cd frontend && npm run lint
+
+lint-frontend-fix:
+	@cd frontend && npm run lint:fix && npm run format

@@ -1,4 +1,5 @@
 """Database health check utilities for CrewHub."""
+
 import logging
 
 import aiosqlite

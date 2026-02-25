@@ -16,7 +16,7 @@ import type { RootState } from '@react-three/fiber'
  */
 export function useThrottledFrame(
   callback: (state: RootState, delta: number) => void,
-  every: number = 2,
+  every: number = 2
 ) {
   const frameCount = useRef(0)
 

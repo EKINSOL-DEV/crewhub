@@ -17,13 +17,15 @@ export function VideoThumbnail({ attachment, maxWidth = 300 }: VideoThumbnailPro
 
   if (videoError) {
     return (
-      <div style={{
-        padding: '12px 16px',
-        background: 'rgba(255, 100, 100, 0.1)',
-        borderRadius: '8px',
-        color: '#ff6b6b',
-        fontSize: '12px',
-      }}>
+      <div
+        style={{
+          padding: '12px 16px',
+          background: 'rgba(255, 100, 100, 0.1)',
+          borderRadius: '8px',
+          color: '#ff6b6b',
+          fontSize: '12px',
+        }}
+      >
         ⚠️ Failed to load video
       </div>
     )

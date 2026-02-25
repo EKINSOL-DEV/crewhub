@@ -9,20 +9,20 @@ export interface PathNode {
 interface AStarNode {
   x: number
   z: number
-  g: number        // cost from start
-  h: number        // heuristic to end
-  f: number        // g + h
+  g: number // cost from start
+  h: number // heuristic to end
+  f: number // g + h
   parent: AStarNode | null
 }
 
 // 8-directional movement: cardinals + diagonals
 const DIRECTIONS: { dx: number; dz: number; cost: number }[] = [
-  { dx: 0, dz: -1, cost: 1.0 },   // north
-  { dx: 1, dz: 0, cost: 1.0 },    // east
-  { dx: 0, dz: 1, cost: 1.0 },    // south
-  { dx: -1, dz: 0, cost: 1.0 },   // west
+  { dx: 0, dz: -1, cost: 1.0 }, // north
+  { dx: 1, dz: 0, cost: 1.0 }, // east
+  { dx: 0, dz: 1, cost: 1.0 }, // south
+  { dx: -1, dz: 0, cost: 1.0 }, // west
   { dx: 1, dz: -1, cost: 1.414 }, // northeast
-  { dx: 1, dz: 1, cost: 1.414 },  // southeast
+  { dx: 1, dz: 1, cost: 1.414 }, // southeast
   { dx: -1, dz: 1, cost: 1.414 }, // southwest
   { dx: -1, dz: -1, cost: 1.414 }, // northwest
 ]
@@ -50,7 +50,7 @@ function nodeKey(x: number, z: number): string {
 export function findPath(
   walkableMask: boolean[][],
   start: PathNode,
-  end: PathNode,
+  end: PathNode
 ): PathNode[] | null {
   const depth = walkableMask.length
   if (depth === 0) return null
@@ -58,8 +58,14 @@ export function findPath(
 
   // Bounds check
   if (
-    start.x < 0 || start.x >= width || start.z < 0 || start.z >= depth ||
-    end.x < 0 || end.x >= width || end.z < 0 || end.z >= depth
+    start.x < 0 ||
+    start.x >= width ||
+    start.z < 0 ||
+    start.z >= depth ||
+    end.x < 0 ||
+    end.x >= width ||
+    end.z < 0 ||
+    end.z >= depth
   ) {
     return null
   }
@@ -164,10 +170,7 @@ export function findPath(
  * Uses BFS radiating outward from target.
  * Returns the closest walkable cell, or null if the grid has no walkable cells.
  */
-export function findNearestWalkable(
-  walkableMask: boolean[][],
-  target: PathNode,
-): PathNode | null {
+export function findNearestWalkable(walkableMask: boolean[][], target: PathNode): PathNode | null {
   const depth = walkableMask.length
   if (depth === 0) return null
   const width = walkableMask[0].length

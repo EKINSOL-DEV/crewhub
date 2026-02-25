@@ -3,6 +3,7 @@
 All SQL for tasks lives here. Routes call these functions and handle
 HTTP concerns (exceptions, SSE broadcasts, response formatting).
 """
+
 import json
 import logging
 import time
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 async def get_display_name(db, session_key: Optional[str]) -> Optional[str]:
     """Look up human-readable display name for a session key."""
@@ -84,6 +86,7 @@ async def add_history_event(
 
 # ── public service functions ──────────────────────────────────────────────────
 
+
 async def list_tasks(
     project_id: Optional[str] = None,
     room_id: Optional[str] = None,
@@ -140,9 +143,7 @@ async def list_tasks(
 async def get_task(task_id: str) -> Optional[TaskResponse]:
     """Return a single task by ID, or None if not found."""
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM tasks WHERE id = ?", (task_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -162,17 +163,13 @@ async def create_task(task: TaskCreate) -> TaskResponse:
     """
     async with get_db() as db:
         # Verify project exists
-        async with db.execute(
-            "SELECT id FROM projects WHERE id = ?", (task.project_id,)
-        ) as cursor:
+        async with db.execute("SELECT id FROM projects WHERE id = ?", (task.project_id,)) as cursor:
             if not await cursor.fetchone():
                 raise ValueError("project_not_found")
 
         # Verify room exists (when provided)
         if task.room_id:
-            async with db.execute(
-                "SELECT id FROM rooms WHERE id = ?", (task.room_id,)
-            ) as cursor:
+            async with db.execute("SELECT id FROM rooms WHERE id = ?", (task.room_id,)) as cursor:
                 if not await cursor.fetchone():
                     raise ValueError("room_not_found")
 
@@ -243,9 +240,7 @@ async def update_task(
     An empty dict means the payload contained no changes.
     """
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM tasks WHERE id = ?", (task_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
             existing = await cursor.fetchone()
 
         if not existing:
@@ -295,9 +290,7 @@ async def update_task(
 
         await db.commit()
 
-        async with db.execute(
-            "SELECT * FROM tasks WHERE id = ?", (task_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
             row = await cursor.fetchone()
 
         display_name = await get_display_name(db, row["assigned_session_key"])
@@ -312,9 +305,7 @@ async def delete_task(task_id: str) -> Optional[dict]:
     or None if the task was not found.
     """
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM tasks WHERE id = ?", (task_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
             existing = await cursor.fetchone()
 
         if not existing:
@@ -380,16 +371,12 @@ async def get_task_row(task_id: str):
     Used by routes that need access to fields beyond TaskResponse (e.g. run).
     """
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM tasks WHERE id = ?", (task_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
             return await cursor.fetchone()
 
 
 async def get_agent_row(agent_id: str):
     """Return the raw database row for an agent, or None if not found."""
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM agents WHERE id = ?", (agent_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM agents WHERE id = ?", (agent_id,)) as cursor:
             return await cursor.fetchone()

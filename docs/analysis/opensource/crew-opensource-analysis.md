@@ -1,6 +1,6 @@
 # 🚀 Crew Open-Source Analyse
 
-**Datum:** 2 februari 2026  
+**Datum:** 2 februari 2026
 **Context:** Nicky wil de Crew functionaliteit open-sourcen en betatesters betrekken. Rest van Ekinbot Planner blijft privé.
 
 ---

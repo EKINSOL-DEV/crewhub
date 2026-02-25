@@ -38,20 +38,46 @@ interface ProjectDocsPanelProps {
 function getFileIcon(entry: FileEntry): string {
   if (entry.type === 'directory') return '📁'
   switch (entry.extension) {
-    case '.md': return '📝'
-    case '.txt': return '📄'
-    case '.py': return '🐍'
-    case '.ts': case '.tsx': return '💎'
-    case '.js': case '.jsx': return '📜'
-    case '.json': return '🔧'
-    case '.yaml': case '.yml': return '⚙️'
-    case '.html': return '🌐'
-    case '.css': case '.scss': return '🎨'
-    case '.png': case '.jpg': case '.jpeg': case '.gif': case '.svg': case '.webp': return '🖼️'
-    case '.sh': case '.bash': return '🐚'
-    case '.sql': return '🗃️'
-    case '.toml': case '.ini': case '.cfg': return '⚙️'
-    default: return '📄'
+    case '.md':
+      return '📝'
+    case '.txt':
+      return '📄'
+    case '.py':
+      return '🐍'
+    case '.ts':
+    case '.tsx':
+      return '💎'
+    case '.js':
+    case '.jsx':
+      return '📜'
+    case '.json':
+      return '🔧'
+    case '.yaml':
+    case '.yml':
+      return '⚙️'
+    case '.html':
+      return '🌐'
+    case '.css':
+    case '.scss':
+      return '🎨'
+    case '.png':
+    case '.jpg':
+    case '.jpeg':
+    case '.gif':
+    case '.svg':
+    case '.webp':
+      return '🖼️'
+    case '.sh':
+    case '.bash':
+      return '🐚'
+    case '.sql':
+      return '🗃️'
+    case '.toml':
+    case '.ini':
+    case '.cfg':
+      return '⚙️'
+    default:
+      return '📄'
   }
 }
 
@@ -77,7 +103,10 @@ function extractToc(content: string): TocEntry[] {
     if (match) {
       const level = match[1].length
       const text = match[2].trim()
-      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      const id = text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
       toc.push({ level, text, id })
     }
   }
@@ -99,11 +128,11 @@ function FileTree({
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     // Auto-expand first level
-    return new Set(entries.filter(e => e.type === 'directory').map(e => e.path))
+    return new Set(entries.filter((e) => e.type === 'directory').map((e) => e.path))
   })
 
   const toggleDir = (path: string) => {
-    setExpanded(prev => {
+    setExpanded((prev) => {
       const next = new Set(prev)
       if (next.has(path)) next.delete(path)
       else next.add(path)
@@ -113,7 +142,7 @@ function FileTree({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      {entries.map(entry => (
+      {entries.map((entry) => (
         <div key={entry.path}>
           <button
             onClick={() => {
@@ -137,10 +166,10 @@ function FileTree({
               textAlign: 'left',
               transition: 'background 0.1s',
             }}
-            onMouseEnter={e => {
+            onMouseEnter={(e) => {
               if (selectedPath !== entry.path) e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
             }}
-            onMouseLeave={e => {
+            onMouseLeave={(e) => {
               if (selectedPath !== entry.path) e.currentTarget.style.background = 'transparent'
             }}
           >
@@ -151,13 +180,15 @@ function FileTree({
             )}
             {entry.type !== 'directory' && <span style={{ width: 12 }} />}
             <span style={{ fontSize: 13 }}>{getFileIcon(entry)}</span>
-            <span style={{
-              flex: 1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              fontWeight: entry.type === 'directory' ? 600 : 400,
-            }}>
+            <span
+              style={{
+                flex: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontWeight: entry.type === 'directory' ? 600 : 400,
+              }}
+            >
               {entry.name}
             </span>
             {entry.size !== undefined && entry.type !== 'directory' && (
@@ -192,7 +223,11 @@ function MarkdownViewer({ content, projectId }: { content: string; projectId: st
           // Custom image handler: resolve relative paths through the API
           img: ({ src, alt, ...props }) => {
             let resolvedSrc = src || ''
-            if (resolvedSrc && !resolvedSrc.startsWith('http') && !resolvedSrc.startsWith('data:')) {
+            if (
+              resolvedSrc &&
+              !resolvedSrc.startsWith('http') &&
+              !resolvedSrc.startsWith('data:')
+            ) {
               resolvedSrc = `${API_BASE}/projects/${projectId}/files/image?path=${encodeURIComponent(resolvedSrc)}`
             }
             return (
@@ -217,8 +252,12 @@ function MarkdownViewer({ content, projectId }: { content: string; projectId: st
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#4f46e5', textDecoration: 'none' }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.textDecoration = 'underline' }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.textDecoration = 'none' }}
+              onMouseEnter={(e) => {
+                ;(e.target as HTMLElement).style.textDecoration = 'underline'
+              }}
+              onMouseLeave={(e) => {
+                ;(e.target as HTMLElement).style.textDecoration = 'none'
+              }}
             >
               {children}
             </a>
@@ -264,14 +303,16 @@ function MarkdownViewer({ content, projectId }: { content: string; projectId: st
             return (
               <div style={{ position: 'relative' }}>
                 {lang && (
-                  <span style={{
-                    position: 'absolute',
-                    top: -20,
-                    right: 8,
-                    fontSize: 10,
-                    color: '#9ca3af',
-                    fontFamily: 'system-ui, sans-serif',
-                  }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -20,
+                      right: 8,
+                      fontSize: 10,
+                      color: '#9ca3af',
+                      fontFamily: 'system-ui, sans-serif',
+                    }}
+                  >
                     {lang}
                   </span>
                 )}
@@ -355,11 +396,13 @@ function MarkdownViewer({ content, projectId }: { content: string; projectId: st
           },
           // Horizontal rules
           hr: () => (
-            <hr style={{
-              border: 'none',
-              borderTop: '1px solid rgba(0,0,0,0.08)',
-              margin: '12px 0',
-            }} />
+            <hr
+              style={{
+                border: 'none',
+                borderTop: '1px solid rgba(0,0,0,0.08)',
+                margin: '12px 0',
+              }}
+            />
           ),
         }}
       >
@@ -371,7 +414,12 @@ function MarkdownViewer({ content, projectId }: { content: string; projectId: st
 
 // ── Main Component ─────────────────────────────────────────────
 
-export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose }: ProjectDocsPanelProps) {
+export function ProjectDocsPanel({
+  projectId,
+  projectName,
+  projectColor,
+  onClose,
+}: ProjectDocsPanelProps) {
   const [files, setFiles] = useState<FileEntry[]>([])
   const [selectedFile, setSelectedFile] = useState<FileEntry | null>(null)
   const [fileContent, setFileContent] = useState<FileContent | null>(null)
@@ -393,10 +441,14 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
           const detail = err.detail || 'Failed to load files'
           // Friendly message for missing folder
           if (detail.includes('no folder configured')) {
-            throw new Error('No project folder configured. Set a folder path in project settings to browse docs.')
+            throw new Error(
+              'No project folder configured. Set a folder path in project settings to browse docs.'
+            )
           }
           if (detail.includes('not found')) {
-            throw new Error('Project folder not found on disk. The configured path may not exist yet.')
+            throw new Error(
+              'Project folder not found on disk. The configured path may not exist yet.'
+            )
           }
           throw new Error(detail)
         }
@@ -413,36 +465,41 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
   }, [projectId])
 
   // Fetch file content
-  const openFile = useCallback(async (entry: FileEntry) => {
-    setSelectedFile(entry)
-    setView('viewer')
-    
-    if (entry.type === 'image') {
-      // Images are loaded via img tag directly
-      setFileContent({
-        path: entry.path,
-        name: entry.name,
-        type: 'image',
-        extension: entry.extension || '',
-        size: entry.size || 0,
-        content: '', // Not needed for images
-      })
-      return
-    }
-    
-    try {
-      setLoadingContent(true)
-      const res = await fetch(`${API_BASE}/projects/${projectId}/files/content?path=${encodeURIComponent(entry.path)}`)
-      if (!res.ok) throw new Error('Failed to load file')
-      const data = await res.json()
-      setFileContent(data)
-    } catch (err) {
-      setFileContent(null)
-      setError(err instanceof Error ? err.message : 'Failed to load file')
-    } finally {
-      setLoadingContent(false)
-    }
-  }, [projectId])
+  const openFile = useCallback(
+    async (entry: FileEntry) => {
+      setSelectedFile(entry)
+      setView('viewer')
+
+      if (entry.type === 'image') {
+        // Images are loaded via img tag directly
+        setFileContent({
+          path: entry.path,
+          name: entry.name,
+          type: 'image',
+          extension: entry.extension || '',
+          size: entry.size || 0,
+          content: '', // Not needed for images
+        })
+        return
+      }
+
+      try {
+        setLoadingContent(true)
+        const res = await fetch(
+          `${API_BASE}/projects/${projectId}/files/content?path=${encodeURIComponent(entry.path)}`
+        )
+        if (!res.ok) throw new Error('Failed to load file')
+        const data = await res.json()
+        setFileContent(data)
+      } catch (err) {
+        setFileContent(null)
+        setError(err instanceof Error ? err.message : 'Failed to load file')
+      } finally {
+        setLoadingContent(false)
+      }
+    },
+    [projectId]
+  )
 
   // Filter files (flattened for counts)
   const fileCounts = useMemo(() => {
@@ -466,7 +523,7 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
     if (filterType === 'all') return files
     function filterTree(entries: FileEntry[]): FileEntry[] {
       return entries
-        .map(e => {
+        .map((e) => {
           if (e.type === 'directory') {
             const children = e.children ? filterTree(e.children) : []
             if (children.length === 0) return null
@@ -488,77 +545,117 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
   }, [fileContent])
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: 16,
-      right: 16,
-      bottom: 80,
-      width: 420,
-      zIndex: 30,
-      background: 'rgba(255, 255, 255, 0.92)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderRadius: 16,
-      border: '1px solid rgba(0, 0, 0, 0.08)',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      animation: 'docsPanelSlideIn 0.3s ease-out',
-    }}>
-      {/* Header */}
-      <div style={{
-        padding: '16px 16px 0',
+    <div
+      style={{
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        bottom: 80,
+        width: 420,
+        zIndex: 30,
+        background: 'rgba(255, 255, 255, 0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: 16,
+        border: '1px solid rgba(0, 0, 0, 0.08)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-      }}>
+        flexDirection: 'column',
+        overflow: 'hidden',
+        animation: 'docsPanelSlideIn 0.3s ease-out',
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          padding: '16px 16px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
         {view === 'viewer' && (
           <button
-            onClick={() => { setView('browser'); setSelectedFile(null); setFileContent(null) }}
+            onClick={() => {
+              setView('browser')
+              setSelectedFile(null)
+              setFileContent(null)
+            }}
             style={{
-              width: 28, height: 28, borderRadius: 8, border: 'none',
-              background: 'rgba(0,0,0,0.05)', color: '#6b7280', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, fontWeight: 700, flexShrink: 0,
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              border: 'none',
+              background: 'rgba(0,0,0,0.05)',
+              color: '#6b7280',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 14,
+              fontWeight: 700,
+              flexShrink: 0,
             }}
           >
             ←
           </button>
         )}
-        <div style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: color + '20',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 18, flexShrink: 0,
-        }}>
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            background: color + '20',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 18,
+            flexShrink: 0,
+          }}
+        >
           📂
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 14, fontWeight: 700, color: '#1f2937',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 700,
+              color: '#1f2937',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {view === 'viewer' && selectedFile ? selectedFile.name : `${projectName} Docs`}
           </div>
           <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>
-            {view === 'viewer' && selectedFile
-              ? selectedFile.path
-              : `${fileCounts.all} files`
-            }
+            {view === 'viewer' && selectedFile ? selectedFile.path : `${fileCounts.all} files`}
           </div>
         </div>
         <button
           onClick={onClose}
           style={{
-            width: 28, height: 28, borderRadius: 8, border: 'none',
-            background: 'rgba(0,0,0,0.05)', color: '#6b7280', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, fontWeight: 700, flexShrink: 0,
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            border: 'none',
+            background: 'rgba(0,0,0,0.05)',
+            color: '#6b7280',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 14,
+            fontWeight: 700,
+            flexShrink: 0,
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.1)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0,0,0,0.1)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
+          }}
         >
           ✕
         </button>
@@ -568,19 +665,21 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
 
       {/* File type filter (browser view only) */}
       {view === 'browser' && !loading && !error && (
-        <div style={{
-          padding: '8px 16px',
-          display: 'flex',
-          gap: 4,
-          flexWrap: 'wrap',
-        }}>
+        <div
+          style={{
+            padding: '8px 16px',
+            display: 'flex',
+            gap: 4,
+            flexWrap: 'wrap',
+          }}
+        >
           {[
             { key: 'all', label: 'All', icon: '📋' },
             { key: 'document', label: 'Docs', icon: '📝' },
             { key: 'code', label: 'Code', icon: '💻' },
             { key: 'config', label: 'Config', icon: '⚙️' },
             { key: 'image', label: 'Images', icon: '🖼️' },
-          ].map(f => (
+          ].map((f) => (
             <button
               key={f.key}
               onClick={() => setFilterType(f.key)}
@@ -609,11 +708,13 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
       )}
 
       {/* Content Area */}
-      <div style={{
-        flex: 1,
-        overflow: 'auto',
-        padding: view === 'viewer' ? '0' : '8px 8px',
-      }}>
+      <div
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: view === 'viewer' ? '0' : '8px 8px',
+        }}
+      >
         {loading && (
           <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
             Loading files...
@@ -621,17 +722,25 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
         )}
 
         {error && (
-          <div style={{
-            margin: 16, padding: 12, borderRadius: 10,
-            background: '#fef2f2', color: '#991b1b', fontSize: 13,
-          }}>
+          <div
+            style={{
+              margin: 16,
+              padding: 12,
+              borderRadius: 10,
+              background: '#fef2f2',
+              color: '#991b1b',
+              fontSize: 13,
+            }}
+          >
             {error}
           </div>
         )}
 
         {/* File Browser */}
-        {view === 'browser' && !loading && !error && (
-          filteredFiles.length === 0 ? (
+        {view === 'browser' &&
+          !loading &&
+          !error &&
+          (filteredFiles.length === 0 ? (
             <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
               No files found
             </div>
@@ -641,12 +750,11 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
               onSelect={openFile}
               selectedPath={selectedFile?.path || null}
             />
-          )
-        )}
+          ))}
 
         {/* File Viewer */}
-        {view === 'viewer' && (
-          loadingContent ? (
+        {view === 'viewer' &&
+          (loadingContent ? (
             <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
               Loading content...
             </div>
@@ -654,24 +762,37 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {/* TOC for markdown */}
               {toc.length > 3 && (
-                <div style={{
-                  padding: '8px 16px',
-                  borderBottom: '1px solid rgba(0,0,0,0.06)',
-                  background: 'rgba(0,0,0,0.02)',
-                  maxHeight: 120,
-                  overflow: 'auto',
-                }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', marginBottom: 4 }}>
+                <div
+                  style={{
+                    padding: '8px 16px',
+                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                    background: 'rgba(0,0,0,0.02)',
+                    maxHeight: 120,
+                    overflow: 'auto',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: '#9ca3af',
+                      textTransform: 'uppercase',
+                      marginBottom: 4,
+                    }}
+                  >
                     Contents
                   </div>
                   {toc.map((entry, i) => (
-                    <div key={i} style={{
-                      fontSize: 11,
-                      color: '#6b7280',
-                      padding: '2px 0',
-                      paddingLeft: (entry.level - 1) * 12,
-                      cursor: 'default',
-                    }}>
+                    <div
+                      key={i}
+                      style={{
+                        fontSize: 11,
+                        color: '#6b7280',
+                        padding: '2px 0',
+                        paddingLeft: (entry.level - 1) * 12,
+                        cursor: 'default',
+                      }}
+                    >
                       {entry.text}
                     </div>
                   ))}
@@ -693,7 +814,8 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
                       }}
                     />
                     <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
-                      {selectedFile.name} · {selectedFile.size ? formatFileSize(selectedFile.size) : ''}
+                      {selectedFile.name} ·{' '}
+                      {selectedFile.size ? formatFileSize(selectedFile.size) : ''}
                     </div>
                   </div>
                 )}
@@ -702,28 +824,30 @@ export function ProjectDocsPanel({ projectId, projectName, projectColor, onClose
                   <MarkdownViewer content={fileContent.content} projectId={projectId} />
                 )}
 
-                {(fileContent.type === 'code' || fileContent.type === 'config' || 
+                {(fileContent.type === 'code' ||
+                  fileContent.type === 'config' ||
                   (fileContent.type === 'document' && fileContent.extension !== '.md')) && (
-                  <pre style={{
-                    margin: 0,
-                    padding: 12,
-                    background: 'rgba(0,0,0,0.03)',
-                    borderRadius: 8,
-                    fontSize: 12,
-                    lineHeight: 1.6,
-                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
-                    color: '#374151',
-                    overflow: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                  }}>
+                  <pre
+                    style={{
+                      margin: 0,
+                      padding: 12,
+                      background: 'rgba(0,0,0,0.03)',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      lineHeight: 1.6,
+                      fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                      color: '#374151',
+                      overflow: 'auto',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                    }}
+                  >
                     {fileContent.content}
                   </pre>
                 )}
               </div>
             </div>
-          ) : null
-        )}
+          ) : null)}
       </div>
 
       {/* Markdown styles */}

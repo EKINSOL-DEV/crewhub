@@ -10,7 +10,9 @@ export function lsGet<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(LS_PREFIX + key)
     if (raw) return JSON.parse(raw) as T
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return fallback
 }
 

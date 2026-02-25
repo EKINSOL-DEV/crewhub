@@ -85,12 +85,12 @@ def _slugify(text: str, max_len: int = 40) -> str:
 async def _save_output(self, output_md: str) -> Optional[str]:
     # ... existing path logic ...
     today = datetime.now().strftime("%Y-%m-%d")
-    
+
     # Use title or goal for context
     topic_slug = _slugify(self.title or self.goal or "meeting")
     if topic_slug == "team-meeting":  # default title, not useful
         topic_slug = _slugify(self.goal) if self.goal else "meeting"
-    
+
     base_name = f"{today}-{topic_slug}"
     filename = f"{base_name}.md"
     counter = 2
@@ -381,7 +381,7 @@ User clicks Meeting Table in 3D HQ
   → MeetingDialog opens (existing)
   → NEW: Tab bar at top: [New Meeting] [History]
   → History tab shows list of past meetings:
-  
+
   ┌──────────────────────────────────────────────┐
   │ 📋 Meeting History                    🔍     │
   ├──────────────────────────────────────────────┤

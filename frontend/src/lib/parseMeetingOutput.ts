@@ -88,18 +88,18 @@ export function parseMeetingOutput(md: string): ParsedMeetingOutput {
     } else if (lower.includes('participant')) {
       result.participants = content
         .split('\n')
-        .map(l => l.replace(/^[-*]\s*/, '').trim())
+        .map((l) => l.replace(/^[-*]\s*/, '').trim())
         .filter(Boolean)
     } else if (lower.includes('summary') || lower.includes('discussion')) {
       result.summary = content
         .split('\n')
-        .filter(l => l.trim().startsWith('-') || l.trim().startsWith('•'))
-        .map(l => l.replace(/^[-•*]\s*/, '').trim())
+        .filter((l) => l.trim().startsWith('-') || l.trim().startsWith('•'))
+        .map((l) => l.replace(/^[-•*]\s*/, '').trim())
       if (result.summary.length === 0 && content) {
         result.summary = [content]
       }
     } else if (lower.includes('action item') || lower.includes('next step')) {
-      content.split('\n').forEach(line => {
+      content.split('\n').forEach((line) => {
         if (line.trim().match(/^- \[[ xX]\]/)) {
           result.actionItems.push(parseActionItem(line.trim(), actionItemIndex++))
         }
@@ -107,12 +107,12 @@ export function parseMeetingOutput(md: string): ParsedMeetingOutput {
     } else if (lower.includes('decision')) {
       result.decisions = content
         .split('\n')
-        .map(l => l.replace(/^[-*]\s*/, '').trim())
+        .map((l) => l.replace(/^[-*]\s*/, '').trim())
         .filter(Boolean)
     } else if (lower.includes('blocker')) {
       result.blockers = content
         .split('\n')
-        .map(l => l.replace(/^[-*]\s*/, '').trim())
+        .map((l) => l.replace(/^[-*]\s*/, '').trim())
         .filter(Boolean)
     }
 

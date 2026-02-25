@@ -39,7 +39,9 @@ export function useAgentFiles(agentId: string | null | undefined) {
     }
   }, [agentId])
 
-  useEffect(() => { refresh() }, [refresh])
+  useEffect(() => {
+    refresh()
+  }, [refresh])
 
   return { files, loading, error, refresh }
 }

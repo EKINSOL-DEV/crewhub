@@ -190,7 +190,7 @@ cd crewhub
 make dev
 ```
 
-Frontend: http://localhost:5181  
+Frontend: http://localhost:5181
 Backend API: http://localhost:8091
 
 ### Option 3: Demo Mode (No OpenClaw Needed)

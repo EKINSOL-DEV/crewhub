@@ -1,11 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from "react"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
-  Download, Upload, Database, Loader2, Clock,
-  HardDrive, RefreshCw, FolderOpen, AlertCircle, Check,
-} from "lucide-react"
+  Download,
+  Upload,
+  Database,
+  Loader2,
+  Clock,
+  HardDrive,
+  RefreshCw,
+  FolderOpen,
+  AlertCircle,
+  Check,
+} from 'lucide-react'
 import {
   exportBackup,
   importBackup,
@@ -14,8 +22,8 @@ import {
   type BackupInfo,
   getSettings as apiGetSettings,
   updateSetting as apiUpdateSetting,
-} from "@/lib/api"
-import { Section, CollapsibleSection } from "./shared"
+} from '@/lib/api'
+import { Section, CollapsibleSection } from './shared'
 
 // ─── DataTab ─────────────────────────────────────────────────────────────────
 
@@ -31,8 +39,8 @@ export function DataTab() {
 // ─── Projects Base Path Section ───────────────────────────────────────────────
 
 function ProjectsBasePathSection() {
-  const [basePath, setBasePath] = useState("")
-  const [savedPath, setSavedPath] = useState("")
+  const [basePath, setBasePath] = useState('')
+  const [savedPath, setSavedPath] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,12 +50,12 @@ function ProjectsBasePathSection() {
     const load = async () => {
       try {
         const settings = await apiGetSettings()
-        const val = settings["projects_base_path"] || "~/Projects"
+        const val = settings['projects_base_path'] || '~/Projects'
         setBasePath(val)
         setSavedPath(val)
       } catch {
-        setBasePath("~/Projects")
-        setSavedPath("~/Projects")
+        setBasePath('~/Projects')
+        setSavedPath('~/Projects')
       } finally {
         setLoading(false)
       }
@@ -58,23 +66,23 @@ function ProjectsBasePathSection() {
   const handleSave = async () => {
     const trimmed = basePath.trim()
     if (!trimmed) {
-      setError("Path cannot be empty")
+      setError('Path cannot be empty')
       return
     }
-    if (!trimmed.startsWith("/") && !trimmed.startsWith("~")) {
-      setError("Path must start with / or ~")
+    if (!trimmed.startsWith('/') && !trimmed.startsWith('~')) {
+      setError('Path must start with / or ~')
       return
     }
     setSaving(true)
     setError(null)
     setSuccess(false)
     try {
-      await apiUpdateSetting("projects_base_path", trimmed)
+      await apiUpdateSetting('projects_base_path', trimmed)
       setSavedPath(trimmed)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     } catch {
-      setError("Failed to save setting")
+      setError('Failed to save setting')
     } finally {
       setSaving(false)
     }
@@ -99,11 +107,17 @@ function ProjectsBasePathSection() {
             <Input
               id="projects-base-path"
               value={basePath}
-              onChange={(e) => { setBasePath(e.target.value); setError(null); setSuccess(false) }}
+              onChange={(e) => {
+                setBasePath(e.target.value)
+                setError(null)
+                setSuccess(false)
+              }}
               placeholder="~/Projects"
               className="pl-9 font-mono text-sm"
               disabled={loading}
-              onKeyDown={(e) => { if (e.key === "Enter" && isDirty) handleSave() }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && isDirty) handleSave()
+              }}
             />
           </div>
           <Button
@@ -112,7 +126,7 @@ function ProjectsBasePathSection() {
             size="sm"
             className="h-10 px-4"
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
           </Button>
         </div>
         {error && (
@@ -140,7 +154,9 @@ function BackupSection() {
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [creating, setCreating] = useState(false)
-  const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(
+    null
+  )
   const [showImportConfirm, setShowImportConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingFileRef = useRef<File | null>(null)
@@ -149,8 +165,11 @@ function BackupSection() {
   useEffect(() => {
     const dialog = importDialogRef.current
     if (!dialog) return
-    if (showImportConfirm) { if (!dialog.open) dialog.showModal() }
-    else { if (dialog.open) dialog.close() }
+    if (showImportConfirm) {
+      if (!dialog.open) dialog.showModal()
+    } else {
+      if (dialog.open) dialog.close()
+    }
   }, [showImportConfirm])
 
   const loadBackups = useCallback(async () => {
@@ -174,7 +193,7 @@ function BackupSection() {
     try {
       const blob = await exportBackup()
       const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
+      const a = document.createElement('a')
       a.href = url
       a.download = `crewhub-backup-${new Date().toISOString().slice(0, 10)}.json`
       document.body.appendChild(a)
@@ -184,7 +203,7 @@ function BackupSection() {
     } catch (err) {
       setImportResult({
         success: false,
-        message: err instanceof Error ? err.message : "Export failed",
+        message: err instanceof Error ? err.message : 'Export failed',
       })
     } finally {
       setExporting(false)
@@ -196,7 +215,7 @@ function BackupSection() {
     if (!file) return
     pendingFileRef.current = file
     setShowImportConfirm(true)
-    e.target.value = ""
+    e.target.value = ''
   }
 
   const handleImportConfirmed = async () => {
@@ -209,13 +228,13 @@ function BackupSection() {
       const result = await importBackup(file)
       setImportResult({
         success: result.success,
-        message: result.message || "Backup imported successfully",
+        message: result.message || 'Backup imported successfully',
       })
       await loadBackups()
     } catch (err) {
       setImportResult({
         success: false,
-        message: err instanceof Error ? err.message : "Import failed",
+        message: err instanceof Error ? err.message : 'Import failed',
       })
     } finally {
       setImporting(false)
@@ -262,7 +281,11 @@ function BackupSection() {
               disabled={exporting}
               className="gap-1.5 h-10"
             >
-              {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+              {exporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
               <span className="text-xs">Export</span>
             </Button>
             <Button
@@ -272,7 +295,11 @@ function BackupSection() {
               disabled={importing}
               className="gap-1.5 h-10"
             >
-              {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+              {importing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
               <span className="text-xs">Import</span>
             </Button>
             <Button
@@ -282,7 +309,11 @@ function BackupSection() {
               disabled={creating}
               className="gap-1.5 h-10"
             >
-              {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Database className="h-3.5 w-3.5" />}
+              {creating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Database className="h-3.5 w-3.5" />
+              )}
               <span className="text-xs">Snapshot</span>
             </Button>
           </div>
@@ -300,14 +331,15 @@ function BackupSection() {
             <div
               className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
                 importResult.success
-                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                  : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               }`}
             >
-              {importResult.success
-                ? <Check className="h-4 w-4 shrink-0" />
-                : <AlertCircle className="h-4 w-4 shrink-0" />
-              }
+              {importResult.success ? (
+                <Check className="h-4 w-4 shrink-0" />
+              ) : (
+                <AlertCircle className="h-4 w-4 shrink-0" />
+              )}
               {importResult.message}
             </div>
           )}
@@ -325,7 +357,7 @@ function BackupSection() {
                 disabled={loading}
                 className="h-6 w-6 p-0"
               >
-                <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
 
@@ -376,9 +408,9 @@ function BackupSection() {
             <div className="flex items-start gap-2 mt-2">
               <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-sm text-muted-foreground">
-                <strong className="text-foreground">Warning:</strong> This will replace all current data
-                including connections, rooms, routing rules, and settings.
-                This action cannot be undone.
+                <strong className="text-foreground">Warning:</strong> This will replace all current
+                data including connections, rooms, routing rules, and settings. This action cannot
+                be undone.
               </p>
             </div>
           </div>

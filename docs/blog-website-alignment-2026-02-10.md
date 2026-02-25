@@ -21,7 +21,7 @@ Additionally, features aren't grouped by category — it mixes UX features (Zen 
 ```markdown
 ### ✅ Shipped This Week
 - **Room Projects** — Organize agents by project, HQ command center for full overview
-- **Task Management** — Visual Kanban boards embedded in 3D rooms  
+- **Task Management** — Visual Kanban boards embedded in 3D rooms
 - **Zen Mode** — Distraction-free focus mode with multi-tab workspaces
 - **Agent Persona Tuning** — Customize how agents behave (autonomous vs. cautious, detailed vs. concise)
 - **Modding System** — Editable templates (JSON blueprints) for custom props and rooms

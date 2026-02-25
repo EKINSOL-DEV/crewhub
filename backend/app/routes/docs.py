@@ -3,7 +3,6 @@ Docs API - Serve markdown documentation from the docs/ folder.
 Provides tree listing and file content endpoints.
 """
 
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -34,36 +33,40 @@ class DocContent(BaseModel):
 def _build_tree(base: Path, rel: str = "") -> list[DocNode]:
     """Recursively build a tree of markdown files and directories."""
     nodes: list[DocNode] = []
-    
+
     if not base.exists():
         return nodes
-    
+
     entries = sorted(base.iterdir(), key=lambda e: (not e.is_dir(), e.name.lower()))
-    
+
     for entry in entries:
         # Skip hidden files/dirs and non-md files
         if entry.name.startswith(".") or entry.name.startswith("__"):
             continue
-        
+
         entry_rel = f"{rel}/{entry.name}" if rel else entry.name
-        
+
         if entry.is_dir():
             children = _build_tree(entry, entry_rel)
             if children:  # Only include dirs that have md files
-                nodes.append(DocNode(
+                nodes.append(
+                    DocNode(
+                        name=entry.name,
+                        path=entry_rel,
+                        type="directory",
+                        children=children,
+                    )
+                )
+        elif entry.suffix.lower() == ".md":
+            nodes.append(
+                DocNode(
                     name=entry.name,
                     path=entry_rel,
-                    type="directory",
-                    children=children,
-                ))
-        elif entry.suffix.lower() == ".md":
-            nodes.append(DocNode(
-                name=entry.name,
-                path=entry_rel,
-                type="file",
-                lastModified=entry.stat().st_mtime,
-            ))
-    
+                    type="file",
+                    lastModified=entry.stat().st_mtime,
+                )
+            )
+
     return nodes
 
 
@@ -85,18 +88,18 @@ async def get_docs_tree():
 async def get_doc_content(path: str = Query(..., description="Relative path to doc file")):
     """Get the content of a specific documentation file."""
     file_path = _safe_path(path)
-    
+
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     if not file_path.is_file() or file_path.suffix.lower() != ".md":
         raise HTTPException(status_code=400, detail="Not a markdown file")
-    
+
     try:
         content = file_path.read_text(encoding="utf-8")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading file: {e}")
-    
+
     return DocContent(
         path=path,
         name=file_path.name,
@@ -110,20 +113,20 @@ async def search_docs(q: str = Query(..., min_length=2, description="Search quer
     """Search through docs content and filenames."""
     results = []
     query = q.lower()
-    
+
     for md_file in DOCS_ROOT.rglob("*.md"):
         if md_file.name.startswith("."):
             continue
-        
+
         rel_path = str(md_file.relative_to(DOCS_ROOT))
         name_match = query in md_file.name.lower()
-        
+
         try:
             content = md_file.read_text(encoding="utf-8")
             content_match = query in content.lower()
         except Exception:
             continue
-        
+
         if name_match or content_match:
             # Extract a snippet around the match
             snippet = ""
@@ -132,15 +135,17 @@ async def search_docs(q: str = Query(..., min_length=2, description="Search quer
                 start = max(0, idx - 80)
                 end = min(len(content), idx + len(query) + 80)
                 snippet = ("..." if start > 0 else "") + content[start:end] + ("..." if end < len(content) else "")
-            
-            results.append({
-                "path": rel_path,
-                "name": md_file.name,
-                "nameMatch": name_match,
-                "snippet": snippet,
-            })
-        
+
+            results.append(
+                {
+                    "path": rel_path,
+                    "name": md_file.name,
+                    "nameMatch": name_match,
+                    "snippet": snippet,
+                }
+            )
+
         if len(results) >= 30:
             break
-    
+
     return results

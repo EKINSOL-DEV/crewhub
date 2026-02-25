@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Workbench() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.1; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.1
+  })
   return (
     <group ref={groupRef} scale={0.65}>
       {/* Top surface */}
@@ -13,7 +15,12 @@ export function Workbench() {
         <meshStandardMaterial color="#aa8844" flatShading />
       </mesh>
       {/* Legs */}
-      {[[-0.6, -0.2], [0.6, -0.2], [-0.6, 0.2], [0.6, 0.2]].map(([x, z], i) => (
+      {[
+        [-0.6, -0.2],
+        [0.6, -0.2],
+        [-0.6, 0.2],
+        [0.6, 0.2],
+      ].map(([x, z], i) => (
         <mesh key={i} position={[x, -0.35, z]}>
           <boxGeometry args={[0.06, 0.8, 0.06]} />
           <meshStandardMaterial color="#886633" flatShading />
@@ -48,5 +55,5 @@ export function Workbench() {
         <meshStandardMaterial color="#ffaa22" />
       </mesh>
     </group>
-  );
+  )
 }

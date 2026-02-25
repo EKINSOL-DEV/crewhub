@@ -6,17 +6,17 @@
  * - First bot creation (Default/Dev/Reviewer templates)
  */
 
-import { useState, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   getEnvironmentInfo,
   testOpenClawConnection,
   type EnvironmentInfo,
   type TestOpenClawResult,
-} from "@/lib/api"
+} from '@/lib/api'
 import {
   Zap,
   CheckCircle2,
@@ -36,13 +36,13 @@ import {
   Sparkles,
   Rocket,
   Info,
-} from "lucide-react"
+} from 'lucide-react'
 
 // ─── Types ──────────────────────────────────────────────────────
 
 type WizardStep = 0 | 1 | 2
 
-type SetupMode = "same-machine" | "docker" | "lan" | "advanced"
+type SetupMode = 'same-machine' | 'docker' | 'lan' | 'advanced'
 
 interface BotTemplate {
   id: string
@@ -68,28 +68,28 @@ interface OpenClawWizardProps {
 
 const BOT_TEMPLATES: BotTemplate[] = [
   {
-    id: "default",
-    name: "Default Bot",
-    description: "General-purpose assistant based on the main agent.",
+    id: 'default',
+    name: 'Default Bot',
+    description: 'General-purpose assistant based on the main agent.',
     icon: <Bot className="h-5 w-5" />,
-    agentId: "main",
-    color: "#4f46e5",
+    agentId: 'main',
+    color: '#4f46e5',
   },
   {
-    id: "developer",
-    name: "Developer Bot",
-    description: "Focused on coding, debugging, and technical tasks.",
+    id: 'developer',
+    name: 'Developer Bot',
+    description: 'Focused on coding, debugging, and technical tasks.',
     icon: <Code2 className="h-5 w-5" />,
-    agentId: "dev",
-    color: "#10b981",
+    agentId: 'dev',
+    color: '#10b981',
   },
   {
-    id: "reviewer",
-    name: "Reviewer Bot",
-    description: "Code review, documentation review, and quality checks.",
+    id: 'reviewer',
+    name: 'Reviewer Bot',
+    description: 'Code review, documentation review, and quality checks.',
     icon: <SearchIcon className="h-5 w-5" />,
-    agentId: "reviewer",
-    color: "#f59e0b",
+    agentId: 'reviewer',
+    color: '#f59e0b',
   },
 ]
 
@@ -98,107 +98,137 @@ const SETUP_MODES: {
   title: string
   description: string
   icon: React.ReactNode
-  inlineHelp: { variant: "amber" | "blue" | "gray"; content: React.ReactNode }
+  inlineHelp: { variant: 'amber' | 'blue' | 'gray'; content: React.ReactNode }
 }[] = [
   {
-    id: "docker",
-    title: "CrewHub in Docker",
-    description: "CrewHub runs in Docker, OpenClaw on the host",
+    id: 'docker',
+    title: 'CrewHub in Docker',
+    description: 'CrewHub runs in Docker, OpenClaw on the host',
     icon: <Container className="h-5 w-5" />,
     inlineHelp: {
-      variant: "amber",
+      variant: 'amber',
       content: (
         <>
-          <p>⚠️ Use <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">ws://host.docker.internal:18789</code> or <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">ws://172.17.0.1:18789</code></p>
-          <p>OpenClaw must bind to <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">"lan"</code> mode (not "loopback")</p>
+          <p>
+            ⚠️ Use{' '}
+            <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
+              ws://host.docker.internal:18789
+            </code>{' '}
+            or{' '}
+            <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
+              ws://172.17.0.1:18789
+            </code>
+          </p>
+          <p>
+            OpenClaw must bind to{' '}
+            <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
+              "lan"
+            </code>{' '}
+            mode (not "loopback")
+          </p>
         </>
       ),
     },
   },
   {
-    id: "same-machine",
-    title: "Same computer",
-    description: "Both running directly on the host (no Docker)",
+    id: 'same-machine',
+    title: 'Same computer',
+    description: 'Both running directly on the host (no Docker)',
     icon: <Server className="h-5 w-5" />,
     inlineHelp: {
-      variant: "blue",
+      variant: 'blue',
       content: (
         <>
-          <p>ℹ️ Use <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">ws://localhost:18789</code> or <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">ws://127.0.0.1:18789</code></p>
+          <p>
+            ℹ️ Use{' '}
+            <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">
+              ws://localhost:18789
+            </code>{' '}
+            or{' '}
+            <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">
+              ws://127.0.0.1:18789
+            </code>
+          </p>
           <p>Dev mode requires Vite proxy configured for the backend port</p>
         </>
       ),
     },
   },
   {
-    id: "lan",
-    title: "Another computer (LAN)",
-    description: "OpenClaw is on a different machine on your network",
+    id: 'lan',
+    title: 'Another computer (LAN)',
+    description: 'OpenClaw is on a different machine on your network',
     icon: <Network className="h-5 w-5" />,
     inlineHelp: {
-      variant: "blue",
+      variant: 'blue',
       content: (
         <>
-          <p>ℹ️ Use <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">ws://your-server-ip:18789</code></p>
+          <p>
+            ℹ️ Use{' '}
+            <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">
+              ws://your-server-ip:18789
+            </code>
+          </p>
           <p>OpenClaw must be accessible from this machine (firewall/network)</p>
         </>
       ),
     },
   },
   {
-    id: "advanced",
-    title: "Advanced / Custom",
-    description: "Remote server, reverse proxy, or custom setup",
+    id: 'advanced',
+    title: 'Advanced / Custom',
+    description: 'Remote server, reverse proxy, or custom setup',
     icon: <Settings2 className="h-5 w-5" />,
     inlineHelp: {
-      variant: "gray",
+      variant: 'gray',
       content: <p>🔧 Manual configuration required</p>,
     },
   },
 ]
 
 const INLINE_HELP_STYLES = {
-  amber: "border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 text-amber-900 dark:text-amber-200",
-  blue: "border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900 text-blue-900 dark:text-blue-200",
-  gray: "border-border bg-muted/50 text-muted-foreground",
+  amber:
+    'border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 text-amber-900 dark:text-amber-200',
+  blue: 'border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900 text-blue-900 dark:text-blue-200',
+  gray: 'border-border bg-muted/50 text-muted-foreground',
 } as const
 
 // ─── Error Category Styling ─────────────────────────────────────
 
 function getCategoryColor(category: string | null): string {
   switch (category) {
-    case "dns":
-      return "border-orange-500 bg-orange-50 dark:bg-orange-950/30"
-    case "tcp":
-      return "border-red-500 bg-red-50 dark:bg-red-950/30"
-    case "auth":
-      return "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
-    case "ws":
-    case "protocol":
-      return "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
-    case "timeout":
-      return "border-gray-500 bg-gray-50 dark:bg-gray-950/30"
+    case 'dns':
+      return 'border-orange-500 bg-orange-50 dark:bg-orange-950/30'
+    case 'tcp':
+      return 'border-red-500 bg-red-50 dark:bg-red-950/30'
+    case 'auth':
+      return 'border-amber-500 bg-amber-50 dark:bg-amber-950/30'
+    case 'ws':
+    case 'protocol':
+      return 'border-purple-500 bg-purple-50 dark:bg-purple-950/30'
+    case 'timeout':
+      return 'border-gray-500 bg-gray-50 dark:bg-gray-950/30'
     default:
-      return "border-red-500 bg-red-50 dark:bg-red-950/30"
+      return 'border-red-500 bg-red-50 dark:bg-red-950/30'
   }
 }
 
 function getCategoryLabel(category: string | null): string {
   switch (category) {
-    case "dns":
-      return "DNS / Host Not Found"
-    case "tcp":
-      return "Port / Firewall"
-    case "auth":
-      return "Authentication"
-    case "ws":
-      return "WebSocket Error"
-    case "protocol":
-      return "Protocol Mismatch"
-    case "timeout":
-      return "Timeout"
+    case 'dns':
+      return 'DNS / Host Not Found'
+    case 'tcp':
+      return 'Port / Firewall'
+    case 'auth':
+      return 'Authentication'
+    case 'ws':
+      return 'WebSocket Error'
+    case 'protocol':
+      return 'Protocol Mismatch'
+    case 'timeout':
+      return 'Timeout'
     default:
-      return "Connection Error"
+      return 'Connection Error'
   }
 }
 
@@ -208,12 +238,12 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   const [step, setStep] = useState<WizardStep>(0)
   const [envInfo, setEnvInfo] = useState<EnvironmentInfo | null>(null)
   const [envLoading, setEnvLoading] = useState(true)
-  const [setupMode, setSetupMode] = useState<SetupMode>("same-machine")
+  const [setupMode, setSetupMode] = useState<SetupMode>('same-machine')
 
   // Connection fields
-  const [url, setUrl] = useState("ws://127.0.0.1:18789")
-  const [token, setToken] = useState("")
-  const [connectionName, setConnectionName] = useState("OpenClaw Local")
+  const [url, setUrl] = useState('ws://127.0.0.1:18789')
+  const [token, setToken] = useState('')
+  const [connectionName, setConnectionName] = useState('OpenClaw Local')
   const [showToken, setShowToken] = useState(false)
 
   // Test state
@@ -221,11 +251,11 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   const [testResult, setTestResult] = useState<TestOpenClawResult | null>(null)
 
   // Bot template
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("default")
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('default')
   const [createBot, setCreateBot] = useState(true)
 
   // Display name
-  const [displayName, setDisplayName] = useState("Assistant")
+  const [displayName, setDisplayName] = useState('Assistant')
 
   // Load environment info on mount
   useEffect(() => {
@@ -236,7 +266,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
 
         // Auto-detect Docker mode
         if (info.is_docker) {
-          setSetupMode("docker")
+          setSetupMode('docker')
         }
 
         // Pre-fill URL from suggestions
@@ -255,20 +285,20 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   useEffect(() => {
     if (!envInfo) return
     switch (setupMode) {
-      case "same-machine":
-        setUrl("ws://127.0.0.1:18789")
+      case 'same-machine':
+        setUrl('ws://127.0.0.1:18789')
         break
-      case "docker":
+      case 'docker':
         if (envInfo.docker_host_internal_reachable) {
-          setUrl("ws://host.docker.internal:18789")
+          setUrl('ws://host.docker.internal:18789')
         } else if (envInfo.lan_ip) {
           setUrl(`ws://${envInfo.lan_ip}:18789`)
         }
         break
-      case "lan":
-        setUrl(envInfo.lan_ip ? `ws://${envInfo.lan_ip}:18789` : "ws://<HOST_IP>:18789")
+      case 'lan':
+        setUrl(envInfo.lan_ip ? `ws://${envInfo.lan_ip}:18789` : 'ws://<HOST_IP>:18789')
         break
-      case "advanced":
+      case 'advanced':
         // Don't change URL
         break
     }
@@ -286,7 +316,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
       setTestResult({
         ok: false,
         category: null,
-        message: err instanceof Error ? err.message : "Test failed",
+        message: err instanceof Error ? err.message : 'Test failed',
         hints: [],
         sessions: null,
       })
@@ -316,9 +346,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           <Zap className="h-8 w-8 text-primary" />
         </div>
         <h2 className="text-2xl font-bold">Connect to OpenClaw</h2>
-        <p className="text-muted-foreground">
-          Where is your OpenClaw gateway running?
-        </p>
+        <p className="text-muted-foreground">Where is your OpenClaw gateway running?</p>
       </div>
 
       {/* Docker auto-detect banner */}
@@ -330,8 +358,8 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               Docker environment detected
             </p>
             <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-              We detected CrewHub is running in a container. We've pre-selected
-              the Docker option below.
+              We detected CrewHub is running in a container. We've pre-selected the Docker option
+              below.
             </p>
           </div>
         </div>
@@ -344,15 +372,15 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               onClick={() => setSetupMode(mode.id)}
               className={`w-full p-4 rounded-xl border transition-all text-left flex items-center gap-4 ${
                 setupMode === mode.id
-                  ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
-                  : "border-border bg-card hover:bg-accent/30"
-              } ${setupMode === mode.id ? "rounded-b-none" : ""}`}
+                  ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                  : 'border-border bg-card hover:bg-accent/30'
+              } ${setupMode === mode.id ? 'rounded-b-none' : ''}`}
             >
               <div
                 className={`p-2.5 rounded-lg shrink-0 ${
                   setupMode === mode.id
-                    ? "bg-primary/10 text-primary"
-                    : "bg-muted text-muted-foreground"
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {mode.icon}
@@ -360,22 +388,22 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               <div className="flex-1 min-w-0">
                 <div className="font-medium flex items-center gap-2">
                   {mode.title}
-                  {mode.id === "docker" && envInfo?.is_docker && (
-                    <Badge variant="secondary" className="text-[10px]">Recommended</Badge>
+                  {mode.id === 'docker' && envInfo?.is_docker && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      Recommended
+                    </Badge>
                   )}
-                  {mode.id !== "docker" && (
-                    <span className="text-[10px] text-muted-foreground/60 font-normal">(in development)</span>
+                  {mode.id !== 'docker' && (
+                    <span className="text-[10px] text-muted-foreground/60 font-normal">
+                      (in development)
+                    </span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {mode.description}
-                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">{mode.description}</div>
               </div>
               <div
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${
-                  setupMode === mode.id
-                    ? "border-primary bg-primary"
-                    : "border-muted-foreground/30"
+                  setupMode === mode.id ? 'border-primary bg-primary' : 'border-muted-foreground/30'
                 }`}
               >
                 {setupMode === mode.id && (
@@ -385,7 +413,9 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
             </button>
             {/* Inline help for selected option */}
             {setupMode === mode.id && (
-              <div className={`px-4 py-3 border border-t-0 rounded-b-xl text-[11px] space-y-1 ${INLINE_HELP_STYLES[mode.inlineHelp.variant]}`}>
+              <div
+                className={`px-4 py-3 border border-t-0 rounded-b-xl text-[11px] space-y-1 ${INLINE_HELP_STYLES[mode.inlineHelp.variant]}`}
+              >
                 {mode.inlineHelp.content}
               </div>
             )}
@@ -411,9 +441,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
     <div className="max-w-lg mx-auto space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">Connection Details</h2>
-        <p className="text-muted-foreground">
-          Enter your OpenClaw gateway URL and token.
-        </p>
+        <p className="text-muted-foreground">Enter your OpenClaw gateway URL and token.</p>
       </div>
 
       <div className="space-y-4">
@@ -457,8 +485,8 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
                     }}
                     className={`text-xs px-2.5 py-1 rounded-md font-mono transition-colors ${
                       url === suggestedUrl
-                        ? "bg-primary/10 text-primary border border-primary/30"
-                        : "bg-muted text-muted-foreground hover:bg-accent border border-transparent"
+                        ? 'bg-primary/10 text-primary border border-primary/30'
+                        : 'bg-muted text-muted-foreground hover:bg-accent border border-transparent'
                     }`}
                   >
                     {suggestedUrl}
@@ -469,19 +497,42 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           )}
 
           {/* Docker bind mode help */}
-          {setupMode === "docker" && (
+          {setupMode === 'docker' && (
             <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
               <Info className="h-3.5 w-3.5 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
               <div className="text-[11px] text-amber-900 dark:text-amber-200 space-y-1.5">
                 <p className="font-semibold">⚠️ OpenClaw Gateway must listen on all interfaces</p>
-                <p>By default, OpenClaw binds to <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">loopback</code> (localhost only).</p>
-                <p>For Docker to connect, change to <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">"bind": "lan"</code> in <code className="font-mono">~/.openclaw/openclaw.json</code>:</p>
+                <p>
+                  By default, OpenClaw binds to{' '}
+                  <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
+                    loopback
+                  </code>{' '}
+                  (localhost only).
+                </p>
+                <p>
+                  For Docker to connect, change to{' '}
+                  <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
+                    "bind": "lan"
+                  </code>{' '}
+                  in <code className="font-mono">~/.openclaw/openclaw.json</code>:
+                </p>
                 <div className="mt-1 p-2 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px] space-y-0.5">
-                  <div><span className="text-amber-700 dark:text-amber-400">"gateway"</span>: &#123;</div>
-                  <div className="ml-2"><span className="text-amber-700 dark:text-amber-400">"bind"</span>: <span className="text-green-700 dark:text-green-400">"lan"</span>,  <span className="text-gray-500">// was: "loopback"</span></div>
+                  <div>
+                    <span className="text-amber-700 dark:text-amber-400">"gateway"</span>: &#123;
+                  </div>
+                  <div className="ml-2">
+                    <span className="text-amber-700 dark:text-amber-400">"bind"</span>:{' '}
+                    <span className="text-green-700 dark:text-green-400">"lan"</span>,{' '}
+                    <span className="text-gray-500">// was: "loopback"</span>
+                  </div>
                   <div>&#125;</div>
                 </div>
-                <p className="mt-1">Then restart: <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">openclaw gateway restart</code></p>
+                <p className="mt-1">
+                  Then restart:{' '}
+                  <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
+                    openclaw gateway restart
+                  </code>
+                </p>
               </div>
             </div>
           )}
@@ -492,7 +543,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           <Label className="text-xs">API Token</Label>
           <div className="flex gap-2">
             <Input
-              type={showToken ? "text" : "password"}
+              type={showToken ? 'text' : 'password'}
               value={token}
               onChange={(e) => {
                 setToken(e.target.value)
@@ -507,11 +558,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               className="h-9 w-9 p-0"
               onClick={() => setShowToken(!showToken)}
             >
-              {showToken ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
           </div>
 
@@ -525,7 +572,18 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
                 <li>• For public/remote deployments, use WSS (not WS) and HTTPS</li>
                 <li>• We do NOT recommend running CrewHub publicly accessible yet</li>
                 <li>• Authentication and security hardening are currently in development</li>
-                <li>• See <a href="https://github.com/ekinsolbot/crewhub/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-amber-700 dark:hover:text-amber-300">SECURITY.md</a> for more details</li>
+                <li>
+                  • See{' '}
+                  <a
+                    href="https://github.com/ekinsolbot/crewhub/blob/main/SECURITY.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-medium hover:text-amber-700 dark:hover:text-amber-300"
+                  >
+                    SECURITY.md
+                  </a>{' '}
+                  for more details
+                </li>
               </ul>
             </div>
           </div>
@@ -536,8 +594,16 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               <Info className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
               <div className="text-[11px] text-muted-foreground space-y-1">
                 <p className="font-medium">How to find your gateway token:</p>
-                <p>Run in terminal: <code className="px-1 py-0.5 rounded bg-muted font-mono text-[10px]">openclaw config get | jq -r '.gateway.auth.token'</code></p>
-                <p className="text-[10px]">Or find it in <code className="font-mono">~/.openclaw/openclaw.json</code> under <code className="font-mono">gateway.auth.token</code></p>
+                <p>
+                  Run in terminal:{' '}
+                  <code className="px-1 py-0.5 rounded bg-muted font-mono text-[10px]">
+                    openclaw config get | jq -r '.gateway.auth.token'
+                  </code>
+                </p>
+                <p className="text-[10px]">
+                  Or find it in <code className="font-mono">~/.openclaw/openclaw.json</code> under{' '}
+                  <code className="font-mono">gateway.auth.token</code>
+                </p>
               </div>
             </div>
           )}
@@ -548,7 +614,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               <Info className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
               <div>
                 <p className="text-[11px] text-muted-foreground">
-                  Token found in:{" "}
+                  Token found in:{' '}
                   <code className="px-1 py-0.5 rounded bg-muted font-mono text-[10px]">
                     {envInfo.token_file_path}
                   </code>
@@ -566,7 +632,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           onClick={handleTest}
           disabled={testing || !url}
           className="w-full gap-2"
-          variant={testResult?.ok ? "default" : "outline"}
+          variant={testResult?.ok ? 'default' : 'outline'}
         >
           {testing ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -575,11 +641,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           ) : (
             <Zap className="h-4 w-4" />
           )}
-          {testing
-            ? "Testing…"
-            : testResult?.ok
-              ? "Connected ✓"
-              : "Test Connection"}
+          {testing ? 'Testing…' : testResult?.ok ? 'Connected ✓' : 'Test Connection'}
         </Button>
 
         {/* Test Result */}
@@ -625,11 +687,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
-        <Button
-          onClick={() => setStep(2)}
-          disabled={!testResult?.ok}
-          className="gap-2"
-        >
+        <Button onClick={() => setStep(2)} disabled={!testResult?.ok} className="gap-2">
           Continue
           <ArrowRight className="h-4 w-4" />
         </Button>
@@ -646,9 +704,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           <Rocket className="h-8 w-8 text-green-600 dark:text-green-400" />
         </div>
         <h2 className="text-2xl font-bold">Create Your First Bot</h2>
-        <p className="text-muted-foreground">
-          Choose a template and give your agent a name.
-        </p>
+        <p className="text-muted-foreground">Choose a template and give your agent a name.</p>
       </div>
 
       {/* Display Name */}
@@ -675,8 +731,8 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
             }}
             className={`w-full p-4 rounded-xl border transition-all text-left flex items-center gap-4 ${
               createBot && selectedTemplate === tmpl.id
-                ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
-                : "border-border bg-card hover:bg-accent/30"
+                ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                : 'border-border bg-card hover:bg-accent/30'
             }`}
           >
             <div
@@ -690,11 +746,9 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-medium">{tmpl.name}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                {tmpl.description}
-              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">{tmpl.description}</div>
             </div>
-            {tmpl.id === "default" && (
+            {tmpl.id === 'default' && (
               <Badge variant="secondary" className="text-[10px] shrink-0">
                 Recommended
               </Badge>
@@ -706,8 +760,8 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           onClick={() => setCreateBot(false)}
           className={`w-full p-3 rounded-xl border transition-all text-left flex items-center gap-3 ${
             !createBot
-              ? "border-primary bg-primary/5"
-              : "border-border/50 bg-muted/30 hover:bg-accent/30"
+              ? 'border-primary bg-primary/5'
+              : 'border-border/50 bg-muted/30 hover:bg-accent/30'
           }`}
         >
           <span className="text-sm text-muted-foreground">
@@ -723,7 +777,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         </Button>
         <Button onClick={handleComplete} className="gap-2">
           <Sparkles className="h-4 w-4" />
-          {createBot ? "Create & Finish" : "Finish Setup"}
+          {createBot ? 'Create & Finish' : 'Finish Setup'}
         </Button>
       </div>
     </div>
@@ -748,7 +802,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                s <= step ? "bg-primary" : "bg-muted"
+                s <= step ? 'bg-primary' : 'bg-muted'
               }`}
             />
           ))}

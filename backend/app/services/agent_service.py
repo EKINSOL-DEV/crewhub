@@ -4,6 +4,7 @@ All SQL for agents lives here. Routes call these functions and handle
 HTTP concerns (response formatting, HTTP exceptions).
 Gateway sync helpers also live here since they feed the DB.
 """
+
 import logging
 import time
 from typing import Optional
@@ -70,6 +71,7 @@ _AGENT_DEFAULTS = {
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
+
 def _build_agent_dict(row, display_name: Optional[str], is_stale: bool) -> dict:
     """Convert a DB row + extras into the agent response dict."""
     return {
@@ -93,6 +95,7 @@ def _build_agent_dict(row, display_name: Optional[str], is_stale: bool) -> dict:
 
 
 # ── Gateway sync ──────────────────────────────────────────────────────────────
+
 
 async def get_gateway_agent_ids() -> set[str]:
     """Fetch the set of agent IDs currently configured in the OpenClaw gateway."""
@@ -175,19 +178,16 @@ async def sync_agents_from_gateway() -> int:
 
 # ── Public service functions ──────────────────────────────────────────────────
 
+
 async def list_agents(gateway_ids: set[str], gateway_reachable: bool) -> list[dict]:
     """Return all agents from DB with is_stale flag."""
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM agents ORDER BY sort_order ASC, name ASC"
-        ) as cursor:
+        async with db.execute("SELECT * FROM agents ORDER BY sort_order ASC, name ASC") as cursor:
             rows = await cursor.fetchall()
 
         # Fetch all display names in one query
         display_names: dict[str, str] = {}
-        async with db.execute(
-            "SELECT session_key, display_name FROM session_display_names"
-        ) as dn_cursor:
+        async with db.execute("SELECT session_key, display_name FROM session_display_names") as dn_cursor:
             async for dn_row in dn_cursor:
                 display_names[dn_row["session_key"]] = dn_row["display_name"]
 
@@ -205,9 +205,7 @@ async def list_agents(gateway_ids: set[str], gateway_reachable: bool) -> list[di
 async def get_agent(agent_id: str, gateway_ids: set[str], gateway_reachable: bool) -> dict:
     """Return a single agent by ID. Raises 404 if not found."""
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM agents WHERE id = ?", (agent_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM agents WHERE id = ?", (agent_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -243,13 +241,9 @@ async def create_agent(
     resolved_bio = bio or f"{name} is a hardworking crew member."
 
     async with get_db() as db:
-        async with db.execute(
-            "SELECT id FROM agents WHERE id = ?", (agent_id,)
-        ) as cur:
+        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
             if await cur.fetchone():
-                raise HTTPException(
-                    status_code=409, detail=f"Agent '{agent_id}' already exists"
-                )
+                raise HTTPException(status_code=409, detail=f"Agent '{agent_id}' already exists")
 
         await db.execute(
             """
@@ -288,9 +282,7 @@ async def update_agent(agent_id: str, updates: dict) -> dict:
     values = list(updates.values()) + [agent_id]
 
     async with get_db() as db:
-        cursor = await db.execute(
-            f"UPDATE agents SET {set_clauses} WHERE id = ?", values
-        )
+        cursor = await db.execute(f"UPDATE agents SET {set_clauses} WHERE id = ?", values)
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="Agent not found")
         await db.commit()

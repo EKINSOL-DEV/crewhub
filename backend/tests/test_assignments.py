@@ -16,10 +16,13 @@ async def test_list_assignments(client):
 @pytest.mark.asyncio
 async def test_create_assignment(client):
     """Test POST /api/session-room-assignments creates an assignment."""
-    response = await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:subagent:test123",
-        "room_id": "dev-lab",
-    })
+    response = await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:subagent:test123",
+            "room_id": "dev-lab",
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["session_key"] == "agent:main:subagent:test123"
@@ -31,16 +34,22 @@ async def test_create_assignment(client):
 async def test_create_assignment_upsert(client):
     """Test POST /api/session-room-assignments upserts on duplicate key."""
     # Create initial assignment
-    await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:upsert-test",
-        "room_id": "dev-lab",
-    })
+    await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:upsert-test",
+            "room_id": "dev-lab",
+        },
+    )
 
     # Update to different room
-    response = await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:upsert-test",
-        "room_id": "headquarters",
-    })
+    response = await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:upsert-test",
+            "room_id": "headquarters",
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["room_id"] == "headquarters"
@@ -49,10 +58,13 @@ async def test_create_assignment_upsert(client):
 @pytest.mark.asyncio
 async def test_create_assignment_invalid_room(client):
     """Test POST /api/session-room-assignments rejects invalid room_id."""
-    response = await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:test",
-        "room_id": "nonexistent-room",
-    })
+    response = await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:test",
+            "room_id": "nonexistent-room",
+        },
+    )
     assert response.status_code == 400
 
 
@@ -60,10 +72,13 @@ async def test_create_assignment_invalid_room(client):
 async def test_get_assignment(client):
     """Test GET /api/session-room-assignments/{key} returns specific assignment."""
     # Create first
-    await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:dev:main",
-        "room_id": "dev-lab",
-    })
+    await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:dev:main",
+            "room_id": "dev-lab",
+        },
+    )
 
     response = await client.get("/api/session-room-assignments/agent:dev:main")
     assert response.status_code == 200
@@ -83,10 +98,13 @@ async def test_get_assignment_not_found(client):
 async def test_delete_assignment(client):
     """Test DELETE /api/session-room-assignments/{key} removes assignment."""
     # Create first
-    await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:to-delete",
-        "room_id": "dev-lab",
-    })
+    await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:to-delete",
+            "room_id": "dev-lab",
+        },
+    )
 
     response = await client.delete("/api/session-room-assignments/agent:main:to-delete")
     assert response.status_code == 200
@@ -109,18 +127,27 @@ async def test_delete_assignment_not_found(client):
 async def test_get_assignments_for_room(client):
     """Test GET /api/session-room-assignments/room/{id} returns room's assignments."""
     # Create some assignments
-    await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:room-test-1",
-        "room_id": "dev-lab",
-    })
-    await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:room-test-2",
-        "room_id": "dev-lab",
-    })
-    await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:room-test-3",
-        "room_id": "headquarters",
-    })
+    await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:room-test-1",
+            "room_id": "dev-lab",
+        },
+    )
+    await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:room-test-2",
+            "room_id": "dev-lab",
+        },
+    )
+    await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:room-test-3",
+            "room_id": "headquarters",
+        },
+    )
 
     response = await client.get("/api/session-room-assignments/room/dev-lab")
     assert response.status_code == 200

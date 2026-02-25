@@ -165,10 +165,10 @@ export function ServerRack({ position = [0, 0, 0] as [number, number, number], r
           {/* Status LEDs */}
           <mesh position={[0.2, y, 0.27]}>
             <sphereGeometry args={[0.012, 6, 4]} />
-            <meshStandardMaterial 
-              color={i % 3 === 0 ? '#ff4444' : '#44ff44'} 
-              emissive={i % 3 === 0 ? '#ff4444' : '#44ff44'} 
-              emissiveIntensity={3} 
+            <meshStandardMaterial
+              color={i % 3 === 0 ? '#ff4444' : '#44ff44'}
+              emissive={i % 3 === 0 ? '#ff4444' : '#44ff44'}
+              emissiveIntensity={3}
             />
           </mesh>
           <mesh position={[0.23, y, 0.27]}>
@@ -338,12 +338,12 @@ export function GlassPanel({ position = [0, 0, 0] as [number, number, number], r
   return (
     <mesh position={position} rotation={rotation}>
       <planeGeometry args={size} />
-      <meshPhysicalMaterial 
-        color="#88ccee" 
-        transparent 
-        opacity={0.15} 
-        roughness={0} 
-        metalness={0.1} 
+      <meshPhysicalMaterial
+        color="#88ccee"
+        transparent
+        opacity={0.15}
+        roughness={0}
+        metalness={0.1}
         side={THREE.DoubleSide}
       />
     </mesh>

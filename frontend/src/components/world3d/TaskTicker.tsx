@@ -25,11 +25,7 @@ const FADE_OUT_DURATION = 30000
 
 // ── Component ──────────────────────────────────────────────────
 
-export function TaskTicker({
-  sessions,
-  getRoomForSession,
-  defaultRoomId,
-}: TaskTickerProps) {
+export function TaskTicker({ sessions, getRoomForSession, defaultRoomId }: TaskTickerProps) {
   const { focusBot } = useWorldFocus()
   const [isOpen, setIsOpen] = useState(false)
   const [width, setWidth] = useState(DEFAULT_WIDTH)
@@ -47,16 +43,19 @@ export function TaskTicker({
   const [, setTick] = useState(0)
   useEffect(() => {
     if (!isOpen) return
-    const interval = setInterval(() => setTick(t => t + 1), 500)
+    const interval = setInterval(() => setTick((t) => t + 1), 500)
     return () => clearInterval(interval)
   }, [isOpen])
 
   // Click handler → focus on the bot
-  const handleTaskClick = useCallback((task: ActiveTask) => {
-    if (!task.sessionKey) return
-    const roomId = getRoomForSession(task.sessionKey) || defaultRoomId || 'headquarters'
-    focusBot(task.sessionKey, roomId)
-  }, [focusBot, getRoomForSession, defaultRoomId])
+  const handleTaskClick = useCallback(
+    (task: ActiveTask) => {
+      if (!task.sessionKey) return
+      const roomId = getRoomForSession(task.sessionKey) || defaultRoomId || 'headquarters'
+      focusBot(task.sessionKey, roomId)
+    },
+    [focusBot, getRoomForSession, defaultRoomId]
+  )
 
   // Sort: running first, then done (sorted by doneAt desc)
   const sortedTasks = useMemo(() => {
@@ -70,38 +69,41 @@ export function TaskTicker({
     })
   }, [tasks])
 
-  const runningCount = sortedTasks.filter(t => t.status === 'running').length
+  const runningCount = sortedTasks.filter((t) => t.status === 'running').length
   const totalCount = sortedTasks.length
 
   // Resize handlers
-  const handleResizeStart = useCallback((e: React.MouseEvent, direction: 'width' | 'height' | 'both') => {
-    e.preventDefault()
-    e.stopPropagation()
-    resizingRef.current = direction
-    startPosRef.current = { x: e.clientX, y: e.clientY, width, height }
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent, direction: 'width' | 'height' | 'both') => {
+      e.preventDefault()
+      e.stopPropagation()
+      resizingRef.current = direction
+      startPosRef.current = { x: e.clientX, y: e.clientY, width, height }
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!resizingRef.current) return
-      const dx = e.clientX - startPosRef.current.x
-      const dy = e.clientY - startPosRef.current.y
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!resizingRef.current) return
+        const dx = e.clientX - startPosRef.current.x
+        const dy = e.clientY - startPosRef.current.y
 
-      if (resizingRef.current === 'width' || resizingRef.current === 'both') {
-        setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startPosRef.current.width + dx)))
+        if (resizingRef.current === 'width' || resizingRef.current === 'both') {
+          setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startPosRef.current.width + dx)))
+        }
+        if (resizingRef.current === 'height' || resizingRef.current === 'both') {
+          setHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, startPosRef.current.height + dy)))
+        }
       }
-      if (resizingRef.current === 'height' || resizingRef.current === 'both') {
-        setHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, startPosRef.current.height + dy)))
+
+      const handleMouseUp = () => {
+        resizingRef.current = null
+        window.removeEventListener('mousemove', handleMouseMove)
+        window.removeEventListener('mouseup', handleMouseUp)
       }
-    }
 
-    const handleMouseUp = () => {
-      resizingRef.current = null
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-  }, [width, height])
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+    },
+    [width, height]
+  )
 
   return (
     <div
@@ -188,12 +190,14 @@ export function TaskTicker({
           {/* Task list */}
           <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
             {sortedTasks.length === 0 ? (
-              <div style={{ 
-                padding: 16, 
-                textAlign: 'center', 
-                color: 'rgba(0,0,0,0.4)',
-                fontSize: 12,
-              }}>
+              <div
+                style={{
+                  padding: 16,
+                  textAlign: 'center',
+                  color: 'rgba(0,0,0,0.4)',
+                  fontSize: 12,
+                }}
+              >
                 No active tasks
               </div>
             ) : (
@@ -246,10 +250,8 @@ interface TaskItemProps {
 
 function TaskItem({ task, opacity, onClick }: TaskItemProps) {
   const isRunning = task.status === 'running'
-  
-  const displayTitle = task.title.length > 35
-    ? task.title.slice(0, 33) + '…'
-    : task.title
+
+  const displayTitle = task.title.length > 35 ? task.title.slice(0, 33) + '…' : task.title
 
   return (
     <button
@@ -270,14 +272,12 @@ function TaskItem({ task, opacity, onClick }: TaskItemProps) {
         fontFamily: 'inherit',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = isRunning 
-          ? 'rgba(59, 130, 246, 0.2)' 
+        e.currentTarget.style.background = isRunning
+          ? 'rgba(59, 130, 246, 0.2)'
           : 'rgba(0, 0, 0, 0.05)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = isRunning 
-          ? 'rgba(59, 130, 246, 0.1)' 
-          : 'transparent'
+        e.currentTarget.style.background = isRunning ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
       }}
       title={`Click to focus on ${task.agentName || 'agent'}`}
     >

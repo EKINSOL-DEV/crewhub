@@ -70,30 +70,11 @@ export function MonitorBank({
   return (
     <group position={position} rotation={rotation}>
       {/* Center screen — larger */}
-      <Screen
-        position={[0, 0, 0]}
-        width={0.8}
-        height={0.5}
-        color="#00ff88"
-        scanlines
-      />
+      <Screen position={[0, 0, 0]} width={0.8} height={0.5} color="#00ff88" scanlines />
       {/* Left screen */}
-      <Screen
-        position={[-1.0, 0, 0]}
-        width={0.6}
-        height={0.4}
-        color="#00aaff"
-        scanlines
-      />
+      <Screen position={[-1.0, 0, 0]} width={0.6} height={0.4} color="#00aaff" scanlines />
       {/* Right screen */}
-      <Screen
-        position={[1.0, 0, 0]}
-        width={0.6}
-        height={0.4}
-        color="#ffaa00"
-        scanlines
-        flicker
-      />
+      <Screen position={[1.0, 0, 0]} width={0.6} height={0.4} color="#ffaa00" scanlines flicker />
       {/* Status LEDs below screens */}
       <LED position={[-0.3, -0.35, 0.02]} color="#00ff00" size={0.015} />
       <LED position={[0, -0.35, 0.02]} color="#00ff00" size={0.015} />
@@ -150,10 +131,7 @@ export function HQCommandOverlay({ size = 16 }: { size?: number }) {
       <HologramTable position={[0, 1.2 * scale, 0]} />
 
       {/* Monitor bank on back wall */}
-      <MonitorBank
-        position={[0, 2.2 * scale, (size / 2 - 0.5) * 1]}
-        rotation={[0, Math.PI, 0]}
-      />
+      <MonitorBank position={[0, 2.2 * scale, (size / 2 - 0.5) * 1]} rotation={[0, Math.PI, 0]} />
 
       {/* Corner data pillars */}
       <DataPillar position={[-size / 2 + 1.5, 0.4, -size / 2 + 1.5]} color="#00ccff" />

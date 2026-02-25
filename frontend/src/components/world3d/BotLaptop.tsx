@@ -22,7 +22,7 @@ export function BotLaptop({ visible }: BotLaptopProps) {
   const scaleRef = useRef(visible ? 1 : 0)
 
   // Shared toon material props
-  const baseToon = useToonMaterialProps('#3a3a3e')       // dark laptop body
+  const baseToon = useToonMaterialProps('#3a3a3e') // dark laptop body
   const screenFrameToon = useToonMaterialProps('#2a2a30') // slightly darker screen bezel
 
   useFrame(({ clock }, delta) => {

@@ -1,33 +1,57 @@
 """CrewHub Backend - Main application."""
 
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import logging
 import asyncio
 import json
+import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from app.config import settings
-from app.routes import health, agents, sessions, sse, gateway_status, rooms, assignments, display_names, rules, cron, history, connections, projects, blueprints, media
-from app.routes import project_files, project_documents, tasks, project_history, context
-from app.routes.project_files import discover_router as project_discover_router
-from app.routes.chat import router as chat_router
-from app.routes import discovery, settings as settings_routes, backup, onboarding
-from app.routes.self_routes import router as self_router
-from app.routes.auth_routes import router as auth_router
-from app.routes.creator import router as creator_router
-from app.routes.personas import router as personas_router
-from app.routes import agent_files
-from app.routes.standups import router as standups_router
-from app.routes.meetings import router as meetings_router
-from app.routes.docs import router as docs_router
-from app.routes.threads import router as threads_router
-from app.db.database import init_database, check_database_health
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.auth import init_api_keys
-from app.services.connections import get_connection_manager
+from app.db.database import check_database_health, init_database
+from app.routes import (
+    agent_files,
+    agents,
+    assignments,
+    backup,
+    blueprints,
+    connections,
+    context,
+    cron,
+    discovery,
+    display_names,
+    gateway_status,
+    health,
+    history,
+    media,
+    onboarding,
+    project_documents,
+    project_files,
+    project_history,
+    projects,
+    rooms,
+    rules,
+    sessions,
+    sse,
+    tasks,
+)
+from app.routes import settings as settings_routes
+from app.routes.auth_routes import router as auth_router
+from app.routes.chat import router as chat_router
+from app.routes.creator import router as creator_router
+from app.routes.docs import router as docs_router
+from app.routes.meetings import router as meetings_router
+from app.routes.personas import router as personas_router
+from app.routes.project_files import discover_router as project_discover_router
+from app.routes.prop_placement import router as prop_placement_router
+from app.routes.self_routes import router as self_router
 from app.routes.sse import broadcast
+from app.routes.standups import router as standups_router
+from app.routes.threads import router as threads_router
+from app.services.connections import get_connection_manager
 from app.services.meeting_recovery import recover_stuck_meetings
 
 logger = logging.getLogger(__name__)
@@ -78,10 +102,7 @@ async def poll_sessions_loop():
                 # ── Issue 2 fix: filter archived/pruned sessions ─────────────
                 # OpenClaw v2026.2.17 may include archived sessions in sessions.list
                 # with a non-active status field. Filter them out to prevent ghosts.
-                active_dicts = [
-                    s for s in raw_dicts
-                    if s.get("status", "active") not in _INACTIVE_STATUSES
-                ]
+                active_dicts = [s for s in raw_dicts if s.get("status", "active") not in _INACTIVE_STATUSES]
 
                 current_keys = {s["key"] for s in active_dicts if s.get("key")}
 
@@ -101,9 +122,7 @@ async def poll_sessions_loop():
                 for s in raw_dicts:
                     status = s.get("status", "active")
                     if status not in ("active", "idle", ""):
-                        logger.warning(
-                            f"[DIAG] Session {s.get('key')} has non-active status: {status!r}"
-                        )
+                        logger.warning(f"[DIAG] Session {s.get('key')} has non-active status: {status!r}")
 
                 # ── Diagnostics: detect stale updatedAt ─────────────────────
                 for s in active_dicts:
@@ -116,8 +135,7 @@ async def poll_sessions_loop():
                         _poll_stale_count[key] = _poll_stale_count.get(key, 0) + 1
                         if _poll_stale_count[key] == 6:  # ~30s of stale updatedAt
                             logger.info(
-                                f"[DIAG] Session {key} updatedAt stale for ~30s "
-                                f"(status={s.get('status', 'active')})"
+                                f"[DIAG] Session {key} updatedAt stale for ~30s (status={s.get('status', 'active')})"
                             )
                     else:
                         _poll_stale_count.pop(key, None)
@@ -136,27 +154,25 @@ async def poll_sessions_loop():
 
 async def load_connections_from_db():
     """Load enabled connections from database into ConnectionManager.
-    
+
     If no connections are configured in the DB, auto-creates a default
     OpenClaw connection from environment variables for backward compat.
     """
     import json
+
     import aiosqlite
+
     from app.db.database import DB_PATH
-    
+
     manager = await get_connection_manager()
-    
+
     loaded_count = 0
     try:
         async with aiosqlite.connect(DB_PATH) as db:
-            db.row_factory = lambda cursor, row: dict(
-                zip([col[0] for col in cursor.description], row)
-            )
-            async with db.execute(
-                "SELECT * FROM connections WHERE enabled = 1"
-            ) as cursor:
+            db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
+            async with db.execute("SELECT * FROM connections WHERE enabled = 1") as cursor:
                 rows = await cursor.fetchall()
-        
+
         for row in rows:
             try:
                 config = json.loads(row["config"]) if isinstance(row["config"], str) else row["config"]
@@ -171,10 +187,10 @@ async def load_connections_from_db():
                 logger.info(f"Loaded connection: {row['id']} ({row['type']})")
             except Exception as e:
                 logger.error(f"Failed to load connection {row['id']}: {e}")
-                
+
     except Exception as e:
         logger.error(f"Failed to load connections from database: {e}")
-    
+
     # Backward compat: if no OpenClaw connections loaded, create one from env
     # Only if BOTH url and token are provided (skip when token is empty/missing
     # so that fresh installs with empty .env show 0 connections → onboarding wizard)
@@ -182,9 +198,7 @@ async def load_connections_from_db():
         url = os.getenv("OPENCLAW_GATEWAY_URL", "").strip()
         token = os.getenv("OPENCLAW_GATEWAY_TOKEN", "").strip()
         if url and token:
-            logger.info(
-                f"No OpenClaw connections in DB — creating default from env: {url}"
-            )
+            logger.info(f"No OpenClaw connections in DB — creating default from env: {url}")
             try:
                 await manager.add_connection(
                     connection_id="default-openclaw",
@@ -196,36 +210,34 @@ async def load_connections_from_db():
             except Exception as e:
                 logger.error(f"Failed to create default OpenClaw connection: {e}")
         else:
-            logger.info(
-                "No OpenClaw connections in DB and no env credentials — skipping default connection"
-            )
+            logger.info("No OpenClaw connections in DB and no env credentials — skipping default connection")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
     global _polling_task
-    
+
     # Startup
     logger.info("Initializing database...")
     await init_database()
-    
+
     # Initialize API keys table and generate default keys
     logger.info("Initializing API keys...")
     await init_api_keys()
-    
+
     health_info = await check_database_health()
     logger.info(f"Database health: {health_info}")
-    
+
     # Initialize Connection Manager with stored connections
     logger.info("Loading connections from database...")
     await load_connections_from_db()
-    
+
     # Start Connection Manager health monitoring
     manager = await get_connection_manager()
     await manager.start(health_interval=30.0)
     logger.info("ConnectionManager started")
-    
+
     # Recover stuck meetings from previous restart
     try:
         recovered = await recover_stuck_meetings()
@@ -233,13 +245,13 @@ async def lifespan(app: FastAPI):
             logger.info(f"Recovered {recovered} stuck meetings on startup")
     except Exception as e:
         logger.error(f"Meeting recovery failed: {e}")
-    
+
     # Start background polling task
     _polling_task = asyncio.create_task(poll_sessions_loop())
     logger.info("Started sessions polling task")
-    
+
     yield
-    
+
     # Shutdown
     if _polling_task:
         _polling_task.cancel()
@@ -247,11 +259,11 @@ async def lifespan(app: FastAPI):
             await _polling_task
         except asyncio.CancelledError:
             pass
-    
+
     # Stop Connection Manager
     manager = await get_connection_manager()
     await manager.stop()
-    
+
     logger.info("Shutting down...")
 
 
@@ -344,6 +356,9 @@ app.include_router(meetings_router, prefix="/api/meetings", tags=["meetings"])
 
 # Documentation browser
 app.include_router(docs_router, prefix="/api/docs", tags=["docs"])
+
+# Creator Mode: Prop Placement
+app.include_router(prop_placement_router)
 
 # Phase 7: Group Chat Threads
 app.include_router(threads_router, prefix="/api/threads", tags=["threads"])

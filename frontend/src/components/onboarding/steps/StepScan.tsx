@@ -1,8 +1,15 @@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  Search, Loader2, RefreshCw, CheckCircle2, Sparkles, ArrowRight,
-  Zap, Terminal, ExternalLink,
+  Search,
+  Loader2,
+  RefreshCw,
+  CheckCircle2,
+  Sparkles,
+  ArrowRight,
+  Zap,
+  Terminal,
+  ExternalLink,
 } from 'lucide-react'
 import { getRuntimeIcon, getRuntimeLabel, getStatusBadge } from '../onboardingHelpers'
 import type { DiscoveryCandidate, ScanResult } from '@/lib/api'
@@ -18,20 +25,34 @@ interface StepScanProps {
 }
 
 export function StepScan({
-  scanning, scanResult, candidates, onScanAgain, onConnect, onContinue, onDemo,
+  scanning,
+  scanResult,
+  candidates,
+  onScanAgain,
+  onConnect,
+  onContinue,
+  onDemo,
 }: StepScanProps) {
-  const reachableCount = candidates.filter(c => c.status === 'reachable').length
+  const reachableCount = candidates.filter((c) => c.status === 'reachable').length
   const nothingFound = !scanning && scanResult && candidates.length === 0
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">
-          {scanning ? 'Scanning for agent runtimes…' : nothingFound ? 'No runtimes found' : 'Discovery Results'}
+          {scanning
+            ? 'Scanning for agent runtimes…'
+            : nothingFound
+              ? 'No runtimes found'
+              : 'Discovery Results'}
         </h2>
-        {scanning && <p className="text-muted-foreground">Checking localhost ports, config files, and CLIs…</p>}
+        {scanning && (
+          <p className="text-muted-foreground">Checking localhost ports, config files, and CLIs…</p>
+        )}
         {scanResult && !scanning && (
-          <p className="text-muted-foreground text-sm">Scan completed in {scanResult.scan_duration_ms}ms</p>
+          <p className="text-muted-foreground text-sm">
+            Scan completed in {scanResult.scan_duration_ms}ms
+          </p>
         )}
       </div>
 
@@ -47,7 +68,10 @@ export function StepScan({
       {!scanning && candidates.length > 0 && (
         <div className="space-y-3">
           {candidates.map((candidate, index) => (
-            <div key={index} className="p-4 rounded-xl border bg-card hover:bg-accent/30 transition-colors">
+            <div
+              key={index}
+              className="p-4 rounded-xl border bg-card hover:bg-accent/30 transition-colors"
+            >
               <div className="flex items-start gap-4">
                 <div className="p-3 rounded-lg bg-primary/10 text-primary shrink-0">
                   {getRuntimeIcon(candidate.runtime_type)}
@@ -57,36 +81,56 @@ export function StepScan({
                     <span className="font-semibold">{getRuntimeLabel(candidate.runtime_type)}</span>
                     {getStatusBadge(candidate.status)}
                     {candidate.confidence !== 'high' && (
-                      <Badge variant="outline" className="text-[10px]">{candidate.confidence} confidence</Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        {candidate.confidence} confidence
+                      </Badge>
                     )}
                   </div>
                   {candidate.target.url && (
-                    <p className="text-sm text-muted-foreground font-mono">{candidate.target.url}</p>
+                    <p className="text-sm text-muted-foreground font-mono">
+                      {candidate.target.url}
+                    </p>
                   )}
                   {candidate.metadata.active_sessions !== undefined && (
                     <p className="text-sm text-muted-foreground">
-                      {candidate.metadata.active_sessions} active session{candidate.metadata.active_sessions !== 1 ? 's' : ''}
+                      {candidate.metadata.active_sessions} active session
+                      {candidate.metadata.active_sessions !== 1 ? 's' : ''}
                     </p>
                   )}
                   {candidate.metadata.version && (
-                    <p className="text-xs text-muted-foreground">Version: {candidate.metadata.version}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Version: {candidate.metadata.version}
+                    </p>
                   )}
                   {candidate.evidence.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {candidate.evidence.map((ev, ei) => (
-                        <span key={ei} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{ev}</span>
+                        <span
+                          key={ei}
+                          className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                        >
+                          {ev}
+                        </span>
                       ))}
                     </div>
                   )}
                 </div>
                 <div className="shrink-0">
                   {candidate.status === 'reachable' ? (
-                    <Button size="sm" onClick={() => onConnect(candidate, index)} className="gap-1.5">
+                    <Button
+                      size="sm"
+                      onClick={() => onConnect(candidate, index)}
+                      className="gap-1.5"
+                    >
                       <CheckCircle2 className="h-4 w-4" /> Connect
                     </Button>
                   ) : candidate.status === 'installed' ? (
                     <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                      <a href={`https://docs.crewhub.dev/runtimes/${candidate.runtime_type}`} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={`https://docs.crewhub.dev/runtimes/${candidate.runtime_type}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <ExternalLink className="h-3.5 w-3.5" /> How to enable
                       </a>
                     </Button>
@@ -117,8 +161,10 @@ export function StepScan({
                   <p className="font-medium text-sm">Start OpenClaw</p>
                   <p className="text-xs text-muted-foreground">
                     Run{' '}
-                    <code className="px-1 py-0.5 rounded bg-muted font-mono text-[11px]">openclaw gateway start</code>
-                    {' '}in your terminal
+                    <code className="px-1 py-0.5 rounded bg-muted font-mono text-[11px]">
+                      openclaw gateway start
+                    </code>{' '}
+                    in your terminal
                   </p>
                 </div>
               </div>
@@ -128,7 +174,12 @@ export function StepScan({
                   <p className="font-medium text-sm">Install Claude Code</p>
                   <p className="text-xs text-muted-foreground">
                     Visit{' '}
-                    <a href="https://docs.anthropic.com/claude-code" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+                    <a
+                      href="https://docs.anthropic.com/claude-code"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
                       docs.anthropic.com/claude-code
                     </a>
                   </p>
@@ -140,7 +191,13 @@ export function StepScan({
       )}
 
       <div className="flex items-center justify-between pt-4">
-        <Button variant="outline" size="sm" onClick={onScanAgain} disabled={scanning} className="gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onScanAgain}
+          disabled={scanning}
+          className="gap-2"
+        >
           <RefreshCw className={`h-4 w-4 ${scanning ? 'animate-spin' : ''}`} />
           Scan again
         </Button>
@@ -160,4 +217,3 @@ export function StepScan({
     </div>
   )
 }
-

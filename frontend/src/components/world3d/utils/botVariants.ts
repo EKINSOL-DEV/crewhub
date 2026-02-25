@@ -72,8 +72,24 @@ const VARIANT_CONFIGS: Record<BotVariant, BotVariantConfig> = {
 const VARIANT_KEYWORDS: { keywords: string[]; variant: BotVariant }[] = [
   { keywords: ['cron', 'schedule', 'timer'], variant: 'cron' },
   { keywords: ['dev', 'gamedev', 'code', 'engineer'], variant: 'dev' },
-  { keywords: ['flowy', 'comms', 'comm', 'creator', 'slack', 'discord', 'whatsapp', 'telegram', 'chat'], variant: 'comms' },
-  { keywords: ['think', 'thinker', 'research', 'analyst', 'reviewer', 'review'], variant: 'thinker' },
+  {
+    keywords: [
+      'flowy',
+      'comms',
+      'comm',
+      'creator',
+      'slack',
+      'discord',
+      'whatsapp',
+      'telegram',
+      'chat',
+    ],
+    variant: 'comms',
+  },
+  {
+    keywords: ['think', 'thinker', 'research', 'analyst', 'reviewer', 'review'],
+    variant: 'thinker',
+  },
   { keywords: ['worker', 'main', 'build', 'deploy'], variant: 'worker' },
 ]
 
@@ -84,7 +100,7 @@ function hashString(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
+    hash = (hash << 5) - hash + char
     hash |= 0 // Convert to 32-bit integer
   }
   return Math.abs(hash)
@@ -122,7 +138,11 @@ export function getBotVariantConfig(variant: BotVariant): BotVariantConfig {
 /**
  * Get variant config directly from session data.
  */
-export function getBotConfigFromSession(sessionKey: string, label?: string, agentColor?: string | null): BotVariantConfig {
+export function getBotConfigFromSession(
+  sessionKey: string,
+  label?: string,
+  agentColor?: string | null
+): BotVariantConfig {
   const variant = detectBotVariant(sessionKey, label)
   const config = { ...VARIANT_CONFIGS[variant] }
 
@@ -144,7 +164,11 @@ export function isSubagent(sessionKey: string): boolean {
 /**
  * Get bot display name from session data.
  */
-export function getBotDisplayName(sessionKey: string, displayName?: string, label?: string): string {
+export function getBotDisplayName(
+  sessionKey: string,
+  displayName?: string,
+  label?: string
+): string {
   if (displayName) return displayName
   if (label) {
     // Extract meaningful part from label

@@ -45,11 +45,11 @@ export function MeetingResultsPanel() {
     setError(null)
 
     fetch(`${API_BASE}/meetings/${sidebarMeetingId}/status`)
-      .then(r => {
+      .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
       })
-      .then(data => {
+      .then((data) => {
         if (cancelled) return
         setLoadedMeeting({
           phase: 'complete',
@@ -62,32 +62,35 @@ export function MeetingResultsPanel() {
           currentTurnAgentId: null,
           currentTurnAgentName: null,
           progressPct: 100,
-          rounds: data.rounds?.map((r: any) => ({
-            roundNum: r.round_num,
-            topic: r.topic,
-            turns: r.turns?.map((t: any, i: number) => ({
-              round: r.round_num,
-              agentId: t.agent_id,
-              agentName: t.agent_name,
-              response: t.response,
-              turnIndex: i,
-              totalTurns: r.turns.length,
-              status: 'done' as const,
+          rounds:
+            data.rounds?.map((r: any) => ({
+              roundNum: r.round_num,
+              topic: r.topic,
+              turns:
+                r.turns?.map((t: any, i: number) => ({
+                  round: r.round_num,
+                  agentId: t.agent_id,
+                  agentName: t.agent_name,
+                  response: t.response,
+                  turnIndex: i,
+                  totalTurns: r.turns.length,
+                  status: 'done' as const,
+                })) || [],
+              status: 'complete' as const,
             })) || [],
-            status: 'complete' as const,
-          })) || [],
           outputMd: data.output_md,
           outputPath: data.output_path,
           outputLoading: false,
           outputError: null,
           error: null,
-          durationSeconds: data.completed_at && data.started_at
-            ? (new Date(data.completed_at).getTime() - new Date(data.started_at).getTime()) / 1000
-            : null,
+          durationSeconds:
+            data.completed_at && data.started_at
+              ? (new Date(data.completed_at).getTime() - new Date(data.started_at).getTime()) / 1000
+              : null,
           warnings: [],
         })
       })
-      .catch(err => {
+      .catch((err) => {
         if (cancelled) return
         console.error('[MeetingResultsPanel] fetch error:', err)
         setError(err.message || 'Failed to load meeting')
@@ -97,8 +100,10 @@ export function MeetingResultsPanel() {
         if (!cancelled) setLoading(false)
       })
 
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sidebarMeetingId])
 
   const handleClose = useCallback(() => {
@@ -181,32 +186,38 @@ export function MeetingResultsPanel() {
       }}
     >
       {/* Content card — matches FullscreenOverlay layout */}
-      <div style={{
-        display: 'flex',
-        flex: 1,
-        overflow: 'hidden',
-        flexDirection: 'column',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          flex: 1,
+          overflow: 'hidden',
+          flexDirection: 'column',
+        }}
+      >
         {loading ? (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 1,
-            color: 'hsl(var(--muted-foreground))',
-            fontSize: 14,
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              color: 'hsl(var(--muted-foreground))',
+              fontSize: 14,
+            }}
+          >
             Loading meeting results…
           </div>
         ) : error ? (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 1,
-            gap: 12,
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              gap: 12,
+            }}
+          >
             <span style={{ color: 'hsl(var(--destructive))', fontSize: 14 }}>
               Failed to load meeting: {error}
             </span>
@@ -233,14 +244,16 @@ export function MeetingResultsPanel() {
             onStartFollowUp={handleFollowUp}
           />
         ) : (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 1,
-            color: 'hsl(var(--muted-foreground))',
-            fontSize: 14,
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              color: 'hsl(var(--muted-foreground))',
+              fontSize: 14,
+            }}
+          >
             Meeting not found
           </div>
         )}

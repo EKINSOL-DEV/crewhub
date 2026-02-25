@@ -1,7 +1,7 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { Text } from '@react-three/drei'
+import * as THREE from 'three'
 
 const CODE_LINES = [
   'const bot = new CrewBot();',
@@ -12,22 +12,22 @@ const CODE_LINES = [
   'bot.learn(new Skill());',
   'console.log("✨ done!");',
   'export default bot;',
-];
+]
 
 export function CodeTerminal() {
-  const groupRef = useRef<THREE.Group>(null);
-  const scrollRef = useRef(0);
-  const textGroupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const scrollRef = useRef(0)
+  const textGroupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.15;
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.15
     }
-    scrollRef.current = (state.clock.elapsedTime * 0.3) % CODE_LINES.length;
+    scrollRef.current = (state.clock.elapsedTime * 0.3) % CODE_LINES.length
     if (textGroupRef.current) {
-      textGroupRef.current.position.y = (scrollRef.current % 1) * 0.15;
+      textGroupRef.current.position.y = (scrollRef.current % 1) * 0.15
     }
-  });
+  })
 
   return (
     <group ref={groupRef}>
@@ -44,7 +44,13 @@ export function CodeTerminal() {
       {/* Screen glow */}
       <mesh position={[0, 0.1, 0.08]}>
         <planeGeometry args={[1.2, 0.8]} />
-        <meshStandardMaterial color="#0d1117" emissive="#112233" emissiveIntensity={0.5} transparent opacity={0.9} />
+        <meshStandardMaterial
+          color="#0d1117"
+          emissive="#112233"
+          emissiveIntensity={0.5}
+          transparent
+          opacity={0.9}
+        />
       </mesh>
       {/* Code text */}
       <group ref={textGroupRef} position={[0, 0.1, 0.09]}>
@@ -82,5 +88,5 @@ export function CodeTerminal() {
         <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={3} />
       </mesh>
     </group>
-  );
+  )
 }

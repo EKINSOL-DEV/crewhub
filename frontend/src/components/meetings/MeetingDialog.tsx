@@ -79,10 +79,7 @@ export function MeetingDialog({
 
   const { refetch: refetchFiles } = useProjectMarkdownFiles(projectId)
 
-  const availableAgents = useMemo(
-    () => agents.filter(a => a.agent.agent_session_key),
-    [agents]
-  )
+  const availableAgents = useMemo(() => agents.filter((a) => a.agent.agent_session_key), [agents])
 
   // Initialize when dialog opens
   const prevOpenRef = useRef(false)
@@ -93,10 +90,8 @@ export function MeetingDialog({
         setTopic(`Follow-up: ${followUpContext.goal || followUpContext.title}`)
         setParentMeetingId(followUpContext.parentMeetingId)
         // Pre-select participants that are available
-        const available = new Set(availableAgents.map(a => a.agent.agent_session_key!))
-        const preselected = new Set(
-          followUpContext.participants.filter(p => available.has(p))
-        )
+        const available = new Set(availableAgents.map((a) => a.agent.agent_session_key!))
+        const preselected = new Set(followUpContext.participants.filter((p) => available.has(p)))
         setSelectedAgents(preselected.size >= 2 ? preselected : new Set())
         setActiveTab('new')
       } else {
@@ -114,7 +109,7 @@ export function MeetingDialog({
   }, [open, availableAgents, followUpContext])
 
   const toggleAgent = (key: string) => {
-    setSelectedAgents(prev => {
+    setSelectedAgents((prev) => {
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
@@ -126,7 +121,7 @@ export function MeetingDialog({
     if (selectedAgents.size === availableAgents.length) {
       setSelectedAgents(new Set())
     } else {
-      setSelectedAgents(new Set(availableAgents.map(a => a.agent.agent_session_key!)))
+      setSelectedAgents(new Set(availableAgents.map((a) => a.agent.agent_session_key!)))
     }
   }
 
@@ -196,9 +191,16 @@ export function MeetingDialog({
             A meeting is already running in this room. View it or wait for it to complete.
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             {onViewProgress && (
-              <Button onClick={() => { onViewProgress(); onOpenChange(false) }}>
+              <Button
+                onClick={() => {
+                  onViewProgress()
+                  onOpenChange(false)
+                }}
+              >
                 View Progress
               </Button>
             )}
@@ -236,8 +238,12 @@ export function MeetingDialog({
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full">
-            <TabsTrigger value="new" className="flex-1">New Meeting</TabsTrigger>
-            <TabsTrigger value="history" className="flex-1">History</TabsTrigger>
+            <TabsTrigger value="new" className="flex-1">
+              New Meeting
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex-1">
+              History
+            </TabsTrigger>
           </TabsList>
 
           {/* ─── New Meeting Tab ─── */}
@@ -282,7 +288,7 @@ export function MeetingDialog({
                   </button>
                 </div>
                 <div className="border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
-                  {availableAgents.map(runtime => {
+                  {availableAgents.map((runtime) => {
                     const key = runtime.agent.agent_session_key!
                     const checked = selectedAgents.has(key)
                     return (
@@ -316,11 +322,21 @@ export function MeetingDialog({
               <div className="space-y-1.5">
                 <Label htmlFor="num-rounds">Rounds</Label>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => updateRounds(numRounds - 1)} disabled={numRounds <= 1}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateRounds(numRounds - 1)}
+                    disabled={numRounds <= 1}
+                  >
                     −
                   </Button>
                   <span className="text-sm font-mono w-6 text-center">{numRounds}</span>
-                  <Button variant="outline" size="sm" onClick={() => updateRounds(numRounds + 1)} disabled={numRounds >= 5}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateRounds(numRounds + 1)}
+                    disabled={numRounds >= 5}
+                  >
                     +
                   </Button>
                 </div>
@@ -340,7 +356,9 @@ export function MeetingDialog({
                       {documentPath ? (
                         <span className="truncate">📄 {documentPath}</span>
                       ) : (
-                        <span className="text-muted-foreground">Select document from project...</span>
+                        <span className="text-muted-foreground">
+                          Select document from project...
+                        </span>
                       )}
                     </Button>
                     {documentPath && (
@@ -409,7 +427,11 @@ export function MeetingDialog({
                   Cancel
                 </Button>
                 <Button onClick={handleStart} disabled={loading || selectedAgents.size < 2}>
-                  {loading ? 'Starting…' : parentMeetingId ? 'Start Follow-up ▶' : 'Start Meeting ▶'}
+                  {loading
+                    ? 'Starting…'
+                    : parentMeetingId
+                      ? 'Start Follow-up ▶'
+                      : 'Start Meeting ▶'}
                 </Button>
               </DialogFooter>
             </div>

@@ -23,15 +23,15 @@ LAST_CRASH_TIME=0
 
 while true; do
   log "Starting Vite dev server (crash count: $CRASH_COUNT)"
-  
+
   # Run Vite in foreground, capture exit code
   npm run dev -- --host 0.0.0.0 --port 5180 2>&1 | tee -a "${LOG_DIR}/vite.log"
   EXIT_CODE=$?
   NOW=$(date +%s)
-  
+
   log "Vite exited with code $EXIT_CODE"
   CRASH_COUNT=$((CRASH_COUNT + 1))
-  
+
   # Check for rapid crash loop
   if [ "$LAST_CRASH_TIME" -gt 0 ]; then
     ELAPSED=$((NOW - LAST_CRASH_TIME))
@@ -40,14 +40,14 @@ while true; do
       exit 1
     fi
   fi
-  
+
   # Reset crash count if stable for a while
   if [ "$LAST_CRASH_TIME" -gt 0 ] && [ $((NOW - LAST_CRASH_TIME)) -gt 300 ]; then
     CRASH_COUNT=1
   fi
-  
+
   LAST_CRASH_TIME=$NOW
-  
+
   log "Restarting in ${COOLDOWN}s..."
   sleep "$COOLDOWN"
 done

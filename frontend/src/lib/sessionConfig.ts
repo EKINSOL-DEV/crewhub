@@ -10,52 +10,52 @@
 export const SESSION_CONFIG_DEFAULTS = {
   // ── Status Thresholds ──
   // Time since last update to determine session status
-  statusActiveThresholdMs: 300_000,       // 5min — active → idle
-  statusSleepingThresholdMs: 1_800_000,   // 30min — idle → sleeping
+  statusActiveThresholdMs: 300_000, // 5min — active → idle
+  statusSleepingThresholdMs: 1_800_000, // 30min — idle → sleeping
 
   // 3D bot status uses finer-grained thresholds
-  botIdleThresholdMs: 120_000,            // 2min — active/idle boundary
-  botSleepingThresholdMs: 1_800_000,      // 30min — sleeping → offline
+  botIdleThresholdMs: 120_000, // 2min — active/idle boundary
+  botSleepingThresholdMs: 1_800_000, // 30min — sleeping → offline
 
   // ── Activity Detection ──
-  tokenChangeThresholdMs: 30_000,         // 30s — token change = actively running
-  updatedAtActiveMs: 30_000,              // 30s — updatedAt within this = active
+  tokenChangeThresholdMs: 30_000, // 30s — token change = actively running
+  updatedAtActiveMs: 30_000, // 30s — updatedAt within this = active
 
   // ── Parking ──
-  parkingIdleThresholdS: 120,             // 2min — idle seconds before parking
-  parkingExpiryMs: 1_800_000,             // 30min — hide parked sessions after this
-  parkingMaxVisible: 15,                  // max sessions in main view before overflow to parking
+  parkingIdleThresholdS: 120, // 2min — idle seconds before parking
+  parkingExpiryMs: 1_800_000, // 30min — hide parked sessions after this
+  parkingMaxVisible: 15, // max sessions in main view before overflow to parking
 
   // ── Bot Movement (3D) ──
-  botWalkSpeedActive: 1.2,                // walk speed when heading to desk
-  botWalkSpeedCoffee: 0.6,               // walk speed going for coffee
-  botWalkSpeedIdle: 0.3,                 // wander speed when idle
-  botWalkSpeedSleepWalk: 0.4,            // walk speed heading to sleep corner
+  botWalkSpeedActive: 1.2, // walk speed when heading to desk
+  botWalkSpeedCoffee: 0.6, // walk speed going for coffee
+  botWalkSpeedIdle: 0.3, // wander speed when idle
+  botWalkSpeedSleepWalk: 0.4, // walk speed heading to sleep corner
 
   // ── Wander Behavior (3D) ──
-  wanderMinWaitS: 4,                     // min seconds between wander moves
-  wanderMaxWaitS: 8,                     // max seconds between wander moves
-  wanderMinSteps: 3,                     // min cells per random walk
-  wanderMaxSteps: 8,                     // max cells per random walk
+  wanderMinWaitS: 4, // min seconds between wander moves
+  wanderMaxWaitS: 8, // max seconds between wander moves
+  wanderMinSteps: 3, // min cells per random walk
+  wanderMaxSteps: 8, // max cells per random walk
 
   // ── Coffee Break (3D) ──
-  coffeeMinTimeS: 5,                     // min seconds at coffee machine
-  coffeeMaxTimeS: 10,                    // max seconds at coffee machine
+  coffeeMinTimeS: 5, // min seconds at coffee machine
+  coffeeMaxTimeS: 10, // max seconds at coffee machine
 
   // ── Polling Intervals ──
-  logViewerPollMs: 3_000,               // log viewer refresh interval
-  cronViewPollMs: 30_000,               // cron view refresh interval
+  logViewerPollMs: 3_000, // log viewer refresh interval
+  cronViewPollMs: 30_000, // cron view refresh interval
 
   // ── Playground 2D ──
-  targetUpdateActiveMs: 2_000,           // movement target update for active sessions
-  targetUpdateIdleMs: 4_000,             // movement target update for idle sessions
+  targetUpdateActiveMs: 2_000, // movement target update for active sessions
+  targetUpdateIdleMs: 4_000, // movement target update for idle sessions
 
   // ── 3D Layout ──
-  maxVisibleBotsPerRoom: 8,              // limit rendered bots per room; overflow as "+N more"
+  maxVisibleBotsPerRoom: 8, // limit rendered bots per room; overflow as "+N more"
 
   // ── Table/List Status Thresholds ──
-  tableActiveThresholdMs: 30_000,        // 30s — active status in table view
-  tableIdleThresholdMs: 300_000,         // 5min — idle status in table view
+  tableActiveThresholdMs: 30_000, // 30s — active status in table view
+  tableIdleThresholdMs: 300_000, // 5min — idle status in table view
 } as const
 
 export type SessionConfigKey = keyof typeof SESSION_CONFIG_DEFAULTS
@@ -71,7 +71,7 @@ type ConfigListener = () => void
 const listeners = new Set<ConfigListener>()
 
 function notifyListeners() {
-  listeners.forEach(fn => fn())
+  listeners.forEach((fn) => fn())
 }
 
 export function subscribeConfig(listener: ConfigListener): () => void {

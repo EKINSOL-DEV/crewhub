@@ -1,7 +1,7 @@
 """Agent files API - browse and read markdown files from agent workspaces."""
+
 import json
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -14,16 +14,28 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Allowed file extensions for viewing
-ALLOWED_EXTENSIONS = {'.md', '.txt', '.json', '.yaml', '.yml', '.toml'}
+ALLOWED_EXTENSIONS = {".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
 
 # Max file size (1MB)
 MAX_FILE_SIZE = 1_048_576
 
 # Directories to skip
 SKIP_DIRS = {
-    'node_modules', '.git', '__pycache__', '.venv', 'venv',
-    '.next', 'dist', 'build', '.cache', '.tox', '.mypy_cache',
-    '.pytest_cache', 'egg-info', '.eggs', '.DS_Store',
+    "node_modules",
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    ".next",
+    "dist",
+    "build",
+    ".cache",
+    ".tox",
+    ".mypy_cache",
+    ".pytest_cache",
+    "egg-info",
+    ".eggs",
+    ".DS_Store",
 }
 
 # Default agent workspace mappings (fallback if not in settings)
@@ -39,9 +51,7 @@ async def _get_agent_workspace(agent_id: str) -> Path:
     """Resolve the workspace path for an agent."""
     # Try settings table first
     async with get_db() as db:
-        async with db.execute(
-            "SELECT value FROM settings WHERE key = 'agent_workspaces'"
-        ) as cursor:
+        async with db.execute("SELECT value FROM settings WHERE key = 'agent_workspaces'") as cursor:
             row = await cursor.fetchone()
             if row:
                 workspaces = json.loads(row["value"])
@@ -73,7 +83,7 @@ def _file_info(base: Path, path: Path) -> dict:
         "path": str(rel),
         "type": "file",
         "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
         "lines": _count_lines(path) if stat.st_size < MAX_FILE_SIZE else None,
     }
 
@@ -81,7 +91,7 @@ def _file_info(base: Path, path: Path) -> dict:
 def _count_lines(path: Path) -> int:
     """Count lines in a text file."""
     try:
-        with open(path, 'r', errors='replace') as f:
+        with open(path, errors="replace") as f:
             return sum(1 for _ in f)
     except Exception:
         return 0
@@ -99,7 +109,7 @@ def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> 
         return []
 
     for entry in entries:
-        if entry.name.startswith('.') and entry.name != '.':
+        if entry.name.startswith(".") and entry.name != ".":
             continue
         if entry.name in SKIP_DIRS:
             continue
@@ -107,12 +117,14 @@ def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> 
         if entry.is_dir():
             children = _scan_directory(base, entry, depth + 1, max_depth)
             if children:  # Only include dirs that have visible files
-                items.append({
-                    "name": entry.name,
-                    "path": str(entry.relative_to(base)) + "/",
-                    "type": "directory",
-                    "children": children,
-                })
+                items.append(
+                    {
+                        "name": entry.name,
+                        "path": str(entry.relative_to(base)) + "/",
+                        "type": "directory",
+                        "children": children,
+                    }
+                )
         elif entry.is_file() and entry.suffix.lower() in ALLOWED_EXTENSIONS:
             items.append(_file_info(base, entry))
 
@@ -134,7 +146,7 @@ async def list_agent_files(
     scan_root = workspace
     if path:
         # Validate path
-        if '..' in path:
+        if ".." in path:
             raise HTTPException(status_code=400, detail="Invalid path")
         scan_root = workspace / path
         if not _is_safe_path(workspace, scan_root):
@@ -154,7 +166,7 @@ async def list_agent_files(
 @router.put("/{agent_id}/files/{file_path:path}")
 async def save_agent_file(agent_id: str, file_path: str, body: dict):
     """Save/update a file in an agent's workspace."""
-    if '..' in file_path:
+    if ".." in file_path:
         raise HTTPException(status_code=400, detail="Invalid path")
 
     content = body.get("content")
@@ -179,7 +191,7 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
     # Optimistic concurrency check
     expected_modified = body.get("expected_modified")
     if expected_modified:
-        current_mtime = datetime.fromtimestamp(target.stat().st_mtime, tz=timezone.utc).isoformat()
+        current_mtime = datetime.fromtimestamp(target.stat().st_mtime, tz=UTC).isoformat()
         if current_mtime != expected_modified:
             raise HTTPException(
                 status_code=409,
@@ -188,8 +200,8 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
 
     # Create backup
     try:
-        bak = target.with_suffix(target.suffix + '.bak')
-        bak.write_text(target.read_text(errors='replace'))
+        bak = target.with_suffix(target.suffix + ".bak")
+        bak.write_text(target.read_text(errors="replace"))
     except Exception as e:
         logger.warning(f"Failed to create backup for {file_path}: {e}")
 
@@ -203,8 +215,8 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
     return {
         "path": file_path,
         "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
-        "lines": content.count('\n') + 1 if content else 0,
+        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+        "lines": content.count("\n") + 1 if content else 0,
         "status": "saved",
     }
 
@@ -213,7 +225,7 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
 async def read_agent_file(agent_id: str, file_path: str):
     """Read a single file from an agent's workspace."""
     # Security: reject path traversal
-    if '..' in file_path:
+    if ".." in file_path:
         raise HTTPException(status_code=400, detail="Invalid path")
 
     workspace = await _get_agent_workspace(agent_id)
@@ -239,21 +251,25 @@ async def read_agent_file(agent_id: str, file_path: str):
         raise HTTPException(status_code=413, detail=f"File too large: {stat.st_size} bytes (max {MAX_FILE_SIZE})")
 
     try:
-        content = target.read_text(errors='replace')
+        content = target.read_text(errors="replace")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to read file: {e}")
 
     # Determine language from extension
     lang_map = {
-        '.md': 'markdown', '.txt': 'text', '.json': 'json',
-        '.yaml': 'yaml', '.yml': 'yaml', '.toml': 'toml',
+        ".md": "markdown",
+        ".txt": "text",
+        ".json": "json",
+        ".yaml": "yaml",
+        ".yml": "yaml",
+        ".toml": "toml",
     }
 
     return {
         "path": file_path,
         "content": content,
         "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
-        "lines": content.count('\n') + 1 if content else 0,
-        "language": lang_map.get(target.suffix.lower(), 'text'),
+        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+        "lines": content.count("\n") + 1 if content else 0,
+        "language": lang_map.get(target.suffix.lower(), "text"),
     }

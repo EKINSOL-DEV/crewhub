@@ -22,7 +22,8 @@ function getLineColor(line: ThinkingLine, isLast: boolean): string {
   if (line.type === 'complete') return 'var(--zen-success, #22c55e)'
   if (line.type === 'correction') return '#f59e0b'
   if (line.type === 'tool' || line.type === 'tool_result') return '#eab308'
-  if (line.type === 'thinking') return isLast ? 'var(--zen-accent, #6366f1)' : 'var(--zen-fg-dim, #888)'
+  if (line.type === 'thinking')
+    return isLast ? 'var(--zen-accent, #6366f1)' : 'var(--zen-fg-dim, #888)'
   if (isLast) return 'var(--zen-accent, #6366f1)'
   return 'var(--zen-fg-dim, #888)'
 }
@@ -53,7 +54,12 @@ export function ExpandableSection({ label, content, color }: ExpandableSectionPr
 
 // ── Main Component ────────────────────────────────────────────
 
-export function ThinkingPanel({ thinkingLines, isGenerating, fullPrompt, toolCalls }: ThinkingPanelProps) {
+export function ThinkingPanel({
+  thinkingLines,
+  isGenerating,
+  fullPrompt,
+  toolCalls,
+}: ThinkingPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll on new lines
@@ -67,20 +73,18 @@ export function ThinkingPanel({ thinkingLines, isGenerating, fullPrompt, toolCal
     <div className="fpm-thinking">
       <div className="fpm-thinking-header">
         🧠 AI Thinking Process
-        {thinkingLines.some(l => l.type === 'thinking') && (
+        {thinkingLines.some((l) => l.type === 'thinking') && (
           <span className="fpm-live-badge">LIVE</span>
         )}
       </div>
 
       {/* Expandable sections */}
       <div className="fpm-thinking-toggles">
-        {fullPrompt && (
-          <ExpandableSection label="📜 Full Prompt" content={fullPrompt} />
-        )}
+        {fullPrompt && <ExpandableSection label="📜 Full Prompt" content={fullPrompt} />}
         {toolCalls.length > 0 && (
           <ExpandableSection
             label={`🔧 Tool Calls (${toolCalls.length})`}
-            content={toolCalls.map(tc => `${tc.name}: ${tc.input}`).join('\n')}
+            content={toolCalls.map((tc) => `${tc.name}: ${tc.input}`).join('\n')}
             color="#eab308"
           />
         )}

@@ -10,8 +10,22 @@
  * - Follow-up meeting support (F4)
  */
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo, type ReactNode } from 'react'
-import { useMeeting, type StartMeetingParams, type MeetingState, type MeetingPhase } from '@/hooks/useMeeting'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+  type ReactNode,
+} from 'react'
+import {
+  useMeeting,
+  type StartMeetingParams,
+  type MeetingState,
+  type MeetingPhase,
+} from '@/hooks/useMeeting'
 import { useDemoMeeting } from '@/hooks/useDemoMeeting'
 import { updateMeetingGatheringState, resetMeetingGatheringState } from '@/lib/meetingStore'
 import { showToast } from '@/lib/toast'
@@ -32,10 +46,10 @@ export function calculateGatheringPositions(
   centerX: number,
   centerZ: number,
   participants: string[],
-  radius: number = 2,
+  radius: number = 2
 ): GatheringPosition[] {
   return participants.map((agentId, i) => {
-    const angle = (2 * Math.PI / participants.length) * i
+    const angle = ((2 * Math.PI) / participants.length) * i
     return {
       agentId,
       x: centerX + Math.cos(angle) * radius,
@@ -95,10 +109,12 @@ const MeetingContext = createContext<MeetingContextValue | null>(null)
 
 export function MeetingProvider({ children }: { children: ReactNode }) {
   const realMeeting = useMeeting()
-  const { demoMeeting, startDemoMeeting, isDemoMeetingActive, isDemoMeetingComplete } = useDemoMeeting()
+  const { demoMeeting, startDemoMeeting, isDemoMeetingActive, isDemoMeetingComplete } =
+    useDemoMeeting()
 
   // In demo mode with active demo meeting, use demo state; otherwise use real meeting
-  const meeting = (isPublicDemo && (isDemoMeetingActive || isDemoMeetingComplete)) ? demoMeeting : realMeeting
+  const meeting =
+    isPublicDemo && (isDemoMeetingActive || isDemoMeetingComplete) ? demoMeeting : realMeeting
 
   const [view, setView] = useState<MeetingView>('none')
   const [tablePos, setTablePos] = useState<{ x: number; z: number }>({ x: 0, z: 0 })
@@ -151,21 +167,28 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
   }, [meeting])
   const closeView = useCallback(() => {
     setView('none')
-    if (meeting.phase === 'complete' || meeting.phase === 'error' || meeting.phase === 'cancelled') {
+    if (
+      meeting.phase === 'complete' ||
+      meeting.phase === 'error' ||
+      meeting.phase === 'cancelled'
+    ) {
       meeting.reset()
     }
   }, [meeting])
   const setTablePosition = useCallback((x: number, z: number) => setTablePos({ x, z }), [])
 
   // F2: Sidebar
-  const openInSidebar = useCallback((meetingId: string) => {
-    setSidebarMeetingId(meetingId)
-    // Close the dialog/output view if open
-    if (view === 'output') {
-      setView('none')
-      meeting.reset()
-    }
-  }, [view, meeting])
+  const openInSidebar = useCallback(
+    (meetingId: string) => {
+      setSidebarMeetingId(meetingId)
+      // Close the dialog/output view if open
+      if (view === 'output') {
+        setView('none')
+        meeting.reset()
+      }
+    },
+    [view, meeting]
+  )
   const closeSidebar = useCallback(() => setSidebarMeetingId(null), [])
 
   // F4: Follow-up
@@ -208,7 +231,7 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     if (meeting.currentTurnAgentId) {
       for (const round of meeting.rounds) {
         const turn = round.turns.find(
-          t => t.agentId === meeting.currentTurnAgentId && t.status === 'done'
+          (t) => t.agentId === meeting.currentTurnAgentId && t.status === 'done'
         )
         if (turn?.response) speakerText = turn.response
       }
@@ -239,32 +262,50 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
     setView('progress')
   }, [startDemoMeeting])
 
-  const value = useMemo<MeetingContextValue>(() => ({
-    meeting,
-    view,
-    gatheringPositions,
-    openDialog,
-    openDialogForRoom,
-    dialogRoomContext,
-    closeDialog,
-    showProgress,
-    showOutput,
-    closeView,
-    setTablePosition,
-    sidebarMeetingId,
-    openInSidebar,
-    closeSidebar,
-    followUpContext,
-    openFollowUp,
-    startDemoMeeting: handleStartDemoMeeting,
-    isDemoMeetingActive,
-  }), [meeting, view, gatheringPositions, openDialog, openDialogForRoom, dialogRoomContext, closeDialog, showProgress, showOutput, closeView, setTablePosition, sidebarMeetingId, openInSidebar, closeSidebar, followUpContext, openFollowUp, handleStartDemoMeeting, isDemoMeetingActive])
-
-  return (
-    <MeetingContext.Provider value={value}>
-      {children}
-    </MeetingContext.Provider>
+  const value = useMemo<MeetingContextValue>(
+    () => ({
+      meeting,
+      view,
+      gatheringPositions,
+      openDialog,
+      openDialogForRoom,
+      dialogRoomContext,
+      closeDialog,
+      showProgress,
+      showOutput,
+      closeView,
+      setTablePosition,
+      sidebarMeetingId,
+      openInSidebar,
+      closeSidebar,
+      followUpContext,
+      openFollowUp,
+      startDemoMeeting: handleStartDemoMeeting,
+      isDemoMeetingActive,
+    }),
+    [
+      meeting,
+      view,
+      gatheringPositions,
+      openDialog,
+      openDialogForRoom,
+      dialogRoomContext,
+      closeDialog,
+      showProgress,
+      showOutput,
+      closeView,
+      setTablePosition,
+      sidebarMeetingId,
+      openInSidebar,
+      closeSidebar,
+      followUpContext,
+      openFollowUp,
+      handleStartDemoMeeting,
+      isDemoMeetingActive,
+    ]
   )
+
+  return <MeetingContext.Provider value={value}>{children}</MeetingContext.Provider>
 }
 
 export function useMeetingContext() {

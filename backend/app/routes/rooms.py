@@ -1,11 +1,13 @@
 """Rooms API routes."""
+
 import logging
-from fastapi import APIRouter, HTTPException
 from typing import List
 
-from app.db.models import Room, RoomCreate, RoomUpdate, RoomProjectAssign
-from app.routes.sse import broadcast
+from fastapi import APIRouter, HTTPException
+
 import app.services.room_service as room_svc
+from app.db.models import Room, RoomCreate, RoomProjectAssign, RoomUpdate
+from app.routes.sse import broadcast
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

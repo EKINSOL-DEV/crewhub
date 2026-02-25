@@ -30,7 +30,9 @@ export function DragStatusIndicator() {
       }}
     >
       <span style={{ fontSize: 16 }}>🤖</span>
-      <span>Moving <strong>{drag.sessionName}</strong></span>
+      <span>
+        Moving <strong>{drag.sessionName}</strong>
+      </span>
       <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
         Drop on room or outside to unassign · Esc to cancel
       </span>

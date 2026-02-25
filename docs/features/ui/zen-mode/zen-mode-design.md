@@ -1,8 +1,8 @@
 # CrewHub — Zen Mode Design Document
 
-**Date:** 2026-02-07  
-**Author:** Opus  
-**Status:** Draft  
+**Date:** 2026-02-07
+**Author:** Opus
+**Status:** Draft
 **Version:** 1.0
 
 ---
@@ -251,30 +251,30 @@ interface ZenTheme {
     bgPanel: string;      // Panel background
     bgHover: string;      // Hover states
     bgActive: string;     // Active/selected
-    
+
     // Foreground
     fg: string;           // Primary text
     fgMuted: string;      // Secondary text
     fgDim: string;        // Tertiary/disabled
-    
+
     // Borders
     border: string;       // Default borders
     borderFocus: string;  // Focused panel border
-    
+
     // Accent colors
     accent: string;       // Primary accent (links, focus)
     accentHover: string;  // Accent hover
-    
+
     // Status colors
     success: string;      // Active, online
     warning: string;      // Thinking, pending
     error: string;        // Error, disconnected
     info: string;         // Info, working
-    
+
     // Chat-specific
     userBubble: string;   // User message background
     assistantBubble: string; // Assistant message background
-    
+
     // Syntax highlighting (for code blocks)
     syntax: {
       keyword: string;
@@ -582,22 +582,22 @@ src/components/zen/
 interface ZenModeState {
   // Mode
   isActive: boolean;
-  
+
   // Layout
   layout: PanelLayout;
   activeLayoutPreset: string | null;
   focusedPanelId: string;
-  
+
   // Panels
   panels: ZenPanel[];
-  
+
   // Theme
   themeId: string;
-  
+
   // Keyboard
   prefixActive: boolean;
   prefixTimeout: number | null;
-  
+
   // Agent context
   selectedAgentId: string | null;
   selectedRoomId: string | null;
@@ -615,7 +615,7 @@ type PanelType = 'chat' | 'sessions' | 'activity' | 'rooms' | 'tasks' | 'logs' |
 
 ### Integration Points
 
-1. **Toggle from 3D World**: 
+1. **Toggle from 3D World**:
    - Add `Ctrl+Shift+Z` global listener in `App.tsx`
    - Conditionally render `<ZenMode />` or `<World3DView />` based on state
    - Preserve 3D world state in context (don't unmount, just hide)
@@ -624,10 +624,10 @@ type PanelType = 'chat' | 'sessions' | 'activity' | 'rooms' | 'tasks' | 'logs' |
    ```typescript
    // In ZenChatPanel
    const { messages, sendMessage, isStreaming } = useAgentChat(agentSessionKey);
-   
-   // In ZenSessionsPanel  
+
+   // In ZenSessionsPanel
    const { sessions, isLoading, refresh } = useSessions();
-   
+
    // In ZenRoomsPanel
    const { rooms, isLoading } = useRooms();
    ```
@@ -672,23 +672,23 @@ For AI image generators (Midjourney, DALL-E, Flux, etc.):
 ### Prompt 1: Full Zen Mode Overview (Dark Theme)
 
 ```
-A sleek, modern terminal-style dashboard interface for monitoring AI agents. 
-Dark theme with deep blue-gray background (#1a1b26). 
+A sleek, modern terminal-style dashboard interface for monitoring AI agents.
+Dark theme with deep blue-gray background (#1a1b26).
 
 The screen is divided into three vertical panels:
-- Left panel (25%): List of AI agents with colored status dots (green=active, 
+- Left panel (25%): List of AI agents with colored status dots (green=active,
   yellow=thinking, gray=idle), showing names like "Assistent", "Dev", "Flowy"
-- Center panel (50%): Chat interface with alternating message bubbles, user 
-  messages on right in subtle blue, assistant messages on left in dark gray, 
+- Center panel (50%): Chat interface with alternating message bubbles, user
+  messages on right in subtle blue, assistant messages on left in dark gray,
   code blocks with syntax highlighting
 - Right panel (25%): Real-time activity feed with timestamps and agent names
 
 Top bar with minimal controls, bottom status bar showing "Assistent • HQ • Connected"
 
-Monospace font (JetBrains Mono style), compact spacing, subtle 1px borders, 
-accent color is soft blue (#7aa2f7). 
+Monospace font (JetBrains Mono style), compact spacing, subtle 1px borders,
+accent color is soft blue (#7aa2f7).
 
-UI screenshot, high resolution, developer tools aesthetic, 4K render, 
+UI screenshot, high resolution, developer tools aesthetic, 4K render,
 professional software interface, tmux meets VS Code design language.
 ```
 
@@ -696,19 +696,19 @@ professional software interface, tmux meets VS Code design language.
 
 ```
 Terminal-style application interface with multiple chat windows side by side.
-Catppuccin color palette - deep purple-black background (#1e1e2e) with 
+Catppuccin color palette - deep purple-black background (#1e1e2e) with
 pastel accent colors.
 
-Two large chat panels dominate the screen, each showing a conversation with 
-a different AI agent. Left chat labeled "Assistent" with purple accent, 
-right chat labeled "Dev" with teal accent. Each has a compact input field 
+Two large chat panels dominate the screen, each showing a conversation with
+a different AI agent. Left chat labeled "Assistent" with purple accent,
+right chat labeled "Dev" with teal accent. Each has a compact input field
 at the bottom.
 
 Narrow sidebar on far left shows minimal agent list with status indicators.
 
 Bottom status bar shows keyboard shortcuts: "Ctrl+B for commands • Alt+1-2 switch chats"
 
-Clean, minimal, information-dense, developer-focused UI. 
+Clean, minimal, information-dense, developer-focused UI.
 Monospace typography, subtle rounded corners (2px), no shadows.
 High-fidelity UI mockup, Figma-quality render.
 ```
@@ -716,21 +716,21 @@ High-fidelity UI mockup, Figma-quality render.
 ### Prompt 3: Monitor Layout (Nord Theme)
 
 ```
-System monitoring dashboard with Nordic color palette - arctic blues and 
+System monitoring dashboard with Nordic color palette - arctic blues and
 muted frost tones. Background #2e3440.
 
 Split into two main areas:
-- Left side (40%): Session table showing AI agent status with columns for 
-  Status (colored dots), Agent Name, Room, Last Activity. Rows alternate 
+- Left side (40%): Session table showing AI agent status with columns for
+  Status (colored dots), Agent Name, Room, Last Activity. Rows alternate
   in subtle shading.
-- Right side (60%): Scrolling activity log with timestamps, agent names in 
-  colored badges, and event descriptions. Tool calls shown as compact inline 
+- Right side (60%): Scrolling activity log with timestamps, agent names in
+  colored badges, and event descriptions. Tool calls shown as compact inline
   cards with checkmark icons.
 
 Compact, terminal-inspired design. Monospace font throughout.
 Top bar minimal, bottom bar shows connection status and time.
 
-UI design screenshot, dashboard interface, clean data visualization, 
+UI design screenshot, dashboard interface, clean data visualization,
 Scandinavian design aesthetic, high resolution render.
 ```
 
@@ -746,17 +746,17 @@ Three-panel layout:
 - Activity feed on right with timestamp column and event descriptions
 
 Professional, accessible design. High contrast text (black on white).
-Thin gray borders separating panels. Blue (#0969da) accent for links 
+Thin gray borders separating panels. Blue (#0969da) accent for links
 and active states.
 
-UI mockup, light mode, developer tools, accessible design, 
+UI mockup, light mode, developer tools, accessible design,
 minimal interface, 4K screenshot render.
 ```
 
 ### Prompt 5: Task Board Focus
 
 ```
-Dark terminal interface focused on task management. Gruvbox color palette - 
+Dark terminal interface focused on task management. Gruvbox color palette -
 warm dark background (#282828) with earthy accent colors.
 
 Three panels:
@@ -764,13 +764,13 @@ Three panels:
   Selected room highlighted in warm yellow
 - Center: Kanban-lite task board with three columns (To Do, In Progress, Done),
   tasks as compact cards with checkboxes, task titles in off-white text
-- Right: Compact chat panel with recent messages from the agent assigned 
+- Right: Compact chat panel with recent messages from the agent assigned
   to selected task
 
 Retro-modern terminal aesthetic, information-dense, productivity-focused.
 Monospace fonts, warm color temperature, subtle borders.
 
-UI screenshot, task management interface, developer productivity tool, 
+UI screenshot, task management interface, developer productivity tool,
 high resolution mockup.
 ```
 
@@ -844,48 +844,48 @@ high resolution mockup.
   --zen-bg-panel: #24283b;
   --zen-bg-hover: #2f3549;
   --zen-bg-active: #3d4560;
-  
+
   /* Foregrounds */
   --zen-fg: #c0caf5;
   --zen-fg-muted: #565f89;
   --zen-fg-dim: #3d4560;
-  
+
   /* Borders */
   --zen-border: #3d4560;
   --zen-border-focus: #7aa2f7;
-  
+
   /* Accent */
   --zen-accent: #7aa2f7;
   --zen-accent-hover: #89b4fa;
-  
+
   /* Status */
   --zen-success: #9ece6a;
   --zen-warning: #e0af68;
   --zen-error: #f7768e;
   --zen-info: #7dcfff;
-  
+
   /* Chat */
   --zen-user-bubble: #3d4560;
   --zen-assistant-bubble: #1e2030;
-  
+
   /* Syntax */
   --zen-syntax-keyword: #bb9af7;
   --zen-syntax-string: #9ece6a;
   --zen-syntax-comment: #565f89;
   --zen-syntax-function: #7aa2f7;
   --zen-syntax-variable: #c0caf5;
-  
+
   /* Typography */
   --zen-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   --zen-font-size: 13px;
   --zen-line-height: 1.4;
-  
+
   /* Spacing */
   --zen-space-xs: 4px;
   --zen-space-sm: 8px;
   --zen-space-md: 12px;
   --zen-space-lg: 16px;
-  
+
   /* Borders */
   --zen-radius: 2px;
   --zen-border-width: 1px;
@@ -1046,4 +1046,3 @@ Zen Mode is now feature-complete and production-ready:
 - Session management
 - Error handling
 - Documentation complete
-

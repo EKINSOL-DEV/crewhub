@@ -22,8 +22,8 @@ export function useThreadChat(threadId: string) {
       if (data?.threadId !== threadId || !data?.message) return
       const msg = data.message as ThreadMessage
       // Deduplicate: skip if we already have this message id
-      setMessages(prev => {
-        if (prev.some(m => m.id === msg.id)) return prev
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev
         return [...prev, msg]
       })
     }
@@ -73,26 +73,33 @@ export function useThreadChat(threadId: string) {
         target_agent_ids: targetAgentIds || null,
         created_at: Date.now(),
       }
-      setMessages(prev => [...prev, optimisticMsg])
+      setMessages((prev) => [...prev, optimisticMsg])
       setIsSending(true)
       setError(null)
 
       try {
-        const result = await threadsApi.sendMessage(threadId, content.trim(), routingMode, targetAgentIds)
+        const result = await threadsApi.sendMessage(
+          threadId,
+          content.trim(),
+          routingMode,
+          targetAgentIds
+        )
 
         // Replace optimistic message with real user message.
         // Agent responses arrive in real-time via SSE (thread.message.created),
         // so we only need to reconcile what the POST returns with what SSE already delivered.
-        setMessages(prev => {
-          const filtered = prev.filter(m => m.id !== optimisticMsg.id)
-          const existingIds = new Set(filtered.map(m => m.id))
-          const newMsgs = [result.user_message, ...result.responses].filter(m => !existingIds.has(m.id))
+        setMessages((prev) => {
+          const filtered = prev.filter((m) => m.id !== optimisticMsg.id)
+          const existingIds = new Set(filtered.map((m) => m.id))
+          const newMsgs = [result.user_message, ...result.responses].filter(
+            (m) => !existingIds.has(m.id)
+          )
           return [...filtered, ...newMsgs]
         })
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : 'Failed to send')
         // Remove optimistic message
-        setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id))
       } finally {
         setIsSending(false)
       }
@@ -108,7 +115,7 @@ export function useThreadChat(threadId: string) {
     setIsLoadingHistory(true)
     try {
       const data = await threadsApi.getMessages(threadId, 50, oldest)
-      setMessages(prev => [...data.messages, ...prev])
+      setMessages((prev) => [...data.messages, ...prev])
       setHasMore(data.hasMore)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load older messages')

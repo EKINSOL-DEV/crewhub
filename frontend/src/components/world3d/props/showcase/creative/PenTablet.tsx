@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function PenTablet() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12
+  })
   return (
     <group ref={groupRef}>
       {/* Tablet body */}
@@ -18,7 +20,7 @@ export function PenTablet() {
         <meshStandardMaterial color="#2a2a3e" />
       </mesh>
       {/* Express keys */}
-      {[0, 1, 2, 3].map(i => (
+      {[0, 1, 2, 3].map((i) => (
         <mesh key={i} position={[-0.38, -0.32, 0.1 - i * 0.08]}>
           <boxGeometry args={[0.06, 0.02, 0.06]} />
           <meshStandardMaterial color="#3a3a4e" />
@@ -50,5 +52,5 @@ export function PenTablet() {
         <meshStandardMaterial color="#00aaff" emissive="#00aaff" emissiveIntensity={3} />
       </mesh>
     </group>
-  );
+  )
 }

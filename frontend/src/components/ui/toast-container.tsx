@@ -15,9 +15,9 @@ export function ToastContainer() {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<ToastEvent>).detail
       const id = ++toastId
-      setToasts(prev => [...prev, { ...detail, id }])
+      setToasts((prev) => [...prev, { ...detail, id }])
       setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id))
+        setToasts((prev) => prev.filter((t) => t.id !== id))
       }, detail.duration || 5000)
     }
     window.addEventListener('crewhub-toast', handler)
@@ -25,19 +25,19 @@ export function ToastContainer() {
   }, [])
 
   const dismiss = useCallback((id: number) => {
-    setToasts(prev => prev.filter(t => t.id !== id))
+    setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
   if (toasts.length === 0) return null
 
   return (
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm">
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <div
           key={toast.id}
           className={cn(
-            "bg-background border rounded-lg shadow-lg p-3 flex items-center gap-3",
-            "animate-in slide-in-from-bottom-5 fade-in duration-300"
+            'bg-background border rounded-lg shadow-lg p-3 flex items-center gap-3',
+            'animate-in slide-in-from-bottom-5 fade-in duration-300'
           )}
         >
           <span className="text-sm flex-1">{toast.message}</span>

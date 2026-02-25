@@ -7,9 +7,25 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { streamMessage } from '@/services/chatStreamService'
 import { API_BASE } from '@/lib/api'
-import type { ChatMessageData } from '@/hooks/useAgentChat'
+import { sseManager } from '@/lib/sseManager'
 
-export type { ChatMessageData }
+export interface ToolCallData {
+  name: string
+  status: string
+  input?: Record<string, unknown>
+  result?: string
+}
+
+export interface ChatMessageData {
+  id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  timestamp: number
+  tokens?: number
+  tools?: ToolCallData[]
+  thinking?: string[] // Thinking blocks when raw mode enabled
+  isStreaming?: boolean
+}
 
 export interface UseStreamingChatReturn {
   messages: ChatMessageData[]
@@ -31,13 +47,16 @@ export function useStreamingChat(
   roomId?: string
 ): UseStreamingChatReturn {
   const [messages, setMessagesRaw] = useState<ChatMessageData[]>([])
-  const setMessages: React.Dispatch<React.SetStateAction<ChatMessageData[]>> = useCallback((action) => {
-    setMessagesRaw(prev => {
-      const next = typeof action === 'function' ? action(prev) : action
-      messagesRef.current = next
-      return next
-    })
-  }, [])
+  const setMessages: React.Dispatch<React.SetStateAction<ChatMessageData[]>> = useCallback(
+    (action) => {
+      setMessagesRaw((prev) => {
+        const next = typeof action === 'function' ? action(prev) : action
+        messagesRef.current = next
+        return next
+      })
+    },
+    []
+  )
   const [isSending, setIsSending] = useState(false)
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -54,41 +73,63 @@ export function useStreamingChat(
   const streamingIdRef = useRef<string | null>(null)
 
   // Load history
-  const loadHistory = useCallback(async (before?: number) => {
-    if (historyAbortRef.current) historyAbortRef.current.abort()
-    historyAbortRef.current = new AbortController()
+  const loadHistory = useCallback(
+    async (before?: number) => {
+      if (historyAbortRef.current) historyAbortRef.current.abort()
+      historyAbortRef.current = new AbortController()
 
-    setIsLoadingHistory(true)
-    try {
-      const params = new URLSearchParams({ limit: '30' })
-      if (raw) params.set('raw', 'true')
-      if (before) params.set('before', String(before))
+      setIsLoadingHistory(true)
+      try {
+        const params = new URLSearchParams({ limit: '50', raw: 'true' })
+        if (before) params.set('before', String(before))
 
-      const resp = await fetch(
-        `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?${params}`,
-        { signal: historyAbortRef.current.signal }
-      )
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-      const data = await resp.json()
+        const resp = await fetch(
+          `${API_BASE}/chat/${encodeURIComponent(sessionKey)}/history?${params}`,
+          { signal: historyAbortRef.current.signal }
+        )
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+        const data = await resp.json()
 
-      if (before) {
-        setMessages(prev => [...data.messages, ...prev])
-      } else {
-        setMessages(data.messages)
+        if (before) {
+          setMessages((prev) => [...data.messages, ...prev])
+        } else {
+          setMessages(data.messages)
+        }
+        setHasMore(data.hasMore)
+      } catch (e: unknown) {
+        if ((e as Error).name === 'AbortError') return
+        setError((e as Error).message || 'Failed to load history')
+      } finally {
+        setIsLoadingHistory(false)
       }
-      setHasMore(data.hasMore)
-    } catch (e: unknown) {
-      if ((e as Error).name === 'AbortError') return
-      setError((e as Error).message || 'Failed to load history')
-    } finally {
-      setIsLoadingHistory(false)
-    }
-  }, [sessionKey, raw])
+    },
+    [sessionKey, raw]
+  )
 
   // Load initial history on mount
   useEffect(() => {
     loadHistory()
   }, [loadHistory])
+
+  // Re-fetch history when this session is updated from another window/source
+  useEffect(() => {
+    if (!sessionKey) return
+
+    const handleSessionUpdated = (event: MessageEvent) => {
+      try {
+        const updated = JSON.parse(event.data)
+        if (updated?.key === sessionKey && !isSending) {
+          // Another surface sent/received a message — sync our history
+          loadHistory()
+        }
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    const unsubscribe = sseManager.subscribe('session-updated', handleSessionUpdated)
+    return () => unsubscribe()
+  }, [sessionKey, isSending, loadHistory])
 
   const loadOlderMessages = useCallback(async () => {
     const oldest = messagesRef.current[0]?.timestamp
@@ -103,124 +144,125 @@ export function useStreamingChat(
     const id = streamingIdRef.current
     const content = pendingContentRef.current
     if (!id) return
-    setMessages(prev =>
-      prev.map(m => m.id === id ? { ...m, content, isStreaming: true } : m)
-    )
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, content, isStreaming: true } : m)))
   }, [])
 
-  const sendMessage = useCallback((text: string) => {
-    const trimmed = text.trim()
-    if (!trimmed || isSending) return
+  const sendMessage = useCallback(
+    (text: string) => {
+      const trimmed = text.trim()
+      if (!trimmed || isSending) return
 
-    // Cancel any in-flight stream
-    if (abortRef.current) {
-      abortRef.current.abort()
-    }
+      // Cancel any in-flight stream
+      if (abortRef.current) {
+        abortRef.current.abort()
+      }
 
-    // Add user message
-    const userMsg: ChatMessageData = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: trimmed,
-      timestamp: Date.now(),
-      tools: [],
-    }
+      // Add user message
+      const userMsg: ChatMessageData = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: trimmed,
+        timestamp: Date.now(),
+        tools: [],
+      }
 
-    // Add empty assistant message (streaming placeholder)
-    const assistantId = `assistant-stream-${Date.now()}`
-    streamingIdRef.current = assistantId
-    pendingContentRef.current = ''
+      // Add empty assistant message (streaming placeholder)
+      const assistantId = `assistant-stream-${Date.now()}`
+      streamingIdRef.current = assistantId
+      pendingContentRef.current = ''
 
-    const assistantMsg: ChatMessageData = {
-      id: assistantId,
-      role: 'assistant',
-      content: '',
-      timestamp: Date.now(),
-      tools: [],
-      isStreaming: true,
-    }
+      const assistantMsg: ChatMessageData = {
+        id: assistantId,
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now(),
+        tools: [],
+        isStreaming: true,
+      }
 
-    setMessages(prev => [...prev, userMsg, assistantMsg])
-    setIsSending(true)
-    setStreamingMessageId(assistantId)
-    setError(null)
+      setMessages((prev) => [...prev, userMsg, assistantMsg])
+      setIsSending(true)
+      setStreamingMessageId(assistantId)
+      setError(null)
 
-    abortRef.current = streamMessage(sessionKey, trimmed, roomId, {
-      onChunk: (chunk: string) => {
-        pendingContentRef.current += chunk
-        // Throttle state updates
-        if (!throttleTimerRef.current) {
-          throttleTimerRef.current = setTimeout(() => {
+      abortRef.current = streamMessage(sessionKey, trimmed, roomId, {
+        onChunk: (chunk: string) => {
+          pendingContentRef.current += chunk
+          // Throttle state updates
+          if (!throttleTimerRef.current) {
+            throttleTimerRef.current = setTimeout(() => {
+              throttleTimerRef.current = null
+              flushPendingContent()
+            }, THROTTLE_MS)
+          }
+        },
+        onDone: () => {
+          // Cancel any pending throttle timer so it can't fire after we clear the ref
+          if (throttleTimerRef.current) {
+            clearTimeout(throttleTimerRef.current)
             throttleTimerRef.current = null
-            flushPendingContent()
-          }, THROTTLE_MS)
-        }
-      },
-      onDone: () => {
-        // Cancel any pending throttle timer so it can't fire after we clear the ref
-        if (throttleTimerRef.current) {
-          clearTimeout(throttleTimerRef.current)
-          throttleTimerRef.current = null
-        }
-        // Capture final content and id BEFORE clearing refs
-        const finalContent = pendingContentRef.current
-        const id = streamingIdRef.current
-        // Single state update: set full content + mark streaming done
-        if (id) {
-          setMessages(prev =>
-            prev.map(m =>
-              m.id === id ? { ...m, content: finalContent, isStreaming: false } : m
+          }
+          // Capture final content and id BEFORE clearing refs
+          const finalContent = pendingContentRef.current
+          const id = streamingIdRef.current
+          // Single state update: set full content + mark streaming done
+          if (id) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === id ? { ...m, content: finalContent, isStreaming: false } : m
+              )
             )
-          )
-        }
-        setIsSending(false)
-        setStreamingMessageId(null)
-        streamingIdRef.current = null
-        pendingContentRef.current = ''
-      },
-      onError: (err: string) => {
-        // On error, fall back to blocking /send
-        const id = streamingIdRef.current
-        if (id) {
-          setMessages(prev => prev.filter(m => m.id !== id))
-        }
-        streamingIdRef.current = null
-        pendingContentRef.current = ''
+          }
+          setIsSending(false)
+          setStreamingMessageId(null)
+          streamingIdRef.current = null
+          pendingContentRef.current = ''
+        },
+        onError: (err: string) => {
+          // On error, fall back to blocking /send
+          const id = streamingIdRef.current
+          if (id) {
+            setMessages((prev) => prev.filter((m) => m.id !== id))
+          }
+          streamingIdRef.current = null
+          pendingContentRef.current = ''
 
-        // Fallback: blocking send
-        if (fallbackAbortRef.current) fallbackAbortRef.current.abort()
-        fallbackAbortRef.current = new AbortController()
-        fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/send`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: trimmed, ...(roomId ? { room_id: roomId } : {}) }),
-          signal: fallbackAbortRef.current.signal,
-        })
-          .then(r => r.json())
-          .then(data => {
-            if (data.success && data.response) {
-              setMessages(prev => [
-                ...prev,
-                {
-                  id: `assistant-${Date.now()}`,
-                  role: 'assistant',
-                  content: data.response,
-                  timestamp: Date.now(),
-                  tools: [],
-                },
-              ])
-            } else {
-              setError(data.error || err || 'Failed to get response')
-            }
+          // Fallback: blocking send
+          if (fallbackAbortRef.current) fallbackAbortRef.current.abort()
+          fallbackAbortRef.current = new AbortController()
+          fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: trimmed, ...(roomId ? { room_id: roomId } : {}) }),
+            signal: fallbackAbortRef.current.signal,
           })
-          .catch(() => setError(err || 'Failed to send message'))
-          .finally(() => {
-            setIsSending(false)
-            setStreamingMessageId(null)
-          })
-      },
-    })
-  }, [sessionKey, isSending, roomId, flushPendingContent])
+            .then((r) => r.json())
+            .then((data) => {
+              if (data.success && data.response) {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: `assistant-${Date.now()}`,
+                    role: 'assistant',
+                    content: data.response,
+                    timestamp: Date.now(),
+                    tools: [],
+                  },
+                ])
+              } else {
+                setError(data.error || err || 'Failed to get response')
+              }
+            })
+            .catch(() => setError(err || 'Failed to send message'))
+            .finally(() => {
+              setIsSending(false)
+              setStreamingMessageId(null)
+            })
+        },
+      })
+    },
+    [sessionKey, isSending, roomId, flushPendingContent]
+  )
 
   // Cleanup on unmount
   useEffect(() => {

@@ -49,10 +49,7 @@ import type { GridCell } from '@/lib/grid/types'
 
 // ─── Zone System ────────────────────────────────────────────────
 
-export type ZoneName =
-  | 'nw' | 'n' | 'ne'
-  | 'w'  | 'center' | 'e'
-  | 'sw' | 's' | 'se'
+export type ZoneName = 'nw' | 'n' | 'ne' | 'w' | 'center' | 'e' | 'sw' | 's' | 'se'
 
 const ZONE_LABELS: Record<ZoneName, string> = {
   nw: 'northwest corner',
@@ -70,14 +67,9 @@ const ZONE_LABELS: Record<ZoneName, string> = {
  * Map a grid coordinate to a 3×3 zone name.
  * The grid is divided into thirds along each axis.
  */
-export function gridToZone(
-  x: number,
-  z: number,
-  width: number = 20,
-  depth: number = 20,
-): ZoneName {
-  const col = x < width / 3 ? 'w' : (x >= 2 * width / 3 ? 'e' : '')
-  const row = z < depth / 3 ? 'n' : (z >= 2 * depth / 3 ? 's' : '')
+export function gridToZone(x: number, z: number, width: number = 20, depth: number = 20): ZoneName {
+  const col = x < width / 3 ? 'w' : x >= (2 * width) / 3 ? 'e' : ''
+  const row = z < depth / 3 ? 'n' : z >= (2 * depth) / 3 ? 's' : ''
   const zone = (row + col) as ZoneName
   return zone || 'center'
 }
@@ -138,7 +130,7 @@ export class SpatialNavigator {
     this.config = { ...DEFAULT_NAV_CONFIG, ...config }
     this.depth = grid.length
     this.width = grid.length > 0 ? grid[0].length : 0
-    this.walkableMask = grid.map(row => row.map(cell => cell.walkable && cell.type !== 'door'))
+    this.walkableMask = grid.map((row) => row.map((cell) => cell.walkable && cell.type !== 'door'))
   }
 
   /**
@@ -148,11 +140,7 @@ export class SpatialNavigator {
    * @param to - End position in grid coords
    * @param speed - Bot speed in grid cells per second (default: 2)
    */
-  navigate(
-    from: PathNode,
-    to: PathNode,
-    speed: number = 2,
-  ): NavigationPath | null {
+  navigate(from: PathNode, to: PathNode, speed: number = 2): NavigationPath | null {
     // Ensure target is walkable (find nearest if not)
     let target = to
     if (!this.walkableMask[to.z]?.[to.x]) {
@@ -193,11 +181,7 @@ export class SpatialNavigator {
    * @param propId - Prop ID to navigate to (e.g., "coffee-machine")
    * @param speed - Bot speed
    */
-  navigateToProp(
-    from: PathNode,
-    propId: string,
-    speed: number = 2,
-  ): NavigationPath | null {
+  navigateToProp(from: PathNode, propId: string, speed: number = 2): NavigationPath | null {
     // Find the prop on the grid
     const propCells = this.findPropCells(propId)
     if (propCells.length === 0) return null
@@ -208,7 +192,16 @@ export class SpatialNavigator {
 
     for (const cell of propCells) {
       // Check all 8 neighbors
-      for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      for (const [dx, dz] of [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+      ]) {
         const nx = cell.x + dx
         const nz = cell.z + dz
         if (nx < 0 || nx >= this.width || nz < 0 || nz >= this.depth) continue
@@ -229,11 +222,7 @@ export class SpatialNavigator {
   /**
    * Navigate to the center of a zone.
    */
-  navigateToZone(
-    from: PathNode,
-    zone: ZoneName,
-    speed: number = 2,
-  ): NavigationPath | null {
+  navigateToZone(from: PathNode, zone: ZoneName, speed: number = 2): NavigationPath | null {
     const target = this.getZoneCenter(zone)
     return this.navigate(from, target, speed)
   }
@@ -257,7 +246,7 @@ export class SpatialNavigator {
       }
     }
 
-    return Array.from(props.values()).map(p => {
+    return Array.from(props.values()).map((p) => {
       const zone = gridToZone(p.x, p.z, this.width, this.depth)
       return { ...p, zone, zoneLabel: getZoneLabel(zone) }
     })
@@ -322,8 +311,8 @@ export class SpatialNavigator {
       s: d - Math.floor(third(d) / 2) - 1,
     }
 
-    const col = zone.includes('w') ? 'w' : (zone.includes('e') ? 'e' : '')
-    const row = zone.startsWith('n') ? 'n' : (zone.startsWith('s') ? 's' : '')
+    const col = zone.includes('w') ? 'w' : zone.includes('e') ? 'e' : ''
+    const row = zone.startsWith('n') ? 'n' : zone.startsWith('s') ? 's' : ''
 
     return { x: colMap[col], z: rowMap[row] }
   }
@@ -361,7 +350,7 @@ export class SpatialNavigator {
 export function smoothPath(
   path: PathNode[],
   walkableMask: boolean[][],
-  _tension: number = 0.5,
+  _tension: number = 0.5
 ): PathNode[] {
   if (path.length <= 2) return path
 
@@ -390,17 +379,13 @@ export function smoothPath(
  * Check if there's a clear line-of-sight between two grid points.
  * Uses Bresenham to walk the line and checks each cell for walkability.
  */
-function hasLineOfSight(
-  walkableMask: boolean[][],
-  from: PathNode,
-  to: PathNode,
-): boolean {
+function hasLineOfSight(walkableMask: boolean[][], from: PathNode, to: PathNode): boolean {
   const depth = walkableMask.length
   if (depth === 0) return false
   const width = walkableMask[0].length
 
-  let dx = Math.abs(to.x - from.x)
-  let dz = Math.abs(to.z - from.z)
+  const dx = Math.abs(to.x - from.x)
+  const dz = Math.abs(to.z - from.z)
   const sx = from.x < to.x ? 1 : -1
   const sz = from.z < to.z ? 1 : -1
   let err = dx - dz

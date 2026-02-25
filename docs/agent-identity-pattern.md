@@ -1,7 +1,7 @@
 # Agent Identity Pattern: Single Identity, Multiple Surfaces
 
-*Created: 2026-02-10*  
-*Status: Design Pattern*  
+*Created: 2026-02-10*
+*Status: Design Pattern*
 *Version: v0.14.0*
 
 ## The Problem
@@ -15,11 +15,11 @@ When agents are accessed through different surfaces (WhatsApp, Discord, CrewHub 
 
 **Real Example (Discord #dev):**
 ```
-TODinSort: "I don't talk to them through crewhub they don't know what is going on 
-and I have a 4 task from chat and it showed working but the bug when I click 
+TODinSort: "I don't talk to them through crewhub they don't know what is going on
+and I have a 4 task from chat and it showed working but the bug when I click
 on the assistant show blank"
 
-TODinSort: "Lie here is an example. I clicked on my main assistant and sent a 
+TODinSort: "Lie here is an example. I clicked on my main assistant and sent a
 chat thought the web interface and it tried to change his personality."
 ```
 
@@ -85,7 +85,7 @@ I exist in ONE place (OpenClaw), but I'm:
 **Example (Correct Behavior):**
 ```
 User clicks 3D avatar in CrewHub → Opens chat panel
-Agent: "Hey! How can I help?" 
+Agent: "Hey! How can I help?"
   (Same personality as WhatsApp, just different UI)
 
 NOT: "Oh, I'm in CrewHub now, let me act more professional"
@@ -102,7 +102,7 @@ NOT: "Oh, I'm in CrewHub now, let me act more professional"
 async function onboard() {
   const hasSoul = fs.existsSync('~/clawd/SOUL.md')
   const hasIdentity = fs.existsSync('~/clawd/IDENTITY.md')
-  
+
   if (hasSoul || hasIdentity) {
     console.log('✓ Detected existing agent personality')
     return onboardConnectionOnly() // Just set up CrewHub connection
@@ -215,11 +215,11 @@ Agent: "Sure! Let me check that for you 🦞"
 
 ## Related Discord Discussion
 
-**Thread:** #dev, 2026-02-10  
-**Participants:** TODinSort, ch-ekinsol (Nicky)  
+**Thread:** #dev, 2026-02-10
+**Participants:** TODinSort, ch-ekinsol (Nicky)
 **Key Insight (ch-ekinsol):**
-> "Could be as simple as providing the agent the idea of also having a 
-> representation in CrewHub with a 3d avatar, instead of calling it 
+> "Could be as simple as providing the agent the idea of also having a
+> representation in CrewHub with a 3d avatar, instead of calling it
 > a different personal identity"
 
 **Problem Identified:**

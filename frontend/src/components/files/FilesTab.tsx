@@ -14,7 +14,12 @@ export function FilesTab({ agentId, agentName }: FilesTabProps) {
   const { files, loading: filesLoading, error: filesError, refresh } = useAgentFiles(agentId)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [fullscreenOpen, setFullscreenOpen] = useState(false)
-  const { content, metadata, loading: contentLoading, setContent } = useFileContent(agentId, selectedPath)
+  const {
+    content,
+    metadata,
+    loading: contentLoading,
+    setContent,
+  } = useFileContent(agentId, selectedPath)
 
   const handleSelect = useCallback((file: FileNode) => {
     if (file.type === 'file') {
@@ -38,12 +43,14 @@ export function FilesTab({ agentId, agentName }: FilesTabProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* File Tree */}
-      <div style={{
-        maxHeight: selectedPath ? '40%' : '100%',
-        overflow: 'auto',
-        borderBottom: selectedPath ? '1px solid hsl(var(--border))' : 'none',
-        flexShrink: 0,
-      }}>
+      <div
+        style={{
+          maxHeight: selectedPath ? '40%' : '100%',
+          overflow: 'auto',
+          borderBottom: selectedPath ? '1px solid hsl(var(--border))' : 'none',
+          flexShrink: 0,
+        }}
+      >
         <FileTree
           files={files}
           selectedPath={selectedPath ?? undefined}
@@ -56,17 +63,21 @@ export function FilesTab({ agentId, agentName }: FilesTabProps) {
       {/* Preview */}
       {selectedPath && (
         <div style={{ flex: 1, overflow: 'auto', padding: '8px 12px', minHeight: 0 }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 8,
-          }}>
-            <span style={{
-              fontSize: 11,
-              color: 'hsl(var(--muted-foreground))',
-              fontFamily: "'JetBrains Mono', monospace",
-            }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                color: 'hsl(var(--muted-foreground))',
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
+            >
               {selectedPath}
             </span>
             <button

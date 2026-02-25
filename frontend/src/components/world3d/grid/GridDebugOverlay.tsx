@@ -12,18 +12,18 @@ import { gridToWorld } from '@/lib/grid/blueprintUtils'
 // ─── Color palette ──────────────────────────────────────────────
 
 const COLORS = {
-  walkable:    new THREE.Color(0x22c55e), // green
-  blocked:     new THREE.Color(0xef4444), // red
+  walkable: new THREE.Color(0x22c55e), // green
+  blocked: new THREE.Color(0xef4444), // red
   interaction: new THREE.Color(0x3b82f6), // blue
-  door:        new THREE.Color(0xeab308), // yellow
-  gridLine:    new THREE.Color(0xffffff), // white
+  door: new THREE.Color(0xeab308), // yellow
+  gridLine: new THREE.Color(0xffffff), // white
 } as const
 
 const OPACITY = {
-  walkable:    0.55,
-  blocked:     0.7,
+  walkable: 0.55,
+  blocked: 0.7,
   interaction: 0.75,
-  door:        0.75,
+  door: 0.75,
 } as const
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -47,7 +47,11 @@ interface GridDebugOverlayProps {
 
 // ─── Helpers ────────────────────────────────────────────────────
 
-function classifyCell(cell: { type: string; walkable: boolean; interactionType?: string }): CellCategory {
+function classifyCell(cell: {
+  type: string
+  walkable: boolean
+  interactionType?: string
+}): CellCategory {
   if (cell.type === 'door') return 'door'
   if (cell.type === 'interaction' || cell.interactionType) return 'interaction'
   if (!cell.walkable) return 'blocked'
@@ -104,7 +108,15 @@ function CellLayer({
 
 // ─── Grid lines (wireframe grid) ────────────────────────────────
 
-function GridLines({ gridWidth, gridDepth, cellSize }: { gridWidth: number; gridDepth: number; cellSize: number }) {
+function GridLines({
+  gridWidth,
+  gridDepth,
+  cellSize,
+}: {
+  gridWidth: number
+  gridDepth: number
+  cellSize: number
+}) {
   const geometry = useMemo(() => {
     const points: THREE.Vector3[] = []
     const halfW = (gridWidth * cellSize) / 2
@@ -135,7 +147,15 @@ function GridLines({ gridWidth, gridDepth, cellSize }: { gridWidth: number; grid
 
 // ─── Coordinate labels on edges ─────────────────────────────────
 
-function CoordinateLabels({ gridWidth, gridDepth, cellSize }: { gridWidth: number; gridDepth: number; cellSize: number }) {
+function CoordinateLabels({
+  gridWidth,
+  gridDepth,
+  cellSize,
+}: {
+  gridWidth: number
+  gridDepth: number
+  cellSize: number
+}) {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
 
@@ -170,14 +190,16 @@ function CoordinateLabels({ gridWidth, gridDepth, cellSize }: { gridWidth: numbe
           zIndexRange={[0, 1]}
           style={{ pointerEvents: 'none' }}
         >
-          <span style={{
-            fontSize: lbl.text.includes('→') || lbl.text.includes('↓') ? '16px' : '13px',
-            fontWeight: 'bold',
-            fontFamily: 'monospace',
-            color: '#facc15',
-            textShadow: '0 0 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.5)',
-            userSelect: 'none',
-          }}>
+          <span
+            style={{
+              fontSize: lbl.text.includes('→') || lbl.text.includes('↓') ? '16px' : '13px',
+              fontWeight: 'bold',
+              fontFamily: 'monospace',
+              color: '#facc15',
+              textShadow: '0 0 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.5)',
+              userSelect: 'none',
+            }}
+          >
             {lbl.text}
           </span>
         </Html>
@@ -188,7 +210,9 @@ function CoordinateLabels({ gridWidth, gridDepth, cellSize }: { gridWidth: numbe
 
 // ─── Prop labels (shown in focus mode) ──────────────────────────
 
-function PropLabels({ cells }: {
+function PropLabels({
+  cells,
+}: {
   cells: CellInstance[]
   cellSize?: number
   gridWidth?: number
@@ -197,7 +221,7 @@ function PropLabels({ cells }: {
   // Only show labels for cells that have a propId and are span parents (no duplicates)
   const labelCells = useMemo(() => {
     const seen = new Set<string>()
-    return cells.filter(c => {
+    return cells.filter((c) => {
       if (!c.propId) return false
       const key = c.propId + ':' + c.x + ':' + c.z
       if (seen.has(key)) return false
@@ -218,16 +242,18 @@ function PropLabels({ cells }: {
           zIndexRange={[0, 1]}
           style={{ pointerEvents: 'none' }}
         >
-          <span style={{
-            fontSize: '6px',
-            fontFamily: 'monospace',
-            color: 'rgba(255,255,255,0.85)',
-            background: 'rgba(0,0,0,0.55)',
-            padding: '1px 3px',
-            borderRadius: '2px',
-            whiteSpace: 'nowrap',
-            userSelect: 'none',
-          }}>
+          <span
+            style={{
+              fontSize: '6px',
+              fontFamily: 'monospace',
+              color: 'rgba(255,255,255,0.85)',
+              background: 'rgba(0,0,0,0.55)',
+              padding: '1px 3px',
+              borderRadius: '2px',
+              whiteSpace: 'nowrap',
+              userSelect: 'none',
+            }}
+          >
             {cell.propId}
           </span>
         </Html>
@@ -263,12 +289,32 @@ export function GridDebugOverlay({ blueprint }: Omit<GridDebugOverlayProps, 'sho
   }, [cells, cellSize, gridWidth, gridDepth])
 
   return (
-    <group position-y={0.10}>
+    <group position-y={0.1}>
       {/* Cell layers — each instance is individually rotated flat */}
-      <CellLayer cells={byCategory.walkable} cellSize={cellSize} opacity={OPACITY.walkable} color={COLORS.walkable} />
-      <CellLayer cells={byCategory.blocked} cellSize={cellSize} opacity={OPACITY.blocked} color={COLORS.blocked} />
-      <CellLayer cells={byCategory.interaction} cellSize={cellSize} opacity={OPACITY.interaction} color={COLORS.interaction} />
-      <CellLayer cells={byCategory.door} cellSize={cellSize} opacity={OPACITY.door} color={COLORS.door} />
+      <CellLayer
+        cells={byCategory.walkable}
+        cellSize={cellSize}
+        opacity={OPACITY.walkable}
+        color={COLORS.walkable}
+      />
+      <CellLayer
+        cells={byCategory.blocked}
+        cellSize={cellSize}
+        opacity={OPACITY.blocked}
+        color={COLORS.blocked}
+      />
+      <CellLayer
+        cells={byCategory.interaction}
+        cellSize={cellSize}
+        opacity={OPACITY.interaction}
+        color={COLORS.interaction}
+      />
+      <CellLayer
+        cells={byCategory.door}
+        cellSize={cellSize}
+        opacity={OPACITY.door}
+        color={COLORS.door}
+      />
 
       {/* Grid lines */}
       <GridLines gridWidth={gridWidth} gridDepth={gridDepth} cellSize={cellSize} />
@@ -290,8 +336,12 @@ export function GridDebugLabels({ blueprint, showLabels = false }: GridDebugOver
           const [wx, , wz] = gridToWorld(x, z, cellSize, gridWidth, gridDepth)
           const cat = classifyCell(cell)
           result.push({
-            x, z, worldX: wx, worldZ: wz,
-            color: COLORS[cat], opacity: OPACITY[cat],
+            x,
+            z,
+            worldX: wx,
+            worldZ: wz,
+            color: COLORS[cat],
+            opacity: OPACITY[cat],
             propId: cell.propId,
           })
         }

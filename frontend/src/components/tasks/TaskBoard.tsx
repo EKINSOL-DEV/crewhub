@@ -1,5 +1,11 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useTasks, type Task, type TaskStatus, type TaskCreate, type TaskUpdate } from '@/hooks/useTasks'
+import {
+  useTasks,
+  type Task,
+  type TaskStatus,
+  type TaskCreate,
+  type TaskUpdate,
+} from '@/hooks/useTasks'
 import { TaskCard } from './TaskCard'
 import { TaskForm } from './TaskForm'
 
@@ -15,7 +21,13 @@ interface ColumnConfig {
 
 const columns: ColumnConfig[] = [
   { status: 'todo', label: 'To Do', icon: '📋', headerBg: '#f3f4f6', headerColor: '#4b5563' },
-  { status: 'in_progress', label: 'In Progress', icon: '🔄', headerBg: '#dbeafe', headerColor: '#1d4ed8' },
+  {
+    status: 'in_progress',
+    label: 'In Progress',
+    icon: '🔄',
+    headerBg: '#dbeafe',
+    headerColor: '#1d4ed8',
+  },
   { status: 'review', label: 'Review', icon: '👀', headerBg: '#ede9fe', headerColor: '#6d28d9' },
   { status: 'done', label: 'Done', icon: '✅', headerBg: '#dcfce7', headerColor: '#15803d' },
 ]
@@ -41,15 +53,10 @@ export function TaskBoard({
   maxTasksPerColumn = 10,
   onTaskClick,
 }: TaskBoardProps) {
-  const {
-    tasks,
-    isLoading,
-    error,
-    createTask,
-    updateTask,
-    deleteTask,
-    taskCounts,
-  } = useTasks({ projectId, roomId })
+  const { tasks, isLoading, error, createTask, updateTask, deleteTask, taskCounts } = useTasks({
+    projectId,
+    roomId,
+  })
 
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -74,87 +81,94 @@ export function TaskBoard({
   const blockedTasks = tasksByStatus.blocked
 
   // Handle status change (drag-drop alternative)
-  const handleStatusChange = useCallback(async (task: Task, newStatus: TaskStatus) => {
-    const result = await updateTask(task.id, { status: newStatus })
-    if (!result.success) {
-      console.error('Failed to update task status:', result.error)
-    }
-  }, [updateTask])
+  const handleStatusChange = useCallback(
+    async (task: Task, newStatus: TaskStatus) => {
+      const result = await updateTask(task.id, { status: newStatus })
+      if (!result.success) {
+        console.error('Failed to update task status:', result.error)
+      }
+    },
+    [updateTask]
+  )
 
   // Handle create task
-  const handleCreateTask = useCallback(async (data: TaskCreate | TaskUpdate) => {
-    setFormLoading(true)
-    try {
-      const result = await createTask(data as TaskCreate)
-      if (result.success) {
-        setShowCreateForm(false)
-      } else {
-        throw new Error(result.error)
+  const handleCreateTask = useCallback(
+    async (data: TaskCreate | TaskUpdate) => {
+      setFormLoading(true)
+      try {
+        const result = await createTask(data as TaskCreate)
+        if (result.success) {
+          setShowCreateForm(false)
+        } else {
+          throw new Error(result.error)
+        }
+      } finally {
+        setFormLoading(false)
       }
-    } finally {
-      setFormLoading(false)
-    }
-  }, [createTask])
+    },
+    [createTask]
+  )
 
   // Handle edit task
-  const handleEditTask = useCallback(async (data: TaskCreate | TaskUpdate) => {
-    if (!editingTask) return
-    setFormLoading(true)
-    try {
-      const result = await updateTask(editingTask.id, data as TaskUpdate)
-      if (result.success) {
-        setEditingTask(null)
-      } else {
-        throw new Error(result.error)
+  const handleEditTask = useCallback(
+    async (data: TaskCreate | TaskUpdate) => {
+      if (!editingTask) return
+      setFormLoading(true)
+      try {
+        const result = await updateTask(editingTask.id, data as TaskUpdate)
+        if (result.success) {
+          setEditingTask(null)
+        } else {
+          throw new Error(result.error)
+        }
+      } finally {
+        setFormLoading(false)
       }
-    } finally {
-      setFormLoading(false)
-    }
-  }, [editingTask, updateTask])
+    },
+    [editingTask, updateTask]
+  )
 
   // Handle delete task
-  const handleDeleteTask = useCallback(async (task: Task) => {
-    if (!confirm(`Delete task "${task.title}"?`)) return
-    const result = await deleteTask(task.id)
-    if (!result.success) {
-      console.error('Failed to delete task:', result.error)
-    }
-  }, [deleteTask])
+  const handleDeleteTask = useCallback(
+    async (task: Task) => {
+      if (!confirm(`Delete task "${task.title}"?`)) return
+      const result = await deleteTask(task.id)
+      if (!result.success) {
+        console.error('Failed to delete task:', result.error)
+      }
+    },
+    [deleteTask]
+  )
 
   // Handle task click
-  const handleTaskClick = useCallback((task: Task) => {
-    if (onTaskClick) {
-      onTaskClick(task)
-    } else {
-      setEditingTask(task)
-    }
-  }, [onTaskClick])
+  const handleTaskClick = useCallback(
+    (task: Task) => {
+      if (onTaskClick) {
+        onTaskClick(task)
+      } else {
+        setEditingTask(task)
+      }
+    },
+    [onTaskClick]
+  )
 
   // Loading state
   if (isLoading) {
     return (
-      <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>
-        Loading tasks...
-      </div>
+      <div style={{ padding: 20, textAlign: 'center', color: '#6b7280' }}>Loading tasks...</div>
     )
   }
 
   // Error state
   if (error) {
-    return (
-      <div style={{ padding: 20, textAlign: 'center', color: '#dc2626' }}>
-        Error: {error}
-      </div>
-    )
+    return <div style={{ padding: 20, textAlign: 'center', color: '#dc2626' }}>Error: {error}</div>
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%' }}>
       {/* Header with Add button */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}>
-          📋 Task Board
-        </span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}>📋 Task Board</span>
         <button
           onClick={() => setShowCreateForm(true)}
           style={{
@@ -174,15 +188,17 @@ export function TaskBoard({
 
       {/* Blocked Tasks Warning */}
       {blockedTasks.length > 0 && (
-        <div style={{
-          padding: '8px 12px',
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          borderRadius: 6,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}>
+        <div
+          style={{
+            padding: '8px 12px',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: 6,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
           <span>🚫</span>
           <span style={{ fontSize: 13, color: '#dc2626', fontWeight: 500 }}>
             {blockedTasks.length} blocked task{blockedTasks.length > 1 ? 's' : ''}
@@ -296,12 +312,14 @@ export function TaskBoard({
       {/* Blocked Tasks Section (if any) */}
       {blockedTasks.length > 0 && !compact && (
         <div style={{ marginTop: 8 }}>
-          <div style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: '#dc2626',
-            marginBottom: 8,
-          }}>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#dc2626',
+              marginBottom: 8,
+            }}
+          >
             🚫 Blocked Tasks
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -348,9 +366,7 @@ export function TaskBoard({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, color: '#1f2937' }}>
-              Create New Task
-            </h3>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, color: '#1f2937' }}>Create New Task</h3>
             <TaskForm
               mode="create"
               projectId={projectId}
@@ -393,10 +409,15 @@ export function TaskBoard({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 18, color: '#1f2937' }}>
-                Edit Task
-              </h3>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 16,
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: 18, color: '#1f2937' }}>Edit Task</h3>
               <button
                 onClick={() => handleDeleteTask(editingTask)}
                 style={{

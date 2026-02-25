@@ -9,7 +9,7 @@ interface StepReadyProps {
 }
 
 export function StepReady({ connections, onGoDashboard }: StepReadyProps) {
-  const enabledConnections = connections.filter(c => c.enabled)
+  const enabledConnections = connections.filter((c) => c.enabled)
   const totalSessions = enabledConnections.reduce((sum, c) => sum + (c.sessions ?? 0), 0)
 
   return (
@@ -30,7 +30,7 @@ export function StepReady({ connections, onGoDashboard }: StepReadyProps) {
 
       {enabledConnections.length > 0 && (
         <div className="w-full space-y-3">
-          {enabledConnections.map(conn => (
+          {enabledConnections.map((conn) => (
             <div key={conn.id} className="p-3 rounded-lg border bg-card flex items-center gap-3">
               <div className="p-2 rounded-md bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
                 {getRuntimeIcon(conn.type)}

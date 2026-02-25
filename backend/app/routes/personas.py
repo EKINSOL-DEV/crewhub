@@ -12,22 +12,20 @@ GET  /api/personas/surfaces                   - List known surfaces + defaults
 POST /api/personas/preview                    - Preview persona prompt output
 """
 
-import time
 import logging
+import time
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional
-
 
 from app.db.database import get_db
 from app.services.personas import (
-    PRESETS,
-    KNOWN_SURFACES,
     DEFAULT_SURFACE_RULES,
-    build_persona_prompt,
+    KNOWN_SURFACES,
+    PRESETS,
     build_identity_block,
-    build_full_persona_prompt,
+    build_persona_prompt,
     get_default_persona,
     get_preview_response,
 )
@@ -40,6 +38,7 @@ router = APIRouter()
 # ========================================
 # MODELS
 # ========================================
+
 
 class PersonaResponse(BaseModel):
     agent_id: str
@@ -91,24 +90,22 @@ class PreviewRequest(BaseModel):
 # ROUTES
 # ========================================
 
+
 @router.get("/agents/{agent_id}/persona", response_model=PersonaResponse)
 async def get_agent_persona(agent_id: str):
     """Get the persona + identity configuration for an agent.
-    
+
     Returns the stored persona or defaults (Executor preset) if none configured.
     Includes identity anchor and surface rules from the Identity Pattern.
     """
     async with get_db() as db:
-
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
             if not await cur.fetchone():
                 raise HTTPException(status_code=404, detail="Agent not found")
 
         # Get persona
-        async with db.execute(
-            "SELECT * FROM agent_personas WHERE agent_id = ?", (agent_id,)
-        ) as cur:
+        async with db.execute("SELECT * FROM agent_personas WHERE agent_id = ?", (agent_id,)) as cur:
             row = await cur.fetchone()
 
         if row:
@@ -152,11 +149,10 @@ async def get_agent_persona(agent_id: str):
 @router.put("/agents/{agent_id}/persona", response_model=PersonaResponse)
 async def update_agent_persona(agent_id: str, body: PersonaUpdate):
     """Update the persona configuration for an agent.
-    
+
     Creates the persona row if it doesn't exist (upsert).
     """
     async with get_db() as db:
-
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
             if not await cur.fetchone():
@@ -169,7 +165,7 @@ async def update_agent_persona(agent_id: str, body: PersonaUpdate):
         now = int(time.time() * 1000)
 
         await db.execute(
-            """INSERT INTO agent_personas 
+            """INSERT INTO agent_personas
                (agent_id, preset, start_behavior, checkin_frequency, response_detail, approach_style, custom_instructions, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(agent_id) DO UPDATE SET
@@ -217,7 +213,7 @@ async def list_presets():
 @router.post("/personas/preview")
 async def preview_persona(body: PreviewRequest):
     """Preview how a persona configuration translates to a system prompt.
-    
+
     Returns the generated prompt fragment and a sample response.
     If a surface is specified, includes identity + surface format rules.
     """
@@ -252,14 +248,14 @@ async def preview_persona(body: PreviewRequest):
 # IDENTITY PATTERN ROUTES
 # ========================================
 
+
 @router.get("/agents/{agent_id}/identity")
 async def get_agent_identity(agent_id: str):
     """Get the identity configuration for an agent.
-    
+
     Returns identity anchor, surface rules, and lock status.
     """
     async with get_db() as db:
-
         # Verify agent exists and get name
         async with db.execute("SELECT id, name FROM agents WHERE id = ?", (agent_id,)) as cur:
             agent = await cur.fetchone()
@@ -268,8 +264,7 @@ async def get_agent_identity(agent_id: str):
 
         # Get persona (identity is stored there)
         async with db.execute(
-            "SELECT identity_anchor, surface_rules, identity_locked FROM agent_personas WHERE agent_id = ?",
-            (agent_id,)
+            "SELECT identity_anchor, surface_rules, identity_locked FROM agent_personas WHERE agent_id = ?", (agent_id,)
         ) as cur:
             row = await cur.fetchone()
 
@@ -295,14 +290,16 @@ async def get_agent_identity(agent_id: str):
         try:
             async with db.execute(
                 "SELECT surface, format_rules, enabled FROM agent_surfaces WHERE agent_id = ? ORDER BY surface",
-                (agent_id,)
+                (agent_id,),
             ) as cur:
                 async for srow in cur:
-                    surfaces.append({
-                        "surface": srow["surface"],
-                        "format_rules": srow["format_rules"] or "",
-                        "enabled": bool(srow["enabled"]),
-                    })
+                    surfaces.append(
+                        {
+                            "surface": srow["surface"],
+                            "format_rules": srow["format_rules"] or "",
+                            "enabled": bool(srow["enabled"]),
+                        }
+                    )
         except Exception:
             pass  # Table may not exist yet
 
@@ -319,11 +316,10 @@ async def get_agent_identity(agent_id: str):
 @router.put("/agents/{agent_id}/identity")
 async def update_agent_identity(agent_id: str, body: IdentityUpdate):
     """Update the identity anchor and surface rules for an agent.
-    
+
     Creates the persona row if it doesn't exist (upsert on identity fields).
     """
     async with get_db() as db:
-
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
             if not await cur.fetchone():
@@ -332,14 +328,12 @@ async def update_agent_identity(agent_id: str, body: IdentityUpdate):
         now = int(time.time() * 1000)
 
         # Check if persona row exists
-        async with db.execute(
-            "SELECT agent_id FROM agent_personas WHERE agent_id = ?", (agent_id,)
-        ) as cur:
+        async with db.execute("SELECT agent_id FROM agent_personas WHERE agent_id = ?", (agent_id,)) as cur:
             exists = await cur.fetchone()
 
         if exists:
             await db.execute(
-                """UPDATE agent_personas 
+                """UPDATE agent_personas
                    SET identity_anchor = ?, surface_rules = ?, identity_locked = ?, updated_at = ?
                    WHERE agent_id = ?""",
                 (body.identity_anchor, body.surface_rules, body.identity_locked, now, agent_id),
@@ -348,7 +342,7 @@ async def update_agent_identity(agent_id: str, body: IdentityUpdate):
             # Create with defaults + identity
             defaults = get_default_persona()
             await db.execute(
-                """INSERT INTO agent_personas 
+                """INSERT INTO agent_personas
                    (agent_id, preset, start_behavior, checkin_frequency, response_detail, approach_style,
                     custom_instructions, identity_anchor, surface_rules, identity_locked, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?)""",
@@ -381,11 +375,10 @@ async def update_agent_identity(agent_id: str, body: IdentityUpdate):
 @router.get("/agents/{agent_id}/surfaces")
 async def get_agent_surfaces(agent_id: str):
     """Get per-surface format rules for an agent.
-    
+
     Returns configured surfaces with their rules, plus defaults for unconfigured surfaces.
     """
     async with get_db() as db:
-
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
             if not await cur.fetchone():
@@ -395,8 +388,7 @@ async def get_agent_surfaces(agent_id: str):
         configured = {}
         try:
             async with db.execute(
-                "SELECT surface, format_rules, enabled FROM agent_surfaces WHERE agent_id = ?",
-                (agent_id,)
+                "SELECT surface, format_rules, enabled FROM agent_surfaces WHERE agent_id = ?", (agent_id,)
             ) as cur:
                 async for row in cur:
                     configured[row["surface"]] = {
@@ -411,19 +403,23 @@ async def get_agent_surfaces(agent_id: str):
         surfaces = []
         for surface in KNOWN_SURFACES:
             if surface in configured:
-                surfaces.append({
-                    "surface": surface,
-                    "default_rules": DEFAULT_SURFACE_RULES.get(surface, ""),
-                    **configured[surface],
-                })
+                surfaces.append(
+                    {
+                        "surface": surface,
+                        "default_rules": DEFAULT_SURFACE_RULES.get(surface, ""),
+                        **configured[surface],
+                    }
+                )
             else:
-                surfaces.append({
-                    "surface": surface,
-                    "format_rules": DEFAULT_SURFACE_RULES.get(surface, ""),
-                    "enabled": True,
-                    "is_custom": False,
-                    "default_rules": DEFAULT_SURFACE_RULES.get(surface, ""),
-                })
+                surfaces.append(
+                    {
+                        "surface": surface,
+                        "format_rules": DEFAULT_SURFACE_RULES.get(surface, ""),
+                        "enabled": True,
+                        "is_custom": False,
+                        "default_rules": DEFAULT_SURFACE_RULES.get(surface, ""),
+                    }
+                )
 
         return {"agent_id": agent_id, "surfaces": surfaces}
 
@@ -431,11 +427,10 @@ async def get_agent_surfaces(agent_id: str):
 @router.put("/agents/{agent_id}/surfaces/{surface}")
 async def update_agent_surface(agent_id: str, surface: str, body: SurfaceRuleUpdate):
     """Set custom format rules for a specific surface.
-    
+
     Creates or updates the surface rule entry.
     """
     async with get_db() as db:
-
         # Verify agent exists
         async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cur:
             if not await cur.fetchone():
@@ -481,9 +476,4 @@ async def delete_agent_surface(agent_id: str, surface: str):
 @router.get("/personas/surfaces")
 async def list_known_surfaces():
     """List all known surfaces with their default format rules."""
-    return {
-        "surfaces": [
-            {"surface": s, "default_rules": DEFAULT_SURFACE_RULES.get(s, "")}
-            for s in KNOWN_SURFACES
-        ]
-    }
+    return {"surfaces": [{"surface": s, "default_rules": DEFAULT_SURFACE_RULES.get(s, "")} for s in KNOWN_SURFACES]}

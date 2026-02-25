@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { fetchActivityEntries, subscribeToActivityUpdates, type ActivityEvent } from '@/services/activityService'
+import {
+  fetchActivityEntries,
+  subscribeToActivityUpdates,
+  type ActivityEvent,
+} from '@/services/activityService'
 
 interface ActivityLogStreamProps {
   sessionKey: string
@@ -22,31 +26,59 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
   const scrollRef = useRef<HTMLDivElement>(null)
   const prevCountRef = useRef(0)
 
+  // Bug 1 fix: only show loading spinner on the very first fetch
+  const isInitialLoad = useRef(true)
+
+  // Bug 2 fix: track whether the user has manually scrolled up
+  const isUserScrolledUp = useRef(false)
+
+  // Debounce ref: avoid burst SSE events triggering many fetches
+  const debouncedFetch = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const fetchHistory = useCallback(async () => {
-    setLoading(true)
+    // Only set loading on the initial fetch — prevents flicker on SSE updates
+    if (isInitialLoad.current) {
+      setLoading(true)
+    }
     try {
       const activityEvents = await fetchActivityEntries(sessionKey, { limit: 20 })
       setEntries(activityEvents)
     } catch (error) {
       console.error('[ActivityLogStream] Failed to fetch activity:', error)
     } finally {
-      setLoading(false)
+      if (isInitialLoad.current) {
+        isInitialLoad.current = false
+        setLoading(false)
+      }
     }
   }, [sessionKey])
+
+  // Debounced wrapper so burst SSE events only trigger one fetch
+  const debouncedFetchHistory = useCallback(() => {
+    if (debouncedFetch.current) clearTimeout(debouncedFetch.current)
+    debouncedFetch.current = setTimeout(fetchHistory, 300)
+  }, [fetchHistory])
 
   // Initial fetch
   useEffect(() => {
     fetchHistory()
   }, [fetchHistory])
 
-  // Subscribe to SSE for live updates
+  // Subscribe to SSE for live updates (debounced)
   useEffect(() => {
-    return subscribeToActivityUpdates(sessionKey, fetchHistory)
-  }, [sessionKey, fetchHistory])
+    return subscribeToActivityUpdates(sessionKey, debouncedFetchHistory)
+  }, [sessionKey, debouncedFetchHistory])
 
-  // Auto-scroll on new entries
+  // Track manual user scroll
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+    isUserScrolledUp.current = scrollHeight - scrollTop - clientHeight > 50
+  }, [])
+
+  // Auto-scroll to bottom on new entries, unless user scrolled up
   useEffect(() => {
-    if (entries.length > prevCountRef.current && scrollRef.current) {
+    if (!isUserScrolledUp.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
     prevCountRef.current = entries.length
@@ -54,7 +86,16 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af', fontSize: 13 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: '#9ca3af',
+          fontSize: 13,
+        }}
+      >
         Loading activity…
       </div>
     )
@@ -62,7 +103,16 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
 
   if (entries.length === 0) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          gap: 8,
+        }}
+      >
         <span style={{ fontSize: 32 }}>💤</span>
         <span style={{ color: '#9ca3af', fontSize: 13 }}>No recent activity</span>
       </div>
@@ -73,6 +123,7 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div
         ref={scrollRef}
+        onScroll={handleScroll}
         style={{
           flex: 1,
           overflow: 'auto',
@@ -91,13 +142,15 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
           return (
             <div key={entry.id}>
               {showTime && (
-                <div style={{
-                  fontSize: 10,
-                  color: '#9ca3af',
-                  textAlign: 'center',
-                  padding: '4px 0 2px',
-                  fontWeight: 500,
-                }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: '#9ca3af',
+                    textAlign: 'center',
+                    padding: '4px 0 2px',
+                    fontWeight: 500,
+                  }}
+                >
                   {thisTime}
                 </div>
               )}
@@ -111,16 +164,18 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
                 }}
               >
                 <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{entry.icon}</span>
-                <div style={{
-                  flex: 1,
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                  color: entry.color || '#374151',
-                  background: 'rgba(0, 0, 0, 0.03)',
-                  padding: '6px 10px',
-                  borderRadius: 10,
-                  wordBreak: 'break-word',
-                }}>
+                <div
+                  style={{
+                    flex: 1,
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    color: entry.color || '#374151',
+                    background: 'rgba(0, 0, 0, 0.03)',
+                    padding: '6px 10px',
+                    borderRadius: 10,
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {entry.description}
                 </div>
               </div>
@@ -146,8 +201,12 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
             fontFamily: 'system-ui, sans-serif',
             transition: 'color 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#374151' }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#6b7280' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#374151'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#6b7280'
+          }}
         >
           View Full Log →
         </button>

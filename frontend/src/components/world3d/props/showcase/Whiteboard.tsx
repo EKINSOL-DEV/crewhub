@@ -1,7 +1,7 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { Text } from '@react-three/drei'
+import * as THREE from 'three'
 
 const STICKY_NOTES = [
   { x: -0.35, y: 0.25, color: '#ffee44', text: 'TODO' },
@@ -9,16 +9,16 @@ const STICKY_NOTES = [
   { x: 0.45, y: 0.15, color: '#44ddff', text: 'v2.0' },
   { x: -0.2, y: -0.1, color: '#88ff66', text: 'DONE ✓' },
   { x: 0.3, y: -0.15, color: '#ff66aa', text: 'BUG?' },
-];
+]
 
 export function Whiteboard() {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.1
     }
-  });
+  })
 
   return (
     <group ref={groupRef}>
@@ -34,7 +34,11 @@ export function Whiteboard() {
       </mesh>
       {/* Sticky notes */}
       {STICKY_NOTES.map((note, i) => (
-        <group key={i} position={[note.x, note.y, 0.04]} rotation={[0, 0, (Math.random() - 0.5) * 0.15]}>
+        <group
+          key={i}
+          position={[note.x, note.y, 0.04]}
+          rotation={[0, 0, (Math.random() - 0.5) * 0.15]}
+        >
           <mesh>
             <boxGeometry args={[0.22, 0.18, 0.005]} />
             <meshStandardMaterial color={note.color} />
@@ -67,5 +71,5 @@ export function Whiteboard() {
         </mesh>
       ))}
     </group>
-  );
+  )
 }

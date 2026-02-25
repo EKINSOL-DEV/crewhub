@@ -1,7 +1,7 @@
 # External 3D Generation APIs - Concept
 
-**Version**: v0.17.0 (Planned)  
-**Status**: 📋 Design phase  
+**Version**: v0.17.0 (Planned)
+**Status**: 📋 Design phase
 **Category**: Creative & Customization
 
 ---
@@ -26,7 +26,7 @@ Integration with external 3D model generation services (Meshy.ai, etc.) as an al
 
 ### Meshy.ai
 - **Website**: https://www.meshy.ai/pricing
-- **Pricing**: 
+- **Pricing**:
   - Free tier: 200 credits
   - Pro: $16/month (1000 credits)
   - Max: $32/month (3000 credits)
@@ -113,7 +113,7 @@ export function GeneratedProp({ position = [0, 0, 0] }) {
 }
 ```
 
-Pros: Simple, preserves all details  
+Pros: Simple, preserves all details
 Cons: Larger file size, not editable, not compatible with PARTS_DATA system
 
 **Option B: Mesh extraction + simplification**
@@ -122,7 +122,7 @@ Cons: Larger file size, not editable, not compatible with PARTS_DATA system
 - Approximate with Three.js primitives (best-fit boxes/cylinders/spheres)
 - Generate TSX code
 
-Pros: Editable, smaller, consistent with current system  
+Pros: Editable, smaller, consistent with current system
 Cons: Loss of detail, complex conversion logic
 
 **Preferred**: Start with Option A (direct GLTF), add Option B later for optimization.
@@ -177,16 +177,16 @@ Cons: Loss of detail, complex conversion logic
 
 ## Risks & Mitigations
 
-**Risk**: External API is slow (2-3 minutes)  
+**Risk**: External API is slow (2-3 minutes)
 **Mitigation**: Keep AI generation as default, API as opt-in
 
-**Risk**: Cost adds up with heavy usage  
+**Risk**: Cost adds up with heavy usage
 **Mitigation**: Credit limits, user-provided keys, caching
 
-**Risk**: GLB files are large  
+**Risk**: GLB files are large
 **Mitigation**: Compression, CDN storage, mesh simplification
 
-**Risk**: Generated models don't match CrewHub aesthetic  
+**Risk**: Generated models don't match CrewHub aesthetic
 **Mitigation**: Style fine-tuning, post-processing, fallback to AI
 
 ---
@@ -211,5 +211,5 @@ Cons: Loss of detail, complex conversion logic
 
 ---
 
-*Created: 2026-02-11*  
+*Created: 2026-02-11*
 *Last updated: 2026-02-11*

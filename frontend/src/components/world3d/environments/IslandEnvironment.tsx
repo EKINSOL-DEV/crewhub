@@ -20,15 +20,15 @@ function useIslandGeometry(radius: number) {
   return useMemo(() => {
     // Profile points from top to bottom (x = radius, y = height)
     const points: THREE.Vector2[] = [
-      new THREE.Vector2(0, -12),        // bottom point (tapered)
-      new THREE.Vector2(1.5, -10),      // rocky narrow
-      new THREE.Vector2(3.0, -8),       // rock widening
-      new THREE.Vector2(radius * 0.7, -5),  // earth layer
+      new THREE.Vector2(0, -12), // bottom point (tapered)
+      new THREE.Vector2(1.5, -10), // rocky narrow
+      new THREE.Vector2(3.0, -8), // rock widening
+      new THREE.Vector2(radius * 0.7, -5), // earth layer
       new THREE.Vector2(radius * 0.85, -3), // earth bulge
       new THREE.Vector2(radius * 0.95, -1.5), // near top
-      new THREE.Vector2(radius, -0.3),  // top edge (slightly below surface)
-      new THREE.Vector2(radius, 0),     // top surface edge
-      new THREE.Vector2(0, 0),          // center top
+      new THREE.Vector2(radius, -0.3), // top edge (slightly below surface)
+      new THREE.Vector2(radius, 0), // top surface edge
+      new THREE.Vector2(0, 0), // center top
     ]
     const geo = new THREE.LatheGeometry(points, 24)
     geo.computeVertexNormals()
@@ -85,13 +85,16 @@ function FloatingDebris() {
   const darkRockProps = useToonMaterialProps('#5A4D40')
   const groupRef = useRef<THREE.Group>(null)
 
-  const debris = useMemo(() => [
-    { pos: [4, -6, 3] as [number, number, number], scale: 0.6, phase: 0 },
-    { pos: [-5, -8, -2] as [number, number, number], scale: 0.4, phase: 1.5 },
-    { pos: [2, -10, -4] as [number, number, number], scale: 0.3, phase: 3.0 },
-    { pos: [-3, -7, 5] as [number, number, number], scale: 0.5, phase: 4.5 },
-    { pos: [6, -9, -1] as [number, number, number], scale: 0.35, phase: 2.0 },
-  ], [])
+  const debris = useMemo(
+    () => [
+      { pos: [4, -6, 3] as [number, number, number], scale: 0.6, phase: 0 },
+      { pos: [-5, -8, -2] as [number, number, number], scale: 0.4, phase: 1.5 },
+      { pos: [2, -10, -4] as [number, number, number], scale: 0.3, phase: 3.0 },
+      { pos: [-3, -7, 5] as [number, number, number], scale: 0.5, phase: 4.5 },
+      { pos: [6, -9, -1] as [number, number, number], scale: 0.35, phase: 2.0 },
+    ],
+    []
+  )
 
   useFrame(({ clock }) => {
     if (!groupRef.current) return
@@ -121,12 +124,27 @@ function FloatingDebris() {
 function DistantClouds() {
   const cloudProps = useToonMaterialProps('#FFFFFF')
 
-  const clouds = useMemo(() => [
-    { pos: [35, 8, -20] as [number, number, number], scale: [4, 1.5, 2] as [number, number, number] },
-    { pos: [-40, 12, 15] as [number, number, number], scale: [5, 1.2, 2.5] as [number, number, number] },
-    { pos: [20, 15, 35] as [number, number, number], scale: [3.5, 1, 2] as [number, number, number] },
-    { pos: [-25, 10, -30] as [number, number, number], scale: [4.5, 1.3, 2.2] as [number, number, number] },
-  ], [])
+  const clouds = useMemo(
+    () => [
+      {
+        pos: [35, 8, -20] as [number, number, number],
+        scale: [4, 1.5, 2] as [number, number, number],
+      },
+      {
+        pos: [-40, 12, 15] as [number, number, number],
+        scale: [5, 1.2, 2.5] as [number, number, number],
+      },
+      {
+        pos: [20, 15, 35] as [number, number, number],
+        scale: [3.5, 1, 2] as [number, number, number],
+      },
+      {
+        pos: [-25, 10, -30] as [number, number, number],
+        scale: [4.5, 1.3, 2.2] as [number, number, number],
+      },
+    ],
+    []
+  )
 
   return (
     <>
@@ -136,7 +154,10 @@ function DistantClouds() {
             <sphereGeometry args={[1, 8, 6]} />
             <meshToonMaterial {...cloudProps} transparent opacity={0.85} />
           </mesh>
-          <mesh position={[c.scale[0] * 0.6, -0.2, 0.3]} scale={[c.scale[0] * 0.5, c.scale[1] * 0.7, c.scale[2] * 0.6]}>
+          <mesh
+            position={[c.scale[0] * 0.6, -0.2, 0.3]}
+            scale={[c.scale[0] * 0.5, c.scale[1] * 0.7, c.scale[2] * 0.6]}
+          >
             <sphereGeometry args={[1, 8, 6]} />
             <meshToonMaterial {...cloudProps} transparent opacity={0.75} />
           </mesh>

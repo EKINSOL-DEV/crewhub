@@ -1,8 +1,8 @@
 # BFF Auth Cleanup — Feature Plan
 
-**Branch:** `feature/bff-auth-cleanup`  
-**Status:** Planning / Review pending  
-**Author:** Ekinbot (analysis by subagent)  
+**Branch:** `feature/bff-auth-cleanup`
+**Status:** Planning / Review pending
+**Author:** Ekinbot (analysis by subagent)
 **Date:** 2026-02-17
 
 ---
@@ -184,27 +184,27 @@ async def _do_connect(self) -> bool:
         connection_id=self.connection_id,
         device_name=f"CrewHub-{self.name}"
     )
-    
+
     # 2. Maak WebSocket verbinding
     self.ws = await websockets.connect(self.uri, ...)
-    
+
     # 3. Ontvang challenge
     challenge = await self.ws.recv()
-    
+
     # 4. Als geen device token → pairing flow
     if not identity.device_token:
         success = await identity_manager.pair_device(identity, self.ws)
         if not success:
             # Fallback: probeer met gateway token (tijdelijk, voor backwards compat)
             logger.warning("Pairing failed, falling back to token auth")
-    
+
     # 5. Bouw connect request
     auth = {}
     if identity.device_token:
         auth = {"deviceToken": identity.device_token}
     elif self.token:
         auth = {"token": self.token}  # tijdelijke fallback
-    
+
     connect_req = {
         "params": {
             "client": {

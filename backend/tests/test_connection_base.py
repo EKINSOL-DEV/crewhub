@@ -1,17 +1,17 @@
 """Tests for the connection abstraction base classes."""
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 # Import through main app to resolve circular imports
 import app.main  # noqa: F401
-
 from app.services.connections.base import (
     AgentConnection,
     ConnectionStatus,
     ConnectionType,
-    SessionInfo,
     HistoryMessage,
+    SessionInfo,
 )
 
 

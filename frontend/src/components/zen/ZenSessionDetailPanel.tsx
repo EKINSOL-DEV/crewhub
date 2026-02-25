@@ -37,15 +37,10 @@ function ContentBlockView({ block }: { block: SessionContentBlock }) {
   if (block.type === 'thinking' && block.thinking) {
     return (
       <div className="zen-sd-thinking">
-        <button
-          className="zen-sd-thinking-toggle"
-          onClick={() => setExpanded(!expanded)}
-        >
+        <button className="zen-sd-thinking-toggle" onClick={() => setExpanded(!expanded)}>
           💭 Thinking {expanded ? '▾' : '▸'}
         </button>
-        {expanded && (
-          <pre className="zen-sd-thinking-content">{block.thinking}</pre>
-        )}
+        {expanded && <pre className="zen-sd-thinking-content">{block.thinking}</pre>}
       </div>
     )
   }
@@ -53,30 +48,26 @@ function ContentBlockView({ block }: { block: SessionContentBlock }) {
   if (block.type === 'tool_use') {
     return (
       <div className="zen-sd-tool-call">
-        <button
-          className="zen-sd-tool-toggle"
-          onClick={() => setExpanded(!expanded)}
-        >
+        <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
           🔧 {block.name || 'Tool'} {expanded ? '▾' : '▸'}
         </button>
         {expanded && block.arguments && (
-          <pre className="zen-sd-tool-args">
-            {JSON.stringify(block.arguments, null, 2)}
-          </pre>
+          <pre className="zen-sd-tool-args">{JSON.stringify(block.arguments, null, 2)}</pre>
         )}
       </div>
     )
   }
 
   if (block.type === 'tool_result') {
-    const text = block.content?.map(c => c.text).filter(Boolean).join('\n') || ''
+    const text =
+      block.content
+        ?.map((c) => c.text)
+        .filter(Boolean)
+        .join('\n') || ''
     if (!text) return null
     return (
       <div className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}>
-        <button
-          className="zen-sd-tool-toggle"
-          onClick={() => setExpanded(!expanded)}
-        >
+        <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
           {block.isError ? '❌' : '✅'} Result {expanded ? '▾' : '▸'}
         </button>
         {expanded && <pre className="zen-sd-tool-result-content">{text}</pre>}
@@ -94,24 +85,35 @@ function MessageBubble({ message }: { message: SessionMessage }) {
   const isSystem = message.role === 'system'
 
   const copyContent = useCallback(() => {
-    const text = message.content
-      ?.filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('\n') || ''
+    const text =
+      message.content
+        ?.filter((b) => b.type === 'text')
+        .map((b) => b.text)
+        .join('\n') || ''
     navigator.clipboard.writeText(text)
   }, [message])
 
   return (
-    <div className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}>
+    <div
+      className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}
+    >
       <div className="zen-sd-message-header">
         <div className="zen-sd-message-header-top">
           <span className="zen-sd-message-role">
-            {isUser ? '👤 User' : isSystem ? '⚙️ System' : message.role === 'toolResult' ? '🔧 Tool Result' : '🤖 Assistant'}
+            {isUser
+              ? '👤 User'
+              : isSystem
+                ? '⚙️ System'
+                : message.role === 'toolResult'
+                  ? '🔧 Tool Result'
+                  : '🤖 Assistant'}
           </span>
           {message.timestamp && (
             <span className="zen-sd-message-timestamp">{formatMessageTime(message.timestamp)}</span>
           )}
-          <button className="zen-sd-copy-btn" onClick={copyContent} title="Copy">📋</button>
+          <button className="zen-sd-copy-btn" onClick={copyContent} title="Copy">
+            📋
+          </button>
         </div>
         {(message.usage || message.model) && (
           <div className="zen-sd-message-meta-line">
@@ -150,8 +152,9 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
     setLoading(true)
     setError(null)
 
-    api.getSessionHistory(session.key, 200)
-      .then(res => {
+    api
+      .getSessionHistory(session.key, 200)
+      .then((res) => {
         if (!cancelled) {
           // Raw JSONL entries have shape {type:"message", message:{role,content,...}}
           // Extract the inner message object and filter to actual messages
@@ -181,19 +184,23 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
           setLoading(false)
         }
       })
-      .catch(err => {
+      .catch((err) => {
         if (!cancelled) {
           setError(err.message)
           setLoading(false)
         }
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [session.key])
 
   // Aggregate token usage from messages
   const totalUsage = useMemo(() => {
-    let input = 0, output = 0, total = 0
+    let input = 0,
+      output = 0,
+      total = 0
     let cost = 0
     for (const m of messages) {
       if (m.usage) {
@@ -206,7 +213,8 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
     return { input, output, total, cost }
   }, [messages])
 
-  const displayName = session.displayName || session.label || session.key.split(':').pop() || 'Agent'
+  const displayName =
+    session.displayName || session.label || session.key.split(':').pop() || 'Agent'
 
   return (
     <div className="zen-sd-panel">
@@ -217,8 +225,17 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
           <span className="zen-sd-header-key">{session.key}</span>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
-          <button className="zen-sd-close" onClick={() => setFullscreen(true)} title="Fullscreen" style={{ fontSize: 13 }}>⛶</button>
-          <button className="zen-sd-close" onClick={onClose} title="Close">✕</button>
+          <button
+            className="zen-sd-close"
+            onClick={() => setFullscreen(true)}
+            title="Fullscreen"
+            style={{ fontSize: 13 }}
+          >
+            ⛶
+          </button>
+          <button className="zen-sd-close" onClick={onClose} title="Close">
+            ✕
+          </button>
         </div>
       </div>
 
@@ -312,13 +329,15 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
           <div className="zen-sd-history">
             {loading && (
               <div className="zen-sd-loading">
-                <div className="zen-thinking-dots"><span /><span /><span /></div>
+                <div className="zen-thinking-dots">
+                  <span />
+                  <span />
+                  <span />
+                </div>
                 Loading history...
               </div>
             )}
-            {error && (
-              <div className="zen-sd-error">❌ {error}</div>
-            )}
+            {error && <div className="zen-sd-error">❌ {error}</div>}
             {!loading && !error && messages.length === 0 && (
               <div className="zen-sd-empty">No messages in history</div>
             )}

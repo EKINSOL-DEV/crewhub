@@ -3,6 +3,7 @@
 SQL is delegated to app.services.task_service. This module owns
 HTTP concerns: status codes, SSE broadcasts, and response shaping.
 """
+
 import logging
 from typing import Optional
 
@@ -20,6 +21,7 @@ router = APIRouter()
 
 # ── helpers shared with the /run endpoint ─────────────────────────────────────
 
+
 async def _not_found(label: str) -> None:
     raise HTTPException(status_code=404, detail=f"{label} not found")
 
@@ -28,6 +30,7 @@ async def _not_found(label: str) -> None:
 # ROOM & PROJECT SCOPED TASK LISTS
 # (must be before /{task_id} to avoid route shadowing)
 # ========================================
+
 
 @router.get("/rooms/{room_id}/tasks", response_model=TaskListResponse)
 async def get_room_tasks(
@@ -62,6 +65,7 @@ async def get_project_tasks(
 # ========================================
 # TASKS CRUD
 # ========================================
+
 
 @router.get("", response_model=TaskListResponse)
 async def list_tasks(
@@ -107,11 +111,14 @@ async def create_task(task: TaskCreate):
     """Create a new task."""
     try:
         result = await task_service.create_task(task)
-        await broadcast("task-created", {
-            "task_id": result.id,
-            "project_id": result.project_id,
-            "room_id": result.room_id,
-        })
+        await broadcast(
+            "task-created",
+            {
+                "task_id": result.id,
+                "project_id": result.project_id,
+                "room_id": result.room_id,
+            },
+        )
         return result
     except ValueError as e:
         err = str(e)
@@ -133,12 +140,15 @@ async def update_task(task_id: str, task: TaskUpdate):
         if result is None:
             raise HTTPException(status_code=404, detail="Task not found")
 
-        await broadcast("task-updated", {
-            "task_id": task_id,
-            "project_id": result.project_id,
-            "room_id": result.room_id,
-            "changes": changes,
-        })
+        await broadcast(
+            "task-updated",
+            {
+                "task_id": task_id,
+                "project_id": result.project_id,
+                "room_id": result.room_id,
+                "changes": changes,
+            },
+        )
         return result
     except HTTPException:
         raise
@@ -155,11 +165,14 @@ async def delete_task(task_id: str):
         if deleted is None:
             raise HTTPException(status_code=404, detail="Task not found")
 
-        await broadcast("task-deleted", {
-            "task_id": deleted["task_id"],
-            "project_id": deleted["project_id"],
-            "room_id": deleted["room_id"],
-        })
+        await broadcast(
+            "task-deleted",
+            {
+                "task_id": deleted["task_id"],
+                "project_id": deleted["project_id"],
+                "room_id": deleted["room_id"],
+            },
+        )
         return {"success": True, "deleted": task_id}
     except HTTPException:
         raise
@@ -172,14 +185,17 @@ async def delete_task(task_id: str):
 # RUN TASK WITH AGENT
 # ========================================
 
+
 class RunRequest(BaseModel):
     """Request body for running a task with an agent's main session."""
+
     agent_id: str
     extra_instructions: Optional[str] = None
 
 
 class RunResponse(BaseModel):
     """Response from running a task with an agent."""
+
     success: bool
     session_key: str
     task_id: str
@@ -265,12 +281,15 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
             prompt_preview=prompt,
         )
 
-        await broadcast("task-updated", {
-            "task_id": task_id,
-            "project_id": task["project_id"],
-            "room_id": task["room_id"],
-            "changes": {"status": {"old": task["status"], "new": "in_progress"}},
-        })
+        await broadcast(
+            "task-updated",
+            {
+                "task_id": task_id,
+                "project_id": task["project_id"],
+                "room_id": task["room_id"],
+                "changes": {"status": {"old": task["status"], "new": "in_progress"}},
+            },
+        )
 
         return RunResponse(
             success=True,

@@ -47,7 +47,7 @@ export function setupMockApi() {
     const method = init?.method?.toUpperCase() || 'GET'
 
     // Add tiny delay to simulate network
-    await new Promise(r => setTimeout(r, 20 + Math.random() * 80))
+    await new Promise((r) => setTimeout(r, 20 + Math.random() * 80))
 
     // Try to handle with mock router
     const response = handleMockRequest(pathname, method, init?.body)

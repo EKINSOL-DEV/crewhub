@@ -13,14 +13,23 @@ class ZonePersistence {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (!raw) return null
       const parsed = JSON.parse(raw)
-      if (parsed.version !== 1) { this.clear(); return null }
+      if (parsed.version !== 1) {
+        this.clear()
+        return null
+      }
       return parsed
-    } catch { this.clear(); return null }
+    } catch {
+      this.clear()
+      return null
+    }
   }
-  clear(): void { localStorage.removeItem(STORAGE_KEY) }
+  clear(): void {
+    localStorage.removeItem(STORAGE_KEY)
+  }
   savePosition(zoneId: string, position: [number, number, number]): void {
     const state = this.load() ?? { version: 1, activeZoneId: zoneId, perZoneState: {} }
-    if (!state.perZoneState[zoneId]) state.perZoneState[zoneId] = { lastPosition: null, lastVisitTimestamp: 0 }
+    if (!state.perZoneState[zoneId])
+      state.perZoneState[zoneId] = { lastPosition: null, lastVisitTimestamp: 0 }
     state.perZoneState[zoneId].lastPosition = position
     state.perZoneState[zoneId].lastVisitTimestamp = Date.now()
     this.save(state)
@@ -33,7 +42,9 @@ class ZonePersistence {
   getPosition(zoneId: string): [number, number, number] | null {
     return this.load()?.perZoneState[zoneId]?.lastPosition ?? null
   }
-  getActiveZoneId(): string | null { return this.load()?.activeZoneId ?? null }
+  getActiveZoneId(): string | null {
+    return this.load()?.activeZoneId ?? null
+  }
 }
 
 describe('ZonePersistence', () => {
@@ -61,7 +72,10 @@ describe('ZonePersistence', () => {
   })
 
   it('rejects version mismatch', () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 999, activeZoneId: 'x', perZoneState: {} }))
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 999, activeZoneId: 'x', perZoneState: {} })
+    )
     expect(persistence.load()).toBeNull()
     // Should also have cleared
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull()

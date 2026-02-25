@@ -10,7 +10,7 @@ import type { DebugBot } from '@/hooks/useDebugBots'
 export function getBotPositionsInRoom(
   roomPos: [number, number, number],
   roomSize: number,
-  botCount: number,
+  botCount: number
 ): [number, number, number][] {
   const positions: [number, number, number][] = []
   const floorY = roomPos[1] + 0.16
@@ -43,7 +43,7 @@ export function getBotPositionsInParking(
   parkingZ: number,
   parkingWidth: number,
   parkingDepth: number,
-  botCount: number,
+  botCount: number
 ): [number, number, number][] {
   const positions: [number, number, number][] = []
   const floorY = 0.14

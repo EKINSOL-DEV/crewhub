@@ -1,7 +1,7 @@
 # AI Stand-Up Meetings - Implementation Kickoff
 
-> **Date:** 2026-02-13  
-> **Goal:** Full AI-orchestrated meeting system (Phase 1-3)  
+> **Date:** 2026-02-13
+> **Goal:** Full AI-orchestrated meeting system (Phase 1-3)
 > **Strategy:** Multi-agent with Opus + GPT-5.2 review cycles
 
 ---
@@ -29,7 +29,7 @@ An AI-orchestrated stand-up meeting system where bots:
 ## 📋 Implementation Phases
 
 ### Phase 1: Backend Round-Robin Engine (1.5 days)
-**Owner:** Dev agent (Opus)  
+**Owner:** Dev agent (Opus)
 **Reviewer:** Reviewer agent (GPT-5.2)
 
 **Deliverables:**
@@ -44,7 +44,7 @@ An AI-orchestrated stand-up meeting system where bots:
 **Testing:** Via curl/httpie (no frontend needed)
 
 ### Phase 2: 3D Gathering Animation (1.5 days)
-**Owner:** Dev agent (Opus)  
+**Owner:** Dev agent (Opus)
 **Reviewer:** Reviewer agent (GPT-5.2)
 
 **Deliverables:**
@@ -57,7 +57,7 @@ An AI-orchestrated stand-up meeting system where bots:
 **Testing:** Visual verification in 3D world
 
 ### Phase 3: Live Progress UI (1.5 days)
-**Owner:** Dev agent (Opus)  
+**Owner:** Dev agent (Opus)
 **Reviewer:** Reviewer agent (GPT-5.2)
 
 **Deliverables:**
@@ -81,16 +81,16 @@ Templates, replay, history browsing - can be added later.
 
 All required reading for dev agents:
 
-1. **System Design:** `~/ekinapps/crewhub/docs/meetings/standup-system-design.md`  
+1. **System Design:** `~/ekinapps/crewhub/docs/meetings/standup-system-design.md`
    Architecture, state machine, round-robin algorithm, synthesis
 
-2. **UX Flow:** `~/ekinapps/crewhub/docs/meetings/standup-ux-flow.md`  
+2. **UX Flow:** `~/ekinapps/crewhub/docs/meetings/standup-ux-flow.md`
    User journey, dialog mockups, 3D behavior, edge cases
 
-3. **API Spec:** `~/ekinapps/crewhub/docs/meetings/standup-api-spec.md`  
+3. **API Spec:** `~/ekinapps/crewhub/docs/meetings/standup-api-spec.md`
    REST endpoints, SSE events, data models, constraints
 
-4. **Implementation Plan:** `~/ekinapps/crewhub/docs/meetings/standup-implementation-plan.md`  
+4. **Implementation Plan:** `~/ekinapps/crewhub/docs/meetings/standup-implementation-plan.md`
    Phased tasks, file structure, effort estimates
 
 ---
@@ -260,8 +260,8 @@ frontend/
 ## 🚀 Execution Plan
 
 ### Step 1: Backend Implementation (Opus)
-**Session label:** `AI Meetings - Backend Engine (Phase 1)`  
-**Timeout:** 2h  
+**Session label:** `AI Meetings - Backend Engine (Phase 1)`
+**Timeout:** 2h
 **Model:** Opus
 
 **Instructions:**
@@ -271,8 +271,8 @@ frontend/
 4. Commit with message: "feat: AI meeting backend orchestration (Phase 1)"
 
 ### Step 2: Backend Review (GPT-5.2)
-**Session label:** `AI Meetings - Backend Review`  
-**Timeout:** 30m  
+**Session label:** `AI Meetings - Backend Review`
+**Timeout:** 30m
 **Model:** GPT-5.2
 
 **Instructions:**
@@ -283,8 +283,8 @@ frontend/
 5. Write review to `docs/meetings/BACKEND-REVIEW.md`
 
 ### Step 3: Backend Fixes (Opus)
-**Session label:** `AI Meetings - Backend Fixes`  
-**Timeout:** 1h  
+**Session label:** `AI Meetings - Backend Fixes`
+**Timeout:** 1h
 **Model:** Opus
 
 **Instructions:**
@@ -294,8 +294,8 @@ frontend/
 4. Commit: "fix: address backend review feedback"
 
 ### Step 4: Frontend Implementation (Opus)
-**Session label:** `AI Meetings - Frontend 3D + UI (Phase 2+3)`  
-**Timeout:** 3h  
+**Session label:** `AI Meetings - Frontend 3D + UI (Phase 2+3)`
+**Timeout:** 3h
 **Model:** Opus
 
 **Instructions:**
@@ -305,8 +305,8 @@ frontend/
 4. Commit: "feat: AI meeting 3D UI and live progress (Phase 2+3)"
 
 ### Step 5: Frontend Review (GPT-5.2)
-**Session label:** `AI Meetings - Frontend Review`  
-**Timeout:** 30m  
+**Session label:** `AI Meetings - Frontend Review`
+**Timeout:** 30m
 **Model:** GPT-5.2
 
 **Instructions:**
@@ -317,8 +317,8 @@ frontend/
 5. Write review to `docs/meetings/FRONTEND-REVIEW.md`
 
 ### Step 6: Frontend Fixes (Opus)
-**Session label:** `AI Meetings - Frontend Fixes`  
-**Timeout:** 1h  
+**Session label:** `AI Meetings - Frontend Fixes`
+**Timeout:** 1h
 **Model:** Opus
 
 **Instructions:**
@@ -328,7 +328,7 @@ frontend/
 4. Commit: "fix: address frontend review feedback"
 
 ### Step 7: Integration Testing (Manual QA)
-**Session label:** `AI Meetings - QA Testing`  
+**Session label:** `AI Meetings - QA Testing`
 **Owner:** Main assistant (me)
 
 **Checklist:**
@@ -347,8 +347,8 @@ frontend/
 - [ ] Error states handled gracefully
 
 ### Step 8: Blog Post (GPT-5.2)
-**Session label:** `AI Meetings - Blog Post`  
-**Timeout:** 20m  
+**Session label:** `AI Meetings - Blog Post`
+**Timeout:** 20m
 **Model:** GPT-5.2
 
 **Instructions:**

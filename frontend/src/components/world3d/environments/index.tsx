@@ -62,7 +62,7 @@ export function useEnvironmentList() {
   return useSyncExternalStore(
     environmentRegistry.subscribe,
     environmentRegistry.getSnapshot,
-    environmentRegistry.getSnapshot,
+    environmentRegistry.getSnapshot
   )
 }
 

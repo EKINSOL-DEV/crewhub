@@ -6,24 +6,24 @@
  * Caches in memory with invalidation.
  */
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   getSettings as apiGetSettings,
   updateSetting as apiUpdateSetting,
   updateSettingsBatch as apiUpdateSettingsBatch,
-} from "@/lib/api"
+} from '@/lib/api'
 
 // Keys we migrate from localStorage → API
 const MIGRATED_KEYS = [
-  "crewhub-theme",
-  "crewhub-accent",
-  "crewhub-environment",
-  "crewhub-view-mode",
-  "crewhub-grid-debug",
-  "crewhub-lighting",
-  "crewhub-idle-threshold",
-  "crewhub-offline-threshold",
-  "crewhub-session-config",
+  'crewhub-theme',
+  'crewhub-accent',
+  'crewhub-environment',
+  'crewhub-view-mode',
+  'crewhub-grid-debug',
+  'crewhub-lighting',
+  'crewhub-idle-threshold',
+  'crewhub-offline-threshold',
+  'crewhub-session-config',
 ] as const
 
 interface UseSettingsReturn {
@@ -193,7 +193,7 @@ export function useSettings(): UseSettingsReturn {
       if (apiAvailable) {
         try {
           // Use empty string to "delete" in API
-          await apiUpdateSetting(key, "")
+          await apiUpdateSetting(key, '')
         } catch {
           // Best-effort
         }

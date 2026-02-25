@@ -4,7 +4,11 @@ import { VisionSystem } from '../vision'
 import type { GridCell } from '@/lib/grid/types'
 
 /** Create a simple test grid */
-function makeGrid(width: number, depth: number, blocked?: { x: number; z: number; type?: string }[]): GridCell[][] {
+function makeGrid(
+  width: number,
+  depth: number,
+  blocked?: { x: number; z: number; type?: string }[]
+): GridCell[][] {
   const grid: GridCell[][] = []
   for (let z = 0; z < depth; z++) {
     const row: GridCell[] = []
@@ -100,12 +104,17 @@ describe('VisionSystem', () => {
     grid[7][5] = { type: 'furniture', walkable: false, propId: 'plant' }
 
     // Use 360° FOV to see all props regardless of facing direction
-    const vision = new VisionSystem(grid, { range: 10, fovDegrees: 360, rayCount: 24, furnitureBlocks: false })
+    const vision = new VisionSystem(grid, {
+      range: 10,
+      fovDegrees: 360,
+      rayCount: 24,
+      furnitureBlocks: false,
+    })
     const props = vision.getVisibleProps({ x: 5, z: 5 }, 0)
 
     expect(props.length).toBe(2)
     // Sorted by distance — both at distance 2
-    const propIds = props.map(p => p.propId).sort()
+    const propIds = props.map((p) => p.propId).sort()
     expect(propIds).toEqual(['desk', 'plant'])
     expect(props[0].distance).toBeCloseTo(2)
     expect(props[1].distance).toBeCloseTo(2)

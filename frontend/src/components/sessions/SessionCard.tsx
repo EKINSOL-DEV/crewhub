@@ -1,10 +1,10 @@
-import { memo } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { FileText, MessageCircle } from "lucide-react"
-import type { CrewSession } from "@/lib/api"
-import { useChatContext } from "@/contexts/ChatContext"
+import { memo } from 'react'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { FileText, MessageCircle } from 'lucide-react'
+import type { CrewSession } from '@/lib/api'
+import { useChatContext } from '@/contexts/ChatContext'
 import {
   getSessionStatus,
   getStatusIndicator,
@@ -16,9 +16,9 @@ import {
   timeAgo,
   getSessionCost,
   formatCost,
-} from "@/lib/minionUtils"
-import { cn } from "@/lib/utils"
-import { EditableSessionName } from "./EditableSessionName"
+} from '@/lib/minionUtils'
+import { cn } from '@/lib/utils'
+import { EditableSessionName } from './EditableSessionName'
 
 interface SessionCardProps {
   session: CrewSession
@@ -39,11 +39,13 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
   const isFixedAgent = FIXED_AGENT_RE.test(session.key)
 
   return (
-    <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-md",
-      status === "active" && "border-green-300 dark:border-green-700",
-      status === "idle" && "border-yellow-300 dark:border-yellow-700"
-    )}>
+    <Card
+      className={cn(
+        'overflow-hidden transition-all hover:shadow-md',
+        status === 'active' && 'border-green-300 dark:border-green-700',
+        status === 'idle' && 'border-yellow-300 dark:border-yellow-700'
+      )}
+    >
       <CardHeader className="p-4 pb-3">
         <div className="flex items-start gap-3">
           <div className="relative shrink-0">
@@ -54,7 +56,10 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
             >
               {sessionType.emoji}
             </div>
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs" title={statusInfo.label}>
+            <span
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs"
+              title={statusInfo.label}
+            >
               {statusInfo.emoji}
             </span>
           </div>
@@ -77,7 +82,9 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
               </Badge>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className={statusInfo.color}>{statusInfo.emoji} {timeAgo(session.updatedAt)}</span>
+              <span className={statusInfo.color}>
+                {statusInfo.emoji} {timeAgo(session.updatedAt)}
+              </span>
               {session.model && (
                 <>
                   <span>·</span>
@@ -111,7 +118,9 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t">
-          <div className="text-xs text-muted-foreground">{(session.totalTokens || 0).toLocaleString()} tokens</div>
+          <div className="text-xs text-muted-foreground">
+            {(session.totalTokens || 0).toLocaleString()} tokens
+          </div>
           {cost > 0 && <div className="text-xs text-muted-foreground">{formatCost(cost)}</div>}
         </div>
 
@@ -121,7 +130,9 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
               size="sm"
               variant="outline"
               className="flex-1 h-8 text-xs"
-              onClick={() => openChat(session.key, fallbackName, sessionType.emoji, sessionType.color)}
+              onClick={() =>
+                openChat(session.key, fallbackName, sessionType.emoji, sessionType.color)
+              }
             >
               <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
               Chat

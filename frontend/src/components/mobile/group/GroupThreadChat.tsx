@@ -1,4 +1,11 @@
-import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type CSSProperties } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type KeyboardEvent,
+  type CSSProperties,
+} from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useThreadChat } from '@/hooks/useThreadChat'
 import type { Thread, ThreadMessage } from '@/lib/threads.api'
@@ -18,7 +25,10 @@ function renderMarkdown(text: string): string {
     (_m, _lang, code) =>
       `<pre style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0"><code>${code.trim()}</code></pre>`
   )
-  html = html.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>')
+  html = html.replace(
+    /`([^`]+)`/g,
+    '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>'
+  )
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
   html = html.replace(/\n/g, '<br/>')
@@ -35,7 +45,15 @@ function GroupMessageBubble({ msg }: { msg: ThreadMessage }) {
 
   if (isSystem) {
     return (
-      <div style={{ textAlign: 'center', fontSize: 11, color: '#64748b', fontStyle: 'italic', padding: '4px 0' }}>
+      <div
+        style={{
+          textAlign: 'center',
+          fontSize: 11,
+          color: '#64748b',
+          fontStyle: 'italic',
+          padding: '4px 0',
+        }}
+      >
         {msg.content}
       </div>
     )
@@ -58,27 +76,39 @@ function GroupMessageBubble({ msg }: { msg: ThreadMessage }) {
       }
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      alignItems: isUser ? 'flex-end' : 'flex-start',
-      gap: 2,
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: isUser ? 'flex-end' : 'flex-start',
+        gap: 2,
+      }}
+    >
       {/* Agent name badge for assistant messages */}
       {!isUser && msg.agent_name && (
-        <div style={{
-          fontSize: 11, fontWeight: 600, color: msg.agent_id ? '#94a3b8' : '#64748b',
-          padding: '0 4px', display: 'flex', alignItems: 'center', gap: 4,
-        }}>
-          <span style={{ fontSize: 12 }}>
-            {/* Agent icon placeholder */}
-          </span>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: msg.agent_id ? '#94a3b8' : '#64748b',
+            padding: '0 4px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          <span style={{ fontSize: 12 }}>{/* Agent icon placeholder */}</span>
           {msg.agent_name}
         </div>
       )}
       <div
         style={{
-          padding: '10px 14px', fontSize: 14, lineHeight: 1.5,
-          wordBreak: 'break-word', maxWidth: '100%', ...bubbleStyle,
+          padding: '10px 14px',
+          fontSize: 14,
+          lineHeight: 1.5,
+          wordBreak: 'break-word',
+          maxWidth: '100%',
+          ...bubbleStyle,
         }}
         dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
       />
@@ -106,10 +136,8 @@ export function GroupThreadChat({
   onAddParticipants,
   onRename,
 }: GroupThreadChatProps) {
-  const {
-    messages, isSending, error, sendMessage,
-    loadOlderMessages, hasMore, isLoadingHistory,
-  } = useThreadChat(thread.id)
+  const { messages, isSending, error, sendMessage, loadOlderMessages, hasMore, isLoadingHistory } =
+    useThreadChat(thread.id)
 
   const [inputValue, setInputValue] = useState('')
   const [showParticipants, setShowParticipants] = useState(false)
@@ -122,7 +150,7 @@ export function GroupThreadChat({
   const prevMessageCount = useRef(0)
 
   const title = thread.title || thread.title_auto || 'Group Chat'
-  const activeParticipants = thread.participants.filter(p => p.is_active)
+  const activeParticipants = thread.participants.filter((p) => p.is_active)
   const onlineCount = activeParticipants.length // Phase 2: real-time presence via SSE
 
   const handleScroll = useCallback(() => {
@@ -154,9 +182,8 @@ export function GroupThreadChat({
     setInputValue('')
     if (inputRef.current) inputRef.current.style.height = 'auto'
 
-    const targets = routingMode === 'targeted' && targetAgentIds.length > 0
-      ? targetAgentIds
-      : undefined
+    const targets =
+      routingMode === 'targeted' && targetAgentIds.length > 0 ? targetAgentIds : undefined
 
     await sendMessage(text, routingMode, targets)
   }, [inputValue, isSending, sendMessage, routingMode, targetAgentIds])
@@ -173,20 +200,32 @@ export function GroupThreadChat({
       {/* Header */}
       <header
         style={{
-          display: 'flex', alignItems: 'center', gap: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
           padding: '12px 12px 10px 8px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
-          flexShrink: 0, cursor: 'pointer',
+          flexShrink: 0,
+          cursor: 'pointer',
         }}
         onClick={() => setShowParticipants(true)}
       >
         <button
-          onClick={e => { e.stopPropagation(); onBack() }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onBack()
+          }}
           style={{
-            width: 36, height: 36, borderRadius: 10,
-            border: 'none', background: 'transparent',
-            color: '#94a3b8', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            border: 'none',
+            background: 'transparent',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <ArrowLeft size={20} />
@@ -195,14 +234,22 @@ export function GroupThreadChat({
         <ParticipantAvatarStack participants={activeParticipants} size={32} />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 15, fontWeight: 600, color: '#f1f5f9',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: '#f1f5f9',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {title}
           </div>
           <div style={{ fontSize: 11, color: isSending ? '#818cf8' : '#64748b' }}>
-            {isSending ? 'Agents thinking…' : `${onlineCount} of ${activeParticipants.length} online`}
+            {isSending
+              ? 'Agents thinking…'
+              : `${onlineCount} of ${activeParticipants.length} online`}
           </div>
         </div>
       </header>
@@ -224,10 +271,13 @@ export function GroupThreadChat({
         ref={scrollContainerRef}
         onScroll={handleScroll}
         style={{
-          flex: 1, overflowY: 'auto',
+          flex: 1,
+          overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
           padding: '12px 14px',
-          display: 'flex', flexDirection: 'column', gap: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
         }}
       >
         {hasMore && (
@@ -235,11 +285,15 @@ export function GroupThreadChat({
             onClick={loadOlderMessages}
             disabled={isLoadingHistory}
             style={{
-              alignSelf: 'center', padding: '6px 14px',
-              borderRadius: 10, border: 'none',
-              background: 'rgba(255,255,255,0.06)', color: '#64748b',
+              alignSelf: 'center',
+              padding: '6px 14px',
+              borderRadius: 10,
+              border: 'none',
+              background: 'rgba(255,255,255,0.06)',
+              color: '#64748b',
               cursor: isLoadingHistory ? 'wait' : 'pointer',
-              fontSize: 12, fontWeight: 500,
+              fontSize: 12,
+              fontWeight: 500,
             }}
           >
             {isLoadingHistory ? 'Loading…' : '↑ Load older'}
@@ -247,36 +301,55 @@ export function GroupThreadChat({
         )}
 
         {!isLoadingHistory && messages.length === 0 && (
-          <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            color: '#475569', fontSize: 14, padding: '40px 0', gap: 8,
-          }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#475569',
+              fontSize: 14,
+              padding: '40px 0',
+              gap: 8,
+            }}
+          >
             <span style={{ fontSize: 40 }}>👥</span>
             <span>Start chatting with the crew!</span>
           </div>
         )}
 
-        {messages.map(msg => (
+        {messages.map((msg) => (
           <GroupMessageBubble key={msg.id} msg={msg} />
         ))}
 
         {isSending && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '4px 0', color: '#64748b', fontSize: 12,
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '4px 0',
+              color: '#64748b',
+              fontSize: 12,
+            }}
+          >
             <span style={{ animation: 'pulse 1.5s infinite' }}>●</span>
             Agents are thinking…
           </div>
         )}
 
         {error && (
-          <div style={{
-            padding: '8px 12px', borderRadius: 10,
-            background: 'rgba(239,68,68,0.15)', color: '#fca5a5',
-            fontSize: 12, alignSelf: 'center',
-          }}>
+          <div
+            style={{
+              padding: '8px 12px',
+              borderRadius: 10,
+              background: 'rgba(239,68,68,0.15)',
+              color: '#fca5a5',
+              fontSize: 12,
+              alignSelf: 'center',
+            }}
+          >
             {error}
           </div>
         )}
@@ -294,30 +367,39 @@ export function GroupThreadChat({
       />
 
       {/* Input */}
-      <div style={{
-        padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex', gap: 8, alignItems: 'flex-end',
-        background: '#0f172a',
-      }}>
+      <div
+        style={{
+          padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex',
+          gap: 8,
+          alignItems: 'flex-end',
+          background: '#0f172a',
+        }}
+      >
         <textarea
           ref={inputRef}
           value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
+          onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Message the crew…"
           disabled={isSending}
           rows={1}
           style={{
-            flex: 1, padding: '10px 14px', borderRadius: 14,
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: 14,
             border: '1px solid rgba(255,255,255,0.1)',
             background: 'rgba(255,255,255,0.05)',
-            color: '#e2e8f0', fontSize: 16,
+            color: '#e2e8f0',
+            fontSize: 16,
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-            resize: 'none', outline: 'none',
-            maxHeight: 100, lineHeight: 1.4,
+            resize: 'none',
+            outline: 'none',
+            maxHeight: 100,
+            lineHeight: 1.4,
           }}
-          onInput={e => {
+          onInput={(e) => {
             const el = e.currentTarget
             el.style.height = 'auto'
             el.style.height = Math.min(el.scrollHeight, 100) + 'px'
@@ -327,13 +409,18 @@ export function GroupThreadChat({
           onClick={handleSend}
           disabled={isSending || !inputValue.trim()}
           style={{
-            width: 44, height: 44, borderRadius: 14,
+            width: 44,
+            height: 44,
+            borderRadius: 14,
             border: 'none',
             background: isSending || !inputValue.trim() ? 'rgba(255,255,255,0.06)' : '#6366f1',
             color: isSending || !inputValue.trim() ? '#475569' : '#fff',
             cursor: isSending || !inputValue.trim() ? 'default' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 18,
+            flexShrink: 0,
           }}
         >
           ➤

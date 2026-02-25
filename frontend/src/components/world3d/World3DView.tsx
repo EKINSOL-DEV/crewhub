@@ -1,5 +1,9 @@
 import { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { Maximize2, Minimize2 } from 'lucide-react'
+import { useCreatorMode } from '@/contexts/CreatorModeContext'
+import { CreatorBottomBar } from './creator/CreatorBottomBar'
+import { API_BASE } from '@/lib/api'
+import { showToast } from '@/lib/toast'
 import { Canvas } from '@react-three/fiber'
 import { CanvasErrorBoundary } from './CanvasErrorBoundary'
 import { SceneContent } from './SceneContent'
@@ -72,7 +76,11 @@ interface World3DViewProps {
 
 // ─── Inner Component ───────────────────────────────────────────
 
-function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged }: World3DViewProps) {
+function World3DViewInner({
+  sessions,
+  settings,
+  onAliasChanged: _onAliasChanged,
+}: World3DViewProps) {
   // ── Zen / visibility: pause render loop when hidden ───────────
   const { isActive: isZenModeActive } = useZenMode()
   const [canvasFrameloop, setCanvasFrameloop] = useState<'always' | 'demand' | 'never'>('always')
@@ -101,17 +109,22 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
   // ── Session data ──────────────────────────────────────────────
   const { isActivelyRunning: isRealActivelyRunning } = useSessionActivity(sessions)
-  const isActivelyRunning = useCallback((key: string): boolean => {
-    if (isDebugSession(key)) {
-      const botId = key.replace('debug:', '')
-      return debugBots.find(b => b.id === botId)?.status === 'active'
-    }
-    return isRealActivelyRunning(key)
-  }, [isRealActivelyRunning, debugBots])
+  const isActivelyRunning = useCallback(
+    (key: string): boolean => {
+      if (isDebugSession(key)) {
+        const botId = key.replace('debug:', '')
+        return debugBots.find((b) => b.id === botId)?.status === 'active'
+      }
+      return isRealActivelyRunning(key)
+    },
+    [isRealActivelyRunning, debugBots]
+  )
 
   const idleThreshold = settings.parkingIdleThreshold ?? 120
   const { visibleSessions: realVisibleSessions, parkingSessions } = splitSessionsForDisplay(
-    sessions, isRealActivelyRunning, idleThreshold,
+    sessions,
+    isRealActivelyRunning,
+    idleThreshold
   )
   const visibleSessions = useMemo(() => {
     if (!debugBotsEnabled || debugBots.length === 0) return realVisibleSessions
@@ -125,13 +138,13 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     const hasDemo = isDemoMode && demoRoomAssignments.size > 0
     if (!hasDebug && !hasDemo) return undefined
     const map = new Map<string, string>()
-    if (hasDebug) debugBots.forEach(b => map.set(`debug:${b.id}`, b.roomId))
+    if (hasDebug) debugBots.forEach((b) => map.set(`debug:${b.id}`, b.roomId))
     if (hasDemo) demoRoomAssignments.forEach((roomId, key) => map.set(key, roomId))
     return map
   }, [debugBots, debugBotsEnabled, isDemoMode, demoRoomAssignments])
 
   // ── Display names + focus ─────────────────────────────────────
-  const sessionKeys = useMemo(() => sessions.map(s => s.key), [sessions])
+  const sessionKeys = useMemo(() => sessions.map((s) => s.key), [sessions])
   const { displayNames } = useSessionDisplayNames(sessionKeys)
   const { state: focusState, focusRoom, focusBot, goBack } = useWorldFocus()
 
@@ -155,16 +168,22 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const { rooms, getRoomForSession, refresh: refreshRooms, isLoading: isRoomsLoading } = useRooms()
 
   const handleFocusAgentRef = useRef<(sessionKey: string) => void>(() => {})
-  handleFocusAgentRef.current = useCallback((sessionKey: string) => {
-    const session = [...visibleSessions, ...parkingSessions].find(s => s.key === sessionKey)
-    if (!session) return
-    const roomId = getRoomForSession(session.key, {
-      label: session.label,
-      model: session.model,
-      channel: session.lastChannel || session.channel,
-    }) || rooms[0]?.id || 'headquarters'
-    focusBot(sessionKey, roomId)
-  }, [visibleSessions, parkingSessions, getRoomForSession, rooms, focusBot])
+  handleFocusAgentRef.current = useCallback(
+    (sessionKey: string) => {
+      const session = [...visibleSessions, ...parkingSessions].find((s) => s.key === sessionKey)
+      if (!session) return
+      const roomId =
+        getRoomForSession(session.key, {
+          label: session.label,
+          model: session.model,
+          channel: session.lastChannel || session.channel,
+        }) ||
+        rooms[0]?.id ||
+        'headquarters'
+      focusBot(sessionKey, roomId)
+    },
+    [visibleSessions, parkingSessions, getRoomForSession, rooms, focusBot]
+  )
 
   useEffect(() => {
     setFocusHandler((sessionKey: string) => handleFocusAgentRef.current(sessionKey))
@@ -174,11 +193,20 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   // ── Panel state ───────────────────────────────────────────────
   const [selectedSession, setSelectedSession] = useState<CrewSession | null>(null)
   const [logViewerOpen, setLogViewerOpen] = useState(false)
-  const [docsPanel, setDocsPanel] = useState<{ projectId: string; projectName: string; projectColor?: string } | null>(null)
-  const [contextInspector, setContextInspector] = useState<{ roomId: string; roomName: string } | null>(null)
+  const [docsPanel, setDocsPanel] = useState<{
+    projectId: string
+    projectName: string
+    projectColor?: string
+  } | null>(null)
+  const [contextInspector, setContextInspector] = useState<{
+    roomId: string
+    roomName: string
+  } | null>(null)
   const [taskBoardOpen, setTaskBoardOpen] = useState(false)
   const [taskBoardContext, setTaskBoardContext] = useState<{
-    projectId: string; roomId?: string; agents?: Array<{ session_key: string; display_name: string }>
+    projectId: string
+    roomId?: string
+    agents?: Array<{ session_key: string; display_name: string }>
   } | null>(null)
   const [hqBoardOpen, setHqBoardOpen] = useState(false)
   const [tasksWindowOpen, setTasksWindowOpen] = useState(false)
@@ -190,6 +218,77 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
     return () => document.removeEventListener('fullscreenchange', handler)
   }, [])
 
+  // ── Creator Mode ──────────────────────────────────────────────
+  const {
+    isCreatorMode,
+    toggleCreatorMode,
+    selectedPropId,
+    clearSelection,
+    pendingRotation,
+    placedProps,
+    pushAction,
+  } = useCreatorMode()
+
+  const ghostPositionRef = useRef<{ x: number; y: number; z: number } | null>(null)
+
+  const handleGhostPosition = useCallback((pos: { x: number; y: number; z: number } | null) => {
+    ghostPositionRef.current = pos
+  }, [])
+
+  const handlePlaceProp = useCallback(
+    async (pos: { x: number; y: number; z: number }) => {
+      if (!selectedPropId) return
+      const apiKey = localStorage.getItem('crewhub-api-key')
+      const headers: HeadersInit = apiKey
+        ? { 'X-API-Key': apiKey, 'Content-Type': 'application/json' }
+        : { 'Content-Type': 'application/json' }
+
+      try {
+        const resp = await fetch(`${API_BASE}/world/props`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            prop_id: selectedPropId,
+            position: pos,
+            rotation_y: pendingRotation,
+            room_id: focusState.focusedRoomId ?? null,
+            scale: 1.0,
+          }),
+        })
+        if (resp.ok) {
+          const placed = await resp.json()
+          // M3: capture scale so redo-place restores the correct scale
+          pushAction({
+            type: 'place',
+            placedId: placed.id,
+            propId: placed.prop_id,
+            position: placed.position,
+            rotation_y: placed.rotation_y,
+            scale: placed.scale ?? 1.0,
+            roomId: placed.room_id,
+          })
+          // Clear selection after placement (one at a time)
+          clearSelection()
+        } else {
+          const err = await resp.json().catch(() => ({ detail: 'Unknown error' }))
+          // M2: surface auth failures visibly — non-admin users see a clear message
+          if (resp.status === 401 || resp.status === 403) {
+            showToast({
+              message:
+                `⛔ Creator Mode requires a manage-scope API key. ${err.detail ?? ''}`.trim(),
+              duration: 6000,
+            })
+          } else {
+            console.warn('[CreatorMode] Place prop failed:', err.detail)
+          }
+        }
+      } catch (e) {
+        console.warn('[CreatorMode] Place prop error:', e)
+      }
+    },
+    [selectedPropId, pendingRotation, pushAction, clearSelection]
+  )
+
   const toggleFullscreen = async () => {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen()
     else await document.exitFullscreen()
@@ -198,21 +297,25 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   // ── Derived session/bot data ──────────────────────────────────
   const allSessions = useMemo(
     () => [...visibleSessions, ...parkingSessions],
-    [visibleSessions, parkingSessions],
+    [visibleSessions, parkingSessions]
   )
   const { tasks: boardTasks } = useTasks({ autoFetch: focusState.level !== 'firstperson' })
   const activeTaskCount = useMemo(
-    () => boardTasks.filter(t => t.status === 'in_progress' || t.status === 'review').length,
-    [boardTasks],
+    () => boardTasks.filter((t) => t.status === 'in_progress' || t.status === 'review').length,
+    [boardTasks]
   )
 
   const focusedSession = useMemo(
-    () => focusState.focusedBotKey ? allSessions.find(s => s.key === focusState.focusedBotKey) ?? null : null,
-    [focusState.focusedBotKey, allSessions],
+    () =>
+      focusState.focusedBotKey
+        ? (allSessions.find((s) => s.key === focusState.focusedBotKey) ?? null)
+        : null,
+    [focusState.focusedBotKey, allSessions]
   )
   const focusedBotConfig = useMemo(
-    () => focusedSession ? getBotConfigFromSession(focusedSession.key, focusedSession.label) : null,
-    [focusedSession],
+    () =>
+      focusedSession ? getBotConfigFromSession(focusedSession.key, focusedSession.label) : null,
+    [focusedSession]
   )
   const focusedBotStatus = useMemo(() => {
     if (!focusedSession) return 'offline' as const
@@ -222,49 +325,75 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
   const { agents: agentRuntimesForPanel, refresh: refreshAgents } = useAgentsRegistry(allSessions)
   const focusedBotRuntime = useMemo(() => {
     if (!focusedSession) return null
-    return agentRuntimesForPanel.find(
-      r => r.agent.agent_session_key === focusedSession.key
-        || r.session?.key === focusedSession.key
-        || r.childSessions.some(c => c.key === focusedSession.key),
-    ) ?? null
+    return (
+      agentRuntimesForPanel.find(
+        (r) =>
+          r.agent.agent_session_key === focusedSession.key ||
+          r.session?.key === focusedSession.key ||
+          r.childSessions.some((c) => c.key === focusedSession.key)
+      ) ?? null
+    )
   }, [focusedSession, agentRuntimesForPanel])
   const focusedBotBio = focusedBotRuntime?.agent.bio ?? null
   const focusedAgentId = focusedBotRuntime?.agent.id ?? null
 
   // ── Room info panel ───────────────────────────────────────────
   const focusedRoom = useMemo(
-    () => focusState.focusedRoomId ? rooms.find(r => r.id === focusState.focusedRoomId) ?? null : null,
-    [focusState.focusedRoomId, rooms],
+    () =>
+      focusState.focusedRoomId
+        ? (rooms.find((r) => r.id === focusState.focusedRoomId) ?? null)
+        : null,
+    [focusState.focusedRoomId, rooms]
   )
   const focusedRoomSessions = useMemo(() => {
     if (!focusState.focusedRoomId) return []
-    return visibleSessions.filter(s => {
-      const roomId = debugRoomMap?.get(s.key)
-        || getRoomForSession(s.key, { label: s.label, model: s.model, channel: s.lastChannel || s.channel })
-        || rooms[0]?.id || 'headquarters'
+    return visibleSessions.filter((s) => {
+      const roomId =
+        debugRoomMap?.get(s.key) ||
+        getRoomForSession(s.key, {
+          label: s.label,
+          model: s.model,
+          channel: s.lastChannel || s.channel,
+        }) ||
+        rooms[0]?.id ||
+        'headquarters'
       return roomId === focusState.focusedRoomId
     })
   }, [focusState.focusedRoomId, visibleSessions, getRoomForSession, rooms, debugRoomMap])
 
-  const handleRoomPanelBotClick = useCallback((session: CrewSession) => {
-    if (focusState.focusedRoomId) focusBot(session.key, focusState.focusedRoomId)
-  }, [focusBot, focusState.focusedRoomId])
+  const handleRoomPanelBotClick = useCallback(
+    (session: CrewSession) => {
+      if (focusState.focusedRoomId) focusBot(session.key, focusState.focusedRoomId)
+    },
+    [focusBot, focusState.focusedRoomId]
+  )
 
-  const handleBotClick = (_session: CrewSession) => { void _session }
+  const handleBotClick = (_session: CrewSession) => {
+    void _session
+  }
 
   const isNotFirstPerson = focusState.level !== 'firstperson'
 
   return (
     <TaskBoardProvider onOpen={() => setTaskBoardOpen(true)}>
       <DragDropProvider onAssignmentChanged={refreshRooms}>
-        <div className="relative w-full h-full" style={{ minHeight: '600px' }}>
+        <div
+          className="relative w-full h-full"
+          style={{
+            minHeight: '600px',
+            boxShadow: isCreatorMode ? '0 0 0 3px gold, 0 0 20px rgba(255,215,0,0.3)' : undefined,
+            transition: 'box-shadow 0.3s ease',
+          }}
+        >
           {/* 3D Canvas */}
           <CanvasErrorBoundary>
             <Canvas
               shadows
               frameloop={canvasFrameloop}
               camera={{ position: [-45, 40, -45], fov: 40, near: 0.1, far: 300 }}
-              style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)' }}
+              style={{
+                background: 'linear-gradient(180deg, #87CEEB 0%, #C9E8F5 40%, #E8F0E8 100%)',
+              }}
             >
               <Suspense fallback={<LoadingFallback />}>
                 <SceneContent
@@ -285,6 +414,11 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
                   isRoomsLoading={isRoomsLoading}
                   meetingParticipantKeys={meetingParticipantKeys}
                   gridDebugEnabled={gridDebugEnabled}
+                  placedProps={placedProps}
+                  selectedPropId={isCreatorMode ? selectedPropId : null}
+                  pendingRotation={pendingRotation}
+                  onPlaceProp={isCreatorMode ? handlePlaceProp : undefined}
+                  onGhostPosition={handleGhostPosition}
                 />
               </Suspense>
             </Canvas>
@@ -299,14 +433,17 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           )}
 
           {/* Navigation (top-left) */}
-          <WorldNavigation rooms={rooms} />
+          <WorldNavigation rooms={rooms} isCreatorMode={isCreatorMode} />
 
           {/* Action Bar + Tasks Window */}
           {isNotFirstPerson && (
             <ActionBar
               runningTaskCount={activeTaskCount}
               tasksWindowOpen={tasksWindowOpen}
-              onToggleTasksWindow={() => setTasksWindowOpen(prev => !prev)}
+              onToggleTasksWindow={() => setTasksWindowOpen((prev) => !prev)}
+              isCreatorMode={isCreatorMode}
+              onToggleCreatorMode={toggleCreatorMode}
+              isAdmin={true}
             />
           )}
           {isNotFirstPerson && tasksWindowOpen && (
@@ -322,16 +459,71 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
             {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           </button>
 
-          {/* Controls hint */}
-          {focusState.level !== 'bot' && focusState.level !== 'room' && isNotFirstPerson && !isFullscreen && (
-            <div className="absolute top-4 right-16 z-20">
-              <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
-                <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
-                <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast</div>
-                <div className="text-gray-400">🐛 F2: Grid · F3: Lighting · F4: Debug Bots · F5: Demo</div>
-              </div>
+          {/* Creator Mode Bottom Bar — replaces floating PropBrowser */}
+          {isCreatorMode && isNotFirstPerson && <CreatorBottomBar />}
+
+          {/* Creator Mode status bar */}
+          {isCreatorMode && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 50,
+                background: 'rgba(0,0,0,0.75)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: '10px',
+                padding: '8px 16px',
+                color: '#e2e8f0',
+                fontSize: '12px',
+                border: '1px solid rgba(255,215,0,0.4)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ color: 'gold', fontWeight: 600 }}>✏️ Creator Mode</span>
+              {selectedPropId && (
+                <>
+                  <span style={{ color: '#94a3b8' }}>·</span>
+                  <span style={{ color: '#00ffcc' }}>🎯 Placing...</span>
+                </>
+              )}
+              <button
+                onClick={toggleCreatorMode}
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '6px',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  padding: '2px 8px',
+                }}
+              >
+                ✕ Exit [E]
+              </button>
             </div>
           )}
+
+          {/* Controls hint */}
+          {focusState.level !== 'bot' &&
+            focusState.level !== 'room' &&
+            isNotFirstPerson &&
+            !isFullscreen && (
+              <div className="absolute top-4 right-16 z-20">
+                <div className="text-xs px-3 py-1.5 rounded-lg backdrop-blur-md text-gray-700 bg-white/60 border border-gray-200/50 shadow-sm space-y-0.5">
+                  <div>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</div>
+                  <div>⌨️ WASD: Move · QE: Rotate · Shift: Fast</div>
+                  <div className="text-gray-400">
+                    🐛 F2: Grid · F3: Lighting · F4: Debug Bots · F5: Demo
+                  </div>
+                </div>
+              </div>
+            )}
 
           {/* Room Info Panel */}
           {focusState.level === 'room' && focusedRoom && !docsPanel && (
@@ -372,32 +564,54 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           )}
 
           {/* Bot Quick Actions */}
-          {focusState.level === 'bot' && focusState.focusedBotKey && focusedSession && focusedBotConfig && (
-            <BotQuickActions
-              session={focusedSession}
-              displayName={displayNames.get(focusState.focusedBotKey) || getSessionDisplayName(focusedSession, null)}
-              botConfig={focusedBotConfig}
-              canChat={/^agent:[a-zA-Z0-9_-]+:main$/.test(focusedSession.key)}
-              onOpenLog={(session) => { setSelectedSession(session); setLogViewerOpen(true) }}
-            />
-          )}
+          {focusState.level === 'bot' &&
+            focusState.focusedBotKey &&
+            focusedSession &&
+            focusedBotConfig && (
+              <BotQuickActions
+                session={focusedSession}
+                displayName={
+                  displayNames.get(focusState.focusedBotKey) ||
+                  getSessionDisplayName(focusedSession, null)
+                }
+                botConfig={focusedBotConfig}
+                canChat={/^agent:[a-zA-Z0-9_-]+:main$/.test(focusedSession.key)}
+                onOpenLog={(session) => {
+                  setSelectedSession(session)
+                  setLogViewerOpen(true)
+                }}
+              />
+            )}
 
           {/* Bot Info Panel */}
-          {focusState.level === 'bot' && focusState.focusedBotKey && focusedSession && focusedBotConfig && (
-            <BotInfoPanel
-              session={focusedSession}
-              displayName={displayNames.get(focusState.focusedBotKey) || getSessionDisplayName(focusedSession, null)}
-              botConfig={focusedBotConfig}
-              status={focusedBotStatus}
-              bio={focusedBotBio}
-              agentId={focusedAgentId}
-              currentRoomId={getRoomForSession(focusedSession.key, { label: focusedSession.label, model: focusedSession.model, channel: focusedSession.lastChannel })}
-              onClose={() => goBack()}
-              onOpenLog={(session) => { setSelectedSession(session); setLogViewerOpen(true) }}
-              onAssignmentChanged={refreshRooms}
-              onBioUpdated={refreshAgents}
-            />
-          )}
+          {focusState.level === 'bot' &&
+            focusState.focusedBotKey &&
+            focusedSession &&
+            focusedBotConfig && (
+              <BotInfoPanel
+                session={focusedSession}
+                displayName={
+                  displayNames.get(focusState.focusedBotKey) ||
+                  getSessionDisplayName(focusedSession, null)
+                }
+                botConfig={focusedBotConfig}
+                status={focusedBotStatus}
+                bio={focusedBotBio}
+                agentId={focusedAgentId}
+                currentRoomId={getRoomForSession(focusedSession.key, {
+                  label: focusedSession.label,
+                  model: focusedSession.model,
+                  channel: focusedSession.lastChannel,
+                })}
+                onClose={() => goBack()}
+                onOpenLog={(session) => {
+                  setSelectedSession(session)
+                  setLogViewerOpen(true)
+                }}
+                onAssignmentChanged={refreshRooms}
+                onBioUpdated={refreshAgents}
+              />
+            )}
 
           {/* Agent Top Bar */}
           <AgentTopBar
@@ -413,8 +627,8 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
 
           <DragStatusIndicator />
 
-          {/* Room Tabs Bar (bottom) */}
-          {isNotFirstPerson && (
+          {/* Room Tabs Bar (bottom) - hidden in Creator Mode */}
+          {isNotFirstPerson && !isCreatorMode && (
             <RoomTabsBar
               rooms={rooms}
               roomBotCounts={new Map()}
@@ -425,7 +639,11 @@ function World3DViewInner({ sessions, settings, onAliasChanged: _onAliasChanged 
           <LightingDebugPanel />
           <DebugPanel />
 
-          <LogViewer session={selectedSession} open={logViewerOpen} onOpenChange={setLogViewerOpen} />
+          <LogViewer
+            session={selectedSession}
+            open={logViewerOpen}
+            onOpenChange={setLogViewerOpen}
+          />
 
           {isDemoMode && isNotFirstPerson && (
             <DemoMeetingButton

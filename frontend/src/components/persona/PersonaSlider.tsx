@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 
 interface PersonaSliderProps {
   label: string
@@ -43,16 +43,16 @@ export function PersonaSlider({
           aria-label={`${label}: ${value}`}
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
               e.preventDefault()
               if (value < 5) onChange(value + 1)
-            } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
               e.preventDefault()
               if (value > 1) onChange(value - 1)
-            } else if (e.key === "Home") {
+            } else if (e.key === 'Home') {
               e.preventDefault()
               onChange(1)
-            } else if (e.key === "End") {
+            } else if (e.key === 'End') {
               e.preventDefault()
               onChange(5)
             }
@@ -75,11 +75,11 @@ export function PersonaSlider({
                 type="button"
                 onClick={() => onChange(m)}
                 className={cn(
-                  "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-all",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-all',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   m === value
-                    ? "bg-primary text-primary-foreground scale-110 shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? 'bg-primary text-primary-foreground scale-110 shadow-sm'
+                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 )}
                 tabIndex={-1}
                 aria-hidden="true"

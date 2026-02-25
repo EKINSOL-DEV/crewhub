@@ -39,7 +39,7 @@ export function extractCodeBlocks(text: string): string[] {
     while ((match = untaggedPattern.exec(text)) !== null) {
       const code = match[1].trim()
       // Only include if it looks like React/Three.js code
-      if (code.length > 50 && (/<mesh|<group|<boxGeometry|useFrame|Three/.test(code))) {
+      if (code.length > 50 && /<mesh|<group|<boxGeometry|useFrame|Three/.test(code)) {
         blocks.push(code)
       }
     }
@@ -73,7 +73,8 @@ function validateImports(code: string): { valid: boolean; errors: string[] } {
   const errors: string[] = []
 
   // Must import from three or @react-three/fiber or @react-three/drei
-  const hasThreeImport = /from\s+['"]three['"]/.test(code) ||
+  const hasThreeImport =
+    /from\s+['"]three['"]/.test(code) ||
     /from\s+['"]@react-three\/fiber['"]/.test(code) ||
     /from\s+['"]@react-three\/drei['"]/.test(code)
 

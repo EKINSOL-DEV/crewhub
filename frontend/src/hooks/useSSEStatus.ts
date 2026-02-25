@@ -10,9 +10,7 @@ import { sseManager } from '@/lib/sseManager'
 export type SSEConnectionState = 'disconnected' | 'connecting' | 'connected'
 
 export function useSSEStatus(): SSEConnectionState {
-  const [state, setState] = useState<SSEConnectionState>(
-    () => sseManager.getConnectionState()
-  )
+  const [state, setState] = useState<SSEConnectionState>(() => sseManager.getConnectionState())
 
   useEffect(() => {
     // onStateChange immediately calls the listener with the current state,

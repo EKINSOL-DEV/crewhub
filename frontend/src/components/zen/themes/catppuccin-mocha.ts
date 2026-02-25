@@ -16,30 +16,30 @@ export const catppuccinMocha: ZenTheme = {
     bgPanel: '#181825',
     bgHover: '#313244',
     bgActive: '#45475a',
-    
+
     // Foreground (Text, Subtext, Overlay)
     fg: '#cdd6f4',
     fgMuted: '#a6adc8',
     fgDim: '#6c7086',
-    
+
     // Borders
     border: '#45475a',
     borderFocus: '#cba6f7',
-    
+
     // Accent - Mauve (purple)
     accent: '#cba6f7',
     accentHover: '#f5c2e7',
-    
+
     // Status
     success: '#a6e3a1',
     warning: '#f9e2af',
     error: '#f38ba8',
     info: '#89dceb',
-    
+
     // Chat
     userBubble: '#45475a',
     assistantBubble: '#11111b',
-    
+
     // Syntax
     syntax: {
       keyword: '#cba6f7',
@@ -47,6 +47,6 @@ export const catppuccinMocha: ZenTheme = {
       comment: '#6c7086',
       function: '#89b4fa',
       variable: '#cdd6f4',
-    }
-  }
+    },
+  },
 }

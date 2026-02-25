@@ -16,30 +16,30 @@ export const oneDark: ZenTheme = {
     bgPanel: '#21252b',
     bgHover: '#2c313a',
     bgActive: '#3e4451',
-    
+
     // Foreground
     fg: '#abb2bf',
     fgMuted: '#5c6370',
     fgDim: '#4b5263',
-    
+
     // Borders
     border: '#3e4451',
     borderFocus: '#61afef',
-    
+
     // Accent - Blue
     accent: '#61afef',
     accentHover: '#74b9f0',
-    
+
     // Status
     success: '#98c379',
     warning: '#e5c07b',
     error: '#e06c75',
     info: '#56b6c2',
-    
+
     // Chat
     userBubble: '#3e4451',
     assistantBubble: '#1b1d23',
-    
+
     // Syntax
     syntax: {
       keyword: '#c678dd',
@@ -47,6 +47,6 @@ export const oneDark: ZenTheme = {
       comment: '#5c6370',
       function: '#61afef',
       variable: '#e06c75',
-    }
-  }
+    },
+  },
 }

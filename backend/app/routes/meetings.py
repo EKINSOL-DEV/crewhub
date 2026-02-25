@@ -1,31 +1,32 @@
 """REST API routes for AI-orchestrated meetings."""
 
+import logging
 import time
 import uuid
-import logging
-from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
+from fastapi import APIRouter, HTTPException, Query
 
 from app.db.database import get_db
 from app.db.meeting_models import (
+    ActionItemExecuteRequest,
+    ActionItemToPlannerRequest,
     MeetingConfig,
     MeetingState,
-    StartMeetingRequest,
     SaveActionItemsRequest,
-    ActionItemToPlannerRequest,
-    ActionItemExecuteRequest,
+    StartMeetingRequest,
 )
+from app.routes.sse import broadcast
 from app.services.meeting_orchestrator import (
-    start_meeting,
     cancel_meeting,
     get_meeting,
     list_meetings,
+    start_meeting,
 )
-from app.routes.sse import broadcast
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
@@ -50,7 +51,7 @@ async def api_start_meeting(req: StartMeetingRequest):
     ]
     round_topics = req.round_topics
     if round_topics is None:
-        round_topics = default_topics[:req.num_rounds]
+        round_topics = default_topics[: req.num_rounds]
         # Pad if num_rounds > 3
         while len(round_topics) < req.num_rounds:
             round_topics.append(f"Round {len(round_topics) + 1}")
@@ -82,10 +83,7 @@ async def api_start_meeting(req: StartMeetingRequest):
         "id": meeting.id,
         "title": meeting.title,
         "state": meeting.state.value,
-        "participants": [
-            {"agent_id": p, "sort_order": i}
-            for i, p in enumerate(config.participants)
-        ],
+        "participants": [{"agent_id": p, "sort_order": i} for i, p in enumerate(config.participants)],
         "config": {
             "num_rounds": config.num_rounds,
             "round_topics": config.round_topics,
@@ -156,8 +154,11 @@ async def api_meeting_history(
 ):
     """Get meeting history with pagination and filtering (F5)."""
     result = await list_meetings(
-        days=days, room_id=room_id, project_id=project_id,
-        limit=limit, offset=offset,
+        days=days,
+        room_id=room_id,
+        project_id=project_id,
+        limit=limit,
+        offset=offset,
     )
     return result
 
@@ -173,8 +174,12 @@ async def api_list_meetings(
 ):
     """List recent meetings with pagination."""
     result = await list_meetings(
-        days=days, room_id=room_id, project_id=project_id,
-        limit=limit, offset=offset, state_filter=state,
+        days=days,
+        room_id=room_id,
+        project_id=project_id,
+        limit=limit,
+        offset=offset,
+        state_filter=state,
     )
     return result
 
@@ -199,6 +204,7 @@ async def api_meeting_output(meeting_id: str):
 # =========================================================================
 # F1: Action Items
 # =========================================================================
+
 
 @router.get("/{meeting_id}/action-items")
 async def api_get_action_items(meeting_id: str):
@@ -230,8 +236,17 @@ async def api_save_action_items(meeting_id: str, req: SaveActionItemsRequest):
                 """INSERT INTO meeting_action_items
                    (id, meeting_id, text, assignee_agent_id, priority, status, sort_order, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (item_id, meeting_id, item.text, item.assignee_agent_id,
-                 item.priority, item.status or "pending", i, now, now),
+                (
+                    item_id,
+                    meeting_id,
+                    item.text,
+                    item.assignee_agent_id,
+                    item.priority,
+                    item.status or "pending",
+                    i,
+                    now,
+                    now,
+                ),
             )
         await db.commit()
 
@@ -277,6 +292,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
 
     # Create task in the project via internal task creation
     from app.db.models import generate_id
+
     task_id = generate_id()
     now = _now_ms()
 
@@ -308,17 +324,23 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
         await db.commit()
 
     # SSE notifications
-    await broadcast("task-created", {
-        "task_id": task_id,
-        "project_id": project_id,
-        "room_id": room_id,
-    })
-    await broadcast("action-item-status", {
-        "meeting_id": meeting_id,
-        "item_id": item_id,
-        "status": "planned",
-        "planner_task_id": task_id,
-    })
+    await broadcast(
+        "task-created",
+        {
+            "task_id": task_id,
+            "project_id": project_id,
+            "room_id": room_id,
+        },
+    )
+    await broadcast(
+        "action-item-status",
+        {
+            "meeting_id": meeting_id,
+            "item_id": item_id,
+            "status": "planned",
+            "planner_task_id": task_id,
+        },
+    )
 
     return {
         "item_id": item_id,
@@ -363,15 +385,19 @@ async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItem
         )
         await db.commit()
 
-    await broadcast("action-item-status", {
-        "meeting_id": meeting_id,
-        "item_id": item_id,
-        "status": "executing",
-        "session_id": session_key,
-    })
+    await broadcast(
+        "action-item-status",
+        {
+            "meeting_id": meeting_id,
+            "item_id": item_id,
+            "status": "executing",
+            "session_id": session_key,
+        },
+    )
 
     # Spawn agent execution via Gateway
     from app.services.connections import get_connection_manager
+
     try:
         manager = await get_connection_manager()
         action_text = dict(item)["text"]
@@ -390,12 +416,15 @@ async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItem
                 (_now_ms(), item_id),
             )
             await db.commit()
-        await broadcast("action-item-status", {
-            "meeting_id": meeting_id,
-            "item_id": item_id,
-            "status": "failed",
-            "error": str(e),
-        })
+        await broadcast(
+            "action-item-status",
+            {
+                "meeting_id": meeting_id,
+                "item_id": item_id,
+                "status": "failed",
+                "error": str(e),
+            },
+        )
         raise HTTPException(502, f"Failed to spawn agent: {str(e)}")
 
     # Update status based on response
@@ -407,12 +436,15 @@ async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItem
         )
         await db.commit()
 
-    await broadcast("action-item-status", {
-        "meeting_id": meeting_id,
-        "item_id": item_id,
-        "status": final_status,
-        "session_id": session_key,
-    })
+    await broadcast(
+        "action-item-status",
+        {
+            "meeting_id": meeting_id,
+            "item_id": item_id,
+            "status": final_status,
+            "session_id": session_key,
+        },
+    )
 
     return {
         "item_id": item_id,

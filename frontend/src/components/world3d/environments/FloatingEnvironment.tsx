@@ -57,7 +57,7 @@ function PlatformGrid({ radius }: { radius: number }) {
         const a2 = ((i + 1) / 6) * Math.PI * 2 - Math.PI / 6
         pts.push(
           new THREE.Vector3(Math.cos(a1) * r, y, Math.sin(a1) * r),
-          new THREE.Vector3(Math.cos(a2) * r, y, Math.sin(a2) * r),
+          new THREE.Vector3(Math.cos(a2) * r, y, Math.sin(a2) * r)
         )
       }
     }
@@ -68,7 +68,7 @@ function PlatformGrid({ radius }: { radius: number }) {
       const outerR = radius * 0.9
       pts.push(
         new THREE.Vector3(0, y, 0),
-        new THREE.Vector3(Math.cos(a) * outerR, y, Math.sin(a) * outerR),
+        new THREE.Vector3(Math.cos(a) * outerR, y, Math.sin(a) * outerR)
       )
     }
 
@@ -79,7 +79,7 @@ function PlatformGrid({ radius }: { radius: number }) {
       const mid = (a1 + a2) / 2
       pts.push(
         new THREE.Vector3(Math.cos(mid) * radius * 0.35, y, Math.sin(mid) * radius * 0.35),
-        new THREE.Vector3(Math.cos(mid) * radius * 0.82, y, Math.sin(mid) * radius * 0.82),
+        new THREE.Vector3(Math.cos(mid) * radius * 0.82, y, Math.sin(mid) * radius * 0.82)
       )
     }
 
@@ -120,7 +120,7 @@ function EdgeEmission({ radius, color }: { radius: number; color: string }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]}>
       <ringGeometry args={[radius - 0.06, radius + 0.03, 6, 1, -Math.PI / 6, Math.PI * 2]} />
-      <meshBasicMaterial color={color} transparent opacity={0.10} side={THREE.DoubleSide} />
+      <meshBasicMaterial color={color} transparent opacity={0.1} side={THREE.DoubleSide} />
     </mesh>
   )
 }
@@ -142,14 +142,17 @@ function CloudPuffs() {
   const cloudProps = useToonMaterialProps('#EEF2F6')
   const groupRef = useRef<THREE.Group>(null)
 
-  const clouds = useMemo(() => [
-    { pos: [7, -10, 5] as [number, number, number], scale: 2.4, phase: 0 },
-    { pos: [-9, -13, -6] as [number, number, number], scale: 3.0, phase: 1.2 },
-    { pos: [3, -15, -10] as [number, number, number], scale: 2.0, phase: 2.8 },
-    { pos: [-6, -11, 9] as [number, number, number], scale: 2.2, phase: 4.0 },
-    { pos: [10, -14, -4] as [number, number, number], scale: 1.8, phase: 5.5 },
-    { pos: [-11, -12, 3] as [number, number, number], scale: 2.6, phase: 3.2 },
-  ], [])
+  const clouds = useMemo(
+    () => [
+      { pos: [7, -10, 5] as [number, number, number], scale: 2.4, phase: 0 },
+      { pos: [-9, -13, -6] as [number, number, number], scale: 3.0, phase: 1.2 },
+      { pos: [3, -15, -10] as [number, number, number], scale: 2.0, phase: 2.8 },
+      { pos: [-6, -11, 9] as [number, number, number], scale: 2.2, phase: 4.0 },
+      { pos: [10, -14, -4] as [number, number, number], scale: 1.8, phase: 5.5 },
+      { pos: [-11, -12, 3] as [number, number, number], scale: 2.6, phase: 3.2 },
+    ],
+    []
+  )
 
   useFrame(({ clock }) => {
     if (!groupRef.current) return

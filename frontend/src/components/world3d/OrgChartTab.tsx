@@ -1,13 +1,21 @@
 // ── Org Chart Tab ── Shows team hierarchy for HQ room
 
-const HIERARCHY: Record<string, { role: string; model?: string; icon?: string; children: string[] }> = {
-  'Nicky': { role: 'Owner / CEO / CTO', icon: '👨‍💼', children: ['Assistent'] },
-  'Assistent': { role: 'Director of Bots', model: 'Sonnet', icon: '🤖', children: ['Dev', 'Game Dev', 'Reviewer', 'Flowy'] },
-  'Dev': { role: 'Developer', model: 'Opus', icon: '💻', children: [] },
+const HIERARCHY: Record<
+  string,
+  { role: string; model?: string; icon?: string; children: string[] }
+> = {
+  Nicky: { role: 'Owner / CEO / CTO', icon: '👨‍💼', children: ['Assistent'] },
+  Assistent: {
+    role: 'Director of Bots',
+    model: 'Sonnet',
+    icon: '🤖',
+    children: ['Dev', 'Game Dev', 'Reviewer', 'Flowy'],
+  },
+  Dev: { role: 'Developer', model: 'Opus', icon: '💻', children: [] },
   'Game Dev': { role: '3D / Three.js specialist', model: 'Opus', icon: '🎮', children: [] },
-  'Reviewer': { role: 'Code Review', model: 'GPT-5.2', icon: '🔍', children: [] },
-  'Flowy': { role: 'PO/PM marketing & media', model: 'GPT-5.2', icon: '📊', children: ['Creator'] },
-  'Creator': { role: 'Video specialist', model: 'Sonnet', icon: '🎬', children: [] },
+  Reviewer: { role: 'Code Review', model: 'GPT-5.2', icon: '🔍', children: [] },
+  Flowy: { role: 'PO/PM marketing & media', model: 'GPT-5.2', icon: '📊', children: ['Creator'] },
+  Creator: { role: 'Video specialist', model: 'Sonnet', icon: '🎬', children: [] },
 }
 
 function modelColor(model?: string): string {
@@ -38,22 +46,28 @@ function OrgNode({ name, depth = 0 }: { name: string; depth?: number }) {
           borderLeft: depth > 0 ? `3px solid ${modelColor(node.model)}` : 'none',
           transition: 'background 0.15s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.15)' : 'rgba(0,0,0,0.06)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.08)' : 'rgba(0,0,0,0.03)' }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.15)' : 'rgba(0,0,0,0.06)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.08)' : 'rgba(0,0,0,0.03)'
+        }}
       >
         <span style={{ fontSize: 18 }}>{node.icon}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#1f2937' }}>{name}</span>
             {node.model && (
-              <span style={{
-                fontSize: 10,
-                fontWeight: 600,
-                color: modelColor(node.model),
-                background: modelColor(node.model) + '15',
-                padding: '1px 6px',
-                borderRadius: 4,
-              }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: modelColor(node.model),
+                  background: modelColor(node.model) + '15',
+                  padding: '1px 6px',
+                  borderRadius: 4,
+                }}
+              >
                 {node.model}
               </span>
             )}
@@ -64,7 +78,7 @@ function OrgNode({ name, depth = 0 }: { name: string; depth?: number }) {
 
       {node.children.length > 0 && (
         <div style={{ marginLeft: 8, borderLeft: '1px solid rgba(0,0,0,0.06)', paddingLeft: 0 }}>
-          {node.children.map(child => (
+          {node.children.map((child) => (
             <OrgNode key={child} name={child} depth={depth + 1} />
           ))}
         </div>
@@ -76,14 +90,16 @@ function OrgNode({ name, depth = 0 }: { name: string; depth?: number }) {
 export function OrgChartTab() {
   return (
     <div style={{ padding: '16px 20px', overflow: 'auto', flex: 1 }}>
-      <div style={{
-        fontSize: 11,
-        fontWeight: 700,
-        color: '#6b7280',
-        textTransform: 'uppercase',
-        letterSpacing: '0.06em',
-        marginBottom: 12,
-      }}>
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#6b7280',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          marginBottom: 12,
+        }}
+      >
         🏢 Team Hierarchy
       </div>
       <OrgNode name="Nicky" depth={0} />

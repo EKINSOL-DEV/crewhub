@@ -1,7 +1,7 @@
 # Frontend Watchdog
 
-**Version**: v0.14.0  
-**Date**: 2026-02-12  
+**Version**: v0.14.0
+**Date**: 2026-02-12
 **Status**: Implemented
 
 ## Problem

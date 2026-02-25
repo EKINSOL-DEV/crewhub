@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Tripod() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.1; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.1
+  })
   return (
     <group ref={groupRef}>
       {/* Head plate */}
@@ -28,11 +30,14 @@ export function Tripod() {
         <meshStandardMaterial color="#333344" />
       </mesh>
       {/* Legs */}
-      {[0, 1, 2].map(i => {
-        const a = (i / 3) * Math.PI * 2;
+      {[0, 1, 2].map((i) => {
+        const a = (i / 3) * Math.PI * 2
         return (
           <group key={i}>
-            <mesh position={[Math.sin(a) * 0.2, -0.4, Math.cos(a) * 0.2]} rotation={[Math.cos(a) * 0.35, 0, Math.sin(a) * 0.35]}>
+            <mesh
+              position={[Math.sin(a) * 0.2, -0.4, Math.cos(a) * 0.2]}
+              rotation={[Math.cos(a) * 0.35, 0, Math.sin(a) * 0.35]}
+            >
               <cylinderGeometry args={[0.02, 0.015, 0.7, 6]} />
               <meshStandardMaterial color="#444455" />
             </mesh>
@@ -42,7 +47,7 @@ export function Tripod() {
               <meshStandardMaterial color="#222222" />
             </mesh>
           </group>
-        );
+        )
       })}
       {/* Level adjustment knob */}
       <mesh position={[0.06, 0.38, 0]}>
@@ -50,5 +55,5 @@ export function Tripod() {
         <meshStandardMaterial color="#666677" />
       </mesh>
     </group>
-  );
+  )
 }

@@ -1,7 +1,7 @@
 # Agent Status Logic Improvements
 
-*Date: 2026-02-13*  
-*Feature: Agent Status Logic*  
+*Date: 2026-02-13*
+*Feature: Agent Status Logic*
 *Version: v0.15.0*
 
 ## What & Why

@@ -1,8 +1,8 @@
 # Agent Persona Tuning — Design Plan Summary
 
-**Date:** 2026-02-10 01:00 AM - 01:10 AM  
-**Cron Job:** `40d29053-ab02-409f-86b7-9b3464fcbac7`  
-**Task:** Create plan for prompt/persona tuning during onboarding  
+**Date:** 2026-02-10 01:00 AM - 01:10 AM
+**Cron Job:** `40d29053-ab02-409f-86b7-9b3464fcbac7`
+**Task:** Create plan for prompt/persona tuning during onboarding
 **Problem:** Agent "Boingz" was too hesitant — asked too many questions instead of executing "Say Hello World"
 
 ---
@@ -185,7 +185,7 @@ Injected as `## Behavior Guidelines` section in context envelope.
 
 **Solution:** Executor preset's Start Behavior=1 maps to:
 ```
-"Execute tasks immediately without asking for confirmation. 
+"Execute tasks immediately without asking for confirmation.
 Only ask when the request is genuinely ambiguous or dangerous."
 ```
 
@@ -193,6 +193,6 @@ Only ask when the request is genuinely ambiguous or dangerous."
 
 ---
 
-**Total collaboration time:** ~15 minutes (Opus design → GPT-5.2 review → Opus iterate → finalize)  
-**Model efficiency:** Opus for implementation, GPT-5.2 for critique — each agent used for their strength  
+**Total collaboration time:** ~15 minutes (Opus design → GPT-5.2 review → Opus iterate → finalize)
+**Model efficiency:** Opus for implementation, GPT-5.2 for critique — each agent used for their strength
 **Outcome:** Production-ready design specification with B+ grade from expert reviewer

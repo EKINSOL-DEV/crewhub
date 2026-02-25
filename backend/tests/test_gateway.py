@@ -1,7 +1,8 @@
 """Tests for gateway status endpoints."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from app.services.connections.base import ConnectionStatus
 
@@ -17,7 +18,7 @@ async def test_gateway_status(client):
     mock_mgr = MagicMock()
     mock_mgr.get_default_openclaw.return_value = mock_conn
 
-    with patch('app.routes.gateway_status.get_connection_manager', new_callable=AsyncMock, return_value=mock_mgr):
+    with patch("app.routes.gateway_status.get_connection_manager", new_callable=AsyncMock, return_value=mock_mgr):
         response = await client.get("/api/gateway/status")
         assert response.status_code == 200
         data = response.json()
@@ -30,7 +31,7 @@ async def test_gateway_status_no_connection(client):
     mock_mgr = MagicMock()
     mock_mgr.get_default_openclaw.return_value = None
 
-    with patch('app.routes.gateway_status.get_connection_manager', new_callable=AsyncMock, return_value=mock_mgr):
+    with patch("app.routes.gateway_status.get_connection_manager", new_callable=AsyncMock, return_value=mock_mgr):
         response = await client.get("/api/gateway/status")
         assert response.status_code == 200
         data = response.json()

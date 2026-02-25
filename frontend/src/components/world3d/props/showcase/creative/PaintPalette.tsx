@@ -1,11 +1,22 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function PaintPalette() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.3; });
-  const colors = ['#ff2244', '#ff8833', '#ffee33', '#33cc44', '#3366ff', '#8833cc', '#ffffff', '#111111'];
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.3
+  })
+  const colors = [
+    '#ff2244',
+    '#ff8833',
+    '#ffee33',
+    '#33cc44',
+    '#3366ff',
+    '#8833cc',
+    '#ffffff',
+    '#111111',
+  ]
   return (
     <group ref={groupRef}>
       {/* Palette shape (oval) */}
@@ -20,14 +31,14 @@ export function PaintPalette() {
       </mesh>
       {/* Paint blobs */}
       {colors.map((c, i) => {
-        const a = (i / colors.length) * Math.PI * 1.5 - 0.5;
-        const r = 0.3;
+        const a = (i / colors.length) * Math.PI * 1.5 - 0.5
+        const r = 0.3
         return (
           <mesh key={i} position={[Math.cos(a) * r, -0.17, Math.sin(a) * r]}>
             <sphereGeometry args={[0.04 + (i % 3) * 0.01, 5, 5]} />
             <meshStandardMaterial color={c} flatShading />
           </mesh>
-        );
+        )
       })}
       {/* Mixed paint in center */}
       <mesh position={[-0.05, -0.17, 0.05]}>
@@ -35,5 +46,5 @@ export function PaintPalette() {
         <meshStandardMaterial color="#aa6644" flatShading />
       </mesh>
     </group>
-  );
+  )
 }

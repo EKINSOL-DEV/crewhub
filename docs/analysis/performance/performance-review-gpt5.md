@@ -379,4 +379,3 @@ Recommendation:
 - **“fetch calls hangen”**: consistent with connection pool starvation (multiple SSE + polling + parallel fetches) and lack of timeouts/abort in most hooks.
 - **“Chrome blijft laden”**: can happen if UI is constantly rerendering from duplicated refresh events + heavy 3D tree updates.
 - **“project assign/create werkt niet”**: `createProject` timeout+retry logic can mask the real underlying server latency / proxy hang and create extra load; `assignProjectToRoom` has no timeout/abort and can stall silently.
-

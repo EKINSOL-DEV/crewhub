@@ -1,7 +1,7 @@
 /**
  * Pixel Avatar Patterns
  * 8x8 grid designs for each agent type and animation state
- * 
+ *
  * Values:
  * 0 = transparent
  * 1 = base color (agent primary)
@@ -48,34 +48,34 @@ export const AGENT_COLORS: Record<AgentType, { base: string; dark: string; accen
 // ─── Idle Pattern ───────────────────────────────────────────────
 // Happy robot face with antenna
 const IDLE_PATTERN: PixelGrid = [
-  [0, 0, 0, 1, 1, 0, 0, 0],  // antenna
-  [0, 1, 1, 1, 1, 1, 1, 0],  // top of head
-  [1, 1, 2, 1, 1, 2, 1, 1],  // eyes (highlight)
-  [1, 1, 1, 1, 1, 1, 1, 1],  // face
-  [1, 1, 1, 3, 3, 1, 1, 1],  // nose/center
-  [1, 1, 4, 4, 4, 4, 1, 1],  // mouth (accent = smile)
-  [1, 1, 1, 1, 1, 1, 1, 1],  // chin
-  [0, 1, 1, 0, 0, 1, 1, 0],  // bottom
+  [0, 0, 0, 1, 1, 0, 0, 0], // antenna
+  [0, 1, 1, 1, 1, 1, 1, 0], // top of head
+  [1, 1, 2, 1, 1, 2, 1, 1], // eyes (highlight)
+  [1, 1, 1, 1, 1, 1, 1, 1], // face
+  [1, 1, 1, 3, 3, 1, 1, 1], // nose/center
+  [1, 1, 4, 4, 4, 4, 1, 1], // mouth (accent = smile)
+  [1, 1, 1, 1, 1, 1, 1, 1], // chin
+  [0, 1, 1, 0, 0, 1, 1, 0], // bottom
 ]
 
 // ─── Thinking Pattern ───────────────────────────────────────────
 // Eyes looking up, thinking dots
 const THINKING_PATTERN: PixelGrid = [
-  [0, 0, 2, 1, 1, 2, 0, 0],  // thinking sparkles
+  [0, 0, 2, 1, 1, 2, 0, 0], // thinking sparkles
   [0, 1, 1, 1, 1, 1, 1, 0],
-  [1, 2, 1, 1, 1, 1, 2, 1],  // eyes looking up
+  [1, 2, 1, 1, 1, 1, 2, 1], // eyes looking up
   [1, 1, 1, 1, 1, 1, 1, 1],
   [1, 1, 1, 3, 3, 1, 1, 1],
-  [1, 1, 1, 4, 4, 1, 1, 1],  // small mouth (concentrating)
+  [1, 1, 1, 4, 4, 1, 1, 1], // small mouth (concentrating)
   [1, 1, 1, 1, 1, 1, 1, 1],
   [0, 1, 1, 0, 0, 1, 1, 0],
 ]
 
 // ─── Thinking Alt (for blink animation) ─────────────────────────
 const THINKING_BLINK: PixelGrid = [
-  [0, 2, 0, 1, 1, 0, 2, 0],  // sparkle positions swapped
+  [0, 2, 0, 1, 1, 0, 2, 0], // sparkle positions swapped
   [0, 1, 1, 1, 1, 1, 1, 0],
-  [1, 1, 3, 3, 3, 3, 1, 1],  // eyes closed (horizontal lines)
+  [1, 1, 3, 3, 3, 3, 1, 1], // eyes closed (horizontal lines)
   [1, 1, 1, 1, 1, 1, 1, 1],
   [1, 1, 1, 3, 3, 1, 1, 1],
   [1, 1, 1, 4, 4, 1, 1, 1],
@@ -88,10 +88,10 @@ const THINKING_BLINK: PixelGrid = [
 const TYPING_PATTERN: PixelGrid = [
   [0, 0, 0, 1, 1, 0, 0, 0],
   [0, 1, 1, 1, 1, 1, 1, 0],
-  [1, 1, 2, 1, 1, 2, 1, 1],  // eyes
+  [1, 1, 2, 1, 1, 2, 1, 1], // eyes
   [1, 1, 1, 1, 1, 1, 1, 1],
   [1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 1, 4, 3, 3, 4, 1, 1],  // open mouth
+  [1, 1, 4, 3, 3, 4, 1, 1], // open mouth
   [1, 1, 1, 4, 4, 1, 1, 1],
   [0, 1, 1, 0, 0, 1, 1, 0],
 ]
@@ -103,7 +103,7 @@ const TYPING_ALT: PixelGrid = [
   [1, 1, 2, 1, 1, 2, 1, 1],
   [1, 1, 1, 1, 1, 1, 1, 1],
   [1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 4, 4, 1, 1, 1],  // smaller mouth
+  [1, 1, 1, 4, 4, 1, 1, 1], // smaller mouth
   [1, 1, 1, 1, 1, 1, 1, 1],
   [0, 1, 1, 0, 0, 1, 1, 0],
 ]
@@ -113,10 +113,10 @@ const TYPING_ALT: PixelGrid = [
 const ERROR_PATTERN: PixelGrid = [
   [0, 0, 0, 1, 1, 0, 0, 0],
   [0, 1, 1, 1, 1, 1, 1, 0],
-  [1, 3, 1, 3, 3, 1, 3, 1],  // X eyes
+  [1, 3, 1, 3, 3, 1, 3, 1], // X eyes
   [1, 1, 3, 1, 1, 3, 1, 1],
   [1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 3, 3, 1, 1, 1],  // frown
+  [1, 1, 1, 3, 3, 1, 1, 1], // frown
   [1, 1, 3, 1, 1, 3, 1, 1],
   [0, 1, 1, 0, 0, 1, 1, 0],
 ]
@@ -143,14 +143,21 @@ export function getPattern(state: AnimationState, frame: number = 0): PixelGrid 
  */
 export function getAgentType(agentName: string | null): AgentType {
   if (!agentName) return 'worker'
-  
+
   const name = agentName.toLowerCase()
-  
+
   if (name.includes('dev') || name.includes('code')) return 'dev'
-  if (name.includes('flow') || name.includes('creator') || name.includes('slack') || name.includes('discord')) return 'comms'
-  if (name.includes('review') || name.includes('think') || name.includes('analyst')) return 'thinker'
+  if (
+    name.includes('flow') ||
+    name.includes('creator') ||
+    name.includes('slack') ||
+    name.includes('discord')
+  )
+    return 'comms'
+  if (name.includes('review') || name.includes('think') || name.includes('analyst'))
+    return 'thinker'
   if (name.includes('cron') || name.includes('schedule')) return 'cron'
-  
+
   return 'worker' // default: Assistent
 }
 

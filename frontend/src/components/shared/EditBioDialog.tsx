@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -6,13 +6,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { useDemoMode } from "@/contexts/DemoContext"
-import { API_BASE } from "@/lib/api"
-import { Sparkles, Loader2 } from "lucide-react"
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { useDemoMode } from '@/contexts/DemoContext'
+import { API_BASE } from '@/lib/api'
+import { Sparkles, Loader2 } from 'lucide-react'
 
 interface EditBioDialogProps {
   agentId: string | null
@@ -25,7 +25,7 @@ interface EditBioDialogProps {
 
 /**
  * EditBioDialog - Dialog for editing agent bios
- * 
+ *
  * Uses the native dialog-based Dialog component which is compatible with React 19.
  * See: src/components/ui/dialog.tsx for the React 19 compatibility fix.
  */
@@ -38,7 +38,7 @@ export function EditBioDialog({
   onSaved,
 }: EditBioDialogProps) {
   const { isDemoMode } = useDemoMode()
-  const [bio, setBio] = useState(currentBio ?? "")
+  const [bio, setBio] = useState(currentBio ?? '')
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +48,7 @@ export function EditBioDialog({
   // Sync bio when dialog opens with new data
   useEffect(() => {
     if (open) {
-      setBio(currentBio ?? "")
+      setBio(currentBio ?? '')
       setError(null)
       setSaving(false)
       setGenerating(false)
@@ -63,13 +63,13 @@ export function EditBioDialog({
 
     try {
       const response = await fetch(`${API_BASE}/agents/${agentId}/generate-bio`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
       })
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}))
-        throw new Error(err.detail || "Failed to generate bio")
+        throw new Error(err.detail || 'Failed to generate bio')
       }
 
       const data = await response.json()
@@ -77,8 +77,8 @@ export function EditBioDialog({
         setBio(data.bio)
       }
     } catch (err) {
-      console.error("Failed to generate bio:", err)
-      setError(err instanceof Error ? err.message : "Failed to generate bio")
+      console.error('Failed to generate bio:', err)
+      setError(err instanceof Error ? err.message : 'Failed to generate bio')
     } finally {
       setGenerating(false)
     }
@@ -92,24 +92,24 @@ export function EditBioDialog({
 
     try {
       const response = await fetch(`${API_BASE}/agents/${agentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bio: bio.trim() || null }),
       })
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}))
-        throw new Error(err.detail || "Failed to save bio")
+        throw new Error(err.detail || 'Failed to save bio')
       }
 
       // Notify other components that agents were updated
-      window.dispatchEvent(new CustomEvent("agents-updated"))
+      window.dispatchEvent(new CustomEvent('agents-updated'))
 
       onSaved?.()
       onOpenChange(false)
     } catch (err) {
-      console.error("Failed to save bio:", err)
-      setError(err instanceof Error ? err.message : "Failed to save bio")
+      console.error('Failed to save bio:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save bio')
     } finally {
       setSaving(false)
     }
@@ -123,9 +123,7 @@ export function EditBioDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {isCreating ? "✨ Create Bio" : "✏️ Update Bio"}
-          </DialogTitle>
+          <DialogTitle>{isCreating ? '✨ Create Bio' : '✏️ Update Bio'}</DialogTitle>
           <DialogDescription>
             {isCreating
               ? `Give ${agentName} a personality! Write a short bio that describes who they are.`
@@ -182,14 +180,10 @@ export function EditBioDialog({
               maxLength={500}
               disabled={generating}
             />
-            <div className="text-xs text-muted-foreground text-right">
-              {bio.length}/500
-            </div>
+            <div className="text-xs text-muted-foreground text-right">{bio.length}/500</div>
           </div>
 
-          {error && (
-            <div className="mt-3 text-sm text-destructive">{error}</div>
-          )}
+          {error && <div className="mt-3 text-sm text-destructive">{error}</div>}
         </div>
 
         <DialogFooter>
@@ -197,7 +191,7 @@ export function EditBioDialog({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving || isDemoMode}>
-            {saving ? "Saving…" : "Save Bio"}
+            {saving ? 'Saving…' : 'Save Bio'}
           </Button>
         </DialogFooter>
       </DialogContent>

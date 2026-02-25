@@ -13,7 +13,8 @@ function FileIcon({ type, name }: { type: string; name: string }) {
   if (type === 'directory') return <span style={{ fontSize: 13 }}>📁</span>
   if (name.endsWith('.md')) return <span style={{ fontSize: 13 }}>📝</span>
   if (name.endsWith('.json')) return <span style={{ fontSize: 13 }}>📋</span>
-  if (name.endsWith('.yaml') || name.endsWith('.yml')) return <span style={{ fontSize: 13 }}>⚙️</span>
+  if (name.endsWith('.yaml') || name.endsWith('.yml'))
+    return <span style={{ fontSize: 13 }}>⚙️</span>
   return <span style={{ fontSize: 13 }}>📄</span>
 }
 
@@ -23,18 +24,18 @@ function formatSize(bytes?: number): string {
   return (bytes / 1024).toFixed(1) + 'K'
 }
 
-function TreeNode({ 
-  node, 
-  depth, 
-  selectedPath, 
-  onSelect, 
-  onExpand 
-}: { 
+function TreeNode({
+  node,
+  depth,
+  selectedPath,
+  onSelect,
+  onExpand,
+}: {
   node: FileNode
   depth: number
   selectedPath?: string
   onSelect: (file: FileNode) => void
-  onExpand?: (file: FileNode) => void 
+  onExpand?: (file: FileNode) => void
 }) {
   const [expanded, setExpanded] = useState(depth === 0)
   const isSelected = node.path === selectedPath
@@ -42,7 +43,7 @@ function TreeNode({
 
   const handleClick = useCallback(() => {
     if (isDir) {
-      setExpanded(prev => !prev)
+      setExpanded((prev) => !prev)
     } else {
       onSelect(node)
     }
@@ -60,31 +61,47 @@ function TreeNode({
           cursor: 'pointer',
           fontSize: 12,
           fontFamily: 'system-ui, sans-serif',
-          color: isSelected ? 'var(--zen-accent, hsl(var(--primary)))' : 'var(--zen-fg, hsl(var(--foreground)))',
-          background: isSelected ? 'var(--zen-bg-active, hsl(var(--primary) / 0.1))' : 'transparent',
+          color: isSelected
+            ? 'var(--zen-accent, hsl(var(--primary)))'
+            : 'var(--zen-fg, hsl(var(--foreground)))',
+          background: isSelected
+            ? 'var(--zen-bg-active, hsl(var(--primary) / 0.1))'
+            : 'transparent',
           borderRadius: 4,
           transition: 'background 0.1s',
           userSelect: 'none',
         }}
-        onMouseEnter={e => {
-          if (!isSelected) e.currentTarget.style.background = 'var(--zen-bg-hover, hsl(var(--secondary)))'
+        onMouseEnter={(e) => {
+          if (!isSelected)
+            e.currentTarget.style.background = 'var(--zen-bg-hover, hsl(var(--secondary)))'
         }}
-        onMouseLeave={e => {
+        onMouseLeave={(e) => {
           if (!isSelected) e.currentTarget.style.background = 'transparent'
         }}
       >
         {isDir && (
-          <span style={{ fontSize: 10, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', width: 10, textAlign: 'center' }}>
+          <span
+            style={{
+              fontSize: 10,
+              color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+              width: 10,
+              textAlign: 'center',
+            }}
+          >
             {expanded ? '▼' : '▶'}
           </span>
         )}
         {!isDir && <span style={{ width: 10 }} />}
         <FileIcon type={node.type} name={node.name} />
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span
+          style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
           {node.name}
         </span>
         {!isDir && node.size != null && (
-          <span style={{ fontSize: 10, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))' }}>
+          <span
+            style={{ fontSize: 10, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))' }}
+          >
             {formatSize(node.size)}
           </span>
         )}
@@ -104,23 +121,25 @@ function TreeNode({
               padding: '0 2px',
               opacity: 0.6,
             }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
           >
             ⤢
           </button>
         )}
       </div>
-      {isDir && expanded && node.children?.map((child, i) => (
-        <TreeNode
-          key={child.path || i}
-          node={child}
-          depth={depth + 1}
-          selectedPath={selectedPath}
-          onSelect={onSelect}
-          onExpand={onExpand}
-        />
-      ))}
+      {isDir &&
+        expanded &&
+        node.children?.map((child, i) => (
+          <TreeNode
+            key={child.path || i}
+            node={child}
+            depth={depth + 1}
+            selectedPath={selectedPath}
+            onSelect={onSelect}
+            onExpand={onExpand}
+          />
+        ))}
     </div>
   )
 }
@@ -128,7 +147,14 @@ function TreeNode({
 export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: FileTreeProps) {
   if (loading) {
     return (
-      <div style={{ padding: 16, fontSize: 12, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', textAlign: 'center' }}>
+      <div
+        style={{
+          padding: 16,
+          fontSize: 12,
+          color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+          textAlign: 'center',
+        }}
+      >
         Loading files…
       </div>
     )
@@ -136,7 +162,14 @@ export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: F
 
   if (files.length === 0) {
     return (
-      <div style={{ padding: 16, fontSize: 12, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))', textAlign: 'center' }}>
+      <div
+        style={{
+          padding: 16,
+          fontSize: 12,
+          color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+          textAlign: 'center',
+        }}
+      >
         No files found
       </div>
     )

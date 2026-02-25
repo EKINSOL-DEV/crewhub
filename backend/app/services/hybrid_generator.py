@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import re
-import json
 import logging
-from typing import Optional
+import re
 from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +142,7 @@ export function {component_name}({{ position = [0, 0, 0], scale = 1 }}: {compone
   // useToonMaterialProps hooks
   // useRef for animated parts
   // useFrame for animation
-  
+
   return (
     <group position={{position}} scale={{scale}}>
       {{/* Multiple mesh layers with varied geometry */}}
@@ -182,7 +181,7 @@ class HybridGenerator:
             template_name=template_base,
         )
 
-        from .connections import get_connection_manager, OpenClawConnection
+        from .connections import OpenClawConnection, get_connection_manager
 
         manager = await get_connection_manager()
         conn = None
@@ -204,10 +203,10 @@ class HybridGenerator:
             raise RuntimeError("AI returned empty response")
 
         raw = raw.strip()
-        raw = re.sub(r'^```\w*\n', '', raw)
-        raw = re.sub(r'\n```\s*$', '', raw)
+        raw = re.sub(r"^```\w*\n", "", raw)
+        raw = re.sub(r"\n```\s*$", "", raw)
 
-        if 'export function' not in raw:
+        if "export function" not in raw:
             raise ValueError("Hybrid generation produced invalid component")
 
         return raw
@@ -228,7 +227,4 @@ class HybridGenerator:
 
     def get_templates(self) -> list[dict]:
         """Return available template bases."""
-        return [
-            {"id": tid, "name": name}
-            for tid, name in TEMPLATE_BASES.items()
-        ]
+        return [{"id": tid, "name": name} for tid, name in TEMPLATE_BASES.items()]

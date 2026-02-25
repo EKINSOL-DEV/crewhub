@@ -1,6 +1,6 @@
 # Demo Site Review — `demo.crewhub.dev`
 
-**Reviewed:** 2026-02-05  
+**Reviewed:** 2026-02-05
 **Input plan:** `docs/demo-site-plan.md`
 
 ## Grade: **B+**

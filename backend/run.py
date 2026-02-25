@@ -2,6 +2,7 @@
 """Run the CrewHub backend server."""
 
 import uvicorn
+
 from app.config import settings
 
 if __name__ == "__main__":

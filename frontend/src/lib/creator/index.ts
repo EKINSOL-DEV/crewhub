@@ -7,9 +7,4 @@ export {
   type ParsedProp,
 } from './parsePropsFromOutput'
 
-export {
-  savePropToRegistry,
-  removeCustomProp,
-  listCustomProps,
-  type SavedProp,
-} from './propSaver'
+export { savePropToRegistry, removeCustomProp, listCustomProps, type SavedProp } from './propSaver'

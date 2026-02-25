@@ -48,10 +48,12 @@ function saveErrors(errors: DevError[]) {
     errorCache = errors.slice(-50)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(errorCache))
   }
-  listeners.forEach(fn => fn())
+  listeners.forEach((fn) => fn())
 }
 
-export function addError(partial: Omit<DevError, 'id' | 'timestamp' | 'userAgent' | 'url'>): DevError {
+export function addError(
+  partial: Omit<DevError, 'id' | 'timestamp' | 'userAgent' | 'url'>
+): DevError {
   const error: DevError = {
     ...partial,
     id: generateId(),
@@ -79,7 +81,7 @@ export function getErrorCount(): number {
 export function subscribe(listener: () => void): () => void {
   listeners.push(listener)
   return () => {
-    listeners = listeners.filter(l => l !== listener)
+    listeners = listeners.filter((l) => l !== listener)
   }
 }
 
@@ -119,18 +121,24 @@ export function installGlobalErrorCapture() {
   const origConsoleError = console.error
   console.error = (...args: unknown[]) => {
     // Skip React internal double-render warnings in strict mode
-    const msg = args.map(a => {
-      if (a instanceof Error) return a.message
-      if (typeof a === 'string') return a
-      try { return JSON.stringify(a) } catch { return String(a) }
-    }).join(' ')
+    const msg = args
+      .map((a) => {
+        if (a instanceof Error) return a.message
+        if (typeof a === 'string') return a
+        try {
+          return JSON.stringify(a)
+        } catch {
+          return String(a)
+        }
+      })
+      .join(' ')
 
     // Don't capture our own logging or trivial messages
     if (!msg.includes('DevErrorStore')) {
       addError({
         type: 'console.error',
         message: msg.slice(0, 2000),
-        stack: args.find(a => a instanceof Error)?.stack as string | undefined,
+        stack: args.find((a) => a instanceof Error)?.stack as string | undefined,
       })
     }
 

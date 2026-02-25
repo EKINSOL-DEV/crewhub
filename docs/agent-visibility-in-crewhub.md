@@ -1,12 +1,12 @@
 # Agent Visibility in CrewHub: What You See vs. What You Don't
 
-*Created: 2026-02-10*  
-*Status: Architecture Documentation*  
+*Created: 2026-02-10*
+*Status: Architecture Documentation*
 *Related: Agent Identity Pattern, CrewHub Monitoring*
 
 ## The Question
 
-> "I also assume that if I don't talk to them through crewhub they don't know what is going on? I have it a task from chat and it showed working but the logs when I click on the assistant show blank"  
+> "I also assume that if I don't talk to them through crewhub they don't know what is going on? I have it a task from chat and it showed working but the logs when I click on the assistant show blank"
 > — TODinSort, Discord #dev
 
 **Core Question:** When an agent works via chat (WhatsApp, Discord, etc.), what does CrewHub see? Why are logs sometimes "blank"?

@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function ArcadeStick() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.35) * 0.15; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.35) * 0.15
+  })
   return (
     <group ref={groupRef}>
       {/* Base */}
@@ -33,16 +35,24 @@ export function ArcadeStick() {
         <meshStandardMaterial color="#ff2244" flatShading />
       </mesh>
       {/* Buttons - 2 rows of 4 */}
-      {[0, 1, 2, 3].map(i => (
+      {[0, 1, 2, 3].map((i) => (
         <mesh key={`t-${i}`} position={[0.05 + i * 0.1, -0.21, -0.05]}>
           <cylinderGeometry args={[0.03, 0.03, 0.04, 8]} />
-          <meshStandardMaterial color={['#ff4444', '#ffcc44', '#44ff44', '#4488ff'][i]} emissive={['#ff4444', '#ffcc44', '#44ff44', '#4488ff'][i]} emissiveIntensity={0.8} />
+          <meshStandardMaterial
+            color={['#ff4444', '#ffcc44', '#44ff44', '#4488ff'][i]}
+            emissive={['#ff4444', '#ffcc44', '#44ff44', '#4488ff'][i]}
+            emissiveIntensity={0.8}
+          />
         </mesh>
       ))}
-      {[0, 1, 2, 3].map(i => (
+      {[0, 1, 2, 3].map((i) => (
         <mesh key={`b-${i}`} position={[0.1 + i * 0.1, -0.21, 0.08]}>
           <cylinderGeometry args={[0.03, 0.03, 0.04, 8]} />
-          <meshStandardMaterial color={['#ff8844', '#88ff44', '#4488ff', '#aa44ff'][i]} emissive={['#ff8844', '#88ff44', '#4488ff', '#aa44ff'][i]} emissiveIntensity={0.8} />
+          <meshStandardMaterial
+            color={['#ff8844', '#88ff44', '#4488ff', '#aa44ff'][i]}
+            emissive={['#ff8844', '#88ff44', '#4488ff', '#aa44ff'][i]}
+            emissiveIntensity={0.8}
+          />
         </mesh>
       ))}
       {/* USB cable */}
@@ -51,5 +61,5 @@ export function ArcadeStick() {
         <meshStandardMaterial color="#222222" />
       </mesh>
     </group>
-  );
+  )
 }

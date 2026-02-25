@@ -58,13 +58,13 @@ interface SessionDetailsProps {
 export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetailsProps) {
   const [isKilling, setIsKilling] = useState(false)
   const [confirmKill, setConfirmKill] = useState(false)
-  
+
   const handleKill = useCallback(async () => {
     if (!confirmKill) {
       setConfirmKill(true)
       return
     }
-    
+
     setIsKilling(true)
     try {
       await onKill(sessionKey)
@@ -73,7 +73,7 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
       setIsKilling(false)
     }
   }, [confirmKill, sessionKey, onKill, onClose])
-  
+
   // Parse session key for display
   const sessionParts = useMemo(() => {
     const parts = sessionKey.split(':')
@@ -83,20 +83,16 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
       id: parts.slice(2).join(':') || sessionKey,
     }
   }, [sessionKey])
-  
+
   return (
     <div className="zen-session-details">
       <header className="zen-session-details-header">
         <h3 className="zen-session-details-title">Session Details</h3>
-        <button
-          className="zen-btn zen-btn-icon"
-          onClick={onClose}
-          title="Close details"
-        >
+        <button className="zen-btn zen-btn-icon" onClick={onClose} title="Close details">
           ✕
         </button>
       </header>
-      
+
       <div className="zen-session-details-content">
         <div className="zen-session-details-row">
           <span className="zen-session-details-label">Type</span>
@@ -111,7 +107,7 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
           <code className="zen-session-details-code">{sessionParts.id}</code>
         </div>
       </div>
-      
+
       <footer className="zen-session-details-footer">
         <button
           className={`zen-btn zen-session-kill-btn ${confirmKill ? 'zen-session-kill-confirm' : ''}`}
@@ -148,26 +144,29 @@ interface ZenAgentPickerProps {
   agents?: AgentOption[]
 }
 
-export function ZenAgentPicker({ onClose, onSelect, agents = AVAILABLE_AGENTS }: ZenAgentPickerProps) {
+export function ZenAgentPicker({
+  onClose,
+  onSelect,
+  agents = AVAILABLE_AGENTS,
+}: ZenAgentPickerProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
   // Filter agents by query
   const filteredAgents = useMemo(() => {
     if (!query.trim()) return agents
     const q = query.toLowerCase()
-    return agents.filter(a => 
-      a.name.toLowerCase().includes(q) || 
-      a.description.toLowerCase().includes(q)
+    return agents.filter(
+      (a) => a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q)
     )
   }, [agents, query])
-  
+
   // Focus input
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
-  
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -179,11 +178,11 @@ export function ZenAgentPicker({ onClose, onSelect, agents = AVAILABLE_AGENTS }:
           break
         case 'ArrowDown':
           e.preventDefault()
-          setSelectedIndex(i => Math.min(i + 1, filteredAgents.length - 1))
+          setSelectedIndex((i) => Math.min(i + 1, filteredAgents.length - 1))
           break
         case 'ArrowUp':
           e.preventDefault()
-          setSelectedIndex(i => Math.max(i - 1, 0))
+          setSelectedIndex((i) => Math.max(i - 1, 0))
           break
         case 'Enter':
           e.preventDefault()
@@ -194,24 +193,27 @@ export function ZenAgentPicker({ onClose, onSelect, agents = AVAILABLE_AGENTS }:
           break
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [filteredAgents, selectedIndex, onSelect, onClose])
-  
+
   // Reset selection when query changes
   useEffect(() => {
     setSelectedIndex(0)
   }, [query])
-  
-  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }, [onClose])
-  
+
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        onClose()
+      }
+    },
+    [onClose]
+  )
+
   return (
-    <div 
+    <div
       className="zen-picker-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
@@ -230,7 +232,7 @@ export function ZenAgentPicker({ onClose, onSelect, agents = AVAILABLE_AGENTS }:
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        
+
         <div className="zen-picker-list">
           {filteredAgents.length === 0 ? (
             <div className="zen-picker-empty">No agents found</div>
@@ -247,18 +249,22 @@ export function ZenAgentPicker({ onClose, onSelect, agents = AVAILABLE_AGENTS }:
                   <span className="zen-picker-item-name">{agent.name}</span>
                   <span className="zen-picker-item-desc">{agent.description}</span>
                 </div>
-                {agent.model && (
-                  <span className="zen-picker-item-model">{agent.model}</span>
-                )}
+                {agent.model && <span className="zen-picker-item-model">{agent.model}</span>}
               </button>
             ))
           )}
         </div>
-        
+
         <div className="zen-picker-footer">
-          <span><kbd className="zen-kbd">↑↓</kbd> navigate</span>
-          <span><kbd className="zen-kbd">Enter</kbd> select</span>
-          <span><kbd className="zen-kbd">Esc</kbd> cancel</span>
+          <span>
+            <kbd className="zen-kbd">↑↓</kbd> navigate
+          </span>
+          <span>
+            <kbd className="zen-kbd">Enter</kbd> select
+          </span>
+          <span>
+            <kbd className="zen-kbd">Esc</kbd> cancel
+          </span>
         </div>
       </div>
     </div>

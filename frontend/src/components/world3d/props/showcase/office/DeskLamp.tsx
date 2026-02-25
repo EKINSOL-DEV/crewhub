@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function DeskLamp() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.15; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.15
+  })
   return (
     <group ref={groupRef}>
       {/* Base */}
@@ -40,5 +42,5 @@ export function DeskLamp() {
       {/* Light cone effect */}
       <pointLight position={[0.28, 0.5, 0]} intensity={0.8} color="#ffeeaa" distance={2} />
     </group>
-  );
+  )
 }

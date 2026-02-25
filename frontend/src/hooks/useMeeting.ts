@@ -69,7 +69,7 @@ export interface StartMeetingParams {
   max_tokens_per_turn?: number
   document_path?: string
   document_context?: string
-  parent_meeting_id?: string  // F4: follow-up meeting
+  parent_meeting_id?: string // F4: follow-up meeting
 }
 
 const INITIAL_STATE: MeetingState = {
@@ -105,7 +105,7 @@ export function useMeeting() {
     const handleStarted = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data)
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           phase: 'gathering',
           meetingId: data.meeting_id,
@@ -141,7 +141,7 @@ export function useMeeting() {
         else if (stateStr === 'error') phase = 'error'
         else if (stateStr === 'cancelled') phase = 'cancelled'
 
-        setState(prev => {
+        setState((prev) => {
           const newRounds = [...prev.rounds]
           // Mark current round topic if we have it
           if (phase === 'round' && data.current_round && data.round_topic) {
@@ -182,7 +182,7 @@ export function useMeeting() {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
 
-        setState(prev => {
+        setState((prev) => {
           const newRounds = [...prev.rounds]
           const roundIdx = (data.round || 1) - 1
           if (!newRounds[roundIdx]) {
@@ -195,7 +195,7 @@ export function useMeeting() {
           }
           // Add or update turn
           const existingIdx = newRounds[roundIdx].turns.findIndex(
-            t => t.agentId === data.agent_id && t.round === data.round
+            (t) => t.agentId === data.agent_id && t.round === data.round
           )
           const turn: MeetingTurn = {
             round: data.round || 1,
@@ -230,7 +230,7 @@ export function useMeeting() {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
 
-        setState(prev => {
+        setState((prev) => {
           const newRounds = [...prev.rounds]
           const roundIdx = (data.round || 1) - 1
           if (!newRounds[roundIdx]) {
@@ -242,7 +242,7 @@ export function useMeeting() {
             }
           }
           const existingIdx = newRounds[roundIdx].turns.findIndex(
-            t => t.agentId === data.agent_id && t.round === data.round
+            (t) => t.agentId === data.agent_id && t.round === data.round
           )
           const turn: MeetingTurn = {
             round: data.round || 1,
@@ -276,7 +276,7 @@ export function useMeeting() {
       try {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           phase: 'synthesizing',
           progressPct: data.progress_pct ?? 90,
@@ -292,7 +292,7 @@ export function useMeeting() {
       try {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           phase: 'complete',
           progressPct: 100,
@@ -310,7 +310,7 @@ export function useMeeting() {
       try {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           phase: 'error',
           error: data.error || 'Unknown error',
@@ -326,7 +326,7 @@ export function useMeeting() {
       try {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           phase: 'cancelled',
           currentTurnAgentId: null,
@@ -341,7 +341,7 @@ export function useMeeting() {
       try {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           warnings: [...prev.warnings, data.message || 'Unknown warning'],
         }))
@@ -362,7 +362,7 @@ export function useMeeting() {
       sseManager.subscribe('meeting-warning', handleWarning),
     ]
 
-    return () => unsubs.forEach(fn => fn())
+    return () => unsubs.forEach((fn) => fn())
   }, [])
 
   // ─── Actions ────────────────────────────────────────────────
@@ -390,7 +390,7 @@ export function useMeeting() {
     }
     const data = await res.json()
     // Immediately update local state (don't wait for SSE which may race)
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       phase: 'cancelled',
       currentTurnAgentId: null,
@@ -402,16 +402,16 @@ export function useMeeting() {
   const fetchOutput = useCallback(async () => {
     const meetingId = stateRef.current.meetingId
     if (!meetingId) return null
-    setState(prev => ({ ...prev, outputLoading: true, outputError: null }))
+    setState((prev) => ({ ...prev, outputLoading: true, outputError: null }))
     try {
       const res = await fetch(`${API_BASE}/meetings/${meetingId}/output`)
       if (!res.ok) {
         const errText = `Failed to load output (HTTP ${res.status})`
-        setState(prev => ({ ...prev, outputLoading: false, outputError: errText }))
+        setState((prev) => ({ ...prev, outputLoading: false, outputError: errText }))
         return null
       }
       const data = await res.json()
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         outputMd: data.output_md || null,
         outputPath: data.output_path || null,
@@ -421,7 +421,7 @@ export function useMeeting() {
       return data
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Failed to load output'
-      setState(prev => ({ ...prev, outputLoading: false, outputError: errMsg }))
+      setState((prev) => ({ ...prev, outputLoading: false, outputError: errMsg }))
       return null
     }
   }, [])
@@ -430,7 +430,11 @@ export function useMeeting() {
     setState(INITIAL_STATE)
   }, [])
 
-  const isActive = state.phase !== 'idle' && state.phase !== 'complete' && state.phase !== 'error' && state.phase !== 'cancelled'
+  const isActive =
+    state.phase !== 'idle' &&
+    state.phase !== 'complete' &&
+    state.phase !== 'error' &&
+    state.phase !== 'cancelled'
 
   return {
     ...state,

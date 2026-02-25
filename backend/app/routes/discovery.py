@@ -8,7 +8,7 @@ and test connectivity to specific endpoints.
 import hashlib
 import logging
 import time
-from typing import Any, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel
@@ -105,13 +105,16 @@ Server-Sent Events powers live state updates.
 # Request / Response Models
 # =============================================================================
 
+
 class ScanRequest(BaseModel):
     """Request body for discovery scan."""
+
     mode: str = "local"  # "local" or future "lan"
 
 
 class DiscoveryCandidateResponse(BaseModel):
     """Single discovery candidate."""
+
     runtime_type: str
     discovery_method: str
     target: dict = {}
@@ -124,12 +127,14 @@ class DiscoveryCandidateResponse(BaseModel):
 
 class ScanResponse(BaseModel):
     """Response for discovery scan."""
+
     candidates: list[DiscoveryCandidateResponse]
     scan_duration_ms: int
 
 
 class TestConnectionRequest(BaseModel):
     """Request body for testing a specific connection."""
+
     type: str  # openclaw | claude_code | codex_cli
     url: str
     token: Optional[str] = None
@@ -137,6 +142,7 @@ class TestConnectionRequest(BaseModel):
 
 class TestConnectionResponse(BaseModel):
     """Response for connection test."""
+
     reachable: bool
     sessions: Optional[int] = None
     error: Optional[str] = None
@@ -145,6 +151,7 @@ class TestConnectionResponse(BaseModel):
 # =============================================================================
 # Routes
 # =============================================================================
+
 
 @router.get("/manifest")
 async def get_manifest():
@@ -179,7 +186,7 @@ async def get_manifest():
 async def scan_for_runtimes(body: ScanRequest):
     """
     Scan for local agent runtimes.
-    
+
     Probes for OpenClaw (WebSocket), Claude Code (CLI),
     and Codex CLI installations.
     """
@@ -205,9 +212,7 @@ async def scan_for_runtimes(body: ScanRequest):
     duration_ms = int((time.monotonic() - start) * 1000)
 
     return ScanResponse(
-        candidates=[
-            DiscoveryCandidateResponse(**c.to_dict()) for c in candidates
-        ],
+        candidates=[DiscoveryCandidateResponse(**c.to_dict()) for c in candidates],
         scan_duration_ms=duration_ms,
     )
 
@@ -216,7 +221,7 @@ async def scan_for_runtimes(body: ScanRequest):
 async def test_connection(body: TestConnectionRequest):
     """
     Test connectivity to a specific runtime endpoint.
-    
+
     Currently supports testing OpenClaw WebSocket connections.
     """
     service = get_discovery_service()

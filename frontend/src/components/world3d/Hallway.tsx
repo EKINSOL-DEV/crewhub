@@ -19,9 +19,9 @@ interface HallwayProps {
 export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
   const floorToon = useToonMaterialProps('#C8BFA0')
 
-  const hq = roomPositions.find(rp => rp.room?.is_hq)
+  const hq = roomPositions.find((rp) => rp.room?.is_hq)
   const center = hq || roomPositions[0]
-  const peripherals = roomPositions.filter(rp => rp !== center)
+  const peripherals = roomPositions.filter((rp) => rp !== center)
 
   const paths = useMemo(() => {
     if (!center || peripherals.length === 0) return []
@@ -68,12 +68,7 @@ export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
   return (
     <group>
       {paths.map(({ key, mx, mz, length, angle }) => (
-        <mesh
-          key={key}
-          position={[mx, 0.06, mz]}
-          rotation={[-Math.PI / 2, 0, angle]}
-          receiveShadow
-        >
+        <mesh key={key} position={[mx, 0.06, mz]} rotation={[-Math.PI / 2, 0, angle]} receiveShadow>
           <planeGeometry args={[hallwayWidth, length]} />
           <meshToonMaterial {...floorToon} />
         </mesh>

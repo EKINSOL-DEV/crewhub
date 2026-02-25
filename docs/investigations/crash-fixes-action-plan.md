@@ -16,7 +16,7 @@ macOS Jetsam killing processes during memory pressure. 16GB RAM is too tight for
 ```bash
 # Kill the idle Astro and Planner dev servers
 kill $(pgrep -f "astro dev.*port 4321")
-kill $(pgrep -f "astro dev.*port 4322")  
+kill $(pgrep -f "astro dev.*port 4322")
 kill $(pgrep -f "vite.*ekinbot_planner")
 ```
 
@@ -58,12 +58,12 @@ while true; do
   cd ~/ekinapps/crewhub/backend
   python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8091 --reload &
   BACK_PID=$!
-  
-  echo "[$(date)] Starting frontend..."  
+
+  echo "[$(date)] Starting frontend..."
   cd ~/ekinapps/crewhub/frontend
   NODE_OPTIONS='--max-old-space-size=512' npx vite --host --port 5180 &
   FRONT_PID=$!
-  
+
   # Wait for either to die
   wait -n $BACK_PID $FRONT_PID
   echo "[$(date)] ⚠️  Process died! Restarting in 2s..."

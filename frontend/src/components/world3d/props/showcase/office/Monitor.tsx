@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Monitor() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.15; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.15
+  })
   return (
     <group ref={groupRef}>
       {/* Screen bezel */}
@@ -21,7 +23,11 @@ export function Monitor() {
       {[0.15, 0.05, -0.05, -0.15].map((y, i) => (
         <mesh key={i} position={[-0.15 + i * 0.05, 0.15 + y, 0.035]}>
           <boxGeometry args={[0.3 + (i % 3) * 0.1, 0.025, 0.001]} />
-          <meshStandardMaterial color={['#66ff66', '#ffcc44', '#66aaff', '#ff6688'][i]} emissive={['#66ff66', '#ffcc44', '#66aaff', '#ff6688'][i]} emissiveIntensity={1.5} />
+          <meshStandardMaterial
+            color={['#66ff66', '#ffcc44', '#66aaff', '#ff6688'][i]}
+            emissive={['#66ff66', '#ffcc44', '#66aaff', '#ff6688'][i]}
+            emissiveIntensity={1.5}
+          />
         </mesh>
       ))}
       {/* Stand neck */}
@@ -40,5 +46,5 @@ export function Monitor() {
         <meshStandardMaterial color="#00ff44" emissive="#00ff44" emissiveIntensity={3} />
       </mesh>
     </group>
-  );
+  )
 }

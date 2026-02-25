@@ -65,7 +65,7 @@ export function calculateMeetingPath(
   targetX: number,
   targetZ: number,
   botRoomId: string | undefined,
-  meetingGathering: MeetingGatheringState,
+  meetingGathering: MeetingGatheringState
 ): { x: number; z: number }[] {
   // If no room info available, fall back to straight line
   if (!botRoomId || meetingGathering.roomPositions.size === 0) {

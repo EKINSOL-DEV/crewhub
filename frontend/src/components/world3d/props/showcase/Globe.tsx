@@ -1,20 +1,20 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Globe() {
-  const globeRef = useRef<THREE.Mesh>(null);
-  const ringsRef = useRef<THREE.Group>(null);
+  const globeRef = useRef<THREE.Mesh>(null)
+  const ringsRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
     if (globeRef.current) {
-      globeRef.current.rotation.y += 0.008;
+      globeRef.current.rotation.y += 0.008
     }
     if (ringsRef.current) {
-      ringsRef.current.rotation.y += 0.015;
-      ringsRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1 + 0.3;
+      ringsRef.current.rotation.y += 0.015
+      ringsRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1 + 0.3
     }
-  });
+  })
 
   return (
     <group>
@@ -25,8 +25,12 @@ export function Globe() {
       </mesh>
       {/* Land masses (simple patches) */}
       {[
-        [0.3, 0.4, 0.35], [-0.2, 0.3, -0.45], [0.4, -0.1, 0.3],
-        [-0.35, -0.2, 0.35], [0.1, -0.4, -0.35], [-0.3, 0.1, 0.45],
+        [0.3, 0.4, 0.35],
+        [-0.2, 0.3, -0.45],
+        [0.4, -0.1, 0.3],
+        [-0.35, -0.2, 0.35],
+        [0.1, -0.4, -0.35],
+        [-0.3, 0.1, 0.45],
       ].map((pos, i) => (
         <mesh key={i} position={pos as [number, number, number]}>
           <icosahedronGeometry args={[0.15 + (i % 3) * 0.05, 0]} />
@@ -57,5 +61,5 @@ export function Globe() {
         <meshStandardMaterial color="#8888aa" transparent opacity={0.3} />
       </mesh>
     </group>
-  );
+  )
 }

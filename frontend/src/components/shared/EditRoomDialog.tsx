@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useDemoMode } from "@/contexts/DemoContext"
-import type { Room, FloorStyle, WallStyle } from "@/hooks/useRooms"
+import { useState, useEffect, useRef } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useDemoMode } from '@/contexts/DemoContext'
+import type { Room, FloorStyle, WallStyle } from '@/hooks/useRooms'
 
 // ── Constants ──────────────────────────────────────────────────
 
@@ -30,10 +30,41 @@ const WALL_STYLES: { value: WallStyle; label: string; icon: string }[] = [
   { value: 'glass', label: 'Glass', icon: '🧊' },
 ]
 
-const ROOM_ICONS = ["🏛️", "💻", "🎨", "🧠", "⚙️", "📡", "🛠️", "📢", "🚀", "📊", "🔬", "📝", "🎯", "💡", "🔧", "📦"]
+const ROOM_ICONS = [
+  '🏛️',
+  '💻',
+  '🎨',
+  '🧠',
+  '⚙️',
+  '📡',
+  '🛠️',
+  '📢',
+  '🚀',
+  '📊',
+  '🔬',
+  '📝',
+  '🎯',
+  '💡',
+  '🔧',
+  '📦',
+]
 const ROOM_COLORS = [
-  "#4f46e5", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#14b8a6", "#f97316", "#ec4899",
-  "#3b82f6", "#ef4444", "#84cc16", "#a855f7", "#0ea5e9", "#f43f5e", "#22c55e", "#6366f1"
+  '#4f46e5',
+  '#10b981',
+  '#f59e0b',
+  '#8b5cf6',
+  '#06b6d4',
+  '#14b8a6',
+  '#f97316',
+  '#ec4899',
+  '#3b82f6',
+  '#ef4444',
+  '#84cc16',
+  '#a855f7',
+  '#0ea5e9',
+  '#f43f5e',
+  '#22c55e',
+  '#6366f1',
 ]
 
 // ── Types ──────────────────────────────────────────────────────
@@ -50,13 +81,16 @@ interface EditRoomDialogProps {
   room: Room | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave: (roomId: string, updates: {
-    name?: string
-    icon?: string
-    color?: string
-    floor_style?: string
-    wall_style?: string
-  }) => Promise<{ success: boolean; error?: string }>
+  onSave: (
+    roomId: string,
+    updates: {
+      name?: string
+      icon?: string
+      color?: string
+      floor_style?: string
+      wall_style?: string
+    }
+  ) => Promise<{ success: boolean; error?: string }>
 }
 
 // ── Component ──────────────────────────────────────────────────
@@ -140,7 +174,10 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
           {isDemoMode && (
             <div className="rounded-lg border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 p-3 text-sm text-amber-800 flex items-center gap-2 mb-4">
               <span>🎮</span>
-              <span><strong>Demo Mode</strong> — Changes won't be saved. Feel free to explore the options!</span>
+              <span>
+                <strong>Demo Mode</strong> — Changes won't be saved. Feel free to explore the
+                options!
+              </span>
             </div>
           )}
 
@@ -160,14 +197,14 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
                 <div className="space-y-2">
                   <Label>Icon</Label>
                   <div className="flex flex-wrap gap-2">
-                    {ROOM_ICONS.map(icon => (
+                    {ROOM_ICONS.map((icon) => (
                       <button
                         key={icon}
                         onClick={() => setForm({ ...form, icon })}
                         className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
                           form.icon === icon
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-muted-foreground"
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-muted-foreground'
                         }`}
                       >
                         {icon}
@@ -179,14 +216,12 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
                 <div className="space-y-2">
                   <Label>Color</Label>
                   <div className="flex flex-wrap gap-2">
-                    {ROOM_COLORS.map(c => (
+                    {ROOM_COLORS.map((c) => (
                       <button
                         key={c}
                         onClick={() => setForm({ ...form, color: c })}
                         className={`w-8 h-8 rounded-full transition-all ${
-                          form.color === c
-                            ? "ring-2 ring-offset-2 ring-primary"
-                            : "hover:scale-110"
+                          form.color === c ? 'ring-2 ring-offset-2 ring-primary' : 'hover:scale-110'
                         }`}
                         style={{ backgroundColor: c }}
                       />
@@ -206,8 +241,8 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
                         onClick={() => setForm({ ...form, floor_style: fs.value })}
                         className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
                           form.floor_style === fs.value
-                            ? "border-primary bg-primary/10 font-medium"
-                            : "border-border hover:border-muted-foreground"
+                            ? 'border-primary bg-primary/10 font-medium'
+                            : 'border-border hover:border-muted-foreground'
                         }`}
                       >
                         <span className="text-lg">{fs.icon}</span>
@@ -220,22 +255,22 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
                 <div className="space-y-2">
                   <Label>Wall Style</Label>
                   <div className="grid grid-cols-2 gap-2">
-                  {WALL_STYLES.map((ws) => (
-                    <button
-                      key={ws.value}
-                      onClick={() => setForm({ ...form, wall_style: ws.value })}
-                      className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
-                        form.wall_style === ws.value
-                          ? "border-primary bg-primary/10 font-medium"
-                          : "border-border hover:border-muted-foreground"
-                      }`}
-                    >
-                      <span className="text-lg">{ws.icon}</span>
-                      <span>{ws.label}</span>
-                    </button>
-                  ))}
+                    {WALL_STYLES.map((ws) => (
+                      <button
+                        key={ws.value}
+                        onClick={() => setForm({ ...form, wall_style: ws.value })}
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
+                          form.wall_style === ws.value
+                            ? 'border-primary bg-primary/10 font-medium'
+                            : 'border-border hover:border-muted-foreground'
+                        }`}
+                      >
+                        <span className="text-lg">{ws.icon}</span>
+                        <span>{ws.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
               </div>
             </div>
           )}
@@ -243,9 +278,11 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
 
         {/* Footer */}
         <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-          <Button variant="outline" onClick={handleClose}>Cancel</Button>
+          <Button variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save Changes"}
+            {saving ? 'Saving…' : 'Save Changes'}
           </Button>
         </div>
       </div>

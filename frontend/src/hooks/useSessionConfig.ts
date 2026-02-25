@@ -1,9 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import {
-  getSessionConfig,
-  subscribeConfig,
-  type SessionConfig,
-} from '@/lib/sessionConfig'
+import { getSessionConfig, subscribeConfig, type SessionConfig } from '@/lib/sessionConfig'
 
 /**
  * React hook that provides reactive access to the session config.

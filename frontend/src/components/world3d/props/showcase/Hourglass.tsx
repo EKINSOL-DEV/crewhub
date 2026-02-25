@@ -1,34 +1,34 @@
-import { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef, useMemo } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Hourglass() {
-  const groupRef = useRef<THREE.Group>(null);
-  const sandTopRef = useRef<THREE.Mesh>(null);
-  const sandBottomRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const sandTopRef = useRef<THREE.Mesh>(null)
+  const sandBottomRef = useRef<THREE.Mesh>(null)
 
   const sandParticles = useMemo(() => {
     return Array.from({ length: 15 }, (_, i) => ({
       offset: i * 0.15,
       x: (Math.random() - 0.5) * 0.03,
       z: (Math.random() - 0.5) * 0.03,
-    }));
-  }, []);
+    }))
+  }, [])
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.005;
+      groupRef.current.rotation.y += 0.005
     }
-    const t = (state.clock.elapsedTime * 0.15) % 1;
+    const t = (state.clock.elapsedTime * 0.15) % 1
     if (sandTopRef.current) {
-      sandTopRef.current.scale.set(1, Math.max(0.1, 1 - t), 1);
-      sandTopRef.current.position.y = 0.2 + (1 - t) * 0.15;
+      sandTopRef.current.scale.set(1, Math.max(0.1, 1 - t), 1)
+      sandTopRef.current.position.y = 0.2 + (1 - t) * 0.15
     }
     if (sandBottomRef.current) {
-      sandBottomRef.current.scale.set(1, Math.max(0.1, t), 1);
-      sandBottomRef.current.position.y = -0.5 + t * 0.15;
+      sandBottomRef.current.scale.set(1, Math.max(0.1, t), 1)
+      sandBottomRef.current.position.y = -0.5 + t * 0.15
     }
-  });
+  })
 
   return (
     <group ref={groupRef}>
@@ -60,12 +60,22 @@ export function Hourglass() {
       {/* Sand top */}
       <mesh ref={sandTopRef} position={[0, 0.3, 0]}>
         <coneGeometry args={[0.25, 0.35, 6]} />
-        <meshStandardMaterial color="#ffcc44" emissive="#ff8800" emissiveIntensity={0.3} flatShading />
+        <meshStandardMaterial
+          color="#ffcc44"
+          emissive="#ff8800"
+          emissiveIntensity={0.3}
+          flatShading
+        />
       </mesh>
       {/* Sand bottom */}
       <mesh ref={sandBottomRef} position={[0, -0.5, 0]}>
         <coneGeometry args={[0.25, 0.3, 6]} />
-        <meshStandardMaterial color="#ffcc44" emissive="#ff8800" emissiveIntensity={0.3} flatShading />
+        <meshStandardMaterial
+          color="#ffcc44"
+          emissive="#ff8800"
+          emissiveIntensity={0.3}
+          flatShading
+        />
       </mesh>
       {/* Falling sand stream */}
       {sandParticles.map((p, i) => (
@@ -75,16 +85,16 @@ export function Hourglass() {
         </mesh>
       ))}
       {/* Corner pillars */}
-      {[0, 1, 2, 3].map(i => {
-        const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
-        const r = 0.3;
+      {[0, 1, 2, 3].map((i) => {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4
+        const r = 0.3
         return (
           <mesh key={i} position={[Math.cos(a) * r, 0, Math.sin(a) * r]}>
             <cylinderGeometry args={[0.025, 0.025, 1.35, 4]} />
             <meshStandardMaterial color="#ccaa44" metalness={0.6} roughness={0.3} />
           </mesh>
-        );
+        )
       })}
     </group>
-  );
+  )
 }

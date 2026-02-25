@@ -1,7 +1,6 @@
 """Tests for connections CRUD endpoints."""
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 
 @pytest.mark.asyncio
@@ -13,18 +12,28 @@ async def test_list_connections(client):
     assert "connections" in data
     assert "total" in data
     assert isinstance(data["connections"], list)
-    # Default seed creates at least one openclaw connection
-    assert data["total"] >= 1
+    # No default connections are seeded; total may be 0
+    assert data["total"] >= 0
 
 
 @pytest.mark.asyncio
 async def test_get_connection(client):
     """Test GET /api/connections/{id} returns a specific connection."""
-    response = await client.get("/api/connections/default-openclaw")
+    # Create a connection first (no default connections are seeded)
+    await client.post(
+        "/api/connections",
+        json={
+            "id": "test-openclaw",
+            "name": "Test Gateway",
+            "type": "openclaw",
+            "enabled": True,
+        },
+    )
+    response = await client.get("/api/connections/test-openclaw")
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == "default-openclaw"
-    assert data["name"] == "OpenClaw Gateway"
+    assert data["id"] == "test-openclaw"
+    assert data["name"] == "Test Gateway"
     assert data["type"] == "openclaw"
     assert data["enabled"] is True
 
@@ -59,10 +68,13 @@ async def test_create_connection(client):
 @pytest.mark.asyncio
 async def test_create_connection_auto_id(client):
     """Test POST /api/connections auto-generates ID if not provided."""
-    response = await client.post("/api/connections", json={
-        "name": "Auto ID Connection",
-        "type": "codex",
-    })
+    response = await client.post(
+        "/api/connections",
+        json={
+            "name": "Auto ID Connection",
+            "type": "codex",
+        },
+    )
     assert response.status_code == 201
     data = response.json()
     assert data["id"]  # Should have a UUID
@@ -72,21 +84,37 @@ async def test_create_connection_auto_id(client):
 @pytest.mark.asyncio
 async def test_create_connection_invalid_type(client):
     """Test POST /api/connections rejects invalid type."""
-    response = await client.post("/api/connections", json={
-        "name": "Invalid Type",
-        "type": "invalid_type",
-    })
+    response = await client.post(
+        "/api/connections",
+        json={
+            "name": "Invalid Type",
+            "type": "invalid_type",
+        },
+    )
     assert response.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_create_connection_duplicate_id(client):
     """Test POST /api/connections rejects duplicate ID."""
-    response = await client.post("/api/connections", json={
-        "id": "default-openclaw",
-        "name": "Duplicate",
-        "type": "openclaw",
-    })
+    # Create a connection first
+    await client.post(
+        "/api/connections",
+        json={
+            "id": "dup-test",
+            "name": "Original",
+            "type": "openclaw",
+        },
+    )
+    # Try to create with same ID
+    response = await client.post(
+        "/api/connections",
+        json={
+            "id": "dup-test",
+            "name": "Duplicate",
+            "type": "openclaw",
+        },
+    )
     assert response.status_code == 409
 
 
@@ -94,16 +122,22 @@ async def test_create_connection_duplicate_id(client):
 async def test_update_connection(client):
     """Test PATCH /api/connections/{id} updates a connection."""
     # Create a disabled connection first
-    await client.post("/api/connections", json={
-        "id": "update-test",
-        "name": "Before Update",
-        "type": "codex",
-        "enabled": False,
-    })
+    await client.post(
+        "/api/connections",
+        json={
+            "id": "update-test",
+            "name": "Before Update",
+            "type": "codex",
+            "enabled": False,
+        },
+    )
 
-    response = await client.patch("/api/connections/update-test", json={
-        "name": "After Update",
-    })
+    response = await client.patch(
+        "/api/connections/update-test",
+        json={
+            "name": "After Update",
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "After Update"
@@ -112,9 +146,12 @@ async def test_update_connection(client):
 @pytest.mark.asyncio
 async def test_update_connection_not_found(client):
     """Test PATCH /api/connections/{id} returns 404 for missing."""
-    response = await client.patch("/api/connections/nonexistent", json={
-        "name": "Test",
-    })
+    response = await client.patch(
+        "/api/connections/nonexistent",
+        json={
+            "name": "Test",
+        },
+    )
     assert response.status_code == 404
 
 
@@ -122,12 +159,15 @@ async def test_update_connection_not_found(client):
 async def test_delete_connection(client):
     """Test DELETE /api/connections/{id} deletes a connection."""
     # Create first
-    await client.post("/api/connections", json={
-        "id": "to-delete",
-        "name": "Delete Me",
-        "type": "codex",
-        "enabled": False,
-    })
+    await client.post(
+        "/api/connections",
+        json={
+            "id": "to-delete",
+            "name": "Delete Me",
+            "type": "codex",
+            "enabled": False,
+        },
+    )
 
     response = await client.delete("/api/connections/to-delete")
     assert response.status_code == 204
@@ -147,6 +187,16 @@ async def test_delete_connection_not_found(client):
 @pytest.mark.asyncio
 async def test_connection_config_is_dict(client):
     """Test that config is returned as a dict, not a JSON string."""
-    response = await client.get("/api/connections/default-openclaw")
+    # Create a connection with config
+    await client.post(
+        "/api/connections",
+        json={
+            "id": "config-test",
+            "name": "Config Test",
+            "type": "claude_code",
+            "config": {"data_dir": "~/.claude"},
+        },
+    )
+    response = await client.get("/api/connections/config-test")
     data = response.json()
     assert isinstance(data["config"], dict)

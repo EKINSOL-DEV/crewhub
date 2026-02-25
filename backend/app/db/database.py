@@ -12,21 +12,24 @@ All historically-public symbols are re-exported from here so that
 existing import paths (``from app.db.database import get_db``) keep
 working without any changes across the codebase.
 """
+
 import logging
 from contextlib import asynccontextmanager
 
 import aiosqlite
 
+from .health import check_database_health  # noqa: F401
+from .migrations import run_migrations
+
 # ── Re-exports (backward-compat) ─────────────────────────────────────────────
 from .schema import DB_DIR, DB_PATH, DEMO_MODE, SCHEMA_VERSION  # noqa: F401
-from .migrations import run_migrations
 from .seed import seed_default_data  # noqa: F401
-from .health import check_database_health  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
 
 # ── Initialisation ────────────────────────────────────────────────────────────
+
 
 async def init_database() -> bool:
     """Initialise the CrewHub database with schema and seed data.
@@ -52,6 +55,7 @@ async def init_database() -> bool:
 
 # ── Connection context manager ────────────────────────────────────────────────
 
+
 @asynccontextmanager
 async def get_db():
     """Async context manager for a database connection.
@@ -70,7 +74,5 @@ async def get_db():
         await init_database()
 
     async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = lambda cursor, row: dict(
-            zip([col[0] for col in cursor.description], row)
-        )
+        db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
         yield db

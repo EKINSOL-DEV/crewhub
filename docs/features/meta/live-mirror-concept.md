@@ -1,8 +1,8 @@
 # Live Mirror Demo Site (Vendetta Concept)
 
-**Proposed for:** v0.21.0 or later  
-**Status:** 💡 Concept  
-**Source:** Nicky's idea 2026-02-11  
+**Proposed for:** v0.21.0 or later
+**Status:** 💡 Concept
+**Source:** Nicky's idea 2026-02-11
 **Credit:** Shoutout to user Vendetta @ ClawHub Discord (after v0.13.0 release)
 
 ---

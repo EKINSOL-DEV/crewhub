@@ -5,21 +5,21 @@
 
 // ── Panel Types ───────────────────────────────────────────────────
 
-export type PanelType = 
-  | 'chat'      // Chat interface with an agent
-  | 'sessions'  // List of all sessions
-  | 'activity'  // Real-time SSE activity feed
-  | 'rooms'     // Room navigation
-  | 'tasks'     // Task board
-  | 'kanban'    // Kanban board view
-  | 'cron'      // Cron jobs viewer
-  | 'logs'      // System logs
-  | 'docs'      // Documentation browser
-  | 'projects'  // Projects panel (overview + documents)
+export type PanelType =
+  | 'chat' // Chat interface with an agent
+  | 'sessions' // List of all sessions
+  | 'activity' // Real-time SSE activity feed
+  | 'rooms' // Room navigation
+  | 'tasks' // Task board
+  | 'kanban' // Kanban board view
+  | 'cron' // Cron jobs viewer
+  | 'logs' // System logs
+  | 'docs' // Documentation browser
+  | 'projects' // Projects panel (overview + documents)
   | 'documents' // Legacy alias for projects
-  | 'details'   // Session details (future)
-  | 'browser'   // Embedded browser panel
-  | 'empty'     // Placeholder panel
+  | 'details' // Session details (future)
+  | 'browser' // Embedded browser panel
+  | 'empty' // Placeholder panel
 
 // ── Layout Node Types ─────────────────────────────────────────────
 
@@ -43,10 +43,10 @@ export interface LeafNode {
  */
 export interface SplitNode {
   kind: 'split'
-  dir: 'row' | 'col'  // row = horizontal (side by side), col = vertical (stacked)
-  ratio: number       // 0-1, how much space the first child takes
-  a: LayoutNode       // First child
-  b: LayoutNode       // Second child
+  dir: 'row' | 'col' // row = horizontal (side by side), col = vertical (stacked)
+  ratio: number // 0-1, how much space the first child takes
+  a: LayoutNode // First child
+  b: LayoutNode // Second child
 }
 
 /**
@@ -60,7 +60,7 @@ export interface ZenLayoutState {
   root: LayoutNode
   focusedPanelId: string
   maximizedPanelId: string | null
-  savedLayout: LayoutNode | null  // Saved layout before maximize
+  savedLayout: LayoutNode | null // Saved layout before maximize
 }
 
 // ── Layout Presets ────────────────────────────────────────────────
@@ -101,7 +101,12 @@ export function generatePanelId(): string {
 /**
  * Create a leaf node
  */
-export function createLeaf(type: PanelType, sessionKey?: string, agentName?: string, agentIcon?: string): LeafNode {
+export function createLeaf(
+  type: PanelType,
+  sessionKey?: string,
+  agentName?: string,
+  agentIcon?: string
+): LeafNode {
   return {
     kind: 'leaf',
     panelId: generatePanelId(),
@@ -115,7 +120,12 @@ export function createLeaf(type: PanelType, sessionKey?: string, agentName?: str
 /**
  * Create a split node
  */
-export function createSplit(dir: 'row' | 'col', a: LayoutNode, b: LayoutNode, ratio = 0.5): SplitNode {
+export function createSplit(
+  dir: 'row' | 'col',
+  a: LayoutNode,
+  b: LayoutNode,
+  ratio = 0.5
+): SplitNode {
   return {
     kind: 'split',
     dir,
@@ -156,7 +166,11 @@ export function countPanels(node: LayoutNode): number {
 /**
  * Update a panel in the layout tree (immutable)
  */
-export function updatePanel(node: LayoutNode, panelId: string, updates: Partial<LeafNode>): LayoutNode {
+export function updatePanel(
+  node: LayoutNode,
+  panelId: string,
+  updates: Partial<LeafNode>
+): LayoutNode {
   if (node.kind === 'leaf') {
     if (node.panelId === panelId) {
       return { ...node, ...updates }
@@ -178,14 +192,14 @@ export function removePanel(node: LayoutNode, panelId: string): LayoutNode | nul
   if (node.kind === 'leaf') {
     return node.panelId === panelId ? null : node
   }
-  
+
   const newA = removePanel(node.a, panelId)
   const newB = removePanel(node.b, panelId)
-  
+
   // If one child was removed, return the other
   if (newA === null) return newB
   if (newB === null) return newA
-  
+
   // Both children still exist
   return { ...node, a: newA, b: newB }
 }
@@ -223,10 +237,10 @@ export function resizePanelSplit(
   _isChildA: boolean = true
 ): LayoutNode {
   if (node.kind === 'leaf') return node
-  
+
   const panelInA = findPanel(node.a, panelId)
   const panelInB = findPanel(node.b, panelId)
-  
+
   if (panelInA) {
     if (node.a.kind === 'leaf' && node.a.panelId === panelId) {
       // This split is the direct parent
@@ -235,7 +249,7 @@ export function resizePanelSplit(
     }
     return { ...node, a: resizePanelSplit(node.a, panelId, deltaRatio, true) }
   }
-  
+
   if (panelInB) {
     if (node.b.kind === 'leaf' && node.b.panelId === panelId) {
       // This split is the direct parent, but panel is on B side
@@ -244,6 +258,6 @@ export function resizePanelSplit(
     }
     return { ...node, b: resizePanelSplit(node.b, panelId, deltaRatio, false) }
   }
-  
+
   return node
 }

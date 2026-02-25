@@ -23,7 +23,7 @@ A human doesn't become a different person when they switch from texting to a pho
 ```
 Human:
   - Body (physical presence)
-  - Mirror (visual representation)  
+  - Mirror (visual representation)
   - Phone calls (voice access)
   - Text messages (written access)
   → Still ONE person
@@ -44,8 +44,8 @@ The Agent Identity Pattern has three components:
 A core "who am I" statement that gets injected into every conversation, regardless of which channel the agent is accessed through:
 
 ```
-I am Assistent, the Director of Bots. I coordinate the crew, 
-manage schedules, and help Nicky with whatever he needs. 
+I am Assistent, the Director of Bots. I coordinate the crew,
+manage schedules, and help Nicky with whatever he needs.
 My personality is constant across all channels.
 ```
 
@@ -100,8 +100,8 @@ The prompt fragment looks like:
 ## Identity
 I am Assistent, the Director of Bots. [...]
 
-**Identity stability rule:** Your personality and core behavior are 
-constant across all access channels. You adapt your *format* per 
+**Identity stability rule:** Your personality and core behavior are
+constant across all access channels. You adapt your *format* per
 channel, never your *personality*.
 
 **Current surface:** whatsapp

@@ -31,53 +31,98 @@ type ViewportSize = 'small' | 'expanded'
 
 function getStatusInfo(status: AgentStatus) {
   switch (status) {
-    case 'active': return { color: '#22c55e', label: 'Working', emoji: '⚡' }
-    case 'idle': return { color: '#f59e0b', label: 'Idle', emoji: '😌' }
-    case 'sleeping': return { color: '#6366f1', label: 'Sleeping', emoji: '😴' }
+    case 'active':
+      return { color: '#22c55e', label: 'Working', emoji: '⚡' }
+    case 'idle':
+      return { color: '#f59e0b', label: 'Idle', emoji: '😌' }
+    case 'sleeping':
+      return { color: '#6366f1', label: 'Sleeping', emoji: '😴' }
   }
 }
 
 // ── Static Fallback (for non-3D devices) ───────────────────────
 
-function StaticAgentAvatar({ config, status }: {
-  config: BotVariantConfig
-  status: AgentStatus
-}) {
+function StaticAgentAvatar({ config, status }: { config: BotVariantConfig; status: AgentStatus }) {
   const info = getStatusInfo(status)
 
   const eyeStyle: React.CSSProperties = {
-    width: 14, height: status === 'sleeping' ? 3 : 14,
+    width: 14,
+    height: status === 'sleeping' ? 3 : 14,
     borderRadius: status === 'sleeping' ? 3 : '50%',
-    background: '#fff', position: 'relative' as const,
+    background: '#fff',
+    position: 'relative' as const,
     transition: 'all 0.4s ease',
   }
 
   return (
-    <div style={{
-      width: '100%', height: '100%',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(ellipse at center, var(--mobile-bg-secondary, #1e293b) 0%, var(--mobile-bg, #0f172a) 100%)',
-      gap: 6,
-    }}>
-      <div style={{
-        width: 52, height: 46, borderRadius: 12,
-        background: config.color,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-      }}>
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background:
+          'radial-gradient(ellipse at center, var(--mobile-bg-secondary, #1e293b) 0%, var(--mobile-bg, #0f172a) 100%)',
+        gap: 6,
+      }}
+    >
+      <div
+        style={{
+          width: 52,
+          height: 46,
+          borderRadius: 12,
+          background: config.color,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+        }}
+      >
         <div style={eyeStyle}>
           {status !== 'sleeping' && (
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#1a1a1a', position: 'absolute', top: 3, left: 3 }} />
+            <div
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: '#1a1a1a',
+                position: 'absolute',
+                top: 3,
+                left: 3,
+              }}
+            />
           )}
         </div>
         <div style={eyeStyle}>
           {status !== 'sleeping' && (
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#1a1a1a', position: 'absolute', top: 3, left: 3 }} />
+            <div
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: '#1a1a1a',
+                position: 'absolute',
+                top: 3,
+                left: 3,
+              }}
+            />
           )}
         </div>
       </div>
-      <div style={{ fontSize: 10, color: info.color, display: 'flex', alignItems: 'center', gap: 3 }}>
-        <span style={{ width: 5, height: 5, borderRadius: '50%', background: info.color, display: 'inline-block' }} />
+      <div
+        style={{ fontSize: 10, color: info.color, display: 'flex', alignItems: 'center', gap: 3 }}
+      >
+        <span
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: '50%',
+            background: info.color,
+            display: 'inline-block',
+          }}
+        />
         {info.label}
       </div>
     </div>
@@ -86,17 +131,29 @@ function StaticAgentAvatar({ config, status }: {
 
 // ── Camera Button (for chat header) ────────────────────────────
 
-export function AgentCameraButton({ onClick, isActive }: { onClick: () => void; isActive?: boolean }) {
+export function AgentCameraButton({
+  onClick,
+  isActive,
+}: {
+  onClick: () => void
+  isActive?: boolean
+}) {
   return (
     <button
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        width: 36, height: 36, borderRadius: 12,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 36,
+        height: 36,
+        borderRadius: 12,
         border: `1px solid ${isActive ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.1)'}`,
         background: isActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.05)',
-        color: isActive ? 'var(--mobile-accent, #818cf8)' : 'var(--mobile-text-secondary, #94a3b8)', cursor: 'pointer',
-        flexShrink: 0, transition: 'all 0.15s',
+        color: isActive ? 'var(--mobile-accent, #818cf8)' : 'var(--mobile-text-secondary, #94a3b8)',
+        cursor: 'pointer',
+        flexShrink: 0,
+        transition: 'all 0.15s',
       }}
     >
       <Camera size={16} />
@@ -149,15 +206,23 @@ export function AgentMiniViewport({
       {/* 3D Content */}
       <div style={{ width: '100%', height: '100%', position: 'relative' }}>
         {has3D ? (
-          <Suspense fallback={
-            <div style={{
-              width: '100%', height: '100%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--mobile-text-muted, #475569)', fontSize: 11,
-            }}>
-              Loading…
-            </div>
-          }>
+          <Suspense
+            fallback={
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--mobile-text-muted, #475569)',
+                  fontSize: 11,
+                }}
+              >
+                Loading…
+              </div>
+            }
+          >
             <AgentScene3D
               botConfig={botConfig}
               agentName={agentName}
@@ -170,28 +235,45 @@ export function AgentMiniViewport({
         )}
 
         {/* Status badge overlay - bottom */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0, left: 0, right: 0,
-          padding: '6px 8px',
-          background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <div style={{
-            fontSize: 10, color: info.color,
-            display: 'flex', alignItems: 'center', gap: 4,
-            fontWeight: 500,
-          }}>
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '6px 8px',
+            background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              color: info.color,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontWeight: 500,
+            }}
+          >
             <span>{info.emoji}</span>
             {info.label}
           </div>
           <button
-            onClick={() => setSize(s => s === 'small' ? 'expanded' : 'small')}
+            onClick={() => setSize((s) => (s === 'small' ? 'expanded' : 'small'))}
             style={{
-              width: 20, height: 20, borderRadius: 6,
-              border: 'none', background: 'rgba(255,255,255,0.1)',
-              color: 'var(--mobile-text-secondary, #94a3b8)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 20,
+              height: 20,
+              borderRadius: 6,
+              border: 'none',
+              background: 'rgba(255,255,255,0.1)',
+              color: 'var(--mobile-text-secondary, #94a3b8)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: 0,
             }}
           >

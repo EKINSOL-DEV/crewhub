@@ -1,9 +1,9 @@
 /**
  * Zen Panel Registry - Single Source of Truth
- * 
+ *
  * All panel definitions live here. Command palette, context menus,
  * tab system, and layout persistence all consume this registry.
- * 
+ *
  * To add a new panel:
  * 1. Add its ID to the PanelId type
  * 2. Register it in PANEL_REGISTRY below
@@ -23,10 +23,10 @@ export type PanelId =
   | 'cron'
   | 'logs'
   | 'projects'
-  | 'docs'       // Documentation browser
-  | 'documents'  // Legacy alias for projects
-  | 'details'    // Future
-  | 'browser'    // Embedded browser panel
+  | 'docs' // Documentation browser
+  | 'documents' // Legacy alias for projects
+  | 'details' // Future
+  | 'browser' // Embedded browser panel
   | 'empty'
 
 export type UserPanelId = Exclude<PanelId, 'empty' | 'details' | 'documents' | 'browser'>
@@ -219,31 +219,31 @@ export function getAllPanelDefs(): PanelDefinition[] {
 
 /** Only user-visible panels (for selectors, menus) */
 export function getVisiblePanelDefs(): PanelDefinition[] {
-  return PANEL_DEFINITIONS.filter(d => !d.hidden)
+  return PANEL_DEFINITIONS.filter((d) => !d.hidden)
 }
 
 /** Primary panels (shown in main grid of empty panel) */
 export function getPrimaryPanelDefs(): PanelDefinition[] {
-  return PANEL_DEFINITIONS.filter(d => !d.hidden && d.primary)
+  return PANEL_DEFINITIONS.filter((d) => !d.hidden && d.primary)
 }
 
 /** Secondary panels (shown in "More" section) */
 export function getSecondaryPanelDefs(): PanelDefinition[] {
-  return PANEL_DEFINITIONS.filter(d => !d.hidden && !d.primary)
+  return PANEL_DEFINITIONS.filter((d) => !d.hidden && !d.primary)
 }
 
 /** Panel IDs for type picker / context menu (visible, non-empty) */
 export function getSelectablePanelIds(): PanelId[] {
-  return PANEL_DEFINITIONS.filter(d => !d.hidden && d.id !== 'empty').map(d => d.id)
+  return PANEL_DEFINITIONS.filter((d) => !d.hidden && d.id !== 'empty').map((d) => d.id)
 }
 
-/** 
+/**
  * PANEL_INFO compat — drop-in replacement for the old PANEL_INFO record.
  * Used by components that just need { icon, label, type } by PanelType.
  */
-export const PANEL_INFO: Record<string, { type: string; icon: string; label: string }> = 
+export const PANEL_INFO: Record<string, { type: string; icon: string; label: string }> =
   Object.fromEntries(
-    PANEL_DEFINITIONS.map(d => [d.id, { type: d.id, icon: d.icon, label: d.label }])
+    PANEL_DEFINITIONS.map((d) => [d.id, { type: d.id, icon: d.icon, label: d.label }])
   )
 
 /**
@@ -259,8 +259,8 @@ export function getPanelCommands(onAddPanel: (type: string) => void): Array<{
   action: () => void
 }> {
   return getVisiblePanelDefs()
-    .filter(d => d.id !== 'empty')
-    .map(d => ({
+    .filter((d) => d.id !== 'empty')
+    .map((d) => ({
       id: `panel.add.${d.id}`,
       label: `Add ${d.label} Panel`,
       description: d.description,

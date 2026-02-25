@@ -51,7 +51,16 @@ describe('getMinionName', () => {
     const thinkingName = getMinionName('test-key', 'thinking')
     // Dev names are Minion-inspired, thinking names are scientists
     expect(['Kevin', 'Stuart', 'Dave', 'Jerry', 'Tim', 'Mark', 'Phil', 'Carl']).toContain(devName)
-    expect(['Einstein', 'Newton', 'Plato', 'Socrates', 'Darwin', 'Curie', 'Hawking', 'Turing']).toContain(thinkingName)
+    expect([
+      'Einstein',
+      'Newton',
+      'Plato',
+      'Socrates',
+      'Darwin',
+      'Curie',
+      'Hawking',
+      'Turing',
+    ]).toContain(thinkingName)
   })
 })
 

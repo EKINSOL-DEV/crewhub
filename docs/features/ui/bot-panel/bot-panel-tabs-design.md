@@ -1,7 +1,7 @@
 # Bot Panel Tabs Design
 
-**Version:** 1.0  
-**Date:** 2026-02-09  
+**Version:** 1.0
+**Date:** 2026-02-09
 **Status:** Ready for implementation
 
 ## Goal

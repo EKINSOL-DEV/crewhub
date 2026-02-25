@@ -1,16 +1,16 @@
-import { useState, useEffect, useCallback, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select'
 import {
   Cable,
   RefreshCw,
@@ -26,21 +26,16 @@ import {
   Zap,
   Terminal,
   Bot,
-} from "lucide-react"
-import { sseManager } from "@/lib/sseManager"
+} from 'lucide-react'
+import { sseManager } from '@/lib/sseManager'
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type ConnectionType = "openclaw" | "claude_code" | "codex"
+type ConnectionType = 'openclaw' | 'claude_code' | 'codex'
 
-type ConnectionStatus =
-  | "connected"
-  | "disconnected"
-  | "connecting"
-  | "error"
-  | "not_loaded"
+type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error' | 'not_loaded'
 
 interface Connection {
   id: string
@@ -75,59 +70,59 @@ const CONNECTION_TYPE_CONFIG: Record<
   }
 > = {
   openclaw: {
-    label: "OpenClaw",
+    label: 'OpenClaw',
     icon: <Zap className="h-4 w-4" />,
-    description: "Connect to an OpenClaw Gateway instance",
+    description: 'Connect to an OpenClaw Gateway instance',
     fields: [
       {
-        key: "gateway_url",
-        label: "Gateway URL",
-        placeholder: "http://localhost:3000",
-        type: "url",
+        key: 'gateway_url',
+        label: 'Gateway URL',
+        placeholder: 'http://localhost:3000',
+        type: 'url',
       },
       {
-        key: "token",
-        label: "API Token",
-        placeholder: "Enter your API token",
-        type: "password",
+        key: 'token',
+        label: 'API Token',
+        placeholder: 'Enter your API token',
+        type: 'password',
       },
     ],
   },
   claude_code: {
-    label: "Claude Code",
+    label: 'Claude Code',
     icon: <Terminal className="h-4 w-4" />,
-    description: "Connect to Claude Code CLI",
+    description: 'Connect to Claude Code CLI',
     fields: [
       {
-        key: "cli_path",
-        label: "CLI Path",
-        placeholder: "/usr/local/bin/claude",
-        type: "text",
+        key: 'cli_path',
+        label: 'CLI Path',
+        placeholder: '/usr/local/bin/claude',
+        type: 'text',
       },
       {
-        key: "working_directory",
-        label: "Working Directory",
-        placeholder: "~/projects",
-        type: "text",
+        key: 'working_directory',
+        label: 'Working Directory',
+        placeholder: '~/projects',
+        type: 'text',
       },
     ],
   },
   codex: {
-    label: "Codex",
+    label: 'Codex',
     icon: <Bot className="h-4 w-4" />,
-    description: "Connect to OpenAI Codex CLI",
+    description: 'Connect to OpenAI Codex CLI',
     fields: [
       {
-        key: "cli_path",
-        label: "CLI Path",
-        placeholder: "/usr/local/bin/codex",
-        type: "text",
+        key: 'cli_path',
+        label: 'CLI Path',
+        placeholder: '/usr/local/bin/codex',
+        type: 'text',
       },
       {
-        key: "api_key",
-        label: "API Key",
-        placeholder: "sk-...",
-        type: "password",
+        key: 'api_key',
+        label: 'API Key',
+        placeholder: 'sk-...',
+        type: 'password',
       },
     ],
   },
@@ -139,36 +134,33 @@ const CONNECTION_TYPE_CONFIG: Record<
 
 function getStatusIcon(status: ConnectionStatus) {
   switch (status) {
-    case "connected":
+    case 'connected':
       return <CheckCircle2 className="h-4 w-4 text-green-500" />
-    case "disconnected":
+    case 'disconnected':
       return <WifiOff className="h-4 w-4 text-muted-foreground" />
-    case "connecting":
+    case 'connecting':
       return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
-    case "error":
+    case 'error':
       return <XCircle className="h-4 w-4 text-red-500" />
-    case "not_loaded":
+    case 'not_loaded':
       return <AlertCircle className="h-4 w-4 text-yellow-500" />
   }
 }
 
 function getStatusBadge(status: ConnectionStatus) {
-  const variants: Record<
-    ConnectionStatus,
-    "default" | "secondary" | "destructive" | "outline"
-  > = {
-    connected: "default",
-    disconnected: "secondary",
-    connecting: "outline",
-    error: "destructive",
-    not_loaded: "secondary",
+  const variants: Record<ConnectionStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    connected: 'default',
+    disconnected: 'secondary',
+    connecting: 'outline',
+    error: 'destructive',
+    not_loaded: 'secondary',
   }
   const labels: Record<ConnectionStatus, string> = {
-    connected: "Connected",
-    disconnected: "Disconnected",
-    connecting: "Connecting...",
-    error: "Error",
-    not_loaded: "Not Loaded",
+    connected: 'Connected',
+    disconnected: 'Disconnected',
+    connecting: 'Connecting...',
+    error: 'Error',
+    not_loaded: 'Not Loaded',
   }
   return <Badge variant={variants[status]}>{labels[status]}</Badge>
 }
@@ -188,17 +180,12 @@ interface ConnectionDialogProps {
   onSave: (data: ConnectionFormData, id?: string) => Promise<void>
 }
 
-function ConnectionDialog({
-  open,
-  onOpenChange,
-  connection,
-  onSave,
-}: ConnectionDialogProps) {
+function ConnectionDialog({ open, onOpenChange, connection, onSave }: ConnectionDialogProps) {
   const isEdit = !!connection
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState<ConnectionFormData>({
-    name: "",
-    type: "openclaw",
+    name: '',
+    type: 'openclaw',
     config: {},
     enabled: true,
   })
@@ -225,8 +212,8 @@ function ConnectionDialog({
       })
     } else {
       setFormData({
-        name: "",
-        type: "openclaw",
+        name: '',
+        type: 'openclaw',
         config: {},
         enabled: true,
       })
@@ -273,13 +260,9 @@ function ConnectionDialog({
       >
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
-          <h2 className="text-lg font-semibold">
-            {isEdit ? "Edit Connection" : "Add Connection"}
-          </h2>
+          <h2 className="text-lg font-semibold">{isEdit ? 'Edit Connection' : 'Add Connection'}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {isEdit
-              ? "Update connection configuration"
-              : "Configure a new agent connection"}
+            {isEdit ? 'Update connection configuration' : 'Configure a new agent connection'}
           </p>
         </div>
 
@@ -291,9 +274,7 @@ function ConnectionDialog({
               id="name"
               placeholder="My Connection"
               value={formData.name}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, name: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
             />
           </div>
 
@@ -306,21 +287,17 @@ function ConnectionDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(CONNECTION_TYPE_CONFIG).map(
-                    ([key, config]) => (
-                      <SelectItem key={key} value={key}>
-                        <div className="flex items-center gap-2">
-                          {config.icon}
-                          <span>{config.label}</span>
-                        </div>
-                      </SelectItem>
-                    )
-                  )}
+                  {Object.entries(CONNECTION_TYPE_CONFIG).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center gap-2">
+                        {config.icon}
+                        <span>{config.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                {typeConfig?.description}
-              </p>
+              <p className="text-xs text-muted-foreground">{typeConfig?.description}</p>
             </div>
           )}
 
@@ -332,7 +309,7 @@ function ConnectionDialog({
                 id={field.key}
                 type={field.type}
                 placeholder={field.placeholder}
-                value={formData.config[field.key] || ""}
+                value={formData.config[field.key] || ''}
                 onChange={(e) => handleConfigChange(field.key, e.target.value)}
               />
             </div>
@@ -342,15 +319,11 @@ function ConnectionDialog({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Enabled</Label>
-              <p className="text-xs text-muted-foreground">
-                Auto-connect on startup
-              </p>
+              <p className="text-xs text-muted-foreground">Auto-connect on startup</p>
             </div>
             <Switch
               checked={formData.enabled}
-              onCheckedChange={(checked) =>
-                setFormData((prev) => ({ ...prev, enabled: checked }))
-              }
+              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, enabled: checked }))}
             />
           </div>
         </div>
@@ -362,7 +335,7 @@ function ConnectionDialog({
           </Button>
           <Button onClick={handleSave} disabled={saving || !formData.name}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isEdit ? "Save Changes" : "Add Connection"}
+            {isEdit ? 'Save Changes' : 'Add Connection'}
           </Button>
         </div>
       </div>
@@ -379,24 +352,22 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingConnection, setEditingConnection] = useState<Connection | null>(
-    null
-  )
+  const [editingConnection, setEditingConnection] = useState<Connection | null>(null)
   const [testingId, setTestingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Fetch connections
   const fetchConnections = useCallback(async () => {
     try {
-      const response = await fetch("/api/connections")
+      const response = await fetch('/api/connections')
       if (!response.ok) {
-        throw new Error("Failed to fetch connections")
+        throw new Error('Failed to fetch connections')
       }
       const data = await response.json()
       setConnections(data.connections || [])
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error")
+      setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
     }
@@ -406,12 +377,10 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
     fetchConnections()
 
     // SSE real-time updates for connection status changes
-    const unsub = sseManager.subscribe("connection-status", (event) => {
+    const unsub = sseManager.subscribe('connection-status', (event) => {
       try {
         const data = JSON.parse(event.data)
-        setConnections((prev) =>
-          prev.map((c) => (c.id === data.id ? { ...c, ...data } : c))
-        )
+        setConnections((prev) => prev.map((c) => (c.id === data.id ? { ...c, ...data } : c)))
       } catch {
         // Fallback: refetch all on parse error
         fetchConnections()
@@ -428,22 +397,19 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
   }, [fetchConnections])
 
   // Create or update connection
-  const handleSaveConnection = async (
-    data: ConnectionFormData,
-    id?: string
-  ) => {
-    const url = id ? `/api/connections/${id}` : "/api/connections"
-    const method = id ? "PATCH" : "POST"
+  const handleSaveConnection = async (data: ConnectionFormData, id?: string) => {
+    const url = id ? `/api/connections/${id}` : '/api/connections'
+    const method = id ? 'PATCH' : 'POST'
 
     const response = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}))
-      throw new Error(errData.detail || "Failed to save connection")
+      throw new Error(errData.detail || 'Failed to save connection')
     }
 
     setError(null)
@@ -452,12 +418,12 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
 
   // Delete connection (two-click: first click sets deletingId for confirm, second deletes)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
-  
+
   const handleDelete = async (id: string) => {
     if (confirmDeleteId !== id) {
       setConfirmDeleteId(id)
       // Auto-reset after 3 seconds
-      setTimeout(() => setConfirmDeleteId((prev) => prev === id ? null : prev), 3000)
+      setTimeout(() => setConfirmDeleteId((prev) => (prev === id ? null : prev)), 3000)
       return
     }
 
@@ -465,14 +431,14 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
     setDeletingId(id)
     try {
       const response = await fetch(`/api/connections/${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       })
       if (!response.ok) {
-        throw new Error("Failed to delete connection")
+        throw new Error('Failed to delete connection')
       }
       await fetchConnections()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete")
+      setError(err instanceof Error ? err.message : 'Failed to delete')
     } finally {
       setDeletingId(null)
     }
@@ -482,16 +448,16 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
   const handleToggleEnabled = async (connection: Connection) => {
     try {
       const response = await fetch(`/api/connections/${connection.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: !connection.enabled }),
       })
       if (!response.ok) {
-        throw new Error("Failed to toggle connection")
+        throw new Error('Failed to toggle connection')
       }
       await fetchConnections()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to toggle")
+      setError(err instanceof Error ? err.message : 'Failed to toggle')
     }
   }
 
@@ -501,18 +467,18 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
     setError(null)
     try {
       const response = await fetch(`/api/connections/${id}/connect`, {
-        method: "POST",
+        method: 'POST',
       })
       const data = await response.json()
-      
+
       // Refresh to get updated status
       await fetchConnections()
-      
+
       if (!data.connected) {
-        setError(`Connection failed: ${data.error || "Unknown error"}`)
+        setError(`Connection failed: ${data.error || 'Unknown error'}`)
       }
     } catch (err) {
-      setError(`Test failed: ${err instanceof Error ? err.message : "Unknown error"}`)
+      setError(`Test failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setTestingId(null)
     }
@@ -531,20 +497,18 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
   }
 
   return (
-    <div className={embedded ? "space-y-4" : "h-full flex flex-col view-gradient"}>
+    <div className={embedded ? 'space-y-4' : 'h-full flex flex-col view-gradient'}>
       {/* Header */}
-      <div className={embedded ? "flex items-center justify-between" : "p-4 border-b border-border"}>
+      <div
+        className={embedded ? 'flex items-center justify-between' : 'p-4 border-b border-border'}
+      >
         {!embedded && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Cable className="h-5 w-5 text-primary" />
               <div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  Connections
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Manage agent connections
-                </p>
+                <h2 className="text-lg font-semibold text-foreground">Connections</h2>
+                <p className="text-sm text-muted-foreground">Manage agent connections</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -555,9 +519,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
                 disabled={loading}
                 className="gap-2"
               >
-                <RefreshCw
-                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-                />
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
               <Button size="sm" onClick={handleAdd} className="gap-2">
@@ -576,9 +538,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
               disabled={loading}
               className="gap-2"
             >
-              <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-              />
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
             <Button size="sm" onClick={handleAdd} className="gap-2">
@@ -601,7 +561,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
       )}
 
       {/* Content */}
-      <div className={embedded ? "" : "flex-1 overflow-auto"}>
+      <div className={embedded ? '' : 'flex-1 overflow-auto'}>
         {loading && connections.length === 0 ? (
           <div className="flex items-center justify-center h-64">
             <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -613,7 +573,10 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
             <Button
               variant="outline"
               className="mt-4"
-              onClick={() => { setError(null); fetchConnections() }}
+              onClick={() => {
+                setError(null)
+                fetchConnections()
+              }}
             >
               Try Again
             </Button>
@@ -623,12 +586,10 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
             <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
               <Cable className="h-12 w-12 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No Connections
-            </h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No Connections</h3>
             <p className="text-muted-foreground max-w-md mb-6">
-              Add connections to OpenClaw, Claude Code, or Codex to manage agent
-              sessions from multiple sources.
+              Add connections to OpenClaw, Claude Code, or Codex to manage agent sessions from
+              multiple sources.
             </p>
             <Button onClick={handleAdd} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -649,41 +610,34 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-foreground">
-                          {connection.name}
-                        </h3>
+                        <h3 className="font-medium text-foreground">{connection.name}</h3>
                         <Badge variant="outline" className="gap-1">
                           {getTypeIcon(connection.type)}
                           {CONNECTION_TYPE_CONFIG[connection.type]?.label}
                         </Badge>
                       </div>
                       {connection.error && (
-                        <p className="text-sm text-red-500 mt-1">
-                          {connection.error}
-                        </p>
+                        <p className="text-sm text-red-500 mt-1">{connection.error}</p>
                       )}
                       <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        {connection.type === "openclaw" &&
-                          connection.config.gateway_url && (
-                            <span className="flex items-center gap-1">
-                              <Wifi className="h-3 w-3" />
-                              {connection.config.gateway_url}
-                            </span>
-                          )}
-                        {connection.type === "claude_code" &&
-                          connection.config.cli_path && (
-                            <span className="flex items-center gap-1">
-                              <Terminal className="h-3 w-3" />
-                              {connection.config.cli_path}
-                            </span>
-                          )}
-                        {connection.type === "codex" &&
-                          connection.config.cli_path && (
-                            <span className="flex items-center gap-1">
-                              <Bot className="h-3 w-3" />
-                              {connection.config.cli_path}
-                            </span>
-                          )}
+                        {connection.type === 'openclaw' && connection.config.gateway_url && (
+                          <span className="flex items-center gap-1">
+                            <Wifi className="h-3 w-3" />
+                            {connection.config.gateway_url}
+                          </span>
+                        )}
+                        {connection.type === 'claude_code' && connection.config.cli_path && (
+                          <span className="flex items-center gap-1">
+                            <Terminal className="h-3 w-3" />
+                            {connection.config.cli_path}
+                          </span>
+                        )}
+                        {connection.type === 'codex' && connection.config.cli_path && (
+                          <span className="flex items-center gap-1">
+                            <Bot className="h-3 w-3" />
+                            {connection.config.cli_path}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -695,9 +649,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleTestConnection(connection.id)}
-                        disabled={
-                          testingId === connection.id || !connection.enabled
-                        }
+                        disabled={testingId === connection.id || !connection.enabled}
                         title="Test connection"
                       >
                         {testingId === connection.id ? (
@@ -721,10 +673,16 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
                         size="sm"
                         onClick={() => handleDelete(connection.id)}
                         disabled={deletingId === connection.id}
-                        title={confirmDeleteId === connection.id ? "Click again to confirm" : "Delete connection"}
-                        className={confirmDeleteId === connection.id 
-                          ? "bg-red-500 text-white hover:bg-red-600" 
-                          : "text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"}
+                        title={
+                          confirmDeleteId === connection.id
+                            ? 'Click again to confirm'
+                            : 'Delete connection'
+                        }
+                        className={
+                          confirmDeleteId === connection.id
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950'
+                        }
                       >
                         {deletingId === connection.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

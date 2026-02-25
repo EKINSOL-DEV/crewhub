@@ -6,8 +6,8 @@ Runs in < 100ms on typical prop code.
 
 from __future__ import annotations
 
-import re
 import logging
+import re
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class PostProcessResult:
 
 def enhance_generated_prop(code: str) -> PostProcessResult:
     """Post-process AI-generated prop code for quality improvements.
-    
+
     Fixes:
     - Replace meshToonMaterial with meshStandardMaterial + flatShading
     - Remove useToonMaterialProps imports and usage
@@ -31,44 +31,38 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
     - Ensure useFrame animation exists
     - Ensure emissive elements exist
     - Fix missing imports
-    
+
     Returns PostProcessResult with enhanced code and metadata.
     """
     result = PostProcessResult(code=code)
     enhanced = code
 
     # 1. Replace meshToonMaterial with meshStandardMaterial + flatShading
-    toon_count = len(re.findall(r'meshToonMaterial', enhanced))
+    toon_count = len(re.findall(r"meshToonMaterial", enhanced))
     if toon_count > 0:
         # Remove toonMaterials import
         enhanced = re.sub(
-            r"import\s*\{[^}]*useToonMaterialProps[^}]*\}\s*from\s*['\"][^'\"]*toonMaterials['\"].*?\n",
-            '',
-            enhanced
+            r"import\s*\{[^}]*useToonMaterialProps[^}]*\}\s*from\s*['\"][^'\"]*toonMaterials['\"].*?\n", "", enhanced
         )
-        result.corrections.append(f"Removed toonMaterials import")
+        result.corrections.append("Removed toonMaterials import")
 
         # Remove useToonMaterialProps hook calls and collect color mappings
         color_map: dict[str, str] = {}
         for m in re.finditer(r'const\s+(\w+)\s*=\s*useToonMaterialProps\([\'"]([^"\']+)[\'"]\)', enhanced):
             var_name, color = m.group(1), m.group(2)
             color_map[var_name] = color
-        
+
         # Remove the hook lines
-        enhanced = re.sub(r'\s*const\s+\w+\s*=\s*useToonMaterialProps\([^)]+\).*?\n', '\n', enhanced)
+        enhanced = re.sub(r"\s*const\s+\w+\s*=\s*useToonMaterialProps\([^)]+\).*?\n", "\n", enhanced)
 
         # Replace <meshToonMaterial {...varName} /> with <meshStandardMaterial color="X" flatShading />
         for var_name, color in color_map.items():
-            pattern = rf'<meshToonMaterial\s+\{{\.\.\.{var_name}\}}\s*/>'
+            pattern = rf"<meshToonMaterial\s+\{{\.\.\.{var_name}\}}\s*/>"
             replacement = f'<meshStandardMaterial color="{color}" flatShading />'
             enhanced = re.sub(pattern, replacement, enhanced)
 
         # Replace any remaining meshToonMaterial tags (with inline props)
-        enhanced = re.sub(
-            r'<meshToonMaterial\s+([^/]*?)\s*/>',
-            r'<meshStandardMaterial \1 flatShading />',
-            enhanced
-        )
+        enhanced = re.sub(r"<meshToonMaterial\s+([^/]*?)\s*/>", r"<meshStandardMaterial \1 flatShading />", enhanced)
 
         result.corrections.append(f"Replaced {toon_count} meshToonMaterial → meshStandardMaterial + flatShading")
 
@@ -76,31 +70,38 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
     def _add_flat_shading(match: re.Match) -> str:
         tag = match.group(0)
         # Skip if already has flatShading, or if it's emissive/transparent
-        if 'flatShading' in tag or 'emissive=' in tag or 'transparent' in tag or 'opacity=' in tag or 'wireframe' in tag or 'metalness=' in tag:
+        if (
+            "flatShading" in tag
+            or "emissive=" in tag
+            or "transparent" in tag
+            or "opacity=" in tag
+            or "wireframe" in tag
+            or "metalness=" in tag
+        ):
             return tag
         # Add flatShading before the closing />
-        return tag.replace('/>', 'flatShading />')
+        return tag.replace("/>", "flatShading />")
 
     before = enhanced
-    enhanced = re.sub(r'<meshStandardMaterial\s+[^>]*?/>', _add_flat_shading, enhanced)
+    enhanced = re.sub(r"<meshStandardMaterial\s+[^>]*?/>", _add_flat_shading, enhanced)
     if enhanced != before:
         result.corrections.append("Added flatShading to meshStandardMaterial where missing")
 
     # 3. Ensure useFrame import and animation
-    has_use_frame_call = bool(re.search(r'useFrame\s*\(', enhanced))
+    has_use_frame_call = bool(re.search(r"useFrame\s*\(", enhanced))
     if not has_use_frame_call:
         # Add useFrame import
         fiber_import = re.search(r"import\s*\{([^}]*)\}\s*from\s*['\"]@react-three/fiber['\"]", enhanced)
         if fiber_import:
-            if 'useFrame' not in fiber_import.group(1):
+            if "useFrame" not in fiber_import.group(1):
                 enhanced = enhanced.replace(
                     fiber_import.group(0),
-                    f"import {{ {fiber_import.group(1).strip()}, useFrame }} from '@react-three/fiber'"
+                    f"import {{ {fiber_import.group(1).strip()}, useFrame }} from '@react-three/fiber'",
                 )
         else:
             # No fiber import at all — add one after last import line
             last_import = None
-            for m in re.finditer(r'^import\s+.*$', enhanced, re.MULTILINE):
+            for m in re.finditer(r"^import\s+.*$", enhanced, re.MULTILINE):
                 last_import = m
             if last_import:
                 pos = last_import.end()
@@ -109,7 +110,7 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
                 enhanced = "import { useFrame } from '@react-three/fiber';\n" + enhanced
 
         # Add animation code — inject after groupRef declaration or before return
-        ref_match = re.search(r'(const\s+groupRef\s*=\s*useRef[^;]*;)', enhanced)
+        ref_match = re.search(r"(const\s+groupRef\s*=\s*useRef[^;]*;)", enhanced)
         if ref_match:
             inject_after = ref_match.end()
             animation_code = """
@@ -123,7 +124,7 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
             result.corrections.append("Added gentle sway animation (useFrame)")
         else:
             # No groupRef — try to inject before return with a new ref
-            return_match = re.search(r'(\n\s*return\s*\()', enhanced)
+            return_match = re.search(r"(\n\s*return\s*\()", enhanced)
             if return_match:
                 inject_pos = return_match.start()
                 animation_code = """\n  const groupRef = useRef<THREE.Group>(null);
@@ -140,37 +141,34 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
                 result.warnings.append("Could not inject animation — no return statement found")
 
     # 4. Ensure useRef import
-    if 'useRef' in enhanced and "import" in enhanced:
+    if "useRef" in enhanced and "import" in enhanced:
         if not re.search(r"import\s*\{[^}]*useRef[^}]*\}\s*from\s*['\"]react['\"]", enhanced):
             # Add useRef to react import
             react_import = re.search(r"import\s*\{([^}]*)\}\s*from\s*['\"]react['\"]", enhanced)
             if react_import:
                 imports = react_import.group(1).strip()
-                if 'useRef' not in imports:
-                    enhanced = enhanced.replace(
-                        react_import.group(0),
-                        f"import {{ {imports}, useRef }} from 'react'"
-                    )
+                if "useRef" not in imports:
+                    enhanced = enhanced.replace(react_import.group(0), f"import {{ {imports}, useRef }} from 'react'")
                     result.corrections.append("Added useRef to react imports")
             elif "from 'react'" not in enhanced and 'from "react"' not in enhanced:
                 enhanced = f"import {{ useRef }} from 'react';\n{enhanced}"
                 result.corrections.append("Added useRef import")
 
     # 5. Ensure THREE import if useRef<THREE.Group> is used
-    if 'THREE.Group' in enhanced and "import * as THREE" not in enhanced:
+    if "THREE.Group" in enhanced and "import * as THREE" not in enhanced:
         enhanced = f"import * as THREE from 'three';\n{enhanced}"
         result.corrections.append("Added THREE import")
 
     # 6. Check for emissive elements
-    has_emissive = 'emissive=' in enhanced or 'emissiveIntensity' in enhanced
+    has_emissive = "emissive=" in enhanced or "emissiveIntensity" in enhanced
     if not has_emissive:
         result.warnings.append("No emissive elements — prop may look flat. Consider regenerating.")
 
     # 7. Count meshes for quality score
-    mesh_count = len(re.findall(r'<mesh\b', enhanced))
-    has_animation = 'useFrame' in enhanced
+    mesh_count = len(re.findall(r"<mesh\b", enhanced))
+    has_animation = "useFrame" in enhanced
     has_multiple_colors = len(set(re.findall(r'color="(#[0-9a-fA-F]{6})"', enhanced))) >= 3
-    has_flat_shading = 'flatShading' in enhanced
+    has_flat_shading = "flatShading" in enhanced
 
     # Quality score
     score = 0
@@ -186,7 +184,7 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
         result.warnings.append(f"Only {mesh_count} meshes — prop may lack detail")
 
     # 8. Clean up any double-blank lines
-    enhanced = re.sub(r'\n{3,}', '\n\n', enhanced)
+    enhanced = re.sub(r"\n{3,}", "\n\n", enhanced)
 
     result.code = enhanced
     return result
@@ -194,12 +192,12 @@ def enhance_generated_prop(code: str) -> PostProcessResult:
 
 def validate_prop_quality(code: str) -> dict:
     """Quick validation check for prop quality metrics."""
-    mesh_count = len(re.findall(r'<mesh\b', code))
-    has_animation = 'useFrame' in code
-    has_emissive = 'emissive=' in code
-    has_flat_shading = 'flatShading' in code
-    has_standard_material = 'meshStandardMaterial' in code
-    has_toon_material = 'meshToonMaterial' in code
+    mesh_count = len(re.findall(r"<mesh\b", code))
+    has_animation = "useFrame" in code
+    has_emissive = "emissive=" in code
+    has_flat_shading = "flatShading" in code
+    has_standard_material = "meshStandardMaterial" in code
+    has_toon_material = "meshToonMaterial" in code
     color_count = len(set(re.findall(r'color="(#[0-9a-fA-F]{6})"', code)))
 
     return {

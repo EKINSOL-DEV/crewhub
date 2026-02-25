@@ -42,14 +42,14 @@ export function getSavedLayouts(): SavedLayout[] {
 export function saveLayoutToStorage(layout: SavedLayout): void {
   try {
     const layouts = getSavedLayouts()
-    const existingIndex = layouts.findIndex(l => l.id === layout.id)
-    
+    const existingIndex = layouts.findIndex((l) => l.id === layout.id)
+
     if (existingIndex >= 0) {
       layouts[existingIndex] = { ...layout, updatedAt: Date.now() }
     } else {
       layouts.push(layout)
     }
-    
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(layouts))
   } catch {
     console.error('Failed to save layout')
@@ -58,7 +58,7 @@ export function saveLayoutToStorage(layout: SavedLayout): void {
 
 export function deleteLayoutFromStorage(layoutId: string): void {
   try {
-    const layouts = getSavedLayouts().filter(l => l.id !== layoutId)
+    const layouts = getSavedLayouts().filter((l) => l.id !== layoutId)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(layouts))
   } catch {
     console.error('Failed to delete layout')
@@ -67,10 +67,13 @@ export function deleteLayoutFromStorage(layoutId: string): void {
 
 export function saveCurrentLayout(layout: LayoutNode): void {
   try {
-    localStorage.setItem(CURRENT_LAYOUT_KEY, JSON.stringify({
-      layout,
-      savedAt: Date.now(),
-    }))
+    localStorage.setItem(
+      CURRENT_LAYOUT_KEY,
+      JSON.stringify({
+        layout,
+        savedAt: Date.now(),
+      })
+    )
   } catch {
     console.error('Failed to save current layout')
   }
@@ -90,7 +93,7 @@ export function loadCurrentLayout(): LayoutNode | null {
 export function addRecentLayout(presetOrId: LayoutPreset | string): void {
   try {
     const recent = getRecentLayouts()
-    const filtered = recent.filter(id => id !== presetOrId)
+    const filtered = recent.filter((id) => id !== presetOrId)
     filtered.unshift(presetOrId)
     // Keep only last 5
     localStorage.setItem(RECENT_LAYOUTS_KEY, JSON.stringify(filtered.slice(0, 5)))
@@ -116,7 +119,7 @@ function generateLayoutId(): string {
 
 function getLayoutSummary(layout: LayoutNode): LayoutSummary {
   const panels = getAllPanels(layout)
-  const panelTypes = [...new Set(panels.map(p => p.panelType))]
+  const panelTypes = [...new Set(panels.map((p) => p.panelType))]
   return {
     panelTypes,
     panelCount: panels.length,
@@ -132,24 +135,24 @@ interface ZenSaveLayoutModalProps {
   existingLayout?: SavedLayout
 }
 
-export function ZenSaveLayoutModal({ 
-  layout, 
-  onClose, 
-  onSave, 
-  existingLayout 
+export function ZenSaveLayoutModal({
+  layout,
+  onClose,
+  onSave,
+  existingLayout,
 }: ZenSaveLayoutModalProps) {
   const [name, setName] = useState(existingLayout?.name || '')
   const [description, setDescription] = useState(existingLayout?.description || '')
   const [isSaving, setIsSaving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
   const summary = useMemo(() => getLayoutSummary(layout), [layout])
-  
+
   // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
-  
+
   // Keyboard handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -162,14 +165,14 @@ export function ZenSaveLayoutModal({
         handleSave()
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [name, onClose])
-  
+
   const handleSave = useCallback(async () => {
     if (!name.trim()) return
-    
+
     setIsSaving(true)
     try {
       const savedLayout: SavedLayout = {
@@ -180,7 +183,7 @@ export function ZenSaveLayoutModal({
         createdAt: existingLayout?.createdAt || Date.now(),
         updatedAt: Date.now(),
       }
-      
+
       saveLayoutToStorage(savedLayout)
       onSave(savedLayout)
       onClose()
@@ -188,15 +191,18 @@ export function ZenSaveLayoutModal({
       setIsSaving(false)
     }
   }, [name, description, layout, existingLayout, onSave, onClose])
-  
-  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }, [onClose])
-  
+
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        onClose()
+      }
+    },
+    [onClose]
+  )
+
   return (
-    <div 
+    <div
       className="zen-save-layout-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
@@ -209,27 +215,25 @@ export function ZenSaveLayoutModal({
             <span className="zen-save-layout-icon">💾</span>
             {existingLayout ? 'Update Layout' : 'Save Layout'}
           </h2>
-          <button
-            className="zen-btn zen-btn-icon zen-btn-close"
-            onClick={onClose}
-            title="Close"
-          >
+          <button className="zen-btn zen-btn-icon zen-btn-close" onClick={onClose} title="Close">
             ✕
           </button>
         </header>
-        
+
         <div className="zen-save-layout-content">
           {/* Preview */}
           <div className="zen-save-layout-preview">
             <div className="zen-save-layout-preview-label">Layout Preview</div>
             <div className="zen-save-layout-preview-info">
               <span className="zen-badge">{summary.panelCount} panels</span>
-              {summary.panelTypes.map(type => (
-                <span key={type} className="zen-badge">{type}</span>
+              {summary.panelTypes.map((type) => (
+                <span key={type} className="zen-badge">
+                  {type}
+                </span>
               ))}
             </div>
           </div>
-          
+
           {/* Name Input */}
           <div className="zen-save-layout-field">
             <label className="zen-save-layout-label" htmlFor="layout-name">
@@ -246,7 +250,7 @@ export function ZenSaveLayoutModal({
               maxLength={50}
             />
           </div>
-          
+
           {/* Description Input */}
           <div className="zen-save-layout-field">
             <label className="zen-save-layout-label" htmlFor="layout-desc">
@@ -263,11 +267,15 @@ export function ZenSaveLayoutModal({
             />
           </div>
         </div>
-        
+
         <footer className="zen-save-layout-footer">
           <div className="zen-save-layout-hints">
-            <span><kbd className="zen-kbd">Enter</kbd> save</span>
-            <span><kbd className="zen-kbd">Esc</kbd> cancel</span>
+            <span>
+              <kbd className="zen-kbd">Enter</kbd> save
+            </span>
+            <span>
+              <kbd className="zen-kbd">Esc</kbd> cancel
+            </span>
           </div>
           <div className="zen-save-layout-actions">
             <button className="zen-btn" onClick={onClose}>
@@ -307,7 +315,10 @@ interface ZenLayoutPickerProps {
   onDeleteSaved: (layoutId: string) => void
 }
 
-const PRESET_DESCRIPTIONS: Record<LayoutPreset, { name: string; description: string; icon: string }> = {
+const PRESET_DESCRIPTIONS: Record<
+  LayoutPreset,
+  { name: string; description: string; icon: string }
+> = {
   default: {
     name: 'Default',
     description: 'Sessions + Chat + Activity',
@@ -325,22 +336,22 @@ const PRESET_DESCRIPTIONS: Record<LayoutPreset, { name: string; description: str
   },
 }
 
-export function ZenLayoutPicker({ 
-  currentPreset, 
-  onClose, 
-  onSelectPreset, 
+export function ZenLayoutPicker({
+  currentPreset,
+  onClose,
+  onSelectPreset,
   onSelectSaved,
   onDeleteSaved,
 }: ZenLayoutPickerProps) {
   const [selectedTab, setSelectedTab] = useState<'presets' | 'saved'>('presets')
   const [savedLayouts, setSavedLayouts] = useState<SavedLayout[]>([])
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-  
+
   // Load saved layouts
   useEffect(() => {
     setSavedLayouts(getSavedLayouts())
   }, [])
-  
+
   // Keyboard handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -354,30 +365,36 @@ export function ZenLayoutPicker({
         }
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [confirmDelete, onClose])
-  
-  const handleDelete = useCallback((layoutId: string) => {
-    if (confirmDelete === layoutId) {
-      deleteLayoutFromStorage(layoutId)
-      setSavedLayouts(layouts => layouts.filter(l => l.id !== layoutId))
-      onDeleteSaved(layoutId)
-      setConfirmDelete(null)
-    } else {
-      setConfirmDelete(layoutId)
-    }
-  }, [confirmDelete, onDeleteSaved])
-  
-  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }, [onClose])
-  
+
+  const handleDelete = useCallback(
+    (layoutId: string) => {
+      if (confirmDelete === layoutId) {
+        deleteLayoutFromStorage(layoutId)
+        setSavedLayouts((layouts) => layouts.filter((l) => l.id !== layoutId))
+        onDeleteSaved(layoutId)
+        setConfirmDelete(null)
+      } else {
+        setConfirmDelete(layoutId)
+      }
+    },
+    [confirmDelete, onDeleteSaved]
+  )
+
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        onClose()
+      }
+    },
+    [onClose]
+  )
+
   return (
-    <div 
+    <div
       className="zen-layout-picker-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
@@ -390,15 +407,11 @@ export function ZenLayoutPicker({
             <span className="zen-layout-picker-icon">📐</span>
             Choose Layout
           </h2>
-          <button
-            className="zen-btn zen-btn-icon zen-btn-close"
-            onClick={onClose}
-            title="Close"
-          >
+          <button className="zen-btn zen-btn-icon zen-btn-close" onClick={onClose} title="Close">
             ✕
           </button>
         </header>
-        
+
         {/* Tabs */}
         <div className="zen-layout-picker-tabs">
           <button
@@ -419,14 +432,14 @@ export function ZenLayoutPicker({
             )}
           </button>
         </div>
-        
+
         <div className="zen-layout-picker-content">
           {selectedTab === 'presets' ? (
             <div className="zen-layout-picker-list">
-              {(Object.keys(PRESET_DESCRIPTIONS) as LayoutPreset[]).map(preset => {
+              {(Object.keys(PRESET_DESCRIPTIONS) as LayoutPreset[]).map((preset) => {
                 const info = PRESET_DESCRIPTIONS[preset]
                 const isCurrent = preset === currentPreset
-                
+
                 return (
                   <button
                     key={preset}
@@ -459,15 +472,12 @@ export function ZenLayoutPicker({
                   </span>
                 </div>
               ) : (
-                savedLayouts.map(layout => {
+                savedLayouts.map((layout) => {
                   const summary = getLayoutSummary(layout.layout)
                   const isConfirmingDelete = confirmDelete === layout.id
-                  
+
                   return (
-                    <div
-                      key={layout.id}
-                      className="zen-layout-picker-saved-item"
-                    >
+                    <div key={layout.id} className="zen-layout-picker-saved-item">
                       <button
                         className="zen-layout-picker-item"
                         onClick={() => {
@@ -479,7 +489,8 @@ export function ZenLayoutPicker({
                         <div className="zen-layout-picker-item-info">
                           <span className="zen-layout-picker-item-name">{layout.name}</span>
                           <span className="zen-layout-picker-item-desc">
-                            {layout.description || `${summary.panelCount} panels: ${summary.panelTypes.join(', ')}`}
+                            {layout.description ||
+                              `${summary.panelCount} panels: ${summary.panelTypes.join(', ')}`}
                           </span>
                         </div>
                       </button>
@@ -497,9 +508,11 @@ export function ZenLayoutPicker({
             </div>
           )}
         </div>
-        
+
         <footer className="zen-layout-picker-footer">
-          <span><kbd className="zen-kbd">Esc</kbd> close</span>
+          <span>
+            <kbd className="zen-kbd">Esc</kbd> close
+          </span>
         </footer>
       </div>
     </div>

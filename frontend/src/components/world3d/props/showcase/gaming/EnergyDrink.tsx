@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function EnergyDrink() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.5) * 0.2; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.5) * 0.2
+  })
   return (
     <group ref={groupRef}>
       {/* Can body */}
@@ -42,5 +44,5 @@ export function EnergyDrink() {
         <meshStandardMaterial color="#ffffff" />
       </mesh>
     </group>
-  );
+  )
 }

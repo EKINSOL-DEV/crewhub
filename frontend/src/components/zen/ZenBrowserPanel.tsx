@@ -76,13 +76,13 @@ function NavBtn({
         flexShrink: 0,
         transition: 'color 0.15s, background 0.15s',
       }}
-      onMouseEnter={e => {
+      onMouseEnter={(e) => {
         if (!disabled) {
           e.currentTarget.style.color = 'var(--zen-fg)'
           e.currentTarget.style.background = 'var(--zen-bg-hover)'
         }
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         e.currentTarget.style.color = disabled ? 'var(--zen-fg-dim)' : 'var(--zen-fg-muted)'
         e.currentTarget.style.background = 'transparent'
       }}
@@ -120,7 +120,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
     setIsLoading(true)
     if (progressTimer.current) clearInterval(progressTimer.current)
     progressTimer.current = setInterval(() => {
-      setLoadProgress(p => {
+      setLoadProgress((p) => {
         if (p >= 85) {
           clearInterval(progressTimer.current!)
           return p
@@ -140,23 +140,29 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
   }, [])
 
   // Navigate to a URL
-  const navigate = useCallback((rawUrl: string) => {
-    const url = normalizeUrl(rawUrl)
-    if (!url) return
+  const navigate = useCallback(
+    (rawUrl: string) => {
+      const url = normalizeUrl(rawUrl)
+      if (!url) return
 
-    setIframeError(false)
-    setLoadedUrl(url)
-    setInputValue(url)
-    onUrlChange?.(url)
-    startProgress()
-  }, [onUrlChange, startProgress])
+      setIframeError(false)
+      setLoadedUrl(url)
+      setInputValue(url)
+      onUrlChange?.(url)
+      startProgress()
+    },
+    [onUrlChange, startProgress]
+  )
 
   const handleGo = useCallback(() => navigate(inputValue), [navigate, inputValue])
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleGo()
-    if (e.key === 'Escape') setInputValue(loadedUrl)
-  }, [handleGo, loadedUrl])
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') handleGo()
+      if (e.key === 'Escape') setInputValue(loadedUrl)
+    },
+    [handleGo, loadedUrl]
+  )
 
   const handleBack = useCallback(() => {
     // iframe doesn't expose history navigation — no-op for now
@@ -182,23 +188,27 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      background: 'var(--zen-bg)',
-      overflow: 'hidden',
-    }}>
-      {/* ── URL Bar ─────────────────────────────────────────── */}
-      <div style={{
+    <div
+      style={{
         display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        padding: '5px 8px',
-        borderBottom: '1px solid var(--zen-border)',
+        flexDirection: 'column',
+        height: '100%',
         background: 'var(--zen-bg)',
-        flexShrink: 0,
-      }}>
+        overflow: 'hidden',
+      }}
+    >
+      {/* ── URL Bar ─────────────────────────────────────────── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          padding: '5px 8px',
+          borderBottom: '1px solid var(--zen-border)',
+          background: 'var(--zen-bg)',
+          flexShrink: 0,
+        }}
+      >
         <NavBtn onClick={handleBack} disabled title="Back (Alt+←)">
           ←
         </NavBtn>
@@ -213,9 +223,9 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
         <input
           type="text"
           value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
+          onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={e => e.currentTarget.select()}
+          onFocus={(e) => e.currentTarget.select()}
           placeholder="Search or enter URL…"
           spellCheck={false}
           autoComplete="off"
@@ -232,8 +242,12 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
             minWidth: 0,
             transition: 'border-color 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--zen-border-focus)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--zen-border)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--zen-border-focus)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--zen-border)'
+          }}
         />
 
         <button
@@ -252,37 +266,44 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
             flexShrink: 0,
             transition: 'opacity 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.85'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1'
+          }}
         >
           Go
         </button>
       </div>
 
       {/* ── Progress bar ────────────────────────────────────── */}
-      <div style={{
-        height: 2,
-        background: 'transparent',
-        flexShrink: 0,
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+      <div
+        style={{
+          height: 2,
+          background: 'transparent',
+          flexShrink: 0,
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         {isLoading && (
-          <div style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            height: '100%',
-            width: `${loadProgress}%`,
-            background: 'var(--zen-accent)',
-            transition: 'width 0.25s ease',
-          }} />
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              height: '100%',
+              width: `${loadProgress}%`,
+              background: 'var(--zen-accent)',
+              transition: 'width 0.25s ease',
+            }}
+          />
         )}
       </div>
 
       {/* ── Browser content ──────────────────────────────────── */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-
         {!loadedUrl ? (
           // Empty state
           <EmptyBrowserState onNavigate={navigate} />
@@ -304,10 +325,16 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
               referrerPolicy="no-referrer-when-downgrade"
               title="Browser panel"
               onLoad={finishProgress}
-              onError={() => { setIframeError(true); finishProgress() }}
+              onError={() => {
+                setIframeError(true)
+                finishProgress()
+              }}
             />
             {iframeError && (
-              <IframeBlockedMessage url={loadedUrl} onOpenExternal={() => window.open(loadedUrl, '_blank')} />
+              <IframeBlockedMessage
+                url={loadedUrl}
+                onOpenExternal={() => window.open(loadedUrl, '_blank')}
+              />
             )}
           </>
         )}
@@ -327,20 +354,30 @@ function EmptyBrowserState({ onNavigate }: { onNavigate: (url: string) => void }
   ]
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      gap: 16,
-      color: 'var(--zen-fg-muted)',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        gap: 16,
+        color: 'var(--zen-fg-muted)',
+      }}
+    >
       <span style={{ fontSize: 40, lineHeight: 1 }}>🌐</span>
       <span style={{ fontSize: 14, fontWeight: 500 }}>Enter a URL to browse</span>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 4 }}>
-        {suggestions.map(s => (
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          marginTop: 4,
+        }}
+      >
+        {suggestions.map((s) => (
           <button
             key={s.url}
             type="button"
@@ -358,11 +395,11 @@ function EmptyBrowserState({ onNavigate }: { onNavigate: (url: string) => void }
               cursor: 'pointer',
               transition: 'all 0.15s',
             }}
-            onMouseEnter={e => {
+            onMouseEnter={(e) => {
               e.currentTarget.style.color = 'var(--zen-fg)'
               e.currentTarget.style.borderColor = 'var(--zen-accent)'
             }}
-            onMouseLeave={e => {
+            onMouseLeave={(e) => {
               e.currentTarget.style.color = 'var(--zen-fg-muted)'
               e.currentTarget.style.borderColor = 'var(--zen-border)'
             }}
@@ -378,19 +415,27 @@ function EmptyBrowserState({ onNavigate }: { onNavigate: (url: string) => void }
 
 // ── Iframe blocked fallback ────────────────────────────────────────────────────
 
-function IframeBlockedMessage({ url, onOpenExternal }: { url: string; onOpenExternal: () => void }) {
+function IframeBlockedMessage({
+  url,
+  onOpenExternal,
+}: {
+  url: string
+  onOpenExternal: () => void
+}) {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      gap: 12,
-      color: 'var(--zen-fg-muted)',
-      padding: 24,
-      textAlign: 'center',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        gap: 12,
+        color: 'var(--zen-fg-muted)',
+        padding: 24,
+        textAlign: 'center',
+      }}
+    >
       <span style={{ fontSize: 36 }}>🚫</span>
       <div>
         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--zen-fg)', marginBottom: 6 }}>
@@ -399,8 +444,8 @@ function IframeBlockedMessage({ url, onOpenExternal }: { url: string; onOpenExte
         <div style={{ fontSize: 12, color: 'var(--zen-fg-muted)', maxWidth: 280, lineHeight: 1.5 }}>
           <strong style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
             {url.length > 60 ? url.slice(0, 57) + '…' : url}
-          </strong>
-          {' '}blocks embedding via X-Frame-Options.
+          </strong>{' '}
+          blocks embedding via X-Frame-Options.
           <br />
           In the Tauri desktop app, this works natively.
         </div>

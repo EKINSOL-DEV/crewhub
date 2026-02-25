@@ -1,6 +1,6 @@
-import type { CrewSession } from "@/lib/api"
-import { SessionCard } from "./SessionCard"
-import { EmptyState } from "./EmptyState"
+import type { CrewSession } from '@/lib/api'
+import { SessionCard } from './SessionCard'
+import { EmptyState } from './EmptyState'
 
 interface ActiveSessionsViewProps {
   sessions: CrewSession[]

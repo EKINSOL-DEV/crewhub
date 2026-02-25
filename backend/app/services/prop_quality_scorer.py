@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import re
-import json
 import logging
-from dataclasses import dataclass, asdict
-from typing import Optional
+import re
+from dataclasses import asdict, dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +74,15 @@ class QualityScorer:
         geo_types = _count_geometry_types(code)
         group_count = len(SHOWCASE_PATTERNS["group_nesting"].findall(code))
 
-        comp = min(100, int(
-            min(mesh_count / 8.0, 1.0) * 40 +      # up to 8 meshes
-            min(geo_types / 4.0, 1.0) * 30 +         # variety of shapes
-            min(group_count / 3.0, 1.0) * 20 +       # hierarchy
-            (10 if SHOWCASE_PATTERNS["cast_shadow"].search(code) else 0)
-        ))
+        comp = min(
+            100,
+            int(
+                min(mesh_count / 8.0, 1.0) * 40  # up to 8 meshes
+                + min(geo_types / 4.0, 1.0) * 30  # variety of shapes
+                + min(group_count / 3.0, 1.0) * 20  # hierarchy
+                + (10 if SHOWCASE_PATTERNS["cast_shadow"].search(code) else 0)
+            ),
+        )
         if mesh_count < 4:
             suggestions.append("Add more geometry layers for visual depth")
         if geo_types < 2:
@@ -92,12 +93,15 @@ class QualityScorer:
         has_emissive = bool(SHOWCASE_PATTERNS["emissive"].search(code))
         has_emissive_intensity = bool(SHOWCASE_PATTERNS["emissive_intensity"].search(code))
 
-        color = min(100, int(
-            min(unique_colors / 4.0, 1.0) * 50 +
-            (25 if has_emissive else 0) +
-            (15 if has_emissive_intensity else 0) +
-            (10 if SHOWCASE_PATTERNS["tone_mapped"].search(code) else 0)
-        ))
+        color = min(
+            100,
+            int(
+                min(unique_colors / 4.0, 1.0) * 50
+                + (25 if has_emissive else 0)
+                + (15 if has_emissive_intensity else 0)
+                + (10 if SHOWCASE_PATTERNS["tone_mapped"].search(code) else 0)
+            ),
+        )
         if unique_colors < 2:
             suggestions.append("Add more color variety to the palette")
         if not has_emissive:
@@ -109,12 +113,15 @@ class QualityScorer:
         has_ref = bool(SHOWCASE_PATTERNS["useRef"].search(code))
         has_rotation = bool(SHOWCASE_PATTERNS["rotation_ref"].search(code))
 
-        anim = min(100, int(
-            (40 if has_frame else 0) +
-            (25 if has_sin else 0) +
-            (20 if has_ref else 0) +
-            (15 if has_rotation and has_frame else 0)
-        ))
+        anim = min(
+            100,
+            int(
+                (40 if has_frame else 0)
+                + (25 if has_sin else 0)
+                + (20 if has_ref else 0)
+                + (15 if has_rotation and has_frame else 0)
+            ),
+        )
         if not has_frame:
             suggestions.append("Add useFrame animation for movement")
         if not has_sin:
@@ -124,13 +131,16 @@ class QualityScorer:
         has_light = bool(SHOWCASE_PATTERNS["point_light"].search(code))
         has_transparent = bool(SHOWCASE_PATTERNS["transparent"].search(code))
 
-        detail = min(100, int(
-            (25 if has_light else 0) +
-            (20 if has_transparent else 0) +
-            (20 if has_emissive_intensity else 0) +
-            min(mesh_count / 6.0, 1.0) * 20 +
-            (15 if SHOWCASE_PATTERNS["tone_mapped"].search(code) else 0)
-        ))
+        detail = min(
+            100,
+            int(
+                (25 if has_light else 0)
+                + (20 if has_transparent else 0)
+                + (20 if has_emissive_intensity else 0)
+                + min(mesh_count / 6.0, 1.0) * 20
+                + (15 if SHOWCASE_PATTERNS["tone_mapped"].search(code) else 0)
+            ),
+        )
         if not has_light:
             suggestions.append("Add a pointLight for ambient glow")
         if not has_transparent:
@@ -144,27 +154,24 @@ class QualityScorer:
         has_scale_prop = bool(SHOWCASE_PATTERNS["scale_prop"].search(code))
         has_both_materials = has_toon and bool(SHOWCASE_PATTERNS["std_material"].search(code))
 
-        style = min(100, int(
-            (30 if has_toon else 0) +
-            (15 if has_interface else 0) +
-            (15 if has_export else 0) +
-            (10 if has_pos_prop else 0) +
-            (10 if has_scale_prop else 0) +
-            (20 if has_both_materials else 0)  # mix of toon + standard = showcase style
-        ))
+        style = min(
+            100,
+            int(
+                (30 if has_toon else 0)
+                + (15 if has_interface else 0)
+                + (15 if has_export else 0)
+                + (10 if has_pos_prop else 0)
+                + (10 if has_scale_prop else 0)
+                + (20 if has_both_materials else 0)  # mix of toon + standard = showcase style
+            ),
+        )
         if not has_toon:
             suggestions.append("Use useToonMaterialProps for consistent style")
         if not has_interface:
             suggestions.append("Define a TypeScript Props interface")
 
         # ── Overall (weighted) ──
-        overall = int(
-            comp * 0.25 +
-            color * 0.20 +
-            anim * 0.20 +
-            detail * 0.15 +
-            style * 0.20
-        )
+        overall = int(comp * 0.25 + color * 0.20 + anim * 0.20 + detail * 0.15 + style * 0.20)
 
         return PropQualityReport(
             composition_score=comp,
@@ -184,20 +191,11 @@ class QualityScorer:
         colors = set(p.get("color", "") for p in parts)
         has_emissive = any(p.get("emissive", False) for p in parts)
 
-        comp = min(100, int(
-            min(mesh_count / 8.0, 1.0) * 60 +
-            min(len(geo_types) / 4.0, 1.0) * 40
-        ))
-        color = min(100, int(
-            min(len(colors) / 4.0, 1.0) * 70 +
-            (30 if has_emissive else 0)
-        ))
+        comp = min(100, int(min(mesh_count / 8.0, 1.0) * 60 + min(len(geo_types) / 4.0, 1.0) * 40))
+        color = min(100, int(min(len(colors) / 4.0, 1.0) * 70 + (30 if has_emissive else 0)))
         # Parts-only can't measure animation/style
         anim = 0
-        detail = min(100, int(
-            (30 if has_emissive else 0) +
-            min(mesh_count / 6.0, 1.0) * 40
-        ))
+        detail = min(100, int((30 if has_emissive else 0) + min(mesh_count / 6.0, 1.0) * 40))
         style = 30  # neutral — can't assess from parts alone
 
         if mesh_count < 4:

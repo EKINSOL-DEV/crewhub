@@ -22,7 +22,7 @@ export interface RoomInteractionPoints {
 export function getRoomInteractionPoints(
   roomName: string,
   _roomSize: number,
-  roomPosition: [number, number, number],
+  roomPosition: [number, number, number]
 ): RoomInteractionPoints {
   const rx = roomPosition[0]
   const rz = roomPosition[2]
@@ -45,7 +45,9 @@ export function getRoomInteractionPoints(
     const [relX, , relZ] = gridToWorld(
       blueprint.walkableCenter.x,
       blueprint.walkableCenter.z,
-      cellSize, gridWidth, gridDepth,
+      cellSize,
+      gridWidth,
+      gridDepth
     )
     return [rx + relX, 0, rz + relZ]
   })()
@@ -77,7 +79,7 @@ export interface WalkableCenter {
 export function getWalkableCenter(
   roomName: string,
   roomSize: number,
-  roomPosition: [number, number, number],
+  roomPosition: [number, number, number]
 ): WalkableCenter {
   const rx = roomPosition[0]
   const rz = roomPosition[2]
@@ -88,7 +90,9 @@ export function getWalkableCenter(
   const [relX, , relZ] = gridToWorld(
     blueprint.walkableCenter.x,
     blueprint.walkableCenter.z,
-    cellSize, gridWidth, gridDepth,
+    cellSize,
+    gridWidth,
+    gridDepth
   )
 
   // Default radius: ~35% of half-room-size (same as before)

@@ -10,7 +10,10 @@ interface BossHudButtonProps {
   /** Get bot config from session key */
   getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
   /** Determine which room a session belongs to */
-  getRoomForSession: (sessionKey: string, sessionData?: { label?: string; model?: string; channel?: string }) => string | undefined
+  getRoomForSession: (
+    sessionKey: string,
+    sessionData?: { label?: string; model?: string; channel?: string }
+  ) => string | undefined
   /** Default room ID fallback */
   defaultRoomId?: string
   /** Is the boss actively running? */
@@ -25,27 +28,34 @@ const BOSS_SESSION_KEY = 'agent:main:main'
  * Clicking flies the camera to the boss bot.
  * Hidden in first-person and bot-focus modes.
  */
-export function BossHudButton({ sessions, getBotConfig, getRoomForSession, defaultRoomId, isActivelyRunning }: BossHudButtonProps) {
+export function BossHudButton({
+  sessions,
+  getBotConfig,
+  getRoomForSession,
+  defaultRoomId,
+  isActivelyRunning,
+}: BossHudButtonProps) {
   const { state, focusBot } = useWorldFocus()
   const { openChat } = useChatContext()
 
-  const bossSession = useMemo(
-    () => sessions.find(s => s.key === BOSS_SESSION_KEY),
-    [sessions],
-  )
+  const bossSession = useMemo(() => sessions.find((s) => s.key === BOSS_SESSION_KEY), [sessions])
 
   const bossConfig = useMemo(
     () => getBotConfig(BOSS_SESSION_KEY, bossSession?.label),
-    [getBotConfig, bossSession?.label],
+    [getBotConfig, bossSession?.label]
   )
 
   const bossRoomId = useMemo(() => {
     if (!bossSession) return defaultRoomId || 'headquarters'
-    return getRoomForSession(bossSession.key, {
-      label: bossSession.label,
-      model: bossSession.model,
-      channel: bossSession.lastChannel || bossSession.channel,
-    }) || defaultRoomId || 'headquarters'
+    return (
+      getRoomForSession(bossSession.key, {
+        label: bossSession.label,
+        model: bossSession.model,
+        channel: bossSession.lastChannel || bossSession.channel,
+      }) ||
+      defaultRoomId ||
+      'headquarters'
+    )
   }, [bossSession, getRoomForSession, defaultRoomId])
 
   const isActive = bossSession ? isActivelyRunning(bossSession.key) : false
@@ -116,17 +126,19 @@ export function BossHudButton({ sessions, getBotConfig, getRoomForSession, defau
 
         {/* Active indicator dot */}
         {isActive && (
-          <div style={{
-            position: 'absolute',
-            bottom: 2,
-            right: 2,
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            background: '#22c55e',
-            border: '2px solid white',
-            animation: 'bossActivePulse 1.5s ease-in-out infinite',
-          }} />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 2,
+              right: 2,
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              background: '#22c55e',
+              border: '2px solid white',
+              animation: 'bossActivePulse 1.5s ease-in-out infinite',
+            }}
+          />
         )}
       </div>
 
@@ -188,19 +200,43 @@ function BotFaceSVG({ color, expression }: { color: string; expression: string }
 
       {/* Mouth */}
       {expression === 'happy' && (
-        <path d="M12 22 Q18 27 24 22" stroke="#333" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path
+          d="M12 22 Q18 27 24 22"
+          stroke="#333"
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        />
       )}
       {expression === 'thoughtful' && (
-        <path d="M14 23 Q18 25 22 23" stroke="#333" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <path
+          d="M14 23 Q18 25 22 23"
+          stroke="#333"
+          strokeWidth="1.2"
+          fill="none"
+          strokeLinecap="round"
+        />
       )}
       {expression === 'determined' && (
-        <line x1="13" y1="23" x2="23" y2="23" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
+        <line
+          x1="13"
+          y1="23"
+          x2="23"
+          y2="23"
+          stroke="#333"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
       )}
-      {expression === 'talking' && (
-        <ellipse cx="18" cy="23" rx="3" ry="2" fill="#e05080" />
-      )}
+      {expression === 'talking' && <ellipse cx="18" cy="23" rx="3" ry="2" fill="#e05080" />}
       {expression === 'serious' && (
-        <path d="M13 24 Q18 22 23 24" stroke="#333" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <path
+          d="M13 24 Q18 22 23 24"
+          stroke="#333"
+          strokeWidth="1.2"
+          fill="none"
+          strokeLinecap="round"
+        />
       )}
 
       {/* Body hint */}
@@ -215,12 +251,24 @@ function darken(hex: string, factor: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
-  return `#${Math.round(r * factor).toString(16).padStart(2, '0')}${Math.round(g * factor).toString(16).padStart(2, '0')}${Math.round(b * factor).toString(16).padStart(2, '0')}`
+  return `#${Math.round(r * factor)
+    .toString(16)
+    .padStart(2, '0')}${Math.round(g * factor)
+    .toString(16)
+    .padStart(2, '0')}${Math.round(b * factor)
+    .toString(16)
+    .padStart(2, '0')}`
 }
 
 function lighten(hex: string, factor: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
-  return `#${Math.min(255, Math.round(r + (255 - r) * factor)).toString(16).padStart(2, '0')}${Math.min(255, Math.round(g + (255 - g) * factor)).toString(16).padStart(2, '0')}${Math.min(255, Math.round(b + (255 - b) * factor)).toString(16).padStart(2, '0')}`
+  return `#${Math.min(255, Math.round(r + (255 - r) * factor))
+    .toString(16)
+    .padStart(2, '0')}${Math.min(255, Math.round(g + (255 - g) * factor))
+    .toString(16)
+    .padStart(2, '0')}${Math.min(255, Math.round(b + (255 - b) * factor))
+    .toString(16)
+    .padStart(2, '0')}`
 }

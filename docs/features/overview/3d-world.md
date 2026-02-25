@@ -5,7 +5,7 @@ Features for the immersive 3D agent world.
 ---
 
 ## 3D World Core
-**Status:** ✅ Released in **v0.3.0**  
+**Status:** ✅ Released in **v0.3.0**
 **Description:** Toon-shaded 3D campus with 20×20 grid, animated bots, 3 zoom levels (Overview → Room focus → Bot focus), draggable agents, and activity bubbles. Uses React Three Fiber, CameraControls, and instanced meshes for performance.
 
 **Docs:**
@@ -16,7 +16,7 @@ Features for the immersive 3D agent world.
 ---
 
 ## Zones
-**Status:** 🚧 In Progress (v0.16.0)  
+**Status:** 🚧 In Progress (v0.16.0)
 **Description:** Thematic campus areas with specialized props, environments, and activities. Three zones planned: Creator Center (film studio), Academy (Hogwarts meets MIT), Game Center (arcade meets indie studio). Each zone includes unique props, interactive elements, and Easter eggs.
 
 **Docs:**
@@ -30,7 +30,7 @@ Features for the immersive 3D agent world.
 ---
 
 ## Academy Zone
-**Status:** 📋 Planned (v0.16.0)  
+**Status:** 📋 Planned (v0.16.0)
 **Description:** Learning-focused zone with Great Library, Research Lab, Lecture Hall, Sandbox, Study Pods, and Map Room. Features: Knowledge Tree (grows with agent learning), flying books, owl mascot, scholar ranking system.
 
 **Docs:**
@@ -39,7 +39,7 @@ Features for the immersive 3D agent world.
 ---
 
 ## Spatial Awareness
-**Status:** 🔬 Research (v0.14.0)  
+**Status:** 🔬 Research (v0.14.0)
 **Description:** Agent awareness of their surroundings in the 3D world. Includes vision system (what agents "see"), proximity detection, pathfinding around obstacles, and context-aware behavior (agents mention nearby bots in conversation).
 
 **Docs:**
@@ -48,7 +48,7 @@ Features for the immersive 3D agent world.
 ---
 
 ## Multi-Zone System
-**Status:** 📋 Planned (v0.16.0)  
+**Status:** 📋 Planned (v0.16.0)
 **Description:** Architecture for supporting multiple themed zones on the campus. Includes zone switcher UI, persistent navigation, and zone-specific environments/props.
 
 **Docs:**

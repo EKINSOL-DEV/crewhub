@@ -8,7 +8,6 @@ respecting privacy tiers (internal vs external channels).
 import hashlib
 import json
 import logging
-import time
 from typing import Any, Optional
 
 import aiosqlite
@@ -241,17 +240,13 @@ async def _get_context_version(
     """
     candidates = []
 
-    async with db.execute(
-        "SELECT updated_at FROM rooms WHERE id = ?", (room_id,)
-    ) as cur:
+    async with db.execute("SELECT updated_at FROM rooms WHERE id = ?", (room_id,)) as cur:
         row = await cur.fetchone()
         if row:
             candidates.append(row["updated_at"])
 
     if project_id:
-        async with db.execute(
-            "SELECT updated_at FROM projects WHERE id = ?", (project_id,)
-        ) as cur:
+        async with db.execute("SELECT updated_at FROM projects WHERE id = ?", (project_id,)) as cur:
             row = await cur.fetchone()
             if row:
                 candidates.append(row["updated_at"])
@@ -281,7 +276,7 @@ async def get_persona_prompt(
     agent_name: Optional[str] = None,
 ) -> Optional[str]:
     """Build persona + identity prompt fragment for an agent, or None if no persona configured.
-    
+
     When a channel is specified, includes identity stability rules and
     surface-specific format hints (Agent Identity Pattern).
     """
@@ -289,9 +284,7 @@ async def get_persona_prompt(
 
     try:
         async with get_db() as db:
-            async with db.execute(
-                "SELECT * FROM agent_personas WHERE agent_id = ?", (agent_id,)
-            ) as cur:
+            async with db.execute("SELECT * FROM agent_personas WHERE agent_id = ?", (agent_id,)) as cur:
                 row = await cur.fetchone()
             if not row:
                 return None
@@ -314,7 +307,7 @@ async def get_persona_prompt(
                 try:
                     async with db.execute(
                         "SELECT format_rules, enabled FROM agent_surfaces WHERE agent_id = ? AND surface = ?",
-                        (agent_id, channel.lower())
+                        (agent_id, channel.lower()),
                     ) as scur:
                         srow = await scur.fetchone()
                     if srow and srow["enabled"]:
@@ -326,7 +319,9 @@ async def get_persona_prompt(
             if identity_anchor or channel:
                 full_surface_rules = surface_rules
                 if surface_format:
-                    full_surface_rules = f"{surface_rules}\n{surface_format}".strip() if surface_rules else surface_format
+                    full_surface_rules = (
+                        f"{surface_rules}\n{surface_format}".strip() if surface_rules else surface_format
+                    )
 
                 return build_full_persona_prompt(
                     start_behavior=row["start_behavior"],

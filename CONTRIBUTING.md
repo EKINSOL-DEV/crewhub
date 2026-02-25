@@ -44,7 +44,7 @@ Use descriptive branch names:
    ```bash
    # Backend
    cd backend && pytest
-   
+
    # Frontend
    cd frontend && npm test
    ```

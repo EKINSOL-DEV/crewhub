@@ -30,28 +30,28 @@ This creates a natural "x-ray vision" effect — you see through exactly ONE wal
 ## 5 Building Designs
 
 ### 1. The Ring
-**Inspired by:** Apple Park  
-**Key features:** Curved ring-shaped building (16 segments) enclosing a central courtyard with reflecting pool and trees. Two stories with cantilevered upper floor. Inner courtyard visible through glass panels.  
+**Inspired by:** Apple Park
+**Key features:** Curved ring-shaped building (16 segments) enclosing a central courtyard with reflecting pool and trees. Two stories with cantilevered upper floor. Inner courtyard visible through glass panels.
 **Why interesting:** The circular form creates a protected interior garden. The cantilever on the upper floor adds dynamic overhang.
 
 ### 2. The Cantilever
-**Inspired by:** OMA / CCTV HQ Beijing  
-**Key features:** Two offset towers of different heights (4 and 3 floors) connected by a dramatic bridging volume at the top. Angular meeting pods jut from the facade. Exposed structural cross-bracing.  
+**Inspired by:** OMA / CCTV HQ Beijing
+**Key features:** Two offset towers of different heights (4 and 3 floors) connected by a dramatic bridging volume at the top. Angular meeting pods jut from the facade. Exposed structural cross-bracing.
 **Why interesting:** The bridge creates a gateway form. The asymmetry between towers adds tension. Cross-bracing is both structural and aesthetic.
 
 ### 3. The Atrium
-**Inspired by:** Frank Lloyd Wright's Guggenheim  
-**Key features:** 4-story building with a central void/atrium running through all floors. Balconied walkways, glass bridges at floors 2 and 4, skylight flooding the core with warm light. Each floor has distinct programming.  
+**Inspired by:** Frank Lloyd Wright's Guggenheim
+**Key features:** 4-story building with a central void/atrium running through all floors. Balconied walkways, glass bridges at floors 2 and 4, skylight flooding the core with warm light. Each floor has distinct programming.
 **Why interesting:** The central void creates vertical connection between floors. Looking down into the atrium from any level gives spatial drama.
 
 ### 4. The Helix
-**Inspired by:** Zaha Hadid / BIG (Bjarke Ingels Group)  
-**Key features:** Spiraling structure wrapping 2.5 rotations around a cylindrical core. Continuous ramping floor plate with workspaces along the outer edge. Cyan accent rings on core. Translucent canopy at top.  
+**Inspired by:** Zaha Hadid / BIG (Bjarke Ingels Group)
+**Key features:** Spiraling structure wrapping 2.5 rotations around a cylindrical core. Continuous ramping floor plate with workspaces along the outer edge. Cyan accent rings on core. Translucent canopy at top.
 **Why interesting:** No traditional "floors" — just a continuous spiral. Movement through the building is a gradual ascent. Each segment has different lighting.
 
 ### 5. The Pavilions
-**Inspired by:** Google Campus / Renzo Piano  
-**Key features:** 4 distinct pavilions (main office, creative hub, tech lab, social lounge) connected by enclosed sky bridges. Different roof types (flat, butterfly, angled). Central courtyard with landscaping and pathways.  
+**Inspired by:** Google Campus / Renzo Piano
+**Key features:** 4 distinct pavilions (main office, creative hub, tech lab, social lounge) connected by enclosed sky bridges. Different roof types (flat, butterfly, angled). Central courtyard with landscaping and pathways.
 **Why interesting:** Campus feel with variety. Each building has unique materiality and character. The spaces between buildings are as important as the buildings themselves.
 
 ## Props Library

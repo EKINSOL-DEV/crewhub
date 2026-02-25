@@ -41,7 +41,7 @@ export function useSessionActivity(sessions: CrewSession[]) {
 }
 ```
 
-**New file: `lib/sessionFiltering.ts`**  
+**New file: `lib/sessionFiltering.ts`**
 Extract the filtering pipeline into a shared util:
 ```ts
 export function splitSessionsForDisplay(
@@ -65,13 +65,13 @@ Then update PlaygroundView to USE these shared utils too.
 3. **Thread settings through** — Stop `void`-ing `_settings`, use `settings.parkingIdleThreshold`
 4. **Fix room routing fallback order** to match 2D exactly:
    - For orphan sessions: `getRoomForSession(...) || getDefaultRoomForSession(...) || rooms[0]?.id`
-   - For agents: `agent.default_room_id || getRoomForSession(...)` 
+   - For agents: `agent.default_room_id || getRoomForSession(...)`
 5. **Fix bot status** — Single source of truth using `isActivelyRunning()`:
    ```ts
    function getAccurateBotStatus(session, isActive): BotStatus {
      if (isActive) return 'active'
      const idleSeconds = (Date.now() - session.updatedAt) / 1000
-     if (idleSeconds < 120) return 'idle'  
+     if (idleSeconds < 120) return 'idle'
      if (idleSeconds < 600) return 'sleeping'
      return 'offline'
    }
@@ -142,14 +142,14 @@ useEffect(() => {
     const currentTokens = session.totalTokens || 0
     const tracked = tokenTrackingRef.current.get(session.key)
     if (!tracked) {
-      tokenTrackingRef.current.set(session.key, { 
-        previousTokens: currentTokens, 
-        lastChangeTime: session.updatedAt 
+      tokenTrackingRef.current.set(session.key, {
+        previousTokens: currentTokens,
+        lastChangeTime: session.updatedAt
       })
     } else if (tracked.previousTokens !== currentTokens) {
-      tokenTrackingRef.current.set(session.key, { 
-        previousTokens: currentTokens, 
-        lastChangeTime: now 
+      tokenTrackingRef.current.set(session.key, {
+        previousTokens: currentTokens,
+        lastChangeTime: now
       })
     }
   })
@@ -175,10 +175,10 @@ const isActivelyRunning = useCallback((sessionKey: string): boolean => {
 const idleThreshold = settings.parkingIdleThreshold ?? 120
 
 // Split sessions into active vs parking (same as 2D)
-const activeSessions = sessions.filter(s => 
+const activeSessions = sessions.filter(s =>
   !shouldBeInParkingLane(s, isActivelyRunning(s.key), idleThreshold)
 )
-const parkingSessions = sessions.filter(s => 
+const parkingSessions = sessions.filter(s =>
   shouldBeInParkingLane(s, isActivelyRunning(s.key), idleThreshold)
 )
 
@@ -213,15 +213,15 @@ const wanderState = useRef({
 
 useFrame((_, delta) => {
   if (status === 'sleeping' || status === 'offline' || !roomBounds) return
-  
+
   const state = wanderState.current
   const speed = status === 'active' ? 1.2 : 0.5
-  
+
   // Move toward target
   const dx = state.targetX - state.currentX
   const dz = state.targetZ - state.currentZ
   const dist = Math.sqrt(dx*dx + dz*dz)
-  
+
   if (dist < 0.1) {
     // Reached target, wait then pick new one
     state.waitTimer -= delta
@@ -238,7 +238,7 @@ useFrame((_, delta) => {
     // Rotate toward movement direction
     groupRef.current.rotation.y = Math.atan2(dx, dz)
   }
-  
+
   groupRef.current.position.x = state.currentX
   groupRef.current.position.z = state.currentZ
 })
@@ -256,7 +256,7 @@ useFrame((_, delta) => {
 
 **CRITICAL: Reuse existing hooks, don't reinvent!**
 
-The 3D view currently uses `getBotDisplayName()` from `botVariants.ts` which is a simplified fallback. 
+The 3D view currently uses `getBotDisplayName()` from `botVariants.ts` which is a simplified fallback.
 The 2D view uses `useSessionDisplayNames` hook + `getSessionDisplayName()` from `minionUtils.ts` which:
 1. Fetches custom display names from the API (`/api/display-names/{key}`)
 2. Falls back to session.label
@@ -273,7 +273,7 @@ The 2D view uses `useSessionDisplayNames` hook + `getSessionDisplayName()` from 
 - `useAgentsRegistry` — already used ✅
 - `useRooms` + `getRoomForSession` — already used ✅
 - `shouldBeInParkingLane` — import from minionUtils
-- `getSessionDisplayName` — import from minionUtils  
+- `getSessionDisplayName` — import from minionUtils
 - `getDefaultRoomForSession` — import from roomsConfig
 - `isActivelyRunning` logic — extract to shared hook or duplicate carefully
 

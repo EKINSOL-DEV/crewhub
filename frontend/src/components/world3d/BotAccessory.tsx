@@ -20,11 +20,16 @@ interface BotAccessoryProps {
  */
 export function BotAccessory({ type, color }: BotAccessoryProps) {
   switch (type) {
-    case 'crown':     return <Crown />
-    case 'lightbulb': return <LightbulbAntenna />
-    case 'clock':     return <ClockAntenna color={color} />
-    case 'signal':    return <SignalAntenna color={color} />
-    case 'gear':      return <GearAntenna color={color} />
+    case 'crown':
+      return <Crown />
+    case 'lightbulb':
+      return <LightbulbAntenna />
+    case 'clock':
+      return <ClockAntenna color={color} />
+    case 'signal':
+      return <SignalAntenna color={color} />
+    case 'gear':
+      return <GearAntenna color={color} />
   }
 }
 
@@ -46,7 +51,7 @@ function Crown() {
       </mesh>
       {/* Hat dome (taller, like a crown) */}
       <mesh position={[0, 0.06, 0]} castShadow>
-        <cylinderGeometry args={[0.17, 0.20, 0.08, 16]} />
+        <cylinderGeometry args={[0.17, 0.2, 0.08, 16]} />
         <meshToonMaterial {...toonYellow} />
       </mesh>
       {/* Top knob */}
@@ -80,11 +85,7 @@ function LightbulbAntenna() {
       {/* Lightbulb */}
       <mesh ref={bulbRef} position={[0, 0.19, 0]}>
         <sphereGeometry args={[0.04, 10, 10]} />
-        <meshStandardMaterial
-          color="#FFD700"
-          emissive="#FFD700"
-          emissiveIntensity={0.6}
-        />
+        <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.6} />
       </mesh>
       {/* Bulb base */}
       <mesh position={[0, 0.145, 0]}>
@@ -114,7 +115,7 @@ function ClockAntenna({ color }: { color: string }) {
         <meshStandardMaterial color="#aaa" metalness={0.5} />
       </mesh>
       {/* Clock face circle */}
-      <group position={[0, 0.20, 0]}>
+      <group position={[0, 0.2, 0]}>
         {/* White clock face (front) */}
         <mesh position={[0, 0, 0.012]} rotation={[0, 0, 0]}>
           <circleGeometry args={[0.045, 20]} />
@@ -175,19 +176,11 @@ function SignalAntenna({ color }: { color: string }) {
         <meshStandardMaterial color={color} />
       </mesh>
       {/* Signal waves (arcs) */}
-      <group ref={wavesRef} position={[0, 0.20, 0]}>
+      <group ref={wavesRef} position={[0, 0.2, 0]}>
         {[0.05, 0.075, 0.1].map((radius, i) => (
-          <mesh
-            key={i}
-            rotation={[0, 0, -Math.PI / 4]}
-          >
+          <mesh key={i} rotation={[0, 0, -Math.PI / 4]}>
             <torusGeometry args={[radius, 0.005, 4, 12, Math.PI / 2]} />
-            <meshStandardMaterial
-              color={color}
-              transparent
-              opacity={0.6}
-              depthWrite={false}
-            />
+            <meshStandardMaterial color={color} transparent opacity={0.6} depthWrite={false} />
           </mesh>
         ))}
       </group>

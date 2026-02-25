@@ -1,19 +1,20 @@
 """Tests for Agent Identity Pattern — single identity, multiple surfaces."""
 
-import pytest
 import time
 
+import pytest
+
 from app.services.personas import (
-    build_identity_block,
-    build_full_persona_prompt,
     DEFAULT_SURFACE_RULES,
     KNOWN_SURFACES,
+    build_full_persona_prompt,
+    build_identity_block,
 )
-
 
 # ========================================
 # Identity Block Tests
 # ========================================
+
 
 class TestBuildIdentityBlock:
     def test_basic_identity_with_name(self):
@@ -136,6 +137,7 @@ class TestBuildFullPersonaPrompt:
 # Surface Rules Tests
 # ========================================
 
+
 class TestSurfaceRules:
     def test_all_known_surfaces_have_defaults(self):
         """Every known surface should have default format rules."""
@@ -162,6 +164,7 @@ class TestSurfaceRules:
 # API Integration Tests
 # ========================================
 
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
@@ -171,11 +174,15 @@ def anyio_backend():
 async def test_db(tmp_path):
     """Create a temporary database with schema for testing."""
     import aiosqlite
+
     import app.db.database as db_mod
 
     db_path = tmp_path / "test.db"
+    import app.routes.personas as personas_mod
+
     original_path = db_mod.DB_PATH
     db_mod.DB_PATH = db_path
+    personas_mod.DB_PATH = db_path
 
     async with aiosqlite.connect(db_path) as db:
         await db.execute("""
@@ -235,14 +242,16 @@ async def test_db(tmp_path):
     yield db_path
 
     db_mod.DB_PATH = original_path
+    personas_mod.DB_PATH = original_path
 
 
 @pytest.fixture
 def client(test_db):
     """Create a test client with temporary DB."""
-    from fastapi.testclient import TestClient
-    from app.routes.personas import router
     from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.routes.personas import router
 
     app = FastAPI()
     app.include_router(router, prefix="/api")
@@ -259,22 +268,28 @@ class TestIdentityAPI:
         assert data["identity_locked"] is False
 
     def test_put_identity(self, client):
-        resp = client.put("/api/agents/test-agent/identity", json={
-            "identity_anchor": "I am a helpful coding assistant.",
-            "surface_rules": "Always be concise.",
-            "identity_locked": True,
-        })
+        resp = client.put(
+            "/api/agents/test-agent/identity",
+            json={
+                "identity_anchor": "I am a helpful coding assistant.",
+                "surface_rules": "Always be concise.",
+                "identity_locked": True,
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["identity_anchor"] == "I am a helpful coding assistant."
         assert data["identity_locked"] is True
 
     def test_put_then_get_identity(self, client):
-        client.put("/api/agents/test-agent/identity", json={
-            "identity_anchor": "I am the director.",
-            "surface_rules": "Use emoji sparingly.",
-            "identity_locked": True,
-        })
+        client.put(
+            "/api/agents/test-agent/identity",
+            json={
+                "identity_anchor": "I am the director.",
+                "surface_rules": "Use emoji sparingly.",
+                "identity_locked": True,
+            },
+        )
         resp = client.get("/api/agents/test-agent/identity")
         data = resp.json()
         assert data["identity_anchor"] == "I am the director."
@@ -288,19 +303,25 @@ class TestIdentityAPI:
     def test_identity_persists_with_persona(self, client):
         """Identity and persona should coexist in the same row."""
         # Set identity first
-        client.put("/api/agents/test-agent/identity", json={
-            "identity_anchor": "I am Bot.",
-            "surface_rules": "",
-            "identity_locked": False,
-        })
+        client.put(
+            "/api/agents/test-agent/identity",
+            json={
+                "identity_anchor": "I am Bot.",
+                "surface_rules": "",
+                "identity_locked": False,
+            },
+        )
         # Now set persona (which uses the same agent_personas table)
-        client.put("/api/agents/test-agent/persona", json={
-            "preset": "advisor",
-            "start_behavior": 4,
-            "checkin_frequency": 2,
-            "response_detail": 4,
-            "approach_style": 2,
-        })
+        client.put(
+            "/api/agents/test-agent/persona",
+            json={
+                "preset": "advisor",
+                "start_behavior": 4,
+                "checkin_frequency": 2,
+                "response_detail": 4,
+                "approach_style": 2,
+            },
+        )
         # Identity fields should still be readable via persona endpoint
         resp = client.get("/api/agents/test-agent/persona")
         data = resp.json()
@@ -320,20 +341,26 @@ class TestSurfacesAPI:
             assert s["is_custom"] is False
 
     def test_put_surface(self, client):
-        resp = client.put("/api/agents/test-agent/surfaces/whatsapp", json={
-            "format_rules": "Always use bullet points.",
-            "enabled": True,
-        })
+        resp = client.put(
+            "/api/agents/test-agent/surfaces/whatsapp",
+            json={
+                "format_rules": "Always use bullet points.",
+                "enabled": True,
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["surface"] == "whatsapp"
         assert data["format_rules"] == "Always use bullet points."
 
     def test_put_then_get_surface(self, client):
-        client.put("/api/agents/test-agent/surfaces/discord", json={
-            "format_rules": "Use code blocks for all code.",
-            "enabled": True,
-        })
+        client.put(
+            "/api/agents/test-agent/surfaces/discord",
+            json={
+                "format_rules": "Use code blocks for all code.",
+                "enabled": True,
+            },
+        )
         resp = client.get("/api/agents/test-agent/surfaces")
         data = resp.json()
         discord = next(s for s in data["surfaces"] if s["surface"] == "discord")
@@ -342,10 +369,13 @@ class TestSurfacesAPI:
 
     def test_delete_surface(self, client):
         # Create first
-        client.put("/api/agents/test-agent/surfaces/slack", json={
-            "format_rules": "Use threads.",
-            "enabled": True,
-        })
+        client.put(
+            "/api/agents/test-agent/surfaces/slack",
+            json={
+                "format_rules": "Use threads.",
+                "enabled": True,
+            },
+        )
         # Delete
         resp = client.delete("/api/agents/test-agent/surfaces/slack")
         assert resp.status_code == 200
@@ -370,21 +400,27 @@ class TestSurfacesAPI:
 
 class TestPreviewWithSurface:
     def test_preview_with_surface(self, client):
-        resp = client.post("/api/personas/preview", json={
-            "prompt": "Say Hello World",
-            "preset": "executor",
-            "surface": "whatsapp",
-        })
+        resp = client.post(
+            "/api/personas/preview",
+            json={
+                "prompt": "Say Hello World",
+                "preset": "executor",
+                "surface": "whatsapp",
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert "identity_block" in data
         assert "whatsapp" in data["identity_block"].lower()
 
     def test_preview_without_surface(self, client):
-        resp = client.post("/api/personas/preview", json={
-            "prompt": "Say Hello World",
-            "preset": "executor",
-        })
+        resp = client.post(
+            "/api/personas/preview",
+            json={
+                "prompt": "Say Hello World",
+                "preset": "executor",
+            },
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["identity_block"] == ""

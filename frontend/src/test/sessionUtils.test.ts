@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  isSubagent,
-  getParentSessionKey,
-  getChildSessions,
-} from '../lib/sessionUtils'
+import { isSubagent, getParentSessionKey, getChildSessions } from '../lib/sessionUtils'
 import type { CrewSession } from '../lib/api'
 
 describe('isSubagent', () => {
@@ -44,17 +40,41 @@ describe('getParentSessionKey', () => {
 
 describe('getChildSessions', () => {
   const mockSessions: CrewSession[] = [
-    { key: 'agent:main:main', kind: 'agent', channel: 'cli', updatedAt: Date.now(), sessionId: 's1' },
-    { key: 'agent:main:subagent:abc', kind: 'agent', channel: 'cli', updatedAt: Date.now(), sessionId: 's2' },
-    { key: 'agent:main:subagent:def', kind: 'agent', channel: 'cli', updatedAt: Date.now(), sessionId: 's3' },
-    { key: 'agent:dev:main', kind: 'agent', channel: 'cli', updatedAt: Date.now(), sessionId: 's4' },
+    {
+      key: 'agent:main:main',
+      kind: 'agent',
+      channel: 'cli',
+      updatedAt: Date.now(),
+      sessionId: 's1',
+    },
+    {
+      key: 'agent:main:subagent:abc',
+      kind: 'agent',
+      channel: 'cli',
+      updatedAt: Date.now(),
+      sessionId: 's2',
+    },
+    {
+      key: 'agent:main:subagent:def',
+      kind: 'agent',
+      channel: 'cli',
+      updatedAt: Date.now(),
+      sessionId: 's3',
+    },
+    {
+      key: 'agent:dev:main',
+      kind: 'agent',
+      channel: 'cli',
+      updatedAt: Date.now(),
+      sessionId: 's4',
+    },
   ]
 
   it('returns child sessions for a parent', () => {
     const children = getChildSessions('agent:main:main', mockSessions)
     expect(children.length).toBe(2)
-    expect(children.map(c => c.key)).toContain('agent:main:subagent:abc')
-    expect(children.map(c => c.key)).toContain('agent:main:subagent:def')
+    expect(children.map((c) => c.key)).toContain('agent:main:subagent:abc')
+    expect(children.map((c) => c.key)).toContain('agent:main:subagent:def')
   })
 
   it('returns empty array when no children', () => {

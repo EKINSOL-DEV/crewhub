@@ -6,20 +6,20 @@
  * offers connection-only mode for existing agents.
  */
 
-import { useState, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { ChevronRight, ChevronDown, AlertTriangle, ShieldCheck } from "lucide-react"
-import { PresetCard } from "@/components/persona/PresetCard"
-import { PersonaSlider } from "@/components/persona/PersonaSlider"
-import { PersonaPreview } from "@/components/persona/PersonaPreview"
-import { fetchPresets, fetchIdentity } from "@/lib/personaApi"
+import { useState, useEffect, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { ChevronRight, ChevronDown, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { PresetCard } from '@/components/persona/PresetCard'
+import { PersonaSlider } from '@/components/persona/PersonaSlider'
+import { PersonaPreview } from '@/components/persona/PersonaPreview'
+import { fetchPresets, fetchIdentity } from '@/lib/personaApi'
 import {
   DIMENSIONS,
   DEFAULT_PERSONA,
   type PersonaConfig,
   type PersonaDimensions,
   type PresetDefinition,
-} from "@/lib/personaTypes"
+} from '@/lib/personaTypes'
 
 interface PersonaStepProps {
   agentName?: string
@@ -30,14 +30,14 @@ interface PersonaStepProps {
 
 export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaStepProps) {
   const [presets, setPresets] = useState<Record<string, PresetDefinition>>({})
-  const [selectedPreset, setSelectedPreset] = useState<string | null>("executor")
+  const [selectedPreset, setSelectedPreset] = useState<string | null>('executor')
   const [dimensions, setDimensions] = useState<PersonaDimensions>({
     start_behavior: DEFAULT_PERSONA.start_behavior,
     checkin_frequency: DEFAULT_PERSONA.checkin_frequency,
     response_detail: DEFAULT_PERSONA.response_detail,
     approach_style: DEFAULT_PERSONA.approach_style,
   })
-  const [customInstructions, setCustomInstructions] = useState("")
+  const [customInstructions, setCustomInstructions] = useState('')
   const [fineTuneOpen, setFineTuneOpen] = useState(false)
   const [customOpen, setCustomOpen] = useState(false)
   const [isCustomized, setIsCustomized] = useState(false)
@@ -82,13 +82,10 @@ export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaS
     [presets]
   )
 
-  const handleDimensionChange = useCallback(
-    (key: keyof PersonaDimensions, value: number) => {
-      setDimensions((prev) => ({ ...prev, [key]: value }))
-      setIsCustomized(true)
-    },
-    []
-  )
+  const handleDimensionChange = useCallback((key: keyof PersonaDimensions, value: number) => {
+    setDimensions((prev) => ({ ...prev, [key]: value }))
+    setIsCustomized(true)
+  }, [])
 
   const handleContinue = useCallback(() => {
     onComplete({
@@ -99,7 +96,7 @@ export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaS
   }, [onComplete, isCustomized, selectedPreset, dimensions, customInstructions])
 
   // Order presets: executor first
-  const presetOrder = ["executor", "advisor", "explorer"]
+  const presetOrder = ['executor', 'advisor', 'explorer']
   const orderedPresets = presetOrder
     .filter((k) => presets[k])
     .map((k) => ({ key: k, preset: presets[k] }))
@@ -111,8 +108,8 @@ export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaS
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold">Agent Identity Detected</h2>
           <p className="text-muted-foreground">
-            <span className="font-medium text-foreground">{agentName || "This agent"}</span>{" "}
-            already has a configured identity.
+            <span className="font-medium text-foreground">{agentName || 'This agent'}</span> already
+            has a configured identity.
           </p>
         </div>
 
@@ -120,8 +117,8 @@ export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaS
           <ShieldCheck className="h-10 w-10 mx-auto text-green-500" />
           <h3 className="font-medium">Identity Locked</h3>
           <p className="text-sm text-muted-foreground">
-            This agent&apos;s personality is already defined and locked. CrewHub will
-            connect to it for monitoring without modifying its identity.
+            This agent&apos;s personality is already defined and locked. CrewHub will connect to it
+            for monitoring without modifying its identity.
           </p>
           <p className="text-xs text-muted-foreground">
             You can adjust this later in Settings → Identity.
@@ -230,7 +227,9 @@ export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaS
                   <textarea
                     value={customInstructions}
                     onChange={(e) => setCustomInstructions(e.target.value.slice(0, 500))}
-                    placeholder={'e.g. "Always respond in Dutch"\n     "Never delete files without asking"'}
+                    placeholder={
+                      'e.g. "Always respond in Dutch"\n     "Never delete files without asking"'
+                    }
                     className="w-full h-24 px-3 py-2 text-sm rounded-md border bg-background resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring placeholder:text-muted-foreground"
                     maxLength={500}
                   />
@@ -238,7 +237,7 @@ export function PersonaStep({ agentName, agentId, onComplete, onSkip }: PersonaS
                     {customInstructions.length}/500
                   </p>
                   {/* Conflict hint */}
-                  {customInstructions.toLowerCase().includes("always ask") &&
+                  {customInstructions.toLowerCase().includes('always ask') &&
                     dimensions.start_behavior <= 2 && (
                       <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" />

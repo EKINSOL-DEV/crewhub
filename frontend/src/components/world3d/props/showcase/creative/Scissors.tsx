@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Scissors() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.4; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = s.clock.elapsedTime * 0.4
+  })
   return (
     <group ref={groupRef}>
       {/* Blade 1 */}
@@ -42,5 +44,5 @@ export function Scissors() {
         <meshStandardMaterial color="#ff4444" flatShading />
       </mesh>
     </group>
-  );
+  )
 }

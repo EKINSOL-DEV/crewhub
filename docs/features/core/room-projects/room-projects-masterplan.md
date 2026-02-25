@@ -1,7 +1,7 @@
 # Room Projects — Masterplan
 
-**Date:** 2026-02-04  
-**Status:** Definitive  
+**Date:** 2026-02-04
+**Status:** Definitive
 **Sources:** Opus technical design + GPT-5.2 UX review + Nicky's HQ requirement
 
 ---
@@ -382,8 +382,8 @@ Triggered by "Assign Project" or "Change Project":
 ### 6.5 Change Confirmation
 
 If the room has active agents and the user changes/clears the project → show confirm dialog:
-> **Change room project?**  
-> 3 agents are currently active. They will continue current tasks. New tasks will use the updated project context.  
+> **Change room project?**
+> 3 agents are currently active. They will continue current tasks. New tasks will use the updated project context.
 > [Cancel] [Change Project]
 
 ### 6.6 HQ Extension
@@ -531,7 +531,7 @@ Backend support for projects.
 | 4 — Visuals | ~4.5h (1 day) | Phase 2 |
 | 5 — Agent Context | ~9.5h (1–2 days) | Phase 2 + OpenClaw |
 
-**Phases 1–4: ~28 hours / 5–7 working days.**  
+**Phases 1–4: ~28 hours / 5–7 working days.**
 **Phase 5: additional 1–2 days (requires OpenClaw changes).**
 
 ---

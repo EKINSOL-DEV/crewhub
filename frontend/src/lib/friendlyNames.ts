@@ -1,19 +1,41 @@
-const adjectives = ["brave", "swift", "happy", "clever", "sunny", "mighty", "gentle", "bold", "cosmic", "turbo"]
-const nouns = ["banana", "lobster", "wrench", "rocket", "coconut", "penguin", "dolphin", "phoenix", "wizard", "ninja"]
+const adjectives = [
+  'brave',
+  'swift',
+  'happy',
+  'clever',
+  'sunny',
+  'mighty',
+  'gentle',
+  'bold',
+  'cosmic',
+  'turbo',
+]
+const nouns = [
+  'banana',
+  'lobster',
+  'wrench',
+  'rocket',
+  'coconut',
+  'penguin',
+  'dolphin',
+  'phoenix',
+  'wizard',
+  'ninja',
+]
 
 const MINION_NAMES: Record<string, string[]> = {
-  dev: ["Kevin", "Stuart", "Dave", "Jerry", "Tim", "Mark", "Phil", "Carl"],
-  thinking: ["Einstein", "Newton", "Plato", "Socrates", "Darwin", "Curie", "Hawking", "Turing"],
-  creative: ["Picasso", "Banksy", "Warhol", "Dali", "Frida", "Monet", "Rembrandt", "Escher"],
-  marketing: ["Madison", "Sterling", "Peggy", "Don", "Cooper", "Draper", "Olson", "Campbell"],
-  automation: ["Cron", "Timer", "Tick", "Pulse", "Batch", "Loop", "Trigger", "Schedule"],
-  comms: ["Hermes", "Mercury", "Iris", "Gabriel", "Messenger", "Herald", "Courier", "Swift"],
-  ops: ["Docker", "Kube", "Helm", "Terraform", "Ansible", "Chef", "Puppet", "Jenkins"],
-  headquarters: ["Boss", "Chief", "Captain", "Admiral", "General", "Commander", "Director", "Lead"],
+  dev: ['Kevin', 'Stuart', 'Dave', 'Jerry', 'Tim', 'Mark', 'Phil', 'Carl'],
+  thinking: ['Einstein', 'Newton', 'Plato', 'Socrates', 'Darwin', 'Curie', 'Hawking', 'Turing'],
+  creative: ['Picasso', 'Banksy', 'Warhol', 'Dali', 'Frida', 'Monet', 'Rembrandt', 'Escher'],
+  marketing: ['Madison', 'Sterling', 'Peggy', 'Don', 'Cooper', 'Draper', 'Olson', 'Campbell'],
+  automation: ['Cron', 'Timer', 'Tick', 'Pulse', 'Batch', 'Loop', 'Trigger', 'Schedule'],
+  comms: ['Hermes', 'Mercury', 'Iris', 'Gabriel', 'Messenger', 'Herald', 'Courier', 'Swift'],
+  ops: ['Docker', 'Kube', 'Helm', 'Terraform', 'Ansible', 'Chef', 'Puppet', 'Jenkins'],
+  headquarters: ['Boss', 'Chief', 'Captain', 'Admiral', 'General', 'Commander', 'Director', 'Lead'],
 }
 
 export function generateFriendlyName(sessionKey: string): string {
-  const hash = sessionKey.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0)
+  const hash = sessionKey.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0)
   const adj = adjectives[Math.abs(hash) % adjectives.length]
   const noun = nouns[Math.abs(hash >> 8) % nouns.length]
   return `${adj}-${noun}`
@@ -21,26 +43,26 @@ export function generateFriendlyName(sessionKey: string): string {
 
 export function getMinionName(sessionKey: string, roomId: string): string {
   const names = MINION_NAMES[roomId]
-  if (!names || names.length === 0) return MINION_NAMES.headquarters[0] || "Agent"
-  const hash = Math.abs(sessionKey.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0))
+  if (!names || names.length === 0) return MINION_NAMES.headquarters[0] || 'Agent'
+  const hash = Math.abs(sessionKey.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0))
   return names[hash % names.length]
 }
 
 export function getTaskEmoji(label?: string): string {
-  if (!label) return "🤖"
+  if (!label) return '🤖'
   const l = label.toLowerCase()
-  if (l.includes("fix") || l.includes("bug")) return "🔧"
-  if (l.includes("feature") || l.includes("implement")) return "✨"
-  if (l.includes("research") || l.includes("analys")) return "🔍"
-  if (l.includes("test") || l.includes("qa")) return "🧪"
-  if (l.includes("refactor")) return "♻️"
-  return "🤖"
+  if (l.includes('fix') || l.includes('bug')) return '🔧'
+  if (l.includes('feature') || l.includes('implement')) return '✨'
+  if (l.includes('research') || l.includes('analys')) return '🔍'
+  if (l.includes('test') || l.includes('qa')) return '🧪'
+  if (l.includes('refactor')) return '♻️'
+  return '🤖'
 }
 
-export function getDisplayName(session: {key: string, label?: string}): string {
+export function getDisplayName(session: { key: string; label?: string }): string {
   if (session.label) return session.label
-  if (session.key.includes(":subagent:")) return generateFriendlyName(session.key)
-  return session.key.split(":").pop() || session.key
+  if (session.key.includes(':subagent:')) return generateFriendlyName(session.key)
+  return session.key.split(':').pop() || session.key
 }
 
 /**
@@ -84,22 +106,22 @@ export function isFixedAgent(sessionKey: string): boolean {
   // WhatsApp session keys
   if (sessionKey.startsWith('whatsapp:')) {
     const payload = sessionKey.slice('whatsapp:'.length)
-    
+
     // Exclude subagent patterns
     if (payload.includes('-subagent-') || payload.includes('-spawn-')) {
       return false
     }
-    
+
     // Include known phone numbers
     if (payload.includes('+32494330227') || payload.includes('+32469774873')) {
       return true
     }
-    
+
     // Include g-agent-{name}-main patterns
     if (payload.match(/^g-agent-\w+-main/)) {
       return true
     }
-    
+
     return false
   }
 
@@ -125,7 +147,7 @@ export function formatSessionKeyAsName(sessionKey: string, label?: string): stri
     if (parts.length >= 2) {
       const agentName = parts[1]
       const capitalizedName = agentName.charAt(0).toUpperCase() + agentName.slice(1)
-      
+
       // Check if it's a subagent
       if (parts.includes('subagent') || parts.includes('spawn')) {
         return `${capitalizedName} (subagent)`
@@ -137,7 +159,7 @@ export function formatSessionKeyAsName(sessionKey: string, label?: string): stri
   // Priority 4: WhatsApp session keys (whatsapp:g-agent-name-subagent-xxx)
   if (sessionKey.startsWith('whatsapp:')) {
     const payload = sessionKey.slice('whatsapp:'.length)
-    
+
     // Parse g-agent-{name}-subagent-xxx format
     const gAgentMatch = payload.match(/^g-agent-(\w+)-subagent-/)
     if (gAgentMatch) {
@@ -145,14 +167,14 @@ export function formatSessionKeyAsName(sessionKey: string, label?: string): stri
       const capitalizedName = agentName.charAt(0).toUpperCase() + agentName.slice(1)
       return `${capitalizedName} (subagent)`
     }
-    
+
     // Parse g-agent-{name}-main format
     const gMainMatch = payload.match(/^g-agent-(\w+)-main/)
     if (gMainMatch) {
       const agentName = gMainMatch[1]
       return agentName.charAt(0).toUpperCase() + agentName.slice(1)
     }
-    
+
     // Phone number in WhatsApp key
     const phoneMatch = payload.match(/\+\d+/)
     if (phoneMatch) {
@@ -160,7 +182,7 @@ export function formatSessionKeyAsName(sessionKey: string, label?: string): stri
       if (phoneMatch[0] === '+32469774873') return 'Ekinbot'
       return `User (${phoneMatch[0].slice(0, 6)}...)`
     }
-    
+
     // Fallback: show first part
     return payload.split('-')[0] || 'WhatsApp'
   }
@@ -176,11 +198,11 @@ export function formatSessionKeyAsName(sessionKey: string, label?: string): stri
   // Priority 6: Extract last meaningful part
   const parts = sessionKey.split(':')
   const lastPart = parts[parts.length - 1]
-  
+
   // If last part is a UUID, try the second-to-last
   if (lastPart.match(/^[a-f0-9-]{36}$/i) && parts.length > 1) {
     return parts[parts.length - 2]
   }
-  
+
   return lastPart || sessionKey
 }

@@ -10,5 +10,12 @@ const MVP_ITEMS = [
 ]
 
 export function GameCenterView({ className }: { className?: string }) {
-  return <ZoneLandingView zone={GAME_CENTER} mvpItems={MVP_ITEMS} className={className} hideCenterMarker />
+  return (
+    <ZoneLandingView
+      zone={GAME_CENTER}
+      mvpItems={MVP_ITEMS}
+      className={className}
+      hideCenterMarker
+    />
+  )
 }

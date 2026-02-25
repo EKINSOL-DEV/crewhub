@@ -30,13 +30,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-import aiosqlite
-from app.db.database import get_db
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
     Ed25519PublicKey,
 )
+
+from app.db.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -300,8 +300,7 @@ class DeviceIdentityManager:
         await self.save_device_identity(identity, connection_id)
 
         logger.info(
-            f"Generated device identity: {device_id[:16]}... "
-            f"(name={identity.device_name}, platform={platform})"
+            f"Generated device identity: {device_id[:16]}... (name={identity.device_name}, platform={platform})"
         )
         return identity
 
@@ -371,9 +370,7 @@ class DeviceIdentityManager:
 
             await db.commit()
 
-    async def get_device_identity(
-        self, connection_id: str
-    ) -> Optional["DeviceIdentity"]:
+    async def get_device_identity(self, connection_id: str) -> Optional["DeviceIdentity"]:
         """Retrieve device identity for a connection (most recently created)."""
         await self.init_database()
 
@@ -406,9 +403,7 @@ class DeviceIdentityManager:
             logger.error(f"Failed to load device identity: {e}")
             return None
 
-    async def update_device_token(
-        self, device_id: str, device_token: str
-    ) -> None:
+    async def update_device_token(self, device_id: str, device_token: str) -> None:
         """Update device token after successful pairing / connect response."""
         await self.init_database()
 
@@ -453,10 +448,7 @@ class DeviceIdentityManager:
             )
             await db.commit()
 
-        logger.info(
-            f"Cleared device token for {device_id[:16]}... "
-            "(will re-authenticate on next connect)"
-        )
+        logger.info(f"Cleared device token for {device_id[:16]}... (will re-authenticate on next connect)")
 
     async def get_or_create_device_identity(
         self, connection_id: str, device_name: Optional[str] = None

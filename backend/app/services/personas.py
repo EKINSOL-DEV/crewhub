@@ -117,7 +117,7 @@ def build_persona_prompt(
     custom_instructions: str = "",
 ) -> str:
     """Convert persona dimensions to a system prompt fragment.
-    
+
     Each dimension value (1-5) maps to a specific prompt fragment.
     Fragments are concatenated into a coherent behavior section.
     """
@@ -174,8 +174,15 @@ DEFAULT_SURFACE_RULES = {
 
 # Well-known surfaces that CrewHub recognizes
 KNOWN_SURFACES = [
-    "whatsapp", "discord", "slack", "telegram",
-    "crewhub-ui", "email", "sms", "signal", "imessage",
+    "whatsapp",
+    "discord",
+    "slack",
+    "telegram",
+    "crewhub-ui",
+    "email",
+    "sms",
+    "signal",
+    "imessage",
 ]
 
 
@@ -186,42 +193,44 @@ def build_identity_block(
     agent_name: Optional[str] = None,
 ) -> str:
     """Build the identity stability block for injection into system prompts.
-    
+
     This is the core of the Agent Identity Pattern — it tells the agent
     that its personality is fixed and only format should adapt per surface.
-    
+
     Args:
         identity_anchor: Agent's core identity statement (who I am).
         surface_rules: Global surface adaptation rules.
         current_surface: The current channel/surface being used.
         agent_name: The agent's display name.
-    
+
     Returns:
         A system prompt fragment for identity stability.
     """
     parts = []
-    
+
     parts.append("## Identity")
-    
+
     if identity_anchor and identity_anchor.strip():
         parts.append(identity_anchor.strip())
     elif agent_name:
         parts.append(f"You are {agent_name}.")
-    
+
     parts.append("")
-    parts.append("**Identity stability rule:** Your personality and core behavior are constant across all access channels (WhatsApp, Discord, Slack, web UI, etc). You adapt your *format* per channel, never your *personality*.")
-    
+    parts.append(
+        "**Identity stability rule:** Your personality and core behavior are constant across all access channels (WhatsApp, Discord, Slack, web UI, etc). You adapt your *format* per channel, never your *personality*."
+    )
+
     if current_surface:
         channel_rules = DEFAULT_SURFACE_RULES.get(current_surface.lower(), "")
         parts.append("")
         parts.append(f"**Current surface:** {current_surface}")
         if channel_rules:
             parts.append(f"**Format rules:** {channel_rules}")
-    
+
     if surface_rules and surface_rules.strip():
         parts.append("")
         parts.append(f"**Custom surface rules:** {surface_rules.strip()}")
-    
+
     return "\n".join(parts)
 
 
@@ -237,12 +246,12 @@ def build_full_persona_prompt(
     agent_name: Optional[str] = None,
 ) -> str:
     """Build a complete persona + identity prompt.
-    
+
     Combines the behavior guidelines (persona) with identity stability
     (identity pattern) into a single coherent prompt fragment.
     """
     sections = []
-    
+
     # Identity section (if any identity config exists)
     if identity_anchor or agent_name or current_surface:
         identity_block = build_identity_block(
@@ -252,7 +261,7 @@ def build_full_persona_prompt(
             agent_name=agent_name,
         )
         sections.append(identity_block)
-    
+
     # Behavior section
     behavior_block = build_persona_prompt(
         start_behavior=start_behavior,
@@ -262,5 +271,5 @@ def build_full_persona_prompt(
         custom_instructions=custom_instructions,
     )
     sections.append(f"## Behavior Guidelines\n{behavior_block}")
-    
+
     return "\n\n".join(sections)

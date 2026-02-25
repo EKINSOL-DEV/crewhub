@@ -3,11 +3,11 @@ import { Workstation, MeetingTable, ServerRack, Whiteboard, Plant, TallPlant, Fl
 
 /**
  * THE CANTILEVER - Inspired by OMA / Rem Koolhaas / CCTV HQ Beijing
- * 
+ *
  * Dramatic architecture with bold cantilevered volumes. Two towers connected
  * by a massive bridging volume at the top, creating a gateway form. The
  * lower sections feature angular, jutting conference rooms and a public atrium.
- * 
+ *
  * Architectural features:
  * - Two offset towers with different heights
  * - Dramatic bridge/cantilever connecting them at top
@@ -32,11 +32,11 @@ function CrossBrace({ p1, p2, color = '#667788' }: { p1: [number, number, number
 
 export function TheCantilever() {
   const floorH = 3.2
-  
+
   return (
     <group>
       <Floor size={[24, 24]} color="#1e2430" />
-      
+
       {/* ═══ LEFT TOWER (taller) ═══ */}
       {[0, 1, 2, 3].map(floor => {
         const y = floor * floorH
@@ -53,7 +53,7 @@ export function TheCantilever() {
             <Wall color="#6a7a8a" position={[0, floorH / 2, -d / 2]}><boxGeometry args={[w, floorH, 0.12]} /></Wall>
             <Wall color="#5a6a7a" position={[w / 2, floorH / 2, 0]} rotation={[0, Math.PI / 2, 0]}><boxGeometry args={[d, floorH, 0.12]} /></Wall>
             <Wall color="#5a6a7a" position={[-w / 2, floorH / 2, 0]} rotation={[0, Math.PI / 2, 0]}><boxGeometry args={[d, floorH, 0.12]} /></Wall>
-            
+
             {/* Interior */}
             <Workstation position={[-1, 0, -0.8]} />
             <Workstation position={[1, 0, -0.8]} />
@@ -68,7 +68,7 @@ export function TheCantilever() {
         <boxGeometry args={[5.4, 0.15, 4.4]} />
         <meshStandardMaterial color="#3a3d4a" metalness={0.3} />
       </mesh>
-      
+
       {/* ═══ RIGHT TOWER (shorter) ═══ */}
       {[0, 1, 2].map(floor => {
         const y = floor * floorH
@@ -83,7 +83,7 @@ export function TheCantilever() {
             <Wall color="#6a7a8a" position={[0, floorH / 2, -d / 2]}><boxGeometry args={[w, floorH, 0.12]} /></Wall>
             <Wall color="#5a6a7a" position={[w / 2, floorH / 2, 0]} rotation={[0, Math.PI / 2, 0]}><boxGeometry args={[d, floorH, 0.12]} /></Wall>
             <Wall color="#5a6a7a" position={[-w / 2, floorH / 2, 0]} rotation={[0, Math.PI / 2, 0]}><boxGeometry args={[d, floorH, 0.12]} /></Wall>
-            
+
             <Workstation position={[0, 0, -0.5]} />
             {floor === 0 && <MeetingTable position={[0, 0, 0.8]} seats={4} />}
             {floor === 1 && <Sofa position={[0, 0, 1]} />}
@@ -94,7 +94,7 @@ export function TheCantilever() {
         <boxGeometry args={[4.9, 0.15, 4.9]} />
         <meshStandardMaterial color="#3a3d4a" metalness={0.3} />
       </mesh>
-      
+
       {/* ═══ BRIDGE / CANTILEVER ═══ */}
       {/* The dramatic connecting bridge at top level */}
       <group position={[0.25, 2.5 * floorH, 0]}>
@@ -118,7 +118,7 @@ export function TheCantilever() {
         <HangingLight position={[-1, floorH - 0.1, 0]} />
         <HangingLight position={[2, floorH - 0.1, 0]} />
       </group>
-      
+
       {/* ═══ ANGULAR MEETING POD (cantilevered) ═══ */}
       {/* Jutting out from left tower, floor 1 */}
       <group position={[-4, floorH, 3.5]} rotation={[0, 0.15, 0]}>
@@ -135,23 +135,23 @@ export function TheCantilever() {
         </mesh>
         <MeetingTable position={[0, 0, 0]} seats={4} />
       </group>
-      
+
       {/* ═══ CROSS-BRACING (structural expression) ═══ */}
       <CrossBrace p1={[-6.5, 0, -2]} p2={[-6.5, floorH * 2, 2]} />
       <CrossBrace p1={[-6.5, floorH * 2, -2]} p2={[-6.5, 0, 2]} />
       <CrossBrace p1={[6.75, 0, -2.25]} p2={[6.75, floorH * 1.5, 2.25]} />
       <CrossBrace p1={[6.75, floorH * 1.5, -2.25]} p2={[6.75, 0, 2.25]} />
-      
+
       {/* Bridge support bracing */}
       <CrossBrace p1={[-1.5, floorH * 2, 2.5]} p2={[0.25, floorH * 2.5, 2.5]} color="#556" />
       <CrossBrace p1={[2, floorH * 2, 2.5]} p2={[0.25, floorH * 2.5, 2.5]} color="#556" />
-      
+
       {/* ═══ GROUND LEVEL ATRIUM ═══ */}
       {/* Open space between towers */}
       <TallPlant position={[0.5, 0, -1.5]} />
       <TallPlant position={[0.5, 0, 1.5]} />
       <Plant position={[-0.5, 0, 0]} variant={2} />
-      
+
       {/* Entrance canopy */}
       <mesh position={[0.25, 3.5, 4]}>
         <boxGeometry args={[6, 0.08, 2]} />

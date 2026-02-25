@@ -10,15 +10,25 @@ interface BotQuickActionsProps {
   onOpenLog: (session: CrewSession) => void
 }
 
-export function BotQuickActions({ session, displayName, botConfig, canChat, onOpenLog }: BotQuickActionsProps) {
+export function BotQuickActions({
+  session,
+  displayName,
+  botConfig,
+  canChat,
+  onOpenLog,
+}: BotQuickActionsProps) {
   const { openChat } = useChatContext()
 
   const buttons = [
-    ...(canChat ? [{
-      icon: '💬',
-      label: 'Chat',
-      onClick: () => openChat(session.key, displayName, botConfig.icon, botConfig.color),
-    }] : []),
+    ...(canChat
+      ? [
+          {
+            icon: '💬',
+            label: 'Chat',
+            onClick: () => openChat(session.key, displayName, botConfig.icon, botConfig.color),
+          },
+        ]
+      : []),
     {
       icon: '📋',
       label: 'Logs',
@@ -40,7 +50,7 @@ export function BotQuickActions({ session, displayName, botConfig, canChat, onOp
         animation: 'quickActionsSlideIn 0.3s ease-out',
       }}
     >
-      {buttons.map(btn => (
+      {buttons.map((btn) => (
         <button
           key={btn.label}
           onClick={btn.onClick}
@@ -62,13 +72,13 @@ export function BotQuickActions({ session, displayName, botConfig, canChat, onOp
             transition: 'all 0.15s',
             position: 'relative',
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.95)'
             e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.12)'
             e.currentTarget.style.transform = 'scale(1.05)'
             e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)'
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.85)'
             e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.08)'
             e.currentTarget.style.transform = 'scale(1)'

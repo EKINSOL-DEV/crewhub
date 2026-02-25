@@ -77,14 +77,14 @@ export function SettingsView() {
             id="backend-url"
             type="text"
             value={url}
-            onChange={e => setUrl(e.target.value)}
+            onChange={(e) => setUrl(e.target.value)}
             placeholder={DEFAULT_URL}
             className="font-mono text-sm"
-            onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave()
+            }}
           />
-          <p className="text-xs text-muted-foreground">
-            Leave empty to use the default URL.
-          </p>
+          <p className="text-xs text-muted-foreground">Leave empty to use the default URL.</p>
         </div>
 
         {/* Effective URL indicator */}
@@ -92,9 +92,7 @@ export function SettingsView() {
           <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">
             Currently active
           </p>
-          <code className="text-xs font-mono text-foreground break-all">
-            {effectiveUrl}
-          </code>
+          <code className="text-xs font-mono text-foreground break-all">{effectiveUrl}</code>
           {!localStorage.getItem(STORAGE_KEY) && (
             <p className="text-xs text-muted-foreground mt-1">(default)</p>
           )}

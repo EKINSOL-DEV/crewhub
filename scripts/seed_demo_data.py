@@ -43,12 +43,12 @@ def now_ms():
 def seed_tasks(db, project_id):
     """Add demo tasks with varied statuses and rich history."""
     cursor = db.cursor()
-    
+
     cursor.execute("SELECT count(*) FROM tasks WHERE title LIKE 'Demo:%'")
     if cursor.fetchone()[0] > 0:
         print("  ⏭  Demo tasks already exist, skipping")
         return
-    
+
     tasks_data = [
         {
             "title": "Demo: Build authentication system",
@@ -107,33 +107,33 @@ def seed_tasks(db, project_id):
             "room_id": "dev-room",
         },
     ]
-    
+
     ts = now_ms()
     for i, t in enumerate(tasks_data):
         task_id = gen_id()
         created_at = ts - (len(tasks_data) - i) * 3600000
-        
+
         cursor.execute(
-            """INSERT INTO tasks (id, project_id, room_id, title, description, status, priority, 
+            """INSERT INTO tasks (id, project_id, room_id, title, description, status, priority,
                assigned_session_key, created_by, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (task_id, project_id, t["room_id"], t["title"], t["description"],
              t["status"], t["priority"], t["assigned_session_key"],
              "agent:dev:main", created_at, created_at)
         )
-        
-        _add_history(cursor, project_id, task_id, "task_created", created_at, 
+
+        _add_history(cursor, project_id, task_id, "task_created", created_at,
                      "agent:dev:main", {"title": t["title"], "status": "todo"})
-        
+
         if t["assigned_session_key"]:
             _add_history(cursor, project_id, task_id, "task_assigned", created_at + 60000,
                          "agent:dev:main", {"assigned_to": t["assigned_session_key"]})
-        
+
         if t["status"] != "todo":
             _add_history(cursor, project_id, task_id, "task_status_changed", created_at + 300000,
                          t["assigned_session_key"] or "agent:dev:main",
                          {"from": "todo", "to": t["status"]})
-    
+
     db.commit()
     print(f"  ✅ Added {len(tasks_data)} demo tasks with history events")
 
@@ -159,7 +159,7 @@ def seed_generation_history():
             return
     else:
         existing = []
-    
+
     demo_entries = [
         {
             "id": "demo-001",
@@ -225,18 +225,18 @@ def seed_generation_history():
             "createdAt": now_ms() - 86400000 * 4,
         },
     ]
-    
+
     existing_ids = {e.get("id") for e in existing}
     new_entries = [e for e in demo_entries if e["id"] not in existing_ids]
-    
+
     if not new_entries:
         print("  ⏭  Demo generation history entries already exist")
         return
-    
+
     combined = existing + new_entries
     with open(GENERATION_HISTORY_PATH, 'w') as f:
         json.dump(combined, f, indent=2)
-    
+
     print(f"  ✅ Added {len(new_entries)} demo generation history entries (total: {len(combined)})")
 
 # ─────────────────────────────────────────────────────────────────────
@@ -246,7 +246,7 @@ def seed_generation_history():
 def seed_demo_markdown_docs():
     """Create demo markdown files for the project docs viewer."""
     DEMO_DOCS_PATH.mkdir(parents=True, exist_ok=True)
-    
+
     docs = {
         "README.md": """# CrewHub Demo Project
 
@@ -437,7 +437,7 @@ After a meeting completes:
 - Review action items and create tasks for follow-up work
 """,
     }
-    
+
     created = 0
     for filename, content in docs.items():
         filepath = DEMO_DOCS_PATH / filename
@@ -449,7 +449,7 @@ After a meeting completes:
             # Update existing files with v0.15.0 content
             filepath.write_text(content)
             created += 1
-    
+
     if created:
         print(f"  ✅ Created/updated {created} demo markdown documents in {DEMO_DOCS_PATH}")
     else:
@@ -462,24 +462,24 @@ After a meeting completes:
 def seed_meetings(db, project_id):
     """Add demo AI meeting with turns, participants, action items, and output."""
     cursor = db.cursor()
-    
+
     cursor.execute("SELECT count(*) FROM meetings WHERE title LIKE 'Demo:%'")
     if cursor.fetchone()[0] > 0:
         print("  ⏭  Demo meetings already exist, skipping")
         return
-    
+
     ts = now_ms()
-    
+
     # Meeting 1: Completed sprint planning
     meeting1_id = gen_id()
     meeting1_started = ts - 86400000 * 2  # 2 days ago
     meeting1_completed = meeting1_started + 600000  # 10 min later
-    
+
     meeting1_output = """# Sprint Planning - v0.15.0 Features
 
-**Date:** 2 days ago  
-**Participants:** Dev, Main, Flowy  
-**Goal:** Plan implementation priorities for v0.15.0 release  
+**Date:** 2 days ago
+**Participants:** Dev, Main, Flowy
+**Goal:** Plan implementation priorities for v0.15.0 release
 
 ## Discussion Summary
 
@@ -511,9 +511,9 @@ def seed_meetings(db, project_id):
     MEETING_OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
     output_path = str(MEETING_OUTPUT_PATH / "demo-sprint-planning.md")
     Path(output_path).write_text(meeting1_output)
-    
+
     cursor.execute(
-        """INSERT INTO meetings (id, title, goal, state, room_id, project_id, 
+        """INSERT INTO meetings (id, title, goal, state, room_id, project_id,
            output_md, output_path, current_round, current_turn,
            started_at, completed_at, created_by, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -523,7 +523,7 @@ def seed_meetings(db, project_id):
          meeting1_output, output_path, 2, 6,
          meeting1_started, meeting1_completed, "user", meeting1_started)
     )
-    
+
     # Participants
     participants = [
         ("dev", "Dev", "🤖", "#4CAF50"),
@@ -536,7 +536,7 @@ def seed_meetings(db, project_id):
                VALUES (?, ?, ?, ?, ?, ?)""",
             (meeting1_id, aid, name, icon, color, i)
         )
-    
+
     # Turns (2 rounds × 3 participants = 6 turns)
     turn_texts = [
         "The AI Meetings backend is mostly complete. We need to focus on the post-meeting workflow — extracting action items and creating tasks automatically. I estimate 2-3 days for the full pipeline.",
@@ -546,13 +546,13 @@ def seed_meetings(db, project_id):
         "Yes, I'll build the participant selector. For pathfinding, I think we should use A* on a simple grid rather than a navmesh — it's simpler and our room layout is grid-based anyway.",
         "A* sounds right. For the meeting output, let's generate clean markdown that can be viewed in our document viewer. I'll write the output template.",
     ]
-    
+
     for ti, text in enumerate(turn_texts):
         round_num = ti // 3
         turn_in_round = ti % 3
         agent = participants[turn_in_round]
         turn_time = meeting1_started + (ti + 1) * 90000
-        
+
         cursor.execute(
             """INSERT INTO meeting_turns (id, meeting_id, round_num, turn_index, agent_id, agent_name,
                prompt_tokens, response_tokens, response_text, started_at, completed_at)
@@ -561,7 +561,7 @@ def seed_meetings(db, project_id):
              850 + ti * 100, 180 + ti * 30, text,
              turn_time, turn_time + 15000)
         )
-    
+
     # Action items
     action_items = [
         ("Implement post-meeting action item extraction", "dev", "high", "completed"),
@@ -570,18 +570,18 @@ def seed_meetings(db, project_id):
         ("Design meeting output markdown template", "flowy", "low", "completed"),
         ("Add action item review state before task creation", "dev", "medium", "pending"),
     ]
-    
+
     for i, (text, assignee, priority, status) in enumerate(action_items):
         cursor.execute(
             """INSERT INTO meeting_action_items (id, meeting_id, text, assignee_agent_id, priority, status, sort_order, created_at, updated_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (gen_id(), meeting1_id, text, assignee, priority, status, i, meeting1_completed, meeting1_completed)
         )
-    
+
     # Meeting 2: In-progress brainstorm (shows active state)
     meeting2_id = gen_id()
     meeting2_started = ts - 3600000  # 1 hour ago
-    
+
     cursor.execute(
         """INSERT INTO meetings (id, title, goal, state, room_id, project_id,
            current_round, current_turn, started_at, created_by, created_at)
@@ -591,14 +591,14 @@ def seed_meetings(db, project_id):
          "completed", "creative-room", project_id,
          1, 2, meeting2_started, "user", meeting2_started)
     )
-    
+
     for i, (aid, name, icon, color) in enumerate([participants[1], participants[2]]):
         cursor.execute(
             """INSERT INTO meeting_participants (meeting_id, agent_id, agent_name, agent_icon, agent_color, sort_order)
                VALUES (?, ?, ?, ?, ?, ?)""",
             (meeting2_id, aid, name, icon, color, i)
         )
-    
+
     # One turn for meeting 2
     cursor.execute(
         """INSERT INTO meeting_turns (id, meeting_id, round_num, turn_index, agent_id, agent_name,
@@ -608,7 +608,7 @@ def seed_meetings(db, project_id):
          920, 245, "For bot pathfinding animations, I think we need three states: idle (subtle bobbing), walking (smooth glide with slight bounce), and arriving (settling animation). The path should be visualized with a subtle dotted line that fades as the bot moves along it.",
          meeting2_started + 30000, meeting2_started + 45000)
     )
-    
+
     db.commit()
     print(f"  ✅ Added 2 demo meetings with turns, participants, and action items")
 
@@ -619,15 +619,15 @@ def seed_meetings(db, project_id):
 def seed_agent_room_assignments(db):
     """Ensure agents have room assignments for pathfinding demo."""
     cursor = db.cursor()
-    
+
     # Check if room_id column exists on agents
     cursor.execute("PRAGMA table_info(agents)")
     columns = [row[1] for row in cursor.fetchall()]
-    
+
     if "room_id" not in columns:
         print("  ⏭  Agents table has no room_id column, skipping room assignments")
         return
-    
+
     assignments = {
         "dev": "dev-room",
         "main": "headquarters",
@@ -635,7 +635,7 @@ def seed_agent_room_assignments(db):
         "creator": "creative-room",
         "reviewer": "thinking-room",
     }
-    
+
     updated = 0
     for agent_id, room_id in assignments.items():
         cursor.execute("SELECT room_id FROM agents WHERE id = ?", (agent_id,))
@@ -643,7 +643,7 @@ def seed_agent_room_assignments(db):
         if row and not row[0]:
             cursor.execute("UPDATE agents SET room_id = ? WHERE id = ?", (room_id, agent_id))
             updated += 1
-    
+
     db.commit()
     if updated:
         print(f"  ✅ Assigned {updated} agents to rooms for pathfinding demo")
@@ -657,10 +657,10 @@ def seed_agent_room_assignments(db):
 def set_project_docs_path(db, project_name="CrewHub"):
     """Set docs_path on the CrewHub project if the column exists."""
     cursor = db.cursor()
-    
+
     cursor.execute("PRAGMA table_info(projects)")
     columns = [row[1] for row in cursor.fetchall()]
-    
+
     if "docs_path" not in columns:
         try:
             cursor.execute("ALTER TABLE projects ADD COLUMN docs_path TEXT")
@@ -669,7 +669,7 @@ def set_project_docs_path(db, project_name="CrewHub"):
         except Exception as e:
             print(f"  ⚠️  Could not add docs_path column: {e}")
             return
-    
+
     cursor.execute("SELECT id FROM projects WHERE name = ?", (project_name,))
     row = cursor.fetchone()
     if row:
@@ -687,14 +687,14 @@ def set_project_docs_path(db, project_name="CrewHub"):
 def reset_demo_data(db):
     """Remove previously seeded demo data."""
     cursor = db.cursor()
-    
+
     # Remove demo tasks
     cursor.execute("SELECT id FROM tasks WHERE title LIKE 'Demo:%'")
     demo_task_ids = [row[0] for row in cursor.fetchall()]
     for tid in demo_task_ids:
         cursor.execute("DELETE FROM project_history WHERE task_id = ?", (tid,))
         cursor.execute("DELETE FROM tasks WHERE id = ?", (tid,))
-    
+
     # Remove demo meetings
     cursor.execute("SELECT id FROM meetings WHERE title LIKE 'Demo:%'")
     demo_meeting_ids = [row[0] for row in cursor.fetchall()]
@@ -703,9 +703,9 @@ def reset_demo_data(db):
         cursor.execute("DELETE FROM meeting_action_items WHERE meeting_id = ?", (mid,))
         cursor.execute("DELETE FROM meeting_participants WHERE meeting_id = ?", (mid,))
         cursor.execute("DELETE FROM meetings WHERE id = ?", (mid,))
-    
+
     db.commit()
-    
+
     # Remove demo generation history entries
     if GENERATION_HISTORY_PATH.exists():
         with open(GENERATION_HISTORY_PATH) as f:
@@ -713,12 +713,12 @@ def reset_demo_data(db):
         filtered = [e for e in entries if not e.get("id", "").startswith("demo-")]
         with open(GENERATION_HISTORY_PATH, 'w') as f:
             json.dump(filtered, f, indent=2)
-    
+
     # Remove demo meeting outputs
     if MEETING_OUTPUT_PATH.exists():
         for f in MEETING_OUTPUT_PATH.glob("demo-*.md"):
             f.unlink()
-    
+
     print(f"  🗑  Removed {len(demo_task_ids)} demo tasks, {len(demo_meeting_ids)} demo meetings")
 
 
@@ -728,22 +728,22 @@ def reset_demo_data(db):
 
 def main():
     reset = "--reset" in sys.argv
-    
+
     print("🌱 CrewHub v0.15.0 Demo Data Seeder")
     print(f"   Database: {DB_PATH}")
     print()
-    
+
     if not DB_PATH.exists():
         print("❌ Database not found. Start the backend first to initialize it.")
         sys.exit(1)
-    
+
     db = sqlite3.connect(str(DB_PATH))
-    
+
     if reset:
         print("🗑  Resetting demo data...")
         reset_demo_data(db)
         print()
-    
+
     cursor = db.cursor()
     cursor.execute("SELECT id, name FROM projects LIMIT 1")
     row = cursor.fetchone()
@@ -751,31 +751,31 @@ def main():
         print("❌ No projects found. Create a project in CrewHub first.")
         db.close()
         sys.exit(1)
-    
+
     project_id, project_name = row
     print(f"📦 Using project: {project_name} ({project_id})")
     print()
-    
+
     print("📋 Tasks & History...")
     seed_tasks(db, project_id)
-    
+
     print("🎨 PropMaker Generation History...")
     seed_generation_history()
-    
+
     print("📝 Demo Markdown Documents...")
     seed_demo_markdown_docs()
-    
+
     print("🤝 AI Meetings...")
     seed_meetings(db, project_id)
-    
+
     print("🤖 Agent Room Assignments...")
     seed_agent_room_assignments(db)
-    
+
     print("🔗 Project docs_path...")
     set_project_docs_path(db, project_name)
-    
+
     db.close()
-    
+
     print()
     print("✅ Done! Demo content is ready for v0.15.0.")
     print()

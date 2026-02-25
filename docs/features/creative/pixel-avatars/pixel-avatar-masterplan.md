@@ -1,7 +1,7 @@
 # Pixel Avatar voor Zen Mode - Masterplan
 
-> **Datum:** 2026-02-07  
-> **Status:** Implementatie  
+> **Datum:** 2026-02-07
+> **Status:** Implementatie
 > **Auteur:** Dev Agent
 
 ---

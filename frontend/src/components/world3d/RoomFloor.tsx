@@ -48,8 +48,8 @@ export function RoomFloor({
 
   // Determine the persistent (non-hover) emissive color and intensity
   const hasProjectTint = isHQ || !!projectColor
-  const persistentEmissiveColor = isHQ ? '#FFD700' : (projectColor || '#000000')
-  const persistentIntensity = isHQ ? 0.05 : (projectColor ? 0.03 : 0)
+  const persistentEmissiveColor = isHQ ? '#FFD700' : projectColor || '#000000'
+  const persistentIntensity = isHQ ? 0.05 : projectColor ? 0.03 : 0
 
   // ─── Shader material for non-default styles ───────────────
   const shaderMat = useMemo(() => {

@@ -19,7 +19,8 @@ const agents: AgentDesign[] = [
     color: '#FE9600',
     description: 'Orange - Tool/Wrench icon',
     role: 'General-purpose task executor',
-    fullDescription: 'The workhorse of CrewHub. Handles day-to-day tasks, file operations, quick fixes, and anything that needs doing. Think of it as the reliable all-rounder.',
+    fullDescription:
+      'The workhorse of CrewHub. Handles day-to-day tasks, file operations, quick fixes, and anything that needs doing. Think of it as the reliable all-rounder.',
     usedFor: ['Task execution', 'File management', 'Simple automations', 'Background jobs'],
     personality: 'Dependable, efficient, always ready',
   },
@@ -29,7 +30,8 @@ const agents: AgentDesign[] = [
     color: '#1277C3',
     description: 'Blue - Lightbulb/Brain icon',
     role: 'Deep analysis & reasoning',
-    fullDescription: 'When a problem needs careful thought, the Thinker Bot steps in. It handles complex analysis, architecture decisions, and anything that requires deep reasoning.',
+    fullDescription:
+      'When a problem needs careful thought, the Thinker Bot steps in. It handles complex analysis, architecture decisions, and anything that requires deep reasoning.',
     usedFor: ['Code review', 'Architecture decisions', 'Complex debugging', 'Research', 'Planning'],
     personality: 'Thoughtful, methodical, sees the big picture',
   },
@@ -39,8 +41,15 @@ const agents: AgentDesign[] = [
     color: '#82B30E',
     description: 'Green - Clock icon',
     role: 'Scheduled & recurring tasks',
-    fullDescription: 'The timekeeper of the crew. Runs on schedules, monitors systems, and ensures nothing falls through the cracks. Always on duty, even when everyone else is sleeping.',
-    usedFor: ['Scheduled checks', 'Monitoring', 'Periodic reports', 'Reminders', 'Automated workflows'],
+    fullDescription:
+      'The timekeeper of the crew. Runs on schedules, monitors systems, and ensures nothing falls through the cracks. Always on duty, even when everyone else is sleeping.',
+    usedFor: [
+      'Scheduled checks',
+      'Monitoring',
+      'Periodic reports',
+      'Reminders',
+      'Automated workflows',
+    ],
     personality: 'Punctual, tireless, consistent',
   },
   {
@@ -49,8 +58,14 @@ const agents: AgentDesign[] = [
     color: '#9370DB',
     description: 'Purple - Chat bubble icon',
     role: 'Communication & coordination',
-    fullDescription: 'The social one. Handles messaging across platforms, coordinates between agents, and makes sure information flows where it needs to go.',
-    usedFor: ['Message routing', 'Cross-platform communication', 'Notifications', 'Team coordination'],
+    fullDescription:
+      'The social one. Handles messaging across platforms, coordinates between agents, and makes sure information flows where it needs to go.',
+    usedFor: [
+      'Message routing',
+      'Cross-platform communication',
+      'Notifications',
+      'Team coordination',
+    ],
     personality: 'Sociable, well-connected, clear communicator',
   },
   {
@@ -59,13 +74,22 @@ const agents: AgentDesign[] = [
     color: '#F32A1C',
     description: 'Red - Code/Gear icon',
     role: 'Software development & coding',
-    fullDescription: 'The builder. Writes code, fixes bugs, implements features, and handles everything development-related. Speaks fluent TypeScript, Python, and whatever else is needed.',
+    fullDescription:
+      'The builder. Writes code, fixes bugs, implements features, and handles everything development-related. Speaks fluent TypeScript, Python, and whatever else is needed.',
     usedFor: ['Feature development', 'Bug fixes', 'Refactoring', 'Testing', 'CI/CD', 'Deployment'],
     personality: 'Creative, precise, loves clean code',
   },
 ]
 
-function AgentDetailPanel({ agent, darkBg, onClose }: { agent: AgentDesign; darkBg: boolean; onClose: () => void }) {
+function AgentDetailPanel({
+  agent,
+  darkBg,
+  onClose,
+}: {
+  agent: AgentDesign
+  darkBg: boolean
+  onClose: () => void
+}) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -113,10 +137,7 @@ function AgentDetailPanel({ agent, darkBg, onClose }: { agent: AgentDesign; dark
         </button>
 
         {/* Color Banner */}
-        <div
-          className="h-2 w-full"
-          style={{ backgroundColor: agent.color }}
-        />
+        <div className="h-2 w-full" style={{ backgroundColor: agent.color }} />
 
         {/* Large SVG Preview */}
         <div
@@ -149,7 +170,9 @@ function AgentDetailPanel({ agent, darkBg, onClose }: { agent: AgentDesign; dark
 
           {/* Description */}
           <div>
-            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+            <h3
+              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+            >
               About
             </h3>
             <p className={`leading-relaxed ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -159,7 +182,9 @@ function AgentDetailPanel({ agent, darkBg, onClose }: { agent: AgentDesign; dark
 
           {/* Used For */}
           <div>
-            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-3 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+            <h3
+              className={`text-sm font-semibold uppercase tracking-wider mb-3 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+            >
               Used for
             </h3>
             <div className="flex flex-wrap gap-2">
@@ -178,7 +203,9 @@ function AgentDetailPanel({ agent, darkBg, onClose }: { agent: AgentDesign; dark
 
           {/* Personality */}
           <div>
-            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+            <h3
+              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+            >
               Personality
             </h3>
             <p className={`italic ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -188,22 +215,31 @@ function AgentDetailPanel({ agent, darkBg, onClose }: { agent: AgentDesign; dark
 
           {/* File Reference */}
           <div>
-            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+            <h3
+              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+            >
               Asset
             </h3>
-            <code className={`text-xs block p-3 rounded-lg
-              ${darkBg ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
+            <code
+              className={`text-xs block p-3 rounded-lg
+              ${darkBg ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}
+            >
               /agents/{agent.file}
             </code>
           </div>
 
           {/* Color Swatch */}
           <div>
-            <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}>
+            <h3
+              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+            >
               Brand Color
             </h3>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg shadow-inner" style={{ backgroundColor: agent.color }} />
+              <div
+                className="w-10 h-10 rounded-lg shadow-inner"
+                style={{ backgroundColor: agent.color }}
+              />
               <code className={`text-sm ${darkBg ? 'text-gray-400' : 'text-gray-600'}`}>
                 {agent.color}
               </code>
@@ -235,13 +271,14 @@ export function DevDesigns() {
               Design proposals for CrewHub agent avatars
             </p>
           </div>
-          
-          <a 
+
+          <a
             href="/"
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
-              ${darkBg 
-                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
-                : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'
+              ${
+                darkBg
+                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'
               }`}
           >
             ← Back to CrewHub
@@ -249,9 +286,10 @@ export function DevDesigns() {
         </div>
 
         {/* Controls */}
-        <div className={`p-4 rounded-xl mb-8 flex items-center gap-6 
-          ${darkBg ? 'bg-gray-800' : 'bg-white shadow-sm'}`}>
-          
+        <div
+          className={`p-4 rounded-xl mb-8 flex items-center gap-6
+          ${darkBg ? 'bg-gray-800' : 'bg-white shadow-sm'}`}
+        >
           {/* Background Toggle */}
           <div className="flex items-center gap-3">
             <span className={`text-sm font-medium ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -260,9 +298,8 @@ export function DevDesigns() {
             <button
               onClick={() => setDarkBg(false)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                ${!darkBg 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                ${
+                  !darkBg ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                 }`}
             >
               ☀️ Light
@@ -270,9 +307,8 @@ export function DevDesigns() {
             <button
               onClick={() => setDarkBg(true)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                ${darkBg 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                ${
+                  darkBg ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                 }`}
             >
               🌙 Dark
@@ -289,11 +325,12 @@ export function DevDesigns() {
                 key={size}
                 onClick={() => setSelectedSize(size)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                  ${selectedSize === size
-                    ? 'bg-blue-500 text-white'
-                    : darkBg 
-                      ? 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  ${
+                    selectedSize === size
+                      ? 'bg-blue-500 text-white'
+                      : darkBg
+                        ? 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                   }`}
               >
                 {size}px
@@ -312,7 +349,7 @@ export function DevDesigns() {
                 ${darkBg ? 'bg-gray-800' : 'bg-white shadow-lg'}`}
             >
               {/* Agent Preview */}
-              <div 
+              <div
                 className={`rounded-xl p-8 mb-4 flex items-center justify-center
                   ${darkBg ? 'bg-gray-900' : 'bg-gray-50'}`}
                 style={{ minHeight: 160 }}
@@ -328,10 +365,7 @@ export function DevDesigns() {
               {/* Agent Info */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: agent.color }}
-                  />
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: agent.color }} />
                   <h3 className={`font-semibold ${darkBg ? 'text-white' : 'text-gray-900'}`}>
                     {agent.name}
                   </h3>
@@ -339,8 +373,10 @@ export function DevDesigns() {
                 <p className={`text-sm ${darkBg ? 'text-gray-400' : 'text-gray-600'}`}>
                   {agent.description}
                 </p>
-                <code className={`text-xs block p-2 rounded
-                  ${darkBg ? 'bg-gray-900 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
+                <code
+                  className={`text-xs block p-2 rounded
+                  ${darkBg ? 'bg-gray-900 text-gray-400' : 'bg-gray-100 text-gray-600'}`}
+                >
                   /agents/{agent.file}
                 </code>
               </div>
@@ -353,7 +389,7 @@ export function DevDesigns() {
           <h2 className={`text-xl font-bold mb-6 ${darkBg ? 'text-white' : 'text-gray-900'}`}>
             📐 Size Comparison
           </h2>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -368,11 +404,13 @@ export function DevDesigns() {
               </thead>
               <tbody>
                 {agents.map((agent) => (
-                  <tr 
+                  <tr
                     key={agent.name}
                     className={`border-t ${darkBg ? 'border-gray-700' : 'border-gray-100'}`}
                   >
-                    <td className={`py-4 px-4 font-medium ${darkBg ? 'text-white' : 'text-gray-900'}`}>
+                    <td
+                      className={`py-4 px-4 font-medium ${darkBg ? 'text-white' : 'text-gray-900'}`}
+                    >
                       {agent.name}
                     </td>
                     {sizes.map((size) => (
@@ -399,12 +437,24 @@ export function DevDesigns() {
             📋 Design Specifications
           </h2>
           <ul className={`space-y-2 text-sm ${darkBg ? 'text-gray-300' : 'text-gray-600'}`}>
-            <li>✓ <strong>Rounded shapes</strong> - Friendly, approachable appearance</li>
-            <li>✓ <strong>Consistent viewBox</strong> - 128x128 for clean scaling</li>
-            <li>✓ <strong>Gradient fills</strong> - Depth and visual interest</li>
-            <li>✓ <strong>Unique icons</strong> - Each bot has a role-specific identifier</li>
-            <li>✓ <strong>Color-coded</strong> - Easy recognition at any size</li>
-            <li>✓ <strong>Clean vectors</strong> - Crisp rendering at all sizes</li>
+            <li>
+              ✓ <strong>Rounded shapes</strong> - Friendly, approachable appearance
+            </li>
+            <li>
+              ✓ <strong>Consistent viewBox</strong> - 128x128 for clean scaling
+            </li>
+            <li>
+              ✓ <strong>Gradient fills</strong> - Depth and visual interest
+            </li>
+            <li>
+              ✓ <strong>Unique icons</strong> - Each bot has a role-specific identifier
+            </li>
+            <li>
+              ✓ <strong>Color-coded</strong> - Easy recognition at any size
+            </li>
+            <li>
+              ✓ <strong>Clean vectors</strong> - Crisp rendering at all sizes
+            </li>
           </ul>
         </div>
 

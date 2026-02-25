@@ -11,7 +11,13 @@ import { degToEuler } from './propComponents'
 
 // ─── ServerLED (used by ServerRackProp in propComponents) ───────
 
-export function ServerLED({ position, color }: { position: [number, number, number]; color: string }) {
+export function ServerLED({
+  position,
+  color,
+}: {
+  position: [number, number, number]
+  color: string
+}) {
   const ref = useRef<THREE.Mesh>(null)
   const blinkSpeed = useMemo(() => 2 + Math.random() * 0.5, [])
   const frameSkip = useRef(0)

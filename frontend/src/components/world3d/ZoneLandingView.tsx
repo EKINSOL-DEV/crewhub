@@ -24,7 +24,17 @@ interface ZoneLandingViewProps {
   hideCenterMarker?: boolean
 }
 
-function LandingScene({ zone, mvpItems, sceneExtras, hideCenterMarker }: { zone: Zone; mvpItems: MvpBoardItem[]; sceneExtras?: ReactNode; hideCenterMarker?: boolean }) {
+function LandingScene({
+  zone,
+  mvpItems,
+  sceneExtras,
+  hideCenterMarker,
+}: {
+  zone: Zone
+  mvpItems: MvpBoardItem[]
+  sceneExtras?: ReactNode
+  hideCenterMarker?: boolean
+}) {
   return (
     <group>
       <ambientLight intensity={0.6} />
@@ -46,18 +56,20 @@ function LandingScene({ zone, mvpItems, sceneExtras, hideCenterMarker }: { zone:
 
       {/* Zone label */}
       <Html position={[0, 5, 0]} center zIndexRange={[0, 0]}>
-        <div style={{
-          background: `${zone.colorPrimary}ee`,
-          color: 'white',
-          padding: '12px 24px',
-          borderRadius: '12px',
-          fontFamily: 'system-ui',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-          textAlign: 'center',
-        }}>
+        <div
+          style={{
+            background: `${zone.colorPrimary}ee`,
+            color: 'white',
+            padding: '12px 24px',
+            borderRadius: '12px',
+            fontFamily: 'system-ui',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            textAlign: 'center',
+          }}
+        >
           {zone.icon} {zone.name}
           {zone.description && (
             <div style={{ fontSize: '12px', fontWeight: 'normal', marginTop: 4, opacity: 0.9 }}>
@@ -69,16 +81,18 @@ function LandingScene({ zone, mvpItems, sceneExtras, hideCenterMarker }: { zone:
 
       {/* MVP Info Board — positioned to the right */}
       <Html position={[9, 2.5, 0]} center zIndexRange={[0, 0]}>
-        <div style={{
-          background: 'rgba(44, 62, 80, 0.95)',
-          color: 'white',
-          padding: '16px 20px',
-          borderRadius: '10px',
-          fontFamily: 'system-ui',
-          fontSize: '13px',
-          width: '220px',
-          pointerEvents: 'none',
-        }}>
+        <div
+          style={{
+            background: 'rgba(44, 62, 80, 0.95)',
+            color: 'white',
+            padding: '16px 20px',
+            borderRadius: '10px',
+            fontFamily: 'system-ui',
+            fontSize: '13px',
+            width: '220px',
+            pointerEvents: 'none',
+          }}
+        >
           <div style={{ fontWeight: 'bold', marginBottom: 8, fontSize: '14px' }}>
             📋 Coming in MVP
           </div>
@@ -101,7 +115,13 @@ function gradientForZone(color: string): string {
   return `linear-gradient(180deg, #1a1a2e 0%, ${color}44 60%, ${color}88 100%)`
 }
 
-export function ZoneLandingView({ zone, mvpItems, className, sceneExtras, hideCenterMarker }: ZoneLandingViewProps) {
+export function ZoneLandingView({
+  zone,
+  mvpItems,
+  className,
+  sceneExtras,
+  hideCenterMarker,
+}: ZoneLandingViewProps) {
   return (
     <div className={`relative w-full h-full ${className ?? ''}`}>
       <Canvas
@@ -110,7 +130,12 @@ export function ZoneLandingView({ zone, mvpItems, className, sceneExtras, hideCe
         style={{ background: gradientForZone(zone.colorPrimary) }}
       >
         <Suspense fallback={null}>
-          <LandingScene zone={zone} mvpItems={mvpItems} sceneExtras={sceneExtras} hideCenterMarker={hideCenterMarker} />
+          <LandingScene
+            zone={zone}
+            mvpItems={mvpItems}
+            sceneExtras={sceneExtras}
+            hideCenterMarker={hideCenterMarker}
+          />
           <OrbitControls
             enablePan={false}
             minDistance={15}

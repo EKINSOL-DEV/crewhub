@@ -36,7 +36,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   const [connections, setConnections] = useState<ConnectionConfig[]>([])
   const scanAbortRef = useRef<AbortController | null>(null)
 
-  useEffect(() => { return () => { scanAbortRef.current?.abort() } }, [])
+  useEffect(() => {
+    return () => {
+      scanAbortRef.current?.abort()
+    }
+  }, [])
 
   // ─── Scan ─────────────────────────────────────────────────────
 
@@ -49,7 +53,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
       setScanResult(result)
       setCandidates(result.candidates)
       const newConns = result.candidates
-        .filter(c => c.status === 'reachable')
+        .filter((c) => c.status === 'reachable')
         .map((c, i) => candidateToConnection(c, i))
       if (newConns.length > 0) setConnections(newConns)
     } catch {
@@ -63,61 +67,82 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
   const handleConnect = useCallback((candidate: DiscoveryCandidate, index: number) => {
     const conn = { ...candidateToConnection(candidate, index), enabled: true }
-    setConnections(prev => {
-      if (prev.some(c => c.url === conn.url && c.type === conn.type)) return prev
+    setConnections((prev) => {
+      if (prev.some((c) => c.url === conn.url && c.type === conn.type)) return prev
       return [...prev, conn]
     })
   }, [])
 
   const handleUpdateConnection = useCallback((id: string, updates: Partial<ConnectionConfig>) => {
-    setConnections(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
+    setConnections((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)))
   }, [])
 
-  const handleTestConnection = useCallback(async (id: string) => {
-    const conn = connections.find(c => c.id === id)
-    if (!conn) return
-    handleUpdateConnection(id, { testStatus: 'testing', testError: undefined })
-    try {
-      const result = await testConnection(conn.type, conn.url, conn.token || undefined)
-      if (result.reachable) {
-        handleUpdateConnection(id, { testStatus: 'success', sessions: result.sessions })
-      } else {
-        handleUpdateConnection(id, { testStatus: 'error', testError: result.error || 'Connection failed' })
+  const handleTestConnection = useCallback(
+    async (id: string) => {
+      const conn = connections.find((c) => c.id === id)
+      if (!conn) return
+      handleUpdateConnection(id, { testStatus: 'testing', testError: undefined })
+      try {
+        const result = await testConnection(conn.type, conn.url, conn.token || undefined)
+        if (result.reachable) {
+          handleUpdateConnection(id, { testStatus: 'success', sessions: result.sessions })
+        } else {
+          handleUpdateConnection(id, {
+            testStatus: 'error',
+            testError: result.error || 'Connection failed',
+          })
+        }
+      } catch (err) {
+        handleUpdateConnection(id, {
+          testStatus: 'error',
+          testError: err instanceof Error ? err.message : 'Test failed',
+        })
       }
-    } catch (err) {
-      handleUpdateConnection(id, {
-        testStatus: 'error',
-        testError: err instanceof Error ? err.message : 'Test failed',
-      })
-    }
-  }, [connections, handleUpdateConnection])
+    },
+    [connections, handleUpdateConnection]
+  )
 
   const handleAddManual = useCallback(() => {
     const id = `manual-${Date.now()}`
-    setConnections(prev => [...prev, {
-      id, name: 'New Connection', type: 'openclaw',
-      url: 'http://localhost:3000', token: '', enabled: true, testStatus: 'idle',
-    }])
+    setConnections((prev) => [
+      ...prev,
+      {
+        id,
+        name: 'New Connection',
+        type: 'openclaw',
+        url: 'http://localhost:3000',
+        token: '',
+        enabled: true,
+        testStatus: 'idle',
+      },
+    ])
   }, [])
 
   const handleRemoveConnection = useCallback((id: string) => {
-    setConnections(prev => prev.filter(c => c.id !== id))
+    setConnections((prev) => prev.filter((c) => c.id !== id))
   }, [])
 
   // ─── Save + complete ──────────────────────────────────────────
 
   const saveConnections = useCallback(async () => {
-    for (const conn of connections.filter(c => c.enabled)) {
+    for (const conn of connections.filter((c) => c.enabled)) {
       try {
         const config: Record<string, string> = {}
-        if (conn.type === 'openclaw') { config.gateway_url = conn.url; if (conn.token) config.token = conn.token }
-        else { config.cli_path = conn.url; if (conn.token) config.api_key = conn.token }
+        if (conn.type === 'openclaw') {
+          config.gateway_url = conn.url
+          if (conn.token) config.token = conn.token
+        } else {
+          config.cli_path = conn.url
+          if (conn.token) config.api_key = conn.token
+        }
         await fetch('/api/connections', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: conn.name, type: conn.type, config, enabled: true }),
         })
-      } catch { /* best-effort */ }
+      } catch {
+        /* best-effort */
+      }
     }
   }, [connections])
 
@@ -130,45 +155,96 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: 'true' }),
       })
-    } catch { /* localStorage is enough */ }
+    } catch {
+      /* localStorage is enough */
+    }
     onComplete()
   }, [saveConnections, onComplete])
 
   // ─── Navigation ───────────────────────────────────────────────
 
-  const goNext = useCallback(() => setStep(s => Math.min(s + 1, 6) as WizardStep), [])
-  const goBack = useCallback(() => setStep(s => Math.max(s - 1, 1) as WizardStep), [])
-  const handleSkip = useCallback(() => { localStorage.setItem('crewhub-onboarded', 'true'); onSkip() }, [onSkip])
+  const goNext = useCallback(() => setStep((s) => Math.min(s + 1, 6) as WizardStep), [])
+  const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 1) as WizardStep), [])
+  const handleSkip = useCallback(() => {
+    localStorage.setItem('crewhub-onboarded', 'true')
+    onSkip()
+  }, [onSkip])
   const handleDemo = useCallback(() => {
     localStorage.setItem('crewhub-onboarded', 'true')
     localStorage.setItem('crewhub-demo-mode', 'true')
     onComplete()
   }, [onComplete])
 
-  const handleOpenClawComplete = useCallback(async (config: {
-    name: string; url: string; token: string; botTemplate?: string; displayName?: string
-  }) => {
-    try {
-      await fetch('/api/connections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: config.name, type: 'openclaw', config: { gateway_url: config.url, token: config.token }, enabled: true }),
-      })
-    } catch { /* best-effort */ }
+  const handleOpenClawComplete = useCallback(
+    async (config: {
+      name: string
+      url: string
+      token: string
+      botTemplate?: string
+      displayName?: string
+    }) => {
+      try {
+        await fetch('/api/connections', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: config.name,
+            type: 'openclaw',
+            config: { gateway_url: config.url, token: config.token },
+            enabled: true,
+          }),
+        })
+      } catch {
+        /* best-effort */
+      }
 
-    if (config.displayName) {
-      const templateToAgentId: Record<string, string> = { default: 'main', developer: 'dev', reviewer: 'reviewer' }
-      const agentId = config.botTemplate ? (templateToAgentId[config.botTemplate] || 'main') : 'main'
-      const sessionKey = `agent:${agentId}:main`
-      try { await fetch(`/api/session-display-names/${encodeURIComponent(sessionKey)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ display_name: config.displayName }) }) } catch {}
-      try { await fetch(`/api/agents/${encodeURIComponent(agentId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: config.displayName }) }) } catch {}
-      try { await fetch('/api/settings/agent-display-name', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: JSON.stringify({ agentId, sessionKey, displayName: config.displayName }) }) }) } catch {}
-    }
+      if (config.displayName) {
+        const templateToAgentId: Record<string, string> = {
+          default: 'main',
+          developer: 'dev',
+          reviewer: 'reviewer',
+        }
+        const agentId = config.botTemplate
+          ? templateToAgentId[config.botTemplate] || 'main'
+          : 'main'
+        const sessionKey = `agent:${agentId}:main`
+        try {
+          await fetch(`/api/session-display-names/${encodeURIComponent(sessionKey)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ display_name: config.displayName }),
+          })
+        } catch {}
+        try {
+          await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: config.displayName }),
+          })
+        } catch {}
+        try {
+          await fetch('/api/settings/agent-display-name', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              value: JSON.stringify({ agentId, sessionKey, displayName: config.displayName }),
+            }),
+          })
+        } catch {}
+      }
 
-    localStorage.setItem('crewhub-onboarded', 'true')
-    try { await fetch('/api/settings/crewhub-onboarded', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: 'true' }) }) } catch {}
-    onComplete()
-  }, [onComplete])
+      localStorage.setItem('crewhub-onboarded', 'true')
+      try {
+        await fetch('/api/settings/crewhub-onboarded', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: 'true' }),
+        })
+      } catch {}
+      onComplete()
+    },
+    [onComplete]
+  )
 
   // ─── Render ───────────────────────────────────────────────────
 
@@ -182,7 +258,12 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             <span className="font-semibold text-lg">CrewHub Setup</span>
           </div>
           {step > 1 && (
-            <Button variant="ghost" size="sm" onClick={handleSkip} className="text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSkip}
+              className="text-muted-foreground"
+            >
               Skip setup
             </Button>
           )}
@@ -197,14 +278,20 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         <div className="max-w-3xl mx-auto px-6 py-10">
           {step === 1 && !showOpenClawWizard && (
             <StepWelcome
-              onScan={() => { setStep(2); runScan() }}
+              onScan={() => {
+                setStep(2)
+                runScan()
+              }}
               onDemo={handleDemo}
               onManual={handleSkip}
               onOpenClawWizard={() => setShowOpenClawWizard(true)}
             />
           )}
           {step === 1 && showOpenClawWizard && (
-            <OpenClawWizard onComplete={handleOpenClawComplete} onSkip={() => setShowOpenClawWizard(false)} />
+            <OpenClawWizard
+              onComplete={handleOpenClawComplete}
+              onSkip={() => setShowOpenClawWizard(false)}
+            />
           )}
           {step === 2 && (
             <StepScan
@@ -235,7 +322,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   const data = await res.json()
                   const list = data.agents || data || []
                   if (list.length > 0) await updatePersona(String(list[0].id), config)
-                } catch { /* best-effort */ }
+                } catch {
+                  /* best-effort */
+                }
                 goNext()
               }}
               onSkip={goNext}

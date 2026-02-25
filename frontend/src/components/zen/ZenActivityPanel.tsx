@@ -45,23 +45,39 @@ function getSessionIcon(session: Partial<CrewSession>): string {
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'running': return 'var(--zen-success)'
-    case 'done': return 'var(--zen-fg-dim)'
-    default: return 'var(--zen-fg-muted)'
+    case 'running':
+      return 'var(--zen-success)'
+    case 'done':
+      return 'var(--zen-fg-dim)'
+    default:
+      return 'var(--zen-fg-muted)'
   }
 }
 
 function getStatusLabel(status: string): string {
   switch (status) {
-    case 'running': return '● Running'
-    case 'done': return '✓ Done'
-    default: return status
+    case 'running':
+      return '● Running'
+    case 'done':
+      return '✓ Done'
+    default:
+      return status
   }
 }
 
 // ── Active Task Item ──────────────────────────────────────────
 
-function ActiveTaskItem({ task, opacity, isSelected, onSelect }: { task: ActiveTask; opacity: number; isSelected: boolean; onSelect: () => void }) {
+function ActiveTaskItem({
+  task,
+  opacity,
+  isSelected,
+  onSelect,
+}: {
+  task: ActiveTask
+  opacity: number
+  isSelected: boolean
+  onSelect: () => void
+}) {
   return (
     <div
       className={`zen-active-task-item zen-fade-in ${isSelected ? 'zen-active-task-item-selected' : ''}`}
@@ -69,21 +85,19 @@ function ActiveTaskItem({ task, opacity, isSelected, onSelect }: { task: ActiveT
       onClick={onSelect}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
     >
-      <div className="zen-active-task-icon">
-        {task.agentIcon || '🤖'}
-      </div>
+      <div className="zen-active-task-icon">{task.agentIcon || '🤖'}</div>
       <div className="zen-active-task-content">
         <div className="zen-active-task-title">{task.title}</div>
         <div className="zen-active-task-meta">
-          {task.agentName && (
-            <span className="zen-active-task-agent">{task.agentName}</span>
-          )}
-          <span
-            className="zen-active-task-status"
-            style={{ color: getStatusColor(task.status) }}
-          >
+          {task.agentName && <span className="zen-active-task-agent">{task.agentName}</span>}
+          <span className="zen-active-task-status" style={{ color: getStatusColor(task.status) }}>
             {getStatusLabel(task.status)}
           </span>
         </div>
@@ -105,7 +119,10 @@ function EventLogItem({ event }: { event: ActivityEvent }) {
   return (
     <div className="zen-activity-item">
       <div className="zen-activity-time">{formatEventTime(event.timestamp)}</div>
-      <div className="zen-activity-type" style={{ color: typeColors[event.type] || 'var(--zen-fg-muted)' }}>
+      <div
+        className="zen-activity-type"
+        style={{ color: typeColors[event.type] || 'var(--zen-fg-muted)' }}
+      >
         {event.type.toUpperCase().slice(0, 3)}
       </div>
       <div className="zen-activity-icon">{event.icon}</div>
@@ -125,9 +142,7 @@ function EmptyState() {
     <div className="zen-activity-empty">
       <div className="zen-empty-icon">✨</div>
       <div className="zen-empty-title">No active tasks</div>
-      <div className="zen-empty-subtitle">
-        Running subagents and tasks will appear here
-      </div>
+      <div className="zen-empty-subtitle">Running subagents and tasks will appear here</div>
     </div>
   )
 }
@@ -158,14 +173,17 @@ export function ZenActivityPanel() {
     if (batchedEventsRef.current.length === 0) return
     const newEvents = [...batchedEventsRef.current]
     batchedEventsRef.current = []
-    setEvents(prev => [...newEvents, ...prev].slice(0, MAX_EVENTS))
+    setEvents((prev) => [...newEvents, ...prev].slice(0, MAX_EVENTS))
   }, [])
 
-  const addEvent = useCallback((event: ActivityEvent) => {
-    batchedEventsRef.current.push(event)
-    if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current)
-    batchTimeoutRef.current = setTimeout(flushBatch, BATCH_DELAY_MS)
-  }, [flushBatch])
+  const addEvent = useCallback(
+    (event: ActivityEvent) => {
+      batchedEventsRef.current.push(event)
+      if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current)
+      batchTimeoutRef.current = setTimeout(flushBatch, BATCH_DELAY_MS)
+    },
+    [flushBatch]
+  )
 
   // Subscribe to SSE events for the log
   useEffect(() => {
@@ -175,35 +193,55 @@ export function ZenActivityPanel() {
       try {
         const session: CrewSession = JSON.parse(e.data)
         addEvent({
-          id: genId(), type: 'created', timestamp: Date.now(),
-          sessionKey: session.key, sessionName: getAgentName(session),
-          description: 'Session started', icon: getSessionIcon(session),
+          id: genId(),
+          type: 'created',
+          timestamp: Date.now(),
+          sessionKey: session.key,
+          sessionName: getAgentName(session),
+          description: 'Session started',
+          icon: getSessionIcon(session),
           details: session.channel ? `via ${session.channel}` : undefined,
         })
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     const handleUpdated = (e: MessageEvent) => {
       try {
         const session: CrewSession = JSON.parse(e.data)
         addEvent({
-          id: genId(), type: 'updated', timestamp: Date.now(),
-          sessionKey: session.key, sessionName: getAgentName(session),
-          description: 'Activity', icon: getSessionIcon(session),
-          details: session.totalTokens ? `${session.totalTokens.toLocaleString()} tokens` : undefined,
+          id: genId(),
+          type: 'updated',
+          timestamp: Date.now(),
+          sessionKey: session.key,
+          sessionName: getAgentName(session),
+          description: 'Activity',
+          icon: getSessionIcon(session),
+          details: session.totalTokens
+            ? `${session.totalTokens.toLocaleString()} tokens`
+            : undefined,
         })
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     const handleRemoved = (e: MessageEvent) => {
       try {
         const { key } = JSON.parse(e.data)
         addEvent({
-          id: genId(), type: 'removed', timestamp: Date.now(),
-          sessionKey: key, sessionName: key.split(':').pop() || 'Agent',
-          description: 'Session ended', icon: '🔴',
+          id: genId(),
+          type: 'removed',
+          timestamp: Date.now(),
+          sessionKey: key,
+          sessionName: key.split(':').pop() || 'Agent',
+          description: 'Session ended',
+          icon: '🔴',
         })
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     const unsub1 = sseManager.subscribe('session-created', handleCreated)
@@ -211,23 +249,25 @@ export function ZenActivityPanel() {
     const unsub3 = sseManager.subscribe('session-removed', handleRemoved)
 
     return () => {
-      unsub1(); unsub2(); unsub3()
+      unsub1()
+      unsub2()
+      unsub3()
       if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current)
     }
   }, [addEvent])
 
   const selectedTask = useMemo(() => {
     if (!selectedTaskId) return null
-    return tasks.find(t => t.id === selectedTaskId) || null
+    return tasks.find((t) => t.id === selectedTaskId) || null
   }, [selectedTaskId, tasks])
 
   const selectedSession = useMemo(() => {
     if (!selectedTask?.sessionKey) return null
-    return sessions.find(s => s.key === selectedTask.sessionKey) || null
+    return sessions.find((s) => s.key === selectedTask.sessionKey) || null
   }, [selectedTask, sessions])
 
   const handleTaskSelect = useCallback((task: ActiveTask) => {
-    setSelectedTaskId(prev => prev === task.id ? null : task.id)
+    setSelectedTaskId((prev) => (prev === task.id ? null : task.id))
   }, [])
 
   return (
@@ -236,14 +276,18 @@ export function ZenActivityPanel() {
         {/* Header */}
         <div className="zen-activity-header">
           <div className="zen-activity-status">
-            <span className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`} />
-            <span>{runningTasks.length} active task{runningTasks.length !== 1 ? 's' : ''}</span>
+            <span
+              className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`}
+            />
+            <span>
+              {runningTasks.length} active task{runningTasks.length !== 1 ? 's' : ''}
+            </span>
           </div>
           <div className="zen-activity-controls">
             <button
               type="button"
               className={`zen-btn zen-btn-small ${showLog ? 'zen-btn-active' : ''}`}
-              onClick={() => setShowLog(v => !v)}
+              onClick={() => setShowLog((v) => !v)}
               title="Toggle event log"
             >
               Log {showLog ? '▾' : '▸'}
@@ -256,7 +300,7 @@ export function ZenActivityPanel() {
           <EmptyState />
         ) : (
           <div className="zen-active-tasks-list">
-            {tasks.map(task => (
+            {tasks.map((task) => (
               <ActiveTaskItem
                 key={task.id}
                 task={task}
@@ -277,7 +321,10 @@ export function ZenActivityPanel() {
                 <button
                   type="button"
                   className="zen-btn zen-btn-small"
-                  onClick={() => { setEvents([]); batchedEventsRef.current = [] }}
+                  onClick={() => {
+                    setEvents([])
+                    batchedEventsRef.current = []
+                  }}
                 >
                   Clear
                 </button>
@@ -287,7 +334,7 @@ export function ZenActivityPanel() {
               {events.length === 0 ? (
                 <div className="zen-activity-log-empty">No events yet</div>
               ) : (
-                events.map(event => <EventLogItem key={event.id} event={event} />)
+                events.map((event) => <EventLogItem key={event.id} event={event} />)
               )}
             </div>
           </div>

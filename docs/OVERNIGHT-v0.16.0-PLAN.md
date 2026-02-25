@@ -1,5 +1,5 @@
 # v0.16.0 Overnight Plan
-**Date:** 2026-02-14 01:05 - 09:00  
+**Date:** 2026-02-14 01:05 - 09:00
 **Goal:** Complete v0.16.0 features + 4 quality iterations (Opus + GPT-5.2)
 
 ---
@@ -7,8 +7,8 @@
 ## 🎯 v0.16.0 Features
 
 ### Priority 1: Zen Mode Panel Registry ⭐⭐⭐
-**Impact:** High - Central architecture for all Zen Mode panels  
-**Effort:** ~2h  
+**Impact:** High - Central architecture for all Zen Mode panels
+**Effort:** ~2h
 **Description:** Single source of truth for panel management (Ctrl+K, context menu, layouts)
 - Centralized panel registry with metadata (title, icon, component, category)
 - Command palette integration (Ctrl+K search)
@@ -23,8 +23,8 @@
 ---
 
 ### Priority 2: Frontend Watchdog ⭐⭐
-**Impact:** Medium - Dev experience improvement  
-**Effort:** ~1.5h  
+**Impact:** Medium - Dev experience improvement
+**Effort:** ~1.5h
 **Description:** Docker-based auto-restart for Vite dev server crashes
 - Health check endpoint in Vite dev server
 - Docker healthcheck configuration
@@ -39,9 +39,9 @@
 ---
 
 ### Priority 3: Grid Boundary Fine-tuning ⭐
-**Impact:** Medium - Polish for prop placement  
-**Effort:** ~2h (potentially defer if complex)  
-**Status:** Already attempted 5+ times, multi-cell edge cases remain  
+**Impact:** Medium - Polish for prop placement
+**Effort:** ~2h (potentially defer if complex)
+**Status:** Already attempted 5+ times, multi-cell edge cases remain
 **Description:** Perfect prop placement against walls
 - Multi-cell placement edge cases
 - Wall gap calculations
@@ -60,8 +60,8 @@
 ## 🔬 Quality Iterations (4 rounds)
 
 ### Iteration 1: Performance Audit ⚡
-**Lead:** Opus (analysis) → GPT-5.2 (review + suggestions)  
-**Time:** ~1h  
+**Lead:** Opus (analysis) → GPT-5.2 (review + suggestions)
+**Time:** ~1h
 **Focus:**
 - Bundle size analysis (identify large dependencies)
 - React render optimization (useMemo, useCallback, React.memo)
@@ -77,8 +77,8 @@
 ---
 
 ### Iteration 2: Bug Sweep 🐛
-**Lead:** Opus (testing + fixes) → GPT-5.2 (review)  
-**Time:** ~1h  
+**Lead:** Opus (testing + fixes) → GPT-5.2 (review)
+**Time:** ~1h
 **Focus:**
 - Review KNOWN_ISSUES.md
 - Test edge cases (empty states, errors, race conditions)
@@ -94,8 +94,8 @@
 ---
 
 ### Iteration 3: Code Quality 📐
-**Lead:** Opus (refactoring) → GPT-5.2 (review)  
-**Time:** ~1.5h  
+**Lead:** Opus (refactoring) → GPT-5.2 (review)
+**Time:** ~1.5h
 **Focus:**
 - TypeScript strict mode progress
 - Reduce code duplication (shared hooks, utilities)
@@ -111,8 +111,8 @@
 ---
 
 ### Iteration 4: Final Review 🔍
-**Lead:** GPT-5.2 (comprehensive review) → Opus (critical fixes)  
-**Time:** ~1h  
+**Lead:** GPT-5.2 (comprehensive review) → Opus (critical fixes)
+**Time:** ~1h
 **Focus:**
 - Security review (XSS, CSRF, injection)
 - Accessibility audit (ARIA, keyboard nav, screen readers)

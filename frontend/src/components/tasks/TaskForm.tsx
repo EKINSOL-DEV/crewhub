@@ -91,39 +91,43 @@ export function TaskForm({
     }
   }, [initialData])
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      setError(null)
 
-    if (!title.trim()) {
-      setError('Title is required')
-      return
-    }
+      if (!title.trim()) {
+        setError('Title is required')
+        return
+      }
 
-    const data = mode === 'create'
-      ? {
-          project_id: projectId,
-          room_id: roomId,
-          title: title.trim(),
-          description: description.trim() || undefined,
-          status,
-          priority,
-          assigned_session_key: assignee || undefined,
-        } as TaskCreate
-      : {
-          title: title.trim(),
-          description: description.trim() || undefined,
-          status,
-          priority,
-          assigned_session_key: assignee || undefined,
-        } as TaskUpdate
+      const data =
+        mode === 'create'
+          ? ({
+              project_id: projectId,
+              room_id: roomId,
+              title: title.trim(),
+              description: description.trim() || undefined,
+              status,
+              priority,
+              assigned_session_key: assignee || undefined,
+            } as TaskCreate)
+          : ({
+              title: title.trim(),
+              description: description.trim() || undefined,
+              status,
+              priority,
+              assigned_session_key: assignee || undefined,
+            } as TaskUpdate)
 
-    try {
-      await onSubmit(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save task')
-    }
-  }, [mode, projectId, roomId, title, description, status, priority, assignee, onSubmit])
+      try {
+        await onSubmit(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to save task')
+      }
+    },
+    [mode, projectId, roomId, title, description, status, priority, assignee, onSubmit]
+  )
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -215,14 +219,16 @@ export function TaskForm({
 
       {/* Error */}
       {error && (
-        <div style={{
-          padding: '8px 12px',
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          borderRadius: 6,
-          color: '#dc2626',
-          fontSize: 13,
-        }}>
+        <div
+          style={{
+            padding: '8px 12px',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: 6,
+            color: '#dc2626',
+            fontSize: 13,
+          }}
+        >
           {error}
         </div>
       )}

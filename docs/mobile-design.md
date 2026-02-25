@@ -1,12 +1,12 @@
 # CrewHub Mobile Design
 
-**Created:** 2026-02-16  
-**Status:** Draft Plan  
+**Created:** 2026-02-16
+**Status:** Draft Plan
 **Goal:** Mobile-friendly CrewHub with chat-first experience
 
 ## Vision
 
-Desktop experience stays as-is (3D World, full features).  
+Desktop experience stays as-is (3D World, full features).
 Mobile experience focuses on **agent communication** with visual context.
 
 ---
@@ -62,11 +62,11 @@ Mobile experience focuses on **agent communication** with visual context.
 Desktop (>= 1024px):
   - Full 3D World layout
   - All current features
-  
+
 Tablet (768-1023px):
   - Hybrid view (simplified 3D + side chat?)
   - OR: same as mobile
-  
+
 Mobile (< 768px):
   - Chat-first layout
   - Agent list → Agent chat
@@ -195,16 +195,16 @@ mobile/
 
 ## Open Questions — ANSWERED (2026-02-16)
 
-1. **Should mobile users see all agents or just active ones?**  
+1. **Should mobile users see all agents or just active ones?**
    → *Not specified yet — default to all agents for now*
 
-2. **Do we need multi-agent selection (group chat)?**  
+2. **Do we need multi-agent selection (group chat)?**
    ✅ **Ja, dat zou echt tof zijn!** — Group chat feature gewenst
 
-3. **Should camera be always-on or tap-to-enable?**  
+3. **Should camera be always-on or tap-to-enable?**
    ✅ **Tap to enable** — Lijkt logischer (on-demand 3D view)
 
-4. **Do we support landscape mode (different layout)?**  
+4. **Do we support landscape mode (different layout)?**
    ✅ **Nog niet nodig** — Focus eerst op portrait mode
 
 ---

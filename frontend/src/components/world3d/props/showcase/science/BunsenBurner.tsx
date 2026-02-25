@@ -1,17 +1,17 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function BunsenBurner() {
-  const groupRef = useRef<THREE.Group>(null);
-  const flameRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const flameRef = useRef<THREE.Group>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12;
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12
     if (flameRef.current) {
-      flameRef.current.scale.x = 1 + Math.sin(s.clock.elapsedTime * 8) * 0.1;
-      flameRef.current.scale.y = 1 + Math.sin(s.clock.elapsedTime * 10) * 0.15;
+      flameRef.current.scale.x = 1 + Math.sin(s.clock.elapsedTime * 8) * 0.1
+      flameRef.current.scale.y = 1 + Math.sin(s.clock.elapsedTime * 10) * 0.15
     }
-  });
+  })
   return (
     <group ref={groupRef}>
       {/* Base */}
@@ -44,15 +44,27 @@ export function BunsenBurner() {
         {/* Inner flame (blue) */}
         <mesh position={[0, 0.05, 0]}>
           <coneGeometry args={[0.03, 0.15, 8]} />
-          <meshStandardMaterial color="#4488ff" emissive="#4488ff" emissiveIntensity={3} transparent opacity={0.8} />
+          <meshStandardMaterial
+            color="#4488ff"
+            emissive="#4488ff"
+            emissiveIntensity={3}
+            transparent
+            opacity={0.8}
+          />
         </mesh>
         {/* Outer flame */}
         <mesh position={[0, 0.08, 0]}>
           <coneGeometry args={[0.045, 0.2, 8]} />
-          <meshStandardMaterial color="#66aaff" emissive="#4466ff" emissiveIntensity={2} transparent opacity={0.4} />
+          <meshStandardMaterial
+            color="#66aaff"
+            emissive="#4466ff"
+            emissiveIntensity={2}
+            transparent
+            opacity={0.4}
+          />
         </mesh>
         <pointLight position={[0, 0.1, 0]} intensity={0.6} color="#4488ff" distance={1.5} />
       </group>
     </group>
-  );
+  )
 }

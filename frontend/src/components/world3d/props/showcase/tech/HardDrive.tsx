@@ -1,14 +1,14 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function HardDrive() {
-  const diskRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
+  const diskRef = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.15;
-    if (diskRef.current) diskRef.current.rotation.y += 0.1;
-  });
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.15
+    if (diskRef.current) diskRef.current.rotation.y += 0.1
+  })
   return (
     <group ref={groupRef}>
       {/* Case */}
@@ -47,5 +47,5 @@ export function HardDrive() {
         <meshStandardMaterial color="#eeeeee" />
       </mesh>
     </group>
-  );
+  )
 }

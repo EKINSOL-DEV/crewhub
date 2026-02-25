@@ -55,29 +55,38 @@ export function ZoneSwitcherBar() {
             fontFamily: 'system-ui, sans-serif',
             opacity: isTransitioning ? 0.5 : 1,
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.08)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0,0,0,0.08)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
+          }}
         >
-          {zones.map(z => {
+          {zones.map((z) => {
             let label = ''
             if (z.id === 'creator-center') label = ' [ALPHA PREVIEW]'
             if (z.id === 'game-center' || z.id === 'academy') label = ' [PLANNED]'
             return (
               <option key={z.id} value={z.id}>
-                {z.icon} {z.name}{label}
+                {z.icon} {z.name}
+                {label}
               </option>
             )
           })}
         </select>
-        <span style={{
-          position: 'absolute',
-          right: 8,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          fontSize: 10,
-          color: '#9ca3af',
-          pointerEvents: 'none',
-        }}>▼</span>
+        <span
+          style={{
+            position: 'absolute',
+            right: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            fontSize: 10,
+            color: '#9ca3af',
+            pointerEvents: 'none',
+          }}
+        >
+          ▼
+        </span>
       </div>
     </div>
   )

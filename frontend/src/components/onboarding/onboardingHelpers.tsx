@@ -7,19 +7,27 @@ import type { ConnectionConfig } from './onboardingTypes'
 
 export function getRuntimeIcon(type: string) {
   switch (type) {
-    case 'openclaw': return <Zap className="h-5 w-5" />
-    case 'claude_code': return <Terminal className="h-5 w-5" />
-    case 'codex_cli': return <Bot className="h-5 w-5" />
-    default: return <Cable className="h-5 w-5" />
+    case 'openclaw':
+      return <Zap className="h-5 w-5" />
+    case 'claude_code':
+      return <Terminal className="h-5 w-5" />
+    case 'codex_cli':
+      return <Bot className="h-5 w-5" />
+    default:
+      return <Cable className="h-5 w-5" />
   }
 }
 
 export function getRuntimeLabel(type: string) {
   switch (type) {
-    case 'openclaw': return 'OpenClaw'
-    case 'claude_code': return 'Claude Code'
-    case 'codex_cli': return 'Codex CLI'
-    default: return type
+    case 'openclaw':
+      return 'OpenClaw'
+    case 'claude_code':
+      return 'Claude Code'
+    case 'codex_cli':
+      return 'Codex CLI'
+    default:
+      return type
   }
 }
 
@@ -58,9 +66,13 @@ export function getStatusBadge(status: string) {
   }
 }
 
-export function candidateToConnection(candidate: DiscoveryCandidate, index: number): ConnectionConfig {
-  const url = candidate.target.url
-    || `http://${candidate.target.host || 'localhost'}:${candidate.target.port || 3000}`
+export function candidateToConnection(
+  candidate: DiscoveryCandidate,
+  index: number
+): ConnectionConfig {
+  const url =
+    candidate.target.url ||
+    `http://${candidate.target.host || 'localhost'}:${candidate.target.port || 3000}`
   return {
     id: `discovered-${index}`,
     name: `${getRuntimeLabel(candidate.runtime_type)} (${candidate.target.host || 'local'})`,

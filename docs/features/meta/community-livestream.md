@@ -1,7 +1,7 @@
 # Community Livestream Feature
 
-**Status:** Research / Concept (v0.20.0+)  
-**Category:** Meta / Community Engagement  
+**Status:** Research / Concept (v0.20.0+)
+**Category:** Meta / Community Engagement
 **Priority:** Future (after core features stable)
 
 ---
@@ -272,5 +272,5 @@ YouTube/Twitch Chat
 
 ---
 
-*Concept proposed by Nicky, 2026-02-12*  
+*Concept proposed by Nicky, 2026-02-12*
 *Chat consensus voting added: 2026-02-12*

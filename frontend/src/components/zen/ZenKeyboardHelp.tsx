@@ -68,9 +68,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: 'Theme',
     icon: '🎨',
-    shortcuts: [
-      { keys: ['Ctrl', 'Shift', 'Y'], description: 'Open theme picker' },
-    ],
+    shortcuts: [{ keys: ['Ctrl', 'Shift', 'Y'], description: 'Open theme picker' }],
   },
   {
     title: 'Sessions',
@@ -99,7 +97,7 @@ interface ZenKeyboardHelpProps {
 
 export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
   const modalRef = useRef<HTMLDivElement>(null)
-  
+
   // Close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -109,46 +107,47 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
         onClose()
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [onClose])
-  
+
   // Click outside to close
-  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }, [onClose])
-  
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        onClose()
+      }
+    },
+    [onClose]
+  )
+
   // Focus trap
   useEffect(() => {
     modalRef.current?.focus()
   }, [])
-  
+
   return (
-    <div 
+    <div
       className="zen-keyboard-help-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-label="Keyboard Shortcuts"
     >
-      <div 
-        ref={modalRef}
-        className="zen-keyboard-help"
-        tabIndex={-1}
-      >
+      <div ref={modalRef} className="zen-keyboard-help" tabIndex={-1}>
         <header className="zen-keyboard-help-header">
           <h2 className="zen-keyboard-help-title">
             <span className="zen-keyboard-help-icon">⌨️</span>
             Keyboard Shortcuts
           </h2>
           <div className="zen-keyboard-help-hints">
-            <span><kbd className="zen-kbd">Esc</kbd> close</span>
+            <span>
+              <kbd className="zen-kbd">Esc</kbd> close
+            </span>
           </div>
         </header>
-        
+
         <div className="zen-keyboard-help-content">
           <div className="zen-keyboard-help-grid">
             {SHORTCUT_GROUPS.map((group) => (
@@ -167,9 +166,7 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
                           </kbd>
                         ))}
                       </div>
-                      <span className="zen-keyboard-help-desc">
-                        {shortcut.description}
-                      </span>
+                      <span className="zen-keyboard-help-desc">{shortcut.description}</span>
                     </div>
                   ))}
                 </div>
@@ -177,10 +174,11 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
             ))}
           </div>
         </div>
-        
+
         <footer className="zen-keyboard-help-footer">
           <span className="zen-keyboard-help-tip">
-            💡 Tip: Use <kbd className="zen-kbd">Ctrl+K</kbd> command palette for quick access to all actions
+            💡 Tip: Use <kbd className="zen-kbd">Ctrl+K</kbd> command palette for quick access to
+            all actions
           </span>
         </footer>
       </div>

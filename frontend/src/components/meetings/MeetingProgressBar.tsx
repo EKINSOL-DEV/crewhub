@@ -48,11 +48,7 @@ export function MeetingProgressBar({
           style={{
             width: `${pct}%`,
             background:
-              phase === 'complete'
-                ? '#22c55e'
-                : phase === 'synthesizing'
-                  ? '#f59e0b'
-                  : '#6366f1',
+              phase === 'complete' ? '#22c55e' : phase === 'synthesizing' ? '#f59e0b' : '#6366f1',
           }}
         />
       </div>

@@ -44,8 +44,15 @@
 }
 
 @keyframes pixel-breathe {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.01); opacity: 0.95; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.01);
+    opacity: 0.95;
+  }
 }
 
 /* Thinking: subtle glow + bounce */
@@ -54,19 +61,20 @@
 }
 
 @keyframes pixel-think {
-  0%, 100% { 
+  0%,
+  100% {
     transform: scale(1) translateY(0);
     filter: brightness(1);
   }
-  25% { 
+  25% {
     transform: scale(1.02) translateY(-1px);
     filter: brightness(1.1);
   }
-  50% { 
+  50% {
     transform: scale(1) translateY(0);
     filter: brightness(1);
   }
-  75% { 
+  75% {
     transform: scale(1.02) translateY(-1px);
     filter: brightness(1.1);
   }
@@ -83,8 +91,15 @@
 }
 
 @keyframes pixel-sparkle {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Typing: active bounce */
@@ -93,8 +108,13 @@
 }
 
 @keyframes pixel-type {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-2px) scale(1.02); }
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.02);
+  }
 }
 
 /* Error: shake */
@@ -103,11 +123,22 @@
 }
 
 @keyframes pixel-error {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-2px); }
-  40% { transform: translateX(2px); }
-  60% { transform: translateX(-1px); }
-  80% { transform: translateX(1px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-2px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  60% {
+    transform: translateX(-1px);
+  }
+  80% {
+    transform: translateX(1px);
+  }
 }
 
 /* ─── Stats Tooltip ────────────────────────────────────────────── */
@@ -186,24 +217,24 @@
 /* ─── Theme Variations ─────────────────────────────────────────── */
 
 /* Light theme adjustments */
-[data-zen-theme="light"] .pixel-avatar-tooltip {
+[data-zen-theme='light'] .pixel-avatar-tooltip {
   background: #fff;
   border-color: #ddd;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-[data-zen-theme="light"] .pixel-avatar-tooltip-header {
+[data-zen-theme='light'] .pixel-avatar-tooltip-header {
   border-color: #eee;
 }
 
 /* Solarized theme */
-[data-zen-theme="solarized"] .pixel-avatar-tooltip {
+[data-zen-theme='solarized'] .pixel-avatar-tooltip {
   background: #002b36;
   border-color: #073642;
 }
 
 /* Dracula theme */
-[data-zen-theme="dracula"] .pixel-avatar-tooltip {
+[data-zen-theme='dracula'] .pixel-avatar-tooltip {
   background: #282a36;
   border-color: #44475a;
 }

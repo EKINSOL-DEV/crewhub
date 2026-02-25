@@ -30,32 +30,32 @@ export function TaskWall3D({
   const [isHovered, setIsHovered] = useState(false)
   const { setInteractingWithUI } = useDragActions()
   const { state: focusState, focusBoard } = useWorldFocus()
-  
+
   // Only enable pointer events when this room is focused (prevent other rooms from intercepting clicks)
   const isThisRoomFocused = focusState.focusedRoomId === roomId
   const pointerEventsEnabled = isThisRoomFocused ? 'auto' : 'none'
-  
+
   // Clean up interaction flag when room loses focus
   useEffect(() => {
     if (!isThisRoomFocused) {
       setInteractingWithUI(false)
     }
   }, [isThisRoomFocused, setInteractingWithUI])
-  
+
   // Block camera controls when interacting with the board
   const handlePointerEnter = useCallback(() => {
     if (!isThisRoomFocused) return
     setInteractingWithUI(true)
   }, [isThisRoomFocused, setInteractingWithUI])
-  
+
   const handlePointerLeave = useCallback(() => {
     if (!isThisRoomFocused) return
     setInteractingWithUI(false)
   }, [isThisRoomFocused, setInteractingWithUI])
 
   return (
-    <group 
-      position={position} 
+    <group
+      position={position}
       rotation={rotation}
       userData={{ isScreenHtml: true }}
       onPointerEnter={() => setIsHovered(true)}
@@ -64,7 +64,7 @@ export function TaskWall3D({
       {/* Whiteboard backing */}
       <mesh position={[0, 0, 0]}>
         <planeGeometry args={[width, height]} />
-        <meshStandardMaterial 
+        <meshStandardMaterial
           color={isHovered ? '#f8fafc' : '#ffffff'}
           roughness={0.9}
           metalness={0}
@@ -74,10 +74,7 @@ export function TaskWall3D({
       {/* Frame border */}
       <mesh position={[0, 0, -0.02]}>
         <planeGeometry args={[width + 0.15, height + 0.15]} />
-        <meshStandardMaterial 
-          color={isHovered ? '#334155' : '#475569'}
-          roughness={0.5}
-        />
+        <meshStandardMaterial color={isHovered ? '#334155' : '#475569'} roughness={0.5} />
       </mesh>
 
       {/* Embedded TaskBoard */}
@@ -95,15 +92,27 @@ export function TaskWall3D({
       >
         <div
           data-world-ui
-          onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation() }}
+          onClick={(e) => {
+            e.stopPropagation()
+            e.nativeEvent.stopImmediatePropagation()
+          }}
           onPointerDown={(e) => e.stopPropagation()}
-          onMouseDown={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation() }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            e.nativeEvent.stopImmediatePropagation()
+          }}
           onPointerMove={(e) => e.stopPropagation()}
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
-          onTouchStart={(e) => { e.stopPropagation(); handlePointerEnter(); }}
+          onTouchStart={(e) => {
+            e.stopPropagation()
+            handlePointerEnter()
+          }}
           onTouchMove={(e) => e.stopPropagation()}
-          onTouchEnd={(e) => { e.stopPropagation(); handlePointerLeave(); }}
+          onTouchEnd={(e) => {
+            e.stopPropagation()
+            handlePointerLeave()
+          }}
           onWheel={(e) => e.stopPropagation()}
           style={{
             width: '100%',

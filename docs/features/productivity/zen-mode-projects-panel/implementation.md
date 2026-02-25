@@ -1,7 +1,7 @@
 # Zen Mode Projects Panel — Implementation Plan
 
-> **Date:** 2026-02-10  
-> **Estimated Effort:** ~3-4 days  
+> **Date:** 2026-02-10
+> **Estimated Effort:** ~3-4 days
 > **Risk:** Low (mostly refactoring + new UI, no DB changes)
 
 ---
@@ -24,8 +24,8 @@ In `loadPersistedState()`, after parsing:
 // Migrate 'documents' → 'projects' panel type
 function migrateLayout(node: LayoutNode): LayoutNode {
   if (node.kind === 'leaf') {
-    return node.panelType === 'documents' 
-      ? { ...node, panelType: 'projects' } 
+    return node.panelType === 'documents'
+      ? { ...node, panelType: 'projects' }
       : node
   }
   return { ...node, a: migrateLayout(node.a), b: migrateLayout(node.b) }
@@ -87,7 +87,7 @@ Pass filter change handler to both panels:
 ```tsx
 case 'tasks':
   return (
-    <ZenTasksPanel 
+    <ZenTasksPanel
       projectId={activeProjectId}
       roomFocusName={activeProjectName}
       onProjectFilterChange={handleProjectFilterChange}
@@ -132,7 +132,7 @@ function ProjectList({ projects, onSelect }) {
 ```tsx
 function ProjectsPanel({ projectId, projectName, onProjectFilterChange }) {
   const [activeView, setActiveView] = useState<'overview' | 'documents'>('overview')
-  
+
   return (
     <>
       <ProjectFilterSelect ... />

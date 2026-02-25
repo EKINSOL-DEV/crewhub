@@ -11,7 +11,6 @@ import re
 from typing import Optional
 
 from .prop_generator import (
-    extract_parts,
     load_prompt_template,
     parse_ai_parts,
     strip_parts_block,
@@ -41,7 +40,7 @@ async def generate_prop_via_ai(
     )
 
     try:
-        from ..connections import get_connection_manager, OpenClawConnection  # type: ignore
+        from ..connections import OpenClawConnection, get_connection_manager  # type: ignore
 
         manager = await get_connection_manager()
         conn = None

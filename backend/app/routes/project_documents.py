@@ -3,6 +3,7 @@
 Uses PROJECT_DATA_PATH env var as base, with optional per-project docs_path override.
 Reuses patterns from agent_files.py (Phase 1).
 """
+
 import logging
 import os
 from datetime import datetime, timezone
@@ -18,35 +19,45 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Allowed file extensions for viewing
-ALLOWED_EXTENSIONS = {'.md', '.txt', '.json', '.yaml', '.yml', '.toml'}
+ALLOWED_EXTENSIONS = {".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
 
 # Max file size (1MB)
 MAX_FILE_SIZE = 1_048_576
 
 # Directories to skip
 SKIP_DIRS = {
-    'node_modules', '.git', '__pycache__', '.venv', 'venv',
-    '.next', 'dist', 'build', '.cache', '.tox', '.mypy_cache',
-    '.pytest_cache', 'egg-info', '.eggs', '.DS_Store',
+    "node_modules",
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    ".next",
+    "dist",
+    "build",
+    ".cache",
+    ".tox",
+    ".mypy_cache",
+    ".pytest_cache",
+    "egg-info",
+    ".eggs",
+    ".DS_Store",
 }
 
 
 async def _get_project_docs_path(project_id: str) -> tuple[Path, str]:
     """Resolve the documents directory for a project.
-    
+
     Returns (resolved_path, project_name).
     Priority: project.docs_path > PROJECT_DATA_PATH/{project.name}/
     """
     async with get_db() as db:
-        async with db.execute(
-            "SELECT name, docs_path FROM projects WHERE id = ?", (project_id,)
-        ) as cursor:
+        async with db.execute("SELECT name, docs_path FROM projects WHERE id = ?", (project_id,)) as cursor:
             row = await cursor.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Project not found")
 
     project_name = row["name"]
-    
+
     # Use explicit docs_path if set
     if row.get("docs_path"):
         docs_dir = Path(os.path.expanduser(row["docs_path"])).resolve()
@@ -69,7 +80,7 @@ def _is_safe_path(base: Path, target: Path) -> bool:
 
 def _count_lines(path: Path) -> int:
     try:
-        with open(path, 'r', errors='replace') as f:
+        with open(path, errors="replace") as f:
             return sum(1 for _ in f)
     except Exception:
         return 0
@@ -83,7 +94,7 @@ def _file_info(base: Path, path: Path) -> dict:
         "path": str(rel),
         "type": "file",
         "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
         "lines": _count_lines(path) if stat.st_size < MAX_FILE_SIZE else None,
     }
 
@@ -97,19 +108,21 @@ def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> 
     except PermissionError:
         return []
     for entry in entries:
-        if entry.name.startswith('.') and entry.name != '.':
+        if entry.name.startswith(".") and entry.name != ".":
             continue
         if entry.name in SKIP_DIRS:
             continue
         if entry.is_dir():
             children = _scan_directory(base, entry, depth + 1, max_depth)
             if children:
-                items.append({
-                    "name": entry.name,
-                    "path": str(entry.relative_to(base)) + "/",
-                    "type": "directory",
-                    "children": children,
-                })
+                items.append(
+                    {
+                        "name": entry.name,
+                        "path": str(entry.relative_to(base)) + "/",
+                        "type": "directory",
+                        "children": children,
+                    }
+                )
         elif entry.is_file() and entry.suffix.lower() in ALLOWED_EXTENSIONS:
             items.append(_file_info(base, entry))
     return items
@@ -135,7 +148,7 @@ async def list_project_documents(
 
     scan_root = docs_dir
     if path:
-        if '..' in path:
+        if ".." in path:
             raise HTTPException(status_code=400, detail="Invalid path")
         scan_root = docs_dir / path
         if not _is_safe_path(docs_dir, scan_root):
@@ -161,7 +174,7 @@ async def list_project_documents(
 @router.put("/{project_id}/documents/{file_path:path}")
 async def save_project_document(project_id: str, file_path: str, body: dict):
     """Save/update a document in a project's data directory."""
-    if '..' in file_path:
+    if ".." in file_path:
         raise HTTPException(status_code=400, detail="Invalid path")
 
     content = body.get("content")
@@ -185,8 +198,8 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
 
     # Create backup
     try:
-        bak = target.with_suffix(target.suffix + '.bak')
-        bak.write_text(target.read_text(errors='replace'))
+        bak = target.with_suffix(target.suffix + ".bak")
+        bak.write_text(target.read_text(errors="replace"))
     except Exception as e:
         logger.warning(f"Failed to create backup for {file_path}: {e}")
 
@@ -200,8 +213,8 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
     return {
         "path": file_path,
         "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
-        "lines": content.count('\n') + 1 if content else 0,
+        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+        "lines": content.count("\n") + 1 if content else 0,
         "status": "saved",
     }
 
@@ -209,7 +222,7 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
 @router.get("/{project_id}/documents/{file_path:path}")
 async def read_project_document(project_id: str, file_path: str):
     """Read a single document from a project's data directory."""
-    if '..' in file_path:
+    if ".." in file_path:
         raise HTTPException(status_code=400, detail="Invalid path")
 
     docs_dir, _ = await _get_project_docs_path(project_id)
@@ -232,20 +245,24 @@ async def read_project_document(project_id: str, file_path: str):
         raise HTTPException(status_code=413, detail=f"File too large: {stat.st_size} bytes (max {MAX_FILE_SIZE})")
 
     try:
-        content = target.read_text(errors='replace')
+        content = target.read_text(errors="replace")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to read file: {e}")
 
     lang_map = {
-        '.md': 'markdown', '.txt': 'text', '.json': 'json',
-        '.yaml': 'yaml', '.yml': 'yaml', '.toml': 'toml',
+        ".md": "markdown",
+        ".txt": "text",
+        ".json": "json",
+        ".yaml": "yaml",
+        ".yml": "yaml",
+        ".toml": "toml",
     }
 
     return {
         "path": file_path,
         "content": content,
         "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
-        "lines": content.count('\n') + 1 if content else 0,
-        "language": lang_map.get(target.suffix.lower(), 'text'),
+        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+        "lines": content.count("\n") + 1 if content else 0,
+        "language": lang_map.get(target.suffix.lower(), "text"),
     }

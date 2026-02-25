@@ -48,9 +48,10 @@ export function DemoMeetingButton({ onClick, isActive, isComplete }: DemoMeeting
         fontFamily: 'system-ui, sans-serif',
         cursor: isActive ? 'default' : 'pointer',
         backdropFilter: 'blur(12px)',
-        boxShadow: hovered && !isActive
-          ? '0 8px 32px rgba(99, 102, 241, 0.5), 0 0 60px rgba(99, 102, 241, 0.2)'
-          : '0 4px 20px rgba(99, 102, 241, 0.35)',
+        boxShadow:
+          hovered && !isActive
+            ? '0 8px 32px rgba(99, 102, 241, 0.5), 0 0 60px rgba(99, 102, 241, 0.2)'
+            : '0 4px 20px rgba(99, 102, 241, 0.35)',
         transition: 'all 0.2s ease',
         animation: isActive ? 'none' : 'demo-btn-pulse 3s ease-in-out infinite',
         pointerEvents: 'auto',

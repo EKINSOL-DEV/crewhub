@@ -1,7 +1,7 @@
 # AI Meetings - Bug Fixes
 
-> **Date:** 2026-02-13  
-> **Goal:** Fix 5 bugs discovered during user testing  
+> **Date:** 2026-02-13
+> **Goal:** Fix 5 bugs discovered during user testing
 > **Strategy:** Opus implementation + GPT-5.2 review
 
 ---
@@ -9,7 +9,7 @@
 ## 🐛 Bugs to Fix
 
 ### Bug #1: Meeting Table Collision with Sleeping Bot
-**Priority:** Medium  
+**Priority:** Medium
 **Reported:** 19:29
 
 **Problem:**
@@ -27,7 +27,7 @@
 **Option A: Check Before Placement**
 ```typescript
 // In Room3D.tsx or wherever table is placed
-const isCenterOccupied = bots.some(bot => 
+const isCenterOccupied = bots.some(bot =>
   distance(bot.position, [0, 0]) < 1.5
 );
 
@@ -54,7 +54,7 @@ if (!isCenterOccupied && room.project_id) {
 ---
 
 ### Bug #2: File Tree Not Showing in Document Selector
-**Priority:** High  
+**Priority:** High
 **Reported:** 19:30
 
 **Problem:**
@@ -94,7 +94,7 @@ if (!isCenterOccupied && room.project_id) {
 ---
 
 ### Bug #3: Bots Walk Through Walls During Gathering
-**Priority:** Low (visual polish, not breaking)  
+**Priority:** Low (visual polish, not breaking)
 **Reported:** 19:31
 
 **Problem:**
@@ -145,7 +145,7 @@ This is a LARGE fix - proper pathfinding is non-trivial:
 ---
 
 ### Bug #4: Round Display Shows "Round 2/0"
-**Priority:** High (user confusion)  
+**Priority:** High (user confusion)
 **Reported:** 19:33
 
 **Problem:**
@@ -176,7 +176,7 @@ This is a LARGE fix - proper pathfinding is non-trivial:
 ---
 
 ### Bug #5: Bot Status "Working" Instead of "In Meeting"
-**Priority:** Low (cosmetic, but nice UX)  
+**Priority:** Low (cosmetic, but nice UX)
 **Reported:** 19:33
 
 **Problem:**

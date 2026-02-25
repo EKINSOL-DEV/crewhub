@@ -7,12 +7,12 @@ interface BotStatusGlowProps {
 }
 
 const STATUS_GLOW_COLOR: Record<string, string> = {
-  active: '#4ade80',  // green
-  idle: '#fbbf24',    // yellow
+  active: '#4ade80', // green
+  idle: '#fbbf24', // yellow
   supervising: '#a78bfa', // purple
-  meeting: '#0ea5e9',   // sky blue
+  meeting: '#0ea5e9', // sky blue
   sleeping: '#9ca3af', // gray
-  offline: '#6b7280',  // dark gray
+  offline: '#6b7280', // dark gray
 }
 
 /**
@@ -56,11 +56,7 @@ export function BotStatusGlow({ status }: BotStatusGlowProps) {
   }, 3)
 
   return (
-    <mesh
-      ref={glowRef}
-      position={[0, -0.34, 0]}
-      rotation={[-Math.PI / 2, 0, 0]}
-    >
+    <mesh ref={glowRef} position={[0, -0.34, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[0.22, 0.34, 24]} />
       <meshStandardMaterial
         color={glowColor}

@@ -7,9 +7,9 @@ Run with: python3 -m pytest tests/test_auth_phase1.py -v
 import json
 import os
 import tempfile
+
 import pytest
 import pytest_asyncio
-from pathlib import Path
 
 # Set test DB to temp dir before importing app
 _test_dir = tempfile.mkdtemp(prefix="crewhub_test_")
@@ -17,9 +17,9 @@ TEST_DB = os.path.join(_test_dir, "crewhub.db")
 os.environ["CREWHUB_DB_PATH"] = TEST_DB
 
 from httpx import ASGITransport, AsyncClient
+
+from app.auth import init_api_keys
 from app.main import app
-from app.auth import init_api_keys, generate_api_key, hash_key
-from app.db.database import init_database, DB_DIR
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -32,6 +32,7 @@ async def setup_db():
 def _get_keys():
     """Read keys from generated files (uses live DB_DIR which may be patched by conftest)."""
     import app.db.database as _db_mod
+
     agent_json = _db_mod.DB_DIR / "agent.json"
     api_keys_json = _db_mod.DB_DIR / "api-keys.json"
     with open(agent_json) as f:
@@ -50,6 +51,7 @@ async def client():
 
 # ── Public endpoints ──────────────────────────────────────────────────
 
+
 @pytest.mark.anyio
 async def test_health_public(client):
     r = await client.get("/health")
@@ -64,6 +66,7 @@ async def test_root_public(client):
 
 # ── Auth enforcement ──────────────────────────────────────────────────
 
+
 @pytest.mark.anyio
 async def test_self_requires_auth(client):
     r = await client.get("/api/self")
@@ -77,6 +80,7 @@ async def test_invalid_key_returns_401(client):
 
 
 # ── Self endpoints ────────────────────────────────────────────────────
+
 
 @pytest.mark.anyio
 async def test_identify_existing_agent(client):
@@ -220,6 +224,7 @@ async def test_display_name_before_identify(client):
 
 # ── Auth key management ───────────────────────────────────────────────
 
+
 @pytest.mark.anyio
 async def test_list_keys_admin(client):
     _, admin_key = _get_keys()
@@ -314,6 +319,7 @@ async def test_bound_key_locks_identity(client):
 
 # ── Security: Identity claim/takeover prevention ─────────────────────
 
+
 @pytest.mark.anyio
 async def test_attacker_cannot_claim_victims_agent_id(client):
     """Unbound self key cannot claim an agent_id owned by another key."""
@@ -407,6 +413,7 @@ async def test_attacker_cannot_set_victims_display_name(client):
 
 
 # ── Discovery manifest ───────────────────────────────────────────────
+
 
 @pytest.mark.anyio
 async def test_discovery_manifest(client):

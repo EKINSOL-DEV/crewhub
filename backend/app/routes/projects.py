@@ -3,6 +3,7 @@
 SQL is delegated to app.services.project_service. This module owns
 HTTP concerns: status codes, SSE broadcasts, file I/O, and response shaping.
 """
+
 import asyncio
 import logging
 import os
@@ -10,9 +11,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from app.db.database import get_db
 from app.db.models import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.routes.sse import broadcast
 from app.services import project_service
@@ -34,6 +34,7 @@ router = APIRouter()
 # ========================================
 # PROJECTS CRUD
 # ========================================
+
 
 @router.get("", response_model=dict)
 async def list_projects():
@@ -138,6 +139,7 @@ async def delete_project(project_id: str):
 # (File I/O stays in the route — no SQL, no service needed)
 # ========================================
 
+
 @router.get("/{project_id}/markdown-files")
 async def list_markdown_files(project_id: str):
     """List markdown files in a project's Synology Drive folder."""
@@ -164,11 +166,7 @@ async def list_markdown_files(project_id: str):
             return {"files": [], "warning": "Project folder not found"}
 
         resolved_base = project_dir.resolve()
-        if not any(
-            resolved_base.is_relative_to(root)
-            for root in ALLOWED_PROJECT_ROOTS
-            if root.exists()
-        ):
+        if not any(resolved_base.is_relative_to(root) for root in ALLOWED_PROJECT_ROOTS if root.exists()):
             logger.warning(f"Project folder outside allowed roots: {resolved_base}")
             raise HTTPException(403, "Project folder outside allowed roots")
 

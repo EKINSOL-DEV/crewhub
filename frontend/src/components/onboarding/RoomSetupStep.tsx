@@ -2,9 +2,9 @@
  * RoomSetupStep — Template-based room creation during onboarding.
  */
 
-import { useState, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { CheckCircle2, Loader2 } from "lucide-react"
+import { useState, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 
 // ─── Room Templates ─────────────────────────────────────────────
 
@@ -25,40 +25,40 @@ interface Template {
 
 const TEMPLATES: Template[] = [
   {
-    key: "software_dev",
-    icon: "🏗️",
-    title: "Software Development",
-    description: "Build apps with dev teams",
+    key: 'software_dev',
+    icon: '🏗️',
+    title: 'Software Development',
+    description: 'Build apps with dev teams',
     rooms: [
-      { id: "dev-room", name: "Dev Room", icon: "💻", color: "#10b981" },
-      { id: "ops-room", name: "Ops Room", icon: "🛠️", color: "#f97316" },
+      { id: 'dev-room', name: 'Dev Room', icon: '💻', color: '#10b981' },
+      { id: 'ops-room', name: 'Ops Room', icon: '🛠️', color: '#f97316' },
     ],
   },
   {
-    key: "content_creation",
-    icon: "🎨",
-    title: "Content Creation",
-    description: "Create content & marketing",
+    key: 'content_creation',
+    icon: '🎨',
+    title: 'Content Creation',
+    description: 'Create content & marketing',
     rooms: [
-      { id: "creative-room", name: "Creative Room", icon: "🎨", color: "#f59e0b" },
-      { id: "marketing-room", name: "Marketing", icon: "📢", color: "#ec4899" },
+      { id: 'creative-room', name: 'Creative Room', icon: '🎨', color: '#f59e0b' },
+      { id: 'marketing-room', name: 'Marketing', icon: '📢', color: '#ec4899' },
     ],
   },
   {
-    key: "mixed",
-    icon: "🔀",
-    title: "Mixed / General",
-    description: "Balance dev & creative work",
+    key: 'mixed',
+    icon: '🔀',
+    title: 'Mixed / General',
+    description: 'Balance dev & creative work',
     rooms: [
-      { id: "dev-room", name: "Dev Room", icon: "💻", color: "#10b981" },
-      { id: "creative-room", name: "Creative Room", icon: "🎨", color: "#f59e0b" },
+      { id: 'dev-room', name: 'Dev Room', icon: '💻', color: '#10b981' },
+      { id: 'creative-room', name: 'Creative Room', icon: '🎨', color: '#f59e0b' },
     ],
   },
   {
-    key: "minimal",
-    icon: "🏛️",
-    title: "Minimal",
-    description: "Start clean, add rooms later",
+    key: 'minimal',
+    icon: '🏛️',
+    title: 'Minimal',
+    description: 'Start clean, add rooms later',
     rooms: [],
   },
 ]
@@ -71,7 +71,7 @@ interface RoomSetupStepProps {
 
 export function RoomSetupStep({ onComplete }: RoomSetupStepProps) {
   const [creating, setCreating] = useState(false)
-  const [progress, setProgress] = useState({ current: 0, total: 0, name: "" })
+  const [progress, setProgress] = useState({ current: 0, total: 0, name: '' })
   const [error, setError] = useState<string | null>(null)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
@@ -87,16 +87,16 @@ export function RoomSetupStep({ onComplete }: RoomSetupStepProps) {
       }
 
       setCreating(true)
-      setProgress({ current: 0, total: template.rooms.length, name: "" })
+      setProgress({ current: 0, total: template.rooms.length, name: '' })
 
       for (let i = 0; i < template.rooms.length; i++) {
         const room = template.rooms[i]
         setProgress({ current: i + 1, total: template.rooms.length, name: room.name })
 
         try {
-          const res = await fetch("/api/rooms", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          const res = await fetch('/api/rooms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               id: room.id,
               name: room.name,
@@ -115,11 +115,7 @@ export function RoomSetupStep({ onComplete }: RoomSetupStepProps) {
         } catch (err) {
           setCreating(false)
           setSelectedKey(null)
-          setError(
-            err instanceof Error
-              ? err.message
-              : `Failed to create ${room.name}`
-          )
+          setError(err instanceof Error ? err.message : `Failed to create ${room.name}`)
           return
         }
       }
@@ -135,8 +131,7 @@ export function RoomSetupStep({ onComplete }: RoomSetupStepProps) {
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">What will you use CrewHub for?</h2>
         <p className="text-muted-foreground">
-          Pick a template to set up your workspace rooms. You can always add or
-          remove rooms later.
+          Pick a template to set up your workspace rooms. You can always add or remove rooms later.
         </p>
       </div>
 
@@ -167,25 +162,23 @@ export function RoomSetupStep({ onComplete }: RoomSetupStepProps) {
               key={tpl.key}
               className={`p-5 rounded-xl border transition-all ${
                 isSelected
-                  ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border bg-card hover:bg-accent/30 hover:border-primary/40"
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border bg-card hover:bg-accent/30 hover:border-primary/40'
               }`}
             >
               <div className="flex items-start gap-4">
                 <div className="text-3xl shrink-0 mt-0.5">{tpl.icon}</div>
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="font-semibold text-base">{tpl.title}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {tpl.description}
-                  </div>
+                  <div className="text-sm text-muted-foreground">{tpl.description}</div>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {/* HQ badge always present */}
                     <span
                       className="text-[11px] px-2 py-0.5 rounded-full font-medium"
                       style={{
-                        backgroundColor: "#4f46e520",
-                        color: "#4f46e5",
-                        border: "1px solid #4f46e540",
+                        backgroundColor: '#4f46e520',
+                        color: '#4f46e5',
+                        border: '1px solid #4f46e540',
                       }}
                     >
                       🏛️ HQ
@@ -208,7 +201,7 @@ export function RoomSetupStep({ onComplete }: RoomSetupStepProps) {
                 <div className="shrink-0">
                   <Button
                     size="sm"
-                    variant={tpl.key === "minimal" ? "outline" : "default"}
+                    variant={tpl.key === 'minimal' ? 'outline' : 'default'}
                     disabled={creating}
                     onClick={() => handleSelect(tpl)}
                     className="gap-1.5"

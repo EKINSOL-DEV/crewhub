@@ -81,7 +81,7 @@ describe('SessionCard', () => {
     const onViewLogs = vi.fn()
     const session = createMockSession()
     render(<SessionCard session={session} onViewLogs={onViewLogs} />)
-    
+
     const button = screen.getByRole('button', { name: /logs/i })
     fireEvent.click(button)
     expect(onViewLogs).toHaveBeenCalledTimes(1)

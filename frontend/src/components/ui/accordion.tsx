@@ -1,27 +1,27 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { ChevronDown } from "lucide-react"
+import * as React from 'react'
+import { cn } from '@/lib/utils'
+import { ChevronDown } from 'lucide-react'
 
 interface AccordionContextValue {
   openItems: Set<string>
   toggle: (value: string) => void
-  type: "single" | "multiple"
+  type: 'single' | 'multiple'
 }
 
 const AccordionContext = React.createContext<AccordionContextValue>({
   openItems: new Set(),
   toggle: () => {},
-  type: "single",
+  type: 'single',
 })
 
 interface AccordionProps {
-  type?: "single" | "multiple"
+  type?: 'single' | 'multiple'
   defaultValue?: string | string[]
   className?: string
   children: React.ReactNode
 }
 
-export function Accordion({ type = "single", defaultValue, className, children }: AccordionProps) {
+export function Accordion({ type = 'single', defaultValue, className, children }: AccordionProps) {
   const initial = defaultValue
     ? new Set(Array.isArray(defaultValue) ? defaultValue : [defaultValue])
     : new Set<string>()
@@ -34,7 +34,7 @@ export function Accordion({ type = "single", defaultValue, className, children }
         if (next.has(value)) {
           next.delete(value)
         } else {
-          if (type === "single") next.clear()
+          if (type === 'single') next.clear()
           next.add(value)
         }
         return next
@@ -57,7 +57,7 @@ interface AccordionItemProps {
 }
 
 const AccordionItemContext = React.createContext<{ value: string; isOpen: boolean }>({
-  value: "",
+  value: '',
   isOpen: false,
 })
 
@@ -67,7 +67,7 @@ export function AccordionItem({ value, className, children }: AccordionItemProps
 
   return (
     <AccordionItemContext.Provider value={{ value, isOpen }}>
-      <div className={cn("border-b", className)}>{children}</div>
+      <div className={cn('border-b', className)}>{children}</div>
     </AccordionItemContext.Provider>
   )
 }
@@ -84,14 +84,16 @@ export function AccordionTrigger({ className, children }: AccordionTriggerProps)
   return (
     <button
       className={cn(
-        "flex w-full items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+        'flex w-full items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180',
         className
       )}
-      data-state={isOpen ? "open" : "closed"}
+      data-state={isOpen ? 'open' : 'closed'}
       onClick={() => toggle(value)}
     >
       {children}
-      <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform duration-200", isOpen && "rotate-180")} />
+      <ChevronDown
+        className={cn('h-4 w-4 shrink-0 transition-transform duration-200', isOpen && 'rotate-180')}
+      />
     </button>
   )
 }
@@ -106,9 +108,5 @@ export function AccordionContent({ className, children }: AccordionContentProps)
 
   if (!isOpen) return null
 
-  return (
-    <div className={cn("overflow-hidden text-sm pb-4 pt-0", className)}>
-      {children}
-    </div>
-  )
+  return <div className={cn('overflow-hidden text-sm pb-4 pt-0', className)}>{children}</div>
 }

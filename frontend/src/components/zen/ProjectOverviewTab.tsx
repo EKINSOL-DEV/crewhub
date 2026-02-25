@@ -11,19 +11,23 @@ interface ProjectOverviewTabProps {
   onSwitchToDocuments?: () => void
 }
 
-export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwitchToDocuments }: ProjectOverviewTabProps) {
+export function ProjectOverviewTab({
+  projectId,
+  projectName: _projectName,
+  onSwitchToDocuments,
+}: ProjectOverviewTabProps) {
   const { projects, fetchOverview } = useProjects()
   const { taskCounts, tasks } = useTasks({ projectId })
   const [overview, setOverview] = useState<ProjectOverview | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const project = projects.find(p => p.id === projectId)
+  const project = projects.find((p) => p.id === projectId)
 
   useEffect(() => {
     setLoading(true)
-    fetchOverview().then(result => {
+    fetchOverview().then((result) => {
       if (result.success) {
-        const found = result.projects.find(p => p.id === projectId)
+        const found = result.projects.find((p) => p.id === projectId)
         setOverview(found || null)
       }
       setLoading(false)
@@ -48,56 +52,75 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
   }
 
   const totalTasks = Object.values(taskCounts).reduce((a, b) => a + b, 0)
-  const activeTasks = tasks.filter(t => t.status !== 'done').slice(0, 5)
+  const activeTasks = tasks.filter((t) => t.status !== 'done').slice(0, 5)
 
   return (
-    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 16, overflow: 'auto', flex: 1 }}>
-      {/* Project Header Card */}
-      <div style={{
+    <div
+      style={{
         padding: '16px',
-        background: (project.color || '#6b7280') + '10',
-        borderRadius: 12,
-        border: `1px solid ${(project.color || '#6b7280')}20`,
-      }}>
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        overflow: 'auto',
+        flex: 1,
+      }}
+    >
+      {/* Project Header Card */}
+      <div
+        style={{
+          padding: '16px',
+          background: (project.color || '#6b7280') + '10',
+          borderRadius: 12,
+          border: `1px solid ${project.color || '#6b7280'}20`,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            background: project.color || '#6b7280',
-            flexShrink: 0,
-          }} />
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              background: project.color || '#6b7280',
+              flexShrink: 0,
+            }}
+          />
           <span style={{ fontSize: 20, flexShrink: 0 }}>{project.icon || '📋'}</span>
-          <span style={{
-            fontSize: 16,
-            fontWeight: 700,
-            color: 'var(--zen-fg)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
+          <span
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: 'var(--zen-fg)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {project.name}
           </span>
         </div>
         {project.description && (
-          <div style={{
-            fontSize: 13,
-            color: 'var(--zen-fg-muted)',
-            marginTop: 8,
-            lineHeight: 1.5,
-          }}>
+          <div
+            style={{
+              fontSize: 13,
+              color: 'var(--zen-fg-muted)',
+              marginTop: 8,
+              lineHeight: 1.5,
+            }}
+          >
             {project.description}
           </div>
         )}
         <div style={{ marginTop: 8 }}>
-          <span style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: project.status === 'active' ? '#15803d' : '#6b7280',
-            background: project.status === 'active' ? '#dcfce7' : '#f3f4f6',
-            padding: '2px 8px',
-            borderRadius: 6,
-          }}>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: project.status === 'active' ? '#15803d' : '#6b7280',
+              background: project.status === 'active' ? '#dcfce7' : '#f3f4f6',
+              padding: '2px 8px',
+              borderRadius: 6,
+            }}
+          >
             {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
           </span>
         </div>
@@ -106,13 +129,26 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
         <StatCard label="Tasks" value={totalTasks} icon="📋" />
-        <StatCard label="Rooms" value={overview?.room_count ?? project.rooms?.length ?? 0} icon="🏠" />
+        <StatCard
+          label="Rooms"
+          value={overview?.room_count ?? project.rooms?.length ?? 0}
+          icon="🏠"
+        />
         <StatCard label="Agents" value={overview?.agent_count ?? 0} icon="🤖" />
       </div>
 
       {/* Task Status Breakdown */}
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--zen-fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: 'var(--zen-fg-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: 8,
+          }}
+        >
           Task Status
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -127,32 +163,57 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
       {/* Active Tasks Preview */}
       {activeTasks.length > 0 && (
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--zen-fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--zen-fg-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: 8,
+            }}
+          >
             Active Tasks
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {activeTasks.map(task => (
-              <div key={task.id} style={{
-                padding: '8px 10px',
-                background: 'var(--zen-bg-hover, rgba(0,0,0,0.03))',
-                borderRadius: 6,
-                fontSize: 12,
-                color: 'var(--zen-fg)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}>
-                <span style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: task.status === 'in_progress' ? '#2563eb'
-                    : task.status === 'blocked' ? '#dc2626'
-                    : task.status === 'review' ? '#7c3aed'
-                    : '#6b7280',
-                  flexShrink: 0,
-                }} />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+            {activeTasks.map((task) => (
+              <div
+                key={task.id}
+                style={{
+                  padding: '8px 10px',
+                  background: 'var(--zen-bg-hover, rgba(0,0,0,0.03))',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  color: 'var(--zen-fg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background:
+                      task.status === 'in_progress'
+                        ? '#2563eb'
+                        : task.status === 'blocked'
+                          ? '#dc2626'
+                          : task.status === 'review'
+                            ? '#7c3aed'
+                            : '#6b7280',
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                  }}
+                >
                   {task.title}
                 </span>
               </div>
@@ -191,12 +252,14 @@ export function ProjectOverviewTab({ projectId, projectName: _projectName, onSwi
 
 function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
   return (
-    <div style={{
-      padding: '12px',
-      background: 'var(--zen-bg-hover, rgba(0,0,0,0.03))',
-      borderRadius: 8,
-      textAlign: 'center',
-    }}>
+    <div
+      style={{
+        padding: '12px',
+        background: 'var(--zen-bg-hover, rgba(0,0,0,0.03))',
+        borderRadius: 8,
+        textAlign: 'center',
+      }}
+    >
       <div style={{ fontSize: 16, marginBottom: 4 }}>{icon}</div>
       <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--zen-fg)' }}>{value}</div>
       <div style={{ fontSize: 11, color: 'var(--zen-fg-muted)', fontWeight: 500 }}>{label}</div>
@@ -206,14 +269,16 @@ function StatCard({ label, value, icon }: { label: string; value: number; icon: 
 
 function TaskBadge({ count, label, color }: { count: number; label: string; color: string }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 4,
-      padding: '4px 8px',
-      background: color + '10',
-      borderRadius: 6,
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '4px 8px',
+        background: color + '10',
+        borderRadius: 6,
+      }}
+    >
       <span style={{ fontSize: 12, fontWeight: 700, color }}>{count}</span>
       <span style={{ fontSize: 10, color: 'var(--zen-fg-muted)' }}>{label}</span>
     </div>

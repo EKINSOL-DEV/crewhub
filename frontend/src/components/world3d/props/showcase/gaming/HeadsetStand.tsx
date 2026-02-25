@@ -1,10 +1,12 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function HeadsetStand() {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((s) => { if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12; });
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame((s) => {
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12
+  })
   return (
     <group ref={groupRef}>
       {/* Base */}
@@ -37,7 +39,12 @@ export function HeadsetStand() {
           {/* RGB ring */}
           <mesh position={[x, 0.28, 0.035]}>
             <ringGeometry args={[0.06, 0.09, 8]} />
-            <meshStandardMaterial color="#ff44ff" emissive="#ff44ff" emissiveIntensity={2} side={THREE.DoubleSide} />
+            <meshStandardMaterial
+              color="#ff44ff"
+              emissive="#ff44ff"
+              emissiveIntensity={2}
+              side={THREE.DoubleSide}
+            />
           </mesh>
         </group>
       ))}
@@ -47,5 +54,5 @@ export function HeadsetStand() {
         <meshStandardMaterial color="#00ffaa" emissive="#00ffaa" emissiveIntensity={2} />
       </mesh>
     </group>
-  );
+  )
 }

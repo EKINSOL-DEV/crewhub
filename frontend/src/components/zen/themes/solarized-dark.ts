@@ -16,30 +16,30 @@ export const solarizedDark: ZenTheme = {
     bgPanel: '#073642',
     bgHover: '#094554',
     bgActive: '#0b5567',
-    
+
     // Foreground
     fg: '#839496',
     fgMuted: '#657b83',
     fgDim: '#586e75',
-    
+
     // Borders
     border: '#094554',
     borderFocus: '#268bd2',
-    
+
     // Accent - Blue
     accent: '#268bd2',
     accentHover: '#2aa1f5',
-    
+
     // Status
     success: '#859900',
     warning: '#b58900',
     error: '#dc322f',
     info: '#2aa198',
-    
+
     // Chat
     userBubble: '#073642',
     assistantBubble: '#001f27',
-    
+
     // Syntax
     syntax: {
       keyword: '#859900',
@@ -47,6 +47,6 @@ export const solarizedDark: ZenTheme = {
       comment: '#586e75',
       function: '#268bd2',
       variable: '#839496',
-    }
-  }
+    },
+  },
 }

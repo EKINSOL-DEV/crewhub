@@ -202,7 +202,7 @@ services:
 Agent workspaces are stored in the `settings` table:
 
 ```sql
-INSERT INTO settings (key, value) VALUES 
+INSERT INTO settings (key, value) VALUES
   ('agent.workspaces', '{"main": "/path/to/clawd", "dev": "/path/to/clawd-dev"}');
 ```
 

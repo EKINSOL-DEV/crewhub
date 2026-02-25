@@ -5,7 +5,7 @@ Deployment, demos, and platform-level features.
 ---
 
 ## Demo Site
-**Status:** ✅ Released (demo.crewhub.dev)  
+**Status:** ✅ Released (demo.crewhub.dev)
 **Description:** Public demo with mock API layer, simulated agents/rooms, and no OpenClaw dependency. Uses Docker with demo.yml config, deployed via Coolify.
 
 **Docs:**

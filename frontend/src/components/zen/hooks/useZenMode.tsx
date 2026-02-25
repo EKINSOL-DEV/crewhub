@@ -1,4 +1,12 @@
-import { useState, useCallback, useEffect, createContext, useContext, useRef, type ReactNode } from 'react'
+import {
+  useState,
+  useCallback,
+  useEffect,
+  createContext,
+  useContext,
+  useRef,
+  type ReactNode,
+} from 'react'
 import { type LayoutNode, createSplit, createLeaf, getAllPanels } from '../types/layout'
 
 // ── Types ──────────────────────────────────────────────────────
@@ -19,7 +27,7 @@ export interface ZenTab {
   layout: LayoutNode
   focusedPanelId: string
   maximizedPanelId: string | null
-  scrollPositions: Record<string, number>  // panelId -> scrollY
+  scrollPositions: Record<string, number> // panelId -> scrollY
   createdAt: number
 }
 
@@ -29,7 +37,7 @@ export interface ZenTab {
 export interface ZenTabsState {
   tabs: ZenTab[]
   activeTabId: string
-  closedTabs: ZenTab[]  // For "reopen closed tab" (max 5)
+  closedTabs: ZenTab[] // For "reopen closed tab" (max 5)
 }
 
 /**
@@ -57,8 +65,8 @@ function generateUUID(): string {
   }
   // Fallback for http:// contexts
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0
-    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
 }
@@ -66,18 +74,14 @@ function generateUUID(): string {
 // ── Default Layout ─────────────────────────────────────────────
 
 function createDefaultLayout(): LayoutNode {
-  return createSplit('row',
-    createLeaf('chat'),
-    createLeaf('tasks'),
-    0.6
-  )
+  return createSplit('row', createLeaf('chat'), createLeaf('tasks'), 0.6)
 }
 
 function createDefaultTab(projectFilter?: ZenProjectFilter): ZenTab {
   const layout = createDefaultLayout()
   const panels = getAllPanels(layout)
-  const chatPanel = panels.find(p => p.panelType === 'chat')
-  
+  const chatPanel = panels.find((p) => p.panelType === 'chat')
+
   return {
     id: generateUUID(),
     label: projectFilter?.projectName || 'Zen Mode',
@@ -96,15 +100,15 @@ function loadPersistedState(): ZenTabsState | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return null
-    
+
     const parsed = JSON.parse(stored) as PersistedZenState
-    
+
     // Validate version
     if (parsed.version !== 1) {
       console.warn('[ZenTabs] Unknown state version, resetting')
       return null
     }
-    
+
     // Migrate 'documents' → 'projects' panel type in all tabs
     function migrateLayoutNode(node: LayoutNode): LayoutNode {
       if (node.kind === 'leaf') {
@@ -114,22 +118,22 @@ function loadPersistedState(): ZenTabsState | null {
       }
       return { ...node, a: migrateLayoutNode(node.a), b: migrateLayoutNode(node.b) }
     }
-    parsed.tabs = parsed.tabs.map(tab => ({
+    parsed.tabs = parsed.tabs.map((tab) => ({
       ...tab,
       layout: migrateLayoutNode(tab.layout),
     }))
-    
+
     // Validate tabs array
     if (!Array.isArray(parsed.tabs) || parsed.tabs.length === 0) {
       return null
     }
-    
+
     // Ensure active tab exists
-    const activeExists = parsed.tabs.some(t => t.id === parsed.activeTabId)
+    const activeExists = parsed.tabs.some((t) => t.id === parsed.activeTabId)
     if (!activeExists) {
       parsed.activeTabId = parsed.tabs[0].id
     }
-    
+
     return {
       tabs: parsed.tabs,
       activeTabId: parsed.activeTabId,
@@ -163,24 +167,26 @@ function migrateLegacyState(): ZenTabsState | null {
     // Check for old layout format
     const legacyLayout = localStorage.getItem('zen-layout-current')
     const legacyAgent = localStorage.getItem('zen-last-agent')
-    
+
     if (!legacyLayout) return null
-    
+
     const parsed = JSON.parse(legacyLayout)
     const layout = parsed.root as LayoutNode
-    
+
     // Create a tab from legacy layout
     const panels = getAllPanels(layout)
-    const chatPanel = panels.find(p => p.panelType === 'chat')
-    
+    const chatPanel = panels.find((p) => p.panelType === 'chat')
+
     // Try to restore agent info to the chat panel
     let agentInfo: { id: string; name: string; icon?: string } | null = null
     if (legacyAgent) {
       try {
         agentInfo = JSON.parse(legacyAgent)
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
-    
+
     const tab: ZenTab = {
       id: 'migrated-tab',
       label: 'Zen Mode',
@@ -191,13 +197,13 @@ function migrateLegacyState(): ZenTabsState | null {
       scrollPositions: {},
       createdAt: Date.now(),
     }
-    
+
     console.log('[ZenTabs] Migrated legacy layout', { agentInfo })
-    
+
     // Clean up legacy keys after migration
     // localStorage.removeItem('zen-layout-current')
     // Keep for now for backwards compatibility
-    
+
     return {
       tabs: [tab],
       activeTabId: tab.id,
@@ -214,7 +220,7 @@ function migrateLegacyState(): ZenTabsState | null {
 export interface UseZenModeReturn {
   // Zen Mode state
   isActive: boolean
-  
+
   // Tabs state
   tabs: ZenTab[]
   activeTab: ZenTab | null
@@ -222,31 +228,42 @@ export interface UseZenModeReturn {
   tabCount: number
   canAddTab: boolean
   closedTabs: ZenTab[]
-  
+
   // Legacy compatibility
   selectedAgentId: string | null
   selectedAgentName: string | null
   selectedAgentIcon: string | null
   selectedAgentColor: string | null
   projectFilter: ZenProjectFilter | null
-  
+
   // Tab actions
   createTab: (projectFilter?: ZenProjectFilter) => string | null
   closeTab: (tabId: string) => void
   switchTab: (tabId: string) => void
-  updateTabLayout: (tabId: string, layout: LayoutNode, focusedPanelId?: string, maximizedPanelId?: string | null) => void
+  updateTabLayout: (
+    tabId: string,
+    layout: LayoutNode,
+    focusedPanelId?: string,
+    maximizedPanelId?: string | null
+  ) => void
   updateTabLabel: (tabId: string, label: string) => void
   reorderTabs: (fromIndex: number, toIndex: number) => void
   reopenClosedTab: () => void
-  
+
   // Scroll position tracking
   setScrollPosition: (panelId: string, scrollY: number) => void
   getScrollPosition: (panelId: string) => number
-  
+
   // Zen Mode actions
   toggle: () => void
   enter: (agentId?: string, agentName?: string, agentIcon?: string, agentColor?: string) => void
-  enterWithProject: (projectFilter: ZenProjectFilter, agentId?: string, agentName?: string, agentIcon?: string, agentColor?: string) => void
+  enterWithProject: (
+    projectFilter: ZenProjectFilter,
+    agentId?: string,
+    agentName?: string,
+    agentIcon?: string,
+    agentColor?: string
+  ) => void
   exit: () => void
   selectAgent: (agentId: string, agentName: string, agentIcon?: string, agentColor?: string) => void
   setProjectFilter: (filter: ZenProjectFilter | null) => void
@@ -270,10 +287,10 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
     // Try to load persisted state, then legacy, then default
     const persisted = loadPersistedState()
     if (persisted) return persisted
-    
+
     const migrated = migrateLegacyState()
     if (migrated) return migrated
-    
+
     const defaultTab = createDefaultTab()
     return {
       tabs: [defaultTab],
@@ -281,16 +298,16 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
       closedTabs: [],
     }
   })
-  
+
   // Legacy agent state (for compatibility with existing components)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [selectedAgentName, setSelectedAgentName] = useState<string | null>(null)
   const [selectedAgentIcon, setSelectedAgentIcon] = useState<string | null>(null)
   const [selectedAgentColor, setSelectedAgentColor] = useState<string | null>(null)
-  
+
   // Debounced persistence
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  
+
   // Persist on state change (debounced)
   useEffect(() => {
     if (persistTimeoutRef.current) {
@@ -299,14 +316,14 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
     persistTimeoutRef.current = setTimeout(() => {
       persistState(tabsState)
     }, DEBOUNCE_MS)
-    
+
     return () => {
       if (persistTimeoutRef.current) {
         clearTimeout(persistTimeoutRef.current)
       }
     }
   }, [tabsState])
-  
+
   // Persist immediately on unmount/unload
   useEffect(() => {
     const handleUnload = () => {
@@ -318,49 +335,49 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
       persistState(tabsState)
     }
   }, [tabsState])
-  
+
   // Derived values
-  const activeTab = tabsState.tabs.find(t => t.id === tabsState.activeTabId) || null
+  const activeTab = tabsState.tabs.find((t) => t.id === tabsState.activeTabId) || null
   const tabCount = tabsState.tabs.length
   const canAddTab = tabCount < MAX_TABS
-  
+
   // ── Tab Actions ──────────────────────────────────────────────
-  
+
   const createTab = useCallback((projectFilter?: ZenProjectFilter): string | null => {
     let newTabId: string | null = null
-    
-    setTabsState(prev => {
+
+    setTabsState((prev) => {
       if (prev.tabs.length >= MAX_TABS) {
         console.warn('[ZenTabs] Maximum tabs reached')
         return prev
       }
-      
+
       const newTab = createDefaultTab(projectFilter)
       newTabId = newTab.id
-      
+
       return {
         ...prev,
         tabs: [...prev.tabs, newTab],
         activeTabId: newTab.id,
       }
     })
-    
+
     return newTabId
   }, [])
-  
+
   const closeTab = useCallback((tabId: string) => {
-    setTabsState(prev => {
+    setTabsState((prev) => {
       // Don't close the last tab
       if (prev.tabs.length <= 1) {
         return prev
       }
-      
-      const tabIndex = prev.tabs.findIndex(t => t.id === tabId)
+
+      const tabIndex = prev.tabs.findIndex((t) => t.id === tabId)
       if (tabIndex === -1) return prev
-      
+
       const closedTab = prev.tabs[tabIndex]
-      const newTabs = prev.tabs.filter(t => t.id !== tabId)
-      
+      const newTabs = prev.tabs.filter((t) => t.id !== tabId)
+
       // If closing active tab, switch to adjacent tab
       let newActiveId = prev.activeTabId
       if (tabId === prev.activeTabId) {
@@ -368,10 +385,10 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
         const newIndex = Math.min(tabIndex, newTabs.length - 1)
         newActiveId = newTabs[newIndex]?.id || newTabs[0]?.id
       }
-      
+
       // Add to closed tabs (for reopen)
       const newClosedTabs = [closedTab, ...prev.closedTabs].slice(0, MAX_CLOSED_TABS)
-      
+
       return {
         tabs: newTabs,
         activeTabId: newActiveId,
@@ -379,73 +396,77 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
       }
     })
   }, [])
-  
+
   const switchTab = useCallback((tabId: string) => {
-    setTabsState(prev => {
+    setTabsState((prev) => {
       if (prev.activeTabId === tabId) return prev
-      if (!prev.tabs.some(t => t.id === tabId)) return prev
+      if (!prev.tabs.some((t) => t.id === tabId)) return prev
       return { ...prev, activeTabId: tabId }
     })
   }, [])
-  
-  const updateTabLayout = useCallback((
-    tabId: string,
-    layout: LayoutNode,
-    focusedPanelId?: string,
-    maximizedPanelId?: string | null
-  ) => {
-    setTabsState(prev => ({
-      ...prev,
-      tabs: prev.tabs.map(tab =>
-        tab.id === tabId
-          ? {
-              ...tab,
-              layout,
-              focusedPanelId: focusedPanelId ?? tab.focusedPanelId,
-              maximizedPanelId: maximizedPanelId !== undefined ? maximizedPanelId : tab.maximizedPanelId,
-            }
-          : tab
-      ),
-    }))
-  }, [])
-  
+
+  const updateTabLayout = useCallback(
+    (
+      tabId: string,
+      layout: LayoutNode,
+      focusedPanelId?: string,
+      maximizedPanelId?: string | null
+    ) => {
+      setTabsState((prev) => ({
+        ...prev,
+        tabs: prev.tabs.map((tab) =>
+          tab.id === tabId
+            ? {
+                ...tab,
+                layout,
+                focusedPanelId: focusedPanelId ?? tab.focusedPanelId,
+                maximizedPanelId:
+                  maximizedPanelId !== undefined ? maximizedPanelId : tab.maximizedPanelId,
+              }
+            : tab
+        ),
+      }))
+    },
+    []
+  )
+
   const updateTabLabel = useCallback((tabId: string, label: string) => {
-    setTabsState(prev => ({
+    setTabsState((prev) => ({
       ...prev,
-      tabs: prev.tabs.map(tab =>
+      tabs: prev.tabs.map((tab) =>
         tab.id === tabId ? { ...tab, label: label.trim() || 'Zen Mode' } : tab
       ),
     }))
   }, [])
-  
+
   const reorderTabs = useCallback((fromIndex: number, toIndex: number) => {
-    setTabsState(prev => {
+    setTabsState((prev) => {
       if (fromIndex < 0 || fromIndex >= prev.tabs.length) return prev
       if (toIndex < 0 || toIndex >= prev.tabs.length) return prev
       if (fromIndex === toIndex) return prev
-      
+
       const newTabs = [...prev.tabs]
       const [moved] = newTabs.splice(fromIndex, 1)
       newTabs.splice(toIndex, 0, moved)
-      
+
       return { ...prev, tabs: newTabs }
     })
   }, [])
-  
+
   const reopenClosedTab = useCallback(() => {
-    setTabsState(prev => {
+    setTabsState((prev) => {
       if (prev.closedTabs.length === 0) return prev
       if (prev.tabs.length >= MAX_TABS) return prev
-      
+
       const [tabToReopen, ...remainingClosed] = prev.closedTabs
-      
+
       // Give it a new ID to avoid conflicts
       const reopenedTab: ZenTab = {
         ...tabToReopen,
         id: generateUUID(),
         createdAt: Date.now(),
       }
-      
+
       return {
         tabs: [...prev.tabs, reopenedTab],
         activeTabId: reopenedTab.id,
@@ -453,21 +474,21 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
       }
     })
   }, [])
-  
+
   // ── Scroll Position Tracking ─────────────────────────────────
-  
+
   const setScrollPosition = useCallback((panelId: string, scrollY: number) => {
-    setTabsState(prev => {
-      const activeTab = prev.tabs.find(t => t.id === prev.activeTabId)
+    setTabsState((prev) => {
+      const activeTab = prev.tabs.find((t) => t.id === prev.activeTabId)
       if (!activeTab) return prev
-      
+
       // Only update if significantly different (avoid unnecessary re-renders)
       const currentScroll = activeTab.scrollPositions[panelId] || 0
       if (Math.abs(currentScroll - scrollY) < 10) return prev
-      
+
       return {
         ...prev,
-        tabs: prev.tabs.map(tab =>
+        tabs: prev.tabs.map((tab) =>
           tab.id === prev.activeTabId
             ? {
                 ...tab,
@@ -478,110 +499,115 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
       }
     })
   }, [])
-  
-  const getScrollPosition = useCallback((panelId: string): number => {
-    const tab = tabsState.tabs.find(t => t.id === tabsState.activeTabId)
-    return tab?.scrollPositions[panelId] || 0
-  }, [tabsState])
-  
+
+  const getScrollPosition = useCallback(
+    (panelId: string): number => {
+      const tab = tabsState.tabs.find((t) => t.id === tabsState.activeTabId)
+      return tab?.scrollPositions[panelId] || 0
+    },
+    [tabsState]
+  )
+
   // ── Zen Mode Actions ─────────────────────────────────────────
 
   const toggle = useCallback(() => {
-    setIsActive(prev => !prev)
+    setIsActive((prev) => !prev)
   }, [])
 
-  const enter = useCallback((
-    agentId?: string,
-    agentName?: string,
-    agentIcon?: string,
-    agentColor?: string
-  ) => {
-    setIsActive(true)
-    if (agentId) setSelectedAgentId(agentId)
-    if (agentName) setSelectedAgentName(agentName)
-    if (agentIcon) setSelectedAgentIcon(agentIcon)
-    if (agentColor) setSelectedAgentColor(agentColor)
-  }, [])
-  
-  const enterWithProject = useCallback((
-    projectFilter: ZenProjectFilter,
-    agentId?: string,
-    agentName?: string,
-    agentIcon?: string,
-    agentColor?: string
-  ) => {
-    setTabsState(prev => {
-      // Check if there's already a tab for this project
-      const existingTab = prev.tabs.find(
-        t => t.projectFilter?.projectId === projectFilter.projectId
-      )
-      
-      if (existingTab) {
-        // Switch to existing tab
-        return { ...prev, activeTabId: existingTab.id }
-      } else {
-        // Create new tab for this project (respecting max tabs)
-        if (prev.tabs.length >= MAX_TABS) {
-          console.warn('[ZenTabs] Maximum tabs reached, cannot create project tab')
-          return prev
+  const enter = useCallback(
+    (agentId?: string, agentName?: string, agentIcon?: string, agentColor?: string) => {
+      setIsActive(true)
+      if (agentId) setSelectedAgentId(agentId)
+      if (agentName) setSelectedAgentName(agentName)
+      if (agentIcon) setSelectedAgentIcon(agentIcon)
+      if (agentColor) setSelectedAgentColor(agentColor)
+    },
+    []
+  )
+
+  const enterWithProject = useCallback(
+    (
+      projectFilter: ZenProjectFilter,
+      agentId?: string,
+      agentName?: string,
+      agentIcon?: string,
+      agentColor?: string
+    ) => {
+      setTabsState((prev) => {
+        // Check if there's already a tab for this project
+        const existingTab = prev.tabs.find(
+          (t) => t.projectFilter?.projectId === projectFilter.projectId
+        )
+
+        if (existingTab) {
+          // Switch to existing tab
+          return { ...prev, activeTabId: existingTab.id }
+        } else {
+          // Create new tab for this project (respecting max tabs)
+          if (prev.tabs.length >= MAX_TABS) {
+            console.warn('[ZenTabs] Maximum tabs reached, cannot create project tab')
+            return prev
+          }
+
+          const newTab = createDefaultTab(projectFilter)
+          return {
+            ...prev,
+            tabs: [...prev.tabs, newTab],
+            activeTabId: newTab.id,
+          }
         }
-        
-        const newTab = createDefaultTab(projectFilter)
-        return {
-          ...prev,
-          tabs: [...prev.tabs, newTab],
-          activeTabId: newTab.id,
-        }
-      }
-    })
-    
-    setIsActive(true)
-    if (agentId) setSelectedAgentId(agentId)
-    if (agentName) setSelectedAgentName(agentName)
-    if (agentIcon) setSelectedAgentIcon(agentIcon)
-    if (agentColor) setSelectedAgentColor(agentColor)
-  }, [])
+      })
+
+      setIsActive(true)
+      if (agentId) setSelectedAgentId(agentId)
+      if (agentName) setSelectedAgentName(agentName)
+      if (agentIcon) setSelectedAgentIcon(agentIcon)
+      if (agentColor) setSelectedAgentColor(agentColor)
+    },
+    []
+  )
 
   const exit = useCallback(() => {
     setIsActive(false)
   }, [])
-  
+
   const setProjectFilter = useCallback((filter: ZenProjectFilter | null) => {
-    setTabsState(prev => ({
+    setTabsState((prev) => ({
       ...prev,
-      tabs: prev.tabs.map(tab =>
+      tabs: prev.tabs.map((tab) =>
         tab.id === prev.activeTabId
           ? { ...tab, projectFilter: filter, label: filter?.projectName || 'Zen Mode' }
           : tab
       ),
     }))
   }, [])
-  
+
   const clearProjectFilter = useCallback(() => {
     setProjectFilter(null)
   }, [setProjectFilter])
 
-  const selectAgent = useCallback((
-    agentId: string,
-    agentName: string,
-    agentIcon?: string,
-    agentColor?: string
-  ) => {
-    setSelectedAgentId(agentId)
-    setSelectedAgentName(agentName)
-    setSelectedAgentIcon(agentIcon || null)
-    setSelectedAgentColor(agentColor || null)
-  }, [])
+  const selectAgent = useCallback(
+    (agentId: string, agentName: string, agentIcon?: string, agentColor?: string) => {
+      setSelectedAgentId(agentId)
+      setSelectedAgentName(agentName)
+      setSelectedAgentIcon(agentIcon || null)
+      setSelectedAgentColor(agentColor || null)
+    },
+    []
+  )
 
   // Persist agent preference (legacy compatibility)
   useEffect(() => {
     if (selectedAgentId) {
-      localStorage.setItem('zen-last-agent', JSON.stringify({
-        id: selectedAgentId,
-        name: selectedAgentName,
-        icon: selectedAgentIcon,
-        color: selectedAgentColor,
-      }))
+      localStorage.setItem(
+        'zen-last-agent',
+        JSON.stringify({
+          id: selectedAgentId,
+          name: selectedAgentName,
+          icon: selectedAgentIcon,
+          color: selectedAgentColor,
+        })
+      )
     }
   }, [selectedAgentId, selectedAgentName, selectedAgentIcon, selectedAgentColor])
 
@@ -606,7 +632,7 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
   const value: UseZenModeReturn = {
     // Zen Mode state
     isActive,
-    
+
     // Tabs state
     tabs: tabsState.tabs,
     activeTab,
@@ -614,14 +640,14 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
     tabCount,
     canAddTab,
     closedTabs: tabsState.closedTabs,
-    
+
     // Legacy compatibility
     selectedAgentId,
     selectedAgentName,
     selectedAgentIcon,
     selectedAgentColor,
     projectFilter: activeTab?.projectFilter || null,
-    
+
     // Tab actions
     createTab,
     closeTab,
@@ -630,11 +656,11 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
     updateTabLabel,
     reorderTabs,
     reopenClosedTab,
-    
+
     // Scroll position tracking
     setScrollPosition,
     getScrollPosition,
-    
+
     // Zen Mode actions
     toggle,
     enter,
@@ -645,11 +671,7 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
     clearProjectFilter,
   }
 
-  return (
-    <ZenModeContext.Provider value={value}>
-      {children}
-    </ZenModeContext.Provider>
-  )
+  return <ZenModeContext.Provider value={value}>{children}</ZenModeContext.Provider>
 }
 
 // ── Hook ───────────────────────────────────────────────────────

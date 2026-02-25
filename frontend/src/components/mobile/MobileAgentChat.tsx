@@ -1,4 +1,11 @@
-import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ClipboardEvent } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type KeyboardEvent,
+  type ClipboardEvent,
+} from 'react'
 import { ArrowLeft, ArrowUp, Paperclip, X, Settings as SettingsIcon, Mic } from 'lucide-react'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
@@ -46,8 +53,16 @@ async function uploadFile(file: File): Promise<{ path: string; url: string }> {
 
 // Deterministic color
 const AGENT_COLORS = [
-  '#8b5cf6', '#06b6d4', '#f59e0b', '#ec4899', '#10b981',
-  '#6366f1', '#f97316', '#14b8a6', '#a855f7', '#3b82f6',
+  '#8b5cf6',
+  '#06b6d4',
+  '#f59e0b',
+  '#ec4899',
+  '#10b981',
+  '#6366f1',
+  '#f97316',
+  '#14b8a6',
+  '#a855f7',
+  '#3b82f6',
 ]
 function getColor(key: string): string {
   let hash = 0
@@ -59,46 +74,93 @@ function getColor(key: string): string {
 
 // ── File Preview Bar ───────────────────────────────────────────
 
-function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (id: string) => void }) {
+function FilePreviewBar({
+  files,
+  onRemove,
+}: {
+  files: PendingFile[]
+  onRemove: (id: string) => void
+}) {
   if (files.length === 0) return null
   return (
-    <div style={{
-      padding: '8px 12px', borderTop: '1px solid var(--mobile-divider)',
-      display: 'flex', gap: 8, overflowX: 'auto', WebkitOverflowScrolling: 'touch',
-      background: 'var(--mobile-surface2)',
-    }}>
-      {files.map(f => (
-        <div key={f.id} style={{
-          position: 'relative', flexShrink: 0,
-          width: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-        }}>
+    <div
+      style={{
+        padding: '8px 12px',
+        borderTop: '1px solid var(--mobile-divider)',
+        display: 'flex',
+        gap: 8,
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        background: 'var(--mobile-surface2)',
+      }}
+    >
+      {files.map((f) => (
+        <div
+          key={f.id}
+          style={{
+            position: 'relative',
+            flexShrink: 0,
+            width: 72,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
           {/* Thumbnail or icon */}
           {f.previewUrl ? (
-            <div style={{
-              width: 64, height: 64, borderRadius: 10, overflow: 'hidden',
-              background: 'var(--mobile-surface2)',
-              border: f.error ? '2px solid #ef4444' : '1px solid var(--mobile-input-border)',
-            }}>
-              <img src={f.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 10,
+                overflow: 'hidden',
+                background: 'var(--mobile-surface2)',
+                border: f.error ? '2px solid #ef4444' : '1px solid var(--mobile-input-border)',
+              }}
+            >
+              <img
+                src={f.previewUrl}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </div>
           ) : (
-            <div style={{
-              width: 64, height: 64, borderRadius: 10,
-              background: 'var(--mobile-surface2)',
-              border: f.error ? '2px solid #ef4444' : '1px solid var(--mobile-input-border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24,
-            }}>
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 10,
+                background: 'var(--mobile-surface2)',
+                border: f.error ? '2px solid #ef4444' : '1px solid var(--mobile-input-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 24,
+              }}
+            >
               📄
             </div>
           )}
           {/* Upload progress overlay */}
           {f.uploading && (
-            <div style={{
-              position: 'absolute', top: 0, left: 4, width: 64, height: 64, borderRadius: 10,
-              background: 'var(--mobile-overlay-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontSize: 11, fontWeight: 600,
-            }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 4,
+                width: 64,
+                height: 64,
+                borderRadius: 10,
+                background: 'var(--mobile-overlay-bg)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 11,
+                fontWeight: 600,
+              }}
+            >
               ⏳
             </div>
           )}
@@ -106,21 +168,35 @@ function FilePreviewBar({ files, onRemove }: { files: PendingFile[]; onRemove: (
           <button
             onClick={() => onRemove(f.id)}
             style={{
-              position: 'absolute', top: -4, right: 0,
-              width: 22, height: 22, borderRadius: '50%',
-              background: 'var(--mobile-surface)', border: '1px solid var(--mobile-input-border)',
-              color: 'var(--mobile-text-secondary)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'absolute',
+              top: -4,
+              right: 0,
+              width: 22,
+              height: 22,
+              borderRadius: '50%',
+              background: 'var(--mobile-surface)',
+              border: '1px solid var(--mobile-input-border)',
+              color: 'var(--mobile-text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <X size={12} />
           </button>
           {/* Filename */}
-          <span style={{
-            fontSize: 9, color: f.error ? '#fca5a5' : 'var(--mobile-text-muted)',
-            maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            textAlign: 'center',
-          }}>
+          <span
+            style={{
+              fontSize: 9,
+              color: f.error ? '#fca5a5' : 'var(--mobile-text-muted)',
+              maxWidth: 72,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+            }}
+          >
             {f.error || `${formatFileSize(f.file.size)}`}
           </span>
         </div>
@@ -154,8 +230,14 @@ export function MobileAgentChat({
   const icon = agentIcon || agentName.charAt(0).toUpperCase()
 
   const {
-    messages, isSending, streamingMessageId, error, sendMessage,
-    loadOlderMessages, hasMore, isLoadingHistory,
+    messages,
+    isSending,
+    streamingMessageId,
+    error,
+    sendMessage,
+    loadOlderMessages,
+    hasMore,
+    isLoadingHistory,
   } = useStreamingChat(sessionKey)
 
   const [inputValue, setInputValue] = useState('')
@@ -212,7 +294,7 @@ export function MobileAgentChat({
   // ── File handling ──
 
   const addFiles = useCallback((files: FileList | File[]) => {
-    const newFiles: PendingFile[] = Array.from(files).map(file => {
+    const newFiles: PendingFile[] = Array.from(files).map((file) => {
       const tooLarge = file.size > MAX_FILE_SIZE
       const previewUrl = isImageFile(file) ? URL.createObjectURL(file) : null
       return {
@@ -225,14 +307,14 @@ export function MobileAgentChat({
         uploadedPath: null,
       }
     })
-    setPendingFiles(prev => [...prev, ...newFiles])
+    setPendingFiles((prev) => [...prev, ...newFiles])
   }, [])
 
   const removeFile = useCallback((id: string) => {
-    setPendingFiles(prev => {
-      const file = prev.find(f => f.id === id)
+    setPendingFiles((prev) => {
+      const file = prev.find((f) => f.id === id)
       if (file?.previewUrl) URL.revokeObjectURL(file.previewUrl)
-      return prev.filter(f => f.id !== id)
+      return prev.filter((f) => f.id !== id)
     })
   }, [])
 
@@ -240,39 +322,47 @@ export function MobileAgentChat({
     fileInputRef.current?.click()
   }, [])
 
-  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      addFiles(e.target.files)
-      e.target.value = '' // reset so same file can be selected again
-    }
-  }, [addFiles])
-
-  const handlePaste = useCallback((e: ClipboardEvent<HTMLTextAreaElement>) => {
-    const items = e.clipboardData?.items
-    if (!items) return
-    const imageFiles: File[] = []
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.startsWith('image/')) {
-        const file = items[i].getAsFile()
-        if (file) imageFiles.push(file)
+  const handleFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        addFiles(e.target.files)
+        e.target.value = '' // reset so same file can be selected again
       }
-    }
-    if (imageFiles.length > 0) {
-      e.preventDefault()
-      addFiles(imageFiles)
-    }
-  }, [addFiles])
+    },
+    [addFiles]
+  )
+
+  const handlePaste = useCallback(
+    (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      const imageFiles: File[] = []
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile()
+          if (file) imageFiles.push(file)
+        }
+      }
+      if (imageFiles.length > 0) {
+        e.preventDefault()
+        addFiles(imageFiles)
+      }
+    },
+    [addFiles]
+  )
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
-      pendingFiles.forEach(f => { if (f.previewUrl) URL.revokeObjectURL(f.previewUrl) })
+      pendingFiles.forEach((f) => {
+        if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
+      })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
-    const filesToUpload = pendingFiles.filter(f => !f.error)
+    const filesToUpload = pendingFiles.filter((f) => !f.error)
     if ((!text && filesToUpload.length === 0) || isSending || isUploading) return
 
     setInputValue('')
@@ -282,7 +372,7 @@ export function MobileAgentChat({
     let mediaPaths: string[] = []
     if (filesToUpload.length > 0) {
       setIsUploading(true)
-      setPendingFiles(prev => prev.map(f => f.error ? f : { ...f, uploading: true }))
+      setPendingFiles((prev) => prev.map((f) => (f.error ? f : { ...f, uploading: true })))
 
       try {
         const results = await Promise.all(
@@ -296,18 +386,20 @@ export function MobileAgentChat({
           })
         )
 
-        const errors = results.filter(r => r.error)
+        const errors = results.filter((r) => r.error)
         if (errors.length > 0) {
-          setPendingFiles(prev => prev.map(f => {
-            const result = results.find(r => r.id === f.id)
-            if (result?.error) return { ...f, uploading: false, error: result.error }
-            return { ...f, uploading: false }
-          }))
+          setPendingFiles((prev) =>
+            prev.map((f) => {
+              const result = results.find((r) => r.id === f.id)
+              if (result?.error) return { ...f, uploading: false, error: result.error }
+              return { ...f, uploading: false }
+            })
+          )
           setIsUploading(false)
           return // Don't send if uploads failed
         }
 
-        mediaPaths = results.filter(r => r.path).map(r => r.path!)
+        mediaPaths = results.filter((r) => r.path).map((r) => r.path!)
       } catch {
         setIsUploading(false)
         return
@@ -316,7 +408,9 @@ export function MobileAgentChat({
     }
 
     // Clear pending files
-    pendingFiles.forEach(f => { if (f.previewUrl) URL.revokeObjectURL(f.previewUrl) })
+    pendingFiles.forEach((f) => {
+      if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
+    })
     setPendingFiles([])
 
     // Build message with media references
@@ -337,15 +431,18 @@ export function MobileAgentChat({
   }
 
   // ── Voice recording ────────────────────────────────────────────
-  const handleAudioReady = useCallback((url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
-    let msg = `[audio attached: ${url} (audio/webm) ${duration}s]`
-    if (transcript) {
-      msg += `\nTranscript: "${transcript}"`
-    } else if (transcriptError) {
-      msg += `\n[Voice transcription unavailable: ${transcriptError}]`
-    }
-    void sendMessage(msg)
-  }, [sendMessage])
+  const handleAudioReady = useCallback(
+    (url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
+      let msg = `[audio attached: ${url} (audio/webm) ${duration}s]`
+      if (transcript) {
+        msg += `\nTranscript: "${transcript}"`
+      } else if (transcriptError) {
+        msg += `\n[Voice transcription unavailable: ${transcriptError}]`
+      }
+      void sendMessage(msg)
+    },
+    [sendMessage]
+  )
 
   const {
     isRecording,
@@ -360,17 +457,23 @@ export function MobileAgentChat({
 
   // Swipe-to-cancel (mobile): touch move left >= 80px cancels
   const touchStartXRef = useRef<number | null>(null)
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (isRecording) touchStartXRef.current = e.touches[0].clientX
-  }, [isRecording])
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isRecording || touchStartXRef.current === null) return
-    const dx = touchStartXRef.current - e.touches[0].clientX
-    if (dx > 80) {
-      touchStartXRef.current = null
-      cancelRecording()
-    }
-  }, [isRecording, cancelRecording])
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (isRecording) touchStartXRef.current = e.touches[0].clientX
+    },
+    [isRecording]
+  )
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isRecording || touchStartXRef.current === null) return
+      const dx = touchStartXRef.current - e.touches[0].clientX
+      if (dx > 80) {
+        touchStartXRef.current = null
+        cancelRecording()
+      }
+    },
+    [isRecording, cancelRecording]
+  )
 
   // Derive bot config, status, and animation for 3D avatar
   const botConfig = getBotConfigFromSession(sessionKey, agentName, agentColor)
@@ -380,19 +483,29 @@ export function MobileAgentChat({
   return (
     <>
       {/* Header */}
-      <header style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '8px 12px 8px 8px',
-        borderBottom: '1px solid var(--mobile-divider)',
-        flexShrink: 0,
-      }}>
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '8px 12px 8px 8px',
+          borderBottom: '1px solid var(--mobile-divider)',
+          flexShrink: 0,
+        }}
+      >
         <button
           onClick={onBack}
           style={{
-            width: 36, height: 36, borderRadius: 10,
-            border: 'none', background: 'transparent',
-            color: 'var(--mobile-text-secondary)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--mobile-text-secondary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             flexShrink: 0,
           }}
         >
@@ -408,29 +521,41 @@ export function MobileAgentChat({
         />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 16, fontWeight: 600, color: 'var(--mobile-text)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              color: 'var(--mobile-text)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {agentName}
           </div>
-          <div style={{ fontSize: 11, color: isSending ? accentColor : 'var(--mobile-text-muted)' }}>
+          <div
+            style={{ fontSize: 11, color: isSending ? accentColor : 'var(--mobile-text-muted)' }}
+          >
             {isSending ? 'Thinking…' : 'Online'}
           </div>
         </div>
 
-        <ActiveTasksBadge
-          count={subagentSessions.length}
-          onClick={() => setShowTasks(true)}
-        />
+        <ActiveTasksBadge count={subagentSessions.length} onClick={() => setShowTasks(true)} />
         {onOpenSettings && (
           <button
             onClick={onOpenSettings}
             title="Settings"
             style={{
-              width: 34, height: 34, borderRadius: 10, border: 'none',
-              background: 'transparent', color: 'var(--mobile-text-secondary)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 34,
+              height: 34,
+              borderRadius: 10,
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--mobile-text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               flexShrink: 0,
             }}
           >
@@ -441,10 +566,7 @@ export function MobileAgentChat({
 
       {/* Active Tasks Overlay */}
       {showTasks && (
-        <ActiveTasksOverlay
-          sessions={subagentSessions}
-          onClose={() => setShowTasks(false)}
-        />
+        <ActiveTasksOverlay sessions={subagentSessions} onClose={() => setShowTasks(false)} />
       )}
 
       {/* Messages */}
@@ -452,10 +574,13 @@ export function MobileAgentChat({
         ref={scrollContainerRef}
         onScroll={handleScroll}
         style={{
-          flex: 1, overflowY: 'auto',
+          flex: 1,
+          overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
           padding: '12px 14px',
-          display: 'flex', flexDirection: 'column', gap: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
         }}
       >
         {hasMore && (
@@ -463,11 +588,15 @@ export function MobileAgentChat({
             onClick={loadOlderMessages}
             disabled={isLoadingHistory}
             style={{
-              alignSelf: 'center', padding: '6px 14px',
-              borderRadius: 10, border: 'none',
-              background: 'var(--mobile-msg-assistant-bg)', color: 'var(--mobile-text-muted)',
+              alignSelf: 'center',
+              padding: '6px 14px',
+              borderRadius: 10,
+              border: 'none',
+              background: 'var(--mobile-msg-assistant-bg)',
+              color: 'var(--mobile-text-muted)',
               cursor: isLoadingHistory ? 'wait' : 'pointer',
-              fontSize: 12, fontWeight: 500,
+              fontSize: 12,
+              fontWeight: 500,
             }}
           >
             {isLoadingHistory ? 'Loading…' : '↑ Load older'}
@@ -475,36 +604,55 @@ export function MobileAgentChat({
         )}
 
         {!isLoadingHistory && messages.length === 0 && (
-          <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            color: 'var(--mobile-text-muted)', fontSize: 14, padding: '40px 0', gap: 8,
-          }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--mobile-text-muted)',
+              fontSize: 14,
+              padding: '40px 0',
+              gap: 8,
+            }}
+          >
             <span style={{ fontSize: 40 }}>💬</span>
             <span>Say hello to {agentName}!</span>
           </div>
         )}
 
-        {messages.map(msg => (
+        {messages.map((msg) => (
           <ChatMessageBubble key={msg.id} msg={msg} variant="mobile" accentColor={accentColor} />
         ))}
 
         {isSending && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '4px 0', color: 'var(--mobile-text-muted)', fontSize: 12,
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '4px 0',
+              color: 'var(--mobile-text-muted)',
+              fontSize: 12,
+            }}
+          >
             <span style={{ animation: 'pulse 1.5s infinite' }}>●</span>
             {agentName} is thinking…
           </div>
         )}
 
         {error && (
-          <div style={{
-            padding: '8px 12px', borderRadius: 10,
-            background: 'rgba(239, 68, 68, 0.15)', color: '#fca5a5',
-            fontSize: 12, alignSelf: 'center',
-          }}>
+          <div
+            style={{
+              padding: '8px 12px',
+              borderRadius: 10,
+              background: 'rgba(239, 68, 68, 0.15)',
+              color: '#fca5a5',
+              fontSize: 12,
+              alignSelf: 'center',
+            }}
+          >
             {error}
           </div>
         )}
@@ -526,19 +674,26 @@ export function MobileAgentChat({
       />
 
       {/* Input */}
-      <div style={{
-        padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
-        borderTop: pendingFiles.length > 0 ? 'none' : '1px solid var(--mobile-divider)',
-        display: 'flex', flexDirection: 'column', gap: 4,
-        background: 'var(--mobile-bg, #0f172a)',
-      }}>
+      <div
+        style={{
+          padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
+          borderTop: pendingFiles.length > 0 ? 'none' : '1px solid var(--mobile-divider)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+          background: 'var(--mobile-bg, #0f172a)',
+        }}
+      >
         {/* Recording indicator bar (WhatsApp-style) */}
         {isRecording && (
           <div
             style={{
-              display: 'flex', alignItems: 'center', gap: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
               padding: '4px 4px 0',
-              fontSize: 13, color: '#ef4444',
+              fontSize: 13,
+              color: '#ef4444',
               fontFamily: 'monospace',
             }}
             onTouchStart={handleTouchStart}
@@ -563,13 +718,19 @@ export function MobileAgentChat({
               onClick={handleFileSelect}
               disabled={isSending || isUploading}
               style={{
-                width: 44, height: 44, borderRadius: 14,
+                width: 44,
+                height: 44,
+                borderRadius: 14,
                 border: 'none',
-                background: pendingFiles.length > 0 ? accentColor + '20' : 'var(--mobile-attach-btn-bg)',
+                background:
+                  pendingFiles.length > 0 ? accentColor + '20' : 'var(--mobile-attach-btn-bg)',
                 color: pendingFiles.length > 0 ? accentColor : 'var(--mobile-text-secondary)',
                 cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, transition: 'background 0.15s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'background 0.15s',
               }}
             >
               <Paperclip size={20} />
@@ -579,23 +740,27 @@ export function MobileAgentChat({
           <textarea
             ref={inputRef}
             value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
+            onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
             disabled={isSending || isUploading || isRecording}
             rows={1}
             style={{
-              flex: 1, padding: '10px 14px',
+              flex: 1,
+              padding: '10px 14px',
               borderRadius: 14,
               border: '1px solid var(--mobile-input-border)',
               background: 'var(--mobile-input-bg)',
-              color: 'var(--mobile-text)', fontSize: 16,
+              color: 'var(--mobile-text)',
+              fontSize: 16,
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-              resize: 'none', outline: 'none',
-              maxHeight: 100, lineHeight: 1.4,
+              resize: 'none',
+              outline: 'none',
+              maxHeight: 100,
+              lineHeight: 1.4,
             }}
-            onInput={e => {
+            onInput={(e) => {
               const el = e.currentTarget
               el.style.height = 'auto'
               el.style.height = Math.min(el.scrollHeight, 100) + 'px'
@@ -609,10 +774,17 @@ export function MobileAgentChat({
                 onClick={stopAndSend}
                 title="Stop & send voice message"
                 style={{
-                  width: 44, height: 44, borderRadius: 14,
-                  border: 'none', background: '#22c55e', color: '#fff',
-                  cursor: 'pointer', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  border: 'none',
+                  background: '#22c55e',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   transition: 'background 0.15s',
                 }}
               >
@@ -622,11 +794,17 @@ export function MobileAgentChat({
                 onClick={cancelRecording}
                 title="Cancel recording"
                 style={{
-                  width: 44, height: 44, borderRadius: 14,
-                  border: 'none', background: 'var(--mobile-attach-btn-bg)',
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  border: 'none',
+                  background: 'var(--mobile-attach-btn-bg)',
                   color: 'var(--mobile-text-secondary)',
-                  cursor: 'pointer', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   transition: 'background 0.15s',
                 }}
               >
@@ -644,13 +822,18 @@ export function MobileAgentChat({
                   disabled={micPreparing || isSending || isUploading}
                   title="Voice message"
                   style={{
-                    width: 44, height: 44, borderRadius: 14,
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
                     border: 'none',
                     background: 'var(--mobile-attach-btn-bg)',
                     color: 'var(--mobile-text-secondary)',
                     cursor: micPreparing || isSending || isUploading ? 'default' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, transition: 'background 0.15s, color 0.15s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    transition: 'background 0.15s, color 0.15s',
                   }}
                 >
                   {micPreparing ? '⏳' : <Mic size={20} />}
@@ -658,21 +841,42 @@ export function MobileAgentChat({
               )}
 
               {/* Send button — only show when there's text or files */}
-              {(inputValue.trim() || pendingFiles.filter(f => !f.error).length > 0) && (
+              {(inputValue.trim() || pendingFiles.filter((f) => !f.error).length > 0) && (
                 <button
                   onClick={handleSend}
-                  disabled={(isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)}
+                  disabled={
+                    isSending ||
+                    isUploading ||
+                    (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
+                  }
                   style={{
-                    width: 44, height: 44, borderRadius: 14,
+                    width: 44,
+                    height: 44,
+                    borderRadius: 14,
                     border: 'none',
-                    background: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
-                      ? 'var(--mobile-msg-assistant-bg)' : accentColor,
-                    color: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
-                      ? 'var(--mobile-text-muted)' : '#fff',
-                    cursor: (isSending || isUploading) || (!inputValue.trim() && pendingFiles.filter(f => !f.error).length === 0)
-                      ? 'default' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 18, flexShrink: 0,
+                    background:
+                      isSending ||
+                      isUploading ||
+                      (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
+                        ? 'var(--mobile-msg-assistant-bg)'
+                        : accentColor,
+                    color:
+                      isSending ||
+                      isUploading ||
+                      (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
+                        ? 'var(--mobile-text-muted)'
+                        : '#fff',
+                    cursor:
+                      isSending ||
+                      isUploading ||
+                      (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
+                        ? 'default'
+                        : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    flexShrink: 0,
                     transition: 'background 0.15s',
                   }}
                 >

@@ -30,7 +30,9 @@ export function PropMakerToolbar({ isGenerating, successMessage, onClose }: Prop
           </span>
         )}
       </div>
-      <button className="fpm-close" onClick={onClose} title="Close (Esc)">✕</button>
+      <button className="fpm-close" onClick={onClose} title="Close (Esc)">
+        ✕
+      </button>
     </div>
   )
 }

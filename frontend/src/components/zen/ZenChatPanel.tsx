@@ -1,6 +1,6 @@
 /**
  * Zen Mode Chat Panel
- * Full chat interface reusing the existing useAgentChat hook
+ * Full chat interface using the shared useStreamingChat hook
  */
 
 import { useRef, useEffect, useCallback, useState, type KeyboardEvent } from 'react'
@@ -17,17 +17,23 @@ interface ZenChatPanelProps {
   sessionKey: string | null
   agentName: string | null
   agentIcon: string | null
-  roomId?: string  // Room ID for context envelope (Zen Mode active project room)
+  roomId?: string // Room ID for context envelope (Zen Mode active project room)
   onStatusChange?: (status: 'active' | 'thinking' | 'idle' | 'error') => void
-  onChangeAgent?: () => void  // Callback to open agent picker
-  onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void  // Direct agent selection
+  onChangeAgent?: () => void // Callback to open agent picker
+  onSelectAgent?: (agentId: string, agentName: string, agentIcon: string) => void // Direct agent selection
 }
 
 // (renderMarkdown, ThinkingBlock, ToolCall, Message all moved to ChatMessageBubble.tsx)
 
 // ── Empty State ────────────────────────────────────────────────
 
-function EmptyState({ agentName, agentIcon }: { agentName: string | null; agentIcon: string | null }) {
+function EmptyState({
+  agentName,
+  agentIcon,
+}: {
+  agentName: string | null
+  agentIcon: string | null
+}) {
   return (
     <div className="zen-empty-state">
       <div className="zen-empty-icon">{agentIcon || '🧘'}</div>
@@ -35,10 +41,9 @@ function EmptyState({ agentName, agentIcon }: { agentName: string | null; agentI
         {agentName ? `Chat with ${agentName}` : 'Select an agent to start'}
       </div>
       <div className="zen-empty-subtitle">
-        {agentName 
+        {agentName
           ? 'Send a message to begin the conversation'
-          : 'Use the sidebar or command palette to select an agent'
-        }
+          : 'Use the sidebar or command palette to select an agent'}
       </div>
     </div>
   )
@@ -50,8 +55,8 @@ function useFixedAgents() {
   const [agents, setAgents] = useState<Agent[]>([])
   useEffect(() => {
     fetch(`${API_BASE}/agents`)
-      .then(r => r.json())
-      .then(data => setAgents(data.agents ?? []))
+      .then((r) => r.json())
+      .then((data) => setAgents(data.agents ?? []))
       .catch(() => {}) // silently fail, list stays empty
   }, [])
   return agents
@@ -66,48 +71,56 @@ interface AgentDropdownProps {
   onOpenPicker?: () => void
 }
 
-function AgentDropdown({ currentAgentName, currentAgentIcon: _currentAgentIcon, onSelectAgent, onOpenPicker }: AgentDropdownProps) {
+function AgentDropdown({
+  currentAgentName,
+  currentAgentIcon: _currentAgentIcon,
+  onSelectAgent,
+  onOpenPicker,
+}: AgentDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  
+
   // Close on click outside
   useEffect(() => {
     if (!isOpen) return
-    
+
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false)
       }
     }
-    
+
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
-  
+
   // Close on escape
   useEffect(() => {
     if (!isOpen) return
-    
+
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsOpen(false)
       }
     }
-    
+
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen])
-  
+
   const fixedAgents = useFixedAgents()
 
-  const handleSelect = useCallback((agent: Agent) => {
-    onSelectAgent?.(agent.id, agent.name ?? agent.id, agent.icon ?? '🤖')
-    setIsOpen(false)
-  }, [onSelectAgent])
-  
+  const handleSelect = useCallback(
+    (agent: Agent) => {
+      onSelectAgent?.(agent.id, agent.name ?? agent.id, agent.icon ?? '🤖')
+      setIsOpen(false)
+    },
+    [onSelectAgent]
+  )
+
   return (
     <div className="zen-agent-dropdown" ref={dropdownRef}>
-      <button 
+      <button
         type="button"
         className="zen-chat-agent-selector zen-chat-agent-selector-minimal"
         onClick={() => setIsOpen(!isOpen)}
@@ -116,10 +129,10 @@ function AgentDropdown({ currentAgentName, currentAgentIcon: _currentAgentIcon, 
         <span className="zen-chat-agent-name">{currentAgentName || 'Agent'}</span>
         <span className="zen-chat-agent-chevron">▾</span>
       </button>
-      
+
       {isOpen && (
         <div className="zen-agent-dropdown-menu">
-          {fixedAgents.map(agent => (
+          {fixedAgents.map((agent) => (
             <button
               key={agent.id}
               className={`zen-agent-dropdown-item ${currentAgentName === agent.name ? 'active' : ''}`}
@@ -165,10 +178,10 @@ function NoAgentState({ onSelectAgent }: NoAgentStateProps) {
       <div className="zen-empty-subtitle" style={{ marginBottom: '16px' }}>
         Choose an agent to start chatting
       </div>
-      
+
       {onSelectAgent && (
         <div className="zen-agent-grid">
-          {fixedAgents.map(agent => (
+          {fixedAgents.map((agent) => (
             <button
               key={agent.id}
               className="zen-agent-option"
@@ -182,7 +195,7 @@ function NoAgentState({ onSelectAgent }: NoAgentStateProps) {
           ))}
         </div>
       )}
-      
+
       <div className="zen-empty-subtitle" style={{ marginTop: '16px' }}>
         <kbd className="zen-kbd">Ctrl+N</kbd> New chat
         <span style={{ margin: '0 8px', opacity: 0.5 }}>•</span>
@@ -194,9 +207,9 @@ function NoAgentState({ onSelectAgent }: NoAgentStateProps) {
 
 // ── Main Chat Panel ────────────────────────────────────────────
 
-export function ZenChatPanel({ 
-  sessionKey, 
-  agentName, 
+export function ZenChatPanel({
+  sessionKey,
+  agentName,
   agentIcon,
   roomId,
   onStatusChange,
@@ -204,7 +217,7 @@ export function ZenChatPanel({
   onSelectAgent,
 }: ZenChatPanelProps) {
   const [showThinking, setShowThinking] = useState(false)
-  
+
   const {
     messages,
     isSending,
@@ -271,7 +284,7 @@ export function ZenChatPanel({
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
         }
       }
-      
+
       // Immediate scroll + delayed scroll for images
       scrollToBottom()
       setTimeout(scrollToBottom, 150)
@@ -309,22 +322,21 @@ export function ZenChatPanel({
       }, 200)
     }
   }, [sessionKey])
-  
+
   // Keyboard shortcut for thinking toggle (Ctrl+.)
   // Note: Ctrl+T conflicts with browser's "new tab" shortcut
   useEffect(() => {
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       // Guard: ignore when typing in inputs/textareas
       const target = e.target as HTMLElement
-      const isInput = target.tagName === 'INPUT' || 
-                     target.tagName === 'TEXTAREA' || 
-                     target.isContentEditable
+      const isInput =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
       if (isInput) return
-      
+
       // Ctrl+. to toggle thinking
       if (e.ctrlKey && e.key === '.' && !e.shiftKey && !e.altKey) {
         e.preventDefault()
-        setShowThinking(v => !v)
+        setShowThinking((v) => !v)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -333,38 +345,38 @@ export function ZenChatPanel({
 
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
-    
+
     // Check if images are still uploading
-    const stillUploading = pendingImages.some(img => img.uploading)
+    const stillUploading = pendingImages.some((img) => img.uploading)
     if (stillUploading) {
       // Wait for uploads to complete before sending
       return
     }
-    
+
     // Check if there are uploaded images
-    const uploadedImages = pendingImages.filter(img => img.uploadedPath && !img.error)
+    const uploadedImages = pendingImages.filter((img) => img.uploadedPath && !img.error)
     const hasImages = uploadedImages.length > 0
-    
+
     // Need text or images to send
     if (!text && !hasImages) return
-    
+
     // Build message with image attachments
     let messageText = text
     if (hasImages) {
       // Append media tags for each image
-      const mediaTags = uploadedImages.map(img => 
-        `[media attached: ${img.uploadedPath} (${img.file.type})]`
-      ).join('\n')
+      const mediaTags = uploadedImages
+        .map((img) => `[media attached: ${img.uploadedPath} (${img.file.type})]`)
+        .join('\n')
       messageText = text ? `${text}\n\n${mediaTags}` : mediaTags
     }
-    
+
     // Clear inputs
     setInputValue('')
-    
+
     // Revoke preview URLs and clear images
-    pendingImages.forEach(img => URL.revokeObjectURL(img.preview))
+    pendingImages.forEach((img) => URL.revokeObjectURL(img.preview))
     setPendingImages([])
-    
+
     if (isSending) {
       // Queue the message for when agent finishes
       setPendingMessage(messageText)
@@ -374,10 +386,10 @@ export function ZenChatPanel({
     // Refocus input after sending
     setTimeout(() => inputRef.current?.focus(), 0)
   }, [inputValue, isSending, sendMessage, pendingImages])
-  
+
   // Remove a pending image
   const handleRemoveImage = useCallback((id: string) => {
-    setPendingImages(prev => prev.filter(img => img.id !== id))
+    setPendingImages((prev) => prev.filter((img) => img.id !== id))
   }, [])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -396,15 +408,18 @@ export function ZenChatPanel({
 
   // ── Voice recording ─────────────────────────────────────────
   // NOTE: these hooks MUST live before any early return to comply with Rules of Hooks
-  const handleAudioReady = useCallback((url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
-    let tag = `[audio attached: ${url} (audio/webm) ${duration}s]`
-    if (transcript) {
-      tag += `\nTranscript: "${transcript}"`
-    } else if (transcriptError) {
-      tag += `\n[Voice transcription unavailable: ${transcriptError}]`
-    }
-    sendMessage(tag)
-  }, [sendMessage])
+  const handleAudioReady = useCallback(
+    (url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
+      let tag = `[audio attached: ${url} (audio/webm) ${duration}s]`
+      if (transcript) {
+        tag += `\nTranscript: "${transcript}"`
+      } else if (transcriptError) {
+        tag += `\n[Voice transcription unavailable: ${transcriptError}]`
+      }
+      sendMessage(tag)
+    },
+    [sendMessage]
+  )
 
   const {
     isRecording,
@@ -437,8 +452,8 @@ export function ZenChatPanel({
   }
 
   // Check if we can send (has text or uploaded images, and nothing uploading)
-  const uploadedImages = pendingImages.filter(img => img.uploadedPath && !img.error)
-  const stillUploading = pendingImages.some(img => img.uploading)
+  const uploadedImages = pendingImages.filter((img) => img.uploadedPath && !img.error)
+  const stillUploading = pendingImages.some((img) => img.uploading)
   const canSend = (inputValue.trim() || uploadedImages.length > 0) && !stillUploading
 
   return (
@@ -446,13 +461,15 @@ export function ZenChatPanel({
       {/* Chat header with agent info and controls */}
       <div className="zen-chat-header">
         <div className="zen-chat-header-left">
-          <PixelAvatar 
+          <PixelAvatar
             agentName={agentName}
-            status={error ? 'error' : isSending ? 'thinking' : messages.length > 0 ? 'active' : 'idle'}
+            status={
+              error ? 'error' : isSending ? 'thinking' : messages.length > 0 ? 'active' : 'idle'
+            }
             stats={{
               tokens: undefined, // TODO: get from session
               uptime: undefined, // TODO: calculate from session start
-              model: undefined,  // TODO: get from session
+              model: undefined, // TODO: get from session
             }}
           />
           <AgentDropdown
@@ -474,19 +491,11 @@ export function ZenChatPanel({
           </button>
         </div>
       </div>
-      
+
       {/* Wrap messages and input with drop zone for image paste/drop */}
-      <ImageDropZone
-        images={pendingImages}
-        onImagesChange={setPendingImages}
-        disabled={isSending}
-      >
+      <ImageDropZone images={pendingImages} onImagesChange={setPendingImages} disabled={isSending}>
         {/* Messages area */}
-        <div 
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="zen-chat-messages"
-        >
+        <div ref={scrollContainerRef} onScroll={handleScroll} className="zen-chat-messages">
           {/* Load older button */}
           {hasMore && (
             <button
@@ -506,12 +515,13 @@ export function ZenChatPanel({
           )}
 
           {/* Messages */}
-          {messages.map(msg => (
+          {messages.map((msg) => (
             <ChatMessageBubble
               key={msg.id}
               msg={msg}
               variant="zen"
               showThinking={showThinking}
+              showToolDetails={showThinking}
             />
           ))}
 
@@ -528,11 +538,7 @@ export function ZenChatPanel({
           )}
 
           {/* Error */}
-          {error && (
-            <div className="zen-error">
-              {error}
-            </div>
-          )}
+          {error && <div className="zen-error">{error}</div>}
 
           <div ref={messagesEndRef} />
         </div>
@@ -544,12 +550,17 @@ export function ZenChatPanel({
         <div className="zen-chat-input-container">
           {/* Recording indicator (WhatsApp-style: green send + cancel shown inline) */}
           {isRecording && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '6px 12px 2px',
-              fontSize: 12, color: '#ef4444',
-              fontFamily: 'monospace',
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 12px 2px',
+                fontSize: 12,
+                color: '#ef4444',
+                fontFamily: 'monospace',
+              }}
+            >
               <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>●</span>
               Recording {formatDuration(recDuration)}
               <span style={{ flex: 1 }} />
@@ -562,10 +573,14 @@ export function ZenChatPanel({
             <textarea
               ref={inputRef}
               value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
+              onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               onInput={handleInput}
-              placeholder={isRecording ? 'Recording…' : `Message ${agentName || 'agent'}... (paste or drop images)`}
+              placeholder={
+                isRecording
+                  ? 'Recording…'
+                  : `Message ${agentName || 'agent'}... (paste or drop images)`
+              }
               rows={1}
               className="zen-chat-input"
               disabled={isRecording}
@@ -614,8 +629,8 @@ export function ZenChatPanel({
                   onClick={handleSend}
                   disabled={!canSend || pendingMessage !== null}
                   className="zen-chat-send-btn"
-                  aria-label={isSending ? "Queue message" : "Send message"}
-                  title={isSending ? "Message will be sent when agent finishes" : "Send message"}
+                  aria-label={isSending ? 'Queue message' : 'Send message'}
+                  title={isSending ? 'Message will be sent when agent finishes' : 'Send message'}
                 >
                   {pendingMessage ? '⏳' : '➤'}
                 </button>

@@ -26,7 +26,7 @@ from .base import ConnectionStatus
 logger = logging.getLogger(__name__)
 
 
-async def perform_handshake(conn: "OpenClawConnection") -> bool:
+async def perform_handshake(conn: OpenClawConnection) -> bool:
     """
     Perform the OpenClaw v2 device-identity WebSocket handshake.
 
@@ -61,7 +61,8 @@ async def perform_handshake(conn: "OpenClawConnection") -> bool:
                 pass
 
         # ── 1. Device identity ───────────────────────────────────────────
-        from .device_identity import DeviceIdentityManager, CREWHUB_SCOPES
+        from .device_identity import CREWHUB_SCOPES, DeviceIdentityManager
+
         identity_manager = DeviceIdentityManager()
         identity = await identity_manager.get_or_create_device_identity(
             connection_id=conn.connection_id,
@@ -79,10 +80,7 @@ async def perform_handshake(conn: "OpenClawConnection") -> bool:
         # ── 3. Receive challenge ─────────────────────────────────────────
         challenge_raw = await asyncio.wait_for(conn.ws.recv(), timeout=5.0)
         challenge = json.loads(challenge_raw)
-        if (
-            challenge.get("type") != "event"
-            or challenge.get("event") != "connect.challenge"
-        ):
+        if challenge.get("type") != "event" or challenge.get("event") != "connect.challenge":
             raise Exception(f"Expected connect.challenge, got: {challenge}")
 
         nonce = challenge.get("payload", {}).get("nonce", "")
@@ -95,17 +93,16 @@ async def perform_handshake(conn: "OpenClawConnection") -> bool:
         if use_device_token:
             logger.debug(f"Auth: stored device token (device {identity.device_id[:16]}...)")
         elif conn.token:
-            logger.info(
-                f"Auth: gateway token for initial device registration "
-                f"(device {identity.device_id[:16]}...)"
-            )
+            logger.info(f"Auth: gateway token for initial device registration (device {identity.device_id[:16]}...)")
         else:
             logger.warning("No auth credentials available")
 
         # ── 5. Build signed device block ─────────────────────────────────
         signed_at_ms = int(time.time() * 1000)
         device_block = identity.build_device_block(
-            nonce=nonce, auth_token=auth_token, signed_at_ms=signed_at_ms,
+            nonce=nonce,
+            auth_token=auth_token,
+            signed_at_ms=signed_at_ms,
         )
 
         # ── 6. Send connect request ──────────────────────────────────────
@@ -117,8 +114,10 @@ async def perform_handshake(conn: "OpenClawConnection") -> bool:
                 "minProtocol": 3,
                 "maxProtocol": 3,
                 "client": {
-                    "id": "cli", "version": "1.0.0",
-                    "platform": "crewhub", "mode": "cli",
+                    "id": "cli",
+                    "version": "1.0.0",
+                    "platform": "crewhub",
+                    "mode": "cli",
                 },
                 "device": device_block,
                 "role": "operator",
@@ -138,12 +137,12 @@ async def perform_handshake(conn: "OpenClawConnection") -> bool:
             error = response.get("error", {})
             error_code = error.get("code", "")
             if use_device_token and error_code in (
-                "DEVICE_TOKEN_INVALID", "DEVICE_NOT_FOUND",
-                "TOKEN_EXPIRED", "UNAUTHORIZED",
+                "DEVICE_TOKEN_INVALID",
+                "DEVICE_NOT_FOUND",
+                "TOKEN_EXPIRED",
+                "UNAUTHORIZED",
             ):
-                logger.warning(
-                    f"Device token rejected ({error_code}) — clearing; will re-register"
-                )
+                logger.warning(f"Device token rejected ({error_code}) — clearing; will re-register")
                 identity.device_token = None
                 await identity_manager.clear_device_token(identity.device_id)
             raise Exception(f"Connect rejected: {error.get('message', error)}")
@@ -151,15 +150,12 @@ async def perform_handshake(conn: "OpenClawConnection") -> bool:
         # ── 8. Store deviceToken if provided ─────────────────────────────
         payload = response.get("payload", {})
         response_auth = payload.get("auth") or {}
-        new_device_token = (
-            response_auth.get("deviceToken") or response_auth.get("token")
-        )
+        new_device_token = response_auth.get("deviceToken") or response_auth.get("token")
         if new_device_token and new_device_token != auth_token:
             identity.device_token = new_device_token
             await identity_manager.update_device_token(identity.device_id, new_device_token)
             logger.info(
-                f"✓ Device token stored for {identity.device_id[:16]}... "
-                "(future connects use device-token auth)"
+                f"✓ Device token stored for {identity.device_id[:16]}... (future connects use device-token auth)"
             )
 
         # ── 9. Mark connected and start listener ─────────────────────────
@@ -170,7 +166,7 @@ async def perform_handshake(conn: "OpenClawConnection") -> bool:
         conn._listen_task = asyncio.create_task(conn._listen_loop())
         return True
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         conn._set_error("Connection timed out")
         return False
     except Exception as exc:

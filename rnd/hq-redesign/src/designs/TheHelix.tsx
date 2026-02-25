@@ -4,11 +4,11 @@ import { Workstation, Plant, TallPlant, Floor, MeetingTable, Sofa, CoffeeTable, 
 
 /**
  * THE HELIX - Inspired by Zaha Hadid / BIG's spiraling buildings
- * 
+ *
  * A spiraling structure that wraps upward around a central core. The floor
  * plate is a continuous ramp/spiral, with workspaces arranged along the
  * outer edge and a central cylindrical core housing elevators/utilities.
- * 
+ *
  * Architectural features:
  * - Continuous spiraling floor plate (3 full rotations)
  * - Central cylindrical core
@@ -27,11 +27,11 @@ export function TheHelix() {
   const totalHeight = 10
   const segAngle = totalAngle / segments
   const segHeight = totalHeight / segments
-  
+
   return (
     <group>
       <Floor size={[20, 20]} color="#1e2430" />
-      
+
       {/* ═══ CENTRAL CORE ═══ */}
       <mesh position={[0, totalHeight / 2, 0]}>
         <cylinderGeometry args={[innerR - 0.3, innerR - 0.3, totalHeight, 24]} />
@@ -44,33 +44,33 @@ export function TheHelix() {
           <meshStandardMaterial color="#4fc3f7" emissive="#4fc3f7" emissiveIntensity={0.5} metalness={0.8} />
         </mesh>
       ))}
-      
+
       {/* ═══ SPIRAL FLOOR SEGMENTS ═══ */}
       {Array.from({ length: segments }).map((_, i) => {
         const startAngle = (i / segments) * totalAngle
         const midAngle = ((i + 0.5) / segments) * totalAngle
         const y = (i / segments) * totalHeight
-        
+
         // Floor segment as a wedge
         const midR = (outerR + innerR) / 2
         const px = Math.cos(midAngle) * midR
         const pz = Math.sin(midAngle) * midR
         const segW = (outerR - innerR)
-        
+
         // Slight tilt to follow spiral
         const tiltAngle = Math.atan2(segHeight, 0) * 0.3
-        
+
         return (
           <group key={i}>
             {/* Floor segment */}
-            <mesh 
-              position={[px, y + 0.02, pz]} 
+            <mesh
+              position={[px, y + 0.02, pz]}
               rotation={[-Math.PI / 2, 0, -midAngle + Math.PI / 2]}
             >
               <planeGeometry args={[segW + 0.3, 2 * midR * Math.sin(segAngle / 2) + 0.3]} />
               <meshStandardMaterial color={i % 2 === 0 ? '#2a2d3a' : '#282b38'} />
             </mesh>
-            
+
             {/* Outer wall segment */}
             <Wall
               color={i % 4 < 2 ? '#6a7a8a' : '#7a8a9a'}
@@ -84,7 +84,7 @@ export function TheHelix() {
             >
               <boxGeometry args={[2 * outerR * Math.sin(segAngle / 2) + 0.2, 2.8, 0.1]} />
             </Wall>
-            
+
             {/* Inner glass railing */}
             <GlassPanel
               position={[
@@ -95,7 +95,7 @@ export function TheHelix() {
               rotation={[0, -midAngle + Math.PI / 2, 0]}
               size={[2 * innerR * Math.sin(segAngle / 2) + 0.1, 1]}
             />
-            
+
             {/* Furnish based on segment position */}
             {i % 5 === 0 && (
               <Workstation
@@ -128,7 +128,7 @@ export function TheHelix() {
                 rotation={[0, -midAngle + Math.PI, 0]}
               />
             )}
-            
+
             {/* Hanging lights every 3 segments */}
             {i % 3 === 0 && (
               <HangingLight
@@ -143,7 +143,7 @@ export function TheHelix() {
           </group>
         )
       })}
-      
+
       {/* ═══ GROUND FLOOR LOBBY ═══ */}
       {/* Entrance area */}
       <mesh position={[outerR + 0.5, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -153,7 +153,7 @@ export function TheHelix() {
       <Sofa position={[outerR + 1, 0, -1]} rotation={[0, -Math.PI / 2, 0]} color="#3a4a5a" />
       <CoffeeTable position={[outerR + 0.3, 0, -1]} />
       <TallPlant position={[outerR + 1.5, 0, 1.2]} />
-      
+
       {/* Terrace gardens at half-rotations */}
       {[0, 1, 2].map(t => {
         const a = t * Math.PI + Math.PI / 2
@@ -165,7 +165,7 @@ export function TheHelix() {
           </group>
         )
       })}
-      
+
       {/* ═══ CROWN / TOP ═══ */}
       {/* Observation deck at top */}
       <mesh position={[0, totalHeight + 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -177,7 +177,7 @@ export function TheHelix() {
         <coneGeometry args={[outerR + 1, 1.5, 32, 1, true]} />
         <meshPhysicalMaterial color="#556" transparent opacity={0.4} side={THREE.DoubleSide} metalness={0.5} />
       </mesh>
-      
+
       {/* Top floor meeting space */}
       <MeetingTable position={[0, totalHeight, 3]} seats={6} />
       <Workstation position={[-3, totalHeight, 0]} rotation={[0, Math.PI / 2, 0]} />

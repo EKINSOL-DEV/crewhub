@@ -105,7 +105,7 @@ export class ProximityGrid {
     const key = this.hash(existing.x, existing.z)
     const bucket = this.cells.get(key)
     if (bucket) {
-      const idx = bucket.findIndex(e => e.id === id)
+      const idx = bucket.findIndex((e) => e.id === id)
       if (idx >= 0) bucket.splice(idx, 1)
       if (bucket.length === 0) this.cells.delete(key)
     }
@@ -128,7 +128,7 @@ export class ProximityGrid {
     if (oldKey !== newKey) {
       const oldBucket = this.cells.get(oldKey)
       if (oldBucket) {
-        const idx = oldBucket.findIndex(e => e.id === id)
+        const idx = oldBucket.findIndex((e) => e.id === id)
         if (idx >= 0) oldBucket.splice(idx, 1)
         if (oldBucket.length === 0) this.cells.delete(oldKey)
       }
@@ -193,10 +193,14 @@ export class ProximityGrid {
     x: number,
     z: number,
     type?: ProximityEntity['type'],
-    excludeId?: string,
+    excludeId?: string
   ): QueryResult | null {
     // Expand search radius until we find something
-    for (let radius = this.cellSize; radius <= Math.max(this.gridWidth, this.gridDepth); radius += this.cellSize) {
+    for (
+      let radius = this.cellSize;
+      radius <= Math.max(this.gridWidth, this.gridDepth);
+      radius += this.cellSize
+    ) {
       const results = this.queryRadius({ x, z, radius, type, excludeId, limit: 1 })
       if (results.length > 0) return results[0]
     }

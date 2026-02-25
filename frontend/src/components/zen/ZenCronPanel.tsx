@@ -39,9 +39,9 @@ function formatSchedule(schedule: CronSchedule): string {
       const expr = schedule.expr || ''
       const parts = expr.split(' ')
       if (parts.length !== 5) return expr
-      
+
       const [minute, hour, _dom, _month, dayOfWeek] = parts
-      
+
       if (expr === '* * * * *') return 'Every min'
       if (minute.startsWith('*/')) {
         const n = parseInt(minute.slice(2), 10)
@@ -70,7 +70,7 @@ function formatNextRun(timestamp: number | null | undefined): string {
   if (!timestamp) return 'Never'
   const now = Date.now()
   const diff = timestamp - now
-  
+
   if (diff < 0) return 'Overdue'
   if (diff < 60_000) return '< 1m'
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m`
@@ -89,25 +89,26 @@ interface CronItemProps {
 function CronItem({ job, onToggle, onRun }: CronItemProps) {
   const hasError = job.state?.lastStatus === 'error'
   const isEnabled = job.enabled
-  
+
   return (
-    <div className={`zen-cron-item ${!isEnabled ? 'zen-cron-item-disabled' : ''} ${hasError ? 'zen-cron-item-error' : ''}`}>
+    <div
+      className={`zen-cron-item ${!isEnabled ? 'zen-cron-item-disabled' : ''} ${hasError ? 'zen-cron-item-error' : ''}`}
+    >
       <div className="zen-cron-status">
-        <span className={`zen-status-dot ${isEnabled ? (hasError ? 'zen-status-dot-error' : 'zen-status-dot-active') : 'zen-status-dot-idle'}`} />
+        <span
+          className={`zen-status-dot ${isEnabled ? (hasError ? 'zen-status-dot-error' : 'zen-status-dot-active') : 'zen-status-dot-idle'}`}
+        />
       </div>
-      
+
       <div className="zen-cron-info">
         <div className="zen-cron-name">{job.name}</div>
         <div className="zen-cron-meta">
           <span className="zen-cron-schedule">
             {job.schedule.kind === 'cron' && '🔄'}
             {job.schedule.kind === 'at' && '📅'}
-            {job.schedule.kind === 'every' && '⏱️'}
-            {' '}{formatSchedule(job.schedule)}
+            {job.schedule.kind === 'every' && '⏱️'} {formatSchedule(job.schedule)}
           </span>
-          <span className="zen-cron-next">
-            Next: {formatNextRun(job.state?.nextRunAtMs)}
-          </span>
+          <span className="zen-cron-next">Next: {formatNextRun(job.state?.nextRunAtMs)}</span>
         </div>
         {hasError && job.state?.lastError && (
           <div className="zen-cron-error" title={job.state.lastError}>
@@ -115,12 +116,15 @@ function CronItem({ job, onToggle, onRun }: CronItemProps) {
           </div>
         )}
       </div>
-      
+
       <div className="zen-cron-actions">
         <button
           type="button"
           className="zen-cron-action"
-          onClick={(e) => { e.stopPropagation(); onRun() }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onRun()
+          }}
           title="Run now"
           disabled={!isEnabled}
           aria-label="Run job now"
@@ -130,7 +134,10 @@ function CronItem({ job, onToggle, onRun }: CronItemProps) {
         <button
           type="button"
           className={`zen-cron-action ${isEnabled ? 'zen-cron-action-enabled' : ''}`}
-          onClick={(e) => { e.stopPropagation(); onToggle() }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggle()
+          }}
           title={isEnabled ? 'Disable' : 'Enable'}
           aria-label={isEnabled ? 'Disable job' : 'Enable job'}
         >
@@ -148,9 +155,7 @@ function EmptyState() {
     <div className="zen-cron-empty">
       <div className="zen-empty-icon">⏰</div>
       <div className="zen-empty-title">No cron jobs</div>
-      <div className="zen-empty-subtitle">
-        Scheduled jobs will appear here
-      </div>
+      <div className="zen-empty-subtitle">Scheduled jobs will appear here</div>
     </div>
   )
 }
@@ -179,7 +184,7 @@ export function ZenCronPanel() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showDisabled, setShowDisabled] = useState(true)
-  
+
   const fetchJobs = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/cron/jobs`)
@@ -196,45 +201,51 @@ export function ZenCronPanel() {
       setIsLoading(false)
     }
   }, [])
-  
+
   useEffect(() => {
     fetchJobs()
     const interval = setInterval(fetchJobs, POLL_INTERVAL)
     return () => clearInterval(interval)
   }, [fetchJobs])
-  
-  const handleToggle = useCallback(async (job: CronJob) => {
-    try {
-      const endpoint = job.enabled ? 'disable' : 'enable'
-      await fetch(`${API_BASE}/cron/jobs/${job.id}/${endpoint}`, { method: 'POST' })
-      await fetchJobs()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle job')
-    }
-  }, [fetchJobs])
-  
-  const handleRun = useCallback(async (job: CronJob) => {
-    try {
-      await fetch(`${API_BASE}/cron/jobs/${job.id}/run?force=true`, { method: 'POST' })
-      await fetchJobs()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to run job')
-    }
-  }, [fetchJobs])
-  
+
+  const handleToggle = useCallback(
+    async (job: CronJob) => {
+      try {
+        const endpoint = job.enabled ? 'disable' : 'enable'
+        await fetch(`${API_BASE}/cron/jobs/${job.id}/${endpoint}`, { method: 'POST' })
+        await fetchJobs()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to toggle job')
+      }
+    },
+    [fetchJobs]
+  )
+
+  const handleRun = useCallback(
+    async (job: CronJob) => {
+      try {
+        await fetch(`${API_BASE}/cron/jobs/${job.id}/run?force=true`, { method: 'POST' })
+        await fetchJobs()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to run job')
+      }
+    },
+    [fetchJobs]
+  )
+
   // Filter and sort jobs
   const visibleJobs = jobs
-    .filter(j => showDisabled || j.enabled)
+    .filter((j) => showDisabled || j.enabled)
     .sort((a, b) => {
       // Enabled first
       if (a.enabled !== b.enabled) return a.enabled ? -1 : 1
       // Then by name
       return a.name.localeCompare(b.name)
     })
-  
-  const enabledCount = jobs.filter(j => j.enabled).length
-  const errorCount = jobs.filter(j => j.enabled && j.state?.lastStatus === 'error').length
-  
+
+  const enabledCount = jobs.filter((j) => j.enabled).length
+  const errorCount = jobs.filter((j) => j.enabled && j.state?.lastStatus === 'error').length
+
   // Loading state
   if (isLoading && jobs.length === 0) {
     return (
@@ -243,7 +254,7 @@ export function ZenCronPanel() {
       </div>
     )
   }
-  
+
   // Empty state
   if (jobs.length === 0) {
     return (
@@ -252,7 +263,7 @@ export function ZenCronPanel() {
       </div>
     )
   }
-  
+
   return (
     <div className="zen-cron-panel">
       {/* Header with filters */}
@@ -261,9 +272,7 @@ export function ZenCronPanel() {
           <span className={enabledCount > 0 ? '' : 'zen-cron-stats-dim'}>
             {enabledCount} active
           </span>
-          {errorCount > 0 && (
-            <span className="zen-cron-stats-error">{errorCount} errored</span>
-          )}
+          {errorCount > 0 && <span className="zen-cron-stats-error">{errorCount} errored</span>}
         </div>
         <label className="zen-cron-toggle-label">
           <input
@@ -274,17 +283,13 @@ export function ZenCronPanel() {
           Show disabled
         </label>
       </div>
-      
+
       {/* Error banner */}
-      {error && (
-        <div className="zen-cron-error-banner">
-          {error}
-        </div>
-      )}
-      
+      {error && <div className="zen-cron-error-banner">{error}</div>}
+
       {/* Job list */}
       <div className="zen-cron-list">
-        {visibleJobs.map(job => (
+        {visibleJobs.map((job) => (
           <CronItem
             key={job.id}
             job={job}
@@ -293,7 +298,7 @@ export function ZenCronPanel() {
           />
         ))}
       </div>
-      
+
       {/* Footer */}
       <div className="zen-cron-footer">
         <span className="zen-cron-count">

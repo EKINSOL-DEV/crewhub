@@ -27,7 +27,12 @@ export function DeskProp({ position, rotation }: PropProps) {
 }
 
 export function MonitorProp({ position, rotation }: PropProps) {
-  return <Monitor position={[position[0], position[1] + 0.78, position[2]]} rotation={degToEuler(rotation)} />
+  return (
+    <Monitor
+      position={[position[0], position[1] + 0.78, position[2]]}
+      rotation={degToEuler(rotation)}
+    />
+  )
 }
 
 export function ChairProp({ position, rotation }: PropProps) {
@@ -146,10 +151,30 @@ export function CableMessProp({ position }: PropProps) {
   const cableBlueToon = useToonMaterialProps('#334499')
 
   const cables = [
-    { pos: [0, 0.01, 0] as [number, number, number], rot: [Math.PI / 2, 0, 0.3] as [number, number, number], toon: cableToon, len: 0.8 },
-    { pos: [0.15, 0.01, 0.1] as [number, number, number], rot: [Math.PI / 2, 0, -0.5] as [number, number, number], toon: cableRedToon, len: 0.6 },
-    { pos: [-0.1, 0.01, -0.05] as [number, number, number], rot: [Math.PI / 2, 0, 1.2] as [number, number, number], toon: cableBlueToon, len: 0.5 },
-    { pos: [0.05, 0.015, 0.15] as [number, number, number], rot: [Math.PI / 2, 0, -0.1] as [number, number, number], toon: cableToon, len: 0.7 },
+    {
+      pos: [0, 0.01, 0] as [number, number, number],
+      rot: [Math.PI / 2, 0, 0.3] as [number, number, number],
+      toon: cableToon,
+      len: 0.8,
+    },
+    {
+      pos: [0.15, 0.01, 0.1] as [number, number, number],
+      rot: [Math.PI / 2, 0, -0.5] as [number, number, number],
+      toon: cableRedToon,
+      len: 0.6,
+    },
+    {
+      pos: [-0.1, 0.01, -0.05] as [number, number, number],
+      rot: [Math.PI / 2, 0, 1.2] as [number, number, number],
+      toon: cableBlueToon,
+      len: 0.5,
+    },
+    {
+      pos: [0.05, 0.015, 0.15] as [number, number, number],
+      rot: [Math.PI / 2, 0, -0.1] as [number, number, number],
+      toon: cableToon,
+      len: 0.7,
+    },
   ]
 
   return (
@@ -409,7 +434,16 @@ export function BeanBagProp(props: PropProps) {
 
 export function BookshelfProp({ position, rotation }: PropProps) {
   const shelfToon = useToonMaterialProps(WARM_COLORS.wood)
-  const bookColors = ['#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#2980B9']
+  const bookColors = [
+    '#E74C3C',
+    '#3498DB',
+    '#2ECC71',
+    '#F39C12',
+    '#9B59B6',
+    '#1ABC9C',
+    '#E67E22',
+    '#2980B9',
+  ]
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -584,7 +618,10 @@ export function HeadsetProp({ position, rotation }: PropProps) {
   const micToon = useToonMaterialProps('#222222')
 
   return (
-    <group position={[position[0], position[1] + 0.82, position[2]]} rotation={degToEuler(rotation)}>
+    <group
+      position={[position[0], position[1] + 0.82, position[2]]}
+      rotation={degToEuler(rotation)}
+    >
       <mesh position={[0, 0.12, 0]}>
         <torusGeometry args={[0.1, 0.015, 8, 12, Math.PI]} />
         <meshToonMaterial {...bandToon} />
@@ -681,7 +718,10 @@ export function DrawingTabletProp({ position, rotation }: PropProps) {
   const penToon = useToonMaterialProps('#555555')
 
   return (
-    <group position={[position[0], position[1] + 0.78, position[2]]} rotation={degToEuler(rotation)}>
+    <group
+      position={[position[0], position[1] + 0.78, position[2]]}
+      rotation={degToEuler(rotation)}
+    >
       <mesh position={[0, 0.02, 0]} castShadow>
         <boxGeometry args={[0.4, 0.03, 0.3]} />
         <meshToonMaterial {...baseToon} />
@@ -738,8 +778,18 @@ export function DeskWithDualMonitorsProp({ position, rotation, cellSize, span }:
   return (
     <group>
       <DeskProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
-      <MonitorProp position={[position[0] - offset, position[1], position[2]]} rotation={rotation} cellSize={cellSize} span={span} />
-      <MonitorProp position={[position[0] + offset, position[1], position[2]]} rotation={rotation} cellSize={cellSize} span={span} />
+      <MonitorProp
+        position={[position[0] - offset, position[1], position[2]]}
+        rotation={rotation}
+        cellSize={cellSize}
+        span={span}
+      />
+      <MonitorProp
+        position={[position[0] + offset, position[1], position[2]]}
+        rotation={rotation}
+        cellSize={cellSize}
+        span={span}
+      />
     </group>
   )
 }
@@ -748,7 +798,10 @@ export function StandingDeskWithMonitorProp({ position, rotation, cellSize, span
   return (
     <group>
       <StandingDeskProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
-      <Monitor position={[position[0], position[1] + 1.05, position[2]]} rotation={degToEuler(rotation)} />
+      <Monitor
+        position={[position[0], position[1] + 1.05, position[2]]}
+        rotation={degToEuler(rotation)}
+      />
     </group>
   )
 }
@@ -768,7 +821,12 @@ export function DeskWithMonitorTabletProp({ position, rotation, cellSize, span }
     <group>
       <DeskProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
       <MonitorProp position={position} rotation={rotation} cellSize={cellSize} span={span} />
-      <DrawingTabletProp position={[position[0] + 0.3, position[1], position[2] + 0.1]} rotation={rotation} cellSize={cellSize} span={span} />
+      <DrawingTabletProp
+        position={[position[0] + 0.3, position[1], position[2] + 0.1]}
+        rotation={rotation}
+        cellSize={cellSize}
+        span={span}
+      />
     </group>
   )
 }

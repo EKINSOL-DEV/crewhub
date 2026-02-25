@@ -211,11 +211,16 @@ function GearIcon({ color }: { color: string }) {
 
 function BotAccessory({ type, color }: { type: BotConfig['accessory']; color: string }) {
   switch (type) {
-    case 'hardhat': return <HardHat color={color} />
-    case 'antenna': return <Antenna color={color} />
-    case 'clock': return <ClockFace color={color} />
-    case 'chat': return <ChatIcon color={color} />
-    case 'gear': return <GearIcon color={color} />
+    case 'hardhat':
+      return <HardHat color={color} />
+    case 'antenna':
+      return <Antenna color={color} />
+    case 'clock':
+      return <ClockFace color={color} />
+    case 'chat':
+      return <ChatIcon color={color} />
+    case 'gear':
+      return <GearIcon color={color} />
   }
 }
 
@@ -232,7 +237,7 @@ function SleepingZs() {
         ref.position.x = Math.sin(t + i) * 0.15
         const opacity = phase < 2.5 ? 1 : 1 - (phase - 2.5) * 2
         ref.scale.setScalar(0.6 + phase * 0.15)
-        ref.children.forEach(child => {
+        ref.children.forEach((child) => {
           const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial
           if (mat.opacity !== undefined) mat.opacity = Math.max(0, opacity)
         })
@@ -242,8 +247,13 @@ function SleepingZs() {
 
   return (
     <group>
-      {[0, 1, 2].map(i => (
-        <group key={i} ref={el => { if (el) zRefs.current[i] = el }}>
+      {[0, 1, 2].map((i) => (
+        <group
+          key={i}
+          ref={(el) => {
+            if (el) zRefs.current[i] = el
+          }}
+        >
           <Text
             fontSize={0.12}
             color="#9ca3af"
@@ -270,12 +280,7 @@ function ErrorMark() {
   })
   return (
     <group ref={ref} position={[0, 0.85, 0]}>
-      <Text
-        fontSize={0.2}
-        color="#ef4444"
-        anchorX="center"
-        anchorY="middle"
-      >
+      <Text fontSize={0.2} color="#ef4444" anchorX="center" anchorY="middle">
         ❗
       </Text>
     </group>
@@ -306,7 +311,7 @@ function ChatBubble3D({
 
   if (scaleRef.current < 0.01 && !visible) return null
 
-  const displayText = style === 'alert' ? '❗' : (text || '...')
+  const displayText = style === 'alert' ? '❗' : text || '...'
   const bgColor = style === 'alert' ? '#fef2f2' : '#ffffff'
   const borderColor = style === 'alert' ? '#ef4444' : style === 'thought' ? '#a5b4fc' : '#d1d5db'
 
@@ -332,24 +337,35 @@ function ChatBubble3D({
         >
           {displayText}
           {style === 'thought' && (
-            <div style={{
-              position: 'absolute', bottom: -10, left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex', gap: 3, alignItems: 'flex-end',
-            }}>
+            <div
+              style={{
+                position: 'absolute',
+                bottom: -10,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: 3,
+                alignItems: 'flex-end',
+              }}
+            >
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: borderColor }} />
               <div style={{ width: 4, height: 4, borderRadius: '50%', background: borderColor }} />
             </div>
           )}
           {style === 'speech' && (
-            <div style={{
-              position: 'absolute', bottom: -8, left: '50%',
-              transform: 'translateX(-50%)',
-              width: 0, height: 0,
-              borderLeft: '6px solid transparent',
-              borderRight: '6px solid transparent',
-              borderTop: `8px solid ${borderColor}`,
-            }} />
+            <div
+              style={{
+                position: 'absolute',
+                bottom: -8,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: `8px solid ${borderColor}`,
+              }}
+            />
           )}
         </div>
       </Html>
@@ -488,9 +504,7 @@ function Bot3DCharacter({
       </mesh>
 
       {/* Sparkles */}
-      {showSparkles && (
-        <Sparkles count={30} scale={1} size={4} speed={0.6} color={glowColor} />
-      )}
+      {showSparkles && <Sparkles count={30} scale={1} size={4} speed={0.6} color={glowColor} />}
 
       {/* Sleeping Zs */}
       {uiState.state === 'sleeping' && <SleepingZs />}
@@ -580,7 +594,14 @@ function BotScene({
         <Bot3DCharacter
           key={bot.id}
           config={bot}
-          uiState={botStates[bot.id] || { state: 'idle', bubbleText: '', bubbleStyle: 'speech', showBubble: false }}
+          uiState={
+            botStates[bot.id] || {
+              state: 'idle',
+              bubbleText: '',
+              bubbleStyle: 'speech',
+              showBubble: false,
+            }
+          }
           position={[startX + i * spacing, 0, 0]}
         />
       ))}
@@ -621,7 +642,7 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
   // Per-bot UI state
   const [botStates, setBotStates] = useState<Record<string, BotUiState>>(() => {
     const initial: Record<string, BotUiState> = {}
-    BOTS.forEach(bot => {
+    BOTS.forEach((bot) => {
       initial[bot.id] = { state: 'idle', bubbleText: '', bubbleStyle: 'speech', showBubble: false }
     })
     return initial
@@ -638,13 +659,15 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
   const cameraPos = useMemo(() => CAMERA_POSITIONS[cameraPreset], [cameraPreset])
 
   const updateBot = useCallback((id: string, patch: Partial<BotUiState>) => {
-    setBotStates(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
+    setBotStates((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }))
   }, [])
 
   const setAllStates = useCallback((state: BotState) => {
-    setBotStates(prev => {
+    setBotStates((prev) => {
       const next = { ...prev }
-      BOTS.forEach(b => { next[b.id] = { ...next[b.id], state } })
+      BOTS.forEach((b) => {
+        next[b.id] = { ...next[b.id], state }
+      })
       return next
     })
   }, [])
@@ -652,7 +675,9 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
   const cardBg = darkBg ? 'bg-gray-800' : 'bg-white shadow-sm'
   const textPrimary = darkBg ? 'text-white' : 'text-gray-900'
   const textSecondary = darkBg ? 'text-gray-400' : 'text-gray-600'
-  const inputBg = darkBg ? 'bg-gray-700 text-white border-gray-600' : 'bg-gray-50 text-gray-900 border-gray-300'
+  const inputBg = darkBg
+    ? 'bg-gray-700 text-white border-gray-600'
+    : 'bg-gray-50 text-gray-900 border-gray-300'
   const btnBase = darkBg
     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -666,7 +691,8 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
           🎮 3D Bot Playground <span className="text-sm font-normal text-blue-400">(POC)</span>
         </h2>
         <p className={textSecondary}>
-          Interactive 3D characters with animations, states, and chat bubbles. Built with Three.js primitives.
+          Interactive 3D characters with animations, states, and chat bubbles. Built with Three.js
+          primitives.
         </p>
       </div>
 
@@ -679,7 +705,7 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
           <div className="space-y-1">
             <span className={`text-xs font-medium ${textSecondary}`}>Camera</span>
             <div className="flex gap-1">
-              {(['front', 'isometric', 'top-down'] as CameraPreset[]).map(p => (
+              {(['front', 'isometric', 'top-down'] as CameraPreset[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => setCameraPreset(p)}
@@ -698,10 +724,18 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
             <span className={`text-xs font-medium ${textSecondary}`}>Scene</span>
             <div className="flex gap-1">
               {[
-                { label: '💡 Shadows', value: showShadows, toggle: () => setShowShadows(v => !v) },
-                { label: '📏 Grid', value: showGrid, toggle: () => setShowGrid(v => !v) },
-                { label: '✨ Sparkles', value: showSparkles, toggle: () => setShowSparkles(v => !v) },
-              ].map(t => (
+                {
+                  label: '💡 Shadows',
+                  value: showShadows,
+                  toggle: () => setShowShadows((v) => !v),
+                },
+                { label: '📏 Grid', value: showGrid, toggle: () => setShowGrid((v) => !v) },
+                {
+                  label: '✨ Sparkles',
+                  value: showSparkles,
+                  toggle: () => setShowSparkles((v) => !v),
+                },
+              ].map((t) => (
                 <button
                   key={t.label}
                   onClick={t.toggle}
@@ -719,7 +753,7 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
           <div className="space-y-1">
             <span className={`text-xs font-medium ${textSecondary}`}>All Bots →</span>
             <div className="flex gap-1">
-              {STATE_LABELS.map(s => (
+              {STATE_LABELS.map((s) => (
                 <button
                   key={s}
                   onClick={() => setAllStates(s)}
@@ -737,7 +771,7 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
       <div className={`rounded-2xl p-5 space-y-3 ${cardBg}`}>
         <h3 className={`font-semibold ${textPrimary}`}>🤖 Bot Controls</h3>
         <div className="space-y-2">
-          {BOTS.map(bot => {
+          {BOTS.map((bot) => {
             const st = botStates[bot.id]
             const isExpanded = expandedBot === bot.id
             return (
@@ -753,7 +787,10 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
                     onClick={() => setExpandedBot(isExpanded ? null : bot.id)}
                     className="flex items-center gap-2 min-w-0"
                   >
-                    <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: bot.color }} />
+                    <div
+                      className="w-4 h-4 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: bot.color }}
+                    />
                     <span className={`font-medium text-sm ${textPrimary}`}>
                       {bot.icon} {bot.name}
                     </span>
@@ -762,7 +799,7 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
 
                   {/* State buttons - always visible */}
                   <div className="flex gap-1 ml-auto">
-                    {STATE_LABELS.map(s => (
+                    {STATE_LABELS.map((s) => (
                       <button
                         key={s}
                         onClick={() => updateBot(bot.id, { state: s })}
@@ -791,7 +828,7 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
 
                     {/* Bubble style */}
                     <div className="flex gap-1">
-                      {BUBBLE_STYLES.map(bs => (
+                      {BUBBLE_STYLES.map((bs) => (
                         <button
                           key={bs}
                           onClick={() => updateBot(bot.id, { bubbleStyle: bs })}
@@ -809,7 +846,7 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
                       type="text"
                       placeholder="Bubble text..."
                       value={st.bubbleText}
-                      onChange={e => updateBot(bot.id, { bubbleText: e.target.value })}
+                      onChange={(e) => updateBot(bot.id, { bubbleText: e.target.value })}
                       className={`flex-1 min-w-[140px] px-3 py-1.5 rounded-lg text-xs border ${inputBg}`}
                     />
                   </div>
@@ -843,9 +880,11 @@ export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
         </div>
 
         {/* Canvas info bar */}
-        <div className={`px-4 py-2 text-xs flex items-center justify-between border-t ${
-          darkBg ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-400'
-        }`}>
+        <div
+          className={`px-4 py-2 text-xs flex items-center justify-between border-t ${
+            darkBg ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-400'
+          }`}
+        >
           <span>🖱️ Drag: Rotate · Scroll: Zoom · Right-drag: Pan</span>
           <span>Three.js r{THREE.REVISION} · @react-three/fiber + drei</span>
         </div>

@@ -1,10 +1,8 @@
 """Baseline tests for AI meetings models, validation, and recovery."""
 
 import pytest
-from unittest.mock import AsyncMock, patch
 
-from app.db.meeting_models import MeetingConfig, MeetingState, Round, Turn, StartMeetingRequest
-
+from app.db.meeting_models import MeetingConfig, Round, StartMeetingRequest, Turn
 
 # ---------------------------------------------------------------------------
 # Pydantic mutable defaults
@@ -38,7 +36,6 @@ class TestMutableDefaults:
 
 
 class TestParticipantValidation:
-
     def test_duplicate_detection(self):
         """Duplicate participants should be detectable."""
         participants = ["a1", "a1", "a2"]
@@ -65,10 +62,10 @@ class TestParticipantValidation:
 
 @pytest.mark.anyio
 class TestRecovery:
-
     async def test_recover_stuck_meetings(self):
         """Meetings in non-terminal state are marked as error on recovery."""
         import aiosqlite
+
         from app.db.database import DB_PATH
         from app.services.meeting_recovery import recover_stuck_meetings
 
@@ -98,12 +95,14 @@ class TestRecovery:
     async def test_recover_no_stuck(self):
         """No stuck meetings = 0 recovered."""
         from app.services.meeting_recovery import recover_stuck_meetings
+
         count = await recover_stuck_meetings()
         assert count == 0
 
     async def test_recover_all_terminal_states_ignored(self):
         """Complete, cancelled, error meetings are not touched."""
         import aiosqlite
+
         from app.db.database import DB_PATH
         from app.services.meeting_recovery import recover_stuck_meetings
 
@@ -126,7 +125,6 @@ class TestRecovery:
 
 
 class TestTokenBudget:
-
     def test_config_has_token_limits(self):
         c = MeetingConfig(participants=["a", "b"], max_tokens_per_turn=150, synthesis_max_tokens=400)
         assert c.max_tokens_per_turn == 150

@@ -55,11 +55,19 @@ function ActionItemCard({
     if (!meetingId) return
     setLoading('planner')
     try {
-      const res = await fetch(`${API_BASE}/meetings/${meetingId}/action-items/${item.id}/to-planner`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: item.text, assignee: item.assignee, priority: item.priority, project_id: projectId }),
-      })
+      const res = await fetch(
+        `${API_BASE}/meetings/${meetingId}/action-items/${item.id}/to-planner`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: item.text,
+            assignee: item.assignee,
+            priority: item.priority,
+            project_id: projectId,
+          }),
+        }
+      )
       if (res.ok) {
         onStatusChange(item.id, 'planned')
         showToast({ message: `✅ Task added to project board`, duration: 4000 })
@@ -101,22 +109,43 @@ function ActionItemCard({
   const status = item.status || 'pending'
 
   return (
-    <div style={{
-      border: '1px solid hsl(var(--border))',
-      borderRadius: 8,
-      padding: 12,
-      background: 'hsl(var(--card))',
-    }}>
+    <div
+      style={{
+        border: '1px solid hsl(var(--border))',
+        borderRadius: 8,
+        padding: 12,
+        background: 'hsl(var(--card))',
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-        <input type="checkbox" checked={item.checked || status === 'done'} readOnly style={{ marginTop: 3, borderRadius: 3 }} />
+        <input
+          type="checkbox"
+          checked={item.checked || status === 'done'}
+          readOnly
+          style={{ marginTop: 3, borderRadius: 3 }}
+        />
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 13, margin: 0, lineHeight: 1.5 }}>{item.text}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-            {item.assignee && <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>👤 {item.assignee}</span>}
-            <Badge variant="secondary" className={`text-xs ${priorityColor}`}>{item.priority}</Badge>
+            {item.assignee && (
+              <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>
+                👤 {item.assignee}
+              </span>
+            )}
+            <Badge variant="secondary" className={`text-xs ${priorityColor}`}>
+              {item.priority}
+            </Badge>
             {status !== 'pending' && (
               <Badge variant="outline" className="text-xs">
-                {status === 'planned' ? '📋 Planned' : status === 'executing' ? '⚡ Executing' : status === 'done' ? '✅ Done' : status === 'failed' ? '❌ Failed' : status}
+                {status === 'planned'
+                  ? '📋 Planned'
+                  : status === 'executing'
+                    ? '⚡ Executing'
+                    : status === 'done'
+                      ? '✅ Done'
+                      : status === 'failed'
+                        ? '❌ Failed'
+                        : status}
               </Badge>
             )}
           </div>
@@ -124,11 +153,23 @@ function ActionItemCard({
       </div>
       {status === 'pending' && (
         <div style={{ display: 'flex', gap: 8, marginLeft: 24, marginTop: 8 }}>
-          <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleAddToPlanner} disabled={loading !== null}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs h-7"
+            onClick={handleAddToPlanner}
+            disabled={loading !== null}
+          >
             {loading === 'planner' ? '⏳ Adding…' : '➕ Planner'}
           </Button>
           {item.assignee && (
-            <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleExecute} disabled={loading !== null}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-7"
+              onClick={handleExecute}
+              disabled={loading !== null}
+            >
               {loading === 'execute' ? '⏳ Starting…' : '🤖 Execute'}
             </Button>
           )}
@@ -143,7 +184,14 @@ function ActionItemCard({
 function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
   if (rounds.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '40px 0',
+          color: 'hsl(var(--muted-foreground))',
+          fontSize: 13,
+        }}
+      >
         No transcript available
       </div>
     )
@@ -152,30 +200,41 @@ function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
       {rounds.map((round) => (
         <div key={round.roundNum} style={{ marginBottom: 24 }}>
-          <div style={{
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'hsl(var(--muted-foreground))',
-            borderBottom: '1px solid hsl(var(--border))',
-            paddingBottom: 6,
-            marginBottom: 12,
-          }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'hsl(var(--muted-foreground))',
+              borderBottom: '1px solid hsl(var(--border))',
+              paddingBottom: 6,
+              marginBottom: 12,
+            }}
+          >
             Round {round.roundNum}: {round.topic}
           </div>
           {round.turns.map((turn, i) => (
             <div key={i} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--foreground))', marginBottom: 2 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: 'hsl(var(--foreground))',
+                  marginBottom: 2,
+                }}
+              >
                 {turn.agentName}
               </div>
-              <p style={{
-                fontSize: 13,
-                color: 'hsl(var(--muted-foreground))',
-                whiteSpace: 'pre-wrap',
-                margin: 0,
-                lineHeight: 1.6,
-              }}>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: 'hsl(var(--muted-foreground))',
+                  whiteSpace: 'pre-wrap',
+                  margin: 0,
+                  lineHeight: 1.6,
+                }}
+              >
                 {turn.response || '(no response)'}
               </p>
             </div>
@@ -201,18 +260,42 @@ function ActionsView({
 }) {
   if (items.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '40px 0',
+          color: 'hsl(var(--muted-foreground))',
+          fontSize: 13,
+        }}
+      >
         No action items found
       </div>
     )
   }
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--muted-foreground))', marginBottom: 4 }}>
+    <div
+      style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8 }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          color: 'hsl(var(--muted-foreground))',
+          marginBottom: 4,
+        }}
+      >
         {items.length} Action Item{items.length !== 1 ? 's' : ''}
       </div>
-      {items.map(item => (
-        <ActionItemCard key={item.id} item={item} meetingId={meetingId} projectId={projectId} onStatusChange={onStatusChange} />
+      {items.map((item) => (
+        <ActionItemCard
+          key={item.id}
+          item={item}
+          meetingId={meetingId}
+          projectId={projectId}
+          onStatusChange={onStatusChange}
+        />
       ))}
     </div>
   )
@@ -233,13 +316,12 @@ export function MeetingOutput({
   const [copied, setCopied] = useState(false)
   const [activeView, setActiveView] = useState<MeetingView>('structured')
   const [itemStatuses, setItemStatuses] = useState<Record<string, string>>({})
-  const [backendItems, setBackendItems] = useState<(ParsedActionItem & { status?: string })[] | null>(null)
+  const [backendItems, setBackendItems] = useState<
+    (ParsedActionItem & { status?: string })[] | null
+  >(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const parsed = useMemo(
-    () => parseMeetingOutput(meeting.outputMd || ''),
-    [meeting.outputMd]
-  )
+  const parsed = useMemo(() => parseMeetingOutput(meeting.outputMd || ''), [meeting.outputMd])
 
   // Fetch action items from backend (source of truth for IDs) or save parsed ones if none exist
   const syncedForMeetingRef = useRef<string | null>(null)
@@ -250,31 +332,33 @@ export function MeetingOutput({
 
     // First try to fetch existing items from backend
     fetch(`${API_BASE}/meetings/${meetingId}/action-items`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
         if (data?.items?.length > 0) {
           // Backend has items — use their IDs (they match the DB)
-          setBackendItems(data.items.map((item: any) => ({
-            id: item.id,
-            text: item.text,
-            assignee: item.assignee_agent_id,
-            priority: item.priority || 'medium',
-            checked: item.status === 'done',
-            status: item.status,
-          })))
+          setBackendItems(
+            data.items.map((item: any) => ({
+              id: item.id,
+              text: item.text,
+              assignee: item.assignee_agent_id,
+              priority: item.priority || 'medium',
+              checked: item.status === 'done',
+              status: item.status,
+            }))
+          )
           // Seed statuses from backend
           const statuses: Record<string, string> = {}
           for (const item of data.items) {
             if (item.status && item.status !== 'pending') statuses[item.id] = item.status
           }
-          setItemStatuses(prev => ({ ...prev, ...statuses }))
+          setItemStatuses((prev) => ({ ...prev, ...statuses }))
         } else if (parsed.actionItems.length > 0) {
           // No backend items — save parsed ones (creates them with parsed IDs)
           fetch(`${API_BASE}/meetings/${meetingId}/action-items`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              items: parsed.actionItems.map(ai => ({
+              items: parsed.actionItems.map((ai) => ({
                 id: ai.id,
                 text: ai.text,
                 assignee_agent_id: ai.assignee,
@@ -282,13 +366,15 @@ export function MeetingOutput({
               })),
             }),
           })
-            .then(r => { if (!r.ok) console.warn('[MeetingOutput] Failed to save action items:', r.status) })
-            .catch(err => console.warn('[MeetingOutput] Failed to save action items:', err))
+            .then((r) => {
+              if (!r.ok) console.warn('[MeetingOutput] Failed to save action items:', r.status)
+            })
+            .catch((err) => console.warn('[MeetingOutput] Failed to save action items:', err))
           // Use parsed items (IDs will match what we just saved)
           setBackendItems(null)
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.warn('[MeetingOutput] Failed to fetch action items:', err)
         setBackendItems(null)
       })
@@ -311,7 +397,7 @@ export function MeetingOutput({
   }, [meeting.outputMd])
 
   const handleStatusChange = useCallback((id: string, status: string) => {
-    setItemStatuses(prev => ({ ...prev, [id]: status }))
+    setItemStatuses((prev) => ({ ...prev, [id]: status }))
   }, [])
 
   // Build markdown without the Action Items section
@@ -341,27 +427,41 @@ export function MeetingOutput({
 
   // Use backend items (correct IDs) when available, fall back to parsed
   const baseItems = backendItems || parsed.actionItems
-  const actionItems = baseItems.map(ai => ({ ...ai, status: itemStatuses[ai.id] || (ai as any).status }))
+  const actionItems = baseItems.map((ai) => ({
+    ...ai,
+    status: itemStatuses[ai.id] || (ai as any).status,
+  }))
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'hsl(var(--background))' }}>
-      {/* ── Header ── */}
-      <div style={{
+    <div
+      style={{
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 20px',
-        borderBottom: '1px solid hsl(var(--border))',
-        background: 'hsl(var(--card))',
-        flexShrink: 0,
-      }}>
+        flexDirection: 'column',
+        height: '100%',
+        background: 'hsl(var(--background))',
+      }}
+    >
+      {/* ── Header ── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 20px',
+          borderBottom: '1px solid hsl(var(--border))',
+          background: 'hsl(var(--card))',
+          flexShrink: 0,
+        }}
+      >
         <div>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>
             ✅ {meetingTitle}
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
             {duration && (
-              <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>⏱ {duration}</span>
+              <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>
+                ⏱ {duration}
+              </span>
             )}
             {meeting.outputPath && (
               <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', opacity: 0.7 }}>
@@ -393,15 +493,17 @@ export function MeetingOutput({
       </div>
 
       {/* ── Action buttons bar ── */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 20px',
-        borderBottom: '1px solid hsl(var(--border))',
-        background: 'hsl(var(--card))',
-        flexShrink: 0,
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 20px',
+          borderBottom: '1px solid hsl(var(--border))',
+          background: 'hsl(var(--card))',
+          flexShrink: 0,
+        }}
+      >
         <Button variant="outline" size="sm" className="text-xs h-7" onClick={handleCopy}>
           {copied ? '✓ Copied' : '📋 Copy'}
         </Button>
@@ -443,18 +545,20 @@ export function MeetingOutput({
                 <MarkdownViewer content={markdownWithoutActions} className="text-sm" />
                 {actionItems.length > 0 && (
                   <div style={{ marginTop: 24 }}>
-                    <h2 style={{
-                      fontSize: 20,
-                      fontWeight: 600,
-                      marginBottom: 12,
-                      color: 'hsl(var(--foreground))',
-                      borderBottom: '1px solid hsl(var(--border))',
-                      paddingBottom: 6,
-                    }}>
+                    <h2
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 600,
+                        marginBottom: 12,
+                        color: 'hsl(var(--foreground))',
+                        borderBottom: '1px solid hsl(var(--border))',
+                        paddingBottom: 6,
+                      }}
+                    >
                       ✅ Action Items
                     </h2>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {actionItems.map(item => (
+                      {actionItems.map((item) => (
                         <ActionItemCard
                           key={item.id}
                           item={item}
@@ -479,32 +583,45 @@ export function MeetingOutput({
             ) : (
               /* Raw markdown */
               <div style={{ maxWidth: 720, margin: '0 auto' }}>
-                <pre style={{
-                  fontSize: 12,
-                  lineHeight: 1.6,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  color: 'hsl(var(--foreground))',
-                  background: 'hsl(var(--secondary) / 0.3)',
-                  padding: 16,
-                  borderRadius: 8,
-                  border: '1px solid hsl(var(--border))',
-                  margin: 0,
-                }}>
+                <pre
+                  style={{
+                    fontSize: 12,
+                    lineHeight: 1.6,
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    color: 'hsl(var(--foreground))',
+                    background: 'hsl(var(--secondary) / 0.3)',
+                    padding: 16,
+                    borderRadius: 8,
+                    border: '1px solid hsl(var(--border))',
+                    margin: 0,
+                  }}
+                >
                   {meeting.outputMd}
                 </pre>
               </div>
             )
           ) : outputError ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <div style={{ fontSize: 13, color: 'hsl(var(--destructive))', marginBottom: 12 }}>⚠️ {outputError}</div>
+              <div style={{ fontSize: 13, color: 'hsl(var(--destructive))', marginBottom: 12 }}>
+                ⚠️ {outputError}
+              </div>
               {onRetryFetch && (
-                <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>🔄 Retry</Button>
+                <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>
+                  🔄 Retry
+                </Button>
               )}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '40px 0',
+                color: 'hsl(var(--muted-foreground))',
+                fontSize: 13,
+              }}
+            >
               {outputLoading ? 'Loading output…' : 'No output available'}
             </div>
           )}

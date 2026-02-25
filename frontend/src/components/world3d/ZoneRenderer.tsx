@@ -37,13 +37,7 @@ export function ZoneRenderer({ sessions, settings, onAliasChanged }: ZoneRendere
   // Other zones get the standalone ZoneSwitcherBar
   switch (activeZone.id) {
     case 'main-campus':
-      return (
-        <World3DView
-          sessions={sessions}
-          settings={settings}
-          onAliasChanged={onAliasChanged}
-        />
-      )
+      return <World3DView sessions={sessions} settings={settings} onAliasChanged={onAliasChanged} />
     case 'creator-center':
       return (
         <>

@@ -113,7 +113,7 @@ data: {"type": "error", "message": "..."}
 - Send `{"type": "agent", "sessionKey": "...", "message": "...", "stream": true}`
 - Stream response frames as SSE events
 
-#### 3. GET `/api/chat/{session_key}/info`  
+#### 3. GET `/api/chat/{session_key}/info`
 Check if a session supports chat (is a fixed agent, not a subagent).
 
 **Response:**

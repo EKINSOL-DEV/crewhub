@@ -6,10 +6,8 @@ Generates base → adds detail components → applies polish → validates.
 
 from __future__ import annotations
 
-import json
 import logging
 import re
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +26,7 @@ COMPONENT_IMPORTS = {
 # JSX snippets for component injection (inserted before closing </group>)
 COMPONENT_JSX = {
     "LED": '      <LED color="{color}" position={{[{pos}]}} pulse />',
-    "SteamParticles": '      <SteamParticles position={{[{pos}]}} count={{8}} spread={{0.1}} />',
+    "SteamParticles": "      <SteamParticles position={{[{pos}]}} count={{8}} spread={{0.1}} />",
     "GlowOrb": '      <GlowOrb color="{color}" position={{[{pos}]}} size={{0.15}} />',
     "Screen": '      <Screen position={{[{pos}]}} color="{color}" width={{0.3}} height={{0.2}} />',
     "DataStream": '      <DataStream position={{[{pos}]}} color="{color}" count={{8}} radius={{0.3}} />',
@@ -38,22 +36,19 @@ COMPONENT_JSX = {
 
 KEYWORD_COMPONENTS: list[tuple[list[str], str, str, str]] = [
     # (keywords, component, default_color, default_position)
-    (["coffee", "tea", "hot", "steam", "kettle", "pot", "cook", "boil"],
-     "SteamParticles", "#ffffff", "0, 0.8, 0"),
-    (["computer", "screen", "monitor", "tv", "display", "terminal", "laptop"],
-     "Screen", "#00ff88", "0, 0.6, 0.2"),
-    (["electronic", "server", "machine", "device", "panel", "control", "dashboard"],
-     "LED", "#00ff00", "0.1, 0.5, 0.15"),
-    (["magic", "crystal", "orb", "energy", "power", "portal", "mystical"],
-     "GlowOrb", "#aa44ff", "0, 0.8, 0"),
-    (["data", "ai", "brain", "neural", "network", "digital", "cyber", "holo"],
-     "DataStream", "#00ffff", "0, 0.5, 0"),
-    (["robot", "mech", "android", "tech", "futuristic", "sci-fi", "space"],
-     "LED", "#00aaff", "-0.1, 0.6, 0.1"),
-    (["neon", "sign", "glow", "light", "lamp", "beacon"],
-     "GlowOrb", "#ff4488", "0, 0.7, 0"),
-    (["arcade", "gaming", "retro", "pixel", "console"],
-     "Screen", "#ff4444", "0, 0.8, 0.05"),
+    (["coffee", "tea", "hot", "steam", "kettle", "pot", "cook", "boil"], "SteamParticles", "#ffffff", "0, 0.8, 0"),
+    (["computer", "screen", "monitor", "tv", "display", "terminal", "laptop"], "Screen", "#00ff88", "0, 0.6, 0.2"),
+    (
+        ["electronic", "server", "machine", "device", "panel", "control", "dashboard"],
+        "LED",
+        "#00ff00",
+        "0.1, 0.5, 0.15",
+    ),
+    (["magic", "crystal", "orb", "energy", "power", "portal", "mystical"], "GlowOrb", "#aa44ff", "0, 0.8, 0"),
+    (["data", "ai", "brain", "neural", "network", "digital", "cyber", "holo"], "DataStream", "#00ffff", "0, 0.5, 0"),
+    (["robot", "mech", "android", "tech", "futuristic", "sci-fi", "space"], "LED", "#00aaff", "-0.1, 0.6, 0.1"),
+    (["neon", "sign", "glow", "light", "lamp", "beacon"], "GlowOrb", "#ff4488", "0, 0.7, 0"),
+    (["arcade", "gaming", "retro", "pixel", "console"], "Screen", "#ff4444", "0, 0.8, 0.05"),
 ]
 
 # ── Animation Patterns ───────────────────────────────────────────
@@ -182,10 +177,12 @@ class MultiPassGenerator:
         # (only for non-emissive, non-transparent materials)
         flat_count = 0
         pattern = r'<meshStandardMaterial\s+color="([^"]+)"\s*/>'
+
         def add_flat(m):
             nonlocal flat_count
             flat_count += 1
             return f'<meshStandardMaterial color="{m.group(1)}" flatShading />'
+
         code = re.sub(pattern, add_flat, code)
         if flat_count:
             notes.append(f"Pass 3: Added flatShading to {flat_count} material(s)")
@@ -232,11 +229,13 @@ class MultiPassGenerator:
         for keywords, component, color, _ in KEYWORD_COMPONENTS:
             if component not in [c["name"] for c in available_components]:
                 relevant = any(kw in lower for kw in keywords)
-                available_components.append({
-                    "name": component,
-                    "suggested": relevant,
-                    "defaultColor": color,
-                })
+                available_components.append(
+                    {
+                        "name": component,
+                        "suggested": relevant,
+                        "defaultColor": color,
+                    }
+                )
 
         # Deduplicate
         seen = set()
@@ -261,8 +260,14 @@ class MultiPassGenerator:
                 {"name": "sway", "label": "Sway", "description": "Side-to-side swaying"},
             ],
             "suggestedColors": [
-                "#cc3333", "#3366cc", "#33aa33", "#ccaa33",
-                "#aa44ff", "#00ffcc", "#ff4488", "#ffaa33",
+                "#cc3333",
+                "#3366cc",
+                "#33aa33",
+                "#ccaa33",
+                "#aa44ff",
+                "#00ffcc",
+                "#ff4488",
+                "#ffaa33",
             ],
         }
 
@@ -311,7 +316,9 @@ class MultiPassGenerator:
                 jsx = COMPONENT_JSX[comp_name].format(color=color, pos=pos)
                 last_group = code.rfind("</group>")
                 if last_group != -1:
-                    code = code[:last_group] + f"\n      {{/* User-added {comp_name} */}}\n{jsx}\n    " + code[last_group:]
+                    code = (
+                        code[:last_group] + f"\n      {{/* User-added {comp_name} */}}\n{jsx}\n    " + code[last_group:]
+                    )
                     diagnostics.append(f"Added {comp_name} component")
 
         if not diagnostics:

@@ -7,7 +7,6 @@ Supports migrating settings from frontend localStorage to the database.
 
 import logging
 import time
-from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
@@ -22,18 +21,22 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 # Request / Response Models
 # =============================================================================
 
+
 class SettingValue(BaseModel):
     """Request body for updating a single setting."""
+
     value: str
 
 
 class BatchSettingsUpdate(BaseModel):
     """Request body for batch-updating settings."""
+
     settings: dict[str, str]
 
 
 class SettingResponse(BaseModel):
     """Single setting response."""
+
     key: str
     value: str
     updated_at: int
@@ -43,11 +46,12 @@ class SettingResponse(BaseModel):
 # Routes
 # =============================================================================
 
+
 @router.get("")
 async def get_all_settings() -> dict[str, str]:
     """
     Get all settings as a key-value dictionary.
-    
+
     Returns a flat dict of {key: value} for easy frontend consumption.
     """
     async with get_db() as db:
@@ -61,7 +65,7 @@ async def get_all_settings() -> dict[str, str]:
 async def get_setting(key: str):
     """
     Get a single setting by key.
-    
+
     Returns 404 if the key doesn't exist.
     """
     async with get_db() as db:
@@ -84,7 +88,7 @@ async def get_setting(key: str):
 async def update_settings_batch(body: BatchSettingsUpdate) -> dict[str, str]:
     """
     Update multiple settings at once.
-    
+
     Creates settings that don't exist, updates those that do.
     Returns the full settings dict after update.
     """
@@ -116,7 +120,7 @@ async def update_settings_batch(body: BatchSettingsUpdate) -> dict[str, str]:
 async def update_setting(key: str, body: SettingValue):
     """
     Create or update a single setting.
-    
+
     Uses upsert semantics (creates if missing, updates if exists).
     """
     now = int(time.time() * 1000)
@@ -139,7 +143,7 @@ async def update_setting(key: str, body: SettingValue):
 async def delete_setting(key: str):
     """
     Delete a setting by key.
-    
+
     Returns 404 if the key doesn't exist.
     """
     async with get_db() as db:

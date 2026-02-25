@@ -1,2 +1,3 @@
 """Database package."""
-from .database import init_database, get_db, DB_PATH
+
+from .database import DB_PATH, get_db, init_database

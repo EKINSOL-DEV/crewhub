@@ -38,9 +38,12 @@ async def test_create_project(client):
 @pytest.mark.asyncio
 async def test_create_project_auto_folder_path(client):
     """Test that folder_path is auto-generated from name if not provided."""
-    response = await client.post("/api/projects", json={
-        "name": "My Cool Project",
-    })
+    response = await client.post(
+        "/api/projects",
+        json={
+            "name": "My Cool Project",
+        },
+    )
     data = response.json()
     assert data["folder_path"] is not None
     assert "My-Cool-Project" in data["folder_path"]
@@ -49,10 +52,13 @@ async def test_create_project_auto_folder_path(client):
 @pytest.mark.asyncio
 async def test_create_project_custom_folder_path(client):
     """Test that custom folder_path is preserved."""
-    response = await client.post("/api/projects", json={
-        "name": "Custom Path Project",
-        "folder_path": "/custom/path/here",
-    })
+    response = await client.post(
+        "/api/projects",
+        json={
+            "name": "Custom Path Project",
+            "folder_path": "/custom/path/here",
+        },
+    )
     data = response.json()
     assert data["folder_path"] == "/custom/path/here"
 
@@ -61,9 +67,12 @@ async def test_create_project_custom_folder_path(client):
 async def test_get_project(client):
     """Test GET /api/projects/{id} returns a specific project."""
     # Create first
-    create_resp = await client.post("/api/projects", json={
-        "name": "Get Test Project",
-    })
+    create_resp = await client.post(
+        "/api/projects",
+        json={
+            "name": "Get Test Project",
+        },
+    )
     project_id = create_resp.json()["id"]
 
     response = await client.get(f"/api/projects/{project_id}")
@@ -83,16 +92,22 @@ async def test_get_project_not_found(client):
 @pytest.mark.asyncio
 async def test_update_project(client):
     """Test PUT /api/projects/{id} updates a project."""
-    create_resp = await client.post("/api/projects", json={
-        "name": "Update Test",
-    })
+    create_resp = await client.post(
+        "/api/projects",
+        json={
+            "name": "Update Test",
+        },
+    )
     project_id = create_resp.json()["id"]
 
-    response = await client.put(f"/api/projects/{project_id}", json={
-        "name": "Updated Name",
-        "description": "Updated description",
-        "color": "#00ff00",
-    })
+    response = await client.put(
+        f"/api/projects/{project_id}",
+        json={
+            "name": "Updated Name",
+            "description": "Updated description",
+            "color": "#00ff00",
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Updated Name"
@@ -103,18 +118,24 @@ async def test_update_project(client):
 @pytest.mark.asyncio
 async def test_update_project_not_found(client):
     """Test PUT /api/projects/{id} returns 404 for missing project."""
-    response = await client.put("/api/projects/nonexistent", json={
-        "name": "Test",
-    })
+    response = await client.put(
+        "/api/projects/nonexistent",
+        json={
+            "name": "Test",
+        },
+    )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_delete_project_must_be_archived(client):
     """Test that only archived projects can be deleted."""
-    create_resp = await client.post("/api/projects", json={
-        "name": "Active Project",
-    })
+    create_resp = await client.post(
+        "/api/projects",
+        json={
+            "name": "Active Project",
+        },
+    )
     project_id = create_resp.json()["id"]
 
     # Try deleting active project - should fail
@@ -126,15 +147,21 @@ async def test_delete_project_must_be_archived(client):
 @pytest.mark.asyncio
 async def test_delete_archived_project(client):
     """Test deleting an archived project succeeds."""
-    create_resp = await client.post("/api/projects", json={
-        "name": "To Archive",
-    })
+    create_resp = await client.post(
+        "/api/projects",
+        json={
+            "name": "To Archive",
+        },
+    )
     project_id = create_resp.json()["id"]
 
     # Archive it first
-    await client.put(f"/api/projects/{project_id}", json={
-        "status": "archived",
-    })
+    await client.put(
+        f"/api/projects/{project_id}",
+        json={
+            "status": "archived",
+        },
+    )
 
     # Now delete
     response = await client.delete(f"/api/projects/{project_id}")
@@ -151,20 +178,29 @@ async def test_delete_archived_project(client):
 async def test_cannot_archive_project_with_rooms(client):
     """Test that project with assigned rooms cannot be archived."""
     # Create project
-    create_resp = await client.post("/api/projects", json={
-        "name": "Busy Project",
-    })
+    create_resp = await client.post(
+        "/api/projects",
+        json={
+            "name": "Busy Project",
+        },
+    )
     project_id = create_resp.json()["id"]
 
     # Assign it to a room
-    await client.post("/api/rooms/dev-room/project", json={
-        "project_id": project_id,
-    })
+    await client.post(
+        "/api/rooms/dev-lab/project",
+        json={
+            "project_id": project_id,
+        },
+    )
 
     # Try to archive - should fail
-    response = await client.put(f"/api/projects/{project_id}", json={
-        "status": "archived",
-    })
+    response = await client.put(
+        f"/api/projects/{project_id}",
+        json={
+            "status": "archived",
+        },
+    )
     assert response.status_code == 400
     assert "assigned" in response.json()["detail"].lower()
 
@@ -180,20 +216,26 @@ async def test_delete_project_not_found(client):
 async def test_project_with_rooms(client):
     """Test that project response includes assigned room IDs."""
     # Create project
-    create_resp = await client.post("/api/projects", json={
-        "name": "Room Project",
-    })
+    create_resp = await client.post(
+        "/api/projects",
+        json={
+            "name": "Room Project",
+        },
+    )
     project_id = create_resp.json()["id"]
 
     # Assign to a room
-    await client.post("/api/rooms/dev-room/project", json={
-        "project_id": project_id,
-    })
+    await client.post(
+        "/api/rooms/dev-lab/project",
+        json={
+            "project_id": project_id,
+        },
+    )
 
     # Get project and verify rooms
     response = await client.get(f"/api/projects/{project_id}")
     data = response.json()
-    assert "dev-room" in data["rooms"]
+    assert "dev-lab" in data["rooms"]
 
 
 @pytest.mark.asyncio
@@ -215,14 +257,14 @@ async def test_delete_project_cascade_room_assignments(client):
     create_resp = await client.post("/api/projects", json={"name": "Cascade Test"})
     project_id = create_resp.json()["id"]
 
-    await client.post("/api/rooms/dev-room/project", json={"project_id": project_id})
+    await client.post("/api/rooms/dev-lab/project", json={"project_id": project_id})
 
     # Verify room is assigned
     proj_resp = await client.get(f"/api/projects/{project_id}")
-    assert "dev-room" in proj_resp.json()["rooms"]
+    assert "dev-lab" in proj_resp.json()["rooms"]
 
     # Unassign room first (required before archiving)
-    await client.delete("/api/rooms/dev-room/project")
+    await client.delete("/api/rooms/dev-lab/project")
 
     # Archive the project
     archive_resp = await client.put(f"/api/projects/{project_id}", json={"status": "archived"})
@@ -249,9 +291,12 @@ async def test_delete_nonexistent_project(client):
 async def test_projects_overview(client):
     """Test GET /api/projects/overview returns enriched data."""
     # Create a project
-    await client.post("/api/projects", json={
-        "name": "Overview Project",
-    })
+    await client.post(
+        "/api/projects",
+        json={
+            "name": "Overview Project",
+        },
+    )
 
     response = await client.get("/api/projects/overview")
     assert response.status_code == 200

@@ -78,18 +78,11 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const threadsApi = {
   list: (kind?: string, archived = false) =>
-    fetchJSON<ThreadsListResponse>(
-      `/threads?${kind ? `kind=${kind}&` : ''}archived=${archived}`
-    ),
+    fetchJSON<ThreadsListResponse>(`/threads?${kind ? `kind=${kind}&` : ''}archived=${archived}`),
 
-  get: (threadId: string) =>
-    fetchJSON<Thread>(`/threads/${threadId}`),
+  get: (threadId: string) => fetchJSON<Thread>(`/threads/${threadId}`),
 
-  create: (data: {
-    kind?: 'direct' | 'group'
-    title?: string
-    participant_agent_ids: string[]
-  }) =>
+  create: (data: { kind?: 'direct' | 'group'; title?: string; participant_agent_ids: string[] }) =>
     fetchJSON<Thread>('/threads', {
       method: 'POST',
       body: JSON.stringify(data),

@@ -1,9 +1,9 @@
 # Demo Site Plan — `demo.crewhub.dev`
 
-> **Status:** Draft  
-> **Date:** 2026-02-05  
-> **Author:** Dev Agent (Opus)  
-> **Goal:** Deploy CrewHub frontend as a standalone static site with mock API — no backend required  
+> **Status:** Draft
+> **Date:** 2026-02-05
+> **Author:** Dev Agent (Opus)
+> **Goal:** Deploy CrewHub frontend as a standalone static site with mock API — no backend required
 
 ---
 
@@ -482,8 +482,8 @@ const MOCK_ARCHIVED_SESSIONS = [
 ## 5. Implementation Plan
 
 ### Step 1: Create `mockApi.ts` — the mock fetch interceptor
-**File:** `frontend/src/lib/mockApi.ts`  
-**Effort:** ~3 hours  
+**File:** `frontend/src/lib/mockApi.ts`
+**Effort:** ~3 hours
 
 This is the core of the demo. A single file that:
 1. Stores all mock data (sections 4.1–4.8)
@@ -501,16 +501,16 @@ export function setupMockApi() {
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url
     const method = init?.method?.toUpperCase() || 'GET'
-    
+
     // Only intercept /api/* requests
     if (!url.startsWith('/api')) {
       return originalFetch(input, init)
     }
-    
+
     // Route to mock handler
     const response = handleMockRequest(url, method, init?.body)
     if (response) return response
-    
+
     // Fallback: 200 OK for unhandled mutations
     if (method !== 'GET') {
       return new Response(JSON.stringify({ success: true }), {
@@ -518,18 +518,18 @@ export function setupMockApi() {
         headers: { 'Content-Type': 'application/json' },
       })
     }
-    
+
     // Unhandled GET → 404
     console.warn(`[MockAPI] Unhandled: ${method} ${url}`)
     return new Response('Not Found', { status: 404 })
   }
-  
+
   // 2. Patch EventSource for SSE
   const OriginalEventSource = window.EventSource
   window.EventSource = class MockEventSource extends EventTarget {
     readyState = EventSource.OPEN
     url: string
-    
+
     constructor(url: string) {
       super()
       this.url = url
@@ -540,26 +540,26 @@ export function setupMockApi() {
         if (this.onopen) this.onopen(new Event('open'))
       }, 100)
     }
-    
+
     close() { this.readyState = EventSource.CLOSED }
     onopen: ((ev: Event) => void) | null = null
     onmessage: ((ev: MessageEvent) => void) | null = null
     onerror: ((ev: Event) => void) | null = null
-    
+
     // Implement addEventListener/removeEventListener via EventTarget
   } as any
-  
+
   // 3. Auto-enable demo mode
   localStorage.setItem('crewhub-demo-mode', 'true')
-  
+
   // 4. Skip onboarding
   localStorage.setItem('crewhub-onboarded', 'true')
 }
 ```
 
 ### Step 2: Wire up in `main.tsx`
-**File:** `frontend/src/main.tsx`  
-**Effort:** 15 minutes  
+**File:** `frontend/src/main.tsx`
+**Effort:** 15 minutes
 
 ```typescript
 import { setupMockApi } from './lib/mockApi'
@@ -573,8 +573,8 @@ if (import.meta.env.VITE_DEMO_MODE === 'true') {
 ```
 
 ### Step 3: Auto-enable demo mode in DemoContext
-**File:** `frontend/src/contexts/DemoContext.tsx`  
-**Effort:** 15 minutes  
+**File:** `frontend/src/contexts/DemoContext.tsx`
+**Effort:** 15 minutes
 
 Small change: when `VITE_DEMO_MODE=true`, start with demo mode enabled and hide the F5 toggle message (replace with "Demo Site" indicator).
 
@@ -590,17 +590,17 @@ const [isDemoMode, setIsDemoMode] = useState(() => {
 ```
 
 ### Step 4: Adjust DemoModeIndicator for public demo
-**File:** `frontend/src/contexts/DemoContext.tsx`  
-**Effort:** 15 minutes  
+**File:** `frontend/src/contexts/DemoContext.tsx`
+**Effort:** 15 minutes
 
 When `VITE_DEMO_MODE=true`, show a "Try CrewHub" CTA instead of "F5 to exit":
 ```typescript
 export function DemoModeIndicator() {
   const { isDemoMode } = useDemoMode()
   const isPublicDemo = import.meta.env.VITE_DEMO_MODE === 'true'
-  
+
   if (!isDemoMode && !isPublicDemo) return null
-  
+
   if (isPublicDemo) {
     return (
       <div style={/* bottom banner */}>
@@ -616,8 +616,8 @@ export function DemoModeIndicator() {
 ```
 
 ### Step 5: Create production Dockerfile for static build
-**File:** `frontend/Dockerfile.demo`  
-**Effort:** 30 minutes  
+**File:** `frontend/Dockerfile.demo`
+**Effort:** 30 minutes
 
 ```dockerfile
 # Build stage
@@ -637,8 +637,8 @@ EXPOSE 80
 ```
 
 ### Step 6: Nginx config for SPA routing
-**File:** `frontend/nginx-demo.conf`  
-**Effort:** 15 minutes  
+**File:** `frontend/nginx-demo.conf`
+**Effort:** 15 minutes
 
 ```nginx
 server {
@@ -646,18 +646,18 @@ server {
     server_name demo.crewhub.dev;
     root /usr/share/nginx/html;
     index index.html;
-    
+
     # SPA fallback
     location / {
         try_files $uri $uri/ /index.html;
     }
-    
+
     # Cache static assets
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
-    
+
     # No cache for HTML
     location = /index.html {
         add_header Cache-Control "no-cache";
@@ -666,7 +666,7 @@ server {
 ```
 
 ### Step 7: Deploy to Coolify
-**Effort:** 30 minutes  
+**Effort:** 30 minutes
 
 1. Create new app in Coolify: `demo.crewhub.dev`
 2. Source: GitHub repo `ekinsolbot/crewhub`
@@ -687,7 +687,7 @@ server {
 | `frontend/Dockerfile.demo` | **NEW** | Multi-stage Dockerfile for static build |
 | `frontend/nginx-demo.conf` | **NEW** | SPA routing config |
 
-**Total new code:** ~450 lines (mockApi.ts is the bulk)  
+**Total new code:** ~450 lines (mockApi.ts is the bulk)
 **Total edits:** ~15 lines across 2 files
 
 ---

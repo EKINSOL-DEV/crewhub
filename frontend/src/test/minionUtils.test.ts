@@ -68,11 +68,15 @@ describe('getSessionStatus', () => {
   })
 
   it('returns idle for sessions 10 minutes old', () => {
-    expect(getSessionStatus(makeMockSession({ updatedAt: Date.now() - 10 * 60 * 1000 }))).toBe('idle')
+    expect(getSessionStatus(makeMockSession({ updatedAt: Date.now() - 10 * 60 * 1000 }))).toBe(
+      'idle'
+    )
   })
 
   it('returns sleeping for sessions 1 hour old', () => {
-    expect(getSessionStatus(makeMockSession({ updatedAt: Date.now() - 60 * 60 * 1000 }))).toBe('sleeping')
+    expect(getSessionStatus(makeMockSession({ updatedAt: Date.now() - 60 * 60 * 1000 }))).toBe(
+      'sleeping'
+    )
   })
 
   it('returns supervising when parent has active subagents', () => {
@@ -268,22 +272,35 @@ describe('getSessionDisplayName', () => {
 
 describe('shouldBeInParkingLane', () => {
   it('main agents never go to parking', () => {
-    expect(shouldBeInParkingLane(makeMockSession({ key: 'agent:main:main', updatedAt: 0 }))).toBe(false)
-    expect(shouldBeInParkingLane(makeMockSession({ key: 'agent:dev:main', updatedAt: 0 }))).toBe(false)
+    expect(shouldBeInParkingLane(makeMockSession({ key: 'agent:main:main', updatedAt: 0 }))).toBe(
+      false
+    )
+    expect(shouldBeInParkingLane(makeMockSession({ key: 'agent:dev:main', updatedAt: 0 }))).toBe(
+      false
+    )
   })
 
   it('sleeping sessions go to parking', () => {
-    expect(shouldBeInParkingLane(makeMockSession({
-      key: 'agent:main:subagent:abc',
-      updatedAt: Date.now() - 60 * 60 * 1000,
-    }))).toBe(true)
+    expect(
+      shouldBeInParkingLane(
+        makeMockSession({
+          key: 'agent:main:subagent:abc',
+          updatedAt: Date.now() - 60 * 60 * 1000,
+        })
+      )
+    ).toBe(true)
   })
 
   it('active subagents stay out of parking', () => {
-    expect(shouldBeInParkingLane(makeMockSession({
-      key: 'agent:main:subagent:abc',
-      updatedAt: Date.now(),
-    }), true)).toBe(false)
+    expect(
+      shouldBeInParkingLane(
+        makeMockSession({
+          key: 'agent:main:subagent:abc',
+          updatedAt: Date.now(),
+        }),
+        true
+      )
+    ).toBe(false)
   })
 })
 

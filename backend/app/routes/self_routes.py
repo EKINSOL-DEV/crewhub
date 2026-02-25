@@ -8,7 +8,6 @@ to know their session key upfront.
 Phase 1 of Agent Onboarding Masterplan.
 """
 
-import json
 import logging
 import time
 from typing import Optional
@@ -31,13 +30,13 @@ router = APIRouter(prefix="/api/self", tags=["self"])
 
 # ── Request/Response Models ───────────────────────────────────────────
 
+
 class IdentifyRequest(BaseModel):
-    agent_id: str = Field(..., min_length=1, max_length=128,
-                          description="Stable agent identity, e.g. 'agent:dev'")
-    runtime: Optional[str] = Field(None, max_length=64,
-                                   description="Runtime type: openclaw, claude-code, codex")
-    session_key: Optional[str] = Field(None, max_length=256,
-                                       description="Current session key (optional if key is bound)")
+    agent_id: str = Field(..., min_length=1, max_length=128, description="Stable agent identity, e.g. 'agent:dev'")
+    runtime: Optional[str] = Field(None, max_length=64, description="Runtime type: openclaw, claude-code, codex")
+    session_key: Optional[str] = Field(
+        None, max_length=256, description="Current session key (optional if key is bound)"
+    )
 
 
 class IdentifyResponse(BaseModel):
@@ -77,6 +76,7 @@ class OkResponse(BaseModel):
 
 
 # ── Helpers ───────────────────────────────────────────────────────────
+
 
 async def _resolve_agent_id(key: APIKeyInfo) -> Optional[str]:
     """Resolve agent_id from API key binding or most recent identity."""
@@ -142,6 +142,7 @@ async def _get_room_id(session_key: str) -> Optional[str]:
 
 # ── Routes ────────────────────────────────────────────────────────────
 
+
 @router.post("/identify", response_model=IdentifyResponse)
 async def identify(
     body: IdentifyRequest,
@@ -149,11 +150,11 @@ async def identify(
 ):
     """
     Identify this agent to CrewHub.
-    
+
     Binds the caller's API key to an agent_id and session_key.
     Creates the agent in the registry if it doesn't exist.
     Idempotent: calling with the same data is a no-op.
-    
+
     Binding rules (Section 4.5 of masterplan):
     - Bound key: can only operate as its bound agent_id
     - Unbound self key: can only claim existing agent_id associated with this key
@@ -167,15 +168,12 @@ async def identify(
     if key.agent_id and key.agent_id != agent_id:
         raise HTTPException(
             status_code=403,
-            detail=f"API key is bound to agent_id '{key.agent_id}'. "
-                   f"Cannot identify as '{agent_id}'.",
+            detail=f"API key is bound to agent_id '{key.agent_id}'. Cannot identify as '{agent_id}'.",
         )
 
     # ── Check if agent_id exists ──
     async with get_db() as db:
-        async with db.execute(
-            "SELECT id FROM agents WHERE id = ?", (agent_id,)
-        ) as cursor:
+        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cursor:
             agent_exists = await cursor.fetchone() is not None
 
         if not agent_exists:
@@ -184,17 +182,15 @@ async def identify(
                 raise HTTPException(
                     status_code=403,
                     detail=f"Agent '{agent_id}' does not exist. "
-                           f"Creating new agents requires 'manage' scope. "
-                           f"Your scopes: {key.scopes}",
+                    f"Creating new agents requires 'manage' scope. "
+                    f"Your scopes: {key.scopes}",
                 )
 
             # ── Rule 4: Rate limit identity creation ──
             if not check_identity_creation_rate(key.key_id):
                 raise HTTPException(
                     status_code=429,
-                    detail="Identity creation rate limit exceeded "
-                           f"(max {10} per hour per key). "
-                           "Try again later.",
+                    detail=f"Identity creation rate limit exceeded (max {10} per hour per key). Try again later.",
                 )
 
             # Auto-create agent in registry
@@ -202,8 +198,7 @@ async def identify(
                 """INSERT INTO agents (id, name, icon, color, agent_session_key,
                    default_room_id, sort_order, is_pinned, auto_spawn, created_at, updated_at)
                    VALUES (?, ?, '🤖', '#6b7280', ?, 'headquarters', 99, 0, 1, ?, ?)""",
-                (agent_id, agent_id.split(":")[-1].capitalize(),
-                 session_key, now, now),
+                (agent_id, agent_id.split(":")[-1].capitalize(), session_key, now, now),
             )
             await db.commit()
             record_identity_creation(key.key_id, agent_id)
@@ -222,8 +217,7 @@ async def identify(
                 if existing and existing["api_key_id"] != key.key_id:
                     raise HTTPException(
                         status_code=403,
-                        detail=f"Agent '{agent_id}' is owned by another key. "
-                               f"Cannot claim.",
+                        detail=f"Agent '{agent_id}' is owned by another key. Cannot claim.",
                     )
 
             # Update agent_session_key if session_key provided
@@ -247,7 +241,7 @@ async def identify(
                 raise HTTPException(
                     status_code=403,
                     detail=f"Identity binding (agent_id={agent_id}, session_key={session_key}) "
-                           f"is owned by another key. Cannot overwrite.",
+                    f"is owned by another key. Cannot overwrite.",
                 )
 
             await db.execute(
@@ -259,7 +253,6 @@ async def identify(
                 (agent_id, session_key, key.key_id, body.runtime, now, now),
             )
             await db.commit()
-
 
     # ── Build response ──
     display_name = await _get_display_name(session_key) if session_key else None
@@ -276,8 +269,7 @@ async def identify(
         scopes=key.scopes,
         display_name=display_name or metadata.get("name"),
         room_id=room_id,
-        agent_metadata={k: v for k, v in metadata.items()
-                       if k not in ("default_room_id",)},
+        agent_metadata={k: v for k, v in metadata.items() if k not in ("default_room_id",)},
         created=created,
     )
 
@@ -288,7 +280,7 @@ async def get_self(
 ):
     """
     Get current identity and status.
-    
+
     Returns the agent_id, session_key, scopes, display name,
     and room assignment for the authenticated caller.
     """
@@ -312,8 +304,7 @@ async def get_self(
         scopes=key.scopes,
         display_name=display_name or metadata.get("name"),
         room_id=room_id,
-        agent_metadata={k: v for k, v in metadata.items()
-                       if k not in ("default_room_id",)},
+        agent_metadata={k: v for k, v in metadata.items() if k not in ("default_room_id",)},
     )
 
 
@@ -324,7 +315,7 @@ async def set_display_name(
 ):
     """
     Set display name for the authenticated agent's current session.
-    
+
     Idempotent: setting the same name is a no-op.
     """
     agent_id = await _resolve_agent_id(key)
@@ -363,7 +354,7 @@ async def set_room(
 ):
     """
     Assign the authenticated agent's current session to a room.
-    
+
     Idempotent: assigning to the same room is a no-op.
     """
     agent_id = await _resolve_agent_id(key)
@@ -382,9 +373,7 @@ async def set_room(
 
     # Verify room exists
     async with get_db() as db:
-        async with db.execute(
-            "SELECT id FROM rooms WHERE id = ?", (body.room_id,)
-        ) as cursor:
+        async with db.execute("SELECT id FROM rooms WHERE id = ?", (body.room_id,)) as cursor:
             if not await cursor.fetchone():
                 raise HTTPException(status_code=404, detail=f"Room '{body.room_id}' not found.")
 
@@ -399,11 +388,14 @@ async def set_room(
         )
         await db.commit()
 
-    await broadcast("rooms-refresh", {
-        "action": "assignment_changed",
-        "session_key": session_key,
-        "room_id": body.room_id,
-    })
+    await broadcast(
+        "rooms-refresh",
+        {
+            "action": "assignment_changed",
+            "session_key": session_key,
+            "room_id": body.room_id,
+        },
+    )
 
     return {"ok": True, "room_id": body.room_id, "session_key": session_key}
 
@@ -415,7 +407,7 @@ async def heartbeat(
 ):
     """
     Update agent presence/heartbeat.
-    
+
     Optional but useful for real-time dashboards.
     Updates last_seen_at in agent_identities.
     """

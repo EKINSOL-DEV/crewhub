@@ -46,7 +46,7 @@ export const TaskCard = memo(function TaskCard({
 }: TaskCardProps) {
   const priority = priorityConfig[task.priority]
   const status = statusConfig[task.status]
-  
+
   // Dropdown state
   const [showDropdown, setShowDropdown] = useState(false)
   const [spawnDialogOpen, setSpawnDialogOpen] = useState(false)
@@ -78,7 +78,8 @@ export const TaskCard = memo(function TaskCard({
   const canMoveToBlocked = task.status === 'in_progress'
 
   // Show Run with Agent button for todo/blocked tasks (not already in progress or done)
-  const showRunWithAgentButton = !hideRunWithAgent && (task.status === 'todo' || task.status === 'blocked')
+  const showRunWithAgentButton =
+    !hideRunWithAgent && (task.status === 'todo' || task.status === 'blocked')
 
   return (
     <>
@@ -123,7 +124,7 @@ export const TaskCard = memo(function TaskCard({
           >
             {task.title}
           </span>
-          
+
           {/* Priority Badge */}
           <span
             style={{

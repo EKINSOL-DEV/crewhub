@@ -1,17 +1,19 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 export function Router() {
-  const groupRef = useRef<THREE.Group>(null);
-  const ledsRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null)
+  const ledsRef = useRef<THREE.Group>(null)
   useFrame((s) => {
-    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12;
-    if (ledsRef.current) ledsRef.current.children.forEach((l, i) => {
-      const mat = (l as THREE.Mesh).material as THREE.MeshStandardMaterial;
-      if (mat.emissiveIntensity !== undefined) mat.emissiveIntensity = Math.sin(s.clock.elapsedTime * 2 + i) > 0 ? 3 : 0.5;
-    });
-  });
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(s.clock.elapsedTime * 0.3) * 0.12
+    if (ledsRef.current)
+      ledsRef.current.children.forEach((l, i) => {
+        const mat = (l as THREE.Mesh).material as THREE.MeshStandardMaterial
+        if (mat.emissiveIntensity !== undefined)
+          mat.emissiveIntensity = Math.sin(s.clock.elapsedTime * 2 + i) > 0 ? 3 : 0.5
+      })
+  })
   return (
     <group ref={groupRef}>
       {/* Body */}
@@ -46,13 +48,17 @@ export function Router() {
       ))}
       {/* LEDs */}
       <group ref={ledsRef}>
-        {[0, 1, 2, 3, 4].map(i => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <mesh key={i} position={[-0.2 + i * 0.1, -0.285, 0.24]}>
             <sphereGeometry args={[0.012, 4, 4]} />
-            <meshStandardMaterial color={i < 3 ? '#00ff66' : '#ff8800'} emissive={i < 3 ? '#00ff66' : '#ff8800'} emissiveIntensity={2} />
+            <meshStandardMaterial
+              color={i < 3 ? '#00ff66' : '#ff8800'}
+              emissive={i < 3 ? '#00ff66' : '#ff8800'}
+              emissiveIntensity={2}
+            />
           </mesh>
         ))}
       </group>
     </group>
-  );
+  )
 }

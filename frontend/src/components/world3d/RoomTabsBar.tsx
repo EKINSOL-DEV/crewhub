@@ -15,7 +15,10 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
   const zones = zoneRegistry.getAll()
 
   const handleTabClick = (roomId: string) => {
-    if (state.focusedRoomId === roomId && (state.level === 'room' || state.level === 'bot' || state.level === 'board')) {
+    if (
+      state.focusedRoomId === roomId &&
+      (state.level === 'room' || state.level === 'bot' || state.level === 'board')
+    ) {
       goOverview()
     } else {
       focusRoom(roomId)
@@ -42,7 +45,7 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
         fontFamily: 'system-ui, sans-serif',
       }}
     >
-      {rooms.map(room => {
+      {rooms.map((room) => {
         const count = roomBotCounts.get(room.id) || 0
         const isFocused = state.focusedRoomId === room.id
         return (
@@ -60,18 +63,16 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
               fontSize: 13,
               fontWeight: isFocused ? 700 : 500,
               color: isFocused ? '#fff' : '#374151',
-              background: isFocused
-                ? (room.color || '#4f46e5')
-                : 'rgba(0,0,0,0.04)',
+              background: isFocused ? room.color || '#4f46e5' : 'rgba(0,0,0,0.04)',
               transition: 'all 0.2s ease',
               whiteSpace: 'nowrap',
             }}
-            onMouseEnter={e => {
+            onMouseEnter={(e) => {
               if (!isFocused) {
                 e.currentTarget.style.background = 'rgba(0,0,0,0.08)'
               }
             }}
-            onMouseLeave={e => {
+            onMouseLeave={(e) => {
               if (!isFocused) {
                 e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
               }
@@ -162,29 +163,38 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
                 fontFamily: 'system-ui, sans-serif',
                 opacity: isTransitioning ? 0.5 : 1,
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.08)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0,0,0,0.08)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
+              }}
             >
-              {zones.map(z => {
+              {zones.map((z) => {
                 let label = ''
                 if (z.id === 'creator-center') label = ' [ALPHA PREVIEW]'
                 if (z.id === 'game-center' || z.id === 'academy') label = ' [PLANNED]'
                 return (
                   <option key={z.id} value={z.id}>
-                    {z.icon} {z.name}{label}
+                    {z.icon} {z.name}
+                    {label}
                   </option>
                 )
               })}
             </select>
-            <span style={{
-              position: 'absolute',
-              right: 8,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: 10,
-              color: '#9ca3af',
-              pointerEvents: 'none',
-            }}>▼</span>
+            <span
+              style={{
+                position: 'absolute',
+                right: 8,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: 10,
+                color: '#9ca3af',
+                pointerEvents: 'none',
+              }}
+            >
+              ▼
+            </span>
           </div>
         </>
       )}

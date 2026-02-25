@@ -3,6 +3,7 @@
 All SQL for projects lives here. Routes call these functions and handle
 HTTP concerns (exceptions, SSE broadcasts, response formatting).
 """
+
 import logging
 import re
 import time
@@ -19,11 +20,10 @@ DEFAULT_PROJECTS_BASE_PATH = "~/Projects"
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
+
 async def _get_room_ids(db, project_id: str) -> List[str]:
     """Return the list of room IDs assigned to a project."""
-    async with db.execute(
-        "SELECT id FROM rooms WHERE project_id = ?", (project_id,)
-    ) as cursor:
+    async with db.execute("SELECT id FROM rooms WHERE project_id = ?", (project_id,)) as cursor:
         rows = await cursor.fetchall()
     return [r["id"] for r in rows]
 
@@ -31,9 +31,7 @@ async def _get_room_ids(db, project_id: str) -> List[str]:
 async def _get_base_path(db) -> str:
     """Read the configurable projects base path from settings, falling back to default."""
     try:
-        async with db.execute(
-            "SELECT value FROM settings WHERE key = 'projects_base_path'"
-        ) as cursor:
+        async with db.execute("SELECT value FROM settings WHERE key = 'projects_base_path'") as cursor:
             row = await cursor.fetchone()
             if row:
                 return row[0] if isinstance(row, tuple) else row["value"]
@@ -44,12 +42,11 @@ async def _get_base_path(db) -> str:
 
 # ── public service functions ──────────────────────────────────────────────────
 
+
 async def list_projects() -> List[ProjectResponse]:
     """Return all projects ordered by creation date (newest first)."""
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM projects ORDER BY created_at DESC"
-        ) as cursor:
+        async with db.execute("SELECT * FROM projects ORDER BY created_at DESC") as cursor:
             rows = await cursor.fetchall()
 
         projects = []
@@ -63,9 +60,7 @@ async def list_projects() -> List[ProjectResponse]:
 async def get_project(project_id: str) -> Optional[ProjectResponse]:
     """Return a single project by ID, or None if not found."""
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM projects WHERE id = ?", (project_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
             row = await cursor.fetchone()
 
         if not row:
@@ -81,9 +76,7 @@ async def get_projects_overview() -> List[dict]:
     Used by the HQ dashboard.
     """
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM projects ORDER BY created_at DESC"
-        ) as cursor:
+        async with db.execute("SELECT * FROM projects ORDER BY created_at DESC") as cursor:
             rows = await cursor.fetchall()
 
         overview = []
@@ -105,11 +98,13 @@ async def get_projects_overview() -> List[dict]:
 
             room_ids = await _get_room_ids(db, row["id"])
 
-            overview.append({
-                **ProjectResponse(**row, rooms=room_ids).model_dump(),
-                "room_count": room_count,
-                "agent_count": agent_count,
-            })
+            overview.append(
+                {
+                    **ProjectResponse(**row, rooms=room_ids).model_dump(),
+                    "room_count": room_count,
+                    "agent_count": agent_count,
+                }
+            )
 
         return overview
 
@@ -177,9 +172,7 @@ async def update_project(
             a project that still has rooms assigned.
     """
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM projects WHERE id = ?", (project_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
             existing = await cursor.fetchone()
 
         if not existing:
@@ -188,13 +181,8 @@ async def update_project(
         update_data = project.model_dump(exclude_unset=True)
 
         # Archive guard: cannot archive if rooms are still assigned
-        if (
-            update_data.get("status") == "archived"
-            and existing["status"] != "archived"
-        ):
-            async with db.execute(
-                "SELECT id, name FROM rooms WHERE project_id = ?", (project_id,)
-            ) as cursor:
+        if update_data.get("status") == "archived" and existing["status"] != "archived":
+            async with db.execute("SELECT id, name FROM rooms WHERE project_id = ?", (project_id,)) as cursor:
                 assigned_rooms = await cursor.fetchall()
 
             if assigned_rooms:
@@ -221,9 +209,7 @@ async def update_project(
             )
             await db.commit()
 
-        async with db.execute(
-            "SELECT * FROM projects WHERE id = ?", (project_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
             row = await cursor.fetchone()
 
         room_ids = await _get_room_ids(db, project_id)
@@ -240,9 +226,7 @@ async def delete_project(project_id: str) -> Optional[str]:
         ValueError("not_archived") if the project is not in archived state.
     """
     async with get_db() as db:
-        async with db.execute(
-            "SELECT * FROM projects WHERE id = ?", (project_id,)
-        ) as cursor:
+        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
             existing = await cursor.fetchone()
 
         if not existing:

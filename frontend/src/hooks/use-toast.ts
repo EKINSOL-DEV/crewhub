@@ -1,9 +1,9 @@
-import { useCallback } from "react"
+import { useCallback } from 'react'
 
 interface Toast {
   title: string
   description?: string
-  variant?: "default" | "destructive"
+  variant?: 'default' | 'destructive'
 }
 
 /**
@@ -14,7 +14,7 @@ export function useToast() {
   const toast = useCallback(({ title, description, variant }: Toast) => {
     // Only log errors to console in production
     // Regular toasts are silent (extend with UI library as needed)
-    if (variant === "destructive") {
+    if (variant === 'destructive') {
       const message = description ? `${title}: ${description}` : title
       console.error(`[Toast] ${message}`)
     }

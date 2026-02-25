@@ -42,14 +42,25 @@ export function useProjectDocuments(projectId: string | null | undefined) {
     }
   }, [projectId])
 
-  useEffect(() => { refresh() }, [refresh])
+  useEffect(() => {
+    refresh()
+  }, [refresh])
 
   return { files, projectName, loading, error, refresh }
 }
 
-export function useProjectDocumentContent(projectId: string | null | undefined, path: string | null) {
+export function useProjectDocumentContent(
+  projectId: string | null | undefined,
+  path: string | null
+) {
   const [content, setContent] = useState<string | null>(null)
-  const [metadata, setMetadata] = useState<{ path: string; size: number; modified: string; lines: number; language: string } | null>(null)
+  const [metadata, setMetadata] = useState<{
+    path: string
+    size: number
+    modified: string
+    lines: number
+    language: string
+  } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -65,11 +76,11 @@ export function useProjectDocumentContent(projectId: string | null | undefined, 
     setError(null)
 
     fetch(`${API_BASE}/projects/${projectId}/documents/${encodeURIComponent(path)}`)
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error(`Failed to load document: ${res.status}`)
         return res.json()
       })
-      .then(data => {
+      .then((data) => {
         if (cancelled) return
         setContent(data.content)
         setMetadata({
@@ -80,25 +91,30 @@ export function useProjectDocumentContent(projectId: string | null | undefined, 
           language: data.language,
         })
       })
-      .catch(e => {
+      .catch((e) => {
         if (!cancelled) setError(e.message)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [projectId, path])
 
   return { content, metadata, loading, error, setContent }
 }
 
 export async function saveProjectDocument(projectId: string, path: string, content: string) {
-  const res = await fetch(`${API_BASE}/projects/${projectId}/documents/${encodeURIComponent(path)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
-  })
+  const res = await fetch(
+    `${API_BASE}/projects/${projectId}/documents/${encodeURIComponent(path)}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    }
+  )
   if (!res.ok) {
     const detail = await res.text()
     throw new Error(`Save failed (${res.status}): ${detail}`)

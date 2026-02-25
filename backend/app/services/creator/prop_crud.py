@@ -15,9 +15,7 @@ logger = logging.getLogger(__name__)
 # ─── Part helpers ─────────────────────────────────────────────────
 
 
-def apply_color_changes_to_parts(
-    parts: list[dict], color_changes: dict
-) -> list[dict]:
+def apply_color_changes_to_parts(parts: list[dict], color_changes: dict) -> list[dict]:
     """Return a new parts list with colors remapped per ``{old: new}`` mapping."""
     if not color_changes or not parts:
         return parts
@@ -32,9 +30,7 @@ def apply_color_changes_to_parts(
     return updated
 
 
-def persist_refined_prop(
-    prop_id: str, refined_code: str, parts: list[dict]
-) -> None:
+def persist_refined_prop(prop_id: str, refined_code: str, parts: list[dict]) -> None:
     """Write refined code + parts back to the generation-history JSON."""
     from .prop_generator import load_generation_history, save_generation_history
 
@@ -57,19 +53,13 @@ async def find_prop_usage_in_blueprints(prop_name: str) -> list[dict]:
     placements: list[dict] = []
     try:
         async with get_db() as db:
-            cursor = await db.execute(
-                "SELECT id, name, room_id, blueprint_json FROM custom_blueprints"
-            )
+            cursor = await db.execute("SELECT id, name, room_id, blueprint_json FROM custom_blueprints")
             rows = await cursor.fetchall()
             for row in rows:
                 bp_json = row["blueprint_json"]
                 if isinstance(bp_json, str):
                     bp_json = json.loads(bp_json)
-                instances = [
-                    p
-                    for p in bp_json.get("placements", [])
-                    if p.get("propId") == prop_name
-                ]
+                instances = [p for p in bp_json.get("placements", []) if p.get("propId") == prop_name]
                 if instances:
                     placements.append(
                         {
@@ -84,9 +74,7 @@ async def find_prop_usage_in_blueprints(prop_name: str) -> list[dict]:
     return placements
 
 
-async def cascade_delete_prop_from_blueprints(
-    placements: list[dict], prop_name: str
-) -> tuple[list[str], int]:
+async def cascade_delete_prop_from_blueprints(placements: list[dict], prop_name: str) -> tuple[list[str], int]:
     """Remove every placement of *prop_name* from the given blueprints.
 
     Returns ``(room_names_affected, total_instances_removed)``.
@@ -110,16 +98,10 @@ async def cascade_delete_prop_from_blueprints(
                 bp_json = json.loads(bp_json)
 
             original_count = len(bp_json.get("placements", []))
-            bp_json["placements"] = [
-                p
-                for p in bp_json.get("placements", [])
-                if p.get("propId") != prop_name
-            ]
+            bp_json["placements"] = [p for p in bp_json.get("placements", []) if p.get("propId") != prop_name]
             removed = original_count - len(bp_json["placements"])
             total_removed += removed
-            deleted_rooms.append(
-                placement.get("blueprintName", placement["blueprintId"])
-            )
+            deleted_rooms.append(placement.get("blueprintName", placement["blueprintId"]))
 
             await db.execute(
                 "UPDATE custom_blueprints SET blueprint_json = ? WHERE id = ?",

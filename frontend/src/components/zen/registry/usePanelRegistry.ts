@@ -28,11 +28,14 @@ export interface UsePanelRegistryReturn {
 }
 
 export function usePanelRegistry(): UsePanelRegistryReturn {
-  return useMemo(() => ({
-    get: getPanelDef,
-    visible: getVisiblePanelDefs(),
-    primary: getPrimaryPanelDefs(),
-    secondary: getSecondaryPanelDefs(),
-    selectableIds: getSelectablePanelIds(),
-  }), [])
+  return useMemo(
+    () => ({
+      get: getPanelDef,
+      visible: getVisiblePanelDefs(),
+      primary: getPrimaryPanelDefs(),
+      secondary: getSecondaryPanelDefs(),
+      selectableIds: getSelectablePanelIds(),
+    }),
+    []
+  )
 }

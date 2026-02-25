@@ -47,15 +47,11 @@ interface LogEntryItemProps {
 
 function LogEntryItem({ entry }: LogEntryItemProps) {
   const config = LEVEL_CONFIG[entry.level]
-  
+
   return (
     <div className={`zen-log-entry zen-log-level-${entry.level}`}>
       <span className="zen-log-time">{formatTime(entry.timestamp)}</span>
-      <span 
-        className="zen-log-level"
-        style={{ color: config.color }}
-        title={config.label}
-      >
+      <span className="zen-log-level" style={{ color: config.color }} title={config.label}>
         {config.icon}
       </span>
       <span className="zen-log-source">[{entry.source}]</span>
@@ -92,21 +88,21 @@ function FilterControls({
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
       />
-      
+
       <div className="zen-logs-levels">
-        {(Object.keys(LEVEL_CONFIG) as LogLevel[]).map(level => {
+        {(Object.keys(LEVEL_CONFIG) as LogLevel[]).map((level) => {
           const config = LEVEL_CONFIG[level]
           const isActive = levels.has(level)
-          
+
           return (
             <button
               type="button"
               key={level}
               className={`zen-logs-level-btn ${isActive ? 'zen-logs-level-active' : ''}`}
               onClick={() => onToggleLevel(level)}
-              style={{ 
+              style={{
                 borderColor: isActive ? config.color : 'transparent',
-                color: isActive ? config.color : 'var(--zen-fg-muted)'
+                color: isActive ? config.color : 'var(--zen-fg-muted)',
               }}
               title={`${isActive ? 'Hide' : 'Show'} ${config.label}`}
               aria-label={`${isActive ? 'Hide' : 'Show'} ${config.label} logs`}
@@ -116,7 +112,7 @@ function FilterControls({
           )
         })}
       </div>
-      
+
       <label className="zen-logs-autoscroll">
         <input
           type="checkbox"
@@ -135,9 +131,7 @@ function EmptyState({ hasFilter }: { hasFilter: boolean }) {
   return (
     <div className="zen-logs-empty">
       <div className="zen-empty-icon">📜</div>
-      <div className="zen-empty-title">
-        {hasFilter ? 'No matching logs' : 'No logs yet'}
-      </div>
+      <div className="zen-empty-title">{hasFilter ? 'No matching logs' : 'No logs yet'}</div>
       <div className="zen-empty-subtitle">
         {hasFilter ? 'Try adjusting your filters' : 'System events will appear here'}
       </div>
@@ -156,53 +150,57 @@ export function ZenLogsPanel() {
   const [search, setSearch] = useState('')
   const [autoScroll, setAutoScroll] = useState(true)
   const [connected, setConnected] = useState(false)
-  
+
   const listRef = useRef<HTMLDivElement>(null)
   const batchedLogsRef = useRef<LogEntry[]>([])
   const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const logIdRef = useRef(0)
-  
+
   // Flush batched logs
   const flushBatch = useCallback(() => {
     if (batchedLogsRef.current.length === 0) return
-    
+
     const newLogs = [...batchedLogsRef.current]
     batchedLogsRef.current = []
-    
-    setLogs(prev => {
+
+    setLogs((prev) => {
       const combined = [...newLogs, ...prev]
       return combined.slice(0, MAX_LOGS)
     })
   }, [])
-  
+
   // Add log entry with batching
-  const addLog = useCallback((entry: Omit<LogEntry, 'id'>) => {
-    batchedLogsRef.current.push({
-      ...entry,
-      id: `log-${++logIdRef.current}`,
-    })
-    
-    if (batchTimeoutRef.current) {
-      clearTimeout(batchTimeoutRef.current)
-    }
-    
-    batchTimeoutRef.current = setTimeout(flushBatch, BATCH_DELAY_MS)
-  }, [flushBatch])
-  
+  const addLog = useCallback(
+    (entry: Omit<LogEntry, 'id'>) => {
+      batchedLogsRef.current.push({
+        ...entry,
+        id: `log-${++logIdRef.current}`,
+      })
+
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current)
+      }
+
+      batchTimeoutRef.current = setTimeout(flushBatch, BATCH_DELAY_MS)
+    },
+    [flushBatch]
+  )
+
   // Subscribe to SSE events
   useEffect(() => {
     // Connection state
     const unsubState = sseManager.onStateChange((state) => {
       setConnected(state === 'connected')
-      
+
       addLog({
         timestamp: Date.now(),
         level: state === 'connected' ? 'info' : 'warn',
         source: 'SSE',
-        message: state === 'connected' ? 'Connected to event stream' : 'Disconnected - reconnecting...',
+        message:
+          state === 'connected' ? 'Connected to event stream' : 'Disconnected - reconnecting...',
       })
     })
-    
+
     // Session events
     const handleSessionCreated = (e: MessageEvent) => {
       try {
@@ -215,7 +213,7 @@ export function ZenLogsPanel() {
         })
       } catch {}
     }
-    
+
     const handleSessionUpdated = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data)
@@ -227,7 +225,7 @@ export function ZenLogsPanel() {
         })
       } catch {}
     }
-    
+
     const handleSessionRemoved = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data)
@@ -239,7 +237,7 @@ export function ZenLogsPanel() {
         })
       } catch {}
     }
-    
+
     // Task events
     const handleTaskCreated = (e: MessageEvent) => {
       try {
@@ -252,7 +250,7 @@ export function ZenLogsPanel() {
         })
       } catch {}
     }
-    
+
     const handleTaskUpdated = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data)
@@ -264,7 +262,7 @@ export function ZenLogsPanel() {
         })
       } catch {}
     }
-    
+
     // Room events
     const handleRoomsRefresh = () => {
       addLog({
@@ -274,14 +272,14 @@ export function ZenLogsPanel() {
         message: 'Rooms refreshed',
       })
     }
-    
+
     const unsubCreated = sseManager.subscribe('session-created', handleSessionCreated)
     const unsubUpdated = sseManager.subscribe('session-updated', handleSessionUpdated)
     const unsubRemoved = sseManager.subscribe('session-removed', handleSessionRemoved)
     const unsubTaskCreated = sseManager.subscribe('task-created', handleTaskCreated)
     const unsubTaskUpdated = sseManager.subscribe('task-updated', handleTaskUpdated)
     const unsubRooms = sseManager.subscribe('rooms-refresh', handleRoomsRefresh)
-    
+
     return () => {
       unsubState()
       unsubCreated()
@@ -290,30 +288,30 @@ export function ZenLogsPanel() {
       unsubTaskCreated()
       unsubTaskUpdated()
       unsubRooms()
-      
+
       if (batchTimeoutRef.current) {
         clearTimeout(batchTimeoutRef.current)
       }
     }
   }, [addLog])
-  
+
   // Auto-scroll
   useEffect(() => {
     if (autoScroll && listRef.current) {
       listRef.current.scrollTop = 0
     }
   }, [logs, autoScroll])
-  
+
   // Handle scroll
   const handleScroll = useCallback(() => {
     const list = listRef.current
     if (!list) return
     setAutoScroll(list.scrollTop < 50)
   }, [])
-  
+
   // Toggle level filter
   const handleToggleLevel = useCallback((level: LogLevel) => {
-    setLevels(prev => {
+    setLevels((prev) => {
       const next = new Set(prev)
       if (next.has(level)) {
         next.delete(level)
@@ -323,25 +321,29 @@ export function ZenLogsPanel() {
       return next
     })
   }, [])
-  
+
   // Clear logs
   const handleClear = useCallback(() => {
     setLogs([])
     batchedLogsRef.current = []
   }, [])
-  
+
   // Filter logs
   const filteredLogs = useMemo(() => {
-    return logs.filter(log => {
+    return logs.filter((log) => {
       if (!levels.has(log.level)) return false
-      if (search && !log.message.toLowerCase().includes(search.toLowerCase()) &&
-          !log.source.toLowerCase().includes(search.toLowerCase())) return false
+      if (
+        search &&
+        !log.message.toLowerCase().includes(search.toLowerCase()) &&
+        !log.source.toLowerCase().includes(search.toLowerCase())
+      )
+        return false
       return true
     })
   }, [logs, levels, search])
-  
+
   const hasFilter = search !== '' || levels.size < 4
-  
+
   return (
     <div className="zen-logs-panel">
       {/* Filters */}
@@ -353,7 +355,7 @@ export function ZenLogsPanel() {
         autoScroll={autoScroll}
         onAutoScrollChange={setAutoScroll}
       />
-      
+
       {/* Connection status */}
       {!connected && (
         <div className="zen-logs-reconnecting">
@@ -365,22 +367,18 @@ export function ZenLogsPanel() {
           Reconnecting...
         </div>
       )}
-      
+
       {/* Logs list */}
       {filteredLogs.length === 0 ? (
         <EmptyState hasFilter={hasFilter} />
       ) : (
-        <div
-          ref={listRef}
-          className="zen-logs-list"
-          onScroll={handleScroll}
-        >
-          {filteredLogs.map(entry => (
+        <div ref={listRef} className="zen-logs-list" onScroll={handleScroll}>
+          {filteredLogs.map((entry) => (
             <LogEntryItem key={entry.id} entry={entry} />
           ))}
         </div>
       )}
-      
+
       {/* Footer */}
       <div className="zen-logs-footer">
         <span className="zen-logs-count">

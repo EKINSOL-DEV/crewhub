@@ -121,8 +121,7 @@ function handleSessionUpdated(event: MessageEvent): void {
     }
 
     // Window is hidden + new activity detected → notify
-    const agentName: string =
-      session.displayName || session.label || session.key || 'Agent'
+    const agentName: string = session.displayName || session.label || session.key || 'Agent'
     const lastMessage: string = extractLastMessage(session)
     const title = `${agentName} is klaar`
 

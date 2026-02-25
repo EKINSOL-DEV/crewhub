@@ -42,9 +42,9 @@ export function UI({ designs, active, onSelect }: UIProps) {
         <div style={{ fontSize: 13, opacity: 0.75, lineHeight: 1.5 }}>
           {designs[active].description}
         </div>
-        <div style={{ 
-          marginTop: 10, fontSize: 11, opacity: 0.4, 
-          display: 'flex', gap: 16 
+        <div style={{
+          marginTop: 10, fontSize: 11, opacity: 0.4,
+          display: 'flex', gap: 16
         }}>
           <span>🖱️ Orbit: drag</span>
           <span>🔍 Zoom: scroll</span>
@@ -55,7 +55,7 @@ export function UI({ designs, active, onSelect }: UIProps) {
 
       {/* Title */}
       <div style={{
-        position: 'absolute', top: 16, right: 16, 
+        position: 'absolute', top: 16, right: 16,
         background: 'rgba(13, 17, 23, 0.7)',
         borderRadius: 10, padding: '8px 14px', zIndex: 10,
         backdropFilter: 'blur(10px)',

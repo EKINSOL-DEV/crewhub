@@ -113,7 +113,14 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 20,
+          }}
+        >
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#1f2937' }}>
             🚀 Run with Agent
           </h2>
@@ -152,7 +159,13 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
         <div style={{ marginBottom: 16 }}>
           <label
             htmlFor="agent-select"
-            style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}
+            style={{
+              display: 'block',
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#374151',
+              marginBottom: 6,
+            }}
           >
             Select Agent
           </label>
@@ -187,7 +200,13 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
         <div style={{ marginBottom: 20 }}>
           <label
             htmlFor="extra-instructions"
-            style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}
+            style={{
+              display: 'block',
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#374151',
+              marginBottom: 6,
+            }}
           >
             Extra Instructions (optional)
           </label>

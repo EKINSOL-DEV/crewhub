@@ -48,11 +48,14 @@ async def test_get_agent_not_found(client):
 @pytest.mark.asyncio
 async def test_update_agent(client):
     """Test PUT /api/agents/{id} updates agent fields."""
-    response = await client.put("/api/agents/dev", json={
-        "name": "Dev Updated",
-        "color": "#00ff00",
-        "is_pinned": True,
-    })
+    response = await client.put(
+        "/api/agents/dev",
+        json={
+            "name": "Dev Updated",
+            "color": "#00ff00",
+            "is_pinned": True,
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
@@ -71,9 +74,12 @@ async def test_update_agent(client):
 @pytest.mark.asyncio
 async def test_update_agent_not_found(client):
     """Test PUT /api/agents/{id} returns 404 for missing agent."""
-    response = await client.put("/api/agents/nonexistent", json={
-        "name": "Test",
-    })
+    response = await client.put(
+        "/api/agents/nonexistent",
+        json={
+            "name": "Test",
+        },
+    )
     assert response.status_code == 404
 
 

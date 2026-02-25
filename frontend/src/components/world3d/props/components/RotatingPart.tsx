@@ -33,9 +33,15 @@ export function RotatingPart({
     if (!groupRef.current) return
     const rate = speed * delta * 2
     switch (axis) {
-      case 'x': groupRef.current.rotation.x += rate; break
-      case 'y': groupRef.current.rotation.y += rate; break
-      case 'z': groupRef.current.rotation.z += rate; break
+      case 'x':
+        groupRef.current.rotation.x += rate
+        break
+      case 'y':
+        groupRef.current.rotation.y += rate
+        break
+      case 'z':
+        groupRef.current.rotation.z += rate
+        break
     }
   }, 2)
 

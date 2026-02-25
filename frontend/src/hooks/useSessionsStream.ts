@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from "react"
-import { api, type CrewSession } from "@/lib/api"
-import { sseManager } from "@/lib/sseManager"
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { api, type CrewSession } from '@/lib/api'
+import { sseManager } from '@/lib/sseManager'
 
 export interface SessionsStreamState {
   sessions: CrewSession[]
   loading: boolean
   error: string | null
   connected: boolean
-  connectionMethod: "sse" | "polling" | "disconnected"
+  connectionMethod: 'sse' | 'polling' | 'disconnected'
   reconnecting: boolean
 }
 
@@ -17,12 +17,12 @@ const POLLING_INTERVAL_MS = 5_000
  * Compute a lightweight fingerprint of sessions data.
  * Used to skip state updates when the data hasn't actually changed,
  * preventing unnecessary re-renders of the entire 3D scene.
- * 
+ *
  * Optimized: Uses a single pass with reduce instead of map+sort+join.
  */
 function computeSessionsFingerprint(sessions: CrewSession[]): string {
-  if (sessions.length === 0) return ""
-  
+  if (sessions.length === 0) return ''
+
   // Single pass: build sorted key array and join
   // This is O(n log n) but with lower constant factor than map+sort+join
   const keys = new Array(sessions.length)
@@ -31,7 +31,7 @@ function computeSessionsFingerprint(sessions: CrewSession[]): string {
     keys[i] = `${s.key}:${s.updatedAt || 0}:${s.totalTokens || 0}`
   }
   keys.sort()
-  return keys.join("|")
+  return keys.join('|')
 }
 
 /**
@@ -39,8 +39,7 @@ function computeSessionsFingerprint(sessions: CrewSession[]): string {
  * Returns true if the session data is effectively unchanged.
  */
 function isSessionUnchanged(existing: CrewSession, updated: CrewSession): boolean {
-  return existing.updatedAt === updated.updatedAt && 
-         existing.totalTokens === updated.totalTokens
+  return existing.updatedAt === updated.updatedAt && existing.totalTokens === updated.totalTokens
 }
 
 export function useSessionsStream(enabled: boolean = true) {
@@ -49,10 +48,10 @@ export function useSessionsStream(enabled: boolean = true) {
     loading: true,
     error: null,
     connected: false,
-    connectionMethod: "disconnected",
+    connectionMethod: 'disconnected',
     reconnecting: false,
   })
-  
+
   const pollingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollingActiveRef = useRef(false)
   const consecutiveFailsRef = useRef(0)
@@ -60,12 +59,12 @@ export function useSessionsStream(enabled: boolean = true) {
   enabledRef.current = enabled
 
   // Data deduplication: track fingerprint to avoid re-renders with identical data
-  const sessionsFingerprintRef = useRef<string>("")
+  const sessionsFingerprintRef = useRef<string>('')
   // Track whether we've successfully fetched data at least once
   const hasFetchedRef = useRef(false)
   // Track whether SSE was ever connected (to distinguish initial connect from reconnect)
   const wasEverConnectedRef = useRef(false)
-  
+
   const fetchSessions = useCallback(async () => {
     try {
       const data = await api.getSessions()
@@ -74,24 +73,24 @@ export function useSessionsStream(enabled: boolean = true) {
 
       if (fingerprint === sessionsFingerprintRef.current && hasFetchedRef.current) {
         // Data unchanged — only clear loading flag if needed
-        setState(prev => prev.loading ? { ...prev, loading: false } : prev)
+        setState((prev) => (prev.loading ? { ...prev, loading: false } : prev))
       } else {
         sessionsFingerprintRef.current = fingerprint
-        setState(prev => ({ ...prev, sessions, loading: false, error: null }))
+        setState((prev) => ({ ...prev, sessions, loading: false, error: null }))
       }
       hasFetchedRef.current = true
       return true
     } catch (err) {
-      console.error("Failed to fetch crew:", err)
+      console.error('Failed to fetch crew:', err)
       // Avoid unnecessary re-renders when error is already set
-      setState(prev => {
+      setState((prev) => {
         if (prev.error && !prev.loading) return prev
-        return { ...prev, error: "Failed to load crew", loading: false }
+        return { ...prev, error: 'Failed to load crew', loading: false }
       })
       return false
     }
   }, [])
-  
+
   const stopPolling = useCallback(() => {
     pollingActiveRef.current = false
     if (pollingTimeoutRef.current) {
@@ -100,24 +99,24 @@ export function useSessionsStream(enabled: boolean = true) {
     }
     consecutiveFailsRef.current = 0
   }, [])
-  
+
   const startPolling = useCallback(() => {
     stopPolling()
     pollingActiveRef.current = true
     consecutiveFailsRef.current = 0
-    
+
     // Use setTimeout chain with progressive backoff on consecutive failures.
     // Normal: 5s intervals. After failures: 10s, 20s, 40s, up to 60s.
     const schedulePoll = (immediate: boolean) => {
       if (!pollingActiveRef.current) return
-      
+
       const fails = consecutiveFailsRef.current
-      const delay = immediate ? 0 : (
-        fails === 0
+      const delay = immediate
+        ? 0
+        : fails === 0
           ? POLLING_INTERVAL_MS
           : Math.min(POLLING_INTERVAL_MS * Math.pow(2, Math.min(fails, 4)), 60_000)
-      )
-      
+
       pollingTimeoutRef.current = setTimeout(async () => {
         if (!pollingActiveRef.current) return
         pollingTimeoutRef.current = null
@@ -130,7 +129,7 @@ export function useSessionsStream(enabled: boolean = true) {
         schedulePoll(false)
       }, delay)
     }
-    
+
     schedulePoll(true)
   }, [fetchSessions, stopPolling])
 
@@ -142,7 +141,7 @@ export function useSessionsStream(enabled: boolean = true) {
         loading: false,
         error: null,
         connected: false,
-        connectionMethod: "disconnected",
+        connectionMethod: 'disconnected',
         reconnecting: false,
       })
       return
@@ -162,14 +161,14 @@ export function useSessionsStream(enabled: boolean = true) {
       const isInitial = isInitialCallback
       isInitialCallback = false
 
-      if (connectionState === "connected") {
+      if (connectionState === 'connected') {
         stopPolling()
         const isReconnect = wasEverConnectedRef.current
         wasEverConnectedRef.current = true
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           connected: true,
-          connectionMethod: "sse",
+          connectionMethod: 'sse',
           reconnecting: false,
           error: null,
         }))
@@ -179,8 +178,8 @@ export function useSessionsStream(enabled: boolean = true) {
         if (isReconnect) {
           fetchSessions()
         }
-      } else if (connectionState === "connecting") {
-        setState(prev => ({
+      } else if (connectionState === 'connecting') {
+        setState((prev) => ({
           ...prev,
           // Don't show "reconnecting" on initial connection attempt
           reconnecting: !isInitial,
@@ -193,10 +192,10 @@ export function useSessionsStream(enabled: boolean = true) {
           // This prevents the double-fetch that caused the re-render flash.
         } else {
           // Actual disconnection after being connected — fall back to polling
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             connected: false,
-            connectionMethod: "polling",
+            connectionMethod: 'polling',
             reconnecting: true,
           }))
           startPolling()
@@ -228,40 +227,40 @@ export function useSessionsStream(enabled: boolean = true) {
         const fingerprint = computeSessionsFingerprint(newSessions)
         if (fingerprint === sessionsFingerprintRef.current) return
         sessionsFingerprintRef.current = fingerprint
-        setState(prev => ({ ...prev, sessions: newSessions, loading: false, error: null }))
+        setState((prev) => ({ ...prev, sessions: newSessions, loading: false, error: null }))
       } catch (error) {
-        console.error("Failed to parse sessions-refresh event:", error)
+        console.error('Failed to parse sessions-refresh event:', error)
       }
     }
 
     const handleSessionCreated = (event: MessageEvent) => {
       try {
         const session: CrewSession = JSON.parse(event.data)
-        setState(prev => {
+        setState((prev) => {
           // Avoid duplicates
-          if (prev.sessions.some(s => s.key === session.key)) return prev
+          if (prev.sessions.some((s) => s.key === session.key)) return prev
           const newSessions = [...prev.sessions, session]
           sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
           return { ...prev, sessions: newSessions }
         })
       } catch (error) {
-        console.error("Failed to parse session-created event:", error)
+        console.error('Failed to parse session-created event:', error)
       }
     }
 
     const handleSessionUpdated = (event: MessageEvent) => {
       try {
         const updatedSession: CrewSession = JSON.parse(event.data)
-        setState(prev => {
-          const idx = prev.sessions.findIndex(s => s.key === updatedSession.key)
+        setState((prev) => {
+          const idx = prev.sessions.findIndex((s) => s.key === updatedSession.key)
           if (idx === -1) return prev // Session not found, skip
-          
+
           // Quick check: if data hasn't changed, skip update
           const existing = prev.sessions[idx]
           if (isSessionUnchanged(existing, updatedSession)) {
             return prev
           }
-          
+
           // Use splice for O(1) update instead of map for O(n)
           const newSessions = [...prev.sessions]
           newSessions[idx] = updatedSession
@@ -269,32 +268,29 @@ export function useSessionsStream(enabled: boolean = true) {
           return { ...prev, sessions: newSessions }
         })
       } catch (error) {
-        console.error("Failed to parse session-updated event:", error)
+        console.error('Failed to parse session-updated event:', error)
       }
     }
 
     const handleSessionRemoved = (event: MessageEvent) => {
       try {
         const { key } = JSON.parse(event.data)
-        if (import.meta.env.DEV) {
-          console.debug('[DIAG] session-removed event ontvangen:', key)
-        }
-        setState(prev => {
-          if (!prev.sessions.some(s => s.key === key)) return prev // Already gone
-          const newSessions = prev.sessions.filter(s => s.key !== key)
+        setState((prev) => {
+          if (!prev.sessions.some((s) => s.key === key)) return prev // Already gone
+          const newSessions = prev.sessions.filter((s) => s.key !== key)
           sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
           return { ...prev, sessions: newSessions }
         })
       } catch (error) {
-        console.error("Failed to parse session-removed event:", error)
+        console.error('Failed to parse session-removed event:', error)
       }
     }
 
     // Subscribe to all session events
-    const unsubscribeRefresh = sseManager.subscribe("sessions-refresh", handleSessionsRefresh)
-    const unsubscribeCreated = sseManager.subscribe("session-created", handleSessionCreated)
-    const unsubscribeUpdated = sseManager.subscribe("session-updated", handleSessionUpdated)
-    const unsubscribeRemoved = sseManager.subscribe("session-removed", handleSessionRemoved)
+    const unsubscribeRefresh = sseManager.subscribe('sessions-refresh', handleSessionsRefresh)
+    const unsubscribeCreated = sseManager.subscribe('session-created', handleSessionCreated)
+    const unsubscribeUpdated = sseManager.subscribe('session-updated', handleSessionUpdated)
+    const unsubscribeRemoved = sseManager.subscribe('session-removed', handleSessionRemoved)
 
     return () => {
       unsubscribeRefresh()
@@ -303,12 +299,12 @@ export function useSessionsStream(enabled: boolean = true) {
       unsubscribeRemoved()
     }
   }, [enabled])
-  
+
   const refresh = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true }))
+    setState((prev) => ({ ...prev, loading: true }))
     await fetchSessions()
   }, [fetchSessions])
-  
+
   return { ...state, refresh }
 }
 

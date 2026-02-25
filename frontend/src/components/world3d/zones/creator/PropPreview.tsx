@@ -13,7 +13,10 @@ import type { TransformMode } from './propMakerTypes'
 
 // ── Error Boundary ────────────────────────────────────────────
 
-interface ErrorBoundaryState { hasError: boolean; error: Error | null }
+interface ErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+}
 
 export class PropErrorBoundary extends React.Component<
   { children: React.ReactNode; onError: (error: Error) => void },
@@ -51,7 +54,11 @@ export interface PropPreviewProps {
   onRenderError: (error: Error) => void
   onRetry: () => void
   onPartSelect: (index: number | null) => void
-  onPartTransform: (index: number, position: [number, number, number], rotation: [number, number, number]) => void
+  onPartTransform: (
+    index: number,
+    position: [number, number, number],
+    rotation: [number, number, number]
+  ) => void
   onDraggingChanged: (dragging: boolean) => void
 }
 
@@ -113,7 +120,10 @@ export function PropPreview({
 
       {/* Overlay states — rendered on top of Canvas */}
       {isGenerating && (
-        <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+        <div
+          className="fpm-preview-placeholder"
+          style={{ position: 'absolute', inset: 0, zIndex: 1 }}
+        >
           <div className="fpm-preview-spinner">⚙️</div>
           <div>Generating prop...</div>
           <div className="fpm-preview-sublabel">{previewModelLabel || selectedModel}</div>
@@ -124,16 +134,24 @@ export function PropPreview({
       )}
 
       {!isGenerating && renderError && (
-        <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+        <div
+          className="fpm-preview-placeholder"
+          style={{ position: 'absolute', inset: 0, zIndex: 1 }}
+        >
           <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
           <div>Render failed</div>
           <div className="fpm-preview-error">{renderError}</div>
-          <button className="fpm-retry-btn" onClick={onRetry}>🔄 Retry</button>
+          <button className="fpm-retry-btn" onClick={onRetry}>
+            🔄 Retry
+          </button>
         </div>
       )}
 
       {!isGenerating && !canPreview && !renderError && (
-        <div className="fpm-preview-placeholder" style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+        <div
+          className="fpm-preview-placeholder"
+          style={{ position: 'absolute', inset: 0, zIndex: 1 }}
+        >
           <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>🎨</div>
           <div>No model yet</div>
           <div className="fpm-preview-sublabel">Generate a prop to see the 3D preview here</div>
@@ -141,9 +159,7 @@ export function PropPreview({
       )}
 
       {/* Preview name badge */}
-      {previewName && !isGenerating && (
-        <div className="fpm-preview-name">🔍 {previewName}</div>
-      )}
+      {previewName && !isGenerating && <div className="fpm-preview-name">🔍 {previewName}</div>}
     </div>
   )
 }

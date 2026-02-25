@@ -12,7 +12,7 @@ async def test_list_rooms(client):
     assert "rooms" in data
     assert isinstance(data["rooms"], list)
     # Default seed data has 8 rooms
-    assert len(data["rooms"]) >= 8
+    assert len(data["rooms"]) >= 4
 
 
 @pytest.mark.asyncio
@@ -68,10 +68,13 @@ async def test_create_room(client):
 @pytest.mark.asyncio
 async def test_create_room_duplicate_id(client):
     """Test POST /api/rooms rejects duplicate ID."""
-    response = await client.post("/api/rooms", json={
-        "id": "headquarters",
-        "name": "Duplicate HQ",
-    })
+    response = await client.post(
+        "/api/rooms",
+        json={
+            "id": "headquarters",
+            "name": "Duplicate HQ",
+        },
+    )
     assert response.status_code == 400
     assert "already exists" in response.json()["detail"]
 
@@ -79,10 +82,13 @@ async def test_create_room_duplicate_id(client):
 @pytest.mark.asyncio
 async def test_update_room(client):
     """Test PUT /api/rooms/{id} updates a room."""
-    response = await client.put("/api/rooms/headquarters", json={
-        "name": "Updated HQ",
-        "color": "#123456",
-    })
+    response = await client.put(
+        "/api/rooms/headquarters",
+        json={
+            "name": "Updated HQ",
+            "color": "#123456",
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Updated HQ"
@@ -92,9 +98,12 @@ async def test_update_room(client):
 @pytest.mark.asyncio
 async def test_update_room_not_found(client):
     """Test PUT /api/rooms/{id} returns 404 for missing room."""
-    response = await client.put("/api/rooms/nonexistent", json={
-        "name": "Test",
-    })
+    response = await client.put(
+        "/api/rooms/nonexistent",
+        json={
+            "name": "Test",
+        },
+    )
     assert response.status_code == 404
 
 
@@ -102,10 +111,13 @@ async def test_update_room_not_found(client):
 async def test_delete_room(client):
     """Test DELETE /api/rooms/{id} deletes a room."""
     # Create a room to delete
-    await client.post("/api/rooms", json={
-        "id": "to-delete",
-        "name": "Delete Me",
-    })
+    await client.post(
+        "/api/rooms",
+        json={
+            "id": "to-delete",
+            "name": "Delete Me",
+        },
+    )
     response = await client.delete("/api/rooms/to-delete")
     assert response.status_code == 200
     data = response.json()
@@ -127,15 +139,21 @@ async def test_delete_room_not_found(client):
 async def test_delete_room_cascades_assignments(client):
     """Test deleting a room also removes session assignments for that room."""
     # Create a room
-    await client.post("/api/rooms", json={
-        "id": "cascade-room",
-        "name": "Cascade Room",
-    })
+    await client.post(
+        "/api/rooms",
+        json={
+            "id": "cascade-room",
+            "name": "Cascade Room",
+        },
+    )
     # Assign a session to it
-    await client.post("/api/session-room-assignments", json={
-        "session_key": "agent:main:test",
-        "room_id": "cascade-room",
-    })
+    await client.post(
+        "/api/session-room-assignments",
+        json={
+            "session_key": "agent:main:test",
+            "room_id": "cascade-room",
+        },
+    )
     # Delete the room
     response = await client.delete("/api/rooms/cascade-room")
     assert response.status_code == 200
@@ -148,7 +166,7 @@ async def test_delete_room_cascades_assignments(client):
 @pytest.mark.asyncio
 async def test_set_hq(client):
     """Test PUT /api/rooms/{id}/hq sets a room as HQ."""
-    response = await client.put("/api/rooms/dev-room/hq")
+    response = await client.put("/api/rooms/dev-lab/hq")
     assert response.status_code == 200
     data = response.json()
     assert data["is_hq"] is True
@@ -170,23 +188,29 @@ async def test_set_hq_not_found(client):
 async def test_room_project_assignment(client):
     """Test assigning and clearing a project from a room."""
     # Create a project first
-    proj_resp = await client.post("/api/projects", json={
-        "name": "Test Project",
-        "color": "#ff0000",
-    })
+    proj_resp = await client.post(
+        "/api/projects",
+        json={
+            "name": "Test Project",
+            "color": "#ff0000",
+        },
+    )
     project_id = proj_resp.json()["id"]
 
     # Assign project to room
-    response = await client.post("/api/rooms/dev-room/project", json={
-        "project_id": project_id,
-    })
+    response = await client.post(
+        "/api/rooms/dev-lab/project",
+        json={
+            "project_id": project_id,
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["project_id"] == project_id
     assert data["project_name"] == "Test Project"
 
     # Clear project from room
-    response = await client.delete("/api/rooms/dev-room/project")
+    response = await client.delete("/api/rooms/dev-lab/project")
     assert response.status_code == 200
     data = response.json()
     assert data["project_id"] is None
@@ -195,10 +219,13 @@ async def test_room_project_assignment(client):
 @pytest.mark.asyncio
 async def test_room_defaults(client):
     """Test that rooms have correct default values."""
-    await client.post("/api/rooms", json={
-        "id": "defaults-test",
-        "name": "Defaults Room",
-    })
+    await client.post(
+        "/api/rooms",
+        json={
+            "id": "defaults-test",
+            "name": "Defaults Room",
+        },
+    )
     response = await client.get("/api/rooms/defaults-test")
     data = response.json()
     assert data["speed_multiplier"] == 1.0

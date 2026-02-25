@@ -31,14 +31,17 @@ export function SteamParticles({
 }: SteamParticlesProps) {
   const groupRef = useRef<THREE.Group>(null)
 
-  const particles = useMemo(() =>
-    Array.from({ length: count }, () => ({
-      x: (Math.random() - 0.5) * spread,
-      z: (Math.random() - 0.5) * spread,
-      offset: Math.random() * Math.PI * 2,
-      speedMul: 0.7 + Math.random() * 0.6,
-      sizeMul: 0.8 + Math.random() * 0.4,
-    })), [count, spread])
+  const particles = useMemo(
+    () =>
+      Array.from({ length: count }, () => ({
+        x: (Math.random() - 0.5) * spread,
+        z: (Math.random() - 0.5) * spread,
+        offset: Math.random() * Math.PI * 2,
+        speedMul: 0.7 + Math.random() * 0.6,
+        sizeMul: 0.8 + Math.random() * 0.4,
+      })),
+    [count, spread]
+  )
 
   const meshRefs = useRef<(THREE.Mesh | null)[]>([])
 
@@ -63,16 +66,13 @@ export function SteamParticles({
       {particles.map((p, i) => (
         <mesh
           key={i}
-          ref={(el) => { meshRefs.current[i] = el }}
+          ref={(el) => {
+            meshRefs.current[i] = el
+          }}
           position={[p.x, 0, p.z]}
         >
           <sphereGeometry args={[size, 6, 6]} />
-          <meshStandardMaterial
-            color={color}
-            transparent
-            opacity={0.2}
-            depthWrite={false}
-          />
+          <meshStandardMaterial color={color} transparent opacity={0.2} depthWrite={false} />
         </mesh>
       ))}
     </group>

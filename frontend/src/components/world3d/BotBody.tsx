@@ -54,11 +54,11 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
       // Feet: alternate forward/backward with lift
       if (leftFootRef.current) {
         leftFootRef.current.position.z = 0.03 + sin * 0.06
-        leftFootRef.current.position.y = -0.30 + Math.max(0, sin) * 0.04
+        leftFootRef.current.position.y = -0.3 + Math.max(0, sin) * 0.04
       }
       if (rightFootRef.current) {
         rightFootRef.current.position.z = 0.03 + sinOpp * 0.06
-        rightFootRef.current.position.y = -0.30 + Math.max(0, sinOpp) * 0.04
+        rightFootRef.current.position.y = -0.3 + Math.max(0, sinOpp) * 0.04
       }
 
       // Arms: counter-swing
@@ -71,10 +71,10 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
     } else {
       // Reset to rest positions
       if (leftFootRef.current) {
-        leftFootRef.current.position.set(-0.09, -0.30, 0.03)
+        leftFootRef.current.position.set(-0.09, -0.3, 0.03)
       }
       if (rightFootRef.current) {
-        rightFootRef.current.position.set(0.09, -0.30, 0.03)
+        rightFootRef.current.position.set(0.09, -0.3, 0.03)
       }
       if (leftArmRef.current) {
         leftArmRef.current.rotation.x = 0
@@ -109,7 +109,7 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
 
       {/* ─── Body (main rounded box, slightly wider) ─── */}
       <RoundedBox
-        args={[0.40, 0.28, 0.34]}
+        args={[0.4, 0.28, 0.34]}
         radius={0.06}
         smoothness={4}
         position={[0, -0.02, 0]}
@@ -120,7 +120,7 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
 
       {/* ─── Lower body / base (darker shade) ─── */}
       <RoundedBox
-        args={[0.40, 0.12, 0.34]}
+        args={[0.4, 0.12, 0.34]}
         radius={0.04}
         smoothness={3}
         position={[0, -0.14, 0]}
@@ -142,14 +142,14 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
       </mesh>
 
       {/* ─── Left foot ─── */}
-      <mesh ref={leftFootRef} position={[-0.09, -0.30, 0.03]} castShadow>
-        <boxGeometry args={[0.10, 0.06, 0.13]} />
+      <mesh ref={leftFootRef} position={[-0.09, -0.3, 0.03]} castShadow>
+        <boxGeometry args={[0.1, 0.06, 0.13]} />
         <meshToonMaterial {...darkToon} />
       </mesh>
 
       {/* ─── Right foot ─── */}
-      <mesh ref={rightFootRef} position={[0.09, -0.30, 0.03]} castShadow>
-        <boxGeometry args={[0.10, 0.06, 0.13]} />
+      <mesh ref={rightFootRef} position={[0.09, -0.3, 0.03]} castShadow>
+        <boxGeometry args={[0.1, 0.06, 0.13]} />
         <meshToonMaterial {...darkToon} />
       </mesh>
     </group>

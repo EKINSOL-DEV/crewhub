@@ -193,19 +193,19 @@ functions:
     description: "Get a natural language description of all props in your room"
     parameters: {}
     returns: "string — e.g. 'Dev Room: 2 standing-desks (w, e walls), server-rack (SE corner)'"
-    
+
   get_prop_location:
     description: "Find where a specific prop is in your room"
     parameters:
       prop_name: "string — prop name or partial match (e.g. 'desk', 'server')"
     returns: "string — e.g. 'standing-desk is on the west wall (grid 2,8)' or 'not found'"
-    
+
   list_nearby_props:
     description: "List props near a zone or position"
     parameters:
       zone: "string — zone name: nw, n, ne, w, center, e, sw, s, se"
     returns: "string[] — props in or adjacent to that zone"
-    
+
   navigate_to:
     description: "Walk your bot to a prop or zone. Triggers movement animation in the 3D world."
     parameters:

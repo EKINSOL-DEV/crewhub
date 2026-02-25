@@ -4,9 +4,27 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { FileText, MessageSquare, ListTodo, Settings, X, Kanban, Activity, FolderKanban, Palette } from 'lucide-react'
+import {
+  FileText,
+  MessageSquare,
+  ListTodo,
+  Settings,
+  X,
+  Kanban,
+  Activity,
+  FolderKanban,
+  Palette,
+} from 'lucide-react'
 
-export type MobilePanel = 'chat' | 'docs' | 'kanban' | 'activity' | 'projects' | 'tasks' | 'settings' | 'creator'
+export type MobilePanel =
+  | 'chat'
+  | 'docs'
+  | 'kanban'
+  | 'activity'
+  | 'projects'
+  | 'tasks'
+  | 'settings'
+  | 'creator'
 
 interface MobileDrawerProps {
   open: boolean
@@ -40,7 +58,9 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
   // Close on escape
   useEffect(() => {
     if (!open) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [open, onClose])
@@ -49,7 +69,9 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = '' }
+      return () => {
+        document.body.style.overflow = ''
+      }
     }
   }, [open])
 
@@ -90,23 +112,38 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
         }}
       >
         {/* Drawer header */}
-        <div style={{
-          padding: '20px 20px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
-        }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--mobile-text, #f1f5f9)' }}>
+        <div
+          style={{
+            padding: '20px 20px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              fontSize: 18,
+              fontWeight: 700,
+              color: 'var(--mobile-text, #f1f5f9)',
+            }}
+          >
             CrewHub
           </h2>
           <button
             onClick={onClose}
             style={{
-              width: 32, height: 32, borderRadius: 8,
-              border: 'none', background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
-              color: 'var(--mobile-text-muted, #94a3b8)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
+              color: 'var(--mobile-text-muted, #94a3b8)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <X size={16} />
@@ -125,33 +162,41 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
               <div key={item.id}>
                 {/* Section header */}
                 {showSectionHeader && (
-                  <div style={{
-                    padding: '12px 16px 6px',
-                    marginTop: idx > 0 ? 4 : 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}>
-                    <div style={{
-                      flex: 1,
-                      height: 1,
-                      background: 'var(--mobile-border, rgba(255,255,255,0.08))',
-                    }} />
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: 'var(--mobile-text-muted, #475569)',
-                      whiteSpace: 'nowrap',
-                    }}>
+                  <div
+                    style={{
+                      padding: '12px 16px 6px',
+                      marginTop: idx > 0 ? 4 : 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        height: 1,
+                        background: 'var(--mobile-border, rgba(255,255,255,0.08))',
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: 'var(--mobile-text-muted, #475569)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {item.section}
                     </span>
-                    <div style={{
-                      flex: 1,
-                      height: 1,
-                      background: 'var(--mobile-border, rgba(255,255,255,0.08))',
-                    }} />
+                    <div
+                      style={{
+                        flex: 1,
+                        height: 1,
+                        background: 'var(--mobile-border, rgba(255,255,255,0.08))',
+                      }}
+                    />
                   </div>
                 )}
 
@@ -173,7 +218,11 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
                     border: 'none',
                     borderRadius: 12,
                     cursor: isDisabled ? 'default' : 'pointer',
-                    color: isDisabled ? 'var(--mobile-text-muted, #475569)' : isActive ? '#818cf8' : 'var(--mobile-text, #cbd5e1)',
+                    color: isDisabled
+                      ? 'var(--mobile-text-muted, #475569)'
+                      : isActive
+                        ? '#818cf8'
+                        : 'var(--mobile-text, #cbd5e1)',
                     fontSize: 15,
                     fontWeight: isActive ? 600 : 400,
                     textAlign: 'left',
@@ -184,11 +233,16 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
                   <Icon size={20} />
                   <span>{item.label}</span>
                   {isDisabled && (
-                    <span style={{
-                      fontSize: 10, marginLeft: 'auto',
-                      padding: '2px 8px', borderRadius: 6,
-                      background: 'rgba(255,255,255,0.06)', color: '#475569',
-                    }}>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        marginLeft: 'auto',
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                        background: 'rgba(255,255,255,0.06)',
+                        color: '#475569',
+                      }}
+                    >
                       Soon
                     </span>
                   )}
@@ -199,12 +253,14 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
         </nav>
 
         {/* Footer */}
-        <div style={{
-          padding: '16px 20px',
-          borderTop: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
-          fontSize: 11,
-          color: 'var(--mobile-text-muted, #475569)',
-        }}>
+        <div
+          style={{
+            padding: '16px 20px',
+            borderTop: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
+            fontSize: 11,
+            color: 'var(--mobile-text-muted, #475569)',
+          }}
+        >
           CrewHub Mobile
         </div>
       </div>

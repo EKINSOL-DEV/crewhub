@@ -25,7 +25,11 @@ export interface LightingConfig {
   sun: { intensity: number; color: string; position: [number, number, number]; castShadow: boolean }
   fill: { intensity: number; color: string; position: [number, number, number] }
   shadows: ShadowConfig
-  toneMapping: 'NoToneMapping' | 'ACESFilmicToneMapping' | 'ReinhardToneMapping' | 'CineonToneMapping'
+  toneMapping:
+    | 'NoToneMapping'
+    | 'ACESFilmicToneMapping'
+    | 'ReinhardToneMapping'
+    | 'CineonToneMapping'
   toneMappingExposure: number
   environmentIntensity: number
 }
@@ -76,14 +80,18 @@ function loadConfig(): LightingConfig {
       }
       return { ...DEFAULT_LIGHTING, ...parsed, shadows }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return { ...DEFAULT_LIGHTING }
 }
 
 function saveConfig(config: LightingConfig) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 // ─── Shared state (singleton across components) ─────────────────
@@ -105,18 +113,23 @@ export function useLightingConfig() {
     listeners.add(handler)
     // Sync on mount in case another component already updated
     setConfigLocal({ ...sharedConfig })
-    return () => { listeners.delete(handler) }
+    return () => {
+      listeners.delete(handler)
+    }
   }, [])
 
-  const setConfig = useCallback((update: Partial<LightingConfig> | ((prev: LightingConfig) => LightingConfig)) => {
-    if (typeof update === 'function') {
-      sharedConfig = update(sharedConfig)
-    } else {
-      sharedConfig = { ...sharedConfig, ...update }
-    }
-    saveConfig(sharedConfig)
-    notifyListeners()
-  }, [])
+  const setConfig = useCallback(
+    (update: Partial<LightingConfig> | ((prev: LightingConfig) => LightingConfig)) => {
+      if (typeof update === 'function') {
+        sharedConfig = update(sharedConfig)
+      } else {
+        sharedConfig = { ...sharedConfig, ...update }
+      }
+      saveConfig(sharedConfig)
+      notifyListeners()
+    },
+    []
+  )
 
   const resetConfig = useCallback(() => {
     sharedConfig = { ...DEFAULT_LIGHTING }
@@ -159,7 +172,9 @@ export function useLightingPanelVisibility() {
     const handler = (v: boolean) => setVisibleLocal(v)
     visibilityListeners.add(handler)
     setVisibleLocal(lightingPanelVisible)
-    return () => { visibilityListeners.delete(handler) }
+    return () => {
+      visibilityListeners.delete(handler)
+    }
   }, [])
 
   const setVisible = useCallback((v: boolean) => {

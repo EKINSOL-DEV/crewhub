@@ -83,7 +83,7 @@ export class VisionSystem {
   canSee(
     from: { x: number; z: number },
     to: { x: number; z: number },
-    facingAngle?: number,
+    facingAngle?: number
   ): VisionResult {
     const dx = to.x - from.x
     const dz = to.z - from.z
@@ -146,10 +146,7 @@ export class VisionSystem {
    * Casts `rayCount` rays evenly distributed across the FOV.
    * Each ray stops at the first blocking cell or max range.
    */
-  getVisibleCells(
-    from: { x: number; z: number },
-    facingAngle: number,
-  ): { x: number; z: number }[] {
+  getVisibleCells(from: { x: number; z: number }, facingAngle: number): { x: number; z: number }[] {
     const visible = new Map<string, { x: number; z: number }>()
     const halfFov = (this.config.fovDegrees / 2) * (Math.PI / 180)
     const { rayCount, range } = this.config
@@ -183,7 +180,7 @@ export class VisionSystem {
    */
   getVisibleProps(
     from: { x: number; z: number },
-    facingAngle: number,
+    facingAngle: number
   ): { propId: string; x: number; z: number; distance: number }[] {
     const cells = this.getVisibleCells(from, facingAngle)
     const props = new Map<string, { propId: string; x: number; z: number; distance: number }>()
@@ -225,11 +222,11 @@ export class VisionSystem {
     x0: number,
     z0: number,
     x1: number,
-    z1: number,
+    z1: number
   ): { x: number; z: number }[] {
     const cells: { x: number; z: number }[] = []
-    let dx = Math.abs(x1 - x0)
-    let dz = Math.abs(z1 - z0)
+    const dx = Math.abs(x1 - x0)
+    const dz = Math.abs(z1 - z0)
     const sx = x0 < x1 ? 1 : -1
     const sz = z0 < z1 ? 1 : -1
     let err = dx - dz

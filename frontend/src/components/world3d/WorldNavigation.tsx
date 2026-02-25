@@ -4,9 +4,10 @@ import type { Room } from '@/hooks/useRooms'
 
 interface WorldNavigationProps {
   rooms: Room[]
+  isCreatorMode?: boolean
 }
 
-export function WorldNavigation({ rooms }: WorldNavigationProps) {
+export function WorldNavigation({ rooms, isCreatorMode }: WorldNavigationProps) {
   const { state, goBack } = useWorldFocus()
 
   // Keyboard: Escape goes up one level (but NOT in first person — PointerLockControls handles ESC)
@@ -25,15 +26,16 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
   // Hide navigation in first person mode (HUD takes over) or overview (no back button needed)
   if (state.level === 'firstperson' || state.level === 'overview') return null
 
-  const focusedRoom = rooms.find(r => r.id === state.focusedRoomId)
-  const label = (state.level === 'bot' || state.level === 'board') && focusedRoom
-    ? `← ${focusedRoom.icon || '📦'} ${focusedRoom.name}`
-    : '← Overview'
+  const focusedRoom = rooms.find((r) => r.id === state.focusedRoomId)
+  const label =
+    (state.level === 'bot' || state.level === 'board') && focusedRoom
+      ? `← ${focusedRoom.icon || '📦'} ${focusedRoom.name}`
+      : '← Overview'
 
   return (
     <>
-      {/* Back button (bottom-center, above RoomTabsBar) */}
-      <div
+      {/* Back button (bottom-center, above RoomTabsBar) — hidden in creator mode */}
+      {!isCreatorMode && <div
         style={{
           position: 'absolute',
           bottom: 80,
@@ -63,11 +65,11 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
             transition: 'all 0.2s ease',
             fontFamily: 'system-ui, sans-serif',
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(255,255,255,0.9)'
             e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)'
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             e.currentTarget.style.background = 'rgba(255,255,255,0.75)'
             e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
           }}
@@ -84,7 +86,7 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
         >
           Press Esc to go back
         </div>
-      </div>
+      </div>}
     </>
   )
 }

@@ -10,9 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +25,8 @@ PROMPT_TEMPLATE_PATH = (
     / "creator-zone-prompt.md"
 )
 
-GENERATION_HISTORY_PATH = (
-    Path(__file__).parent.parent.parent.parent / "data" / "generation_history.json"
-)
-SAVED_PROPS_PATH = (
-    Path(__file__).parent.parent.parent.parent / "data" / "saved_props.json"
-)
+GENERATION_HISTORY_PATH = Path(__file__).parent.parent.parent.parent / "data" / "generation_history.json"
+SAVED_PROPS_PATH = Path(__file__).parent.parent.parent.parent / "data" / "saved_props.json"
 
 # ─── Available Models ─────────────────────────────────────────────
 
@@ -46,12 +40,30 @@ DEFAULT_MODEL = "sonnet-4-5"
 # ─── Color Keywords ───────────────────────────────────────────────
 
 COLOR_KEYWORDS: dict[str, str] = {
-    "red": "#CC3333", "blue": "#3366CC", "green": "#338833", "yellow": "#CCAA33",
-    "purple": "#8833AA", "pink": "#CC6699", "orange": "#CC6633", "white": "#EEEEEE",
-    "black": "#333333", "brown": "#8B6238", "gold": "#DAA520", "silver": "#C0C0C0",
-    "wooden": "#A0724A", "wood": "#A0724A", "metal": "#888888", "metallic": "#AAAAAA",
-    "neon": "#00FF88", "glowing": "#FFDD44", "dark": "#444444", "bright": "#FFCC00",
-    "stone": "#888877", "crystal": "#88CCEE", "rusty": "#8B4513", "copper": "#B87333",
+    "red": "#CC3333",
+    "blue": "#3366CC",
+    "green": "#338833",
+    "yellow": "#CCAA33",
+    "purple": "#8833AA",
+    "pink": "#CC6699",
+    "orange": "#CC6633",
+    "white": "#EEEEEE",
+    "black": "#333333",
+    "brown": "#8B6238",
+    "gold": "#DAA520",
+    "silver": "#C0C0C0",
+    "wooden": "#A0724A",
+    "wood": "#A0724A",
+    "metal": "#888888",
+    "metallic": "#AAAAAA",
+    "neon": "#00FF88",
+    "glowing": "#FFDD44",
+    "dark": "#444444",
+    "bright": "#FFCC00",
+    "stone": "#888877",
+    "crystal": "#88CCEE",
+    "rusty": "#8B4513",
+    "copper": "#B87333",
 }
 
 # ─── Shape Templates ──────────────────────────────────────────────
@@ -64,7 +76,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("cylinder", [0, 0.55, 0], [0.27, 0.27, 0.04, 12], "accent"),
             ("cylinder", [0, 0.3, 0], [0.27, 0.27, 0.04, 12], "accent"),
         ],
-        "main_color": "#A0724A", "accent_color": "#777777",
+        "main_color": "#A0724A",
+        "accent_color": "#777777",
     },
     "mushroom": {
         "parts": [
@@ -72,7 +85,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("sphere", [0, 0.38, 0], [0.2, 12, 12, 0, 6.28, 0, 1.57], "main"),
             ("cylinder", [0, 0.01, 0], [0.12, 0.14, 0.02, 10], "accent"),
         ],
-        "main_color": "#CC4444", "accent_color": "#EEDDCC",
+        "main_color": "#CC4444",
+        "accent_color": "#EEDDCC",
     },
     "lamp": {
         "parts": [
@@ -80,7 +94,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("cylinder", [0, 0.5, 0], [0.03, 0.03, 0.9, 8], "accent"),
             ("sphere", [0, 1.0, 0], [0.15, 12, 12], "emissive"),
         ],
-        "main_color": "#FFDD44", "accent_color": "#777777",
+        "main_color": "#FFDD44",
+        "accent_color": "#777777",
     },
     "table": {
         "parts": [
@@ -90,7 +105,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("box", [-0.35, 0.18, 0.2], [0.05, 0.36, 0.05], "accent"),
             ("box", [0.35, 0.18, 0.2], [0.05, 0.36, 0.05], "accent"),
         ],
-        "main_color": "#A0724A", "accent_color": "#8B6238",
+        "main_color": "#A0724A",
+        "accent_color": "#8B6238",
     },
     "sign": {
         "parts": [
@@ -98,14 +114,16 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("cylinder", [0, 0.3, 0], [0.03, 0.03, 0.6, 8], "accent"),
             ("cylinder", [0, 0.01, 0], [0.12, 0.14, 0.02, 10], "accent"),
         ],
-        "main_color": "#FF4488", "accent_color": "#555555",
+        "main_color": "#FF4488",
+        "accent_color": "#555555",
     },
     "box": {
         "parts": [
             ("box", [0, 0.2, 0], [0.4, 0.4, 0.4], "main"),
             ("box", [0, 0.41, 0], [0.42, 0.02, 0.42], "accent"),
         ],
-        "main_color": "#B8956A", "accent_color": "#8B6238",
+        "main_color": "#B8956A",
+        "accent_color": "#8B6238",
     },
     "crystal": {
         "parts": [
@@ -114,7 +132,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("cone", [-0.08, 0.18, -0.06], [0.06, 0.3, 6], "emissive"),
             ("cylinder", [0, 0.02, 0], [0.2, 0.22, 0.04, 8], "accent"),
         ],
-        "main_color": "#88CCEE", "accent_color": "#666666",
+        "main_color": "#88CCEE",
+        "accent_color": "#666666",
     },
     "chair": {
         "parts": [
@@ -125,7 +144,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("box", [-0.17, 0.11, 0.17], [0.04, 0.22, 0.04], "accent"),
             ("box", [0.17, 0.11, 0.17], [0.04, 0.22, 0.04], "accent"),
         ],
-        "main_color": "#6688AA", "accent_color": "#555555",
+        "main_color": "#6688AA",
+        "accent_color": "#555555",
     },
     "teapot": {
         "parts": [
@@ -137,7 +157,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("torus", [-0.24, 0.24, 0], [0.08, 0.02, 8, 16], "accent"),
             ("cylinder", [0, 0.04, 0], [0.12, 0.14, 0.04, 12], "accent"),
         ],
-        "main_color": "#CC8844", "accent_color": "#8B6238",
+        "main_color": "#CC8844",
+        "accent_color": "#8B6238",
     },
     "mug": {
         "parts": [
@@ -146,7 +167,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("cylinder", [0, 0.02, 0], [0.12, 0.13, 0.04, 16], "accent"),
             ("torus", [0.16, 0.18, 0], [0.06, 0.015, 8, 16], "accent"),
         ],
-        "main_color": "#EEEEEE", "accent_color": "#CCCCCC",
+        "main_color": "#EEEEEE",
+        "accent_color": "#CCCCCC",
     },
     "bottle": {
         "parts": [
@@ -155,7 +177,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("cylinder", [0, 0.55, 0], [0.04, 0.04, 0.06, 8], "accent"),
             ("cylinder", [0, 0.02, 0], [0.11, 0.11, 0.04, 12], "accent"),
         ],
-        "main_color": "#336644", "accent_color": "#555555",
+        "main_color": "#336644",
+        "accent_color": "#555555",
     },
     "clock": {
         "parts": [
@@ -166,7 +189,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("sphere", [0, 0.53, 0], [0.015, 8, 8], "accent"),
             ("box", [0, 0.5, -0.04], [0.04, 0.15, 0.02], "accent"),
         ],
-        "main_color": "#F5F5DC", "accent_color": "#8B6238",
+        "main_color": "#F5F5DC",
+        "accent_color": "#8B6238",
     },
     "robot": {
         "parts": [
@@ -180,7 +204,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("box", [-0.08, 0.08, 0], [0.1, 0.16, 0.12], "accent"),
             ("box", [0.08, 0.08, 0], [0.1, 0.16, 0.12], "accent"),
         ],
-        "main_color": "#888888", "accent_color": "#555555",
+        "main_color": "#888888",
+        "accent_color": "#555555",
     },
     "book": {
         "parts": [
@@ -188,7 +213,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("box", [0, 0.12, 0], [0.28, 0.2, 0.03], "accent"),
             ("box", [-0.15, 0.12, 0], [0.01, 0.22, 0.05], "accent"),
         ],
-        "main_color": "#8B2222", "accent_color": "#EEDDCC",
+        "main_color": "#8B2222",
+        "accent_color": "#EEDDCC",
     },
     "sword": {
         "parts": [
@@ -197,7 +223,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("cylinder", [0, 0.1, 0], [0.025, 0.025, 0.14, 8], "main"),
             ("sphere", [0, 0.02, 0], [0.03, 8, 8], "main"),
         ],
-        "main_color": "#8B6238", "accent_color": "#C0C0C0",
+        "main_color": "#8B6238",
+        "accent_color": "#C0C0C0",
     },
     "flower": {
         "parts": [
@@ -209,7 +236,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("sphere", [0, 0.52, -0.08], [0.04, 8, 8], "main"),
             ("cylinder", [0, 0.04, 0], [0.08, 0.1, 0.08, 8], "accent"),
         ],
-        "main_color": "#FF6699", "accent_color": "#338833",
+        "main_color": "#FF6699",
+        "accent_color": "#338833",
     },
     "trophy": {
         "parts": [
@@ -219,7 +247,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("torus", [-0.18, 0.3, 0], [0.05, 0.015, 8, 12], "main"),
             ("torus", [0.18, 0.3, 0], [0.05, 0.015, 8, 12], "main"),
         ],
-        "main_color": "#DAA520", "accent_color": "#8B6238",
+        "main_color": "#DAA520",
+        "accent_color": "#8B6238",
     },
     "skull": {
         "parts": [
@@ -228,7 +257,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("sphere", [-0.06, 0.22, 0.14], [0.03, 8, 8], "accent"),
             ("sphere", [0.06, 0.22, 0.14], [0.03, 8, 8], "accent"),
         ],
-        "main_color": "#EEDDCC", "accent_color": "#333333",
+        "main_color": "#EEDDCC",
+        "accent_color": "#333333",
     },
     "arcade": {
         "parts": [
@@ -239,7 +269,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("sphere", [0.08, 0.56, 0.25], [0.02, 8, 8], "emissive"),
             ("cylinder", [-0.02, 0.58, 0.25], [0.015, 0.015, 0.04, 6], "accent"),
         ],
-        "main_color": "#2222AA", "accent_color": "#333333",
+        "main_color": "#2222AA",
+        "accent_color": "#333333",
     },
     "tree": {
         "parts": [
@@ -247,7 +278,8 @@ SHAPE_TEMPLATES: dict[str, dict] = {
             ("cone", [0, 0.8, 0], [0.35, 0.5, 8], "main"),
             ("cone", [0, 1.05, 0], [0.25, 0.4, 8], "main"),
         ],
-        "main_color": "#338833", "accent_color": "#8B6238",
+        "main_color": "#338833",
+        "accent_color": "#8B6238",
     },
 }
 
@@ -341,14 +373,16 @@ def extract_parts(prompt: str) -> list[dict]:
     parts = []
     for geo_type, pos, args, color_role in shape["parts"]:
         color = main_color if color_role in ("main", "emissive") else accent_color
-        parts.append({
-            "type": geo_type,
-            "position": pos,
-            "rotation": [0, 0, 0],
-            "args": [float(a) for a in args],
-            "color": color,
-            "emissive": color_role == "emissive",
-        })
+        parts.append(
+            {
+                "type": geo_type,
+                "position": pos,
+                "rotation": [0, 0, 0],
+                "args": [float(a) for a in args],
+                "color": color,
+                "emissive": color_role == "emissive",
+            }
+        )
     return parts
 
 
@@ -388,10 +422,7 @@ def generate_template_code(name: str, prompt: str) -> str:
         geo_name = geo_map.get(geo_type, "boxGeometry")
 
         if color_role == "emissive":
-            mat_line = (
-                f'        <meshStandardMaterial color="{color}" '
-                f'emissive="{color}" emissiveIntensity={{0.5}} />'
-            )
+            mat_line = f'        <meshStandardMaterial color="{color}" emissive="{color}" emissiveIntensity={{0.5}} />'
         else:
             mat_line = f"        <meshToonMaterial {{...{hook_name}}} />"
 
@@ -426,7 +457,7 @@ def generate_template_code(name: str, prompt: str) -> str:
 
 
 def parse_ai_parts(raw: str) -> list[dict] | None:
-    match = re.search(r'/\*\s*PARTS_DATA\s*\n(.*?)\nPARTS_DATA\s*\*/', raw, re.DOTALL)
+    match = re.search(r"/\*\s*PARTS_DATA\s*\n(.*?)\nPARTS_DATA\s*\*/", raw, re.DOTALL)
     if not match:
         return None
     try:
@@ -443,8 +474,8 @@ def parse_ai_parts(raw: str) -> list[dict] | None:
 
 def strip_parts_block(code: str) -> str:
     return re.sub(
-        r'/\*\s*PARTS_DATA\s*\n.*?\nPARTS_DATA\s*\*/',
-        '',
+        r"/\*\s*PARTS_DATA\s*\n.*?\nPARTS_DATA\s*\*/",
+        "",
         code,
         flags=re.DOTALL,
     ).strip()

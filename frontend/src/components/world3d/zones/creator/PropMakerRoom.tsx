@@ -19,9 +19,7 @@ export function PropMakerRoom({ position = [0, 0, 0], size = 12 }: PropMakerRoom
   const [showcaseProps, setShowcaseProps] = useState<ShowcaseProp[]>([])
 
   const handlePropGenerated = useCallback((prop: GeneratedPropData) => {
-    const kebabName = prop.name
-      .replace(/([a-z])([A-Z])/g, '$1-$2')
-      .toLowerCase()
+    const kebabName = prop.name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 
     setShowcaseProps((prev) => {
       const next = [
@@ -52,9 +50,9 @@ export function PropMakerRoom({ position = [0, 0, 0], size = 12 }: PropMakerRoom
       size={size}
       position={position}
       theme={{
-        color: '#7B1FA2',         // Creator purple
-        floorStyle: 'lab',        // Tech-lab floor fits the fabricator theme
-        wallStyle: 'two-tone',    // Modern two-tone walls
+        color: '#7B1FA2', // Creator purple
+        floorStyle: 'lab', // Tech-lab floor fits the fabricator theme
+        wallStyle: 'two-tone', // Modern two-tone walls
       }}
     >
       {/* Center fabricator machine */}
@@ -64,11 +62,7 @@ export function PropMakerRoom({ position = [0, 0, 0], size = 12 }: PropMakerRoom
       <ShowcasePedestal position={[3.5, 0, -3.5]} />
 
       {/* Generated props gallery */}
-      <PropShowcase
-        props={showcaseProps}
-        position={[0, 0, 0]}
-        radius={3}
-      />
+      <PropShowcase props={showcaseProps} position={[0, 0, 0]} radius={3} />
 
       {/* Neon trim strips along wall tops for Creator Zone flair */}
       {[

@@ -1,7 +1,7 @@
 # AI Meetings - QA Checklist
 
-> **Date:** 2026-02-13  
-> **Version:** Phase 1-3 Complete  
+> **Date:** 2026-02-13
+> **Version:** Phase 1-3 Complete
 > **Tester:** Assistent + Nicky
 
 ---

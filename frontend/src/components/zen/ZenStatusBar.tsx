@@ -16,16 +16,16 @@ interface ZenStatusBarProps {
 }
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { 
-    hour: '2-digit', 
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
     minute: '2-digit',
-    hour12: false 
+    hour12: false,
   })
 }
 
-export function ZenStatusBar({ 
-  agentName, 
-  agentStatus, 
+export function ZenStatusBar({
+  agentName,
+  agentStatus,
   roomName,
   connected,
   panelCount = 1,
@@ -44,19 +44,27 @@ export function ZenStatusBar({
 
   const getStatusDotClass = () => {
     switch (agentStatus) {
-      case 'active': return 'zen-status-dot zen-status-dot-active'
-      case 'thinking': return 'zen-status-dot zen-status-dot-thinking'
-      case 'error': return 'zen-status-dot zen-status-dot-error'
-      default: return 'zen-status-dot zen-status-dot-idle'
+      case 'active':
+        return 'zen-status-dot zen-status-dot-active'
+      case 'thinking':
+        return 'zen-status-dot zen-status-dot-thinking'
+      case 'error':
+        return 'zen-status-dot zen-status-dot-error'
+      default:
+        return 'zen-status-dot zen-status-dot-idle'
     }
   }
 
   const getStatusLabel = () => {
     switch (agentStatus) {
-      case 'active': return 'Active'
-      case 'thinking': return 'Thinking...'
-      case 'error': return 'Error'
-      default: return 'Idle'
+      case 'active':
+        return 'Active'
+      case 'thinking':
+        return 'Thinking...'
+      case 'error':
+        return 'Error'
+      default:
+        return 'Idle'
     }
   }
 
@@ -71,9 +79,7 @@ export function ZenStatusBar({
             <span className="zen-status-muted">{getStatusLabel()}</span>
           </div>
         ) : (
-          <div className="zen-status-item zen-status-muted">
-            Select a session to start chatting
-          </div>
+          <div className="zen-status-item zen-status-muted">Select a session to start chatting</div>
         )}
       </div>
 
@@ -102,7 +108,9 @@ export function ZenStatusBar({
 
       <div className="zen-status-bar-right">
         <div className="zen-status-item">
-          <span className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`} />
+          <span
+            className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`}
+          />
           <span>{connected ? 'Connected' : 'Disconnected'}</span>
         </div>
         <span className="zen-status-sep">•</span>

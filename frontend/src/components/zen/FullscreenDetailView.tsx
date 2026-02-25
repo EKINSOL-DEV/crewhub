@@ -9,12 +9,7 @@ import { createPortal } from 'react-dom'
 import { api } from '@/lib/api'
 import type { SessionMessage, SessionContentBlock, CrewSession } from '@/lib/api'
 import type { ActiveTask } from '@/hooks/useActiveTasks'
-import {
-  formatTimestamp,
-  formatDuration,
-  formatTokens,
-  formatMessageTime,
-} from '@/lib/formatters'
+import { formatTimestamp, formatDuration, formatTokens, formatMessageTime } from '@/lib/formatters'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -39,32 +34,52 @@ interface FullscreenDetailViewProps {
 
 function getStatusConfig(status: string): { color: string; label: string; dot: string } {
   switch (status) {
-    case 'running': return { color: 'var(--zen-success)', label: 'Running', dot: '●' }
-    case 'done': return { color: 'var(--zen-fg-dim)', label: 'Completed', dot: '✓' }
-    case 'failed': return { color: 'var(--zen-error)', label: 'Failed', dot: '✕' }
-    default: return { color: 'var(--zen-fg-muted)', label: status || 'Unknown', dot: '○' }
+    case 'running':
+      return { color: 'var(--zen-success)', label: 'Running', dot: '●' }
+    case 'done':
+      return { color: 'var(--zen-fg-dim)', label: 'Completed', dot: '✓' }
+    case 'failed':
+      return { color: 'var(--zen-error)', label: 'Failed', dot: '✕' }
+    default:
+      return { color: 'var(--zen-fg-muted)', label: status || 'Unknown', dot: '○' }
   }
 }
 
 // ── Content Block ─────────────────────────────────────────────
 
-function ContentBlockView({ block, filterText }: { block: SessionContentBlock; filterText?: string }) {
+function ContentBlockView({
+  block,
+  filterText,
+}: {
+  block: SessionContentBlock
+  filterText?: string
+}) {
   const [expanded, setExpanded] = useState(false)
 
-  const highlightText = useCallback((text: string) => {
-    if (!filterText) return text
-    const idx = text.toLowerCase().indexOf(filterText.toLowerCase())
-    if (idx === -1) return text
-    return (
-      <>
-        {text.slice(0, idx)}
-        <mark style={{ background: 'var(--zen-warning, #f0c040)', color: '#000', borderRadius: 2, padding: '0 1px' }}>
-          {text.slice(idx, idx + filterText.length)}
-        </mark>
-        {text.slice(idx + filterText.length)}
-      </>
-    )
-  }, [filterText])
+  const highlightText = useCallback(
+    (text: string) => {
+      if (!filterText) return text
+      const idx = text.toLowerCase().indexOf(filterText.toLowerCase())
+      if (idx === -1) return text
+      return (
+        <>
+          {text.slice(0, idx)}
+          <mark
+            style={{
+              background: 'var(--zen-warning, #f0c040)',
+              color: '#000',
+              borderRadius: 2,
+              padding: '0 1px',
+            }}
+          >
+            {text.slice(idx, idx + filterText.length)}
+          </mark>
+          {text.slice(idx + filterText.length)}
+        </>
+      )
+    },
+    [filterText]
+  )
 
   if (block.type === 'text' && block.text) {
     return <div className="zen-sd-text">{highlightText(block.text)}</div>
@@ -92,7 +107,11 @@ function ContentBlockView({ block, filterText }: { block: SessionContentBlock; f
     )
   }
   if (block.type === 'tool_result') {
-    const text = block.content?.map(c => c.text).filter(Boolean).join('\n') || ''
+    const text =
+      block.content
+        ?.map((c) => c.text)
+        .filter(Boolean)
+        .join('\n') || ''
     if (!text) return null
     return (
       <div className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}>
@@ -113,31 +132,53 @@ function MessageBubble({ message, filterText }: { message: SessionMessage; filte
   const isSystem = message.role === 'system'
 
   const copyContent = useCallback(() => {
-    const text = message.content?.filter(b => b.type === 'text').map(b => b.text).join('\n') || ''
+    const text =
+      message.content
+        ?.filter((b) => b.type === 'text')
+        .map((b) => b.text)
+        .join('\n') || ''
     navigator.clipboard.writeText(text)
   }, [message])
 
   return (
-    <div className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}>
+    <div
+      className={`zen-sd-message zen-sd-message-${isUser ? 'user' : isSystem ? 'system' : 'assistant'}`}
+    >
       <div className="zen-sd-message-header">
         <div className="zen-sd-message-header-top">
           <span className="zen-sd-message-role">
-            {isUser ? '👤 User' : isSystem ? '⚙️ System' : message.role === 'toolResult' ? '🔧 Tool' : '🤖 Assistant'}
+            {isUser
+              ? '👤 User'
+              : isSystem
+                ? '⚙️ System'
+                : message.role === 'toolResult'
+                  ? '🔧 Tool'
+                  : '🤖 Assistant'}
           </span>
           {message.timestamp && (
             <span className="zen-sd-message-timestamp">{formatMessageTime(message.timestamp)}</span>
           )}
-          <button className="zen-sd-copy-btn" onClick={copyContent} title="Copy">📋</button>
+          <button className="zen-sd-copy-btn" onClick={copyContent} title="Copy">
+            📋
+          </button>
         </div>
         {(message.usage || message.model) && (
           <div className="zen-sd-message-meta-line">
-            {message.usage && <span className="zen-sd-message-tokens">{formatTokens(message.usage.totalTokens)} tok</span>}
-            {message.model && <span className="zen-sd-message-model">{message.model.split('/').pop()}</span>}
+            {message.usage && (
+              <span className="zen-sd-message-tokens">
+                {formatTokens(message.usage.totalTokens)} tok
+              </span>
+            )}
+            {message.model && (
+              <span className="zen-sd-message-model">{message.model.split('/').pop()}</span>
+            )}
           </div>
         )}
       </div>
       <div className="zen-sd-message-body">
-        {message.content?.map((block, i) => <ContentBlockView key={i} block={block} filterText={filterText} />)}
+        {message.content?.map((block, i) => (
+          <ContentBlockView key={i} block={block} filterText={filterText} />
+        ))}
       </div>
     </div>
   )
@@ -145,7 +186,13 @@ function MessageBubble({ message, filterText }: { message: SessionMessage; filte
 
 // ── Main Component ────────────────────────────────────────────
 
-export function FullscreenDetailView({ type, task, session, events: _events, onClose }: FullscreenDetailViewProps) {
+export function FullscreenDetailView({
+  type,
+  task,
+  session,
+  events: _events,
+  onClose,
+}: FullscreenDetailViewProps) {
   const [messages, setMessages] = useState<SessionMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -167,8 +214,9 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
     setLoading(true)
     setError(null)
 
-    api.getSessionHistory(sessionKey, 500)
-      .then(res => {
+    api
+      .getSessionHistory(sessionKey, 500)
+      .then((res) => {
         if (cancelled) return
         const raw = res.messages || []
         const parsed: SessionMessage[] = raw
@@ -190,11 +238,16 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
         setMessages(parsed)
         setLoading(false)
       })
-      .catch(err => {
-        if (!cancelled) { setError(err.message); setLoading(false) }
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err.message)
+          setLoading(false)
+        }
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [sessionKey])
 
   // Filtered + sorted messages
@@ -202,10 +255,11 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
     let filtered = messages
     if (filterText) {
       const q = filterText.toLowerCase()
-      filtered = messages.filter(m =>
-        m.content?.some(b =>
-          (b.type === 'text' && b.text?.toLowerCase().includes(q)) ||
-          (b.type === 'thinking' && b.thinking?.toLowerCase().includes(q))
+      filtered = messages.filter((m) =>
+        m.content?.some(
+          (b) =>
+            (b.type === 'text' && b.text?.toLowerCase().includes(q)) ||
+            (b.type === 'thinking' && b.thinking?.toLowerCase().includes(q))
         )
       )
     }
@@ -260,18 +314,26 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
     document.body.style.overflow = 'hidden'
     const canvases = document.querySelectorAll('canvas')
     const prevPE: string[] = []
-    canvases.forEach((c, i) => { prevPE[i] = c.style.pointerEvents; c.style.pointerEvents = 'none' })
+    canvases.forEach((c, i) => {
+      prevPE[i] = c.style.pointerEvents
+      c.style.pointerEvents = 'none'
+    })
     window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: true } }))
     return () => {
       document.body.style.overflow = prev
-      canvases.forEach((c, i) => { c.style.pointerEvents = prevPE[i] })
+      canvases.forEach((c, i) => {
+        c.style.pointerEvents = prevPE[i]
+      })
       window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: false } }))
     }
   }, [])
 
   // Token totals
   const totalUsage = useMemo(() => {
-    let input = 0, output = 0, total = 0, cost = 0
+    let input = 0,
+      output = 0,
+      total = 0,
+      cost = 0
     for (const m of messages) {
       if (m.usage) {
         input += m.usage.input || 0
@@ -284,9 +346,10 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
   }, [messages])
 
   // Title
-  const title = type === 'activity'
-    ? (task?.title || 'Activity Detail')
-    : (session?.displayName || session?.label || session?.key?.split(':').pop() || 'Session Detail')
+  const title =
+    type === 'activity'
+      ? task?.title || 'Activity Detail'
+      : session?.displayName || session?.label || session?.key?.split(':').pop() || 'Session Detail'
 
   const statusConfig = task ? getStatusConfig(task.status) : null
 
@@ -294,12 +357,16 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
     <div
       className="zen-fs-overlay"
       data-fullscreen-overlay
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
     >
       {/* Top bar */}
       <div className="zen-fs-topbar">
         <div className="zen-fs-topbar-left">
-          <span className="zen-fs-topbar-icon">{type === 'activity' ? (task?.agentIcon || '🤖') : '💬'}</span>
+          <span className="zen-fs-topbar-icon">
+            {type === 'activity' ? task?.agentIcon || '🤖' : '💬'}
+          </span>
           <span className="zen-fs-topbar-title">{title}</span>
           {statusConfig && (
             <span className="zen-fs-topbar-status" style={{ color: statusConfig.color }}>
@@ -307,7 +374,9 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
             </span>
           )}
         </div>
-        <button className="zen-fs-close" onClick={onClose} title="Close (Esc)">✕</button>
+        <button className="zen-fs-close" onClick={onClose} title="Close (Esc)">
+          ✕
+        </button>
       </div>
 
       {/* Split view */}
@@ -330,7 +399,9 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
                   </div>
                   <div className="zen-sd-meta-item">
                     <span className="zen-sd-meta-label">Agent</span>
-                    <span className="zen-sd-meta-value">{task.agentIcon} {task.agentName || '—'}</span>
+                    <span className="zen-sd-meta-value">
+                      {task.agentIcon} {task.agentName || '—'}
+                    </span>
                   </div>
                   {task.sessionKey && (
                     <div className="zen-sd-meta-item">
@@ -389,11 +460,15 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
                       <>
                         <div className="zen-sd-meta-item">
                           <span className="zen-sd-meta-label">Context</span>
-                          <span className="zen-sd-meta-value">{formatTokens(session.contextTokens)}</span>
+                          <span className="zen-sd-meta-value">
+                            {formatTokens(session.contextTokens)}
+                          </span>
                         </div>
                         <div className="zen-sd-meta-item">
                           <span className="zen-sd-meta-label">Total (session)</span>
-                          <span className="zen-sd-meta-value">{formatTokens(session.totalTokens)}</span>
+                          <span className="zen-sd-meta-value">
+                            {formatTokens(session.totalTokens)}
+                          </span>
                         </div>
                       </>
                     )}
@@ -401,11 +476,15 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
                       <>
                         <div className="zen-sd-meta-item">
                           <span className="zen-sd-meta-label">Input</span>
-                          <span className="zen-sd-meta-value">{formatTokens(totalUsage.input)}</span>
+                          <span className="zen-sd-meta-value">
+                            {formatTokens(totalUsage.input)}
+                          </span>
                         </div>
                         <div className="zen-sd-meta-item">
                           <span className="zen-sd-meta-label">Output</span>
-                          <span className="zen-sd-meta-value">{formatTokens(totalUsage.output)}</span>
+                          <span className="zen-sd-meta-value">
+                            {formatTokens(totalUsage.output)}
+                          </span>
                         </div>
                         {totalUsage.cost > 0 && (
                           <div className="zen-sd-meta-item">
@@ -428,7 +507,7 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
           <div className="zen-fs-controls">
             <button
               className="zen-fs-control-btn"
-              onClick={() => setSortDesc(d => !d)}
+              onClick={() => setSortDesc((d) => !d)}
               title={sortDesc ? 'Showing newest first' : 'Showing oldest first'}
             >
               {sortDesc ? '↓ Newest' : '↑ Oldest'}
@@ -438,7 +517,7 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
               <input
                 type="checkbox"
                 checked={autoScroll}
-                onChange={e => setAutoScroll(e.target.checked)}
+                onChange={(e) => setAutoScroll(e.target.checked)}
               />
               Auto-scroll
             </label>
@@ -450,10 +529,12 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
                 type="text"
                 placeholder="Filter messages..."
                 value={filterText}
-                onChange={e => setFilterText(e.target.value)}
+                onChange={(e) => setFilterText(e.target.value)}
               />
               {filterText && (
-                <button className="zen-fs-filter-clear" onClick={() => setFilterText('')}>✕</button>
+                <button className="zen-fs-filter-clear" onClick={() => setFilterText('')}>
+                  ✕
+                </button>
               )}
             </div>
 
@@ -463,14 +544,14 @@ export function FullscreenDetailView({ type, task, session, events: _events, onC
           </div>
 
           {/* Messages */}
-          <div
-            className="zen-fs-messages"
-            ref={historyRef}
-            onScroll={handleHistoryScroll}
-          >
+          <div className="zen-fs-messages" ref={historyRef} onScroll={handleHistoryScroll}>
             {loading && (
               <div className="zen-sd-loading">
-                <div className="zen-thinking-dots"><span /><span /><span /></div>
+                <div className="zen-thinking-dots">
+                  <span />
+                  <span />
+                  <span />
+                </div>
                 Loading history...
               </div>
             )}

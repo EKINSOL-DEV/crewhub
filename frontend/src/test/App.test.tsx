@@ -30,7 +30,15 @@ vi.mock('../hooks/useAgentsRegistry', () => ({
 vi.mock('../hooks/useRooms', () => ({
   useRooms: () => ({
     rooms: [
-      { id: 'default', name: 'Default Room', icon: '🏠', color: '#4f46e5', sort_order: 0, created_at: Date.now(), updated_at: Date.now() }
+      {
+        id: 'default',
+        name: 'Default Room',
+        icon: '🏠',
+        color: '#4f46e5',
+        sort_order: 0,
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      },
     ],
     sessionAssignments: new Map(),
     getRoomForSession: () => undefined,
@@ -74,7 +82,9 @@ describe('App', () => {
     await act(async () => {
       render(<App />)
     })
-    expect(screen.getByText("Getting real work done doesn't have to be boring.")).toBeInTheDocument()
+    expect(
+      screen.getByText("Getting real work done doesn't have to be boring.")
+    ).toBeInTheDocument()
   })
 
   it('shows connected status when connected', async () => {

@@ -1,6 +1,6 @@
 /**
  * Zen Standalone App
- * 
+ *
  * A lightweight app that provides Zen Mode as a standalone experience.
  * Shares all code/components/API with CrewHub via path aliases.
  * No 3D world, no HQ - just focused Zen Mode.
@@ -24,9 +24,9 @@ interface Project {
   description: string | null
 }
 
-function WorkspaceSelector({ onSelect, onEnterAll }: { 
+function WorkspaceSelector({ onSelect, onEnterAll }: {
   onSelect: (project: Project) => void
-  onEnterAll: () => void 
+  onEnterAll: () => void
 }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
@@ -58,9 +58,9 @@ function WorkspaceSelector({ onSelect, onEnterAll }: {
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     }}>
       <div style={{ textAlign: 'center', maxWidth: 600, padding: '0 24px' }}>
-        <h1 style={{ 
-          fontSize: '2rem', 
-          fontWeight: 300, 
+        <h1 style={{
+          fontSize: '2rem',
+          fontWeight: 300,
           color: '#c0caf5',
           marginBottom: '0.5rem',
           letterSpacing: '-0.02em',
@@ -107,9 +107,9 @@ function WorkspaceSelector({ onSelect, onEnterAll }: {
           <p style={{ color: '#565f89', fontSize: '0.875rem' }}>Loading projects...</p>
         ) : projects.length > 0 && (
           <>
-            <div style={{ 
-              fontSize: '0.75rem', 
-              color: '#565f89', 
+            <div style={{
+              fontSize: '0.75rem',
+              color: '#565f89',
               margin: '20px 0 12px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -143,10 +143,10 @@ function WorkspaceSelector({ onSelect, onEnterAll }: {
                   e.currentTarget.style.borderColor = '#3b4261'
                 }}
               >
-                <span style={{ 
+                <span style={{
                   display: 'inline-block',
-                  width: 8, height: 8, 
-                  borderRadius: '50%', 
+                  width: 8, height: 8,
+                  borderRadius: '50%',
                   background: project.color || '#7aa2f7',
                   marginRight: 10,
                 }} />

@@ -40,7 +40,7 @@ function matchesSearch(node: DocNode, q: string): boolean {
   if (node.type === 'file') {
     return node.name.toLowerCase().includes(q) || node.path.toLowerCase().includes(q)
   }
-  return node.children?.some(c => matchesSearch(c, q)) ?? false
+  return node.children?.some((c) => matchesSearch(c, q)) ?? false
 }
 
 function countFiles(nodes: DocNode[]): number {
@@ -55,10 +55,17 @@ function countFiles(nodes: DocNode[]): number {
 // ── Tree Node (mobile optimized) ──────────────────────────────────
 
 function MobileDocTreeNode({
-  node, depth, sortKey, onOpen, searchQuery,
+  node,
+  depth,
+  sortKey,
+  onOpen,
+  searchQuery,
 }: {
-  node: DocNode; depth: number; sortKey: SortKey
-  onOpen: (path: string) => void; searchQuery: string
+  node: DocNode
+  depth: number
+  sortKey: SortKey
+  onOpen: (path: string) => void
+  searchQuery: string
 }) {
   const [expanded, setExpanded] = useState(depth === 0)
   const isDir = node.type === 'directory'
@@ -66,7 +73,7 @@ function MobileDocTreeNode({
   if (searchQuery.length >= 2) {
     const q = searchQuery.toLowerCase()
     if (isDir) {
-      if (!node.children?.some(c => matchesSearch(c, q))) return null
+      if (!node.children?.some((c) => matchesSearch(c, q))) return null
     } else {
       if (!node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q)) return null
     }
@@ -79,7 +86,7 @@ function MobileDocTreeNode({
     <div>
       <div
         onClick={() => {
-          if (isDir) setExpanded(prev => !prev)
+          if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
         }}
         style={{
@@ -106,7 +113,9 @@ function MobileDocTreeNode({
 
         <span style={{ fontSize: 16 }}>{isDir ? (isExpanded ? '📂' : '📁') : '📄'}</span>
 
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span
+          style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
           {isDir ? node.name : node.name.replace(/\.md$/, '')}
         </span>
 
@@ -117,16 +126,18 @@ function MobileDocTreeNode({
         )}
       </div>
 
-      {isDir && isExpanded && sorted.map(child => (
-        <MobileDocTreeNode
-          key={child.path}
-          node={child}
-          depth={depth + 1}
-          sortKey={sortKey}
-          onOpen={onOpen}
-          searchQuery={searchQuery}
-        />
-      ))}
+      {isDir &&
+        isExpanded &&
+        sorted.map((child) => (
+          <MobileDocTreeNode
+            key={child.path}
+            node={child}
+            depth={depth + 1}
+            sortKey={sortKey}
+            onOpen={onOpen}
+            searchQuery={searchQuery}
+          />
+        ))}
     </div>
   )
 }
@@ -151,9 +162,15 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
 
   useEffect(() => {
     fetch(`${API_BASE}/docs/tree`)
-      .then(r => r.json())
-      .then(data => { setTree(data); setLoading(false) })
-      .catch(() => { setError('Failed to load docs'); setLoading(false) })
+      .then((r) => r.json())
+      .then((data) => {
+        setTree(data)
+        setLoading(false)
+      })
+      .catch(() => {
+        setError('Failed to load docs')
+        setLoading(false)
+      })
   }, [])
 
   const fileCount = countFiles(tree)
@@ -165,37 +182,56 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
     setError(null)
 
     fetch(`${API_BASE}/docs/content?path=${encodeURIComponent(path)}`)
-      .then(r => { if (!r.ok) throw new Error('Not found'); return r.json() })
-      .then(data => { setContent(data.content); setContentLoading(false) })
-      .catch(() => { setError('Failed to load document'); setContentLoading(false) })
+      .then((r) => {
+        if (!r.ok) throw new Error('Not found')
+        return r.json()
+      })
+      .then((data) => {
+        setContent(data.content)
+        setContentLoading(false)
+      })
+      .catch(() => {
+        setError('Failed to load document')
+        setContentLoading(false)
+      })
   }, [])
 
   const sorted = sortNodes(tree, sortKey)
 
   return (
-    <div style={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      background: '#0f172a',
-    }}>
-      {/* Header */}
-      <header style={{
-        padding: '12px 16px',
+    <div
+      style={{
+        height: '100%',
         display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        flexShrink: 0,
-        paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
-      }}>
+        flexDirection: 'column',
+        background: '#0f172a',
+      }}
+    >
+      {/* Header */}
+      <header
+        style={{
+          padding: '12px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          flexShrink: 0,
+          paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
+        }}
+      >
         <button
           onClick={onBack}
           style={{
-            width: 36, height: 36, borderRadius: 10,
-            border: 'none', background: 'rgba(255,255,255,0.06)',
-            color: '#94a3b8', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            border: 'none',
+            background: 'rgba(255,255,255,0.06)',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             flexShrink: 0,
           }}
         >
@@ -203,19 +239,23 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
         </button>
 
         <div style={{ flex: 1 }}>
-          <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>
-            📚 Docs
-          </h1>
+          <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>📚 Docs</h1>
           <span style={{ fontSize: 11, color: '#64748b' }}>{fileCount} files</span>
         </div>
 
         <button
-          onClick={() => setSortKey(k => k === 'name' ? 'date' : 'name')}
+          onClick={() => setSortKey((k) => (k === 'name' ? 'date' : 'name'))}
           style={{
-            width: 36, height: 36, borderRadius: 10,
-            border: 'none', background: 'rgba(255,255,255,0.06)',
-            color: '#94a3b8', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            border: 'none',
+            background: 'rgba(255,255,255,0.06)',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
           title={`Sort by ${sortKey === 'name' ? 'date' : 'name'}`}
         >
@@ -223,14 +263,18 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
         </button>
 
         <button
-          onClick={() => setShowSearch(s => !s)}
+          onClick={() => setShowSearch((s) => !s)}
           style={{
-            width: 36, height: 36, borderRadius: 10,
+            width: 36,
+            height: 36,
+            borderRadius: 10,
             border: 'none',
             background: showSearch ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.06)',
             color: showSearch ? '#818cf8' : '#94a3b8',
             cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <Search size={16} />
@@ -244,7 +288,7 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
             type="text"
             placeholder="Search documents..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             autoFocus
             style={{
               width: '100%',
@@ -274,7 +318,7 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
             No documents found
           </div>
         ) : (
-          sorted.map(node => (
+          sorted.map((node) => (
             <MobileDocTreeNode
               key={node.path}
               node={node}

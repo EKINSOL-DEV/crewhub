@@ -13,7 +13,17 @@ export interface ModelOption {
 
 export interface ThinkingLine {
   text: string
-  type: 'status' | 'thinking' | 'text' | 'tool' | 'tool_result' | 'correction' | 'complete' | 'error' | 'model' | 'prompt'
+  type:
+    | 'status'
+    | 'thinking'
+    | 'text'
+    | 'tool'
+    | 'tool_result'
+    | 'correction'
+    | 'complete'
+    | 'error'
+    | 'model'
+    | 'prompt'
 }
 
 export interface GenerationRecord {

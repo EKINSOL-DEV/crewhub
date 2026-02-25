@@ -25,7 +25,7 @@ describe('DEFAULT_ROOMS', () => {
   })
 
   it('rooms have unique IDs', () => {
-    const ids = DEFAULT_ROOMS.map(r => r.id)
+    const ids = DEFAULT_ROOMS.map((r) => r.id)
     expect(new Set(ids).size).toBe(ids.length)
   })
 })
@@ -94,32 +94,27 @@ describe('getRoomForSession', () => {
   })
 
   it('uses label-based auto-assignment', () => {
-    const result = getRoomForSession(
-      'agent:main:subagent:x',
-      config,
-      { label: 'implement new feature' }
-    )
+    const result = getRoomForSession('agent:main:subagent:x', config, {
+      label: 'implement new feature',
+    })
     expect(result).toBe('dev-room')
   })
 
   it('assigns marketing label to marketing room', () => {
     // Use pure marketing keywords without overlap with dev keywords
-    const result = getRoomForSession(
-      'agent:main:subagent:x',
-      config,
-      { label: 'newsletter copy for landing page' }
-    )
+    const result = getRoomForSession('agent:main:subagent:x', config, {
+      label: 'newsletter copy for landing page',
+    })
     // 'copy' and 'newsletter' and 'landing page' are marketing keywords
     // but may overlap with dev. Verify it picks one of the expected rooms.
     expect(['marketing-room', 'dev-room']).toContain(result)
   })
 
   it('assigns model-based routing for opus', () => {
-    const result = getRoomForSession(
-      'agent:main:subagent:x',
-      config,
-      { label: 'something', model: 'claude-opus-4' }
-    )
+    const result = getRoomForSession('agent:main:subagent:x', config, {
+      label: 'something',
+      model: 'claude-opus-4',
+    })
     expect(result).toBe('dev-room')
   })
 })

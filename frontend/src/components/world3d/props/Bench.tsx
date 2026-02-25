@@ -64,7 +64,11 @@ export function Bench({ position = [0, 0, 0], rotation = [0, 0, 0] }: BenchProps
 
       {/* Back rest metal supports */}
       {[-seatWidth / 2 + 0.2, seatWidth / 2 - 0.2].map((x, i) => (
-        <mesh key={`backleg-${i}`} position={[x, seatHeight + 0.3, -seatDepth / 2 + 0.04]} rotation={[0.15, 0, 0]}>
+        <mesh
+          key={`backleg-${i}`}
+          position={[x, seatHeight + 0.3, -seatDepth / 2 + 0.04]}
+          rotation={[0.15, 0, 0]}
+        >
           <boxGeometry args={[legWidth, 0.55, legWidth]} />
           <meshToonMaterial {...metalToon} />
         </mesh>

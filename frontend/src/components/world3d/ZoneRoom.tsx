@@ -46,12 +46,7 @@ export function ZoneRoom({
   theme = {},
   children,
 }: ZoneRoomProps) {
-  const {
-    color = '#7B1FA2',
-    floorStyle = 'default',
-    wallStyle = 'default',
-    projectColor,
-  } = theme
+  const { color = '#7B1FA2', floorStyle = 'default', wallStyle = 'default', projectColor } = theme
 
   const [hovered, setHovered] = useState(false)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -73,11 +68,7 @@ export function ZoneRoom({
   }, [])
 
   return (
-    <group
-      position={position}
-      onPointerOver={handlePointerOver}
-      onPointerOut={handlePointerOut}
-    >
+    <group position={position} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
       {/* Floor — reuses campus RoomFloor component */}
       <RoomFloor
         color={color}
@@ -88,21 +79,10 @@ export function ZoneRoom({
       />
 
       {/* Walls — reuses campus RoomWalls component */}
-      <RoomWalls
-        color={color}
-        size={size}
-        hovered={hovered}
-        wallStyle={wallStyle}
-      />
+      <RoomWalls color={color} size={size} hovered={hovered} wallStyle={wallStyle} />
 
       {/* Nameplate */}
-      <RoomNameplate
-        name={name}
-        icon={icon}
-        color={color}
-        size={size}
-        hovered={hovered}
-      />
+      <RoomNameplate name={name} icon={icon} color={color} size={size} hovered={hovered} />
 
       {/* Zone-specific content */}
       {children}

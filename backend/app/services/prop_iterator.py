@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import re
-import json
 import logging
+import re
+from dataclasses import asdict, dataclass, field
 from typing import Optional
-from dataclasses import dataclass, field, asdict
 
 logger = logging.getLogger(__name__)
 
@@ -32,28 +31,70 @@ class IterationHistory:
 # Feedback type detection
 FEEDBACK_PATTERNS = {
     "color": [
-        r"more colorful", r"less colorful", r"use (\w+) instead of (\w+)",
-        r"make it (\w+)", r"change color", r"brighter", r"darker",
-        r"neon", r"pastel", r"warm", r"cool colors", r"monochrome",
+        r"more colorful",
+        r"less colorful",
+        r"use (\w+) instead of (\w+)",
+        r"make it (\w+)",
+        r"change color",
+        r"brighter",
+        r"darker",
+        r"neon",
+        r"pastel",
+        r"warm",
+        r"cool colors",
+        r"monochrome",
     ],
     "size": [
-        r"taller", r"shorter", r"bigger", r"smaller", r"wider", r"thinner",
-        r"scale (up|down)", r"enlarge", r"shrink", r"compact",
+        r"taller",
+        r"shorter",
+        r"bigger",
+        r"smaller",
+        r"wider",
+        r"thinner",
+        r"scale (up|down)",
+        r"enlarge",
+        r"shrink",
+        r"compact",
     ],
     "detail": [
-        r"add (\w+) lights?", r"add steam", r"add particles", r"add glow",
-        r"add led", r"more detail", r"add texture", r"add pattern",
-        r"add indicator", r"add button", r"add screen",
+        r"add (\w+) lights?",
+        r"add steam",
+        r"add particles",
+        r"add glow",
+        r"add led",
+        r"more detail",
+        r"add texture",
+        r"add pattern",
+        r"add indicator",
+        r"add button",
+        r"add screen",
     ],
     "animation": [
-        r"spin faster", r"spin slower", r"stop spinning", r"add pulsing",
-        r"floating", r"bobbing", r"make it move", r"animate",
-        r"add rotation", r"oscillat", r"wave",
+        r"spin faster",
+        r"spin slower",
+        r"stop spinning",
+        r"add pulsing",
+        r"floating",
+        r"bobbing",
+        r"make it move",
+        r"animate",
+        r"add rotation",
+        r"oscillat",
+        r"wave",
     ],
     "style": [
-        r"more futuristic", r"more rustic", r"simpler", r"more complex",
-        r"steampunk", r"cyberpunk", r"organic", r"mechanical",
-        r"retro", r"modern", r"minimal", r"ornate",
+        r"more futuristic",
+        r"more rustic",
+        r"simpler",
+        r"more complex",
+        r"steampunk",
+        r"cyberpunk",
+        r"organic",
+        r"mechanical",
+        r"retro",
+        r"modern",
+        r"minimal",
+        r"ornate",
     ],
 }
 
@@ -142,7 +183,7 @@ class PropIterator:
     ) -> tuple[str, str]:
         """
         Apply user feedback to improve a prop.
-        
+
         Returns (improved_code, feedback_type).
         Uses AI via OpenClaw connection.
         """
@@ -155,7 +196,7 @@ class PropIterator:
         )
 
         # Send to AI via OpenClaw
-        from .connections import get_connection_manager, OpenClawConnection
+        from .connections import OpenClawConnection, get_connection_manager
 
         manager = await get_connection_manager()
         conn = None
@@ -178,11 +219,11 @@ class PropIterator:
 
         # Clean up response
         raw = raw.strip()
-        raw = re.sub(r'^```\w*\n', '', raw)
-        raw = re.sub(r'\n```\s*$', '', raw)
+        raw = re.sub(r"^```\w*\n", "", raw)
+        raw = re.sub(r"\n```\s*$", "", raw)
 
         # Validate
-        if 'export function' not in raw:
+        if "export function" not in raw:
             raise ValueError("AI response doesn't contain a valid component")
 
         return raw, feedback_type

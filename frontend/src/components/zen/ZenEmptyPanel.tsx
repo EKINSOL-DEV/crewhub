@@ -21,7 +21,7 @@ export function ZenEmptyPanel({ onSelectPanelType }: ZenEmptyPanelProps) {
         <div className="zen-empty-title">Add Panel</div>
         <div className="zen-empty-subtitle">Choose a panel type to display</div>
       </div>
-      
+
       {onSelectPanelType && (
         <div className="zen-panel-selector">
           {/* Main panel types */}
@@ -38,13 +38,11 @@ export function ZenEmptyPanel({ onSelectPanelType }: ZenEmptyPanelProps) {
                   <span className="zen-panel-option-label">{def.label}</span>
                   <span className="zen-panel-option-desc">{def.description}</span>
                 </div>
-                {def.shortcutHint && (
-                  <kbd className="zen-panel-option-kbd">{def.shortcutHint}</kbd>
-                )}
+                {def.shortcutHint && <kbd className="zen-panel-option-kbd">{def.shortcutHint}</kbd>}
               </button>
             ))}
           </div>
-          
+
           {/* Additional types */}
           {secondaryPanels.length > 0 && (
             <div className="zen-panel-additional">
@@ -66,7 +64,7 @@ export function ZenEmptyPanel({ onSelectPanelType }: ZenEmptyPanelProps) {
           )}
         </div>
       )}
-      
+
       <div className="zen-empty-footer">
         <span className="zen-empty-hint">
           Press <kbd className="zen-kbd">Ctrl+K</kbd> to open command palette

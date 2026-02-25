@@ -180,7 +180,6 @@ export function PropControls({
   return (
     <div className="fpm-controls">
       <div className="fpm-controls-scroll">
-
         {/* Tabs */}
         <div className="fpm-tabs">
           <button
@@ -240,11 +239,7 @@ export function PropControls({
               {showExamples && (
                 <div className="fpm-examples-grid">
                   {EXAMPLE_PROMPTS.map((p) => (
-                    <button
-                      key={p}
-                      className="fpm-example-btn"
-                      onClick={() => onSelectExample(p)}
-                    >
+                    <button key={p} className="fpm-example-btn" onClick={() => onSelectExample(p)}>
                       {p}
                     </button>
                   ))}
@@ -275,8 +270,10 @@ export function PropControls({
                   className="fpm-select"
                 >
                   <option value="">None (enhanced AI)</option>
-                  {availableTemplates.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
+                  {availableTemplates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -305,7 +302,9 @@ export function PropControls({
             {error && !isGenerating && !previewParts && (
               <div className="fpm-error">
                 ❌ {error}
-                <button className="fpm-retry-btn" onClick={onRetry}>🔄 Retry</button>
+                <button className="fpm-retry-btn" onClick={onRetry}>
+                  🔄 Retry
+                </button>
               </div>
             )}
 
@@ -352,20 +351,29 @@ export function PropControls({
                 {editMode && (
                   <div className="fpm-part-editor-controls">
                     <div className="fpm-transform-modes">
-                      {(['translate', 'rotate', 'scale'] as const).map(mode => (
+                      {(['translate', 'rotate', 'scale'] as const).map((mode) => (
                         <button
                           key={mode}
                           className={`fpm-transform-btn ${transformMode === mode ? 'fpm-transform-btn-active' : ''}`}
                           onClick={() => onTransformModeChange(mode)}
                         >
-                          {mode === 'translate' ? '↔️ Move' : mode === 'rotate' ? '🔄 Rotate' : '📐 Scale'}
+                          {mode === 'translate'
+                            ? '↔️ Move'
+                            : mode === 'rotate'
+                              ? '🔄 Rotate'
+                              : '📐 Scale'}
                         </button>
                       ))}
                     </div>
                     {selectedPartIndex !== null ? (
                       <div className="fpm-selected-part-info">
-                        Selected: Part {selectedPartIndex + 1} ({previewParts[selectedPartIndex]?.type})
-                        <span style={{ color: previewParts[selectedPartIndex]?.color, marginLeft: 6 }}>■</span>
+                        Selected: Part {selectedPartIndex + 1} (
+                        {previewParts[selectedPartIndex]?.type})
+                        <span
+                          style={{ color: previewParts[selectedPartIndex]?.color, marginLeft: 6 }}
+                        >
+                          ■
+                        </span>
                       </div>
                     ) : (
                       <div className="fpm-selected-part-info" style={{ opacity: 0.5 }}>
@@ -402,7 +410,8 @@ export function PropControls({
                           className="fpm-quality-bar-fill"
                           style={{
                             width: `${value}%`,
-                            background: value >= 80 ? '#22c55e' : value >= 50 ? '#eab308' : '#ef4444',
+                            background:
+                              value >= 80 ? '#22c55e' : value >= 50 ? '#eab308' : '#ef4444',
                           }}
                         />
                       </div>
@@ -413,7 +422,9 @@ export function PropControls({
                 {qualityScore.suggestions?.length > 0 && (
                   <div className="fpm-quality-suggestions">
                     {qualityScore.suggestions.map((s: string, i: number) => (
-                      <div key={i} className="fpm-quality-suggestion">💡 {s}</div>
+                      <div key={i} className="fpm-quality-suggestion">
+                        💡 {s}
+                      </div>
                     ))}
                   </div>
                 )}
@@ -444,7 +455,9 @@ export function PropControls({
                     placeholder="e.g. Make it more colorful, add blinking lights..."
                     value={iterationFeedback}
                     onChange={(e) => onIterationFeedbackChange(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') onIterate() }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onIterate()
+                    }}
                     disabled={isIterating}
                   />
                   <button
@@ -459,7 +472,9 @@ export function PropControls({
                   <div className="fpm-iteration-history">
                     {iterationHistory.map((h) => (
                       <div key={h.version} className="fpm-iteration-entry">
-                        <span>v{h.version}: "{h.feedback}" (Score: {h.score})</span>
+                        <span>
+                          v{h.version}: "{h.feedback}" (Score: {h.score})
+                        </span>
                         <button
                           className="fpm-iteration-rollback"
                           onClick={() => onRollback(h.version)}
@@ -478,20 +493,18 @@ export function PropControls({
 
         {/* ── History Tab ───────────────────────────────────── */}
         {activeTab === 'history' && (
-          <GenerationHistory
-            onLoadProp={onLoadFromHistory}
-            refreshKey={historyRefreshKey}
-          />
+          <GenerationHistory onLoadProp={onLoadFromHistory} refreshKey={historyRefreshKey} />
         )}
 
         {/* ── Advanced Tab ──────────────────────────────────── */}
         {activeTab === 'advanced' && (
           <div className="fpm-advanced">
-
             {/* Style Transfer */}
             <div className="fpm-advanced-section">
               <div className="fpm-advanced-title">🎨 Style Transfer</div>
-              <p className="fpm-description">Apply a showcase prop's visual style to your current prop.</p>
+              <p className="fpm-description">
+                Apply a showcase prop's visual style to your current prop.
+              </p>
               <div className="fpm-model-row">
                 <label className="fpm-label">Style:</label>
                 <select
@@ -501,16 +514,25 @@ export function PropControls({
                   disabled={isApplyingStyle || !previewCode}
                 >
                   <option value="">Select style...</option>
-                  {availableStyles.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
+                  {availableStyles.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
                   ))}
                 </select>
               </div>
               {selectedStyle && (
                 <div className="fpm-style-palette">
-                  {availableStyles.find(s => s.id === selectedStyle)?.palette.map((c, i) => (
-                    <div key={i} className="fpm-style-swatch" style={{ background: c }} title={c} />
-                  ))}
+                  {availableStyles
+                    .find((s) => s.id === selectedStyle)
+                    ?.palette.map((c, i) => (
+                      <div
+                        key={i}
+                        className="fpm-style-swatch"
+                        style={{ background: c }}
+                        title={c}
+                      />
+                    ))}
                 </div>
               )}
               <button
@@ -527,8 +549,8 @@ export function PropControls({
             <div className="fpm-advanced-section">
               <div className="fpm-advanced-title">🧬 Prop Genetics</div>
               <p className="fpm-description">
-                Combine traits from two props to create unique hybrids.
-                Use the API endpoint <code>/api/creator/props/crossbreed</code> for programmatic access.
+                Combine traits from two props to create unique hybrids. Use the API endpoint{' '}
+                <code>/api/creator/props/crossbreed</code> for programmatic access.
               </p>
               <div className="fpm-advanced-hint">
                 💡 Coming soon to the UI — available now via API
@@ -539,16 +561,27 @@ export function PropControls({
             <div className="fpm-advanced-section">
               <div className="fpm-advanced-title">💡 Quality Tips</div>
               <div className="fpm-quality-tips">
-                <div>• Use <strong>Hybrid mode</strong> with a template base for best results</div>
-                <div>• <strong>Iterate</strong> with feedback to improve score by 10-20 points</div>
-                <div>• Apply <strong>style transfer</strong> from a showcase prop for consistent quality</div>
-                <div>• Aim for <strong>85+</strong> quality score for showcase-grade props</div>
-                <div>• Try <strong>"add blinking lights"</strong> or <strong>"more colorful"</strong> as feedback</div>
+                <div>
+                  • Use <strong>Hybrid mode</strong> with a template base for best results
+                </div>
+                <div>
+                  • <strong>Iterate</strong> with feedback to improve score by 10-20 points
+                </div>
+                <div>
+                  • Apply <strong>style transfer</strong> from a showcase prop for consistent
+                  quality
+                </div>
+                <div>
+                  • Aim for <strong>85+</strong> quality score for showcase-grade props
+                </div>
+                <div>
+                  • Try <strong>"add blinking lights"</strong> or <strong>"more colorful"</strong>{' '}
+                  as feedback
+                </div>
               </div>
             </div>
           </div>
         )}
-
       </div>
     </div>
   )

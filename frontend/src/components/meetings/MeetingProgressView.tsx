@@ -48,7 +48,9 @@ function TurnEntry({ turn }: { turn: MeetingTurn }) {
   return (
     <div className="py-2 border-b border-border/40 last:border-0">
       <div className="flex items-start gap-2">
-        <span className={`text-sm mt-0.5 ${statusColor}`} aria-label={statusLabel} role="img">{statusIcon}</span>
+        <span className={`text-sm mt-0.5 ${statusColor}`} aria-label={statusLabel} role="img">
+          {statusIcon}
+        </span>
         <div className="flex-1 min-w-0">
           <span className="text-sm font-medium">{turn.agentName}</span>
           {turn.status === 'speaking' && (
@@ -81,31 +83,27 @@ function RoundSection({ round }: { round: MeetingRound }) {
   )
 }
 
-export function MeetingProgressView({
-  meeting,
-  onCancel,
-  onViewOutput,
-}: MeetingProgressViewProps) {
+export function MeetingProgressView({ meeting, onCancel, onViewOutput }: MeetingProgressViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom on new content
   useEffect(() => {
     if (scrollRef.current) {
-      const el = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]') || scrollRef.current
+      const el =
+        scrollRef.current.querySelector('[data-radix-scroll-area-viewport]') || scrollRef.current
       el.scrollTop = el.scrollHeight
     }
   }, [meeting.rounds])
 
-  const isFinished = meeting.phase === 'complete' || meeting.phase === 'error' || meeting.phase === 'cancelled'
+  const isFinished =
+    meeting.phase === 'complete' || meeting.phase === 'error' || meeting.phase === 'cancelled'
 
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="px-4 py-3 border-b">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">
-            📋 {meeting.title || 'Meeting'}
-          </h3>
+          <h3 className="text-sm font-semibold">📋 {meeting.title || 'Meeting'}</h3>
           {meeting.phase === 'gathering' && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
               Gathering
@@ -153,7 +151,10 @@ export function MeetingProgressView({
         {meeting.warnings && meeting.warnings.length > 0 && (
           <div className="space-y-1 mt-2">
             {meeting.warnings.map((w, i) => (
-              <div key={i} className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 p-2 rounded">
+              <div
+                key={i}
+                className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 p-2 rounded"
+              >
                 ⚠️ {w}
               </div>
             ))}

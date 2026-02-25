@@ -1,9 +1,8 @@
 """Tests for database initialization and operations."""
 
 import pytest
-import aiosqlite
 
-from app.db.database import DB_PATH, init_database, get_db, check_database_health, seed_default_data
+from app.db.database import DB_PATH, check_database_health, get_db, seed_default_data
 
 
 @pytest.mark.asyncio
@@ -40,9 +39,7 @@ async def test_database_tables_exist():
         "schema_version",
     ]
     async with get_db() as db:
-        async with db.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ) as cursor:
+        async with db.execute("SELECT name FROM sqlite_master WHERE type='table'") as cursor:
             rows = await cursor.fetchall()
             table_names = {row["name"] for row in rows}
 
@@ -77,8 +74,19 @@ async def test_rooms_schema():
         async with db.execute("PRAGMA table_info(rooms)") as cursor:
             columns = {row["name"] for row in await cursor.fetchall()}
 
-    expected = {"id", "name", "icon", "color", "sort_order", "default_model",
-                "speed_multiplier", "created_at", "updated_at", "project_id", "is_hq"}
+    expected = {
+        "id",
+        "name",
+        "icon",
+        "color",
+        "sort_order",
+        "default_model",
+        "speed_multiplier",
+        "created_at",
+        "updated_at",
+        "project_id",
+        "is_hq",
+    }
     assert expected.issubset(columns)
 
 
@@ -89,9 +97,20 @@ async def test_agents_schema():
         async with db.execute("PRAGMA table_info(agents)") as cursor:
             columns = {row["name"] for row in await cursor.fetchall()}
 
-    expected = {"id", "name", "icon", "color", "agent_session_key",
-                "default_model", "default_room_id", "sort_order",
-                "is_pinned", "auto_spawn", "created_at", "updated_at"}
+    expected = {
+        "id",
+        "name",
+        "icon",
+        "color",
+        "agent_session_key",
+        "default_model",
+        "default_room_id",
+        "sort_order",
+        "is_pinned",
+        "auto_spawn",
+        "created_at",
+        "updated_at",
+    }
     assert expected.issubset(columns)
 
 

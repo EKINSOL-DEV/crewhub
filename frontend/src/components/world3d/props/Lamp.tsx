@@ -42,11 +42,7 @@ export function Lamp({
       {/* Sphere bulb */}
       <mesh position={[0, poleHeight + 0.08 + sphereRadius, 0]} castShadow>
         <sphereGeometry args={[sphereRadius, 16, 16]} />
-        <meshStandardMaterial
-          color={lightColor}
-          emissive={lightColor}
-          emissiveIntensity={0.6}
-        />
+        <meshStandardMaterial color={lightColor} emissive={lightColor} emissiveIntensity={0.6} />
       </mesh>
 
       {/* Point light from sphere */}

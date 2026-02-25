@@ -59,7 +59,11 @@ interface WanderingBots3DProps {
 const CAMPUS_MARGIN = 3 // padding inside building walls
 
 /** Get a random point within the campus/building area, avoiding rooms */
-function getRandomCampusPosition(buildingWidth: number, buildingDepth: number, obstacles?: RoomObstacle[]): [number, number] {
+function getRandomCampusPosition(
+  buildingWidth: number,
+  buildingDepth: number,
+  obstacles?: RoomObstacle[]
+): [number, number] {
   const halfBW = buildingWidth / 2
   const halfBD = buildingDepth / 2
   const maxAttempts = 30
@@ -77,7 +81,12 @@ function getRandomCampusPosition(buildingWidth: number, buildingDepth: number, o
 }
 
 /** Clamp a position to campus bounds */
-function clampToCampus(x: number, z: number, buildingWidth: number, buildingDepth: number): [number, number] {
+function clampToCampus(
+  x: number,
+  z: number,
+  buildingWidth: number,
+  buildingDepth: number
+): [number, number] {
   const halfBW = buildingWidth / 2
   const halfBD = buildingDepth / 2
   return [
@@ -112,7 +121,13 @@ function isInsideAnyRoom(x: number, z: number, obstacles: RoomObstacle[]): boole
 }
 
 /** Check if a straight-line path crosses through any room obstacle */
-function doesPathCrossRoom(x1: number, z1: number, x2: number, z2: number, obstacles: RoomObstacle[]): boolean {
+function doesPathCrossRoom(
+  x1: number,
+  z1: number,
+  x2: number,
+  z2: number,
+  obstacles: RoomObstacle[]
+): boolean {
   const dx = x2 - x1
   const dz = z2 - z1
   const dist = Math.sqrt(dx * dx + dz * dz)
@@ -132,9 +147,9 @@ function pushOutsideRooms(x: number, z: number, obstacles: RoomObstacle[]): [num
     const hd = obs.halfD + ROOM_AVOIDANCE_MARGIN
     if (x >= obs.cx - hw && x <= obs.cx + hw && z >= obs.cz - hd && z <= obs.cz + hd) {
       const toLeft = x - (obs.cx - hw)
-      const toRight = (obs.cx + hw) - x
+      const toRight = obs.cx + hw - x
       const toFront = z - (obs.cz - hd)
-      const toBack = (obs.cz + hd) - z
+      const toBack = obs.cz + hd - z
       const min = Math.min(toLeft, toRight, toFront, toBack)
       if (min === toLeft) return [obs.cx - hw - 0.2, z]
       if (min === toRight) return [obs.cx + hw + 0.2, z]
@@ -159,7 +174,17 @@ interface OutdoorBotProps {
   onBotClick?: (session: CrewSession) => void
 }
 
-function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, buildingDepth, roomObstacles, onBotClick }: OutdoorBotProps) {
+function OutdoorBot({
+  session,
+  config,
+  name,
+  initialX,
+  initialZ,
+  buildingWidth,
+  buildingDepth,
+  roomObstacles,
+  onBotClick,
+}: OutdoorBotProps) {
   const groupRef = useRef<THREE.Group>(null)
   const walkPhaseRef = useRef(0)
   const { focusBot } = useWorldFocus()
@@ -215,7 +240,11 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
         const [cx, cz] = clampToCampus(rawX, rawZ, buildingWidth, buildingDepth)
 
         // Reject target if inside a room or path crosses through a room
-        if (roomObstacles && (isInsideAnyRoom(cx, cz, roomObstacles) || doesPathCrossRoom(state.currentX, state.currentZ, cx, cz, roomObstacles))) {
+        if (
+          roomObstacles &&
+          (isInsideAnyRoom(cx, cz, roomObstacles) ||
+            doesPathCrossRoom(state.currentX, state.currentZ, cx, cz, roomObstacles))
+        ) {
           state.waitTimer = 0.1 // retry quickly next frame
         } else {
           state.targetX = cx
@@ -257,7 +286,12 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
     }
 
     // Clamp to campus bounds (safety net)
-    const [clampedX, clampedZ] = clampToCampus(state.currentX, state.currentZ, buildingWidth, buildingDepth)
+    const [clampedX, clampedZ] = clampToCampus(
+      state.currentX,
+      state.currentZ,
+      buildingWidth,
+      buildingDepth
+    )
     state.currentX = clampedX
     state.currentZ = clampedZ
 
@@ -292,8 +326,12 @@ function OutdoorBot({ session, config, name, initialX, initialZ, buildingWidth, 
         focusBot(session.key, 'outdoor')
         if (onBotClick) onBotClick(session)
       }}
-      onPointerOver={() => { document.body.style.cursor = 'pointer' }}
-      onPointerOut={() => { document.body.style.cursor = 'auto' }}
+      onPointerOver={() => {
+        document.body.style.cursor = 'pointer'
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = 'auto'
+      }}
     >
       <group position={[0, 0.33, 0]}>
         <BotStatusGlow status="sleeping" />
@@ -353,24 +391,27 @@ export function WanderingBots3D({
     if (sleepingSessions.length === 0) return []
     const count = Math.min(
       MIN_WANDERERS + Math.floor(Math.random() * (MAX_WANDERERS - MIN_WANDERERS + 1)),
-      sleepingSessions.length,
+      sleepingSessions.length
     )
     // Shuffle and pick
     const shuffled = [...sleepingSessions].sort(() => Math.random() - 0.5)
-    return shuffled.slice(0, count).map(s => s.key)
+    return shuffled.slice(0, count).map((s) => s.key)
   }, [sleepingSessions])
 
   // Refresh selection periodically
   const wanderers = useMemo(() => {
     const now = Date.now()
-    if (now - lastRefreshRef.current > REFRESH_INTERVAL_MS || selectedKeysRef.current.length === 0) {
+    if (
+      now - lastRefreshRef.current > REFRESH_INTERVAL_MS ||
+      selectedKeysRef.current.length === 0
+    ) {
       selectedKeysRef.current = selectWanderers()
       lastRefreshRef.current = now
     }
 
     // Validate selected keys still exist in sleeping sessions
-    const validKeys = new Set(sleepingSessions.map(s => s.key))
-    const stillValid = selectedKeysRef.current.filter(k => validKeys.has(k))
+    const validKeys = new Set(sleepingSessions.map((s) => s.key))
+    const stillValid = selectedKeysRef.current.filter((k) => validKeys.has(k))
 
     // If we lost too many, re-select
     if (stillValid.length < MIN_WANDERERS && sleepingSessions.length >= MIN_WANDERERS) {
@@ -385,14 +426,22 @@ export function WanderingBots3D({
 
   // Build bot data for selected wanderers
   const wanderingBots = useMemo(() => {
-    return wanderers.map(key => {
-      const session = sleepingSessions.find(s => s.key === key)
-      if (!session) return null
-      const config = getBotConfigFromSession(session.key, session.label)
-      const name = getSessionDisplayName(session, displayNames.get(session.key))
-      const [x, z] = getRandomCampusPosition(buildingWidth, buildingDepth, roomObstacles)
-      return { session, config, name, x, z }
-    }).filter(Boolean) as { session: CrewSession; config: BotVariantConfig; name: string; x: number; z: number }[]
+    return wanderers
+      .map((key) => {
+        const session = sleepingSessions.find((s) => s.key === key)
+        if (!session) return null
+        const config = getBotConfigFromSession(session.key, session.label)
+        const name = getSessionDisplayName(session, displayNames.get(session.key))
+        const [x, z] = getRandomCampusPosition(buildingWidth, buildingDepth, roomObstacles)
+        return { session, config, name, x, z }
+      })
+      .filter(Boolean) as {
+      session: CrewSession
+      config: BotVariantConfig
+      name: string
+      x: number
+      z: number
+    }[]
     // We intentionally use wanderers as the primary dep, not sleepingSessions
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wanderers])
@@ -401,7 +450,7 @@ export function WanderingBots3D({
 
   return (
     <group>
-      {wanderingBots.map(bot => (
+      {wanderingBots.map((bot) => (
         <OutdoorBot
           key={bot.session.key}
           session={bot.session}

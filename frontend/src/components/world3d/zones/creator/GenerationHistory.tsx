@@ -29,18 +29,25 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
   const extraCount = state.placements.length - displayPlacements.length
 
   return (
-    <div className="fpm-delete-overlay" onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
+    <div
+      className="fpm-delete-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel()
+      }}
+    >
       <div className="fpm-delete-dialog">
         <div className="fpm-delete-title">
           {hasPlacements ? '⚠️ Delete Prop?' : '🗑️ Delete Prop?'}
         </div>
         <div className="fpm-delete-body">
-          <p>This will delete "<strong>{state.record.name}</strong>" from your history.</p>
+          <p>
+            This will delete "<strong>{state.record.name}</strong>" from your history.
+          </p>
           {hasPlacements ? (
             <>
               <div className="fpm-delete-warning">
-                ⚠️ This prop is currently placed in {state.placements.length} room(s)
-                ({state.totalInstances} instance{state.totalInstances !== 1 ? 's' : ''}):
+                ⚠️ This prop is currently placed in {state.placements.length} room(s) (
+                {state.totalInstances} instance{state.totalInstances !== 1 ? 's' : ''}):
               </div>
               <ul className="fpm-delete-room-list">
                 {displayPlacements.map((p) => (
@@ -63,7 +70,11 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
             Cancel
           </button>
           <button className="fpm-delete-confirm-btn" onClick={onConfirm} disabled={state.loading}>
-            {state.loading ? '⏳ Deleting...' : hasPlacements ? '🗑️ Delete Anyway' : '🗑️ Delete Prop'}
+            {state.loading
+              ? '⏳ Deleting...'
+              : hasPlacements
+                ? '🗑️ Delete Anyway'
+                : '🗑️ Delete Prop'}
           </button>
         </div>
       </div>
@@ -91,8 +102,11 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
   useEffect(() => {
     setLoading(true)
     fetch('/api/creator/generation-history?limit=50')
-      .then(r => r.json())
-      .then(data => { setRecords(data.records || []); setLoading(false) })
+      .then((r) => r.json())
+      .then((data) => {
+        setRecords(data.records || [])
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [refreshKey])
 
@@ -141,20 +155,26 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
       const res = await fetch(url, { method: 'DELETE' })
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: 'Delete failed' }))
-        throw new Error(typeof err.detail === 'string' ? err.detail : err.detail?.message || 'Delete failed')
+        throw new Error(
+          typeof err.detail === 'string' ? err.detail : err.detail?.message || 'Delete failed'
+        )
       }
       const result = await res.json()
 
-      setRecords(prev => prev.filter(r => r.id !== deleteState.record.id))
+      setRecords((prev) => prev.filter((r) => r.id !== deleteState.record.id))
       if (selectedId === deleteState.record.id) {
         setSelectedId(null)
         setDetail(null)
       }
 
-      const roomsMsg = result.total_instances_removed > 0
-        ? ` (removed from ${result.deleted_from_rooms.length} room${result.deleted_from_rooms.length !== 1 ? 's' : ''})`
-        : ''
-      setToast({ message: `✅ Prop "${deleteState.record.name}" deleted${roomsMsg}`, type: 'success' })
+      const roomsMsg =
+        result.total_instances_removed > 0
+          ? ` (removed from ${result.deleted_from_rooms.length} room${result.deleted_from_rooms.length !== 1 ? 's' : ''})`
+          : ''
+      setToast({
+        message: `✅ Prop "${deleteState.record.name}" deleted${roomsMsg}`,
+        type: 'success',
+      })
     } catch (e: any) {
       setToast({ message: `❌ ${e.message || 'Delete failed'}`, type: 'error' })
     } finally {
@@ -167,9 +187,7 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
 
   return (
     <div className="fpm-history">
-      {toast && (
-        <div className={`fpm-toast fpm-toast-${toast.type}`}>{toast.message}</div>
-      )}
+      {toast && <div className={`fpm-toast fpm-toast-${toast.type}`}>{toast.message}</div>}
       {deleteState && (
         <PropDeleteDialog
           state={deleteState}
@@ -189,15 +207,17 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
               {r.error ? '❌' : r.method === 'ai' ? '🤖' : '📐'} {r.name}
             </div>
             <div className="fpm-history-item-meta">
-              {r.modelLabel} · {r.prompt.slice(0, 40)}{r.prompt.length > 40 ? '...' : ''}
+              {r.modelLabel} · {r.prompt.slice(0, 40)}
+              {r.prompt.length > 40 ? '...' : ''}
             </div>
-            <div className="fpm-history-item-date">
-              {new Date(r.createdAt).toLocaleString()}
-            </div>
+            <div className="fpm-history-item-date">{new Date(r.createdAt).toLocaleString()}</div>
             <button
               className="fpm-history-delete-btn"
               title="Delete prop"
-              onClick={(e) => { e.stopPropagation(); handleDeleteClick(r) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDeleteClick(r)
+              }}
             >
               🗑️
             </button>
@@ -224,13 +244,13 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
                 Tool Calls ({detail.toolCalls.length}):
               </span>
               {detail.toolCalls.map((tc, i) => (
-                <div key={i} style={{ fontSize: 10, color: '#888' }}>🔧 {tc.name}</div>
+                <div key={i} style={{ fontSize: 10, color: '#888' }}>
+                  🔧 {tc.name}
+                </div>
               ))}
             </div>
           )}
-          {detail.error && (
-            <div style={{ color: '#ef4444', fontSize: 11 }}>❌ {detail.error}</div>
-          )}
+          {detail.error && <div style={{ color: '#ef4444', fontSize: 11 }}>❌ {detail.error}</div>}
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {detail.parts.length > 0 && !detail.error && (
               <button className="fpm-load-btn" onClick={() => onLoadProp(detail)}>

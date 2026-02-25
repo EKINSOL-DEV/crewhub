@@ -1,7 +1,7 @@
 # Zen Mode Standalone Architecture Plan
 
-**Date:** 2026-02-11  
-**Status:** Planning (no implementation)  
+**Date:** 2026-02-11
+**Status:** Planning (no implementation)
 **Goal:** Extract Zen Mode into a standalone app while reusing CrewHub code, API, and database where appropriate.
 
 ---

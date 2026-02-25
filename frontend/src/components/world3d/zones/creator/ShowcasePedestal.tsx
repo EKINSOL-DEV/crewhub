@@ -38,18 +38,23 @@ export function ShowcasePedestal({ position = [0, 0, 0] }: ShowcasePedestalProps
   return (
     <group
       position={position}
-      onPointerOver={() => { setHovered(true); document.body.style.cursor = 'pointer' }}
-      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto' }}
-      onClick={(e) => { e.stopPropagation(); setShowShowcase(true) }}
+      onPointerOver={() => {
+        setHovered(true)
+        document.body.style.cursor = 'pointer'
+      }}
+      onPointerOut={() => {
+        setHovered(false)
+        document.body.style.cursor = 'auto'
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        setShowShowcase(true)
+      }}
     >
       {/* Base pedestal */}
       <mesh position={[0, 0.15, 0]} castShadow>
         <cylinderGeometry args={[0.5, 0.6, 0.3, 6]} />
-        <meshStandardMaterial
-          color="#2a1a0a"
-          metalness={0.7}
-          roughness={0.3}
-        />
+        <meshStandardMaterial color="#2a1a0a" metalness={0.7} roughness={0.3} />
       </mesh>
 
       {/* Gold rim */}
@@ -68,11 +73,7 @@ export function ShowcasePedestal({ position = [0, 0, 0] }: ShowcasePedestalProps
       {/* Pillar */}
       <mesh position={[0, 0.6, 0]} castShadow>
         <cylinderGeometry args={[0.12, 0.2, 0.6, 6]} />
-        <meshStandardMaterial
-          color="#1a1a2e"
-          metalness={0.5}
-          roughness={0.4}
-        />
+        <meshStandardMaterial color="#1a1a2e" metalness={0.5} roughness={0.4} />
       </mesh>
 
       {/* Floating golden star/dodecahedron */}
@@ -149,17 +150,19 @@ export function ShowcasePedestal({ position = [0, 0, 0] }: ShowcasePedestalProps
       {/* Tooltip */}
       {hovered && !showShowcase && (
         <Html position={[0, 1.8, 0]} center>
-          <div style={{
-            background: 'rgba(0,0,0,0.85)',
-            color: '#ffd700',
-            padding: '6px 14px',
-            borderRadius: '8px',
-            fontSize: '12px',
-            fontFamily: 'system-ui, sans-serif',
-            whiteSpace: 'nowrap',
-            pointerEvents: 'none',
-            border: '1px solid rgba(255, 215, 0, 0.3)',
-          }}>
+          <div
+            style={{
+              background: 'rgba(0,0,0,0.85)',
+              color: '#ffd700',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontFamily: 'system-ui, sans-serif',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              border: '1px solid rgba(255, 215, 0, 0.3)',
+            }}
+          >
             🎨 PropCreator Design Showcase
           </div>
         </Html>

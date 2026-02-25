@@ -24,23 +24,23 @@ logger = logging.getLogger(__name__)
 class ClaudeCodeConnection(AgentConnection):
     """
     Connection to Claude Code CLI.
-    
+
     STUB IMPLEMENTATION
-    
+
     Claude Code CLI currently runs as a standalone terminal application.
     This stub provides the interface for when Claude Code exposes
     session management APIs.
-    
+
     Potential implementation approaches:
     1. File-based: Read session files from Claude Code's data directory
     2. Socket: Connect to a local socket if Claude Code exposes one
     3. CLI wrapper: Execute `claude` commands and parse output
-    
+
     Config options:
         data_dir: Path to Claude Code data directory (default: ~/.claude)
         cli_path: Path to claude executable (default: claude)
     """
-    
+
     def __init__(
         self,
         connection_id: str,
@@ -49,7 +49,7 @@ class ClaudeCodeConnection(AgentConnection):
     ) -> None:
         """
         Initialize Claude Code connection.
-        
+
         Args:
             connection_id: Unique identifier for this connection
             name: Human-readable name
@@ -62,34 +62,32 @@ class ClaudeCodeConnection(AgentConnection):
             connection_type=ConnectionType.CLAUDE_CODE,
             config=config,
         )
-        
+
         self.data_dir = config.get("data_dir", "~/.claude")
         self.cli_path = config.get("cli_path", "claude")
-        
-        logger.info(
-            f"ClaudeCodeConnection initialized (STUB): "
-            f"data_dir={self.data_dir}, cli_path={self.cli_path}"
-        )
-    
+
+        logger.info(f"ClaudeCodeConnection initialized (STUB): data_dir={self.data_dir}, cli_path={self.cli_path}")
+
     # =========================================================================
     # Connection lifecycle
     # =========================================================================
-    
+
     async def connect(self) -> bool:
         """
         Establish connection to Claude Code.
-        
+
         STUB: Currently checks if claude CLI is available.
-        
+
         Returns:
             True if connection successful, False otherwise.
         """
         self.status = ConnectionStatus.CONNECTING
-        
+
         try:
             # Check if claude CLI exists
             proc = await asyncio.create_subprocess_exec(
-                self.cli_path, "--version",
+                self.cli_path,
+                "--version",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -97,7 +95,7 @@ class ClaudeCodeConnection(AgentConnection):
                 proc.communicate(),
                 timeout=5.0,
             )
-            
+
             if proc.returncode == 0:
                 version = stdout.decode().strip()
                 logger.info(f"Claude Code CLI found: {version}")
@@ -106,51 +104,51 @@ class ClaudeCodeConnection(AgentConnection):
             else:
                 self._set_error(f"Claude CLI returned error: {stderr.decode()}")
                 return False
-                
+
         except FileNotFoundError:
             self._set_error(f"Claude CLI not found at: {self.cli_path}")
             return False
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._set_error("Claude CLI check timed out")
             return False
         except Exception as e:
             self._set_error(str(e))
             return False
-    
+
     async def disconnect(self) -> None:
         """
         Close the connection.
-        
+
         STUB: No persistent connection to close.
         """
         self.status = ConnectionStatus.DISCONNECTED
         logger.info(f"ClaudeCodeConnection {self.name} disconnected")
-    
+
     # =========================================================================
     # Session management (STUB)
     # =========================================================================
-    
+
     async def get_sessions(self) -> list[SessionInfo]:
         """
         Get list of active Claude Code sessions.
-        
+
         STUB: Returns empty list.
-        
+
         TODO: Implement by:
         - Reading session files from data_dir
         - Parsing active terminal sessions
         - Querying claude CLI if API becomes available
-        
+
         Returns:
             List of SessionInfo objects.
         """
         if not self.is_connected():
             return []
-        
+
         # STUB: No session discovery implemented yet
         logger.debug("ClaudeCodeConnection.get_sessions() - STUB returning empty list")
         return []
-    
+
     async def get_session_history(
         self,
         session_key: str,
@@ -158,32 +156,29 @@ class ClaudeCodeConnection(AgentConnection):
     ) -> list[HistoryMessage]:
         """
         Get message history for a Claude Code session.
-        
+
         STUB: Returns empty list.
-        
+
         TODO: Implement by reading session history files.
-        
+
         Args:
             session_key: Session identifier
             limit: Maximum messages to return
-            
+
         Returns:
             List of HistoryMessage objects.
         """
         if not self.is_connected():
             return []
-        
+
         # STUB: No history reading implemented yet
-        logger.debug(
-            f"ClaudeCodeConnection.get_session_history({session_key}) - "
-            f"STUB returning empty list"
-        )
+        logger.debug(f"ClaudeCodeConnection.get_session_history({session_key}) - STUB returning empty list")
         return []
-    
+
     async def get_status(self) -> dict[str, Any]:
         """
         Get Claude Code connection status.
-        
+
         Returns:
             Status dictionary.
         """
@@ -197,7 +192,7 @@ class ClaudeCodeConnection(AgentConnection):
             "implementation": "stub",
             "note": "Claude Code CLI integration not yet implemented",
         }
-    
+
     async def send_message(
         self,
         session_key: str,
@@ -206,46 +201,42 @@ class ClaudeCodeConnection(AgentConnection):
     ) -> Optional[str]:
         """
         Send a message to a Claude Code session.
-        
+
         STUB: Not implemented.
-        
+
         TODO: Implement via stdin/stdout piping to claude CLI.
-        
+
         Raises:
             NotImplementedError: Always (stub implementation)
         """
-        raise NotImplementedError(
-            "ClaudeCodeConnection.send_message() not yet implemented"
-        )
-    
+        raise NotImplementedError("ClaudeCodeConnection.send_message() not yet implemented")
+
     async def kill_session(self, session_key: str) -> bool:
         """
         Kill a Claude Code session.
-        
+
         STUB: Not implemented.
-        
+
         Returns:
             False always (stub).
         """
-        logger.warning(
-            f"ClaudeCodeConnection.kill_session({session_key}) - "
-            f"STUB returning False"
-        )
+        logger.warning(f"ClaudeCodeConnection.kill_session({session_key}) - STUB returning False")
         return False
-    
+
     async def health_check(self) -> bool:
         """
         Check if Claude Code CLI is responsive.
-        
+
         Returns:
             True if CLI responds, False otherwise.
         """
         if not self.is_connected():
             return False
-        
+
         try:
             proc = await asyncio.create_subprocess_exec(
-                self.cli_path, "--version",
+                self.cli_path,
+                "--version",
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )

@@ -25,15 +25,8 @@ export {
 } from './blueprintUtils'
 
 // Room blueprints
-export {
-  ROOM_BLUEPRINTS,
-  getRoomBlueprintsRecord,
-  getBlueprintForRoom,
-} from './blueprints'
+export { ROOM_BLUEPRINTS, getRoomBlueprintsRecord, getBlueprintForRoom } from './blueprints'
 
 // Pathfinding
 export type { PathNode } from './pathfinding'
-export {
-  findPath,
-  findNearestWalkable,
-} from './pathfinding'
+export { findPath, findNearestWalkable } from './pathfinding'

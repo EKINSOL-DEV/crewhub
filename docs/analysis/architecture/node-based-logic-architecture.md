@@ -1,7 +1,7 @@
 # Architecture Analysis: Node-Based Status/Timing Logic for CrewHub
 
-**Date:** 2026-02-03  
-**Author:** Architecture Analysis (Opus)  
+**Date:** 2026-02-03
+**Author:** Architecture Analysis (Opus)
 **Status:** Proposal / Analysis
 
 ---
