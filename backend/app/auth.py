@@ -242,6 +242,7 @@ PUBLIC_PATHS = {
     "/docs",
     "/openapi.json",
     "/redoc",
+    "/api/auth/local-bootstrap",
 }
 
 # Path prefixes that are public

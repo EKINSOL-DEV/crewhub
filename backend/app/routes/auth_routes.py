@@ -11,7 +11,7 @@ import secrets
 import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from app.auth import (
@@ -293,3 +293,32 @@ async def trigger_audit_cleanup(
     """Manually trigger cleanup of expired audit log entries (90-day retention)."""
     await cleanup_audit_log()
     return {"ok": True, "message": "Audit log cleanup triggered."}
+
+
+@router.get("/local-bootstrap")
+async def local_bootstrap(request: Request):
+    """
+    Returns the local admin key ONLY for requests from localhost.
+    This allows the frontend to auto-configure itself without manual key entry.
+    Safe because only processes on the same machine can call 127.0.0.1.
+    """
+    client_host = request.client.host if request.client else ""
+    allowed = {"127.0.0.1", "::1", "localhost"}
+    if client_host not in allowed:
+        raise HTTPException(status_code=403, detail="Only accessible from localhost")
+
+    import os
+
+    key_file = os.path.expanduser("~/.crewhub/api-keys.json")
+    try:
+        with open(key_file) as f:
+            data = json.load(f)
+        admin_key = next(
+            (k["key"] for k in data.get("keys", []) if "manage" in k.get("scopes", [])),
+            None,
+        )
+        if not admin_key:
+            raise HTTPException(status_code=404, detail="No manage-scope key found")
+        return {"key": admin_key, "scopes": ["read", "self", "manage", "admin"]}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Key file not found")

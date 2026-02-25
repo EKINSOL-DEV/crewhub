@@ -448,6 +448,26 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
     setApiKey(raw)
   }, [])
 
+  // ── Auto-fetch local admin key at startup ──────────────────────
+  // If no key is stored, try the localhost-only bootstrap endpoint.
+  // On non-local deployments this will 403/fail silently.
+  useEffect(() => {
+    const existingKey = localStorage.getItem(LS_API_KEY)
+    if (existingKey) return // Already configured
+
+    fetch('/api/auth/local-bootstrap')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.key) {
+          localStorage.setItem(LS_API_KEY, data.key)
+          setApiKey(data.key)
+        }
+      })
+      .catch(() => {
+        /* silently ignore if not local */
+      })
+  }, [])
+
   const openBrowser = useCallback(() => setIsBrowserOpen(true), [])
   const closeBrowser = useCallback(() => setIsBrowserOpen(false), [])
   const toggleBrowser = useCallback(() => setIsBrowserOpen((p) => !p), [])
