@@ -228,12 +228,6 @@ function MeetingTableConnected(
     if (groupRef.current) {
       const worldPos = new THREE.Vector3()
       groupRef.current.getWorldPosition(worldPos)
-      console.log(
-        '[MeetingTable] World position on click:',
-        worldPos.x.toFixed(2),
-        worldPos.z.toFixed(2),
-        props.roomId ? `room=${props.roomId}` : 'HQ'
-      )
       meetingCtx.setTablePosition(worldPos.x, worldPos.z)
     }
 
@@ -259,12 +253,6 @@ function MeetingTableConnected(
       if (groupRef.current) {
         const worldPos = new THREE.Vector3()
         groupRef.current.getWorldPosition(worldPos)
-        console.log(
-          '[MeetingTable] World position registered:',
-          worldPos.x.toFixed(2),
-          worldPos.z.toFixed(2),
-          props.roomId ? `room=${props.roomId}` : 'HQ'
-        )
         meetingCtx.setTablePosition(worldPos.x, worldPos.z)
       }
     })
