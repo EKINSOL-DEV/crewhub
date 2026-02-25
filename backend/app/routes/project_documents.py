@@ -6,7 +6,7 @@ Reuses patterns from agent_files.py (Phase 1).
 
 import logging
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 

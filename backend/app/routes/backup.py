@@ -8,7 +8,7 @@ create file-level backups, and list existing backup files.
 import json
 import logging
 import shutil
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -90,7 +90,7 @@ async def _export_table(db: aiosqlite.Connection, table: str) -> list[dict[str, 
 def _create_backup_path() -> Path:
     """Generate a timestamped backup path."""
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     return BACKUP_DIR / f"crewhub-{timestamp}.db"
 
 
@@ -138,7 +138,7 @@ async def export_database(key: APIKeyInfo = Depends(require_scope("admin"))):
         export_data = {
             "metadata": {
                 "version": "1.0.0",
-                "exported_at": datetime.now(UTC).isoformat(),
+                "exported_at": datetime.now(timezone.utc).isoformat(),
                 "schema_version": SCHEMA_VERSION,
                 "tables": table_counts,
             },
@@ -148,7 +148,7 @@ async def export_database(key: APIKeyInfo = Depends(require_scope("admin"))):
         return JSONResponse(
             content=export_data,
             headers={
-                "Content-Disposition": f'attachment; filename="crewhub-export-{datetime.now(UTC).strftime("%Y%m%d_%H%M%S")}.json"',
+                "Content-Disposition": f'attachment; filename="crewhub-export-{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.json"',
             },
         )
 
