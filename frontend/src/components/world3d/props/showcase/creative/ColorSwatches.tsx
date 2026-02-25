@@ -9,7 +9,7 @@ export function ColorSwatches() {
   })
   return (
     <group ref={groupRef}>
-      {[...Array(7)].map((_, i) => (
+      {[...new Array(7)].map((_, i) => (
         <mesh
           key={`item-${i}`}
           position={[-0.08 + i * 0.025, -0.12 + i * 0.01, 0]}

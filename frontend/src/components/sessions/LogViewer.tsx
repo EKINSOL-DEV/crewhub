@@ -139,7 +139,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `${session.key.replace(/[:/]/g, '-')}-${Date.now()}.json`
+    a.download = `${session.key.replaceAll(/[:/]/g, '-')}-${Date.now()}.json`
     a.click()
   }
 

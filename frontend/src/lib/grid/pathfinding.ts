@@ -17,10 +17,10 @@ interface AStarNode {
 
 // 8-directional movement: cardinals + diagonals
 const DIRECTIONS: { dx: number; dz: number; cost: number }[] = [
-  { dx: 0, dz: -1, cost: 1.0 }, // north
-  { dx: 1, dz: 0, cost: 1.0 }, // east
-  { dx: 0, dz: 1, cost: 1.0 }, // south
-  { dx: -1, dz: 0, cost: 1.0 }, // west
+  { dx: 0, dz: -1, cost: 1 }, // north
+  { dx: 1, dz: 0, cost: 1 }, // east
+  { dx: 0, dz: 1, cost: 1 }, // south
+  { dx: -1, dz: 0, cost: 1 }, // west
   { dx: 1, dz: -1, cost: 1.414 }, // northeast
   { dx: 1, dz: 1, cost: 1.414 }, // southeast
   { dx: -1, dz: 1, cost: 1.414 }, // southwest

@@ -62,7 +62,7 @@ export function meetsWCAG_AA(fg: string, bg: string): boolean {
  * Large text is 18pt (24px) or 14pt (19px) bold
  */
 export function meetsWCAG_AA_Large(fg: string, bg: string): boolean {
-  return getContrastRatio(fg, bg) >= 3.0
+  return getContrastRatio(fg, bg) >= 3
 }
 
 /**
@@ -70,7 +70,7 @@ export function meetsWCAG_AA_Large(fg: string, bg: string): boolean {
  * for normal text (7:1 ratio)
  */
 export function meetsWCAG_AAA(fg: string, bg: string): boolean {
-  return getContrastRatio(fg, bg) >= 7.0
+  return getContrastRatio(fg, bg) >= 7
 }
 
 /**
@@ -79,9 +79,9 @@ export function meetsWCAG_AAA(fg: string, bg: string): boolean {
 export function getContrastLevel(fg: string, bg: string): 'fail' | 'AA-large' | 'AA' | 'AAA' {
   const ratio = getContrastRatio(fg, bg)
 
-  if (ratio >= 7.0) return 'AAA'
+  if (ratio >= 7) return 'AAA'
   if (ratio >= 4.5) return 'AA'
-  if (ratio >= 3.0) return 'AA-large'
+  if (ratio >= 3) return 'AA-large'
   return 'fail'
 }
 
@@ -124,7 +124,7 @@ export function validateThemeContrast(theme: ZenTheme): ContrastIssue[] {
 
   for (const pair of pairs) {
     const ratio = getContrastRatio(pair.fg, pair.bg)
-    const required = pair.largeText ? 3.0 : 4.5
+    const required = pair.largeText ? 3 : 4.5
 
     if (ratio < required) {
       issues.push({

@@ -46,7 +46,7 @@ interface Bot3DProps {
   readonly status: BotStatus
   /** Display name shown below bot */
   readonly name: string
-  /** Scale factor (1.0 = main agent, 0.6 = subagent) */
+  /** Scale factor (1 = main agent, 0.6 = subagent) */
   readonly scale?: number
   /** Session data (for click handler) */
   readonly session?: CrewSession
@@ -78,7 +78,7 @@ export const Bot3D = memo(function Bot3D({
   config,
   status,
   name,
-  scale = 1.0,
+  scale = 1,
   session,
   onClick,
   roomBounds,
@@ -479,7 +479,7 @@ export const Bot3D = memo(function Bot3D({
 
     // Helper: pick a random walkable direction from current position
     const pickWalkableDir = (): { x: number; z: number } | null => {
-      const cellSize = gridData ? gridData.blueprint.cellSize : 1.0
+      const cellSize = gridData ? gridData.blueprint.cellSize : 1
       const shuffled = [...DIRECTIONS].sort(() => Math.random() - 0.5)
       for (const d of shuffled) {
         if (isWalkableAt(state.currentX + d.x * cellSize, state.currentZ + d.z * cellSize)) {

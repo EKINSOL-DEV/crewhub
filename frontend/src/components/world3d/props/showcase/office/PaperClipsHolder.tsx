@@ -17,7 +17,7 @@ export function PaperClipsHolder() {
         <sphereGeometry args={[0.04, 4, 4]} />
         <meshStandardMaterial color="#aaaacc" emissive="#444466" emissiveIntensity={0.3} />
       </mesh>
-      {[...Array(8)].map((_, i) => (
+      {[...new Array(8)].map((_, i) => (
         <mesh
           key={`item-${i}`}
           position={[Math.cos(i * 0.8) * 0.05, -0.12 + i * 0.01, Math.sin(i * 0.8) * 0.05]}

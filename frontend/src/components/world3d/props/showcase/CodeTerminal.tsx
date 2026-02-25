@@ -33,7 +33,7 @@ export function CodeTerminal() {
     <group ref={groupRef}>
       {/* Monitor body */}
       <mesh position={[0, 0.1, 0]}>
-        <boxGeometry args={[1.4, 1.0, 0.15]} />
+        <boxGeometry args={[1.4, 1, 0.15]} />
         <meshStandardMaterial color="#1a1a2e" />
       </mesh>
       {/* Screen bezel */}

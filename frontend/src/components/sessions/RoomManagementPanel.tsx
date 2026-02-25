@@ -66,8 +66,8 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
     return (
       name
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '') + '-room'
+        .replaceAll(/[^a-z0-9]+/g, '-')
+        .replaceAll(/(^-|-$)/g, '') + '-room'
     )
   }
 

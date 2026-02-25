@@ -32,7 +32,7 @@ export function TheAtrium() {
 
       {Array.from({ length: floors }).map((_, fi) => {
         const y = fi * floorH
-        const rotation = fi * 0.0 // Could add slight rotation per floor
+        const rotation = fi * 0 // Could add slight rotation per floor
 
         return (
           <group key={fi} position={[0, y, 0]}>

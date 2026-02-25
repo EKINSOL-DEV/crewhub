@@ -256,7 +256,7 @@ interface AgentScene3DProps {
 
 export default function AgentScene3D({ botConfig, agentStatus, mini }: AgentScene3DProps) {
   // Mini mode: closer camera focused on face, no controls
-  const cameraPos: [number, number, number] = mini ? [0, 1.1, 2.0] : [1.5, 2, 2.5]
+  const cameraPos: [number, number, number] = mini ? [0, 1.1, 2] : [1.5, 2, 2.5]
 
   return (
     <Canvas

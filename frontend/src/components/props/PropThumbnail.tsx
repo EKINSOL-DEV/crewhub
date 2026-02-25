@@ -35,7 +35,7 @@ function getPropName(meta: PropMeta | undefined, displayName?: string, propId?: 
   if (meta?.displayName) return meta.displayName
   // Try to prettify the raw ID
   if (!propId) return 'Unknown'
-  return propId.replace(/^(builtin:|crewhub:)/, '').replace(/-/g, ' ')
+  return propId.replace(/^(builtin:|crewhub:)/, '').replaceAll(/-/g, ' ')
 }
 
 function getCategoryLabel(meta: PropMeta | undefined): string {

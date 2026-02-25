@@ -291,7 +291,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     if (!previewParts || !previewName || isSaving) return
     setIsSaving(true)
     setError(null)
-    const kebabName = previewName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+    const kebabName = previewName.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 
     try {
       const res = await fetch('/api/creator/save-prop', {

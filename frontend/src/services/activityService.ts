@@ -219,7 +219,7 @@ function parseMessagesToActivityEntries(messages: any[]): ActivityEvent[] {
             color,
           })
         } else if (block.type === 'text' && block.text) {
-          const preview = block.text.slice(0, 150).replace(/\n/g, ' ')
+          const preview = block.text.slice(0, 150).replaceAll(/\n/g, ' ')
           if (preview.trim()) {
             entries.push({
               id: `msg-${ts}-${Math.random().toString(36).slice(2, 6)}`,
@@ -232,7 +232,7 @@ function parseMessagesToActivityEntries(messages: any[]): ActivityEvent[] {
             })
           }
         } else if (block.type === 'thinking' && block.thinking) {
-          const preview = block.thinking.slice(0, 100).replace(/\n/g, ' ')
+          const preview = block.thinking.slice(0, 100).replaceAll(/\n/g, ' ')
           if (preview.trim()) {
             entries.push({
               id: `think-${ts}-${Math.random().toString(36).slice(2, 6)}`,

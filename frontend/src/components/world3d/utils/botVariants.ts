@@ -173,8 +173,8 @@ export function getBotDisplayName(
   if (label) {
     // Extract meaningful part from label
     const cleanLabel = label
-      .replace(/parent=[^\s]+/g, '')
-      .replace(/model=[^\s]+/g, '')
+      .replaceAll(/parent=[^\s]+/g, '')
+      .replaceAll(/model=[^\s]+/g, '')
       .trim()
     if (cleanLabel.length > 0 && cleanLabel.length < 30) return cleanLabel
   }

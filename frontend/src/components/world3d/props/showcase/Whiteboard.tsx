@@ -29,7 +29,7 @@ export function Whiteboard() {
       </mesh>
       {/* White surface */}
       <mesh position={[0, 0.05, 0.026]}>
-        <boxGeometry args={[1.4, 1.0, 0.01]} />
+        <boxGeometry args={[1.4, 1, 0.01]} />
         <meshStandardMaterial color="#f0f0f0" />
       </mesh>
       {/* Sticky notes */}

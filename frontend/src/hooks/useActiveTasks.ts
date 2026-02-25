@@ -243,8 +243,8 @@ function extractTaskTitle(session: CrewSession): string {
   if (session.label) {
     // Clean up common patterns
     const cleanLabel = session.label
-      .replace(/parent=[^\s]+/g, '')
-      .replace(/model=[^\s]+/g, '')
+      .replaceAll(/parent=[^\s]+/g, '')
+      .replaceAll(/model=[^\s]+/g, '')
       .replace(/^(subagent|spawn):?\s*/i, '')
       .trim()
 
@@ -258,7 +258,7 @@ function extractTaskTitle(session: CrewSession): string {
   // agent:name:subagent:task-id → task-id
   const lastPart = parts[parts.length - 1]
   if (lastPart && lastPart.length > 4) {
-    return lastPart.replace(/-/g, ' ')
+    return lastPart.replaceAll(/-/g, ' ')
   }
 
   return 'Working...'

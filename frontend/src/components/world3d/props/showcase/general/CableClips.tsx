@@ -13,7 +13,7 @@ export function CableClips() {
         <boxGeometry args={[0.5, 0.02, 0.3]} />
         <meshStandardMaterial color="#aa8855" flatShading />
       </mesh>
-      {[...Array(5)].map((_, i) => (
+      {[...new Array(5)].map((_, i) => (
         <group key={`item-${i}`} position={[-0.16 + i * 0.08, -0.22, 0.12]}>
           <mesh>
             <boxGeometry args={[0.03, 0.04, 0.02]} />

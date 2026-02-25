@@ -23,7 +23,7 @@ export function BackupBattery() {
           />
         </mesh>
       ))}
-      <mesh position={[0.05, 0.0, 0.032]}>
+      <mesh position={[0.05, 0, 0.032]}>
         <sphereGeometry args={[0.006, 4, 4]} />
         <meshStandardMaterial color="#4488ff" emissive="#4488ff" emissiveIntensity={1} />
       </mesh>

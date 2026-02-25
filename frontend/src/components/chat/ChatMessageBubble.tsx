@@ -24,10 +24,10 @@ import { formatRelativeTime, formatShortTimestamp } from '@/lib/formatters'
 
 function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replaceAll(/&/g, '&amp;')
+    .replaceAll(/</g, '&lt;')
+    .replaceAll(/>/g, '&gt;')
+    .replaceAll(/"/g, '&quot;')
 }
 
 /**
@@ -47,14 +47,14 @@ export function renderMarkdown(
   let html = escapeHtml(text)
 
   // Code blocks (protect first — already escaped above, no double-escape)
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
+  html = html.replaceAll(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
     const style = codeBlockStyle ?? ''
     return `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ` style="${style}"` : ''}><code>${code.trim()}</code></pre>`
   })
 
   // Inline code (protect from other replacements — already escaped above)
   const inlineCodePlaceholders: string[] = []
-  html = html.replace(/`([^`]+)`/g, (_m, code) => {
+  html = html.replaceAll(/`([^`]+)`/g, (_m, code) => {
     const style = inlineCodeStyle ?? ''
     const placeholder = `%%INLINE_CODE_${inlineCodePlaceholders.length}%%`
     inlineCodePlaceholders.push(
@@ -64,27 +64,27 @@ export function renderMarkdown(
   })
 
   // Headers
-  html = html.replace(/^### (.+)$/gm, '<h4 class="chat-md-h3">$1</h4>')
-  html = html.replace(/^## (.+)$/gm, '<h3 class="chat-md-h2">$1</h3>')
-  html = html.replace(/^# (.+)$/gm, '<h2 class="chat-md-h1">$1</h2>')
+  html = html.replaceAll(/^### (.+)$/gm, '<h4 class="chat-md-h3">$1</h4>')
+  html = html.replaceAll(/^## (.+)$/gm, '<h3 class="chat-md-h2">$1</h3>')
+  html = html.replaceAll(/^# (.+)$/gm, '<h2 class="chat-md-h1">$1</h2>')
 
   // Blockquotes
-  html = html.replace(/^> (.+)$/gm, '<blockquote class="chat-md-blockquote">$1</blockquote>')
+  html = html.replaceAll(/^> (.+)$/gm, '<blockquote class="chat-md-blockquote">$1</blockquote>')
 
   // Horizontal rule
-  html = html.replace(/^---$/gm, '<hr class="chat-md-hr" />')
+  html = html.replaceAll(/^---$/gm, '<hr class="chat-md-hr" />')
 
   // Bold + italic combo (***text***)
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+  html = html.replaceAll(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
 
   // Bold
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  html = html.replaceAll(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
 
   // Italic
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+  html = html.replaceAll(/\*(.+?)\*/g, '<em>$1</em>')
 
   // Strikethrough
-  html = html.replace(/~~(.+?)~~/g, '<del>$1</del>')
+  html = html.replaceAll(/~~(.+?)~~/g, '<del>$1</del>')
 
   // Links [text](url)
   html = html.replace(
@@ -93,11 +93,11 @@ export function renderMarkdown(
   )
 
   // Unordered lists
-  html = html.replace(/^- (.+)$/gm, '<li class="chat-md-li">$1</li>')
-  html = html.replace(/(<li class="chat-md-li">.*<\/li>\n?)+/g, '<ul class="chat-md-ul">$&</ul>')
+  html = html.replaceAll(/^- (.+)$/gm, '<li class="chat-md-li">$1</li>')
+  html = html.replaceAll(/(<li class="chat-md-li">.*<\/li>\n?)+/g, '<ul class="chat-md-ul">$&</ul>')
 
   // Ordered lists
-  html = html.replace(/^\d+\. (.+)$/gm, '<li class="chat-md-li-ordered">$1</li>')
+  html = html.replaceAll(/^\d+\. (.+)$/gm, '<li class="chat-md-li-ordered">$1</li>')
   html = html.replace(
     /(<li class="chat-md-li-ordered">.*<\/li>\n?)+/g,
     '<ol class="chat-md-ol">$&</ol>'
@@ -105,15 +105,15 @@ export function renderMarkdown(
 
   // Restore inline code
   inlineCodePlaceholders.forEach((code, i) => {
-    html = html.replace(`%%INLINE_CODE_${i}%%`, code)
+    html = html.replaceAll(`%%INLINE_CODE_${i}%%`, code)
   })
 
   // Line breaks (not inside block elements)
-  html = html.replace(/\n/g, '<br/>')
+  html = html.replaceAll(/\n/g, '<br/>')
 
   // Clean up extra breaks around block elements
-  html = html.replace(/<\/(h[234]|blockquote|ul|ol|pre|hr)><br\/>/g, '</$1>')
-  html = html.replace(/<br\/><(h[234]|blockquote|ul|ol|pre)/g, '<$1')
+  html = html.replaceAll(/<\/(h[234]|blockquote|ul|ol|pre|hr)><br\/>/g, '</$1>')
+  html = html.replaceAll(/<br\/><(h[234]|blockquote|ul|ol|pre)/g, '<$1')
 
   return html
 }

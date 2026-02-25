@@ -252,7 +252,7 @@ function World3DViewInner({
             position: pos,
             rotation_y: pendingRotation,
             room_id: focusState.focusedRoomId ?? null,
-            scale: 1.0,
+            scale: 1,
           }),
         })
         if (resp.ok) {
@@ -264,7 +264,7 @@ function World3DViewInner({
             propId: placed.prop_id,
             position: placed.position,
             rotation_y: placed.rotation_y,
-            scale: placed.scale ?? 1.0,
+            scale: placed.scale ?? 1,
             roomId: placed.room_id,
           })
           // Clear selection after placement (one at a time)

@@ -36,7 +36,7 @@ export function BulletinBoard() {
         [-0.15, 0.2],
         [0.12, 0.13],
         [-0.05, -0.05],
-        [0.2, 0.0],
+        [0.2, 0],
       ].map(([x, y], i) => (
         <mesh key={`item-${i}`} position={[x, y + 0.05, 0.03]}>
           <sphereGeometry args={[0.015, 6, 6]} />

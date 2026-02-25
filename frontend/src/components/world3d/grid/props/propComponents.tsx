@@ -44,7 +44,7 @@ export function LampProp({ position }: PropProps) {
 }
 
 export function PlantProp({ position }: PropProps) {
-  return <Plant position={position} scale={1.0} />
+  return <Plant position={position} scale={1} />
 }
 
 export function CoffeeMachineProp({ position, rotation }: PropProps) {
@@ -73,7 +73,7 @@ export function WhiteboardProp({ position, rotation }: PropProps) {
   return (
     <group position={position} rotation={degToEuler(rotation)}>
       <mesh castShadow>
-        <boxGeometry args={[1.6, 1.0, 0.05]} />
+        <boxGeometry args={[1.6, 1, 0.05]} />
         <meshToonMaterial {...frameToon} />
       </mesh>
       <mesh position={[0, 0, 0.026]}>
@@ -207,7 +207,7 @@ export function EaselProp({ position, rotation }: PropProps) {
         <meshToonMaterial {...woodToon} />
       </mesh>
       <mesh position={[0, 0.5, -0.2]} rotation={[0.3, 0, 0]} castShadow>
-        <boxGeometry args={[0.04, 1.0, 0.04]} />
+        <boxGeometry args={[0.04, 1, 0.04]} />
         <meshToonMaterial {...woodToon} />
       </mesh>
       <mesh position={[0, 0.4, 0]} castShadow>
@@ -230,7 +230,7 @@ export function EaselProp({ position, rotation }: PropProps) {
         <sphereGeometry args={[0.05, 6, 6]} />
         <meshToonMaterial {...paint2} />
       </mesh>
-      <mesh position={[0.0, 0.75, 0.06]}>
+      <mesh position={[0, 0.75, 0.06]}>
         <sphereGeometry args={[0.04, 6, 6]} />
         <meshToonMaterial {...paint3} />
       </mesh>
@@ -397,7 +397,7 @@ export function RoundTableProp({ position, rotation }: PropProps) {
   return (
     <group position={position} rotation={degToEuler(rotation)}>
       <mesh position={[0, 0.55, 0]} castShadow>
-        <cylinderGeometry args={[1.0, 1.0, 0.06, 20]} />
+        <cylinderGeometry args={[1, 1, 0.06, 20]} />
         <meshToonMaterial {...topToon} />
       </mesh>
       <mesh position={[0, 0.27, 0]} castShadow>
@@ -500,15 +500,15 @@ export function ConveyorBeltProp({ position, rotation }: PropProps) {
   return (
     <group position={position} rotation={degToEuler(rotation)}>
       <mesh position={[0, 0.15, 0]} castShadow>
-        <boxGeometry args={[2.0, 0.06, 0.4]} />
+        <boxGeometry args={[2, 0.06, 0.4]} />
         <meshToonMaterial {...beltToon} />
       </mesh>
       <mesh position={[0, 0.2, 0.22]} castShadow>
-        <boxGeometry args={[2.0, 0.04, 0.04]} />
+        <boxGeometry args={[2, 0.04, 0.04]} />
         <meshToonMaterial {...frameToon} />
       </mesh>
       <mesh position={[0, 0.2, -0.22]} castShadow>
-        <boxGeometry args={[2.0, 0.04, 0.04]} />
+        <boxGeometry args={[2, 0.04, 0.04]} />
         <meshToonMaterial {...frameToon} />
       </mesh>
       {[-0.85, 0, 0.85].map((x, i) => (
@@ -596,7 +596,7 @@ export function AntennaTowerProp({ position }: PropProps) {
         <cylinderGeometry args={[0.03, 0.05, 1.8, 8]} />
         <meshToonMaterial {...poleToon} />
       </mesh>
-      {[0.5, 1.0, 1.4].map((y, i) => (
+      {[0.5, 1, 1.4].map((y, i) => (
         <mesh key={`y-${i}`} position={[0, y, 0]}>
           <torusGeometry args={[0.08 + i * 0.02, 0.01, 6, 12]} />
           <meshToonMaterial {...ringToon} />

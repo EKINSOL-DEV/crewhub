@@ -101,7 +101,7 @@ export function calculateMeetingPath(
   if (!targetRoom) return [{ x: targetX, z: targetZ }]
 
   const waypoints: { x: number; z: number }[] = []
-  const doorOffset = 2.0 // How far outside the door to step
+  const doorOffset = 2 // How far outside the door to step
 
   // 1. Walk to just inside the bot's room door
   waypoints.push({ x: botRoom.doorX, z: botRoom.doorZ + 0.5 })

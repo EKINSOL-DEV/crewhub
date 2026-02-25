@@ -384,7 +384,7 @@ function SelectionIndicator({
     if (!shadowRef.current) return
     const mat = shadowRef.current.material as THREE.MeshBasicMaterial
     mat.opacity = isDragging ? 0.25 : 0.1
-    const s = isDragging ? 1.1 : 1.0
+    const s = isDragging ? 1.1 : 1
     shadowRef.current.scale.set(s, s, 1)
   })
 
@@ -408,7 +408,7 @@ function SelectionIndicator({
 
       {/* Pulsing ring on the floor around the prop */}
       <mesh position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.8, 1.0, 32]} />
+        <ringGeometry args={[0.8, 1, 32]} />
         <meshBasicMaterial color={ringColor} transparent opacity={0.7} side={THREE.DoubleSide} />
       </mesh>
 

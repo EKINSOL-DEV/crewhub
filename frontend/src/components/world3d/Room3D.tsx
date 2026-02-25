@@ -300,7 +300,7 @@ export const Room3D = memo(function Room3D({
         <TaskWall3D
           projectId={room.project_id}
           roomId={room.id}
-          position={[0, 2.8, size / 2 - 1.0]}
+          position={[0, 2.8, size / 2 - 1]}
           rotation={[0, Math.PI, 0]}
           width={Math.min(size * 0.94, 7.8)}
           height={3.1}

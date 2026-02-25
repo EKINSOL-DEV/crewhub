@@ -130,13 +130,13 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
       </RoundedBox>
 
       {/* ─── Left arm (stubby capsule) ─── */}
-      <mesh ref={leftArmRef} position={[-0.26, 0.0, 0]} rotation={[0, 0, 0.2]} castShadow>
+      <mesh ref={leftArmRef} position={[-0.26, 0, 0]} rotation={[0, 0, 0.2]} castShadow>
         <capsuleGeometry args={[0.04, 0.12, 6, 8]} />
         <meshToonMaterial {...toonProps} />
       </mesh>
 
       {/* ─── Right arm (stubby capsule) ─── */}
-      <mesh ref={rightArmRef} position={[0.26, 0.0, 0]} rotation={[0, 0, -0.2]} castShadow>
+      <mesh ref={rightArmRef} position={[0.26, 0, 0]} rotation={[0, 0, -0.2]} castShadow>
         <capsuleGeometry args={[0.04, 0.12, 6, 8]} />
         <meshToonMaterial {...toonProps} />
       </mesh>

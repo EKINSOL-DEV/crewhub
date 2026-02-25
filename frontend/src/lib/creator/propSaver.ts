@@ -25,7 +25,7 @@ export async function savePropToRegistry(
   yOffset: number = 0.16
 ): Promise<SavedProp> {
   const filename = `${componentName}.tsx`
-  const kebabName = componentName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+  const kebabName = componentName.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
   const propId = `custom:${kebabName}`
 
   // Save code to backend
@@ -82,7 +82,7 @@ export function listCustomProps(): SavedProp[] {
     .list()
     .filter((entry) => entry.id.startsWith('custom:'))
     .map((entry) => {
-      const kebabName = entry.id.replace('custom:', '')
+      const kebabName = entry.id.replaceAll('custom:', '')
       const pascalName = kebabName
         .split('-')
         .map((s) => s.charAt(0).toUpperCase() + s.slice(1))

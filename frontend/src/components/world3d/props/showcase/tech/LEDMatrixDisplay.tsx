@@ -22,7 +22,7 @@ export function LEDMatrixDisplay() {
         <meshStandardMaterial color="#111122" flatShading />
       </mesh>
       <group ref={dotsRef}>
-        {[...Array(64)].map((_, i) => {
+        {[...new Array(64)].map((_, i) => {
           const x = (i % 8) - 3.5
           const y = Math.floor(i / 8) - 3.5
           return (

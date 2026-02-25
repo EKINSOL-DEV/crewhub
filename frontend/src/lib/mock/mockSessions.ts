@@ -550,7 +550,7 @@ export function createMockSessionHistory(sessionKey: string) {
         content: [
           {
             type: 'text',
-            text: '✨ Updated! Changed:\n- `mirror={0.4}` (was 1.0)\n- `blur={[300, 100]}` for softer edges\n- `mixBlur={8}` for blend\n\nThe floor now has a subtle, professional reflection instead of a mirror finish.',
+            text: '✨ Updated! Changed:\n- `mirror={0.4}` (was 1)\n- `blur={[300, 100]}` for softer edges\n- `mixBlur={8}` for blend\n\nThe floor now has a subtle, professional reflection instead of a mirror finish.',
           },
         ],
         timestamp: now - 5370000,

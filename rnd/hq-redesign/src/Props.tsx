@@ -33,12 +33,12 @@ export function Monitor({ position = [0, 0, 0] as [number, number, number], rota
   return (
     <group position={position} rotation={rotation}>
       {/* Screen bezel */}
-      <mesh position={[0, 1.0, 0]} castShadow>
+      <mesh position={[0, 1, 0]} castShadow>
         <boxGeometry args={[0.56, 0.38, 0.02]} />
         <meshStandardMaterial color="#111" roughness={0.3} />
       </mesh>
       {/* Screen */}
-      <mesh position={[0, 1.0, 0.012]}>
+      <mesh position={[0, 1, 0.012]}>
         <planeGeometry args={[0.5, 0.32]} />
         <meshStandardMaterial color={screenColor} emissive={screenColor} emissiveIntensity={0.8} roughness={0} />
       </mesh>
@@ -131,7 +131,7 @@ export function TallPlant({ position = [0, 0, 0] as [number, number, number] }) 
         <meshStandardMaterial color="#555" roughness={0.6} metalness={0.3} />
       </mesh>
       {/* Trunk */}
-      <mesh position={[0, 1.0, 0]}>
+      <mesh position={[0, 1, 0]}>
         <cylinderGeometry args={[0.04, 0.06, 1.2, 6]} />
         <meshStandardMaterial color="#5C4033" roughness={0.9} />
       </mesh>

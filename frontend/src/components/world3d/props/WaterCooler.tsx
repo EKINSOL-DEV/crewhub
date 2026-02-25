@@ -29,7 +29,7 @@ export function WaterCooler({ position = [0, 0, 0], rotation = [0, 0, 0] }: Wate
       </mesh>
 
       {/* Water bottle on top */}
-      <mesh position={[0, 1.0, 0]} castShadow>
+      <mesh position={[0, 1, 0]} castShadow>
         <cylinderGeometry args={[0.14, 0.14, 0.5, 12]} />
         <meshToonMaterial {...bottleToon} />
       </mesh>

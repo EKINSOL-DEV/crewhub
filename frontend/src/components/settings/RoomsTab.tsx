@@ -335,8 +335,8 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
   const generateRoomId = (name: string) =>
     name
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') + '-room'
+      .replaceAll(/[^a-z0-9]+/g, '-')
+      .replaceAll(/(^-|-$)/g, '') + '-room'
 
   const getRuleTypeLabel = (type: string) => RULE_TYPES.find((t) => t.value === type)?.label || type
 

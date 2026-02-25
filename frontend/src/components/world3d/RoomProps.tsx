@@ -77,7 +77,7 @@ function Whiteboard({
     <group position={position} rotation={rotation}>
       {/* Frame */}
       <mesh castShadow>
-        <boxGeometry args={[1.6, 1.0, 0.05]} />
+        <boxGeometry args={[1.6, 1, 0.05]} />
         <meshToonMaterial {...frameToon} />
       </mesh>
       {/* White surface */}
@@ -261,7 +261,7 @@ function Easel({
       </mesh>
       {/* Back leg */}
       <mesh position={[0, 0.5, -0.2]} rotation={[0.3, 0, 0]} castShadow>
-        <boxGeometry args={[0.04, 1.0, 0.04]} />
+        <boxGeometry args={[0.04, 1, 0.04]} />
         <meshToonMaterial {...woodToon} />
       </mesh>
       {/* Cross bar */}
@@ -288,7 +288,7 @@ function Easel({
         <sphereGeometry args={[0.05, 6, 6]} />
         <meshToonMaterial {...useToonMaterialProps('#4ECDC4')} />
       </mesh>
-      <mesh position={[0.0, 0.75, 0.06]}>
+      <mesh position={[0, 0.75, 0.06]}>
         <sphereGeometry args={[0.04, 6, 6]} />
         <meshToonMaterial {...useToonMaterialProps('#FFE66D')} />
       </mesh>
@@ -513,7 +513,7 @@ function RoundTable({
     <group position={position} rotation={rotation}>
       {/* Table top */}
       <mesh position={[0, 0.55, 0]} castShadow>
-        <cylinderGeometry args={[1.0, 1.0, 0.06, 20]} />
+        <cylinderGeometry args={[1, 1, 0.06, 20]} />
         <meshToonMaterial {...topToon} />
       </mesh>
       {/* Central pedestal */}
@@ -712,16 +712,16 @@ function ConveyorBelt({
     <group position={position} rotation={rotation}>
       {/* Belt base */}
       <mesh position={[0, 0.15, 0]} castShadow>
-        <boxGeometry args={[2.0, 0.06, 0.4]} />
+        <boxGeometry args={[2, 0.06, 0.4]} />
         <meshToonMaterial {...beltToon} />
       </mesh>
       {/* Side rails */}
       <mesh position={[0, 0.2, 0.22]} castShadow>
-        <boxGeometry args={[2.0, 0.04, 0.04]} />
+        <boxGeometry args={[2, 0.04, 0.04]} />
         <meshToonMaterial {...frameToon} />
       </mesh>
       <mesh position={[0, 0.2, -0.22]} castShadow>
-        <boxGeometry args={[2.0, 0.04, 0.04]} />
+        <boxGeometry args={[2, 0.04, 0.04]} />
         <meshToonMaterial {...frameToon} />
       </mesh>
       {/* Legs */}
@@ -903,7 +903,7 @@ function AntennaTower({ position }: { position: [number, number, number] }) {
         <meshToonMaterial {...poleToon} />
       </mesh>
       {/* Rings at intervals */}
-      {[0.5, 1.0, 1.4].map((y, i) => (
+      {[0.5, 1, 1.4].map((y, i) => (
         <mesh key={`y-${i}`} position={[0, y, 0]}>
           <torusGeometry args={[0.08 + i * 0.02, 0.01, 6, 12]} />
           <meshToonMaterial {...ringToon} />
@@ -1236,7 +1236,7 @@ function CreativeRoomProps({ s, size }: RoomTypeProps) {
       <MoodBoard position={[0, 1.6 * s + Y, h - 0.5 * s]} rotation={[0, Math.PI, 0]} />
 
       {/* Plants for inspiration */}
-      <Plant position={[h - 1.2 * s, Y, -h + 1.5 * s]} scale={1.0 * s} />
+      <Plant position={[h - 1.2 * s, Y, -h + 1.5 * s]} scale={1 * s} />
       <Plant position={[-h + 1.2 * s, Y, h - 1.2 * s]} scale={0.8 * s} potColor="#6B4F12" />
     </group>
   )
@@ -1283,7 +1283,7 @@ function ThinkingRoomProps({ s, size }: RoomTypeProps) {
       <BeanBag position={[-1.5 * s, Y, -0.8 * s]} color="#6366F1" />
       <BeanBag position={[1.5 * s, Y, -0.5 * s]} color="#8B5CF6" />
       <BeanBag position={[0, Y, 1.5 * s]} color="#A78BFA" />
-      <BeanBag position={[-1.2 * s, Y, 1.0 * s]} color="#7C3AED" />
+      <BeanBag position={[-1.2 * s, Y, 1 * s]} color="#7C3AED" />
 
       {/* Bookshelf — against back wall */}
       <Bookshelf position={[h - 1.2 * s, Y, h - 1 * s]} rotation={[0, Math.PI, 0]} />
@@ -1347,7 +1347,7 @@ function CommsRoomProps({ s, size }: RoomTypeProps) {
       {/* Desk with headset */}
       <Desk position={[h - 2.5 * s, Y, -h + 2.5 * s]} rotation={[0, -Math.PI / 3, 0]} />
       <Monitor position={[h - 2.5 * s, Y + 0.78, -h + 2.5 * s]} rotation={[0, -Math.PI / 3, 0]} />
-      <Headset position={[h - 2.0 * s, Y + 0.82, -h + 2.2 * s]} rotation={[0, -Math.PI / 3, 0]} />
+      <Headset position={[h - 2 * s, Y + 0.82, -h + 2.2 * s]} rotation={[0, -Math.PI / 3, 0]} />
       <Chair position={[h - 3.2 * s, Y, -h + 3.2 * s]} rotation={[0, (Math.PI * 2) / 3, 0]} />
 
       {/* Signal waves emanating from antenna */}
@@ -1406,7 +1406,7 @@ function DefaultRoomProps({ s, size }: RoomTypeProps) {
       <Monitor position={[-h + 2.5 * s, Y + 0.78, h - 2.5 * s]} rotation={[0, Math.PI / 4, 0]} />
       <Chair position={[-h + 3.5 * s, Y, h - 3.5 * s]} rotation={[0, Math.PI + Math.PI / 4, 0]} />
       <Lamp position={[h - 1.5 * s, Y, -h + 2 * s]} lightColor="#FFD700" lightIntensity={0.4} />
-      <Plant position={[h - 1.2 * s, Y, h - 1.2 * s]} scale={1.0 * s} />
+      <Plant position={[h - 1.2 * s, Y, h - 1.2 * s]} scale={1 * s} />
     </group>
   )
 }

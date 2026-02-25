@@ -204,7 +204,7 @@ export function SceneContent({
     const status: BotStatus = meetingParticipantKeys?.has(session.key) ? 'meeting' : baseStatus
     const config = getBotConfigFromSession(session.key, session.label, _runtime?.agent?.color)
     const name = getSessionDisplayName(session, displayNames.get(session.key))
-    const scale = isSubagent(session.key) ? 0.6 : 1.0
+    const scale = isSubagent(session.key) ? 0.6 : 1
     const activity = getActivityText(session, isActive, allSessions)
     return { key: session.key, session, status, config, name, scale, activity, isActive }
   }

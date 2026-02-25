@@ -29,7 +29,7 @@ export function getAccurateBotStatus(
  * e.g. "fix-wall-alignment" → "Fixing wall alignment"
  */
 export function humanizeLabel(label: string): string {
-  const text = label.replace(/[-_]+/g, ' ').trim()
+  const text = label.replaceAll(/[-_]+/g, ' ').trim()
   if (!text) return ''
 
   const gerundMap: Record<string, string> = {

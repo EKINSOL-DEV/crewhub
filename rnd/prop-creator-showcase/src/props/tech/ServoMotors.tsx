@@ -19,7 +19,7 @@ export function ServoMotors() {
         </group>
       ))}
       <mesh ref={hornRef} position={[0.08, -0.14, 0]}><boxGeometry args={[0.002, 0.04, 0.005]} /><meshStandardMaterial color="#ffffff" flatShading /></mesh>
-      {[...Array(3)].map((_,i) => (
+      {[...new Array(3)].map((_,i) => (
         <mesh key={`item-${i}`} position={[-0.08, -0.22, -0.01+i*0.01]}><cylinderGeometry args={[0.003, 0.003, 0.08, 3]} /><meshStandardMaterial color={['#ff4444','#222222','#ffcc44'][i]} flatShading /></mesh>
       ))}
 

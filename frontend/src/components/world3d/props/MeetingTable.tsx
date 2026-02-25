@@ -122,7 +122,7 @@ export function MeetingTable({
 
       {/* Active meeting indicator ring */}
       <mesh ref={activeRingRef} position={[0, 0.65, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.0, 1.3, 32]} />
+        <ringGeometry args={[1, 1.3, 32]} />
         <meshStandardMaterial
           color="#4ade80"
           emissive="#4ade80"

@@ -92,8 +92,8 @@ function registerBuiltinProps(): void {
     'wall-clock': { component: WallClockProp, mountType: 'wall', yOffset: 2.2 },
     'small-screen': { component: SmallScreenProp, mountType: 'wall', yOffset: 1.5 },
     'gear-mechanism': { component: GearMechanismProp, mountType: 'wall', yOffset: 1.2 },
-    'satellite-dish': { component: SatelliteDishProp, mountType: 'wall', yOffset: 2.0 },
-    'signal-waves': { component: SignalWavesProp, mountType: 'wall', yOffset: 2.0 },
+    'satellite-dish': { component: SatelliteDishProp, mountType: 'wall', yOffset: 2 },
+    'signal-waves': { component: SignalWavesProp, mountType: 'wall', yOffset: 2 },
     'status-lights': { component: StatusLightsProp, mountType: 'wall', yOffset: 1.3 },
 
     // ─── Composite props (desk + accessory combos) ───────────────

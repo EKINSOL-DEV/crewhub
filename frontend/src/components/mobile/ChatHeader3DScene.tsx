@@ -60,7 +60,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
       groupRef.current.rotation.z = Math.sin(t * 1.5) * 0.02
     } else {
       // idle — gentle float
-      groupRef.current.position.y = Math.sin(t * 1.0) * 0.04
+      groupRef.current.position.y = Math.sin(t * 1) * 0.04
       groupRef.current.rotation.y = Math.sin(t * 0.25) * 0.08
       groupRef.current.rotation.z = 0
     }
@@ -78,7 +78,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
 
     // ── Eye blink every ~4 s ──
     const blinkPhase = t % 4
-    const blinkScale = blinkPhase > 3.8 && blinkPhase < 3.95 ? 0.05 : 1.0
+    const blinkScale = blinkPhase > 3.8 && blinkPhase < 3.95 ? 0.05 : 1
     if (leftEyeRef.current) leftEyeRef.current.scale.y = blinkScale
     if (rightEyeRef.current) rightEyeRef.current.scale.y = blinkScale
   })
@@ -132,7 +132,7 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
       </group>
 
       {/* ── Body ── */}
-      <RoundedBox args={[0.38, 0.26, 0.3]} radius={0.06} smoothness={3} position={[0, 0.0, 0]}>
+      <RoundedBox args={[0.38, 0.26, 0.3]} radius={0.06} smoothness={3} position={[0, 0, 0]}>
         <meshToonMaterial color={config.color} />
       </RoundedBox>
 

@@ -19,11 +19,11 @@ export function extractHeadings(content: string): TOCHeading[] {
     const match = line.match(/^(#{1,4})\s+(.+)$/)
     if (match) {
       const level = match[1].length
-      const text = match[2].replace(/[*_`~]/g, '').trim()
+      const text = match[2].replaceAll(/[*_`~]/g, '').trim()
       const id = text
         .toLowerCase()
-        .replace(/[^\w]+/g, '-')
-        .replace(/^-|-$/g, '')
+        .replaceAll(/[^\w]+/g, '-')
+        .replaceAll(/^-|-$/g, '')
       headings.push({ id, text, level })
     }
   }

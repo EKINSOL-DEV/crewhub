@@ -19,7 +19,7 @@ interface BotChestDisplayProps {
  * - Dev: "</>" code display
  */
 export function BotChestDisplay({ type, color }: BotChestDisplayProps) {
-  const displayY = 0.0 // On the body (body center = -0.02)
+  const displayY = 0 // On the body (body center = -0.02)
   const displayZ = 0.18 // Front face of body (pushed forward to avoid clipping)
 
   return (

@@ -145,9 +145,9 @@ function CloudPuffs() {
   const clouds = useMemo(
     () => [
       { pos: [7, -10, 5] as [number, number, number], scale: 2.4, phase: 0 },
-      { pos: [-9, -13, -6] as [number, number, number], scale: 3.0, phase: 1.2 },
-      { pos: [3, -15, -10] as [number, number, number], scale: 2.0, phase: 2.8 },
-      { pos: [-6, -11, 9] as [number, number, number], scale: 2.2, phase: 4.0 },
+      { pos: [-9, -13, -6] as [number, number, number], scale: 3, phase: 1.2 },
+      { pos: [3, -15, -10] as [number, number, number], scale: 2, phase: 2.8 },
+      { pos: [-6, -11, 9] as [number, number, number], scale: 2.2, phase: 4 },
       { pos: [10, -14, -4] as [number, number, number], scale: 1.8, phase: 5.5 },
       { pos: [-11, -12, 3] as [number, number, number], scale: 2.6, phase: 3.2 },
     ],

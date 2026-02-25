@@ -53,7 +53,7 @@ export function tickAnimState(s: AnimState, delta: number): void {
       if (s.nextTypingPauseTimer <= 0) {
         // Start a typing pause
         s.typingPause = true
-        s.typingPauseTimer = 1.0 + Math.random() * 1.0 // pause for 1-2s
+        s.typingPauseTimer = 1 + Math.random() * 1 // pause for 1-2s
         s.bodyTilt = 0.04 // slight forward lean (looking at laptop)
       }
     }

@@ -230,7 +230,7 @@ export function parseMediaAttachments(content: string): ParsedMessage {
   text = text.replace(messageIdPattern, '')
 
   // Clean up multiple newlines from removed media
-  text = text.replace(/\n{3,}/g, '\n\n').trim()
+  text = text.replaceAll(/\n{3,}/g, '\n\n').trim()
 
   return { text, attachments }
 }

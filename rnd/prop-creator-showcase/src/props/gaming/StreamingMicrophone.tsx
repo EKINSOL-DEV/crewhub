@@ -21,7 +21,7 @@ export function StreamingMicrophone() {
         <cylinderGeometry args={[0.08, 0.1, 0.02, 8]} />
         <meshStandardMaterial color="#333344" flatShading />
       </mesh>
-            <mesh position={[0, 0.0, 0.065]}>
+            <mesh position={[0, 0, 0.065]}>
         <sphereGeometry args={[0.008, 4, 4]} />
         <meshStandardMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={2} />
       </mesh>

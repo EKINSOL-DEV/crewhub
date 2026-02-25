@@ -50,7 +50,7 @@ const DEFAULT_SETTINGS: SessionsSettings = {
   displayDensity: 'comfortable',
   showBadges: true,
   easterEggsEnabled: true,
-  playgroundSpeed: 1.0,
+  playgroundSpeed: 1,
   parkingIdleThreshold: 120,
 }
 

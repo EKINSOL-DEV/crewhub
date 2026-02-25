@@ -19,7 +19,7 @@ export function PropMakerRoom({ position = [0, 0, 0], size = 12 }: PropMakerRoom
   const [showcaseProps, setShowcaseProps] = useState<ShowcaseProp[]>([])
 
   const handlePropGenerated = useCallback((prop: GeneratedPropData) => {
-    const kebabName = prop.name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+    const kebabName = prop.name.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 
     setShowcaseProps((prev) => {
       const next = [

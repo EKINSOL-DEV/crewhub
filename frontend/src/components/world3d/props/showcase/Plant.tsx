@@ -22,7 +22,7 @@ export function Plant() {
     { angle: Math.PI * 1.2, tilt: 0.5, scale: 0.8, y: 0.38 },
     { angle: Math.PI * 1.6, tilt: 0.45, scale: 0.9, y: 0.28 },
     { angle: Math.PI * 0.2, tilt: 0.3, scale: 0.7, y: 0.45 },
-    { angle: Math.PI * 1.0, tilt: 0.55, scale: 0.75, y: 0.42 },
+    { angle: Math.PI * 1, tilt: 0.55, scale: 0.75, y: 0.42 },
   ]
 
   return (

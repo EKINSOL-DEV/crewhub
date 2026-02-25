@@ -149,8 +149,8 @@ export function ProjectPicker({
     if (!newName.trim()) return ''
     const slug = newName
       .trim()
-      .replace(/[^a-zA-Z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
+      .replaceAll(/[^a-zA-Z0-9]+/g, '-')
+      .replaceAll(/^-|-$/g, '')
     return `${projectsBasePath}/${slug}`
   }, [newName, projectsBasePath])
 

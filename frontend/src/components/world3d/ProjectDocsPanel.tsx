@@ -105,8 +105,8 @@ function extractToc(content: string): TocEntry[] {
       const text = match[2].trim()
       const id = text
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
+        .replaceAll(/[^a-z0-9]+/g, '-')
+        .replaceAll(/^-|-$/g, '')
       toc.push({ level, text, id })
     }
   }
@@ -299,7 +299,7 @@ function MarkdownViewer({ content, projectId }: { content: string; projectId: st
               )
             }
             // Extract language from className (e.g. "language-python")
-            const lang = className?.replace('language-', '')
+            const lang = className?.replaceAll('language-', '')
             return (
               <div style={{ position: 'relative' }}>
                 {lang && (

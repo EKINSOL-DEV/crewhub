@@ -13,11 +13,11 @@ import type { PlacedProp } from '@/contexts/CreatorModeContext'
 
 interface PlacedPropsRendererProps {
   readonly placedProps: PlacedProp[]
-  /** Cell size passed to each prop component (default 1.0 — world-coordinate props) */
+  /** Cell size passed to each prop component (default 1 — world-coordinate props) */
   readonly cellSize?: number
 }
 
-export function PlacedPropsRenderer({ placedProps, cellSize = 1.0 }: PlacedPropsRendererProps) {
+export function PlacedPropsRenderer({ placedProps, cellSize = 1 }: PlacedPropsRendererProps) {
   return (
     <>
       {placedProps.map((placed) => (
@@ -35,7 +35,7 @@ function PlacedPropMesh({ placed, cellSize }: { placed: PlacedProp; cellSize: nu
   const PropComponent = entry.component
   const yOffset = entry.yOffset ?? 0.16
   const rotationDeg = placed.rotation_y ?? 0
-  const scale = placed.scale ?? 1.0
+  const scale = placed.scale ?? 1
 
   return (
     <group

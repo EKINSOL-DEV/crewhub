@@ -305,8 +305,8 @@ describe('shouldBeInParkingLane', () => {
 })
 
 describe('getIdleOpacity', () => {
-  it('returns 1.0 for <60s idle', () => {
-    expect(getIdleOpacity(30)).toBe(1.0)
+  it('returns 1 for <60s idle', () => {
+    expect(getIdleOpacity(30)).toBe(1)
   })
 
   it('returns 0 for >300s idle', () => {

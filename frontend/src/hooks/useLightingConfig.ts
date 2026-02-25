@@ -58,8 +58,8 @@ export const DEFAULT_LIGHTING: LightingConfig = {
   fill: { intensity: 0.4, color: '#E6F0FF', position: [-10, 15, -8] },
   shadows: { ...DEFAULT_SHADOWS },
   toneMapping: 'ACESFilmicToneMapping',
-  toneMappingExposure: 1.0,
-  environmentIntensity: 1.0,
+  toneMappingExposure: 1,
+  environmentIntensity: 1,
 }
 
 const STORAGE_KEY = 'crewhub-lighting'

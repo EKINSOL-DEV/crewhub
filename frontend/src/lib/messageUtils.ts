@@ -15,5 +15,5 @@ const OPENCLAW_TAG_RE = /\[\[\s*reply_to[^\]]*\]\]/g
  * Only apply at render time — never mutate stored data.
  */
 export function stripOpenClawTags(text: string): string {
-  return text.replace(OPENCLAW_TAG_RE, '').trim()
+  return text.replaceAll(OPENCLAW_TAG_RE, '').trim()
 }

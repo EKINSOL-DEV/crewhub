@@ -235,7 +235,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
 
         // ── Rocks (0.68 < s ≤ 0.76) ────────────────
         if (s > 0.68 && s <= 0.76) {
-          const sc = 0.4 + s * 1.0
+          const sc = 0.4 + s * 1
           const variant = Math.floor(s * 100) % 4
           tmpQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), variant * 1.3)
           mat4.compose(

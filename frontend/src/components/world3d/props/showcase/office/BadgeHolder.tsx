@@ -20,7 +20,7 @@ export function BadgeHolder() {
         <boxGeometry args={[0.12, 0.16, 0.005]} />
         <meshStandardMaterial color="#ffffff" flatShading />
       </mesh>
-      <mesh position={[0, 0.0, 0.003]}>
+      <mesh position={[0, 0, 0.003]}>
         <boxGeometry args={[0.06, 0.06, 0.002]} />
         <meshStandardMaterial color="#ddccbb" flatShading />
       </mesh>

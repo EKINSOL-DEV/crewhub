@@ -25,7 +25,7 @@ type WallSegment = {
 // ─── Toon lighting GLSL chunk ────────────────────────────────────────
 const TOON_LIGHTING = /* glsl */ `
   float toonStep(float NdotL) {
-    if (NdotL > 0.6) return 1.0;
+    if (NdotL > 0.6) return 1;
     if (NdotL > 0.25) return 0.7;
     return 0.45;
   }
@@ -39,7 +39,7 @@ const WALL_VERTEX = /* glsl */ `
   void main() {
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
-    vec4 wp = modelMatrix * vec4(position, 1.0);
+    vec4 wp = modelMatrix * vec4(position, 1);
     vWorldPos = wp.xyz;
     gl_Position = projectionMatrix * viewMatrix * wp;
   }
@@ -61,10 +61,10 @@ const ACCENT_BAND_FRAGMENT = /* glsl */ `
     float toon = toonStep(NdotL);
 
     float dist = abs(vUv.y - uBandCenter);
-    float band = 1.0 - smoothstep(uBandWidth - 0.01, uBandWidth, dist);
+    float band = 1 - smoothstep(uBandWidth - 0.01, uBandWidth, dist);
     vec3 col = mix(uWallColor, uAccentColor, band);
 
-    gl_FragColor = vec4(col * toon, 1.0);
+    gl_FragColor = vec4(col * toon, 1);
   }
 `
 
@@ -85,7 +85,7 @@ const TWO_TONE_FRAGMENT = /* glsl */ `
     float blend = smoothstep(uSplit - 0.02, uSplit + 0.02, vUv.y);
     vec3 col = mix(uLowerColor, uUpperColor, blend);
 
-    gl_FragColor = vec4(col * toon, 1.0);
+    gl_FragColor = vec4(col * toon, 1);
   }
 `
 
@@ -111,10 +111,10 @@ const WAINSCOTING_FRAGMENT = /* glsl */ `
 
     // Trim line
     float trimDist = abs(vUv.y - uTrimHeight);
-    float isTrim = 1.0 - smoothstep(uTrimWidth - 0.005, uTrimWidth, trimDist);
+    float isTrim = 1 - smoothstep(uTrimWidth - 0.005, uTrimWidth, trimDist);
     col = mix(col, uTrimColor, isTrim);
 
-    gl_FragColor = vec4(col * toon, 1.0);
+    gl_FragColor = vec4(col * toon, 1);
   }
 `
 
@@ -133,7 +133,7 @@ const LIGHT_WALL_FRAGMENT = /* glsl */ `
     // Subtle vertical gradient: slightly warmer at bottom
     vec3 col = mix(uWallColor * 0.96, uWallColor, vUv.y);
 
-    gl_FragColor = vec4(col * toon, 1.0);
+    gl_FragColor = vec4(col * toon, 1);
   }
 `
 
@@ -153,12 +153,12 @@ const PASTEL_BAND_FRAGMENT = /* glsl */ `
     float toon = toonStep(NdotL);
 
     float dist = abs(vUv.y - uBandCenter);
-    float band = 1.0 - smoothstep(uBandWidth - 0.015, uBandWidth, dist);
+    float band = 1 - smoothstep(uBandWidth - 0.015, uBandWidth, dist);
     // Use a pastel (whitened) version of the accent
-    vec3 pastel = mix(uAccentColor, vec3(1.0), 0.55);
+    vec3 pastel = mix(uAccentColor, vec3(1), 0.55);
     vec3 col = mix(uWallColor, pastel, band);
 
-    gl_FragColor = vec4(col * toon, 1.0);
+    gl_FragColor = vec4(col * toon, 1);
   }
 `
 
@@ -176,15 +176,15 @@ const GLASS_FRAGMENT = /* glsl */ `
     float toon = toonStep(NdotL);
 
     // Fresnel-like edge brightening for glass feel
-    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 1.5);
+    float fresnel = pow(1 - abs(dot(vNormal, vec3(0, 0, 1))), 1.5);
     vec3 col = mix(uBaseColor, uTintColor, 0.15 + fresnel * 0.2);
 
     // Subtle horizontal bands to suggest glass panels
-    float panelLine = smoothstep(0.48, 0.5, fract(vUv.y * 4.0)) *
-                      (1.0 - smoothstep(0.5, 0.52, fract(vUv.y * 4.0)));
+    float panelLine = smoothstep(0.48, 0.5, fract(vUv.y * 4)) *
+                      (1 - smoothstep(0.5, 0.52, fract(vUv.y * 4)));
     col = mix(col, col * 0.88, panelLine);
 
-    gl_FragColor = vec4(col * toon, 1.0);
+    gl_FragColor = vec4(col * toon, 1);
   }
 `
 
@@ -193,7 +193,7 @@ function createWallShaderMaterial(
   wallColor: string,
   accentColor: string
 ): THREE.ShaderMaterial | null {
-  const lightDir = new THREE.Vector3(0.5, 1.0, 0.3).normalize()
+  const lightDir = new THREE.Vector3(0.5, 1, 0.3).normalize()
   const wc = new THREE.Color(wallColor)
   const ac = new THREE.Color(accentColor)
 

@@ -50,7 +50,7 @@ export function HologramTable({ position = [0, 0, 0] as [number, number, number]
         position={[0, 0.3, 0]}
         count={12}
         radius={0.7}
-        height={1.0}
+        height={1}
         color="#00ccff"
         speed={0.8}
         particleSize={0.025}
@@ -72,9 +72,9 @@ export function MonitorBank({
       {/* Center screen — larger */}
       <Screen position={[0, 0, 0]} width={0.8} height={0.5} color="#00ff88" scanlines />
       {/* Left screen */}
-      <Screen position={[-1.0, 0, 0]} width={0.6} height={0.4} color="#00aaff" scanlines />
+      <Screen position={[-1, 0, 0]} width={0.6} height={0.4} color="#00aaff" scanlines />
       {/* Right screen */}
-      <Screen position={[1.0, 0, 0]} width={0.6} height={0.4} color="#ffaa00" scanlines flicker />
+      <Screen position={[1, 0, 0]} width={0.6} height={0.4} color="#ffaa00" scanlines flicker />
       {/* Status LEDs below screens */}
       <LED position={[-0.3, -0.35, 0.02]} color="#00ff00" size={0.015} />
       <LED position={[0, -0.35, 0.02]} color="#00ff00" size={0.015} />
@@ -108,7 +108,7 @@ export function DataPillar({
         position={[0, 0, 0]}
         count={8}
         radius={0.2}
-        height={2.0}
+        height={2}
         color={color}
         speed={1.2}
         particleSize={0.02}

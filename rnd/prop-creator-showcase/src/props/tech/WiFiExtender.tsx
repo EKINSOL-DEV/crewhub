@@ -12,7 +12,7 @@ export function WiFiExtender() {
         <boxGeometry args={[0.12, 0.2, 0.04]} />
         <meshStandardMaterial color="#ffffff" flatShading />
       </mesh>
-            <mesh position={[0, 0.0, 0.021]}>
+            <mesh position={[0, 0, 0.021]}>
         <sphereGeometry args={[0.01, 4, 4]} />
         <meshStandardMaterial color="#44ff44" emissive="#44ff44" emissiveIntensity={1.5} />
       </mesh>

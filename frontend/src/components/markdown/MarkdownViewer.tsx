@@ -7,8 +7,8 @@ import { CodeBlock } from './CodeBlock'
 function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^\w]+/g, '-')
-    .replace(/^-|-$/g, '')
+    .replaceAll(/[^\w]+/g, '-')
+    .replaceAll(/^-|-$/g, '')
 }
 
 function extractText(node: any): string {

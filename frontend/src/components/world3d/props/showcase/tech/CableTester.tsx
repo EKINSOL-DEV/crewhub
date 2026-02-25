@@ -17,7 +17,7 @@ export function CableTester() {
         <boxGeometry args={[0.06, 0.04, 0.002]} />
         <meshStandardMaterial color="#44ff44" emissive="#44ff44" emissiveIntensity={1} />
       </mesh>
-      {[...Array(8)].map((_, i) => (
+      {[...new Array(8)].map((_, i) => (
         <mesh
           key={`item-${i}`}
           position={[-0.02 + (i % 4) * 0.012, -0.04 - Math.floor(i / 4) * 0.02, 0.022]}

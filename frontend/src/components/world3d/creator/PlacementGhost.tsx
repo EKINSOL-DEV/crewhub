@@ -33,7 +33,7 @@ export function PlacementGhost({
   propId,
   rotation,
   onPositionChange,
-  cellSize = 1.0,
+  cellSize = 1,
 }: PlacementGhostProps) {
   const { camera, raycaster, gl } = useThree()
   const groupRef = useRef<THREE.Group>(null)

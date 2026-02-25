@@ -21,7 +21,7 @@ export function LabelMaker() {
         <boxGeometry args={[0.12, 0.02, 0.002]} />
         <meshStandardMaterial color="#88ffaa" emissive="#88ffaa" emissiveIntensity={1} />
       </mesh>
-      {[...Array(6)].map((_, i) => (
+      {[...new Array(6)].map((_, i) => (
         <mesh key={`item-${i}`} position={[-0.06 + i * 0.025, -0.14, 0.06]}>
           <boxGeometry args={[0.02, 0.02, 0.005]} />
           <meshStandardMaterial color="#ffffff" flatShading />

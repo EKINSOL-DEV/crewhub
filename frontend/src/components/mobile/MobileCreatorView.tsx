@@ -406,7 +406,7 @@ function PropGeneratorTab() {
     if (!result || isSaving || isSaved) return
     setIsSaving(true)
     setError(null)
-    const kebabName = result.name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+    const kebabName = result.name.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
     try {
       const res = await fetch('/api/creator/save-prop', {
         method: 'POST',
@@ -730,8 +730,8 @@ function PropGeneratorTab() {
 function formatPropName(name: string): string {
   if (!name) return ''
   return name
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
+    .replaceAll(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
     .trim()
 }
 

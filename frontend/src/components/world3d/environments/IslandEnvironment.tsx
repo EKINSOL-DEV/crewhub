@@ -22,7 +22,7 @@ function useIslandGeometry(radius: number) {
     const points: THREE.Vector2[] = [
       new THREE.Vector2(0, -12), // bottom point (tapered)
       new THREE.Vector2(1.5, -10), // rocky narrow
-      new THREE.Vector2(3.0, -8), // rock widening
+      new THREE.Vector2(3, -8), // rock widening
       new THREE.Vector2(radius * 0.7, -5), // earth layer
       new THREE.Vector2(radius * 0.85, -3), // earth bulge
       new THREE.Vector2(radius * 0.95, -1.5), // near top
@@ -89,9 +89,9 @@ function FloatingDebris() {
     () => [
       { pos: [4, -6, 3] as [number, number, number], scale: 0.6, phase: 0 },
       { pos: [-5, -8, -2] as [number, number, number], scale: 0.4, phase: 1.5 },
-      { pos: [2, -10, -4] as [number, number, number], scale: 0.3, phase: 3.0 },
+      { pos: [2, -10, -4] as [number, number, number], scale: 0.3, phase: 3 },
       { pos: [-3, -7, 5] as [number, number, number], scale: 0.5, phase: 4.5 },
-      { pos: [6, -9, -1] as [number, number, number], scale: 0.35, phase: 2.0 },
+      { pos: [6, -9, -1] as [number, number, number], scale: 0.35, phase: 2 },
     ],
     []
   )

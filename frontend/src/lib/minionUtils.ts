@@ -351,7 +351,7 @@ export function getIdleTimeSeconds(session: MinionSession): number {
 }
 
 export function getIdleOpacity(idleSeconds: number): number {
-  if (idleSeconds < 60) return 1.0
+  if (idleSeconds < 60) return 1
   if (idleSeconds < 120) return 0.8
   if (idleSeconds < 180) return 0.6
   if (idleSeconds < 240) return 0.4
