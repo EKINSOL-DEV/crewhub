@@ -240,7 +240,7 @@ function World3DViewInner({
       if (!selectedPropId) return
       const apiKey = localStorage.getItem('crewhub-api-key')
       const headers: HeadersInit = apiKey
-        ? { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+        ? { 'X-API-Key': apiKey, 'Content-Type': 'application/json' }
         : { 'Content-Type': 'application/json' }
 
       try {

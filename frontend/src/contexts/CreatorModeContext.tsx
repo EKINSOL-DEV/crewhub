@@ -307,7 +307,7 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
   const headers = useCallback((): HeadersInit => {
     const key = localStorage.getItem(LS_API_KEY)
     return key
-      ? { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }
+      ? { 'X-API-Key': key, 'Content-Type': 'application/json' }
       : { 'Content-Type': 'application/json' }
   }, [])
 
