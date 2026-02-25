@@ -4,7 +4,7 @@ Endpoints for viewing and managing archived agent session history.
 Reads directly from OpenClaw session files in ~/.openclaw/agents/*/sessions/
 """
 
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -15,14 +15,14 @@ router = APIRouter()
 
 @router.get("")
 async def get_archived_sessions(
-    limit: int = Query(default=50, ge=1, le=500),
-    offset: int = Query(default=0, ge=0),
-    agent_id: Optional[str] = Query(default=None, alias="agent"),
-    type: Optional[str] = Query(default=None, alias="type"),
-    date_from: Optional[int] = Query(default=None),
-    date_to: Optional[int] = Query(default=None),
-    search: Optional[str] = Query(default=None),
-    include_deleted: bool = Query(default=False),
+    limit: Annotated[int, Query(default=50, ge=1, le=500)],
+    offset: Annotated[int, Query(default=0, ge=0)],
+    agent_id: Annotated[Optional[str], Query(default=None, alias="agent")],
+    type: Annotated[Optional[str], Query(default=None, alias="type")],
+    date_from: Annotated[Optional[int], Query(default=None)],
+    date_to: Annotated[Optional[int], Query(default=None)],
+    search: Annotated[Optional[str], Query(default=None)],
+    include_deleted: Annotated[bool, Query(default=False)],
 ):
     """Get archived session history with filters.
 

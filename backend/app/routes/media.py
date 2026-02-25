@@ -13,7 +13,7 @@ import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 import httpx
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -104,7 +104,7 @@ AUDIO_MIME_TO_EXT = {
 
 
 @router.post("/api/media/upload")
-async def upload_media(file: UploadFile = File(...)):
+async def upload_media(file: Annotated[UploadFile, File(...)]):
     """Upload an image file for chat attachment.
 
     Accepts: jpeg, png, gif, webp
@@ -250,7 +250,7 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
 
 
 @router.post("/api/media/audio")
-async def upload_audio(file: UploadFile = File(...)):
+async def upload_audio(file: Annotated[UploadFile, File(...)]):
     """Upload an audio file for voice message.
 
     Accepts: webm, mp4, ogg, wav, mp3, m4a

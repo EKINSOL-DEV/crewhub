@@ -8,9 +8,9 @@ create file-level backups, and list existing backup files.
 import json
 import logging
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import aiosqlite
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
@@ -90,7 +90,7 @@ async def _export_table(db: aiosqlite.Connection, table: str) -> list[dict[str, 
 def _create_backup_path() -> Path:
     """Generate a timestamped backup path."""
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     return BACKUP_DIR / f"crewhub-{timestamp}.db"
 
 
@@ -108,7 +108,7 @@ async def _create_file_backup() -> Path:
 
 
 @router.get("/export")
-async def export_database(key: APIKeyInfo = Depends(require_scope("admin"))):
+async def export_database(key: Annotated[APIKeyInfo, Depends(require_scope("admin"))]):
     """
     Export the entire database as a downloadable JSON file.
 
@@ -138,7 +138,7 @@ async def export_database(key: APIKeyInfo = Depends(require_scope("admin"))):
         export_data = {
             "metadata": {
                 "version": "1.0.0",
-                "exported_at": datetime.now(timezone.utc).isoformat(),
+                "exported_at": datetime.now(UTC).isoformat(),
                 "schema_version": SCHEMA_VERSION,
                 "tables": table_counts,
             },
@@ -148,7 +148,7 @@ async def export_database(key: APIKeyInfo = Depends(require_scope("admin"))):
         return JSONResponse(
             content=export_data,
             headers={
-                "Content-Disposition": f'attachment; filename="crewhub-export-{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.json"',
+                "Content-Disposition": f'attachment; filename="crewhub-export-{datetime.now(UTC).strftime("%Y%m%d_%H%M%S")}.json"',
             },
         )
 
@@ -161,7 +161,9 @@ async def export_database(key: APIKeyInfo = Depends(require_scope("admin"))):
 
 
 @router.post("/import", response_model=ImportResponse)
-async def import_database(file: UploadFile = File(...), key: APIKeyInfo = Depends(require_scope("admin"))):
+async def import_database(
+    file: Annotated[UploadFile, File(...)], key: Annotated[APIKeyInfo, Depends(require_scope("admin"))]
+):
     """
     Import data from a JSON export file.
 
@@ -276,7 +278,7 @@ async def import_database(file: UploadFile = File(...), key: APIKeyInfo = Depend
 
 
 @router.get("/list", response_model=list[BackupFileInfo])
-async def list_backups(key: APIKeyInfo = Depends(require_scope("admin"))):
+async def list_backups(key: Annotated[APIKeyInfo, Depends(require_scope("admin"))]):
     """
     List available backup files from ~/.crewhub/backups/.
 
@@ -301,7 +303,7 @@ async def list_backups(key: APIKeyInfo = Depends(require_scope("admin"))):
 
 
 @router.post("/create", response_model=BackupCreateResponse)
-async def create_backup(key: APIKeyInfo = Depends(require_scope("admin"))):
+async def create_backup(key: Annotated[APIKeyInfo, Depends(require_scope("admin"))]):
     """
     Create a manual backup of the database file.
 

@@ -6,9 +6,9 @@ Reuses patterns from agent_files.py (Phase 1).
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -131,8 +131,8 @@ def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> 
 @router.get("/{project_id}/documents")
 async def list_project_documents(
     project_id: str,
-    path: Optional[str] = Query(None, description="Subdirectory to list"),
-    depth: int = Query(3, ge=1, le=5, description="Max folder depth"),
+    path: Annotated[Optional[str], Query(None, description="Subdirectory to list")],
+    depth: Annotated[int, Query(3, ge=1, le=5, description="Max folder depth")],
 ):
     """List documents in a project's data directory."""
     docs_dir, project_name = await _get_project_docs_path(project_id)

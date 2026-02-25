@@ -2,9 +2,9 @@
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -134,8 +134,8 @@ def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> 
 @router.get("/{agent_id}/files")
 async def list_agent_files(
     agent_id: str,
-    path: Optional[str] = Query(None, description="Subdirectory to list"),
-    depth: int = Query(2, ge=1, le=5, description="Max folder depth"),
+    path: Annotated[Optional[str], Query(None, description="Subdirectory to list")],
+    depth: Annotated[int, Query(2, ge=1, le=5, description="Max folder depth")],
 ):
     """List files in an agent's workspace."""
     workspace = await _get_agent_workspace(agent_id)

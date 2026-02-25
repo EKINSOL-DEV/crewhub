@@ -4,7 +4,7 @@ import logging
 import mimetypes
 import os
 from pathlib import Path
-from typing import List
+from typing import Annotated, List
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -138,8 +138,8 @@ async def _get_project_folder(project_id: str) -> str:
 @router.get("/{project_id}/files")
 async def list_project_files(
     project_id: str,
-    path: str = Query("", description="Relative path within project folder"),
-    depth: int = Query(2, ge=1, le=5, description="Max directory depth to scan"),
+    path: Annotated[str, Query("", description="Relative path within project folder")],
+    depth: Annotated[int, Query(2, ge=1, le=5, description="Max directory depth to scan")],
 ):
     """List files in a project folder. Returns a tree structure."""
     folder_path = await _get_project_folder(project_id)
@@ -211,7 +211,7 @@ async def list_project_files(
 @router.get("/{project_id}/files/content")
 async def read_project_file(
     project_id: str,
-    path: str = Query(..., description="Relative path to file within project folder"),
+    path: Annotated[str, Query(..., description="Relative path to file within project folder")],
 ):
     """Read the content of a file from the project folder."""
     folder_path = await _get_project_folder(project_id)
@@ -262,7 +262,7 @@ async def read_project_file(
 @router.get("/{project_id}/files/image")
 async def get_project_image(
     project_id: str,
-    path: str = Query(..., description="Relative path to image within project folder"),
+    path: Annotated[str, Query(..., description="Relative path to image within project folder")],
 ):
     """Serve an image file from the project folder."""
     folder_path = await _get_project_folder(project_id)

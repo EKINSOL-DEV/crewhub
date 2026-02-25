@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -290,8 +290,8 @@ async def get_session_context_prompt(session_key: str):
 @router.get("/{session_key}/context/envelope", response_model=dict)
 async def get_context_envelope(
     session_key: str,
-    channel: Optional[str] = Query(None, description="Origin channel (whatsapp, slack, crewhub-ui, ...)"),
-    spawned_from: Optional[str] = Query(None, description="Parent session key"),
+    channel: Annotated[Optional[str], Query(None, description="Origin channel (whatsapp, slack, crewhub-ui, ...)")],
+    spawned_from: Annotated[Optional[str], Query(None, description="Parent session key")],
 ):
     """
     Get a CrewHub context envelope for a session.
@@ -353,8 +353,8 @@ async def get_context_envelope(
 @router.get("/rooms/{room_id}/context-envelope", response_model=dict)
 async def get_room_context_envelope(
     room_id: str,
-    channel: Optional[str] = Query(None),
-    session_key: Optional[str] = Query(None),
+    channel: Annotated[Optional[str], Query(None)],
+    session_key: Annotated[Optional[str], Query(None)],
 ):
     """Get context envelope directly by room_id (for spawn flows)."""
     envelope = await build_crewhub_context(

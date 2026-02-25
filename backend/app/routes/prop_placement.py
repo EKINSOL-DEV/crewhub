@@ -17,7 +17,7 @@ import json
 import logging
 import time
 import uuid
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -137,7 +137,7 @@ async def list_placed_props(
 @router.post("", response_model=PlacedPropResponse, status_code=201)
 async def place_prop(
     body: PlacePropRequest,
-    key: APIKeyInfo = Depends(require_scope("manage")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("manage"))],
 ):
     """Place a prop in the world. Requires manage scope (admin only)."""
     placed_id = str(uuid.uuid4())
@@ -183,7 +183,7 @@ async def place_prop(
 async def update_placed_prop(
     placed_id: str,
     body: UpdatePropRequest,
-    key: APIKeyInfo = Depends(require_scope("manage")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("manage"))],
 ):
     """Move, rotate, or rescale an existing placed prop. Requires manage scope."""
     async with get_db() as db:
@@ -240,7 +240,7 @@ async def update_placed_prop(
 @router.delete("/{placed_id}", status_code=204)
 async def delete_placed_prop(
     placed_id: str,
-    key: APIKeyInfo = Depends(require_scope("manage")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("manage"))],
 ):
     """Remove a placed prop from the world. Requires manage scope."""
     async with get_db() as db:

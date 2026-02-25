@@ -7,7 +7,7 @@ Phase 1: non-streaming (send message, get full response).
 import logging
 import re
 import time
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -104,9 +104,9 @@ class SendMessageBody(BaseModel):
 @router.get("/api/chat/{session_key}/history")
 async def get_chat_history(
     session_key: str,
-    limit: int = Query(default=30, ge=1, le=100),
-    before: Optional[int] = Query(default=None),
-    raw: bool = Query(default=False),
+    limit: Annotated[int, Query(default=30, ge=1, le=100)],
+    before: Annotated[Optional[int], Query(default=None)],
+    raw: Annotated[bool, Query(default=False)],
 ):
     """Get chat history for a session with pagination.
 

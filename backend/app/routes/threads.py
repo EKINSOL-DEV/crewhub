@@ -7,7 +7,7 @@ import json
 import logging
 import time
 import uuid
-from typing import Optional
+from typing import Annotated, Optional
 
 import aiosqlite
 from fastapi import APIRouter, HTTPException, Query
@@ -171,9 +171,9 @@ async def create_thread(body: ThreadCreate):
 
 @router.get("")
 async def list_threads(
-    kind: Optional[str] = Query(default=None),
-    archived: bool = Query(default=False),
-    limit: int = Query(default=50, ge=1, le=200),
+    kind: Annotated[Optional[str], Query(default=None)],
+    archived: Annotated[bool, Query(default=False)],
+    limit: Annotated[int, Query(default=50, ge=1, le=200)],
 ):
     """List threads, optionally filtered by kind."""
     async with get_db() as db:
@@ -372,8 +372,8 @@ async def remove_participant(thread_id: str, agent_id: str):
 @router.get("/{thread_id}/messages")
 async def get_messages(
     thread_id: str,
-    limit: int = Query(default=50, ge=1, le=200),
-    before: Optional[int] = Query(default=None),
+    limit: Annotated[int, Query(default=50, ge=1, le=200)],
+    before: Annotated[Optional[int], Query(default=None)],
 ):
     """Get messages for a thread with pagination."""
     async with get_db() as db:

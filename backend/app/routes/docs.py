@@ -4,7 +4,7 @@ Provides tree listing and file content endpoints.
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -85,7 +85,7 @@ async def get_docs_tree():
 
 
 @router.get("/content")
-async def get_doc_content(path: str = Query(..., description="Relative path to doc file")):
+async def get_doc_content(path: Annotated[str, Query(..., description="Relative path to doc file")]):
     """Get the content of a specific documentation file."""
     file_path = _safe_path(path)
 
@@ -109,7 +109,7 @@ async def get_doc_content(path: str = Query(..., description="Relative path to d
 
 
 @router.get("/search")
-async def search_docs(q: str = Query(..., min_length=2, description="Search query")):
+async def search_docs(q: Annotated[str, Query(..., min_length=2, description="Search query")]):
     """Search through docs content and filenames."""
     results = []
     query = q.lower()

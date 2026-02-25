@@ -5,7 +5,7 @@ HTTP concerns: status codes, SSE broadcasts, and response shaping.
 """
 
 import logging
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -35,9 +35,9 @@ async def _not_found(label: str) -> None:
 @router.get("/rooms/{room_id}/tasks", response_model=TaskListResponse)
 async def get_room_tasks(
     room_id: str,
-    status: Optional[str] = Query(None, description="Filter by status (comma-separated)"),
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    status: Annotated[Optional[str], Query(None, description="Filter by status (comma-separated)")],
+    limit: Annotated[int, Query(100, ge=1, le=500)],
+    offset: Annotated[int, Query(0, ge=0)],
 ):
     """Get all tasks for a specific room."""
     try:
@@ -50,9 +50,9 @@ async def get_room_tasks(
 @router.get("/projects/{project_id}/tasks", response_model=TaskListResponse)
 async def get_project_tasks(
     project_id: str,
-    status: Optional[str] = Query(None, description="Filter by status (comma-separated)"),
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    status: Annotated[Optional[str], Query(None, description="Filter by status (comma-separated)")],
+    limit: Annotated[int, Query(100, ge=1, le=500)],
+    offset: Annotated[int, Query(0, ge=0)],
 ):
     """Get all tasks for a specific project."""
     try:
@@ -69,12 +69,12 @@ async def get_project_tasks(
 
 @router.get("", response_model=TaskListResponse)
 async def list_tasks(
-    project_id: Optional[str] = Query(None, description="Filter by project"),
-    room_id: Optional[str] = Query(None, description="Filter by room"),
-    status: Optional[str] = Query(None, description="Filter by status (comma-separated)"),
-    assigned_session_key: Optional[str] = Query(None, description="Filter by assignee"),
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    project_id: Annotated[Optional[str], Query(None, description="Filter by project")],
+    room_id: Annotated[Optional[str], Query(None, description="Filter by room")],
+    status: Annotated[Optional[str], Query(None, description="Filter by status (comma-separated)")],
+    assigned_session_key: Annotated[Optional[str], Query(None, description="Filter by assignee")],
+    limit: Annotated[int, Query(100, ge=1, le=500)],
+    offset: Annotated[int, Query(0, ge=0)],
 ):
     """Get all tasks with optional filters."""
     try:

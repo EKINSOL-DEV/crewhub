@@ -9,7 +9,7 @@ import json
 import logging
 import secrets
 import time
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
@@ -101,7 +101,7 @@ VALID_ENVS = {"live", "test"}
 @router.post("/keys", response_model=CreateKeyResponse)
 async def create_key(
     body: CreateKeyRequest,
-    key: APIKeyInfo = Depends(require_scope("admin")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
 ):
     """
     Create a new API key. Admin only.
@@ -161,8 +161,8 @@ async def create_key(
 
 @router.get("/keys", response_model=dict)
 async def list_keys(
-    include_revoked: bool = Query(False, description="Include revoked keys"),
-    key: APIKeyInfo = Depends(require_scope("admin")),
+    include_revoked: Annotated[bool, Query(False, description="Include revoked keys")],
+    key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
 ):
     """List all API keys (masked). Admin only."""
     now = int(time.time() * 1000)
@@ -203,7 +203,7 @@ async def list_keys(
 @router.delete("/keys/{key_id}")
 async def revoke_key(
     key_id: str,
-    key: APIKeyInfo = Depends(require_scope("admin")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
 ):
     """Revoke an API key. Admin only."""
     # Prevent self-revocation
@@ -222,7 +222,7 @@ async def revoke_key(
 
 @router.get("/keys/self", response_model=KeySelfResponse)
 async def get_self_key(
-    key: APIKeyInfo = Depends(require_scope("read")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("read"))],
 ):
     """Show current key's scopes and metadata. Any authenticated user."""
     return KeySelfResponse(
@@ -237,9 +237,9 @@ async def get_self_key(
 @router.get("/keys/{key_id}/audit")
 async def get_key_audit_log(
     key_id: str,
-    limit: int = Query(100, ge=1, le=1000),
-    offset: int = Query(0, ge=0),
-    key: APIKeyInfo = Depends(require_scope("admin")),
+    limit: Annotated[int, Query(100, ge=1, le=1000)],
+    offset: Annotated[int, Query(0, ge=0)],
+    key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
 ):
     """Get audit log for a specific API key. Admin only."""
     async with get_db() as db:
@@ -276,7 +276,7 @@ async def get_key_audit_log(
 @router.delete("/keys/{key_id}/audit")
 async def clear_key_audit_log(
     key_id: str,
-    key: APIKeyInfo = Depends(require_scope("admin")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
 ):
     """Clear audit log for a specific key (admin only)."""
     async with get_db() as db:
@@ -288,7 +288,7 @@ async def clear_key_audit_log(
 
 @router.post("/keys/cleanup")
 async def trigger_audit_cleanup(
-    key: APIKeyInfo = Depends(require_scope("admin")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
 ):
     """Manually trigger cleanup of expired audit log entries (90-day retention)."""
     await cleanup_audit_log()

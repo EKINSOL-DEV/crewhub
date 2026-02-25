@@ -10,7 +10,7 @@ Phase 1 of Agent Onboarding Masterplan.
 
 import logging
 import time
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -146,7 +146,7 @@ async def _get_room_id(session_key: str) -> Optional[str]:
 @router.post("/identify", response_model=IdentifyResponse)
 async def identify(
     body: IdentifyRequest,
-    key: APIKeyInfo = Depends(require_scope("self")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
 ):
     """
     Identify this agent to CrewHub.
@@ -276,7 +276,7 @@ async def identify(
 
 @router.get("", response_model=SelfInfoResponse)
 async def get_self(
-    key: APIKeyInfo = Depends(require_scope("self")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
 ):
     """
     Get current identity and status.
@@ -311,7 +311,7 @@ async def get_self(
 @router.post("/display-name")
 async def set_display_name(
     body: DisplayNameRequest,
-    key: APIKeyInfo = Depends(require_scope("self")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
 ):
     """
     Set display name for the authenticated agent's current session.
@@ -350,7 +350,7 @@ async def set_display_name(
 @router.post("/room")
 async def set_room(
     body: RoomRequest,
-    key: APIKeyInfo = Depends(require_scope("self")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
 ):
     """
     Assign the authenticated agent's current session to a room.
@@ -403,7 +403,7 @@ async def set_room(
 @router.post("/heartbeat")
 async def heartbeat(
     body: HeartbeatRequest,
-    key: APIKeyInfo = Depends(require_scope("self")),
+    key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
 ):
     """
     Update agent presence/heartbeat.

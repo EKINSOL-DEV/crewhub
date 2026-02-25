@@ -3,7 +3,7 @@
 import logging
 import time
 import uuid
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -148,9 +148,9 @@ async def api_cancel_meeting(meeting_id: str):
 async def api_meeting_history(
     room_id: Optional[str] = None,
     project_id: Optional[str] = None,
-    limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    days: int = Query(365, ge=1, le=3650),
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    days: Annotated[int, Query(ge=1, le=3650)] = 365,
 ):
     """Get meeting history with pagination and filtering (F5)."""
     result = await list_meetings(
@@ -165,11 +165,11 @@ async def api_meeting_history(
 
 @router.get("")
 async def api_list_meetings(
-    days: int = Query(30, ge=1, le=365),
+    days: Annotated[int, Query(ge=1, le=365)] = 30,
     room_id: Optional[str] = None,
     project_id: Optional[str] = None,
-    limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
     state: Optional[str] = None,
 ):
     """List recent meetings with pagination."""

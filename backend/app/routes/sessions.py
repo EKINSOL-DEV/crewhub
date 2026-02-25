@@ -5,7 +5,7 @@ Handles listing, viewing, and killing agent sessions.
 Uses ConnectionManager to aggregate sessions from all agent connections.
 """
 
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -29,7 +29,7 @@ async def list_sessions():
 
 
 @router.get("/{session_key:path}/history")
-async def get_session_history(session_key: str, limit: int = Query(default=50, ge=1, le=500)):
+async def get_session_history(session_key: str, limit: Annotated[int, Query(default=50, ge=1, le=500)]):
     """Get message history for a specific session.
 
     Returns raw JSONL entries for backward compatibility.

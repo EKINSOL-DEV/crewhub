@@ -10,6 +10,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
@@ -241,7 +242,7 @@ async def list_markdown_files(project_id: str):
 
 
 @router.post("/{project_id}/upload-document")
-async def upload_document(project_id: str, file: UploadFile = File(...)):
+async def upload_document(project_id: str, file: Annotated[UploadFile, File(...)]):
     """Upload a markdown document to a project's meetings folder."""
     project = await project_service.get_project(project_id)
     if not project:
