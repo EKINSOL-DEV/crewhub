@@ -23,6 +23,15 @@ function Slider({
   step: number
   onChange: (v: number) => void
 }) {
+  let formattedValue: string
+  if (step < 0.01) {
+    formattedValue = value.toFixed(4)
+  } else if (step < 0.1) {
+    formattedValue = value.toFixed(2)
+  } else {
+    formattedValue = value.toFixed(1)
+  }
+
   return (
     <div className="flex items-center gap-2">
       <span className="text-[10px] text-gray-400 w-14 shrink-0 truncate" title={label}>
@@ -38,9 +47,7 @@ function Slider({
         className="flex-1 h-1 accent-blue-400"
         style={{ minWidth: 60 }}
       />
-      <span className="text-[10px] text-gray-300 font-mono w-10 text-right">
-        {step < 0.01 ? value.toFixed(4) : step < 0.1 ? value.toFixed(2) : value.toFixed(1)}
-      </span>
+      <span className="text-[10px] text-gray-300 font-mono w-10 text-right">{formattedValue}</span>
     </div>
   )
 }

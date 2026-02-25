@@ -81,6 +81,14 @@ function MobileDocTreeNode({
 
   const isExpanded = searchQuery.length >= 2 ? true : expanded
   const sorted = isDir && node.children ? sortNodes(node.children, sortKey) : []
+  let folderIcon: string
+  if (!isDir) {
+    folderIcon = '📄'
+  } else if (isExpanded) {
+    folderIcon = '📂'
+  } else {
+    folderIcon = '📁'
+  }
 
   return (
     <div>
@@ -111,7 +119,7 @@ function MobileDocTreeNode({
           <span style={{ width: 16 }} />
         )}
 
-        <span style={{ fontSize: 16 }}>{isDir ? (isExpanded ? '📂' : '📁') : '📄'}</span>
+        <span style={{ fontSize: 16 }}>{folderIcon}</span>
 
         <span
           style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}

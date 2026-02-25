@@ -108,21 +108,19 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
             }}
           >
             ←{' '}
-            {showCode
-              ? 'Back to Detail'
-              : selectedProp
-                ? 'Back to Showcase'
-                : 'Back to Creator Center'}
+            {(() => {
+              if (showCode) return 'Back to Detail'
+              return selectedProp ? 'Back to Showcase' : 'Back to Creator Center'
+            })()}
           </button>
         </div>
         <div className="psc-topbar-center">
           <span className="psc-topbar-icon">🎨</span>
           <span className="psc-topbar-title">
-            {showCode
-              ? `${selectedProp?.name} — Source`
-              : selectedProp
-                ? selectedProp.name
-                : 'PropCreator Design Showcase'}
+            {(() => {
+              if (showCode) return `${selectedProp?.name} — Source`
+              return selectedProp ? selectedProp.name : 'PropCreator Design Showcase'
+            })()}
           </span>
           <span className="psc-topbar-count">{showcaseProps.length} props</span>
         </div>

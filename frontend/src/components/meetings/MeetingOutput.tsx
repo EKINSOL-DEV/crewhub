@@ -137,15 +137,13 @@ function ActionItemCard({
             </Badge>
             {status !== 'pending' && (
               <Badge variant="outline" className="text-xs">
-                {status === 'planned'
-                  ? '📋 Planned'
-                  : status === 'executing'
-                    ? '⚡ Executing'
-                    : status === 'done'
-                      ? '✅ Done'
-                      : status === 'failed'
-                        ? '❌ Failed'
-                        : status}
+                {(() => {
+                  if (status === 'planned') return '📋 Planned'
+                  if (status === 'executing') return '⚡ Executing'
+                  if (status === 'done') return '✅ Done'
+                  if (status === 'failed') return '❌ Failed'
+                  return status
+                })()}
               </Badge>
             )}
           </div>

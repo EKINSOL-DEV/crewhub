@@ -14,7 +14,11 @@ export function ChiselSet() {
         <meshStandardMaterial color="#aa8855" flatShading />
       </mesh>
       {[0, 1, 2, 3].map((i) => (
-        <group key={`item-${i}`} position={[-0.1 + i * 0.065, -0.15, 0]} rotation={[0, 0, (i - 1.5) * 0.05]}>
+        <group
+          key={`item-${i}`}
+          position={[-0.1 + i * 0.065, -0.15, 0]}
+          rotation={[0, 0, (i - 1.5) * 0.05]}
+        >
           <mesh>
             <cylinderGeometry args={[0.008, 0.012, 0.12, 6]} />
             <meshStandardMaterial color="#bb9966" flatShading />

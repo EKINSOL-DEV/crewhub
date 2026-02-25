@@ -22,9 +22,14 @@ interface AccordionProps {
 }
 
 export function Accordion({ type = 'single', defaultValue, className, children }: AccordionProps) {
-  const initial = defaultValue
-    ? new Set(Array.isArray(defaultValue) ? defaultValue : [defaultValue])
-    : new Set<string>()
+  let initial: Set<string>
+  if (!defaultValue) {
+    initial = new Set<string>()
+  } else if (Array.isArray(defaultValue)) {
+    initial = new Set(defaultValue)
+  } else {
+    initial = new Set([defaultValue])
+  }
   const [openItems, setOpenItems] = React.useState<Set<string>>(initial)
 
   const toggle = React.useCallback(

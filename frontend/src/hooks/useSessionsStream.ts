@@ -111,11 +111,14 @@ export function useSessionsStream(enabled: boolean = true) {
       if (!pollingActiveRef.current) return
 
       const fails = consecutiveFailsRef.current
-      const delay = immediate
-        ? 0
-        : fails === 0
-          ? POLLING_INTERVAL_MS
-          : Math.min(POLLING_INTERVAL_MS * Math.pow(2, Math.min(fails, 4)), 60_000)
+      let delay: number
+      if (immediate) {
+        delay = 0
+      } else if (fails === 0) {
+        delay = POLLING_INTERVAL_MS
+      } else {
+        delay = Math.min(POLLING_INTERVAL_MS * Math.pow(2, Math.min(fails, 4)), 60_000)
+      }
 
       pollingTimeoutRef.current = setTimeout(async () => {
         if (!pollingActiveRef.current) return

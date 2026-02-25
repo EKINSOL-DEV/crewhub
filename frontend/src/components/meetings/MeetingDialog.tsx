@@ -427,11 +427,10 @@ export function MeetingDialog({
                   Cancel
                 </Button>
                 <Button onClick={handleStart} disabled={loading || selectedAgents.size < 2}>
-                  {loading
-                    ? 'Starting…'
-                    : parentMeetingId
-                      ? 'Start Follow-up ▶'
-                      : 'Start Meeting ▶'}
+                  {(() => {
+                    if (loading) return 'Starting…'
+                    return parentMeetingId ? 'Start Follow-up ▶' : 'Start Meeting ▶'
+                  })()}
                 </Button>
               </DialogFooter>
             </div>

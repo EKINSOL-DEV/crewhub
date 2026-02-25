@@ -346,16 +346,26 @@ const ChatMessageBubbleInner = memo(
     const renderedHtml = useMemo(() => {
       if (!cleanText) return ''
       const isDark = variant === 'mobile'
-      const codeBlockStyle = isDark
-        ? 'background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
-        : variant === 'zen'
-          ? undefined
-          : 'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
-      const inlineCodeStyle = isDark
-        ? 'background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px'
-        : variant === 'zen'
-          ? undefined
-          : 'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px'
+      let codeBlockStyle: string | undefined
+      if (isDark) {
+        codeBlockStyle =
+          'background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
+      } else if (variant === 'zen') {
+        codeBlockStyle = undefined
+      } else {
+        codeBlockStyle =
+          'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
+      }
+      let inlineCodeStyle: string | undefined
+      if (isDark) {
+        inlineCodeStyle =
+          'background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px'
+      } else if (variant === 'zen') {
+        inlineCodeStyle = undefined
+      } else {
+        inlineCodeStyle =
+          'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px'
+      }
       return renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle)
     }, [cleanText, variant])
 

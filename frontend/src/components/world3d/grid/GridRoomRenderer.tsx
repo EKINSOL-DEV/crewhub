@@ -492,11 +492,10 @@ function SelectionIndicator({
 
             {/* Hint text */}
             <div style={HUD_HINT_STYLE}>
-              {isOverInvalid
-                ? "⛔ Can't place here"
-                : isDragging
-                  ? 'Release to drop'
-                  : 'Drag to move • Arrows/WASD'}
+              {(() => {
+                if (isOverInvalid) return "⛔ Can't place here"
+                return isDragging ? 'Release to drop' : 'Drag to move • Arrows/WASD'
+              })()}
             </div>
           </div>
         </Html>

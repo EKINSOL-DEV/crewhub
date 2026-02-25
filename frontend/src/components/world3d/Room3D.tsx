@@ -77,17 +77,17 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
           // Use a generous fixed size that covers the room area at most zoom levels
           width: `${Math.max(size * 18, 200)}px`,
           height: `${Math.max(size * 18, 200)}px`,
-          background: isDropTarget
-            ? 'rgba(255, 165, 0, 0.3)'
-            : isSourceRoom
-              ? 'rgba(100, 100, 100, 0.08)'
-              : 'rgba(79, 70, 229, 0.1)',
+          background: (() => {
+            if (isDropTarget) return 'rgba(255, 165, 0, 0.3)'
+            return isSourceRoom ? 'rgba(100, 100, 100, 0.08)' : 'rgba(79, 70, 229, 0.1)'
+          })(),
           borderRadius: '20px',
-          border: isDropTarget
-            ? '3px dashed rgba(255, 165, 0, 0.9)'
-            : isSourceRoom
+          border: (() => {
+            if (isDropTarget) return '3px dashed rgba(255, 165, 0, 0.9)'
+            return isSourceRoom
               ? '2px dashed rgba(100, 100, 100, 0.25)'
-              : '2px dashed rgba(79, 70, 229, 0.35)',
+              : '2px dashed rgba(79, 70, 229, 0.35)'
+          })(),
           transition: 'all 0.15s ease',
           display: 'flex',
           alignItems: 'center',

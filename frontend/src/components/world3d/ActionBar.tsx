@@ -59,11 +59,10 @@ function ActionButton({
           borderRadius: 10,
           cursor: 'pointer',
           fontSize: 18,
-          background: isActive
-            ? (activeBackground ?? 'rgba(59, 130, 246, 0.25)')
-            : isHovered
-              ? 'rgba(255, 255, 255, 0.3)'
-              : 'transparent',
+          background: (() => {
+            if (isActive) return activeBackground ?? 'rgba(59, 130, 246, 0.25)'
+            return isHovered ? 'rgba(255, 255, 255, 0.3)' : 'transparent'
+          })(),
           border: isActive && activeBorder ? activeBorder : 'none',
           transition: 'all 0.15s ease',
           position: 'relative',

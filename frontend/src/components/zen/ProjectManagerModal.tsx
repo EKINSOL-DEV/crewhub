@@ -293,12 +293,11 @@ export function ProjectManagerModal({
     fontSize: 13,
     fontWeight: 600,
     fontFamily: 'inherit',
-    background:
-      variant === 'primary'
-        ? 'var(--zen-accent, #7aa2f7)'
-        : variant === 'danger'
-          ? '#dc2626'
-          : 'transparent',
+    background: (() => {
+      if (variant === 'primary') return 'var(--zen-accent, #7aa2f7)'
+      if (variant === 'danger') return '#dc2626'
+      return 'transparent'
+    })(),
     color: variant === 'primary' || variant === 'danger' ? '#fff' : 'var(--zen-fg, #c0caf5)',
     opacity: saving ? 0.6 : 1,
   })
@@ -450,7 +449,11 @@ export function ProjectManagerModal({
           disabled={saving}
           style={btnStyle('primary')}
         >
-          {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Project'}
+          {(() => {
+            if (saving) return 'Saving...'
+            if (isEdit) return 'Save Changes'
+            return 'Create Project'
+          })()}
         </button>
       </div>
     </div>

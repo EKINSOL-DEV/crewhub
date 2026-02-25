@@ -112,7 +112,9 @@ export function CreatorBottomBar() {
   const { selectedPropId, selectProp } = useCreatorMode()
 
   // activeCategory: null = props bar hidden; 'All' = show all; 'generated' = custom AI props; PropCategory = filter by category
-  const [activeCategory, setActiveCategory] = useState<'All' | 'generated' | PropCategory | null>(null)
+  const [activeCategory, setActiveCategory] = useState<'All' | 'generated' | PropCategory | null>(
+    null
+  )
   const [generatedProps, setGeneratedProps] = useState<GeneratedPropRecord[]>([])
   const [loadingGenerated, setLoadingGenerated] = useState(false)
 
@@ -140,12 +142,11 @@ export function CreatorBottomBar() {
   }
 
   // Filter props for the active category
-  const displayedProps =
-    activeCategory === null || activeCategory === 'generated'
-      ? []
-      : activeCategory === 'All'
-        ? ALL_PROPS
-        : ALL_PROPS.filter((p) => p.category === activeCategory)
+  const displayedProps = (() => {
+    if (activeCategory === null || activeCategory === 'generated') return []
+    if (activeCategory === 'All') return ALL_PROPS
+    return ALL_PROPS.filter((p) => p.category === activeCategory)
+  })()
 
   const showPropsBar = activeCategory !== null
 
@@ -225,75 +226,84 @@ export function CreatorBottomBar() {
           })}
 
           {/* Generated/custom AI props */}
-          {activeCategory === 'generated' && (
-            loadingGenerated
-              ? <div style={{ color: '#94a3b8', fontSize: '12px', padding: '8px 0' }}>Loading…</div>
-              : generatedProps.length === 0
-                ? <div style={{ color: '#94a3b8', fontSize: '12px', padding: '8px 0' }}>No generated props yet. Use the AI generator to create some!</div>
-                : generatedProps.map((gen) => {
-                  const propId = `crewhub:${gen.id}`
-                  const isSelected = selectedPropId === propId
-                  return (
+          {activeCategory === 'generated' &&
+            (() => {
+              if (loadingGenerated)
+                return (
+                  <div style={{ color: '#94a3b8', fontSize: '12px', padding: '8px 0' }}>
+                    Loading…
+                  </div>
+                )
+              if (generatedProps.length === 0)
+                return (
+                  <div style={{ color: '#94a3b8', fontSize: '12px', padding: '8px 0' }}>
+                    No generated props yet. Use the AI generator to create some!
+                  </div>
+                )
+              return generatedProps.map((gen) => {
+                const propId = `crewhub:${gen.id}`
+                const isSelected = selectedPropId === propId
+                return (
+                  <div
+                    key={gen.id}
+                    style={propCardStyle(isSelected)}
+                    onClick={() => handlePropClick(propId)}
+                    title={gen.prompt || gen.name}
+                  >
+                    {/* Icon block */}
                     <div
-                      key={gen.id}
-                      style={propCardStyle(isSelected)}
-                      onClick={() => handlePropClick(propId)}
-                      title={gen.prompt || gen.name}
+                      style={{
+                        flex: '0 0 68px',
+                        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '28px',
+                        position: 'relative',
+                      }}
                     >
-                      {/* Icon block */}
-                      <div
-                        style={{
-                          flex: '0 0 68px',
-                          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '28px',
-                          position: 'relative',
-                        }}
-                      >
-                        ✨
-                        {isSelected && (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: 3,
-                              right: 4,
-                              fontSize: '10px',
-                              background: 'gold',
-                              color: '#000',
-                              borderRadius: '3px',
-                              padding: '0 3px',
-                              fontWeight: 700,
-                              lineHeight: '14px',
-                            }}
-                          >
-                            ✓
-                          </div>
-                        )}
-                      </div>
-                      {/* Name */}
-                      <div
-                        style={{
-                          flex: 1,
-                          padding: '3px 4px',
-                          fontSize: '9px',
-                          fontWeight: isSelected ? 600 : 400,
-                          color: isSelected ? 'gold' : '#e2e8f0',
-                          lineHeight: 1.25,
-                          textAlign: 'center',
-                          overflow: 'hidden',
-                          display: '-webkit-box' as React.CSSProperties['display'],
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
-                        }}
-                      >
-                        {gen.name}
-                      </div>
+                      ✨
+                      {isSelected && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 3,
+                            right: 4,
+                            fontSize: '10px',
+                            background: 'gold',
+                            color: '#000',
+                            borderRadius: '3px',
+                            padding: '0 3px',
+                            fontWeight: 700,
+                            lineHeight: '14px',
+                          }}
+                        >
+                          ✓
+                        </div>
+                      )}
                     </div>
-                  )
-                })
-          )}
+                    {/* Name */}
+                    <div
+                      style={{
+                        flex: 1,
+                        padding: '3px 4px',
+                        fontSize: '9px',
+                        fontWeight: isSelected ? 600 : 400,
+                        color: isSelected ? 'gold' : '#e2e8f0',
+                        lineHeight: 1.25,
+                        textAlign: 'center',
+                        overflow: 'hidden',
+                        display: '-webkit-box' as React.CSSProperties['display'],
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
+                      }}
+                    >
+                      {gen.name}
+                    </div>
+                  </div>
+                )
+              })
+            })()}
 
           {activeCategory !== 'generated' && displayedProps.length === 0 && (
             <div style={{ color: '#94a3b8', fontSize: '12px', padding: '8px 0' }}>

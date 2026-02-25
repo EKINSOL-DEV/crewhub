@@ -23,7 +23,10 @@ export function StickyNotes() {
       </mesh>
       {/* Cork texture spots */}
       {Array.from({ length: 8 }, (_, i) => (
-        <mesh key={`item-${i}`} position={[(Math.random() - 0.5) * 0.7, (Math.random() - 0.5) * 0.5, -0.003]}>
+        <mesh
+          key={`item-${i}`}
+          position={[(Math.random() - 0.5) * 0.7, (Math.random() - 0.5) * 0.5, -0.003]}
+        >
           <circleGeometry args={[0.03, 5]} />
           <meshStandardMaterial color="#bb9966" />
         </mesh>

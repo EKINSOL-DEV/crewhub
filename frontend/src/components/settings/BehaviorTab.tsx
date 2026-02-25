@@ -84,16 +84,18 @@ function ConfigField({
     displayStep = 1
   }
   const displayMax = max ? toDisplay(max) : undefined
-  const unitLabel =
-    unit === 'seconds'
-      ? 's'
-      : unit === 'minutes'
-        ? 'min'
-        : unit === 'ms'
-          ? 'ms'
-          : unit === 'speed'
-            ? '×'
-            : ''
+  let unitLabel: string
+  if (unit === 'seconds') {
+    unitLabel = 's'
+  } else if (unit === 'minutes') {
+    unitLabel = 'min'
+  } else if (unit === 'ms') {
+    unitLabel = 'ms'
+  } else if (unit === 'speed') {
+    unitLabel = '×'
+  } else {
+    unitLabel = ''
+  }
 
   return (
     <div className="flex items-center justify-between gap-3 py-1.5">

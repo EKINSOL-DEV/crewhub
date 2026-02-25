@@ -397,6 +397,14 @@ export function FullscreenOverlay({
                   >
                     {headings.map((h, i) => {
                       const isActive = h.id === activeId
+                      let headingFontWeight: number
+                      if (isActive) {
+                        headingFontWeight = 600
+                      } else if (h.level === 1) {
+                        headingFontWeight = 500
+                      } else {
+                        headingFontWeight = 400
+                      }
                       return (
                         <button
                           key={`${h.id}-${i}`}
@@ -407,7 +415,7 @@ export function FullscreenOverlay({
                             textAlign: 'left',
                             padding: `10px 16px 10px ${16 + (h.level - 1) * 14}px`,
                             fontSize: h.level === 1 ? 14 : 13,
-                            fontWeight: isActive ? 600 : h.level === 1 ? 500 : 400,
+                            fontWeight: headingFontWeight,
                             color: isActive
                               ? 'hsl(var(--primary))'
                               : 'hsl(var(--muted-foreground))',

@@ -195,14 +195,12 @@ export function ProjectOverviewTab({
                     width: 6,
                     height: 6,
                     borderRadius: '50%',
-                    background:
-                      task.status === 'in_progress'
-                        ? '#2563eb'
-                        : task.status === 'blocked'
-                          ? '#dc2626'
-                          : task.status === 'review'
-                            ? '#7c3aed'
-                            : '#6b7280',
+                    background: (() => {
+                      if (task.status === 'in_progress') return '#2563eb'
+                      if (task.status === 'blocked') return '#dc2626'
+                      if (task.status === 'review') return '#7c3aed'
+                      return '#6b7280'
+                    })(),
                     flexShrink: 0,
                   }}
                 />

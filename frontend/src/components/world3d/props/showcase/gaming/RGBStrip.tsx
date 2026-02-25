@@ -44,7 +44,10 @@ export function RGBStrip() {
       </mesh>
       {/* Remote buttons */}
       {[0, 1, 2, 3].map((i) => (
-        <mesh key={`item-${i}`} position={[0.27 + (i % 2) * 0.06, -0.28, 0.08 + Math.floor(i / 2) * 0.06]}>
+        <mesh
+          key={`item-${i}`}
+          position={[0.27 + (i % 2) * 0.06, -0.28, 0.08 + Math.floor(i / 2) * 0.06]}
+        >
           <cylinderGeometry args={[0.015, 0.015, 0.01, 6]} />
           <meshStandardMaterial color={['#ff0000', '#00ff00', '#0000ff', '#ffffff'][i]} />
         </mesh>

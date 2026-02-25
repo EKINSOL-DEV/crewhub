@@ -103,9 +103,7 @@ function CronItem({ job, onToggle, onRun }: CronItemProps) {
       className={`zen-cron-item ${!isEnabled ? 'zen-cron-item-disabled' : ''} ${hasError ? 'zen-cron-item-error' : ''}`}
     >
       <div className="zen-cron-status">
-        <span
-          className={`zen-status-dot ${statusDotClass}`}
-        />
+        <span className={`zen-status-dot ${statusDotClass}`} />
       </div>
 
       <div className="zen-cron-info">

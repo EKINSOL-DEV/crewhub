@@ -94,6 +94,14 @@ export function TOCSidebar({ headings, activeId, onSelect }: TOCSidebarProps) {
       </div>
       {headings.map((h, i) => {
         const isActive = h.id === activeId
+        let headingFontWeight: number
+        if (isActive) {
+          headingFontWeight = 600
+        } else if (h.level === 1) {
+          headingFontWeight = 500
+        } else {
+          headingFontWeight = 400
+        }
         return (
           <button
             key={`${h.id}-${i}`}
@@ -104,7 +112,7 @@ export function TOCSidebar({ headings, activeId, onSelect }: TOCSidebarProps) {
               textAlign: 'left',
               padding: '4px 12px 4px ' + (12 + (h.level - 1) * 12) + 'px',
               fontSize: h.level === 1 ? 13 : 12,
-              fontWeight: isActive ? 600 : h.level === 1 ? 500 : 400,
+              fontWeight: headingFontWeight,
               color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
               background: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent',
               border: 'none',

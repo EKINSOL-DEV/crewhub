@@ -175,18 +175,20 @@ export function MobileLayout() {
   }, [])
 
   // Determine current panel for drawer highlight
-  const currentPanel: MobilePanel =
-    view.type === 'docs'
-      ? 'docs'
-      : view.type === 'kanban'
-        ? 'kanban'
-        : view.type === 'activity'
-          ? 'activity'
-          : view.type === 'projects'
-            ? 'projects'
-            : view.type === 'creator'
-              ? 'creator'
-              : 'chat'
+  let currentPanel: MobilePanel
+  if (view.type === 'docs') {
+    currentPanel = 'docs'
+  } else if (view.type === 'kanban') {
+    currentPanel = 'kanban'
+  } else if (view.type === 'activity') {
+    currentPanel = 'activity'
+  } else if (view.type === 'projects') {
+    currentPanel = 'projects'
+  } else if (view.type === 'creator') {
+    currentPanel = 'creator'
+  } else {
+    currentPanel = 'chat'
+  }
 
   return (
     <div

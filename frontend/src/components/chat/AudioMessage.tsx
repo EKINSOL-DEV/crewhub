@@ -98,39 +98,51 @@ export function AudioMessage({
   const isDark = variant === 'mobile'
   const isZen = variant === 'zen'
 
-  const containerBg = isUser
-    ? 'transparent'
-    : isDark
-      ? 'rgba(255,255,255,0.08)'
-      : isZen
-        ? 'rgba(255,255,255,0.06)'
-        : 'rgba(0,0,0,0.06)'
+  let containerBg: string
+  if (isUser) {
+    containerBg = 'transparent'
+  } else if (isDark) {
+    containerBg = 'rgba(255,255,255,0.08)'
+  } else if (isZen) {
+    containerBg = 'rgba(255,255,255,0.06)'
+  } else {
+    containerBg = 'rgba(0,0,0,0.06)'
+  }
 
-  const textColor = isUser
-    ? 'rgba(255,255,255,0.9)'
-    : isDark
-      ? '#e2e8f0'
-      : isZen
-        ? 'var(--zen-fg, #e2e8f0)'
-        : '#374151'
+  let textColor: string
+  if (isUser) {
+    textColor = 'rgba(255,255,255,0.9)'
+  } else if (isDark) {
+    textColor = '#e2e8f0'
+  } else if (isZen) {
+    textColor = 'var(--zen-fg, #e2e8f0)'
+  } else {
+    textColor = '#374151'
+  }
 
-  const trackBg = isUser
-    ? 'rgba(255,255,255,0.3)'
-    : isDark
-      ? 'rgba(255,255,255,0.15)'
-      : isZen
-        ? 'rgba(255,255,255,0.1)'
-        : 'rgba(0,0,0,0.12)'
+  let trackBg: string
+  if (isUser) {
+    trackBg = 'rgba(255,255,255,0.3)'
+  } else if (isDark) {
+    trackBg = 'rgba(255,255,255,0.15)'
+  } else if (isZen) {
+    trackBg = 'rgba(255,255,255,0.1)'
+  } else {
+    trackBg = 'rgba(0,0,0,0.12)'
+  }
 
   const fillColor = isUser ? '#fff' : accentColor
 
-  const btnBg = isUser
-    ? 'rgba(255,255,255,0.25)'
-    : isDark
-      ? 'rgba(255,255,255,0.1)'
-      : isZen
-        ? 'rgba(255,255,255,0.08)'
-        : `${accentColor}20`
+  let btnBg: string
+  if (isUser) {
+    btnBg = 'rgba(255,255,255,0.25)'
+  } else if (isDark) {
+    btnBg = 'rgba(255,255,255,0.1)'
+  } else if (isZen) {
+    btnBg = 'rgba(255,255,255,0.08)'
+  } else {
+    btnBg = `${accentColor}20`
+  }
 
   const btnColor = isUser ? '#fff' : accentColor
 
@@ -145,13 +157,16 @@ export function AudioMessage({
   const displayTime = isPlaying || currentTime > 0 ? fmt(currentTime) : fmt(totalDuration)
 
   // Transcript text color
-  const transcriptColor = isUser
-    ? 'rgba(255,255,255,0.75)'
-    : isDark
-      ? 'rgba(226,232,240,0.65)'
-      : isZen
-        ? 'rgba(226,232,240,0.6)'
-        : 'rgba(55,65,81,0.65)'
+  let transcriptColor: string
+  if (isUser) {
+    transcriptColor = 'rgba(255,255,255,0.75)'
+  } else if (isDark) {
+    transcriptColor = 'rgba(226,232,240,0.65)'
+  } else if (isZen) {
+    transcriptColor = 'rgba(226,232,240,0.6)'
+  } else {
+    transcriptColor = 'rgba(55,65,81,0.65)'
+  }
 
   return (
     <div

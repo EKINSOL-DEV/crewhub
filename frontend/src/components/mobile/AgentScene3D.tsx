@@ -171,6 +171,15 @@ function ExpressiveBot({ config, status }: { config: BotVariantConfig; status: A
     }
   })
 
+  let statusRingColor: string
+  if (status === 'active') {
+    statusRingColor = '#22c55e'
+  } else if (status === 'idle') {
+    statusRingColor = '#f59e0b'
+  } else {
+    statusRingColor = '#6366f1'
+  }
+
   return (
     <group ref={groupRef} position={[0, 0.1, 0]} scale={2.4}>
       {/* Head */}
@@ -210,8 +219,8 @@ function ExpressiveBot({ config, status }: { config: BotVariantConfig; status: A
       <mesh position={[0, -0.24, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.18, 0.26, 20]} />
         <meshStandardMaterial
-          color={status === 'active' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#6366f1'}
-          emissive={status === 'active' ? '#22c55e' : status === 'idle' ? '#f59e0b' : '#6366f1'}
+          color={statusRingColor}
+          emissive={statusRingColor}
           emissiveIntensity={0.6}
           transparent
           opacity={0.5}

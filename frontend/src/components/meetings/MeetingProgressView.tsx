@@ -18,32 +18,38 @@ interface MeetingProgressViewProps {
 }
 
 function TurnEntry({ turn }: { turn: MeetingTurn }) {
-  const statusIcon =
-    turn.status === 'done'
-      ? '✓'
-      : turn.status === 'speaking'
-        ? '●'
-        : turn.status === 'skipped'
-          ? '⊘'
-          : '○'
+  let statusIcon: string
+  if (turn.status === 'done') {
+    statusIcon = '✓'
+  } else if (turn.status === 'speaking') {
+    statusIcon = '●'
+  } else if (turn.status === 'skipped') {
+    statusIcon = '⊘'
+  } else {
+    statusIcon = '○'
+  }
 
-  const statusLabel =
-    turn.status === 'done'
-      ? 'Completed'
-      : turn.status === 'speaking'
-        ? 'Speaking'
-        : turn.status === 'skipped'
-          ? 'Skipped'
-          : 'Waiting'
+  let statusLabel: string
+  if (turn.status === 'done') {
+    statusLabel = 'Completed'
+  } else if (turn.status === 'speaking') {
+    statusLabel = 'Speaking'
+  } else if (turn.status === 'skipped') {
+    statusLabel = 'Skipped'
+  } else {
+    statusLabel = 'Waiting'
+  }
 
-  const statusColor =
-    turn.status === 'done'
-      ? 'text-green-500'
-      : turn.status === 'speaking'
-        ? 'text-blue-500 animate-pulse'
-        : turn.status === 'skipped'
-          ? 'text-orange-400'
-          : 'text-muted-foreground'
+  let statusColor: string
+  if (turn.status === 'done') {
+    statusColor = 'text-green-500'
+  } else if (turn.status === 'speaking') {
+    statusColor = 'text-blue-500 animate-pulse'
+  } else if (turn.status === 'skipped') {
+    statusColor = 'text-orange-400'
+  } else {
+    statusColor = 'text-muted-foreground'
+  }
 
   return (
     <div className="py-2 border-b border-border/40 last:border-0">

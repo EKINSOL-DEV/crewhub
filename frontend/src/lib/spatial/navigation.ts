@@ -68,8 +68,22 @@ const ZONE_LABELS: Record<ZoneName, string> = {
  * The grid is divided into thirds along each axis.
  */
 export function gridToZone(x: number, z: number, width: number = 20, depth: number = 20): ZoneName {
-  const col = x < width / 3 ? 'w' : x >= (2 * width) / 3 ? 'e' : ''
-  const row = z < depth / 3 ? 'n' : z >= (2 * depth) / 3 ? 's' : ''
+  let col: string
+  if (x < width / 3) {
+    col = 'w'
+  } else if (x >= (2 * width) / 3) {
+    col = 'e'
+  } else {
+    col = ''
+  }
+  let row: string
+  if (z < depth / 3) {
+    row = 'n'
+  } else if (z >= (2 * depth) / 3) {
+    row = 's'
+  } else {
+    row = ''
+  }
   const zone = (row + col) as ZoneName
   return zone || 'center'
 }
@@ -311,8 +325,22 @@ export class SpatialNavigator {
       s: d - Math.floor(third(d) / 2) - 1,
     }
 
-    const col = zone.includes('w') ? 'w' : zone.includes('e') ? 'e' : ''
-    const row = zone.startsWith('n') ? 'n' : zone.startsWith('s') ? 's' : ''
+    let col: string
+    if (zone.includes('w')) {
+      col = 'w'
+    } else if (zone.includes('e')) {
+      col = 'e'
+    } else {
+      col = ''
+    }
+    let row: string
+    if (zone.startsWith('n')) {
+      row = 'n'
+    } else if (zone.startsWith('s')) {
+      row = 's'
+    } else {
+      row = ''
+    }
 
     return { x: colMap[col], z: rowMap[row] }
   }

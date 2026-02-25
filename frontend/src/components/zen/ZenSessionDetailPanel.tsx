@@ -102,19 +102,16 @@ function MessageBubble({ message }: { message: SessionMessage }) {
   }, [message])
 
   return (
-    <div
-      className={`zen-sd-message zen-sd-message-${messageRole}`}
-    >
+    <div className={`zen-sd-message zen-sd-message-${messageRole}`}>
       <div className="zen-sd-message-header">
         <div className="zen-sd-message-header-top">
           <span className="zen-sd-message-role">
-            {isUser
-              ? '👤 User'
-              : isSystem
-                ? '⚙️ System'
-                : message.role === 'toolResult'
-                  ? '🔧 Tool Result'
-                  : '🤖 Assistant'}
+            {(() => {
+              if (isUser) return '👤 User'
+              if (isSystem) return '⚙️ System'
+              if (message.role === 'toolResult') return '🔧 Tool Result'
+              return '🤖 Assistant'
+            })()}
           </span>
           {message.timestamp && (
             <span className="zen-sd-message-timestamp">{formatMessageTime(message.timestamp)}</span>

@@ -37,11 +37,10 @@ export function DemoMeetingButton({ onClick, isActive, isComplete }: DemoMeeting
         padding: '14px 28px',
         borderRadius: '16px',
         border: '2px solid rgba(99, 102, 241, 0.4)',
-        background: isActive
-          ? 'rgba(99, 102, 241, 0.6)'
-          : hovered
-            ? 'rgba(99, 102, 241, 0.95)'
-            : 'rgba(99, 102, 241, 0.85)',
+        background: (() => {
+          if (isActive) return 'rgba(99, 102, 241, 0.6)'
+          return hovered ? 'rgba(99, 102, 241, 0.95)' : 'rgba(99, 102, 241, 0.85)'
+        })(),
         color: '#fff',
         fontSize: '16px',
         fontWeight: 700,

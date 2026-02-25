@@ -170,8 +170,16 @@ function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
           tools: [],
         }
       }
+      let role: string
+      if (msg.role === 'assistant') {
+        role = 'assistant'
+      } else if (msg.role === 'user') {
+        role = 'user'
+      } else {
+        role = 'system'
+      }
       return {
-        role: msg.role === 'assistant' ? 'assistant' : msg.role === 'user' ? 'user' : 'system',
+        role,
         content: content || (tools.length > 0 ? '' : '[no content]'),
         timestamp: m.timestamp ? new Date(m.timestamp).getTime() : undefined,
         tools,

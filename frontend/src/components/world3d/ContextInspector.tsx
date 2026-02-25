@@ -188,25 +188,35 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
             marginLeft: 'auto',
           }}
         >
-          {(['tree', 'json', 'formatted'] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              style={{
-                padding: '4px 10px',
-                fontSize: 11,
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-                background: viewMode === mode ? 'rgba(99, 102, 241, 0.3)' : 'transparent',
-                color: viewMode === mode ? '#a5b4fc' : '#64748b',
-                transition: 'all 0.15s',
-                textTransform: 'capitalize',
-              }}
-            >
-              {mode === 'formatted' ? '📝' : mode === 'json' ? '{}' : '🌳'} {mode}
-            </button>
-          ))}
+          {(['tree', 'json', 'formatted'] as const).map((mode) => {
+            let modeIcon: string
+            if (mode === 'formatted') {
+              modeIcon = '📝'
+            } else if (mode === 'json') {
+              modeIcon = '{}'
+            } else {
+              modeIcon = '🌳'
+            }
+            return (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: viewMode === mode ? 'rgba(99, 102, 241, 0.3)' : 'transparent',
+                  color: viewMode === mode ? '#a5b4fc' : '#64748b',
+                  transition: 'all 0.15s',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {modeIcon} {mode}
+              </button>
+            )
+          })}
         </div>
       </div>
 

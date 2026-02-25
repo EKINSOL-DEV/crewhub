@@ -320,11 +320,11 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
                   key={`msg-${idx}`}
                   className={cn(
                     'p-3 rounded-lg',
-                    msg.role === 'user'
-                      ? 'bg-blue-50 dark:bg-blue-950'
-                      : msg.role === 'system'
-                        ? 'bg-gray-50 dark:bg-gray-950'
-                        : 'bg-green-50 dark:bg-green-950'
+                    (() => {
+                      if (msg.role === 'user') return 'bg-blue-50 dark:bg-blue-950'
+                      if (msg.role === 'system') return 'bg-gray-50 dark:bg-gray-950'
+                      return 'bg-green-50 dark:bg-green-950'
+                    })()
                   )}
                 >
                   <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">

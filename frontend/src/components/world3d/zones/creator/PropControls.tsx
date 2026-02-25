@@ -366,11 +366,11 @@ export function PropControls({
                           className={`fpm-transform-btn ${transformMode === mode ? 'fpm-transform-btn-active' : ''}`}
                           onClick={() => onTransformModeChange(mode)}
                         >
-                          {mode === 'translate'
-                            ? '↔️ Move'
-                            : mode === 'rotate'
-                              ? '🔄 Rotate'
-                              : '📐 Scale'}
+                          {(() => {
+                            if (mode === 'translate') return '↔️ Move'
+                            if (mode === 'rotate') return '🔄 Rotate'
+                            return '📐 Scale'
+                          })()}
                         </button>
                       ))}
                     </div>

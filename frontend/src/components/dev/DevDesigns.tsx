@@ -325,13 +325,12 @@ export function DevDesigns() {
                 key={size}
                 onClick={() => setSelectedSize(size)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                  ${
-                    selectedSize === size
-                      ? 'bg-blue-500 text-white'
-                      : darkBg
-                        ? 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                  }`}
+                  ${(() => {
+                    if (selectedSize === size) return 'bg-blue-500 text-white'
+                    return darkBg
+                      ? 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  })()}`}
               >
                 {size}px
               </button>

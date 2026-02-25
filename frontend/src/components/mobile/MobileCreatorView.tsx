@@ -613,11 +613,11 @@ function PropGeneratorTab() {
             disabled={isSaved || isSaving}
             style={{
               padding: '13px 20px',
-              background: isSaved
-                ? 'rgba(34,197,94,0.15)'
-                : isSaving
-                  ? 'rgba(99,102,241,0.2)'
-                  : 'linear-gradient(135deg, #059669, #10b981)',
+              background: (() => {
+                if (isSaved) return 'rgba(34,197,94,0.15)'
+                if (isSaving) return 'rgba(99,102,241,0.2)'
+                return 'linear-gradient(135deg, #059669, #10b981)'
+              })(),
               border: isSaved ? '1px solid rgba(34,197,94,0.35)' : '1px solid transparent',
               borderRadius: 12,
               color: isSaved ? '#86efac' : '#fff',

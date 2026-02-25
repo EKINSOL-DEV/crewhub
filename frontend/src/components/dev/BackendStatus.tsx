@@ -35,12 +35,21 @@ export function BackendStatus() {
 
   if (!import.meta.env.DEV) return null
 
+  let statusText: string
+  if (uptime) {
+    statusText = `uptime: ${uptime}`
+  } else if (reachable) {
+    statusText = ''
+  } else {
+    statusText = 'backend unreachable'
+  }
+
   return (
     <span
       style={{ fontSize: '10px', marginLeft: 8 }}
       className={reachable ? 'text-muted-foreground' : 'text-red-500'}
     >
-      {uptime ? `uptime: ${uptime}` : reachable ? '' : 'backend unreachable'}
+      {statusText}
     </span>
   )
 }

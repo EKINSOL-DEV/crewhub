@@ -18,7 +18,10 @@ export function CableTester() {
         <meshStandardMaterial color="#44ff44" emissive="#44ff44" emissiveIntensity={1} />
       </mesh>
       {[...Array(8)].map((_, i) => (
-        <mesh key={`item-${i}`} position={[-0.02 + (i % 4) * 0.012, -0.04 - Math.floor(i / 4) * 0.02, 0.022]}>
+        <mesh
+          key={`item-${i}`}
+          position={[-0.02 + (i % 4) * 0.012, -0.04 - Math.floor(i / 4) * 0.02, 0.022]}
+        >
           <sphereGeometry args={[0.004, 4, 4]} />
           <meshStandardMaterial
             color={i % 2 === 0 ? '#44ff44' : '#ff4444'}

@@ -316,12 +316,11 @@ function TaskItem({ task }: TaskItemProps) {
         width: '100%',
         padding: '6px 10px',
         borderRadius: 8,
-        background:
-          task.status === 'in_progress'
-            ? 'rgba(59, 130, 246, 0.08)'
-            : task.status === 'blocked'
-              ? 'rgba(239, 68, 68, 0.08)'
-              : 'transparent',
+        background: (() => {
+          if (task.status === 'in_progress') return 'rgba(59, 130, 246, 0.08)'
+          if (task.status === 'blocked') return 'rgba(239, 68, 68, 0.08)'
+          return 'transparent'
+        })(),
         marginBottom: 2,
       }}
     >

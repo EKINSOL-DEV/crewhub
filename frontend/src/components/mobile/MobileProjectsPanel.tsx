@@ -30,8 +30,14 @@ function ProjectCard({
   onTap,
 }: ProjectCardProps) {
   const progress = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0
-  const statusColor =
-    project.status === 'active' ? '#22c55e' : project.status === 'archived' ? '#64748b' : '#f59e0b'
+  let statusColor: string
+  if (project.status === 'active') {
+    statusColor = '#22c55e'
+  } else if (project.status === 'archived') {
+    statusColor = '#64748b'
+  } else {
+    statusColor = '#f59e0b'
+  }
 
   return (
     <button
@@ -181,8 +187,14 @@ function ProjectDetailModal({
   onClose,
 }: ProjectDetailModalProps) {
   const progress = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0
-  const statusColor =
-    project.status === 'active' ? '#22c55e' : project.status === 'archived' ? '#64748b' : '#f59e0b'
+  let statusColor: string
+  if (project.status === 'active') {
+    statusColor = '#22c55e'
+  } else if (project.status === 'archived') {
+    statusColor = '#64748b'
+  } else {
+    statusColor = '#f59e0b'
+  }
 
   return (
     <div

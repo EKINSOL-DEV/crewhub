@@ -129,6 +129,15 @@ export function TaskForm({
     [mode, projectId, roomId, title, description, status, priority, assignee, onSubmit]
   )
 
+  let submitBtnLabel: string
+  if (isLoading) {
+    submitBtnLabel = 'Saving...'
+  } else if (mode === 'create') {
+    submitBtnLabel = 'Create Task'
+  } else {
+    submitBtnLabel = 'Save Changes'
+  }
+
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Title */}
@@ -259,7 +268,7 @@ export function TaskForm({
             opacity: !title.trim() ? 0.5 : 1,
           }}
         >
-          {isLoading ? 'Saving...' : mode === 'create' ? 'Create Task' : 'Save Changes'}
+          {submitBtnLabel}
         </button>
       </div>
     </form>

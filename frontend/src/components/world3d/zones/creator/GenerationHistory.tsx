@@ -70,11 +70,10 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
             Cancel
           </button>
           <button className="fpm-delete-confirm-btn" onClick={onConfirm} disabled={state.loading}>
-            {state.loading
-              ? '⏳ Deleting...'
-              : hasPlacements
-                ? '🗑️ Delete Anyway'
-                : '🗑️ Delete Prop'}
+            {(() => {
+              if (state.loading) return '⏳ Deleting...'
+              return hasPlacements ? '🗑️ Delete Anyway' : '🗑️ Delete Prop'
+            })()}
           </button>
         </div>
       </div>
@@ -198,32 +197,42 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
       )}
 
       <div className="fpm-history-list">
-        {records.map((r) => (
-          <div
-            key={r.id}
-            className={`fpm-history-item ${selectedId === r.id ? 'fpm-history-item-active' : ''}`}
-            onClick={() => handleSelect(r)}
-          >
-            <div className="fpm-history-item-name">
-              {r.error ? '❌' : r.method === 'ai' ? '🤖' : '📐'} {r.name}
-            </div>
-            <div className="fpm-history-item-meta">
-              {r.modelLabel} · {r.prompt.slice(0, 40)}
-              {r.prompt.length > 40 ? '...' : ''}
-            </div>
-            <div className="fpm-history-item-date">{new Date(r.createdAt).toLocaleString()}</div>
-            <button
-              className="fpm-history-delete-btn"
-              title="Delete prop"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDeleteClick(r)
-              }}
+        {records.map((r) => {
+          let historyIcon: string
+          if (r.error) {
+            historyIcon = '❌'
+          } else if (r.method === 'ai') {
+            historyIcon = '🤖'
+          } else {
+            historyIcon = '📐'
+          }
+          return (
+            <div
+              key={r.id}
+              className={`fpm-history-item ${selectedId === r.id ? 'fpm-history-item-active' : ''}`}
+              onClick={() => handleSelect(r)}
             >
-              🗑️
-            </button>
-          </div>
-        ))}
+              <div className="fpm-history-item-name">
+                {historyIcon} {r.name}
+              </div>
+              <div className="fpm-history-item-meta">
+                {r.modelLabel} · {r.prompt.slice(0, 40)}
+                {r.prompt.length > 40 ? '...' : ''}
+              </div>
+              <div className="fpm-history-item-date">{new Date(r.createdAt).toLocaleString()}</div>
+              <button
+                className="fpm-history-delete-btn"
+                title="Delete prop"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteClick(r)
+                }}
+              >
+                🗑️
+              </button>
+            </div>
+          )
+        })}
       </div>
 
       {detail && (

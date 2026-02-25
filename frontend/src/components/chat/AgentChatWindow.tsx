@@ -635,13 +635,10 @@ function HeaderBtn({
           height: 26,
           borderRadius: 7,
           border: 'none',
-          background: active
-            ? activeColor
-              ? activeColor + '20'
-              : 'rgba(0,0,0,0.08)'
-            : isHovered
-              ? 'rgba(0, 0, 0, 0.1)'
-              : 'rgba(0,0,0,0.04)',
+          background: (() => {
+            if (active) return activeColor ? activeColor + '20' : 'rgba(0,0,0,0.08)'
+            return isHovered ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0,0,0,0.04)'
+          })(),
           color: active ? activeColor || '#374151' : '#6b7280',
           cursor: 'pointer',
           display: 'flex',

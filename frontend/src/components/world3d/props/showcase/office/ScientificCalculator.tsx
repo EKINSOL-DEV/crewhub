@@ -18,7 +18,10 @@ export function ScientificCalculator() {
         <meshStandardMaterial color="#88bbaa" emissive="#88bbaa" emissiveIntensity={0.5} />
       </mesh>
       {[...Array(20)].map((_, i) => (
-        <mesh key={`item-${i}`} position={[-0.06 + (i % 4) * 0.04, -0.04 - Math.floor(i / 4) * 0.035, 0.012]}>
+        <mesh
+          key={`item-${i}`}
+          position={[-0.06 + (i % 4) * 0.04, -0.04 - Math.floor(i / 4) * 0.035, 0.012]}
+        >
           <boxGeometry args={[0.03, 0.025, 0.005]} />
           <meshStandardMaterial color={i < 4 ? '#ff6644' : '#555566'} flatShading />
         </mesh>

@@ -218,11 +218,10 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
                     border: 'none',
                     borderRadius: 12,
                     cursor: isDisabled ? 'default' : 'pointer',
-                    color: isDisabled
-                      ? 'var(--mobile-text-muted, #475569)'
-                      : isActive
-                        ? '#818cf8'
-                        : 'var(--mobile-text, #cbd5e1)',
+                    color: (() => {
+                      if (isDisabled) return 'var(--mobile-text-muted, #475569)'
+                      return isActive ? '#818cf8' : 'var(--mobile-text, #cbd5e1)'
+                    })(),
                     fontSize: 15,
                     fontWeight: isActive ? 600 : 400,
                     textAlign: 'left',

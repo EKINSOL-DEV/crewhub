@@ -152,11 +152,11 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
         >
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
             🗓️{' '}
-            {step === 'done'
-              ? 'Standup Complete!'
-              : step === 'entries'
-                ? `Entry: ${agent?.name}`
-                : 'Start Stand-Up'}
+            {(() => {
+              if (step === 'done') return 'Standup Complete!'
+              if (step === 'entries') return `Entry: ${agent?.name}`
+              return 'Start Stand-Up'
+            })()}
           </h2>
           <button
             onClick={handleClose}
@@ -274,12 +274,11 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                     flex: 1,
                     height: 4,
                     borderRadius: 2,
-                    background:
-                      i < currentAgent
-                        ? a.color || '#4f46e5'
-                        : i === currentAgent
-                          ? '#d1d5db'
-                          : '#f3f4f6',
+                    background: (() => {
+                      if (i < currentAgent) return a.color || '#4f46e5'
+                      if (i === currentAgent) return '#d1d5db'
+                      return '#f3f4f6'
+                    })(),
                     transition: 'background 0.3s',
                   }}
                 />
@@ -382,11 +381,10 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                   cursor: 'pointer',
                 }}
               >
-                {submitting
-                  ? 'Saving...'
-                  : currentAgent < selectedAgents.length - 1
-                    ? 'Next →'
-                    : 'Finish ✓'}
+                {(() => {
+                  if (submitting) return 'Saving...'
+                  return currentAgent < selectedAgents.length - 1 ? 'Next →' : 'Finish ✓'
+                })()}
               </button>
             </div>
           </>

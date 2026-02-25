@@ -144,12 +144,14 @@ export function PixelAvatar({ agentName, status, stats }: PixelAvatarProps) {
 
   const statusClass = `pixel-avatar--${animState}`
   const statusText = getStatusText(status)
-  const statusColorClass =
-    status === 'error'
-      ? 'pixel-avatar-tooltip-value--error'
-      : status === 'idle'
-        ? 'pixel-avatar-tooltip-value--idle'
-        : 'pixel-avatar-tooltip-value--active'
+  let statusColorClass: string
+  if (status === 'error') {
+    statusColorClass = 'pixel-avatar-tooltip-value--error'
+  } else if (status === 'idle') {
+    statusColorClass = 'pixel-avatar-tooltip-value--idle'
+  } else {
+    statusColorClass = 'pixel-avatar-tooltip-value--active'
+  }
 
   return (
     <div className={`pixel-avatar ${statusClass}`}>

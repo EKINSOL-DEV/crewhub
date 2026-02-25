@@ -416,15 +416,12 @@ export function RoomRoutingRulesPanel({
                 <Input
                   value={newRule.rule_value}
                   onChange={(e) => setNewRule({ ...newRule, rule_value: e.target.value })}
-                  placeholder={
-                    newRule.rule_type === 'session_key_contains'
-                      ? 'e.g., :cron:'
-                      : newRule.rule_type === 'keyword'
-                        ? 'e.g., implement'
-                        : newRule.rule_type === 'model'
-                          ? 'e.g., opus'
-                          : 'Enter pattern...'
-                  }
+                  placeholder={(() => {
+                    if (newRule.rule_type === 'session_key_contains') return 'e.g., :cron:'
+                    if (newRule.rule_type === 'keyword') return 'e.g., implement'
+                    if (newRule.rule_type === 'model') return 'e.g., opus'
+                    return 'Enter pattern...'
+                  })()}
                 />
               )}
             </div>

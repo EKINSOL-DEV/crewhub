@@ -54,18 +54,28 @@ export function CodeTerminal() {
       </mesh>
       {/* Code text */}
       <group ref={textGroupRef} position={[0, 0.1, 0.09]}>
-        {CODE_LINES.slice(0, 5).map((line, i) => (
-          <Text
-            key={`line-${i}`}
-            position={[-0.5, 0.25 - i * 0.15, 0]}
-            fontSize={0.07}
-            color={i === 0 ? '#66ff66' : i === 1 ? '#ffcc44' : '#44aaff'}
-            anchorX="left"
-            font={undefined}
-          >
-            {line}
-          </Text>
-        ))}
+        {CODE_LINES.slice(0, 5).map((line, i) => {
+          let lineColor: string
+          if (i === 0) {
+            lineColor = '#66ff66'
+          } else if (i === 1) {
+            lineColor = '#ffcc44'
+          } else {
+            lineColor = '#44aaff'
+          }
+          return (
+            <Text
+              key={`line-${i}`}
+              position={[-0.5, 0.25 - i * 0.15, 0]}
+              fontSize={0.07}
+              color={lineColor}
+              anchorX="left"
+              font={undefined}
+            >
+              {line}
+            </Text>
+          )
+        })}
       </group>
       {/* Cursor blink */}
       <mesh position={[-0.5, -0.28, 0.09]}>

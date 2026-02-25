@@ -40,11 +40,10 @@ export function StepScan({
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">
-          {scanning
-            ? 'Scanning for agent runtimes…'
-            : nothingFound
-              ? 'No runtimes found'
-              : 'Discovery Results'}
+          {(() => {
+            if (scanning) return 'Scanning for agent runtimes…'
+            return nothingFound ? 'No runtimes found' : 'Discovery Results'
+          })()}
         </h2>
         {scanning && (
           <p className="text-muted-foreground">Checking localhost ports, config files, and CLIs…</p>
