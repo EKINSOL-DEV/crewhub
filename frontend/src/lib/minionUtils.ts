@@ -59,12 +59,6 @@ export function hasActiveSubagents(session: MinionSession, allSessions: MinionSe
     if (!childParts[2]?.includes('subagent') && !childParts[2]?.includes('spawn')) return false
     // Child must be recently active (within active threshold)
     const childAge = now - s.updatedAt
-    if (import.meta.env.DEV) {
-      console.debug(
-        `[DIAG] hasActiveSubagents: child ${s.key} age=${Math.round(childAge / 1000)}s, ` +
-          `threshold=${SESSION_CONFIG.statusActiveThresholdMs / 1000}s, active=${childAge < SESSION_CONFIG.statusActiveThresholdMs}`
-      )
-    }
     return childAge < SESSION_CONFIG.statusActiveThresholdMs
   })
 
@@ -86,12 +80,6 @@ export function hasActiveSubagents(session: MinionSession, allSessions: MinionSe
       )
     })
     if (hasAnyChild) {
-      if (import.meta.env.DEV) {
-        console.debug(
-          `[DIAG] hasActiveSubagents: secondary check triggered for ${key} ` +
-            `(thisAge=${Math.round(thisSessionAge / 1000)}s < grace=60s, hasChild=true)`
-        )
-      }
       return true
     }
   }
@@ -124,15 +112,12 @@ export function getStatusIndicator(status: SessionStatus): {
  * Conservative patterns — refine after observing actual announce format.
  */
 function _isLikelyAnnounceRouting(text: string): boolean {
-  const matched =
+  return (
     text.startsWith('[Subagent result]') ||
     text.startsWith('[Agent completed]') ||
     text.startsWith('[announce]') ||
     /^(Subagent|Sub-agent)\s+\S+\s+(completed|finished|done)/i.test(text)
-  if (matched) {
-    console.warn('[DIAG] announce-routing heuristic triggered:', text.slice(0, 80))
-  }
-  return matched
+  )
 }
 
 export function parseRecentActivities(session: MinionSession, limit = 5): ActivityEvent[] {
@@ -416,22 +401,9 @@ export function shouldBeInParkingLane(
     if (parentMainSession) {
       const parentAge = Date.now() - parentMainSession.updatedAt
       if (parentAge < ANNOUNCE_ROUTING_GRACE_MS) {
-        if (import.meta.env.DEV) {
-          console.debug(
-            `[DIAG] shouldBeInParkingLane(${session.key}): deferred — parent main updated ` +
-              `${Math.round(parentAge / 1000)}s ago (grace=${ANNOUNCE_ROUTING_GRACE_MS / 1000}s)`
-          )
-        }
         return false // Parent recently updated → hold off parking
       }
     }
-  }
-
-  if (import.meta.env.DEV && session.key.includes(':subagent:')) {
-    console.debug(
-      `[DIAG] shouldBeInParkingLane(${session.key}): idleSeconds=${idleSeconds}, ` +
-        `status=${status}, isActivelyRunning=${isActivelyRunning}, threshold=${idleThresholdSeconds}`
-    )
   }
 
   return idleSeconds > idleThresholdSeconds
