@@ -5,10 +5,14 @@
  * floor triggers prop placement at the snapped grid position.
  *
  * Must be rendered inside <Canvas>.
+ *
+ * Note: relies on R3F's built-in onClick drag filtering (onClick only fires when
+ * there is no significant pointer movement between pointerdown and pointerup).
+ * Manual drag tracking was removed as it broke with CameraControls emitting
+ * pointermove events during orbit/pan, causing every click to be treated as a drag.
  */
 
-import { useRef, useCallback } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useCallback } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -24,37 +28,12 @@ interface PlacementClickPlaneProps {
 }
 
 export function PlacementClickPlane({ enabled, onPlace }: PlacementClickPlaneProps) {
-  const didDrag = useRef(false)
-  const mouseDownPos = useRef({ x: 0, y: 0 })
-  const { size } = useThree()
-  void size
-
-  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
-    mouseDownPos.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY }
-    didDrag.current = false
-  }, [])
-
-  const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
-    const dx = e.nativeEvent.clientX - mouseDownPos.current.x
-    const dy = e.nativeEvent.clientY - mouseDownPos.current.y
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      didDrag.current = true
-    }
-  }, [])
-
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
       if (!enabled) return
-      if (didDrag.current) return
-
-      // Prevent the event from bubbling to room-click handlers
       e.stopPropagation()
-
       const point = e.point as THREE.Vector3
-      const sx = snapToGrid(point.x)
-      const sz = snapToGrid(point.z)
-
-      onPlace({ x: sx, y: 0, z: sz })
+      onPlace({ x: snapToGrid(point.x), y: 0, z: snapToGrid(point.z) })
     },
     [enabled, onPlace]
   )
@@ -65,8 +44,6 @@ export function PlacementClickPlane({ enabled, onPlace }: PlacementClickPlanePro
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
       position={[0, 0.01, 0]}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
       onClick={handleClick}
       renderOrder={0}
     >
