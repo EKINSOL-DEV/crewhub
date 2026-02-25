@@ -13,7 +13,7 @@ import logging
 import re
 import uuid as _uuid_mod
 from collections.abc import AsyncGenerator
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .prop_generator import (
@@ -217,7 +217,7 @@ async def stream_prop_generation(
                         "diagnostics": [],
                         "parts": [],
                         "code": "",
-                        "createdAt": datetime.utcnow().isoformat(),
+                        "createdAt": datetime.now(UTC).isoformat(),
                         "error": err_msg,
                     }
                 )
@@ -400,7 +400,7 @@ async def stream_prop_generation(
                     "diagnostics": diagnostics_collected,
                     "parts": parts,
                     "code": code,
-                    "createdAt": datetime.utcnow().isoformat(),
+                    "createdAt": datetime.now(UTC).isoformat(),
                     "error": None,
                     "qualityScore": pp_result.quality_score,
                     "validation": validation,
@@ -503,7 +503,7 @@ def _template_record(
         "diagnostics": extra_diags or [],
         "parts": parts,
         "code": code,
-        "createdAt": datetime.utcnow().isoformat(),
+        "createdAt": datetime.now(UTC).isoformat(),
         "error": error,
     }
 

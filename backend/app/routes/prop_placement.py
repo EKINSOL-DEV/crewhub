@@ -68,10 +68,10 @@ class PlacedPropResponse(BaseModel):
     position: Vec3
     rotation_y: float
     scale: float
-    room_id: Optional[str]
-    placed_by: Optional[str]
+    room_id: Optional[str] = None
+    placed_by: Optional[str] = None
     placed_at: float
-    metadata: Optional[dict]
+    metadata: Optional[dict] = None
 
 
 def _row_to_response(row: dict) -> PlacedPropResponse:

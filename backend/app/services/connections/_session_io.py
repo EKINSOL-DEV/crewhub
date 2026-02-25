@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -155,7 +155,7 @@ class OpenClawSessionIOMixin:
                 return False
 
             if session_file.exists():
-                ts = datetime.utcnow().isoformat().replace(":", "-")
+                ts = datetime.now(UTC).isoformat().replace(":", "-")
                 session_file.rename(session_file.with_suffix(f".jsonl.deleted.{ts}"))
                 logger.info(f"kill_session: renamed {session_file.name} → .deleted")
                 return True

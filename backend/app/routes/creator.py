@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import re
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -149,7 +149,14 @@ async def get_generation_record(gen_id: str):
     return record
 
 
-@router.delete("/generation-history/{gen_id}", responses={404: {"description": "Not found"}, 409: {"description": "Conflict"}, 500: {"description": "Internal server error"}})
+@router.delete(
+    "/generation-history/{gen_id}",
+    responses={
+        404: {"description": "Not found"},
+        409: {"description": "Conflict"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def delete_generation_record(gen_id: str, cascade: Annotated[bool, Query(False)]):
     """Delete a generation history record, optionally cascading to blueprint placements."""
     history = load_generation_history()
@@ -209,7 +216,7 @@ async def save_prop(req: SavePropRequest):
         "parts": [p.model_dump() for p in req.parts],
         "mountType": req.mountType,
         "yOffset": req.yOffset,
-        "createdAt": datetime.utcnow().isoformat(),
+        "createdAt": datetime.now(UTC).isoformat(),
     }
     props.append(entry)
     save_props_to_disk(props)
@@ -378,7 +385,7 @@ async def hybrid_generate(req: HybridGenerateRequest):
                 "diagnostics": [f"Template: {req.templateBase or 'none'}"],
                 "parts": parts,
                 "code": clean_code,
-                "createdAt": datetime.utcnow().isoformat(),
+                "createdAt": datetime.now(UTC).isoformat(),
                 "error": None,
             }
         )

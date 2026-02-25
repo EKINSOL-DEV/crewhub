@@ -26,7 +26,7 @@ import hashlib
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -312,7 +312,7 @@ class DeviceIdentityManager:
         """Save or update device identity in database."""
         await self.init_database()
 
-        now = int(datetime.utcnow().timestamp())
+        now = int(datetime.now(UTC).timestamp())
 
         async with get_db() as db:
             cursor = await db.execute(
@@ -407,7 +407,7 @@ class DeviceIdentityManager:
         """Update device token after successful pairing / connect response."""
         await self.init_database()
 
-        now = int(datetime.utcnow().timestamp())
+        now = int(datetime.now(UTC).timestamp())
 
         async with get_db() as db:
             await db.execute(
@@ -433,7 +433,7 @@ class DeviceIdentityManager:
         """
         await self.init_database()
 
-        now = int(datetime.utcnow().timestamp())
+        now = int(datetime.now(UTC).timestamp())
 
         async with get_db() as db:
             await db.execute(

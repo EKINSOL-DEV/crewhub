@@ -7,7 +7,7 @@ Provides filtering, statistics, and management of historical sessions.
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -357,7 +357,7 @@ async def delete_session(session_key: str) -> bool:
             return False
 
         if session_file.exists():
-            ts = datetime.utcnow().isoformat().replace(":", "-")
+            ts = datetime.now(UTC).isoformat().replace(":", "-")
             session_file.rename(session_file.with_suffix(f".jsonl.deleted.{ts}"))
             logger.info(f"Deleted session: {session_key}")
             return True
