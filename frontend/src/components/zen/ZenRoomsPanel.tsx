@@ -190,7 +190,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
       {/* All rooms option */}
       <div className="zen-rooms-list">
         <div
-          className={`zen-room-item zen-room-item-all ${!selectedRoomId ? 'zen-room-item-selected' : ''}`}
+          className={`zen-room-item zen-room-item-all ${selectedRoomId ? '' : 'zen-room-item-selected'}`}
           onClick={() => handleSelect(null)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -225,7 +225,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
       {/* Footer with count */}
       <div className="zen-rooms-footer">
         <span className="zen-rooms-count">
-          {sortedRooms.length} room{sortedRooms.length !== 1 ? 's' : ''}
+          {sortedRooms.length} room{sortedRooms.length === 1 ? '' : 's'}
         </span>
       </div>
     </div>

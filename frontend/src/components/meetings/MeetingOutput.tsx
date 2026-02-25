@@ -284,7 +284,7 @@ function ActionsView({
           marginBottom: 4,
         }}
       >
-        {items.length} Action Item{items.length !== 1 ? 's' : ''}
+        {items.length} Action Item{items.length === 1 ? '' : 's'}
       </div>
       {items.map((item) => (
         <ActionItemCard

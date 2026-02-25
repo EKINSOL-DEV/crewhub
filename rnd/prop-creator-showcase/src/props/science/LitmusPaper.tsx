@@ -12,7 +12,7 @@ export function LitmusPaper() {
         <boxGeometry args={[0.12, 0.22, 0.005]} />
         <meshStandardMaterial color="#ffffff" flatShading />
       </mesh>
-      {[...new Array(5)].map((_,i) => (
+      {Array.from({length: 5}).map((_,i) => (
         <mesh key={`item-${i}`} position={[0, -0.06+i*0.04, 0.004]}>
           <boxGeometry args={[0.08, 0.03, 0.002]} />
           <meshStandardMaterial color={['#ff2222','#ff8844','#ffff44','#44cc44','#4444ff'][i]} flatShading />

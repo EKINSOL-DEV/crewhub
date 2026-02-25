@@ -37,7 +37,7 @@ export function useGridDebug(): [boolean, (value?: boolean) => void] {
   }, [])
 
   const toggle = useCallback((value?: boolean) => {
-    const next = value !== undefined ? value : !readStored()
+    const next = value === undefined ? !readStored() : value
     localStorage.setItem(STORAGE_KEY, String(next))
     setEnabled(next)
     // Notify other components in same tab

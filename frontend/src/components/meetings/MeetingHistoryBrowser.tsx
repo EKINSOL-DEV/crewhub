@@ -179,7 +179,7 @@ export function MeetingHistoryBrowser({
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground">
-        {total} meeting{total !== 1 ? 's' : ''}
+        {total} meeting{total === 1 ? '' : 's'}
       </div>
       <ScrollArea className="max-h-[60vh]">
         <div className="space-y-2 pr-2">

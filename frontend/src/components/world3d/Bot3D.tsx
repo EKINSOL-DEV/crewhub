@@ -389,14 +389,14 @@ export const Bot3D = memo(function Bot3D({
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
         groupRef.current.rotation.y = currentRotY + angleDiff * 0.2
-      } else if (!isLastWaypoint) {
-        // Reached intermediate waypoint — advance to next
-        state.meetingWaypointIndex++
-      } else {
+      } else if (isLastWaypoint) {
         // Arrived at final gathering position — face center of table
         groupRef.current.rotation.y = meetingPos.angle
         state.currentX = meetingPos.x
         state.currentZ = meetingPos.z
+      } else {
+        // Reached intermediate waypoint — advance to next
+        state.meetingWaypointIndex++
       }
 
       groupRef.current.position.x = state.currentX

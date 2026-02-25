@@ -477,7 +477,7 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
         >
           {loading
             ? 'Loading…'
-            : `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''}`}
+            : `${filteredEvents.length} event${filteredEvents.length === 1 ? '' : 's'}`}
           {selectedAgentId && ' (filtered)'}
         </div>
 

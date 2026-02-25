@@ -68,7 +68,7 @@ export function CrewAvatar({ agent, size = 'md', showStatus = true, onClick }: C
         )}
         style={{
           background: `linear-gradient(135deg, ${agent.color}40, ${agent.color}20)`,
-          borderColor: agent.status !== 'offline' ? agent.color : undefined,
+          borderColor: agent.status === 'offline' ? undefined : agent.color,
         }}
       >
         {agent.avatarUrl ? (

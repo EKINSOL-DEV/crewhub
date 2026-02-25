@@ -20,7 +20,7 @@ export function TissueBox() {
         <boxGeometry args={[0.08, 0.08, 0.002]} />
         <meshStandardMaterial color="#ffffff" flatShading />
       </mesh>
-      {[...new Array(3)].map((_,i) => (
+      {Array.from({length: 3}).map((_,i) => (
         <mesh key={`item-${i}`} position={[-0.06+i*0.06, -0.18, 0.066]}>
           <sphereGeometry args={[0.015, 4, 4]} />
           <meshStandardMaterial color="#66aadd" flatShading />

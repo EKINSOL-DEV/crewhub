@@ -84,10 +84,12 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
   const fetchMessages = async (silent = false) => {
     if (!session) return
     try {
-      if (!silent) {
+      if (silent) {
+        setIsRefreshing(true)
+      } else {
         setLoading(true)
         setError(null)
-      } else setIsRefreshing(true)
+      }
       const response = await api.getMinionHistory(session.key, 100)
       // Transform messages - handle both direct messages and wrapped {message, timestamp} format
       const transformedMessages = (response.messages || []).map((item: any) => {
@@ -282,7 +284,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
           </div>
           {searchQuery && (
             <div className="text-xs text-muted-foreground mt-2">
-              Found {filteredMessages.length} message{filteredMessages.length !== 1 ? 's' : ''}
+              Found {filteredMessages.length} message{filteredMessages.length === 1 ? '' : 's'}
             </div>
           )}
         </div>
@@ -376,7 +378,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
           <div className="flex items-center gap-4 justify-between flex-wrap">
             <div className="flex items-center gap-4">
               <span>
-                📊 {filteredMessages.length} message{filteredMessages.length !== 1 ? 's' : ''}
+                📊 {filteredMessages.length} message{filteredMessages.length === 1 ? '' : 's'}
               </span>
               {messages.length > 0 && (
                 <>

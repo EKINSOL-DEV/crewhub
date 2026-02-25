@@ -290,8 +290,8 @@ function World3DViewInner({
   )
 
   const toggleFullscreen = async () => {
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen()
-    else await document.exitFullscreen()
+    if (document.fullscreenElement) await document.exitFullscreen()
+    else await document.documentElement.requestFullscreen()
   }
 
   // ── Derived session/bot data ──────────────────────────────────

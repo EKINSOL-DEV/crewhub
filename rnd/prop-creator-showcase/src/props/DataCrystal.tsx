@@ -58,7 +58,7 @@ export function DataCrystal() {
         );
       })}
       {/* Floating data bits */}
-      {[...new Array(8)].map((_, i) => {
+      {Array.from({length: 8}).map((_, i) => {
         const a = (i / 8) * Math.PI * 2;
         return (
           <mesh key={`bit-${i}`} position={[Math.cos(a) * 1.1, Math.sin(a * 2) * 0.3, Math.sin(a) * 1.1]}>

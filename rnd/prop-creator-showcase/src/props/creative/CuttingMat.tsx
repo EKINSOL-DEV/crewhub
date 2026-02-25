@@ -12,10 +12,10 @@ export function CuttingMat() {
         <boxGeometry args={[0.6, 0.01, 0.4]} />
         <meshStandardMaterial color="#228844" flatShading />
       </mesh>
-      {[...new Array(6)].map((_,i) => (
+      {Array.from({length: 6}).map((_,i) => (
         <mesh key={`item-${i}`} position={[-0.25+i*0.1, -0.264, 0]}><boxGeometry args={[0.002, 0.001, 0.38]} /><meshStandardMaterial color="#44aa66" /></mesh>
       ))}
-      {[...new Array(4)].map((_,i) => (
+      {Array.from({length: 4}).map((_,i) => (
         <mesh key={`item-${i}`} position={[0, -0.264, -0.15+i*0.1]}><boxGeometry args={[0.58, 0.001, 0.002]} /><meshStandardMaterial color="#44aa66" /></mesh>
       ))}
 

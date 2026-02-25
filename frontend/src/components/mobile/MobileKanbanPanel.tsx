@@ -591,7 +591,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
         }}
       >
         <span style={{ fontSize: 13, color: '#64748b' }}>
-          {tasks.length} task{tasks.length !== 1 ? 's' : ''} total
+          {tasks.length} task{tasks.length === 1 ? '' : 's'} total
         </span>
       </div>
 

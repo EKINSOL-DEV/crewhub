@@ -20,11 +20,7 @@ export function DeskOrganizerTray() {
         </mesh>
       ))}
       {[0, 1, 2].map((i) => (
-        <mesh
-          key={`x-${i}`}
-          position={[-0.22 + i * 0.04, 0, 0]}
-          rotation={[0, 0, 0.05 * (i - 1)]}
-        >
+        <mesh key={`x-${i}`} position={[-0.22 + i * 0.04, 0, 0]} rotation={[0, 0, 0.05 * (i - 1)]}>
           <cylinderGeometry args={[0.008, 0.008, 0.15, 6]} />
           <meshStandardMaterial color={['#4488ff', '#ff4444', '#222222'][i]} flatShading />
         </mesh>

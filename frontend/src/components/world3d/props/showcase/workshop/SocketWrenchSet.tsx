@@ -13,7 +13,7 @@ export function SocketWrenchSet() {
         <boxGeometry args={[0.35, 0.02, 0.2]} />
         <meshStandardMaterial color="#ff4444" flatShading />
       </mesh>
-      {[...new Array(8)].map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <mesh
           key={`item-${i}`}
           position={[-0.12 + (i % 4) * 0.08, -0.18, -0.04 + Math.floor(i / 4) * 0.08]}

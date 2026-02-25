@@ -299,7 +299,7 @@ export function DevDesigns() {
               onClick={() => setDarkBg(false)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                 ${
-                  !darkBg ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                  darkBg ? 'bg-gray-700 text-gray-400 hover:bg-gray-600' : 'bg-blue-500 text-white'
                 }`}
             >
               ☀️ Light

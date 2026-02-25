@@ -265,7 +265,7 @@ export function TaskForm({
             background: isLoading ? '#9ca3af' : '#2563eb',
             border: 'none',
             color: '#ffffff',
-            opacity: !title.trim() ? 0.5 : 1,
+            opacity: title.trim() ? 1 : 0.5,
           }}
         >
           {submitBtnLabel}

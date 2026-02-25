@@ -125,7 +125,7 @@ export function RoomProjectTab({
             maxWidth: 260,
           }}
         >
-          This room has <strong>{activeCount}</strong> active agent{activeCount !== 1 ? 's' : ''}.
+          This room has <strong>{activeCount}</strong> active agent{activeCount === 1 ? '' : 's'}.
           {confirmAction === 'change'
             ? ' Changing the project will update their context.'
             : ' Clearing the project will remove their project context.'}

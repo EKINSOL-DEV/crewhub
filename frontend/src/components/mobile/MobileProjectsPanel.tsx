@@ -121,7 +121,7 @@ function ProjectCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span>📋</span>
           <span>
-            {taskCount} task{taskCount !== 1 ? 's' : ''}
+            {taskCount} task{taskCount === 1 ? '' : 's'}
           </span>
         </div>
         {taskCount > 0 && (
@@ -134,7 +134,7 @@ function ProjectCard({
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span>👥</span>
             <span>
-              {assignedAgents.length} agent{assignedAgents.length !== 1 ? 's' : ''}
+              {assignedAgents.length} agent{assignedAgents.length === 1 ? '' : 's'}
             </span>
           </div>
         )}

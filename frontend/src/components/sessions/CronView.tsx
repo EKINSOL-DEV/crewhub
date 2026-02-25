@@ -169,12 +169,12 @@ export function CronView() {
     setLoading(true)
     try {
       const response = await fetch('/api/cron/jobs')
-      if (!response.ok) {
-        setJobs([])
-        setError(null)
-      } else {
+      if (response.ok) {
         const data = await response.json()
         setJobs(data.jobs || [])
+        setError(null)
+      } else {
+        setJobs([])
         setError(null)
       }
     } catch (_err) {
@@ -299,7 +299,7 @@ export function CronView() {
                 <div
                   key={job.id}
                   className={`p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors ${
-                    !job.enabled ? 'opacity-60' : ''
+                    job.enabled ? '' : 'opacity-60'
                   }`}
                 >
                   <div className="flex items-start justify-between">

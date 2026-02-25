@@ -108,8 +108,8 @@ function getNextZIndex(): number {
 
 function getDefaultPosition(index: number): { x: number; y: number } {
   // Cascade windows with offset, starting from center-ish
-  const baseX = typeof window !== 'undefined' ? Math.max(200, window.innerWidth / 2 - 200) : 300
-  const baseY = typeof window !== 'undefined' ? Math.max(80, window.innerHeight / 4) : 100
+  const baseX = typeof window === 'undefined' ? 300 : Math.max(200, window.innerWidth / 2 - 200)
+  const baseY = typeof window === 'undefined' ? 100 : Math.max(80, window.innerHeight / 4)
   return {
     x: baseX + (index % 5) * 30,
     y: baseY + (index % 5) * 30,

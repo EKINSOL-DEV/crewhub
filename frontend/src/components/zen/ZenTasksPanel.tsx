@@ -376,7 +376,7 @@ export function ZenTasksPanel({
       {/* Footer with count */}
       <div className="zen-tasks-footer">
         <span className="zen-tasks-count">
-          {sortedTasks.length} task{sortedTasks.length !== 1 ? 's' : ''}
+          {sortedTasks.length} task{sortedTasks.length === 1 ? '' : 's'}
           {statusFilter !== 'all' && ` (${statusFilter.replace('_', ' ')})`}
         </span>
       </div>

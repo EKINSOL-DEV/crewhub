@@ -93,7 +93,7 @@ export function StepScan({
                   {candidate.metadata.active_sessions !== undefined && (
                     <p className="text-sm text-muted-foreground">
                       {candidate.metadata.active_sessions} active session
-                      {candidate.metadata.active_sessions !== 1 ? 's' : ''}
+                      {candidate.metadata.active_sessions === 1 ? '' : 's'}
                     </p>
                   )}
                   {candidate.metadata.version && (

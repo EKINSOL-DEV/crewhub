@@ -172,11 +172,11 @@ export function normalizePropCode(code: string, _componentName: string): string 
 
     // Insert after last import statement
     const lastImportIdx = code.lastIndexOf('import ')
-    if (lastImportIdx !== -1) {
+    if (lastImportIdx === -1) {
+      normalized = importLine + '\n' + code
+    } else {
       const lineEnd = code.indexOf('\n', lastImportIdx)
       normalized = code.slice(0, lineEnd + 1) + importLine + code.slice(lineEnd + 1)
-    } else {
-      normalized = importLine + '\n' + code
     }
   }
 

@@ -16,13 +16,13 @@ export function FPGABoard() {
         <boxGeometry args={[0.08, 0.02, 0.08]} />
         <meshStandardMaterial color="#222233" flatShading />
       </mesh>
-      {[...new Array(6)].map((_,i) => (
+      {Array.from({length: 6}).map((_,i) => (
         <mesh key={`item-${i}`} position={[-0.12+i*0.05, -0.13, 0.1]}><boxGeometry args={[0.02, 0.015, 0.015]} /><meshStandardMaterial color="#aaaacc" flatShading /></mesh>
       ))}
       {[0,1,2,3].map(i => (
         <mesh key={`item-${i}`} position={[0.1, -0.135, -0.08+i*0.03]}><sphereGeometry args={[0.005, 4, 4]} /><meshStandardMaterial color={['#ff4444','#44ff44','#4488ff','#ffcc44'][i]} emissive={['#ff4444','#44ff44','#4488ff','#ffcc44'][i]} emissiveIntensity={1} /></mesh>
       ))}
-      {[...new Array(12)].map((_,i) => (
+      {Array.from({length: 12}).map((_,i) => (
         <mesh key={`item-${i}`} position={[-0.13+i*0.024, -0.14, -0.11]}><cylinderGeometry args={[0.003, 0.003, 0.02, 3]} /><meshStandardMaterial color="#ccccdd" flatShading /></mesh>
       ))}
 

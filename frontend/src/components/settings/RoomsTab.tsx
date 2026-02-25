@@ -1024,7 +1024,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
             <h2 className="text-lg font-semibold">🧪 Test Routing Rules</h2>
             <p className="text-sm text-muted-foreground mt-1">
               Preview how current rules would route your {activeSessions?.length || 0} active
-              session{(activeSessions?.length || 0) !== 1 ? 's' : ''}
+              session{(activeSessions?.length || 0) === 1 ? '' : 's'}
             </p>
           </div>
           <div className="px-6 pb-4 max-h-96 overflow-y-auto space-y-2">

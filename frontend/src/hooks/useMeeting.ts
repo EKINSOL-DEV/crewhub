@@ -146,16 +146,16 @@ export function useMeeting() {
           // Mark current round topic if we have it
           if (phase === 'round' && data.current_round && data.round_topic) {
             const roundIdx = data.current_round - 1
-            if (!newRounds[roundIdx]) {
+            if (newRounds[roundIdx]) {
+              newRounds[roundIdx].status = 'in_progress'
+              newRounds[roundIdx].topic = data.round_topic
+            } else {
               newRounds[roundIdx] = {
                 roundNum: data.current_round,
                 topic: data.round_topic,
                 turns: [],
                 status: 'in_progress',
               }
-            } else {
-              newRounds[roundIdx].status = 'in_progress'
-              newRounds[roundIdx].topic = data.round_topic
             }
             // Mark previous rounds as complete
             for (let i = 0; i < roundIdx; i++) {

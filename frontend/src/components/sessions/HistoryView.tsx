@@ -116,8 +116,8 @@ export function HistoryView() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const fetchHistory = useCallback(async (offset = 0, append = false) => {
-    if (!append) setLoading(true)
-    else setLoadingMore(true)
+    if (append) setLoadingMore(true)
+    else setLoading(true)
 
     try {
       const params = new URLSearchParams({
@@ -125,12 +125,7 @@ export function HistoryView() {
         offset: offset.toString(),
       })
       const response = await fetch(`/api/sessions/archived?${params}`)
-      if (!response.ok) {
-        // API not implemented yet - show placeholder
-        if (!append) setSessions([])
-        setTotal(0)
-        setError(null)
-      } else {
+      if (response.ok) {
         const data: ArchivedResponse = await response.json()
         if (append) {
           setSessions((prev) => [...prev, ...(data.sessions || [])])
@@ -138,6 +133,11 @@ export function HistoryView() {
           setSessions(data.sessions || [])
         }
         setTotal(data.total ?? 0)
+        setError(null)
+      } else {
+        // API not implemented yet - show placeholder
+        if (!append) setSessions([])
+        setTotal(0)
         setError(null)
       }
     } catch (_err) {

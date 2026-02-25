@@ -502,7 +502,7 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>Activity Feed</div>
           <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-            {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
+            {filteredEvents.length} event{filteredEvents.length === 1 ? '' : 's'}
           </div>
         </div>
 

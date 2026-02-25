@@ -42,7 +42,7 @@ function formatDate(iso: string): string {
 /** Hook to detect mobile viewport */
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
+    typeof window === 'undefined' ? false : window.innerWidth < breakpoint
   )
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`)

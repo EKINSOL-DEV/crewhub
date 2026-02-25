@@ -47,12 +47,12 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
             <>
               <div className="fpm-delete-warning">
                 ⚠️ This prop is currently placed in {state.placements.length} room(s) (
-                {state.totalInstances} instance{state.totalInstances !== 1 ? 's' : ''}):
+                {state.totalInstances} instance{state.totalInstances === 1 ? '' : 's'}):
               </div>
               <ul className="fpm-delete-room-list">
                 {displayPlacements.map((p) => (
                   <li key={p.blueprintId}>
-                    {p.blueprintName} ({p.instanceCount} instance{p.instanceCount !== 1 ? 's' : ''})
+                    {p.blueprintName} ({p.instanceCount} instance{p.instanceCount === 1 ? '' : 's'})
                   </li>
                 ))}
                 {extraCount > 0 && <li className="fpm-delete-more">+ {extraCount} more...</li>}
@@ -166,7 +166,7 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
         setDetail(null)
       }
 
-      const roomSuffix = result.deleted_from_rooms.length !== 1 ? 's' : ''
+      const roomSuffix = result.deleted_from_rooms.length === 1 ? '' : 's'
       const roomsMsg =
         result.total_instances_removed > 0
           ? ` (removed from ${result.deleted_from_rooms.length} room${roomSuffix})`

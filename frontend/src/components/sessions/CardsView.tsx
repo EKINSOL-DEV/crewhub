@@ -93,7 +93,7 @@ function RoomGroupHeader({
       </div>
       <span className="font-medium text-sm flex-1">{name}</span>
       <span className="text-xs text-muted-foreground tabular-nums">
-        {count} session{count !== 1 ? 's' : ''}
+        {count} session{count === 1 ? '' : 's'}
       </span>
     </button>
   )
@@ -368,7 +368,7 @@ export function CardsView({ sessions }: CardsViewProps) {
           {/* Count */}
           <div className="text-sm text-muted-foreground whitespace-nowrap">
             {filteredAndSortedSessions.length} session
-            {filteredAndSortedSessions.length !== 1 ? 's' : ''}
+            {filteredAndSortedSessions.length === 1 ? '' : 's'}
           </div>
         </div>
       </div>

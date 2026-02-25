@@ -304,10 +304,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
 
       {/* ── Browser content ──────────────────────────────────── */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        {!loadedUrl ? (
-          // Empty state
-          <EmptyBrowserState onNavigate={navigate} />
-        ) : (
+        {loadedUrl ? (
           // Use <iframe> on all platforms (Tauri + browser).
           // <webview> is an Electron concept that does NOT work in Tauri v2 / WKWebView.
           // The tauri.conf.json already has frame-src: ["*"] so iframes load any URL.
@@ -337,6 +334,9 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
               />
             )}
           </>
+        ) : (
+          // Empty state
+          <EmptyBrowserState onNavigate={navigate} />
         )}
       </div>
     </div>

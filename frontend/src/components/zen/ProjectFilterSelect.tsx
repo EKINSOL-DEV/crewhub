@@ -185,12 +185,12 @@ export function ProjectFilterSelect({
                 padding: '8px 10px',
                 borderRadius: 6,
                 border: 'none',
-                background: !currentProjectId
-                  ? 'var(--zen-bg-active, rgba(59,130,246,0.1))'
-                  : 'transparent',
+                background: currentProjectId
+                  ? 'transparent'
+                  : 'var(--zen-bg-active, rgba(59,130,246,0.1))',
                 color: 'var(--zen-fg, inherit)',
                 fontSize: 12,
-                fontWeight: !currentProjectId ? 700 : 500,
+                fontWeight: currentProjectId ? 500 : 700,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 textAlign: 'left',

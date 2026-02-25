@@ -90,17 +90,19 @@ function CronItem({ job, onToggle, onRun }: CronItemProps) {
   const hasError = job.state?.lastStatus === 'error'
   const isEnabled = job.enabled
   let statusDotClass: string
-  if (!isEnabled) {
-    statusDotClass = 'zen-status-dot-idle'
-  } else if (hasError) {
-    statusDotClass = 'zen-status-dot-error'
+  if (isEnabled) {
+    if (hasError) {
+      statusDotClass = 'zen-status-dot-error'
+    } else {
+      statusDotClass = 'zen-status-dot-active'
+    }
   } else {
-    statusDotClass = 'zen-status-dot-active'
+    statusDotClass = 'zen-status-dot-idle'
   }
 
   return (
     <div
-      className={`zen-cron-item ${!isEnabled ? 'zen-cron-item-disabled' : ''} ${hasError ? 'zen-cron-item-error' : ''}`}
+      className={`zen-cron-item ${isEnabled ? '' : 'zen-cron-item-disabled'} ${hasError ? 'zen-cron-item-error' : ''}`}
     >
       <div className="zen-cron-status">
         <span className={`zen-status-dot ${statusDotClass}`} />
@@ -308,7 +310,7 @@ export function ZenCronPanel() {
       {/* Footer */}
       <div className="zen-cron-footer">
         <span className="zen-cron-count">
-          {visibleJobs.length} job{visibleJobs.length !== 1 ? 's' : ''}
+          {visibleJobs.length} job{visibleJobs.length === 1 ? '' : 's'}
         </span>
         <button type="button" className="zen-btn zen-btn-small" onClick={fetchJobs}>
           ↻ Refresh

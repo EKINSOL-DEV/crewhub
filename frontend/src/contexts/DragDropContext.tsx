@@ -114,14 +114,14 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
           }),
         })
 
-        if (!response.ok) {
+        if (response.ok) {
+          onAssignmentChangedRef.current?.()
+          setDrag(defaultDrag)
+        } else {
           const err = await response.json().catch(() => ({}))
           const message = err?.detail || err?.message || 'Failed to move bot. Please try again.'
           console.error('Failed to assign bot to room:', err)
           setErrorWithAutoClear(message)
-        } else {
-          onAssignmentChangedRef.current?.()
-          setDrag(defaultDrag)
         }
       } catch (err) {
         const message = "Network error — couldn't move bot. Please retry."

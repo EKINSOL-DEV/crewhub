@@ -429,7 +429,7 @@ export function ZenKanbanPanel({
       {/* Footer with count */}
       <div className="zen-kanban-footer">
         <span className="zen-kanban-count">
-          {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+          {tasks.length} task{tasks.length === 1 ? '' : 's'}
         </span>
       </div>
 

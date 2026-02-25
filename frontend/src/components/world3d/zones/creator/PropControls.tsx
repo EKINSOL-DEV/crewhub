@@ -374,7 +374,11 @@ export function PropControls({
                         </button>
                       ))}
                     </div>
-                    {selectedPartIndex !== null ? (
+                    {selectedPartIndex === null ? (
+                      <div className="fpm-selected-part-info" style={{ opacity: 0.5 }}>
+                        Click a part in the preview to select it
+                      </div>
+                    ) : (
                       <div className="fpm-selected-part-info">
                         Selected: Part {selectedPartIndex + 1} (
                         {previewParts[selectedPartIndex]?.type})
@@ -383,10 +387,6 @@ export function PropControls({
                         >
                           ■
                         </span>
-                      </div>
-                    ) : (
-                      <div className="fpm-selected-part-info" style={{ opacity: 0.5 }}>
-                        Click a part in the preview to select it
                       </div>
                     )}
                     <button className="fpm-apply-edits-btn" onClick={onApplyPartEdits}>

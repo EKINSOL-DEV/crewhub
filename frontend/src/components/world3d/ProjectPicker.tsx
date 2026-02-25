@@ -260,197 +260,7 @@ export function ProjectPicker({
         </button>
       </div>
 
-      {!showCreate ? (
-        <>
-          {/* Search */}
-          <div style={{ padding: '0 16px 8px' }}>
-            <input
-              ref={searchRef}
-              type="text"
-              placeholder="Search projects…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(0,0,0,0.1)',
-                background: 'rgba(0,0,0,0.03)',
-                fontSize: 13,
-                outline: 'none',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#3b82f6'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
-              }}
-            />
-          </div>
-
-          {/* Project list */}
-          <div
-            style={{
-              flex: 1,
-              overflow: 'auto',
-              padding: '0 12px',
-            }}
-          >
-            {filteredProjects.length === 0 && (
-              <div
-                style={{
-                  padding: '20px 8px',
-                  textAlign: 'center',
-                  fontSize: 13,
-                  color: '#9ca3af',
-                }}
-              >
-                {search ? 'No projects match your search' : 'No projects available'}
-              </div>
-            )}
-            {filteredProjects.map((project) => (
-              <button
-                key={project.id}
-                onClick={() => onSelect(project.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  width: '100%',
-                  padding: '10px 10px',
-                  borderRadius: 10,
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  textAlign: 'left',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                }}
-              >
-                {/* Color dot */}
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: project.color || '#6b7280',
-                    flexShrink: 0,
-                  }}
-                />
-
-                {/* Icon */}
-                <span style={{ fontSize: 18, flexShrink: 0 }}>{project.icon || '📋'}</span>
-
-                {/* Name & description */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: '#1f2937',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {project.name}
-                  </div>
-                  {project.description && (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: '#9ca3af',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        marginTop: 1,
-                      }}
-                    >
-                      {project.description}
-                    </div>
-                  )}
-                </div>
-
-                {/* Folder indicator */}
-                {project.folder_path && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: '#059669',
-                      background: '#ecfdf5',
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      flexShrink: 0,
-                    }}
-                    title={project.folder_path}
-                  >
-                    📂
-                  </span>
-                )}
-
-                {/* Status badge */}
-                {project.status === 'paused' && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: '#a16207',
-                      background: '#fef9c3',
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      flexShrink: 0,
-                    }}
-                  >
-                    Paused
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Create new project button */}
-          <div
-            style={{
-              padding: '8px 12px 12px',
-              borderTop: '1px solid rgba(0,0,0,0.06)',
-            }}
-          >
-            <button
-              onClick={() => setShowCreate(true)}
-              style={{
-                width: '100%',
-                padding: '10px 14px',
-                borderRadius: 10,
-                border: '1px dashed rgba(0,0,0,0.15)',
-                background: 'transparent',
-                color: '#3b82f6',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(59,130,246,0.05)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-              }}
-            >
-              + Create New Project
-            </button>
-          </div>
-        </>
-      ) : (
+      {showCreate ? (
         /* Create new project form */
         <div
           style={{
@@ -714,6 +524,196 @@ export function ProjectPicker({
             </button>
           </div>
         </div>
+      ) : (
+        <>
+          {/* Search */}
+          <div style={{ padding: '0 16px 8px' }}>
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search projects…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(0,0,0,0.03)',
+                fontSize: 13,
+                outline: 'none',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#3b82f6'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
+              }}
+            />
+          </div>
+
+          {/* Project list */}
+          <div
+            style={{
+              flex: 1,
+              overflow: 'auto',
+              padding: '0 12px',
+            }}
+          >
+            {filteredProjects.length === 0 && (
+              <div
+                style={{
+                  padding: '20px 8px',
+                  textAlign: 'center',
+                  fontSize: 13,
+                  color: '#9ca3af',
+                }}
+              >
+                {search ? 'No projects match your search' : 'No projects available'}
+              </div>
+            )}
+            {filteredProjects.map((project) => (
+              <button
+                key={project.id}
+                onClick={() => onSelect(project.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  width: '100%',
+                  padding: '10px 10px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                {/* Color dot */}
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: project.color || '#6b7280',
+                    flexShrink: 0,
+                  }}
+                />
+
+                {/* Icon */}
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{project.icon || '📋'}</span>
+
+                {/* Name & description */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: '#1f2937',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {project.name}
+                  </div>
+                  {project.description && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: '#9ca3af',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginTop: 1,
+                      }}
+                    >
+                      {project.description}
+                    </div>
+                  )}
+                </div>
+
+                {/* Folder indicator */}
+                {project.folder_path && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#059669',
+                      background: '#ecfdf5',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      flexShrink: 0,
+                    }}
+                    title={project.folder_path}
+                  >
+                    📂
+                  </span>
+                )}
+
+                {/* Status badge */}
+                {project.status === 'paused' && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#a16207',
+                      background: '#fef9c3',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      flexShrink: 0,
+                    }}
+                  >
+                    Paused
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Create new project button */}
+          <div
+            style={{
+              padding: '8px 12px 12px',
+              borderTop: '1px solid rgba(0,0,0,0.06)',
+            }}
+          >
+            <button
+              onClick={() => setShowCreate(true)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 10,
+                border: '1px dashed rgba(0,0,0,0.15)',
+                background: 'transparent',
+                color: '#3b82f6',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(59,130,246,0.05)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+              }}
+            >
+              + Create New Project
+            </button>
+          </div>
+        </>
       )}
 
       {/* Animation */}

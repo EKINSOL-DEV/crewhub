@@ -668,7 +668,7 @@ export function ProjectManagerModal({
           >
             <div style={{ fontWeight: 600, marginBottom: 6 }}>
               This project is assigned to {deleteRooms.length} room
-              {deleteRooms.length !== 1 ? 's' : ''}:
+              {deleteRooms.length === 1 ? '' : 's'}:
             </div>
             <ul style={{ margin: 0, paddingLeft: 20 }}>
               {shownRooms.map((r) => (

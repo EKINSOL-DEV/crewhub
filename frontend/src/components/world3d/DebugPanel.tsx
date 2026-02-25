@@ -55,7 +55,7 @@ export function DebugPanel() {
 
   // Dragging
   const [pos, setPos] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 280 : 700,
+    x: typeof window === 'undefined' ? 700 : window.innerWidth - 280,
     y: 80,
   })
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(

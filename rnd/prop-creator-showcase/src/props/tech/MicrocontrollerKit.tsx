@@ -25,7 +25,7 @@ export function MicrocontrollerKit() {
         <meshStandardMaterial color="#aaaacc" flatShading />
       </mesh>
       <mesh ref={ledRef} position={[0.06, -0.165, 0.04]}><sphereGeometry args={[0.006, 4, 4]} /><meshStandardMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={1} /></mesh>
-      {[...new Array(14)].map((_,i) => (
+      {Array.from({length: 14}).map((_,i) => (
         <mesh key={`item-${i}`} position={[-0.085+i*0.013, -0.18, 0.07]}><cylinderGeometry args={[0.002, 0.002, 0.02, 3]} /><meshStandardMaterial color="#ccccdd" flatShading /></mesh>
       ))}
 

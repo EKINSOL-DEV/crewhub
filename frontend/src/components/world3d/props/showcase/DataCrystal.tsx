@@ -79,7 +79,7 @@ export function DataCrystal() {
         )
       })}
       {/* Floating data bits */}
-      {[...new Array(8)].map((_, i) => {
+      {Array.from({ length: 8 }).map((_, i) => {
         const a = (i / 8) * Math.PI * 2
         return (
           <mesh

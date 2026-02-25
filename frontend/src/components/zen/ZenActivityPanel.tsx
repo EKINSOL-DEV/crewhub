@@ -280,7 +280,7 @@ export function ZenActivityPanel() {
               className={`zen-status-dot ${connected ? 'zen-status-dot-active' : 'zen-status-dot-error'}`}
             />
             <span>
-              {runningTasks.length} active task{runningTasks.length !== 1 ? 's' : ''}
+              {runningTasks.length} active task{runningTasks.length === 1 ? '' : 's'}
             </span>
           </div>
           <div className="zen-activity-controls">
@@ -343,8 +343,8 @@ export function ZenActivityPanel() {
         {/* Footer */}
         <div className="zen-activity-footer">
           <span className="zen-activity-count">
-            {tasks.length} task{tasks.length !== 1 ? 's' : ''}
-            {events.length > 0 && ` · ${events.length} event${events.length !== 1 ? 's' : ''}`}
+            {tasks.length} task{tasks.length === 1 ? '' : 's'}
+            {events.length > 0 && ` · ${events.length} event${events.length === 1 ? '' : 's'}`}
           </span>
         </div>
       </div>

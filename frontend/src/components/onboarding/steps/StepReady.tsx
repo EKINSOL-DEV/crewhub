@@ -46,7 +46,7 @@ export function StepReady({ connections, onGoDashboard }: StepReadyProps) {
           ))}
           {totalSessions > 0 && (
             <p className="text-sm text-muted-foreground">
-              {totalSessions} active session{totalSessions !== 1 ? 's' : ''} ready to stream
+              {totalSessions} active session{totalSessions === 1 ? '' : 's'} ready to stream
             </p>
           )}
         </div>

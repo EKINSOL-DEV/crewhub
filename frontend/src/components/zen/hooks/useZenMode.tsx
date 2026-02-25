@@ -421,7 +421,7 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
                 layout,
                 focusedPanelId: focusedPanelId ?? tab.focusedPanelId,
                 maximizedPanelId:
-                  maximizedPanelId !== undefined ? maximizedPanelId : tab.maximizedPanelId,
+                  maximizedPanelId === undefined ? tab.maximizedPanelId : maximizedPanelId,
               }
             : tab
         ),

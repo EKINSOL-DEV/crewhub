@@ -255,7 +255,7 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
                 🏛️ HQ Command Center
               </h2>
               <p className="text-xs text-muted-foreground">
-                {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''} ·{' '}
+                {filteredProjects.length} project{filteredProjects.length === 1 ? '' : 's'} ·{' '}
                 {totalTasks} tasks · {activeTasks} active
               </p>
             </div>

@@ -599,7 +599,7 @@ function PropGeneratorTab() {
             <div>
               <div style={{ fontWeight: 600, color: '#86efac', fontSize: 15 }}>{result.name}</div>
               <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-                {result.parts.length} part{result.parts.length !== 1 ? 's' : ''} generated
+                {result.parts.length} part{result.parts.length === 1 ? '' : 's'} generated
               </div>
             </div>
           </div>
@@ -854,7 +854,7 @@ function PropHistoryTab() {
       >
         {/* Count */}
         <div style={{ fontSize: 11, color: '#64748b', paddingLeft: 2, paddingBottom: 2 }}>
-          {records.length} generation{records.length !== 1 ? 's' : ''}
+          {records.length} generation{records.length === 1 ? '' : 's'}
         </div>
 
         {records.map((record) => {
@@ -968,7 +968,7 @@ function PropHistoryTab() {
                           fontWeight: 600,
                         }}
                       >
-                        {record.parts.length} part{record.parts.length !== 1 ? 's' : ''}
+                        {record.parts.length} part{record.parts.length === 1 ? '' : 's'}
                       </span>
                     )}
                     {hasError && (
@@ -1158,7 +1158,7 @@ function PropDetailView({ record, onBack }: PropDetailViewProps) {
                 fontWeight: 600,
               }}
             >
-              📦 {record.parts.length} part{record.parts.length !== 1 ? 's' : ''}
+              📦 {record.parts.length} part{record.parts.length === 1 ? '' : 's'}
             </span>
           )}
         </div>

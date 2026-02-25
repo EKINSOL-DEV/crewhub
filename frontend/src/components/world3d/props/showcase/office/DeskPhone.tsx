@@ -21,7 +21,7 @@ export function DeskPhone() {
         <boxGeometry args={[0.12, 0.03, 0.002]} />
         <meshStandardMaterial color="#44ccaa" emissive="#44ccaa" emissiveIntensity={0.8} />
       </mesh>
-      {[...new Array(12)].map((_, i) => (
+      {Array.from({ length: 12 }).map((_, i) => (
         <mesh
           key={`item-${i}`}
           position={[-0.04 + (i % 3) * 0.04, -0.175, -0.04 + Math.floor(i / 3) * 0.03]}

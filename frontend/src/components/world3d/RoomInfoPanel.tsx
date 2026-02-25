@@ -685,8 +685,8 @@ function HQDashboard({
                       marginTop: 2,
                     }}
                   >
-                    {project.room_count} room{project.room_count !== 1 ? 's' : ''} ·{' '}
-                    {project.agent_count} agent{project.agent_count !== 1 ? 's' : ''}
+                    {project.room_count} room{project.room_count === 1 ? '' : 's'} ·{' '}
+                    {project.agent_count} agent{project.agent_count === 1 ? '' : 's'}
                   </div>
                 </div>
 

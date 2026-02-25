@@ -69,7 +69,7 @@ export function MobileLayout() {
   useEffect(() => {
     const interval = setInterval(() => {
       const current = localStorage.getItem('crewhub-debug') === 'true'
-      setDebugMode((prev) => (prev !== current ? current : prev))
+      setDebugMode((prev) => (prev === current ? prev : current))
     }, 500)
     return () => clearInterval(interval)
   }, [])

@@ -303,7 +303,7 @@ export function MobileAgentList({
                         color: '#a78bfa',
                       }}
                     >
-                      {activeSubagents} task{activeSubagents !== 1 ? 's' : ''}
+                      {activeSubagents} task{activeSubagents === 1 ? '' : 's'}
                     </span>
                   )}
                 </div>

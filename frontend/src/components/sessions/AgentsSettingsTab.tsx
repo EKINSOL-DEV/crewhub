@@ -548,15 +548,7 @@ function AgentCard({
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Clickable icon badge */}
-            {!editingIcon ? (
-              <button
-                title="Click to edit icon"
-                onClick={() => setEditingIcon(true)}
-                className="text-lg hover:scale-110 transition-transform"
-              >
-                {agent.icon || '🤖'}
-              </button>
-            ) : (
+            {editingIcon ? (
               <div className="flex items-center gap-1">
                 <button
                   onClick={handleSaveIcon}
@@ -581,6 +573,14 @@ function AgentCard({
                   <X className="h-3 w-3" />
                 </button>
               </div>
+            ) : (
+              <button
+                title="Click to edit icon"
+                onClick={() => setEditingIcon(true)}
+                className="text-lg hover:scale-110 transition-transform"
+              >
+                {agent.icon || '🤖'}
+              </button>
             )}
             <h3 className="font-semibold text-sm truncate">{agent.display_name || agent.name}</h3>
             {agent.is_pinned && (

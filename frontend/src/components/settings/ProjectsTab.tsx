@@ -111,7 +111,7 @@ function ProjectsSettingsSection({
     <>
       <CollapsibleSection
         title="📋 All Projects"
-        badge={`${projects.length} project${projects.length !== 1 ? 's' : ''}`}
+        badge={`${projects.length} project${projects.length === 1 ? '' : 's'}`}
       >
         {/* Archive error banner */}
         {archiveError && (
@@ -204,7 +204,7 @@ function ProjectsSettingsSection({
                           </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                             <span>
-                              {roomCount} room{roomCount !== 1 ? 's' : ''}
+                              {roomCount} room{roomCount === 1 ? '' : 's'}
                             </span>
                             {project.folder_path && (
                               <span className="truncate font-mono max-w-[200px]">

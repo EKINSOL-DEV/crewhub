@@ -299,7 +299,7 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
           display: 'flex',
           overflow: 'hidden',
           minWidth: isRow ? MIN_PANEL_SIZE : undefined,
-          minHeight: !isRow ? MIN_PANEL_SIZE : undefined,
+          minHeight: isRow ? undefined : MIN_PANEL_SIZE,
         }}
       >
         {children[0]}
@@ -327,7 +327,7 @@ function SplitContainer({ direction, ratio, onRatioChange, children }: SplitCont
           display: 'flex',
           overflow: 'hidden',
           minWidth: isRow ? MIN_PANEL_SIZE : undefined,
-          minHeight: !isRow ? MIN_PANEL_SIZE : undefined,
+          minHeight: isRow ? undefined : MIN_PANEL_SIZE,
         }}
       >
         {children[1]}
