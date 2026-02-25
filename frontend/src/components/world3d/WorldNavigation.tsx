@@ -4,9 +4,10 @@ import type { Room } from '@/hooks/useRooms'
 
 interface WorldNavigationProps {
   rooms: Room[]
+  isCreatorMode?: boolean
 }
 
-export function WorldNavigation({ rooms }: WorldNavigationProps) {
+export function WorldNavigation({ rooms, isCreatorMode }: WorldNavigationProps) {
   const { state, goBack } = useWorldFocus()
 
   // Keyboard: Escape goes up one level (but NOT in first person — PointerLockControls handles ESC)
@@ -33,8 +34,8 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
 
   return (
     <>
-      {/* Back button (bottom-center, above RoomTabsBar) */}
-      <div
+      {/* Back button (bottom-center, above RoomTabsBar) — hidden in creator mode */}
+      {!isCreatorMode && <div
         style={{
           position: 'absolute',
           bottom: 80,
@@ -85,7 +86,7 @@ export function WorldNavigation({ rooms }: WorldNavigationProps) {
         >
           Press Esc to go back
         </div>
-      </div>
+      </div>}
     </>
   )
 }

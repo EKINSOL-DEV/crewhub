@@ -251,7 +251,7 @@ function World3DViewInner({
             prop_id: selectedPropId,
             position: pos,
             rotation_y: pendingRotation,
-            room_id: null,
+            room_id: focusState.focusedRoomId ?? null,
             scale: 1.0,
           }),
         })
@@ -433,7 +433,7 @@ function World3DViewInner({
           )}
 
           {/* Navigation (top-left) */}
-          <WorldNavigation rooms={rooms} />
+          <WorldNavigation rooms={rooms} isCreatorMode={isCreatorMode} />
 
           {/* Action Bar + Tasks Window */}
           {isNotFirstPerson && (

@@ -9,7 +9,7 @@
  * Clicking a prop card calls selectProp(propId).
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCreatorMode } from '@/contexts/CreatorModeContext'
 import {
   PROP_META_BY_ID,
@@ -17,6 +17,7 @@ import {
   CATEGORY_LABELS,
   type PropCategory,
 } from '@/components/props/propMeta'
+import { API_BASE } from '@/lib/api'
 
 // ─── Data ──────────────────────────────────────────────────────
 
@@ -24,6 +25,15 @@ import {
 const ALL_PROPS = Array.from(PROP_META_BY_ID.values()).filter(
   (meta) => (meta as { browsable?: boolean }).browsable !== false
 )
+
+// ─── Types ─────────────────────────────────────────────────────
+
+interface GeneratedPropRecord {
+  id: string
+  name: string
+  prompt: string
+  createdAt?: string
+}
 
 // ─── Styles ────────────────────────────────────────────────────
 
@@ -101,10 +111,27 @@ function propCardStyle(selected: boolean): React.CSSProperties {
 export function CreatorBottomBar() {
   const { selectedPropId, selectProp } = useCreatorMode()
 
-  // activeCategory: null = props bar hidden; 'All' = show all; PropCategory = filter by category
-  const [activeCategory, setActiveCategory] = useState<'All' | PropCategory | null>(null)
+  // activeCategory: null = props bar hidden; 'All' = show all; 'generated' = custom AI props; PropCategory = filter by category
+  const [activeCategory, setActiveCategory] = useState<'All' | 'generated' | PropCategory | null>(null)
+  const [generatedProps, setGeneratedProps] = useState<GeneratedPropRecord[]>([])
+  const [loadingGenerated, setLoadingGenerated] = useState(false)
 
-  const handleCategoryClick = (cat: 'All' | PropCategory) => {
+  // Fetch generated props when the generated category is selected
+  useEffect(() => {
+    if (activeCategory !== 'generated') return
+    if (generatedProps.length > 0) return // already loaded
+    setLoadingGenerated(true)
+    fetch(`${API_BASE}/creator/generation-history?limit=100`)
+      .then((r) => r.json())
+      .then((data) => {
+        const records: GeneratedPropRecord[] = data.records ?? data.history ?? data ?? []
+        setGeneratedProps(records)
+      })
+      .catch(console.error)
+      .finally(() => setLoadingGenerated(false))
+  }, [activeCategory, generatedProps.length])
+
+  const handleCategoryClick = (cat: 'All' | 'generated' | PropCategory) => {
     setActiveCategory((prev) => (prev === cat ? null : cat))
   }
 
@@ -114,7 +141,7 @@ export function CreatorBottomBar() {
 
   // Filter props for the active category
   const displayedProps =
-    activeCategory === null
+    activeCategory === null || activeCategory === 'generated'
       ? []
       : activeCategory === 'All'
         ? ALL_PROPS
@@ -133,6 +160,7 @@ export function CreatorBottomBar() {
         }}
       >
         <div style={propsBarStyle}>
+          {/* Built-in props */}
           {displayedProps.map((meta) => {
             const isSelected = selectedPropId === meta.propId
             return (
@@ -196,7 +224,78 @@ export function CreatorBottomBar() {
             )
           })}
 
-          {displayedProps.length === 0 && (
+          {/* Generated/custom AI props */}
+          {activeCategory === 'generated' && (
+            loadingGenerated
+              ? <div style={{ color: '#94a3b8', fontSize: '12px', padding: '8px 0' }}>Loading…</div>
+              : generatedProps.length === 0
+                ? <div style={{ color: '#94a3b8', fontSize: '12px', padding: '8px 0' }}>No generated props yet. Use the AI generator to create some!</div>
+                : generatedProps.map((gen) => {
+                  const propId = `crewhub:${gen.id}`
+                  const isSelected = selectedPropId === propId
+                  return (
+                    <div
+                      key={gen.id}
+                      style={propCardStyle(isSelected)}
+                      onClick={() => handlePropClick(propId)}
+                      title={gen.prompt || gen.name}
+                    >
+                      {/* Icon block */}
+                      <div
+                        style={{
+                          flex: '0 0 68px',
+                          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '28px',
+                          position: 'relative',
+                        }}
+                      >
+                        ✨
+                        {isSelected && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: 3,
+                              right: 4,
+                              fontSize: '10px',
+                              background: 'gold',
+                              color: '#000',
+                              borderRadius: '3px',
+                              padding: '0 3px',
+                              fontWeight: 700,
+                              lineHeight: '14px',
+                            }}
+                          >
+                            ✓
+                          </div>
+                        )}
+                      </div>
+                      {/* Name */}
+                      <div
+                        style={{
+                          flex: 1,
+                          padding: '3px 4px',
+                          fontSize: '9px',
+                          fontWeight: isSelected ? 600 : 400,
+                          color: isSelected ? 'gold' : '#e2e8f0',
+                          lineHeight: 1.25,
+                          textAlign: 'center',
+                          overflow: 'hidden',
+                          display: '-webkit-box' as React.CSSProperties['display'],
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
+                        }}
+                      >
+                        {gen.name}
+                      </div>
+                    </div>
+                  )
+                })
+          )}
+
+          {activeCategory !== 'generated' && displayedProps.length === 0 && (
             <div style={{ color: '#94a3b8', fontSize: '12px', padding: '8px 0' }}>
               No props in this category yet.
             </div>
@@ -226,6 +325,14 @@ export function CreatorBottomBar() {
             </div>
           )
         })}
+
+        {/* "✨ Generated" chip — AI-generated custom props */}
+        <div
+          style={chipStyle(activeCategory === 'generated')}
+          onClick={() => handleCategoryClick('generated')}
+        >
+          ✨ Generated
+        </div>
       </div>
     </div>
   )
