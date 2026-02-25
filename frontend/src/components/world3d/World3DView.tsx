@@ -467,7 +467,7 @@ function World3DViewInner({
             <div
               style={{
                 position: 'absolute',
-                top: '230px',
+                top: '100px',
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 50,
