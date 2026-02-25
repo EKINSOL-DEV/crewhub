@@ -282,7 +282,7 @@ async def get_chat_history(
     }
 
 
-@router.post("/api/chat/{session_key}/send")
+@router.post("/api/chat/{session_key}/send", responses={400: {"description": "Bad request"}})
 async def send_chat_message(session_key: str, body: SendMessageBody):
     """Send a message to an agent and get a response (non-streaming)."""
     _validate_session_key(session_key)
@@ -347,7 +347,7 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         return {"response": None, "tokens": 0, "success": False, "error": "No response from agent"}
 
 
-@router.post("/api/chat/{session_key}/stream")
+@router.post("/api/chat/{session_key}/stream", responses={400: {"description": "Bad request"}, 503: {"description": "Service unavailable"}})
 async def stream_chat_message(session_key: str, body: SendMessageBody):
     """Send a message to an agent and stream back the response via SSE."""
     import json

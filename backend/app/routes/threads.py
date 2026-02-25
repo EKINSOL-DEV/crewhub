@@ -101,7 +101,7 @@ async def _get_thread_response(db: aiosqlite.Connection, thread_id: str) -> dict
 # ── Thread CRUD ─────────────────────────────────────────────────
 
 
-@router.post("")
+@router.post("", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
 async def create_thread(body: ThreadCreate):
     """Create a new thread (group chat)."""
     agent_ids = body.participant_agent_ids
@@ -211,7 +211,7 @@ async def list_threads(
     return {"threads": results}
 
 
-@router.get("/{thread_id}")
+@router.get("/{thread_id}", responses={404: {"description": "Not found"}})
 async def get_thread(thread_id: str):
     """Get thread detail with participants."""
     async with get_db() as db:
@@ -221,7 +221,7 @@ async def get_thread(thread_id: str):
         return result
 
 
-@router.patch("/{thread_id}")
+@router.patch("/{thread_id}", responses={404: {"description": "Not found"}})
 async def update_thread(thread_id: str, body: ThreadUpdate):
     """Update thread (rename, archive)."""
     now = _now_ms()
@@ -249,7 +249,7 @@ async def update_thread(thread_id: str, body: ThreadUpdate):
 # ── Participants ────────────────────────────────────────────────
 
 
-@router.post("/{thread_id}/participants")
+@router.post("/{thread_id}/participants", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
 async def add_participants(thread_id: str, body: ThreadParticipantAdd):
     """Add agents to a thread."""
     now = _now_ms()
@@ -330,7 +330,7 @@ async def add_participants(thread_id: str, body: ThreadParticipantAdd):
     return result
 
 
-@router.delete("/{thread_id}/participants/{agent_id}")
+@router.delete("/{thread_id}/participants/{agent_id}", responses={404: {"description": "Not found"}})
 async def remove_participant(thread_id: str, agent_id: str):
     """Remove an agent from a thread (soft delete)."""
     now = _now_ms()
@@ -372,7 +372,7 @@ async def remove_participant(thread_id: str, agent_id: str):
 # ── Messages ────────────────────────────────────────────────────
 
 
-@router.get("/{thread_id}/messages")
+@router.get("/{thread_id}/messages", responses={404: {"description": "Not found"}})
 async def get_messages(
     thread_id: str,
     limit: Annotated[int, Query(default=50, ge=1, le=200)],
@@ -436,7 +436,7 @@ async def get_messages(
     }
 
 
-@router.post("/{thread_id}/messages")
+@router.post("/{thread_id}/messages", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
 async def send_message(thread_id: str, body: ThreadMessageSend):
     """Send a message to a thread, routing to agents."""
     content = body.content.strip()

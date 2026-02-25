@@ -181,7 +181,7 @@ async def place_prop(
     return placed
 
 
-@router.patch("/{placed_id}", response_model=PlacedPropResponse)
+@router.patch("/{placed_id}", response_model=PlacedPropResponse, responses={404: {"description": "Not found"}})
 async def update_placed_prop(
     placed_id: str,
     body: UpdatePropRequest,
@@ -239,7 +239,7 @@ async def update_placed_prop(
     return placed
 
 
-@router.delete("/{placed_id}", status_code=204)
+@router.delete("/{placed_id}", status_code=204, responses={404: {"description": "Not found"}})
 async def delete_placed_prop(
     placed_id: str,
     key: Annotated[APIKeyInfo, Depends(require_scope("manage"))],

@@ -64,7 +64,7 @@ class SessionContextResponse(BaseModel):
 # ── Routes ──────────────────────────────────────────────────────
 
 
-@router.get("/{session_key}/context", response_model=SessionContextResponse)
+@router.get("/{session_key}/context", response_model=SessionContextResponse, responses={500: {"description": "Internal server error"}})
 async def get_session_context(session_key: str):
     """
     Get full context for a bot session.
@@ -287,7 +287,7 @@ async def get_session_context_prompt(session_key: str):
 # ── Context Envelope (v2) ──────────────────────────────────────
 
 
-@router.get("/{session_key}/context/envelope", response_model=dict)
+@router.get("/{session_key}/context/envelope", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def get_context_envelope(
     session_key: str,
     channel: Annotated[Optional[str], Query(None, description="Origin channel (whatsapp, slack, crewhub-ui, ...)")],
@@ -350,7 +350,7 @@ async def get_context_envelope(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/rooms/{room_id}/context-envelope", response_model=dict)
+@router.get("/rooms/{room_id}/context-envelope", response_model=dict, responses={404: {"description": "Not found"}})
 async def get_room_context_envelope(
     room_id: str,
     channel: Annotated[Optional[str], Query(None)],

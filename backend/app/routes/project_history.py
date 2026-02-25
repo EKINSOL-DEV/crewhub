@@ -53,7 +53,7 @@ def _row_to_event(row: dict, display_name: Optional[str] = None) -> HistoryEvent
     )
 
 
-@router.get("/{project_id}/history", response_model=HistoryListResponse)
+@router.get("/{project_id}/history", response_model=HistoryListResponse, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_project_history(
     project_id: str,
     event_type: Annotated[Optional[str], Query(None, description="Filter by event type")],
@@ -103,7 +103,7 @@ async def get_project_history(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{project_id}/history/task/{task_id}", response_model=HistoryListResponse)
+@router.get("/{project_id}/history/task/{task_id}", response_model=HistoryListResponse, responses={500: {"description": "Internal server error"}})
 async def get_task_history(
     project_id: str,
     task_id: str,

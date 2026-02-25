@@ -64,7 +64,7 @@ async def get_history_stats():
     return stats
 
 
-@router.get("/{session_key:path}")
+@router.get("/{session_key:path}", responses={404: {"description": "Not found"}})
 async def get_session_detail(session_key: str):
     """Get detailed information for a specific archived session.
 
@@ -82,7 +82,7 @@ async def get_session_detail(session_key: str):
     return session
 
 
-@router.delete("/{session_key:path}")
+@router.delete("/{session_key:path}", responses={500: {"description": "Internal server error"}})
 async def delete_session(session_key: str):
     """Delete a session from history (marks as deleted, not permanent).
 

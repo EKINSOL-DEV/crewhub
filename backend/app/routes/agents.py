@@ -104,7 +104,7 @@ async def delete_agent(agent_id: str):
     return await agent_svc.delete_agent(agent_id)
 
 
-@router.post("/{agent_id}/generate-bio")
+@router.post("/{agent_id}/generate-bio", responses={404: {"description": "Not found"}})
 async def generate_bio(agent_id: str):
     """
     Generate an AI-powered bio for an agent based on their SOUL.md and recent activity.

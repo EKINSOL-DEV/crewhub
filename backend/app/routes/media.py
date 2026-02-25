@@ -117,7 +117,7 @@ AUDIO_MIME_TO_EXT = {
 # ─── UPLOAD ROUTE (must be before catch-all GET) ─────────────────────────────
 
 
-@router.post("/api/media/upload")
+@router.post("/api/media/upload", responses={413: {"description": "Request entity too large"}, 415: {"description": "Unsupported media type"}, 500: {"description": "Internal server error"}})
 async def upload_media(file: Annotated[UploadFile, File(...)]):
     """Upload an image file for chat attachment.
 
@@ -263,7 +263,7 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
             pass
 
 
-@router.post("/api/media/audio")
+@router.post("/api/media/audio", responses={413: {"description": "Request entity too large"}, 415: {"description": "Unsupported media type"}, 500: {"description": "Internal server error"}})
 async def upload_audio(file: Annotated[UploadFile, File(...)]):
     """Upload an audio file for voice message.
 
@@ -362,7 +362,7 @@ def get_mime_type(file_path: Path) -> Optional[str]:
     return IMAGE_MIME_TYPES.get(ext) or AUDIO_MIME_TYPES.get(ext)
 
 
-@router.get("/api/media/{file_path:path}")
+@router.get("/api/media/{file_path:path}", responses={404: {"description": "Not found"}, 415: {"description": "Unsupported media type"}})
 async def serve_media(file_path: str):
     """Serve a media file from allowed directories.
 

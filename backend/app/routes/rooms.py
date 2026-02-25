@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("", response_model=dict)
+@router.get("", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def list_rooms():
     """Get all rooms sorted by sort_order."""
     try:
@@ -24,7 +24,7 @@ async def list_rooms():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{room_id}", response_model=Room)
+@router.get("/{room_id}", response_model=Room, responses={500: {"description": "Internal server error"}})
 async def get_room(room_id: str):
     """Get a specific room by ID."""
     try:
@@ -36,7 +36,7 @@ async def get_room(room_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("", response_model=Room)
+@router.post("", response_model=Room, responses={500: {"description": "Internal server error"}})
 async def create_room(room: RoomCreate):
     """Create a new room."""
     try:
@@ -50,7 +50,7 @@ async def create_room(room: RoomCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{room_id}", response_model=Room)
+@router.put("/{room_id}", response_model=Room, responses={500: {"description": "Internal server error"}})
 async def update_room(room_id: str, room: RoomUpdate):
     """Update an existing room."""
     try:
@@ -64,7 +64,7 @@ async def update_room(room_id: str, room: RoomUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{room_id}")
+@router.delete("/{room_id}", responses={500: {"description": "Internal server error"}})
 async def delete_room(room_id: str):
     """Delete a room."""
     try:
@@ -78,7 +78,7 @@ async def delete_room(room_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{room_id}/project", response_model=Room)
+@router.post("/{room_id}/project", response_model=Room, responses={500: {"description": "Internal server error"}})
 async def assign_project(room_id: str, body: RoomProjectAssign):
     """Assign a project to a room."""
     try:
@@ -92,7 +92,7 @@ async def assign_project(room_id: str, body: RoomProjectAssign):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{room_id}/project", response_model=Room)
+@router.delete("/{room_id}/project", response_model=Room, responses={500: {"description": "Internal server error"}})
 async def clear_project(room_id: str):
     """Clear project assignment from a room."""
     try:
@@ -106,7 +106,7 @@ async def clear_project(room_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{room_id}/hq", response_model=Room)
+@router.put("/{room_id}/hq", response_model=Room, responses={500: {"description": "Internal server error"}})
 async def set_hq(room_id: str):
     """Set a room as HQ. Only one room can be HQ at a time."""
     try:
@@ -120,7 +120,7 @@ async def set_hq(room_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/reorder", response_model=dict)
+@router.put("/reorder", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def reorder_rooms(room_order: List[str]):
     """Reorder rooms by updating sort_order."""
     try:
@@ -132,7 +132,7 @@ async def reorder_rooms(room_order: List[str]):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{room_id}/context")
+@router.get("/{room_id}/context", responses={404: {"description": "Not found"}})
 async def get_room_context(room_id: str, channel: str = "crewhub-ui"):
     """Get the context envelope for a room.
 

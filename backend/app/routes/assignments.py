@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("", response_model=dict)
+@router.get("", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def list_assignments():
     """Get all session room assignments."""
     try:
@@ -27,7 +27,7 @@ async def list_assignments():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{session_key}", response_model=SessionRoomAssignment)
+@router.get("/{session_key}", response_model=SessionRoomAssignment, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_assignment(session_key: str):
     """Get assignment for a specific session."""
     try:
@@ -46,7 +46,7 @@ async def get_assignment(session_key: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("", response_model=SessionRoomAssignment)
+@router.post("", response_model=SessionRoomAssignment, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_or_update_assignment(assignment: SessionRoomAssignmentCreate):
     """Create or update a session room assignment."""
     try:
@@ -94,7 +94,7 @@ async def create_or_update_assignment(assignment: SessionRoomAssignmentCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{session_key}")
+@router.delete("/{session_key}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_assignment(session_key: str):
     """Delete a session room assignment."""
     try:
@@ -124,7 +124,7 @@ async def delete_assignment(session_key: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/room/{room_id}", response_model=dict)
+@router.get("/room/{room_id}", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def get_assignments_for_room(room_id: str):
     """Get all assignments for a specific room."""
     try:
@@ -140,7 +140,7 @@ async def get_assignments_for_room(room_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/batch", response_model=dict)
+@router.post("/batch", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def batch_assign(assignments: list[SessionRoomAssignmentCreate]):
     """Batch create/update multiple assignments."""
     try:

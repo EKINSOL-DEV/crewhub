@@ -98,7 +98,7 @@ VALID_ENVS = {"live", "test"}
 # ── Routes ────────────────────────────────────────────────────────────
 
 
-@router.post("/keys", response_model=CreateKeyResponse)
+@router.post("/keys", response_model=CreateKeyResponse, responses={400: {"description": "Bad request"}})
 async def create_key(
     body: CreateKeyRequest,
     key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
@@ -200,7 +200,7 @@ async def list_keys(
         return {"keys": items}
 
 
-@router.delete("/keys/{key_id}")
+@router.delete("/keys/{key_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
 async def revoke_key(
     key_id: str,
     key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
@@ -234,7 +234,7 @@ async def get_self_key(
     )
 
 
-@router.get("/keys/{key_id}/audit")
+@router.get("/keys/{key_id}/audit", responses={404: {"description": "Not found"}})
 async def get_key_audit_log(
     key_id: str,
     limit: Annotated[int, Query(100, ge=1, le=1000)],
@@ -295,7 +295,7 @@ async def trigger_audit_cleanup(
     return {"ok": True, "message": "Audit log cleanup triggered."}
 
 
-@router.get("/local-bootstrap")
+@router.get("/local-bootstrap", responses={403: {"description": "Forbidden"}, 404: {"description": "Not found"}})
 async def local_bootstrap(request: Request):
     """
     Returns the local admin key ONLY for requests from localhost.

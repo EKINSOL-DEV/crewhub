@@ -82,7 +82,7 @@ async def list_cron_jobs(all: bool = True):
     return {"jobs": jobs}
 
 
-@router.post("/jobs")
+@router.post("/jobs", responses={500: {"description": "Internal server error"}})
 async def create_cron_job(job: CronJobCreate):
     """Create a new cron job."""
     conn = await _get_openclaw()
@@ -105,7 +105,7 @@ async def create_cron_job(job: CronJobCreate):
     return result
 
 
-@router.get("/jobs/{job_id}")
+@router.get("/jobs/{job_id}", responses={404: {"description": "Not found"}})
 async def get_cron_job(job_id: str):
     """Get a specific cron job by ID."""
     conn = await _get_openclaw()
@@ -119,7 +119,7 @@ async def get_cron_job(job_id: str):
     return job
 
 
-@router.patch("/jobs/{job_id}")
+@router.patch("/jobs/{job_id}", responses={500: {"description": "Internal server error"}})
 async def update_cron_job(job_id: str, update: CronJobUpdate):
     """Update a cron job."""
     conn = await _get_openclaw()
@@ -150,7 +150,7 @@ async def update_cron_job(job_id: str, update: CronJobUpdate):
     return result
 
 
-@router.delete("/jobs/{job_id}")
+@router.delete("/jobs/{job_id}", responses={500: {"description": "Internal server error"}})
 async def delete_cron_job(job_id: str):
     """Delete a cron job."""
     conn = await _get_openclaw()
@@ -162,7 +162,7 @@ async def delete_cron_job(job_id: str):
     return {"success": True}
 
 
-@router.post("/jobs/{job_id}/enable")
+@router.post("/jobs/{job_id}/enable", responses={500: {"description": "Internal server error"}})
 async def enable_cron_job(job_id: str):
     """Enable a cron job."""
     conn = await _get_openclaw()
@@ -174,7 +174,7 @@ async def enable_cron_job(job_id: str):
     return {"success": True}
 
 
-@router.post("/jobs/{job_id}/disable")
+@router.post("/jobs/{job_id}/disable", responses={500: {"description": "Internal server error"}})
 async def disable_cron_job(job_id: str):
     """Disable a cron job."""
     conn = await _get_openclaw()
@@ -186,7 +186,7 @@ async def disable_cron_job(job_id: str):
     return {"success": True}
 
 
-@router.post("/jobs/{job_id}/run")
+@router.post("/jobs/{job_id}/run", responses={500: {"description": "Internal server error"}})
 async def run_cron_job(job_id: str, force: bool = True):
     """Trigger a cron job to run immediately."""
     conn = await _get_openclaw()

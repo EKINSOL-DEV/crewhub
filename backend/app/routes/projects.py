@@ -39,7 +39,7 @@ router = APIRouter()
 # ========================================
 
 
-@router.get("", response_model=dict)
+@router.get("", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def list_projects():
     """Get all projects."""
     try:
@@ -50,7 +50,7 @@ async def list_projects():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/overview", response_model=dict)
+@router.get("/overview", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def projects_overview():
     """Get all projects with room counts and agent counts for HQ dashboard."""
     try:
@@ -61,7 +61,7 @@ async def projects_overview():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{project_id}", response_model=ProjectResponse)
+@router.get("/{project_id}", response_model=ProjectResponse, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_project(project_id: str):
     """Get a specific project by ID."""
     try:
@@ -76,7 +76,7 @@ async def get_project(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("", response_model=ProjectResponse)
+@router.post("", response_model=ProjectResponse, responses={500: {"description": "Internal server error"}})
 async def create_project(project: ProjectCreate):
     """Create a new project."""
     try:
@@ -88,7 +88,7 @@ async def create_project(project: ProjectCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{project_id}", response_model=ProjectResponse)
+@router.put("/{project_id}", response_model=ProjectResponse, responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_project(project_id: str, project: ProjectUpdate):
     """Update an existing project."""
     try:
@@ -114,7 +114,7 @@ async def update_project(project_id: str, project: ProjectUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{project_id}")
+@router.delete("/{project_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_project(project_id: str):
     """Delete a project. Only archived projects can be deleted."""
     try:
@@ -143,7 +143,7 @@ async def delete_project(project_id: str):
 # ========================================
 
 
-@router.get("/{project_id}/markdown-files")
+@router.get("/{project_id}/markdown-files", responses={403: {"description": "Forbidden"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def list_markdown_files(project_id: str):
     """List markdown files in a project's Synology Drive folder."""
     try:
@@ -243,7 +243,7 @@ async def list_markdown_files(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{project_id}/upload-document")
+@router.post("/{project_id}/upload-document", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}})
 async def upload_document(project_id: str, file: Annotated[UploadFile, File(...)]):
     """Upload a markdown document to a project's meetings folder."""
     project = await project_service.get_project(project_id)

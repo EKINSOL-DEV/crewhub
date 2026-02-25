@@ -94,7 +94,7 @@ class PreviewRequest(BaseModel):
 # ========================================
 
 
-@router.get("/agents/{agent_id}/persona", response_model=PersonaResponse)
+@router.get("/agents/{agent_id}/persona", response_model=PersonaResponse, responses={404: {"description": "Not found"}})
 async def get_agent_persona(agent_id: str):
     """Get the persona + identity configuration for an agent.
 
@@ -149,7 +149,7 @@ async def get_agent_persona(agent_id: str):
         return PersonaResponse(agent_id=agent_id, **defaults)
 
 
-@router.put("/agents/{agent_id}/persona", response_model=PersonaResponse)
+@router.put("/agents/{agent_id}/persona", response_model=PersonaResponse, responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
 async def update_agent_persona(agent_id: str, body: PersonaUpdate):
     """Update the persona configuration for an agent.
 
@@ -252,7 +252,7 @@ async def preview_persona(body: PreviewRequest):
 # ========================================
 
 
-@router.get("/agents/{agent_id}/identity")
+@router.get("/agents/{agent_id}/identity", responses={404: {"description": "Not found"}})
 async def get_agent_identity(agent_id: str):
     """Get the identity configuration for an agent.
 
@@ -316,7 +316,7 @@ async def get_agent_identity(agent_id: str):
         }
 
 
-@router.put("/agents/{agent_id}/identity")
+@router.put("/agents/{agent_id}/identity", responses={404: {"description": "Not found"}})
 async def update_agent_identity(agent_id: str, body: IdentityUpdate):
     """Update the identity anchor and surface rules for an agent.
 
@@ -375,7 +375,7 @@ async def update_agent_identity(agent_id: str, body: IdentityUpdate):
         }
 
 
-@router.get("/agents/{agent_id}/surfaces")
+@router.get("/agents/{agent_id}/surfaces", responses={404: {"description": "Not found"}})
 async def get_agent_surfaces(agent_id: str):
     """Get per-surface format rules for an agent.
 
@@ -427,7 +427,7 @@ async def get_agent_surfaces(agent_id: str):
         return {"agent_id": agent_id, "surfaces": surfaces}
 
 
-@router.put("/agents/{agent_id}/surfaces/{surface}")
+@router.put("/agents/{agent_id}/surfaces/{surface}", responses={404: {"description": "Not found"}})
 async def update_agent_surface(agent_id: str, surface: str, body: SurfaceRuleUpdate):
     """Set custom format rules for a specific surface.
 
@@ -461,7 +461,7 @@ async def update_agent_surface(agent_id: str, surface: str, body: SurfaceRuleUpd
         }
 
 
-@router.delete("/agents/{agent_id}/surfaces/{surface}")
+@router.delete("/agents/{agent_id}/surfaces/{surface}", responses={404: {"description": "Not found"}})
 async def delete_agent_surface(agent_id: str, surface: str):
     """Remove a custom surface rule (reverts to default)."""
     async with get_db() as db:

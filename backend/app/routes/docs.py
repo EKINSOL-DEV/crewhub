@@ -84,7 +84,7 @@ async def get_docs_tree():
     return _build_tree(DOCS_ROOT)
 
 
-@router.get("/content")
+@router.get("/content", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_doc_content(path: Annotated[str, Query(..., description="Relative path to doc file")]):
     """Get the content of a specific documentation file."""
     file_path = _safe_path(path)

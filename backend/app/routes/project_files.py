@@ -137,7 +137,7 @@ async def _get_project_folder(project_id: str) -> str:
             return row["folder_path"]
 
 
-@router.get("/{project_id}/files")
+@router.get("/{project_id}/files", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}})
 async def list_project_files(
     project_id: str,
     path: Annotated[str, Query("", description="Relative path within project folder")],
@@ -210,7 +210,7 @@ async def list_project_files(
     }
 
 
-@router.get("/{project_id}/files/content")
+@router.get("/{project_id}/files/content", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}, 413: {"description": "Request entity too large"}})
 async def read_project_file(
     project_id: str,
     path: Annotated[str, Query(..., description="Relative path to file within project folder")],
@@ -261,7 +261,7 @@ async def read_project_file(
     }
 
 
-@router.get("/{project_id}/files/image")
+@router.get("/{project_id}/files/image", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}})
 async def get_project_image(
     project_id: str,
     path: Annotated[str, Query(..., description="Relative path to image within project folder")],

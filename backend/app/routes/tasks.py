@@ -35,7 +35,7 @@ async def _not_found(label: str) -> None:
 # ========================================
 
 
-@router.get("/rooms/{room_id}/tasks", response_model=TaskListResponse)
+@router.get("/rooms/{room_id}/tasks", response_model=TaskListResponse, responses={500: {"description": "Internal server error"}})
 async def get_room_tasks(
     room_id: str,
     status: Annotated[Optional[str], Query(None, description=MSG_FILTER_STATUS)],
@@ -50,7 +50,7 @@ async def get_room_tasks(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/projects/{project_id}/tasks", response_model=TaskListResponse)
+@router.get("/projects/{project_id}/tasks", response_model=TaskListResponse, responses={500: {"description": "Internal server error"}})
 async def get_project_tasks(
     project_id: str,
     status: Annotated[Optional[str], Query(None, description=MSG_FILTER_STATUS)],
@@ -70,7 +70,7 @@ async def get_project_tasks(
 # ========================================
 
 
-@router.get("", response_model=TaskListResponse)
+@router.get("", response_model=TaskListResponse, responses={500: {"description": "Internal server error"}})
 async def list_tasks(
     project_id: Annotated[Optional[str], Query(None, description="Filter by project")],
     room_id: Annotated[Optional[str], Query(None, description="Filter by room")],
@@ -94,7 +94,7 @@ async def list_tasks(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{task_id}", response_model=TaskResponse)
+@router.get("/{task_id}", response_model=TaskResponse, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_task(task_id: str):
     """Get a specific task by ID."""
     try:
@@ -109,7 +109,7 @@ async def get_task(task_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("", response_model=TaskResponse)
+@router.post("", response_model=TaskResponse, responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def create_task(task: TaskCreate):
     """Create a new task."""
     try:
@@ -135,7 +135,7 @@ async def create_task(task: TaskCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.patch("/{task_id}", response_model=TaskResponse)
+@router.patch("/{task_id}", response_model=TaskResponse, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_task(task_id: str, task: TaskUpdate):
     """Update a task."""
     try:
@@ -160,7 +160,7 @@ async def update_task(task_id: str, task: TaskUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{task_id}")
+@router.delete("/{task_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_task(task_id: str):
     """Delete a task."""
     try:
@@ -205,7 +205,7 @@ class RunResponse(BaseModel):
     agent_id: str
 
 
-@router.post("/{task_id}/run", response_model=RunResponse)
+@router.post("/{task_id}/run", response_model=RunResponse, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def run_task_with_agent(task_id: str, body: RunRequest):
     """
     Send a task to an agent's main session (not spawning a subagent).

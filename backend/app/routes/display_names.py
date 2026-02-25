@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("", response_model=dict)
+@router.get("", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def list_display_names():
     """Get all session display names."""
     try:
@@ -27,7 +27,7 @@ async def list_display_names():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{session_key}", response_model=SessionDisplayName)
+@router.get("/{session_key}", response_model=SessionDisplayName, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_display_name(session_key: str):
     """Get display name for a specific session."""
     try:
@@ -46,7 +46,7 @@ async def get_display_name(session_key: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{session_key}", response_model=SessionDisplayName)
+@router.post("/{session_key}", response_model=SessionDisplayName, responses={500: {"description": "Internal server error"}})
 async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
     """Set or update display name for a session."""
     try:
@@ -88,7 +88,7 @@ async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{session_key}")
+@router.delete("/{session_key}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_display_name(session_key: str):
     """Delete a session display name."""
     try:

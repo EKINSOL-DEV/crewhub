@@ -145,7 +145,7 @@ async def _get_room_id(session_key: str) -> Optional[str]:
 # ── Routes ────────────────────────────────────────────────────────────
 
 
-@router.post("/identify", response_model=IdentifyResponse)
+@router.post("/identify", response_model=IdentifyResponse, responses={403: {"description": "Forbidden"}, 429: {"description": "Too many requests"}})
 async def identify(
     body: IdentifyRequest,
     key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
@@ -310,7 +310,7 @@ async def get_self(
     )
 
 
-@router.post("/display-name")
+@router.post("/display-name", responses={400: {"description": "Bad request"}})
 async def set_display_name(
     body: DisplayNameRequest,
     key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
@@ -349,7 +349,7 @@ async def set_display_name(
     return {"ok": True, "display_name": body.display_name, "session_key": session_key}
 
 
-@router.post("/room")
+@router.post("/room", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
 async def set_room(
     body: RoomRequest,
     key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
@@ -402,7 +402,7 @@ async def set_room(
     return {"ok": True, "room_id": body.room_id, "session_key": session_key}
 
 
-@router.post("/heartbeat")
+@router.post("/heartbeat", responses={400: {"description": "Bad request"}})
 async def heartbeat(
     body: HeartbeatRequest,
     key: Annotated[APIKeyInfo, Depends(require_scope("self"))],

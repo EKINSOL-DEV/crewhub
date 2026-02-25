@@ -32,7 +32,7 @@ class StandupEntryCreate(BaseModel):
 # ── Routes ──────────────────────────────────────────────────────
 
 
-@router.post("")
+@router.post("", responses={400: {"description": "Bad request"}})
 async def create_standup(body: StandupCreate):
     """Create a new standup meeting."""
     if not body.participants:
@@ -59,7 +59,7 @@ async def create_standup(body: StandupCreate):
         }
 
 
-@router.post("/{standup_id}/entries")
+@router.post("/{standup_id}/entries", responses={404: {"description": "Not found"}})
 async def submit_entry(standup_id: str, body: StandupEntryCreate):
     """Submit a standup entry for an agent."""
     async with get_db() as db:
@@ -115,7 +115,7 @@ async def list_standups(days: Annotated[int, Query(7, ge=1, le=90)]):
         return {"standups": rows}
 
 
-@router.get("/{standup_id}")
+@router.get("/{standup_id}", responses={404: {"description": "Not found"}})
 async def get_standup(standup_id: str):
     """Get a standup with all entries."""
     async with get_db() as db:

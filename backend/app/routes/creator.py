@@ -89,7 +89,7 @@ async def generate_prop_stream(
     )
 
 
-@router.post("/generate-prop", response_model=GeneratePropResponse)
+@router.post("/generate-prop", response_model=GeneratePropResponse, responses={400: {"description": "Bad request"}})
 async def generate_prop(req: GeneratePropRequest):
     """Generate a 3D prop (non-streaming). Tries AI first, falls back to template."""
     if not req.prompt.strip():
@@ -124,7 +124,7 @@ async def get_generation_history(limit: Annotated[int, Query(50, ge=1, le=100)])
     return {"records": load_generation_history()[:limit]}
 
 
-@router.get("/generation-history/{gen_id}/usage")
+@router.get("/generation-history/{gen_id}/usage", responses={404: {"description": "Not found"}})
 async def get_prop_usage(gen_id: str):
     """Check where a generated prop is used in blueprints/rooms."""
     record = next((r for r in load_generation_history() if r.get("id") == gen_id), None)
@@ -141,7 +141,7 @@ async def get_prop_usage(gen_id: str):
     }
 
 
-@router.get("/generation-history/{gen_id}")
+@router.get("/generation-history/{gen_id}", responses={404: {"description": "Not found"}})
 async def get_generation_record(gen_id: str):
     record = next((r for r in load_generation_history() if r.get("id") == gen_id), None)
     if not record:
@@ -149,7 +149,7 @@ async def get_generation_record(gen_id: str):
     return record
 
 
-@router.delete("/generation-history/{gen_id}")
+@router.delete("/generation-history/{gen_id}", responses={404: {"description": "Not found"}, 409: {"description": "Conflict"}, 500: {"description": "Internal server error"}})
 async def delete_generation_record(gen_id: str, cascade: Annotated[bool, Query(False)]):
     """Delete a generation history record, optionally cascading to blueprint placements."""
     history = load_generation_history()
@@ -221,7 +221,7 @@ async def list_saved_props():
     return [SavedPropResponse(**p) for p in load_saved_props()]
 
 
-@router.delete("/saved-props/{prop_id}")
+@router.delete("/saved-props/{prop_id}", responses={404: {"description": "Not found"}})
 async def delete_saved_prop(prop_id: str):
     props = load_saved_props()
     new_props = [p for p in props if p["propId"] != prop_id]
@@ -254,7 +254,7 @@ async def list_showcase_props():
     return {"props": props, "count": len(props)}
 
 
-@router.get("/showcase-props/{name}")
+@router.get("/showcase-props/{name}", responses={404: {"description": "Not found"}})
 async def get_showcase_prop(name: str):
     path = SHOWCASE_PROPS_DIR / f"{name}.tsx"
     if not path.exists():
@@ -266,7 +266,7 @@ async def get_showcase_prop(name: str):
 # ─── Phase 2: Multi-Pass & Refinement ────────────────────────────
 
 
-@router.post("/props/refine", response_model=PropRefinementResponse)
+@router.post("/props/refine", response_model=PropRefinementResponse, responses={404: {"description": "Not found"}})
 async def refine_prop(req: PropRefinementRequest):
     """Apply user refinements to a generated prop."""
     from ..services.multi_pass_generator import MultiPassGenerator
@@ -300,7 +300,7 @@ async def get_refinement_options(prompt: Annotated[str, Query("", min_length=0)]
 # ─── Phase 3: Advanced Features ──────────────────────────────────
 
 
-@router.post("/props/iterate")
+@router.post("/props/iterate", responses={500: {"description": "Internal server error"}})
 async def iterate_prop(req: IteratePropRequest):
     """Iterate on a prop with natural language feedback."""
     from ..services.prop_iterator import PropIterator
@@ -319,7 +319,7 @@ async def iterate_prop(req: IteratePropRequest):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-@router.post("/props/style-transfer")
+@router.post("/props/style-transfer", responses={500: {"description": "Internal server error"}})
 async def apply_style_transfer(req: StyleTransferRequest):
     """Apply a showcase style to a generated prop."""
     from ..services.prop_quality_scorer import QualityScorer
@@ -345,7 +345,7 @@ async def list_styles():
     return {"styles": get_available_styles()}
 
 
-@router.post("/props/hybrid-generate")
+@router.post("/props/hybrid-generate", responses={500: {"description": "Internal server error"}})
 async def hybrid_generate(req: HybridGenerateRequest):
     """Generate a prop using hybrid AI + template approach."""
     from ..services.hybrid_generator import HybridGenerator
@@ -403,7 +403,7 @@ async def list_templates():
     return {"templates": HybridGenerator().get_templates()}
 
 
-@router.post("/props/crossbreed")
+@router.post("/props/crossbreed", responses={500: {"description": "Internal server error"}})
 async def crossbreed_props(req: CrossbreedRequest):
     """Crossbreed two props to create a hybrid offspring."""
     from ..services.prop_genetics import PropGenetics

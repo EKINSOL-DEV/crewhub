@@ -55,7 +55,7 @@ def _validate_regex_pattern(rule_type: str, rule_value: str) -> None:
             raise HTTPException(status_code=400, detail=f"Invalid regex pattern '{rule_value}': {e}")
 
 
-@router.get("", response_model=dict)
+@router.get("", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def list_rules():
     """Get all room assignment rules sorted by priority."""
     try:
@@ -71,7 +71,7 @@ async def list_rules():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{rule_id}", response_model=RoomAssignmentRule)
+@router.get("/{rule_id}", response_model=RoomAssignmentRule, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_rule(rule_id: str):
     """Get a specific rule by ID."""
     try:
@@ -88,7 +88,7 @@ async def get_rule(rule_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("", response_model=RoomAssignmentRule)
+@router.post("", response_model=RoomAssignmentRule, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def create_rule(rule: RoomAssignmentRuleCreate):
     """Create a new room assignment rule."""
     # Validate rule_type
@@ -129,7 +129,7 @@ async def create_rule(rule: RoomAssignmentRuleCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{rule_id}", response_model=RoomAssignmentRule)
+@router.put("/{rule_id}", response_model=RoomAssignmentRule, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
     """Update an existing rule."""
     # Validate rule_type if provided
@@ -178,7 +178,7 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{rule_id}")
+@router.delete("/{rule_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_rule(rule_id: str):
     """Delete a room assignment rule."""
     try:
@@ -200,7 +200,7 @@ async def delete_rule(rule_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/bulk", response_model=dict)
+@router.put("/bulk", response_model=dict, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def bulk_update_rules(request: BulkRulesRequest):
     """Replace all rules with a new set (atomic bulk update)."""
     # Validate all rules first before touching the database
@@ -249,7 +249,7 @@ async def bulk_update_rules(request: BulkRulesRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/room/{room_id}", response_model=dict)
+@router.get("/room/{room_id}", response_model=dict, responses={500: {"description": "Internal server error"}})
 async def get_rules_for_room(room_id: str):
     """Get all rules for a specific room."""
     try:

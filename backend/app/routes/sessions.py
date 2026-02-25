@@ -28,7 +28,7 @@ async def list_sessions():
     return {"sessions": [s.to_dict() for s in sessions]}
 
 
-@router.get("/{session_key:path}/history")
+@router.get("/{session_key:path}/history", responses={503: {"description": "Service unavailable"}})
 async def get_session_history(session_key: str, limit: Annotated[int, Query(default=50, ge=1, le=500)]):
     """Get message history for a specific session.
 
@@ -48,7 +48,7 @@ async def get_session_history(session_key: str, limit: Annotated[int, Query(defa
     return {"messages": history, "count": len(history)}
 
 
-@router.patch("/{session_key:path}")
+@router.patch("/{session_key:path}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}, 502: {"description": "HTTP 502"}, 503: {"description": "Service unavailable"}})
 async def patch_session(session_key: str, patch: SessionPatch):
     """Update session configuration (e.g., switch model).
 
@@ -82,7 +82,7 @@ async def patch_session(session_key: str, patch: SessionPatch):
     return {"success": True, "sessionKey": session_key, "model": patch.model}
 
 
-@router.delete("/{session_key:path}")
+@router.delete("/{session_key:path}", responses={500: {"description": "Internal server error"}})
 async def kill_session(session_key: str):
     """Terminate a session.
 

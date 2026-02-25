@@ -34,7 +34,7 @@ def _now_ms() -> int:
     return int(time.time() * 1000)
 
 
-@router.post("/start", status_code=201)
+@router.post("/start", status_code=201, responses={400: {"description": "Bad request"}, 409: {"description": "Conflict"}})
 async def api_start_meeting(req: StartMeetingRequest):
     """Start a new AI-orchestrated meeting."""
     # Validate
@@ -95,7 +95,7 @@ async def api_start_meeting(req: StartMeetingRequest):
     }
 
 
-@router.get("/{meeting_id}/status")
+@router.get("/{meeting_id}/status", responses={404: {"description": "Not found"}})
 async def api_meeting_status(meeting_id: str):
     """Get current state and progress of a meeting."""
     meeting = await get_meeting(meeting_id)
@@ -123,7 +123,7 @@ async def api_meeting_status(meeting_id: str):
     }
 
 
-@router.post("/{meeting_id}/cancel")
+@router.post("/{meeting_id}/cancel", responses={404: {"description": "Not found"}, 409: {"description": "Conflict"}, 500: {"description": "Internal server error"}})
 async def api_cancel_meeting(meeting_id: str):
     """Cancel a running meeting."""
     meeting = await get_meeting(meeting_id)
@@ -186,7 +186,7 @@ async def api_list_meetings(
     return result
 
 
-@router.get("/{meeting_id}/output")
+@router.get("/{meeting_id}/output", responses={404: {"description": "Not found"}, 409: {"description": "Conflict"}})
 async def api_meeting_output(meeting_id: str):
     """Get the final meeting output (markdown)."""
     meeting = await get_meeting(meeting_id)
@@ -220,7 +220,7 @@ async def api_get_action_items(meeting_id: str):
             return {"items": [dict(r) for r in rows]}
 
 
-@router.post("/{meeting_id}/action-items")
+@router.post("/{meeting_id}/action-items", responses={404: {"description": "Not found"}})
 async def api_save_action_items(meeting_id: str, req: SaveActionItemsRequest):
     """Save parsed action items for a meeting."""
     meeting = await get_meeting(meeting_id)
@@ -255,7 +255,7 @@ async def api_save_action_items(meeting_id: str, req: SaveActionItemsRequest):
     return {"created": len(req.items)}
 
 
-@router.post("/{meeting_id}/action-items/{item_id}/to-planner")
+@router.post("/{meeting_id}/action-items/{item_id}/to-planner", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
 async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionItemToPlannerRequest):
     """Push an action item to the project task board (or fallback to Ekinbot Planner)."""
     # Verify item exists and get meeting data
@@ -352,7 +352,7 @@ async def api_action_item_to_planner(meeting_id: str, item_id: str, req: ActionI
     }
 
 
-@router.post("/{meeting_id}/action-items/{item_id}/execute")
+@router.post("/{meeting_id}/action-items/{item_id}/execute", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 502: {"description": "HTTP 502"}})
 async def api_action_item_execute(meeting_id: str, item_id: str, req: ActionItemExecuteRequest):
     """Spawn an agent to execute an action item."""
     # Verify item exists
