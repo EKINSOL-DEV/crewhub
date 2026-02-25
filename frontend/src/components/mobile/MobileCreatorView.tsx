@@ -86,8 +86,8 @@ function PropPreview3D({ parts, name }: PropPreview3DProps) {
       height: 250,
       borderRadius: 12,
       overflow: 'hidden',
-      background: '#0f1e35',
-      border: '1px solid rgba(99,102,241,0.25)',
+      background: 'var(--mobile-surface, #0f1e35)',
+      border: '1px solid var(--mobile-border, rgba(99,102,241,0.25))',
       position: 'relative',
     }}>
       <PropErrorBoundary resetKey={`${name}-${parts.length}`}>
