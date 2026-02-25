@@ -433,7 +433,7 @@ export function SceneContent({
 
         return (
           <group key={room.id}>
-            <Room3D room={room} position={position} size={roomSize} />
+            <Room3D room={room} position={position} size={roomSize} isCreatorMode={!!selectedPropId && !!onPlaceProp} />
             {visibleBots.map((bot, i) => (
               <Bot3D
                 key={bot.key}

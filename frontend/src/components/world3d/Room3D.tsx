@@ -23,6 +23,7 @@ interface Room3DProps {
   room: Room
   position?: [number, number, number]
   size?: number
+  isCreatorMode?: boolean
 }
 
 // ─── Room Drop Zone (visible when dragging) ────────────────────
@@ -137,7 +138,7 @@ function RoomDropZone({ roomId, size }: { roomId: string; size: number }) {
  * - Click at overview: focusRoom → camera zooms in, Room HUD opens
  * - Click at room level: floor click re-opens Room HUD, bot clicks handled by Bot3D
  */
-export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 12 }: Room3DProps) {
+export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 12, isCreatorMode = false }: Room3DProps) {
   const roomColor = room.color || '#4f46e5'
   const baseBlueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
   // Mutable placements state so prop moves persist in the UI
@@ -200,6 +201,9 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
   // ─── Click handler (focus-level aware) ──────────────────────
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
+      // Creator mode: let PlacementClickPlane handle clicks — do not steal the event
+      if (isCreatorMode) return
+
       e.stopPropagation()
 
       // Ignore clicks that were actually drags (camera rotation)
@@ -222,7 +226,7 @@ export const Room3D = memo(function Room3D({ room, position = [0, 0, 0], size = 
         focusRoom(room.id)
       }
     },
-    [state.level, room.id, focusRoom]
+    [isCreatorMode, state.level, room.id, focusRoom]
   )
 
   return (
