@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { ZoneRuntimeState } from '../lib/zones/types'
 
+const MAIN_CAMPUS = 'main-campus'
+
 const STORAGE_KEY = 'crewhub-zone-state-v1'
 
 // Inline the class to avoid singleton side-effects
@@ -64,7 +66,7 @@ describe('ZonePersistence', () => {
   it('saves and loads state', () => {
     const state: ZoneRuntimeState = {
       version: 1,
-      activeZoneId: 'main-campus',
+      activeZoneId: MAIN_CAMPUS,
       perZoneState: {},
     }
     persistence.save(state)
@@ -87,8 +89,8 @@ describe('ZonePersistence', () => {
   })
 
   it('saves and retrieves position', () => {
-    persistence.savePosition('main-campus', [1, 2, 3])
-    expect(persistence.getPosition('main-campus')).toEqual([1, 2, 3])
+    persistence.savePosition(MAIN_CAMPUS, [1, 2, 3])
+    expect(persistence.getPosition(MAIN_CAMPUS)).toEqual([1, 2, 3])
   })
 
   it('saves and retrieves active zone', () => {
@@ -97,7 +99,7 @@ describe('ZonePersistence', () => {
   })
 
   it('clear removes data', () => {
-    persistence.saveActiveZone('main-campus')
+    persistence.saveActiveZone(MAIN_CAMPUS)
     persistence.clear()
     expect(persistence.load()).toBeNull()
   })

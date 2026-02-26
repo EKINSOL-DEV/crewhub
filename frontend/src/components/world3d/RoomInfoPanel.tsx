@@ -15,6 +15,10 @@ import { RoomProjectTab } from './RoomProjectTab'
 import { RoomFilesTab } from './RoomFilesTab'
 import { OrgChartTab } from './OrgChartTab'
 
+const CLS_BACKGROUND_015S = 'background 0.15s'
+const RGBA_0_0_0_0_05 = 'rgba(0, 0, 0, 0.05)'
+const RGBA_0_0_0_0_1 = 'rgba(0, 0, 0, 0.1)'
+
 // ── Types ──────────────────────────────────────────────────────
 
 type BotStatus = 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
@@ -335,7 +339,7 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
               height: 28,
               borderRadius: 8,
               border: 'none',
-              background: 'rgba(0, 0, 0, 0.05)',
+              background: RGBA_0_0_0_0_05,
               color: '#6b7280',
               cursor: 'pointer',
               display: 'flex',
@@ -343,13 +347,13 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
               justifyContent: 'center',
               fontSize: 13,
               flexShrink: 0,
-              transition: 'background 0.15s',
+              transition: CLS_BACKGROUND_015S,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
+              e.currentTarget.style.background = RGBA_0_0_0_0_1
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
+              e.currentTarget.style.background = RGBA_0_0_0_0_05
             }}
           >
             ✏️
@@ -362,7 +366,7 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
               height: 28,
               borderRadius: 8,
               border: 'none',
-              background: 'rgba(0, 0, 0, 0.05)',
+              background: RGBA_0_0_0_0_05,
               color: '#6b7280',
               cursor: 'pointer',
               display: 'flex',
@@ -370,13 +374,13 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
               justifyContent: 'center',
               fontSize: 13,
               flexShrink: 0,
-              transition: 'background 0.15s',
+              transition: CLS_BACKGROUND_015S,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
+              e.currentTarget.style.background = RGBA_0_0_0_0_1
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
+              e.currentTarget.style.background = RGBA_0_0_0_0_05
             }}
           >
             🔍
@@ -388,7 +392,7 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
               height: 28,
               borderRadius: 8,
               border: 'none',
-              background: 'rgba(0, 0, 0, 0.05)',
+              background: RGBA_0_0_0_0_05,
               color: '#6b7280',
               cursor: 'pointer',
               display: 'flex',
@@ -397,13 +401,13 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
               fontSize: 14,
               fontWeight: 700,
               flexShrink: 0,
-              transition: 'background 0.15s',
+              transition: CLS_BACKGROUND_015S,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)'
+              e.currentTarget.style.background = RGBA_0_0_0_0_1
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)'
+              e.currentTarget.style.background = RGBA_0_0_0_0_05
             }}
           >
             ✕
@@ -641,7 +645,7 @@ function HQDashboard({
                   fontFamily: 'inherit',
                   textAlign: 'left',
                   width: '100%',
-                  transition: 'background 0.15s',
+                  transition: CLS_BACKGROUND_015S,
                 }}
                 onMouseEnter={(e) => {
                   if (clickable) e.currentTarget.style.background = 'rgba(245,158,11,0.1)'

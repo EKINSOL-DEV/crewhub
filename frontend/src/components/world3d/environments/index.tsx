@@ -5,6 +5,8 @@ import { FloatingEnvironment } from './FloatingEnvironment'
 import { DesertEnvironment } from './DesertEnvironment'
 import { environmentRegistry } from '@/lib/modding/registries'
 
+const KEY_CREWHUB_ENVIRONMENT_CHANGE = 'crewhub-environment-change'
+
 // ─── Environment Types ───────────────────────────────────────────
 // EnvironmentType is now a plain string — any registered id is valid.
 
@@ -30,7 +32,7 @@ export function setStoredEnvironment(env: EnvironmentType): void {
     // localStorage unavailable
   }
   // Dispatch custom event so other components can react
-  window.dispatchEvent(new CustomEvent('crewhub-environment-change', { detail: env }))
+  window.dispatchEvent(new CustomEvent(KEY_CREWHUB_ENVIRONMENT_CHANGE, { detail: env }))
 }
 
 // ─── Hook for environment state ──────────────────────────────────
@@ -49,8 +51,8 @@ export function useEnvironment(): [EnvironmentType, (env: EnvironmentType) => vo
       const detail = (e as CustomEvent<EnvironmentType>).detail
       setEnvironment(detail)
     }
-    window.addEventListener('crewhub-environment-change', handler)
-    return () => window.removeEventListener('crewhub-environment-change', handler)
+    window.addEventListener(KEY_CREWHUB_ENVIRONMENT_CHANGE, handler)
+    return () => window.removeEventListener(KEY_CREWHUB_ENVIRONMENT_CHANGE, handler)
   }, [])
 
   return [environment, handleChange]

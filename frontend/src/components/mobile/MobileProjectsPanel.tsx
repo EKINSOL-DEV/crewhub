@@ -8,6 +8,9 @@ import { ArrowLeft, Folder, TrendingUp } from 'lucide-react'
 import { useProjects, type Project } from '@/hooks/useProjects'
 import { useTasks } from '@/hooks/useTasks'
 
+const BORDER_1PX_SOLID_RGBA_255_255_255_0_0 = '1px solid rgba(255, 255, 255, 0.06)'
+const RGBA_255_255_255_0_02 = 'rgba(255, 255, 255, 0.02)'
+
 interface MobileProjectsPanelProps {
   readonly onBack: () => void
 }
@@ -45,7 +48,7 @@ function ProjectCard({
       style={{
         width: '100%',
         padding: '16px',
-        background: 'rgba(255, 255, 255, 0.02)',
+        background: RGBA_255_255_255_0_02,
         border: `1px solid ${project.color ? project.color + '40' : 'rgba(255, 255, 255, 0.06)'}`,
         borderRadius: 12,
         textAlign: 'left',
@@ -306,8 +309,8 @@ function ProjectDetailModal({
             <div
               style={{
                 padding: '12px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: RGBA_255_255_255_0_02,
+                border: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
                 borderRadius: 10,
               }}
             >
@@ -319,8 +322,8 @@ function ProjectDetailModal({
             <div
               style={{
                 padding: '12px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: RGBA_255_255_255_0_02,
+                border: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
                 borderRadius: 10,
               }}
             >
@@ -332,8 +335,8 @@ function ProjectDetailModal({
             <div
               style={{
                 padding: '12px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: RGBA_255_255_255_0_02,
+                border: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
                 borderRadius: 10,
               }}
             >
@@ -345,8 +348,8 @@ function ProjectDetailModal({
             <div
               style={{
                 padding: '12px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: RGBA_255_255_255_0_02,
+                border: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
                 borderRadius: 10,
               }}
             >
@@ -409,7 +412,7 @@ function ProjectDetailModal({
                   style={{
                     padding: '6px 12px',
                     background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    border: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
                     borderRadius: 8,
                     fontSize: 12,
                     color: '#cbd5e1',
@@ -493,7 +496,7 @@ export function MobileProjectsPanel({ onBack }: MobileProjectsPanelProps) {
           alignItems: 'center',
           gap: 12,
           padding: '12px 16px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           flexShrink: 0,
         }}
       >

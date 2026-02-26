@@ -12,6 +12,12 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 
+const BORDER_1PX_SOLID_VAR_ZEN_BORDER = '1px solid var(--zen-border)'
+const TRANSPARENT = 'transparent'
+const VAR_ZEN_ACCENT = 'var(--zen-accent)'
+const VAR_ZEN_FG = 'var(--zen-fg)'
+const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted)'
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface ZenBrowserPanelProps {
@@ -68,8 +74,8 @@ function NavBtn({
         height: 28,
         border: 'none',
         borderRadius: 4,
-        background: 'transparent',
-        color: disabled ? 'var(--zen-fg-dim)' : 'var(--zen-fg-muted)',
+        background: TRANSPARENT,
+        color: disabled ? 'var(--zen-fg-dim)' : VAR_ZEN_FG_MUTED,
         cursor: disabled ? 'default' : 'pointer',
         fontSize: 15,
         lineHeight: 1,
@@ -78,13 +84,13 @@ function NavBtn({
       }}
       onMouseEnter={(e) => {
         if (!disabled) {
-          e.currentTarget.style.color = 'var(--zen-fg)'
+          e.currentTarget.style.color = VAR_ZEN_FG
           e.currentTarget.style.background = 'var(--zen-bg-hover)'
         }
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.color = disabled ? 'var(--zen-fg-dim)' : 'var(--zen-fg-muted)'
-        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.color = disabled ? 'var(--zen-fg-dim)' : VAR_ZEN_FG_MUTED
+        e.currentTarget.style.background = TRANSPARENT
       }}
     >
       {children}
@@ -204,7 +210,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
           alignItems: 'center',
           gap: 2,
           padding: '5px 8px',
-          borderBottom: '1px solid var(--zen-border)',
+          borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER,
           background: 'var(--zen-bg)',
           flexShrink: 0,
         }}
@@ -233,9 +239,9 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
             flex: 1,
             padding: '4px 10px',
             borderRadius: 6,
-            border: '1px solid var(--zen-border)',
+            border: BORDER_1PX_SOLID_VAR_ZEN_BORDER,
             background: 'var(--zen-bg-panel)',
-            color: 'var(--zen-fg)',
+            color: VAR_ZEN_FG,
             fontSize: 12,
             fontFamily: 'ui-monospace, monospace',
             outline: 'none',
@@ -258,7 +264,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
             padding: '4px 10px',
             borderRadius: 5,
             border: 'none',
-            background: 'var(--zen-accent)',
+            background: VAR_ZEN_ACCENT,
             color: '#fff',
             fontSize: 12,
             fontWeight: 600,
@@ -281,7 +287,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
       <div
         style={{
           height: 2,
-          background: 'transparent',
+          background: TRANSPARENT,
           flexShrink: 0,
           position: 'relative',
           overflow: 'hidden',
@@ -295,7 +301,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
               top: 0,
               height: '100%',
               width: `${loadProgress}%`,
-              background: 'var(--zen-accent)',
+              background: VAR_ZEN_ACCENT,
               transition: 'width 0.25s ease',
             }}
           />
@@ -362,7 +368,7 @@ function EmptyBrowserState({ onNavigate }: { onNavigate: (url: string) => void }
         justifyContent: 'center',
         height: '100%',
         gap: 16,
-        color: 'var(--zen-fg-muted)',
+        color: VAR_ZEN_FG_MUTED,
       }}
     >
       <span style={{ fontSize: 40, lineHeight: 1 }}>🌐</span>
@@ -388,19 +394,19 @@ function EmptyBrowserState({ onNavigate }: { onNavigate: (url: string) => void }
               gap: 6,
               padding: '5px 12px',
               borderRadius: 6,
-              border: '1px solid var(--zen-border)',
+              border: BORDER_1PX_SOLID_VAR_ZEN_BORDER,
               background: 'var(--zen-bg-panel)',
-              color: 'var(--zen-fg-muted)',
+              color: VAR_ZEN_FG_MUTED,
               fontSize: 12,
               cursor: 'pointer',
               transition: 'all 0.15s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--zen-fg)'
-              e.currentTarget.style.borderColor = 'var(--zen-accent)'
+              e.currentTarget.style.color = VAR_ZEN_FG
+              e.currentTarget.style.borderColor = VAR_ZEN_ACCENT
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--zen-fg-muted)'
+              e.currentTarget.style.color = VAR_ZEN_FG_MUTED
               e.currentTarget.style.borderColor = 'var(--zen-border)'
             }}
           >
@@ -431,17 +437,17 @@ function IframeBlockedMessage({
         justifyContent: 'center',
         height: '100%',
         gap: 12,
-        color: 'var(--zen-fg-muted)',
+        color: VAR_ZEN_FG_MUTED,
         padding: 24,
         textAlign: 'center',
       }}
     >
       <span style={{ fontSize: 36 }}>🚫</span>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--zen-fg)', marginBottom: 6 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: VAR_ZEN_FG, marginBottom: 6 }}>
           This page can't be embedded
         </div>
-        <div style={{ fontSize: 12, color: 'var(--zen-fg-muted)', maxWidth: 280, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: VAR_ZEN_FG_MUTED, maxWidth: 280, lineHeight: 1.5 }}>
           <strong style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
             {url.length > 60 ? url.slice(0, 57) + '…' : url}
           </strong>{' '}
@@ -457,7 +463,7 @@ function IframeBlockedMessage({
           padding: '6px 16px',
           borderRadius: 6,
           border: 'none',
-          background: 'var(--zen-accent)',
+          background: VAR_ZEN_ACCENT,
           color: '#fff',
           fontSize: 13,
           fontWeight: 600,

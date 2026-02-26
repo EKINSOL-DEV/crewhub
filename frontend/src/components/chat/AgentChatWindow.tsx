@@ -6,6 +6,9 @@ import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from './ChatMessageBubble'
 import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 
+const BACKGROUND_0_15S_COLOR_0_15S = 'background 0.15s, color 0.15s'
+const SYSTEM_UI_SANS_SERIF = 'system-ui, sans-serif'
+
 // (renderMarkdown, ThinkingBlock, ToolCallBlock, ChatBubble all moved to ChatMessageBubble.tsx)
 
 // ── Agent Chat Window ──────────────────────────────────────────
@@ -339,7 +342,7 @@ export function AgentChatWindow({
                   cursor: isLoadingHistory ? 'wait' : 'pointer',
                   fontSize: 11,
                   fontWeight: 500,
-                  fontFamily: 'system-ui, sans-serif',
+                  fontFamily: SYSTEM_UI_SANS_SERIF,
                 }}
               >
                 {isLoadingHistory ? 'Loading…' : '↑ Load older messages'}
@@ -458,7 +461,7 @@ export function AgentChatWindow({
                   background: 'rgba(255,255,255,0.8)',
                   color: '#1f2937',
                   fontSize: 13,
-                  fontFamily: 'system-ui, sans-serif',
+                  fontFamily: SYSTEM_UI_SANS_SERIF,
                   resize: 'none',
                   outline: 'none',
                   maxHeight: 80,
@@ -536,7 +539,7 @@ export function AgentChatWindow({
                         justifyContent: 'center',
                         fontSize: 15,
                         flexShrink: 0,
-                        transition: 'background 0.15s, color 0.15s',
+                        transition: BACKGROUND_0_15S_COLOR_0_15S,
                       }}
                     >
                       {micPreparing ? '⏳' : '🎤'}
@@ -559,7 +562,7 @@ export function AgentChatWindow({
                       justifyContent: 'center',
                       fontSize: 16,
                       flexShrink: 0,
-                      transition: 'background 0.15s, color 0.15s',
+                      transition: BACKGROUND_0_15S_COLOR_0_15S,
                     }}
                   >
                     ➤
@@ -643,7 +646,7 @@ function HeaderBtn({
           fontSize: 12,
           fontWeight: 700,
           flexShrink: 0,
-          transition: 'background 0.15s, color 0.15s',
+          transition: BACKGROUND_0_15S_COLOR_0_15S,
         }}
       >
         {children}
@@ -667,7 +670,7 @@ function HeaderBtn({
             whiteSpace: 'nowrap',
             pointerEvents: 'none',
             zIndex: 100,
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: SYSTEM_UI_SANS_SERIF,
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
             animation: 'chatTooltipFadeIn 0.15s ease-out',
           }}

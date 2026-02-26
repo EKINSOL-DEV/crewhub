@@ -3,6 +3,12 @@ import type { Project } from '@/hooks/useProjects'
 import { API_BASE } from '@/lib/api'
 import { useDemoMode } from '@/contexts/DemoContext'
 
+const BORDER_1PX_SOLID_RGBA_0_0_0_0_1 = '1px solid rgba(0,0,0,0.1)'
+const BORDER_BOX = 'border-box'
+const RGBA_0_0_0_0_03 = 'rgba(0,0,0,0.03)'
+const RGBA_0_0_0_0_1 = 'rgba(0,0,0,0.1)'
+const TRANSPARENT = 'transparent'
+
 /** Default projects base path (overridden by settings) */
 const DEFAULT_PROJECTS_BASE = '~/Projects'
 
@@ -297,18 +303,18 @@ export function ProjectPicker({
                 width: '100%',
                 padding: '8px 12px',
                 borderRadius: 8,
-                border: '1px solid rgba(0,0,0,0.1)',
-                background: 'rgba(0,0,0,0.03)',
+                border: BORDER_1PX_SOLID_RGBA_0_0_0_0_1,
+                background: RGBA_0_0_0_0_03,
                 fontSize: 13,
                 outline: 'none',
                 fontFamily: 'inherit',
-                boxSizing: 'border-box',
+                boxSizing: BORDER_BOX,
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = '#3b82f6'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
+                e.currentTarget.style.borderColor = RGBA_0_0_0_0_1
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newName.trim()) handleCreate()
@@ -339,7 +345,7 @@ export function ProjectPicker({
                     height: 34,
                     borderRadius: 8,
                     border: newIcon === icon ? '2px solid #3b82f6' : '1px solid rgba(0,0,0,0.08)',
-                    background: newIcon === icon ? 'rgba(59,130,246,0.08)' : 'transparent',
+                    background: newIcon === icon ? 'rgba(59,130,246,0.08)' : TRANSPARENT,
                     cursor: 'pointer',
                     fontSize: 16,
                     display: 'flex',
@@ -410,18 +416,18 @@ export function ProjectPicker({
                 width: '100%',
                 padding: '8px 12px',
                 borderRadius: 8,
-                border: '1px solid rgba(0,0,0,0.1)',
-                background: 'rgba(0,0,0,0.03)',
+                border: BORDER_1PX_SOLID_RGBA_0_0_0_0_1,
+                background: RGBA_0_0_0_0_03,
                 fontSize: 12,
                 outline: 'none',
                 fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                boxSizing: 'border-box',
+                boxSizing: BORDER_BOX,
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = '#3b82f6'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
+                e.currentTarget.style.borderColor = RGBA_0_0_0_0_1
               }}
             />
             {!newFolderPath && autoFolderPath && (
@@ -497,7 +503,7 @@ export function ProjectPicker({
                 flex: 1,
                 padding: '8px 14px',
                 borderRadius: 8,
-                border: '1px solid rgba(0,0,0,0.1)',
+                border: BORDER_1PX_SOLID_RGBA_0_0_0_0_1,
                 background: 'white',
                 color: '#6b7280',
                 fontSize: 13,
@@ -542,18 +548,18 @@ export function ProjectPicker({
                 width: '100%',
                 padding: '8px 12px',
                 borderRadius: 8,
-                border: '1px solid rgba(0,0,0,0.1)',
-                background: 'rgba(0,0,0,0.03)',
+                border: BORDER_1PX_SOLID_RGBA_0_0_0_0_1,
+                background: RGBA_0_0_0_0_03,
                 fontSize: 13,
                 outline: 'none',
                 fontFamily: 'inherit',
-                boxSizing: 'border-box',
+                boxSizing: BORDER_BOX,
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = '#3b82f6'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
+                e.currentTarget.style.borderColor = RGBA_0_0_0_0_1
               }}
             />
           </div>
@@ -590,7 +596,7 @@ export function ProjectPicker({
                   padding: '10px 10px',
                   borderRadius: 10,
                   border: 'none',
-                  background: 'transparent',
+                  background: TRANSPARENT,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                   textAlign: 'left',
@@ -600,7 +606,7 @@ export function ProjectPicker({
                   e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.background = TRANSPARENT
                 }}
               >
                 {/* Color dot */}
@@ -699,7 +705,7 @@ export function ProjectPicker({
                 padding: '10px 14px',
                 borderRadius: 10,
                 border: '1px dashed rgba(0,0,0,0.15)',
-                background: 'transparent',
+                background: TRANSPARENT,
                 color: '#3b82f6',
                 fontSize: 13,
                 fontWeight: 600,
@@ -711,7 +717,7 @@ export function ProjectPicker({
                 e.currentTarget.style.background = 'rgba(59,130,246,0.05)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.background = TRANSPARENT
               }}
             >
               + Create New Project

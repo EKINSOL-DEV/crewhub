@@ -8,9 +8,9 @@ import type { RoomBounds } from './World3DView'
 // ─── Types ──────────────────────────────────────────────────────
 
 export type BotAnimState =
-  | 'idle-wandering'
-  | 'getting-coffee'
-  | 'sleeping-walking'
+  | typeof IDLE_WANDERING
+  | typeof GETTING_COFFEE
+  | typeof SLEEPING_WALKING
   | 'sleeping'
   | 'offline'
 
@@ -39,13 +39,18 @@ export interface AnimState {
 
 // RoomInteractionPoints & WalkableCenter extracted to ./roomInteractionPoints.ts
 import type { RoomInteractionPoints, WalkableCenter } from './roomInteractionPoints'
+
+const GETTING_COFFEE = 'getting-coffee'
+const IDLE_WANDERING = 'idle-wandering'
+const SLEEPING_WALKING = 'sleeping-walking'
+
 export type { RoomInteractionPoints, WalkableCenter } // NOSONAR
 
 // ─── Animation State Machine Hook ───────────────────────────────
 
 function createDefaultAnimState(): AnimState {
   return {
-    phase: 'idle-wandering',
+    phase: IDLE_WANDERING,
     targetX: null,
     targetZ: null,
     walkSpeed: 0.5,
@@ -103,14 +108,14 @@ export function useBotAnimation(
     // If so, skip the reset entirely — prevents jitter from status flickering.
     const phaseCompatible: Record<string, string[]> = {
       active: [], // Always reinitialize for active (need typing pause setup)
-      idle: ['idle-wandering', 'getting-coffee'],
-      sleeping: ['sleeping-walking', 'sleeping'],
+      idle: [IDLE_WANDERING, GETTING_COFFEE],
+      sleeping: [SLEEPING_WALKING, 'sleeping'],
       offline: ['offline'],
     }
     const compatible = phaseCompatible[status] || []
 
     // Special handling: if already actively walking with laptop and staying active, skip reset
-    if (status === 'active' && s.isActiveWalking && s.phase === 'idle-wandering') {
+    if (status === 'active' && s.isActiveWalking && s.phase === IDLE_WANDERING) {
       return
     }
 
@@ -133,7 +138,7 @@ export function useBotAnimation(
     switch (status) {
       case 'active': {
         // Active bots wander around the room WITH a laptop (no desk targeting)
-        s.phase = 'idle-wandering'
+        s.phase = IDLE_WANDERING
         s.targetX = null
         s.targetZ = null
         s.walkSpeed = 0.5 // moderate walk speed — purposeful but relaxed
@@ -160,7 +165,7 @@ export function useBotAnimation(
         const goCoffee = hasCoffee && Math.random() > 0.5
 
         if (goCoffee && interactionPoints?.coffeePosition) {
-          s.phase = 'getting-coffee'
+          s.phase = GETTING_COFFEE
           s.targetX = interactionPoints.coffeePosition[0] + j.x * 0.5
           s.targetZ = interactionPoints.coffeePosition[2] + j.z * 0.5
           s.walkSpeed = SESSION_CONFIG.botWalkSpeedCoffee
@@ -170,7 +175,7 @@ export function useBotAnimation(
             SESSION_CONFIG.coffeeMinTimeS +
             Math.random() * (SESSION_CONFIG.coffeeMaxTimeS - SESSION_CONFIG.coffeeMinTimeS)
         } else {
-          s.phase = 'idle-wandering'
+          s.phase = IDLE_WANDERING
           s.targetX = null
           s.targetZ = null
           s.walkSpeed = SESSION_CONFIG.botWalkSpeedIdle
@@ -194,7 +199,7 @@ export function useBotAnimation(
 
       case 'sleeping': {
         if (interactionPoints) {
-          s.phase = 'sleeping-walking'
+          s.phase = SLEEPING_WALKING
           s.targetX = interactionPoints.sleepCorner[0] + j.x * 0.3
           s.targetZ = interactionPoints.sleepCorner[2] + j.z * 0.3
           s.walkSpeed = SESSION_CONFIG.botWalkSpeedSleepWalk

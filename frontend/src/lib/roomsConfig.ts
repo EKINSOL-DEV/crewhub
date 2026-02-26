@@ -1,3 +1,6 @@
+const COMMS_ROOM = 'comms-room'
+const HEADQUARTERS = 'headquarters'
+
 export interface Room {
   id: string
   name: string
@@ -29,13 +32,13 @@ interface StoredRoomsConfig {
 }
 
 export const DEFAULT_ROOMS: Room[] = [
-  { id: 'headquarters', name: 'Headquarters', icon: '🏛️', color: '#4f46e5', order: 0 },
+  { id: HEADQUARTERS, name: 'Headquarters', icon: '🏛️', color: '#4f46e5', order: 0 },
   { id: 'marketing-room', name: 'Marketing', icon: '📢', color: '#ec4899', order: 1 },
   { id: 'dev-room', name: 'Dev Room', icon: '💻', color: '#10b981', order: 2 },
   { id: 'creative-room', name: 'Creative Room', icon: '🎨', color: '#f59e0b', order: 3 },
   { id: 'thinking-room', name: 'Thinking Room', icon: '🧠', color: '#8b5cf6', order: 4 },
   { id: 'automation-room', name: 'Automation Room', icon: '⚙️', color: '#06b6d4', order: 5 },
-  { id: 'comms-room', name: 'Comms Room', icon: '📡', color: '#14b8a6', order: 6 },
+  { id: COMMS_ROOM, name: 'Comms Room', icon: '📡', color: '#14b8a6', order: 6 },
   { id: 'ops-room', name: 'Ops Room', icon: '🛠️', color: '#f97316', order: 7 },
 ]
 
@@ -46,7 +49,7 @@ export const DEFAULT_ROOMS_CONFIG: RoomsConfig = {
   gridColumns: 4,
   showRoomLabels: true,
   showRoomBorders: true,
-  unassignedRoomId: 'headquarters',
+  unassignedRoomId: HEADQUARTERS,
 }
 
 const STORAGE_KEY = 'crewhub-rooms-config'
@@ -81,11 +84,11 @@ export function saveRoomsConfig(config: RoomsConfig): { success: boolean; error?
 }
 
 const PERSONA_ROOM_DEFAULTS: Record<string, string> = {
-  'agent:main:main': 'headquarters',
-  'agent:whatsapp:main': 'comms-room',
-  'agent:telegram:main': 'comms-room',
-  'agent:slack:main': 'comms-room',
-  'agent:discord:main': 'comms-room',
+  'agent:main:main': HEADQUARTERS,
+  'agent:whatsapp:main': COMMS_ROOM,
+  'agent:telegram:main': COMMS_ROOM,
+  'agent:slack:main': COMMS_ROOM,
+  'agent:discord:main': COMMS_ROOM,
 }
 
 /**
@@ -137,7 +140,7 @@ export function getRoomForSession(
     const assignment = config.assignments.find((a) => a.botSessionKey === sessionKey)
     if (assignment) return assignment.roomId
   }
-  return config.unassignedRoomId || config.rooms[0]?.id || 'headquarters'
+  return config.unassignedRoomId || config.rooms[0]?.id || HEADQUARTERS
 }
 
 function autoAssignRoom(
@@ -192,8 +195,8 @@ function autoAssignRoom(
   if (marketingKeywords.some((kw) => label.includes(kw))) return 'marketing-room'
   if (creativeKeywords.some((kw) => label.includes(kw))) return 'creative-room'
   if (automationKeywords.some((kw) => label.includes(kw))) return 'automation-room'
-  if (commsKeywords.some((kw) => label.includes(kw))) return 'comms-room'
+  if (commsKeywords.some((kw) => label.includes(kw))) return COMMS_ROOM
   if (opsKeywords.some((kw) => label.includes(kw))) return 'ops-room'
 
-  return config.unassignedRoomId || 'headquarters'
+  return config.unassignedRoomId || HEADQUARTERS
 }

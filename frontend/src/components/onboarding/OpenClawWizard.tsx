@@ -38,11 +38,25 @@ import {
   Info,
 } from 'lucide-react'
 
+const CLS_FLEX_ITEMS_CENTER_GAP_2 = 'flex items-center gap-2'
+const CLS_FLEX_JUSTIFY_BETWEEN_PT_2 = 'flex justify-between pt-2'
+const CLS_MAX_W_LG_MX_AUTO_SPACE_Y_6 = 'max-w-lg mx-auto space-y-6'
+const CLS_PX_1_PY_05_ROUNDED_BG_AMBER_100 =
+  'px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]'
+const CLS_PX_1_PY_05_ROUNDED_BG_BLUE_100 =
+  'px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]'
+const CLS_TEXT_2XL_FONT_BOLD = 'text-2xl font-bold'
+const CLS_TEXT_CENTER_SPACE_Y_2 = 'text-center space-y-2'
+const SAME_MACHINE = 'same-machine'
+const SPACE_Y_1_5 = 'space-y-1.5'
+const TEXT_MUTED_FOREGROUND = 'text-muted-foreground'
+const WS_127_0_0_1_18789 = 'ws://127.0.0.1:18789'
+
 // ─── Types ──────────────────────────────────────────────────────
 
 type WizardStep = 0 | 1 | 2
 
-type SetupMode = 'same-machine' | 'docker' | 'lan' | 'advanced'
+type SetupMode = typeof SAME_MACHINE | 'docker' | 'lan' | 'advanced'
 
 interface BotTemplate {
   id: string
@@ -111,19 +125,13 @@ const SETUP_MODES: {
         <>
           <p>
             ⚠️ Use{' '}
-            <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
+            <code className={CLS_PX_1_PY_05_ROUNDED_BG_AMBER_100}>
               ws://host.docker.internal:18789
             </code>{' '}
-            or{' '}
-            <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
-              ws://172.17.0.1:18789
-            </code>
+            or <code className={CLS_PX_1_PY_05_ROUNDED_BG_AMBER_100}>ws://172.17.0.1:18789</code>
           </p>
           <p>
-            OpenClaw must bind to{' '}
-            <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
-              "lan"
-            </code>{' '}
+            OpenClaw must bind to <code className={CLS_PX_1_PY_05_ROUNDED_BG_AMBER_100}>"lan"</code>{' '}
             mode (not "loopback")
           </p>
         </>
@@ -131,7 +139,7 @@ const SETUP_MODES: {
     },
   },
   {
-    id: 'same-machine',
+    id: SAME_MACHINE,
     title: 'Same computer',
     description: 'Both running directly on the host (no Docker)',
     icon: <Server className="h-5 w-5" />,
@@ -140,14 +148,8 @@ const SETUP_MODES: {
       content: (
         <>
           <p>
-            ℹ️ Use{' '}
-            <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">
-              ws://localhost:18789
-            </code>{' '}
-            or{' '}
-            <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">
-              ws://127.0.0.1:18789
-            </code>
+            ℹ️ Use <code className={CLS_PX_1_PY_05_ROUNDED_BG_BLUE_100}>ws://localhost:18789</code>{' '}
+            or <code className={CLS_PX_1_PY_05_ROUNDED_BG_BLUE_100}>ws://127.0.0.1:18789</code>
           </p>
           <p>Dev mode requires Vite proxy configured for the backend port</p>
         </>
@@ -165,9 +167,7 @@ const SETUP_MODES: {
         <>
           <p>
             ℹ️ Use{' '}
-            <code className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-900 font-mono text-[10px]">
-              ws://your-server-ip:18789
-            </code>
+            <code className={CLS_PX_1_PY_05_ROUNDED_BG_BLUE_100}>ws://your-server-ip:18789</code>
           </p>
           <p>OpenClaw must be accessible from this machine (firewall/network)</p>
         </>
@@ -238,10 +238,10 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   const [step, setStep] = useState<WizardStep>(0)
   const [envInfo, setEnvInfo] = useState<EnvironmentInfo | null>(null)
   const [envLoading, setEnvLoading] = useState(true)
-  const [setupMode, setSetupMode] = useState<SetupMode>('same-machine')
+  const [setupMode, setSetupMode] = useState<SetupMode>(SAME_MACHINE)
 
   // Connection fields
-  const [url, setUrl] = useState('ws://127.0.0.1:18789')
+  const [url, setUrl] = useState(WS_127_0_0_1_18789)
   const [token, setToken] = useState('')
   const [connectionName, setConnectionName] = useState('OpenClaw Local')
   const [showToken, setShowToken] = useState(false)
@@ -285,8 +285,8 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   useEffect(() => {
     if (!envInfo) return
     switch (setupMode) {
-      case 'same-machine':
-        setUrl('ws://127.0.0.1:18789')
+      case SAME_MACHINE:
+        setUrl(WS_127_0_0_1_18789)
         break
       case 'docker':
         if (envInfo.docker_host_internal_reachable) {
@@ -340,13 +340,13 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   // ─── Step 0: Choose setup mode ────────────────────────────────
 
   const renderStep0 = () => (
-    <div className="max-w-lg mx-auto space-y-6">
-      <div className="text-center space-y-2">
+    <div className={CLS_MAX_W_LG_MX_AUTO_SPACE_Y_6}>
+      <div className={CLS_TEXT_CENTER_SPACE_Y_2}>
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-2">
           <Zap className="h-8 w-8 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold">Connect to OpenClaw</h2>
-        <p className="text-muted-foreground">Where is your OpenClaw gateway running?</p>
+        <h2 className={CLS_TEXT_2XL_FONT_BOLD}>Connect to OpenClaw</h2>
+        <p className={TEXT_MUTED_FOREGROUND}>Where is your OpenClaw gateway running?</p>
       </div>
 
       {/* Docker auto-detect banner */}
@@ -423,8 +423,8 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         ))}
       </div>
 
-      <div className="flex justify-between pt-2">
-        <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">
+      <div className={CLS_FLEX_JUSTIFY_BETWEEN_PT_2}>
+        <Button variant="ghost" onClick={onSkip} className={TEXT_MUTED_FOREGROUND}>
           Skip for now
         </Button>
         <Button onClick={() => setStep(1)} className="gap-2">
@@ -438,15 +438,15 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   // ─── Step 1: Connection details + Test ────────────────────────
 
   const renderStep1 = () => (
-    <div className="max-w-lg mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Connection Details</h2>
-        <p className="text-muted-foreground">Enter your OpenClaw gateway URL and token.</p>
+    <div className={CLS_MAX_W_LG_MX_AUTO_SPACE_Y_6}>
+      <div className={CLS_TEXT_CENTER_SPACE_Y_2}>
+        <h2 className={CLS_TEXT_2XL_FONT_BOLD}>Connection Details</h2>
+        <p className={TEXT_MUTED_FOREGROUND}>Enter your OpenClaw gateway URL and token.</p>
       </div>
 
       <div className="space-y-4">
         {/* Name */}
-        <div className="space-y-1.5">
+        <div className={SPACE_Y_1_5}>
           <Label className="text-xs">Connection Name</Label>
           <Input
             value={connectionName}
@@ -457,7 +457,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         </div>
 
         {/* URL */}
-        <div className="space-y-1.5">
+        <div className={SPACE_Y_1_5}>
           <Label className="text-xs">WebSocket URL</Label>
           <Input
             value={url}
@@ -465,7 +465,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
               setUrl(e.target.value)
               setTestResult(null)
             }}
-            placeholder="ws://127.0.0.1:18789"
+            placeholder={WS_127_0_0_1_18789}
             className="h-9 font-mono text-sm"
           />
 
@@ -504,17 +504,13 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
                 <p className="font-semibold">⚠️ OpenClaw Gateway must listen on all interfaces</p>
                 <p>
                   By default, OpenClaw binds to{' '}
-                  <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
-                    loopback
-                  </code>{' '}
-                  (localhost only).
+                  <code className={CLS_PX_1_PY_05_ROUNDED_BG_AMBER_100}>loopback</code> (localhost
+                  only).
                 </p>
                 <p>
                   For Docker to connect, change to{' '}
-                  <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
-                    "bind": "lan"
-                  </code>{' '}
-                  in <code className="font-mono">~/.openclaw/openclaw.json</code>:
+                  <code className={CLS_PX_1_PY_05_ROUNDED_BG_AMBER_100}>"bind": "lan"</code> in{' '}
+                  <code className="font-mono">~/.openclaw/openclaw.json</code>:
                 </p>
                 <div className="mt-1 p-2 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px] space-y-0.5">
                   <div>
@@ -529,7 +525,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
                 </div>
                 <p className="mt-1">
                   Then restart:{' '}
-                  <code className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900 font-mono text-[10px]">
+                  <code className={CLS_PX_1_PY_05_ROUNDED_BG_AMBER_100}>
                     openclaw gateway restart
                   </code>
                 </p>
@@ -539,7 +535,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         </div>
 
         {/* Token */}
-        <div className="space-y-1.5">
+        <div className={SPACE_Y_1_5}>
           <Label className="text-xs">API Token</Label>
           <div className="flex gap-2">
             <Input
@@ -653,7 +649,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           <div
             className={`p-4 rounded-lg border-l-4 space-y-2 ${getCategoryColor(testResult.category)}`}
           >
-            <div className="flex items-center gap-2">
+            <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
               <XCircle className="h-4 w-4 text-red-500 shrink-0" />
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {getCategoryLabel(testResult.category)}
@@ -679,7 +675,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         {/* Success result */}
         {testResult?.ok && (
           <div className="p-4 rounded-lg border border-green-300 bg-green-50 dark:bg-green-950/30 dark:border-green-800 space-y-1">
-            <div className="flex items-center gap-2">
+            <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
               <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
               <span className="text-sm font-medium text-green-800 dark:text-green-300">
                 {testResult.message}
@@ -689,7 +685,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         )}
       </div>
 
-      <div className="flex justify-between pt-2">
+      <div className={CLS_FLEX_JUSTIFY_BETWEEN_PT_2}>
         <Button variant="outline" onClick={() => setStep(0)} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -705,17 +701,17 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
   // ─── Step 2: First bot creation ───────────────────────────────
 
   const renderStep2 = () => (
-    <div className="max-w-lg mx-auto space-y-6">
-      <div className="text-center space-y-2">
+    <div className={CLS_MAX_W_LG_MX_AUTO_SPACE_Y_6}>
+      <div className={CLS_TEXT_CENTER_SPACE_Y_2}>
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-green-100 dark:bg-green-900/30 mb-2">
           <Rocket className="h-8 w-8 text-green-600 dark:text-green-400" />
         </div>
-        <h2 className="text-2xl font-bold">Create Your First Bot</h2>
-        <p className="text-muted-foreground">Choose a template and give your agent a name.</p>
+        <h2 className={CLS_TEXT_2XL_FONT_BOLD}>Create Your First Bot</h2>
+        <p className={TEXT_MUTED_FOREGROUND}>Choose a template and give your agent a name.</p>
       </div>
 
       {/* Display Name */}
-      <div className="space-y-1.5">
+      <div className={SPACE_Y_1_5}>
         <Label className="text-xs font-medium">Agent Display Name</Label>
         <Input
           value={displayName}
@@ -777,7 +773,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         </button>
       </div>
 
-      <div className="flex justify-between pt-2">
+      <div className={CLS_FLEX_JUSTIFY_BETWEEN_PT_2}>
         <Button variant="outline" onClick={() => setStep(1)} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -804,7 +800,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
     <div className="py-8 px-4">
       {/* Progress */}
       <div className="max-w-lg mx-auto mb-8">
-        <div className="flex items-center gap-2">
+        <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
           {[0, 1, 2].map((s) => (
             <div
               key={s}

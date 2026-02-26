@@ -6,6 +6,12 @@ import {
   type ShadowMapType,
 } from '@/hooks/useLightingConfig'
 
+const CLS_FLEX_1_BG_GRAY_800_TEXT_GRAY_200_TEXT_10 =
+  'flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600'
+const CLS_FLEX_ITEMS_CENTER_GAP_2 = 'flex items-center gap-2'
+const CLS_TEXT_10PX_TEXT_GRAY_400_W_14_SHRINK_0 = 'text-[10px] text-gray-400 w-14 shrink-0'
+const COPY_JSON = '📋 Copy JSON'
+
 // ─── Slider Component ───────────────────────────────────────────
 
 function Slider({
@@ -33,7 +39,7 @@ function Slider({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
       <span className="text-[10px] text-gray-400 w-14 shrink-0 truncate" title={label}>
         {label}
       </span>
@@ -64,7 +70,7 @@ function ColorField({
   onChange: (v: string) => void
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
       <span className="text-[10px] text-gray-400 w-14 shrink-0 truncate" title={label}>
         {label}
       </span>
@@ -91,8 +97,8 @@ function Toggle({
   onChange: (v: boolean) => void
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] text-gray-400 w-14 shrink-0">{label}</span>
+    <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
+      <span className={CLS_TEXT_10PX_TEXT_GRAY_400_W_14_SHRINK_0}>{label}</span>
       <button
         onClick={() => onChange(!checked)}
         className={`w-8 h-4 rounded-full transition-colors ${checked ? 'bg-blue-500' : 'bg-gray-600'}`}
@@ -193,7 +199,7 @@ export function LightingDebugPanel() {
   }, [])
 
   // Copy / Paste state
-  const [copyLabel, setCopyLabel] = useState('📋 Copy JSON')
+  const [copyLabel, setCopyLabel] = useState(COPY_JSON)
   const [pasteError, setPasteError] = useState('')
 
   const handleCopy = async () => {
@@ -214,11 +220,11 @@ export function LightingDebugPanel() {
         ta.remove()
       }
       setCopyLabel('✅ Copied!')
-      setTimeout(() => setCopyLabel('📋 Copy JSON'), 1500)
+      setTimeout(() => setCopyLabel(COPY_JSON), 1500)
     } catch {
       // Last resort: prompt with the JSON so user can manually copy
       window.prompt('Copy this lighting config:', json)
-      setCopyLabel('📋 Copy JSON')
+      setCopyLabel(COPY_JSON)
     }
   }
 
@@ -404,12 +410,12 @@ export function LightingDebugPanel() {
               checked={config.shadows.enabled}
               onChange={(v) => setShadows({ enabled: v })}
             />
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-400 w-14 shrink-0">Type</span>
+            <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
+              <span className={CLS_TEXT_10PX_TEXT_GRAY_400_W_14_SHRINK_0}>Type</span>
               <select
                 value={config.shadows.type}
                 onChange={(e) => setShadows({ type: e.target.value as ShadowMapType })}
-                className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
+                className={CLS_FLEX_1_BG_GRAY_800_TEXT_GRAY_200_TEXT_10}
               >
                 {SHADOW_TYPE_OPTIONS.map((opt) => (
                   <option key={opt} value={opt}>
@@ -418,12 +424,12 @@ export function LightingDebugPanel() {
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-400 w-14 shrink-0">Map Size</span>
+            <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
+              <span className={CLS_TEXT_10PX_TEXT_GRAY_400_W_14_SHRINK_0}>Map Size</span>
               <select
                 value={config.shadows.mapSize}
                 onChange={(e) => setShadows({ mapSize: Number.parseInt(e.target.value, 10) })}
-                className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
+                className={CLS_FLEX_1_BG_GRAY_800_TEXT_GRAY_200_TEXT_10}
               >
                 {SHADOW_MAP_SIZES.map((size) => (
                   <option key={size} value={size}>
@@ -533,14 +539,14 @@ export function LightingDebugPanel() {
 
             {/* ── Environment ── */}
             <SectionHeader title="🎬 Tone Mapping" />
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-400 w-14 shrink-0">Type</span>
+            <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
+              <span className={CLS_TEXT_10PX_TEXT_GRAY_400_W_14_SHRINK_0}>Type</span>
               <select
                 value={config.toneMapping}
                 onChange={(e) =>
                   setConfig({ toneMapping: e.target.value as LightingConfig['toneMapping'] })
                 }
-                className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
+                className={CLS_FLEX_1_BG_GRAY_800_TEXT_GRAY_200_TEXT_10}
               >
                 {TONE_OPTIONS.map((opt) => (
                   <option key={opt} value={opt}>

@@ -1,3 +1,6 @@
+const PHONE_32469774873 = '+32469774873'
+const PHONE_32494330227 = '+32494330227'
+
 const adjectives = [
   'brave',
   'swift',
@@ -35,8 +38,8 @@ const MINION_NAMES: Record<string, string[]> = {
 }
 
 const KNOWN_PHONES: Record<string, string> = {
-  '+32494330227': 'Nicky',
-  '+32469774873': 'Ekinbot',
+  PHONE_32494330227: 'Nicky',
+  PHONE_32469774873: 'Ekinbot',
 }
 
 export function generateFriendlyName(sessionKey: string): string {
@@ -75,7 +78,7 @@ export function getDisplayName(session: { key: string; label?: string }): string
 // ── Helpers ───────────────────────────────────────────────────
 
 function containsKnownPhone(key: string): boolean {
-  return key.includes('+32494330227') || key.includes('+32469774873')
+  return key.includes(PHONE_32494330227) || key.includes(PHONE_32469774873)
 }
 
 function isFixedAgentKey(sessionKey: string): boolean {
@@ -88,7 +91,7 @@ function isFixedAgentKey(sessionKey: string): boolean {
 
 function isFixedWhatsAppPayload(payload: string): boolean {
   if (payload.includes('-subagent-') || payload.includes('-spawn-')) return false
-  if (payload.includes('+32494330227') || payload.includes('+32469774873')) return true
+  if (payload.includes(PHONE_32494330227) || payload.includes(PHONE_32469774873)) return true
   if (/^g-agent-\w+-main/.exec(payload)) return true
   return false
 }
@@ -119,7 +122,7 @@ export function isFixedAgent(sessionKey: string): boolean {
   }
 
   if (/^\+\d+$/.exec(sessionKey)) {
-    return sessionKey === '+32494330227' || sessionKey === '+32469774873'
+    return sessionKey === PHONE_32494330227 || sessionKey === PHONE_32469774873
   }
 
   return false

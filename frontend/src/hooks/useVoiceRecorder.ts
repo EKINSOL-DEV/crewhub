@@ -13,6 +13,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { API_BASE } from '@/lib/api'
 
+const AUDIO_WEBM = 'audio/webm'
+
 const MAX_DURATION_MS = 5 * 60 * 1000 // 5 minutes
 const MIC_DEVICE_KEY = 'crewhub-mic-device-id'
 
@@ -64,7 +66,7 @@ export function useVoiceRecorder(
   const maxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startTimeRef = useRef<number>(0)
   const cancelledRef = useRef(false)
-  const mimeTypeRef = useRef<string>('audio/webm')
+  const mimeTypeRef = useRef<string>(AUDIO_WEBM)
   // sendImmediately: when true, uploadAudio calls onAudioReady directly (skip preview)
   const sendImmediatelyRef = useRef(false)
   // Keep onAudioReady in a ref so uploadAudio can call the latest version
@@ -211,15 +213,15 @@ export function useVoiceRecorder(
       let mimeType: string
       if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
         mimeType = 'audio/webm;codecs=opus'
-      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-        mimeType = 'audio/webm'
+      } else if (MediaRecorder.isTypeSupported(AUDIO_WEBM)) {
+        mimeType = AUDIO_WEBM
       } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
         mimeType = 'audio/mp4'
       } else {
         mimeType = ''
       }
 
-      mimeTypeRef.current = mimeType || 'audio/webm'
+      mimeTypeRef.current = mimeType || AUDIO_WEBM
 
       const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
 
@@ -233,7 +235,7 @@ export function useVoiceRecorder(
       mr.onstop = () => {
         const dur = (Date.now() - startTimeRef.current) / 1000
         const blob = new Blob(chunksRef.current, {
-          type: mimeTypeRef.current || 'audio/webm',
+          type: mimeTypeRef.current || AUDIO_WEBM,
         })
 
         cleanup()

@@ -11,6 +11,9 @@ import {
 import { API_BASE } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
 
+const APPLICATION_JSON = 'application/json'
+const UNKNOWN_ERROR = 'Unknown error'
+
 export type FloorStyle =
   | 'default'
   | 'tiles'
@@ -192,7 +195,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') return
       console.error('[RoomsContext] Failed to fetch rooms:', err)
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err.message : UNKNOWN_ERROR)
     } finally {
       setIsLoading(false)
     }
@@ -316,7 +319,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
       try {
         const response = await fetch(`${API_BASE}/rooms`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify({
             id: room.id,
             name: room.name,
@@ -332,7 +335,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
         await fetchRooms()
         return { success: true }
       } catch (err) {
-        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+        return { success: false, error: err instanceof Error ? err.message : UNKNOWN_ERROR }
       }
     },
     [fetchRooms, rooms.length]
@@ -353,14 +356,14 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
       try {
         const response = await fetch(`${API_BASE}/rooms/${roomId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify(updates),
         })
         if (!response.ok) throw new Error('Failed to update room')
         await fetchRooms()
         return { success: true }
       } catch (err) {
-        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+        return { success: false, error: err instanceof Error ? err.message : UNKNOWN_ERROR }
       }
     },
     [fetchRooms]
@@ -376,7 +379,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
         await fetchRooms()
         return { success: true }
       } catch (err) {
-        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+        return { success: false, error: err instanceof Error ? err.message : UNKNOWN_ERROR }
       }
     },
     [fetchRooms]
@@ -387,14 +390,14 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
       try {
         const response = await fetch(`${API_BASE}/rooms/reorder`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify(roomIds),
         })
         if (!response.ok) throw new Error('Failed to reorder rooms')
         await fetchRooms()
         return { success: true }
       } catch (err) {
-        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+        return { success: false, error: err instanceof Error ? err.message : UNKNOWN_ERROR }
       }
     },
     [fetchRooms]

@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { isSubagent, getParentSessionKey, getChildSessions } from '../lib/sessionUtils'
 import type { CrewSession } from '../lib/api'
 
+const AGENT_MAIN_MAIN = 'agent:main:main'
+const AGENT_MAIN_SUBAGENT_ABC = 'agent:main:subagent:abc'
+
 describe('isSubagent', () => {
   it('returns true for subagent sessions', () => {
     expect(isSubagent('agent:main:subagent:abc123')).toBe(true)
@@ -12,7 +15,7 @@ describe('isSubagent', () => {
   })
 
   it('returns false for main sessions', () => {
-    expect(isSubagent('agent:main:main')).toBe(false)
+    expect(isSubagent(AGENT_MAIN_MAIN)).toBe(false)
   })
 
   it('returns false for cron sessions', () => {
@@ -22,7 +25,7 @@ describe('isSubagent', () => {
 
 describe('getParentSessionKey', () => {
   it('returns parent key for main agent subagents', () => {
-    expect(getParentSessionKey('agent:main:subagent:abc')).toBe('agent:main:main')
+    expect(getParentSessionKey(AGENT_MAIN_SUBAGENT_ABC)).toBe(AGENT_MAIN_MAIN)
   })
 
   it('returns parent key for dev agent subagents', () => {
@@ -30,7 +33,7 @@ describe('getParentSessionKey', () => {
   })
 
   it('returns null for non-subagent sessions', () => {
-    expect(getParentSessionKey('agent:main:main')).toBeNull()
+    expect(getParentSessionKey(AGENT_MAIN_MAIN)).toBeNull()
   })
 
   it('returns null for short keys', () => {
@@ -41,14 +44,14 @@ describe('getParentSessionKey', () => {
 describe('getChildSessions', () => {
   const mockSessions: CrewSession[] = [
     {
-      key: 'agent:main:main',
+      key: AGENT_MAIN_MAIN,
       kind: 'agent',
       channel: 'cli',
       updatedAt: Date.now(),
       sessionId: 's1',
     },
     {
-      key: 'agent:main:subagent:abc',
+      key: AGENT_MAIN_SUBAGENT_ABC,
       kind: 'agent',
       channel: 'cli',
       updatedAt: Date.now(),
@@ -71,9 +74,9 @@ describe('getChildSessions', () => {
   ]
 
   it('returns child sessions for a parent', () => {
-    const children = getChildSessions('agent:main:main', mockSessions)
+    const children = getChildSessions(AGENT_MAIN_MAIN, mockSessions)
     expect(children.length).toBe(2)
-    expect(children.map((c) => c.key)).toContain('agent:main:subagent:abc')
+    expect(children.map((c) => c.key)).toContain(AGENT_MAIN_SUBAGENT_ABC)
     expect(children.map((c) => c.key)).toContain('agent:main:subagent:def')
   })
 

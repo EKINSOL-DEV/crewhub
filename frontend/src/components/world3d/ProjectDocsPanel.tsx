@@ -5,6 +5,11 @@ import rehypeRaw from 'rehype-raw'
 import { API_BASE } from '@/lib/api'
 import { formatFileSize } from '@/lib/formatters'
 
+const RGBA_0_0_0_0_04 = 'rgba(0,0,0,0.04)'
+const RGBA_0_0_0_0_05 = 'rgba(0,0,0,0.05)'
+const UI_MONOSPACE_SFMONO_REGULAR_SF_MONO_MENL =
+  'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace'
+
 // ── Types ──────────────────────────────────────────────────────
 
 interface FileEntry {
@@ -167,7 +172,7 @@ function FileTree({
               transition: 'background 0.1s',
             }}
             onMouseEnter={(e) => {
-              if (selectedPath !== entry.path) e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
+              if (selectedPath !== entry.path) e.currentTarget.style.background = RGBA_0_0_0_0_04
             }}
             onMouseLeave={(e) => {
               if (selectedPath !== entry.path) e.currentTarget.style.background = 'transparent'
@@ -261,11 +266,11 @@ function DocPre({ children, ...props }: any) {
       style={{
         margin: '10px 0',
         padding: 12,
-        background: 'rgba(0,0,0,0.04)',
+        background: RGBA_0_0_0_0_04,
         borderRadius: 8,
         fontSize: 12,
         lineHeight: 1.5,
-        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+        fontFamily: UI_MONOSPACE_SFMONO_REGULAR_SF_MONO_MENL,
         overflow: 'auto',
       }}
     >
@@ -285,7 +290,7 @@ function DocCode({ className, children, ...props }: any) {
           background: 'rgba(0,0,0,0.06)',
           borderRadius: 4,
           fontSize: '0.9em',
-          fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+          fontFamily: UI_MONOSPACE_SFMONO_REGULAR_SF_MONO_MENL,
         }}
       >
         {children}
@@ -352,7 +357,7 @@ function DocTh({ children, ...props }: any) {
       style={{
         padding: '6px 10px',
         border: '1px solid rgba(0,0,0,0.1)',
-        background: 'rgba(0,0,0,0.04)',
+        background: RGBA_0_0_0_0_04,
         fontWeight: 600,
         textAlign: 'left',
       }}
@@ -598,7 +603,7 @@ export function ProjectDocsPanel({
               height: 28,
               borderRadius: 8,
               border: 'none',
-              background: 'rgba(0,0,0,0.05)',
+              background: RGBA_0_0_0_0_05,
               color: '#6b7280',
               cursor: 'pointer',
               display: 'flex',
@@ -651,7 +656,7 @@ export function ProjectDocsPanel({
             height: 28,
             borderRadius: 8,
             border: 'none',
-            background: 'rgba(0,0,0,0.05)',
+            background: RGBA_0_0_0_0_05,
             color: '#6b7280',
             cursor: 'pointer',
             display: 'flex',
@@ -665,7 +670,7 @@ export function ProjectDocsPanel({
             e.currentTarget.style.background = 'rgba(0,0,0,0.1)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
+            e.currentTarget.style.background = RGBA_0_0_0_0_05
           }}
         >
           ✕
@@ -846,7 +851,7 @@ export function ProjectDocsPanel({
                       borderRadius: 8,
                       fontSize: 12,
                       lineHeight: 1.6,
-                      fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                      fontFamily: UI_MONOSPACE_SFMONO_REGULAR_SF_MONO_MENL,
                       color: '#374151',
                       overflow: 'auto',
                       whiteSpace: 'pre-wrap',

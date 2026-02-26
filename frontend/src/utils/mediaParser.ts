@@ -1,3 +1,5 @@
+const IMAGE_JPEG = 'image/jpeg'
+
 /**
  * Media attachment parser for chat messages.
  * Detects and extracts image, video, and audio attachments from message content.
@@ -22,7 +24,7 @@ export interface ParsedMessage {
 }
 
 // Supported image MIME types
-const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+const SUPPORTED_IMAGE_TYPES = new Set([IMAGE_JPEG, 'image/png', 'image/gif', 'image/webp'])
 
 // Supported video MIME types
 const SUPPORTED_VIDEO_TYPES = new Set(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'])
@@ -86,8 +88,8 @@ export function getMediaUrl(path: string): string {
 // ── Extension → MIME type map ─────────────────────────────────
 
 const EXT_TO_MIME: Record<string, { mimeType: string; mediaType: 'image' | 'video' }> = {
-  jpg: { mimeType: 'image/jpeg', mediaType: 'image' },
-  jpeg: { mimeType: 'image/jpeg', mediaType: 'image' },
+  jpg: { mimeType: IMAGE_JPEG, mediaType: 'image' },
+  jpeg: { mimeType: IMAGE_JPEG, mediaType: 'image' },
   png: { mimeType: 'image/png', mediaType: 'image' },
   gif: { mimeType: 'image/gif', mediaType: 'image' },
   webp: { mimeType: 'image/webp', mediaType: 'image' },

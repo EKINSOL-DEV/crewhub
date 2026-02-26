@@ -27,6 +27,9 @@ import { StepReady } from './steps/StepReady'
 import { candidateToConnection } from './onboardingHelpers'
 import type { WizardStep, ConnectionConfig, OnboardingWizardProps } from './onboardingTypes'
 
+const APPLICATION_JSON = 'application/json'
+const KEY_CREWHUB_ONBOARDED = 'crewhub-onboarded'
+
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>(1)
   const [showOpenClawWizard, setShowOpenClawWizard] = useState(false)
@@ -137,7 +140,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         }
         await fetch('/api/connections', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify({ name: conn.name, type: conn.type, config, enabled: true }),
         })
       } catch {
@@ -148,11 +151,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
   const completeOnboarding = useCallback(async () => {
     await saveConnections()
-    localStorage.setItem('crewhub-onboarded', 'true')
+    localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
     try {
       await fetch('/api/settings/crewhub-onboarded', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { CONTENT_TYPE: APPLICATION_JSON },
         body: JSON.stringify({ value: 'true' }),
       })
     } catch {
@@ -166,11 +169,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   const goNext = useCallback(() => setStep((s) => Math.min(s + 1, 6) as WizardStep), [])
   const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 1) as WizardStep), [])
   const handleSkip = useCallback(() => {
-    localStorage.setItem('crewhub-onboarded', 'true')
+    localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
     onSkip()
   }, [onSkip])
   const handleDemo = useCallback(() => {
-    localStorage.setItem('crewhub-onboarded', 'true')
+    localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
     localStorage.setItem('crewhub-demo-mode', 'true')
     onComplete()
   }, [onComplete])
@@ -186,7 +189,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
       try {
         await fetch('/api/connections', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify({
             name: config.name,
             type: 'openclaw',
@@ -211,7 +214,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         try {
           await fetch(`/api/session-display-names/${encodeURIComponent(sessionKey)}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { CONTENT_TYPE: APPLICATION_JSON },
             body: JSON.stringify({ display_name: config.displayName }),
           })
         } catch {
@@ -220,7 +223,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         try {
           await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { CONTENT_TYPE: APPLICATION_JSON },
             body: JSON.stringify({ name: config.displayName }),
           })
         } catch {
@@ -229,7 +232,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         try {
           await fetch('/api/settings/agent-display-name', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { CONTENT_TYPE: APPLICATION_JSON },
             body: JSON.stringify({
               value: JSON.stringify({ agentId, sessionKey, displayName: config.displayName }),
             }),
@@ -239,11 +242,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         }
       }
 
-      localStorage.setItem('crewhub-onboarded', 'true')
+      localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
       try {
         await fetch('/api/settings/crewhub-onboarded', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify({ value: 'true' }),
         })
       } catch {

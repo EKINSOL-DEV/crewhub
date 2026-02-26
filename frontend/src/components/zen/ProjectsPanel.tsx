@@ -8,6 +8,9 @@ import { ProjectFilterSelect } from './ProjectFilterSelect'
 import { ProjectOverviewTab } from './ProjectOverviewTab'
 import { ZenDocumentsPanel } from './ZenDocumentsPanel'
 
+const BORDER_1PX_SOLID_VAR_ZEN_BORDER_VAR_Z = '1px solid var(--zen-border, var(--zen-border))'
+const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted)'
+
 interface ProjectsPanelProps {
   readonly projectId?: string | null
   readonly projectName?: string | null
@@ -45,7 +48,7 @@ export function ProjectsPanel({
         <div
           style={{
             padding: '8px 12px',
-            borderBottom: '1px solid var(--zen-border, var(--zen-border))',
+            borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_VAR_Z,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -78,7 +81,7 @@ export function ProjectsPanel({
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '100%',
-                color: 'var(--zen-fg-muted)',
+                color: VAR_ZEN_FG_MUTED,
                 fontSize: 13,
                 gap: 8,
               }}
@@ -113,7 +116,7 @@ export function ProjectsPanel({
       <div
         style={{
           padding: '8px 12px',
-          borderBottom: '1px solid var(--zen-border, var(--zen-border))',
+          borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_VAR_Z,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -140,7 +143,7 @@ export function ProjectsPanel({
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid var(--zen-border, var(--zen-border))',
+          borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_VAR_Z,
           padding: '0 12px',
           flexShrink: 0,
         }}
@@ -199,7 +202,7 @@ function TabButton({
         padding: '8px 12px',
         fontSize: 12,
         fontWeight: 600,
-        color: active ? 'var(--zen-accent)' : 'var(--zen-fg-muted)',
+        color: active ? 'var(--zen-accent)' : VAR_ZEN_FG_MUTED,
         background: 'none',
         border: 'none',
         borderBottom: `2px solid ${active ? 'var(--zen-accent, #3b82f6)' : 'transparent'}`,
@@ -265,7 +268,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
           <div
             style={{
               fontSize: 11,
-              color: 'var(--zen-fg-muted)',
+              color: VAR_ZEN_FG_MUTED,
               marginTop: 2,
               overflow: 'hidden',
               textOverflow: 'ellipsis',

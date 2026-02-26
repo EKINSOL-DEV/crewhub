@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import type { FileNode } from '@/hooks/useAgentFiles'
 
+const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted, hsl(var(--muted-foreground)))'
+
 interface FileTreeProps {
   readonly files: FileNode[]
   readonly selectedPath?: string
@@ -83,7 +85,7 @@ function TreeNode({
           <span
             style={{
               fontSize: 10,
-              color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+              color: VAR_ZEN_FG_MUTED,
               width: 10,
               textAlign: 'center',
             }}
@@ -99,11 +101,7 @@ function TreeNode({
           {node.name}
         </span>
         {!isDir && node.size != null && (
-          <span
-            style={{ fontSize: 10, color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))' }}
-          >
-            {formatSize(node.size)}
-          </span>
+          <span style={{ fontSize: 10, color: VAR_ZEN_FG_MUTED }}>{formatSize(node.size)}</span>
         )}
         {!isDir && onExpand && (
           <button
@@ -117,7 +115,7 @@ function TreeNode({
               border: 'none',
               cursor: 'pointer',
               fontSize: 11,
-              color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+              color: VAR_ZEN_FG_MUTED,
               padding: '0 2px',
               opacity: 0.6,
             }}
@@ -151,7 +149,7 @@ export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: F
         style={{
           padding: 16,
           fontSize: 12,
-          color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+          color: VAR_ZEN_FG_MUTED,
           textAlign: 'center',
         }}
       >
@@ -166,7 +164,7 @@ export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: F
         style={{
           padding: 16,
           fontSize: 12,
-          color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+          color: VAR_ZEN_FG_MUTED,
           textAlign: 'center',
         }}
       >

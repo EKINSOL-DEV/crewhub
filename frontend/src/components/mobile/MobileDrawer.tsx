@@ -16,6 +16,8 @@ import {
   Palette,
 } from 'lucide-react'
 
+const VAR_MOBILE_TEXT_MUTED = 'var(--mobile-text-muted, #475569)'
+
 export type MobilePanel =
   | 'chat'
   | 'docs'
@@ -184,7 +186,7 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
                         fontWeight: 600,
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        color: 'var(--mobile-text-muted, #475569)',
+                        color: VAR_MOBILE_TEXT_MUTED,
                         whiteSpace: 'nowrap',
                       }}
                     >
@@ -219,7 +221,7 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
                     borderRadius: 12,
                     cursor: isDisabled ? 'default' : 'pointer',
                     color: (() => {
-                      if (isDisabled) return 'var(--mobile-text-muted, #475569)'
+                      if (isDisabled) return VAR_MOBILE_TEXT_MUTED
                       return isActive ? '#818cf8' : 'var(--mobile-text, #cbd5e1)'
                     })(),
                     fontSize: 15,
@@ -257,7 +259,7 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
             padding: '16px 20px',
             borderTop: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
             fontSize: 11,
-            color: 'var(--mobile-text-muted, #475569)',
+            color: VAR_MOBILE_TEXT_MUTED,
           }}
         >
           CrewHub Mobile

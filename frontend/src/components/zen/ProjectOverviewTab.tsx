@@ -5,6 +5,9 @@ import { useState, useEffect } from 'react'
 import { useProjects, type ProjectOverview } from '@/hooks/useProjects'
 import { useTasks } from '@/hooks/useTasks'
 
+const VAR_ZEN_FG = 'var(--zen-fg)'
+const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted)'
+
 interface ProjectOverviewTabProps {
   readonly projectId: string
   readonly projectName?: string | null
@@ -36,7 +39,7 @@ export function ProjectOverviewTab({
 
   if (loading) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', color: 'var(--zen-fg-muted)', fontSize: 13 }}>
+      <div style={{ padding: 24, textAlign: 'center', color: VAR_ZEN_FG_MUTED, fontSize: 13 }}>
         Loading project overview...
       </div>
     )
@@ -44,7 +47,7 @@ export function ProjectOverviewTab({
 
   if (!project) {
     return (
-      <div style={{ padding: 24, textAlign: 'center', color: 'var(--zen-fg-muted)', fontSize: 13 }}>
+      <div style={{ padding: 24, textAlign: 'center', color: VAR_ZEN_FG_MUTED, fontSize: 13 }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>❌</div>
         Project not found
       </div>
@@ -89,7 +92,7 @@ export function ProjectOverviewTab({
             style={{
               fontSize: 16,
               fontWeight: 700,
-              color: 'var(--zen-fg)',
+              color: VAR_ZEN_FG,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -102,7 +105,7 @@ export function ProjectOverviewTab({
           <div
             style={{
               fontSize: 13,
-              color: 'var(--zen-fg-muted)',
+              color: VAR_ZEN_FG_MUTED,
               marginTop: 8,
               lineHeight: 1.5,
             }}
@@ -143,7 +146,7 @@ export function ProjectOverviewTab({
           style={{
             fontSize: 11,
             fontWeight: 700,
-            color: 'var(--zen-fg-muted)',
+            color: VAR_ZEN_FG_MUTED,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             marginBottom: 8,
@@ -167,7 +170,7 @@ export function ProjectOverviewTab({
             style={{
               fontSize: 11,
               fontWeight: 700,
-              color: 'var(--zen-fg-muted)',
+              color: VAR_ZEN_FG_MUTED,
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
               marginBottom: 8,
@@ -184,7 +187,7 @@ export function ProjectOverviewTab({
                   background: 'var(--zen-bg-hover, rgba(0,0,0,0.03))',
                   borderRadius: 6,
                   fontSize: 12,
-                  color: 'var(--zen-fg)',
+                  color: VAR_ZEN_FG,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
@@ -259,8 +262,8 @@ function StatCard({ label, value, icon }: { label: string; value: number; icon: 
       }}
     >
       <div style={{ fontSize: 16, marginBottom: 4 }}>{icon}</div>
-      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--zen-fg)' }}>{value}</div>
-      <div style={{ fontSize: 11, color: 'var(--zen-fg-muted)', fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: VAR_ZEN_FG }}>{value}</div>
+      <div style={{ fontSize: 11, color: VAR_ZEN_FG_MUTED, fontWeight: 500 }}>{label}</div>
     </div>
   )
 }
@@ -278,7 +281,7 @@ function TaskBadge({ count, label, color }: { count: number; label: string; colo
       }}
     >
       <span style={{ fontSize: 12, fontWeight: 700, color }}>{count}</span>
-      <span style={{ fontSize: 10, color: 'var(--zen-fg-muted)' }}>{label}</span>
+      <span style={{ fontSize: 10, color: VAR_ZEN_FG_MUTED }}>{label}</span>
     </div>
   )
 }

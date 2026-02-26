@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useStandups } from '@/hooks/useStandups'
 import { API_BASE } from '@/lib/api'
 
+const BORDER_1PX_SOLID_E5E7EB = '1px solid #e5e7eb'
+const BORDER_BOX = 'border-box'
+
 interface Agent {
   id: string
   name: string
@@ -189,10 +192,10 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                 width: '100%',
                 padding: '8px 12px',
                 borderRadius: 8,
-                border: '1px solid #e5e7eb',
+                border: BORDER_1PX_SOLID_E5E7EB,
                 fontSize: 14,
                 marginBottom: 16,
-                boxSizing: 'border-box',
+                boxSizing: BORDER_BOX,
               }}
             />
 
@@ -239,7 +242,7 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                 style={{
                   padding: '8px 16px',
                   borderRadius: 8,
-                  border: '1px solid #e5e7eb',
+                  border: BORDER_1PX_SOLID_E5E7EB,
                   background: '#fff',
                   fontSize: 13,
                   cursor: 'pointer',
@@ -330,11 +333,11 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                     width: '100%',
                     padding: '8px 12px',
                     borderRadius: 8,
-                    border: '1px solid #e5e7eb',
+                    border: BORDER_1PX_SOLID_E5E7EB,
                     fontSize: 13,
                     resize: 'vertical',
                     fontFamily: 'inherit',
-                    boxSizing: 'border-box',
+                    boxSizing: BORDER_BOX,
                   }}
                 />
               </div>
@@ -355,11 +358,11 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                     width: '100%',
                     padding: '8px 12px',
                     borderRadius: 8,
-                    border: '1px solid #e5e7eb',
+                    border: BORDER_1PX_SOLID_E5E7EB,
                     fontSize: 13,
                     resize: 'vertical',
                     fontFamily: 'inherit',
-                    boxSizing: 'border-box',
+                    boxSizing: BORDER_BOX,
                   }}
                 />
               </div>
@@ -380,11 +383,11 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                     width: '100%',
                     padding: '8px 12px',
                     borderRadius: 8,
-                    border: '1px solid #e5e7eb',
+                    border: BORDER_1PX_SOLID_E5E7EB,
                     fontSize: 13,
                     resize: 'vertical',
                     fontFamily: 'inherit',
-                    boxSizing: 'border-box',
+                    boxSizing: BORDER_BOX,
                   }}
                 />
               </div>

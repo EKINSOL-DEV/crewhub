@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { API_BASE } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
 
+const APPLICATION_JSON = 'application/json'
+const UNKNOWN_ERROR = 'Unknown error'
+
 export interface Project {
   id: string
   name: string
@@ -62,7 +65,7 @@ export function useProjects() {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') return
       console.error('Failed to fetch projects:', err)
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err.message : UNKNOWN_ERROR)
     } finally {
       setIsLoading(false)
     }
@@ -108,7 +111,7 @@ export function useProjects() {
       try {
         const response = await fetch(`${API_BASE}/projects`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify(project),
           signal: controller.signal,
         })
@@ -150,7 +153,7 @@ export function useProjects() {
 
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         }
       }
     },
@@ -172,7 +175,7 @@ export function useProjects() {
       try {
         const response = await fetch(`${API_BASE}/projects/${projectId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify(updates),
         })
         if (!response.ok) {
@@ -184,7 +187,7 @@ export function useProjects() {
       } catch (err) {
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         }
       }
     },
@@ -206,7 +209,7 @@ export function useProjects() {
       } catch (err) {
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         }
       }
     },
@@ -218,7 +221,7 @@ export function useProjects() {
       try {
         const response = await fetch(`${API_BASE}/rooms/${roomId}/project`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify({ project_id: projectId }),
         })
         if (!response.ok) throw new Error('Failed to assign project to room')
@@ -227,7 +230,7 @@ export function useProjects() {
       } catch (err) {
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         }
       }
     },
@@ -246,7 +249,7 @@ export function useProjects() {
       } catch (err) {
         return {
           success: false as const,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         }
       }
     },
@@ -262,7 +265,7 @@ export function useProjects() {
     } catch (err) {
       return {
         success: false as const,
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         projects: [] as ProjectOverview[],
       }
     }

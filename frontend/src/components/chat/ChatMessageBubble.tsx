@@ -18,6 +18,9 @@ import { VideoThumbnail } from './VideoThumbnail'
 import { AudioMessage } from './AudioMessage'
 import { formatRelativeTime, formatShortTimestamp } from '@/lib/formatters'
 
+const BREAK_WORD = 'break-word'
+const FLEX_START = 'flex-start'
+
 // ─────────────────────────────────────────────────────────────────
 // Markdown renderer (full-featured, shared for all variants)
 // ─────────────────────────────────────────────────────────────────
@@ -168,14 +171,14 @@ export function ThinkingBlock({ content, zenMode }: ThinkingBlockProps) {
         background: 'rgba(147, 51, 234, 0.08)',
         border: '1px solid rgba(147, 51, 234, 0.15)',
         color: '#7c3aed',
-        alignSelf: 'flex-start',
+        alignSelf: FLEX_START,
         maxWidth: '100%',
         fontStyle: 'italic',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: FLEX_START, gap: 6 }}>
         <span>💭</span>
-        <div style={{ flex: 1, wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+        <div style={{ flex: 1, wordBreak: BREAK_WORD, overflowWrap: BREAK_WORD }}>
           {displayText}
           {isLong && !isExpanded && '...'}
           {isLong && (
@@ -242,7 +245,7 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
         fontSize: 11,
         background: 'rgba(251, 191, 36, 0.1)',
         border: '1px solid rgba(251, 191, 36, 0.2)',
-        alignSelf: 'flex-start',
+        alignSelf: FLEX_START,
         maxWidth: '100%',
       }}
     >
@@ -513,13 +516,13 @@ const ChatMessageBubbleInner = memo(
           color: variant === 'mobile' ? 'var(--mobile-msg-assistant-text, #e2e8f0)' : '#1f2937',
           borderRadius: variant === 'mobile' ? '16px 16px 16px 4px' : '14px 14px 14px 4px',
           marginRight: 48,
-          alignSelf: 'flex-start',
+          alignSelf: FLEX_START,
         }
 
     const containerStyle: CSSProperties = {
       display: 'flex',
       flexDirection: 'column',
-      alignItems: isUser ? 'flex-end' : 'flex-start',
+      alignItems: isUser ? 'flex-end' : FLEX_START,
       gap: 4,
     }
 
@@ -552,8 +555,8 @@ const ChatMessageBubbleInner = memo(
               padding: variant === 'mobile' ? '10px 14px' : '8px 12px',
               fontSize: variant === 'mobile' ? 14 : 13,
               lineHeight: 1.5,
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word',
+              wordBreak: BREAK_WORD,
+              overflowWrap: BREAK_WORD,
               maxWidth: '100%',
               ...bubbleStyle,
             }}

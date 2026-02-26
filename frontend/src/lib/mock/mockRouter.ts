@@ -23,6 +23,9 @@ import {
 } from './mockSessions'
 import { lsGet, jsonResponse, okResponse } from './mockUtils'
 
+const TEAM_STANDUP = 'Team Standup'
+const THREAD_STANDUP_GROUP = 'thread-standup-group'
+
 export function handleMockRequest( // NOSONAR: complexity from legitimate mock routing switch; all branches needed for comprehensive API mocking
   pathname: string,
   method: string,
@@ -126,10 +129,10 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   if (pathname === '/api/threads' && method === 'GET') {
     const mockThreads = [
       {
-        id: 'thread-standup-group',
+        id: THREAD_STANDUP_GROUP,
         kind: 'group',
-        title: 'Team Standup',
-        title_auto: 'Team Standup',
+        title: TEAM_STANDUP,
+        title_auto: TEAM_STANDUP,
         created_by: 'user',
         created_at: Date.now() - 6 * 3_600_000,
         updated_at: Date.now() - 4 * 3_600_000,
@@ -139,7 +142,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
         participants: [
           {
             id: 'p1',
-            thread_id: 'thread-standup-group',
+            thread_id: THREAD_STANDUP_GROUP,
             agent_id: 'main',
             agent_name: 'Director',
             agent_icon: '🎯',
@@ -150,7 +153,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
           },
           {
             id: 'p2',
-            thread_id: 'thread-standup-group',
+            thread_id: THREAD_STANDUP_GROUP,
             agent_id: 'dev',
             agent_name: 'Developer',
             agent_icon: '💻',
@@ -161,7 +164,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
           },
           {
             id: 'p3',
-            thread_id: 'thread-standup-group',
+            thread_id: THREAD_STANDUP_GROUP,
             agent_id: 'flowy',
             agent_name: 'Flowy',
             agent_icon: '🎨',
@@ -172,7 +175,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
           },
           {
             id: 'p4',
-            thread_id: 'thread-standup-group',
+            thread_id: THREAD_STANDUP_GROUP,
             agent_id: 'reviewer',
             agent_name: 'Reviewer',
             agent_icon: '🔍',
@@ -196,7 +199,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
     return okResponse({
       id: threadId,
       kind: 'group',
-      title: 'Team Standup',
+      title: TEAM_STANDUP,
       participants: [],
       participant_count: 0,
       settings: {},

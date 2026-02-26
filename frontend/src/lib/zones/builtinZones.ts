@@ -1,10 +1,12 @@
 import type { Zone } from './types'
 
+const BUILTIN_GRASS = 'builtin:grass'
+
 export const MAIN_CAMPUS: Zone = {
   id: 'main-campus',
   name: 'Main Campus',
   icon: '🏢',
-  environment: 'builtin:grass',
+  environment: BUILTIN_GRASS,
   colorPrimary: '#4A90D9',
   layout: 'campus',
   defaultSpawnPoint: [0, 0, 20],
@@ -29,7 +31,7 @@ export const GAME_CENTER: Zone = {
   id: 'game-center',
   name: 'Game Center',
   icon: '🎮',
-  environment: 'builtin:grass',
+  environment: BUILTIN_GRASS,
   colorPrimary: '#E67E22',
   layout: 'arena',
   defaultSpawnPoint: [0, 0, 0],
@@ -41,7 +43,7 @@ export const ACADEMY: Zone = {
   id: 'academy',
   name: 'Academy',
   icon: '📚',
-  environment: 'builtin:grass',
+  environment: BUILTIN_GRASS,
   colorPrimary: '#27AE60',
   layout: 'classroom',
   defaultSpawnPoint: [0, 0, 0],

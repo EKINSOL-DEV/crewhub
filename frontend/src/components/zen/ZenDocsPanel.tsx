@@ -7,6 +7,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 import { API_BASE } from '@/lib/api'
 
+const BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V = '1px solid var(--zen-border, hsl(var(--border)))'
+const VAR_ZEN_FG = 'var(--zen-fg, hsl(var(--foreground)))'
+const VAR_ZEN_FG_DIM = 'var(--zen-fg-dim, hsl(var(--muted-foreground)))'
+
 // ── Types ─────────────────────────────────────────────────────────
 
 interface DocNode {
@@ -101,7 +105,7 @@ function DocTreeNode({
           cursor: 'pointer',
           fontSize: 12,
           fontFamily: 'system-ui, sans-serif',
-          color: 'var(--zen-fg, hsl(var(--foreground)))',
+          color: VAR_ZEN_FG,
           userSelect: 'none',
           borderRadius: 4,
           transition: 'background 0.1s',
@@ -118,7 +122,7 @@ function DocTreeNode({
               fontSize: 9,
               width: 12,
               textAlign: 'center',
-              color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))',
+              color: VAR_ZEN_FG_DIM,
             }}
           >
             {isExpanded ? '▼' : '▶'}
@@ -142,7 +146,7 @@ function DocTreeNode({
           <span
             style={{
               fontSize: 10,
-              color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))',
+              color: VAR_ZEN_FG_DIM,
               whiteSpace: 'nowrap',
               flexShrink: 0,
             }}
@@ -244,21 +248,15 @@ export function ZenDocsPanel() {
       <div
         style={{
           padding: '10px 16px',
-          borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+          borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
           display: 'flex',
           alignItems: 'center',
           gap: 10,
           flexShrink: 0,
         }}
       >
-        <span
-          style={{ fontWeight: 600, fontSize: 13, color: 'var(--zen-fg, hsl(var(--foreground)))' }}
-        >
-          📚 Docs
-        </span>
-        <span style={{ fontSize: 11, color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))' }}>
-          {fileCount} files
-        </span>
+        <span style={{ fontWeight: 600, fontSize: 13, color: VAR_ZEN_FG }}>📚 Docs</span>
+        <span style={{ fontSize: 11, color: VAR_ZEN_FG_DIM }}>{fileCount} files</span>
         <div style={{ flex: 1 }} />
 
         {/* Sort toggle */}
@@ -267,12 +265,12 @@ export function ZenDocsPanel() {
           title={`Sort by ${sortKey === 'name' ? 'date' : 'name'}`}
           style={{
             background: 'none',
-            border: '1px solid var(--zen-border, hsl(var(--border)))',
+            border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
             borderRadius: 4,
             cursor: 'pointer',
             fontSize: 10,
             padding: '3px 8px',
-            color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))',
+            color: VAR_ZEN_FG_DIM,
           }}
         >
           {sortKey === 'name' ? '🔤 Name' : '🕒 Date'}
@@ -287,10 +285,10 @@ export function ZenDocsPanel() {
           style={{
             width: 160,
             padding: '4px 8px',
-            border: '1px solid var(--zen-border, hsl(var(--border)))',
+            border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
             borderRadius: 4,
             background: 'var(--zen-bg-panel, hsl(var(--card)))',
-            color: 'var(--zen-fg, hsl(var(--foreground)))',
+            color: VAR_ZEN_FG,
             fontSize: 12,
             outline: 'none',
           }}
@@ -305,7 +303,7 @@ export function ZenDocsPanel() {
               padding: 24,
               textAlign: 'center',
               fontSize: 12,
-              color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))',
+              color: VAR_ZEN_FG_DIM,
             }}
           >
             Loading…
@@ -320,7 +318,7 @@ export function ZenDocsPanel() {
               padding: 24,
               textAlign: 'center',
               fontSize: 12,
-              color: 'var(--zen-fg-dim, hsl(var(--muted-foreground)))',
+              color: VAR_ZEN_FG_DIM,
             }}
           >
             No documents found

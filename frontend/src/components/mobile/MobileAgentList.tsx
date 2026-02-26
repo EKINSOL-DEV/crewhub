@@ -3,6 +3,10 @@ import type { AgentRuntime, AgentStatus } from '@/hooks/useAgentsRegistry'
 import type { Thread } from '@/lib/threads.api'
 import { ParticipantAvatarStack } from './group/ParticipantAvatarStack'
 
+const TRANSPARENT = 'transparent'
+const VAR_MOBILE_TEXT = 'var(--mobile-text, #f1f5f9)'
+const VAR_MOBILE_TEXT_MUTED = 'var(--mobile-text-muted, #64748b)'
+
 interface MobileAgentListProps {
   readonly agents: AgentRuntime[]
   readonly loading: boolean
@@ -118,7 +122,7 @@ export function MobileAgentList({
                 fontSize: 22,
                 fontWeight: 700,
                 margin: 0,
-                color: 'var(--mobile-text, #f1f5f9)',
+                color: VAR_MOBILE_TEXT,
               }}
             >
               CrewHub
@@ -126,7 +130,7 @@ export function MobileAgentList({
             <div
               style={{
                 fontSize: 12,
-                color: 'var(--mobile-text-muted, #64748b)',
+                color: VAR_MOBILE_TEXT_MUTED,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
@@ -219,7 +223,7 @@ export function MobileAgentList({
                 gap: 14,
                 width: '100%',
                 padding: '14px 12px',
-                background: 'transparent',
+                background: TRANSPARENT,
                 border: 'none',
                 borderRadius: 14,
                 cursor: 'pointer',
@@ -232,7 +236,7 @@ export function MobileAgentList({
                 e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
               }}
               onTouchEnd={(e) => {
-                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.background = TRANSPARENT
               }}
             >
               {/* Avatar */}
@@ -274,7 +278,7 @@ export function MobileAgentList({
                   style={{
                     fontSize: 15,
                     fontWeight: 600,
-                    color: 'var(--mobile-text, #f1f5f9)',
+                    color: VAR_MOBILE_TEXT,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -285,7 +289,7 @@ export function MobileAgentList({
                 <div
                   style={{
                     fontSize: 12,
-                    color: 'var(--mobile-text-muted, #64748b)',
+                    color: VAR_MOBILE_TEXT_MUTED,
                     marginTop: 2,
                     display: 'flex',
                     alignItems: 'center',
@@ -333,7 +337,7 @@ export function MobileAgentList({
                 padding: '16px 12px 8px',
                 fontSize: 12,
                 fontWeight: 600,
-                color: 'var(--mobile-text-muted, #64748b)',
+                color: VAR_MOBILE_TEXT_MUTED,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
               }}
@@ -357,7 +361,7 @@ export function MobileAgentList({
                     gap: 14,
                     width: '100%',
                     padding: '14px 12px',
-                    background: 'transparent',
+                    background: TRANSPARENT,
                     border: 'none',
                     borderRadius: 14,
                     cursor: 'pointer',
@@ -369,7 +373,7 @@ export function MobileAgentList({
                     e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
                   }}
                   onTouchEnd={(e) => {
-                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.background = TRANSPARENT
                   }}
                 >
                   {/* Avatar stack */}
@@ -387,7 +391,7 @@ export function MobileAgentList({
                       style={{
                         fontSize: 15,
                         fontWeight: 600,
-                        color: 'var(--mobile-text, #f1f5f9)',
+                        color: VAR_MOBILE_TEXT,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -398,7 +402,7 @@ export function MobileAgentList({
                     <div
                       style={{
                         fontSize: 12,
-                        color: 'var(--mobile-text-muted, #64748b)',
+                        color: VAR_MOBILE_TEXT_MUTED,
                         marginTop: 2,
                       }}
                     >

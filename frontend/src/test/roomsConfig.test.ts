@@ -6,13 +6,17 @@ import {
   getRoomForSession, // NOSONAR — intentionally testing deprecated compat function
 } from '../lib/roomsConfig'
 
+const AGENT_MAIN_SUBAGENT_X = 'agent:main:subagent:x'
+const COMMS_ROOM = 'comms-room'
+const HEADQUARTERS = 'headquarters'
+
 describe('DEFAULT_ROOMS', () => {
   it('has 8 default rooms', () => {
     expect(DEFAULT_ROOMS.length).toBe(8)
   })
 
   it('has headquarters as first room', () => {
-    expect(DEFAULT_ROOMS[0].id).toBe('headquarters')
+    expect(DEFAULT_ROOMS[0].id).toBe(HEADQUARTERS)
     expect(DEFAULT_ROOMS[0].name).toBe('Headquarters')
   })
 
@@ -40,7 +44,7 @@ describe('DEFAULT_ROOMS_CONFIG', () => {
   })
 
   it('has headquarters as unassigned room', () => {
-    expect(DEFAULT_ROOMS_CONFIG.unassignedRoomId).toBe('headquarters')
+    expect(DEFAULT_ROOMS_CONFIG.unassignedRoomId).toBe(HEADQUARTERS)
   })
 })
 
@@ -58,23 +62,23 @@ describe('getDefaultRoomForSession', () => {
   })
 
   it('routes whatsapp main to comms-room', () => {
-    expect(getDefaultRoomForSession('agent:whatsapp:main')).toBe('comms-room') // NOSONAR — testing deprecated compat function
+    expect(getDefaultRoomForSession('agent:whatsapp:main')).toBe(COMMS_ROOM) // NOSONAR — testing deprecated compat function
   })
 
   it('routes slack main to comms-room', () => {
-    expect(getDefaultRoomForSession('agent:slack:main')).toBe('comms-room') // NOSONAR — testing deprecated compat function
+    expect(getDefaultRoomForSession('agent:slack:main')).toBe(COMMS_ROOM) // NOSONAR — testing deprecated compat function
   })
 
   it('routes telegram main to comms-room', () => {
-    expect(getDefaultRoomForSession('agent:telegram:main')).toBe('comms-room') // NOSONAR — testing deprecated compat function
+    expect(getDefaultRoomForSession('agent:telegram:main')).toBe(COMMS_ROOM) // NOSONAR — testing deprecated compat function
   })
 
   it('routes discord main to comms-room', () => {
-    expect(getDefaultRoomForSession('agent:discord:main')).toBe('comms-room') // NOSONAR — testing deprecated compat function
+    expect(getDefaultRoomForSession('agent:discord:main')).toBe(COMMS_ROOM) // NOSONAR — testing deprecated compat function
   })
 
   it('routes main agent to headquarters', () => {
-    expect(getDefaultRoomForSession('agent:main:main')).toBe('headquarters') // NOSONAR — testing deprecated compat function
+    expect(getDefaultRoomForSession('agent:main:main')).toBe(HEADQUARTERS) // NOSONAR — testing deprecated compat function
   })
 
   it('returns undefined for unknown sessions', () => {
@@ -90,11 +94,11 @@ describe('getRoomForSession', () => {
   })
 
   it('falls back to unassigned room for unknown sessions', () => {
-    expect(getRoomForSession('agent:unknown:session', config)).toBe('headquarters') // NOSONAR — testing deprecated compat function
+    expect(getRoomForSession('agent:unknown:session', config)).toBe(HEADQUARTERS) // NOSONAR — testing deprecated compat function
   })
 
   it('uses label-based auto-assignment', () => {
-    const result = getRoomForSession('agent:main:subagent:x', config, {
+    const result = getRoomForSession(AGENT_MAIN_SUBAGENT_X, config, {
       // NOSONAR — testing deprecated compat function
       label: 'implement new feature',
     })
@@ -103,7 +107,7 @@ describe('getRoomForSession', () => {
 
   it('assigns marketing label to marketing room', () => {
     // Use pure marketing keywords without overlap with dev keywords
-    const result = getRoomForSession('agent:main:subagent:x', config, {
+    const result = getRoomForSession(AGENT_MAIN_SUBAGENT_X, config, {
       // NOSONAR — testing deprecated compat function
       label: 'newsletter copy for landing page',
     })
@@ -113,7 +117,7 @@ describe('getRoomForSession', () => {
   })
 
   it('assigns model-based routing for opus', () => {
-    const result = getRoomForSession('agent:main:subagent:x', config, {
+    const result = getRoomForSession(AGENT_MAIN_SUBAGENT_X, config, {
       // NOSONAR — testing deprecated compat function
       label: 'something',
       model: 'claude-opus-4',

@@ -10,6 +10,8 @@ import {
 } from 'react'
 import { type LayoutNode, createSplit, createLeaf, getAllPanels } from '../types/layout'
 
+const ZEN_LAST_AGENT = 'zen-last-agent'
+
 // ── Types ──────────────────────────────────────────────────────
 
 export interface ZenProjectFilter {
@@ -167,7 +169,7 @@ function migrateLegacyState(): ZenTabsState | null {
   try {
     // Check for old layout format
     const legacyLayout = localStorage.getItem('zen-layout-current')
-    const legacyAgent = localStorage.getItem('zen-last-agent')
+    const legacyAgent = localStorage.getItem(ZEN_LAST_AGENT)
 
     if (!legacyLayout) return null
 
@@ -601,7 +603,7 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
   useEffect(() => {
     if (selectedAgentId) {
       localStorage.setItem(
-        'zen-last-agent',
+        ZEN_LAST_AGENT,
         JSON.stringify({
           id: selectedAgentId,
           name: selectedAgentName,
@@ -615,7 +617,7 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
   // Restore last selected agent on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('zen-last-agent')
+      const stored = localStorage.getItem(ZEN_LAST_AGENT)
       if (stored) {
         const { id, name, icon, color } = JSON.parse(stored)
         if (id && name) {

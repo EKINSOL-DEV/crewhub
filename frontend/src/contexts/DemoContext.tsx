@@ -15,6 +15,12 @@ import {
 } from 'react'
 import type { CrewSession } from '@/lib/api'
 
+const CLAUDE_OPUS_4_20250514 = 'claude-opus-4-20250514'
+const CLAUDE_SONNET_4_20250514 = 'claude-sonnet-4-20250514'
+const CLS_BACKGROUND_015S = 'background 0.15s'
+const RGBA_255_255_255_0_2 = 'rgba(255,255,255,0.2)'
+const SYSTEM_UI_SANS_SERIF = 'system-ui, sans-serif'
+
 // ─── Types ──────────────────────────────────────────────────────
 
 interface DemoContextValue {
@@ -47,7 +53,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'Reviewing pull request #127',
       updatedAt: now - 5_000, // 5s ago — active
       sessionId: 'demo-main',
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_SONNET_4_20250514,
       totalTokens: 48_200,
       contextTokens: 12_400,
     },
@@ -59,7 +65,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'Building REST API endpoints',
       updatedAt: now - 3_000, // 3s ago — active
       sessionId: 'demo-dev',
-      model: 'claude-opus-4-20250514',
+      model: CLAUDE_OPUS_4_20250514,
       totalTokens: 127_500,
       contextTokens: 34_200,
     },
@@ -71,7 +77,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'Optimizing 3D render pipeline',
       updatedAt: now - 8_000, // 8s ago — active
       sessionId: 'demo-gamedev',
-      model: 'claude-opus-4-20250514',
+      model: CLAUDE_OPUS_4_20250514,
       totalTokens: 89_300,
       contextTokens: 22_100,
     },
@@ -83,7 +89,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'Writing blog post draft',
       updatedAt: now - 12_000, // 12s ago — active
       sessionId: 'demo-flowy',
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_SONNET_4_20250514,
       totalTokens: 34_600,
       contextTokens: 8_900,
     },
@@ -108,7 +114,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'fix-auth-middleware',
       updatedAt: now - 4_000, // 4s ago — active
       sessionId: 'demo-sub-auth',
-      model: 'claude-opus-4-20250514',
+      model: CLAUDE_OPUS_4_20250514,
       totalTokens: 41_200,
       contextTokens: 11_300,
     },
@@ -120,7 +126,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'design-landing-page',
       updatedAt: now - 7_000, // 7s ago — active
       sessionId: 'demo-sub-landing',
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_SONNET_4_20250514,
       totalTokens: 28_400,
       contextTokens: 7_600,
     },
@@ -132,7 +138,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'database-migration-v3',
       updatedAt: now - 120_000, // 2 min ago — idle
       sessionId: 'demo-sub-migration',
-      model: 'claude-opus-4-20250514',
+      model: CLAUDE_OPUS_4_20250514,
       totalTokens: 19_800,
       contextTokens: 5_100,
     },
@@ -144,7 +150,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'unit-test-coverage',
       updatedAt: now - 2_000, // 2s ago — active
       sessionId: 'demo-sub-tests',
-      model: 'claude-opus-4-20250514',
+      model: CLAUDE_OPUS_4_20250514,
       totalTokens: 55_700,
       contextTokens: 14_800,
     },
@@ -156,7 +162,7 @@ function createDemoSessions(): CrewSession[] {
       label: 'social-media-campaign',
       updatedAt: now - 6_000, // 6s ago — active
       sessionId: 'demo-sub-social',
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_SONNET_4_20250514,
       totalTokens: 22_100,
       contextTokens: 6_200,
     },
@@ -207,7 +213,7 @@ function showDemoToast(enabled: boolean) {
     color: '#fff',
     fontSize: '13px',
     fontWeight: '600',
-    fontFamily: 'system-ui, sans-serif',
+    fontFamily: SYSTEM_UI_SANS_SERIF,
     zIndex: '99999',
     pointerEvents: 'none',
     backdropFilter: 'blur(8px)',
@@ -403,7 +409,7 @@ export function DemoModeIndicator() {
           color: '#fff',
           fontSize: '12px',
           fontWeight: '600',
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: SYSTEM_UI_SANS_SERIF,
           zIndex: 99998,
           pointerEvents: 'auto',
           backdropFilter: 'blur(8px)',
@@ -425,7 +431,7 @@ export function DemoModeIndicator() {
             padding: '2px 6px',
             fontSize: '12px',
             lineHeight: 1,
-            transition: 'background 0.15s',
+            transition: CLS_BACKGROUND_015S,
           }}
           onMouseEnter={(e) => {
             ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.3)'
@@ -447,16 +453,16 @@ export function DemoModeIndicator() {
             textDecoration: 'none',
             padding: '3px 10px',
             borderRadius: '6px',
-            background: 'rgba(255,255,255,0.2)',
+            background: RGBA_255_255_255_0_2,
             fontSize: '11px',
             fontWeight: '700',
-            transition: 'background 0.15s',
+            transition: CLS_BACKGROUND_015S,
           }}
           onMouseEnter={(e) => {
             ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)'
           }}
           onMouseLeave={(e) => {
-            ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)'
+            ;(e.target as HTMLElement).style.background = RGBA_255_255_255_0_2
           }}
         >
           Website →
@@ -470,16 +476,16 @@ export function DemoModeIndicator() {
             textDecoration: 'none',
             padding: '3px 10px',
             borderRadius: '6px',
-            background: 'rgba(255,255,255,0.2)',
+            background: RGBA_255_255_255_0_2,
             fontSize: '11px',
             fontWeight: '700',
-            transition: 'background 0.15s',
+            transition: CLS_BACKGROUND_015S,
           }}
           onMouseEnter={(e) => {
             ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.35)'
           }}
           onMouseLeave={(e) => {
-            ;(e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)'
+            ;(e.target as HTMLElement).style.background = RGBA_255_255_255_0_2
           }}
         >
           GitHub →
@@ -503,7 +509,7 @@ export function DemoModeIndicator() {
         color: '#fff',
         fontSize: '12px',
         fontWeight: '600',
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: SYSTEM_UI_SANS_SERIF,
         zIndex: 99998,
         pointerEvents: 'none',
         backdropFilter: 'blur(8px)',

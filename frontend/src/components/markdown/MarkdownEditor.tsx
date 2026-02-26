@@ -14,6 +14,8 @@ import { markdown } from '@codemirror/lang-markdown'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 
+const BORDER_1PX_SOLID_HSL_VAR_BORDER = '1px solid hsl(var(--border))'
+
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 interface MarkdownEditorProps {
@@ -178,7 +180,7 @@ export function MarkdownEditor({
           padding: '4px 12px',
           fontSize: 11,
           color: 'hsl(var(--muted-foreground))',
-          borderBottom: '1px solid hsl(var(--border))',
+          borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
           background: 'hsl(var(--card))',
           gap: 8,
           flexShrink: 0,
@@ -194,7 +196,7 @@ export function MarkdownEditor({
           style={{
             padding: '2px 10px',
             borderRadius: 4,
-            border: '1px solid hsl(var(--border))',
+            border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
             background: 'hsl(var(--primary))',
             color: 'hsl(var(--primary-foreground))',
             cursor: 'pointer',
@@ -211,7 +213,7 @@ export function MarkdownEditor({
           style={{
             padding: '2px 10px',
             borderRadius: 4,
-            border: '1px solid hsl(var(--border))',
+            border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
             background: 'hsl(var(--secondary))',
             color: 'hsl(var(--foreground))',
             cursor: 'pointer',

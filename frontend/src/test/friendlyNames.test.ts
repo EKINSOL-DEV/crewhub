@@ -6,20 +6,22 @@ import {
   getDisplayName,
 } from '../lib/friendlyNames'
 
+const AGENT_MAIN_SUBAGENT_ABC = 'agent:main:subagent:abc'
+
 describe('generateFriendlyName', () => {
   it('generates an adjective-noun format', () => {
-    const name = generateFriendlyName('agent:main:subagent:abc')
+    const name = generateFriendlyName(AGENT_MAIN_SUBAGENT_ABC)
     expect(name).toMatch(/^\w+-\w+$/)
   })
 
   it('is deterministic for the same key', () => {
-    const name1 = generateFriendlyName('agent:main:subagent:abc')
-    const name2 = generateFriendlyName('agent:main:subagent:abc')
+    const name1 = generateFriendlyName(AGENT_MAIN_SUBAGENT_ABC)
+    const name2 = generateFriendlyName(AGENT_MAIN_SUBAGENT_ABC)
     expect(name1).toBe(name2)
   })
 
   it('generates different names for different keys', () => {
-    const name1 = generateFriendlyName('agent:main:subagent:abc')
+    const name1 = generateFriendlyName(AGENT_MAIN_SUBAGENT_ABC)
     const name2 = generateFriendlyName('agent:main:subagent:xyz')
     // Different keys should (usually) produce different names
     // Not guaranteed with hash collisions, so we just check both generate
@@ -30,7 +32,7 @@ describe('generateFriendlyName', () => {
 
 describe('getMinionName', () => {
   it('returns a name from the room pool', () => {
-    const name = getMinionName('agent:main:subagent:abc', 'dev')
+    const name = getMinionName(AGENT_MAIN_SUBAGENT_ABC, 'dev')
     expect(typeof name).toBe('string')
     expect(name.length).toBeGreaterThan(0)
   })
@@ -96,7 +98,7 @@ describe('getTaskEmoji', () => {
 
 describe('getDisplayName', () => {
   it('uses label when available', () => {
-    expect(getDisplayName({ key: 'agent:main:subagent:abc', label: 'My Task' })).toBe('My Task')
+    expect(getDisplayName({ key: AGENT_MAIN_SUBAGENT_ABC, label: 'My Task' })).toBe('My Task')
   })
 
   it('generates friendly name for subagents', () => {

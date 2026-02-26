@@ -25,6 +25,11 @@ import {
 } from '@/lib/api'
 import { Section, CollapsibleSection } from './shared'
 
+const CLS_GAP_15_H_10 = 'gap-1.5 h-10'
+const CLS_H_35_W_35 = 'h-3.5 w-3.5'
+const CLS_H_35_W_35_ANIMATE_SPIN = 'h-3.5 w-3.5 animate-spin'
+const PROJECTS = '~/Projects'
+
 // ─── DataTab ─────────────────────────────────────────────────────────────────
 
 export function DataTab() {
@@ -50,12 +55,12 @@ function ProjectsBasePathSection() {
     const load = async () => {
       try {
         const settings = await apiGetSettings()
-        const val = settings['projects_base_path'] || '~/Projects'
+        const val = settings['projects_base_path'] || PROJECTS
         setBasePath(val)
         setSavedPath(val)
       } catch {
-        setBasePath('~/Projects')
-        setSavedPath('~/Projects')
+        setBasePath(PROJECTS)
+        setSavedPath(PROJECTS)
       } finally {
         setLoading(false)
       }
@@ -112,7 +117,7 @@ function ProjectsBasePathSection() {
                 setError(null)
                 setSuccess(false)
               }}
-              placeholder="~/Projects"
+              placeholder={PROJECTS}
               className="pl-9 font-mono text-sm"
               disabled={loading}
               onKeyDown={(e) => {
@@ -131,13 +136,13 @@ function ProjectsBasePathSection() {
         </div>
         {error && (
           <div className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
-            <AlertCircle className="h-3.5 w-3.5" />
+            <AlertCircle className={CLS_H_35_W_35} />
             {error}
           </div>
         )}
         {success && (
           <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
-            <Check className="h-3.5 w-3.5" />
+            <Check className={CLS_H_35_W_35} />
             Projects base path saved
           </div>
         )}
@@ -277,12 +282,12 @@ function BackupSection() {
               size="sm"
               onClick={handleExport}
               disabled={exporting}
-              className="gap-1.5 h-10"
+              className={CLS_GAP_15_H_10}
             >
               {exporting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className={CLS_H_35_W_35_ANIMATE_SPIN} />
               ) : (
-                <Download className="h-3.5 w-3.5" />
+                <Download className={CLS_H_35_W_35} />
               )}
               <span className="text-xs">Export</span>
             </Button>
@@ -291,12 +296,12 @@ function BackupSection() {
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
-              className="gap-1.5 h-10"
+              className={CLS_GAP_15_H_10}
             >
               {importing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className={CLS_H_35_W_35_ANIMATE_SPIN} />
               ) : (
-                <Upload className="h-3.5 w-3.5" />
+                <Upload className={CLS_H_35_W_35} />
               )}
               <span className="text-xs">Import</span>
             </Button>
@@ -305,12 +310,12 @@ function BackupSection() {
               size="sm"
               onClick={handleCreateSnapshot}
               disabled={creating}
-              className="gap-1.5 h-10"
+              className={CLS_GAP_15_H_10}
             >
               {creating ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className={CLS_H_35_W_35_ANIMATE_SPIN} />
               ) : (
-                <Database className="h-3.5 w-3.5" />
+                <Database className={CLS_H_35_W_35} />
               )}
               <span className="text-xs">Snapshot</span>
             </Button>

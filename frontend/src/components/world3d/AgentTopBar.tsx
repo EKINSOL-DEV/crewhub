@@ -8,6 +8,11 @@ import type { CrewSession } from '@/lib/api'
 import type { BotVariantConfig } from './utils/botVariants'
 import type { AgentRuntime } from '@/hooks/useAgentsRegistry'
 
+const HEADQUARTERS = 'headquarters'
+const RGBA_255_255_255_0_6 = 'rgba(255,255,255,0.6)'
+const SYSTEM_UI_SANS_SERIF = 'system-ui, sans-serif'
+const THOUGHTFUL = 'thoughtful'
+
 // ─── Types ─────────────────────────────────────────────────────
 
 interface AgentTopBarProps {
@@ -66,7 +71,7 @@ function getRoomId(
       channel: session.lastChannel || session.channel,
     }) ||
     defaultRoomId ||
-    'headquarters'
+    HEADQUARTERS
   )
 }
 
@@ -115,7 +120,7 @@ function BotFaceSVG({
   size?: number
 }) {
   let pupilDx: number
-  if (expression === 'thoughtful') {
+  if (expression === THOUGHTFUL) {
     pupilDx = 1
   } else if (expression === 'talking') {
     pupilDx = -0.5
@@ -123,7 +128,7 @@ function BotFaceSVG({
     pupilDx = 0
   }
   let pupilDy: number
-  if (expression === 'thoughtful') {
+  if (expression === THOUGHTFUL) {
     pupilDy = 1
   } else if (expression === 'serious') {
     pupilDy = -0.5
@@ -150,7 +155,7 @@ function BotFaceSVG({
           strokeLinecap="round"
         />
       )}
-      {expression === 'thoughtful' && (
+      {expression === THOUGHTFUL && (
         <path
           d="M14 23 Q18 25 22 23"
           stroke="#333"
@@ -274,10 +279,10 @@ function AgentPortraitButton({
           fontSize: 10,
           fontWeight: 700,
           color: 'rgba(55, 65, 81, 0.9)',
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: SYSTEM_UI_SANS_SERIF,
           textShadow: '0 1px 3px rgba(255,255,255,0.8)',
           letterSpacing: '0.02em',
-          background: 'rgba(255,255,255,0.6)',
+          background: RGBA_255_255_255_0_6,
           padding: '1px 6px',
           borderRadius: 6,
           backdropFilter: 'blur(4px)',
@@ -359,7 +364,7 @@ function AgentPickerToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () =
           height: 56,
           borderRadius: '50%',
           background: isOpen ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)',
-          border: `3px solid ${isOpen ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'}`,
+          border: `3px solid ${isOpen ? RGBA_255_255_255_0_6 : 'rgba(255,255,255,0.3)'}`,
           boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           display: 'flex',
           alignItems: 'center',
@@ -379,10 +384,10 @@ function AgentPickerToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () =
           fontSize: 10,
           fontWeight: 700,
           color: 'rgba(55, 65, 81, 0.9)',
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: SYSTEM_UI_SANS_SERIF,
           textShadow: '0 1px 3px rgba(255,255,255,0.8)',
           letterSpacing: '0.02em',
-          background: 'rgba(255,255,255,0.6)',
+          background: RGBA_255_255_255_0_6,
           padding: '1px 6px',
           borderRadius: 6,
           backdropFilter: 'blur(4px)',
@@ -488,7 +493,7 @@ function AgentPickerDropdown({
               color: 'rgba(255,255,255,0.4)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
-              fontFamily: 'system-ui, sans-serif',
+              fontFamily: SYSTEM_UI_SANS_SERIF,
             }}
           >
             Fixed Agents
@@ -516,7 +521,7 @@ function AgentPickerDropdown({
               color: 'rgba(255,255,255,0.4)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
-              fontFamily: 'system-ui, sans-serif',
+              fontFamily: SYSTEM_UI_SANS_SERIF,
               borderTop: fixedAgents.length > 0 ? '1px solid rgba(255,255,255,0.08)' : undefined,
               marginTop: fixedAgents.length > 0 ? 4 : 0,
             }}
@@ -542,7 +547,7 @@ function AgentPickerDropdown({
             textAlign: 'center',
             fontSize: 12,
             color: 'rgba(255,255,255,0.35)',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: SYSTEM_UI_SANS_SERIF,
           }}
         >
           No agents found
@@ -626,7 +631,7 @@ function DropdownItem({
             fontSize: 13,
             fontWeight: 600,
             color: 'rgba(255,255,255,0.9)',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: SYSTEM_UI_SANS_SERIF,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -639,7 +644,7 @@ function DropdownItem({
           style={{
             fontSize: 10,
             color: 'rgba(255,255,255,0.35)',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: SYSTEM_UI_SANS_SERIF,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -661,11 +666,11 @@ function DropdownItem({
             borderRadius: 6,
             border: '1px solid rgba(255,255,255,0.15)',
             background: 'rgba(255,255,255,0.08)',
-            color: 'rgba(255,255,255,0.6)',
+            color: RGBA_255_255_255_0_6,
             fontSize: 11,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: SYSTEM_UI_SANS_SERIF,
             transition: 'all 0.15s',
             flexShrink: 0,
           }}
@@ -724,7 +729,7 @@ export function AgentTopBar({
   )
 
   const bossRoomId = useMemo(() => {
-    if (!bossSession) return defaultRoomId || 'headquarters'
+    if (!bossSession) return defaultRoomId || HEADQUARTERS
     return getRoomId(bossSession, getRoomForSession, defaultRoomId)
   }, [bossSession, getRoomForSession, defaultRoomId])
 
@@ -797,7 +802,7 @@ export function AgentTopBar({
           const config = getBotConfig(agentKey, agent.name)
           const name = agent.name
           const status: AgentStatus = 'offline'
-          const roomId = agent.default_room_id || defaultRoomId || 'headquarters'
+          const roomId = agent.default_room_id || defaultRoomId || HEADQUARTERS
           const roomName = getRoomName(roomId, rooms)
           entry = { session: syntheticSession, config, name, status, roomName, roomId }
         }

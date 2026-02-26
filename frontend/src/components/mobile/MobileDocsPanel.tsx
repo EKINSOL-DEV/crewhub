@@ -8,6 +8,8 @@ import { ArrowLeft, Search, SortAsc, Clock } from 'lucide-react'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 import { API_BASE } from '@/lib/api'
 
+const RGBA_255_255_255_0_06 = 'rgba(255,255,255,0.06)'
+
 // ── Types ─────────────────────────────────────────────────────────
 
 interface DocNode {
@@ -234,7 +236,7 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
             height: 36,
             borderRadius: 10,
             border: 'none',
-            background: 'rgba(255,255,255,0.06)',
+            background: RGBA_255_255_255_0_06,
             color: '#94a3b8',
             cursor: 'pointer',
             display: 'flex',
@@ -258,7 +260,7 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
             height: 36,
             borderRadius: 10,
             border: 'none',
-            background: 'rgba(255,255,255,0.06)',
+            background: RGBA_255_255_255_0_06,
             color: '#94a3b8',
             cursor: 'pointer',
             display: 'flex',
@@ -277,7 +279,7 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
             height: 36,
             borderRadius: 10,
             border: 'none',
-            background: showSearch ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.06)',
+            background: showSearch ? 'rgba(99,102,241,0.15)' : RGBA_255_255_255_0_06,
             color: showSearch ? '#818cf8' : '#94a3b8',
             cursor: 'pointer',
             display: 'flex',

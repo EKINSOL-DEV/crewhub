@@ -29,6 +29,10 @@ import type {
   GenerationMode,
 } from './propMakerTypes'
 
+const APPLICATION_JSON = 'application/json'
+const CORRECTION = 'correction'
+const SONNET_4_5 = 'sonnet-4-5'
+
 // ── Props ─────────────────────────────────────────────────────
 
 export interface FullscreenPropMakerProps {
@@ -59,7 +63,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
 
   // Model selection
   const [models, setModels] = useState<ModelOption[]>([])
-  const [selectedModel, setSelectedModel] = useState('sonnet-4-5')
+  const [selectedModel, setSelectedModel] = useState(SONNET_4_5)
 
   // Preview state
   const [previewParts, setPreviewParts] = useState<PropPart[] | null>(null)
@@ -112,7 +116,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       .then((data) => {
         if (data.models) {
           setModels(data.models)
-          setSelectedModel(data.default || 'sonnet-4-5')
+          setSelectedModel(data.default || SONNET_4_5)
         }
       })
       .catch(() => {
@@ -124,7 +128,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
             provider: 'anthropic',
           },
           {
-            key: 'sonnet-4-5',
+            key: SONNET_4_5,
             id: 'anthropic/claude-sonnet-4-5',
             label: 'Sonnet 4.5',
             provider: 'anthropic',
@@ -233,8 +237,8 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
         es.addEventListener('tool_result', (e) => {
           addLine({ text: JSON.parse(e.data).message, type: 'tool_result' })
         })
-        es.addEventListener('correction', (e) => {
-          addLine({ text: JSON.parse(e.data).message, type: 'correction' })
+        es.addEventListener(CORRECTION, (e) => {
+          addLine({ text: JSON.parse(e.data).message, type: CORRECTION })
         })
         es.addEventListener('complete', (e) => {
           const data = JSON.parse(e.data)
@@ -296,7 +300,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     try {
       const res = await fetch('/api/creator/save-prop', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { CONTENT_TYPE: APPLICATION_JSON },
         body: JSON.stringify({
           name: previewName,
           propId: kebabName,
@@ -346,7 +350,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     try {
       const res = await fetch('/api/creator/props/quality-score', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { CONTENT_TYPE: APPLICATION_JSON },
         body: JSON.stringify({ code }),
       })
       if (res.ok) setQualityScore(await res.json())
@@ -363,7 +367,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     try {
       const res = await fetch('/api/creator/props/iterate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { CONTENT_TYPE: APPLICATION_JSON },
         body: JSON.stringify({
           code: previewCode,
           feedback: iterationFeedback.trim(),
@@ -400,7 +404,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     try {
       const res = await fetch('/api/creator/props/style-transfer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { CONTENT_TYPE: APPLICATION_JSON },
         body: JSON.stringify({
           code: previewCode,
           styleSource: selectedStyle,
@@ -450,7 +454,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       try {
         const res = await fetch('/api/creator/props/refine', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify({ propId: generationId, changes }),
         })
         if (res.ok) {

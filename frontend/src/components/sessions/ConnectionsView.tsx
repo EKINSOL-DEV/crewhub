@@ -29,6 +29,11 @@ import {
 } from 'lucide-react'
 import { sseManager } from '@/lib/sseManager'
 
+const CLS_FLEX_ITEMS_CENTER_GAP_1 = 'flex items-center gap-1'
+const CLS_FLEX_ITEMS_CENTER_GAP_2 = 'flex items-center gap-2'
+const CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN = 'flex items-center justify-between'
+const UNKNOWN_ERROR = 'Unknown error'
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -295,7 +300,7 @@ function ConnectionDialog({ open, onOpenChange, connection, onSave }: Connection
                 <SelectContent>
                   {Object.entries(CONNECTION_TYPE_CONFIG).map(([key, config]) => (
                     <SelectItem key={key} value={key}>
-                      <div className="flex items-center gap-2">
+                      <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
                         {config.icon}
                         <span>{config.label}</span>
                       </div>
@@ -322,7 +327,7 @@ function ConnectionDialog({ open, onOpenChange, connection, onSave }: Connection
           ))}
 
           {/* Enabled Toggle */}
-          <div className="flex items-center justify-between">
+          <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
             <div className="space-y-0.5">
               <Label>Enabled</Label>
               <p className="text-xs text-muted-foreground">Auto-connect on startup</p>
@@ -373,7 +378,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
       setConnections(data.connections || [])
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err.message : UNKNOWN_ERROR)
     } finally {
       setLoading(false)
     }
@@ -481,10 +486,10 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
       await fetchConnections()
 
       if (!data.connected) {
-        setError(`Connection failed: ${data.error || 'Unknown error'}`)
+        setError(`Connection failed: ${data.error || UNKNOWN_ERROR}`)
       }
     } catch (err) {
-      setError(`Test failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setError(`Test failed: ${err instanceof Error ? err.message : UNKNOWN_ERROR}`)
     } finally {
       setTestingId(null)
     }
@@ -506,10 +511,10 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
     <div className={embedded ? 'space-y-4' : 'h-full flex flex-col view-gradient'}>
       {/* Header */}
       <div
-        className={embedded ? 'flex items-center justify-between' : 'p-4 border-b border-border'}
+        className={embedded ? CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN : 'p-4 border-b border-border'}
       >
         {!embedded && (
-          <div className="flex items-center justify-between">
+          <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
             <div className="flex items-center gap-3">
               <Cable className="h-5 w-5 text-primary" />
               <div>
@@ -517,7 +522,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
                 <p className="text-sm text-muted-foreground">Manage agent connections</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
               <Button
                 variant="outline"
                 size="sm"
@@ -615,7 +620,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
                       {getStatusIcon(connection.status as ConnectionStatus)}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
                         <h3 className="font-medium text-foreground">{connection.name}</h3>
                         <Badge variant="outline" className="gap-1">
                           {getTypeIcon(connection.type)}
@@ -627,19 +632,19 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
                       )}
                       <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                         {connection.type === 'openclaw' && connection.config.gateway_url && (
-                          <span className="flex items-center gap-1">
+                          <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
                             <Wifi className="h-3 w-3" />
                             {connection.config.gateway_url}
                           </span>
                         )}
                         {connection.type === 'claude_code' && connection.config.cli_path && (
-                          <span className="flex items-center gap-1">
+                          <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
                             <Terminal className="h-3 w-3" />
                             {connection.config.cli_path}
                           </span>
                         )}
                         {connection.type === 'codex' && connection.config.cli_path && (
-                          <span className="flex items-center gap-1">
+                          <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
                             <Bot className="h-3 w-3" />
                             {connection.config.cli_path}
                           </span>
@@ -647,7 +652,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
                     {getStatusBadge(connection.status as ConnectionStatus)}
                     <div className="flex items-center gap-1 ml-2">
                       {/* Test Connection */}

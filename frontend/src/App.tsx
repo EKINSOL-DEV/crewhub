@@ -57,6 +57,11 @@ import {
 } from './components/desktop/DesktopActivityFeed'
 import { CreatorModeProvider } from './contexts/CreatorModeContext'
 
+const BORDER_1PX_SOLID_3B4261 = '1px solid #3b4261'
+const CLS_TEXT_MUTED_FOREGROUND_MB_6 = 'text-muted-foreground mb-6'
+const CLS_TEXT_XL_FONT_SEMIBOLD_MB_2 = 'text-xl font-semibold mb-2'
+const KEY_CREWHUB_ONBOARDED = 'crewhub-onboarded'
+
 /** Open the standalone Zen Mode Tauri window (or focus it if already open). */
 async function openZenWindow() {
   try {
@@ -163,14 +168,14 @@ function NoConnectionView({
         {error ? (
           <>
             <WifiOff className="h-12 w-12 mx-auto text-red-400 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Connection Error</h2>
-            <p className="text-muted-foreground mb-6">{error}</p>
+            <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>Connection Error</h2>
+            <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>{error}</p>
           </>
         ) : connected ? (
           <>
             <div className="text-5xl mb-4">📡</div>
-            <h2 className="text-xl font-semibold mb-2">No Active Sessions</h2>
-            <p className="text-muted-foreground mb-6">
+            <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>No Active Sessions</h2>
+            <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>
               CrewHub is connected but no agent sessions are running. Configure a gateway connection
               or start an agent to see the 3D world.
             </p>
@@ -178,8 +183,8 @@ function NoConnectionView({
         ) : (
           <>
             <WifiOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No Connection</h2>
-            <p className="text-muted-foreground mb-6">
+            <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>No Connection</h2>
+            <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>
               Unable to reach the CrewHub backend. Make sure the server is running and try again.
             </p>
           </>
@@ -315,7 +320,7 @@ function AppContent() {
       }
 
       // Quick localStorage check first
-      if (localStorage.getItem('crewhub-onboarded') === 'true') {
+      if (localStorage.getItem(KEY_CREWHUB_ONBOARDED) === 'true') {
         setOnboardingChecked(true)
         return
       }
@@ -325,7 +330,7 @@ function AppContent() {
         const status = await getOnboardingStatus()
         if (status.completed || status.connections_count > 0) {
           // Already set up
-          localStorage.setItem('crewhub-onboarded', 'true')
+          localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
           setOnboardingChecked(true)
         } else {
           setShowOnboarding(true)
@@ -339,7 +344,7 @@ function AppContent() {
             const data = await resp.json()
             const connCount = data.connections?.length ?? 0
             if (connCount > 0) {
-              localStorage.setItem('crewhub-onboarded', 'true')
+              localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
               setOnboardingChecked(true)
               return
             }
@@ -614,7 +619,7 @@ function ZenWorkspaceSelector({
             padding: '14px 20px',
             marginBottom: '12px',
             background: '#24283b',
-            border: '1px solid #3b4261',
+            border: BORDER_1PX_SOLID_3B4261,
             borderRadius: '8px',
             color: '#7aa2f7',
             fontSize: '1rem',
@@ -664,7 +669,7 @@ function ZenWorkspaceSelector({
                     padding: '12px 20px',
                     marginBottom: '8px',
                     background: '#24283b',
-                    border: '1px solid #3b4261',
+                    border: BORDER_1PX_SOLID_3B4261,
                     borderRadius: '8px',
                     color: '#c0caf5',
                     fontSize: '0.9rem',
@@ -719,7 +724,7 @@ function ZenWorkspaceSelector({
             padding: '10px 20px',
             marginTop: '16px',
             background: 'transparent',
-            border: '1px solid #3b4261',
+            border: BORDER_1PX_SOLID_3B4261,
             borderRadius: '8px',
             color: '#565f89',
             fontSize: '0.85rem',

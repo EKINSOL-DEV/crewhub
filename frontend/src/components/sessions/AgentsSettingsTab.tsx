@@ -7,6 +7,14 @@ import { useToast } from '@/hooks/use-toast'
 import { API_BASE } from '@/lib/api'
 import { Loader2, Edit2, Check, X, Sparkles, Trash2, Plus, AlertTriangle } from 'lucide-react'
 
+const BORDER_1PX_SOLID_HSL_VAR_BORDER = '1px solid hsl(var(--border))'
+const CLS_H_4_W_4_MR_1 = 'h-4 w-4 mr-1'
+const CLS_TEXT_XS_FONT_MEDIUM = 'text-xs font-medium'
+const DESTRUCTIVE = 'destructive'
+const HEADQUARTERS = 'headquarters'
+const HSL_BACKGROUND = 'hsl(var(--background))'
+const HSL_FOREGROUND = 'hsl(var(--foreground))'
+
 // ── Types ────────────────────────────────────────────────────────────
 
 interface Agent {
@@ -121,7 +129,7 @@ function AddAgentModal({
   const [agentId, setAgentId] = useState('')
   const [icon, setIcon] = useState('🤖')
   const [color, setColor] = useState('#6b7280')
-  const [roomId, setRoomId] = useState('headquarters')
+  const [roomId, setRoomId] = useState(HEADQUARTERS)
   const [bio, setBio] = useState('')
   const [saving, setSaving] = useState(false)
   const [idManual, setIdManual] = useState(false)
@@ -165,7 +173,7 @@ function AddAgentModal({
       toast({
         title: 'Failed to create agent',
         description: String(err instanceof Error ? err.message : err),
-        variant: 'destructive',
+        variant: DESTRUCTIVE,
       })
     } finally {
       setSaving(false)
@@ -179,8 +187,8 @@ function AddAgentModal({
       style={{
         border: '1px solid var(--zen-border, hsl(var(--border)))',
         borderRadius: '12px',
-        background: 'hsl(var(--background))',
-        color: 'hsl(var(--foreground))',
+        background: HSL_BACKGROUND,
+        color: HSL_FOREGROUND,
         padding: '0',
         maxWidth: '440px',
         width: 'calc(100vw - 32px)',
@@ -242,7 +250,7 @@ function AddAgentModal({
                     width: '36px',
                     height: '36px',
                     borderRadius: '6px',
-                    border: '1px solid hsl(var(--border))',
+                    border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
                     cursor: 'pointer',
                     background: 'transparent',
                   }}
@@ -330,14 +338,14 @@ function AddAgentModal({
                 width: '100%',
                 height: '36px',
                 borderRadius: '6px',
-                border: '1px solid hsl(var(--border))',
-                background: 'hsl(var(--background))',
-                color: 'hsl(var(--foreground))',
+                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                background: HSL_BACKGROUND,
+                color: HSL_FOREGROUND,
                 padding: '0 8px',
                 fontSize: '0.875rem',
               }}
             >
-              <option value="headquarters">🏠 Headquarters</option>
+              <option value={HEADQUARTERS}>🏠 Headquarters</option>
               {rooms.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.icon ? `${r.icon} ` : ''}
@@ -369,9 +377,9 @@ function AddAgentModal({
                 width: '100%',
                 height: '64px',
                 borderRadius: '6px',
-                border: '1px solid hsl(var(--border))',
-                background: 'hsl(var(--background))',
-                color: 'hsl(var(--foreground))',
+                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                background: HSL_BACKGROUND,
+                color: HSL_FOREGROUND,
                 padding: '8px 12px',
                 fontSize: '0.875rem',
                 resize: 'none',
@@ -398,7 +406,7 @@ function AddAgentModal({
               {saving ? (
                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />
               ) : (
-                <Plus className="h-4 w-4 mr-1" />
+                <Plus className={CLS_H_4_W_4_MR_1} />
               )}
               Create Agent
             </Button>
@@ -425,7 +433,7 @@ function AgentCard({
   const [editing, setEditing] = useState(false)
   const [color, setColor] = useState(agent.color || '#6b7280')
   const [bio, setBio] = useState(agent.bio || '')
-  const [roomId, setRoomId] = useState(agent.default_room_id || 'headquarters')
+  const [roomId, setRoomId] = useState(agent.default_room_id || HEADQUARTERS)
   const [saving, setSaving] = useState(false)
   const [generating, setGenerating] = useState(false)
   // Inline icon editing
@@ -438,7 +446,7 @@ function AgentCard({
   useEffect(() => {
     setColor(agent.color || '#6b7280')
     setBio(agent.bio || '')
-    setRoomId(agent.default_room_id || 'headquarters')
+    setRoomId(agent.default_room_id || HEADQUARTERS)
     setIconValue(agent.icon || '🤖')
   }, [agent.color, agent.bio, agent.default_room_id, agent.icon])
 
@@ -452,7 +460,7 @@ function AgentCard({
         description: `${agent.icon} ${agent.display_name || agent.name} saved`,
       })
     } catch {
-      toast({ title: 'Failed to save', variant: 'destructive' })
+      toast({ title: 'Failed to save', variant: DESTRUCTIVE })
     } finally {
       setSaving(false)
     }
@@ -464,7 +472,7 @@ function AgentCard({
       const generatedBio = await generateAgentBio(agent.id)
       setBio(generatedBio)
     } catch {
-      toast({ title: 'Failed to generate bio', variant: 'destructive' })
+      toast({ title: 'Failed to generate bio', variant: DESTRUCTIVE })
     } finally {
       setGenerating(false)
     }
@@ -473,7 +481,7 @@ function AgentCard({
   const handleCancel = () => {
     setColor(agent.color || '#6b7280')
     setBio(agent.bio || '')
-    setRoomId(agent.default_room_id || 'headquarters')
+    setRoomId(agent.default_room_id || HEADQUARTERS)
     setEditing(false)
   }
 
@@ -485,7 +493,7 @@ function AgentCard({
       setEditingIcon(false)
       toast({ title: 'Icon updated' })
     } catch {
-      toast({ title: 'Failed to save icon', variant: 'destructive' })
+      toast({ title: 'Failed to save icon', variant: DESTRUCTIVE })
     } finally {
       setSavingIcon(false)
     }
@@ -542,7 +550,7 @@ function AgentCard({
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  color: 'hsl(var(--foreground))',
+                  color: HSL_FOREGROUND,
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSaveIcon()
@@ -659,7 +667,7 @@ function AgentCard({
         <div className="mt-4 space-y-4 border-t pt-4">
           {/* Color picker */}
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Bot Color</Label>
+            <Label className={CLS_TEXT_XS_FONT_MEDIUM}>Bot Color</Label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
@@ -680,7 +688,7 @@ function AgentCard({
 
           {/* Room dropdown */}
           <div className="space-y-2">
-            <Label className="text-xs font-medium">Default Room</Label>
+            <Label className={CLS_TEXT_XS_FONT_MEDIUM}>Default Room</Label>
             <select
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
@@ -688,14 +696,14 @@ function AgentCard({
                 width: '100%',
                 height: '36px',
                 borderRadius: '6px',
-                border: '1px solid hsl(var(--border))',
-                background: 'hsl(var(--background))',
-                color: 'hsl(var(--foreground))',
+                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                background: HSL_BACKGROUND,
+                color: HSL_FOREGROUND,
                 padding: '0 8px',
                 fontSize: '0.875rem',
               }}
             >
-              <option value="headquarters">🏠 Headquarters</option>
+              <option value={HEADQUARTERS}>🏠 Headquarters</option>
               {rooms.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.icon ? `${r.icon} ` : ''}
@@ -708,7 +716,7 @@ function AgentCard({
           {/* Bio */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium">Bio</Label>
+              <Label className={CLS_TEXT_XS_FONT_MEDIUM}>Bio</Label>
               <Button
                 variant="ghost"
                 size="sm"
@@ -735,13 +743,13 @@ function AgentCard({
           {/* Actions */}
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" size="sm" onClick={handleCancel} disabled={saving}>
-              <X className="h-4 w-4 mr-1" /> Cancel
+              <X className={CLS_H_4_W_4_MR_1} /> Cancel
             </Button>
             <Button size="sm" onClick={handleSave} disabled={saving}>
               {saving ? (
                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />
               ) : (
-                <Check className="h-4 w-4 mr-1" />
+                <Check className={CLS_H_4_W_4_MR_1} />
               )}
               Save
             </Button>
@@ -774,10 +782,10 @@ function DeleteConfirmDialog({
       ref={dialogRef}
       onClose={onCancel}
       style={{
-        border: '1px solid hsl(var(--border))',
+        border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
         borderRadius: '12px',
-        background: 'hsl(var(--background))',
-        color: 'hsl(var(--foreground))',
+        background: HSL_BACKGROUND,
+        color: HSL_FOREGROUND,
         padding: '24px',
         maxWidth: '360px',
         width: 'calc(100vw - 32px)',
@@ -839,14 +847,14 @@ function DeleteConfirmDialog({
             Cancel
           </Button>
           <Button
-            variant="destructive"
+            variant={DESTRUCTIVE}
             size="sm"
             onClick={() => {
               dialogRef.current?.close()
               onConfirm()
             }}
           >
-            <Trash2 className="h-4 w-4 mr-1" />
+            <Trash2 className={CLS_H_4_W_4_MR_1} />
             Delete
           </Button>
         </div>
@@ -871,7 +879,7 @@ export function AgentsSettingsTab() {
       setAgents(agentData)
       setRooms(roomData)
     } catch {
-      toast({ title: 'Failed to load agents', variant: 'destructive' })
+      toast({ title: 'Failed to load agents', variant: DESTRUCTIVE })
     } finally {
       setLoading(false)
     }
@@ -898,7 +906,7 @@ export function AgentsSettingsTab() {
         description: `${deleteTarget.icon || '🤖'} ${deleteTarget.display_name || deleteTarget.name} removed`,
       })
     } catch {
-      toast({ title: 'Failed to delete agent', variant: 'destructive' })
+      toast({ title: 'Failed to delete agent', variant: DESTRUCTIVE })
     } finally {
       setDeleteTarget(null)
     }

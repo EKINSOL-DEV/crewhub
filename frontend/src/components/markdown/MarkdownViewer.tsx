@@ -3,6 +3,9 @@ import remarkGfm from 'remark-gfm'
 import { rehypeHighlightLite } from './rehypeHighlightLite'
 import { CodeBlock } from './CodeBlock'
 
+const BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V = '1px solid var(--zen-border, hsl(var(--border)))'
+const VAR_ZEN_FG = 'var(--zen-fg, hsl(var(--foreground)))'
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -32,8 +35,8 @@ function MdH1({ children, ...props }: any) {
         fontWeight: 700,
         marginTop: 24,
         marginBottom: 12,
-        color: 'var(--zen-fg, hsl(var(--foreground)))',
-        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+        color: VAR_ZEN_FG,
+        borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
         paddingBottom: 8,
       }}
     >
@@ -54,8 +57,8 @@ function MdH2({ children, ...props }: any) {
         fontWeight: 600,
         marginTop: 20,
         marginBottom: 10,
-        color: 'var(--zen-fg, hsl(var(--foreground)))',
-        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+        color: VAR_ZEN_FG,
+        borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
         paddingBottom: 6,
       }}
     >
@@ -76,7 +79,7 @@ function MdH3({ children, ...props }: any) {
         fontWeight: 600,
         marginTop: 16,
         marginBottom: 8,
-        color: 'var(--zen-fg, hsl(var(--foreground)))',
+        color: VAR_ZEN_FG,
       }}
     >
       {children}
@@ -96,7 +99,7 @@ function MdH4({ children, ...props }: any) {
         fontWeight: 600,
         marginTop: 14,
         marginBottom: 6,
-        color: 'var(--zen-fg, hsl(var(--foreground)))',
+        color: VAR_ZEN_FG,
       }}
     >
       {children}
@@ -110,7 +113,7 @@ function MdP({ children }: any) {
       style={{
         marginBottom: 12,
         lineHeight: 1.7,
-        color: 'var(--zen-fg, hsl(var(--foreground)))',
+        color: VAR_ZEN_FG,
       }}
     >
       {children}
@@ -132,7 +135,7 @@ function MdLi({ children }: any) {
       style={{
         marginBottom: 4,
         lineHeight: 1.6,
-        color: 'var(--zen-fg, hsl(var(--foreground)))',
+        color: VAR_ZEN_FG,
       }}
     >
       {children}
@@ -181,7 +184,7 @@ function MdTh({ children }: any) {
   return (
     <th
       style={{
-        border: '1px solid var(--zen-border, hsl(var(--border)))',
+        border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
         padding: '8px 12px',
         textAlign: 'left',
         fontWeight: 600,
@@ -195,7 +198,7 @@ function MdTh({ children }: any) {
 
 function MdTd({ children }: any) {
   return (
-    <td style={{ border: '1px solid var(--zen-border, hsl(var(--border)))', padding: '8px 12px' }}>
+    <td style={{ border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V, padding: '8px 12px' }}>
       {children}
     </td>
   )
@@ -232,7 +235,7 @@ function MdHr() {
     <hr
       style={{
         border: 'none',
-        borderTop: '1px solid var(--zen-border, hsl(var(--border)))',
+        borderTop: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
         margin: '24px 0',
       }}
     />
@@ -313,7 +316,7 @@ export function MarkdownViewer({ content, className, maxHeight }: MarkdownViewer
         fontSize: 14,
         lineHeight: 1.7,
         maxWidth: 720,
-        color: 'var(--zen-fg, hsl(var(--foreground)))',
+        color: VAR_ZEN_FG,
       }}
     >
       <ReactMarkdown

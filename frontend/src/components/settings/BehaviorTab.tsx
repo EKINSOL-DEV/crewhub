@@ -25,6 +25,12 @@ import { useToast } from '@/hooks/use-toast'
 import { Section, CollapsibleSection } from './shared'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
+const CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN = 'flex items-center justify-between'
+const CLS_TEXT_XS_FONT_SEMIBOLD_UPPERCASE_TRACKING =
+  'text-xs font-semibold uppercase tracking-wider text-muted-foreground'
+const CLS_TEXT_XS_TEXT_MUTED_FOREGROUND = 'text-xs text-muted-foreground'
+const KEY_CREWHUB_MIC_DEVICE_ID = 'crewhub-mic-device-id'
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface BehaviorTabProps {
@@ -112,7 +118,7 @@ function ConfigField({
             </button>
           )}
         </div>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        {description && <p className={CLS_TEXT_XS_TEXT_MUTED_FOREGROUND}>{description}</p>}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <Input
@@ -142,9 +148,7 @@ function ThresholdsTimingSection({ config }: { config: Record<string, number> })
     <div className="space-y-5">
       {/* Status Thresholds */}
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Session Status
-        </h3>
+        <h3 className={CLS_TEXT_XS_FONT_SEMIBOLD_UPPERCASE_TRACKING}>Session Status</h3>
         <ConfigField
           label="Active → Idle"
           description="Time before a session is considered idle"
@@ -165,9 +169,7 @@ function ThresholdsTimingSection({ config }: { config: Record<string, number> })
 
       {/* 3D Bot Status */}
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          3D Bot Status
-        </h3>
+        <h3 className={CLS_TEXT_XS_FONT_SEMIBOLD_UPPERCASE_TRACKING}>3D Bot Status</h3>
         <ConfigField
           label="Bot Idle Threshold"
           description="Time before a bot appears idle in the 3D world"
@@ -188,9 +190,7 @@ function ThresholdsTimingSection({ config }: { config: Record<string, number> })
 
       {/* Activity Detection */}
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Activity Detection
-        </h3>
+        <h3 className={CLS_TEXT_XS_FONT_SEMIBOLD_UPPERCASE_TRACKING}>Activity Detection</h3>
         <ConfigField
           label="Token Change Window"
           description="Recent token changes within this window = actively running"
@@ -211,9 +211,7 @@ function ThresholdsTimingSection({ config }: { config: Record<string, number> })
 
       {/* Parking */}
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Parking / Break Area
-        </h3>
+        <h3 className={CLS_TEXT_XS_FONT_SEMIBOLD_UPPERCASE_TRACKING}>Parking / Break Area</h3>
         <ConfigField
           label="Parking Expiry"
           description="Hide parked sessions after this time"
@@ -244,9 +242,7 @@ function ThresholdsTimingSection({ config }: { config: Record<string, number> })
 
       {/* Bot Movement */}
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          3D Bot Movement
-        </h3>
+        <h3 className={CLS_TEXT_XS_FONT_SEMIBOLD_UPPERCASE_TRACKING}>3D Bot Movement</h3>
         <ConfigField
           label="Active Walk Speed"
           configKey="botWalkSpeedActive"
@@ -283,9 +279,7 @@ function ThresholdsTimingSection({ config }: { config: Record<string, number> })
 
       {/* Polling */}
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Polling Intervals
-        </h3>
+        <h3 className={CLS_TEXT_XS_FONT_SEMIBOLD_UPPERCASE_TRACKING}>Polling Intervals</h3>
         <ConfigField
           label="Log Viewer Refresh"
           configKey="logViewerPollMs"
@@ -337,7 +331,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
   )
   const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedMicId, setSelectedMicId] = useState<string>(
-    () => localStorage.getItem('crewhub-mic-device-id') ?? ''
+    () => localStorage.getItem(KEY_CREWHUB_MIC_DEVICE_ID) ?? ''
   )
   const [micEnumerating, setMicEnumerating] = useState(false)
 
@@ -364,9 +358,9 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
   const handleMicChange = (deviceId: string) => {
     setSelectedMicId(deviceId)
     if (deviceId) {
-      localStorage.setItem('crewhub-mic-device-id', deviceId)
+      localStorage.setItem(KEY_CREWHUB_MIC_DEVICE_ID, deviceId)
     } else {
-      localStorage.removeItem('crewhub-mic-device-id')
+      localStorage.removeItem(KEY_CREWHUB_MIC_DEVICE_ID)
     }
   }
 
@@ -385,7 +379,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
       <Section title="🔄 Updates">
-        <div className="flex items-center justify-between">
+        <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
           <Label htmlFor="auto-refresh" className="flex flex-col gap-1">
             <span className="text-sm">Auto-refresh</span>
             <span className="text-xs text-muted-foreground font-normal">
@@ -440,7 +434,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
               <SelectItem value="600">10 minutes</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
+          <p className={CLS_TEXT_XS_TEXT_MUTED_FOREGROUND}>
             How long before idle sessions move to parking
           </p>
         </div>
@@ -471,7 +465,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
       </Section>
 
       <Section title="🧘 Zen Mode">
-        <div className="flex items-center justify-between">
+        <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
           <Label htmlFor="zen-auto-launch" className="flex flex-col gap-1">
             <span className="text-sm">Launch in Zen Mode</span>
             <span className="text-xs text-muted-foreground font-normal">
@@ -499,7 +493,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
         typeof navigator.mediaDevices?.enumerateDevices === 'function' && (
           <Section title="🎤 Microphone">
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
                 <Label className="text-sm">Input Device</Label>
                 <Button
                   variant="outline"
@@ -522,7 +516,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
                 </Button>
               </div>
               {micDevices.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
+                <p className={CLS_TEXT_XS_TEXT_MUTED_FOREGROUND}>
                   {micEnumerating
                     ? 'Scanning for microphones…'
                     : 'Click Refresh to list microphones'}
@@ -541,7 +535,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
                   ))}
                 </select>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className={CLS_TEXT_XS_TEXT_MUTED_FOREGROUND}>
                 Used for voice messages. Saved to this device.
               </p>
             </div>

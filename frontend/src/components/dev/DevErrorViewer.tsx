@@ -12,6 +12,9 @@ import {
 } from '@/lib/devErrorStore'
 import { Bug, X, Trash2, Search, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
 
+const BORDER_1PX_SOLID_3B4261 = '1px solid #3b4261'
+const TRANSPARENT = 'transparent'
+
 // ── Dev Toolbar Button ─────────────────────────────────────────
 
 export function DevToolbar() {
@@ -78,7 +81,7 @@ export function DevToolbar() {
           gap: 6,
           padding: '8px 12px',
           borderRadius: 8,
-          border: count > 0 ? '1px solid #f7768e40' : '1px solid #3b4261',
+          border: count > 0 ? '1px solid #f7768e40' : BORDER_1PX_SOLID_3B4261,
           background: count > 0 ? '#1a1b26ee' : '#1a1b26cc',
           color: count > 0 ? '#f7768e' : '#565f89',
           fontSize: '0.8rem',
@@ -197,7 +200,7 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 20px',
-          borderBottom: '1px solid #3b4261',
+          borderBottom: BORDER_1PX_SOLID_3B4261,
           background: '#1a1b26',
         }}
       >
@@ -217,8 +220,8 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
               gap: 4,
               padding: '6px 10px',
               borderRadius: 6,
-              border: '1px solid #3b4261',
-              background: 'transparent',
+              border: BORDER_1PX_SOLID_3B4261,
+              background: TRANSPARENT,
               color: '#565f89',
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -233,7 +236,7 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
               padding: 6,
               borderRadius: 6,
               border: 'none',
-              background: 'transparent',
+              background: TRANSPARENT,
               color: '#565f89',
               cursor: 'pointer',
             }}
@@ -274,7 +277,7 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
               width: '100%',
               padding: '7px 10px 7px 32px',
               borderRadius: 6,
-              border: '1px solid #3b4261',
+              border: BORDER_1PX_SOLID_3B4261,
               background: '#24283b',
               color: '#a9b1d6',
               fontSize: '0.85rem',
@@ -288,7 +291,7 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
           style={{
             padding: '7px 10px',
             borderRadius: 6,
-            border: '1px solid #3b4261',
+            border: BORDER_1PX_SOLID_3B4261,
             background: '#24283b',
             color: '#a9b1d6',
             fontSize: '0.85rem',
@@ -320,7 +323,7 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
                   marginBottom: 4,
                   borderRadius: 6,
                   border: `1px solid ${expanded ? '#3b4261' : '#3b426140'}`,
-                  background: expanded ? '#1a1b26' : 'transparent',
+                  background: expanded ? '#1a1b26' : TRANSPARENT,
                   transition: 'all 0.15s',
                 }}
               >
@@ -454,8 +457,8 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
                         marginTop: 8,
                         padding: '4px 8px',
                         borderRadius: 4,
-                        border: '1px solid #3b4261',
-                        background: 'transparent',
+                        border: BORDER_1PX_SOLID_3B4261,
+                        background: TRANSPARENT,
                         color: '#565f89',
                         fontSize: '0.72rem',
                         cursor: 'pointer',

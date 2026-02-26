@@ -6,6 +6,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { useProjects, type Project, type ProjectOverview } from '@/hooks/useProjects'
 import { API_BASE } from '@/lib/api'
 
+const BORDER_1PX_SOLID_VAR_ZEN_BORDER_3B426 = '1px solid var(--zen-border, #3b4261)'
+const DELETE_CONFIRM = 'delete-confirm'
+const VAR_ZEN_BG_HOVER = 'var(--zen-bg-hover, #24283b)'
+const VAR_ZEN_FG = 'var(--zen-fg, #c0caf5)'
+const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted)'
+
 // ── Types ────────────────────────────────────────────────────
 
 interface ProjectManagerModalProps {
@@ -16,7 +22,7 @@ interface ProjectManagerModalProps {
   readonly onProjectSelect?: (projectId: string, projectName: string, projectColor?: string) => void
 }
 
-type ModalView = 'list' | 'create' | 'edit' | 'details' | 'delete-confirm'
+type ModalView = 'list' | 'create' | 'edit' | 'details' | typeof DELETE_CONFIRM
 
 interface ProjectForm {
   name: string
@@ -162,7 +168,7 @@ export function ProjectManagerModal({
     } catch {
       setDeleteRooms([])
     }
-    setView('delete-confirm')
+    setView(DELETE_CONFIRM)
   }, [])
 
   const handleCreate = useCallback(async () => {
@@ -259,9 +265,9 @@ export function ProjectManagerModal({
 
   const modalStyle: React.CSSProperties = {
     background: 'var(--zen-bg-panel, #1a1b26)',
-    color: 'var(--zen-fg, #c0caf5)',
+    color: VAR_ZEN_FG,
     borderRadius: 12,
-    border: '1px solid var(--zen-border, #3b4261)',
+    border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_3B426,
     boxShadow: '0 16px 48px rgba(0,0,0,0.3)',
     width: '90vw',
     maxWidth: 520,
@@ -273,7 +279,7 @@ export function ProjectManagerModal({
 
   const headerStyle: React.CSSProperties = {
     padding: '16px 20px',
-    borderBottom: '1px solid var(--zen-border, #3b4261)',
+    borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_3B426,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -298,7 +304,7 @@ export function ProjectManagerModal({
       if (variant === 'danger') return '#dc2626'
       return 'transparent'
     })(),
-    color: variant === 'primary' || variant === 'danger' ? '#fff' : 'var(--zen-fg, #c0caf5)',
+    color: variant === 'primary' || variant === 'danger' ? '#fff' : VAR_ZEN_FG,
     opacity: saving ? 0.6 : 1,
   })
 
@@ -306,9 +312,9 @@ export function ProjectManagerModal({
     width: '100%',
     padding: '8px 12px',
     borderRadius: 6,
-    border: '1px solid var(--zen-border, #3b4261)',
-    background: 'var(--zen-bg-hover, #24283b)',
-    color: 'var(--zen-fg, #c0caf5)',
+    border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_3B426,
+    background: VAR_ZEN_BG_HOVER,
+    color: VAR_ZEN_FG,
     fontSize: 13,
     fontFamily: 'inherit',
     outline: 'none',
@@ -405,10 +411,7 @@ export function ProjectManagerModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background:
-                  form.icon === icon
-                    ? 'var(--zen-accent, #7aa2f7)30'
-                    : 'var(--zen-bg-hover, #24283b)',
+                background: form.icon === icon ? 'var(--zen-accent, #7aa2f7)30' : VAR_ZEN_BG_HOVER,
                 outline: form.icon === icon ? '2px solid var(--zen-accent, #7aa2f7)' : 'none',
               }}
             >
@@ -485,9 +488,7 @@ export function ProjectManagerModal({
         </button>
 
         {activeProjects.length === 0 ? (
-          <div
-            style={{ textAlign: 'center', color: 'var(--zen-fg-muted)', fontSize: 13, padding: 24 }}
-          >
+          <div style={{ textAlign: 'center', color: VAR_ZEN_FG_MUTED, fontSize: 13, padding: 24 }}>
             No projects yet. Create one to get started!
           </div>
         ) : (
@@ -504,7 +505,7 @@ export function ProjectManagerModal({
                   borderRadius: 8,
                   marginBottom: 4,
                   cursor: 'pointer',
-                  border: '1px solid var(--zen-border, #3b4261)',
+                  border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_3B426,
                   transition: 'background 0.1s',
                 }}
                 onClick={() => openDetails(project)}
@@ -513,9 +514,7 @@ export function ProjectManagerModal({
                 }}
                 role="button"
                 tabIndex={0}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = 'var(--zen-bg-hover, #24283b)')
-                }
+                onMouseEnter={(e) => (e.currentTarget.style.background = VAR_ZEN_BG_HOVER)}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
                 <span
@@ -544,7 +543,7 @@ export function ProjectManagerModal({
                     <div
                       style={{
                         fontSize: 11,
-                        color: 'var(--zen-fg-muted)',
+                        color: VAR_ZEN_FG_MUTED,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -557,7 +556,7 @@ export function ProjectManagerModal({
                 <div
                   style={{
                     fontSize: 11,
-                    color: 'var(--zen-fg-muted)',
+                    color: VAR_ZEN_FG_MUTED,
                     textAlign: 'right',
                     flexShrink: 0,
                   }}
@@ -593,13 +592,13 @@ export function ProjectManagerModal({
             <div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>{selectedProject.name}</div>
               {selectedProject.description && (
-                <div style={{ fontSize: 12, color: 'var(--zen-fg-muted)', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: VAR_ZEN_FG_MUTED, marginTop: 2 }}>
                   {selectedProject.description}
                 </div>
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--zen-fg-muted)' }}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: VAR_ZEN_FG_MUTED }}>
             <span>📅 Created {created}</span>
             {ov && <span>🏠 {ov.room_count} rooms</span>}
             {ov && <span>🤖 {ov.agent_count} agents</span>}
@@ -686,7 +685,7 @@ export function ProjectManagerModal({
                 <li key={r.id}>{r.name}</li>
               ))}
               {moreCount > 0 && (
-                <li style={{ color: 'var(--zen-fg-muted)' }}>and {moreCount} more...</li>
+                <li style={{ color: VAR_ZEN_FG_MUTED }}>and {moreCount} more...</li>
               )}
             </ul>
           </div>
@@ -697,9 +696,9 @@ export function ProjectManagerModal({
             padding: 12,
             borderRadius: 8,
             marginBottom: 16,
-            background: 'var(--zen-bg-hover, #24283b)',
+            background: VAR_ZEN_BG_HOVER,
             fontSize: 12,
-            color: 'var(--zen-fg-muted)',
+            color: VAR_ZEN_FG_MUTED,
           }}
         >
           All room assignments will be removed. Documents will remain.
@@ -738,13 +737,13 @@ export function ProjectManagerModal({
         {view === 'create' && renderHeader('New Project', true)}
         {view === 'edit' && renderHeader('Edit Project', true)}
         {view === 'details' && renderHeader('Project Details', true)}
-        {view === 'delete-confirm' && renderHeader('Delete Project', true)}
+        {view === DELETE_CONFIRM && renderHeader('Delete Project', true)}
 
         {view === 'list' && renderList()}
         {view === 'create' && renderForm(false)}
         {view === 'edit' && renderForm(true)}
         {view === 'details' && renderDetails()}
-        {view === 'delete-confirm' && renderDeleteConfirm()}
+        {view === DELETE_CONFIRM && renderDeleteConfirm()}
       </div>
     </div>
   )

@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { splitSessionsForDisplay } from '../lib/sessionFiltering'
 import type { CrewSession } from '../lib/api'
 
+const AGENT_MAIN_MAIN = 'agent:main:main'
+
 const makeMockSession = (key: string, updatedAt: number): CrewSession => ({
   key,
   kind: 'agent',
@@ -14,13 +16,13 @@ describe('splitSessionsForDisplay', () => {
   it('splits sessions into visible and parking', () => {
     const now = Date.now()
     const sessions = [
-      makeMockSession('agent:main:main', now),
+      makeMockSession(AGENT_MAIN_MAIN, now),
       makeMockSession('agent:main:subagent:1', now),
       // 5 minutes ago - idle but not expired from parking (within 30min parkingExpiryMs)
       makeMockSession('agent:main:subagent:2', now - 5 * 60 * 1000),
     ]
 
-    const isActive = (key: string) => key === 'agent:main:main'
+    const isActive = (key: string) => key === AGENT_MAIN_MAIN
     const { visibleSessions, parkingSessions } = splitSessionsForDisplay(
       sessions,
       isActive,
@@ -30,7 +32,7 @@ describe('splitSessionsForDisplay', () => {
     )
 
     // Main agent never parks
-    expect(visibleSessions.some((s) => s.key === 'agent:main:main')).toBe(true)
+    expect(visibleSessions.some((s) => s.key === AGENT_MAIN_MAIN)).toBe(true)
     // Recent subagent stays visible
     expect(visibleSessions.some((s) => s.key === 'agent:main:subagent:1')).toBe(true)
     // Idle subagent (>2min idle) goes to parking

@@ -6,7 +6,9 @@ type MinionContentBlock = SessionContentBlock
 import { getTaskEmoji, generateFriendlyName } from './friendlyNames'
 import { SESSION_CONFIG } from './sessionConfig'
 
-export type SessionStatus = 'active' | 'idle' | 'sleeping' | 'supervising'
+const SUPERVISING = 'supervising'
+
+export type SessionStatus = 'active' | 'idle' | 'sleeping' | typeof SUPERVISING
 
 export interface ActivityEvent {
   timestamp: number
@@ -24,7 +26,7 @@ export function getSessionStatus(
   if (timeSinceUpdate < SESSION_CONFIG.statusActiveThresholdMs) return 'active'
 
   // Check if this session has active subagents (parent appears idle but subagent is working)
-  if (allSessions && hasActiveSubagents(session, allSessions)) return 'supervising'
+  if (allSessions && hasActiveSubagents(session, allSessions)) return SUPERVISING
 
   if (timeSinceUpdate < SESSION_CONFIG.statusSleepingThresholdMs) return 'idle'
   return 'sleeping'
@@ -97,7 +99,7 @@ export function getStatusIndicator(status: SessionStatus): {
       return { emoji: '🟢', color: 'text-green-500', label: 'Active' }
     case 'idle':
       return { emoji: '🟡', color: 'text-yellow-500', label: 'Idle' }
-    case 'supervising':
+    case SUPERVISING:
       return { emoji: '👁️', color: 'text-blue-500', label: 'Supervising' }
     case 'sleeping':
       return { emoji: '💤', color: 'text-gray-400', label: 'Sleeping' }
@@ -223,7 +225,7 @@ export function getCurrentActivity(session: MinionSession, allSessions?: MinionS
       if (timeSinceUpdate < 30000) return 'Working...'
       return 'Ready and listening'
     }
-    if (status === 'supervising') {
+    if (status === SUPERVISING) {
       const subagentLabel = getActiveSubagentLabel(session, allSessions || [])
       return subagentLabel ? `Supervising: ${subagentLabel}` : 'Supervising subagent'
     }
@@ -415,7 +417,7 @@ export function shouldBeInParkingLane(
   const idleSeconds = getIdleTimeSeconds(session)
   const status = getSessionStatus(session, allSessions)
   // Supervising sessions should NOT be parked — they're actively delegating work
-  if (status === 'supervising') return false
+  if (status === SUPERVISING) return false
   if (status === 'sleeping') return true
   if (isActivelyRunning) return false
 

@@ -14,6 +14,11 @@ import {
   type ActivityEvent,
 } from '@/services/activityService'
 
+const RGBA_139_92_246_0_2 = 'rgba(139, 92, 246, 0.2)'
+const RGBA_255_255_255_0_03 = 'rgba(255, 255, 255, 0.03)'
+const RGBA_255_255_255_0_06 = 'rgba(255, 255, 255, 0.06)'
+const TRANSPARENT = 'transparent'
+
 interface MobileActivityPanelProps {
   readonly onBack: () => void
 }
@@ -177,8 +182,8 @@ function FilterSheet({
               style={{
                 flex: 1,
                 padding: '8px 12px',
-                background: tab === t ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                border: `1px solid ${tab === t ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
+                background: tab === t ? RGBA_139_92_246_0_2 : RGBA_255_255_255_0_03,
+                border: `1px solid ${tab === t ? '#8b5cf6' : RGBA_255_255_255_0_06}`,
                 borderRadius: 8,
                 color: tab === t ? '#c4b5fd' : '#94a3b8',
                 fontSize: 13,
@@ -207,10 +212,8 @@ function FilterSheet({
                   width: '100%',
                   padding: '12px',
                   background:
-                    selectedAgentId === null
-                      ? 'rgba(139, 92, 246, 0.2)'
-                      : 'rgba(255, 255, 255, 0.03)',
-                  border: `1px solid ${selectedAgentId === null ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
+                    selectedAgentId === null ? RGBA_139_92_246_0_2 : RGBA_255_255_255_0_03,
+                  border: `1px solid ${selectedAgentId === null ? '#8b5cf6' : RGBA_255_255_255_0_06}`,
                   borderRadius: 10,
                   color: selectedAgentId === null ? '#c4b5fd' : '#cbd5e1',
                   fontSize: 14,
@@ -232,10 +235,8 @@ function FilterSheet({
                     width: '100%',
                     padding: '12px',
                     background:
-                      selectedAgentId === agent.id
-                        ? 'rgba(139, 92, 246, 0.2)'
-                        : 'rgba(255, 255, 255, 0.03)',
-                    border: `1px solid ${selectedAgentId === agent.id ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
+                      selectedAgentId === agent.id ? RGBA_139_92_246_0_2 : RGBA_255_255_255_0_03,
+                    border: `1px solid ${selectedAgentId === agent.id ? '#8b5cf6' : RGBA_255_255_255_0_06}`,
                     borderRadius: 10,
                     color: selectedAgentId === agent.id ? '#c4b5fd' : '#cbd5e1',
                     fontSize: 14,
@@ -261,10 +262,8 @@ function FilterSheet({
                   width: '100%',
                   padding: '12px',
                   background:
-                    selectedProjectId === null
-                      ? 'rgba(139, 92, 246, 0.2)'
-                      : 'rgba(255, 255, 255, 0.03)',
-                  border: `1px solid ${selectedProjectId === null ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
+                    selectedProjectId === null ? RGBA_139_92_246_0_2 : RGBA_255_255_255_0_03,
+                  border: `1px solid ${selectedProjectId === null ? '#8b5cf6' : RGBA_255_255_255_0_06}`,
                   borderRadius: 10,
                   color: selectedProjectId === null ? '#c4b5fd' : '#cbd5e1',
                   fontSize: 14,
@@ -286,10 +285,8 @@ function FilterSheet({
                     width: '100%',
                     padding: '12px',
                     background:
-                      selectedProjectId === proj.id
-                        ? 'rgba(139, 92, 246, 0.2)'
-                        : 'rgba(255, 255, 255, 0.03)',
-                    border: `1px solid ${selectedProjectId === proj.id ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
+                      selectedProjectId === proj.id ? RGBA_139_92_246_0_2 : RGBA_255_255_255_0_03,
+                    border: `1px solid ${selectedProjectId === proj.id ? '#8b5cf6' : RGBA_255_255_255_0_06}`,
                     borderRadius: 10,
                     color: selectedProjectId === proj.id ? '#c4b5fd' : '#cbd5e1',
                     fontSize: 14,
@@ -331,10 +328,8 @@ function FilterSheet({
                     width: '100%',
                     padding: '12px',
                     background:
-                      selectedEventType === t.value
-                        ? 'rgba(139, 92, 246, 0.2)'
-                        : 'rgba(255, 255, 255, 0.03)',
-                    border: `1px solid ${selectedEventType === t.value ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
+                      selectedEventType === t.value ? RGBA_139_92_246_0_2 : RGBA_255_255_255_0_03,
+                    border: `1px solid ${selectedEventType === t.value ? '#8b5cf6' : RGBA_255_255_255_0_06}`,
                     borderRadius: 10,
                     color: selectedEventType === t.value ? '#c4b5fd' : '#cbd5e1',
                     fontSize: 14,
@@ -496,7 +491,7 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
             height: 36,
             borderRadius: 10,
             border: 'none',
-            background: 'transparent',
+            background: TRANSPARENT,
             color: '#94a3b8',
             cursor: 'pointer',
             display: 'flex',
@@ -522,7 +517,7 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
             height: 36,
             borderRadius: 10,
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'transparent',
+            background: TRANSPARENT,
             color: '#94a3b8',
             cursor: refreshing ? 'wait' : 'pointer',
             display: 'flex',
@@ -543,7 +538,7 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
             height: 36,
             borderRadius: 10,
             border: hasActiveFilters ? '1px solid #8b5cf6' : '1px solid rgba(255, 255, 255, 0.1)',
-            background: hasActiveFilters ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+            background: hasActiveFilters ? 'rgba(139, 92, 246, 0.15)' : TRANSPARENT,
             color: hasActiveFilters ? '#a78bfa' : '#94a3b8',
             cursor: 'pointer',
             display: 'flex',

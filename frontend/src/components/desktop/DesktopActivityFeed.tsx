@@ -25,6 +25,11 @@ import {
 } from '@/services/activityService'
 import { useChatContext } from '@/contexts/ChatContext'
 
+const BORDER_1PX_SOLID_HSL_VAR_BORDER = '1px solid hsl(var(--border))'
+const HSL_MUTED_FOREGROUND = 'hsl(var(--muted-foreground))'
+const RGBA_255_255_255_0_05 = 'rgba(255,255,255,0.05)'
+const TRANSPARENT = 'transparent'
+
 // ── Constants ─────────────────────────────────────────────────
 
 const STORAGE_KEY = 'crewhub-desktop-activity-feed-open'
@@ -93,7 +98,7 @@ function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
           alignItems: 'center',
           gap: 6,
           padding: '5px 10px',
-          background: selectedId ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255,255,255,0.05)',
+          background: selectedId ? 'rgba(139, 92, 246, 0.15)' : RGBA_255_255_255_0_05,
           border: `1px solid ${selectedId ? '#8b5cf6' : 'rgba(255,255,255,0.1)'}`,
           borderRadius: 6,
           color: selectedId ? '#c4b5fd' : '#94a3b8',
@@ -149,7 +154,7 @@ function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
                 display: 'block',
                 width: '100%',
                 padding: '8px 12px',
-                background: selectedId === opt.id ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                background: selectedId === opt.id ? 'rgba(139, 92, 246, 0.2)' : TRANSPARENT,
                 border: 'none',
                 borderRadius: 6,
                 color: selectedId === opt.id ? '#c4b5fd' : '#cbd5e1',
@@ -159,11 +164,11 @@ function AgentDropdown({ agents, selectedId, onChange }: AgentDropdownProps) {
               }}
               onMouseEnter={(e) => {
                 if (selectedId !== opt.id)
-                  (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.05)'
+                  (e.target as HTMLElement).style.background = RGBA_255_255_255_0_05
               }}
               onMouseLeave={(e) => {
                 ;(e.target as HTMLElement).style.background =
-                  selectedId === opt.id ? 'rgba(139, 92, 246, 0.2)' : 'transparent'
+                  selectedId === opt.id ? 'rgba(139, 92, 246, 0.2)' : TRANSPARENT
               }}
             >
               {opt.name}
@@ -196,9 +201,9 @@ function EntryItem({ event, onOpen }: EntryItemProps) {
         gap: 8,
         width: '100%',
         padding: '8px 10px',
-        background: hovered ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
+        background: hovered ? RGBA_255_255_255_0_05 : 'rgba(255,255,255,0.02)',
         border: '1px solid transparent',
-        borderColor: hovered ? 'rgba(139,92,246,0.3)' : 'transparent',
+        borderColor: hovered ? 'rgba(139,92,246,0.3)' : TRANSPARENT,
         borderRadius: 8,
         cursor: 'pointer',
         textAlign: 'left',
@@ -389,7 +394,7 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
           bottom: 0,
           width: PANEL_WIDTH,
           background: 'hsl(var(--card))',
-          borderLeft: '1px solid hsl(var(--border))',
+          borderLeft: BORDER_1PX_SOLID_HSL_VAR_BORDER,
           display: 'flex',
           flexDirection: 'column',
           transform: isOpen ? 'translateX(0)' : `translateX(${PANEL_WIDTH}px)`,
@@ -403,7 +408,7 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
             alignItems: 'center',
             gap: 8,
             padding: '12px 12px 10px',
-            borderBottom: '1px solid hsl(var(--border))',
+            borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
             flexShrink: 0,
           }}
         >
@@ -428,11 +433,11 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'transparent',
+              background: TRANSPARENT,
               border: 'none',
               borderRadius: 6,
               cursor: refreshing ? 'wait' : 'pointer',
-              color: 'hsl(var(--muted-foreground))',
+              color: HSL_MUTED_FOREGROUND,
             }}
           >
             <RefreshCw
@@ -450,11 +455,11 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'transparent',
+              background: TRANSPARENT,
               border: 'none',
               borderRadius: 6,
               cursor: 'pointer',
-              color: 'hsl(var(--muted-foreground))',
+              color: HSL_MUTED_FOREGROUND,
             }}
           >
             <X size={14} />
@@ -465,9 +470,9 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
         <div
           style={{
             fontSize: 11,
-            color: 'hsl(var(--muted-foreground))',
+            color: HSL_MUTED_FOREGROUND,
             padding: '6px 12px',
-            borderBottom: '1px solid hsl(var(--border))',
+            borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
             flexShrink: 0,
           }}
         >
@@ -496,7 +501,7 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
                 alignItems: 'center',
                 justifyContent: 'center',
                 flex: 1,
-                color: 'hsl(var(--muted-foreground))',
+                color: HSL_MUTED_FOREGROUND,
                 fontSize: 13,
                 gap: 12,
                 paddingTop: 40,
@@ -515,7 +520,7 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
                 alignItems: 'center',
                 justifyContent: 'center',
                 flex: 1,
-                color: 'hsl(var(--muted-foreground))',
+                color: HSL_MUTED_FOREGROUND,
                 fontSize: 13,
                 gap: 8,
                 paddingTop: 40,
@@ -576,11 +581,11 @@ export function DesktopActivityFeedButton({
         justifyContent: 'center',
         width: 34,
         height: 34,
-        background: isOpen ? 'rgba(139,92,246,0.15)' : 'transparent',
-        border: `1px solid ${isOpen ? '#8b5cf6' : 'transparent'}`,
+        background: isOpen ? 'rgba(139,92,246,0.15)' : TRANSPARENT,
+        border: `1px solid ${isOpen ? '#8b5cf6' : TRANSPARENT}`,
         borderRadius: 6,
         cursor: 'pointer',
-        color: isOpen ? '#a78bfa' : 'hsl(var(--muted-foreground))',
+        color: isOpen ? '#a78bfa' : HSL_MUTED_FOREGROUND,
         transition: 'background 0.15s, border-color 0.15s, color 0.15s',
       }}
     >

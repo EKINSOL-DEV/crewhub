@@ -15,8 +15,13 @@ import {
 } from '../lib/minionUtils'
 import type { CrewSession } from '../lib/api'
 
+const AGENT_DEV_MAIN = 'agent:dev:main'
+const AGENT_MAIN_MAIN = 'agent:main:main'
+const AGENT_MAIN_SUBAGENT_ABC = 'agent:main:subagent:abc'
+const SUPERVISING = 'supervising'
+
 const makeMockSession = (overrides: Partial<CrewSession> = {}): CrewSession => ({
-  key: 'agent:main:main',
+  key: AGENT_MAIN_MAIN,
   kind: 'agent',
   channel: 'cli',
   updatedAt: Date.now(),
@@ -81,7 +86,7 @@ describe('getSessionStatus', () => {
 
   it('returns supervising when parent has active subagents', () => {
     const parentSession = makeMockSession({
-      key: 'agent:dev:main',
+      key: AGENT_DEV_MAIN,
       updatedAt: Date.now() - 10 * 60 * 1000, // 10 min ago (would be idle)
     })
     const activeSubagent = makeMockSession({
@@ -89,12 +94,12 @@ describe('getSessionStatus', () => {
       updatedAt: Date.now() - 30 * 1000, // 30s ago (active)
     })
     const allSessions = [parentSession, activeSubagent]
-    expect(getSessionStatus(parentSession, allSessions)).toBe('supervising')
+    expect(getSessionStatus(parentSession, allSessions)).toBe(SUPERVISING)
   })
 
   it('returns idle when subagents are also idle', () => {
     const parentSession = makeMockSession({
-      key: 'agent:dev:main',
+      key: AGENT_DEV_MAIN,
       updatedAt: Date.now() - 10 * 60 * 1000,
     })
     const staleSubagent = makeMockSession({
@@ -126,7 +131,7 @@ describe('getSessionStatus', () => {
       key: 'agent:main:subagent:task1',
       updatedAt: Date.now() - 30 * 1000,
     })
-    expect(getSessionStatus(cronSession, [cronSession, subagent])).toBe('supervising')
+    expect(getSessionStatus(cronSession, [cronSession, subagent])).toBe(SUPERVISING)
   })
 })
 
@@ -144,7 +149,7 @@ describe('getStatusIndicator', () => {
   })
 
   it('returns supervising indicator', () => {
-    const indicator = getStatusIndicator('supervising')
+    const indicator = getStatusIndicator(SUPERVISING)
     expect(indicator.emoji).toBe('👁️')
     expect(indicator.label).toBe('Supervising')
   })
@@ -204,7 +209,7 @@ describe('getTokenMeterLevel', () => {
 
 describe('getMinionType', () => {
   it('identifies main agent', () => {
-    const t = getMinionType(makeMockSession({ key: 'agent:main:main' }))
+    const t = getMinionType(makeMockSession({ key: AGENT_MAIN_MAIN }))
     expect(t.type).toBe('Main Agent')
   })
 
@@ -214,7 +219,7 @@ describe('getMinionType', () => {
   })
 
   it('identifies subagent', () => {
-    const t = getMinionType(makeMockSession({ key: 'agent:main:subagent:abc' }))
+    const t = getMinionType(makeMockSession({ key: AGENT_MAIN_SUBAGENT_ABC }))
     expect(t.type).toBe('Subagent')
   })
 
@@ -254,12 +259,12 @@ describe('getSessionDisplayName', () => {
   })
 
   it('uses agent name for main sessions', () => {
-    const name = getSessionDisplayName(makeMockSession({ key: 'agent:main:main' }))
+    const name = getSessionDisplayName(makeMockSession({ key: AGENT_MAIN_MAIN }))
     expect(name).toBe('Assistent')
   })
 
   it('uses agent name for dev main', () => {
-    const name = getSessionDisplayName(makeMockSession({ key: 'agent:dev:main' }))
+    const name = getSessionDisplayName(makeMockSession({ key: AGENT_DEV_MAIN }))
     expect(name).toBe('Dev')
   })
 
@@ -272,10 +277,10 @@ describe('getSessionDisplayName', () => {
 
 describe('shouldBeInParkingLane', () => {
   it('main agents never go to parking', () => {
-    expect(shouldBeInParkingLane(makeMockSession({ key: 'agent:main:main', updatedAt: 0 }))).toBe(
+    expect(shouldBeInParkingLane(makeMockSession({ key: AGENT_MAIN_MAIN, updatedAt: 0 }))).toBe(
       false
     )
-    expect(shouldBeInParkingLane(makeMockSession({ key: 'agent:dev:main', updatedAt: 0 }))).toBe(
+    expect(shouldBeInParkingLane(makeMockSession({ key: AGENT_DEV_MAIN, updatedAt: 0 }))).toBe(
       false
     )
   })
@@ -284,7 +289,7 @@ describe('shouldBeInParkingLane', () => {
     expect(
       shouldBeInParkingLane(
         makeMockSession({
-          key: 'agent:main:subagent:abc',
+          key: AGENT_MAIN_SUBAGENT_ABC,
           updatedAt: Date.now() - 60 * 60 * 1000,
         })
       )
@@ -295,7 +300,7 @@ describe('shouldBeInParkingLane', () => {
     expect(
       shouldBeInParkingLane(
         makeMockSession({
-          key: 'agent:main:subagent:abc',
+          key: AGENT_MAIN_SUBAGENT_ABC,
           updatedAt: Date.now(),
         }),
         true

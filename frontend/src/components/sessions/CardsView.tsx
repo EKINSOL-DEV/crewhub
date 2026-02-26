@@ -10,6 +10,13 @@ import { getSessionStatus, type SessionStatus } from '@/lib/minionUtils'
 import { useRooms } from '@/hooks/useRooms'
 import { cn } from '@/lib/utils'
 
+const CLS_BG_MUTED_50_TEXT_MUTED_FOREGROUND_BORDER =
+  'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+const CLS_BG_PRIMARY_TEXT_PRIMARY_FOREGROUND_BORDE =
+  'bg-primary text-primary-foreground border-primary'
+const CLS_BORDER_CURSOR_POINTER_SELECT_NONE = 'border cursor-pointer select-none'
+const UNASSIGNED = '__unassigned__'
+
 interface CardsViewProps {
   readonly sessions: CrewSession[]
 }
@@ -220,10 +227,10 @@ export function CardsView({ sessions }: CardsViewProps) {
         groups.get(roomId)!.sessions.push(session)
       } else {
         // Unassigned group
-        if (!groups.has('__unassigned__')) {
-          groups.set('__unassigned__', { room: null, sessions: [] })
+        if (!groups.has(UNASSIGNED)) {
+          groups.set(UNASSIGNED, { room: null, sessions: [] })
         }
-        groups.get('__unassigned__')!.sessions.push(session)
+        groups.get(UNASSIGNED)!.sessions.push(session)
       }
     }
 
@@ -237,7 +244,7 @@ export function CardsView({ sessions }: CardsViewProps) {
     }[] = []
     for (const [groupId, { room, sessions: groupSessions }] of groups) {
       if (groupSessions.length === 0) continue
-      if (groupId === '__unassigned__') continue // Add last
+      if (groupId === UNASSIGNED) continue // Add last
       result.push({
         groupId,
         name: room?.name || groupId,
@@ -248,10 +255,10 @@ export function CardsView({ sessions }: CardsViewProps) {
     }
 
     // Add unassigned at the end
-    const unassigned = groups.get('__unassigned__')
+    const unassigned = groups.get(UNASSIGNED)
     if (unassigned && unassigned.sessions.length > 0) {
       result.push({
-        groupId: '__unassigned__',
+        groupId: UNASSIGNED,
         name: 'Unassigned',
         icon: '📦',
         color: '#6b7280',
@@ -307,10 +314,10 @@ export function CardsView({ sessions }: CardsViewProps) {
               onClick={toggleAll}
               className={cn(
                 'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                'border cursor-pointer select-none',
+                CLS_BORDER_CURSOR_POINTER_SELECT_NONE,
                 allSelected
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                  ? CLS_BG_PRIMARY_TEXT_PRIMARY_FOREGROUND_BORDE
+                  : CLS_BG_MUTED_50_TEXT_MUTED_FOREGROUND_BORDER
               )}
             >
               All ({statusCounts.all})
@@ -323,10 +330,10 @@ export function CardsView({ sessions }: CardsViewProps) {
                 onClick={() => toggleFilter(status)}
                 className={cn(
                   'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                  'border cursor-pointer select-none',
+                  CLS_BORDER_CURSOR_POINTER_SELECT_NONE,
                   activeFilters.has(status)
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                    ? CLS_BG_PRIMARY_TEXT_PRIMARY_FOREGROUND_BORDE
+                    : CLS_BG_MUTED_50_TEXT_MUTED_FOREGROUND_BORDER
                 )}
               >
                 {filterLabels[status]} ({statusCounts[status]})
@@ -341,10 +348,10 @@ export function CardsView({ sessions }: CardsViewProps) {
               onClick={() => setGroupByRoom((prev) => !prev)}
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                'border cursor-pointer select-none',
+                CLS_BORDER_CURSOR_POINTER_SELECT_NONE,
                 groupByRoom
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                  ? CLS_BG_PRIMARY_TEXT_PRIMARY_FOREGROUND_BORDE
+                  : CLS_BG_MUTED_50_TEXT_MUTED_FOREGROUND_BORDER
               )}
               title="Group sessions by room"
             >

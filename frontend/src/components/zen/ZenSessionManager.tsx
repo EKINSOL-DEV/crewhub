@@ -5,6 +5,10 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 
+const CLAUDE_SONNET = 'claude-sonnet'
+const ZEN_SESSION_DETAILS_LABEL = 'zen-session-details-label'
+const ZEN_SESSION_DETAILS_ROW = 'zen-session-details-row'
+
 // ── Types ─────────────────────────────────────────────────────────
 
 interface AgentOption {
@@ -22,7 +26,7 @@ const AVAILABLE_AGENTS: AgentOption[] = [
     name: 'Main Agent',
     icon: '🧠',
     description: 'Primary assistant for general tasks',
-    model: 'claude-sonnet',
+    model: CLAUDE_SONNET,
   },
   {
     id: 'dev',
@@ -36,14 +40,14 @@ const AVAILABLE_AGENTS: AgentOption[] = [
     name: 'Research Agent',
     icon: '🔍',
     description: 'Web research and analysis',
-    model: 'claude-sonnet',
+    model: CLAUDE_SONNET,
   },
   {
     id: 'writer',
     name: 'Writer Agent',
     icon: '✍️',
     description: 'Content creation and editing',
-    model: 'claude-sonnet',
+    model: CLAUDE_SONNET,
   },
 ]
 
@@ -94,16 +98,16 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
       </header>
 
       <div className="zen-session-details-content">
-        <div className="zen-session-details-row">
-          <span className="zen-session-details-label">Type</span>
+        <div className={ZEN_SESSION_DETAILS_ROW}>
+          <span className={ZEN_SESSION_DETAILS_LABEL}>Type</span>
           <span className="zen-session-details-value">{sessionParts.type}</span>
         </div>
-        <div className="zen-session-details-row">
-          <span className="zen-session-details-label">Kind</span>
+        <div className={ZEN_SESSION_DETAILS_ROW}>
+          <span className={ZEN_SESSION_DETAILS_LABEL}>Kind</span>
           <span className="zen-session-details-value">{sessionParts.kind}</span>
         </div>
-        <div className="zen-session-details-row">
-          <span className="zen-session-details-label">Session ID</span>
+        <div className={ZEN_SESSION_DETAILS_ROW}>
+          <span className={ZEN_SESSION_DETAILS_LABEL}>Session ID</span>
           <code className="zen-session-details-code">{sessionParts.id}</code>
         </div>
       </div>

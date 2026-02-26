@@ -6,6 +6,13 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useProjects, type Project } from '@/hooks/useProjects'
 import { ProjectManagerModal } from './ProjectManagerModal'
 
+const BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V = '1px solid var(--zen-border, hsl(var(--border)))'
+const CLS_BACKGROUND_01S = 'background 0.1s'
+const TRANSPARENT = 'transparent'
+const VAR_ZEN_BG_HOVER = 'var(--zen-bg-hover, rgba(0,0,0,0.05))'
+const VAR_ZEN_FG = 'var(--zen-fg, inherit)'
+const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted, #9ca3af)'
+
 interface ProjectFilterSelectProps {
   readonly currentProjectId: string | null | undefined
   readonly currentProjectName?: string | null
@@ -90,7 +97,7 @@ export function ProjectFilterSelect({
           gap: 6,
           padding: compact ? '4px 8px' : '5px 10px',
           borderRadius: 6,
-          border: '1px solid var(--zen-border, hsl(var(--border)))',
+          border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
           background: 'var(--zen-bg-panel, transparent)',
           color: 'var(--zen-fg, hsl(var(--foreground)))',
           fontSize: 12,
@@ -138,7 +145,7 @@ export function ProjectFilterSelect({
             maxWidth: 300,
             maxHeight: 320,
             background: 'var(--zen-bg-panel, white)',
-            border: '1px solid var(--zen-border, hsl(var(--border)))',
+            border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
             borderRadius: 8,
             boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
             zIndex: 50,
@@ -159,9 +166,9 @@ export function ProjectFilterSelect({
                 width: '100%',
                 padding: '6px 8px',
                 borderRadius: 4,
-                border: '1px solid var(--zen-border, hsl(var(--border)))',
+                border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
                 background: 'var(--zen-bg-hover, transparent)',
-                color: 'var(--zen-fg, inherit)',
+                color: VAR_ZEN_FG,
                 fontSize: 12,
                 fontFamily: 'inherit',
                 outline: 'none',
@@ -186,22 +193,21 @@ export function ProjectFilterSelect({
                 borderRadius: 6,
                 border: 'none',
                 background: currentProjectId
-                  ? 'transparent'
+                  ? TRANSPARENT
                   : 'var(--zen-bg-active, rgba(59,130,246,0.1))',
-                color: 'var(--zen-fg, inherit)',
+                color: VAR_ZEN_FG,
                 fontSize: 12,
                 fontWeight: currentProjectId ? 500 : 700,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 textAlign: 'left',
-                transition: 'background 0.1s',
+                transition: CLS_BACKGROUND_01S,
               }}
               onMouseEnter={(e) => {
-                if (currentProjectId)
-                  e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))'
+                if (currentProjectId) e.currentTarget.style.background = VAR_ZEN_BG_HOVER
               }}
               onMouseLeave={(e) => {
-                if (currentProjectId) e.currentTarget.style.background = 'transparent'
+                if (currentProjectId) e.currentTarget.style.background = TRANSPARENT
               }}
             >
               <span style={{ fontSize: 14 }}>🌐</span>
@@ -221,7 +227,7 @@ export function ProjectFilterSelect({
                 style={{
                   padding: '12px',
                   fontSize: 12,
-                  color: 'var(--zen-fg-muted, #9ca3af)',
+                  color: VAR_ZEN_FG_MUTED,
                   textAlign: 'center',
                 }}
               >
@@ -232,7 +238,7 @@ export function ProjectFilterSelect({
                 style={{
                   padding: '12px',
                   fontSize: 12,
-                  color: 'var(--zen-fg-muted, #9ca3af)',
+                  color: VAR_ZEN_FG_MUTED,
                   textAlign: 'center',
                 }}
               >
@@ -257,21 +263,20 @@ export function ProjectFilterSelect({
                       border: 'none',
                       background: isSelected
                         ? 'var(--zen-bg-active, rgba(59,130,246,0.1))'
-                        : 'transparent',
-                      color: 'var(--zen-fg, inherit)',
+                        : TRANSPARENT,
+                      color: VAR_ZEN_FG,
                       fontSize: 12,
                       fontWeight: isSelected ? 700 : 500,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       textAlign: 'left',
-                      transition: 'background 0.1s',
+                      transition: CLS_BACKGROUND_01S,
                     }}
                     onMouseEnter={(e) => {
-                      if (!isSelected)
-                        e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))'
+                      if (!isSelected) e.currentTarget.style.background = VAR_ZEN_BG_HOVER
                     }}
                     onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = 'transparent'
+                      if (!isSelected) e.currentTarget.style.background = TRANSPARENT
                     }}
                   >
                     <span
@@ -321,19 +326,17 @@ export function ProjectFilterSelect({
                 padding: '8px 10px',
                 borderRadius: 6,
                 border: 'none',
-                background: 'transparent',
-                color: 'var(--zen-fg-muted, #9ca3af)',
+                background: TRANSPARENT,
+                color: VAR_ZEN_FG_MUTED,
                 fontSize: 12,
                 fontWeight: 500,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 textAlign: 'left',
-                transition: 'background 0.1s',
+                transition: CLS_BACKGROUND_01S,
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = 'var(--zen-bg-hover, rgba(0,0,0,0.05))')
-              }
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = VAR_ZEN_BG_HOVER)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = TRANSPARENT)}
             >
               <span style={{ fontSize: 14 }}>⚙️</span>
               <span>Manage Projects...</span>

@@ -9,6 +9,10 @@
 import { useState, useCallback, useRef } from 'react'
 import type { MeetingState } from '@/hooks/useMeeting'
 
+const AGENT_DEV_MAIN = 'agent:dev:main'
+const AGENT_FLOWY_MAIN = 'agent:flowy:main'
+const AGENT_MAIN_MAIN = 'agent:main:main'
+
 // ─── Fake Script ────────────────────────────────────────────────
 
 interface FakeTurn {
@@ -22,26 +26,26 @@ interface FakeRound {
   turns: FakeTurn[]
 }
 
-const FAKE_PARTICIPANTS = ['agent:dev:main', 'agent:main:main', 'agent:flowy:main']
+const FAKE_PARTICIPANTS = [AGENT_DEV_MAIN, AGENT_MAIN_MAIN, AGENT_FLOWY_MAIN]
 
 const FAKE_SCRIPT: FakeRound[] = [
   {
     topic: 'Current sprint progress and blockers',
     turns: [
       {
-        agentId: 'agent:dev:main',
+        agentId: AGENT_DEV_MAIN,
         agentName: 'Dev',
         response:
           "I've completed the authentication middleware refactoring and the new REST API endpoints are passing all tests. The main blocker is the database migration for v3 — there's a schema conflict with the user preferences table that needs careful handling. I've drafted a migration plan that preserves existing data.",
       },
       {
-        agentId: 'agent:main:main',
+        agentId: AGENT_MAIN_MAIN,
         agentName: 'Assistent',
         response:
           "Good progress on the API. I've been reviewing incoming support tickets and there are 3 high-priority items related to the webhook reliability issue. I suggest we prioritize the database migration since it's blocking two other features. I can help coordinate the rollout plan.",
       },
       {
-        agentId: 'agent:flowy:main',
+        agentId: AGENT_FLOWY_MAIN,
         agentName: 'Flowy',
         response:
           "From the marketing side, the landing page redesign is 80% complete. I'm waiting on the final API documentation from Dev to update the developer portal. The blog post about our new features is drafted and ready for review. Social media campaign for the launch is scheduled for next Thursday.",
@@ -52,19 +56,19 @@ const FAKE_SCRIPT: FakeRound[] = [
     topic: 'Architecture decisions for the next milestone',
     turns: [
       {
-        agentId: 'agent:dev:main',
+        agentId: AGENT_DEV_MAIN,
         agentName: 'Dev',
         response:
           "For the real-time collaboration feature, I propose using WebSocket connections with a message queue backend. This gives us better scalability than polling. I've benchmarked both approaches — WebSockets reduce latency by 85% and server load by 60%. The trade-off is slightly more complex client-side code.",
       },
       {
-        agentId: 'agent:main:main',
+        agentId: AGENT_MAIN_MAIN,
         agentName: 'Assistent',
         response:
           "The WebSocket approach makes sense. I'd recommend we also implement a fallback to long-polling for environments where WebSockets are blocked. For the deployment strategy, I suggest a blue-green deployment with feature flags so we can gradually roll out to users. This minimizes risk.",
       },
       {
-        agentId: 'agent:flowy:main',
+        agentId: AGENT_FLOWY_MAIN,
         agentName: 'Flowy',
         response:
           "From a user communication perspective, we should announce the real-time features in phases. First a beta announcement to power users, then a general release. I'll prepare the announcement materials and documentation. Also, we should update the pricing page if this affects our tier structure.",
@@ -75,19 +79,19 @@ const FAKE_SCRIPT: FakeRound[] = [
     topic: 'Action items and next steps',
     turns: [
       {
-        agentId: 'agent:dev:main',
+        agentId: AGENT_DEV_MAIN,
         agentName: 'Dev',
         response:
           "I'll finalize the database migration plan by EOD tomorrow and start implementing the WebSocket infrastructure. I need a review of the migration SQL from the team. I'll also set up the feature flag system so we can safely deploy incremental changes.",
       },
       {
-        agentId: 'agent:main:main',
+        agentId: AGENT_MAIN_MAIN,
         agentName: 'Assistent',
         response:
           "I'll review the migration plan, coordinate with Dev on the rollout timeline, and handle the 3 high-priority support tickets. I'll also draft the feature flag configuration and set up monitoring dashboards for the new WebSocket connections.",
       },
       {
-        agentId: 'agent:flowy:main',
+        agentId: AGENT_FLOWY_MAIN,
         agentName: 'Flowy',
         response:
           "I'll finalize the landing page, prepare beta announcement emails, and complete the developer portal updates once the API docs are ready. I'll also create a content calendar for the phased launch communication strategy.",

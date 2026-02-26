@@ -6,6 +6,15 @@ import { useEnvironment, useEnvironmentList } from '@/components/world3d/environ
 import { Section } from './shared'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
+const CLS_BORDER_BORDER_BG_BACKGROUND_HOVER_BG_MUT = 'border-border bg-background hover:bg-muted'
+const CLS_FLEX_1_MIN_W_0 = 'flex-1 min-w-0'
+const CLS_FLEX_FLEX_COL_GAP_1 = 'flex flex-col gap-1'
+const CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN = 'flex items-center justify-between'
+const CLS_TEXT_XS_TEXT_MUTED_FOREGROUND_FONT_NORMA = 'text-xs text-muted-foreground font-normal'
+const CLS_W_2_H_2_ROUNDED_FULL_BG_PRIMARY = 'w-2 h-2 rounded-full bg-primary shrink-0'
+const CLS_W_5_H_5_ROUNDED_FULL_SHADOW_SM = 'w-5 h-5 rounded-full shadow-sm border border-white/10'
+const CLS_W_5_H_5_ROUNDED_FULL_SHADOW_SM_2 = 'w-5 h-5 rounded-full shadow-sm border border-black/10'
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface LookAndFeelTabProps {
@@ -45,31 +54,31 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
                   ${
                     zen.currentTheme.id === t.id
                       ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30'
-                      : 'border-border bg-background hover:bg-muted'
+                      : CLS_BORDER_BORDER_BG_BACKGROUND_HOVER_BG_MUT
                   }
                 `}
               >
                 {/* Color preview dots */}
                 <div className="flex gap-1 shrink-0">
                   <div
-                    className="w-5 h-5 rounded-full shadow-sm border border-white/10"
+                    className={CLS_W_5_H_5_ROUNDED_FULL_SHADOW_SM}
                     style={{ background: t.preview.bg }}
                   />
                   <div
-                    className="w-5 h-5 rounded-full shadow-sm border border-white/10"
+                    className={CLS_W_5_H_5_ROUNDED_FULL_SHADOW_SM}
                     style={{ background: t.preview.accent }}
                   />
                   <div
-                    className="w-5 h-5 rounded-full shadow-sm border border-white/10"
+                    className={CLS_W_5_H_5_ROUNDED_FULL_SHADOW_SM}
                     style={{ background: t.preview.fg }}
                   />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className={CLS_FLEX_1_MIN_W_0}>
                   <div className="text-sm font-medium truncate">{t.name}</div>
                   <div className="text-xs text-muted-foreground truncate">{t.description}</div>
                 </div>
                 {zen.currentTheme.id === t.id && (
-                  <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                  <div className={CLS_W_2_H_2_ROUNDED_FULL_BG_PRIMARY} />
                 )}
               </button>
             ))}
@@ -91,30 +100,30 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
                   ${
                     zen.currentTheme.id === t.id
                       ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30'
-                      : 'border-border bg-background hover:bg-muted'
+                      : CLS_BORDER_BORDER_BG_BACKGROUND_HOVER_BG_MUT
                   }
                 `}
               >
                 <div className="flex gap-1 shrink-0">
                   <div
-                    className="w-5 h-5 rounded-full shadow-sm border border-black/10"
+                    className={CLS_W_5_H_5_ROUNDED_FULL_SHADOW_SM_2}
                     style={{ background: t.preview.bg }}
                   />
                   <div
-                    className="w-5 h-5 rounded-full shadow-sm border border-black/10"
+                    className={CLS_W_5_H_5_ROUNDED_FULL_SHADOW_SM_2}
                     style={{ background: t.preview.accent }}
                   />
                   <div
-                    className="w-5 h-5 rounded-full shadow-sm border border-black/10"
+                    className={CLS_W_5_H_5_ROUNDED_FULL_SHADOW_SM_2}
                     style={{ background: t.preview.fg }}
                   />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className={CLS_FLEX_1_MIN_W_0}>
                   <div className="text-sm font-medium truncate">{t.name}</div>
                   <div className="text-xs text-muted-foreground truncate">{t.description}</div>
                 </div>
                 {zen.currentTheme.id === t.id && (
-                  <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                  <div className={CLS_W_2_H_2_ROUNDED_FULL_BG_PRIMARY} />
                 )}
               </button>
             ))}
@@ -141,16 +150,16 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
                   ${
                     environment === entry.id
                       ? 'border-primary bg-primary/10 shadow-sm'
-                      : 'border-border bg-background hover:bg-muted'
+                      : CLS_BORDER_BORDER_BG_BACKGROUND_HOVER_BG_MUT
                   }
                 `}
               >
-                <div className="flex-1 min-w-0">
+                <div className={CLS_FLEX_1_MIN_W_0}>
                   <div className="text-sm font-medium">{entry.data.name}</div>
                   <div className="text-xs text-muted-foreground">{entry.data.description}</div>
                 </div>
                 {environment === entry.id && (
-                  <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                  <div className={CLS_W_2_H_2_ROUNDED_FULL_BG_PRIMARY} />
                 )}
               </button>
             ))}
@@ -160,10 +169,10 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
 
       <div className="space-y-6">
         <Section title="📺 Display">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="show-animations" className="flex flex-col gap-1">
+          <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
+            <Label htmlFor="show-animations" className={CLS_FLEX_FLEX_COL_GAP_1}>
               <span className="text-sm">Animations</span>
-              <span className="text-xs text-muted-foreground font-normal">
+              <span className={CLS_TEXT_XS_TEXT_MUTED_FOREGROUND_FONT_NORMA}>
                 Show wiggle and bounce effects
               </span>
             </Label>
@@ -173,10 +182,10 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
               onCheckedChange={(checked) => updateSetting('showAnimations', checked)}
             />
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="show-badges" className="flex flex-col gap-1">
+          <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
+            <Label htmlFor="show-badges" className={CLS_FLEX_FLEX_COL_GAP_1}>
               <span className="text-sm">Achievement Badges</span>
-              <span className="text-xs text-muted-foreground font-normal">
+              <span className={CLS_TEXT_XS_TEXT_MUTED_FOREGROUND_FONT_NORMA}>
                 Display earned badges
               </span>
             </Label>
@@ -189,10 +198,10 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
         </Section>
 
         <Section title="🎉 Fun & Playfulness">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="easter-eggs" className="flex flex-col gap-1">
+          <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
+            <Label htmlFor="easter-eggs" className={CLS_FLEX_FLEX_COL_GAP_1}>
               <span className="text-sm">Easter Eggs</span>
-              <span className="text-xs text-muted-foreground font-normal">
+              <span className={CLS_TEXT_XS_TEXT_MUTED_FOREGROUND_FONT_NORMA}>
                 Enable hidden surprises
               </span>
             </Label>
@@ -202,10 +211,10 @@ export function LookAndFeelTab({ settings, onSettingsChange }: LookAndFeelTabPro
               onCheckedChange={(checked) => updateSetting('easterEggsEnabled', checked)}
             />
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="play-sound" className="flex flex-col gap-1">
+          <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
+            <Label htmlFor="play-sound" className={CLS_FLEX_FLEX_COL_GAP_1}>
               <span className="text-sm">Sound Effects</span>
-              <span className="text-xs text-muted-foreground font-normal">
+              <span className={CLS_TEXT_XS_TEXT_MUTED_FOREGROUND_FONT_NORMA}>
                 Play sounds for easter eggs
               </span>
             </Label>

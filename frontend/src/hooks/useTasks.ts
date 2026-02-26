@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { API_BASE } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
 
+const UNKNOWN_ERROR = 'Unknown error'
+
 // ── Types ──────────────────────────────────────────────────────
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done' | 'blocked'
@@ -99,7 +101,7 @@ export function useTasks(options: UseTasksOptions = {}) {
       // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') return
       console.error('Failed to fetch tasks:', err)
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setError(err instanceof Error ? err.message : UNKNOWN_ERROR)
     } finally {
       setIsLoading(false)
     }
@@ -189,7 +191,7 @@ export function useTasks(options: UseTasksOptions = {}) {
       } catch (err) {
         return {
           success: false,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         }
       }
     },
@@ -218,7 +220,7 @@ export function useTasks(options: UseTasksOptions = {}) {
       } catch (err) {
         return {
           success: false,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         }
       }
     },
@@ -241,7 +243,7 @@ export function useTasks(options: UseTasksOptions = {}) {
       } catch (err) {
         return {
           success: false,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : UNKNOWN_ERROR,
         }
       }
     },

@@ -22,6 +22,8 @@ import {
 import { getPropMountType } from '@/components/world3d/grid/PropRegistry'
 import { API_BASE } from '@/lib/api'
 
+const BORDER_1PX_SOLID_RGBA_255_255_255_0_0 = '1px solid rgba(255,255,255,0.08)'
+
 // ── Types ─────────────────────────────────────────────────────────
 
 type TabId = 'builtin' | 'generated'
@@ -212,7 +214,7 @@ export function PropBrowser() {
           alignItems: 'center',
           gap: '8px',
           padding: '10px 12px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           cursor: 'grab',
           background: 'rgba(0,255,204,0.05)',
           flexShrink: 0,
@@ -273,7 +275,7 @@ export function PropBrowser() {
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           flexShrink: 0,
           padding: '0 10px',
           gap: '4px',
@@ -451,7 +453,7 @@ export function PropBrowser() {
       {/* ── Footer: selection hint ── */}
       <div
         style={{
-          borderTop: '1px solid rgba(255,255,255,0.08)',
+          borderTop: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           padding: '8px 12px',
           flexShrink: 0,
           background: selectedPropId ? 'rgba(0,255,204,0.05)' : 'transparent',

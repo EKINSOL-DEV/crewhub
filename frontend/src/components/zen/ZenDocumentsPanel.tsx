@@ -14,6 +14,9 @@ import { MarkdownViewer } from '../markdown/MarkdownViewer'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
 import type { FileNode } from '@/hooks/useAgentFiles'
 
+const BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V = '1px solid var(--zen-border, hsl(var(--border)))'
+const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted, hsl(var(--muted-foreground)))'
+
 interface ZenDocumentsPanelProps {
   readonly projectId: string | null
   readonly projectName?: string | null
@@ -38,8 +41,8 @@ function Breadcrumbs({
         gap: 4,
         padding: '6px 12px',
         fontSize: 11,
-        color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
-        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+        color: VAR_ZEN_FG_MUTED,
+        borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
         flexWrap: 'wrap',
       }}
     >
@@ -134,7 +137,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+          color: VAR_ZEN_FG_MUTED,
           fontSize: 13,
           flexDirection: 'column',
           gap: 8,
@@ -157,7 +160,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
             style={{
               padding: '4px 12px',
               borderRadius: 6,
-              border: '1px solid var(--zen-border, hsl(var(--border)))',
+              border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
               background: 'transparent',
               cursor: 'pointer',
               fontSize: 11,
@@ -176,7 +179,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
       <div
         style={{
           padding: '8px 12px',
-          borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+          borderBottom: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -203,7 +206,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
             border: 'none',
             cursor: 'pointer',
             fontSize: 13,
-            color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+            color: VAR_ZEN_FG_MUTED,
             padding: '2px 6px',
             borderRadius: 4,
           }}
@@ -259,12 +262,12 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
                 title="Fullscreen"
                 style={{
                   background: 'none',
-                  border: '1px solid var(--zen-border, hsl(var(--border)))',
+                  border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
                   borderRadius: 4,
                   cursor: 'pointer',
                   fontSize: 11,
                   padding: '2px 8px',
-                  color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+                  color: VAR_ZEN_FG_MUTED,
                 }}
               >
                 ⤢ Fullscreen
@@ -276,12 +279,12 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
                 title="Close preview"
                 style={{
                   background: 'none',
-                  border: '1px solid var(--zen-border, hsl(var(--border)))',
+                  border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V,
                   borderRadius: 4,
                   cursor: 'pointer',
                   fontSize: 11,
                   padding: '2px 8px',
-                  color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+                  color: VAR_ZEN_FG_MUTED,
                 }}
               >
                 ✕
@@ -294,7 +297,7 @@ export function ZenDocumentsPanel({ projectId, projectName }: ZenDocumentsPanelP
               style={{
                 padding: 12,
                 fontSize: 12,
-                color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+                color: VAR_ZEN_FG_MUTED,
                 textAlign: 'center',
               }}
             >

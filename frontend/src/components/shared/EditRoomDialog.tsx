@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label'
 import { useDemoMode } from '@/contexts/DemoContext'
 import type { Room, FloorStyle, WallStyle } from '@/hooks/useRooms'
 
+const CLS_BORDER_BORDER_HOVER_BORDER_MUTED_FOREGRO = 'border-border hover:border-muted-foreground'
+
 // ── Constants ──────────────────────────────────────────────────
 
 const FLOOR_STYLES: { value: FloorStyle; label: string; icon: string }[] = [
@@ -202,7 +204,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
                         className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
                           form.icon === icon
                             ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-muted-foreground'
+                            : CLS_BORDER_BORDER_HOVER_BORDER_MUTED_FOREGRO
                         }`}
                       >
                         {icon}
@@ -240,7 +242,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
                         className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
                           form.floor_style === fs.value
                             ? 'border-primary bg-primary/10 font-medium'
-                            : 'border-border hover:border-muted-foreground'
+                            : CLS_BORDER_BORDER_HOVER_BORDER_MUTED_FOREGRO
                         }`}
                       >
                         <span className="text-lg">{fs.icon}</span>
@@ -260,7 +262,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
                         className={`flex items-center gap-2 p-2.5 rounded-lg border-2 text-sm transition-all ${
                           form.wall_style === ws.value
                             ? 'border-primary bg-primary/10 font-medium'
-                            : 'border-border hover:border-muted-foreground'
+                            : CLS_BORDER_BORDER_HOVER_BORDER_MUTED_FOREGRO
                         }`}
                       >
                         <span className="text-lg">{ws.icon}</span>

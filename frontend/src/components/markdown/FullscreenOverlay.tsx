@@ -4,6 +4,12 @@ import { MarkdownViewer } from './MarkdownViewer'
 import { MarkdownEditor } from './MarkdownEditor'
 import { TOCSidebar, extractHeadings, useActiveHeading } from './TOCSidebar'
 
+const BORDER_1PX_SOLID_HSL_VAR_BORDER = '1px solid hsl(var(--border))'
+const HSL_CARD = 'hsl(var(--card))'
+const HSL_FOREGROUND = 'hsl(var(--foreground))'
+const HSL_MUTED_FOREGROUND = 'hsl(var(--muted-foreground))'
+const HSL_SECONDARY = 'hsl(var(--secondary))'
+
 interface FullscreenOverlayProps {
   readonly open: boolean
   readonly onClose: () => void
@@ -193,8 +199,8 @@ export function FullscreenOverlay({
           gap: 8,
           padding: isMobile ? '8px 12px' : '12px 20px',
           paddingTop: isMobile ? 'max(8px, env(safe-area-inset-top, 8px))' : '12px',
-          borderBottom: '1px solid hsl(var(--border))',
-          background: 'hsl(var(--card))',
+          borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+          background: HSL_CARD,
           flexShrink: 0,
         }}
       >
@@ -207,9 +213,9 @@ export function FullscreenOverlay({
                 width: 44,
                 height: 44,
                 borderRadius: 10,
-                border: '1px solid hsl(var(--border))',
-                background: 'hsl(var(--secondary))',
-                color: 'hsl(var(--foreground))',
+                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                background: HSL_SECONDARY,
+                color: HSL_FOREGROUND,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -227,7 +233,7 @@ export function FullscreenOverlay({
               style={{
                 fontSize: isMobile ? 14 : 16,
                 fontWeight: 600,
-                color: 'hsl(var(--foreground))',
+                color: HSL_FOREGROUND,
                 margin: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -237,9 +243,7 @@ export function FullscreenOverlay({
               📄 {title}
             </h2>
             {subtitle && !isMobile && (
-              <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>
-                {subtitle}
-              </span>
+              <span style={{ fontSize: 12, color: HSL_MUTED_FOREGROUND }}>{subtitle}</span>
             )}
           </div>
         </div>
@@ -265,7 +269,7 @@ export function FullscreenOverlay({
             </button>
           )}
           {editing && dirty && (
-            <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>● Unsaved</span>
+            <span style={{ fontSize: 11, color: HSL_MUTED_FOREGROUND }}>● Unsaved</span>
           )}
           <button
             onClick={() => {
@@ -274,14 +278,14 @@ export function FullscreenOverlay({
             }}
             title="Close (Esc)"
             style={{
-              background: 'hsl(var(--secondary))',
-              border: '1px solid hsl(var(--border))',
+              background: HSL_SECONDARY,
+              border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
               borderRadius: 10,
               width: 44,
               height: 44,
               fontSize: 20,
               cursor: 'pointer',
-              color: 'hsl(var(--foreground))',
+              color: HSL_FOREGROUND,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -345,7 +349,7 @@ export function FullscreenOverlay({
                     bottom: 0,
                     width: 'min(300px, 80vw)',
                     zIndex: 11,
-                    background: 'hsl(var(--card))',
+                    background: HSL_CARD,
                     boxShadow: '4px 0 20px rgba(0,0,0,0.4)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -360,7 +364,7 @@ export function FullscreenOverlay({
                       justifyContent: 'space-between',
                       padding: '12px 16px',
                       paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
-                      borderBottom: '1px solid hsl(var(--border))',
+                      borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
                       flexShrink: 0,
                     }}
                   >
@@ -370,7 +374,7 @@ export function FullscreenOverlay({
                         fontWeight: 600,
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
-                        color: 'hsl(var(--muted-foreground))',
+                        color: HSL_MUTED_FOREGROUND,
                       }}
                     >
                       📑 Contents
@@ -381,9 +385,9 @@ export function FullscreenOverlay({
                         width: 36,
                         height: 36,
                         borderRadius: 8,
-                        border: '1px solid hsl(var(--border))',
-                        background: 'hsl(var(--secondary))',
-                        color: 'hsl(var(--foreground))',
+                        border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                        background: HSL_SECONDARY,
+                        color: HSL_FOREGROUND,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -424,9 +428,7 @@ export function FullscreenOverlay({
                             padding: `10px 16px 10px ${16 + (h.level - 1) * 14}px`,
                             fontSize: h.level === 1 ? 14 : 13,
                             fontWeight: headingFontWeight,
-                            color: isActive
-                              ? 'hsl(var(--primary))'
-                              : 'hsl(var(--muted-foreground))',
+                            color: isActive ? 'hsl(var(--primary))' : HSL_MUTED_FOREGROUND,
                             background: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent',
                             border: 'none',
                             borderLeft: isActive
@@ -471,10 +473,10 @@ export function FullscreenOverlay({
             display: 'flex',
             gap: 16,
             padding: '8px 20px',
-            borderTop: '1px solid hsl(var(--border))',
-            background: 'hsl(var(--card))',
+            borderTop: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+            background: HSL_CARD,
             fontSize: 11,
-            color: 'hsl(var(--muted-foreground))',
+            color: HSL_MUTED_FOREGROUND,
             flexShrink: 0,
           }}
         >

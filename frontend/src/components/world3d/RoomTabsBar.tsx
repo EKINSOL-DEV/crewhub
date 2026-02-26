@@ -3,6 +3,8 @@ import type { Room } from '@/hooks/useRooms'
 import { zoneRegistry } from '@/lib/zones'
 import { useZone } from '@/hooks/useZone'
 
+const RGBA_0_0_0_0_04 = 'rgba(0,0,0,0.04)'
+
 interface RoomTabsBarProps {
   readonly rooms: Room[]
   readonly roomBotCounts: Map<string, number>
@@ -63,7 +65,7 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
               fontSize: 13,
               fontWeight: isFocused ? 700 : 500,
               color: isFocused ? '#fff' : '#374151',
-              background: isFocused ? room.color || '#4f46e5' : 'rgba(0,0,0,0.04)',
+              background: isFocused ? room.color || '#4f46e5' : RGBA_0_0_0_0_04,
               transition: 'all 0.2s ease',
               whiteSpace: 'nowrap',
             }}
@@ -74,7 +76,7 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
             }}
             onMouseLeave={(e) => {
               if (!isFocused) {
-                e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
+                e.currentTarget.style.background = RGBA_0_0_0_0_04
               }
             }}
           >
@@ -157,7 +159,7 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
                 fontSize: 13,
                 fontWeight: 500,
                 color: '#374151',
-                background: 'rgba(0,0,0,0.04)',
+                background: RGBA_0_0_0_0_04,
                 transition: 'all 0.2s ease',
                 whiteSpace: 'nowrap',
                 fontFamily: 'system-ui, sans-serif',
@@ -167,7 +169,7 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
                 e.currentTarget.style.background = 'rgba(0,0,0,0.08)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
+                e.currentTarget.style.background = RGBA_0_0_0_0_04
               }}
             >
               {zones.map((z) => {

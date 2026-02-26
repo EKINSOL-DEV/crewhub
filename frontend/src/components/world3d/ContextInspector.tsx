@@ -5,13 +5,20 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+const BORDER_1PX_SOLID_RGBA_255_255_255_0_0 = '1px solid rgba(255, 255, 255, 0.06)'
+const BORDER_1PX_SOLID_RGBA_255_255_255_0_1 = '1px solid rgba(255,255,255,0.1)'
+const JETBRAINS_MONO_MENLO_MONOSPACE = 'JetBrains Mono, Menlo, monospace'
+const KEY_CREWHUB_UI = 'crewhub-ui'
+const RGBA_255_255_255_0_04 = 'rgba(255,255,255,0.04)'
+const TRANSPARENT = 'transparent'
+
 interface ContextInspectorProps {
   readonly roomId: string
   readonly roomName: string
   readonly onClose: () => void
 }
 
-type PrivacyTier = 'crewhub-ui' | 'external'
+type PrivacyTier = typeof KEY_CREWHUB_UI | 'external'
 
 interface EnvelopeResponse {
   envelope: Record<string, unknown>
@@ -25,7 +32,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
   const [data, setData] = useState<EnvelopeResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [channel, setChannel] = useState<PrivacyTier>('crewhub-ui')
+  const [channel, setChannel] = useState<PrivacyTier>(KEY_CREWHUB_UI)
   const [viewMode, setViewMode] = useState<'tree' | 'json' | 'formatted'>('tree')
   const [copied, setCopied] = useState(false)
   const [prevEnvelope, setPrevEnvelope] = useState<Record<string, unknown> | null>(null)
@@ -104,7 +111,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
       <div
         style={{
           padding: '16px 20px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -143,7 +150,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
       <div
         style={{
           padding: '12px 20px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           display: 'flex',
           gap: 8,
           alignItems: 'center',
@@ -156,10 +163,10 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
             display: 'flex',
             borderRadius: 8,
             overflow: 'hidden',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: BORDER_1PX_SOLID_RGBA_255_255_255_0_1,
           }}
         >
-          {(['crewhub-ui', 'external'] as PrivacyTier[]).map((tier) => (
+          {([KEY_CREWHUB_UI, 'external'] as PrivacyTier[]).map((tier) => (
             <button
               key={tier}
               onClick={() => setChannel(tier)}
@@ -169,12 +176,12 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
                 fontWeight: 500,
                 border: 'none',
                 cursor: 'pointer',
-                background: channel === tier ? 'rgba(99, 102, 241, 0.3)' : 'transparent',
+                background: channel === tier ? 'rgba(99, 102, 241, 0.3)' : TRANSPARENT,
                 color: channel === tier ? '#a5b4fc' : '#64748b',
                 transition: 'all 0.15s',
               }}
             >
-              {tier === 'crewhub-ui' ? '🔒 Internal' : '🌐 External'}
+              {tier === KEY_CREWHUB_UI ? '🔒 Internal' : '🌐 External'}
             </button>
           ))}
         </div>
@@ -185,7 +192,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
             display: 'flex',
             borderRadius: 8,
             overflow: 'hidden',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: BORDER_1PX_SOLID_RGBA_255_255_255_0_1,
             marginLeft: 'auto',
           }}
         >
@@ -208,7 +215,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
                   fontWeight: 500,
                   border: 'none',
                   cursor: 'pointer',
-                  background: viewMode === mode ? 'rgba(99, 102, 241, 0.3)' : 'transparent',
+                  background: viewMode === mode ? 'rgba(99, 102, 241, 0.3)' : TRANSPARENT,
                   color: viewMode === mode ? '#a5b4fc' : '#64748b',
                   transition: 'all 0.15s',
                   textTransform: 'capitalize',
@@ -237,8 +244,8 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
                 marginTop: 12,
                 padding: '6px 16px',
                 borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'transparent',
+                border: BORDER_1PX_SOLID_RGBA_255_255_255_0_1,
+                background: TRANSPARENT,
                 color: '#94a3b8',
                 cursor: 'pointer',
               }}
@@ -280,7 +287,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
               <pre
                 style={{
                   fontSize: 12,
-                  fontFamily: 'JetBrains Mono, Menlo, monospace',
+                  fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE,
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                   lineHeight: 1.6,
@@ -295,7 +302,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
               <pre
                 style={{
                   fontSize: 12,
-                  fontFamily: 'JetBrains Mono, Menlo, monospace',
+                  fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE,
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                   lineHeight: 1.6,
@@ -314,7 +321,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
       <div
         style={{
           padding: '12px 20px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+          borderTop: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           display: 'flex',
           gap: 8,
         }}
@@ -326,8 +333,8 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
             flex: 1,
             padding: '8px 12px',
             borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: copied ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.04)',
+            border: BORDER_1PX_SOLID_RGBA_255_255_255_0_1,
+            background: copied ? 'rgba(34, 197, 94, 0.2)' : RGBA_255_255_255_0_04,
             color: copied ? '#22c55e' : '#94a3b8',
             fontSize: 12,
             fontWeight: 500,
@@ -344,8 +351,8 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
             flex: 1,
             padding: '8px 12px',
             borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(255,255,255,0.04)',
+            border: BORDER_1PX_SOLID_RGBA_255_255_255_0_1,
+            background: RGBA_255_255_255_0_04,
             color: '#94a3b8',
             fontSize: 12,
             fontWeight: 500,
@@ -359,8 +366,8 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
           style={{
             padding: '8px 12px',
             borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(255,255,255,0.04)',
+            border: BORDER_1PX_SOLID_RGBA_255_255_255_0_1,
+            background: RGBA_255_255_255_0_04,
             color: '#94a3b8',
             fontSize: 12,
             cursor: 'pointer',
@@ -384,7 +391,7 @@ function StatBadge({ label, value, color }: { label: string; value: string; colo
         gap: 6,
         padding: '3px 10px',
         borderRadius: 6,
-        background: 'rgba(255,255,255,0.04)',
+        background: RGBA_255_255_255_0_04,
         border: '1px solid rgba(255,255,255,0.06)',
         fontSize: 11,
       }}
@@ -394,7 +401,7 @@ function StatBadge({ label, value, color }: { label: string; value: string; colo
         style={{
           color: color || '#a5b4fc',
           fontWeight: 500,
-          fontFamily: 'JetBrains Mono, Menlo, monospace',
+          fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE,
         }}
       >
         {value.length > 16 ? value.slice(-8) : value}
@@ -490,7 +497,7 @@ function ObjectView({
                 gap: 4,
                 padding: '2px 0',
                 borderRadius: 4,
-                background: changed ? 'rgba(251, 191, 36, 0.08)' : 'transparent',
+                background: changed ? 'rgba(251, 191, 36, 0.08)' : TRANSPARENT,
                 transition: 'background 0.3s',
               }}
             >
@@ -516,14 +523,14 @@ function ObjectView({
                 style={{
                   color: '#818cf8',
                   fontSize: 12,
-                  fontFamily: 'JetBrains Mono, Menlo, monospace',
+                  fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE,
                 }}
               >
                 {key}
               </span>
               <span style={{ color: '#475569', fontSize: 12 }}>:</span>
               {!isComplex && (
-                <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, Menlo, monospace' }}>
+                <span style={{ fontSize: 12, fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE }}>
                   <TreeView data={value} prevData={prevObj?.[key]} depth={depth + 1} />
                 </span>
               )}

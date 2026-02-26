@@ -13,6 +13,14 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'
 import { DynamicProp, type PropPart } from '../world3d/zones/creator/DynamicProp'
 
+const BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG =
+  '1px solid var(--mobile-border, rgba(255,255,255,0.08))'
+const CORRECTION = 'correction'
+const TOOL_RESULT = 'tool_result'
+const TRANSPARENT = 'transparent'
+const VAR_MOBILE_SURFACE = 'var(--mobile-surface, #1e293b)'
+const VAR_MOBILE_TEXT_MUTED = 'var(--mobile-text-muted, #94a3b8)'
+
 // ── Types ─────────────────────────────────────────────────────────
 
 interface GenerationRecord {
@@ -35,8 +43,8 @@ interface ThinkingLine {
     | 'thinking'
     | 'text'
     | 'tool'
-    | 'tool_result'
-    | 'correction'
+    | typeof TOOL_RESULT
+    | typeof CORRECTION
     | 'complete'
     | 'error'
     | 'model'
@@ -201,8 +209,8 @@ export function MobileCreatorView({ onBack }: MobileCreatorViewProps) {
           gap: 12,
           padding: '12px 16px',
           paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))',
-          background: 'var(--mobile-surface, #1e293b)',
-          borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+          background: VAR_MOBILE_SURFACE,
+          borderBottom: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
           flexShrink: 0,
         }}
       >
@@ -214,7 +222,7 @@ export function MobileCreatorView({ onBack }: MobileCreatorViewProps) {
             borderRadius: 10,
             border: 'none',
             background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
-            color: 'var(--mobile-text-muted, #94a3b8)',
+            color: VAR_MOBILE_TEXT_MUTED,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -243,8 +251,8 @@ export function MobileCreatorView({ onBack }: MobileCreatorViewProps) {
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
-          background: 'var(--mobile-surface, #1e293b)',
+          borderBottom: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
+          background: VAR_MOBILE_SURFACE,
           flexShrink: 0,
         }}
       >
@@ -261,8 +269,8 @@ export function MobileCreatorView({ onBack }: MobileCreatorViewProps) {
               flex: 1,
               padding: '11px 8px',
               border: 'none',
-              background: 'transparent',
-              color: activeTab === tab.id ? '#818cf8' : 'var(--mobile-text-muted, #94a3b8)',
+              background: TRANSPARENT,
+              color: activeTab === tab.id ? '#818cf8' : VAR_MOBILE_TEXT_MUTED,
               fontSize: 13,
               fontWeight: activeTab === tab.id ? 600 : 400,
               cursor: 'pointer',
@@ -358,11 +366,11 @@ function PropGeneratorTab() {
       es.addEventListener('tool', (e) =>
         addLine({ text: JSON.parse(e.data).message, type: 'tool' })
       )
-      es.addEventListener('tool_result', (e) =>
-        addLine({ text: JSON.parse(e.data).message, type: 'tool_result' })
+      es.addEventListener(TOOL_RESULT, (e) =>
+        addLine({ text: JSON.parse(e.data).message, type: TOOL_RESULT })
       )
-      es.addEventListener('correction', (e) =>
-        addLine({ text: JSON.parse(e.data).message, type: 'correction' })
+      es.addEventListener(CORRECTION, (e) =>
+        addLine({ text: JSON.parse(e.data).message, type: CORRECTION })
       )
 
       es.addEventListener('complete', (e) => {
@@ -434,8 +442,8 @@ function PropGeneratorTab() {
   const getLineColor = (line: ThinkingLine, isLast: boolean) => {
     if (line.type === 'error') return '#ef4444'
     if (line.type === 'complete') return '#22c55e'
-    if (line.type === 'correction') return '#f59e0b'
-    if (line.type === 'tool' || line.type === 'tool_result') return '#eab308'
+    if (line.type === CORRECTION) return '#f59e0b'
+    if (line.type === 'tool' || line.type === TOOL_RESULT) return '#eab308'
     if (line.type === 'thinking') return isLast ? '#818cf8' : '#64748b'
     if (isLast) return '#818cf8'
     return '#64748b'
@@ -469,9 +477,9 @@ function PropGeneratorTab() {
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            background: 'transparent',
+            background: TRANSPARENT,
             border: 'none',
-            color: 'var(--mobile-text-muted, #94a3b8)',
+            color: VAR_MOBILE_TEXT_MUTED,
             fontSize: 13,
             cursor: 'pointer',
             padding: 0,
@@ -524,7 +532,7 @@ function PropGeneratorTab() {
           style={{
             width: '100%',
             padding: '12px 14px',
-            background: 'var(--mobile-surface, #1e293b)',
+            background: VAR_MOBILE_SURFACE,
             border: '1px solid var(--mobile-border, rgba(255,255,255,0.1))',
             borderRadius: 12,
             color: 'var(--mobile-text, #e2e8f0)',
@@ -664,8 +672,8 @@ function PropGeneratorTab() {
       {thinkingLines.length > 0 && (
         <div
           style={{
-            background: 'var(--mobile-surface, #1e293b)',
-            border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+            background: VAR_MOBILE_SURFACE,
+            border: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
             borderRadius: 12,
             overflow: 'hidden',
           }}
@@ -675,12 +683,12 @@ function PropGeneratorTab() {
             style={{
               width: '100%',
               padding: '10px 14px',
-              background: 'transparent',
+              background: TRANSPARENT,
               border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              color: 'var(--mobile-text-muted, #94a3b8)',
+              color: VAR_MOBILE_TEXT_MUTED,
               fontSize: 13,
               cursor: 'pointer',
             }}
@@ -891,7 +899,7 @@ function PropHistoryTab() {
               onClick={() => setSelectedRecord(record)}
               style={{
                 width: '100%',
-                background: 'var(--mobile-surface, #1e293b)',
+                background: VAR_MOBILE_SURFACE,
                 border: '1px solid var(--mobile-border, rgba(255,255,255,0.07))',
                 borderRadius: 12,
                 padding: '12px 14px',
@@ -1060,8 +1068,8 @@ function PropDetailView({ record, onBack }: PropDetailViewProps) {
           alignItems: 'center',
           gap: 10,
           padding: '12px 16px',
-          background: 'var(--mobile-surface, #1e293b)',
-          borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+          background: VAR_MOBILE_SURFACE,
+          borderBottom: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
           flexShrink: 0,
         }}
       >
@@ -1071,7 +1079,7 @@ function PropDetailView({ record, onBack }: PropDetailViewProps) {
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            background: 'transparent',
+            background: TRANSPARENT,
             border: 'none',
             color: '#818cf8',
             fontSize: 14,
@@ -1165,8 +1173,8 @@ function PropDetailView({ record, onBack }: PropDetailViewProps) {
         {/* Full prompt */}
         <div
           style={{
-            background: 'var(--mobile-surface, #1e293b)',
-            border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+            background: VAR_MOBILE_SURFACE,
+            border: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
             borderRadius: 12,
             padding: '12px 14px',
           }}

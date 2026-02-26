@@ -7,6 +7,8 @@
 import { useSSEStatus } from '@/hooks/useSSEStatus'
 import { API_BASE } from '@/lib/api'
 
+const VAR_MOBILE_BORDER = 'var(--mobile-border, rgba(255,255,255,0.1))'
+
 const APP_VERSION = '0.12.0'
 
 function isTauri(): boolean {
@@ -71,7 +73,7 @@ export function MobileDebugBar({ enabled }: MobileDebugBarProps) {
         <span style={{ color: stateColor }}>SSE: {sseState}</span>
       </span>
 
-      <span style={{ color: 'var(--mobile-border, rgba(255,255,255,0.1))' }}>│</span>
+      <span style={{ color: VAR_MOBILE_BORDER }}>│</span>
 
       {/* API base */}
       <span
@@ -85,14 +87,14 @@ export function MobileDebugBar({ enabled }: MobileDebugBarProps) {
         API: {API_BASE}
       </span>
 
-      <span style={{ color: 'var(--mobile-border, rgba(255,255,255,0.1))' }}>│</span>
+      <span style={{ color: VAR_MOBILE_BORDER }}>│</span>
 
       {/* Tauri */}
       <span style={{ color: inTauri ? '#a78bfa' : '#475569' }}>
         Tauri: {inTauri ? 'yes' : 'no'}
       </span>
 
-      <span style={{ color: 'var(--mobile-border, rgba(255,255,255,0.1))' }}>│</span>
+      <span style={{ color: VAR_MOBILE_BORDER }}>│</span>
 
       {/* Version */}
       <span>v{APP_VERSION}</span>

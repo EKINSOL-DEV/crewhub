@@ -8,6 +8,8 @@ import { getWalkableMask, worldToGrid } from '@/lib/grid/blueprintUtils'
 import { getIsPropBeingMoved, getIsPropBeingDragged } from '@/hooks/usePropMovement'
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib'
 
+const SYSTEM_UI_SANS_SERIF = 'system-ui, sans-serif'
+
 // ─── Types ─────────────────────────────────────────────────────
 
 interface RoomCollisionData {
@@ -385,7 +387,7 @@ export function FirstPersonHUD({ currentRoom, showRoomLabel }: FirstPersonHUDPro
           color: 'rgba(255,255,255,0.8)',
           fontSize: 13,
           fontWeight: 500,
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: SYSTEM_UI_SANS_SERIF,
           animation: 'fpHudFadeOut 4s forwards',
         }}
       >
@@ -408,7 +410,7 @@ export function FirstPersonHUD({ currentRoom, showRoomLabel }: FirstPersonHUDPro
             color: '#fff',
             fontSize: 18,
             fontWeight: 700,
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: SYSTEM_UI_SANS_SERIF,
             letterSpacing: '0.5px',
             animation: 'fpRoomFade 2.5s forwards',
           }}
@@ -428,7 +430,7 @@ export function FirstPersonHUD({ currentRoom, showRoomLabel }: FirstPersonHUDPro
           background: 'rgba(0,0,0,0.35)',
           color: 'rgba(255,255,255,0.5)',
           fontSize: 11,
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: SYSTEM_UI_SANS_SERIF,
         }}
       >
         🚶 First Person Mode

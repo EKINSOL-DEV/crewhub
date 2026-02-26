@@ -15,6 +15,9 @@ import { useDemoMode } from '@/contexts/DemoContext'
 import { AgentMultiSelectSheet, GroupThreadChat } from './group'
 import { threadsApi, type Thread } from '@/lib/threads.api'
 
+const GROUP_CHAT = 'group-chat'
+const KEY_CREWHUB_DEBUG = 'crewhub-debug'
+
 type View =
   | { type: 'list' }
   | {
@@ -26,7 +29,7 @@ type View =
       agentColor: string | null
     }
   | { type: 'new-group' }
-  | { type: 'group-chat'; thread: Thread }
+  | { type: typeof GROUP_CHAT; thread: Thread }
   | { type: 'docs' }
   | { type: 'kanban' }
   | { type: 'activity' }
@@ -57,7 +60,9 @@ export function MobileLayout() {
   const [threads, setThreads] = useState<Thread[]>([])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [debugMode, setDebugMode] = useState(() => localStorage.getItem('crewhub-debug') === 'true')
+  const [debugMode, setDebugMode] = useState(
+    () => localStorage.getItem(KEY_CREWHUB_DEBUG) === 'true'
+  )
 
   // Initialize theme + font size on first render
   useEffect(() => {
@@ -67,7 +72,7 @@ export function MobileLayout() {
   // Keep debugMode in sync with localStorage (settings panel writes it directly)
   useEffect(() => {
     const syncDebug = () => {
-      setDebugMode(localStorage.getItem('crewhub-debug') === 'true')
+      setDebugMode(localStorage.getItem(KEY_CREWHUB_DEBUG) === 'true')
     }
     window.addEventListener('storage', syncDebug)
     return () => window.removeEventListener('storage', syncDebug)
@@ -77,7 +82,7 @@ export function MobileLayout() {
   // (storage event only fires for other tabs; we poll lightly)
   useEffect(() => {
     const interval = setInterval(() => {
-      const current = localStorage.getItem('crewhub-debug') === 'true'
+      const current = localStorage.getItem(KEY_CREWHUB_DEBUG) === 'true'
       setDebugMode((prev) => (prev === current ? prev : current))
     }, 500)
     return () => clearInterval(interval)
@@ -130,22 +135,22 @@ export function MobileLayout() {
   const handleCreateGroup = useCallback(async (agentIds: string[]) => {
     try {
       const thread = await threadsApi.create({ participant_agent_ids: agentIds })
-      setView({ type: 'group-chat', thread })
+      setView({ type: GROUP_CHAT, thread })
     } catch (e) {
       console.error('Failed to create group:', e)
     }
   }, [])
 
   const handleSelectThread = useCallback((thread: Thread) => {
-    setView({ type: 'group-chat', thread })
+    setView({ type: GROUP_CHAT, thread })
   }, [])
 
   const handleRemoveParticipant = useCallback(
     async (threadId: string, agentId: string) => {
       try {
         const updated = await threadsApi.removeParticipant(threadId, agentId)
-        if (view.type === 'group-chat') {
-          setView({ type: 'group-chat', thread: updated })
+        if (view.type === GROUP_CHAT) {
+          setView({ type: GROUP_CHAT, thread: updated })
         }
       } catch (e) {
         console.error('Failed to remove participant:', e)
@@ -226,7 +231,7 @@ export function MobileLayout() {
         onClose={() => {
           setSettingsOpen(false)
           // Re-sync debug mode after settings closed
-          setDebugMode(localStorage.getItem('crewhub-debug') === 'true')
+          setDebugMode(localStorage.getItem(KEY_CREWHUB_DEBUG) === 'true')
         }}
       />
 
@@ -249,7 +254,7 @@ export function MobileLayout() {
           onConfirm={handleCreateGroup}
           onClose={handleBack}
         />
-      ) : view.type === 'group-chat' ? (
+      ) : view.type === GROUP_CHAT ? (
         <GroupThreadChat
           thread={view.thread}
           onBack={handleBack}

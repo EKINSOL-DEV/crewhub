@@ -9,6 +9,11 @@ import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
 import { useProjects } from '@/hooks/useProjects'
 import { PRIORITY_CONFIG } from '@/lib/taskConstants'
 
+const BORDER_1PX_SOLID_RGBA_255_255_255_0_0 = '1px solid rgba(255, 255, 255, 0.06)'
+const RGBA_255_255_255_0_03 = 'rgba(255, 255, 255, 0.03)'
+const RGBA_255_255_255_0_06 = 'rgba(255, 255, 255, 0.06)'
+const TRANSPARENT = 'transparent'
+
 interface MobileKanbanPanelProps {
   readonly onBack: () => void
 }
@@ -46,8 +51,8 @@ function TaskCard({ task, onTap }: TaskCardProps) {
       style={{
         width: '100%',
         padding: '12px',
-        background: 'rgba(255, 255, 255, 0.03)',
-        border: '1px solid rgba(255, 255, 255, 0.06)',
+        background: RGBA_255_255_255_0_03,
+        border: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
         borderRadius: 10,
         textAlign: 'left',
         color: '#e2e8f0',
@@ -161,7 +166,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
               width: 32,
               height: 32,
               borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.06)',
+              background: RGBA_255_255_255_0_06,
               border: 'none',
               color: '#94a3b8',
               fontSize: 20,
@@ -244,7 +249,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
                 style={{
                   width: '100%',
                   padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: RGBA_255_255_255_0_03,
                   border: `1px solid ${col.color}40`,
                   borderRadius: 10,
                   color: col.color,
@@ -321,10 +326,8 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
               width: '100%',
               padding: '12px',
               background:
-                selectedProjectId === null
-                  ? 'rgba(139, 92, 246, 0.2)'
-                  : 'rgba(255, 255, 255, 0.03)',
-              border: `1px solid ${selectedProjectId === null ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
+                selectedProjectId === null ? 'rgba(139, 92, 246, 0.2)' : RGBA_255_255_255_0_03,
+              border: `1px solid ${selectedProjectId === null ? '#8b5cf6' : RGBA_255_255_255_0_06}`,
               borderRadius: 10,
               color: selectedProjectId === null ? '#c4b5fd' : '#cbd5e1',
               fontSize: 14,
@@ -346,10 +349,8 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
                 width: '100%',
                 padding: '12px',
                 background:
-                  selectedProjectId === proj.id
-                    ? 'rgba(139, 92, 246, 0.2)'
-                    : 'rgba(255, 255, 255, 0.03)',
-                border: `1px solid ${selectedProjectId === proj.id ? '#8b5cf6' : 'rgba(255, 255, 255, 0.06)'}`,
+                  selectedProjectId === proj.id ? 'rgba(139, 92, 246, 0.2)' : RGBA_255_255_255_0_03,
+                border: `1px solid ${selectedProjectId === proj.id ? '#8b5cf6' : RGBA_255_255_255_0_06}`,
                 borderRadius: 10,
                 color: selectedProjectId === proj.id ? '#c4b5fd' : '#cbd5e1',
                 fontSize: 14,
@@ -451,7 +452,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
           alignItems: 'center',
           gap: 12,
           padding: '12px 16px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           flexShrink: 0,
         }}
       >
@@ -462,7 +463,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
             height: 36,
             borderRadius: 10,
             border: 'none',
-            background: 'transparent',
+            background: TRANSPARENT,
             color: '#94a3b8',
             cursor: 'pointer',
             display: 'flex',
@@ -489,7 +490,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
             height: 36,
             borderRadius: 10,
             border: selectedProjectId ? '1px solid #8b5cf6' : '1px solid rgba(255, 255, 255, 0.1)',
-            background: selectedProjectId ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+            background: selectedProjectId ? 'rgba(139, 92, 246, 0.15)' : TRANSPARENT,
             color: selectedProjectId ? '#a78bfa' : '#94a3b8',
             cursor: 'pointer',
             display: 'flex',
@@ -506,7 +507,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
         style={{
           display: 'flex',
           overflowX: 'auto',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           flexShrink: 0,
         }}
       >
@@ -521,7 +522,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
                 flex: 1,
                 minWidth: 100,
                 padding: '12px 16px',
-                background: 'transparent',
+                background: TRANSPARENT,
                 border: 'none',
                 borderBottom: isActive ? `2px solid ${col.color}` : '2px solid transparent',
                 color: isActive ? col.color : '#64748b',
@@ -599,7 +600,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
       <div
         style={{
           padding: '12px 16px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+          borderTop: BORDER_1PX_SOLID_RGBA_255_255_255_0_0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',

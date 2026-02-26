@@ -17,6 +17,13 @@ import type {
   GenerationMode,
 } from './propMakerTypes'
 
+const FPM_ADVANCED_SECTION = 'fpm-advanced-section'
+const FPM_ADVANCED_TITLE = 'fpm-advanced-title'
+const FPM_DESCRIPTION = 'fpm-description'
+const FPM_MODEL_ROW = 'fpm-model-row'
+const FPM_SELECT = 'fpm-select'
+const FPM_TAB_ACTIVE = 'fpm-tab-active'
+
 // ── Props ─────────────────────────────────────────────────────
 
 export interface PropControlsProps {
@@ -192,19 +199,19 @@ export function PropControls({
         {/* Tabs */}
         <div className="fpm-tabs">
           <button
-            className={`fpm-tab ${activeTab === 'generate' ? 'fpm-tab-active' : ''}`}
+            className={`fpm-tab ${activeTab === 'generate' ? FPM_TAB_ACTIVE : ''}`}
             onClick={() => onTabChange('generate')}
           >
             ⚡ Generate
           </button>
           <button
-            className={`fpm-tab ${activeTab === 'history' ? 'fpm-tab-active' : ''}`}
+            className={`fpm-tab ${activeTab === 'history' ? FPM_TAB_ACTIVE : ''}`}
             onClick={() => onTabChange('history')}
           >
             📋 History
           </button>
           <button
-            className={`fpm-tab ${activeTab === 'advanced' ? 'fpm-tab-active' : ''}`}
+            className={`fpm-tab ${activeTab === 'advanced' ? FPM_TAB_ACTIVE : ''}`}
             onClick={() => onTabChange('advanced')}
           >
             🧬 Advanced
@@ -219,12 +226,12 @@ export function PropControls({
                 ⚠️ Demo Mode — Prop generation is disabled. You can browse existing history.
               </div>
             )}
-            <p className="fpm-description">
+            <p className={FPM_DESCRIPTION}>
               Describe the prop you want. The AI fabricator will generate a 3D object.
             </p>
 
             {/* Model chooser */}
-            <div className="fpm-model-row">
+            <div className={FPM_MODEL_ROW}>
               <label htmlFor="prop-model-select" className="fpm-label">
                 Model:
               </label>
@@ -233,7 +240,7 @@ export function PropControls({
                 value={selectedModel}
                 onChange={(e) => onModelChange(e.target.value)}
                 disabled={isGenerating}
-                className="fpm-select"
+                className={FPM_SELECT}
               >
                 {models.map((m) => (
                   <option key={m.key} value={m.key}>
@@ -260,26 +267,26 @@ export function PropControls({
             </div>
 
             {/* Generation mode & template */}
-            <div className="fpm-model-row">
+            <div className={FPM_MODEL_ROW}>
               <label className="fpm-label">Mode:</label>
               <select
                 value={generationMode}
                 onChange={(e) => onGenerationModeChange(e.target.value as GenerationMode)}
                 disabled={isGenerating}
-                className="fpm-select"
+                className={FPM_SELECT}
               >
                 <option value="standard">Standard AI</option>
                 <option value="hybrid">Hybrid (Template + AI)</option>
               </select>
             </div>
             {generationMode === 'hybrid' && (
-              <div className="fpm-model-row">
+              <div className={FPM_MODEL_ROW}>
                 <label className="fpm-label">Base:</label>
                 <select
                   value={templateBase}
                   onChange={(e) => onTemplateBaseChange(e.target.value)}
                   disabled={isGenerating}
-                  className="fpm-select"
+                  className={FPM_SELECT}
                 >
                   <option value="">None (enhanced AI)</option>
                   {availableTemplates.map((t) => (
@@ -525,17 +532,17 @@ export function PropControls({
         {activeTab === 'advanced' && (
           <div className="fpm-advanced">
             {/* Style Transfer */}
-            <div className="fpm-advanced-section">
-              <div className="fpm-advanced-title">🎨 Style Transfer</div>
-              <p className="fpm-description">
+            <div className={FPM_ADVANCED_SECTION}>
+              <div className={FPM_ADVANCED_TITLE}>🎨 Style Transfer</div>
+              <p className={FPM_DESCRIPTION}>
                 Apply a showcase prop's visual style to your current prop.
               </p>
-              <div className="fpm-model-row">
+              <div className={FPM_MODEL_ROW}>
                 <label className="fpm-label">Style:</label>
                 <select
                   value={selectedStyle}
                   onChange={(e) => onStyleChange(e.target.value)}
-                  className="fpm-select"
+                  className={FPM_SELECT}
                   disabled={isApplyingStyle || !previewCode}
                 >
                   <option value="">Select style...</option>
@@ -571,9 +578,9 @@ export function PropControls({
             </div>
 
             {/* Prop Genetics placeholder */}
-            <div className="fpm-advanced-section">
-              <div className="fpm-advanced-title">🧬 Prop Genetics</div>
-              <p className="fpm-description">
+            <div className={FPM_ADVANCED_SECTION}>
+              <div className={FPM_ADVANCED_TITLE}>🧬 Prop Genetics</div>
+              <p className={FPM_DESCRIPTION}>
                 Combine traits from two props to create unique hybrids. Use the API endpoint{' '}
                 <code>/api/creator/props/crossbreed</code> for programmatic access.
               </p>
@@ -583,8 +590,8 @@ export function PropControls({
             </div>
 
             {/* Quality Tips */}
-            <div className="fpm-advanced-section">
-              <div className="fpm-advanced-title">💡 Quality Tips</div>
+            <div className={FPM_ADVANCED_SECTION}>
+              <div className={FPM_ADVANCED_TITLE}>💡 Quality Tips</div>
               <div className="fpm-quality-tips">
                 <div>
                   • Use <strong>Hybrid mode</strong> with a template base for best results

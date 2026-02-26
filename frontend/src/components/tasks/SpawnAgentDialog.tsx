@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import type { Task } from '@/hooks/useTasks'
 
+const BORDER_1PX_SOLID_D1D5DB = '1px solid #d1d5db'
+
 interface Agent {
   id: string
   name: string
@@ -180,7 +182,7 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: 8,
-                border: '1px solid #d1d5db',
+                border: BORDER_1PX_SOLID_D1D5DB,
                 fontSize: 14,
                 background: '#fff',
                 cursor: 'pointer',
@@ -220,7 +222,7 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
               width: '100%',
               padding: '10px 12px',
               borderRadius: 8,
-              border: '1px solid #d1d5db',
+              border: BORDER_1PX_SOLID_D1D5DB,
               fontSize: 14,
               resize: 'vertical',
               fontFamily: 'inherit',
@@ -252,7 +254,7 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
             style={{
               padding: '10px 20px',
               borderRadius: 8,
-              border: '1px solid #d1d5db',
+              border: BORDER_1PX_SOLID_D1D5DB,
               background: '#fff',
               color: '#374151',
               fontSize: 14,

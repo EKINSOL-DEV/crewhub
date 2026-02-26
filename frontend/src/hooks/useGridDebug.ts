@@ -1,9 +1,11 @@
 // ─── Grid Debug Toggle ──────────────────────────────────────────
-// Persisted in localStorage under 'crewhub-grid-debug'.
+// Persisted in localStorage under KEY_CREWHUB_GRID_DEBUG.
 
 import { useState, useCallback, useEffect } from 'react'
 
-const STORAGE_KEY = 'crewhub-grid-debug'
+const KEY_CREWHUB_GRID_DEBUG = 'crewhub-grid-debug'
+
+const STORAGE_KEY = KEY_CREWHUB_GRID_DEBUG
 
 function readStored(): boolean {
   try {
@@ -27,11 +29,11 @@ export function useGridDebug(): [boolean, (value?: boolean) => void] {
     const storageHandler = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) setEnabled(e.newValue === 'true')
     }
-    window.addEventListener('crewhub-grid-debug', handler)
+    window.addEventListener(KEY_CREWHUB_GRID_DEBUG, handler)
     // Also listen to storage events (other tabs)
     window.addEventListener('storage', storageHandler)
     return () => {
-      window.removeEventListener('crewhub-grid-debug', handler)
+      window.removeEventListener(KEY_CREWHUB_GRID_DEBUG, handler)
       window.removeEventListener('storage', storageHandler)
     }
   }, [])
@@ -41,7 +43,7 @@ export function useGridDebug(): [boolean, (value?: boolean) => void] {
     localStorage.setItem(STORAGE_KEY, String(next))
     setEnabled(next)
     // Notify other components in same tab
-    window.dispatchEvent(new Event('crewhub-grid-debug'))
+    window.dispatchEvent(new Event(KEY_CREWHUB_GRID_DEBUG))
   }, [])
 
   return [enabled, toggle]

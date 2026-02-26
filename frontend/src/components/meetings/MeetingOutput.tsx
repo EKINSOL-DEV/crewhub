@@ -17,6 +17,12 @@ import { parseMeetingOutput, type ParsedActionItem } from '@/lib/parseMeetingOut
 import { showToast } from '@/lib/toast'
 import { API_BASE } from '@/lib/api'
 
+const APPLICATION_JSON = 'application/json'
+const BORDER_1PX_SOLID_HSL_VAR_BORDER = '1px solid hsl(var(--border))'
+const HSL_CARD = 'hsl(var(--card))'
+const HSL_FOREGROUND = 'hsl(var(--foreground))'
+const HSL_MUTED_FOREGROUND = 'hsl(var(--muted-foreground))'
+
 // ─── Types ──────────────────────────────────────────────────────
 
 interface MeetingOutputProps {
@@ -59,7 +65,7 @@ function ActionItemCard({
         `${API_BASE}/meetings/${meetingId}/action-items/${item.id}/to-planner`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { CONTENT_TYPE: APPLICATION_JSON },
           body: JSON.stringify({
             title: item.text,
             assignee: item.assignee,
@@ -89,7 +95,7 @@ function ActionItemCard({
     try {
       const res = await fetch(`${API_BASE}/meetings/${meetingId}/action-items/${item.id}/execute`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { CONTENT_TYPE: APPLICATION_JSON },
         body: JSON.stringify({ agent_id: item.assignee }),
       })
       if (res.ok) {
@@ -111,10 +117,10 @@ function ActionItemCard({
   return (
     <div
       style={{
-        border: '1px solid hsl(var(--border))',
+        border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
         borderRadius: 8,
         padding: 12,
-        background: 'hsl(var(--card))',
+        background: HSL_CARD,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
@@ -128,9 +134,7 @@ function ActionItemCard({
           <p style={{ fontSize: 13, margin: 0, lineHeight: 1.5 }}>{item.text}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             {item.assignee && (
-              <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>
-                👤 {item.assignee}
-              </span>
+              <span style={{ fontSize: 11, color: HSL_MUTED_FOREGROUND }}>👤 {item.assignee}</span>
             )}
             <Badge variant="secondary" className={`text-xs ${priorityColor}`}>
               {item.priority}
@@ -186,7 +190,7 @@ function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
         style={{
           textAlign: 'center',
           padding: '40px 0',
-          color: 'hsl(var(--muted-foreground))',
+          color: HSL_MUTED_FOREGROUND,
           fontSize: 13,
         }}
       >
@@ -204,8 +208,8 @@ function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
-              color: 'hsl(var(--muted-foreground))',
-              borderBottom: '1px solid hsl(var(--border))',
+              color: HSL_MUTED_FOREGROUND,
+              borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
               paddingBottom: 6,
               marginBottom: 12,
             }}
@@ -218,7 +222,7 @@ function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
                 style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  color: 'hsl(var(--foreground))',
+                  color: HSL_FOREGROUND,
                   marginBottom: 2,
                 }}
               >
@@ -227,7 +231,7 @@ function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
               <p
                 style={{
                   fontSize: 13,
-                  color: 'hsl(var(--muted-foreground))',
+                  color: HSL_MUTED_FOREGROUND,
                   whiteSpace: 'pre-wrap',
                   margin: 0,
                   lineHeight: 1.6,
@@ -262,7 +266,7 @@ function ActionsView({
         style={{
           textAlign: 'center',
           padding: '40px 0',
-          color: 'hsl(var(--muted-foreground))',
+          color: HSL_MUTED_FOREGROUND,
           fontSize: 13,
         }}
       >
@@ -280,7 +284,7 @@ function ActionsView({
           fontWeight: 600,
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
-          color: 'hsl(var(--muted-foreground))',
+          color: HSL_MUTED_FOREGROUND,
           marginBottom: 4,
         }}
       >
@@ -355,7 +359,7 @@ export function MeetingOutput({
           // No backend items — save parsed ones (creates them with parsed IDs)
           fetch(`${API_BASE}/meetings/${meetingId}/action-items`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { CONTENT_TYPE: APPLICATION_JSON },
             body: JSON.stringify({
               items: parsed.actionItems.map((ai) => ({
                 id: ai.id,
@@ -447,23 +451,21 @@ export function MeetingOutput({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 20px',
-          borderBottom: '1px solid hsl(var(--border))',
-          background: 'hsl(var(--card))',
+          borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+          background: HSL_CARD,
           flexShrink: 0,
         }}
       >
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: HSL_FOREGROUND, margin: 0 }}>
             ✅ {meetingTitle}
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
             {duration && (
-              <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>
-                ⏱ {duration}
-              </span>
+              <span style={{ fontSize: 12, color: HSL_MUTED_FOREGROUND }}>⏱ {duration}</span>
             )}
             {meeting.outputPath && (
-              <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', opacity: 0.7 }}>
+              <span style={{ fontSize: 11, color: HSL_MUTED_FOREGROUND, opacity: 0.7 }}>
                 💾 {meeting.outputPath.split('/').pop()}
               </span>
             )}
@@ -474,13 +476,13 @@ export function MeetingOutput({
           title="Close (Esc)"
           style={{
             background: 'hsl(var(--secondary))',
-            border: '1px solid hsl(var(--border))',
+            border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
             borderRadius: 6,
             width: 32,
             height: 32,
             fontSize: 16,
             cursor: 'pointer',
-            color: 'hsl(var(--foreground))',
+            color: HSL_FOREGROUND,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -498,8 +500,8 @@ export function MeetingOutput({
           alignItems: 'center',
           gap: 8,
           padding: '8px 20px',
-          borderBottom: '1px solid hsl(var(--border))',
-          background: 'hsl(var(--card))',
+          borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+          background: HSL_CARD,
           flexShrink: 0,
         }}
       >
@@ -549,8 +551,8 @@ export function MeetingOutput({
                         fontSize: 20,
                         fontWeight: 600,
                         marginBottom: 12,
-                        color: 'hsl(var(--foreground))',
-                        borderBottom: '1px solid hsl(var(--border))',
+                        color: HSL_FOREGROUND,
+                        borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
                         paddingBottom: 6,
                       }}
                     >
@@ -589,11 +591,11 @@ export function MeetingOutput({
                     whiteSpace: 'pre-wrap',
                     wordBreak: 'break-word',
                     fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    color: 'hsl(var(--foreground))',
+                    color: HSL_FOREGROUND,
                     background: 'hsl(var(--secondary) / 0.3)',
                     padding: 16,
                     borderRadius: 8,
-                    border: '1px solid hsl(var(--border))',
+                    border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
                     margin: 0,
                   }}
                 >
@@ -617,7 +619,7 @@ export function MeetingOutput({
               style={{
                 textAlign: 'center',
                 padding: '40px 0',
-                color: 'hsl(var(--muted-foreground))',
+                color: HSL_MUTED_FOREGROUND,
                 fontSize: 13,
               }}
             >

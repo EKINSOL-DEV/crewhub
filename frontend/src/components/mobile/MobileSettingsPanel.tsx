@@ -13,6 +13,18 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Sun, Moon, Monitor, Check, Mic } from 'lucide-react'
 import { API_BASE } from '@/lib/api'
 
+const BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG =
+  '1px solid var(--mobile-border, rgba(255,255,255,0.08))'
+const KEY_CREWHUB_BACKEND_URL = 'crewhub_backend_url'
+const KEY_CREWHUB_DEBUG = 'crewhub-debug'
+const KEY_CREWHUB_FONT_SIZE = 'crewhub-font-size'
+const KEY_CREWHUB_MIC_DEVICE_ID = 'crewhub-mic-device-id'
+const KEY_CREWHUB_THEME = 'crewhub-theme'
+const SPACE_BETWEEN = 'space-between'
+const VAR_MOBILE_SURFACE2 = 'var(--mobile-surface2, rgba(255,255,255,0.04))'
+const VAR_MOBILE_TEXT = 'var(--mobile-text, #e2e8f0)'
+const VAR_MOBILE_TEXT_SECONDARY = 'var(--mobile-text-secondary, #94a3b8)'
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export type AppTheme = 'dark' | 'light' | 'system'
@@ -129,7 +141,7 @@ export function initAppSettings(): void {
   // zen-theme is the source of truth for dark/light; crewhub-theme is the mobile
   // fallback for when no zen-theme has been set yet.
   const zenThemeId = localStorage.getItem(ZEN_THEME_KEY)
-  const cTheme = (localStorage.getItem('crewhub-theme') as AppTheme | null) ?? 'dark'
+  const cTheme = (localStorage.getItem(KEY_CREWHUB_THEME) as AppTheme | null) ?? 'dark'
 
   const isDark = zenThemeId
     ? !ZEN_LIGHT_THEMES.has(zenThemeId) // derive from zen-theme type
@@ -137,7 +149,7 @@ export function initAppSettings(): void {
 
   applyThemeClassOnly(isDark)
 
-  const fontSize = (localStorage.getItem('crewhub-font-size') as FontSize | null) ?? 'normal'
+  const fontSize = (localStorage.getItem(KEY_CREWHUB_FONT_SIZE) as FontSize | null) ?? 'normal'
   applyFontSize(fontSize)
 }
 
@@ -152,7 +164,7 @@ function isTauri(): boolean {
 function getEffectiveUrl(): string {
   const isInTauri = isTauri()
   const raw =
-    localStorage.getItem('crewhub_backend_url') ||
+    localStorage.getItem(KEY_CREWHUB_BACKEND_URL) ||
     (window as any).__CREWHUB_BACKEND_URL__ ||
     import.meta.env.VITE_API_URL ||
     ''
@@ -204,10 +216,10 @@ function Segmented<T extends string>({
       style={{
         display: 'flex',
         gap: 4,
-        background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+        background: VAR_MOBILE_SURFACE2,
         borderRadius: 12,
         padding: 4,
-        border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+        border: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
       }}
     >
       {options.map((opt) => {
@@ -255,11 +267,11 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
       style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: SPACE_BETWEEN,
         padding: '12px 14px',
         borderRadius: 12,
-        background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
-        border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+        background: VAR_MOBILE_SURFACE2,
+        border: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
         cursor: 'pointer',
       }}
       onClick={() => onChange(!value)}
@@ -270,9 +282,7 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
       tabIndex={0}
     >
       <div>
-        <div style={{ fontSize: 14, color: 'var(--mobile-text, #e2e8f0)', fontWeight: 500 }}>
-          {label}
-        </div>
+        <div style={{ fontSize: 14, color: VAR_MOBILE_TEXT, fontWeight: 500 }}>{label}</div>
         {description && (
           <div style={{ fontSize: 11, color: 'var(--mobile-text-muted, #64748b)', marginTop: 2 }}>
             {description}
@@ -320,14 +330,16 @@ interface MobileSettingsPanelProps {
 export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps) {
   // ── State ────
   const [theme, setThemeState] = useState<AppTheme>(
-    () => (localStorage.getItem('crewhub-theme') as AppTheme | null) ?? 'dark'
+    () => (localStorage.getItem(KEY_CREWHUB_THEME) as AppTheme | null) ?? 'dark'
   )
   const [backendUrl, setBackendUrl] = useState(
-    () => localStorage.getItem('crewhub_backend_url') ?? ''
+    () => localStorage.getItem(KEY_CREWHUB_BACKEND_URL) ?? ''
   )
-  const [debugMode, setDebugMode] = useState(() => localStorage.getItem('crewhub-debug') === 'true')
+  const [debugMode, setDebugMode] = useState(
+    () => localStorage.getItem(KEY_CREWHUB_DEBUG) === 'true'
+  )
   const [fontSize, setFontSizeState] = useState<FontSize>(
-    () => (localStorage.getItem('crewhub-font-size') as FontSize | null) ?? 'normal'
+    () => (localStorage.getItem(KEY_CREWHUB_FONT_SIZE) as FontSize | null) ?? 'normal'
   )
   const [urlSaved, setUrlSaved] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -335,7 +347,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
   // ── Microphone state ──
   const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedMicId, setSelectedMicId] = useState<string>(
-    () => localStorage.getItem('crewhub-mic-device-id') ?? ''
+    () => localStorage.getItem(KEY_CREWHUB_MIC_DEVICE_ID) ?? ''
   )
   const [micEnumerating, setMicEnumerating] = useState(false)
 
@@ -360,9 +372,9 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
   const handleMicChange = (deviceId: string) => {
     setSelectedMicId(deviceId)
     if (deviceId) {
-      localStorage.setItem('crewhub-mic-device-id', deviceId)
+      localStorage.setItem(KEY_CREWHUB_MIC_DEVICE_ID, deviceId)
     } else {
-      localStorage.removeItem('crewhub-mic-device-id')
+      localStorage.removeItem(KEY_CREWHUB_MIC_DEVICE_ID)
     }
   }
 
@@ -382,38 +394,38 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
   // ── Apply changes reactively ────
   const handleThemeChange = (t: AppTheme) => {
     setThemeState(t)
-    localStorage.setItem('crewhub-theme', t)
+    localStorage.setItem(KEY_CREWHUB_THEME, t)
     applyTheme(t)
   }
 
   const handleFontSizeChange = (s: FontSize) => {
     setFontSizeState(s)
-    localStorage.setItem('crewhub-font-size', s)
+    localStorage.setItem(KEY_CREWHUB_FONT_SIZE, s)
     applyFontSize(s)
   }
 
   const handleDebugChange = (v: boolean) => {
     setDebugMode(v)
     if (v) {
-      localStorage.setItem('crewhub-debug', 'true')
+      localStorage.setItem(KEY_CREWHUB_DEBUG, 'true')
     } else {
-      localStorage.removeItem('crewhub-debug')
+      localStorage.removeItem(KEY_CREWHUB_DEBUG)
     }
   }
 
   const handleSaveUrl = () => {
     const trimmed = backendUrl.trim()
     if (trimmed) {
-      localStorage.setItem('crewhub_backend_url', trimmed)
+      localStorage.setItem(KEY_CREWHUB_BACKEND_URL, trimmed)
     } else {
-      localStorage.removeItem('crewhub_backend_url')
+      localStorage.removeItem(KEY_CREWHUB_BACKEND_URL)
     }
     setUrlSaved(true)
     setTimeout(() => setUrlSaved(false), 2000)
   }
 
   const handleClearUrl = () => {
-    localStorage.removeItem('crewhub_backend_url')
+    localStorage.removeItem(KEY_CREWHUB_BACKEND_URL)
     setBackendUrl('')
     setUrlSaved(false)
   }
@@ -493,7 +505,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
             padding: '8px 20px 16px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: SPACE_BETWEEN,
             borderBottom: '1px solid var(--mobile-border, rgba(255,255,255,0.06))',
             flexShrink: 0,
           }}
@@ -509,7 +521,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
               borderRadius: 8,
               border: 'none',
               background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
-              color: 'var(--mobile-text-secondary, #94a3b8)',
+              color: VAR_MOBILE_TEXT_SECONDARY,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -550,10 +562,10 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
           <Section title="Backend URL">
             <div
               style={{
-                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+                background: VAR_MOBILE_SURFACE2,
                 borderRadius: 12,
                 padding: '12px 14px',
-                border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+                border: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
                 marginBottom: 8,
               }}
             >
@@ -563,7 +575,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
               <div
                 style={{
                   fontSize: 12,
-                  color: 'var(--mobile-text-secondary, #94a3b8)',
+                  color: VAR_MOBILE_TEXT_SECONDARY,
                   wordBreak: 'break-all',
                   fontFamily: 'monospace',
                 }}
@@ -588,8 +600,8 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                 padding: '10px 14px',
                 borderRadius: 10,
                 border: '1px solid var(--mobile-border, rgba(255,255,255,0.12))',
-                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
-                color: 'var(--mobile-text, #e2e8f0)',
+                background: VAR_MOBILE_SURFACE2,
+                color: VAR_MOBILE_TEXT,
                 fontSize: 14,
                 fontFamily: 'monospace',
                 outline: 'none',
@@ -633,7 +645,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                   borderRadius: 10,
                   border: '1px solid var(--mobile-border, rgba(255,255,255,0.1))',
                   background: 'transparent',
-                  color: 'var(--mobile-text-secondary, #94a3b8)',
+                  color: VAR_MOBILE_TEXT_SECONDARY,
                   cursor: 'pointer',
                   fontSize: 13,
                 }}
@@ -675,10 +687,10 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
           <Section title="Microphone">
             <div
               style={{
-                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+                background: VAR_MOBILE_SURFACE2,
                 borderRadius: 12,
                 padding: '12px 14px',
-                border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+                border: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
               }}
             >
               <div
@@ -689,13 +701,8 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                   marginBottom: 10,
                 }}
               >
-                <Mic
-                  size={14}
-                  style={{ color: 'var(--mobile-text-secondary, #94a3b8)', flexShrink: 0 }}
-                />
-                <span style={{ fontSize: 13, color: 'var(--mobile-text, #e2e8f0)', flex: 1 }}>
-                  Input Device
-                </span>
+                <Mic size={14} style={{ color: VAR_MOBILE_TEXT_SECONDARY, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: VAR_MOBILE_TEXT, flex: 1 }}>Input Device</span>
                 <button
                   onClick={handleEnumerateMics}
                   disabled={micEnumerating}
@@ -729,7 +736,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                     borderRadius: 8,
                     border: '1px solid var(--mobile-border, rgba(255,255,255,0.12))',
                     background: 'var(--mobile-surface2, rgba(255,255,255,0.06))',
-                    color: 'var(--mobile-text, #e2e8f0)',
+                    color: VAR_MOBILE_TEXT,
                     fontSize: 13,
                     outline: 'none',
                     cursor: 'pointer',
@@ -754,10 +761,10 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
           <Section title="App Info">
             <div
               style={{
-                background: 'var(--mobile-surface2, rgba(255,255,255,0.04))',
+                background: VAR_MOBILE_SURFACE2,
                 borderRadius: 12,
                 overflow: 'hidden',
-                border: '1px solid var(--mobile-border, rgba(255,255,255,0.08))',
+                border: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
               }}
             >
               {[
@@ -777,7 +784,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
-                    justifyContent: 'space-between',
+                    justifyContent: SPACE_BETWEEN,
                     padding: '11px 14px',
                     borderBottom:
                       i < arr.length - 1
@@ -790,7 +797,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
                   <span
                     style={{
                       fontSize: 12,
-                      color: 'var(--mobile-text, #e2e8f0)',
+                      color: VAR_MOBILE_TEXT,
                       textAlign: 'right',
                       wordBreak: 'break-all',
                       fontFamily: row.mono ? 'monospace' : 'inherit',

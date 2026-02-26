@@ -1,3 +1,5 @@
+const HSL_MUTED_FOREGROUND = 'hsl(var(--muted-foreground))'
+
 /**
  * MeetingViewMenu — Left sidebar menu for meeting results.
  * Matches TOCSidebar visual style from markdown viewer.
@@ -56,7 +58,7 @@ export function MeetingViewMenu({
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
-            color: 'hsl(var(--muted-foreground))',
+            color: HSL_MUTED_FOREGROUND,
           }}
         >
           Views
@@ -77,7 +79,7 @@ export function MeetingViewMenu({
               padding: '7px 12px',
               fontSize: 13,
               fontWeight: isActive ? 600 : 400,
-              color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+              color: isActive ? 'hsl(var(--primary))' : HSL_MUTED_FOREGROUND,
               background: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent',
               border: 'none',
               borderLeft: isActive ? '2px solid hsl(var(--primary))' : '2px solid transparent',
@@ -100,7 +102,7 @@ export function MeetingViewMenu({
                   fontSize: 10,
                   fontWeight: 600,
                   background: isActive ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--secondary))',
-                  color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+                  color: isActive ? 'hsl(var(--primary))' : HSL_MUTED_FOREGROUND,
                   padding: '1px 6px',
                   borderRadius: 8,
                 }}

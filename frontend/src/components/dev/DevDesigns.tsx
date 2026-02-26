@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import { DesignLab3D } from './DesignLab3D'
 
+const BG_GRAY_800 = 'bg-gray-800'
+const BG_GRAY_900 = 'bg-gray-900'
+const CLS_BG_BLUE_500_TEXT_WHITE = 'bg-blue-500 text-white'
+const CLS_BG_WHITE_SHADOW_LG = 'bg-white shadow-lg'
+const CLS_FLEX_ITEMS_CENTER_GAP_3 = 'flex items-center gap-3'
+const TEXT_GRAY_300 = 'text-gray-300'
+const TEXT_GRAY_400 = 'text-gray-400'
+const TEXT_GRAY_500 = 'text-gray-500'
+const TEXT_GRAY_600 = 'text-gray-600'
+const TEXT_GRAY_700 = 'text-gray-700'
+const TEXT_GRAY_900 = 'text-gray-900'
+const TEXT_WHITE = 'text-white'
+
 interface AgentDesign {
   name: string
   file: string
@@ -128,7 +141,7 @@ function AgentDetailPanel({
       <div
         className={`relative w-full max-w-lg h-full overflow-y-auto transition-transform duration-300 ease-out
           ${visible ? 'translate-x-0' : 'translate-x-full'}
-          ${darkBg ? 'bg-gray-900' : 'bg-white'}`}
+          ${darkBg ? BG_GRAY_900 : 'bg-white'}`}
         style={{ boxShadow: '-4px 0 24px rgba(0,0,0,0.2)' }}
       >
         {/* Close Button */}
@@ -160,7 +173,7 @@ function AgentDetailPanel({
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-5 h-5 rounded-full" style={{ backgroundColor: agent.color }} />
-              <h2 className={`text-2xl font-bold ${darkBg ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-2xl font-bold ${darkBg ? TEXT_WHITE : TEXT_GRAY_900}`}>
                 {agent.name}
               </h2>
             </div>
@@ -175,11 +188,11 @@ function AgentDetailPanel({
           {/* Description */}
           <div>
             <h3
-              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? TEXT_GRAY_400 : TEXT_GRAY_500}`}
             >
               About
             </h3>
-            <p className={`leading-relaxed ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
+            <p className={`leading-relaxed ${darkBg ? TEXT_GRAY_300 : TEXT_GRAY_700}`}>
               {agent.fullDescription}
             </p>
           </div>
@@ -187,7 +200,7 @@ function AgentDetailPanel({
           {/* Used For */}
           <div>
             <h3
-              className={`text-sm font-semibold uppercase tracking-wider mb-3 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+              className={`text-sm font-semibold uppercase tracking-wider mb-3 ${darkBg ? TEXT_GRAY_400 : TEXT_GRAY_500}`}
             >
               Used for
             </h3>
@@ -208,11 +221,11 @@ function AgentDetailPanel({
           {/* Personality */}
           <div>
             <h3
-              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? TEXT_GRAY_400 : TEXT_GRAY_500}`}
             >
               Personality
             </h3>
-            <p className={`italic ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
+            <p className={`italic ${darkBg ? TEXT_GRAY_300 : TEXT_GRAY_700}`}>
               "{agent.personality}"
             </p>
           </div>
@@ -220,7 +233,7 @@ function AgentDetailPanel({
           {/* File Reference */}
           <div>
             <h3
-              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? TEXT_GRAY_400 : TEXT_GRAY_500}`}
             >
               Asset
             </h3>
@@ -235,16 +248,16 @@ function AgentDetailPanel({
           {/* Color Swatch */}
           <div>
             <h3
-              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? 'text-gray-400' : 'text-gray-500'}`}
+              className={`text-sm font-semibold uppercase tracking-wider mb-2 ${darkBg ? TEXT_GRAY_400 : TEXT_GRAY_500}`}
             >
               Brand Color
             </h3>
-            <div className="flex items-center gap-3">
+            <div className={CLS_FLEX_ITEMS_CENTER_GAP_3}>
               <div
                 className="w-10 h-10 rounded-lg shadow-inner"
                 style={{ backgroundColor: agent.color }}
               />
-              <code className={`text-sm ${darkBg ? 'text-gray-400' : 'text-gray-600'}`}>
+              <code className={`text-sm ${darkBg ? TEXT_GRAY_400 : TEXT_GRAY_600}`}>
                 {agent.color}
               </code>
             </div>
@@ -263,15 +276,15 @@ export function DevDesigns() {
   const [selectedAgent, setSelectedAgent] = useState<AgentDesign | null>(null)
 
   return (
-    <div className={`min-h-screen p-8 ${darkBg ? 'bg-gray-900' : 'bg-gray-100'}`}>
+    <div className={`min-h-screen p-8 ${darkBg ? BG_GRAY_900 : 'bg-gray-100'}`}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className={`text-3xl font-bold ${darkBg ? 'text-white' : 'text-gray-900'}`}>
+            <h1 className={`text-3xl font-bold ${darkBg ? TEXT_WHITE : TEXT_GRAY_900}`}>
               🤖 Agent Design Lab
             </h1>
-            <p className={`mt-2 ${darkBg ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`mt-2 ${darkBg ? TEXT_GRAY_400 : TEXT_GRAY_600}`}>
               Design proposals for CrewHub agent avatars
             </p>
           </div>
@@ -292,18 +305,20 @@ export function DevDesigns() {
         {/* Controls */}
         <div
           className={`p-4 rounded-xl mb-8 flex items-center gap-6
-          ${darkBg ? 'bg-gray-800' : 'bg-white shadow-sm'}`}
+          ${darkBg ? BG_GRAY_800 : 'bg-white shadow-sm'}`}
         >
           {/* Background Toggle */}
-          <div className="flex items-center gap-3">
-            <span className={`text-sm font-medium ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
+          <div className={CLS_FLEX_ITEMS_CENTER_GAP_3}>
+            <span className={`text-sm font-medium ${darkBg ? TEXT_GRAY_300 : TEXT_GRAY_700}`}>
               Background:
             </span>
             <button
               onClick={() => setDarkBg(false)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                 ${
-                  darkBg ? 'bg-gray-700 text-gray-400 hover:bg-gray-600' : 'bg-blue-500 text-white'
+                  darkBg
+                    ? 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                    : CLS_BG_BLUE_500_TEXT_WHITE
                 }`}
             >
               ☀️ Light
@@ -312,7 +327,9 @@ export function DevDesigns() {
               onClick={() => setDarkBg(true)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                 ${
-                  darkBg ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  darkBg
+                    ? CLS_BG_BLUE_500_TEXT_WHITE
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                 }`}
             >
               🌙 Dark
@@ -320,8 +337,8 @@ export function DevDesigns() {
           </div>
 
           {/* Size Controls */}
-          <div className="flex items-center gap-3">
-            <span className={`text-sm font-medium ${darkBg ? 'text-gray-300' : 'text-gray-700'}`}>
+          <div className={CLS_FLEX_ITEMS_CENTER_GAP_3}>
+            <span className={`text-sm font-medium ${darkBg ? TEXT_GRAY_300 : TEXT_GRAY_700}`}>
               Size:
             </span>
             {sizes.map((size) => (
@@ -330,7 +347,7 @@ export function DevDesigns() {
                 onClick={() => setSelectedSize(size)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                   ${(() => {
-                    if (selectedSize === size) return 'bg-blue-500 text-white'
+                    if (selectedSize === size) return CLS_BG_BLUE_500_TEXT_WHITE
                     return darkBg
                       ? 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                       : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -354,12 +371,12 @@ export function DevDesigns() {
               role="button"
               tabIndex={0}
               className={`rounded-2xl p-6 transition-all hover:scale-[1.02] cursor-pointer
-                ${darkBg ? 'bg-gray-800' : 'bg-white shadow-lg'}`}
+                ${darkBg ? BG_GRAY_800 : CLS_BG_WHITE_SHADOW_LG}`}
             >
               {/* Agent Preview */}
               <div
                 className={`rounded-xl p-8 mb-4 flex items-center justify-center
-                  ${darkBg ? 'bg-gray-900' : 'bg-gray-50'}`}
+                  ${darkBg ? BG_GRAY_900 : 'bg-gray-50'}`}
                 style={{ minHeight: 160 }}
               >
                 <img
@@ -374,11 +391,11 @@ export function DevDesigns() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full" style={{ backgroundColor: agent.color }} />
-                  <h3 className={`font-semibold ${darkBg ? 'text-white' : 'text-gray-900'}`}>
+                  <h3 className={`font-semibold ${darkBg ? TEXT_WHITE : TEXT_GRAY_900}`}>
                     {agent.name}
                   </h3>
                 </div>
-                <p className={`text-sm ${darkBg ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-sm ${darkBg ? TEXT_GRAY_400 : TEXT_GRAY_600}`}>
                   {agent.description}
                 </p>
                 <code
@@ -393,15 +410,15 @@ export function DevDesigns() {
         </div>
 
         {/* All Sizes Comparison */}
-        <div className={`mt-12 rounded-2xl p-6 ${darkBg ? 'bg-gray-800' : 'bg-white shadow-lg'}`}>
-          <h2 className={`text-xl font-bold mb-6 ${darkBg ? 'text-white' : 'text-gray-900'}`}>
+        <div className={`mt-12 rounded-2xl p-6 ${darkBg ? BG_GRAY_800 : CLS_BG_WHITE_SHADOW_LG}`}>
+          <h2 className={`text-xl font-bold mb-6 ${darkBg ? TEXT_WHITE : TEXT_GRAY_900}`}>
             📐 Size Comparison
           </h2>
 
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className={darkBg ? 'text-gray-400' : 'text-gray-600'}>
+                <tr className={darkBg ? TEXT_GRAY_400 : TEXT_GRAY_600}>
                   <th className="text-left py-3 px-4 font-medium">Agent</th>
                   {sizes.map((size) => (
                     <th key={size} className="text-center py-3 px-4 font-medium">
@@ -416,9 +433,7 @@ export function DevDesigns() {
                     key={agent.name}
                     className={`border-t ${darkBg ? 'border-gray-700' : 'border-gray-100'}`}
                   >
-                    <td
-                      className={`py-4 px-4 font-medium ${darkBg ? 'text-white' : 'text-gray-900'}`}
-                    >
+                    <td className={`py-4 px-4 font-medium ${darkBg ? TEXT_WHITE : TEXT_GRAY_900}`}>
                       {agent.name}
                     </td>
                     {sizes.map((size) => (
@@ -440,11 +455,11 @@ export function DevDesigns() {
         </div>
 
         {/* Design Specs */}
-        <div className={`mt-8 rounded-2xl p-6 ${darkBg ? 'bg-gray-800' : 'bg-white shadow-lg'}`}>
-          <h2 className={`text-xl font-bold mb-4 ${darkBg ? 'text-white' : 'text-gray-900'}`}>
+        <div className={`mt-8 rounded-2xl p-6 ${darkBg ? BG_GRAY_800 : CLS_BG_WHITE_SHADOW_LG}`}>
+          <h2 className={`text-xl font-bold mb-4 ${darkBg ? TEXT_WHITE : TEXT_GRAY_900}`}>
             📋 Design Specifications
           </h2>
-          <ul className={`space-y-2 text-sm ${darkBg ? 'text-gray-300' : 'text-gray-600'}`}>
+          <ul className={`space-y-2 text-sm ${darkBg ? TEXT_GRAY_300 : TEXT_GRAY_600}`}>
             <li>
               ✓ <strong>Rounded shapes</strong> - Friendly, approachable appearance
             </li>

@@ -18,6 +18,14 @@ import { getBotConfigFromSession } from '@/components/world3d/utils/botVariants'
 import { formatFileSize } from '@/lib/formatters'
 import { ChatHeader3DAvatar, type AvatarAnimation } from './ChatHeader3DAvatar'
 
+const BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER = '1px solid var(--mobile-divider)'
+const BORDER_1PX_SOLID_VAR_MOBILE_INPUT_BOR = '1px solid var(--mobile-input-border)'
+const CLS_BACKGROUND_015S = 'background 0.15s'
+const VAR_MOBILE_ATTACH_BTN_BG = 'var(--mobile-attach-btn-bg)'
+const VAR_MOBILE_SURFACE2 = 'var(--mobile-surface2)'
+const VAR_MOBILE_TEXT_MUTED = 'var(--mobile-text-muted)'
+const VAR_MOBILE_TEXT_SECONDARY = 'var(--mobile-text-secondary)'
+
 // ── File Upload Types & Helpers ────────────────────────────────
 
 interface PendingFile {
@@ -86,12 +94,12 @@ function FilePreviewBar({
     <div
       style={{
         padding: '8px 12px',
-        borderTop: '1px solid var(--mobile-divider)',
+        borderTop: BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER,
         display: 'flex',
         gap: 8,
         overflowX: 'auto',
         WebkitOverflowScrolling: 'touch',
-        background: 'var(--mobile-surface2)',
+        background: VAR_MOBILE_SURFACE2,
       }}
     >
       {files.map((f) => (
@@ -115,8 +123,8 @@ function FilePreviewBar({
                 height: 64,
                 borderRadius: 10,
                 overflow: 'hidden',
-                background: 'var(--mobile-surface2)',
-                border: f.error ? '2px solid #ef4444' : '1px solid var(--mobile-input-border)',
+                background: VAR_MOBILE_SURFACE2,
+                border: f.error ? '2px solid #ef4444' : BORDER_1PX_SOLID_VAR_MOBILE_INPUT_BOR,
               }}
             >
               <img
@@ -131,8 +139,8 @@ function FilePreviewBar({
                 width: 64,
                 height: 64,
                 borderRadius: 10,
-                background: 'var(--mobile-surface2)',
-                border: f.error ? '2px solid #ef4444' : '1px solid var(--mobile-input-border)',
+                background: VAR_MOBILE_SURFACE2,
+                border: f.error ? '2px solid #ef4444' : BORDER_1PX_SOLID_VAR_MOBILE_INPUT_BOR,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -175,8 +183,8 @@ function FilePreviewBar({
               height: 22,
               borderRadius: '50%',
               background: 'var(--mobile-surface)',
-              border: '1px solid var(--mobile-input-border)',
-              color: 'var(--mobile-text-secondary)',
+              border: BORDER_1PX_SOLID_VAR_MOBILE_INPUT_BOR,
+              color: VAR_MOBILE_TEXT_SECONDARY,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -189,7 +197,7 @@ function FilePreviewBar({
           <span
             style={{
               fontSize: 9,
-              color: f.error ? '#fca5a5' : 'var(--mobile-text-muted)',
+              color: f.error ? '#fca5a5' : VAR_MOBILE_TEXT_MUTED,
               maxWidth: 72,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -491,7 +499,7 @@ export function MobileAgentChat({
           alignItems: 'center',
           gap: 10,
           padding: '8px 12px 8px 8px',
-          borderBottom: '1px solid var(--mobile-divider)',
+          borderBottom: BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER,
           flexShrink: 0,
         }}
       >
@@ -503,7 +511,7 @@ export function MobileAgentChat({
             borderRadius: 10,
             border: 'none',
             background: 'transparent',
-            color: 'var(--mobile-text-secondary)',
+            color: VAR_MOBILE_TEXT_SECONDARY,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -535,9 +543,7 @@ export function MobileAgentChat({
           >
             {agentName}
           </div>
-          <div
-            style={{ fontSize: 11, color: isSending ? accentColor : 'var(--mobile-text-muted)' }}
-          >
+          <div style={{ fontSize: 11, color: isSending ? accentColor : VAR_MOBILE_TEXT_MUTED }}>
             {isSending ? 'Thinking…' : 'Online'}
           </div>
         </div>
@@ -553,7 +559,7 @@ export function MobileAgentChat({
               borderRadius: 10,
               border: 'none',
               background: 'transparent',
-              color: 'var(--mobile-text-secondary)',
+              color: VAR_MOBILE_TEXT_SECONDARY,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -595,7 +601,7 @@ export function MobileAgentChat({
               borderRadius: 10,
               border: 'none',
               background: 'var(--mobile-msg-assistant-bg)',
-              color: 'var(--mobile-text-muted)',
+              color: VAR_MOBILE_TEXT_MUTED,
               cursor: isLoadingHistory ? 'wait' : 'pointer',
               fontSize: 12,
               fontWeight: 500,
@@ -613,7 +619,7 @@ export function MobileAgentChat({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--mobile-text-muted)',
+              color: VAR_MOBILE_TEXT_MUTED,
               fontSize: 14,
               padding: '40px 0',
               gap: 8,
@@ -635,7 +641,7 @@ export function MobileAgentChat({
               alignItems: 'center',
               gap: 6,
               padding: '4px 0',
-              color: 'var(--mobile-text-muted)',
+              color: VAR_MOBILE_TEXT_MUTED,
               fontSize: 12,
             }}
           >
@@ -679,7 +685,7 @@ export function MobileAgentChat({
       <div
         style={{
           padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
-          borderTop: pendingFiles.length > 0 ? 'none' : '1px solid var(--mobile-divider)',
+          borderTop: pendingFiles.length > 0 ? 'none' : BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER,
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
@@ -704,7 +710,7 @@ export function MobileAgentChat({
             <span style={{ animation: 'mob-rec-blink 0.6s step-end infinite' }}>●</span>
             {formatDuration(recDuration)}
             <span style={{ flex: 1 }} />
-            <span style={{ fontSize: 11, color: 'var(--mobile-text-muted)', opacity: 0.7 }}>
+            <span style={{ fontSize: 11, color: VAR_MOBILE_TEXT_MUTED, opacity: 0.7 }}>
               ← swipe to cancel
             </span>
           </div>
@@ -724,15 +730,14 @@ export function MobileAgentChat({
                 height: 44,
                 borderRadius: 14,
                 border: 'none',
-                background:
-                  pendingFiles.length > 0 ? accentColor + '20' : 'var(--mobile-attach-btn-bg)',
-                color: pendingFiles.length > 0 ? accentColor : 'var(--mobile-text-secondary)',
+                background: pendingFiles.length > 0 ? accentColor + '20' : VAR_MOBILE_ATTACH_BTN_BG,
+                color: pendingFiles.length > 0 ? accentColor : VAR_MOBILE_TEXT_SECONDARY,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                transition: 'background 0.15s',
+                transition: CLS_BACKGROUND_015S,
               }}
             >
               <Paperclip size={20} />
@@ -752,7 +757,7 @@ export function MobileAgentChat({
               flex: 1,
               padding: '10px 14px',
               borderRadius: 14,
-              border: '1px solid var(--mobile-input-border)',
+              border: BORDER_1PX_SOLID_VAR_MOBILE_INPUT_BOR,
               background: 'var(--mobile-input-bg)',
               color: 'var(--mobile-text)',
               fontSize: 16,
@@ -787,7 +792,7 @@ export function MobileAgentChat({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'background 0.15s',
+                  transition: CLS_BACKGROUND_015S,
                 }}
               >
                 <ArrowUp size={20} />
@@ -800,14 +805,14 @@ export function MobileAgentChat({
                   height: 44,
                   borderRadius: 14,
                   border: 'none',
-                  background: 'var(--mobile-attach-btn-bg)',
-                  color: 'var(--mobile-text-secondary)',
+                  background: VAR_MOBILE_ATTACH_BTN_BG,
+                  color: VAR_MOBILE_TEXT_SECONDARY,
                   cursor: 'pointer',
                   flexShrink: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'background 0.15s',
+                  transition: CLS_BACKGROUND_015S,
                 }}
               >
                 <X size={18} />
@@ -828,8 +833,8 @@ export function MobileAgentChat({
                     height: 44,
                     borderRadius: 14,
                     border: 'none',
-                    background: 'var(--mobile-attach-btn-bg)',
-                    color: 'var(--mobile-text-secondary)',
+                    background: VAR_MOBILE_ATTACH_BTN_BG,
+                    color: VAR_MOBILE_TEXT_SECONDARY,
                     cursor: micPreparing || isSending || isUploading ? 'default' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -866,7 +871,7 @@ export function MobileAgentChat({
                       isSending ||
                       isUploading ||
                       (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
-                        ? 'var(--mobile-text-muted)'
+                        ? VAR_MOBILE_TEXT_MUTED
                         : '#fff',
                     cursor:
                       isSending ||
@@ -879,7 +884,7 @@ export function MobileAgentChat({
                     justifyContent: 'center',
                     fontSize: 18,
                     flexShrink: 0,
-                    transition: 'background 0.15s',
+                    transition: CLS_BACKGROUND_015S,
                   }}
                 >
                   {isUploading ? '⏳' : '➤'}

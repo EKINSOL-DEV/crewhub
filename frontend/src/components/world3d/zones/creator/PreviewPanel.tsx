@@ -7,6 +7,8 @@ import React, { Suspense, useState, useCallback, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'
 
+const HSL_DESTRUCTIVE = 'hsl(var(--destructive))'
+
 // ─── Error Boundary ─────────────────────────────────────────────
 
 interface ErrorBoundaryState {
@@ -101,7 +103,7 @@ const ERROR_BOX: React.CSSProperties = {
   borderRadius: '8px',
   padding: '10px 14px',
   fontSize: '12px',
-  color: 'hsl(var(--destructive))',
+  color: HSL_DESTRUCTIVE,
   fontFamily: 'monospace',
   maxHeight: '120px',
   overflow: 'auto',
@@ -114,7 +116,7 @@ const RETRY_BTN: React.CSSProperties = {
   borderRadius: '8px',
   border: '1px solid hsl(var(--destructive) / 0.4)',
   background: 'hsl(var(--destructive) / 0.2)',
-  color: 'hsl(var(--destructive))',
+  color: HSL_DESTRUCTIVE,
   fontWeight: 600,
   fontSize: '13px',
   cursor: 'pointer',
@@ -214,7 +216,7 @@ export function PreviewPanel({
               padding: '20px',
             }}
           >
-            <div style={{ textAlign: 'center', color: 'hsl(var(--destructive))' }}>
+            <div style={{ textAlign: 'center', color: HSL_DESTRUCTIVE }}>
               <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚠️</div>
               <div style={{ fontSize: '13px' }}>Render failed</div>
             </div>
