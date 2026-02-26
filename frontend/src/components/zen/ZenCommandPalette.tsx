@@ -180,18 +180,16 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
   let globalIndex = -1
 
   return (
-    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
+    <div
+      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
       className="zen-command-backdrop"
-      onClick={handleBackdropClick}
+      role="dialog"
       aria-modal="true"
       aria-label="Command Palette"
-      role="button"
       tabIndex={0}
+      onClick={handleBackdropClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          ;(e.currentTarget as HTMLElement).click()
-        }
+        if (e.key === 'Escape') onClose()
       }}
     >
       <div className="zen-command-palette">

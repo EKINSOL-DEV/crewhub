@@ -39,17 +39,27 @@ export function ImageLightbox({ src, alt = 'Image', onClose }: ImageLightboxProp
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10000,
-    cursor: 'pointer',
     padding: '40px',
+  }
+
+  const backdropStyle: CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    cursor: 'pointer',
+    zIndex: 0,
   }
 
   const imageContainerStyle: CSSProperties = {
     position: 'relative',
+    zIndex: 1,
     maxWidth: '100%',
     maxHeight: '100%',
     display: 'flex',
@@ -85,20 +95,23 @@ export function ImageLightbox({ src, alt = 'Image', onClose }: ImageLightboxProp
   }
 
   return (
-    <div // NOSONAR: backdrop div closes lightbox on click; role='dialog' conveys purpose
-      style={overlayStyle}
-      onClick={onClose}
-      aria-modal="true"
-      aria-label="Image viewer"
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          ;(e.currentTarget as HTMLElement).click()
-        }
-      }}
-    >
+    <div style={overlayStyle} role="dialog" aria-modal="true" aria-label="Image viewer">
+      {/* Backdrop (closes lightbox on click / keyboard) */}
+      <div
+        // NOSONAR: non-interactive element used as backdrop; role/tabIndex/keyboard added
+        style={backdropStyle}
+        role="button"
+        tabIndex={0}
+        aria-label="Close image viewer"
+        onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onClose()
+          }
+        }}
+      />
+
       {/* Close button */}
       <button
         style={closeButtonStyle}
@@ -117,16 +130,7 @@ export function ImageLightbox({ src, alt = 'Image', onClose }: ImageLightboxProp
         <X size={24} />
       </button>
 
-      {/* Image container - stop propagation to prevent closing when clicking image */}
-      <div
-        style={imageContainerStyle}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.stopPropagation()
-          }
-        }}
-      >
+      <div style={imageContainerStyle}>
         <img src={src} alt={alt} style={imageStyle} loading="eager" />
       </div>
     </div>

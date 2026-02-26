@@ -260,9 +260,12 @@ function CompactTaskCard({
 
   return (
     <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={() => onClick?.(task)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
           onClick?.(task)
         }
       }}

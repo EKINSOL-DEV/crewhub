@@ -231,80 +231,74 @@ export function ProjectFilterSelect({
               >
                 Loading...
               </div>
+            ) : filteredProjects.length === 0 ? (
+              <div
+                style={{
+                  padding: '12px',
+                  fontSize: 12,
+                  color: VAR_ZEN_FG_MUTED,
+                  textAlign: 'center',
+                }}
+              >
+                {search ? 'No projects match' : 'No active projects'}
+              </div>
             ) : (
-              (() => {
-                if (filteredProjects.length === 0) {
-                  return (
-                    <div
+              filteredProjects.map((project) => {
+                const isSelected = project.id === currentProjectId
+                return (
+                  <button
+                    key={project.id}
+                    aria-selected={isSelected}
+                    onClick={() => handleSelect(project)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      border: 'none',
+                      background: isSelected
+                        ? 'var(--zen-bg-active, rgba(59,130,246,0.1))'
+                        : TRANSPARENT,
+                      color: VAR_ZEN_FG,
+                      fontSize: 12,
+                      fontWeight: isSelected ? 700 : 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                      transition: CLS_BACKGROUND_01S,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = VAR_ZEN_BG_HOVER
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = TRANSPARENT
+                    }}
+                  >
+                    <span
                       style={{
-                        padding: '12px',
-                        fontSize: 12,
-                        color: VAR_ZEN_FG_MUTED,
-                        textAlign: 'center',
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: project.color || '#6b7280',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ fontSize: 14, flexShrink: 0 }}>{project.icon || '📋'}</span>
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        flex: 1,
                       }}
                     >
-                      {search ? 'No projects match' : 'No active projects'}
-                    </div>
-                  )
-                }
-
-                return filteredProjects.map((project) => {
-                  const isSelected = project.id === currentProjectId
-                  return (
-                    <button
-                      key={project.id}
-                      aria-selected={isSelected}
-                      onClick={() => handleSelect(project)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        width: '100%',
-                        padding: '8px 10px',
-                        borderRadius: 6,
-                        border: 'none',
-                        background: isSelected
-                          ? 'var(--zen-bg-active, rgba(59,130,246,0.1))'
-                          : TRANSPARENT,
-                        color: VAR_ZEN_FG,
-                        fontSize: 12,
-                        fontWeight: isSelected ? 700 : 500,
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                        textAlign: 'left',
-                        transition: CLS_BACKGROUND_01S,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.background = VAR_ZEN_BG_HOVER
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) e.currentTarget.style.background = TRANSPARENT
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: project.color || '#6b7280',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span style={{ fontSize: 14, flexShrink: 0 }}>{project.icon || '📋'}</span>
-                      <span
-                        style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          flex: 1,
-                        }}
-                      >
-                        {project.name}
-                      </span>
-                    </button>
-                  )
-                })
-              })()
+                      {project.name}
+                    </span>
+                  </button>
+                )
+              })
             )}
           </div>
 

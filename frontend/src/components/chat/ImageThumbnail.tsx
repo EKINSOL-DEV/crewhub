@@ -58,9 +58,13 @@ export function ImageThumbnail({ attachment, maxWidth = 200 }: ImageThumbnailPro
     <>
       <div
         style={containerStyle}
+        role="button"
+        tabIndex={0}
+        aria-label="Open image viewer"
         onClick={() => setLightboxOpen(true)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
             setLightboxOpen(true)
           }
         }}

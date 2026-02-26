@@ -90,19 +90,17 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
   )
 
   return (
-    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
+    <div
+      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
       ref={containerRef}
       className="zen-theme-picker-backdrop"
-      onClick={handleBackdropClick}
+      role="dialog"
       aria-modal="true"
       aria-label="Select Theme"
-      role="button"
       tabIndex={0}
+      onClick={handleBackdropClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          ;(e.currentTarget as HTMLElement).click()
-        }
+        if (e.key === 'Escape') onClose()
       }}
     >
       <div className="zen-theme-picker">

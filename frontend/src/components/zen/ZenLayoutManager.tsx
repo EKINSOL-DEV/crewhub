@@ -202,18 +202,16 @@ export function ZenSaveLayoutModal({
   )
 
   return (
-    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
+    <div
+      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
       className="zen-save-layout-backdrop"
-      onClick={handleBackdropClick}
+      role="dialog"
       aria-modal="true"
       aria-label="Save Layout"
-      role="button"
       tabIndex={0}
+      onClick={handleBackdropClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          ;(e.currentTarget as HTMLElement).click()
-        }
+        if (e.key === 'Escape') onClose()
       }}
     >
       <div className="zen-save-layout-modal">
@@ -400,18 +398,16 @@ export function ZenLayoutPicker({
   )
 
   return (
-    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
+    <div
+      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
       className="zen-layout-picker-backdrop"
-      onClick={handleBackdropClick}
+      role="dialog"
       aria-modal="true"
       aria-label="Choose Layout"
-      role="button"
       tabIndex={0}
+      onClick={handleBackdropClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          ;(e.currentTarget as HTMLElement).click()
-        }
+        if (e.key === 'Escape') onClose()
       }}
     >
       <div className="zen-layout-picker-modal">

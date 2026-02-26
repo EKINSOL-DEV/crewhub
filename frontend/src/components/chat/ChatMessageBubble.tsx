@@ -267,10 +267,15 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
           color: '#b45309',
           cursor: hasDetails ? 'pointer' : 'default',
         }}
+        role={hasDetails ? 'button' : undefined}
+        tabIndex={hasDetails ? 0 : undefined}
+        aria-expanded={hasDetails ? expanded : undefined}
         onClick={() => hasDetails && setExpanded(!expanded)}
         onKeyDown={(e) => {
+          if (!hasDetails) return
           if (e.key === 'Enter' || e.key === ' ') {
-            if (hasDetails) setExpanded(!expanded)
+            e.preventDefault()
+            setExpanded(!expanded)
           }
         }}
       >
@@ -436,7 +441,11 @@ const ChatMessageBubbleInner = memo(
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}
             >
               {videoAttachments.map((attachment) => (
-                <VideoThumbnail key={attachment.path} attachment={attachment} maxWidth={300} />
+                <VideoThumbnail
+                  key={attachment.path || `attachme-${attachment.type}`}
+                  attachment={attachment}
+                  maxWidth={300}
+                />
               ))}
             </div>
           )}

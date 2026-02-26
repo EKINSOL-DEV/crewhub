@@ -128,18 +128,16 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
   }, [])
 
   return (
-    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
+    <div
+      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
       className="zen-keyboard-help-backdrop"
-      onClick={handleBackdropClick}
+      role="dialog"
       aria-modal="true"
       aria-label="Keyboard Shortcuts"
-      role="button"
       tabIndex={0}
+      onClick={handleBackdropClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          ;(e.currentTarget as HTMLElement).click()
-        }
+        if (e.key === 'Escape') onClose()
       }}
     >
       <div ref={modalRef} className="zen-keyboard-help" tabIndex={-1}>

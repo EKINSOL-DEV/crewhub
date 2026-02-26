@@ -387,114 +387,104 @@ export function TaskBoardOverlay({
 
         {/* Board Content */}
         <div className="flex-1 overflow-hidden p-6">
-          {(() => {
-            if (isLoading) {
-              return (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-              )
-            }
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+              <p className="text-sm text-destructive">{error}</p>
+              <button
+                onClick={handleRefresh}
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-full overflow-x-auto">
+              {columns.map((col) => {
+                const columnTasks = tasksByStatus[col.status]
+                const isDropTarget = dragOverColumn === col.status
 
-            if (error) {
-              return (
-                <div className="flex flex-col items-center justify-center h-full gap-3">
-                  <p className="text-sm text-destructive">{error}</p>
-                  <button
-                    onClick={handleRefresh}
-                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+                return (
+                  <div
+                    key={col.status}
+                    className={cn(
+                      'flex flex-col rounded-xl border bg-muted/30 min-h-[400px] transition-all',
+                      isDropTarget &&
+                        'ring-2 ring-blue-500 ring-offset-2 bg-blue-50/50 dark:bg-blue-950/50'
+                    )}
+                    onDragOver={(e) => handleDragOver(e, col.status)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, col.status)}
                   >
-                    Retry
-                  </button>
-                </div>
-              )
-            }
-
-            return (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-full overflow-x-auto">
-                {columns.map((col) => {
-                  const columnTasks = tasksByStatus[col.status]
-                  const isDropTarget = dragOverColumn === col.status
-
-                  return (
+                    {/* Column Header */}
                     <div
-                      key={col.status}
                       className={cn(
-                        'flex flex-col rounded-xl border bg-muted/30 min-h-[400px] transition-all',
-                        isDropTarget &&
-                          'ring-2 ring-blue-500 ring-offset-2 bg-blue-50/50 dark:bg-blue-950/50'
+                        'flex items-center justify-between px-4 py-3 rounded-t-xl',
+                        col.headerBg
                       )}
-                      onDragOver={(e) => handleDragOver(e, col.status)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, col.status)}
                     >
-                      {/* Column Header */}
-                      <div
-                        className={cn(
-                          'flex items-center justify-between px-4 py-3 rounded-t-xl',
-                          col.headerBg
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{col.icon}</span>
-                          <span className={cn('font-semibold text-sm', col.headerColor)}>
-                            {col.label}
-                          </span>
-                        </div>
-                        <span
-                          className={cn(
-                            'text-xs font-medium px-2 py-0.5 rounded-full',
-                            col.headerBg,
-                            col.headerColor,
-                            'bg-white/60 dark:bg-black/20'
-                          )}
-                        >
-                          {taskCounts[col.status]}
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{col.icon}</span>
+                        <span className={cn('font-semibold text-sm', col.headerColor)}>
+                          {col.label}
                         </span>
                       </div>
-
-                      {/* Task Cards */}
-                      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                        {columnTasks.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center h-32 text-center">
-                            <p className="text-sm text-muted-foreground italic">No tasks</p>
-                            {col.status === 'todo' && (
-                              <button
-                                onClick={() => setShowCreateForm(true)}
-                                className="mt-2 text-xs text-blue-600 hover:underline"
-                              >
-                                + Add first task
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          columnTasks.map((task) => (
-                            <div
-                              key={task.id}
-                              draggable
-                              onDragStart={() => handleDragStart(task)}
-                              onDragEnd={handleDragEnd}
-                              className={cn(
-                                'cursor-grab active:cursor-grabbing transition-opacity',
-                                draggedTask?.id === task.id && 'opacity-50'
-                              )}
-                            >
-                              <TaskCard
-                                task={task}
-                                compact={false}
-                                onClick={(t) => setEditingTask(t)} // NOSONAR: mouse/drag interaction
-                                onStatusChange={handleStatusChange}
-                              />
-                            </div>
-                          ))
+                      <span
+                        className={cn(
+                          'text-xs font-medium px-2 py-0.5 rounded-full',
+                          col.headerBg,
+                          col.headerColor,
+                          'bg-white/60 dark:bg-black/20'
                         )}
-                      </div>
+                      >
+                        {taskCounts[col.status]}
+                      </span>
                     </div>
-                  )
-                })}
-              </div>
-            )
-          })()}
+
+                    {/* Task Cards */}
+                    <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                      {columnTasks.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-32 text-center">
+                          <p className="text-sm text-muted-foreground italic">No tasks</p>
+                          {col.status === 'todo' && (
+                            <button
+                              onClick={() => setShowCreateForm(true)}
+                              className="mt-2 text-xs text-blue-600 hover:underline"
+                            >
+                              + Add first task
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        columnTasks.map((task) => (
+                          <div
+                            key={task.id}
+                            draggable
+                            onDragStart={() => handleDragStart(task)}
+                            onDragEnd={handleDragEnd}
+                            className={cn(
+                              'cursor-grab active:cursor-grabbing transition-opacity',
+                              draggedTask?.id === task.id && 'opacity-50'
+                            )}
+                          >
+                            <TaskCard
+                              task={task}
+                              compact={false}
+                              onClick={(t) => setEditingTask(t)} // NOSONAR: mouse/drag interaction
+                              onStatusChange={handleStatusChange}
+                            />
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
