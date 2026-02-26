@@ -103,8 +103,8 @@ export function ServerRackProp({ position, rotation }: PropProps) {
         <boxGeometry args={[0.5, 1.6, 0.01]} />
         <meshToonMaterial {...rackToon} />
       </mesh>
-      {[0.3, 0.6, 0.9, 1.2, 1.5].map((y, i) => (
-        <mesh key={`y-${i}`} position={[0, y, 0.26]}>
+      {[0.3, 0.6, 0.9, 1.2, 1.5].map((y) => (
+        <mesh key={y} position={[0, y, 0.26]}>
           <boxGeometry args={[0.44, 0.08, 0.01]} />
           <meshToonMaterial {...slotToon} />
         </mesh>
@@ -179,8 +179,8 @@ export function CableMessProp({ position }: PropProps) {
 
   return (
     <group position={position}>
-      {cables.map((c, i) => (
-        <mesh key={`c-${i}`} position={c.pos} rotation={c.rot}>
+      {cables.map((c) => (
+        <mesh key={String(c.pos)} position={c.pos} rotation={c.rot}>
           <cylinderGeometry args={[0.012, 0.012, c.len, 6]} />
           <meshToonMaterial {...c.toon} />
         </mesh>
@@ -257,7 +257,7 @@ export function ColorPaletteProp({ position, rotation }: PropProps) {
         const angle = (i / colors.length) * Math.PI * 2
         const r = 0.08
         return (
-          <mesh key={`col-${i}`} position={[Math.cos(angle) * r, 0.42, Math.sin(angle) * r]}>
+          <mesh key={col} position={[Math.cos(angle) * r, 0.42, Math.sin(angle) * r]}>
             <sphereGeometry args={[0.02, 6, 6]} />
             <meshToonMaterial {...getToonMaterialProps(col)} />
           </mesh>
@@ -286,7 +286,7 @@ export function MoodBoardProp({ position, rotation }: PropProps) {
         const col2 = Math.floor(i / 2)
         const row = i % 2
         return (
-          <mesh key={`col-${i}`} position={[-0.35 + col2 * 0.35, 0.12 - row * 0.3, 0.03]}>
+          <mesh key={col} position={[-0.35 + col2 * 0.35, 0.12 - row * 0.3, 0.03]}>
             <boxGeometry args={[0.25, 0.2, 0.005]} />
             <meshToonMaterial {...getToonMaterialProps(col)} />
           </mesh>
@@ -330,7 +330,7 @@ export function BarChartProp({ position, rotation }: PropProps) {
         <meshToonMaterial {...baseToon} />
       </mesh>
       {bars.map((bar, i) => (
-        <mesh key={`bar-${i}`} position={[-0.28 + i * 0.14, bar.h / 2 + 0.02, 0]} castShadow>
+        <mesh key={bar.color} position={[-0.28 + i * 0.14, bar.h / 2 + 0.02, 0]} castShadow>
           <boxGeometry args={[0.1, bar.h, 0.18]} />
           <meshToonMaterial {...getToonMaterialProps(bar.color)} />
         </mesh>
@@ -455,16 +455,16 @@ export function BookshelfProp({ position, rotation }: PropProps) {
         <boxGeometry args={[0.04, 1.4, 0.3]} />
         <meshToonMaterial {...shelfToon} />
       </mesh>
-      {[0.02, 0.48, 0.94, 1.4].map((y, i) => (
-        <mesh key={`y-${i}`} position={[0, y, 0]} castShadow>
+      {[0.02, 0.48, 0.94, 1.4].map((y) => (
+        <mesh key={y} position={[0, y, 0]} castShadow>
           <boxGeometry args={[0.92, 0.04, 0.3]} />
           <meshToonMaterial {...shelfToon} />
         </mesh>
       ))}
       {[0.06, 0.52, 0.98].map((shelfY, si) => (
-        <group key={si}>
+        <group key={shelfY}>
           {bookColors.slice(si * 3, si * 3 + 3).map((col, bi) => (
-            <mesh key={bi} position={[-0.25 + bi * 0.22, shelfY + 0.16, 0]} castShadow>
+            <mesh key={col} position={[-0.25 + bi * 0.22, shelfY + 0.16, 0]} castShadow>
               <boxGeometry args={[0.12, 0.28, 0.2]} />
               <meshToonMaterial {...getToonMaterialProps(col)} />
             </mesh>
@@ -511,14 +511,14 @@ export function ConveyorBeltProp({ position, rotation }: PropProps) {
         <boxGeometry args={[2, 0.04, 0.04]} />
         <meshToonMaterial {...frameToon} />
       </mesh>
-      {[-0.85, 0, 0.85].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, 0.07, 0]} castShadow>
+      {[-0.85, 0, 0.85].map((x) => (
+        <mesh key={x} position={[x, 0.07, 0]} castShadow>
           <boxGeometry args={[0.06, 0.14, 0.4]} />
           <meshToonMaterial {...frameToon} />
         </mesh>
       ))}
       {boxColors.map((col, i) => (
-        <mesh key={`x-${i}`} position={[-0.5 + i * 0.5, 0.28, 0]} castShadow>
+        <mesh key={col} position={[-0.5 + i * 0.5, 0.28, 0]} castShadow>
           <boxGeometry args={[0.2, 0.18, 0.18]} />
           <meshToonMaterial {...getToonMaterialProps(col)} />
         </mesh>
@@ -547,7 +547,7 @@ export function ControlPanelProp({ position, rotation }: PropProps) {
         const colIdx = i % 3
         return (
           <mesh
-            key={`col-${i}`}
+            key={col}
             position={[-0.15 + colIdx * 0.15, 0.78 - row * 0.1, 0.12 - row * 0.06]}
             rotation={[-0.4, 0, 0]}
           >
@@ -597,7 +597,7 @@ export function AntennaTowerProp({ position }: PropProps) {
         <meshToonMaterial {...poleToon} />
       </mesh>
       {[0.5, 1, 1.4].map((y, i) => (
-        <mesh key={`y-${i}`} position={[0, y, 0]}>
+        <mesh key={y} position={[0, y, 0]}>
           <torusGeometry args={[0.08 + i * 0.02, 0.01, 6, 12]} />
           <meshToonMaterial {...ringToon} />
         </mesh>
@@ -665,8 +665,8 @@ export function FilingCabinetProp({ position, rotation }: PropProps) {
         <boxGeometry args={[0.45, 1.1, 0.4]} />
         <meshToonMaterial {...bodyToon} />
       </mesh>
-      {[0.18, 0.55, 0.92].map((y, i) => (
-        <group key={`y-${i}`}>
+      {[0.18, 0.55, 0.92].map((y) => (
+        <group key={y}>
           <mesh position={[0, y, 0.201]}>
             <boxGeometry args={[0.38, 0.28, 0.01]} />
             <meshToonMaterial {...drawerToon} />
@@ -752,8 +752,8 @@ export function StatusLightsProp({ position }: PropProps) {
         <boxGeometry args={[0.5, 0.06, 0.06]} />
         <meshToonMaterial {...poleToon} />
       </mesh>
-      {lights.map((l, i) => (
-        <mesh key={`l-${i}`} position={[l.x, 0, 0.04]}>
+      {lights.map((l) => (
+        <mesh key={l.x} position={[l.x, 0, 0.04]}>
           <sphereGeometry args={[0.04, 8, 8]} />
           <meshStandardMaterial color={l.color} emissive={l.color} emissiveIntensity={0.5} />
         </mesh>

@@ -21,8 +21,8 @@ export function Bench({ position = [0, 0, 0], rotation = [0, 0, 0] }: BenchProps
   return (
     <group position={position} rotation={rotation}>
       {/* Metal legs (2 A-frame supports) */}
-      {[-seatWidth / 2 + 0.2, seatWidth / 2 - 0.2].map((x, i) => (
-        <group key={`x-${i}`}>
+      {[-seatWidth / 2 + 0.2, seatWidth / 2 - 0.2].map((x) => (
+        <group key={x}>
           {/* Front leg */}
           <mesh position={[x, seatHeight / 2, seatDepth / 2 - 0.05]} castShadow>
             <boxGeometry args={[legWidth, seatHeight, legWidth]} />
@@ -42,17 +42,17 @@ export function Bench({ position = [0, 0, 0], rotation = [0, 0, 0] }: BenchProps
       ))}
 
       {/* Seat slats (3 wooden planks) */}
-      {[-0.12, 0, 0.12].map((zOff, i) => (
-        <mesh key={`seat-${i}`} position={[0, seatHeight + slatThickness / 2, zOff]} castShadow>
+      {[-0.12, 0, 0.12].map((zOff) => (
+        <mesh key={zOff} position={[0, seatHeight + slatThickness / 2, zOff]} castShadow>
           <boxGeometry args={[seatWidth, slatThickness, 0.1]} />
           <meshToonMaterial {...woodToon} />
         </mesh>
       ))}
 
       {/* Back rest (2 slats) — slightly tilted back */}
-      {[0.15, 0.35].map((yOff, i) => (
+      {[0.15, 0.35].map((yOff) => (
         <mesh
-          key={`back-${i}`}
+          key={yOff}
           position={[0, seatHeight + slatThickness + yOff, -seatDepth / 2 + 0.04]}
           rotation={[0.15, 0, 0]}
           castShadow
@@ -63,9 +63,9 @@ export function Bench({ position = [0, 0, 0], rotation = [0, 0, 0] }: BenchProps
       ))}
 
       {/* Back rest metal supports */}
-      {[-seatWidth / 2 + 0.2, seatWidth / 2 - 0.2].map((x, i) => (
+      {[-seatWidth / 2 + 0.2, seatWidth / 2 - 0.2].map((x) => (
         <mesh
-          key={`backleg-${i}`}
+          key={x}
           position={[x, seatHeight + 0.3, -seatDepth / 2 + 0.04]}
           rotation={[0.15, 0, 0]}
         >

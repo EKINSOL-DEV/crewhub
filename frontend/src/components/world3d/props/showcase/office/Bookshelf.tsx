@@ -25,22 +25,22 @@ export function Bookshelf() {
         <meshStandardMaterial color="#8B6914" flatShading />
       </mesh>
       {/* Shelves */}
-      {[0.45, 0.05, -0.35].map((y, i) => (
-        <mesh key={`y-${i}`} position={[0, y, 0]}>
+      {[0.45, 0.05, -0.35].map((y) => (
+        <mesh key={y} position={[0, y, 0]}>
           <boxGeometry args={[0.95, 0.04, 0.33]} />
           <meshStandardMaterial color="#9B7924" flatShading />
         </mesh>
       ))}
       {/* Books row 1 */}
       {bookColors.slice(0, 4).map((c, i) => (
-        <mesh key={`y-${i}`} position={[-0.3 + i * 0.18, 0.28, 0]}>
+        <mesh key={c} position={[-0.3 + i * 0.18, 0.28, 0]}>
           <boxGeometry args={[0.12, 0.3 + (i % 2) * 0.05, 0.22]} />
           <meshStandardMaterial color={c} flatShading />
         </mesh>
       ))}
       {/* Books row 2 */}
       {bookColors.slice(4).map((c, i) => (
-        <mesh key={`c-${i}`} position={[-0.3 + i * 0.2, -0.12, 0]}>
+        <mesh key={c} position={[-0.3 + i * 0.2, -0.12, 0]}>
           <boxGeometry args={[0.14, 0.28 + (i % 2) * 0.04, 0.22]} />
           <meshStandardMaterial color={c} flatShading />
         </mesh>

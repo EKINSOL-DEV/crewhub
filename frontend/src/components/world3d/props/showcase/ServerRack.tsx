@@ -30,14 +30,14 @@ export function ServerRack() {
       </mesh>
       {/* Server units */}
       {servers.map((y, i) => (
-        <group key={`y-${i}`}>
+        <group key={y}>
           <mesh position={[0, y, 0.05]}>
             <boxGeometry args={[0.8, 0.22, 0.45]} />
             <meshStandardMaterial color={i % 2 === 0 ? '#2a2a3e' : '#252538'} />
           </mesh>
           {/* Ventilation lines */}
-          {[-0.15, 0, 0.15].map((x, j) => (
-            <mesh key={j} position={[x, y, 0.276]}>
+          {[-0.15, 0, 0.15].map((x) => (
+            <mesh key={x} position={[x, y, 0.276]}>
               <boxGeometry args={[0.08, 0.12, 0.001]} />
               <meshStandardMaterial color="#1a1a28" />
             </mesh>
@@ -46,9 +46,9 @@ export function ServerRack() {
       ))}
       {/* LEDs */}
       <group ref={ledsRef}>
-        {servers.flatMap((y, si) =>
+        {servers.flatMap((y) =>
           [0, 1, 2, 3].map((li) => (
-            <mesh key={`${si}-${li}`} position={[0.28 + li * 0.04, y + 0.07, 0.276]}>
+            <mesh key={`${y}-${li}`} position={[0.28 + li * 0.04, y + 0.07, 0.276]}>
               <sphereGeometry args={[0.012, 4, 4]} />
               <meshStandardMaterial
                 color={li < 2 ? '#00ff44' : '#ff8800'}
@@ -65,10 +65,10 @@ export function ServerRack() {
         <meshStandardMaterial color="#333344" />
       </mesh>
       {/* Cables on side */}
-      {[0, 1, 2].map((i) => (
-        <mesh key={`item-${i}`} position={[0.46, 0.2 - i * 0.3, 0.1]}>
+      {[0, 1, 2].map((n) => (
+        <mesh key={n} position={[0.46, 0.2 - n * 0.3, 0.1]}>
           <cylinderGeometry args={[0.015, 0.015, 0.5, 4]} />
-          <meshStandardMaterial color={['#ff4444', '#44ff44', '#4488ff'][i]} />
+          <meshStandardMaterial color={['#ff4444', '#44ff44', '#4488ff'][n]} />
         </mesh>
       ))}
     </group>
