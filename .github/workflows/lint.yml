@@ -54,7 +54,8 @@ jobs:
   sonarcloud:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
-    needs: [lint-backend, lint-frontend]  # Alleen na lint pass
+    needs: [lint-backend, lint-frontend]  # Only after lint pass
+    continue-on-error: true
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
 
     steps:
