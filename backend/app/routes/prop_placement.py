@@ -25,7 +25,6 @@ from pydantic import BaseModel, Field
 from app.auth import APIKeyInfo, require_scope
 from app.db.database import get_db
 from app.routes.sse import broadcast
-from app.utils.sanitize import sanitize_log
 
 SQL_GET_PLACED_PROP = "SELECT * FROM placed_props WHERE id = ?"
 

@@ -172,6 +172,37 @@ async def _fetch_project_context(db, project_id: str, session_key: str) -> tuple
 # ── Routes ──────────────────────────────────────────────────────
 
 
+async def _fetch_room_context(db, room_id: str) -> Optional[RoomContext]:
+    """Fetch room context by id."""
+    async with db.execute("SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)) as cursor:
+        room_row = await cursor.fetchone()
+    if not room_row:
+        return None
+    return RoomContext(
+        id=room_row["id"],
+        name=room_row["name"],
+        is_hq=bool(room_row["is_hq"]),
+        project_id=room_row.get("project_id"),
+    )
+
+
+async def _build_session_context(db, session_key: str) -> SessionContextResponse:
+    """Build full session context response from DB."""
+    room_id = await _resolve_session_room_id(db, session_key)
+    if not room_id:
+        return SessionContextResponse()
+
+    room = await _fetch_room_context(db, room_id)
+    if not room:
+        return SessionContextResponse()
+
+    if not room.project_id:
+        return SessionContextResponse(room=room)
+
+    project, tasks, recent_history = await _fetch_project_context(db, room.project_id, session_key)
+    return SessionContextResponse(room=room, project=project, tasks=tasks, recent_history=recent_history)
+
+
 @router.get(
     "/{session_key}/context",
     response_model=SessionContextResponse,
@@ -195,28 +226,7 @@ async def get_session_context(session_key: str):
     """
     try:
         async with get_db() as db:
-            room_id = await _resolve_session_room_id(db, session_key)
-            if not room_id:
-                return SessionContextResponse()
-
-            async with db.execute("SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)) as cursor:
-                room_row = await cursor.fetchone()
-
-            if not room_row:
-                return SessionContextResponse()
-
-            room = RoomContext(
-                id=room_row["id"],
-                name=room_row["name"],
-                is_hq=bool(room_row["is_hq"]),
-                project_id=room_row.get("project_id"),
-            )
-
-            project, tasks, recent_history = None, None, []
-            if room_row.get("project_id"):
-                project, tasks, recent_history = await _fetch_project_context(db, room_row["project_id"], session_key)
-
-            return SessionContextResponse(room=room, project=project, tasks=tasks, recent_history=recent_history)
+            return await _build_session_context(db, session_key)
     except Exception as e:
         logger.error(f"Failed to get session context for {session_key}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))

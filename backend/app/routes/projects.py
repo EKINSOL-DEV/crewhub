@@ -177,6 +177,20 @@ async def create_project(project: ProjectCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _project_value_error_to_http(err: ValueError) -> HTTPException:
+    """Convert project-service ValueErrors to API HTTP errors."""
+    err_msg = str(err)
+    if not err_msg.startswith("cannot_archive_with_rooms:"):
+        return HTTPException(status_code=400, detail=err_msg)
+
+    room_names = err_msg.split(":", 1)[1]
+    count = len(room_names.split(", "))
+    return HTTPException(
+        status_code=400,
+        detail=f"Cannot archive: project is assigned to {count} room(s): {room_names}",
+    )
+
+
 @router.put(
     "/{project_id}",
     response_model=ProjectResponse,
@@ -197,18 +211,20 @@ async def update_project(project_id: str, project: ProjectUpdate):
     except HTTPException:
         raise
     except ValueError as e:
-        err = str(e)
-        if err.startswith("cannot_archive_with_rooms:"):
-            room_names = err.split(":", 1)[1]
-            count = len(room_names.split(", "))
-            raise HTTPException(
-                status_code=400,
-                detail=f"Cannot archive: project is assigned to {count} room(s): {room_names}",
-            )
-        raise HTTPException(status_code=400, detail=err)
+        raise _project_value_error_to_http(e) from e
     except Exception as e:
         logger.error(f"Failed to update project {project_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _delete_project_value_error_to_http(err: ValueError) -> HTTPException:
+    """Convert delete-project ValueErrors to API HTTP errors."""
+    if str(err) == "not_archived":
+        return HTTPException(
+            status_code=400,
+            detail="Only archived projects can be deleted. Archive the project first.",
+        )
+    return HTTPException(status_code=400, detail=str(err))
 
 
 @router.delete(
@@ -230,12 +246,7 @@ async def delete_project(project_id: str):
     except HTTPException:
         raise
     except ValueError as e:
-        if str(e) == "not_archived":
-            raise HTTPException(
-                status_code=400,
-                detail="Only archived projects can be deleted. Archive the project first.",
-            )
-        raise HTTPException(status_code=400, detail=str(e))
+        raise _delete_project_value_error_to_http(e) from e
     except Exception as e:
         logger.error(f"Failed to delete project {project_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
