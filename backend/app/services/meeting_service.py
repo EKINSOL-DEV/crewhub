@@ -194,7 +194,9 @@ async def db_get_started_at(meeting_id: str) -> int:
             return row["started_at"] if row and row["started_at"] else _now_ms()
 
 
-async def db_save_action_items(meeting_id: str, output_md: str) -> None:  # NOSONAR: complexity from markdown parsing state machine (section detection, list parsing), safe to keep
+async def db_save_action_items(
+    meeting_id: str, output_md: str
+) -> None:  # NOSONAR: complexity from markdown parsing state machine (section detection, list parsing), safe to keep
     """Parse action items from synthesis markdown and persist to DB."""
     lines = output_md.split("\n")
     in_section = False

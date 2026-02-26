@@ -141,25 +141,29 @@ def _scan_project_dir(dir_path: Path, base: Path, current_depth: int, max_depth:
         rel = entry.relative_to(base)
         if entry.is_dir():
             children = _scan_project_dir(entry, base, current_depth + 1, max_depth) if current_depth < max_depth else []
-            items.append({
-                "name": entry.name,
-                "path": str(rel),
-                "type": "directory",
-                "children": children,
-                "child_count": len(children),
-            })
+            items.append(
+                {
+                    "name": entry.name,
+                    "path": str(rel),
+                    "type": "directory",
+                    "children": children,
+                    "child_count": len(children),
+                }
+            )
         elif entry.suffix.lower() in ALLOWED_EXTENSIONS:
             try:
                 size = entry.stat().st_size
             except OSError:
                 size = 0
-            items.append({
-                "name": entry.name,
-                "path": str(rel),
-                "type": _get_file_type(entry),
-                "extension": entry.suffix.lower(),
-                "size": size,
-            })
+            items.append(
+                {
+                    "name": entry.name,
+                    "path": str(rel),
+                    "type": _get_file_type(entry),
+                    "extension": entry.suffix.lower(),
+                    "size": size,
+                }
+            )
     return items
 
 
@@ -175,7 +179,14 @@ async def _get_project_folder(project_id: str) -> str:
             return row["folder_path"]
 
 
-@router.get("/{project_id}/files", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}})
+@router.get(
+    "/{project_id}/files",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+    },
+)
 async def list_project_files(
     project_id: str,
     path: Annotated[str, Query("", description="Relative path within project folder")],
@@ -204,7 +215,15 @@ async def list_project_files(
     }
 
 
-@router.get("/{project_id}/files/content", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}, 413: {"description": "Request entity too large"}})
+@router.get(
+    "/{project_id}/files/content",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+        413: {"description": "Request entity too large"},
+    },
+)
 async def read_project_file(
     project_id: str,
     path: Annotated[str, Query(..., description="Relative path to file within project folder")],
@@ -255,7 +274,14 @@ async def read_project_file(
     }
 
 
-@router.get("/{project_id}/files/image", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}})
+@router.get(
+    "/{project_id}/files/image",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+    },
+)
 async def get_project_image(
     project_id: str,
     path: Annotated[str, Query(..., description="Relative path to image within project folder")],
@@ -341,12 +367,14 @@ async def discover_project_folders():
         for entry in sorted(resolved_base.iterdir()):
             if entry.is_dir() and not entry.name.startswith("."):
                 info = _analyze_project_folder(entry)
-                folders.append({
-                    "name": entry.name,
-                    "path": f"{base_path_str}/{entry.name}",
-                    "resolved_path": str(entry),
-                    **info,
-                })
+                folders.append(
+                    {
+                        "name": entry.name,
+                        "path": f"{base_path_str}/{entry.name}",
+                        "resolved_path": str(entry),
+                        **info,
+                    }
+                )
     except PermissionError:
         pass
 

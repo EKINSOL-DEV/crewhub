@@ -29,9 +29,7 @@ def _fix_toon_materials(code: str, result: PostProcessResult) -> str:
     if toon_count == 0:
         return code
 
-    code = re.sub(
-        r"import\s*\{[^}]*useToonMaterialProps[^}]*\}\s*from\s*['\"][^'\"]*toonMaterials['\"].*?\n", "", code
-    )
+    code = re.sub(r"import\s*\{[^}]*useToonMaterialProps[^}]*\}\s*from\s*['\"][^'\"]*toonMaterials['\"].*?\n", "", code)
     result.corrections.append("Removed toonMaterials import")
 
     color_map: dict[str, str] = {}
@@ -51,6 +49,7 @@ def _fix_toon_materials(code: str, result: PostProcessResult) -> str:
 
 def _add_flat_shading_to_standard(code: str, result: PostProcessResult) -> str:
     """Add flatShading to meshStandardMaterial tags that are missing it."""
+
     def _add_flat(match: re.Match) -> str:
         tag = match.group(0)
         if (

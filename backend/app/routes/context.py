@@ -73,9 +73,7 @@ async def _resolve_session_room_id(db, session_key: str) -> Optional[str]:
         if row:
             return row["room_id"]
 
-    async with db.execute(
-        "SELECT default_room_id FROM agents WHERE agent_session_key = ?", (session_key,)
-    ) as cursor:
+    async with db.execute("SELECT default_room_id FROM agents WHERE agent_session_key = ?", (session_key,)) as cursor:
         row = await cursor.fetchone()
         if row and row.get("default_room_id"):
             return row["default_room_id"]
@@ -201,9 +199,7 @@ async def get_session_context(session_key: str):
             if not room_id:
                 return SessionContextResponse()
 
-            async with db.execute(
-                "SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)
-            ) as cursor:
+            async with db.execute("SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)) as cursor:
                 room_row = await cursor.fetchone()
 
             if not room_row:
@@ -218,9 +214,7 @@ async def get_session_context(session_key: str):
 
             project, tasks, recent_history = None, None, []
             if room_row.get("project_id"):
-                project, tasks, recent_history = await _fetch_project_context(
-                    db, room_row["project_id"], session_key
-                )
+                project, tasks, recent_history = await _fetch_project_context(db, room_row["project_id"], session_key)
 
             return SessionContextResponse(room=room, project=project, tasks=tasks, recent_history=recent_history)
     except Exception as e:

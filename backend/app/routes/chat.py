@@ -370,7 +370,10 @@ async def _prepend_context_if_available(session_key: str, agent_id: str, body: "
     return message
 
 
-@router.post("/api/chat/{session_key}/stream", responses={400: {"description": "Bad request"}, 503: {"description": "Service unavailable"}})
+@router.post(
+    "/api/chat/{session_key}/stream",
+    responses={400: {"description": "Bad request"}, 503: {"description": "Service unavailable"}},
+)
 async def stream_chat_message(session_key: str, body: SendMessageBody):
     """Send a message to an agent and stream back the response via SSE."""
     import json

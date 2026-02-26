@@ -249,7 +249,9 @@ async def update_thread(thread_id: str, body: ThreadUpdate):
 # ── Participants ────────────────────────────────────────────────
 
 
-@router.post("/{thread_id}/participants", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
+@router.post(
+    "/{thread_id}/participants", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}}
+)
 async def add_participants(thread_id: str, body: ThreadParticipantAdd):
     """Add agents to a thread."""
     now = _now_ms()
@@ -482,7 +484,9 @@ async def _route_to_agent(conn, thread_id: str, agent_id: str, participants: lis
         return None
 
 
-@router.post("/{thread_id}/messages", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
+@router.post(
+    "/{thread_id}/messages", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}}
+)
 async def send_message(thread_id: str, body: ThreadMessageSend):
     """Send a message to a thread, routing to agents."""
     content = body.content.strip()

@@ -84,7 +84,14 @@ async def get_docs_tree():
     return _build_tree(DOCS_ROOT)
 
 
-@router.get("/content", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.get(
+    "/content",
+    responses={
+        400: {"description": "Bad request"},
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def get_doc_content(path: Annotated[str, Query(..., description="Relative path to doc file")]):
     """Get the content of a specific documentation file."""
     file_path = _safe_path(path)
@@ -138,12 +145,14 @@ async def search_docs(q: Annotated[str, Query(..., min_length=2, description="Se
             continue
 
         if name_match or content_match:
-            results.append({
-                "path": rel_path,
-                "name": md_file.name,
-                "nameMatch": name_match,
-                "snippet": _extract_doc_snippet(content, query) if content_match else "",
-            })
+            results.append(
+                {
+                    "path": rel_path,
+                    "name": md_file.name,
+                    "nameMatch": name_match,
+                    "snippet": _extract_doc_snippet(content, query) if content_match else "",
+                }
+            )
 
         if len(results) >= 30:
             break
