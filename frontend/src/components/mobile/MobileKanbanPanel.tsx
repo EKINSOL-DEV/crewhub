@@ -152,7 +152,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
           gap: 16,
           overflowY: 'auto',
         }}
-        onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
 
         aria-modal="true"
@@ -308,7 +308,7 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
           padding: '20px',
           overflowY: 'auto',
         }}
-        onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
 
         aria-modal="true"

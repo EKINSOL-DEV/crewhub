@@ -348,7 +348,7 @@ export function RoomRoutingRulesPanel({
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
       >
         <div
-          onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           role="presentation"
           className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
@@ -486,7 +486,7 @@ export function RoomRoutingRulesPanel({
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
       >
         <div
-          onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           role="presentation"
           className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
@@ -541,7 +541,7 @@ export function RoomRoutingRulesPanel({
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
       >
         <div
-          onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           role="presentation"
           className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"

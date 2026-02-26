@@ -93,7 +93,7 @@ function DocTreeNode({ // NOSONAR
   return (
     <div>
       <div
-        onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> {
+        onClick={() => {
           if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
         }}

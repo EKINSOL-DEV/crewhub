@@ -260,7 +260,7 @@ function CompactTaskCard({
 
   return (
     <div
-      onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> onClick?.(task)}
+      onClick={() => onClick?.(task)}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onClick?.(task) } }}
       className={cn(
         'group px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded border-l-2 cursor-pointer',

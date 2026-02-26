@@ -158,7 +158,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
       style={{ zIndex: 100 }}
     >
       <div
-        onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation() } }}
         className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
       >

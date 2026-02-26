@@ -508,7 +508,7 @@ export function ProjectManagerModal({
                   border: BORDER_1PX_SOLID_VAR_ZEN_BORDER_3B426,
                   transition: 'background 0.1s',
                 }}
-                onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> openDetails(project)}
+                onClick={() => openDetails(project)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') openDetails(project)
                 }}
@@ -719,7 +719,7 @@ export function ProjectManagerModal({
   return (
     <div
       style={overlayStyle}
-      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> {
+      onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
       onKeyDown={(e) => {
@@ -729,7 +729,7 @@ export function ProjectManagerModal({
     >
       <div
         style={modalStyle}
-        onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="presentation"
       >
