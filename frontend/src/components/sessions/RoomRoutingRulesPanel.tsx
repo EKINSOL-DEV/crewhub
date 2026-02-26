@@ -341,7 +341,7 @@ export function RoomRoutingRulesPanel({
       </Sheet>
 
       {/* Create Rule Dialog */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={createDialogRef}
         onClose={() => setShowCreateDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowCreateDialog(false)}
@@ -479,7 +479,7 @@ export function RoomRoutingRulesPanel({
       </dialog>
 
       {/* Preview Dialog */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={previewDialogRef}
         onClose={() => setShowPreviewDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowPreviewDialog(false)}
@@ -534,7 +534,7 @@ export function RoomRoutingRulesPanel({
       </dialog>
 
       {/* Delete Confirmation Dialog */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={deleteDialogRef}
         onClose={() => setDeleteConfirm(null)}
         onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}

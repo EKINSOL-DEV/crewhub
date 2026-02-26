@@ -90,7 +90,7 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
   )
 
   return (
-    <div
+    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
       ref={containerRef}
       className="zen-theme-picker-backdrop"
       onClick={handleBackdropClick}

@@ -214,7 +214,7 @@ function ProjectDetailModal({
       role="button"
       tabIndex={0}
     >
-      <div
+      <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
           width: '100%',
           maxHeight: '85vh',

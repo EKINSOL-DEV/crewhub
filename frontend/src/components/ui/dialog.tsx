@@ -266,7 +266,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
     }, [open, onEscapeKeyDown])
 
     return (
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={dialogRef}
         onClose={handleDialogClose}
         onClick={handleBackdropClick}
@@ -282,7 +282,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           open:flex open:items-center open:justify-center
         "
       >
-        <div
+        <div // NOSONAR: onClick only prevents event bubble, not interactive
           ref={setContentRef}
           id={contentId}
           role="dialog"

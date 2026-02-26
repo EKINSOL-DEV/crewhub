@@ -391,7 +391,7 @@ function BackupSection() {
       </CollapsibleSection>
 
       {/* Import confirmation dialog */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={importDialogRef}
         onClose={() => setShowImportConfirm(false)}
         onClick={(e) => e.target === e.currentTarget && setShowImportConfirm(false)}

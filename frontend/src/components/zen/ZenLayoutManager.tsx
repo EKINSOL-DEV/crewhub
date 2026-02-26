@@ -202,7 +202,7 @@ export function ZenSaveLayoutModal({
   )
 
   return (
-    <div
+    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
       className="zen-save-layout-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
@@ -393,7 +393,7 @@ export function ZenLayoutPicker({
   )
 
   return (
-    <div
+    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
       className="zen-layout-picker-backdrop"
       onClick={handleBackdropClick}
       role="dialog"

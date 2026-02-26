@@ -301,7 +301,7 @@ export function TaskBoardOverlay({
   const activeTasks = taskCounts.todo + taskCounts.in_progress + taskCounts.review
 
   return (
-    <dialog
+    <dialog // NOSONAR: <dialog> is a native interactive HTML element
       ref={dialogRef}
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
@@ -323,7 +323,7 @@ export function TaskBoardOverlay({
       "
     >
       {/* Dialog content panel */}
-      <div
+      <div // NOSONAR: onClick only prevents event bubble, not interactive
         className="w-[calc(100vw-3rem)] max-w-[1600px] h-[calc(100vh-3rem)] max-h-[900px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
@@ -512,7 +512,7 @@ export function TaskBoardOverlay({
             role="button"
             tabIndex={0}
           >
-            <div
+            <div // NOSONAR: onClick only prevents event bubble, not interactive
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
@@ -544,7 +544,7 @@ export function TaskBoardOverlay({
             role="button"
             tabIndex={0}
           >
-            <div
+            <div // NOSONAR: onClick only prevents event bubble, not interactive
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}

@@ -359,7 +359,7 @@ export function TaskBoard({
           role="button"
           tabIndex={0}
         >
-          <div
+          <div // NOSONAR: onClick only prevents event bubble, not interactive
             style={{
               background: '#fff',
               borderRadius: 12,
@@ -410,7 +410,7 @@ export function TaskBoard({
           role="button"
           tabIndex={0}
         >
-          <div
+          <div // NOSONAR: onClick only prevents event bubble, not interactive
             style={{
               background: '#fff',
               borderRadius: 12,
