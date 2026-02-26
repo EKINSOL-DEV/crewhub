@@ -34,6 +34,7 @@ mkdir -p "$LOG_DIR"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [frontend-watchdog] $*" | tee -a "$FRONTEND_LOG"
+    return 0
 }
 
 log_crash() {
@@ -56,6 +57,7 @@ log_crash() {
         echo "========================================="
         echo ""
     } >> "$CRASH_LOG"
+    return 0
 }
 
 start_frontend() {
@@ -66,6 +68,7 @@ start_frontend() {
     echo "$pid" > "$FRONTEND_PID_FILE"
     log "Frontend started with PID $pid"
     echo "$pid"
+    return 0
 }
 
 check_health() {
@@ -74,7 +77,7 @@ check_health() {
 }
 
 stop_frontend() {
-    if [ -f "$FRONTEND_PID_FILE" ]; then
+    if [[ -f "$FRONTEND_PID_FILE" ]]; then
         local pid
         pid=$(cat "$FRONTEND_PID_FILE")
         if kill -0 "$pid" 2>/dev/null; then
@@ -91,10 +94,11 @@ stop_frontend() {
     fi
     # Kill any orphaned processes on our port
     lsof -ti:"$PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
+    return 0
 }
 
 do_stop() {
-    if [ -f "$PID_FILE" ]; then
+    if [[ -f "$PID_FILE" ]]; then
         local wpid
         wpid=$(cat "$PID_FILE")
         if kill -0 "$wpid" 2>/dev/null; then
@@ -105,10 +109,11 @@ do_stop() {
     fi
     stop_frontend
     log "Stopped."
+    return 0
 }
 
 do_status() {
-    if [ -f "$PID_FILE" ]; then
+    if [[ -f "$PID_FILE" ]]; then
         local wpid
         wpid=$(cat "$PID_FILE")
         if kill -0 "$wpid" 2>/dev/null; then
@@ -120,7 +125,7 @@ do_status() {
         echo "Watchdog: not running"
     fi
 
-    if [ -f "$FRONTEND_PID_FILE" ]; then
+    if [[ -f "$FRONTEND_PID_FILE" ]]; then
         local fpid
         fpid=$(cat "$FRONTEND_PID_FILE")
         if kill -0 "$fpid" 2>/dev/null; then
@@ -137,16 +142,17 @@ do_status() {
         echo "Frontend: not running"
     fi
 
-    if [ -f "$CRASH_LOG" ]; then
+    if [[ -f "$CRASH_LOG" ]]; then
         local count
         count=$(grep -c "FRONTEND CRASH:" "$CRASH_LOG" 2>/dev/null || echo 0)
         echo "Total crashes logged: $count"
     fi
+    return 0
 }
 
 do_start() {
     # Check if already running
-    if [ -f "$PID_FILE" ]; then
+    if [[ -f "$PID_FILE" ]]; then
         local wpid
         wpid=$(cat "$PID_FILE")
         if kill -0 "$wpid" 2>/dev/null; then

@@ -15,6 +15,7 @@ mkdir -p "$LOG_DIR"
 
 log() {
   echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*" | tee -a "$LOG_FILE"
+  return 0
 }
 
 log "Watchdog started (PID $$)"

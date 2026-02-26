@@ -18,11 +18,12 @@ echo "Press Ctrl+C to stop"
 echo ""
 
 # Track PIDs
-get_vite_pid() { pgrep -f "vite.*5180" 2>/dev/null | head -1; }
-get_uvicorn_pid() { pgrep -f "uvicorn.*8091" 2>/dev/null | head -1; }
+get_vite_pid() { pgrep -f "vite.*5180" 2>/dev/null | head -1; return 0; }
+get_uvicorn_pid() { pgrep -f "uvicorn.*8091" 2>/dev/null | head -1; return 0; }
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"
+    return 0
 }
 
 snapshot() {
@@ -72,6 +73,7 @@ snapshot() {
     if [[ -z "$uvicorn_pid" ]]; then
         log "💀 uvicorn NOT RUNNING!"
     fi
+return 0
 }
 
 # Initial state

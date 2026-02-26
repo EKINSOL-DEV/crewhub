@@ -28,6 +28,7 @@ mkdir -p "$LOG_DIR"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$BACKEND_LOG"
+    return 0
 }
 
 log_crash() {
@@ -50,6 +51,7 @@ log_crash() {
         echo "========================================="
         echo ""
     } >> "$CRASH_LOG"
+    return 0
 }
 
 start_backend() {
@@ -60,6 +62,7 @@ start_backend() {
     echo "$pid" > "$BACKEND_PID_FILE"
     log "Backend started with PID $pid"
     echo "$pid"
+    return 0
 }
 
 check_health() {
@@ -70,7 +73,7 @@ check_health() {
 }
 
 stop_backend() {
-    if [ -f "$BACKEND_PID_FILE" ]; then
+    if [[ -f "$BACKEND_PID_FILE" ]]; then
         local pid
         pid=$(cat "$BACKEND_PID_FILE")
         if kill -0 "$pid" 2>/dev/null; then
@@ -83,10 +86,11 @@ stop_backend() {
     fi
     # Also kill any orphaned uvicorn on our port
     lsof -ti:"$PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
+    return 0
 }
 
 do_stop() {
-    if [ -f "$PID_FILE" ]; then
+    if [[ -f "$PID_FILE" ]]; then
         local wpid
         wpid=$(cat "$PID_FILE")
         if kill -0 "$wpid" 2>/dev/null; then
@@ -97,11 +101,12 @@ do_stop() {
     fi
     stop_backend
     log "Stopped."
+    return 0
 }
 
 do_status() {
     local running=false
-    if [ -f "$PID_FILE" ]; then
+    if [[ -f "$PID_FILE" ]]; then
         local wpid
         wpid=$(cat "$PID_FILE")
         if kill -0 "$wpid" 2>/dev/null; then
@@ -114,7 +119,7 @@ do_status() {
         echo "Watchdog: not running"
     fi
 
-    if [ -f "$BACKEND_PID_FILE" ]; then
+    if [[ -f "$BACKEND_PID_FILE" ]]; then
         local bpid
         bpid=$(cat "$BACKEND_PID_FILE")
         if kill -0 "$bpid" 2>/dev/null; then
@@ -130,11 +135,12 @@ do_status() {
     else
         echo "Backend: not running"
     fi
+    return 0
 }
 
 do_start() {
     # Check if already running
-    if [ -f "$PID_FILE" ]; then
+    if [[ -f "$PID_FILE" ]]; then
         local wpid
         wpid=$(cat "$PID_FILE")
         if kill -0 "$wpid" 2>/dev/null; then
