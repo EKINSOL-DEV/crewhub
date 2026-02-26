@@ -75,6 +75,7 @@ export function saveRoomsConfig(config: RoomsConfig): { success: boolean; error?
     window.dispatchEvent(new CustomEvent('roomsConfigUpdated'))
     return { success: true }
   } catch (error) {
+    console.warn('Failed to save rooms config:', error)
     return { success: false, error: 'Failed to save settings' }
   }
 }

@@ -476,9 +476,9 @@ export function ZenChatPanel({
             agentName={agentName}
             status={avatarStatus}
             stats={{
-              tokens: undefined, // TODO: get from session
-              uptime: undefined, // TODO: calculate from session start
-              model: undefined, // TODO: get from session
+              tokens: undefined, // FUTURE: get from session
+              uptime: undefined, // FUTURE: calculate from session start
+              model: undefined, // FUTURE: get from session
             }}
           />
           <AgentDropdown

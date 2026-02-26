@@ -101,6 +101,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
       }) as MinionMessage[]
       setMessages(transformedMessages)
     } catch (err) {
+      console.warn('Failed to load session history:', err)
       if (!silent) setError('Failed to load session history')
     } finally {
       setLoading(false)

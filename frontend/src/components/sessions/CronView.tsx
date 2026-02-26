@@ -178,7 +178,8 @@ export function CronView() {
         setJobs([])
         setError(null)
       }
-    } catch (_err) {
+    } catch (err) {
+      console.warn('Cron jobs API not available:', err)
       setJobs([])
       setError(null)
     } finally {
