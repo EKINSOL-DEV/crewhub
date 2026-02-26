@@ -18,8 +18,7 @@ const THOUGHTFUL = 'thoughtful'
 interface AgentTopBarProps {
   readonly sessions: CrewSession[]
   readonly getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
-  readonly getRoomForSession: (
-    sessionKey: string,
+  readonly getRoomForSession: ( sessionKey: string,
     sessionData?: { label?: string; model?: string; channel?: string }
   ) => string | undefined
   readonly defaultRoomId?: string
@@ -335,7 +334,7 @@ function AgentPortraitButton({
 
 // ─── Agent Picker Button ───────────────────────────────────────
 
-function AgentPickerToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () => void }) {
+function AgentPickerToggle({ isOpen, onClick }: Readonly<{ isOpen: boolean; onClick: () => void }>) {
   const [hovered, setHovered] = useState(false)
 
   return (
@@ -414,10 +413,7 @@ interface AgentPickerDropdownProps {
   readonly fixedAgents: DropdownEntry[]
   readonly recentSubagents: DropdownEntry[]
   readonly pinnedKey: string | null
-  readonly onSelect: (
-    session: CrewSession,
-    roomId: string,
-    name: string,
+  readonly onSelect: ( session: CrewSession, roomId: string, name: string,
     config: BotVariantConfig
   ) => void
   readonly onPin: (sessionKey: string) => void
