@@ -61,10 +61,10 @@ const DEFAULT_CONFIG: VisionConfig = {
  *   const visible = vision.getVisibleCells(botPos, botFacingAngle)
  */
 export class VisionSystem {
-  private grid: GridCell[][]
-  private config: VisionConfig
-  private width: number
-  private depth: number
+  private readonly grid: GridCell[][]
+  private readonly config: VisionConfig
+  private readonly width: number
+  private readonly depth: number
 
   constructor(grid: GridCell[][], config?: Partial<VisionConfig>) {
     this.grid = grid

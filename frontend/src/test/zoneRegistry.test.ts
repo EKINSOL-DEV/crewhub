@@ -3,7 +3,7 @@ import type { Zone } from '../lib/zones/types'
 
 // We test the class directly (not the singleton) to avoid cross-test pollution
 class ZoneRegistry {
-  private zones = new Map<string, Zone>()
+  private readonly zones = new Map<string, Zone>()
   register(zone: Zone): void {
     this.zones.set(zone.id, zone)
   }

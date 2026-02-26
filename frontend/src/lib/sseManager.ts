@@ -20,15 +20,15 @@ const MAX_BACKOFF_MS = 30_000
 
 class SSEManager {
   private eventSource: EventSource | null = null
-  private subscriptions: Map<string, Set<EventHandler>> = new Map()
+  private readonly subscriptions: Map<string, Set<EventHandler>> = new Map()
   private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null
   private reconnectAttempts = 0
   private isConnecting = false
   private connectionState: 'disconnected' | 'connecting' | 'connected' = 'disconnected'
-  private stateListeners: Set<(state: typeof this.connectionState) => void> = new Set()
+  private readonly stateListeners: Set<(state: typeof this.connectionState) => void> = new Set()
 
   // Track which event types have dispatchers registered
-  private registeredDispatchers: Set<string> = new Set()
+  private readonly registeredDispatchers: Set<string> = new Set()
 
   /**
    * Subscribe to a specific SSE event type.

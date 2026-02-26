@@ -2,7 +2,7 @@ import type { Zone } from './types'
 import { BUILTIN_ZONES } from './builtinZones'
 
 class ZoneRegistry {
-  private zones = new Map<string, Zone>()
+  private readonly zones = new Map<string, Zone>()
 
   register(zone: Zone): void {
     this.zones.set(zone.id, zone)

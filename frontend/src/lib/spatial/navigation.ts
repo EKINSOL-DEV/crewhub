@@ -133,11 +133,11 @@ const DEFAULT_NAV_CONFIG: NavigationConfig = {
  *   - Prop-target resolution ("navigate to coffee-machine")
  */
 export class SpatialNavigator {
-  private grid: GridCell[][]
-  private walkableMask: boolean[][]
-  private width: number
-  private depth: number
-  private config: NavigationConfig
+  private readonly grid: GridCell[][]
+  private readonly walkableMask: boolean[][]
+  private readonly width: number
+  private readonly depth: number
+  private readonly config: NavigationConfig
 
   constructor(grid: GridCell[][], config?: Partial<NavigationConfig>) {
     this.grid = grid

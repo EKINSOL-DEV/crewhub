@@ -29,12 +29,12 @@ export interface RegistryEntry<T> {
 }
 
 export class Registry<T> {
-  private entries = new Map<string, RegistryEntry<T>>()
-  private listeners = new Set<() => void>()
+  private readonly entries = new Map<string, RegistryEntry<T>>()
+  private readonly listeners = new Set<() => void>()
   private snapshot: readonly RegistryEntry<T>[] = []
   private snapshotDirty = true
   /** Shorthand aliases (plain id → namespaced id) for builtin entries. */
-  private aliases = new Map<string, string>()
+  private readonly aliases = new Map<string, string>()
 
   /**
    * Register a new entry. ID must be in namespace:id format.

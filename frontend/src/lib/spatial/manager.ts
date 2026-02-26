@@ -66,11 +66,11 @@ export interface SpatialState {
  *   const path = manager.navigateTo('session-key', 'coffee-machine')
  */
 export class SpatialManager {
-  private vision: VisionSystem
-  private proximity: ProximityGrid
-  private navigator: SpatialNavigator
-  private bots: Map<string, BotSpatialInfo> = new Map()
-  private blueprint: RoomBlueprint
+  private readonly vision: VisionSystem
+  private readonly proximity: ProximityGrid
+  private readonly navigator: SpatialNavigator
+  private readonly bots: Map<string, BotSpatialInfo> = new Map()
+  private readonly blueprint: RoomBlueprint
 
   readonly roomId: string
   readonly roomName: string

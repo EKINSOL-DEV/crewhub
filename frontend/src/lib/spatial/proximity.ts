@@ -60,11 +60,11 @@ interface QueryResult extends ProximityEntity {
  *   const nearby = grid.queryRadius({ x: 5, z: 5, radius: 3 })
  */
 export class ProximityGrid {
-  private cells: Map<string, ProximityEntity[]> = new Map()
-  private entities: Map<string, ProximityEntity> = new Map()
-  private cellSize: number
-  private gridWidth: number
-  private gridDepth: number
+  private readonly cells: Map<string, ProximityEntity[]> = new Map()
+  private readonly entities: Map<string, ProximityEntity> = new Map()
+  private readonly cellSize: number
+  private readonly gridWidth: number
+  private readonly gridDepth: number
 
   /**
    * @param gridWidth - Grid width in cells
