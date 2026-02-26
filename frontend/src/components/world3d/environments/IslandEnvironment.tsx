@@ -68,7 +68,7 @@ function IslandGrassTufts({ radius }: { radius: number }) {
       {tufts.map((t, i) => (
         <group key={`t-${i}`} position={t.pos} rotation={[0, t.rot, 0]}>
           {[-0.06, 0, 0.06].map((offset, j) => (
-            <mesh key={j} position={[offset, 0.12, 0]} rotation={[0, 0, (j - 1) * 0.25]}>
+            <mesh key={offset} position={[offset, 0.12, 0]} rotation={[0, 0, (j - 1) * 0.25]}>
               <boxGeometry args={[0.05, 0.24, 0.03]} />
               <meshToonMaterial {...toonProps} />
             </mesh>

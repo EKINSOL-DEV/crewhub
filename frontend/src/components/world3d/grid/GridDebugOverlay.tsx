@@ -180,9 +180,9 @@ function CoordinateLabels({
 
   return (
     <>
-      {labels.map((lbl, i) => (
+      {labels.map((lbl, _i) => (
         <Html
-          key={`lbl-${i}`}
+          key={lbl.text}
           position={lbl.pos as [number, number, number]}
           center
           zIndexRange={[0, 1]}

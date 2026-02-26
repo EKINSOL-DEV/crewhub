@@ -39,7 +39,7 @@ export function TheHelix() {
       </mesh>
       {/* Core accent rings */}
       {[0, 2.5, 5, 7.5, 10].map((h, i) => (
-        <mesh key={`h-${i}`} position={[0, h, 0]}>
+        <mesh key={h} position={[0, h, 0]}>
           <torusGeometry args={[innerR - 0.2, 0.06, 8, 24]} />
           <meshStandardMaterial color="#4fc3f7" emissive="#4fc3f7" emissiveIntensity={0.5} metalness={0.8} />
         </mesh>

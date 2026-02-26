@@ -74,7 +74,7 @@ export function Chair({ position = [0, 0, 0] as [number, number, number], rotati
       </mesh>
       {/* Star base */}
       {[0, 1.256, 2.513, 3.77, 5.027].map((a, i) => (
-        <mesh key={`a-${i}`} position={[Math.cos(a) * 0.15, 0.06, Math.sin(a) * 0.15]} rotation={[0, a, Math.PI / 2]}>
+        <mesh key={a} position={[Math.cos(a) * 0.15, 0.06, Math.sin(a) * 0.15]} rotation={[0, a, Math.PI / 2]}>
           <cylinderGeometry args={[0.015, 0.015, 0.3, 4]} />
           <meshStandardMaterial color="#555" metalness={0.8} />
         </mesh>
@@ -155,7 +155,7 @@ export function ServerRack({ position = [0, 0, 0] as [number, number, number], r
       </mesh>
       {/* Rack units */}
       {[0.2, 0.5, 0.8, 1.1, 1.4, 1.7].map((y, i) => (
-        <group key={`y-${i}`}>
+        <group key={y}>
           <mesh position={[0, y, 0.26]}>
             <boxGeometry args={[0.52, 0.18, 0.01]} />
             <meshStandardMaterial color="#222" metalness={0.8} />

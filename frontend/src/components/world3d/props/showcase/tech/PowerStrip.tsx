@@ -15,8 +15,8 @@ export function PowerStrip() {
         <meshStandardMaterial color="#eeeeee" flatShading />
       </mesh>
       {/* Outlets */}
-      {[-0.35, -0.15, 0.05, 0.25].map((x, i) => (
-        <group key={`x-${i}`}>
+      {[-0.35, -0.15, 0.05, 0.25].map((x) => (
+        <group key={x}>
           <mesh position={[x, -0.35, 0.09]}>
             <boxGeometry args={[0.12, 0.04, 0.01]} />
             <meshStandardMaterial color="#dddddd" />

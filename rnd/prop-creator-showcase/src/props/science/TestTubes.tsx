@@ -24,14 +24,14 @@ export function TestTubes() {
       </mesh>
       {/* Rack uprights */}
       {[-0.22, 0.22].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.2, 0]}>
+        <mesh key={x} position={[x, -0.2, 0]}>
           <boxGeometry args={[0.03, 0.25, 0.03]} />
           <meshStandardMaterial color="#aa8844" flatShading />
         </mesh>
       ))}
       {/* Test tubes */}
       {tubes.map((t, i) => (
-        <group key={`x-${i}`}>
+        <group key={x}>
           {/* Glass */}
           <mesh position={[t.x, 0.05, 0]}>
             <cylinderGeometry args={[0.03, 0.03, 0.5, 8]} />

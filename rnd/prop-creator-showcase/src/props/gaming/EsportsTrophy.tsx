@@ -26,7 +26,7 @@ export function EsportsTrophy() {
       </mesh>
       <mesh ref={starRef} position={[0, 0.02, 0]}><dodecahedronGeometry args={[0.04, 0]} /><meshStandardMaterial color="#ffdd44" emissive="#ffdd44" emissiveIntensity={1} flatShading /></mesh>
       {[-0.08, 0.08].map((x,i) => (
-        <mesh key={`x-${i}`} position={[x, -0.06, 0]}><torusGeometry args={[0.03, 0.008, 4, 6, Math.PI]} /><meshStandardMaterial color="#cc9933" flatShading /></mesh>
+        <mesh key={x} position={[x, -0.06, 0]}><torusGeometry args={[0.03, 0.008, 4, 6, Math.PI]} /><meshStandardMaterial color="#cc9933" flatShading /></mesh>
       ))}
 
     </group>

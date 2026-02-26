@@ -10,7 +10,7 @@ export function DocumentTray() {
   return (
     <group ref={groupRef}>
       {[0, 0.13].map((y, i) => (
-        <group key={`y-${i}`} position={[0, -0.15 + y, i * 0.02]}>
+        <group key={y} position={[0, -0.15 + y, i * 0.02]}>
           <mesh>
             <boxGeometry args={[0.35, 0.02, 0.25]} />
             <meshStandardMaterial color={i === 0 ? '#555566' : '#666677'} flatShading />

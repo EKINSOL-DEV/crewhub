@@ -222,9 +222,9 @@ function ProjectsSettingsSection({
                           </div>
                           {roomCount > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
-                              {assignedRoomNames.map((name, i) => (
+                              {assignedRoomNames.map((name, _i) => (
                                 <span
-                                  key={`name-${i}`}
+                                  key={name}
                                   className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
                                 >
                                   {name}

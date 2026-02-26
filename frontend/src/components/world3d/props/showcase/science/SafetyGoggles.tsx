@@ -45,8 +45,8 @@ export function SafetyGoggles() {
         <meshStandardMaterial color="#4488ff" />
       </mesh>
       {/* Vents */}
-      {[-0.28, 0.28].map((x, i) => (
-        <group key={`x-${i}`}>
+      {[-0.28, 0.28].map((x) => (
+        <group key={x}>
           {[0, 1, 2].map((j) => (
             <mesh key={j} position={[x, -0.02 + j * 0.04, 0.08]}>
               <boxGeometry args={[0.02, 0.02, 0.01]} />

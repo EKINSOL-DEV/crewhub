@@ -24,8 +24,8 @@ export function AmiiboFigure() {
         <sphereGeometry args={[0.04, 6, 6]} />
         <meshStandardMaterial color="#ffcc88" flatShading />
       </mesh>
-      {[-0.04, 0.04].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.18, 0]}>
+      {[-0.04, 0.04].map((x) => (
+        <mesh key={x} position={[x, -0.18, 0]}>
           <cylinderGeometry args={[0.012, 0.012, 0.1, 4]} />
           <meshStandardMaterial color="#4488ff" flatShading />
         </mesh>

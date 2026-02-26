@@ -13,7 +13,7 @@ export function Modem() {
         <meshStandardMaterial color="#111122" flatShading />
       </mesh>
       {['#44ff44','#44ff44','#ffcc44','#4488ff','#44ff44'].map((c,i) => (
-        <mesh key={`c-${i}`} position={[0, 0.1-i*0.05, 0.032]}><sphereGeometry args={[0.006, 4, 4]} /><meshStandardMaterial color={c} emissive={c} emissiveIntensity={1} /></mesh>
+        <mesh key={c} position={[0, 0.1-i*0.05, 0.032]}><sphereGeometry args={[0.006, 4, 4]} /><meshStandardMaterial color={c} emissive={c} emissiveIntensity={1} /></mesh>
       ))}
 
     </group>

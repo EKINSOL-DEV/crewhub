@@ -20,14 +20,14 @@ export function PopFigure() {
         <boxGeometry args={[0.1, 0.15, 0.06]} />
         <meshStandardMaterial color="#ff4444" flatShading />
       </mesh>
-      {[-0.07, 0.07].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.2, 0]}>
+      {[-0.07, 0.07].map((x) => (
+        <mesh key={x} position={[x, -0.2, 0]}>
           <cylinderGeometry args={[0.015, 0.015, 0.08, 4]} />
           <meshStandardMaterial color="#4488ff" flatShading />
         </mesh>
       ))}
-      {[-0.03, 0.03].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, 0.07, 0.09]}>
+      {[-0.03, 0.03].map((x) => (
+        <mesh key={x} position={[x, 0.07, 0.09]}>
           <sphereGeometry args={[0.025, 4, 4]} />
           <meshStandardMaterial color="#222222" />
         </mesh>

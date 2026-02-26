@@ -13,7 +13,7 @@ export function DeskOrganizerTray() {
         <meshStandardMaterial color="#ffcc44" flatShading />
       </mesh>
       {[-0.15, 0.05].map((x,i) => (
-        <mesh key={`x-${i}`} position={[x, -0.08, 0]}>
+        <mesh key={x} position={[x, -0.08, 0]}>
           <boxGeometry args={[0.01, 0.1, 0.23]} />
           <meshStandardMaterial color="#eebb33" flatShading />
         </mesh>

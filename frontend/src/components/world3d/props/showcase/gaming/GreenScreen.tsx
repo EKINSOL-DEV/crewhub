@@ -17,8 +17,8 @@ export function GreenScreen() {
         <boxGeometry args={[0.75, 0.03, 0.03]} />
         <meshStandardMaterial color="#888899" flatShading />
       </mesh>
-      {[-0.25, 0.25].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.2, -0.08]} rotation={[0.15, 0, 0]}>
+      {[-0.25, 0.25].map((x) => (
+        <mesh key={x} position={[x, -0.2, -0.08]} rotation={[0.15, 0, 0]}>
           <cylinderGeometry args={[0.01, 0.01, 0.5, 4]} />
           <meshStandardMaterial color="#888899" flatShading />
         </mesh>

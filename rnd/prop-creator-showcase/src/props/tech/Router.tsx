@@ -33,7 +33,7 @@ export function Router() {
       ))}
       {/* Antennas */}
       {[-0.3, 0, 0.3].map((x, i) => (
-        <group key={`x-${i}`}>
+        <group key={x}>
           <mesh position={[x, -0.05, -0.2]} rotation={[0.15, 0, (i - 1) * 0.1]}>
             <cylinderGeometry args={[0.02, 0.015, 0.6, 6]} />
             <meshStandardMaterial color="#333355" />

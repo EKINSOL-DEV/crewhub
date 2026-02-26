@@ -24,8 +24,8 @@ export function GamingChair() {
         <boxGeometry args={[0.08, 0.7, 0.01]} />
         <meshStandardMaterial color="#ff2244" />
       </mesh>
-      {[-0.18, 0.18].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, 0.4, -0.17]}>
+      {[-0.18, 0.18].map((x) => (
+        <mesh key={x} position={[x, 0.4, -0.17]}>
           <boxGeometry args={[0.04, 0.7, 0.01]} />
           <meshStandardMaterial color="#ff2244" />
         </mesh>
@@ -36,8 +36,8 @@ export function GamingChair() {
         <meshStandardMaterial color="#222233" />
       </mesh>
       {/* Armrests */}
-      {[-0.28, 0.28].map((x, i) => (
-        <group key={`x-${i}`}>
+      {[-0.28, 0.28].map((x) => (
+        <group key={x}>
           <mesh position={[x, 0.05, -0.05]}>
             <boxGeometry args={[0.05, 0.2, 0.05]} />
             <meshStandardMaterial color="#333344" />

@@ -35,8 +35,8 @@ export function EsportsTrophy() {
           flatShading
         />
       </mesh>
-      {[-0.08, 0.08].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.06, 0]}>
+      {[-0.08, 0.08].map((x) => (
+        <mesh key={x} position={[x, -0.06, 0]}>
           <torusGeometry args={[0.03, 0.008, 4, 6, Math.PI]} />
           <meshStandardMaterial color="#cc9933" flatShading />
         </mesh>

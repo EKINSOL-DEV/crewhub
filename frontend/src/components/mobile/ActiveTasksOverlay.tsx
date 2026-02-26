@@ -192,9 +192,9 @@ function TaskLogsView({ session, onBack }: { session: CrewSession; onBack: () =>
           const tools =
             entry.tools && entry.tools.length > 0 ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
-                {entry.tools.map((t, ti) => (
+                {entry.tools.map((t, _ti) => (
                   <span
-                    key={ti}
+                    key={t.name}
                     style={{
                       fontSize: 10,
                       padding: '2px 6px',

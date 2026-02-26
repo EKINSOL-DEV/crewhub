@@ -37,7 +37,7 @@ export function ServerRack() {
           </mesh>
           {/* Ventilation lines */}
           {[-0.15, 0, 0.15].map((x, j) => (
-            <mesh key={j} position={[x, y, 0.276]}>
+            <mesh key={x} position={[x, y, 0.276]}>
               <boxGeometry args={[0.08, 0.12, 0.001]} />
               <meshStandardMaterial color="#1a1a28" />
             </mesh>
