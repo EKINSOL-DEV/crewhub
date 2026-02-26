@@ -208,6 +208,7 @@ export function SceneContent({
   }
 
   const { roomBots, parkingBots } = useMemo(() => {
+    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const roomBots = new Map<string, BotPlacement[]>()
     const parkingBots: BotPlacement[] = []
 

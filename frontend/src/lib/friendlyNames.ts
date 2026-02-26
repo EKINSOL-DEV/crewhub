@@ -34,6 +34,11 @@ const MINION_NAMES: Record<string, string[]> = {
   headquarters: ['Boss', 'Chief', 'Captain', 'Admiral', 'General', 'Commander', 'Director', 'Lead'],
 }
 
+const KNOWN_PHONES: Record<string, string> = {
+  '+32494330227': 'Nicky',
+  '+32469774873': 'Ekinbot',
+}
+
 export function generateFriendlyName(sessionKey: string): string {
   const hash = sessionKey.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0)
   const adj = adjectives[Math.abs(hash) % adjectives.length]
@@ -65,6 +70,29 @@ export function getDisplayName(session: { key: string; label?: string }): string
   return session.key.split(':').pop() || session.key
 }
 
+// ── Helpers ───────────────────────────────────────────────────
+
+function containsKnownPhone(key: string): boolean {
+  return key.includes('+32494330227') || key.includes('+32469774873')
+}
+
+function isFixedAgentKey(sessionKey: string): boolean {
+  const parts = sessionKey.split(':')
+  if (parts.includes('subagent') || parts.includes('spawn')) return false
+  if (parts.includes('main')) return true
+  if (parts.length === 2) return true
+  return false
+}
+
+function isFixedWhatsAppPayload(payload: string): boolean {
+  if (payload.includes('-subagent-') || payload.includes('-spawn-')) return false
+  if (payload.includes('+32494330227') || payload.includes('+32469774873')) return true
+  if (payload.match(/^g-agent-\w+-main/)) return true
+  return false
+}
+
+// ── Public API ────────────────────────────────────────────────
+
 /**
  * Get a user-friendly display name from a session key.
  * Handles various formats:
@@ -80,52 +108,14 @@ export function getDisplayName(session: { key: string; label?: string }): string
  * Temporary subagents should be excluded.
  */
 export function isFixedAgent(sessionKey: string): boolean {
-  // Known owner phone numbers - always include
-  if (sessionKey.includes('+32494330227') || sessionKey.includes('+32469774873')) {
-    return true
-  }
+  if (containsKnownPhone(sessionKey)) return true
 
-  // Agent session keys: agent:name:type:uuid
-  if (sessionKey.startsWith('agent:')) {
-    const parts = sessionKey.split(':')
-    // Exclude subagent and spawn sessions
-    if (parts.includes('subagent') || parts.includes('spawn')) {
-      return false
-    }
-    // Include main sessions (agent:dev:main, agent:main:main, etc.)
-    if (parts.includes('main')) {
-      return true
-    }
-    // If it's just agent:name format (no subagent/spawn), include it
-    if (parts.length === 2) {
-      return true
-    }
-    return false
-  }
+  if (sessionKey.startsWith('agent:')) return isFixedAgentKey(sessionKey)
 
-  // WhatsApp session keys
   if (sessionKey.startsWith('whatsapp:')) {
-    const payload = sessionKey.slice('whatsapp:'.length)
-
-    // Exclude subagent patterns
-    if (payload.includes('-subagent-') || payload.includes('-spawn-')) {
-      return false
-    }
-
-    // Include known phone numbers
-    if (payload.includes('+32494330227') || payload.includes('+32469774873')) {
-      return true
-    }
-
-    // Include g-agent-{name}-main patterns
-    if (payload.match(/^g-agent-\w+-main/)) {
-      return true
-    }
-
-    return false
+    return isFixedWhatsAppPayload(sessionKey.slice('whatsapp:'.length))
   }
 
-  // Plain phone numbers - include known ones
   if (sessionKey.match(/^\+\d+$/)) {
     return sessionKey === '+32494330227' || sessionKey === '+32469774873'
   }
@@ -133,73 +123,65 @@ export function isFixedAgent(sessionKey: string): boolean {
   return false
 }
 
-export function formatSessionKeyAsName(sessionKey: string, label?: string): string {
-  // Priority 1: If we have a label, use it
-  if (label) return label
+function resolvePhoneToName(phone: string): string | null {
+  return KNOWN_PHONES[phone] ?? null
+}
 
-  // Priority 2: Known phone numbers
-  if (sessionKey.includes('+32494330227')) return 'Nicky'
-  if (sessionKey.includes('+32469774873')) return 'Ekinbot'
+function capitalizeFirst(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
-  // Priority 3: Parse agent session keys (agent:name:type:uuid)
-  if (sessionKey.startsWith('agent:')) {
-    const parts = sessionKey.split(':')
-    if (parts.length >= 2) {
-      const agentName = parts[1]
-      const capitalizedName = agentName.charAt(0).toUpperCase() + agentName.slice(1)
-
-      // Check if it's a subagent
-      if (parts.includes('subagent') || parts.includes('spawn')) {
-        return `${capitalizedName} (subagent)`
-      }
-      return capitalizedName
-    }
+function parseAgentSessionKey(sessionKey: string): string {
+  const parts = sessionKey.split(':')
+  if (parts.length < 2) return sessionKey
+  const agentName = parts[1]
+  const capitalized = capitalizeFirst(agentName)
+  if (parts.includes('subagent') || parts.includes('spawn')) {
+    return `${capitalized} (subagent)`
   }
+  return capitalized
+}
 
-  // Priority 4: WhatsApp session keys (whatsapp:g-agent-name-subagent-xxx)
-  if (sessionKey.startsWith('whatsapp:')) {
-    const payload = sessionKey.slice('whatsapp:'.length)
+function parseWhatsAppSessionKey(payload: string): string {
+  const gSubMatch = payload.match(/^g-agent-(\w+)-subagent-/)
+  if (gSubMatch) return `${capitalizeFirst(gSubMatch[1])} (subagent)`
 
-    // Parse g-agent-{name}-subagent-xxx format
-    const gAgentMatch = payload.match(/^g-agent-(\w+)-subagent-/)
-    if (gAgentMatch) {
-      const agentName = gAgentMatch[1]
-      const capitalizedName = agentName.charAt(0).toUpperCase() + agentName.slice(1)
-      return `${capitalizedName} (subagent)`
-    }
+  const gMainMatch = payload.match(/^g-agent-(\w+)-main/)
+  if (gMainMatch) return capitalizeFirst(gMainMatch[1])
 
-    // Parse g-agent-{name}-main format
-    const gMainMatch = payload.match(/^g-agent-(\w+)-main/)
-    if (gMainMatch) {
-      const agentName = gMainMatch[1]
-      return agentName.charAt(0).toUpperCase() + agentName.slice(1)
-    }
-
-    // Phone number in WhatsApp key
-    const phoneMatch = payload.match(/\+\d+/)
-    if (phoneMatch) {
-      if (phoneMatch[0] === '+32494330227') return 'Nicky'
-      if (phoneMatch[0] === '+32469774873') return 'Ekinbot'
-      return `User (${phoneMatch[0].slice(0, 6)}...)`
-    }
-
-    // Fallback: show first part
-    return payload.split('-')[0] || 'WhatsApp'
-  }
-
-  // Priority 5: Plain phone number
-  const phoneMatch = sessionKey.match(/\+\d+/)
+  const phoneMatch = payload.match(/\+\d+/)
   if (phoneMatch) {
-    if (phoneMatch[0] === '+32494330227') return 'Nicky'
-    if (phoneMatch[0] === '+32469774873') return 'Ekinbot'
+    const name = resolvePhoneToName(phoneMatch[0])
+    if (name) return name
     return `User (${phoneMatch[0].slice(0, 6)}...)`
   }
 
-  // Priority 6: Extract last meaningful part
+  return payload.split('-')[0] || 'WhatsApp'
+}
+
+export function formatSessionKeyAsName(sessionKey: string, label?: string): string {
+  if (label) return label
+
+  // Known phone numbers (direct or embedded)
+  for (const [phone, name] of Object.entries(KNOWN_PHONES)) {
+    if (sessionKey.includes(phone)) return name
+  }
+
+  if (sessionKey.startsWith('agent:')) return parseAgentSessionKey(sessionKey)
+
+  if (sessionKey.startsWith('whatsapp:')) {
+    return parseWhatsAppSessionKey(sessionKey.slice('whatsapp:'.length))
+  }
+
+  const phoneMatch = sessionKey.match(/\+\d+/)
+  if (phoneMatch) {
+    const name = resolvePhoneToName(phoneMatch[0])
+    if (name) return name
+    return `User (${phoneMatch[0].slice(0, 6)}...)`
+  }
+
   const parts = sessionKey.split(':')
   const lastPart = parts[parts.length - 1]
-
-  // If last part is a UUID, try the second-to-last
   if (lastPart.match(/^[a-f0-9-]{36}$/i) && parts.length > 1) {
     return parts[parts.length - 2]
   }

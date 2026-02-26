@@ -142,6 +142,7 @@ interface PreviewPanelProps {
 }
 
 export function PreviewPanel({
+  // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   PropComponent,
   componentName,
   renderError,

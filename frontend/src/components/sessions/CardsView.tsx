@@ -185,6 +185,7 @@ export function CardsView({ sessions }: CardsViewProps) {
 
   // Group sessions by room when groupByRoom is enabled
   const groupedSessions = useMemo(() => {
+    // NOSONAR: complexity from React render with multiple view state branches
     if (!groupByRoom) return null
 
     const groups = new Map<

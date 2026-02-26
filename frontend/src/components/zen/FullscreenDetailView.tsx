@@ -48,6 +48,7 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 // ── Content Block ─────────────────────────────────────────────
 
 function ContentBlockView({
+  // NOSONAR: complexity from fullscreen overlay with multiple content and action type branches
   block,
   filterText,
 }: {

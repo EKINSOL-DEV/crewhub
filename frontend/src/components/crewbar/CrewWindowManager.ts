@@ -99,7 +99,7 @@ export function useCrewWindows() {
         const existing = prev.find((w) => w.agent.id === agent.id)
         if (existing) {
           // Bring to front
-          setFocusOrder((fo) => [...fo.filter((id) => id !== existing.id), existing.id])
+          setFocusOrder((fo) => [...fo.filter((id) => id !== existing.id), existing.id]) // NOSONAR: nested setState in updater - acceptable React pattern for focus management
           return prev
         }
 

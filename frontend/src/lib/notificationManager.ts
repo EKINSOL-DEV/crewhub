@@ -166,6 +166,21 @@ function handleSessionRemoved(event: MessageEvent): void {
 }
 
 /**
+ * Extract text from a message content value (string or block array).
+ */
+function extractTextFromContent(content: unknown): string | null {
+  if (typeof content === 'string') return content.slice(0, 100)
+  if (!Array.isArray(content)) return null
+  for (const block of content) {
+    if (typeof block === 'object' && block !== null && 'text' in block) {
+      const text = (block as { text: string }).text
+      if (text) return text.slice(0, 100)
+    }
+  }
+  return null
+}
+
+/**
  * Extract a readable summary from a session's recent messages.
  * Returns first 100 chars of the last assistant message, or a default.
  */
@@ -174,21 +189,11 @@ function extractLastMessage(session: {
 }): string {
   if (!session.messages?.length) return 'Taak afgerond'
 
-  // Find last assistant message
   for (let i = session.messages.length - 1; i >= 0; i--) {
     const msg = session.messages[i]
     if (msg.role !== 'assistant') continue
-
-    const content = msg.content
-    if (typeof content === 'string') return content.slice(0, 100)
-    if (Array.isArray(content)) {
-      for (const block of content) {
-        if (typeof block === 'object' && block !== null && 'text' in block) {
-          const text = (block as { text: string }).text
-          if (text) return text.slice(0, 100)
-        }
-      }
-    }
+    const text = extractTextFromContent(msg.content)
+    if (text) return text
   }
 
   return 'Taak afgerond'

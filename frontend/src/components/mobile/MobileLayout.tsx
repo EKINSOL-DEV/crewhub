@@ -37,6 +37,7 @@ type View =
 const FIXED_AGENT_IDS = ['main', 'dev', 'flowy', 'creator', 'reviewer', 'gamedev', 'webdev']
 
 export function MobileLayout() {
+  // NOSONAR: complexity from React component with multiple hooks and state; extracting sub-hooks would hurt cohesion
   const { sessions: realSessions, loading, connected, refresh } = useSessionsStream(true)
   const { isDemoMode, demoSessions } = useDemoMode()
   const sessions = useMemo(

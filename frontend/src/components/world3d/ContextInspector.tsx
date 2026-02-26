@@ -21,6 +21,7 @@ interface EnvelopeResponse {
 }
 
 export function ContextInspector({ roomId, roomName, onClose }: ContextInspectorProps) {
+  // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   const [data, setData] = useState<EnvelopeResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

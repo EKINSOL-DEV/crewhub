@@ -180,6 +180,12 @@ interface ConnectionDialogProps {
   readonly onSave: (data: ConnectionFormData, id?: string) => Promise<void>
 }
 
+/** Module-level updater to reduce setState callback nesting depth below 4 levels. */
+function makeConnectionStatusUpdater(data: Partial<Connection> & { id: string }) {
+  return (prev: Connection[]): Connection[] =>
+    prev.map((c) => (c.id === data.id ? { ...c, ...data } : c))
+}
+
 function ConnectionDialog({ open, onOpenChange, connection, onSave }: ConnectionDialogProps) {
   const isEdit = !!connection
   const [saving, setSaving] = useState(false)
@@ -382,7 +388,7 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
     const unsub = sseManager.subscribe('connection-status', (event) => {
       try {
         const data = JSON.parse(event.data)
-        setConnections((prev) => prev.map((c) => (c.id === data.id ? { ...c, ...data } : c)))
+        setConnections(makeConnectionStatusUpdater(data))
       } catch {
         // Fallback: refetch all on parse error
         fetchConnections()

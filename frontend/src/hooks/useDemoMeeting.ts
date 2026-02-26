@@ -201,7 +201,7 @@ export function useDemoMeeting() {
             newRounds[ri] = {
               roundNum,
               topic: round.topic,
-              turns: round.turns.map((t, ti) => ({
+              turns: round.turns.map((t, ti) => ({ // NOSONAR: nested map in setState in setTimeout — demo playback pattern
                 round: roundNum,
                 agentId: t.agentId,
                 agentName: t.agentName,

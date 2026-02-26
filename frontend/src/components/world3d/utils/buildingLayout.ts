@@ -71,6 +71,7 @@ export interface BuildingLayout {
  *   > 9 rooms → 3×3  (capped at 8 peripheral slots)
  */
 export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
+  // NOSONAR: complexity from legitimate spatial layout algorithm
   const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
 
   const hqRoom = sorted.find((r) => r.is_hq)

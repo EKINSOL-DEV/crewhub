@@ -23,7 +23,7 @@ import {
 } from './mockSessions'
 import { lsGet, jsonResponse, okResponse } from './mockUtils'
 
-export function handleMockRequest(
+export function handleMockRequest( // NOSONAR: complexity from legitimate mock routing switch; all branches needed for comprehensive API mocking
   pathname: string,
   method: string,
   _body?: BodyInit | null

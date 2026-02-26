@@ -92,6 +92,101 @@ const INITIAL_STATE: MeetingState = {
   warnings: [],
 }
 
+// ─── Module-level setState updater helpers ───────────────────────────────────
+// Extracted to module level to reduce setState callback nesting depth below 4 levels.
+
+function applyTurnStart(data: {
+  round?: number
+  agent_id: string
+  agent_name?: string
+  turn_index?: number
+  total_turns?: number
+}) {
+  return (prev: MeetingState): MeetingState => {
+    const newRounds = [...prev.rounds]
+    const roundIdx = (data.round || 1) - 1
+    if (!newRounds[roundIdx]) {
+      newRounds[roundIdx] = {
+        roundNum: data.round || 1,
+        topic: '',
+        turns: [],
+        status: 'in_progress',
+      }
+    }
+    const existingIdx = newRounds[roundIdx].turns.findIndex(
+      (t) => t.agentId === data.agent_id && t.round === (data.round || 1)
+    )
+    const turn: MeetingTurn = {
+      round: data.round || 1,
+      agentId: data.agent_id,
+      agentName: data.agent_name || data.agent_id,
+      response: null,
+      turnIndex: data.turn_index ?? 0,
+      totalTurns: data.total_turns ?? prev.participants.length,
+      status: 'speaking',
+    }
+    if (existingIdx >= 0) {
+      newRounds[roundIdx].turns[existingIdx] = turn
+    } else {
+      newRounds[roundIdx].turns.push(turn)
+    }
+    return {
+      ...prev,
+      phase: 'round',
+      currentTurnAgentId: data.agent_id,
+      currentTurnAgentName: data.agent_name || data.agent_id,
+      rounds: newRounds,
+    }
+  }
+}
+
+function applyTurnComplete(data: {
+  round?: number
+  agent_id: string
+  agent_name?: string
+  response?: string
+  turn_index?: number
+  total_turns?: number
+  progress_pct?: number
+}) {
+  return (prev: MeetingState): MeetingState => {
+    const newRounds = [...prev.rounds]
+    const roundIdx = (data.round || 1) - 1
+    if (!newRounds[roundIdx]) {
+      newRounds[roundIdx] = {
+        roundNum: data.round || 1,
+        topic: '',
+        turns: [],
+        status: 'in_progress',
+      }
+    }
+    const existingIdx = newRounds[roundIdx].turns.findIndex(
+      (t) => t.agentId === data.agent_id && t.round === (data.round || 1)
+    )
+    const turn: MeetingTurn = {
+      round: data.round || 1,
+      agentId: data.agent_id,
+      agentName: data.agent_name || data.agent_id,
+      response: data.response || '(no response — skipped)',
+      turnIndex: data.turn_index ?? 0,
+      totalTurns: data.total_turns ?? prev.participants.length,
+      status: data.response ? 'done' : 'skipped',
+    }
+    if (existingIdx >= 0) {
+      newRounds[roundIdx].turns[existingIdx] = turn
+    } else {
+      newRounds[roundIdx].turns.push(turn)
+    }
+    return {
+      ...prev,
+      progressPct: data.progress_pct ?? prev.progressPct,
+      currentTurnAgentId: null,
+      currentTurnAgentName: null,
+      rounds: newRounds,
+    }
+  }
+}
+
 // ─── Hook ───────────────────────────────────────────────────────
 
 export function useMeeting() {
@@ -181,45 +276,7 @@ export function useMeeting() {
       try {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
-
-        setState((prev) => {
-          const newRounds = [...prev.rounds]
-          const roundIdx = (data.round || 1) - 1
-          if (!newRounds[roundIdx]) {
-            newRounds[roundIdx] = {
-              roundNum: data.round || 1,
-              topic: '',
-              turns: [],
-              status: 'in_progress',
-            }
-          }
-          // Add or update turn
-          const existingIdx = newRounds[roundIdx].turns.findIndex(
-            (t) => t.agentId === data.agent_id && t.round === data.round
-          )
-          const turn: MeetingTurn = {
-            round: data.round || 1,
-            agentId: data.agent_id,
-            agentName: data.agent_name || data.agent_id,
-            response: null,
-            turnIndex: data.turn_index ?? 0,
-            totalTurns: data.total_turns ?? prev.participants.length,
-            status: 'speaking',
-          }
-          if (existingIdx >= 0) {
-            newRounds[roundIdx].turns[existingIdx] = turn
-          } else {
-            newRounds[roundIdx].turns.push(turn)
-          }
-
-          return {
-            ...prev,
-            phase: 'round',
-            currentTurnAgentId: data.agent_id,
-            currentTurnAgentName: data.agent_name || data.agent_id,
-            rounds: newRounds,
-          }
-        })
+        setState(applyTurnStart(data))
       } catch (e) {
         console.error('Failed to parse meeting-turn-start:', e)
       }
@@ -229,44 +286,7 @@ export function useMeeting() {
       try {
         const data = JSON.parse(event.data)
         if (stateRef.current.meetingId && data.meeting_id !== stateRef.current.meetingId) return
-
-        setState((prev) => {
-          const newRounds = [...prev.rounds]
-          const roundIdx = (data.round || 1) - 1
-          if (!newRounds[roundIdx]) {
-            newRounds[roundIdx] = {
-              roundNum: data.round || 1,
-              topic: '',
-              turns: [],
-              status: 'in_progress',
-            }
-          }
-          const existingIdx = newRounds[roundIdx].turns.findIndex(
-            (t) => t.agentId === data.agent_id && t.round === data.round
-          )
-          const turn: MeetingTurn = {
-            round: data.round || 1,
-            agentId: data.agent_id,
-            agentName: data.agent_name || data.agent_id,
-            response: data.response || '(no response — skipped)',
-            turnIndex: data.turn_index ?? 0,
-            totalTurns: data.total_turns ?? prev.participants.length,
-            status: data.response ? 'done' : 'skipped',
-          }
-          if (existingIdx >= 0) {
-            newRounds[roundIdx].turns[existingIdx] = turn
-          } else {
-            newRounds[roundIdx].turns.push(turn)
-          }
-
-          return {
-            ...prev,
-            progressPct: data.progress_pct ?? prev.progressPct,
-            currentTurnAgentId: null,
-            currentTurnAgentName: null,
-            rounds: newRounds,
-          }
-        })
+        setState(applyTurnComplete(data))
       } catch (e) {
         console.error('Failed to parse meeting-turn:', e)
       }

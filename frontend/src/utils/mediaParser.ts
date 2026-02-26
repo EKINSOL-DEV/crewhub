@@ -83,6 +83,141 @@ export function getMediaUrl(path: string): string {
   return `/api/media/${encodedPath}`
 }
 
+// ── Extension → MIME type map ─────────────────────────────────
+
+const EXT_TO_MIME: Record<string, { mimeType: string; mediaType: 'image' | 'video' }> = {
+  jpg: { mimeType: 'image/jpeg', mediaType: 'image' },
+  jpeg: { mimeType: 'image/jpeg', mediaType: 'image' },
+  png: { mimeType: 'image/png', mediaType: 'image' },
+  gif: { mimeType: 'image/gif', mediaType: 'image' },
+  webp: { mimeType: 'image/webp', mediaType: 'image' },
+  mp4: { mimeType: 'video/mp4', mediaType: 'video' },
+  webm: { mimeType: 'video/webm', mediaType: 'video' },
+  mov: { mimeType: 'video/quicktime', mediaType: 'video' },
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function extractAudioTranscript(
+  content: string,
+  matchIndex: number,
+  fullMatchLength: number
+): { transcript?: string; transcriptError?: string; matchText: string } {
+  const afterTag = content.slice(matchIndex + fullMatchLength)
+
+  const transcriptMatch = TRANSCRIPT_REGEX.exec(afterTag)
+  if (transcriptMatch) {
+    return { transcript: transcriptMatch[1], matchText: transcriptMatch[0] }
+  }
+
+  const errorMatch = TRANSCRIPT_ERROR_REGEX.exec(afterTag)
+  if (errorMatch) {
+    return { transcriptError: errorMatch[1].trim(), matchText: errorMatch[0] }
+  }
+
+  return { matchText: '' }
+}
+
+function parseAudioAttachments(
+  content: string,
+  attachments: MediaAttachment[],
+  text: string
+): string {
+  const audioRegex = new RegExp(AUDIO_ATTACHED_REGEX)
+  let match: RegExpExecArray | null
+
+  while ((match = audioRegex.exec(content)) !== null) {
+    const [fullMatch, path, mimeType, durationStr] = match
+    const baseMime = mimeType.toLowerCase().split(';')[0].trim()
+    if (!isAudioMimeType(baseMime)) continue
+
+    const { transcript, transcriptError, matchText } = extractAudioTranscript(
+      content,
+      match.index,
+      fullMatch.length
+    )
+
+    attachments.push({
+      type: 'audio',
+      path,
+      mimeType: baseMime,
+      originalText: fullMatch + (matchText ? '\n' + matchText : ''),
+      duration: durationStr ? parseFloat(durationStr) : undefined,
+      transcript,
+      transcriptError,
+    })
+
+    const removeText = matchText ? fullMatch + '\n' + matchText : fullMatch
+    text = text.replace(removeText, '').trim()
+  }
+
+  return text
+}
+
+function parseImageVideoAttachments(
+  content: string,
+  attachments: MediaAttachment[],
+  text: string
+): string {
+  const mediaRegex = new RegExp(MEDIA_ATTACHED_REGEX)
+  let match: RegExpExecArray | null
+
+  while ((match = mediaRegex.exec(content)) !== null) {
+    const [fullMatch, path, mimeType] = match
+
+    if (isImageMimeType(mimeType)) {
+      attachments.push({ type: 'image', path, mimeType, originalText: fullMatch })
+      text = text.replace(fullMatch, '').trim()
+    } else if (isVideoMimeType(mimeType)) {
+      attachments.push({ type: 'video', path, mimeType, originalText: fullMatch })
+      text = text.replace(fullMatch, '').trim()
+    }
+  }
+
+  return text
+}
+
+function parseMediaPrefixAttachments(
+  content: string,
+  attachments: MediaAttachment[],
+  text: string
+): string {
+  const mediaPrefixRegex = new RegExp(MEDIA_PREFIX_REGEX)
+  let match: RegExpExecArray | null
+
+  while ((match = mediaPrefixRegex.exec(content)) !== null) {
+    const [fullMatch, path] = match
+    const ext = path.split('.').pop()?.toLowerCase() ?? ''
+    const info = EXT_TO_MIME[ext]
+    if (!info) continue
+
+    const alreadyAdded = attachments.some((a) => a.path === path)
+    if (!alreadyAdded) {
+      attachments.push({
+        type: info.mediaType,
+        path,
+        mimeType: info.mimeType,
+        originalText: fullMatch,
+      })
+      text = text.replace(fullMatch, '').trim()
+    }
+  }
+
+  return text
+}
+
+function cleanupMessageText(text: string): string {
+  // Remove OpenClaw media instruction hint
+  text = text.replace(/To send an image back,.*?Keep caption in the text body\.\n?/gs, '')
+  // Remove WhatsApp/channel metadata
+  text = text.replace(/\[(WhatsApp|Telegram|Signal|Discord|iMessage|Slack)[^\]]*\]\n?/gi, '')
+  // Remove message_id annotations
+  text = text.replace(/\[message_id:\s*[^\]]+\]\n?/gi, '')
+  // Clean up multiple newlines
+  text = text.replaceAll(/\n{3,}/g, '\n\n').trim()
+  return text
+}
+
 /**
  * Parse a message and extract media attachments.
  * Returns the remaining text and a list of attachments.
@@ -91,146 +226,10 @@ export function parseMediaAttachments(content: string): ParsedMessage {
   const attachments: MediaAttachment[] = []
   let text = content
 
-  // Parse [audio attached: /path/to/file.webm (audio/webm) 5.2s] pattern
-  // Also parses optional Transcript: "..." or [Voice transcription unavailable: ...] lines
-  let match: RegExpExecArray | null
-  const audioAttachedRegex = new RegExp(AUDIO_ATTACHED_REGEX)
-
-  while ((match = audioAttachedRegex.exec(content)) !== null) {
-    const [fullMatch, path, mimeType, durationStr] = match
-    const baseMime = mimeType.toLowerCase().split(';')[0].trim()
-    if (isAudioMimeType(baseMime)) {
-      // Look for transcript line immediately after the audio tag
-      const afterTag = content.slice(match.index + fullMatch.length)
-
-      let transcript: string | undefined
-      let transcriptError: string | undefined
-      let transcriptMatchText = ''
-
-      const transcriptMatch = TRANSCRIPT_REGEX.exec(afterTag)
-      if (transcriptMatch) {
-        transcript = transcriptMatch[1]
-        transcriptMatchText = transcriptMatch[0]
-      } else {
-        const errorMatch = TRANSCRIPT_ERROR_REGEX.exec(afterTag)
-        if (errorMatch) {
-          transcriptError = errorMatch[1].trim()
-          transcriptMatchText = errorMatch[0]
-        }
-      }
-
-      attachments.push({
-        type: 'audio',
-        path,
-        mimeType: baseMime,
-        originalText: fullMatch + (transcriptMatchText ? '\n' + transcriptMatchText : ''),
-        duration: durationStr ? parseFloat(durationStr) : undefined,
-        transcript,
-        transcriptError,
-      })
-      // Remove the audio tag and associated transcript line from text
-      let removeText = fullMatch
-      if (transcriptMatchText) {
-        removeText = fullMatch + '\n' + transcriptMatchText
-      }
-      text = text.replace(removeText, '').trim()
-    }
-  }
-
-  // Parse [media attached: /path/to/file.jpg (image/jpeg)] pattern
-  const mediaAttachedRegex = new RegExp(MEDIA_ATTACHED_REGEX)
-
-  while ((match = mediaAttachedRegex.exec(content)) !== null) {
-    const [fullMatch, path, mimeType] = match
-
-    if (isImageMimeType(mimeType)) {
-      attachments.push({
-        type: 'image',
-        path,
-        mimeType,
-        originalText: fullMatch,
-      })
-      text = text.replace(fullMatch, '').trim()
-    } else if (isVideoMimeType(mimeType)) {
-      attachments.push({
-        type: 'video',
-        path,
-        mimeType,
-        originalText: fullMatch,
-      })
-      text = text.replace(fullMatch, '').trim()
-    }
-  }
-
-  // Parse MEDIA: /path/to/file.jpg pattern (infer MIME from extension)
-  const mediaPrefixRegex = new RegExp(MEDIA_PREFIX_REGEX)
-
-  while ((match = mediaPrefixRegex.exec(content)) !== null) {
-    const [fullMatch, path] = match
-
-    // Infer MIME type from extension
-    const ext = path.split('.').pop()?.toLowerCase()
-    let mimeType: string | null = null
-    let mediaType: 'image' | 'video' = 'image'
-
-    switch (ext) {
-      case 'jpg':
-      case 'jpeg':
-        mimeType = 'image/jpeg'
-        break
-      case 'png':
-        mimeType = 'image/png'
-        break
-      case 'gif':
-        mimeType = 'image/gif'
-        break
-      case 'webp':
-        mimeType = 'image/webp'
-        break
-      case 'mp4':
-        mimeType = 'video/mp4'
-        mediaType = 'video'
-        break
-      case 'webm':
-        mimeType = 'video/webm'
-        mediaType = 'video'
-        break
-      case 'mov':
-        mimeType = 'video/quicktime'
-        mediaType = 'video'
-        break
-    }
-
-    if (mimeType) {
-      // Check if we already added this attachment (avoid duplicates)
-      const alreadyAdded = attachments.some((a) => a.path === path)
-      if (!alreadyAdded) {
-        attachments.push({
-          type: mediaType,
-          path,
-          mimeType,
-          originalText: fullMatch,
-        })
-        text = text.replace(fullMatch, '').trim()
-      }
-    }
-  }
-
-  // Remove OpenClaw media instruction hint (injected context for AI)
-  const mediaHintPattern = /To send an image back,.*?Keep caption in the text body\.\n?/gs
-  text = text.replace(mediaHintPattern, '')
-
-  // Remove WhatsApp/channel metadata (timestamp, message_id)
-  // Pattern: [WhatsApp +324... +1m 2026-02-07 11:41 GMT+1]
-  const channelMetaPattern = /\[(WhatsApp|Telegram|Signal|Discord|iMessage|Slack)[^\]]*\]\n?/gi
-  text = text.replace(channelMetaPattern, '')
-
-  // Pattern: [message_id: ...]
-  const messageIdPattern = /\[message_id:\s*[^\]]+\]\n?/gi
-  text = text.replace(messageIdPattern, '')
-
-  // Clean up multiple newlines from removed media
-  text = text.replaceAll(/\n{3,}/g, '\n\n').trim()
+  text = parseAudioAttachments(content, attachments, text)
+  text = parseImageVideoAttachments(content, attachments, text)
+  text = parseMediaPrefixAttachments(content, attachments, text)
+  text = cleanupMessageText(text)
 
   return { text, attachments }
 }

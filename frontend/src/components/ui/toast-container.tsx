@@ -17,7 +17,7 @@ export function ToastContainer() {
       const id = ++toastId
       setToasts((prev) => [...prev, { ...detail, id }])
       setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id))
+        setToasts(makeRemoveToastById(id))
       }, detail.duration || 5000)
     }
     window.addEventListener('crewhub-toast', handler)
@@ -25,7 +25,7 @@ export function ToastContainer() {
   }, [])
 
   const dismiss = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
+    setToasts(makeRemoveToastById(id))
   }, [])
 
   if (toasts.length === 0) return null

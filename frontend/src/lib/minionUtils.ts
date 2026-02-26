@@ -1,4 +1,4 @@
-import type { CrewSession, SessionContentBlock } from './api'
+import type { CrewSession, SessionContentBlock, SessionMessage } from './api'
 
 // Type aliases for backwards compatibility
 type MinionSession = CrewSession
@@ -120,6 +120,56 @@ function _isLikelyAnnounceRouting(text: string): boolean {
   )
 }
 
+function processTextBlock(
+  block: MinionContentBlock,
+  msg: SessionMessage,
+  timestamp: number,
+  activities: ActivityEvent[]
+): void {
+  if (!(block.type === 'text' && block.text && block.text.trim())) return
+  const text = block.text.trim()
+  if (text === 'NO_REPLY' || text === 'HEARTBEAT_OK') return
+  // Skip routed announce messages from sub-subagents injected into parent session
+  if (msg.role === 'user' && _isLikelyAnnounceRouting(text)) return
+  activities.push({
+    timestamp,
+    type: 'message',
+    icon: msg.role === 'user' ? '👤' : '🤖',
+    text: text.length > 80 ? text.slice(0, 80) + '…' : text,
+    role: msg.role as 'user' | 'assistant' | 'system',
+  })
+}
+
+function processContentBlock(
+  block: MinionContentBlock,
+  msg: SessionMessage,
+  timestamp: number,
+  activities: ActivityEvent[],
+  limit: number
+): void {
+  if (activities.length >= limit) return
+  processTextBlock(block, msg, timestamp, activities)
+  if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
+    const target = getToolTarget(block)
+    activities.push({
+      timestamp,
+      type: 'tool_call',
+      icon: '🔧',
+      text: target ? `${block.name} → ${target}` : block.name,
+      role: 'assistant',
+    })
+  }
+  if (block.type === 'thinking' && block.thinking) {
+    activities.push({
+      timestamp,
+      type: 'thinking',
+      icon: '💭',
+      text: block.thinking.length > 80 ? block.thinking.slice(0, 80) + '…' : block.thinking,
+      role: 'assistant',
+    })
+  }
+}
+
 export function parseRecentActivities(session: MinionSession, limit = 5): ActivityEvent[] {
   if (!session.messages || session.messages.length === 0) return []
   const activities: ActivityEvent[] = []
@@ -128,43 +178,9 @@ export function parseRecentActivities(session: MinionSession, limit = 5): Activi
   for (const msg of recentMessages) {
     if (activities.length >= limit) break
     const timestamp = msg.timestamp || session.updatedAt
-
     if (Array.isArray(msg.content)) {
       for (const block of msg.content) {
-        if (activities.length >= limit) break
-        if (block.type === 'text' && block.text && block.text.trim()) {
-          const text = block.text.trim()
-          if (text === 'NO_REPLY' || text === 'HEARTBEAT_OK') continue
-          // Issue 1 fix: skip routed announce messages from sub-subagents
-          // These are injected into the parent session by OpenClaw's announce routing.
-          if (msg.role === 'user' && _isLikelyAnnounceRouting(text)) continue
-          activities.push({
-            timestamp,
-            type: 'message',
-            icon: msg.role === 'user' ? '👤' : '🤖',
-            text: text.length > 80 ? text.slice(0, 80) + '…' : text,
-            role: msg.role as 'user' | 'assistant' | 'system',
-          })
-        }
-        if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
-          const target = getToolTarget(block)
-          activities.push({
-            timestamp,
-            type: 'tool_call',
-            icon: '🔧',
-            text: target ? `${block.name} → ${target}` : block.name,
-            role: 'assistant',
-          })
-        }
-        if (block.type === 'thinking' && block.thinking) {
-          activities.push({
-            timestamp,
-            type: 'thinking',
-            icon: '💭',
-            text: block.thinking.length > 80 ? block.thinking.slice(0, 80) + '…' : block.thinking,
-            role: 'assistant',
-          })
-        }
+        processContentBlock(block, msg, timestamp, activities, limit)
       }
     }
   }
@@ -362,6 +378,24 @@ export function getIdleOpacity(idleSeconds: number): number {
 /** Default parking idle threshold in seconds (reads from centralized config) */
 export const DEFAULT_PARKING_IDLE_THRESHOLD = SESSION_CONFIG.parkingIdleThresholdS
 
+/**
+ * Check if a subagent session is within the announce-routing grace window.
+ * Sub-subagents don't get their updatedAt bumped by their own result announce
+ * (the announce is routed to the parent session instead). This grace period
+ * prevents premature parking of recently-completed subagents.
+ */
+function isWithinAnnouncementRoutingGrace(
+  session: MinionSession,
+  allSessions: MinionSession[]
+): boolean {
+  if (!session.key.includes(':subagent:') && !session.key.includes(':spawn:')) return false
+  const agentId = session.key.split(':')[1]
+  const GRACE_MS = SESSION_CONFIG.parkingIdleThresholdS * 1000 * 2
+  const parentMainSession = allSessions.find((s) => s.key === `agent:${agentId}:main`)
+  if (!parentMainSession) return false
+  return Date.now() - parentMainSession.updatedAt < GRACE_MS
+}
+
 export function shouldBeInParkingLane(
   session: MinionSession,
   isActivelyRunning?: boolean,
@@ -385,26 +419,8 @@ export function shouldBeInParkingLane(
   if (status === 'sleeping') return true
   if (isActivelyRunning) return false
 
-  // Issue 1 fix (v2026.2.17 — nested announce routing compensation):
-  // Sub-subagent sessions don't get their updatedAt bumped by their own result announce
-  // (the announce is routed to the parent session instead).
-  // Check whether the parent main session recently received an update (proxy for: parent
-  // received the announce routing) — if so, hold off parking the subagent.
-  if (allSessions && (session.key.includes(':subagent:') || session.key.includes(':spawn:'))) {
-    const keyParts = session.key.split(':')
-    const agentId = keyParts[1]
-    // Grace window = 2× parking threshold (240s by default)
-    const ANNOUNCE_ROUTING_GRACE_MS = SESSION_CONFIG.parkingIdleThresholdS * 1000 * 2
-
-    // Check parent main session
-    const parentMainSession = allSessions.find((s) => s.key === `agent:${agentId}:main`)
-    if (parentMainSession) {
-      const parentAge = Date.now() - parentMainSession.updatedAt
-      if (parentAge < ANNOUNCE_ROUTING_GRACE_MS) {
-        return false // Parent recently updated → hold off parking
-      }
-    }
-  }
+  // Issue 1 fix (v2026.2.17 — nested announce routing compensation)
+  if (allSessions && isWithinAnnouncementRoutingGrace(session, allSessions)) return false
 
   return idleSeconds > idleThresholdSeconds
 }

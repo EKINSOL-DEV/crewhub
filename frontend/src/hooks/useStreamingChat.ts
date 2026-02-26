@@ -41,6 +41,31 @@ export interface UseStreamingChatReturn {
 
 const THROTTLE_MS = 80
 
+// ── Module-level message-state updater factories ──────────────────────────────
+// Extracted to module level to reduce setState callback nesting depth below 4 levels.
+
+function makeStreamingDoneUpdater(id: string, content: string) {
+  return (prev: ChatMessageData[]): ChatMessageData[] =>
+    prev.map((m) => (m.id === id ? { ...m, content, isStreaming: false } : m))
+}
+
+function makeRemoveStreamingMessage(id: string) {
+  return (prev: ChatMessageData[]): ChatMessageData[] => prev.filter((m) => m.id !== id)
+}
+
+function makeAppendAssistantMessage(response: string) {
+  return (prev: ChatMessageData[]): ChatMessageData[] => [
+    ...prev,
+    {
+      id: `assistant-${Date.now()}`,
+      role: 'assistant' as const,
+      content: response,
+      timestamp: Date.now(),
+      tools: [] as ChatMessageData['tools'],
+    },
+  ]
+}
+
 export function useStreamingChat(
   sessionKey: string,
   raw: boolean = false,
@@ -207,57 +232,44 @@ export function useStreamingChat(
           const id = streamingIdRef.current
           // Single state update: set full content + mark streaming done
           if (id) {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === id ? { ...m, content: finalContent, isStreaming: false } : m
-              )
-            )
+            setMessages(makeStreamingDoneUpdater(id, finalContent))
           }
           setIsSending(false)
           setStreamingMessageId(null)
           streamingIdRef.current = null
           pendingContentRef.current = ''
         },
-        onError: (err: string) => {
+        onError: async (err: string) => {
           // On error, fall back to blocking /send
           const id = streamingIdRef.current
           if (id) {
-            setMessages((prev) => prev.filter((m) => m.id !== id))
+            setMessages(makeRemoveStreamingMessage(id))
           }
           streamingIdRef.current = null
           pendingContentRef.current = ''
 
-          // Fallback: blocking send
+          // Fallback: blocking send (async/await avoids deeply nested .then() callbacks)
           if (fallbackAbortRef.current) fallbackAbortRef.current.abort()
           fallbackAbortRef.current = new AbortController()
-          fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/send`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: trimmed, ...(roomId ? { room_id: roomId } : {}) }),
-            signal: fallbackAbortRef.current.signal,
-          })
-            .then((r) => r.json())
-            .then((data) => {
-              if (data.success && data.response) {
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: `assistant-${Date.now()}`,
-                    role: 'assistant',
-                    content: data.response,
-                    timestamp: Date.now(),
-                    tools: [],
-                  },
-                ])
-              } else {
-                setError(data.error || err || 'Failed to get response')
-              }
+          try {
+            const r = await fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/send`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: trimmed, ...(roomId ? { room_id: roomId } : {}) }),
+              signal: fallbackAbortRef.current.signal,
             })
-            .catch(() => setError(err || 'Failed to send message'))
-            .finally(() => {
-              setIsSending(false)
-              setStreamingMessageId(null)
-            })
+            const data = await r.json()
+            if (data.success && data.response) {
+              setMessages(makeAppendAssistantMessage(data.response))
+            } else {
+              setError(data.error || err || 'Failed to get response')
+            }
+          } catch {
+            setError(err || 'Failed to send message')
+          } finally {
+            setIsSending(false)
+            setStreamingMessageId(null)
+          }
         },
       })
     },

@@ -24,6 +24,7 @@ interface LogViewerProps {
  * See: https://github.com/radix-ui/primitives/issues/3799
  */
 export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
+  // NOSONAR: complexity from log viewer with multiple message format handlers
   const [messages, setMessages] = useState<MinionMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

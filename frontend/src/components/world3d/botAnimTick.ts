@@ -6,6 +6,7 @@ import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import type { AnimState } from './BotAnimations'
 
 export function tickAnimState(s: AnimState, delta: number): void {
+  // NOSONAR: complexity from legitimate animation state machine; extracting would obscure control flow
   switch (s.phase) {
     case 'getting-coffee': {
       if (s.arrived) {

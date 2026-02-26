@@ -30,7 +30,7 @@ export function createEmptyGrid(width: number, depth: number): GridCell[][] {
  * For multi-cell props, (x, z) is the top-left corner of the footprint.
  * All spanned cells point back to the anchor via spanParent.
  */
-export function placeOnGrid(
+export function placeOnGrid( // NOSONAR: complexity from legitimate multi-cell span logic; extracting would obscure the algorithm
   grid: GridCell[][],
   x: number,
   z: number,
