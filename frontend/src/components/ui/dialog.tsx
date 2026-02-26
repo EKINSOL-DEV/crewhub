@@ -272,6 +272,9 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         ref={dialogRef}
         onClose={handleDialogClose}
         onClick={handleBackdropClick}
+        onKeyDown={(e) => {
+          if (e.target === e.currentTarget && e.key === 'Escape') handleDialogClose()
+        }}
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         className="

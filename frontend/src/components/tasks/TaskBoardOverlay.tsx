@@ -307,6 +307,16 @@ export function TaskBoardOverlay({
       ref={dialogRef}
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
+      onKeyDown={(e) => {
+        if (
+          e.key === 'Escape' &&
+          !showCreateForm &&
+          !editingTask &&
+          !showRunOrSelfDialog &&
+          !showSpawnDialogForDrop
+        )
+          onOpenChange(false)
+      }}
       className="
         fixed inset-0 z-[60] m-0 h-screen w-screen max-h-none max-w-none
         bg-transparent p-0

@@ -118,6 +118,10 @@ function AgentDetailPanel({
         className={`absolute inset-0 transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
         onClick={handleClose}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') handleClose()
+        }}
+        role="presentation"
       />
 
       {/* Slide-in Panel */}
@@ -344,6 +348,11 @@ export function DevDesigns() {
             <div
               key={agent.name}
               onClick={() => setSelectedAgent(agent)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setSelectedAgent(agent)
+              }}
+              role="button"
+              tabIndex={0}
               className={`rounded-2xl p-6 transition-all hover:scale-[1.02] cursor-pointer
                 ${darkBg ? 'bg-gray-800' : 'bg-white shadow-lg'}`}
             >

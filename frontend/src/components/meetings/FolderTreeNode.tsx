@@ -71,7 +71,9 @@ export function FolderTreeNode({
       <div
         className="pl-2 py-1 cursor-pointer hover:bg-muted/30 rounded text-sm font-medium transition-colors"
         onClick={() => setExpanded(!expanded)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpanded(!expanded) }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') setExpanded(!expanded)
+        }}
         role="button"
         tabIndex={0}
       >

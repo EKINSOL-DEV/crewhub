@@ -221,6 +221,11 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
               animation: 'fadeInUp 0.25s ease-out',
             }}
             onClick={clearError}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') clearError()
+            }}
+            role="button"
+            tabIndex={0}
           >
             <span>⚠️</span>
             <span>{drag.error}</span>
