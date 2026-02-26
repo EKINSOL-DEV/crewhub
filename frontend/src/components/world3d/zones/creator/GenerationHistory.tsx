@@ -263,8 +263,8 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
               <span className="fpm-history-field-label" style={{ color: '#eab308' }}>
                 Tool Calls ({detail.toolCalls.length}):
               </span>
-              {detail.toolCalls.map((tc, i) => (
-                <div key={`tc-${i}`} style={{ fontSize: 10, color: '#888' }}>
+              {detail.toolCalls.map((tc) => (
+                <div key={`tc-${tc.name}-${tc.input}`} style={{ fontSize: 10, color: '#888' }}>
                   🔧 {tc.name}
                 </div>
               ))}

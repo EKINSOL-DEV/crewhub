@@ -19,7 +19,7 @@ export function ScientificCalculator() {
       </mesh>
       {Array.from({ length: 20 }).map((_, i) => (
         <mesh
-          key={`item-${i}`}
+          key={`item-${i % 4}-${Math.floor(i / 4)}`}
           position={[-0.06 + (i % 4) * 0.04, -0.04 - Math.floor(i / 4) * 0.035, 0.012]}
         >
           <boxGeometry args={[0.03, 0.025, 0.005]} />

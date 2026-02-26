@@ -19,7 +19,7 @@ export function CableTester() {
       </mesh>
       {Array.from({ length: 8 }).map((_, i) => (
         <mesh
-          key={`item-${i}`}
+          key={`item-${i % 4}-${Math.floor(i / 4)}`}
           position={[-0.02 + (i % 4) * 0.012, -0.04 - Math.floor(i / 4) * 0.02, 0.022]}
         >
           <sphereGeometry args={[0.004, 4, 4]} />

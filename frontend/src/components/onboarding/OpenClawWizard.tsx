@@ -658,9 +658,9 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
             <p className="text-sm font-medium">{testResult.message}</p>
             {testResult.hints.length > 0 && (
               <ul className="space-y-1 mt-2">
-                {testResult.hints.map((hint, i) => (
+                {testResult.hints.map((hint) => (
                   <li
-                    key={`hint-${i}`}
+                    key={`hint-${hint}`}
                     className="text-xs text-muted-foreground flex items-start gap-1.5"
                   >
                     <span className="text-primary mt-0.5">→</span>

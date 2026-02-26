@@ -709,7 +709,7 @@ function PropGeneratorTab() {
             >
               {thinkingLines.map((line, i) => (
                 <div
-                  key={`line-${i}`}
+                  key={`line-${line.type}-${line.text}`}
                   style={{
                     color: getLineColor(line, i === thinkingLines.length - 1),
                     paddingLeft: line.type === 'thinking' ? 12 : 0,
