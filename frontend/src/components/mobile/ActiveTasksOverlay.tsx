@@ -27,7 +27,7 @@ function escapeHtml(str: string): string {
 
 // ── Task Logs View ─────────────────────────────────────────────
 
-function TaskLogsView({ session, onBack }: { session: CrewSession; onBack: () => void }) {
+function TaskLogsView({ session, onBack }: Readonly<{ session: CrewSession; onBack: () => void }>) {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -395,7 +395,7 @@ function TasksListView({
   )
 }
 
-function TaskRow({ session, onClick }: { session: CrewSession; onClick: () => void }) {
+function TaskRow({ session, onClick }: Readonly<{ session: CrewSession; onClick: () => void }>) {
   const uuid = session.key.split(':subagent:')[1]?.slice(0, 8) || '?'
   const label = session.label || `Subagent ${uuid}`
   const active = isActive(session)
@@ -492,7 +492,7 @@ export function ActiveTasksOverlay({
 
 // ── Header Badge Button ────────────────────────────────────────
 
-export function ActiveTasksBadge({ count, onClick }: { count: number; onClick: () => void }) {
+export function ActiveTasksBadge({ count, onClick }: Readonly<{ count: number; onClick: () => void }>) {
   if (count === 0) return null
 
   return (

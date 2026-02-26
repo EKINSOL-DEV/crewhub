@@ -351,7 +351,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: Readon
 
 // ── Empty state ────────────────────────────────────────────────────────────────
 
-function EmptyBrowserState({ onNavigate }: { onNavigate: (url: string) => void }) {
+function EmptyBrowserState({ onNavigate }: Readonly<{ onNavigate: (url: string) => void }>) {
   const suggestions = [
     { label: 'Google', url: 'https://www.google.com', icon: '🔍' },
     { label: 'GitHub', url: 'https://github.com', icon: '🐙' },

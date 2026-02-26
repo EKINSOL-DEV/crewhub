@@ -129,7 +129,7 @@ function ContentBlockView({
 
 // ── Message Bubble ────────────────────────────────────────────
 
-function MessageBubble({ message, filterText }: { message: SessionMessage; filterText?: string }) {
+function MessageBubble({ message, filterText }: Readonly<{ message: SessionMessage; filterText?: string }>) {
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
   let messageRole: string

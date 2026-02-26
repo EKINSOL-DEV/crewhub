@@ -11,7 +11,7 @@ interface FileTreeProps {
   readonly loading?: boolean
 }
 
-function FileIcon({ type, name }: { type: string; name: string }) {
+function FileIcon({ type, name }: Readonly<{ type: string; name: string }>) {
   if (type === 'directory') return <span style={{ fontSize: 13 }}>📁</span>
   if (name.endsWith('.md')) return <span style={{ fontSize: 13 }}>📝</span>
   if (name.endsWith('.json')) return <span style={{ fontSize: 13 }}>📋</span>

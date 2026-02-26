@@ -143,7 +143,7 @@ function ConfigField({
 
 // ─── Thresholds & Timing Section ──────────────────────────────────────────────
 
-function ThresholdsTimingSection({ config }: { config: Record<string, number> }) {
+function ThresholdsTimingSection({ config }: Readonly<{ config: Record<string, number> }>) {
   return (
     <div className="space-y-5">
       {/* Status Thresholds */}

@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 
 // ─── Section wrapper ─────────────────────────────────────────────────────────
 
-export function Section({ title, children }: { title: string; children: React.ReactNode }) {
+export function Section({ title, children }: Readonly<{ title: string; children: React.ReactNode }>) {
   return (
     <div className="rounded-xl border bg-card/80 p-6 space-y-5 shadow-sm">
       <h2 className="text-base font-semibold tracking-tight">{title}</h2>

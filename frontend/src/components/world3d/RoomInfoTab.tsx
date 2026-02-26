@@ -210,7 +210,7 @@ export function RoomInfoTab({
 }
 
 // Shared helpers
-function SectionHeader({ children }: { children: React.ReactNode }) {
+function SectionHeader({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div
       style={{
@@ -226,7 +226,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
   )
 }
 
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+function InfoRow({ label, children }: Readonly<{ label: string; children: React.ReactNode }>) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>{label}</span>

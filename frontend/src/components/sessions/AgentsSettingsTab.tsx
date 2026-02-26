@@ -100,7 +100,7 @@ async function generateAgentBio(agentId: string): Promise<string> {
 
 // ── Color preview sphere (CSS 3D-ish) ────────────────────────────────
 
-function ColorSphere({ color, size = 48 }: { color: string; size?: number }) {
+function ColorSphere({ color, size = 48 }: Readonly<{ color: string; size?: number }>) {
   return (
     <div
       className="rounded-full shrink-0 shadow-lg"

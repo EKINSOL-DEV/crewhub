@@ -183,7 +183,7 @@ function ActionItemCard({
 
 // ─── Transcript View ────────────────────────────────────────────
 
-function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
+function TranscriptView({ rounds }: Readonly<{ rounds: MeetingRound[] }>) {
   if (rounds.length === 0) {
     return (
       <div

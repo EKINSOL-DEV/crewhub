@@ -412,7 +412,7 @@ const DOC_MD_COMPONENTS = {
 
 // ── Markdown Viewer (react-markdown) ───────────────────────────
 
-function MarkdownViewer({ content, projectId }: { content: string; projectId: string }) {
+function MarkdownViewer({ content, projectId }: Readonly<{ content: string; projectId: string }>) {
   return (
     <ProjectIdContext.Provider value={projectId}>
       <div className="md-content">

@@ -34,7 +34,7 @@ function safeGetZoneOrDefault(zoneId: string | null | undefined): Zone {
   return zoneRegistry.getDefault()
 }
 
-export function ZoneProvider({ children }: { children: ReactNode }) {
+export function ZoneProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [activeZone, setActiveZone] = useState<Zone>(() => {
     // Priority:
     // 1) URL (/zone/:zoneId)

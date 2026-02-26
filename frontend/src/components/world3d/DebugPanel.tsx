@@ -4,7 +4,7 @@ import { useRooms } from '@/hooks/useRooms'
 
 // ─── Section Header ─────────────────────────────────────────────
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({ title }: Readonly<{ title: string }>) {
   return (
     <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mt-2 mb-1 border-b border-gray-700 pb-1">
       {title}

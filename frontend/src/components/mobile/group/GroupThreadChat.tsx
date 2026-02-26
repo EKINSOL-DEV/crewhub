@@ -39,7 +39,7 @@ function escapeHtml(str: string): string {
 }
 // ── Message Bubble ─────────────────────────────────────────────
 
-function GroupMessageBubble({ msg }: { msg: ThreadMessage }) {
+function GroupMessageBubble({ msg }: Readonly<{ msg: ThreadMessage }>) {
   const isUser = msg.role === 'user'
   const isSystem = msg.role === 'system'
 

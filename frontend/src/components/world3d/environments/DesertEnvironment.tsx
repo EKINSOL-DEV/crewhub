@@ -14,7 +14,7 @@ const DECORATION_MAX_DIST = 80 // cull decorations beyond this radius
 
 // ─── Animated Tumbleweed (max 6, kept individual) ────────────────
 
-function Tumbleweed({ position, phase }: { position: [number, number, number]; phase: number }) {
+function Tumbleweed({ position, phase }: Readonly<{ position: [number, number, number]; phase: number }>) {
   const ref = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
     if (!ref.current) return

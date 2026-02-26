@@ -1,4 +1,4 @@
-export function StepProgress({ step, total }: { step: number; total: number }) {
+export function StepProgress({ step, total }: Readonly<{ step: number; total: number }>) {
   return (
     <div className="flex items-center gap-2">
       {Array.from({ length: total }, (_, i) => (

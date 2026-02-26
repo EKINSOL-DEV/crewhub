@@ -73,7 +73,7 @@ function BotEye({
   )
 }
 
-function BotMouth({ status }: { status: AgentStatus }) {
+function BotMouth({ status }: Readonly<{ status: AgentStatus }>) {
   const ref = useRef<THREE.Group>(null)
 
   useFrame(({ clock }) => {
@@ -129,7 +129,7 @@ function BotMouth({ status }: { status: AgentStatus }) {
 
 // Thinking indicators (floating dots above head when active)
 // Note: All other Three.js objects in this file are JSX-declared; R3F handles their disposal.
-function ThinkingDots({ visible }: { visible: boolean }) {
+function ThinkingDots({ visible }: Readonly<{ visible: boolean }>) {
   const ref = useRef<THREE.Group>(null)
 
   useFrame(({ clock }) => {
@@ -157,7 +157,7 @@ function ThinkingDots({ visible }: { visible: boolean }) {
   )
 }
 
-function ExpressiveBot({ config, status }: { config: BotVariantConfig; status: AgentStatus }) {
+function ExpressiveBot({ config, status }: Readonly<{ config: BotVariantConfig; status: AgentStatus }>) {
   const groupRef = useRef<THREE.Group>(null)
   const darkColor = new THREE.Color(config.color).multiplyScalar(0.65)
   const darkHex = '#' + darkColor.getHexString()

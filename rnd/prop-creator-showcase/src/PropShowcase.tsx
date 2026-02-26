@@ -503,12 +503,12 @@ const categories: Category[] = [
   },
 ];
 
-function PropCard({ name, Component, color, index }: {
+function PropCard({ name, Component, color, index }: Readonly<{
   name: string;
   Component: React.FC;
   color: string;
   index: number;
-}) {
+}>) {
   const [hovered, setHovered] = useState(false);
 
   return (

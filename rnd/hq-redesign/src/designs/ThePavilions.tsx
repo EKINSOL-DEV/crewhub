@@ -16,9 +16,9 @@ import { Workstation, MeetingTable, Sofa, CoffeeTable, Plant, TallPlant, Floor, 
  * - Each building has unique materiality
  */
 
-function SkyBridge({ from, to, height, width = 1.5 }: {
+function SkyBridge({ from, to, height, width = 1.5 }: Readonly<{
   from: [number, number, number], to: [number, number, number], height: number, width?: number
-}) {
+}>) {
   const dx = to[0] - from[0], dz = to[2] - from[2]
   const len = Math.hypot(dx, dz)
   const mx = (from[0] + to[0]) / 2, mz = (from[2] + to[2]) / 2
@@ -45,14 +45,14 @@ function SkyBridge({ from, to, height, width = 1.5 }: {
 
 function Pavilion({
   position, size, floors, color, roofType = 'flat', children
-}: {
+}: Readonly<{
   position: [number, number, number]
   size: [number, number] // width, depth
   floors: number
   color: string
   roofType?: 'flat' | 'angled' | 'butterfly'
   children?: React.ReactNode
-}) {
+}>) {
   const floorH = 3
   const [w, d] = size
 

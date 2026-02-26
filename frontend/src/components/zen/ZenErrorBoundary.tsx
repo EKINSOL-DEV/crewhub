@@ -78,11 +78,11 @@ export class ZenErrorBoundary extends Component<ZenErrorBoundaryProps, ZenErrorB
 
 // ── Loading Skeleton Components ───────────────────────────────────
 
-export function ZenSkeleton({ className = '' }: { className?: string }) {
+export function ZenSkeleton({ className = '' }: Readonly<{ className?: string }>) {
   return <div className={`zen-skeleton ${className}`} />
 }
 
-export function ZenSkeletonText({ lines = 3, short = false }: { lines?: number; short?: boolean }) {
+export function ZenSkeletonText({ lines = 3, short = false }: Readonly<{ lines?: number; short?: boolean }>) {
   return (
     <div className="zen-skeleton-text-container">
       {Array.from({ length: lines }).map((_, i) => {
@@ -110,7 +110,7 @@ export function ZenSkeletonText({ lines = 3, short = false }: { lines?: number; 
   )
 }
 
-export function ZenSkeletonAvatar({ size = 32 }: { size?: number }) {
+export function ZenSkeletonAvatar({ size = 32 }: Readonly<{ size?: number }>) {
   return <div className="zen-skeleton zen-skeleton-avatar" style={{ width: size, height: size }} />
 }
 
@@ -126,7 +126,7 @@ export function ZenSkeletonSessionItem() {
   )
 }
 
-export function ZenSkeletonMessageBubble({ isUser = false }: { isUser?: boolean }) {
+export function ZenSkeletonMessageBubble({ isUser = false }: Readonly<{ isUser?: boolean }>) {
   return (
     <div className={`zen-skeleton-message ${isUser ? 'zen-skeleton-message-user' : ''}`}>
       <ZenSkeletonText lines={2} short={isUser} />

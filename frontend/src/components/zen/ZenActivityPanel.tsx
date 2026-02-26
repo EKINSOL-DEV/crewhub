@@ -108,7 +108,7 @@ function ActiveTaskItem({
 
 // ── Event Log Item ────────────────────────────────────────────
 
-function EventLogItem({ event }: { event: ActivityEvent }) {
+function EventLogItem({ event }: Readonly<{ event: ActivityEvent }>) {
   const typeColors: Record<string, string> = {
     created: 'var(--zen-success)',
     updated: 'var(--zen-info)',

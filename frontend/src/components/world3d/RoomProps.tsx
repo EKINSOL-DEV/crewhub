@@ -135,7 +135,7 @@ function ServerRack({
 }
 
 /** Blinking LED for server rack */
-function ServerLED({ position, color }: { position: [number, number, number]; color: string }) {
+function ServerLED({ position, color }: Readonly<{ position: [number, number, number]; color: string }>) {
   const ref = useRef<THREE.Mesh>(null)
   // Pre-compute stable blink speed to avoid Math.random() in useFrame
   const blinkSpeed = useMemo(() => 2 + Math.random() * 0.5, [])
@@ -193,7 +193,7 @@ function DeskLamp({
 }
 
 /** Cable mess on floor */
-function CableMess({ position }: { position: [number, number, number] }) {
+function CableMess({ position }: Readonly<{ position: [number, number, number] }>) {
   const cableToon = getToonMaterialProps('#222222')
   const cableRedToon = getToonMaterialProps('#993333')
   const cableBlueToon = getToonMaterialProps('#334499')
@@ -891,7 +891,7 @@ function SatelliteDish({
 }
 
 /** Antenna tower (tall thin cylinder with rings) */
-function AntennaTower({ position }: { position: [number, number, number] }) {
+function AntennaTower({ position }: Readonly<{ position: [number, number, number] }>) {
   const poleToon = getToonMaterialProps('#777777')
   const ringToon = getToonMaterialProps('#999999')
 
@@ -970,7 +970,7 @@ function Headset({
 }
 
 /** Signal wave rings (animated, transparent) */
-function SignalWaves({ position }: { position: [number, number, number] }) {
+function SignalWaves({ position }: Readonly<{ position: [number, number, number] }>) {
   const ring1Ref = useRef<THREE.Mesh>(null)
   const ring2Ref = useRef<THREE.Mesh>(null)
   const ring3Ref = useRef<THREE.Mesh>(null)
@@ -1011,7 +1011,7 @@ function SignalWaves({ position }: { position: [number, number, number] }) {
 }
 
 /** Status lights (colored spheres) */
-function StatusLights({ position }: { position: [number, number, number] }) {
+function StatusLights({ position }: Readonly<{ position: [number, number, number] }>) {
   const lights = [
     { color: '#44CC44', x: -0.15 },
     { color: '#CCCC44', x: 0 },
@@ -1074,7 +1074,7 @@ function FilingCabinet({
 }
 
 /** Fire extinguisher */
-function FireExtinguisher({ position }: { position: [number, number, number] }) {
+function FireExtinguisher({ position }: Readonly<{ position: [number, number, number] }>) {
   const bodyToon = getToonMaterialProps('#CC2222')
   const topToon = getToonMaterialProps('#444444')
 

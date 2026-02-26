@@ -74,10 +74,10 @@ const wallFragmentShader = `
   }
 `
 
-export function WallProvider({ children, buildingCenter = [0, 2, 0] as [number, number, number] }: {
+export function WallProvider({ children, buildingCenter = [0, 2, 0] as [number, number, number] }: Readonly<{
   children: React.ReactNode
   buildingCenter?: [number, number, number]
-}) {
+}>) {
   const wallsRef = useRef<Set<THREE.Mesh>>(new Set())
   const raycaster = useRef(new THREE.Raycaster())
   const centerVec = useRef(new THREE.Vector3(...buildingCenter))

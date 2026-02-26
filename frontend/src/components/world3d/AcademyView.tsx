@@ -9,7 +9,7 @@ const MVP_ITEMS = [
   { emoji: '🏅', label: 'Certificates' },
 ]
 
-export function AcademyView({ className }: { className?: string }) {
+export function AcademyView({ className }: Readonly<{ className?: string }>) {
   return (
     <ZoneLandingView zone={ACADEMY} mvpItems={MVP_ITEMS} className={className} hideCenterMarker />
   )

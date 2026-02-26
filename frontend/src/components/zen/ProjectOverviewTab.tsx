@@ -251,7 +251,7 @@ export function ProjectOverviewTab({
   )
 }
 
-function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
+function StatCard({ label, value, icon }: Readonly<{ label: string; value: number; icon: string }>) {
   return (
     <div
       style={{
@@ -268,7 +268,7 @@ function StatCard({ label, value, icon }: { label: string; value: number; icon: 
   )
 }
 
-function TaskBadge({ count, label, color }: { count: number; label: string; color: string }) {
+function TaskBadge({ count, label, color }: Readonly<{ count: number; label: string; color: string }>) {
   return (
     <div
       style={{

@@ -74,7 +74,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 // ── Provider ──────────────────────────────────────────────────────
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
   const zen = useZenTheme()
   const current = zen.currentTheme
 
