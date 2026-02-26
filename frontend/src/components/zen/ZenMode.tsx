@@ -411,16 +411,16 @@ export function ZenMode({
     Object.entries(vars).forEach(([key, value]) => {
       container.style.setProperty(key, value)
     })
-    container.setAttribute('data-zen-theme', theme.currentTheme.id)
-    container.setAttribute('data-zen-theme-type', theme.currentTheme.type)
+    container.dataset.zenTheme = theme.currentTheme.id
+    container.dataset.zenThemeType = theme.currentTheme.type
   }, [theme.currentTheme])
 
   // Clean up theme on unmount
   useEffect(() => {
     return () => {
       const root = document.documentElement
-      root.removeAttribute('data-zen-theme')
-      root.removeAttribute('data-zen-theme-type')
+      delete root.dataset.zenTheme
+      delete root.dataset.zenThemeType
     }
   }, [])
 

@@ -43,7 +43,7 @@ describe('splitSessionsForDisplay', () => {
       makeMockSession(`agent:main:subagent:${i}`, now - i * 1000)
     )
 
-    const { visibleSessions, parkingSessions } = splitSessionsForDisplay(
+    const { visibleSessions } = splitSessionsForDisplay(
       sessions,
       () => true,
       600, // idle threshold

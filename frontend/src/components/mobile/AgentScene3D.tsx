@@ -249,7 +249,6 @@ function ExpressiveBot({ config, status }: { config: BotVariantConfig; status: A
 
 interface AgentScene3DProps {
   readonly botConfig: BotVariantConfig
-  readonly agentName: string
   readonly agentStatus: AgentStatus
   readonly mini?: boolean
 }

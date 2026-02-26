@@ -12,7 +12,6 @@ import { formatTimestamp, formatTokens, formatMessageTime } from '@/lib/formatte
 interface ZenSessionDetailPanelProps {
   readonly session: CrewSession
   readonly onClose: () => void
-  readonly onOpenChat?: (sessionKey: string, agentName: string, agentIcon?: string) => void
 }
 
 // ── Format helpers (local) ────────────────────────────────────────

@@ -49,7 +49,7 @@ export function renderMarkdown(
   // Code blocks (protect first — already escaped above, no double-escape)
   html = html.replaceAll(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
     const style = codeBlockStyle ?? ''
-    return `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ` style="${style}"` : ''}><code>${code.trim()}</code></pre>`
+    return `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ' style="' + style + '"' : ''}><code>${code.trim()}</code></pre>`
   })
 
   // Inline code (protect from other replacements — already escaped above)
@@ -58,7 +58,7 @@ export function renderMarkdown(
     const style = inlineCodeStyle ?? ''
     const placeholder = `%%INLINE_CODE_${inlineCodePlaceholders.length}%%`
     inlineCodePlaceholders.push(
-      `<code class="chat-md-inline-code"${style ? ` style="${style}"` : ''}>${code}</code>`
+      `<code class="chat-md-inline-code"${style ? ' style="' + style + '"' : ''}>${code}</code>`
     )
     return placeholder
   })

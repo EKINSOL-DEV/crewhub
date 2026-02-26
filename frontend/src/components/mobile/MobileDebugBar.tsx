@@ -11,8 +11,7 @@ const APP_VERSION = '0.12.0'
 
 function isTauri(): boolean {
   return (
-    typeof (window as any).__TAURI_INTERNALS__ !== 'undefined' ||
-    typeof (window as any).__TAURI__ !== 'undefined'
+    (window as any).__TAURI_INTERNALS__ !== undefined || (window as any).__TAURI__ !== undefined
   )
 }
 

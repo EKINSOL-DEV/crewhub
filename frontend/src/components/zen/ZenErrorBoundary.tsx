@@ -229,7 +229,7 @@ export function ZenConnectionStatus({
       <span className="zen-connection-status-text">
         {reconnecting
           ? 'Reconnecting...'
-          : `Disconnected${lastConnected ? ` at ${formatTime(lastConnected)}` : ''}`}
+          : `Disconnected${lastConnected ? ' at ' + formatTime(lastConnected) : ''}`}
       </span>
     </div>
   )

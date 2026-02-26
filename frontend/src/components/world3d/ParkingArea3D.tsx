@@ -1,5 +1,4 @@
-import { Html } from '@react-three/drei'
-import { Float } from '@react-three/drei'
+import { Html, Float } from '@react-three/drei'
 import { Bench } from './props/Bench'
 import { CoffeeMachine } from './props/CoffeeMachine'
 import { WaterCooler } from './props/WaterCooler'

@@ -5,10 +5,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { api } from '@/lib/api'
-import type { SessionMessage, SessionContentBlock } from '@/lib/api'
+import { api, type SessionMessage, type SessionContentBlock, type CrewSession } from '@/lib/api'
 import type { ActiveTask } from '@/hooks/useActiveTasks'
-import type { CrewSession } from '@/lib/api'
 import { FullscreenDetailView } from './FullscreenDetailView'
 import {
   formatTimestamp,

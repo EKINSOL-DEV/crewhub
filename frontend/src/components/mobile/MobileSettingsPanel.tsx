@@ -111,7 +111,7 @@ export function applyFontSize(size: FontSize): void {
     large: '17px',
   }
   document.documentElement.style.setProperty('--mobile-font-size', sizes[size])
-  document.documentElement.setAttribute('data-font-size', size)
+  document.documentElement.dataset.fontSize = size
 }
 
 /**
@@ -145,8 +145,7 @@ export function initAppSettings(): void {
 
 function isTauri(): boolean {
   return (
-    typeof (window as any).__TAURI_INTERNALS__ !== 'undefined' ||
-    typeof (window as any).__TAURI__ !== 'undefined'
+    (window as any).__TAURI_INTERNALS__ !== undefined || (window as any).__TAURI__ !== undefined
   )
 }
 

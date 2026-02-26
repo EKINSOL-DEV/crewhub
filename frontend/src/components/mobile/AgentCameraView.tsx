@@ -170,12 +170,7 @@ interface AgentMiniViewportProps {
   readonly botConfig: BotVariantConfig
 }
 
-export function AgentMiniViewport({
-  isVisible,
-  agentName,
-  agentStatus,
-  botConfig,
-}: AgentMiniViewportProps) {
+export function AgentMiniViewport({ isVisible, agentStatus, botConfig }: AgentMiniViewportProps) {
   const [has3D] = useState(() => canRender3D())
   const [size, setSize] = useState<ViewportSize>('small')
   const info = getStatusInfo(agentStatus)
@@ -223,12 +218,7 @@ export function AgentMiniViewport({
               </div>
             }
           >
-            <AgentScene3D
-              botConfig={botConfig}
-              agentName={agentName}
-              agentStatus={agentStatus}
-              mini
-            />
+            <AgentScene3D botConfig={botConfig} agentStatus={agentStatus} mini />
           </Suspense>
         ) : (
           <StaticAgentAvatar config={botConfig} status={agentStatus} />
@@ -289,7 +279,6 @@ export function AgentMiniViewport({
 
 interface AgentCameraViewProps {
   readonly isOpen: boolean
-  readonly onClose: () => void
   readonly agentName: string
   readonly agentStatus: AgentStatus
   readonly botConfig: BotVariantConfig
