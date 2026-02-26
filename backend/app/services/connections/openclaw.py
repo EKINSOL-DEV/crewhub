@@ -166,42 +166,44 @@ class OpenClawConnection(
     # ---
     # Background listener
     # ---
-    async def _listen_loop(  # noqa: C901 - protocol event loop with reconnection/dispatch branches
-        self,
-    ) -> None:
+    def _dispatch_response(self, msg: dict[str, Any]) -> None:
+        req_id = msg.get("id")
+        q = self._response_queues.get(req_id)
+        if q is None:
+            return
+        try:
+            q.put_nowait(msg)
+        except asyncio.QueueFull:
+            logger.warning(f"Response queue full for {req_id}")
+
+    def _dispatch_event_handlers(self, event_name: str, payload: dict[str, Any]) -> None:
+        if event_name.startswith("session."):
+            self._handle_session_event(event_name, payload)
+        for handler in self._event_handlers.get(event_name, []):
+            try:
+                if asyncio.iscoroutinefunction(handler):
+                    _handler_task = asyncio.create_task(handler(payload))
+                    _handler_task  # noqa: F841, B018
+                else:
+                    handler(payload)
+            except Exception as exc:
+                logger.error(f"Event handler error: {exc}")
+
+    def _dispatch_message(self, msg: dict[str, Any]) -> None:
+        msg_type = msg.get("type")
+        if msg_type == "res":
+            self._dispatch_response(msg)
+            return
+        if msg_type == "event":
+            self._dispatch_event_handlers(msg.get("event", ""), msg.get("payload", {}))
+
+    async def _listen_loop(self) -> None:
         """Receive and route messages from the Gateway."""
         logger.debug(f"Listener loop started for {self.name}")
         try:
             while self._ws_is_open():
                 try:
-                    raw = await self.ws.recv()
-                    msg = json.loads(raw)
-                    msg_type = msg.get("type")
-
-                    if msg_type == "res":
-                        req_id = msg.get("id")
-                        q = self._response_queues.get(req_id)
-                        if q is not None:
-                            try:
-                                q.put_nowait(msg)
-                            except asyncio.QueueFull:
-                                logger.warning(f"Response queue full for {req_id}")
-
-                    elif msg_type == "event":
-                        event_name = msg.get("event", "")
-                        payload = msg.get("payload", {})
-                        if event_name.startswith("session."):
-                            self._handle_session_event(event_name, payload)
-                        for handler in self._event_handlers.get(event_name, []):
-                            try:
-                                if asyncio.iscoroutinefunction(handler):
-                                    _handler_task = asyncio.create_task(handler(payload))
-                                    _handler_task  # noqa: F841, B018 — prevent premature GC
-                                else:
-                                    handler(payload)
-                            except Exception as exc:
-                                logger.error(f"Event handler error: {exc}")
-
+                    self._dispatch_message(json.loads(await self.ws.recv()))
                 except ConnectionClosed:
                     logger.warning(f"Gateway {self.name} connection closed by server")
                     break
@@ -210,11 +212,9 @@ class OpenClawConnection(
                 except Exception as exc:
                     logger.error(f"Listener error: {exc}")
                     break
-
         finally:
             old_status = self._status
             self.status = ConnectionStatus.DISCONNECTED
-
             disconnect_err = {
                 "type": "res",
                 "ok": False,
@@ -226,13 +226,11 @@ class OpenClawConnection(
                 except asyncio.QueueFull:
                     pass
             self._response_queues.clear()
-
             for sq in list(self._stream_queues.values()):
                 try:
                     sq.put_nowait(("error", "DISCONNECTED"))
                 except Exception:
                     pass
-
             logger.info(f"Listener loop ended for {self.name}")
             if self.auto_reconnect and old_status == ConnectionStatus.CONNECTED:
                 self._schedule_reconnect()

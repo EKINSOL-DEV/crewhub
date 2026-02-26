@@ -46,42 +46,40 @@ async def _find_connected_openclaw(manager) -> Optional[Any]:
     return None
 
 
+def _assistant_block_events(block: dict) -> list:
+    bt = block.get("type", "")
+    if bt == "thinking":
+        return [
+            ("thinking", {"text": chunk.strip()}) for chunk in block.get("thinking", "").split("\n") if chunk.strip()
+        ]
+    if bt == "text" and block.get("text", ""):
+        return [("text", {"text": block.get("text", "")[:200]})]
+    if bt == "tool_use":
+        tool_name = block.get("name", "unknown")
+        tool_input = block.get("input", {})
+        return [("tool", {"name": tool_name, "input": str(tool_input)[:200], "message": f"🔧 Using tool: {tool_name}"})]
+    return []
+
+
 def _extract_transcript_events(entry: dict) -> list:
     """Parse a JSONL transcript entry and return a list of (event_type, data) tuples."""
-    events: list = []
     role = entry.get("role", "")
     content = entry.get("content", "")
-
     if role == "assistant" and isinstance(content, list):
+        events: list = []
         for block in content:
-            if not isinstance(block, dict):
-                continue
-            bt = block.get("type", "")
-            if bt == "thinking":
-                for chunk in block.get("thinking", "").split("\n"):
-                    chunk = chunk.strip()
-                    if chunk:
-                        events.append(("thinking", {"text": chunk}))
-            elif bt == "text":
-                text = block.get("text", "")
-                if text:
-                    events.append(("text", {"text": text[:200]}))
-            elif bt == "tool_use":
-                tool_name = block.get("name", "unknown")
-                tool_input = block.get("input", {})
-                events.append(
-                    (
-                        "tool",
-                        {"name": tool_name, "input": str(tool_input)[:200], "message": f"🔧 Using tool: {tool_name}"},
-                    )
-                )
-    elif role == "assistant" and isinstance(content, str) and content:
-        events.append(("text", {"text": content[:200]}))
-    elif role == "user" and isinstance(content, list):
-        for block in content:
-            if isinstance(block, dict) and block.get("type") == "tool_result":
-                events.append(("tool_result", {"message": "📋 Tool result received"}))
-    return events
+            if isinstance(block, dict):
+                events.extend(_assistant_block_events(block))
+        return events
+    if role == "assistant" and isinstance(content, str) and content:
+        return [("text", {"text": content[:200]})]
+    if role == "user" and isinstance(content, list):
+        return [
+            ("tool_result", {"message": "📋 Tool result received"})
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "tool_result"
+        ]
+    return []
 
 
 def _extract_final_raw_text(final_result: Any) -> Optional[str]:

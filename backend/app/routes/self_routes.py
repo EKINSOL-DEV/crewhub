@@ -142,6 +142,84 @@ async def _get_room_id(session_key: str) -> Optional[str]:
             return row["room_id"] if row else None
 
 
+def _validate_identify_access(key: APIKeyInfo, agent_id: str) -> None:
+    if key.agent_id and key.agent_id != agent_id:
+        raise HTTPException(
+            status_code=403,
+            detail=f"API key is bound to agent_id '{key.agent_id}'. Cannot identify as '{agent_id}'.",
+        )
+
+
+async def _create_or_update_identity(body: IdentifyRequest, key: APIKeyInfo, now: int) -> bool:
+    agent_id = body.agent_id
+    session_key = body.session_key
+    created = False
+    async with get_db() as db:
+        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cursor:
+            agent_exists = await cursor.fetchone() is not None
+
+        if not agent_exists:
+            if not key.agent_id and not key.has_scope("manage"):
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Agent '{agent_id}' does not exist. Creating new agents requires 'manage' scope. Your scopes: {key.scopes}",
+                )
+            if not check_identity_creation_rate(key.key_id):
+                raise HTTPException(
+                    status_code=429,
+                    detail="Identity creation rate limit exceeded (max 10 per hour per key). Try again later.",
+                )
+            await db.execute(
+                """INSERT INTO agents (id, name, icon, color, agent_session_key,
+                   default_room_id, sort_order, is_pinned, auto_spawn, created_at, updated_at)
+                   VALUES (?, ?, '🤖', '#6b7280', ?, 'headquarters', 99, 0, 1, ?, ?)""",
+                (agent_id, agent_id.split(":")[-1].capitalize(), session_key, now, now),
+            )
+            await db.commit()
+            record_identity_creation(key.key_id, agent_id)
+            logger.info(f"Auto-created agent '{agent_id}' via identify")
+            created = True
+        else:
+            if not key.agent_id and not key.has_scope("manage"):
+                async with db.execute(
+                    "SELECT api_key_id FROM agent_identities WHERE agent_id = ? LIMIT 1", (agent_id,)
+                ) as cursor:
+                    existing = await cursor.fetchone()
+                if existing and existing["api_key_id"] != key.key_id:
+                    raise HTTPException(
+                        status_code=403, detail=f"Agent '{agent_id}' is owned by another key. Cannot claim."
+                    )
+            if session_key:
+                await db.execute(
+                    "UPDATE agents SET agent_session_key = ?, updated_at = ? WHERE id = ?",
+                    (session_key, now, agent_id),
+                )
+                await db.commit()
+
+        if session_key:
+            async with db.execute(
+                "SELECT api_key_id FROM agent_identities WHERE agent_id = ? AND session_key = ?",
+                (agent_id, session_key),
+            ) as cursor:
+                existing_binding = await cursor.fetchone()
+            if existing_binding and existing_binding["api_key_id"] != key.key_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Identity binding (agent_id={agent_id}, session_key={session_key}) is owned by another key. Cannot overwrite.",
+                )
+            await db.execute(
+                """INSERT INTO agent_identities (agent_id, session_key, api_key_id, runtime, bound_at, last_seen_at)
+                   VALUES (?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(agent_id, session_key) DO UPDATE SET
+                       runtime = excluded.runtime,
+                       last_seen_at = excluded.last_seen_at""",
+                (agent_id, session_key, key.key_id, body.runtime, now, now),
+            )
+            await db.commit()
+
+    return created
+
+
 # ── Routes ────────────────────────────────────────────────────────────
 
 
@@ -154,123 +232,19 @@ async def identify(
     body: IdentifyRequest,
     key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
 ):
-    """
-    Identify this agent to CrewHub.
-
-    Binds the caller's API key to an agent_id and session_key.
-    Creates the agent in the registry if it doesn't exist.
-    Idempotent: calling with the same data is a no-op.
-
-    Binding rules (Section 4.5 of masterplan):
-    - Bound key: can only operate as its bound agent_id
-    - Unbound self key: can only claim existing agent_id associated with this key
-    - Unbound manage+ key: can create new agent_ids (rate-limited)
-    """
-    agent_id = body.agent_id
-    session_key = body.session_key
+    """Identify this agent to CrewHub and upsert ownership bindings."""
     now = int(time.time() * 1000)
+    _validate_identify_access(key, body.agent_id)
+    created = await _create_or_update_identity(body, key, now)
 
-    # ── Rule 1: Bound keys lock identity ──
-    if key.agent_id and key.agent_id != agent_id:
-        raise HTTPException(
-            status_code=403,
-            detail=f"API key is bound to agent_id '{key.agent_id}'. Cannot identify as '{agent_id}'.",
-        )
-
-    # ── Check if agent_id exists ──
-    async with get_db() as db:
-        async with db.execute("SELECT id FROM agents WHERE id = ?", (agent_id,)) as cursor:
-            agent_exists = await cursor.fetchone() is not None
-
-        if not agent_exists:
-            # ── Rule 2: Unbound keys need manage+ to create new identities ──
-            if not key.agent_id and not key.has_scope("manage"):
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"Agent '{agent_id}' does not exist. "
-                    f"Creating new agents requires 'manage' scope. "
-                    f"Your scopes: {key.scopes}",
-                )
-
-            # ── Rule 4: Rate limit identity creation ──
-            if not check_identity_creation_rate(key.key_id):
-                raise HTTPException(
-                    status_code=429,
-                    detail=f"Identity creation rate limit exceeded (max {10} per hour per key). Try again later.",
-                )
-
-            # Auto-create agent in registry
-            await db.execute(
-                """INSERT INTO agents (id, name, icon, color, agent_session_key,
-                   default_room_id, sort_order, is_pinned, auto_spawn, created_at, updated_at)
-                   VALUES (?, ?, '🤖', '#6b7280', ?, 'headquarters', 99, 0, 1, ?, ?)""",
-                (agent_id, agent_id.split(":")[-1].capitalize(), session_key, now, now),
-            )
-            await db.commit()
-            record_identity_creation(key.key_id, agent_id)
-            created = True
-            logger.info(f"Auto-created agent '{agent_id}' via identify")
-        else:
-            created = False
-
-            # ── Rule: Unbound non-manage keys can only claim agent_ids they own ──
-            if not key.agent_id and not key.has_scope("manage"):
-                async with db.execute(
-                    "SELECT api_key_id FROM agent_identities WHERE agent_id = ? LIMIT 1",
-                    (agent_id,),
-                ) as cursor:
-                    existing = await cursor.fetchone()
-                if existing and existing["api_key_id"] != key.key_id:
-                    raise HTTPException(
-                        status_code=403,
-                        detail=f"Agent '{agent_id}' is owned by another key. Cannot claim.",
-                    )
-
-            # Update agent_session_key if session_key provided
-            if session_key:
-                await db.execute(
-                    "UPDATE agents SET agent_session_key = ?, updated_at = ? WHERE id = ?",
-                    (session_key, now, agent_id),
-                )
-                await db.commit()
-
-        # ── Insert/update agent_identity binding (ownership-safe) ──
-        if session_key:
-            # Check if binding exists with different key (prevent takeover)
-            async with db.execute(
-                "SELECT api_key_id FROM agent_identities WHERE agent_id = ? AND session_key = ?",
-                (agent_id, session_key),
-            ) as cursor:
-                existing_binding = await cursor.fetchone()
-
-            if existing_binding and existing_binding["api_key_id"] != key.key_id:
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"Identity binding (agent_id={agent_id}, session_key={session_key}) "
-                    f"is owned by another key. Cannot overwrite.",
-                )
-
-            await db.execute(
-                """INSERT INTO agent_identities (agent_id, session_key, api_key_id, runtime, bound_at, last_seen_at)
-                   VALUES (?, ?, ?, ?, ?, ?)
-                   ON CONFLICT(agent_id, session_key) DO UPDATE SET
-                       runtime = excluded.runtime,
-                       last_seen_at = excluded.last_seen_at""",
-                (agent_id, session_key, key.key_id, body.runtime, now, now),
-            )
-            await db.commit()
-
-    # ── Build response ──
+    session_key = body.session_key
+    metadata = await _get_agent_metadata(body.agent_id)
     display_name = await _get_display_name(session_key) if session_key else None
     room_id = await _get_room_id(session_key) if session_key else None
-    metadata = await _get_agent_metadata(agent_id)
-
-    # If no room assigned and agent has default_room_id, use that
-    if not room_id and metadata.get("default_room_id"):
-        room_id = metadata["default_room_id"]
+    room_id = room_id or metadata.get("default_room_id")
 
     return IdentifyResponse(
-        agent_id=agent_id,
+        agent_id=body.agent_id,
         session_key=session_key,
         scopes=key.scopes,
         display_name=display_name or metadata.get("name"),

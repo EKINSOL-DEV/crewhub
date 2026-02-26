@@ -31,9 +31,7 @@ interface RoomInfoPanelProps {
   readonly onClose: () => void
   readonly onBotClick?: (session: CrewSession) => void
   readonly onFocusRoom?: (roomId: string) => void
-  readonly onOpenTaskBoard?: (
-    projectId: string,
-    roomId: string,
+  readonly onOpenTaskBoard?: ( projectId: string, roomId: string,
     agents: Array<{ session_key: string; display_name: string }>
   ) => void
   readonly onOpenHQBoard?: () => void

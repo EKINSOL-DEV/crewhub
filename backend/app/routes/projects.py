@@ -75,6 +75,17 @@ def _md_file_item(base_dir: Path, resolved: Path, item: Path) -> dict | None:
     return {"name": item.name, "type": "file", "path": str(item.relative_to(base_dir))}
 
 
+def _tree_entry(base_dir: Path, resolved: Path, item: Path, depth: int) -> dict | None:
+    if item.name.startswith(".") or item.name in _SKIP_DIRS:
+        return None
+    if item.is_dir():
+        children = _build_project_md_tree(base_dir, item, resolved, depth + 1)
+        return {"name": item.name, "type": "folder", "children": children} if children else None
+    if item.is_file() and item.suffix == ".md":
+        return _md_file_item(base_dir, resolved, item)
+    return None
+
+
 def _build_project_md_tree(base_dir: Path, current_dir: Path, resolved: Path, depth: int = 0) -> list:
     """Recursively build a tree of markdown files (depth ≤ 4)."""
     if depth > 4:
@@ -84,20 +95,7 @@ def _build_project_md_tree(base_dir: Path, current_dir: Path, resolved: Path, de
     except PermissionError:
         return []
 
-    items = []
-    for item in entries:
-        if item.name.startswith(".") or item.name in _SKIP_DIRS:
-            continue
-        if item.is_dir():
-            children = _build_project_md_tree(base_dir, item, resolved, depth + 1)
-            if children:
-                items.append({"name": item.name, "type": "folder", "children": children})
-            continue
-        if item.is_file() and item.suffix == ".md":
-            file_item = _md_file_item(base_dir, resolved, item)
-            if file_item:
-                items.append(file_item)
-    return items
+    return [entry for item in entries if (entry := _tree_entry(base_dir, resolved, item, depth)) is not None]
 
 
 def _resolve_existing_project_dir(folder_path: str) -> Path | None:

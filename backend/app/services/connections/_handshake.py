@@ -26,43 +26,39 @@ from .base import ConnectionStatus
 logger = logging.getLogger(__name__)
 
 
-async def perform_handshake(
-    conn: OpenClawConnection,
-) -> bool:  # NOSONAR
-    """
-    Perform the OpenClaw v2 device-identity WebSocket handshake.
+async def _reset_existing_connection(conn: OpenClawConnection) -> None:
+    if conn.ws:
+        try:
+            await conn.ws.close()
+        except Exception as exc:
+            logger.debug(f"Error closing old connection: {exc}")
+        conn.ws = None
+    if conn._listen_task and not conn._listen_task.done():
+        conn._listen_task.cancel()
+        try:
+            await conn._listen_task
+        except asyncio.CancelledError:
+            pass
 
-    Protocol:
-    1. Load/create Ed25519 device identity for this connection.
-    2. Open WebSocket → receive connect.challenge (contains nonce).
-    3. Build device block: sign payload with private key.
-    4. Send connect request with client + device blocks.
-    5. On success: store any returned deviceToken for future auth.
-    6. On token-rejection errors: clear stored token (will re-register next time).
-    7. Start the background listener task.
 
-    Mutates ``conn`` in-place. Returns True on success.
-    """
+def _choose_auth(identity, conn: OpenClawConnection) -> tuple[bool, str]:
+    use_device_token = bool(identity.device_token)
+    auth_token = identity.device_token if use_device_token else (conn.token or "")
+    if use_device_token:
+        logger.debug(f"Auth: stored device token (device {identity.device_id[:16]}...)")
+    elif conn.token:
+        logger.info(f"Auth: gateway token for initial device registration (device {identity.device_id[:16]}...)")
+    else:
+        logger.warning("No auth credentials available")
+    return use_device_token, auth_token
+
+
+async def perform_handshake(conn: OpenClawConnection) -> bool:
+    """Perform the OpenClaw v2 device-identity WebSocket handshake."""
     try:
         logger.info(f"Connecting to Gateway at {conn.uri}...")
+        await _reset_existing_connection(conn)
 
-        # ── Close any existing connection ────────────────────────────────
-        if conn.ws:
-            try:
-                await conn.ws.close()
-            except Exception as exc:
-                logger.debug(f"Error closing old connection: {exc}")
-            conn.ws = None
-
-        # ── Cancel old listener ──────────────────────────────────────────
-        if conn._listen_task and not conn._listen_task.done():
-            conn._listen_task.cancel()
-            try:
-                await conn._listen_task
-            except asyncio.CancelledError:  # NOSONAR
-                pass
-
-        # ── 1. Device identity ───────────────────────────────────────────
         from .device_identity import CREWHUB_SCOPES, DeviceIdentityManager
 
         identity_manager = DeviceIdentityManager()
@@ -73,68 +69,40 @@ async def perform_handshake(
         conn._identity_manager = identity_manager
         conn._device_identity = identity
 
-        # ── 2. WebSocket connect ─────────────────────────────────────────
-        conn.ws = await asyncio.wait_for(
-            websockets.connect(conn.uri, ping_interval=20, ping_timeout=20),
-            timeout=10.0,
-        )
-
-        # ── 3. Receive challenge ─────────────────────────────────────────
-        challenge_raw = await asyncio.wait_for(conn.ws.recv(), timeout=5.0)
-        challenge = json.loads(challenge_raw)
+        conn.ws = await asyncio.wait_for(websockets.connect(conn.uri, ping_interval=20, ping_timeout=20), timeout=10.0)
+        challenge = json.loads(await asyncio.wait_for(conn.ws.recv(), timeout=5.0))
         if challenge.get("type") != "event" or challenge.get("event") != "connect.challenge":
             raise Exception(f"Expected connect.challenge, got: {challenge}")
 
         nonce = challenge.get("payload", {}).get("nonce", "")
         logger.debug(f"Received challenge nonce: {nonce[:16]}...")
-
-        # ── 4. Choose auth token ─────────────────────────────────────────
-        use_device_token = bool(identity.device_token)
-        auth_token = identity.device_token if use_device_token else (conn.token or "")
-
-        if use_device_token:
-            logger.debug(f"Auth: stored device token (device {identity.device_id[:16]}...)")
-        elif conn.token:
-            logger.info(f"Auth: gateway token for initial device registration (device {identity.device_id[:16]}...)")
-        else:
-            logger.warning("No auth credentials available")
-
-        # ── 5. Build signed device block ─────────────────────────────────
-        signed_at_ms = int(time.time() * 1000)
+        use_device_token, auth_token = _choose_auth(identity, conn)
         device_block = identity.build_device_block(
-            nonce=nonce,
-            auth_token=auth_token,
-            signed_at_ms=signed_at_ms,
+            nonce=nonce, auth_token=auth_token, signed_at_ms=int(time.time() * 1000)
         )
 
-        # ── 6. Send connect request ──────────────────────────────────────
-        connect_req = {
-            "type": "req",
-            "id": f"connect-{uuid.uuid4()}",
-            "method": "connect",
-            "params": {
-                "minProtocol": 3,
-                "maxProtocol": 3,
-                "client": {
-                    "id": "cli",
-                    "version": "1.0.0",
-                    "platform": "crewhub",
-                    "mode": "cli",
-                },
-                "device": device_block,
-                "role": "operator",
-                "scopes": CREWHUB_SCOPES,
-                "auth": {"token": auth_token} if auth_token else {},
-                "locale": "en-US",
-                "userAgent": f"crewhub/{conn.connection_id}/1.0.0",
-            },
-        }
-        await conn.ws.send(json.dumps(connect_req))
+        await conn.ws.send(
+            json.dumps(
+                {
+                    "type": "req",
+                    "id": f"connect-{uuid.uuid4()}",
+                    "method": "connect",
+                    "params": {
+                        "minProtocol": 3,
+                        "maxProtocol": 3,
+                        "client": {"id": "cli", "version": "1.0.0", "platform": "crewhub", "mode": "cli"},
+                        "device": device_block,
+                        "role": "operator",
+                        "scopes": CREWHUB_SCOPES,
+                        "auth": {"token": auth_token} if auth_token else {},
+                        "locale": "en-US",
+                        "userAgent": f"crewhub/{conn.connection_id}/1.0.0",
+                    },
+                }
+            )
+        )
 
-        # ── 7. Receive connect response ──────────────────────────────────
-        response_raw = await asyncio.wait_for(conn.ws.recv(), timeout=5.0)
-        response = json.loads(response_raw)
-
+        response = json.loads(await asyncio.wait_for(conn.ws.recv(), timeout=5.0))
         if not response.get("ok"):
             error = response.get("error", {})
             error_code = error.get("code", "")
@@ -149,9 +117,7 @@ async def perform_handshake(
                 await identity_manager.clear_device_token(identity.device_id)
             raise Exception(f"Connect rejected: {error.get('message', error)}")
 
-        # ── 8. Store deviceToken if provided ─────────────────────────────
-        payload = response.get("payload", {})
-        response_auth = payload.get("auth") or {}
+        response_auth = (response.get("payload", {}) or {}).get("auth") or {}
         new_device_token = response_auth.get("deviceToken") or response_auth.get("token")
         if new_device_token and new_device_token != auth_token:
             identity.device_token = new_device_token
@@ -160,14 +126,12 @@ async def perform_handshake(
                 f"✓ Device token stored for {identity.device_id[:16]}... (future connects use device-token auth)"
             )
 
-        # ── 9. Mark connected and start listener ─────────────────────────
         conn.status = ConnectionStatus.CONNECTED
         auth_mode = "device-token" if use_device_token else "gateway-token"
         got_token = " (got new device token ✓)" if (new_device_token and not use_device_token) else ""
         logger.info(f"Gateway '{conn.name}' connected [{auth_mode}]{got_token}")
         conn._listen_task = asyncio.create_task(conn._listen_loop())
         return True
-
     except TimeoutError:
         conn._set_error("Connection timed out")
         return False

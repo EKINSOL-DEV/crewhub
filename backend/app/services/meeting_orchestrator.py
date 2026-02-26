@@ -77,104 +77,98 @@ class MeetingOrchestrator:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    async def run(
-        self,
-    ):  # NOSONAR
-        """Run the full meeting lifecycle."""
-        try:
-            self.participants = [await resolve_agent_info(p) for p in self.config.participants]
-            if self.config.document_path:
-                self._document_content = await load_document(
-                    self.config.document_path,
-                    self.project_id,
-                    self.meeting_id,
-                    self.config.document_context,
-                )
-            if self.parent_meeting_id:
-                from app.services.meeting_service import get_meeting as _get
+    async def _prepare_meeting(self) -> None:
+        self.participants = [await resolve_agent_info(p) for p in self.config.participants]
+        if self.config.document_path:
+            self._document_content = await load_document(
+                self.config.document_path,
+                self.project_id,
+                self.meeting_id,
+                self.config.document_context,
+            )
+        if self.parent_meeting_id:
+            from app.services.meeting_service import get_meeting as _get
 
-                parent = await _get(self.parent_meeting_id)
-                if parent and parent.get("output_md"):
-                    self._document_content = f"## Previous Meeting Results\n\n{parent['output_md']}\n\n---\n\n" + (
-                        self._document_content or ""
-                    )
-            await db_save_participants(self.meeting_id, self.participants)
-            await db_set_state(self.meeting_id, MeetingState.GATHERING)
+            parent = await _get(self.parent_meeting_id)
+            if parent and parent.get("output_md"):
+                self._document_content = f"## Previous Meeting Results\n\n{parent['output_md']}\n\n---\n\n" + (
+                    self._document_content or ""
+                )
+        await db_save_participants(self.meeting_id, self.participants)
+        await db_set_state(self.meeting_id, MeetingState.GATHERING)
+        await broadcast(
+            "meeting-started",
+            {
+                "meeting_id": self.meeting_id,
+                "title": self.title,
+                "state": MeetingState.GATHERING.value,
+                "participants": [p["session_key"] for p in self.participants],
+                "num_rounds": self.config.num_rounds,
+                "total_rounds": self.config.num_rounds,
+            },
+        )
+
+    async def _run_all_rounds(self) -> None:
+        for round_num in range(1, self.config.num_rounds + 1):
+            if self._cancelled:
+                return
+            round_state = ROUND_STATES.get(round_num, MeetingState.ROUND_1)
+            round_topic = (
+                self.config.round_topics[round_num - 1]
+                if round_num <= len(self.config.round_topics)
+                else f"Round {round_num}"
+            )
+            await db_set_state(self.meeting_id, round_state, current_round=round_num)
+            prev_state = (
+                ROUND_STATES.get(round_num - 1, MeetingState.GATHERING).value
+                if round_num > 1
+                else MeetingState.GATHERING.value
+            )
             await broadcast(
-                "meeting-started",
+                "meeting-state",
                 {
                     "meeting_id": self.meeting_id,
-                    "title": self.title,
-                    "state": MeetingState.GATHERING.value,
-                    "participants": [p["session_key"] for p in self.participants],
-                    "num_rounds": self.config.num_rounds,
-                    "total_rounds": self.config.num_rounds,
+                    "state": round_state.value,
+                    "previous_state": prev_state,
+                    "current_round": round_num,
+                    "round_topic": round_topic,
+                    "progress_pct": self._calc_progress(round_num, 0),
                 },
             )
+            await self._run_round(round_num, round_topic)
+
+    async def _finalize_meeting(self) -> None:
+        await db_set_state(self.meeting_id, MeetingState.SYNTHESIZING)
+        await broadcast(
+            "meeting-synthesis", {"meeting_id": self.meeting_id, "state": "synthesizing", "progress_pct": 90}
+        )
+        output_md = await self._synthesize()
+        output_path = self._save_output(output_md)
+        await db_save_action_items(self.meeting_id, output_md)
+        duration = (_now_ms() - (await db_get_started_at(self.meeting_id))) // 1000
+        await db_set_state(self.meeting_id, MeetingState.COMPLETE, output_md=output_md, output_path=output_path)
+        await broadcast(
+            "meeting-complete",
+            {
+                "meeting_id": self.meeting_id,
+                "state": "complete",
+                "output_path": output_path,
+                "progress_pct": 100,
+                "duration_seconds": duration,
+            },
+        )
+
+    async def run(self):
+        """Run the full meeting lifecycle."""
+        try:
+            await self._prepare_meeting()
             await asyncio.sleep(3)
             if self._cancelled:
                 return
-
-            for round_num in range(1, self.config.num_rounds + 1):
-                if self._cancelled:
-                    return
-                round_state = ROUND_STATES.get(round_num, MeetingState.ROUND_1)
-                round_topic = (
-                    self.config.round_topics[round_num - 1]
-                    if round_num <= len(self.config.round_topics)
-                    else f"Round {round_num}"
-                )
-                await db_set_state(self.meeting_id, round_state, current_round=round_num)
-                prev_state = (
-                    ROUND_STATES.get(round_num - 1, MeetingState.GATHERING).value
-                    if round_num > 1
-                    else MeetingState.GATHERING.value
-                )
-                await broadcast(
-                    "meeting-state",
-                    {
-                        "meeting_id": self.meeting_id,
-                        "state": round_state.value,
-                        "previous_state": prev_state,
-                        "current_round": round_num,
-                        "round_topic": round_topic,
-                        "progress_pct": self._calc_progress(round_num, 0),
-                    },
-                )
-                await self._run_round(round_num, round_topic)
-
+            await self._run_all_rounds()
             if self._cancelled:
                 return
-
-            await db_set_state(self.meeting_id, MeetingState.SYNTHESIZING)
-            await broadcast(
-                "meeting-synthesis",
-                {
-                    "meeting_id": self.meeting_id,
-                    "state": "synthesizing",
-                    "progress_pct": 90,
-                },
-            )
-            output_md = await self._synthesize()
-            output_path = self._save_output(output_md)
-            await db_save_action_items(self.meeting_id, output_md)
-            duration = (_now_ms() - (await db_get_started_at(self.meeting_id))) // 1000
-            await db_set_state(
-                self.meeting_id,
-                MeetingState.COMPLETE,
-                output_md=output_md,
-                output_path=output_path,
-            )
-            await broadcast(
-                "meeting-complete",
-                {
-                    "meeting_id": self.meeting_id,
-                    "state": "complete",
-                    "output_path": output_path,
-                    "progress_pct": 100,
-                    "duration_seconds": duration,
-                },
-            )
+            await self._finalize_meeting()
         except asyncio.CancelledError:
             logger.info(f"Meeting {self.meeting_id} cancelled")
             await db_set_state(self.meeting_id, MeetingState.CANCELLED)

@@ -232,45 +232,34 @@ async def get_session_context(session_key: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _append_task_prompt(lines: list[str], tasks) -> None:
+    if not tasks:
+        return
+    lines.extend(["", "## Tasks"])
+    if tasks.assigned_to_me:
+        lines.append(f"**Assigned to you ({len(tasks.assigned_to_me)}):**")
+        lines.extend([f"- [{t.priority.upper()}] {t.title} ({t.status})" for t in tasks.assigned_to_me[:5]])
+    if tasks.blocked:
+        lines.append(f"**Blocked ({len(tasks.blocked)}):**")
+        lines.extend([f"- {t.title}" for t in tasks.blocked[:3]])
+    lines.append(f"- Todo: {tasks.todo_count}, Done: {tasks.done_count}")
+
+
 @router.get("/{session_key}/context/prompt", response_model=dict)
 async def get_session_context_prompt(session_key: str):
-    """
-    Get a formatted system prompt snippet for context injection.
-
-    Returns a ready-to-use text block that can be appended to bot system prompts.
-    """
+    """Get a formatted system prompt snippet for context injection."""
     context = await get_session_context(session_key)
-
     if not context.room:
         return {"prompt": ""}
 
-    lines = []
-    lines.append("## Current Assignment")
-    lines.append(f"- Room: {context.room.name}" + (" (HQ)" if context.room.is_hq else ""))
-
+    lines = ["## Current Assignment", f"- Room: {context.room.name}" + (" (HQ)" if context.room.is_hq else "")]
     if context.project:
         lines.append(f"- Project: {context.project.name}")
         if context.project.description:
             lines.append(f"- Description: {context.project.description}")
         if context.project.folder_path:
             lines.append(f"- Folder: {context.project.folder_path}")
-
-    if context.tasks:
-        lines.append("")
-        lines.append("## Tasks")
-
-        if context.tasks.assigned_to_me:
-            lines.append(f"**Assigned to you ({len(context.tasks.assigned_to_me)}):**")
-            for t in context.tasks.assigned_to_me[:5]:
-                lines.append(f"- [{t.priority.upper()}] {t.title} ({t.status})")
-
-        if context.tasks.blocked:
-            lines.append(f"**Blocked ({len(context.tasks.blocked)}):**")
-            for t in context.tasks.blocked[:3]:
-                lines.append(f"- {t.title}")
-
-        lines.append(f"- Todo: {context.tasks.todo_count}, Done: {context.tasks.done_count}")
-
+    _append_task_prompt(lines, context.tasks)
     return {"prompt": "\n".join(lines)}
 
 

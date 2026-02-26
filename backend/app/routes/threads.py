@@ -484,6 +484,12 @@ async def _route_to_agent(conn, thread_id: str, agent_id: str, participants: lis
         return None
 
 
+def _resolve_target_ids(body: ThreadMessageSend, participants: list[dict]) -> list[str]:
+    if body.routing_mode == "targeted" and body.target_agent_ids:
+        return [p["agent_id"] for p in participants if p["agent_id"] in body.target_agent_ids]
+    return [p["agent_id"] for p in participants]
+
+
 @router.post(
     "/{thread_id}/messages", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}}
 )
@@ -496,34 +502,28 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
         content = content[:5000]
 
     now = _now_ms()
-
     async with get_db() as db:
-        # Get thread + active participants
-        cursor = await db.execute(SQL_GET_THREAD, (thread_id,))
-        thread = await cursor.fetchone()
+        thread = await (await db.execute(SQL_GET_THREAD, (thread_id,))).fetchone()
         if not thread:
             raise HTTPException(status_code=404, detail=MSG_THREAD_NOT_FOUND)
         if thread["archived_at"]:
             raise HTTPException(status_code=400, detail="Thread is archived")
 
-        cursor = await db.execute(
-            "SELECT * FROM thread_participants WHERE thread_id = ? AND is_active = 1", (thread_id,)
-        )
-        participants = [dict(r) for r in await cursor.fetchall()]
-
+        participants = [
+            dict(r)
+            for r in await (
+                await db.execute(
+                    "SELECT * FROM thread_participants WHERE thread_id = ? AND is_active = 1", (thread_id,)
+                )
+            ).fetchall()
+        ]
         if not participants:
             raise HTTPException(status_code=400, detail="No active participants in thread")
 
-        # Determine target agents
-        if body.routing_mode == "targeted" and body.target_agent_ids:
-            target_ids = [p["agent_id"] for p in participants if p["agent_id"] in body.target_agent_ids]
-        else:
-            target_ids = [p["agent_id"] for p in participants]
-
+        target_ids = _resolve_target_ids(body, participants)
         if not target_ids:
             raise HTTPException(status_code=400, detail="No valid target agents")
 
-        # Save user message
         user_msg_id = _gen_id()
         target_json = json.dumps(body.target_agent_ids) if body.target_agent_ids else None
         await db.execute(
@@ -531,11 +531,9 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
                VALUES (?, ?, 'user', ?, ?, ?, ?)""",
             (user_msg_id, thread_id, content, body.routing_mode, target_json, now),
         )
-
         await db.execute("UPDATE threads SET last_message_at = ?, updated_at = ? WHERE id = ?", (now, now, thread_id))
         await db.commit()
 
-    # Broadcast user message event
     user_msg = {
         "id": user_msg_id,
         "thread_id": thread_id,
@@ -549,10 +547,8 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
     }
     await broadcast("thread.message.created", {"threadId": thread_id, "message": user_msg})
 
-    # Route to each target agent via OpenClaw
     manager = await get_connection_manager()
     conn = manager.get_default_openclaw()
-
     responses = []
     if conn:
         participant_names = [p["agent_name"] for p in participants]
