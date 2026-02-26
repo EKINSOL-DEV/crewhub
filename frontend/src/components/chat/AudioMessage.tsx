@@ -44,7 +44,7 @@ export function AudioMessage({ // NOSONAR
 
     const onTimeUpdate = () => setCurrentTime(audio.currentTime)
     const onDurationChange = () => {
-      if (isFinite(audio.duration)) setTotalDuration(audio.duration)
+      if (Number.isFinite(audio.duration)) setTotalDuration(audio.duration)
     }
     const onEnded = () => {
       setIsPlaying(false)
@@ -88,7 +88,7 @@ export function AudioMessage({ // NOSONAR
       if (!audio || !isLoaded) return
       const rect = e.currentTarget.getBoundingClientRect()
       const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-      audio.currentTime = ratio * (isFinite(audio.duration) ? audio.duration : 0)
+      audio.currentTime = ratio * (Number.isFinite(audio.duration) ? audio.duration : 0)
     },
     [isLoaded]
   )
@@ -215,7 +215,25 @@ export function AudioMessage({ // NOSONAR
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {/* Progress track */}
           <div
-            onClick={handleSeek}  // NOSONAR: mouse/drag interaction
+            onClick={handleSeek}
+            role="slider"
+            tabIndex={isLoaded ? 0 : -1}
+            aria-label="Seek audio"
+            aria-valuemin={0}
+            aria-valuemax={Math.max(0, totalDuration)}
+            aria-valuenow={Math.min(currentTime, totalDuration || 0)}
+            onKeyDown={(e) => {
+              const audio = audioRef.current
+              if (!audio || !isLoaded) return
+              if (e.key === 'ArrowLeft') {
+                e.preventDefault()
+                audio.currentTime = Math.max(0, audio.currentTime - 5)
+              } else if (e.key === 'ArrowRight') {
+                e.preventDefault()
+                const max = Number.isFinite(audio.duration) ? audio.duration : totalDuration
+                audio.currentTime = Math.min(max || 0, audio.currentTime + 5)
+              }
+            }}
             style={{
               height: 4,
               borderRadius: 2,
