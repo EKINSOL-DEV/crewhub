@@ -98,7 +98,7 @@ function LightbulbAntenna() {
 
 // ─── Clock Face Antenna (Cron) ─────────────────────────────────
 
-function ClockAntenna({ color }: Readonly<{ color: string }>) {
+function ClockAntenna({ color }: { color: string }) {
   const handRef = useRef<THREE.Mesh>(null)
 
   useFrame(({ clock }) => {
@@ -148,7 +148,7 @@ function ClockAntenna({ color }: Readonly<{ color: string }>) {
 
 // ─── Signal Antenna (Comms) ────────────────────────────────────
 
-function SignalAntenna({ color }: Readonly<{ color: string }>) {
+function SignalAntenna({ color }: { color: string }) {
   const wavesRef = useRef<THREE.Group>(null)
 
   useFrame(({ clock }) => {
@@ -190,7 +190,7 @@ function SignalAntenna({ color }: Readonly<{ color: string }>) {
 
 // ─── Gear Antenna (Dev) ────────────────────────────────────────
 
-function GearAntenna({ color }: Readonly<{ color: string }>) {
+function GearAntenna({ color }: { color: string }) {
   const gearRef = useRef<THREE.Group>(null)
 
   useFrame(({ clock }) => {

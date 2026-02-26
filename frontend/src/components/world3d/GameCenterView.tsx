@@ -9,7 +9,7 @@ const MVP_ITEMS = [
   { emoji: '📊', label: 'Stats & Rankings' },
 ]
 
-export function GameCenterView({ className }: Readonly<{ className?: string }>) {
+export function GameCenterView({ className }: { className?: string }) {
   return (
     <ZoneLandingView
       zone={GAME_CENTER}

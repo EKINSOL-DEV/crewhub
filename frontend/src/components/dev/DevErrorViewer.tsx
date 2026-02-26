@@ -116,7 +116,7 @@ export function DevToolbar() {
 
 // ── Error Viewer Modal ─────────────────────────────────────────
 
-function ErrorViewerModal({ onClose }: Readonly<{ onClose: () => void }>) {
+function ErrorViewerModal({ onClose }: { onClose: () => void }) {
   const [errors, setErrors] = useState(getAllErrors)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
@@ -511,7 +511,7 @@ const TYPE_COLORS: Record<string, string> = {
   custom: '#7aa2f7',
 }
 
-function TypeBadge({ type }: Readonly<{ type: string }>) {
+function TypeBadge({ type }: { type: string }) {
   const label = type.replace('unhandled-', '').replace('console.', 'c.')
   return (
     <span

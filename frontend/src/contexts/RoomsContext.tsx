@@ -116,7 +116,7 @@ interface RoomsContextValue {
 
 const RoomsContext = createContext<RoomsContextValue | null>(null)
 
-export function RoomsProvider({ children }: Readonly<{ children: ReactNode }>) {
+export function RoomsProvider({ children }: { children: ReactNode }) {
   const [rooms, setRooms] = useState<Room[]>([])
   const [sessionAssignments, setSessionAssignments] = useState<Map<string, string>>(new Map())
   const [rules, setRules] = useState<RoomAssignmentRule[]>([])

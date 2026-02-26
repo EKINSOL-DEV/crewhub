@@ -240,7 +240,7 @@ function CategoryGridView({
 
 // ── Showcase Card ─────────────────────────────────────────────
 
-function ShowcaseCard({ prop, onClick }: Readonly<{ prop: ShowcaseProp; onClick: () => void }>) {
+function ShowcaseCard({ prop, onClick }: { prop: ShowcaseProp; readonly onClick: () => void }) {
   const [hovered, setHovered] = useState(false)
   const Comp = prop.component
 

@@ -26,7 +26,7 @@ function modelColor(model?: string): string {
   return '#6b7280'
 }
 
-function OrgNode({ name, depth = 0 }: Readonly<{ name: string; depth?: number }>) {
+function OrgNode({ name, depth = 0 }: { name: string; readonly depth?: number }) {
   const node = HIERARCHY[name]
   if (!node) return null
 

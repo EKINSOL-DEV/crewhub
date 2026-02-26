@@ -42,7 +42,7 @@ function getStatusInfo(status: AgentStatus) {
 
 // ── Static Fallback (for non-3D devices) ───────────────────────
 
-function StaticAgentAvatar({ config, status }: Readonly<{ config: BotVariantConfig; status: AgentStatus }>) {
+function StaticAgentAvatar({ config, status }: { config: BotVariantConfig; readonly status: AgentStatus }) {
   const info = getStatusInfo(status)
 
   const eyeStyle: React.CSSProperties = {

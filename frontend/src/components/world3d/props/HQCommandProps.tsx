@@ -122,7 +122,7 @@ export function DataPillar({
  * Added on top of the standard grid blueprint furniture.
  * Scaled relative to room size.
  */
-export function HQCommandOverlay({ size = 16 }: Readonly<{ size?: number }>) {
+export function HQCommandOverlay({ size = 16 }: { size?: number }) {
   const scale = size / 16 // normalize to reference size
 
   return (

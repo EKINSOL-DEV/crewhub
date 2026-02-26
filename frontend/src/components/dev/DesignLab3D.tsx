@@ -46,7 +46,7 @@ const BUBBLE_STYLES: BubbleStyle[] = ['speech', 'thought', 'alert']
 // ─── 3D helpers ──────────────────────────────────────────────────────
 
 /** Blinking eyes that close during sleeping state */
-function BotEyes({ state, color: _color }: Readonly<{ state: BotState; color: string }>) {
+function BotEyes({ state, color: _color }: { state: BotState; readonly color: string }) {
   const leftRef = useRef<THREE.Mesh>(null)
   const rightRef = useRef<THREE.Mesh>(null)
 
@@ -85,7 +85,7 @@ function BotEyes({ state, color: _color }: Readonly<{ state: BotState; color: st
 }
 
 /** Cute little smile / expression */
-function BotMouth({ state }: Readonly<{ state: BotState }>) {
+function BotMouth({ state }: { state: BotState }) {
   const color = state === 'error' ? '#ef4444' : '#333'
   // Simple arc using a torus segment
   return (
@@ -99,7 +99,7 @@ function BotMouth({ state }: Readonly<{ state: BotState }>) {
 }
 
 /** Hard hat accessory (Worker) */
-function HardHat({ color }: Readonly<{ color: string }>) {
+function HardHat({ color }: { color: string }) {
   return (
     <group position={[0, 0.48, 0]}>
       {/* Dome */}
@@ -117,7 +117,7 @@ function HardHat({ color }: Readonly<{ color: string }>) {
 }
 
 /** Antenna accessory (Thinker) */
-function Antenna({ color }: Readonly<{ color: string }>) {
+function Antenna({ color }: { color: string }) {
   const bulbRef = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
     if (bulbRef.current) {
@@ -140,7 +140,7 @@ function Antenna({ color }: Readonly<{ color: string }>) {
 }
 
 /** Clock face accessory (Cron) */
-function ClockFace({ color }: Readonly<{ color: string }>) {
+function ClockFace({ color }: { color: string }) {
   const handRef = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
     if (handRef.current) {
@@ -168,7 +168,7 @@ function ClockFace({ color }: Readonly<{ color: string }>) {
 }
 
 /** Chat icon accessory (Comms) */
-function ChatIcon({ color }: Readonly<{ color: string }>) {
+function ChatIcon({ color }: { color: string }) {
   return (
     <group position={[0, 0.52, 0]}>
       <Float speed={3} floatIntensity={0.15} rotationIntensity={0}>
@@ -188,7 +188,7 @@ function ChatIcon({ color }: Readonly<{ color: string }>) {
 }
 
 /** Gear accessory (Dev) */
-function GearIcon({ color }: Readonly<{ color: string }>) {
+function GearIcon({ color }: { color: string }) {
   const gearRef = useRef<THREE.Group>(null)
   useFrame(({ clock }) => {
     if (gearRef.current) gearRef.current.rotation.z = clock.getElapsedTime() * 0.8
@@ -209,7 +209,7 @@ function GearIcon({ color }: Readonly<{ color: string }>) {
   )
 }
 
-function BotAccessory({ type, color }: Readonly<{ type: BotConfig['accessory']; color: string }>) {
+function BotAccessory({ type, color }: { type: BotConfig['accessory']; readonly color: string }) {
   switch (type) {
     case 'hardhat':
       return <HardHat color={color} />
@@ -543,7 +543,7 @@ function Bot3DCharacter({
 }
 
 /** Ground plane */
-function Ground({ showGrid }: Readonly<{ showGrid: boolean }>) {
+function Ground({ showGrid }: { showGrid: boolean }) {
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
@@ -645,7 +645,7 @@ const CAMERA_POSITIONS: Record<CameraPreset, [number, number, number]> = {
 }
 
 // ─── Main exported component ─────────────────────────────────────────
-export function DesignLab3D({ darkBg }: Readonly<{ darkBg: boolean }>) {
+export function DesignLab3D({ darkBg }: { darkBg: boolean }) {
   // Per-bot UI state
   const [botStates, setBotStates] = useState<Record<string, BotUiState>>(() => {
     const initial: Record<string, BotUiState> = {}

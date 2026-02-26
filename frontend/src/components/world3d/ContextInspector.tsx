@@ -382,7 +382,7 @@ export function ContextInspector({ roomId, roomName, onClose }: Readonly<Context
 
 // ── Stat Badge ──────────────────────────────────────────────────
 
-function StatBadge({ label, value, color }: Readonly<{ label: string; value: string; color?: string }>) {
+function StatBadge({ label, value, color }: { label: string; readonly value: string; readonly color?: string }) {
   return (
     <div
       style={{

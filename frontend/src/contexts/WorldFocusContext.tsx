@@ -59,7 +59,7 @@ function clearIsAnimating(prev: WorldFocusState): WorldFocusState {
 
 // ─── Provider ──────────────────────────────────────────────────
 
-export function WorldFocusProvider({ children }: Readonly<{ children: ReactNode }>) {
+export function WorldFocusProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WorldFocusState>(defaultState)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingCallerRef = useRef<string | null>(null)

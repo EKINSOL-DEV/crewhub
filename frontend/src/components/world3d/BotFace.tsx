@@ -106,7 +106,7 @@ function getPupilOffset(expression: BotExpression): { x: number; y: number } {
 
 // ─── Mouth shapes per expression ───────────────────────────────
 
-function ExpressionMouth({ expression }: Readonly<{ expression: BotExpression }>) {
+function ExpressionMouth({ expression }: { expression: BotExpression }) {
   switch (expression) {
     case 'happy':
       // Wide happy smile — arc curving up

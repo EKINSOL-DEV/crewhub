@@ -127,7 +127,7 @@ function FilterControls({
 
 // ── Empty State ──────────────────────────────────────────────────
 
-function EmptyState({ hasFilter }: Readonly<{ hasFilter: boolean }>) {
+function EmptyState({ hasFilter }: { hasFilter: boolean }) {
   return (
     <div className="zen-logs-empty">
       <div className="zen-empty-icon">📜</div>

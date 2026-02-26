@@ -265,7 +265,7 @@ export function useBotAnimation(
  * Accepts animRef to control visibility: only shows when bot has actually
  * arrived at sleep corner (showZzz === true), not during walking-to-sleep.
  */
-export function SleepingZs({ animRef }: Readonly<{ animRef: React.MutableRefObject<AnimState> }>) {
+export function SleepingZs({ animRef }: { animRef: React.MutableRefObject<AnimState> }) {
   const groupRef = useRef<THREE.Group>(null)
   const spriteRefs = useRef<THREE.Sprite[]>([])
 

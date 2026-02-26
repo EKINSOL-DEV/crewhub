@@ -137,7 +137,7 @@ function getInitialWindows(): ChatWindowState[] {
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 
-export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
+export function ChatProvider({ children }: { children: ReactNode }) {
   const [windows, setWindows] = useState<ChatWindowState[]>(getInitialWindows)
   const focusHandlerRef = useRef<((sessionKey: string) => void) | null>(null)
   const [, setFocusHandlerVersion] = useState(0) // NOSONAR

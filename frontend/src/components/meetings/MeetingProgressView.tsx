@@ -17,7 +17,7 @@ interface MeetingProgressViewProps {
   readonly onViewOutput: () => void
 }
 
-function TurnEntry({ turn }: Readonly<{ turn: MeetingTurn }>) {
+function TurnEntry({ turn }: { turn: MeetingTurn }) {
   let statusIcon: string
   if (turn.status === 'done') {
     statusIcon = '✓'
@@ -76,7 +76,7 @@ function TurnEntry({ turn }: Readonly<{ turn: MeetingTurn }>) {
   )
 }
 
-function RoundSection({ round }: Readonly<{ round: MeetingRound }>) {
+function RoundSection({ round }: { round: MeetingRound }) {
   return (
     <div className="mb-4">
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">

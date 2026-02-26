@@ -28,7 +28,7 @@ interface Room3DProps {
 
 // ─── Room Drop Zone (visible when dragging) ────────────────────
 
-function RoomDropZone({ roomId, size }: Readonly<{ roomId: string; size: number }>) {
+function RoomDropZone({ roomId, size }: { roomId: string; readonly size: number }) {
   const { drag, dropOnRoom } = useDragDrop()
   const [isDropTarget, setIsDropTarget] = useState(false)
 

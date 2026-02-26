@@ -358,7 +358,7 @@ function ConnectionDialog({ open, onOpenChange, connection, onSave }: Readonly<C
 // Main Component
 // ============================================================================
 
-export function ConnectionsView({ embedded = false }: Readonly<{ embedded?: boolean }>) {
+export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
   const [connections, setConnections] = useState<Connection[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

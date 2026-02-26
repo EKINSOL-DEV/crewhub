@@ -44,7 +44,7 @@ function useHexGeometry(radius: number, height: number) {
 
 // ─── Sci-fi panel lines on the platform surface ──────────────────
 
-function PlatformGrid({ radius }: Readonly<{ radius: number }>) {
+function PlatformGrid({ radius }: { radius: number }) {
   const geometry = useMemo(() => {
     const pts: THREE.Vector3[] = []
     const y = 0.005 // just above platform top
@@ -95,7 +95,7 @@ function PlatformGrid({ radius }: Readonly<{ radius: number }>) {
 
 // ─── Glowing edge ring ───────────────────────────────────────────
 
-function GlowingEdge({ radius, color }: Readonly<{ radius: number; color: string }>) {
+function GlowingEdge({ radius, color }: { radius: number; readonly color: string }) {
   const ringRef = useRef<THREE.Mesh>(null)
 
   useFrame(({ clock }) => {
@@ -116,7 +116,7 @@ function GlowingEdge({ radius, color }: Readonly<{ radius: number; color: string
 
 // ─── Emissive edge accent (chamfer glow) ─────────────────────────
 
-function EdgeEmission({ radius, color }: Readonly<{ radius: number; color: string }>) {
+function EdgeEmission({ radius, color }: { radius: number; readonly color: string }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]}>
       <ringGeometry args={[radius - 0.06, radius + 0.03, 6, 1, -Math.PI / 6, Math.PI * 2]} />
@@ -127,7 +127,7 @@ function EdgeEmission({ radius, color }: Readonly<{ radius: number; color: strin
 
 // ─── Darker-edge overlay for two-tone surface ────────────────────
 
-function EdgeDarkening({ radius }: Readonly<{ radius: number }>) {
+function EdgeDarkening({ radius }: { radius: number }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, 0]}>
       <ringGeometry args={[radius * 0.65, radius, 6, 1, -Math.PI / 6, Math.PI * 2]} />
@@ -197,7 +197,7 @@ function CloudPuffs() {
 
 // ─── Energy beam underneath ──────────────────────────────────────
 
-function EnergyBeam({ color }: Readonly<{ color: string }>) {
+function EnergyBeam({ color }: { color: string }) {
   const beamRef = useRef<THREE.Mesh>(null)
 
   useFrame(({ clock }) => {

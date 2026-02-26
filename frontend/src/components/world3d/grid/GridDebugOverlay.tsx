@@ -208,7 +208,7 @@ function CoordinateLabels({
 
 // ─── Prop labels (shown in focus mode) ──────────────────────────
 
-function PropLabels({ cells }: Readonly<{ cells: CellInstance[] }>) {
+function PropLabels({ cells }: { cells: CellInstance[] }) {
   // Only show labels for cells that have a propId and are span parents (no duplicates)
   const labelCells = useMemo(() => {
     const seen = new Set<string>()

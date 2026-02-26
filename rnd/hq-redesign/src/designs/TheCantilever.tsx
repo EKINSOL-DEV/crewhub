@@ -16,7 +16,7 @@ import { Workstation, MeetingTable, ServerRack, Whiteboard, Plant, TallPlant, Fl
  * - Exposed structural cross-bracing
  */
 
-function CrossBrace({ p1, p2, color = '#667788' }: Readonly<{ p1: [number, number, number], p2: [number, number, number], color?: string }>) {
+function CrossBrace({ p1, p2, color = '#667788' }: { p1: [number, number, number], p2: [number, number, number], color?: string }) {
   const dx = p2[0] - p1[0], dy = p2[1] - p1[1], dz = p2[2] - p1[2]
   const len = Math.sqrt(dx * dx + dy * dy + dz * dz)
   const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2, mz = (p1[2] + p2[2]) / 2
