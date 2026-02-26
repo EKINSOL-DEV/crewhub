@@ -127,14 +127,12 @@ function AgentDetailPanel({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end">
       {/* Backdrop */}
-      <div
+      <button
+        type="button"
         className={`absolute inset-0 transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
         onClick={handleClose}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') handleClose()
-        }}
-        role="presentation"
+        aria-label="Close details panel"
       />
 
       {/* Slide-in Panel */}
@@ -362,15 +360,11 @@ export function DevDesigns() {
         {/* Agent Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {agents.map((agent) => (
-            <div
+            <button
               key={agent.name}
+              type="button"
               onClick={() => setSelectedAgent(agent)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setSelectedAgent(agent)
-              }}
-              role="button"
-              tabIndex={0}
-              className={`rounded-2xl p-6 transition-all hover:scale-[1.02] cursor-pointer
+              className={`rounded-2xl p-6 transition-all hover:scale-[1.02] cursor-pointer text-left w-full
                 ${darkBg ? BG_GRAY_800 : CLS_BG_WHITE_SHADOW_LG}`}
             >
               {/* Agent Preview */}
@@ -405,7 +399,7 @@ export function DevDesigns() {
                   /agents/{agent.file}
                 </code>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 

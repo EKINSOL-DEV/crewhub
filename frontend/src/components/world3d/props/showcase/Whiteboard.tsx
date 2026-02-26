@@ -4,7 +4,7 @@ import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 
 const STICKY_NOTES = [
-  { x: -0.35, y: 0.25, color: '#ffee44', text: 'TODO' },
+  { x: -0.35, y: 0.25, color: '#ffee44', text: 'IDEA' },
   { x: 0.1, y: 0.3, color: '#ff8844', text: 'SHIP IT' },
   { x: 0.45, y: 0.15, color: '#44ddff', text: 'v2.0' },
   { x: -0.2, y: -0.1, color: '#88ff66', text: 'DONE ✓' },
@@ -66,7 +66,7 @@ export function Whiteboard() {
       {/* Markers */}
       {['#ff3333', '#3366ff', '#33aa33'].map((c, i) => (
         <mesh
-          key={`c-${i}`}
+          key={`c-${c}`}
           position={[-0.15 + i * 0.12, -0.53, 0.06]}
           rotation={[0, 0, Math.PI / 2]}
         >
