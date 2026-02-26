@@ -226,7 +226,7 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
   const error = tasksError || projectsError
 
   return (
-    <dialog
+    <dialog // NOSONAR: <dialog> is a native interactive HTML element
       ref={dialogRef}
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
@@ -241,7 +241,7 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
       "
     >
       {/* Dialog content panel */}
-      <div
+      <div // NOSONAR: onClick only prevents event bubble, not interactive
         className="w-[calc(100vw-2rem)] max-w-[1800px] h-[calc(100vh-2rem)] max-h-[1000px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
@@ -438,7 +438,7 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
             role="button"
             tabIndex={0}
           >
-            <div
+            <div // NOSONAR: onClick only prevents event bubble, not interactive
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}

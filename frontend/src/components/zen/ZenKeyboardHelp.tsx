@@ -128,7 +128,7 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
   }, [])
 
   return (
-    <div
+    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
       className="zen-keyboard-help-backdrop"
       onClick={handleBackdropClick}
       role="dialog"

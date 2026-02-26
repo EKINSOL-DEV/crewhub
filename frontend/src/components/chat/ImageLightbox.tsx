@@ -85,7 +85,7 @@ export function ImageLightbox({ src, alt = 'Image', onClose }: ImageLightboxProp
   }
 
   return (
-    <div
+    <div // NOSONAR: backdrop div closes lightbox on click; role='dialog' conveys purpose
       style={overlayStyle}
       onClick={onClose}
       role="dialog"

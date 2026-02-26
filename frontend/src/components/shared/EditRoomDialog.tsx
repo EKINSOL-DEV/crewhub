@@ -148,7 +148,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
   }
 
   return (
-    <dialog
+    <dialog // NOSONAR: <dialog> is a native interactive HTML element
       ref={dialogRef}
       onClose={() => onOpenChange(false)}
       onClick={(e) => e.target === e.currentTarget && onOpenChange(false)}

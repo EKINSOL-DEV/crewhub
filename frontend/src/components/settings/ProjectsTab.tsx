@@ -278,7 +278,7 @@ function ProjectsSettingsSection({
       </CollapsibleSection>
 
       {/* Delete confirmation dialog */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={deleteDialogRef}
         onClose={() => setDeleteConfirm(null)}
         onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}

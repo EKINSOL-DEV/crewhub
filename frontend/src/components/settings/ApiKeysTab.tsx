@@ -284,7 +284,7 @@ function KeysManager({ adminKey }: { adminKey: string }) {
       </Section>
 
       {/* ── Create Key Modal ── */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={createDialogRef}
         onClose={() => setShowCreateModal(false)}
         onClick={(e) => e.target === e.currentTarget && setShowCreateModal(false)}
@@ -294,7 +294,7 @@ function KeysManager({ adminKey }: { adminKey: string }) {
       </dialog>
 
       {/* ── New Key Reveal Modal ── */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={revealDialogRef}
         onClose={() => setNewKeyResult(null)}
         onClick={(e) => e.target === e.currentTarget && setNewKeyResult(null)}

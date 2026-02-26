@@ -133,7 +133,7 @@ export function ZenPanel({
   )
 
   return (
-    <div
+    <div // NOSONAR: onClick manages panel focus; role='region' is semantic landmark
       className={`zen-panel ${isFocused ? 'zen-panel-focused' : ''}`}
       onClick={handleClick}
       onContextMenu={handleContextMenu}

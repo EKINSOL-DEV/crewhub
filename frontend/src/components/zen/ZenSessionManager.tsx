@@ -210,7 +210,7 @@ export function ZenAgentPicker({
   )
 
   return (
-    <div
+    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
       className="zen-picker-backdrop"
       onClick={handleBackdropClick}
       role="dialog"

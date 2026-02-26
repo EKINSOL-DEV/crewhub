@@ -296,7 +296,7 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
       </Sheet>
 
       {/* Create Room Dialog */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={createDialogRef}
         onClose={() => setShowCreateDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowCreateDialog(false)}
@@ -411,7 +411,7 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
       />
 
       {/* Delete Confirmation Dialog */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={deleteDialogRef}
         onClose={() => setDeleteConfirm(null)}
         onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}

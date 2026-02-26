@@ -135,7 +135,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
       role="button"
       tabIndex={0}
     >
-      <div
+      <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
           width: '100%',
           maxHeight: '85vh',
@@ -294,7 +294,7 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
       role="button"
       tabIndex={0}
     >
-      <div
+      <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
           width: '100%',
           maxHeight: '60vh',

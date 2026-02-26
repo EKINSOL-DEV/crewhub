@@ -180,7 +180,7 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
   let globalIndex = -1
 
   return (
-    <div
+    <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
       className="zen-command-backdrop"
       onClick={handleBackdropClick}
       role="dialog"

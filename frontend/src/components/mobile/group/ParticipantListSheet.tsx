@@ -36,7 +36,7 @@ export function ParticipantListSheet({
       role="button"
       tabIndex={0}
     >
-      <div
+      <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
           background: '#1e293b',
           borderRadius: '20px 20px 0 0',

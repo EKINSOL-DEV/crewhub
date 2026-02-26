@@ -712,7 +712,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       </div>
 
       {/* ─── Create Room Dialog ─── */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={createRoomDialogRef}
         onClose={() => setShowCreateRoomDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowCreateRoomDialog(false)}
@@ -812,7 +812,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       </dialog>
 
       {/* ─── Delete Room Dialog ─── */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={deleteRoomDialogRef}
         onClose={() => setDeleteRoomConfirm(null)}
         onClick={(e) => e.target === e.currentTarget && setDeleteRoomConfirm(null)}
@@ -846,7 +846,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       </dialog>
 
       {/* ─── Create Rule Dialog ─── */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={createRuleDialogRef}
         onClose={() => setShowCreateRuleDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowCreateRuleDialog(false)}
@@ -977,7 +977,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       </dialog>
 
       {/* ─── Delete Rule Dialog ─── */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={deleteRuleDialogRef}
         onClose={() => setDeleteRuleConfirm(null)}
         onClick={(e) => e.target === e.currentTarget && setDeleteRuleConfirm(null)}
@@ -1010,7 +1010,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
       </dialog>
 
       {/* ─── Test Rules Preview Dialog ─── */}
-      <dialog
+      <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={testRulesDialogRef}
         onClose={() => setShowTestRulesDialog(false)}
         onClick={(e) => e.target === e.currentTarget && setShowTestRulesDialog(false)}

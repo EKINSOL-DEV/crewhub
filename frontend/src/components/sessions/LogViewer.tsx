@@ -164,7 +164,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
   const displayName = getSessionDisplayName(session)
 
   return (
-    <dialog
+    <dialog // NOSONAR: <dialog> is a native interactive HTML element
       ref={dialogRef}
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
