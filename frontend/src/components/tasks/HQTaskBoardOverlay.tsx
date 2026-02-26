@@ -375,30 +375,40 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
 
         {/* Board Content */}
         <div className="flex-1 overflow-hidden p-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center h-full gap-3">
-              <p className="text-sm text-destructive">{error}</p>
-              <button
-                onClick={handleRefresh}
-                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90"
-              >
-                Retry
-              </button>
-            </div>
-          ) : (
-            <HQTaskBoard
-              tasks={filteredTasks}
-              projects={filteredProjects}
-              onTaskClick={handleTaskClick}
-              onStatusChange={handleStatusChange}
-              collapsedProjects={collapsedProjects}
-              onToggleProject={toggleProjectCollapse}
-            />
-          )}
+          {(() => {
+            if (isLoading) {
+              return (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+              )
+            }
+
+            if (error) {
+              return (
+                <div className="flex flex-col items-center justify-center h-full gap-3">
+                  <p className="text-sm text-destructive">{error}</p>
+                  <button
+                    onClick={handleRefresh}
+                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )
+            }
+
+            return (
+              <HQTaskBoard
+                tasks={filteredTasks}
+                projects={filteredProjects}
+                onTaskClick={handleTaskClick}
+                onStatusChange={handleStatusChange}
+                collapsedProjects={collapsedProjects}
+                onToggleProject={toggleProjectCollapse}
+              />
+            )
+          })()}
         </div>
 
         {/* Footer */}
@@ -442,7 +452,6 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
-
               aria-modal="true"
             >
               <div className="flex items-center justify-between mb-4">

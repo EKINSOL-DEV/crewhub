@@ -143,7 +143,8 @@ interface PreviewPanelProps {
   readonly isSaving?: boolean
 }
 
-export function PreviewPanel({ // NOSONAR
+export function PreviewPanel({
+  // NOSONAR
   // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   PropComponent,
   componentName,
@@ -193,47 +194,65 @@ export function PreviewPanel({ // NOSONAR
           >
             ⚙️ Generating prop...
           </div>
-        ) : canPreview && PreviewWrapper ? (
-          <Canvas camera={{ position: [2, 1.5, 2], fov: 45 }}>
-            <PropErrorBoundary onError={handleRuntimeError}>
-              <Suspense fallback={null}>
-                <Stage adjustCamera={false} environment="city" intensity={0.5}>
-                  <PreviewWrapper />
-                </Stage>
-              </Suspense>
-            </PropErrorBoundary>
-            <OrbitControls makeDefault enablePan enableZoom minDistance={1} maxDistance={10} />
-            <ambientLight intensity={0.4} />
-            <directionalLight position={[5, 5, 5]} intensity={0.8} />
-          </Canvas>
-        ) : displayError ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              padding: '20px',
-            }}
-          >
-            <div style={{ textAlign: 'center', color: HSL_DESTRUCTIVE }}>
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚠️</div>
-              <div style={{ fontSize: '13px' }}>Render failed</div>
-            </div>
-          </div>
         ) : (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: 'hsl(var(--muted-foreground))',
-              fontSize: '13px',
-            }}
-          >
-            No preview available
-          </div>
+          (() => {
+            if (canPreview && PreviewWrapper) {
+              return (
+                <Canvas camera={{ position: [2, 1.5, 2], fov: 45 }}>
+                  <PropErrorBoundary onError={handleRuntimeError}>
+                    <Suspense fallback={null}>
+                      <Stage adjustCamera={false} environment="city" intensity={0.5}>
+                        <PreviewWrapper />
+                      </Stage>
+                    </Suspense>
+                  </PropErrorBoundary>
+                  <OrbitControls
+                    makeDefault
+                    enablePan
+                    enableZoom
+                    minDistance={1}
+                    maxDistance={10}
+                  />
+                  <ambientLight intensity={0.4} />
+                  <directionalLight position={[5, 5, 5]} intensity={0.8} />
+                </Canvas>
+              )
+            }
+
+            if (displayError) {
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    padding: '20px',
+                  }}
+                >
+                  <div style={{ textAlign: 'center', color: HSL_DESTRUCTIVE }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚠️</div>
+                    <div style={{ fontSize: '13px' }}>Render failed</div>
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: 'hsl(var(--muted-foreground))',
+                  fontSize: '13px',
+                }}
+              >
+                No preview available
+              </div>
+            )
+          })()
         )}
       </div>
 

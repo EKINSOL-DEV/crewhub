@@ -71,7 +71,8 @@ function getDisplayStatus(job: CronJob): DisplayStatus {
 
 // --- Formatting helpers ---
 
-function formatSchedule(schedule: Schedule): string { // NOSONAR
+function formatSchedule(schedule: Schedule): string {
+  // NOSONAR
   // NOSONAR: complexity from cron schedule rendering with multiple format branches
   switch (schedule.kind) {
     case 'cron': {
@@ -261,107 +262,125 @@ export function CronView() {
 
       {/* Content */}
       <ScrollArea className="flex-1">
-        {loading && jobs.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-            <p className="text-muted-foreground">{error}</p>
-            <Button variant="outline" className="mt-4" onClick={fetchJobs}>
-              Try Again
-            </Button>
-          </div>
-        ) : jobs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8">
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
-              <Clock className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">No Scheduled Jobs</h3>
-            <p className="text-muted-foreground max-w-md">
-              Cron jobs will appear here when configured. Jobs can be scheduled via the OpenClaw CLI
-              or API.
-            </p>
-            <div className="mt-6 p-4 rounded-lg bg-muted border border-border text-left">
-              <p className="text-xs text-muted-foreground mb-2">Example CLI command:</p>
-              <code className="text-xs text-primary font-mono">
-                openclaw cron add "0 9 * * *" --task "Daily summary"
-              </code>
-            </div>
-          </div>
-        ) : (
-          <div className="p-4 space-y-3">
-            {sortedJobs.map((job) => {
-              const status = getDisplayStatus(job)
-              const lastError = job.state?.lastError
-              const duration = job.state?.lastDurationMs
+        {(() => {
+          if (loading && jobs.length === 0) {
+            return (
+              <div className="flex items-center justify-center h-64">
+                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            )
+          }
 
-              return (
-                <div
-                  key={job.id}
-                  className={`p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors ${
-                    job.enabled ? '' : 'opacity-60'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      {getStatusIcon(status)}
-                      <div className="min-w-0">
-                        <h3 className="font-medium text-foreground">{job.name}</h3>
+          if (error) {
+            return (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+                <p className="text-muted-foreground">{error}</p>
+                <Button variant="outline" className="mt-4" onClick={fetchJobs}>
+                  Try Again
+                </Button>
+              </div>
+            )
+          }
 
-                        {/* Schedule + payload info */}
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            {getScheduleIcon(job.schedule.kind)}
-                            {formatSchedule(job.schedule)}
-                          </span>
-                          <span>Last: {formatTime(job.state?.lastRunAtMs)}</span>
-                          <span>Next: {formatTime(job.state?.nextRunAtMs)}</span>
-                          {duration != null && duration > 0 && (
+          if (jobs.length === 0) {
+            return (
+              <div className="flex flex-col items-center justify-center h-64 text-center p-8">
+                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
+                  <Clock className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">No Scheduled Jobs</h3>
+                <p className="text-muted-foreground max-w-md">
+                  Cron jobs will appear here when configured. Jobs can be scheduled via the OpenClaw
+                  CLI or API.
+                </p>
+                <div className="mt-6 p-4 rounded-lg bg-muted border border-border text-left">
+                  <p className="text-xs text-muted-foreground mb-2">Example CLI command:</p>
+                  <code className="text-xs text-primary font-mono">
+                    openclaw cron add "0 9 * * *" --task "Daily summary"
+                  </code>
+                </div>
+              </div>
+            )
+          }
+
+          return (
+            <div className="p-4 space-y-3">
+              {sortedJobs.map((job) => {
+                const status = getDisplayStatus(job)
+                const lastError = job.state?.lastError
+                const duration = job.state?.lastDurationMs
+
+                return (
+                  <div
+                    key={job.id}
+                    className={`p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors ${
+                      job.enabled ? '' : 'opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        {getStatusIcon(status)}
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-foreground">{job.name}</h3>
+
+                          {/* Schedule + payload info */}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
-                              <Timer className="h-3 w-3" />
-                              {formatDuration(duration)}
+                              {getScheduleIcon(job.schedule.kind)}
+                              {formatSchedule(job.schedule)}
                             </span>
+                            <span>Last: {formatTime(job.state?.lastRunAtMs)}</span>
+                            <span>Next: {formatTime(job.state?.nextRunAtMs)}</span>
+                            {duration != null && duration > 0 && (
+                              <span className="flex items-center gap-1">
+                                <Timer className="h-3 w-3" />
+                                {formatDuration(duration)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Payload & target badges */}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            {job.payload?.kind && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                <Zap className="h-2.5 w-2.5 mr-0.5" />
+                                {job.payload.kind}
+                              </Badge>
+                            )}
+                            {job.sessionTarget && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                {job.sessionTarget}
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Error message */}
+                          {lastError && status === 'error' && (
+                            <p className="mt-2 text-xs text-red-500 cursor-help" title={lastError}>
+                              ⚠ {truncate(lastError, 80)}
+                            </p>
                           )}
                         </div>
+                      </div>
 
-                        {/* Payload & target badges */}
-                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                          {job.payload?.kind && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              <Zap className="h-2.5 w-2.5 mr-0.5" />
-                              {job.payload.kind}
-                            </Badge>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {getStatusBadge(status)}
+                        <Button variant="ghost" size="sm">
+                          {job.enabled ? (
+                            <Pause className="h-4 w-4" />
+                          ) : (
+                            <Play className="h-4 w-4" />
                           )}
-                          {job.sessionTarget && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              {job.sessionTarget}
-                            </Badge>
-                          )}
-                        </div>
-
-                        {/* Error message */}
-                        {lastError && status === 'error' && (
-                          <p className="mt-2 text-xs text-red-500 cursor-help" title={lastError}>
-                            ⚠ {truncate(lastError, 80)}
-                          </p>
-                        )}
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {getStatusBadge(status)}
-                      <Button variant="ghost" size="sm">
-                        {job.enabled ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </Button>
-                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+                )
+              })}
+            </div>
+          )
+        })()}
       </ScrollArea>
     </div>
   )

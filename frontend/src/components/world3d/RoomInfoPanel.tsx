@@ -31,7 +31,9 @@ interface RoomInfoPanelProps {
   readonly onClose: () => void
   readonly onBotClick?: (session: CrewSession) => void
   readonly onFocusRoom?: (roomId: string) => void
-  readonly onOpenTaskBoard?: ( projectId: string, roomId: string,
+  readonly onOpenTaskBoard?: (
+    projectId: string,
+    roomId: string,
     agents: Array<{ session_key: string; display_name: string }>
   ) => void
   readonly onOpenHQBoard?: () => void
@@ -596,120 +598,128 @@ function HQDashboard({
         >
           Loading projects…
         </div>
-      ) : overview.length === 0 ? (
-        <div
-          style={{
-            marginTop: 8,
-            padding: '16px 14px',
-            background: 'rgba(245,158,11,0.05)',
-            borderRadius: 10,
-            fontSize: 13,
-            color: '#9ca3af',
-            textAlign: 'center',
-          }}
-        >
-          No projects yet
-        </div>
       ) : (
-        <div
-          style={{
-            marginTop: 8,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-          }}
-        >
-          {overview.map((project) => {
-            const statusBadge = getProjectStatusBadge(project.status)
-            // Find the first room assigned to this project for navigation
-            const primaryRoomId = project.rooms?.[0]
-            const clickable = !!primaryRoomId && !!onProjectClick
-
+        (() => {
+          if (overview.length === 0) {
             return (
-              <button
-                key={project.id}
-                onClick={() => {
-                  if (clickable) onProjectClick(primaryRoomId)
-                }}
+              <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 12px',
+                  marginTop: 8,
+                  padding: '16px 14px',
+                  background: 'rgba(245,158,11,0.05)',
                   borderRadius: 10,
-                  border: '1px solid rgba(245,158,11,0.12)',
-                  background: 'rgba(245,158,11,0.04)',
-                  cursor: clickable ? 'pointer' : 'default',
-                  fontFamily: 'inherit',
-                  textAlign: 'left',
-                  width: '100%',
-                  transition: CLS_BACKGROUND_015S,
-                }}
-                onMouseEnter={(e) => {
-                  if (clickable) e.currentTarget.style.background = 'rgba(245,158,11,0.1)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(245,158,11,0.04)'
+                  fontSize: 13,
+                  color: '#9ca3af',
+                  textAlign: 'center',
                 }}
               >
-                {/* Color dot */}
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: project.color || '#6b7280',
-                    flexShrink: 0,
-                  }}
-                />
+                No projects yet
+              </div>
+            )
+          }
 
-                {/* Icon + info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 14 }}>{project.icon || '📋'}</span>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: '#1f2937',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {project.name}
-                    </span>
-                  </div>
-                  <div
+          return (
+            <div
+              style={{
+                marginTop: 8,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
+              {overview.map((project) => {
+                const statusBadge = getProjectStatusBadge(project.status)
+                // Find the first room assigned to this project for navigation
+                const primaryRoomId = project.rooms?.[0]
+                const clickable = !!primaryRoomId && !!onProjectClick
+
+                return (
+                  <button
+                    key={project.id}
+                    onClick={() => {
+                      if (clickable) onProjectClick(primaryRoomId)
+                    }}
                     style={{
-                      fontSize: 11,
-                      color: '#9ca3af',
-                      marginTop: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: '1px solid rgba(245,158,11,0.12)',
+                      background: 'rgba(245,158,11,0.04)',
+                      cursor: clickable ? 'pointer' : 'default',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                      width: '100%',
+                      transition: CLS_BACKGROUND_015S,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (clickable) e.currentTarget.style.background = 'rgba(245,158,11,0.1)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(245,158,11,0.04)'
                     }}
                   >
-                    {project.room_count} room{project.room_count === 1 ? '' : 's'} ·{' '}
-                    {project.agent_count} agent{project.agent_count === 1 ? '' : 's'}
-                  </div>
-                </div>
+                    {/* Color dot */}
+                    <span
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: project.color || '#6b7280',
+                        flexShrink: 0,
+                      }}
+                    />
 
-                {/* Status */}
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: statusBadge.color,
-                    background: statusBadge.bg,
-                    padding: '2px 6px',
-                    borderRadius: 4,
-                    flexShrink: 0,
-                  }}
-                >
-                  {statusBadge.label}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+                    {/* Icon + info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 14 }}>{project.icon || '📋'}</span>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: '#1f2937',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {project.name}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: '#9ca3af',
+                          marginTop: 2,
+                        }}
+                      >
+                        {project.room_count} room{project.room_count === 1 ? '' : 's'} ·{' '}
+                        {project.agent_count} agent{project.agent_count === 1 ? '' : 's'}
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        color: statusBadge.color,
+                        background: statusBadge.bg,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {statusBadge.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )
+        })()
       )}
 
       {/* Recent Standups */}

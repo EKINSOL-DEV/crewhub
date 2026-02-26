@@ -191,7 +191,12 @@ function makeConnectionStatusUpdater(data: Partial<Connection> & { id: string })
     prev.map((c) => (c.id === data.id ? { ...c, ...data } : c))
 }
 
-function ConnectionDialog({ open, onOpenChange, connection, onSave }: Readonly<ConnectionDialogProps>) {
+function ConnectionDialog({
+  open,
+  onOpenChange,
+  connection,
+  onSave,
+}: Readonly<ConnectionDialogProps>) {
   const isEdit = !!connection
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState<ConnectionFormData>({
@@ -266,7 +271,7 @@ function ConnectionDialog({ open, onOpenChange, connection, onSave }: Readonly<C
       <div
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"  // NOSONAR: decorative/overlay element; presentation role is appropriate here
+        role="presentation" // NOSONAR: decorative/overlay element; presentation role is appropriate here
         className="bg-background rounded-lg overflow-hidden"
       >
         {/* Header */}
@@ -573,149 +578,165 @@ export function ConnectionsView({ embedded = false }: { embedded?: boolean }) {
 
       {/* Content */}
       <div className={embedded ? '' : 'flex-1 overflow-auto'}>
-        {loading && connections.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : error && connections.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-            <p className="text-muted-foreground">{error}</p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => {
-                setError(null)
-                fetchConnections()
-              }}
-            >
-              Try Again
-            </Button>
-          </div>
-        ) : connections.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8">
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
-              <Cable className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">No Connections</h3>
-            <p className="text-muted-foreground max-w-md mb-6">
-              Add connections to OpenClaw, Claude Code, or Codex to manage agent sessions from
-              multiple sources.
-            </p>
-            <Button onClick={handleAdd} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Your First Connection
-            </Button>
-          </div>
-        ) : (
-          <div className="p-4 space-y-3">
-            {connections.map((connection) => (
-              <div
-                key={connection.id}
-                className="p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5">
-                      {getStatusIcon(connection.status as ConnectionStatus)}
-                    </div>
-                    <div className="flex-1">
-                      <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
-                        <h3 className="font-medium text-foreground">{connection.name}</h3>
-                        <Badge variant="outline" className="gap-1">
-                          {getTypeIcon(connection.type)}
-                          {CONNECTION_TYPE_CONFIG[connection.type]?.label}
-                        </Badge>
+        {(() => {
+          if (loading && connections.length === 0) {
+            return (
+              <div className="flex items-center justify-center h-64">
+                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            )
+          }
+
+          if (error && connections.length === 0) {
+            return (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+                <p className="text-muted-foreground">{error}</p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    setError(null)
+                    fetchConnections()
+                  }}
+                >
+                  Try Again
+                </Button>
+              </div>
+            )
+          }
+
+          if (connections.length === 0) {
+            return (
+              <div className="flex flex-col items-center justify-center h-64 text-center p-8">
+                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
+                  <Cable className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">No Connections</h3>
+                <p className="text-muted-foreground max-w-md mb-6">
+                  Add connections to OpenClaw, Claude Code, or Codex to manage agent sessions from
+                  multiple sources.
+                </p>
+                <Button onClick={handleAdd} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Your First Connection
+                </Button>
+              </div>
+            )
+          }
+
+          return (
+            <div className="p-4 space-y-3">
+              {connections.map((connection) => (
+                <div
+                  key={connection.id}
+                  className="p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5">
+                        {getStatusIcon(connection.status as ConnectionStatus)}
                       </div>
-                      {connection.error && (
-                        <p className="text-sm text-red-500 mt-1">{connection.error}</p>
-                      )}
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        {connection.type === 'openclaw' && connection.config.gateway_url && (
-                          <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
-                            <Wifi className="h-3 w-3" />
-                            {connection.config.gateway_url}
-                          </span>
+                      <div className="flex-1">
+                        <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
+                          <h3 className="font-medium text-foreground">{connection.name}</h3>
+                          <Badge variant="outline" className="gap-1">
+                            {getTypeIcon(connection.type)}
+                            {CONNECTION_TYPE_CONFIG[connection.type]?.label}
+                          </Badge>
+                        </div>
+                        {connection.error && (
+                          <p className="text-sm text-red-500 mt-1">{connection.error}</p>
                         )}
-                        {connection.type === 'claude_code' && connection.config.cli_path && (
-                          <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
-                            <Terminal className="h-3 w-3" />
-                            {connection.config.cli_path}
-                          </span>
-                        )}
-                        {connection.type === 'codex' && connection.config.cli_path && (
-                          <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
-                            <Bot className="h-3 w-3" />
-                            {connection.config.cli_path}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          {connection.type === 'openclaw' && connection.config.gateway_url && (
+                            <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
+                              <Wifi className="h-3 w-3" />
+                              {connection.config.gateway_url}
+                            </span>
+                          )}
+                          {connection.type === 'claude_code' && connection.config.cli_path && (
+                            <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
+                              <Terminal className="h-3 w-3" />
+                              {connection.config.cli_path}
+                            </span>
+                          )}
+                          {connection.type === 'codex' && connection.config.cli_path && (
+                            <span className={CLS_FLEX_ITEMS_CENTER_GAP_1}>
+                              <Bot className="h-3 w-3" />
+                              {connection.config.cli_path}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
-                    {getStatusBadge(connection.status as ConnectionStatus)}
-                    <div className="flex items-center gap-1 ml-2">
-                      {/* Test Connection */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTestConnection(connection.id)}
-                        disabled={testingId === connection.id || !connection.enabled}
-                        title="Test connection"
-                      >
-                        {testingId === connection.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Zap className="h-4 w-4" />
-                        )}
-                      </Button>
-                      {/* Edit */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(connection)}
-                        title="Edit connection"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      {/* Delete */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(connection.id)}
-                        disabled={deletingId === connection.id}
-                        title={
-                          confirmDeleteId === connection.id
-                            ? 'Click again to confirm'
-                            : 'Delete connection'
-                        }
-                        className={
-                          confirmDeleteId === connection.id
-                            ? 'bg-red-500 text-white hover:bg-red-600'
-                            : 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950'
-                        }
-                      >
-                        {deletingId === connection.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : confirmDeleteId === connection.id ? (
-                          <span className="text-xs px-1">Confirm?</span>
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                      {/* Enable/Disable Toggle */}
-                      <Switch
-                        checked={connection.enabled}
-                        onCheckedChange={() => handleToggleEnabled(connection)}
-                        className="ml-2"
-                      />
+                    <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
+                      {getStatusBadge(connection.status as ConnectionStatus)}
+                      <div className="flex items-center gap-1 ml-2">
+                        {/* Test Connection */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTestConnection(connection.id)}
+                          disabled={testingId === connection.id || !connection.enabled}
+                          title="Test connection"
+                        >
+                          {testingId === connection.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Zap className="h-4 w-4" />
+                          )}
+                        </Button>
+                        {/* Edit */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(connection)}
+                          title="Edit connection"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        {/* Delete */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(connection.id)}
+                          disabled={deletingId === connection.id}
+                          title={
+                            confirmDeleteId === connection.id
+                              ? 'Click again to confirm'
+                              : 'Delete connection'
+                          }
+                          className={
+                            confirmDeleteId === connection.id
+                              ? 'bg-red-500 text-white hover:bg-red-600'
+                              : 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950'
+                          }
+                        >
+                          {(() => {
+                            if (deletingId === connection.id) {
+                              return <Loader2 className="h-4 w-4 animate-spin" />
+                            }
+                            if (confirmDeleteId === connection.id) {
+                              return <span className="text-xs px-1">Confirm?</span>
+                            }
+                            return <Trash2 className="h-4 w-4" />
+                          })()}
+                        </Button>
+                        {/* Enable/Disable Toggle */}
+                        <Switch
+                          checked={connection.enabled}
+                          onCheckedChange={() => handleToggleEnabled(connection)}
+                          className="ml-2"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Add/Edit Dialog */}

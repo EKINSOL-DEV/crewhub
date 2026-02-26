@@ -27,7 +27,8 @@ interface EnvelopeResponse {
   privacy: string
 }
 
-export function ContextInspector({ roomId, roomName, onClose }: Readonly<ContextInspectorProps>) { // NOSONAR
+export function ContextInspector({ roomId, roomName, onClose }: Readonly<ContextInspectorProps>) {
+  // NOSONAR
   // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   const [data, setData] = useState<EnvelopeResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -230,91 +231,105 @@ export function ContextInspector({ roomId, roomName, onClose }: Readonly<Context
 
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px' }}>
-        {loading && !data ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
-            Loading context...
-          </div>
-        ) : error ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#ef4444' }}>
-            {error}
-            <br />
-            <button
-              onClick={fetchContext}
-              style={{
-                marginTop: 12,
-                padding: '6px 16px',
-                borderRadius: 8,
-                border: BORDER_1PX_SOLID_RGBA_255_255_255_0_1,
-                background: TRANSPARENT,
-                color: '#94a3b8',
-                cursor: 'pointer',
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        ) : data ? (
-          <>
-            {/* Stats bar */}
-            <div
-              style={{
-                display: 'flex',
-                gap: 12,
-                marginBottom: 16,
-                flexWrap: 'wrap',
-              }}
-            >
-              <StatBadge
-                label="Privacy"
-                value={data.privacy}
-                color={data.privacy === 'internal' ? '#22c55e' : '#f59e0b'}
-              />
-              <StatBadge label="Version" value={String(data.envelope.context_version)} />
-              <StatBadge
-                label="Size"
-                value={`${new Blob([JSON.stringify(data.envelope)]).size} B`}
-              />
-              {Array.isArray(data.envelope.tasks) && (
-                <StatBadge label="Tasks" value={String(data.envelope.tasks.length)} />
-              )}
-              {Array.isArray(data.envelope.participants) && (
-                <StatBadge label="Agents" value={String(data.envelope.participants.length)} />
-              )}
-            </div>
+        {(() => {
+          if (loading && !data) {
+            return (
+              <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>
+                Loading context...
+              </div>
+            )
+          }
 
-            {viewMode === 'tree' && <TreeView data={data.envelope} prevData={prevEnvelope} />}
-            {viewMode === 'json' && (
-              <pre
-                style={{
-                  fontSize: 12,
-                  fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  lineHeight: 1.6,
-                  margin: 0,
-                  color: '#cbd5e1',
-                }}
-              >
-                {JSON.stringify(data.envelope, null, 2)}
-              </pre>
-            )}
-            {viewMode === 'formatted' && (
-              <pre
-                style={{
-                  fontSize: 12,
-                  fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  lineHeight: 1.6,
-                  margin: 0,
-                  color: '#cbd5e1',
-                }}
-              >
-                {data.formatted}
-              </pre>
-            )}
-          </>
-        ) : null}
+          if (error) {
+            return (
+              <div style={{ textAlign: 'center', padding: 40, color: '#ef4444' }}>
+                {error}
+                <br />
+                <button
+                  onClick={fetchContext}
+                  style={{
+                    marginTop: 12,
+                    padding: '6px 16px',
+                    borderRadius: 8,
+                    border: BORDER_1PX_SOLID_RGBA_255_255_255_0_1,
+                    background: TRANSPARENT,
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
+            )
+          }
+
+          if (data) {
+            return (
+              <>
+                {/* Stats bar */}
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 12,
+                    marginBottom: 16,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <StatBadge
+                    label="Privacy"
+                    value={data.privacy}
+                    color={data.privacy === 'internal' ? '#22c55e' : '#f59e0b'}
+                  />
+                  <StatBadge label="Version" value={String(data.envelope.context_version)} />
+                  <StatBadge
+                    label="Size"
+                    value={`${new Blob([JSON.stringify(data.envelope)]).size} B`}
+                  />
+                  {Array.isArray(data.envelope.tasks) && (
+                    <StatBadge label="Tasks" value={String(data.envelope.tasks.length)} />
+                  )}
+                  {Array.isArray(data.envelope.participants) && (
+                    <StatBadge label="Agents" value={String(data.envelope.participants.length)} />
+                  )}
+                </div>
+
+                {viewMode === 'tree' && <TreeView data={data.envelope} prevData={prevEnvelope} />}
+                {viewMode === 'json' && (
+                  <pre
+                    style={{
+                      fontSize: 12,
+                      fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.6,
+                      margin: 0,
+                      color: '#cbd5e1',
+                    }}
+                  >
+                    {JSON.stringify(data.envelope, null, 2)}
+                  </pre>
+                )}
+                {viewMode === 'formatted' && (
+                  <pre
+                    style={{
+                      fontSize: 12,
+                      fontFamily: JETBRAINS_MONO_MENLO_MONOSPACE,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.6,
+                      margin: 0,
+                      color: '#cbd5e1',
+                    }}
+                  >
+                    {data.formatted}
+                  </pre>
+                )}
+              </>
+            )
+          }
+
+          return null
+        })()}
       </div>
 
       {/* Footer */}

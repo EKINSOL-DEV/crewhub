@@ -234,106 +234,120 @@ export function HistoryView() {
 
       {/* Content */}
       <ScrollArea className="flex-1">
-        {loading && sessions.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <XCircle className="h-12 w-12 text-red-500 mb-4" />
-            <p className="text-muted-foreground">{error}</p>
-            <Button variant="outline" className="mt-4" onClick={() => fetchHistory()}>
-              Try Again
-            </Button>
-          </div>
-        ) : filteredSessions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8">
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
-              <History className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">No History Yet</h3>
-            <p className="text-muted-foreground max-w-md">
-              Completed and archived sessions will appear here. Sessions are automatically archived
-              after completion or timeout.
-            </p>
-            <div className="mt-6 grid grid-cols-2 gap-4 text-center">
-              <div className="p-4 rounded-lg bg-muted border border-border">
-                <CheckCircle2 className="h-6 w-6 text-green-500 mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">Successful tasks</p>
+        {(() => {
+          if (loading && sessions.length === 0) {
+            return (
+              <div className="flex items-center justify-center h-64">
+                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-              <div className="p-4 rounded-lg bg-muted border border-border">
-                <Clock className="h-6 w-6 text-primary mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">Task duration tracking</p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="p-4 space-y-2">
-            {filteredSessions.map((session) => (
-              <div
-                key={session.session_id}
-                className="p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {getStatusIcon(session.status)}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-foreground truncate">
-                          {session.display_name || session.session_key}
-                        </h3>
-                        {getStatusBadge(session.status)}
-                      </div>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                        <span>{formatDate(session.ended_at)}</span>
-                        <span>
-                          Duration: {formatDuration(session.started_at, session.ended_at)}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3" />
-                          {formatCount(session.message_count)} messages
-                        </span>
-                        {session.agent_id && (
-                          <span className="inline-flex items-center gap-1">
-                            <Bot className="h-3 w-3" />
-                            {session.agent_id}
-                          </span>
-                        )}
-                        {session.model && <span>{session.model}</span>}
-                      </div>
-                      {session.summary && (
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                          {session.summary}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-            ))}
+            )
+          }
 
-            {/* Load More */}
-            {hasMore && (
-              <div className="flex justify-center pt-4 pb-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="gap-2"
-                >
-                  {loadingMore ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                  Load more ({formatTotal(total - sessions.length)} remaining)
+          if (error) {
+            return (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <XCircle className="h-12 w-12 text-red-500 mb-4" />
+                <p className="text-muted-foreground">{error}</p>
+                <Button variant="outline" className="mt-4" onClick={() => fetchHistory()}>
+                  Try Again
                 </Button>
               </div>
-            )}
-          </div>
-        )}
+            )
+          }
+
+          if (filteredSessions.length === 0) {
+            return (
+              <div className="flex flex-col items-center justify-center h-64 text-center p-8">
+                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
+                  <History className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">No History Yet</h3>
+                <p className="text-muted-foreground max-w-md">
+                  Completed and archived sessions will appear here. Sessions are automatically
+                  archived after completion or timeout.
+                </p>
+                <div className="mt-6 grid grid-cols-2 gap-4 text-center">
+                  <div className="p-4 rounded-lg bg-muted border border-border">
+                    <CheckCircle2 className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Successful tasks</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted border border-border">
+                    <Clock className="h-6 w-6 text-primary mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Task duration tracking</p>
+                  </div>
+                </div>
+              </div>
+            )
+          }
+
+          return (
+            <div className="p-4 space-y-2">
+              {filteredSessions.map((session) => (
+                <div
+                  key={session.session_id}
+                  className="p-4 rounded-lg bg-card border border-border hover:bg-muted/50 transition-colors cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {getStatusIcon(session.status)}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-foreground truncate">
+                            {session.display_name || session.session_key}
+                          </h3>
+                          {getStatusBadge(session.status)}
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <span>{formatDate(session.ended_at)}</span>
+                          <span>
+                            Duration: {formatDuration(session.started_at, session.ended_at)}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3" />
+                            {formatCount(session.message_count)} messages
+                          </span>
+                          {session.agent_id && (
+                            <span className="inline-flex items-center gap-1">
+                              <Bot className="h-3 w-3" />
+                              {session.agent_id}
+                            </span>
+                          )}
+                          {session.model && <span>{session.model}</span>}
+                        </div>
+                        {session.summary && (
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                            {session.summary}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              ))}
+
+              {/* Load More */}
+              {hasMore && (
+                <div className="flex justify-center pt-4 pb-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="gap-2"
+                  >
+                    {loadingMore ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                    Load more ({formatTotal(total - sessions.length)} remaining)
+                  </Button>
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </ScrollArea>
     </div>
   )

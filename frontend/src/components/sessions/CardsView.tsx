@@ -191,7 +191,8 @@ export function CardsView({ sessions }: CardsViewProps) {
   }, [sessions, search, sortBy, activeFilters])
 
   // Group sessions by room when groupByRoom is enabled
-  const groupedSessions = useMemo(() => { // NOSONAR
+  const groupedSessions = useMemo(() => {
+    // NOSONAR
     // NOSONAR: complexity from React render with multiple view state branches
     if (!groupByRoom) return null
 
@@ -398,50 +399,58 @@ export function CardsView({ sessions }: CardsViewProps) {
                 </Button>
               )}
             </div>
-          ) : groupByRoom && groupedSessions ? (
-            // Grouped by room view
-            <div className="space-y-4">
-              {groupedSessions.map((group) => {
-                const isCollapsed = collapsedRooms.has(group.groupId)
+          ) : (
+            (() => {
+              if (groupByRoom && groupedSessions) {
                 return (
-                  <div key={group.groupId}>
-                    <RoomGroupHeader
-                      name={group.name}
-                      icon={group.icon}
-                      color={group.color}
-                      count={group.sessions.length}
-                      expanded={!isCollapsed}
-                      onToggle={() => toggleRoomCollapse(group.groupId)}
-                    />
-                    {!isCollapsed && (
-                      <div
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-3 ml-1 pl-4 border-l-2"
-                        style={{ borderColor: `${group.color || '#6b7280'}40` }}
-                      >
-                        {group.sessions.map((session) => (
-                          <SessionCard
-                            key={session.key}
-                            session={session}
-                            onViewLogs={() => handleViewLogs(session)}
+                  // Grouped by room view
+                  <div className="space-y-4">
+                    {groupedSessions.map((group) => {
+                      const isCollapsed = collapsedRooms.has(group.groupId)
+                      return (
+                        <div key={group.groupId}>
+                          <RoomGroupHeader
+                            name={group.name}
+                            icon={group.icon}
+                            color={group.color}
+                            count={group.sessions.length}
+                            expanded={!isCollapsed}
+                            onToggle={() => toggleRoomCollapse(group.groupId)}
                           />
-                        ))}
-                      </div>
-                    )}
+                          {!isCollapsed && (
+                            <div
+                              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-3 ml-1 pl-4 border-l-2"
+                              style={{ borderColor: `${group.color || '#6b7280'}40` }}
+                            >
+                              {group.sessions.map((session) => (
+                                <SessionCard
+                                  key={session.key}
+                                  session={session}
+                                  onViewLogs={() => handleViewLogs(session)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )
-              })}
-            </div>
-          ) : (
-            // Flat view (no grouping)
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredAndSortedSessions.map((session) => (
-                <SessionCard
-                  key={session.key}
-                  session={session}
-                  onViewLogs={() => handleViewLogs(session)}
-                />
-              ))}
-            </div>
+              }
+
+              return (
+                // Flat view (no grouping)
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredAndSortedSessions.map((session) => (
+                    <SessionCard
+                      key={session.key}
+                      session={session}
+                      onViewLogs={() => handleViewLogs(session)}
+                    />
+                  ))}
+                </div>
+              )
+            })()
           )}
         </div>
       </ScrollArea>

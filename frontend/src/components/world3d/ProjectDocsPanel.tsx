@@ -770,100 +770,110 @@ export function ProjectDocsPanel({
 
         {/* File Viewer */}
         {view === 'viewer' &&
-          (loadingContent ? (
-            <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
-              Loading content...
-            </div>
-          ) : fileContent ? (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              {/* TOC for markdown */}
-              {toc.length > 3 && (
-                <div
-                  style={{
-                    padding: '8px 16px',
-                    borderBottom: '1px solid rgba(0,0,0,0.06)',
-                    background: 'rgba(0,0,0,0.02)',
-                    maxHeight: 120,
-                    overflow: 'auto',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: '#9ca3af',
-                      textTransform: 'uppercase',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Contents
-                  </div>
-                  {toc.map((entry) => (
+          (() => {
+            if (loadingContent) {
+              return (
+                <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
+                  Loading content...
+                </div>
+              )
+            }
+
+            if (fileContent) {
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  {/* TOC for markdown */}
+                  {toc.length > 3 && (
                     <div
-                      key={entry.text}
                       style={{
-                        fontSize: 11,
-                        color: '#6b7280',
-                        padding: '2px 0',
-                        paddingLeft: (entry.level - 1) * 12,
-                        cursor: 'default',
+                        padding: '8px 16px',
+                        borderBottom: '1px solid rgba(0,0,0,0.06)',
+                        background: 'rgba(0,0,0,0.02)',
+                        maxHeight: 120,
+                        overflow: 'auto',
                       }}
                     >
-                      {entry.text}
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: '#9ca3af',
+                          textTransform: 'uppercase',
+                          marginBottom: 4,
+                        }}
+                      >
+                        Contents
+                      </div>
+                      {toc.map((entry) => (
+                        <div
+                          key={entry.text}
+                          style={{
+                            fontSize: 11,
+                            color: '#6b7280',
+                            padding: '2px 0',
+                            paddingLeft: (entry.level - 1) * 12,
+                            cursor: 'default',
+                          }}
+                        >
+                          {entry.text}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )}
 
-              {/* Rendered Content */}
-              <div style={{ flex: 1, overflow: 'auto', padding: '12px 16px' }}>
-                {fileContent.type === 'image' && selectedFile && (
-                  <div style={{ textAlign: 'center', padding: 8 }}>
-                    <img
-                      src={`${API_BASE}/projects/${projectId}/files/image?path=${encodeURIComponent(selectedFile.path)}`}
-                      alt={selectedFile.name}
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: 400,
-                        borderRadius: 8,
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-                      }}
-                    />
-                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
-                      {selectedFile.name} ·{' '}
-                      {selectedFile.size ? formatFileSize(selectedFile.size) : ''}
-                    </div>
+                  {/* Rendered Content */}
+                  <div style={{ flex: 1, overflow: 'auto', padding: '12px 16px' }}>
+                    {fileContent.type === 'image' && selectedFile && (
+                      <div style={{ textAlign: 'center', padding: 8 }}>
+                        <img
+                          src={`${API_BASE}/projects/${projectId}/files/image?path=${encodeURIComponent(selectedFile.path)}`}
+                          alt={selectedFile.name}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: 400,
+                            borderRadius: 8,
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                          }}
+                        />
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 8 }}>
+                          {selectedFile.name} ·{' '}
+                          {selectedFile.size ? formatFileSize(selectedFile.size) : ''}
+                        </div>
+                      </div>
+                    )}
+
+                    {fileContent.type === 'document' && fileContent.extension === '.md' && (
+                      <MarkdownViewer content={fileContent.content} projectId={projectId} />
+                    )}
+
+                    {(fileContent.type === 'code' ||
+                      fileContent.type === 'config' ||
+                      (fileContent.type === 'document' && fileContent.extension !== '.md')) && (
+                      <pre
+                        style={{
+                          margin: 0,
+                          padding: 12,
+                          background: 'rgba(0,0,0,0.03)',
+                          borderRadius: 8,
+                          fontSize: 12,
+                          lineHeight: 1.6,
+                          fontFamily: UI_MONOSPACE_SFMONO_REGULAR_SF_MONO_MENL,
+                          color: '#374151',
+                          overflow: 'auto',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {fileContent.content}
+                      </pre>
+                    )}
                   </div>
-                )}
+                </div>
+              )
+            }
 
-                {fileContent.type === 'document' && fileContent.extension === '.md' && (
-                  <MarkdownViewer content={fileContent.content} projectId={projectId} />
-                )}
-
-                {(fileContent.type === 'code' ||
-                  fileContent.type === 'config' ||
-                  (fileContent.type === 'document' && fileContent.extension !== '.md')) && (
-                  <pre
-                    style={{
-                      margin: 0,
-                      padding: 12,
-                      background: 'rgba(0,0,0,0.03)',
-                      borderRadius: 8,
-                      fontSize: 12,
-                      lineHeight: 1.6,
-                      fontFamily: UI_MONOSPACE_SFMONO_REGULAR_SF_MONO_MENL,
-                      color: '#374151',
-                      overflow: 'auto',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {fileContent.content}
-                  </pre>
-                )}
-              </div>
-            </div>
-          ) : null)}
+            return null
+          })()}
       </div>
 
       {/* Markdown styles */}

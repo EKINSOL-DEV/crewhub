@@ -256,27 +256,33 @@ export function TasksWindow({ projectId, roomId, onClose }: TasksWindowProps) {
           >
             <span style={{ fontSize: 13 }}>Loading tasks...</span>
           </div>
-        ) : activeTasks.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              padding: 24,
-              color: 'rgba(0, 0, 0, 0.4)',
-              textAlign: 'center',
-            }}
-          >
-            <span style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>✅</span>
-            <span style={{ fontSize: 13 }}>No active tasks</span>
-            <span style={{ fontSize: 11, marginTop: 4, opacity: 0.7 }}>
-              Tasks in progress will appear here
-            </span>
-          </div>
         ) : (
-          activeTasks.map((task) => <TaskItem key={task.id} task={task} />)
+          (() => {
+            if (activeTasks.length === 0) {
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    padding: 24,
+                    color: 'rgba(0, 0, 0, 0.4)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <span style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>✅</span>
+                  <span style={{ fontSize: 13 }}>No active tasks</span>
+                  <span style={{ fontSize: 11, marginTop: 4, opacity: 0.7 }}>
+                    Tasks in progress will appear here
+                  </span>
+                </div>
+              )
+            }
+
+            return activeTasks.map((task) => <TaskItem key={task.id} task={task} />)
+          })()
         )}
       </div>
 
