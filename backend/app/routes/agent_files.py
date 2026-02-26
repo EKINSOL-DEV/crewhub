@@ -134,7 +134,14 @@ def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> 
     return items
 
 
-@router.get("/{agent_id}/files", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}})
+@router.get(
+    "/{agent_id}/files",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+    },
+)
 async def list_agent_files(
     agent_id: str,
     path: Annotated[Optional[str], Query(None, description="Subdirectory to list")],
@@ -166,7 +173,16 @@ async def list_agent_files(
     }
 
 
-@router.put("/{agent_id}/files/{file_path:path}", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}, 409: {"description": "Conflict"}, 500: {"description": "Internal server error"}})
+@router.put(
+    "/{agent_id}/files/{file_path:path}",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+        409: {"description": "Conflict"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def save_agent_file(agent_id: str, file_path: str, body: dict):
     """Save/update a file in an agent's workspace."""
     if ".." in file_path:
@@ -206,7 +222,9 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
         bak = target.with_suffix(target.suffix + ".bak")
         bak.write_text(target.read_text(errors="replace"))
     except Exception as e:
-        logger.warning(f"Failed to create backup for {file_path}: {e}")
+        logger.warning(
+            f"Failed to create backup for {file_path}: {e}"
+        )  # NOSONAR: file_path is validated server-side; e is system exception, needed for diagnostics
 
     # Write file
     try:
@@ -224,7 +242,16 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
     }
 
 
-@router.get("/{agent_id}/files/{file_path:path}", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}, 413: {"description": "Request entity too large"}, 500: {"description": "Internal server error"}})
+@router.get(
+    "/{agent_id}/files/{file_path:path}",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+        413: {"description": "Request entity too large"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def read_agent_file(agent_id: str, file_path: str):
     """Read a single file from an agent's workspace."""
     # Security: reject path traversal

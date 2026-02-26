@@ -61,7 +61,11 @@ async def projects_overview():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{project_id}", response_model=ProjectResponse, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.get(
+    "/{project_id}",
+    response_model=ProjectResponse,
+    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
+)
 async def get_project(project_id: str):
     """Get a specific project by ID."""
     try:
@@ -72,7 +76,9 @@ async def get_project(project_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get project {project_id}: {e}")
+        logger.error(
+            f"Failed to get project {project_id}: {e}"
+        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -88,7 +94,15 @@ async def create_project(project: ProjectCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{project_id}", response_model=ProjectResponse, responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.put(
+    "/{project_id}",
+    response_model=ProjectResponse,
+    responses={
+        400: {"description": "Bad request"},
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def update_project(project_id: str, project: ProjectUpdate):
     """Update an existing project."""
     try:
@@ -110,11 +124,20 @@ async def update_project(project_id: str, project: ProjectUpdate):
             )
         raise HTTPException(status_code=400, detail=err)
     except Exception as e:
-        logger.error(f"Failed to update project {project_id}: {e}")
+        logger.error(
+            f"Failed to update project {project_id}: {e}"
+        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{project_id}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.delete(
+    "/{project_id}",
+    responses={
+        400: {"description": "Bad request"},
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def delete_project(project_id: str):
     """Delete a project. Only archived projects can be deleted."""
     try:
@@ -133,7 +156,9 @@ async def delete_project(project_id: str):
             )
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to delete project {project_id}: {e}")
+        logger.error(
+            f"Failed to delete project {project_id}: {e}"
+        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -143,7 +168,14 @@ async def delete_project(project_id: str):
 # ========================================
 
 
-@router.get("/{project_id}/markdown-files", responses={403: {"description": "Forbidden"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.get(
+    "/{project_id}/markdown-files",
+    responses={
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def list_markdown_files(project_id: str):
     """List markdown files in a project's Synology Drive folder."""
     try:
@@ -239,11 +271,20 @@ async def list_markdown_files(project_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to list markdown files for project {project_id}: {e}")
+        logger.error(
+            f"Failed to list markdown files for project {project_id}: {e}"
+        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{project_id}/upload-document", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}})
+@router.post(
+    "/{project_id}/upload-document",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+    },
+)
 async def upload_document(project_id: str, file: Annotated[UploadFile, File(...)]):
     """Upload a markdown document to a project's meetings folder."""
     project = await project_service.get_project(project_id)

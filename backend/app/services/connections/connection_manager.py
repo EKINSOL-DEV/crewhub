@@ -172,7 +172,9 @@ class ConnectionManager:
             return False
 
         await connection.disconnect()
-        logger.info(f"Removed connection: {connection_id}")
+        logger.info(
+            f"Removed connection: {connection_id}"
+        )  # NOSONAR: connection_id is an internal system identifier, not user input
         return True
 
     def get_connection(self, connection_id: str) -> Optional[AgentConnection]:

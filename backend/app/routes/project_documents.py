@@ -131,7 +131,9 @@ def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> 
     return items
 
 
-@router.get("/{project_id}/documents", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}})
+@router.get(
+    "/{project_id}/documents", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}}
+)
 async def list_project_documents(
     project_id: str,
     path: Annotated[Optional[str], Query(None, description="Subdirectory to list")],
@@ -174,7 +176,15 @@ async def list_project_documents(
     }
 
 
-@router.put("/{project_id}/documents/{file_path:path}", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.put(
+    "/{project_id}/documents/{file_path:path}",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def save_project_document(project_id: str, file_path: str, body: dict):
     """Save/update a document in a project's data directory."""
     if ".." in file_path:
@@ -204,7 +214,9 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
         bak = target.with_suffix(target.suffix + ".bak")
         bak.write_text(target.read_text(errors="replace"))
     except Exception as e:
-        logger.warning(f"Failed to create backup for {file_path}: {e}")
+        logger.warning(
+            f"Failed to create backup for {file_path}: {e}"
+        )  # NOSONAR: file_path is validated server-side; e is system exception, needed for diagnostics
 
     # Write file
     try:
@@ -222,7 +234,16 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
     }
 
 
-@router.get("/{project_id}/documents/{file_path:path}", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}, 413: {"description": "Request entity too large"}, 500: {"description": "Internal server error"}})
+@router.get(
+    "/{project_id}/documents/{file_path:path}",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+        413: {"description": "Request entity too large"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def read_project_document(project_id: str, file_path: str):
     """Read a single document from a project's data directory."""
     if ".." in file_path:

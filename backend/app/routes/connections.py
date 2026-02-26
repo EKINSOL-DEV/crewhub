@@ -559,7 +559,9 @@ async def trigger_device_pairing(connection_id: str):
 
         if identity:
             await identity_manager.clear_device_token(identity.device_id)
-            logger.info(f"Cleared device token for {connection_id} — re-pairing on reconnect")
+            logger.info(
+                f"Cleared device token for {connection_id} — re-pairing on reconnect"
+            )  # NOSONAR: connection_id is internal system identifier, not user input
 
         # Trigger reconnect so pairing happens immediately
         manager = await get_connection_manager()

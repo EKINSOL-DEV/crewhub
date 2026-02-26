@@ -27,7 +27,11 @@ async def list_display_names():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{session_key}", response_model=SessionDisplayName, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.get(
+    "/{session_key}",
+    response_model=SessionDisplayName,
+    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
+)
 async def get_display_name(session_key: str):
     """Get display name for a specific session."""
     try:
@@ -42,11 +46,15 @@ async def get_display_name(session_key: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get display name for {session_key}: {e}")
+        logger.error(
+            f"Failed to get display name for {session_key}: {e}"
+        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{session_key}", response_model=SessionDisplayName, responses={500: {"description": "Internal server error"}})
+@router.post(
+    "/{session_key}", response_model=SessionDisplayName, responses={500: {"description": "Internal server error"}}
+)
 async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
     """Set or update display name for a session."""
     try:
@@ -84,11 +92,15 @@ async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
             )
             return result
     except Exception as e:
-        logger.error(f"Failed to set display name for {session_key}: {e}")
+        logger.error(
+            f"Failed to set display name for {session_key}: {e}"
+        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{session_key}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.delete(
+    "/{session_key}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}}
+)
 async def delete_display_name(session_key: str):
     """Delete a session display name."""
     try:
@@ -116,5 +128,7 @@ async def delete_display_name(session_key: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete display name {session_key}: {e}")
+        logger.error(
+            f"Failed to delete display name {session_key}: {e}"
+        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))

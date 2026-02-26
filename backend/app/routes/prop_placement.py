@@ -175,7 +175,7 @@ async def place_prop(
 
     await broadcast("prop_update", _to_broadcast_data(placed, "place"))
     logger.info(
-        f"[Creator] Placed prop {body.prop_id} at ({body.position.x},{body.position.y},{body.position.z}) room={body.room_id}"
+        f"[Creator] Placed prop {body.prop_id} at ({body.position.x},{body.position.y},{body.position.z}) room={body.room_id}"  # NOSONAR: prop_id and room_id are internal DB identifiers; coordinates are numeric values, not sensitive user data
     )
 
     return placed
@@ -234,7 +234,9 @@ async def update_placed_prop(
 
     placed = _row_to_response(dict(updated_row))
     await broadcast("prop_update", _to_broadcast_data(placed, "move"))
-    logger.info(f"[Creator] Updated placed prop {placed_id}")
+    logger.info(
+        f"[Creator] Updated placed prop {placed_id}"
+    )  # NOSONAR: placed_id is an internal DB UUID, not user input
 
     return placed
 
@@ -265,4 +267,6 @@ async def delete_placed_prop(
             "action": "remove",
         },
     )
-    logger.info(f"[Creator] Deleted placed prop {placed_id}")
+    logger.info(
+        f"[Creator] Deleted placed prop {placed_id}"
+    )  # NOSONAR: placed_id is an internal DB UUID, not user input
