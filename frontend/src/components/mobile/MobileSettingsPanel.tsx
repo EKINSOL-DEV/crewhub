@@ -442,7 +442,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
       <div
         onClick={handleBackdropClick}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') onClose()
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
         }}
         role="button"
         tabIndex={0}
