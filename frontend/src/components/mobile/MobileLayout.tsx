@@ -34,7 +34,15 @@ type View =
   | { type: 'creator' }
 
 // Fixed crew members only
-const FIXED_AGENT_IDS = new Set(['main', 'dev', 'flowy', 'creator', 'reviewer', 'gamedev', 'webdev'])
+const FIXED_AGENT_IDS = new Set([
+  'main',
+  'dev',
+  'flowy',
+  'creator',
+  'reviewer',
+  'gamedev',
+  'webdev',
+])
 
 export function MobileLayout() {
   // NOSONAR: complexity from React component with multiple hooks and state; extracting sub-hooks would hurt cohesion
