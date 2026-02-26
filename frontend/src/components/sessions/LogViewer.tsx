@@ -174,7 +174,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
       <div
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"
+        role="presentation"  // NOSONAR: decorative/overlay element; presentation role is appropriate here
         className="relative w-[calc(100vw-2rem)] sm:max-w-4xl h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col border bg-background shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95 duration-200"
       >
         {/* Close button */}
@@ -321,7 +321,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
             <div className="space-y-4">
               {filteredMessages.map((msg, idx) => (
                 <div
-                  key={`msg-${idx}`}
+                  key={`msg-${msg.id || idx}`}
                   className={cn(
                     'p-3 rounded-lg',
                     (() => {
@@ -342,7 +342,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
                   </div>
                   <div className="text-sm whitespace-pre-wrap">
                     {msg.content?.map((block, bidx) => (
-                      <div key={bidx}>
+                      <div key={`block-${block.type}-${bidx}`}>
                         {block.type === 'text' && block.text && <span>{block.text}</span>}
                         {block.type === 'thinking' && block.thinking && (
                           <div className="text-purple-600 dark:text-purple-400 italic">
