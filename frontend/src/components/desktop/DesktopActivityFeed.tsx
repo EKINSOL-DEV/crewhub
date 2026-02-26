@@ -478,7 +478,10 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
         >
           {loading
             ? 'Loading…'
-            : `${filteredEvents.length} event${filteredEvents.length === 1 ? '' : 's'}`}
+            : (() => {
+                const suffix = filteredEvents.length === 1 ? '' : 's'
+                return `${filteredEvents.length} event${suffix}`
+              })()}
           {selectedAgentId && ' (filtered)'}
         </div>
 

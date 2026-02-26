@@ -115,25 +115,35 @@ export function StepScan({
                   )}
                 </div>
                 <div className="shrink-0">
-                  {candidate.status === 'reachable' ? (
-                    <Button
-                      size="sm"
-                      onClick={() => onConnect(candidate, index)}
-                      className="gap-1.5"
-                    >
-                      <CheckCircle2 className="h-4 w-4" /> Connect
-                    </Button>
-                  ) : candidate.status === 'installed' ? (
-                    <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                      <a
-                        href={`https://docs.crewhub.dev/runtimes/${candidate.runtime_type}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" /> How to enable
-                      </a>
-                    </Button>
-                  ) : null}
+                  {(() => {
+                    if (candidate.status === 'reachable') {
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => onConnect(candidate, index)}
+                          className="gap-1.5"
+                        >
+                          <CheckCircle2 className="h-4 w-4" /> Connect
+                        </Button>
+                      )
+                    }
+
+                    if (candidate.status === 'installed') {
+                      return (
+                        <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                          <a
+                            href={`https://docs.crewhub.dev/runtimes/${candidate.runtime_type}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" /> How to enable
+                          </a>
+                        </Button>
+                      )
+                    }
+
+                    return null
+                  })()}
                 </div>
               </div>
             </div>

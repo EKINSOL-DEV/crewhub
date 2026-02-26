@@ -137,16 +137,22 @@ export function TaskTicker({ sessions, getRoomForSession, defaultRoomId }: TaskT
         }}
         title={isOpen ? 'Hide active tasks' : 'Show active tasks'}
       >
-        {runningCount > 0 ? (
-          <>
-            <span style={{ animation: 'pulse 2s infinite' }}>⚡</span>
-            {runningCount} running
-          </>
-        ) : totalCount > 0 ? (
-          <>📋 {totalCount} tasks</>
-        ) : (
-          <>📋 Tasks</>
-        )}
+        {(() => {
+          if (runningCount > 0) {
+            return (
+              <>
+                <span style={{ animation: 'pulse 2s infinite' }}>⚡</span>
+                {runningCount} running
+              </>
+            )
+          }
+
+          if (totalCount > 0) {
+            return <>📋 {totalCount} tasks</>
+          }
+
+          return <>📋 Tasks</>
+        })()}
         <span style={{ fontSize: 10, opacity: 0.6 }}>{isOpen ? '▲' : '▼'}</span>
       </button>
 

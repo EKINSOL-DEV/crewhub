@@ -876,11 +876,10 @@ function PropHistoryTab() {
             methodIcon = '📐'
           }
           const displayName = formatPropName(record.name) || record.prompt || 'Untitled prop'
-          const promptPreview = record.prompt
-            ? record.prompt.length > 72
-              ? record.prompt.slice(0, 69) + '…'
-              : record.prompt
-            : ''
+          let promptPreview = ''
+          if (record.prompt) {
+            promptPreview = record.prompt.length > 72 ? record.prompt.slice(0, 69) + '…' : record.prompt
+          }
 
           // Date formatting
           let dateStr = record.createdAt?.slice(0, 10) ?? ''

@@ -82,20 +82,28 @@ export function RoomTabsBar({ rooms, roomBotCounts, parkingBotCount }: RoomTabsB
           >
             <span>{room.icon || '📦'}</span>
             {/* Project color dot / HQ star */}
-            {room.is_hq ? (
-              <span style={{ color: '#FFD700', fontSize: 11, lineHeight: 1 }}>★</span>
-            ) : room.project_color ? (
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: room.project_color,
-                  display: 'inline-block',
-                  flexShrink: 0,
-                }}
-              />
-            ) : null}
+            {(() => {
+              if (room.is_hq) {
+                return <span style={{ color: '#FFD700', fontSize: 11, lineHeight: 1 }}>★</span>
+              }
+
+              if (room.project_color) {
+                return (
+                  <span
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: room.project_color,
+                      display: 'inline-block',
+                      flexShrink: 0,
+                    }}
+                  />
+                )
+              }
+
+              return null
+            })()}
             <span>{room.name}</span>
             {count > 0 && (
               <span

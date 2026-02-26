@@ -118,19 +118,29 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
           onClick={handleKill}
           disabled={isKilling}
         >
-          {isKilling ? (
-            <>
-              <span className="zen-spinner" /> Terminating...
-            </>
-          ) : confirmKill ? (
-            <>
-              <span>⚠️</span> Click again to confirm
-            </>
-          ) : (
-            <>
-              <span>🛑</span> Terminate Session
-            </>
-          )}
+          {(() => {
+            if (isKilling) {
+              return (
+                <>
+                  <span className="zen-spinner" /> Terminating...
+                </>
+              )
+            }
+
+            if (confirmKill) {
+              return (
+                <>
+                  <span>⚠️</span> Click again to confirm
+                </>
+              )
+            }
+
+            return (
+              <>
+                <span>🛑</span> Terminate Session
+              </>
+            )
+          })()}
         </button>
       </footer>
     </div>
