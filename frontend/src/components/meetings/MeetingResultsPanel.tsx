@@ -66,7 +66,8 @@ export function MeetingResultsPanel() {
             data.rounds?.map((r: any) => ({
               roundNum: r.round_num,
               topic: r.topic,
-              turns: // NOSONAR: nested map inside rounds.map in data transform — acceptable pattern
+              // NOSONAR: nested map inside rounds.map in data transform — acceptable pattern
+              turns:
                 r.turns?.map((t: any, i: number) => ({
                   round: r.round_num,
                   agentId: t.agent_id,
