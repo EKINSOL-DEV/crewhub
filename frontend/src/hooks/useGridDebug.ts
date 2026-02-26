@@ -29,12 +29,12 @@ export function useGridDebug(): [boolean, (value?: boolean) => void] {
     const storageHandler = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) setEnabled(e.newValue === 'true')
     }
-    window.addEventListener(KEY_CREWHUB_GRID_DEBUG, handler)
+    globalThis.addEventListener(KEY_CREWHUB_GRID_DEBUG, handler)
     // Also listen to storage events (other tabs)
-    window.addEventListener('storage', storageHandler)
+    globalThis.addEventListener('storage', storageHandler)
     return () => {
-      window.removeEventListener(KEY_CREWHUB_GRID_DEBUG, handler)
-      window.removeEventListener('storage', storageHandler)
+      globalThis.removeEventListener(KEY_CREWHUB_GRID_DEBUG, handler)
+      globalThis.removeEventListener('storage', storageHandler)
     }
   }, [])
 
@@ -43,7 +43,7 @@ export function useGridDebug(): [boolean, (value?: boolean) => void] {
     localStorage.setItem(STORAGE_KEY, String(next))
     setEnabled(next)
     // Notify other components in same tab
-    window.dispatchEvent(new Event(KEY_CREWHUB_GRID_DEBUG))
+    globalThis.dispatchEvent(new Event(KEY_CREWHUB_GRID_DEBUG))
   }, [])
 
   return [enabled, toggle]

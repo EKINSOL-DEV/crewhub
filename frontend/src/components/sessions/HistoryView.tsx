@@ -58,7 +58,7 @@ function formatDuration(startIso: string, endIso: string): string {
 
 function formatDate(iso: string): string {
   const timestamp = parseTimestamp(iso)
-  if (isNaN(timestamp)) return '—'
+  if (Number.isNaN(timestamp)) return '—'
   const date = new Date(timestamp)
   const now = new Date()
   const diffDays = Math.floor((now.getTime() - timestamp) / 86400000)

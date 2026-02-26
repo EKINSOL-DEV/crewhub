@@ -463,7 +463,7 @@ function CreateKeyModal({
       const result = await apiKeyApi.create({
         name: name.trim(),
         scopes: Array.from(scopes),
-        expires_in_days: isNaN(days) || days <= 0 ? null : days,
+        expires_in_days: Number.isNaN(days) || days <= 0 ? null : days,
         env,
       })
       onCreated(result)

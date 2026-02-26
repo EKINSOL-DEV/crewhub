@@ -144,7 +144,7 @@ function parseAudioAttachments(
       path,
       mimeType: baseMime,
       originalText: fullMatch + (matchText ? '\n' + matchText : ''),
-      duration: durationStr ? parseFloat(durationStr) : undefined,
+      duration: durationStr ? Number.parseFloat(durationStr) : undefined,
       transcript,
       transcriptError,
     })
