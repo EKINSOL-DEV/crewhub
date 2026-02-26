@@ -368,9 +368,7 @@ function World3DViewInner({
     [focusBot, focusState.focusedRoomId]
   )
 
-  const handleBotClick = (_session: CrewSession) => {
-    void _session
-  }
+  const handleBotClick = (_session: CrewSession) => {}
 
   const isNotFirstPerson = focusState.level !== 'firstperson'
 

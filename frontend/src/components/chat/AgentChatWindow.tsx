@@ -40,11 +40,9 @@ export function AgentChatWindow({
     onFocusAgent,
     windows,
   } = useChatContext()
-  void _togglePin // Reserved for future use
 
   const windowState = windows.find((w) => w.sessionKey === sessionKey)
   const _isPinned = windowState?.isPinned ?? false
-  void _isPinned // Reserved for future use
   const showInternals = windowState?.showInternals ?? false
   const accentColor = agentColor || '#8b5cf6'
   const icon = agentIcon || '🤖'
@@ -117,11 +115,11 @@ export function AgentChatWindow({
     setTimeout(() => inputRef.current?.focus(), 150)
   }, [])
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(() => {
     const text = inputValue.trim()
     if (!text || isSending) return
     setInputValue('')
-    await sendMessage(text)
+    sendMessage(text)
   }, [inputValue, isSending, sendMessage])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -140,7 +138,7 @@ export function AgentChatWindow({
       } else if (transcriptError) {
         msg += `\n[Voice transcription unavailable: ${transcriptError}]`
       }
-      void sendMessage(msg)
+      sendMessage(msg)
     },
     [sendMessage]
   )

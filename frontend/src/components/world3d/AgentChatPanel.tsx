@@ -35,11 +35,11 @@ export function AgentChatPanel({ sessionKey, botConfig, displayName }: AgentChat
     }
   }, [messages.length])
 
-  const handleSend = async () => {
+  const handleSend = () => {
     const text = inputValue.trim()
     if (!text || isSending) return
     setInputValue('')
-    await sendMessage(text)
+    sendMessage(text)
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {

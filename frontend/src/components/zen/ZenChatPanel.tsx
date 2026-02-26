@@ -343,7 +343,7 @@ export function ZenChatPanel({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(() => {
     const text = inputValue.trim()
 
     // Check if images are still uploading
@@ -381,7 +381,7 @@ export function ZenChatPanel({
       // Queue the message for when agent finishes
       setPendingMessage(messageText)
     } else {
-      await sendMessage(messageText)
+      sendMessage(messageText)
     }
     // Refocus input after sending
     setTimeout(() => inputRef.current?.focus(), 0)

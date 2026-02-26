@@ -151,8 +151,6 @@ export function SceneContent({
   onPlaceProp,
   onGhostPosition,
 }: SceneContentProps) {
-  void _settings
-
   const allSessions = useMemo(
     () => [...visibleSessions, ...parkingSessions],
     [visibleSessions, parkingSessions]

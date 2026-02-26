@@ -44,7 +44,7 @@ export const SESSION_LABELS: Record<string, string[]> = {
 }
 
 // Shared mutable rotation index — used by both getRotatingLabel and createMockEventSource
-export let labelRotationIndex = 0
+let labelRotationIndex = 0
 export function incrementLabelRotationIndex() {
   labelRotationIndex++
 }

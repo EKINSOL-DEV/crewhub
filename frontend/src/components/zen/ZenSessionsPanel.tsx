@@ -139,7 +139,6 @@ export function ZenSessionsPanel({
   onSelectSession,
   roomFilter,
 }: ZenSessionsPanelProps) {
-  void _selectedSessionKey // kept for API compat
   const { sessions, loading, connected } = useSessionsStream(true)
   const { isActivelyRunning } = useSessionActivity(sessions)
   const { sessionAssignments, getRoomForSession } = useRoomsContext()

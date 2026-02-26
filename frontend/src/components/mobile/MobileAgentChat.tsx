@@ -420,7 +420,7 @@ export function MobileAgentChat({
       parts.push(`MEDIA: ${path}`)
     }
     const fullMessage = parts.join('\n')
-    if (fullMessage) await sendMessage(fullMessage)
+    if (fullMessage) sendMessage(fullMessage)
   }, [inputValue, pendingFiles, isSending, isUploading, sendMessage])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -439,7 +439,7 @@ export function MobileAgentChat({
       } else if (transcriptError) {
         msg += `\n[Voice transcription unavailable: ${transcriptError}]`
       }
-      void sendMessage(msg)
+      sendMessage(msg)
     },
     [sendMessage]
   )

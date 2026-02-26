@@ -59,7 +59,7 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
   const [isKilling, setIsKilling] = useState(false)
   const [confirmKill, setConfirmKill] = useState(false)
 
-  const handleKill = useCallback(async () => {
+  const handleKill = useCallback(() => {
     if (!confirmKill) {
       setConfirmKill(true)
       return
@@ -67,7 +67,7 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
 
     setIsKilling(true)
     try {
-      await onKill(sessionKey)
+      onKill(sessionKey)
       onClose()
     } finally {
       setIsKilling(false)

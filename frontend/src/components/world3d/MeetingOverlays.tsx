@@ -27,7 +27,6 @@ export function MeetingOverlays({ agentRuntimes, rooms }: MeetingOverlaysProps) 
     followUpContext,
     openFollowUp,
   } = useMeetingContext()
-  void _od
 
   const hqRoom = rooms.find(
     (r) => r.name.toLowerCase().includes('headquarter') || r.name.toLowerCase() === 'hq'

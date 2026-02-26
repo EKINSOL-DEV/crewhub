@@ -97,8 +97,7 @@ export function PlacementGhost({
 }
 
 /** A subtle green ambient glow below the ghost prop */
-function GhostOverlay({ scale }: { scale: number }) {
-  void scale
+function GhostOverlay({ scale: _scale }: { scale: number }) {
   return (
     <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <circleGeometry args={[0.6, 16]} />

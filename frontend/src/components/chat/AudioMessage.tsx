@@ -77,7 +77,7 @@ export function AudioMessage({
     if (isPlaying) {
       audio.pause()
     } else {
-      void audio.play()
+      audio.play().catch(() => {}) // ignore play() rejection in browsers
     }
   }, [isPlaying])
 

@@ -114,7 +114,7 @@ describe('VisionSystem', () => {
 
     expect(props.length).toBe(2)
     // Sorted by distance — both at distance 2
-    const propIds = props.map((p) => p.propId).sort()
+    const propIds = props.map((p) => p.propId).sort((a, b) => a.localeCompare(b))
     expect(propIds).toEqual(['desk', 'plant'])
     expect(props[0].distance).toBeCloseTo(2)
     expect(props[1].distance).toBeCloseTo(2)

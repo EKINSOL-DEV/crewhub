@@ -160,7 +160,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
         const assignments = assignmentsData.assignments || []
         // Deduplicate assignments
         const assignmentsFingerprint = JSON.stringify(
-          assignments.map((a) => `${a.session_key}:${a.room_id}`).sort()
+          assignments.map((a) => `${a.session_key}:${a.room_id}`).sort((a, b) => a.localeCompare(b))
         )
         if (assignmentsFingerprint !== assignmentsFingerprintRef.current) {
           assignmentsFingerprintRef.current = assignmentsFingerprint

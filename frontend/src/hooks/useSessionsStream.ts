@@ -30,7 +30,7 @@ function computeSessionsFingerprint(sessions: CrewSession[]): string {
     const s = sessions[i]
     keys[i] = `${s.key}:${s.updatedAt || 0}:${s.totalTokens || 0}`
   }
-  keys.sort()
+  keys.sort((a, b) => a.localeCompare(b))
   return keys.join('|')
 }
 

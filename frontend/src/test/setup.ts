@@ -3,9 +3,15 @@ import '@testing-library/jest-dom'
 // Mock ResizeObserver which is not available in jsdom
 ;(globalThis as unknown as { ResizeObserver: typeof ResizeObserver }).ResizeObserver =
   class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+    observe() {
+      /* no-op mock */
+    }
+    unobserve() {
+      /* no-op mock */
+    }
+    disconnect() {
+      /* no-op mock */
+    }
   } as unknown as typeof ResizeObserver
 
 // Mock window.matchMedia which is not available in jsdom

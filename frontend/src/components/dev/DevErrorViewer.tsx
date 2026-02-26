@@ -150,7 +150,7 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
 
   const errorTypes = useMemo(() => {
     const types = new Set(errors.map((e) => e.type))
-    return Array.from(types).sort()
+    return Array.from(types).sort((a, b) => a.localeCompare(b))
   }, [errors])
 
   const handleClear = useCallback(() => {

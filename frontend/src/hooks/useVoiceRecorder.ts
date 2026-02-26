@@ -240,7 +240,7 @@ export function useVoiceRecorder(
         setDuration(0)
 
         if (!cancelledRef.current && blob.size > 0) {
-          void uploadAudio(blob, dur)
+          uploadAudio(blob, dur)
         }
       }
 
