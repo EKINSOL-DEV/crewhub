@@ -134,8 +134,8 @@ export function ZenTooltip({
             <span className="zen-tooltip-content">{content}</span>
             {formattedShortcut && (
               <span className="zen-tooltip-shortcut">
-                {formattedShortcut.map((key, i) => (
-                  <kbd key={`key-${i}`} className="zen-kbd zen-kbd-small">
+                {formattedShortcut.map((key, _i) => (
+                  <kbd key={JSON.stringify(key)} className="zen-kbd zen-kbd-small">
                     {key}
                   </kbd>
                 ))}

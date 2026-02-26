@@ -406,9 +406,9 @@ function ProjectDetailModal({
               ASSIGNED AGENTS ({assignedAgents.length})
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {assignedAgents.map((agent, i) => (
+              {assignedAgents.map((agent, _i) => (
                 <div
-                  key={`agent-${i}`}
+                  key={JSON.stringify(agent)}
                   style={{
                     padding: '6px 12px',
                     background: 'rgba(255, 255, 255, 0.03)',

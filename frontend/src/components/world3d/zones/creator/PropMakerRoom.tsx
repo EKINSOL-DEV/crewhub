@@ -70,8 +70,8 @@ export function PropMakerRoom({ position = [0, 0, 0], size = 12 }: PropMakerRoom
         { pos: [0, 1.75, size / 2 - 0.08] as [number, number, number], rotY: 0 },
         { pos: [-size / 2 + 0.08, 1.75, 0] as [number, number, number], rotY: Math.PI / 2 },
         { pos: [size / 2 - 0.08, 1.75, 0] as [number, number, number], rotY: Math.PI / 2 },
-      ].map((strip, i) => (
-        <mesh key={`trim-${i}`} position={strip.pos} rotation={[0, strip.rotY, 0]}>
+      ].map((strip, _i) => (
+        <mesh key={JSON.stringify(strip)} position={strip.pos} rotation={[0, strip.rotY, 0]}>
           <boxGeometry args={[size - 0.3, 0.04, 0.02]} />
           <meshStandardMaterial
             color="#00ffcc"
@@ -88,9 +88,9 @@ export function PropMakerRoom({ position = [0, 0, 0], size = 12 }: PropMakerRoom
         [size / 2 - 0.5, 0.5, -size / 2 + 0.5],
         [-size / 2 + 0.5, 0.5, size / 2 - 0.5],
         [size / 2 - 0.5, 0.5, size / 2 - 0.5],
-      ].map((pos, i) => (
+      ].map((pos, _i) => (
         <pointLight
-          key={`corner-${i}`}
+          key={JSON.stringify(pos)}
           position={pos as [number, number, number]}
           color="#7B1FA2"
           intensity={0.3}

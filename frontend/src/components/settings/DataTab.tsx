@@ -375,9 +375,9 @@ function BackupSection() {
 
               return (
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                  {backups.map((backup, i) => (
+                  {backups.map((backup, _i) => (
                     <div
-                      key={`backup-${i}`}
+                      key={JSON.stringify(backup)}
                       className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 text-sm"
                     >
                       <HardDrive className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

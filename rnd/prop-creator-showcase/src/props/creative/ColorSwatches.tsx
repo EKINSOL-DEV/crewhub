@@ -9,7 +9,7 @@ export function ColorSwatches() {
     <group ref={groupRef}>
 
       {Array.from({length: 7}).map((_,i) => (
-        <mesh key={`item-${i}`} position={[-0.08+i*0.025, -0.12+i*0.01, 0]} rotation={[0, 0, (i-3)*0.05]}>
+        <mesh key={JSON.stringify(_)} position={[-0.08+i*0.025, -0.12+i*0.01, 0]} rotation={[0, 0, (i-3)*0.05]}>
           <boxGeometry args={[0.04, 0.25, 0.003]} />
           <meshStandardMaterial color={['#ff4444','#ff8844','#ffcc44','#44cc44','#4488ff','#8844ff','#ff44aa'][i]} flatShading />
         </mesh>

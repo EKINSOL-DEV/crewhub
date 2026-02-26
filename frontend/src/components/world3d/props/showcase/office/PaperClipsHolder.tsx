@@ -19,7 +19,7 @@ export function PaperClipsHolder() {
       </mesh>
       {Array.from({ length: 8 }).map((_, i) => (
         <mesh
-          key={`item-${i}`}
+          key={JSON.stringify(_)}
           position={[Math.cos(i * 0.8) * 0.05, -0.12 + i * 0.01, Math.sin(i * 0.8) * 0.05]}
           rotation={[0.3 * i, 0.5 * i, 0]}
         >

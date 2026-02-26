@@ -13,7 +13,7 @@ export function Desk({ position = [0, 0, 0] as [number, number, number], rotatio
       </mesh>
       {/* Legs - tapered */}
       {[[-0.6, 0.37, -0.28], [0.6, 0.37, -0.28], [-0.6, 0.37, 0.28], [0.6, 0.37, 0.28]].map((p, i) => (
-        <mesh key={`p-${i}`} position={p as [number, number, number]} castShadow>
+        <mesh key={JSON.stringify(p)} position={p as [number, number, number]} castShadow>
           <cylinderGeometry args={[0.02, 0.03, 0.74, 6]} />
           <meshStandardMaterial color="#333" metalness={0.8} roughness={0.2} />
         </mesh>
@@ -220,7 +220,7 @@ export function MeetingTable({ position = [0, 0, 0] as [number, number, number],
       {/* Chairs around */}
       {Array.from({ length: seats }).map((_, i) => {
         const a = (i / seats) * Math.PI * 2
-        return <Chair key={`item-${i}`} position={[Math.cos(a) * 1.3, 0, Math.sin(a) * 1.3]} rotation={[0, -a + Math.PI, 0]} />
+        return <Chair key={JSON.stringify(_)} position={[Math.cos(a) * 1.3, 0, Math.sin(a) * 1.3]} rotation={[0, -a + Math.PI, 0]} />
       })}
     </group>
   )
@@ -277,7 +277,7 @@ export function Stairs({ position = [0, 0, 0] as [number, number, number], rotat
   return (
     <group position={position} rotation={rotation}>
       {Array.from({ length: steps }).map((_, i) => (
-        <mesh key={`item-${i}`} position={[0, stepH * i + stepH / 2, stepD * i]} castShadow>
+        <mesh key={JSON.stringify(_)} position={[0, stepH * i + stepH / 2, stepD * i]} castShadow>
           <boxGeometry args={[width, stepH, stepD]} />
           <meshStandardMaterial color="#556" roughness={0.4} metalness={0.3} />
         </mesh>

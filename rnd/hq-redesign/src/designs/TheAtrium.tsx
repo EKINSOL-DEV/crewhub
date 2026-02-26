@@ -33,7 +33,7 @@ export function TheAtrium() {
         const y = fi * floorH
 
         return (
-          <group key={fi} position={[0, y, 0]}>
+          <group key={JSON.stringify(_)} position={[0, y, 0]}>
             {/* Floor slab with central void */}
             {/* Left wing */}
             <mesh position={[-(atriumW / 2 + (buildW / 2 - atriumW / 2) / 2), 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>

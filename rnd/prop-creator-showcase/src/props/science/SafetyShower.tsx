@@ -25,7 +25,7 @@ export function SafetyShower() {
         <meshStandardMaterial color="#ffcc44" flatShading />
       </mesh>
       {Array.from({length: 3}).map((_,i) => (
-        <mesh key={`item-${i}`} position={[(i-1)*0.02, 0.28, 0]}><cylinderGeometry args={[0.003, 0.003, 0.06, 3]} /><meshStandardMaterial color="#88ccff" transparent opacity={0.3} /></mesh>
+        <mesh key={JSON.stringify(_)} position={[(i-1)*0.02, 0.28, 0]}><cylinderGeometry args={[0.003, 0.003, 0.06, 3]} /><meshStandardMaterial color="#88ccff" transparent opacity={0.3} /></mesh>
       ))}
 
     </group>

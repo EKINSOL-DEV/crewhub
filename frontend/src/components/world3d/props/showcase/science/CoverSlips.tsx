@@ -14,7 +14,7 @@ export function CoverSlips() {
         <meshStandardMaterial color="#888899" flatShading />
       </mesh>
       {Array.from({ length: 6 }).map((_, i) => (
-        <mesh key={`item-${i}`} position={[0, -0.24 + i * 0.003, 0]}>
+        <mesh key={JSON.stringify(_)} position={[0, -0.24 + i * 0.003, 0]}>
           <boxGeometry args={[0.05, 0.001, 0.05]} />
           <meshStandardMaterial color="#eeeeff" transparent opacity={0.2} />
         </mesh>

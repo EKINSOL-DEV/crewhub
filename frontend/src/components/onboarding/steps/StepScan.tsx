@@ -68,7 +68,7 @@ export function StepScan({
         <div className="space-y-3">
           {candidates.map((candidate, index) => (
             <div
-              key={`candidat-${index}`}
+              key={JSON.stringify(candidate)}
               className="p-4 rounded-xl border bg-card hover:bg-accent/30 transition-colors"
             >
               <div className="flex items-start gap-4">
@@ -103,9 +103,9 @@ export function StepScan({
                   )}
                   {candidate.evidence.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-1">
-                      {candidate.evidence.map((ev, ei) => (
+                      {candidate.evidence.map((ev, _ei) => (
                         <span
-                          key={ei}
+                          key={JSON.stringify(ev)}
                           className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
                         >
                           {ev}

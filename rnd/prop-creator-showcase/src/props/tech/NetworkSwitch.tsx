@@ -19,11 +19,11 @@ export function NetworkSwitch() {
         <meshStandardMaterial color="#222233" flatShading />
       </mesh>
       {Array.from({length: 8}).map((_,i) => (
-        <mesh key={`item-${i}`} position={[-0.16+i*0.046, -0.22, 0.076]}><boxGeometry args={[0.025, 0.02, 0.005]} /><meshStandardMaterial color="#444455" flatShading /></mesh>
+        <mesh key={JSON.stringify(_)} position={[-0.16+i*0.046, -0.22, 0.076]}><boxGeometry args={[0.025, 0.02, 0.005]} /><meshStandardMaterial color="#444455" flatShading /></mesh>
       ))}
       <group ref={ledsRef}>
         {Array.from({length: 8}).map((_,i) => (
-          <mesh key={`item-${i}`} position={[-0.16+i*0.046, -0.195, 0.076]}><sphereGeometry args={[0.005, 4, 4]} /><meshStandardMaterial color="#44ff44" emissive="#44ff44" emissiveIntensity={1} /></mesh>
+          <mesh key={JSON.stringify(_)} position={[-0.16+i*0.046, -0.195, 0.076]}><sphereGeometry args={[0.005, 4, 4]} /><meshStandardMaterial color="#44ff44" emissive="#44ff44" emissiveIntensity={1} /></mesh>
         ))}
       </group>
             <mesh position={[0.18, -0.22, 0.076]}>

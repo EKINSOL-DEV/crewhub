@@ -65,7 +65,7 @@ export function DataStream({
     <group position={position}>
       {bits.map((b, i) => (
         <mesh
-          key={`b-${i}`}
+          key={JSON.stringify(b)}
           ref={(el) => {
             meshRefs.current[i] = el
           }}

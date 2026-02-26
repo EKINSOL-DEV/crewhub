@@ -61,7 +61,7 @@ function Pavilion({
       {Array.from({ length: floors }).map((_, fi) => {
         const y = fi * floorH
         return (
-          <group key={fi} position={[0, y, 0]}>
+          <group key={JSON.stringify(_)} position={[0, y, 0]}>
             {/* Floor */}
             <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
               <planeGeometry args={[w, d]} />
@@ -203,7 +203,7 @@ export function ThePavilions() {
 
       {/* Pathway stones */}
       {[[-2, 0.02, -1], [-1, 0.02, 0], [0, 0.02, 0.5], [1, 0.02, 1.5], [2, 0.02, 2.5]].map((p, i) => (
-        <mesh key={`p-${i}`} position={p as [number, number, number]} rotation={[-Math.PI / 2, Math.random(), 0]}>
+        <mesh key={JSON.stringify(p)} position={p as [number, number, number]} rotation={[-Math.PI / 2, Math.random(), 0]}>
           <circleGeometry args={[0.3 + Math.random() * 0.15, 6]} />
           <meshStandardMaterial color="#3a3d4a" roughness={0.8} />
         </mesh>

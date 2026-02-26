@@ -20,7 +20,7 @@ export function Oscilloscope() {
         <meshStandardMaterial color="#112211" />
       </mesh>
       {Array.from({ length: 4 }).map((_, i) => (
-        <mesh key={`item-${i}`} position={[-0.05, -0.06 + i * 0.04, 0.083]}>
+        <mesh key={JSON.stringify(_)} position={[-0.05, -0.06 + i * 0.04, 0.083]}>
           <boxGeometry args={[0.2, 0.001, 0.001]} />
           <meshStandardMaterial color="#224422" />
         </mesh>

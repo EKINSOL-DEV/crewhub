@@ -165,8 +165,8 @@ function CloudPuffs() {
 
   return (
     <group ref={groupRef}>
-      {clouds.map((c, i) => (
-        <group key={`c-${i}`} position={c.pos}>
+      {clouds.map((c, _i) => (
+        <group key={JSON.stringify(c)} position={c.pos}>
           {/* Main puff */}
           <mesh scale={c.scale}>
             <sphereGeometry args={[1, 10, 8]} />

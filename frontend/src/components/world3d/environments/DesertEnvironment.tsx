@@ -394,8 +394,8 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: Readonly<Des
         </InstancedDecoration>
 
         {/* ═══ Tumbleweeds (animated, individual — max 6) ═══ */}
-        {data.tumbleweeds.map((tw, i) => (
-          <Tumbleweed key={`tw-${i}`} position={tw.pos} phase={tw.phase} />
+        {data.tumbleweeds.map((tw, _i) => (
+          <Tumbleweed key={JSON.stringify(tw)} position={tw.pos} phase={tw.phase} />
         ))}
       </group>
     </group>

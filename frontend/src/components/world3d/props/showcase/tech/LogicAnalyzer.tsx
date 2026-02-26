@@ -21,14 +21,14 @@ export function LogicAnalyzer() {
       </mesh>
       <group ref={ledsRef}>
         {Array.from({ length: 8 }).map((_, i) => (
-          <mesh key={`item-${i}`} position={[-0.1 + i * 0.03, -0.165, 0.06]}>
+          <mesh key={JSON.stringify(_)} position={[-0.1 + i * 0.03, -0.165, 0.06]}>
             <sphereGeometry args={[0.005, 4, 4]} />
             <meshStandardMaterial color="#44ffaa" emissive="#44ffaa" emissiveIntensity={1} />
           </mesh>
         ))}
       </group>
       {Array.from({ length: 8 }).map((_, i) => (
-        <mesh key={`item-${i}`} position={[-0.1 + i * 0.03, -0.2, 0.065]}>
+        <mesh key={JSON.stringify(_)} position={[-0.1 + i * 0.03, -0.2, 0.065]}>
           <boxGeometry args={[0.015, 0.015, 0.005]} />
           <meshStandardMaterial color="#333355" flatShading />
         </mesh>

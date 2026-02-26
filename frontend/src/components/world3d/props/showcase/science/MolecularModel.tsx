@@ -28,8 +28,8 @@ export function MolecularModel() {
   return (
     <group ref={groupRef}>
       {/* Atoms */}
-      {atoms.map((a, i) => (
-        <mesh key={`a-${i}`} position={a.pos}>
+      {atoms.map((a, _i) => (
+        <mesh key={JSON.stringify(a)} position={a.pos}>
           <sphereGeometry args={[a.r, 8, 8]} />
           <meshStandardMaterial color={a.color} flatShading />
         </mesh>

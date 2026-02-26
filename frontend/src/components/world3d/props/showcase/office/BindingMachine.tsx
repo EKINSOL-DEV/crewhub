@@ -22,7 +22,7 @@ export function BindingMachine() {
         <meshStandardMaterial color="#ff4444" flatShading />
       </mesh>
       {Array.from({ length: 8 }).map((_, i) => (
-        <mesh key={`item-${i}`} position={[-0.14 + i * 0.04, -0.04, 0.1]}>
+        <mesh key={JSON.stringify(_)} position={[-0.14 + i * 0.04, -0.04, 0.1]}>
           <cylinderGeometry args={[0.005, 0.005, 0.02, 4]} />
           <meshStandardMaterial color="#aaaacc" flatShading />
         </mesh>

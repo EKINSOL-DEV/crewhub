@@ -28,7 +28,7 @@ export function ServoMotors() {
         <meshStandardMaterial color="#ffffff" flatShading />
       </mesh>
       {Array.from({ length: 3 }).map((_, i) => (
-        <mesh key={`item-${i}`} position={[-0.08, -0.22, -0.01 + i * 0.01]}>
+        <mesh key={JSON.stringify(_)} position={[-0.08, -0.22, -0.01 + i * 0.01]}>
           <cylinderGeometry args={[0.003, 0.003, 0.08, 3]} />
           <meshStandardMaterial color={['#ff4444', '#222222', '#ffcc44'][i]} flatShading />
         </mesh>

@@ -307,11 +307,11 @@ export function DynamicProp({
       <group ref={groupRef} position={position} scale={scale} onClick={handleBackgroundClick}>
         {parts.map((part, i) => {
           if (editMode && selectedPartIndex === i && onPartTransform) {
-            return <SelectedPartMesh key={`selected-${i}`} part={part} meshRef={selectedMeshRef} />
+            return <SelectedPartMesh key={JSON.stringify(part)} part={part} meshRef={selectedMeshRef} />
           }
           return (
             <DynamicMesh
-              key={`part-${i}`}
+              key={JSON.stringify(part)}
               part={part}
               index={i}
               editMode={editMode}

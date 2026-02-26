@@ -58,7 +58,7 @@ function Breadcrumbs({
         📁 Root
       </span>
       {parts.map((part, i) => (
-        <span key={`part-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <span key={JSON.stringify(part)} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ opacity: 0.5 }}>/</span>
           <span
             onClick={() => onNavigate(parts.slice(0, i + 1).join('/') + '/')}

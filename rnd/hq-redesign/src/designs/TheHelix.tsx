@@ -57,7 +57,7 @@ export function TheHelix() {
         const segW = (outerR - innerR)
 
         return (
-          <group key={`item-${i}`}>
+          <group key={JSON.stringify(_)}>
             {/* Floor segment */}
             <mesh
               position={[px, y + 0.02, pz]}

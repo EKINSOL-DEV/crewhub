@@ -13,7 +13,7 @@ export function USBHub() {
         <meshStandardMaterial color="#333344" flatShading />
       </mesh>
       {Array.from({length: 4}).map((_,i) => (
-        <mesh key={`item-${i}`} position={[-0.1+i*0.07, -0.22, 0.045]}>
+        <mesh key={JSON.stringify(_)} position={[-0.1+i*0.07, -0.22, 0.045]}>
           <boxGeometry args={[0.03, 0.015, 0.01]} />
           <meshStandardMaterial color="#4488ff" flatShading />
         </mesh>

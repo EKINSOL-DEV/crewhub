@@ -37,7 +37,7 @@ export function TheRing() {
         const segW = 2 * outerR * Math.sin(Math.PI / segments)
         return (
           <Wall
-            key={`outer-${i}`}
+            key={JSON.stringify(_)}
             color="#7a8a9a"
             opacity={0.88}
             position={[Math.cos(midA) * outerR, wallH / 2, Math.sin(midA) * outerR]}
@@ -56,7 +56,7 @@ export function TheRing() {
         const segW = 2 * innerR * Math.sin(Math.PI / segments)
         return (
           <Wall
-            key={`inner-${i}`}
+            key={JSON.stringify(_)}
             color="#8a9aaa"
             opacity={0.85}
             position={[Math.cos(midA) * innerR, wallH / 2, Math.sin(midA) * innerR]}
@@ -89,7 +89,7 @@ export function TheRing() {
         const segW = 2 * (outerR + 0.3) * Math.sin(Math.PI / segments)
         return (
           <Wall
-            key={`upper-outer-${i}`}
+            key={JSON.stringify(_)}
             color="#8899aa"
             opacity={0.85}
             position={[Math.cos(midA) * (outerR + 0.3), wallH + wallH / 2, Math.sin(midA) * (outerR + 0.3)]}
@@ -107,7 +107,7 @@ export function TheRing() {
         const midA = (a + nextA) / 2
         return (
           <GlassPanel
-            key={`upper-inner-${i}`}
+            key={JSON.stringify(_)}
             position={[Math.cos(midA) * (innerR - 0.3), wallH + wallH / 2, Math.sin(midA) * (innerR - 0.3)]}
             rotation={[0, -midA + Math.PI / 2, 0]}
             size={[2 * (innerR - 0.3) * Math.sin(Math.PI / segments), wallH]}
@@ -125,7 +125,7 @@ export function TheRing() {
       {Array.from({ length: 12 }).map((_, i) => {
         const a = (i / 12) * Math.PI * 2
         const r = (outerR + innerR) / 2
-        return <Pillar key={`item-${i}`} position={[Math.cos(a) * r, 0, Math.sin(a) * r]} height={wallH * 2} radius={0.12} color="#556" />
+        return <Pillar key={JSON.stringify(_)} position={[Math.cos(a) * r, 0, Math.sin(a) * r]} height={wallH * 2} radius={0.12} color="#556" />
       })}
 
       {/* ═══ GROUND FLOOR INTERIOR ═══ */}
@@ -181,7 +181,7 @@ export function TheRing() {
       {/* Small plants */}
       {Array.from({ length: 8 }).map((_, i) => {
         const a = (i / 8) * Math.PI * 2
-        return <Plant key={`item-${i}`} position={[Math.cos(a) * 2.8, 0, Math.sin(a) * 2.8]} variant={i} scale={0.7} />
+        return <Plant key={JSON.stringify(_)} position={[Math.cos(a) * 2.8, 0, Math.sin(a) * 2.8]} variant={i} scale={0.7} />
       })}
     </group>
   )

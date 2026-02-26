@@ -82,8 +82,8 @@ function RoundSection({ round }: { round: MeetingRound }) {
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
         Round {round.roundNum}: {round.topic}
       </div>
-      {round.turns.map((turn, i) => (
-        <TurnEntry key={`${turn.agentId}-${turn.round}-${i}`} turn={turn} />
+      {round.turns.map((turn, _i) => (
+        <TurnEntry key={JSON.stringify(turn)} turn={turn} />
       ))}
     </div>
   )
@@ -143,8 +143,8 @@ export function MeetingProgressView({ meeting, onCancel, onViewOutput }: Readonl
           </div>
         )}
 
-        {meeting.rounds.map((round, i) => (
-          <RoundSection key={`round-${i}`} round={round} />
+        {meeting.rounds.map((round, _i) => (
+          <RoundSection key={JSON.stringify(round)} round={round} />
         ))}
 
         {meeting.phase === 'synthesizing' && (
@@ -156,9 +156,9 @@ export function MeetingProgressView({ meeting, onCancel, onViewOutput }: Readonl
 
         {meeting.warnings && meeting.warnings.length > 0 && (
           <div className="space-y-1 mt-2">
-            {meeting.warnings.map((w, i) => (
+            {meeting.warnings.map((w, _i) => (
               <div
-                key={`w-${i}`}
+                key={JSON.stringify(w)}
                 className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 p-2 rounded"
               >
                 ⚠️ {w}

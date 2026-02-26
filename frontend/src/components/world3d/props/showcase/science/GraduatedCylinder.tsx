@@ -18,7 +18,7 @@ export function GraduatedCylinder() {
         <meshStandardMaterial color="#4488ff" transparent opacity={0.3} flatShading />
       </mesh>
       {Array.from({ length: 6 }).map((_, i) => (
-        <mesh key={`item-${i}`} position={[0.055, -0.2 + i * 0.06, 0]}>
+        <mesh key={JSON.stringify(_)} position={[0.055, -0.2 + i * 0.06, 0]}>
           <boxGeometry args={[0.01, 0.002, 0.001]} />
           <meshStandardMaterial color="#ffffff" transparent opacity={0.5} />
         </mesh>

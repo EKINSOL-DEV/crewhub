@@ -11,7 +11,7 @@ export function ColorSwatches() {
     <group ref={groupRef}>
       {Array.from({ length: 7 }).map((_, i) => (
         <mesh
-          key={`item-${i}`}
+          key={JSON.stringify(_)}
           position={[-0.08 + i * 0.025, -0.12 + i * 0.01, 0]}
           rotation={[0, 0, (i - 3) * 0.05]}
         >

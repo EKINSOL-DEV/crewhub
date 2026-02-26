@@ -77,8 +77,8 @@ export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
           <meshToonMaterial {...floorToon} />
         </mesh>
       ))}
-      {plants.map((p, i) => (
-        <Plant key={`hallway-plant-${i}`} position={p.position} scale={p.scale} />
+      {plants.map((p, _i) => (
+        <Plant key={JSON.stringify(p)} position={p.position} scale={p.scale} />
       ))}
     </group>
   )

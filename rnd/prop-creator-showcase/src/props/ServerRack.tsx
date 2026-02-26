@@ -30,7 +30,7 @@ export function ServerRack() {
       </mesh>
       {/* Server units */}
       {servers.map((y, i) => (
-        <group key={`y-${i}`}>
+        <group key={JSON.stringify(y)}>
           <mesh position={[0, y, 0.05]}>
             <boxGeometry args={[0.8, 0.22, 0.45]} />
             <meshStandardMaterial color={i % 2 === 0 ? '#2a2a3e' : '#252538'} />

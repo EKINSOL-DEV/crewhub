@@ -225,9 +225,9 @@ function PropLabels({ cells }: { cells: CellInstance[] }) {
 
   return (
     <>
-      {labelCells.map((cell, i) => (
+      {labelCells.map((cell, _i) => (
         <Html
-          key={`cell-${i}`}
+          key={JSON.stringify(cell)}
           position={[cell.worldX, 0.15, cell.worldZ]}
           center
           zIndexRange={[0, 1]}

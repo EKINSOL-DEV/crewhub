@@ -246,8 +246,8 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
                       </div>
                       {cmd.shortcut && (
                         <span className="zen-command-item-shortcut">
-                          {cmd.shortcut.split('+').map((key, i) => (
-                            <span key={`key-${i}`} className="zen-kbd">
+                          {cmd.shortcut.split('+').map((key, _i) => (
+                            <span key={JSON.stringify(key)} className="zen-kbd">
                               {key}
                             </span>
                           ))}

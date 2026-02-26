@@ -21,7 +21,7 @@ export function SpaceHeater() {
         <meshStandardMaterial color="#ff4422" emissive="#ff4422" emissiveIntensity={1.5} flatShading />
       </mesh>
       {Array.from({length: 5}).map((_,i) => (
-        <mesh key={`item-${i}`} position={[0, -0.1+i*0.06, 0.07]}>
+        <mesh key={JSON.stringify(_)} position={[0, -0.1+i*0.06, 0.07]}>
           <boxGeometry args={[0.25, 0.008, 0.005]} />
           <meshStandardMaterial color="#cc4422" flatShading />
         </mesh>

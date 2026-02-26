@@ -79,7 +79,7 @@ export function Hourglass() {
       </mesh>
       {/* Falling sand stream */}
       {sandParticles.map((p, i) => (
-        <mesh key={`p-${i}`} position={[p.x, -0.05 - i * 0.02, p.z]}>
+        <mesh key={JSON.stringify(p)} position={[p.x, -0.05 - i * 0.02, p.z]}>
           <sphereGeometry args={[0.008, 4, 4]} />
           <meshStandardMaterial color="#ffdd66" emissive="#ffaa22" emissiveIntensity={1} />
         </mesh>

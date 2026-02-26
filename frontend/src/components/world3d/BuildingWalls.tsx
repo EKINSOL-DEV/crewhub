@@ -109,8 +109,8 @@ export function BuildingWalls({
       ))}
 
       {/* Entrance pillars on either side of the gap */}
-      {[entranceOffset - entranceWidth / 2, entranceOffset + entranceWidth / 2].map((x, i) => (
-        <group key={`pillar-${i}`}>
+      {[entranceOffset - entranceWidth / 2, entranceOffset + entranceWidth / 2].map((x, _i) => (
+        <group key={JSON.stringify(x)}>
           <mesh position={[x, wallHeight / 2, -halfD + wallThickness / 2]} castShadow>
             <boxGeometry args={[0.6, wallHeight + 0.3, 0.6]} />
             <meshToonMaterial {...accentToon} />

@@ -63,11 +63,11 @@ export function DataCrystal() {
         />
       </mesh>
       {/* Data streams */}
-      {streamPositions.map((pts, si) => {
+      {streamPositions.map((pts, _si) => {
         const curve = new THREE.CatmullRomCurve3(pts)
         const tubeGeom = new THREE.TubeGeometry(curve, 20, 0.01, 4, false)
         return (
-          <mesh key={si} geometry={tubeGeom}>
+          <mesh key={JSON.stringify(pts)} geometry={tubeGeom}>
             <meshStandardMaterial
               color="#cc88ff"
               emissive="#aa66ff"
@@ -83,7 +83,7 @@ export function DataCrystal() {
         const a = (i / 8) * Math.PI * 2
         return (
           <mesh
-            key={`bit-${i}`}
+            key={JSON.stringify(_)}
             position={[Math.cos(a) * 1.1, Math.sin(a * 2) * 0.3, Math.sin(a) * 1.1]}
           >
             <boxGeometry args={[0.04, 0.04, 0.04]} />

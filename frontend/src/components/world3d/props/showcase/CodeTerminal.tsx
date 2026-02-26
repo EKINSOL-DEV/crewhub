@@ -65,7 +65,7 @@ export function CodeTerminal() {
           }
           return (
             <Text
-              key={`line-${i}`}
+              key={JSON.stringify(line)}
               position={[-0.5, 0.25 - i * 0.15, 0]}
               fontSize={0.07}
               color={lineColor}

@@ -33,7 +33,7 @@ export function StickyNotes() {
       ))}
       {/* Sticky notes */}
       {notes.map((n, i) => (
-        <group key={`n-${i}`}>
+        <group key={JSON.stringify(n)}>
           <mesh position={n.pos} rotation={[0, 0, n.rot]}>
             <boxGeometry args={[0.22, 0.22, 0.003]} />
             <meshStandardMaterial color={n.color} flatShading />

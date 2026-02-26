@@ -158,7 +158,7 @@ function TaskLogsView({ session, onBack }: { session: CrewSession; readonly onBa
             No log entries yet
           </div>
         )}
-        {logs.map((entry, i) => {
+        {logs.map((entry, _i) => {
           const isUser = entry.role === 'user'
           const isSystem = entry.role === 'system'
           const isTool = entry.role === 'tool'
@@ -168,7 +168,7 @@ function TaskLogsView({ session, onBack }: { session: CrewSession; readonly onBa
               typeof entry.content === 'string' ? entry.content : JSON.stringify(entry.content)
             return (
               <div
-                key={`entry-${i}`}
+                key={JSON.stringify(entry)}
                 style={{
                   fontSize: 11,
                   color: '#475569',
@@ -214,7 +214,7 @@ function TaskLogsView({ session, onBack }: { session: CrewSession; readonly onBa
 
           return (
             <div
-              key={`item-${i}`}
+              key={JSON.stringify(entry)}
               style={{
                 alignSelf: isUser ? 'flex-end' : 'flex-start',
                 maxWidth: '90%',

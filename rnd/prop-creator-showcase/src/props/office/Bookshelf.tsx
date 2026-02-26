@@ -23,7 +23,7 @@ export function Bookshelf() {
       ))}
       {/* Books row 2 */}
       {bookColors.slice(4).map((c, i) => (
-        <mesh key={`c-${i}`} position={[-0.3 + i * 0.2, -0.12, 0]}>
+        <mesh key={JSON.stringify(c)} position={[-0.3 + i * 0.2, -0.12, 0]}>
           <boxGeometry args={[0.14, 0.28 + (i % 2) * 0.04, 0.22]} />
           <meshStandardMaterial color={c} flatShading />
         </mesh>

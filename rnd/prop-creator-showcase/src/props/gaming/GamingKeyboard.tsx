@@ -13,7 +13,7 @@ export function GamingKeyboard() {
         <meshStandardMaterial color="#111122" flatShading />
       </mesh>
       {Array.from({length: 30}).map((_,i) => (
-        <mesh key={`item-${i}`} position={[-0.22+(i%10)*0.05, -0.2, -0.06+Math.floor(i/10)*0.05]}>
+        <mesh key={JSON.stringify(_)} position={[-0.22+(i%10)*0.05, -0.2, -0.06+Math.floor(i/10)*0.05]}>
           <boxGeometry args={[0.035, 0.015, 0.035]} />
           <meshStandardMaterial color={i===3||i===13||i===23?'#ff4444':'#222233'} flatShading />
         </mesh>

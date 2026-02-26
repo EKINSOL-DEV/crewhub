@@ -216,8 +216,8 @@ function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
           >
             Round {round.roundNum}: {round.topic}
           </div>
-          {round.turns.map((turn, i) => (
-            <div key={`turn-${i}`} style={{ marginBottom: 16 }}>
+          {round.turns.map((turn, _i) => (
+            <div key={JSON.stringify(turn)} style={{ marginBottom: 16 }}>
               <div
                 style={{
                   fontSize: 13,
