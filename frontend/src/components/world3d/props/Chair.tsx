@@ -1,4 +1,4 @@
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 interface ChairProps {
   readonly position?: [number, number, number]
@@ -10,8 +10,8 @@ interface ChairProps {
  * Dark toon-shaded color.
  */
 export function Chair({ position = [0, 0, 0], rotation = [0, 0, 0] }: ChairProps) {
-  const seatToon = useToonMaterialProps('#3A3A3A')
-  const legToon = useToonMaterialProps('#555555')
+  const seatToon = getToonMaterialProps('#3A3A3A')
+  const legToon = getToonMaterialProps('#555555')
 
   const seatRadius = 0.3
   const seatHeight = 0.08

@@ -9,7 +9,7 @@ import { Plant } from './props/Plant'
 import { CoffeeMachine } from './props/CoffeeMachine'
 import { WaterCooler } from './props/WaterCooler'
 import { NoticeBoard } from './props/NoticeBoard'
-import { useToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
+import { getToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
 
 // ─── Room Type Detection ────────────────────────────────────────
 
@@ -69,9 +69,9 @@ function Whiteboard({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const frameToon = useToonMaterialProps('#888888')
-  const boardToon = useToonMaterialProps('#F5F5F5')
-  const trayToon = useToonMaterialProps('#666666')
+  const frameToon = getToonMaterialProps('#888888')
+  const boardToon = getToonMaterialProps('#F5F5F5')
+  const trayToon = getToonMaterialProps('#666666')
 
   return (
     <group position={position} rotation={rotation}>
@@ -102,8 +102,8 @@ function ServerRack({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const bodyToon = useToonMaterialProps('#2A2A2A')
-  const rackToon = useToonMaterialProps('#1A1A1A')
+  const bodyToon = getToonMaterialProps('#2A2A2A')
+  const rackToon = getToonMaterialProps('#1A1A1A')
 
   return (
     <group position={position} rotation={rotation}>
@@ -121,7 +121,7 @@ function ServerRack({
       {[0.3, 0.6, 0.9, 1.2, 1.5].map((y, i) => (
         <mesh key={`y-${i}`} position={[0, y, 0.26]}>
           <boxGeometry args={[0.44, 0.08, 0.01]} />
-          <meshToonMaterial {...useToonMaterialProps('#333333')} />
+          <meshToonMaterial {...getToonMaterialProps('#333333')} />
         </mesh>
       ))}
       {/* Status LEDs */}
@@ -166,9 +166,9 @@ function DeskLamp({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const baseToon = useToonMaterialProps('#444444')
-  const armToon = useToonMaterialProps('#555555')
-  const shadeToon = useToonMaterialProps('#888888')
+  const baseToon = getToonMaterialProps('#444444')
+  const armToon = getToonMaterialProps('#555555')
+  const shadeToon = getToonMaterialProps('#888888')
 
   return (
     <group position={position} rotation={rotation}>
@@ -194,9 +194,9 @@ function DeskLamp({
 
 /** Cable mess on floor */
 function CableMess({ position }: { position: [number, number, number] }) {
-  const cableToon = useToonMaterialProps('#222222')
-  const cableRedToon = useToonMaterialProps('#993333')
-  const cableBlueToon = useToonMaterialProps('#334499')
+  const cableToon = getToonMaterialProps('#222222')
+  const cableRedToon = getToonMaterialProps('#993333')
+  const cableBlueToon = getToonMaterialProps('#334499')
 
   const cables = [
     {
@@ -245,8 +245,8 @@ function Easel({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const woodToon = useToonMaterialProps(WARM_COLORS.wood)
-  const canvasToon = useToonMaterialProps('#FFFFF0')
+  const woodToon = getToonMaterialProps(WARM_COLORS.wood)
+  const canvasToon = getToonMaterialProps('#FFFFF0')
 
   return (
     <group position={position} rotation={rotation}>
@@ -282,15 +282,15 @@ function Easel({
       {/* Splash of paint on canvas */}
       <mesh position={[-0.1, 0.9, 0.06]}>
         <sphereGeometry args={[0.06, 6, 6]} />
-        <meshToonMaterial {...useToonMaterialProps('#FF6B6B')} />
+        <meshToonMaterial {...getToonMaterialProps('#FF6B6B')} />
       </mesh>
       <mesh position={[0.12, 0.8, 0.06]}>
         <sphereGeometry args={[0.05, 6, 6]} />
-        <meshToonMaterial {...useToonMaterialProps('#4ECDC4')} />
+        <meshToonMaterial {...getToonMaterialProps('#4ECDC4')} />
       </mesh>
       <mesh position={[0, 0.75, 0.06]}>
         <sphereGeometry args={[0.04, 6, 6]} />
-        <meshToonMaterial {...useToonMaterialProps('#FFE66D')} />
+        <meshToonMaterial {...getToonMaterialProps('#FFE66D')} />
       </mesh>
     </group>
   )
@@ -304,7 +304,7 @@ function ColorPalette({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const baseToon = useToonMaterialProps(WARM_COLORS.woodLight)
+  const baseToon = getToonMaterialProps(WARM_COLORS.woodLight)
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#34D399', '#F97316', '#FFFFFF']
 
   return (
@@ -321,7 +321,7 @@ function ColorPalette({
         return (
           <mesh key={`col-${i}`} position={[Math.cos(angle) * r, 0.02, Math.sin(angle) * r]}>
             <sphereGeometry args={[0.02, 6, 6]} />
-            <meshToonMaterial {...useToonMaterialProps(col)} />
+            <meshToonMaterial {...getToonMaterialProps(col)} />
           </mesh>
         )
       })}
@@ -337,8 +337,8 @@ function MoodBoard({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const frameToon = useToonMaterialProps('#555555')
-  const boardToon = useToonMaterialProps('#333333')
+  const frameToon = getToonMaterialProps('#555555')
+  const boardToon = getToonMaterialProps('#333333')
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#F97316', '#60A5FA']
 
   return (
@@ -358,7 +358,7 @@ function MoodBoard({
         return (
           <mesh key={`col-${i}`} position={[-0.35 + col2 * 0.35, 0.12 - row * 0.3, 0.03]}>
             <boxGeometry args={[0.25, 0.2, 0.005]} />
-            <meshToonMaterial {...useToonMaterialProps(col)} />
+            <meshToonMaterial {...getToonMaterialProps(col)} />
           </mesh>
         )
       })}
@@ -374,7 +374,7 @@ function PresentationScreen({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const frameToon = useToonMaterialProps('#333333')
+  const frameToon = getToonMaterialProps('#333333')
 
   return (
     <group position={position} rotation={rotation}>
@@ -400,7 +400,7 @@ function BarChart({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const baseToon = useToonMaterialProps('#555555')
+  const baseToon = getToonMaterialProps('#555555')
   const bars = [
     { h: 0.3, color: '#FF6B6B' },
     { h: 0.6, color: '#4ECDC4' },
@@ -420,7 +420,7 @@ function BarChart({
       {bars.map((bar, i) => (
         <mesh key={`bar-${i}`} position={[-0.28 + i * 0.14, bar.h / 2 + 0.02, 0]} castShadow>
           <boxGeometry args={[0.1, bar.h, 0.18]} />
-          <meshToonMaterial {...useToonMaterialProps(bar.color)} />
+          <meshToonMaterial {...getToonMaterialProps(bar.color)} />
         </mesh>
       ))}
     </group>
@@ -435,8 +435,8 @@ function Megaphone({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const bodyToon = useToonMaterialProps('#FF8C00')
-  const bellToon = useToonMaterialProps('#FFB347')
+  const bodyToon = getToonMaterialProps('#FF8C00')
+  const bellToon = getToonMaterialProps('#FFB347')
 
   return (
     <group position={position} rotation={rotation}>
@@ -462,8 +462,8 @@ function StandingDesk({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const topToon = useToonMaterialProps(WARM_COLORS.woodLight)
-  const metalToon = useToonMaterialProps('#666666')
+  const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
+  const metalToon = getToonMaterialProps('#666666')
 
   const topWidth = 1.4
   const topDepth = 0.7
@@ -506,8 +506,8 @@ function RoundTable({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const topToon = useToonMaterialProps(WARM_COLORS.woodLight)
-  const legToon = useToonMaterialProps(WARM_COLORS.wood)
+  const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
+  const legToon = getToonMaterialProps(WARM_COLORS.wood)
 
   return (
     <group position={position} rotation={rotation}>
@@ -538,7 +538,7 @@ function BeanBag({
   position: [number, number, number]
   color?: string
 }) {
-  const toon = useToonMaterialProps(color)
+  const toon = getToonMaterialProps(color)
 
   return (
     <group position={position}>
@@ -563,7 +563,7 @@ function Bookshelf({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const shelfToon = useToonMaterialProps(WARM_COLORS.wood)
+  const shelfToon = getToonMaterialProps(WARM_COLORS.wood)
   const bookColors = [
     '#E74C3C',
     '#3498DB',
@@ -599,7 +599,7 @@ function Bookshelf({
           {bookColors.slice(si * 3, si * 3 + 3).map((col, bi) => (
             <mesh key={bi} position={[-0.25 + bi * 0.22, shelfY + 0.16, 0]} castShadow>
               <boxGeometry args={[0.12, 0.28, 0.2]} />
-              <meshToonMaterial {...useToonMaterialProps(col)} />
+              <meshToonMaterial {...getToonMaterialProps(col)} />
             </mesh>
           ))}
         </group>
@@ -616,8 +616,8 @@ function WallClock({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const frameToon = useToonMaterialProps('#333333')
-  const faceToon = useToonMaterialProps('#FFFFF0')
+  const frameToon = getToonMaterialProps('#333333')
+  const faceToon = getToonMaterialProps('#FFFFF0')
   const handRef1 = useRef<THREE.Mesh>(null)
   const handRef2 = useRef<THREE.Mesh>(null)
   const clockFrameSkip = useRef(0)
@@ -656,17 +656,17 @@ function WallClock({
       {/* Minute hand */}
       <mesh ref={handRef1} position={[0, 0, 0.04]}>
         <boxGeometry args={[0.015, 0.28, 0.005]} />
-        <meshToonMaterial {...useToonMaterialProps('#222222')} />
+        <meshToonMaterial {...getToonMaterialProps('#222222')} />
       </mesh>
       {/* Hour hand */}
       <mesh ref={handRef2} position={[0, 0, 0.042]}>
         <boxGeometry args={[0.02, 0.2, 0.005]} />
-        <meshToonMaterial {...useToonMaterialProps('#222222')} />
+        <meshToonMaterial {...getToonMaterialProps('#222222')} />
       </mesh>
       {/* Center dot */}
       <mesh position={[0, 0, 0.045]}>
         <sphereGeometry args={[0.025, 8, 8]} />
-        <meshToonMaterial {...useToonMaterialProps('#CC3333')} />
+        <meshToonMaterial {...getToonMaterialProps('#CC3333')} />
       </mesh>
     </group>
   )
@@ -680,7 +680,7 @@ function SmallScreen({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const frameToon = useToonMaterialProps('#2A2A2A')
+  const frameToon = getToonMaterialProps('#2A2A2A')
 
   return (
     <group position={position} rotation={rotation}>
@@ -704,8 +704,8 @@ function ConveyorBelt({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const beltToon = useToonMaterialProps('#444444')
-  const frameToon = useToonMaterialProps('#666666')
+  const beltToon = getToonMaterialProps('#444444')
+  const frameToon = getToonMaterialProps('#666666')
   const boxColors = ['#FF8C00', '#4ECDC4', '#A78BFA']
 
   return (
@@ -735,7 +735,7 @@ function ConveyorBelt({
       {boxColors.map((col, i) => (
         <mesh key={`x-${i}`} position={[-0.5 + i * 0.5, 0.28, 0]} castShadow>
           <boxGeometry args={[0.2, 0.18, 0.18]} />
-          <meshToonMaterial {...useToonMaterialProps(col)} />
+          <meshToonMaterial {...getToonMaterialProps(col)} />
         </mesh>
       ))}
     </group>
@@ -750,7 +750,7 @@ function GearMechanism({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const gearToon = useToonMaterialProps('#777777')
+  const gearToon = getToonMaterialProps('#777777')
   const gear1Ref = useRef<THREE.Group>(null)
   const gear2Ref = useRef<THREE.Group>(null)
   const gearFrameSkip = useRef(0)
@@ -783,7 +783,7 @@ function GearMechanism({
         })}
         <mesh>
           <cylinderGeometry args={[0.05, 0.05, 0.08, 8]} />
-          <meshToonMaterial {...useToonMaterialProps('#555555')} />
+          <meshToonMaterial {...getToonMaterialProps('#555555')} />
         </mesh>
       </group>
       {/* Gear 2 (smaller) */}
@@ -803,7 +803,7 @@ function GearMechanism({
         })}
         <mesh>
           <cylinderGeometry args={[0.04, 0.04, 0.08, 8]} />
-          <meshToonMaterial {...useToonMaterialProps('#555555')} />
+          <meshToonMaterial {...getToonMaterialProps('#555555')} />
         </mesh>
       </group>
     </group>
@@ -818,8 +818,8 @@ function ControlPanel({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const bodyToon = useToonMaterialProps('#3A3A3A')
-  const panelToon = useToonMaterialProps('#4A4A4A')
+  const bodyToon = getToonMaterialProps('#3A3A3A')
+  const panelToon = getToonMaterialProps('#4A4A4A')
   const buttonColors = ['#44AA44', '#CC3333', '#FFAA00', '#4488CC', '#44AA44', '#CC3333']
 
   return (
@@ -861,8 +861,8 @@ function SatelliteDish({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const dishToon = useToonMaterialProps('#CCCCCC')
-  const armToon = useToonMaterialProps('#888888')
+  const dishToon = getToonMaterialProps('#CCCCCC')
+  const armToon = getToonMaterialProps('#888888')
 
   return (
     <group position={position} rotation={rotation}>
@@ -892,8 +892,8 @@ function SatelliteDish({
 
 /** Antenna tower (tall thin cylinder with rings) */
 function AntennaTower({ position }: { position: [number, number, number] }) {
-  const poleToon = useToonMaterialProps('#777777')
-  const ringToon = useToonMaterialProps('#999999')
+  const poleToon = getToonMaterialProps('#777777')
+  const ringToon = getToonMaterialProps('#999999')
 
   return (
     <group position={position}>
@@ -927,9 +927,9 @@ function Headset({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const bandToon = useToonMaterialProps('#333333')
-  const earToon = useToonMaterialProps('#444444')
-  const cushionToon = useToonMaterialProps('#555555')
+  const bandToon = getToonMaterialProps('#333333')
+  const earToon = getToonMaterialProps('#444444')
+  const cushionToon = getToonMaterialProps('#555555')
 
   return (
     <group position={position} rotation={rotation}>
@@ -963,7 +963,7 @@ function Headset({
       </mesh>
       <mesh position={[-0.1, -0.08, 0.08]}>
         <sphereGeometry args={[0.02, 6, 6]} />
-        <meshToonMaterial {...useToonMaterialProps('#222222')} />
+        <meshToonMaterial {...getToonMaterialProps('#222222')} />
       </mesh>
     </group>
   )
@@ -1017,7 +1017,7 @@ function StatusLights({ position }: { position: [number, number, number] }) {
     { color: '#CCCC44', x: 0 },
     { color: '#CC4444', x: 0.15 },
   ]
-  const poleToon = useToonMaterialProps('#666666')
+  const poleToon = getToonMaterialProps('#666666')
 
   return (
     <group position={position}>
@@ -1044,9 +1044,9 @@ function FilingCabinet({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const bodyToon = useToonMaterialProps('#777777')
-  const drawerToon = useToonMaterialProps('#888888')
-  const handleToon = useToonMaterialProps('#AAAAAA')
+  const bodyToon = getToonMaterialProps('#777777')
+  const drawerToon = getToonMaterialProps('#888888')
+  const handleToon = getToonMaterialProps('#AAAAAA')
 
   return (
     <group position={position} rotation={rotation}>
@@ -1075,8 +1075,8 @@ function FilingCabinet({
 
 /** Fire extinguisher */
 function FireExtinguisher({ position }: { position: [number, number, number] }) {
-  const bodyToon = useToonMaterialProps('#CC2222')
-  const topToon = useToonMaterialProps('#444444')
+  const bodyToon = getToonMaterialProps('#CC2222')
+  const topToon = getToonMaterialProps('#444444')
 
   return (
     <group position={position}>
@@ -1098,12 +1098,12 @@ function FireExtinguisher({ position }: { position: [number, number, number] }) 
       {/* Hose */}
       <mesh position={[-0.06, 0.48, 0]} rotation={[0, 0, 0.5]}>
         <cylinderGeometry args={[0.012, 0.012, 0.15, 6]} />
-        <meshToonMaterial {...useToonMaterialProps('#333333')} />
+        <meshToonMaterial {...getToonMaterialProps('#333333')} />
       </mesh>
       {/* Base */}
       <mesh position={[0, 0.04, 0]}>
         <cylinderGeometry args={[0.09, 0.09, 0.02, 10]} />
-        <meshToonMaterial {...useToonMaterialProps('#333333')} />
+        <meshToonMaterial {...getToonMaterialProps('#333333')} />
       </mesh>
     </group>
   )
@@ -1117,8 +1117,8 @@ function DrawingTablet({
   position: [number, number, number]
   rotation?: [number, number, number]
 }) {
-  const baseToon = useToonMaterialProps('#2A2A2A')
-  const penToon = useToonMaterialProps('#555555')
+  const baseToon = getToonMaterialProps('#2A2A2A')
+  const penToon = getToonMaterialProps('#555555')
 
   return (
     <group position={position} rotation={rotation}>

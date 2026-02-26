@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import { useToonMaterialProps } from '../../utils/toonMaterials'
+import { getToonMaterialProps } from '../../utils/toonMaterials'
 import { FullscreenPropMaker } from './FullscreenPropMaker'
 import type { PropPart } from './DynamicProp'
 import * as THREE from 'three'
@@ -30,9 +30,9 @@ export function PropMakerMachine({
   const coreRef = useRef<THREE.Mesh>(null)
   const ringRef = useRef<THREE.Mesh>(null)
 
-  const baseToon = useToonMaterialProps('#1a1a2e')
-  const panelToon = useToonMaterialProps('#16213e')
-  const trimToon = useToonMaterialProps('#0f3460')
+  const baseToon = getToonMaterialProps('#1a1a2e')
+  const panelToon = getToonMaterialProps('#16213e')
+  const trimToon = getToonMaterialProps('#0f3460')
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()

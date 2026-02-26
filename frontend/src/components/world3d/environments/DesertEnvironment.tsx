@@ -1,7 +1,7 @@
 import { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 // ─── Constants ───────────────────────────────────────────────────
 
@@ -48,7 +48,7 @@ function InstancedDecoration({
   receiveShadow?: boolean
 }) {
   const ref = useRef<THREE.InstancedMesh>(null)
-  const toonProps = useToonMaterialProps(color)
+  const toonProps = getToonMaterialProps(color)
   const count = matrices.length
 
   useEffect(() => {
@@ -84,7 +84,7 @@ interface DesertEnvironmentProps {
 }
 
 export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnvironmentProps) {
-  const sandToonProps = useToonMaterialProps('#D2B48C')
+  const sandToonProps = getToonMaterialProps('#D2B48C')
   const groundRef = useRef<THREE.InstancedMesh>(null)
 
   const data = useMemo(() => {

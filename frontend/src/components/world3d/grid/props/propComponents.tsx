@@ -3,7 +3,7 @@
 // Wraps existing /props/ components and defines inline mini-props.
 
 import * as THREE from 'three'
-import { useToonMaterialProps, WARM_COLORS } from '../../utils/toonMaterials'
+import { getToonMaterialProps, WARM_COLORS } from '../../utils/toonMaterials'
 import { Desk } from '../../props/Desk'
 import { Monitor } from '../../props/Monitor'
 import { Chair } from '../../props/Chair'
@@ -66,9 +66,9 @@ export function BenchProp({ position, rotation }: PropProps) {
 // ─── Mini-Prop Components ───────────────────────────────────────
 
 export function WhiteboardProp({ position, rotation }: PropProps) {
-  const frameToon = useToonMaterialProps('#888888')
-  const boardToon = useToonMaterialProps('#F5F5F5')
-  const trayToon = useToonMaterialProps('#666666')
+  const frameToon = getToonMaterialProps('#888888')
+  const boardToon = getToonMaterialProps('#F5F5F5')
+  const trayToon = getToonMaterialProps('#666666')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -89,9 +89,9 @@ export function WhiteboardProp({ position, rotation }: PropProps) {
 }
 
 export function ServerRackProp({ position, rotation }: PropProps) {
-  const bodyToon = useToonMaterialProps('#2A2A2A')
-  const rackToon = useToonMaterialProps('#1A1A1A')
-  const slotToon = useToonMaterialProps('#333333')
+  const bodyToon = getToonMaterialProps('#2A2A2A')
+  const rackToon = getToonMaterialProps('#1A1A1A')
+  const slotToon = getToonMaterialProps('#333333')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -122,9 +122,9 @@ export function ServerRackProp({ position, rotation }: PropProps) {
 import { ServerLED } from './propAnimations'
 
 export function DeskLampProp({ position, rotation }: PropProps) {
-  const baseToon = useToonMaterialProps('#444444')
-  const armToon = useToonMaterialProps('#555555')
-  const shadeToon = useToonMaterialProps('#888888')
+  const baseToon = getToonMaterialProps('#444444')
+  const armToon = getToonMaterialProps('#555555')
+  const shadeToon = getToonMaterialProps('#888888')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -146,9 +146,9 @@ export function DeskLampProp({ position, rotation }: PropProps) {
 }
 
 export function CableMessProp({ position }: PropProps) {
-  const cableToon = useToonMaterialProps('#222222')
-  const cableRedToon = useToonMaterialProps('#993333')
-  const cableBlueToon = useToonMaterialProps('#334499')
+  const cableToon = getToonMaterialProps('#222222')
+  const cableRedToon = getToonMaterialProps('#993333')
+  const cableBlueToon = getToonMaterialProps('#334499')
 
   const cables = [
     {
@@ -190,11 +190,11 @@ export function CableMessProp({ position }: PropProps) {
 }
 
 export function EaselProp({ position, rotation }: PropProps) {
-  const woodToon = useToonMaterialProps(WARM_COLORS.wood)
-  const canvasToon = useToonMaterialProps('#FFFFF0')
-  const paint1 = useToonMaterialProps('#FF6B6B')
-  const paint2 = useToonMaterialProps('#4ECDC4')
-  const paint3 = useToonMaterialProps('#FFE66D')
+  const woodToon = getToonMaterialProps(WARM_COLORS.wood)
+  const canvasToon = getToonMaterialProps('#FFFFF0')
+  const paint1 = getToonMaterialProps('#FF6B6B')
+  const paint2 = getToonMaterialProps('#4ECDC4')
+  const paint3 = getToonMaterialProps('#FFE66D')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -239,8 +239,8 @@ export function EaselProp({ position, rotation }: PropProps) {
 }
 
 export function ColorPaletteProp({ position, rotation }: PropProps) {
-  const baseToon = useToonMaterialProps(WARM_COLORS.woodLight)
-  const stoolToon = useToonMaterialProps(WARM_COLORS.wood)
+  const baseToon = getToonMaterialProps(WARM_COLORS.woodLight)
+  const stoolToon = getToonMaterialProps(WARM_COLORS.wood)
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#34D399', '#F97316', '#FFFFFF']
 
   return (
@@ -259,7 +259,7 @@ export function ColorPaletteProp({ position, rotation }: PropProps) {
         return (
           <mesh key={`col-${i}`} position={[Math.cos(angle) * r, 0.42, Math.sin(angle) * r]}>
             <sphereGeometry args={[0.02, 6, 6]} />
-            <meshToonMaterial {...useToonMaterialProps(col)} />
+            <meshToonMaterial {...getToonMaterialProps(col)} />
           </mesh>
         )
       })}
@@ -268,8 +268,8 @@ export function ColorPaletteProp({ position, rotation }: PropProps) {
 }
 
 export function MoodBoardProp({ position, rotation }: PropProps) {
-  const frameToon = useToonMaterialProps('#555555')
-  const boardToon = useToonMaterialProps('#333333')
+  const frameToon = getToonMaterialProps('#555555')
+  const boardToon = getToonMaterialProps('#333333')
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#F97316', '#60A5FA']
 
   return (
@@ -288,7 +288,7 @@ export function MoodBoardProp({ position, rotation }: PropProps) {
         return (
           <mesh key={`col-${i}`} position={[-0.35 + col2 * 0.35, 0.12 - row * 0.3, 0.03]}>
             <boxGeometry args={[0.25, 0.2, 0.005]} />
-            <meshToonMaterial {...useToonMaterialProps(col)} />
+            <meshToonMaterial {...getToonMaterialProps(col)} />
           </mesh>
         )
       })}
@@ -297,7 +297,7 @@ export function MoodBoardProp({ position, rotation }: PropProps) {
 }
 
 export function PresentationScreenProp({ position, rotation }: PropProps) {
-  const frameToon = useToonMaterialProps('#333333')
+  const frameToon = getToonMaterialProps('#333333')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -314,7 +314,7 @@ export function PresentationScreenProp({ position, rotation }: PropProps) {
 }
 
 export function BarChartProp({ position, rotation }: PropProps) {
-  const baseToon = useToonMaterialProps('#555555')
+  const baseToon = getToonMaterialProps('#555555')
   const bars = [
     { h: 0.3, color: '#FF6B6B' },
     { h: 0.6, color: '#4ECDC4' },
@@ -332,7 +332,7 @@ export function BarChartProp({ position, rotation }: PropProps) {
       {bars.map((bar, i) => (
         <mesh key={`bar-${i}`} position={[-0.28 + i * 0.14, bar.h / 2 + 0.02, 0]} castShadow>
           <boxGeometry args={[0.1, bar.h, 0.18]} />
-          <meshToonMaterial {...useToonMaterialProps(bar.color)} />
+          <meshToonMaterial {...getToonMaterialProps(bar.color)} />
         </mesh>
       ))}
     </group>
@@ -340,8 +340,8 @@ export function BarChartProp({ position, rotation }: PropProps) {
 }
 
 export function MegaphoneProp({ position, rotation }: PropProps) {
-  const bodyToon = useToonMaterialProps('#FF8C00')
-  const bellToon = useToonMaterialProps('#FFB347')
+  const bodyToon = getToonMaterialProps('#FF8C00')
+  const bellToon = getToonMaterialProps('#FFB347')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -358,8 +358,8 @@ export function MegaphoneProp({ position, rotation }: PropProps) {
 }
 
 export function StandingDeskProp({ position, rotation }: PropProps) {
-  const topToon = useToonMaterialProps(WARM_COLORS.woodLight)
-  const metalToon = useToonMaterialProps('#666666')
+  const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
+  const metalToon = getToonMaterialProps('#666666')
   const topWidth = 1.4
   const topDepth = 0.7
   const topHeight = 1.05
@@ -391,8 +391,8 @@ export function StandingDeskProp({ position, rotation }: PropProps) {
 }
 
 export function RoundTableProp({ position, rotation }: PropProps) {
-  const topToon = useToonMaterialProps(WARM_COLORS.woodLight)
-  const legToon = useToonMaterialProps(WARM_COLORS.wood)
+  const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
+  const legToon = getToonMaterialProps(WARM_COLORS.wood)
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -416,7 +416,7 @@ export function BeanBagProp(props: PropProps) {
   const { position } = props
   const colors = ['#6366F1', '#8B5CF6', '#A78BFA', '#7C3AED']
   const colorIndex = Math.abs(Math.round(position[0] * 7 + position[2] * 13)) % colors.length
-  const toon = useToonMaterialProps(colors[colorIndex])
+  const toon = getToonMaterialProps(colors[colorIndex])
 
   return (
     <group position={position}>
@@ -433,7 +433,7 @@ export function BeanBagProp(props: PropProps) {
 }
 
 export function BookshelfProp({ position, rotation }: PropProps) {
-  const shelfToon = useToonMaterialProps(WARM_COLORS.wood)
+  const shelfToon = getToonMaterialProps(WARM_COLORS.wood)
   const bookColors = [
     '#E74C3C',
     '#3498DB',
@@ -466,7 +466,7 @@ export function BookshelfProp({ position, rotation }: PropProps) {
           {bookColors.slice(si * 3, si * 3 + 3).map((col, bi) => (
             <mesh key={bi} position={[-0.25 + bi * 0.22, shelfY + 0.16, 0]} castShadow>
               <boxGeometry args={[0.12, 0.28, 0.2]} />
-              <meshToonMaterial {...useToonMaterialProps(col)} />
+              <meshToonMaterial {...getToonMaterialProps(col)} />
             </mesh>
           ))}
         </group>
@@ -476,7 +476,7 @@ export function BookshelfProp({ position, rotation }: PropProps) {
 }
 
 export function SmallScreenProp({ position, rotation }: PropProps) {
-  const frameToon = useToonMaterialProps('#2A2A2A')
+  const frameToon = getToonMaterialProps('#2A2A2A')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -493,8 +493,8 @@ export function SmallScreenProp({ position, rotation }: PropProps) {
 }
 
 export function ConveyorBeltProp({ position, rotation }: PropProps) {
-  const beltToon = useToonMaterialProps('#444444')
-  const frameToon = useToonMaterialProps('#666666')
+  const beltToon = getToonMaterialProps('#444444')
+  const frameToon = getToonMaterialProps('#666666')
   const boxColors = ['#FF8C00', '#4ECDC4', '#A78BFA']
 
   return (
@@ -520,7 +520,7 @@ export function ConveyorBeltProp({ position, rotation }: PropProps) {
       {boxColors.map((col, i) => (
         <mesh key={`x-${i}`} position={[-0.5 + i * 0.5, 0.28, 0]} castShadow>
           <boxGeometry args={[0.2, 0.18, 0.18]} />
-          <meshToonMaterial {...useToonMaterialProps(col)} />
+          <meshToonMaterial {...getToonMaterialProps(col)} />
         </mesh>
       ))}
     </group>
@@ -528,8 +528,8 @@ export function ConveyorBeltProp({ position, rotation }: PropProps) {
 }
 
 export function ControlPanelProp({ position, rotation }: PropProps) {
-  const bodyToon = useToonMaterialProps('#3A3A3A')
-  const panelToon = useToonMaterialProps('#4A4A4A')
+  const bodyToon = getToonMaterialProps('#3A3A3A')
+  const panelToon = getToonMaterialProps('#4A4A4A')
   const buttonColors = ['#44AA44', '#CC3333', '#FFAA00', '#4488CC', '#44AA44', '#CC3333']
 
   return (
@@ -561,8 +561,8 @@ export function ControlPanelProp({ position, rotation }: PropProps) {
 }
 
 export function SatelliteDishProp({ position, rotation }: PropProps) {
-  const dishToon = useToonMaterialProps('#CCCCCC')
-  const armToon = useToonMaterialProps('#888888')
+  const dishToon = getToonMaterialProps('#CCCCCC')
+  const armToon = getToonMaterialProps('#888888')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -587,8 +587,8 @@ export function SatelliteDishProp({ position, rotation }: PropProps) {
 }
 
 export function AntennaTowerProp({ position }: PropProps) {
-  const poleToon = useToonMaterialProps('#777777')
-  const ringToon = useToonMaterialProps('#999999')
+  const poleToon = getToonMaterialProps('#777777')
+  const ringToon = getToonMaterialProps('#999999')
 
   return (
     <group position={position}>
@@ -612,10 +612,10 @@ export function AntennaTowerProp({ position }: PropProps) {
 }
 
 export function HeadsetProp({ position, rotation }: PropProps) {
-  const bandToon = useToonMaterialProps('#333333')
-  const earToon = useToonMaterialProps('#444444')
-  const cushionToon = useToonMaterialProps('#555555')
-  const micToon = useToonMaterialProps('#222222')
+  const bandToon = getToonMaterialProps('#333333')
+  const earToon = getToonMaterialProps('#444444')
+  const cushionToon = getToonMaterialProps('#555555')
+  const micToon = getToonMaterialProps('#222222')
 
   return (
     <group
@@ -655,9 +655,9 @@ export function HeadsetProp({ position, rotation }: PropProps) {
 }
 
 export function FilingCabinetProp({ position, rotation }: PropProps) {
-  const bodyToon = useToonMaterialProps('#777777')
-  const drawerToon = useToonMaterialProps('#888888')
-  const handleToon = useToonMaterialProps('#AAAAAA')
+  const bodyToon = getToonMaterialProps('#777777')
+  const drawerToon = getToonMaterialProps('#888888')
+  const handleToon = getToonMaterialProps('#AAAAAA')
 
   return (
     <group position={position} rotation={degToEuler(rotation)}>
@@ -682,10 +682,10 @@ export function FilingCabinetProp({ position, rotation }: PropProps) {
 }
 
 export function FireExtinguisherProp({ position }: PropProps) {
-  const bodyToon = useToonMaterialProps('#CC2222')
-  const topToon = useToonMaterialProps('#444444')
-  const baseToon = useToonMaterialProps('#333333')
-  const hoseToon = useToonMaterialProps('#333333')
+  const bodyToon = getToonMaterialProps('#CC2222')
+  const topToon = getToonMaterialProps('#444444')
+  const baseToon = getToonMaterialProps('#333333')
+  const hoseToon = getToonMaterialProps('#333333')
 
   return (
     <group position={position}>
@@ -714,8 +714,8 @@ export function FireExtinguisherProp({ position }: PropProps) {
 }
 
 export function DrawingTabletProp({ position, rotation }: PropProps) {
-  const baseToon = useToonMaterialProps('#2A2A2A')
-  const penToon = useToonMaterialProps('#555555')
+  const baseToon = getToonMaterialProps('#2A2A2A')
+  const penToon = getToonMaterialProps('#555555')
 
   return (
     <group
@@ -744,7 +744,7 @@ export function StatusLightsProp({ position }: PropProps) {
     { color: '#CCCC44', x: 0 },
     { color: '#CC4444', x: 0.15 },
   ]
-  const poleToon = useToonMaterialProps('#666666')
+  const poleToon = getToonMaterialProps('#666666')
 
   return (
     <group position={position}>

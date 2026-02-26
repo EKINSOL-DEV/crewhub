@@ -1,5 +1,5 @@
 import { Html } from '@react-three/drei'
-import { useToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
+import { getToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
 
 interface NoticeBoardProps {
   readonly position?: [number, number, number]
@@ -10,12 +10,12 @@ interface NoticeBoardProps {
  * Wall-mounted notice/bulletin board with pinned notes.
  */
 export function NoticeBoard({ position = [0, 0, 0], rotation = [0, 0, 0] }: NoticeBoardProps) {
-  const frameToon = useToonMaterialProps(WARM_COLORS.wood)
-  const boardToon = useToonMaterialProps('#C4956A')
-  const noteToon1 = useToonMaterialProps('#FFFACD') // yellow sticky
-  const noteToon2 = useToonMaterialProps('#FFB6C1') // pink sticky
-  const noteToon3 = useToonMaterialProps('#B0E0E6') // blue sticky
-  const pinToon = useToonMaterialProps('#CC3333')
+  const frameToon = getToonMaterialProps(WARM_COLORS.wood)
+  const boardToon = getToonMaterialProps('#C4956A')
+  const noteToon1 = getToonMaterialProps('#FFFACD') // yellow sticky
+  const noteToon2 = getToonMaterialProps('#FFB6C1') // pink sticky
+  const noteToon3 = getToonMaterialProps('#B0E0E6') // blue sticky
+  const pinToon = getToonMaterialProps('#CC3333')
 
   return (
     <group position={position} rotation={rotation}>

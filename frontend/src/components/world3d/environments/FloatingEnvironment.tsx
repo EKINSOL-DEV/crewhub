@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 // ─── Floating Sky Platform Environment ───────────────────────────
 
@@ -139,7 +139,7 @@ function EdgeDarkening({ radius }: { radius: number }) {
 // ─── Cloud puffs floating below ──────────────────────────────────
 
 function CloudPuffs() {
-  const cloudProps = useToonMaterialProps('#EEF2F6')
+  const cloudProps = getToonMaterialProps('#EEF2F6')
   const groupRef = useRef<THREE.Group>(null)
 
   const clouds = useMemo(
@@ -221,7 +221,7 @@ export function FloatingEnvironment({ buildingWidth, buildingDepth }: FloatingEn
   const radius = Math.max(buildingWidth, buildingDepth) / 2 + 5
   const platformHeight = 0.35 // sleek, thin platform
   const hexGeo = useHexGeometry(radius, platformHeight)
-  const platformProps = useToonMaterialProps('#6E7F8E') // dark blue-teal gray
+  const platformProps = getToonMaterialProps('#6E7F8E') // dark blue-teal gray
   const accentColor = '#14b8a6' // teal accent
   const groupRef = useRef<THREE.Group>(null)
 

@@ -1,4 +1,4 @@
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 interface CoffeeMachineProps {
   readonly position?: [number, number, number]
@@ -9,13 +9,13 @@ interface CoffeeMachineProps {
  * Office coffee machine: boxy body with a coffee pot and cup.
  */
 export function CoffeeMachine({ position = [0, 0, 0], rotation = [0, 0, 0] }: CoffeeMachineProps) {
-  const bodyToon = useToonMaterialProps('#2A2A2A')
-  const frontToon = useToonMaterialProps('#3A3A3A')
-  const potToon = useToonMaterialProps('#222222')
-  const coffeeToon = useToonMaterialProps('#4A2810')
-  const cupToon = useToonMaterialProps('#FFFFFF')
-  const buttonToon = useToonMaterialProps('#44AA44')
-  const redToon = useToonMaterialProps('#CC3333')
+  const bodyToon = getToonMaterialProps('#2A2A2A')
+  const frontToon = getToonMaterialProps('#3A3A3A')
+  const potToon = getToonMaterialProps('#222222')
+  const coffeeToon = getToonMaterialProps('#4A2810')
+  const cupToon = getToonMaterialProps('#FFFFFF')
+  const buttonToon = getToonMaterialProps('#44AA44')
+  const redToon = getToonMaterialProps('#CC3333')
 
   return (
     <group position={position} rotation={rotation}>
@@ -40,7 +40,7 @@ export function CoffeeMachine({ position = [0, 0, 0], rotation = [0, 0, 0] }: Co
       {/* Nozzle area (recessed opening) */}
       <mesh position={[0, 0.35, 0.19]}>
         <boxGeometry args={[0.2, 0.2, 0.05]} />
-        <meshToonMaterial {...useToonMaterialProps('#1A1A1A')} />
+        <meshToonMaterial {...getToonMaterialProps('#1A1A1A')} />
       </mesh>
 
       {/* Coffee cup sitting in nozzle area */}
@@ -78,7 +78,7 @@ export function CoffeeMachine({ position = [0, 0, 0], rotation = [0, 0, 0] }: Co
       {/* Drip tray at bottom */}
       <mesh position={[0, 0.11, 0.19]}>
         <boxGeometry args={[0.35, 0.02, 0.15]} />
-        <meshToonMaterial {...useToonMaterialProps('#444444')} />
+        <meshToonMaterial {...getToonMaterialProps('#444444')} />
       </mesh>
 
       {/* Coffee pot on side (carafe) */}

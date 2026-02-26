@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 import type { BotAccessoryType } from './utils/botVariants'
 
 interface BotAccessoryProps {
@@ -39,8 +39,8 @@ const HEAD_TOP_Y = 0.48
 // ─── Crown / Hat (Worker) ──────────────────────────────────────
 
 function Crown() {
-  const toonYellow = useToonMaterialProps('#FFD700')
-  const toonDarkYellow = useToonMaterialProps('#DAA520')
+  const toonYellow = getToonMaterialProps('#FFD700')
+  const toonDarkYellow = getToonMaterialProps('#DAA520')
 
   return (
     <group position={[0, HEAD_TOP_Y, 0]}>

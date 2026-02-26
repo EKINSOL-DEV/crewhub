@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { useToonMaterialProps } from '../../utils/toonMaterials'
+import { getToonMaterialProps } from '../../utils/toonMaterials'
 import type { PropProps } from './PropRegistry'
 import { degToEuler } from './propComponents'
 
@@ -41,10 +41,10 @@ export function ServerLED({
 // ─── WallClockProp ──────────────────────────────────────────────
 
 export function WallClockProp({ position }: PropProps) {
-  const frameToon = useToonMaterialProps('#333333')
-  const faceToon = useToonMaterialProps('#FFFFF0')
-  const handToon = useToonMaterialProps('#222222')
-  const centerToon = useToonMaterialProps('#CC3333')
+  const frameToon = getToonMaterialProps('#333333')
+  const faceToon = getToonMaterialProps('#FFFFF0')
+  const handToon = getToonMaterialProps('#222222')
+  const centerToon = getToonMaterialProps('#CC3333')
   const handRef1 = useRef<THREE.Mesh>(null)
   const handRef2 = useRef<THREE.Mesh>(null)
   const clockFrameSkip = useRef(0)
@@ -95,8 +95,8 @@ export function WallClockProp({ position }: PropProps) {
 // ─── GearMechanismProp ──────────────────────────────────────────
 
 export function GearMechanismProp({ position, rotation }: PropProps) {
-  const gearToon = useToonMaterialProps('#777777')
-  const axleToon = useToonMaterialProps('#555555')
+  const gearToon = getToonMaterialProps('#777777')
+  const axleToon = getToonMaterialProps('#555555')
   const gear1Ref = useRef<THREE.Group>(null)
   const gear2Ref = useRef<THREE.Group>(null)
   const gearFrameSkip = useRef(0)

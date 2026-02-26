@@ -211,7 +211,9 @@ export function ZenLogsPanel() {
           source: 'Session',
           message: `Created: ${data.label || data.key || 'Unknown'}`,
         })
-      } catch {}
+      } catch {
+        /* intentionally empty */
+      }
     }
 
     const handleSessionUpdated = (e: MessageEvent) => {
@@ -223,7 +225,9 @@ export function ZenLogsPanel() {
           source: 'Session',
           message: `Updated: ${data.label || data.key || 'Unknown'}`,
         })
-      } catch {}
+      } catch {
+        /* intentionally empty */
+      }
     }
 
     const handleSessionRemoved = (e: MessageEvent) => {
@@ -235,7 +239,9 @@ export function ZenLogsPanel() {
           source: 'Session',
           message: `Removed: ${data.key || 'Unknown'}`,
         })
-      } catch {}
+      } catch {
+        /* intentionally empty */
+      }
     }
 
     // Task events
@@ -248,7 +254,9 @@ export function ZenLogsPanel() {
           source: 'Task',
           message: `Created: ${data.title || 'Untitled'}`,
         })
-      } catch {}
+      } catch {
+        /* intentionally empty */
+      }
     }
 
     const handleTaskUpdated = (e: MessageEvent) => {
@@ -260,7 +268,9 @@ export function ZenLogsPanel() {
           source: 'Task',
           message: `Updated: ${data.title || data.id || 'Unknown'}`,
         })
-      } catch {}
+      } catch {
+        /* intentionally empty */
+      }
     }
 
     // Room events

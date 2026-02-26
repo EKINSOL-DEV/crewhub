@@ -1,4 +1,4 @@
-import { useToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
+import { getToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
 
 interface DeskProps {
   readonly position?: [number, number, number]
@@ -10,8 +10,8 @@ interface DeskProps {
  * Toon-shaded warm wood color.
  */
 export function Desk({ position = [0, 0, 0], rotation = [0, 0, 0] }: DeskProps) {
-  const woodToon = useToonMaterialProps(WARM_COLORS.wood)
-  const topToon = useToonMaterialProps(WARM_COLORS.woodLight)
+  const woodToon = getToonMaterialProps(WARM_COLORS.wood)
+  const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
 
   const topWidth = 1.6
   const topDepth = 0.8

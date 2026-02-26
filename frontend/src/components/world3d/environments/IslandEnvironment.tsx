@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 // ─── Floating Island Environment (Monument Valley style) ─────────
 
@@ -38,7 +38,7 @@ function useIslandGeometry(radius: number) {
 
 /** Island top surface — flat circle for grass */
 function IslandTop({ radius }: { radius: number }) {
-  const toonProps = useToonMaterialProps('#5E8F45')
+  const toonProps = getToonMaterialProps('#5E8F45')
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
       <circleGeometry args={[radius, 24]} />
@@ -49,7 +49,7 @@ function IslandTop({ radius }: { radius: number }) {
 
 /** Grass tufts scattered on the island surface */
 function IslandGrassTufts({ radius }: { radius: number }) {
-  const toonProps = useToonMaterialProps('#4A7A35')
+  const toonProps = getToonMaterialProps('#4A7A35')
   const tufts = useMemo(() => {
     const result: { pos: [number, number, number]; rot: number }[] = []
     const seed = (i: number) => Math.abs(Math.sin(i * 127.1 + 311.7) * 43758.5453) % 1
@@ -81,8 +81,8 @@ function IslandGrassTufts({ radius }: { radius: number }) {
 
 /** Floating debris rocks beneath the island */
 function FloatingDebris() {
-  const rockProps = useToonMaterialProps('#7A6B5A')
-  const darkRockProps = useToonMaterialProps('#5A4D40')
+  const rockProps = getToonMaterialProps('#7A6B5A')
+  const darkRockProps = getToonMaterialProps('#5A4D40')
   const groupRef = useRef<THREE.Group>(null)
 
   const debris = useMemo(
@@ -122,7 +122,7 @@ function FloatingDebris() {
 
 /** Distant clouds for atmosphere */
 function DistantClouds() {
-  const cloudProps = useToonMaterialProps('#FFFFFF')
+  const cloudProps = getToonMaterialProps('#FFFFFF')
 
   const clouds = useMemo(
     () => [
@@ -171,7 +171,7 @@ export function IslandEnvironment({ buildingWidth, buildingDepth }: IslandEnviro
   // Island radius covers roughly the same area as the building + some margin
   const radius = Math.max(buildingWidth, buildingDepth) / 2 + 6
   const islandGeo = useIslandGeometry(radius)
-  const earthProps = useToonMaterialProps('#8B6B4A')
+  const earthProps = getToonMaterialProps('#8B6B4A')
 
   return (
     <group>

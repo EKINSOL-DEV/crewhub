@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { TransformControls } from '@react-three/drei'
-import { useToonMaterialProps } from '../../utils/toonMaterials'
+import { getToonMaterialProps } from '../../utils/toonMaterials'
 import * as THREE from 'three'
 
 export interface PropPart {
@@ -44,7 +44,7 @@ function DynamicMesh({
   selected?: boolean
   onSelect?: (index: number) => void
 }) {
-  const toon = useToonMaterialProps(part.color)
+  const toon = getToonMaterialProps(part.color)
   const meshRef = useRef<THREE.Mesh>(null)
 
   // Center geometry so pivot point is at visual center

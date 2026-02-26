@@ -48,7 +48,9 @@ export function DevToolbar() {
           const next = !v
           try {
             localStorage.setItem('dev-error-viewer-visible', String(next))
-          } catch {}
+          } catch {
+            /* intentionally empty */
+          }
           return next
         })
       }

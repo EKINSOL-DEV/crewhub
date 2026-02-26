@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Plant } from './props/Plant'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 
 interface HallwayProps {
   readonly roomPositions: {
@@ -21,7 +21,7 @@ interface HallwayProps {
  * horizontal and vertical corridor strips.
  */
 export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
-  const floorToon = useToonMaterialProps('#C8BFA0')
+  const floorToon = getToonMaterialProps('#C8BFA0')
 
   const hq = roomPositions.find((rp) => rp.room?.is_hq)
   const center = hq || roomPositions[0]

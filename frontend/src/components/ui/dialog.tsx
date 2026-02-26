@@ -191,7 +191,10 @@ interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
-  ({ className, children, onEscapeKeyDown, onPointerDownOutside, ...props }, ref) => {
+  (
+    { className, children, onEscapeKeyDown, onPointerDownOutside: _onPointerDownOutside, ...props },
+    ref
+  ) => {
     const { open, onOpenChange, triggerRef, contentId, titleId, descriptionId } = useDialogContext()
     const dialogRef = useRef<HTMLDialogElement>(null)
     const contentRef = useRef<HTMLDivElement>(null)

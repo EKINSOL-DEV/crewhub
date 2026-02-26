@@ -1,4 +1,4 @@
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 interface PlantProps {
   readonly position?: [number, number, number]
@@ -10,10 +10,10 @@ interface PlantProps {
  * Simple decorative potted plant: cylinder pot + green sphere foliage.
  */
 export function Plant({ position = [0, 0, 0], scale = 1, potColor = '#8B6238' }: PlantProps) {
-  const potToon = useToonMaterialProps(potColor)
-  const dirtToon = useToonMaterialProps('#5A3E2B')
-  const leafToon = useToonMaterialProps('#4A8B3F')
-  const leafLightToon = useToonMaterialProps('#6BAF5B')
+  const potToon = getToonMaterialProps(potColor)
+  const dirtToon = getToonMaterialProps('#5A3E2B')
+  const leafToon = getToonMaterialProps('#4A8B3F')
+  const leafLightToon = getToonMaterialProps('#6BAF5B')
 
   return (
     <group position={position} scale={scale}>
@@ -54,7 +54,7 @@ export function Plant({ position = [0, 0, 0], scale = 1, potColor = '#8B6238' }:
       {/* Small stem */}
       <mesh position={[0, 0.38, 0]}>
         <cylinderGeometry args={[0.02, 0.03, 0.12, 6]} />
-        <meshToonMaterial {...useToonMaterialProps('#5A8A3C')} />
+        <meshToonMaterial {...getToonMaterialProps('#5A8A3C')} />
       </mesh>
     </group>
   )

@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 
 interface BotLaptopProps {
   /** Whether the laptop should be visible (true when bot is actively working) */
@@ -22,8 +22,8 @@ export function BotLaptop({ visible }: BotLaptopProps) {
   const scaleRef = useRef(visible ? 1 : 0)
 
   // Shared toon material props
-  const baseToon = useToonMaterialProps('#3a3a3e') // dark laptop body
-  const screenFrameToon = useToonMaterialProps('#2a2a30') // slightly darker screen bezel
+  const baseToon = getToonMaterialProps('#3a3a3e') // dark laptop body
+  const screenFrameToon = getToonMaterialProps('#2a2a30') // slightly darker screen bezel
 
   useFrame(({ clock }, delta) => {
     if (!groupRef.current) return

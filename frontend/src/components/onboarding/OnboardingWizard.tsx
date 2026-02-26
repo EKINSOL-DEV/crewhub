@@ -214,14 +214,18 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ display_name: config.displayName }),
           })
-        } catch {}
+        } catch {
+          /* intentionally empty */
+        }
         try {
           await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: config.displayName }),
           })
-        } catch {}
+        } catch {
+          /* intentionally empty */
+        }
         try {
           await fetch('/api/settings/agent-display-name', {
             method: 'PUT',
@@ -230,7 +234,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               value: JSON.stringify({ agentId, sessionKey, displayName: config.displayName }),
             }),
           })
-        } catch {}
+        } catch {
+          /* intentionally empty */
+        }
       }
 
       localStorage.setItem('crewhub-onboarded', 'true')
@@ -240,7 +246,9 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ value: 'true' }),
         })
-      } catch {}
+      } catch {
+        /* intentionally empty */
+      }
       onComplete()
     },
     [onComplete]

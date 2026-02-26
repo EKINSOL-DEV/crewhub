@@ -8,25 +8,15 @@ import type { Root, Element, ElementContent, Text } from 'hast'
 import { visit } from 'unist-util-visit'
 
 // Import only the languages we actually need
-// @ts-ignore — highlight.js language modules lack type declarations
 import javascript from 'highlight.js/lib/languages/javascript'
-// @ts-ignore — highlight.js language modules lack type declarations
 import typescript from 'highlight.js/lib/languages/typescript'
-// @ts-ignore — highlight.js language modules lack type declarations
 import python from 'highlight.js/lib/languages/python'
-// @ts-ignore — highlight.js language modules lack type declarations
 import bash from 'highlight.js/lib/languages/bash'
-// @ts-ignore — highlight.js language modules lack type declarations
 import json from 'highlight.js/lib/languages/json'
-// @ts-ignore — highlight.js language modules lack type declarations
 import markdown from 'highlight.js/lib/languages/markdown'
-// @ts-ignore — highlight.js language modules lack type declarations
 import yaml from 'highlight.js/lib/languages/yaml'
-// @ts-ignore — highlight.js language modules lack type declarations
 import xml from 'highlight.js/lib/languages/xml'
-// @ts-ignore — highlight.js language modules lack type declarations
 import css from 'highlight.js/lib/languages/css'
-// @ts-ignore — highlight.js language modules lack type declarations
 import sql from 'highlight.js/lib/languages/sql'
 
 const lowlight = createLowlight()

@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 
 interface BotBodyProps {
   readonly color: string
@@ -37,9 +37,9 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
   const rightFootRef = useRef<THREE.Mesh>(null)
   const leftArmRef = useRef<THREE.Mesh>(null)
   const rightArmRef = useRef<THREE.Mesh>(null)
-  const toonProps = useToonMaterialProps(color)
-  const darkBodyToon = useToonMaterialProps(darkenColor(color, 0.65))
-  const darkToon = useToonMaterialProps('#2a2a2a')
+  const toonProps = getToonMaterialProps(color)
+  const darkBodyToon = getToonMaterialProps(darkenColor(color, 0.65))
+  const darkToon = getToonMaterialProps('#2a2a2a')
 
   // Walking + breathing animation
   useFrame(({ clock }) => {

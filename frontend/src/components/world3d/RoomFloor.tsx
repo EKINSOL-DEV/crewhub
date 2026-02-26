@@ -1,7 +1,7 @@
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 import {
   createTilesFloorMaterial,
   createWoodFloorMaterial,
@@ -43,7 +43,7 @@ export function RoomFloor({
   const baseColor = color || '#9E9684'
 
   // ─── Default (toon) material ──────────────────────────────
-  const toonProps = useToonMaterialProps(baseColor)
+  const toonProps = getToonMaterialProps(baseColor)
   const toonMatRef = useRef<THREE.MeshToonMaterial>(null)
 
   // Determine the persistent (non-hover) emissive color and intensity

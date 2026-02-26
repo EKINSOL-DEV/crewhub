@@ -15,7 +15,7 @@ import { Room3D } from './Room3D'
 import { Bot3D } from './Bot3D'
 import type { BotStatus } from './botConstants'
 import { useAgentsRegistry, type AgentRuntime } from '@/hooks/useAgentsRegistry'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 import { EnvironmentSwitcher } from './environments'
 import { getBotConfigFromSession, isSubagent } from './utils/botVariants'
 import { getSessionDisplayName } from '@/lib/minionUtils'
@@ -105,7 +105,7 @@ function ParkingAreaFloor({
   width: number
   depth: number
 }) {
-  const floorToon = useToonMaterialProps('#BFB090')
+  const floorToon = getToonMaterialProps('#BFB090')
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.08, z]} receiveShadow>
       <boxGeometry args={[width, depth, 0.12]} />

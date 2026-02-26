@@ -1,4 +1,4 @@
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 interface WaterCoolerProps {
   readonly position?: [number, number, number]
@@ -9,10 +9,10 @@ interface WaterCoolerProps {
  * Office water cooler: cylindrical body + water bottle on top.
  */
 export function WaterCooler({ position = [0, 0, 0], rotation = [0, 0, 0] }: WaterCoolerProps) {
-  const bodyToon = useToonMaterialProps('#E8E8E8')
-  const bottleToon = useToonMaterialProps('#C8E0F8')
-  const baseToon = useToonMaterialProps('#AAAAAA')
-  const tapToon = useToonMaterialProps('#888888')
+  const bodyToon = getToonMaterialProps('#E8E8E8')
+  const bottleToon = getToonMaterialProps('#C8E0F8')
+  const baseToon = getToonMaterialProps('#AAAAAA')
+  const tapToon = getToonMaterialProps('#888888')
 
   return (
     <group position={position} rotation={rotation}>

@@ -1,4 +1,4 @@
-import { useToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
+import { getToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
 
 interface BenchProps {
   readonly position?: [number, number, number]
@@ -9,8 +9,8 @@ interface BenchProps {
  * Simple park/office bench: wooden slats on metal frame.
  */
 export function Bench({ position = [0, 0, 0], rotation = [0, 0, 0] }: BenchProps) {
-  const woodToon = useToonMaterialProps(WARM_COLORS.woodLight)
-  const metalToon = useToonMaterialProps('#555555')
+  const woodToon = getToonMaterialProps(WARM_COLORS.woodLight)
+  const metalToon = getToonMaterialProps('#555555')
 
   const seatWidth = 1.6
   const seatDepth = 0.45

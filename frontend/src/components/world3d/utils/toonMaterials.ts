@@ -50,7 +50,7 @@ export function createToonMaterial(color: string): THREE.MeshToonMaterial {
 /**
  * React hook-friendly: returns props to spread on <meshToonMaterial>.
  */
-export function useToonMaterialProps(color: string) {
+export function getToonMaterialProps(color: string) {
   const gradientMap = getSharedGradientMap()
   return { color, gradientMap }
 }

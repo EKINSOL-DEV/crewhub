@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
+import { getToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
 
 interface BuildingWallsProps {
   readonly width: number
@@ -27,8 +27,8 @@ export function BuildingWalls({
   entranceWidth = 5,
   entranceOffset = 0,
 }: BuildingWallsProps) {
-  const wallToon = useToonMaterialProps(WARM_COLORS.stone)
-  const accentToon = useToonMaterialProps(WARM_COLORS.stoneDark)
+  const wallToon = getToonMaterialProps(WARM_COLORS.stone)
+  const accentToon = getToonMaterialProps(WARM_COLORS.stoneDark)
 
   const wallThickness = 0.35
   const accentHeight = 0.12

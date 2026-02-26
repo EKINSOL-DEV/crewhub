@@ -1,4 +1,4 @@
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 interface LampProps {
   readonly position?: [number, number, number]
@@ -17,8 +17,8 @@ export function Lamp({
   lightColor = '#FFD700',
   lightIntensity = 0.5,
 }: LampProps) {
-  const poleToon = useToonMaterialProps('#777777')
-  const baseToon = useToonMaterialProps('#555555')
+  const poleToon = getToonMaterialProps('#777777')
+  const baseToon = getToonMaterialProps('#555555')
 
   const poleHeight = 1.8
   const poleRadius = 0.03

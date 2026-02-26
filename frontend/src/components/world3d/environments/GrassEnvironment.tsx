@@ -1,6 +1,6 @@
 import { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 // ─── Constants ───────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ function InstancedDecoration({
   receiveShadow?: boolean
 }) {
   const ref = useRef<THREE.InstancedMesh>(null)
-  const toonProps = useToonMaterialProps(color)
+  const toonProps = getToonMaterialProps(color)
   const count = matrices.length
 
   useEffect(() => {
@@ -63,7 +63,7 @@ interface GrassEnvironmentProps {
 }
 
 export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironmentProps) {
-  const toonProps = useToonMaterialProps('#6B8F52')
+  const toonProps = getToonMaterialProps('#6B8F52')
   const groundRef = useRef<THREE.InstancedMesh>(null)
 
   const data = useMemo(() => {

@@ -1,4 +1,4 @@
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 interface SpaceshipProps {
   readonly position?: [number, number, number]
@@ -6,11 +6,11 @@ interface SpaceshipProps {
 }
 
 export function Spaceship({ position = [0, 0, 0], scale = 1 }: SpaceshipProps) {
-  const hull = useToonMaterialProps('#B8B8B8')
-  const dark = useToonMaterialProps('#555555')
-  const accent = useToonMaterialProps('#4488CC')
-  const wing = useToonMaterialProps('#777777')
-  const nozzle = useToonMaterialProps('#333333')
+  const hull = getToonMaterialProps('#B8B8B8')
+  const dark = getToonMaterialProps('#555555')
+  const accent = getToonMaterialProps('#4488CC')
+  const wing = getToonMaterialProps('#777777')
+  const nozzle = getToonMaterialProps('#333333')
 
   return (
     <group position={position} scale={scale}>

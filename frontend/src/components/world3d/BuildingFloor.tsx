@@ -1,4 +1,4 @@
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 
 interface BuildingFloorProps {
   readonly width: number
@@ -11,7 +11,7 @@ interface BuildingFloorProps {
  * Sits at y=0, acts as the base for all rooms and hallways.
  */
 export function BuildingFloor({ width, depth, color = '#D4C4A8' }: BuildingFloorProps) {
-  const floorToon = useToonMaterialProps(color)
+  const floorToon = getToonMaterialProps(color)
 
   // Inset floor slightly so it doesn't peek out beyond the building walls.
   // Wall thickness is 0.35, so pull the floor in by that amount on each side.

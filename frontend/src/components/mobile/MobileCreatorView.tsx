@@ -875,14 +875,14 @@ function PropHistoryTab() {
             : ''
 
           // Date formatting
-          let dateStr = ''
+          let dateStr = record.createdAt?.slice(0, 10) ?? ''
           let timeStr = ''
           try {
             const date = new Date(record.createdAt)
             dateStr = date.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short' })
             timeStr = date.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
           } catch {
-            dateStr = record.createdAt?.slice(0, 10) ?? ''
+            /* intentionally empty */
           }
 
           return (
@@ -1041,14 +1041,14 @@ function PropDetailView({ record, onBack }: PropDetailViewProps) {
   }
   const displayName = formatPropName(record.name) || record.prompt || 'Untitled prop'
 
-  let dateStr = ''
+  let dateStr = record.createdAt?.slice(0, 10) ?? ''
   let timeStr = ''
   try {
     const date = new Date(record.createdAt)
     dateStr = date.toLocaleDateString('nl-BE', { day: '2-digit', month: 'long', year: 'numeric' })
     timeStr = date.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
   } catch {
-    dateStr = record.createdAt?.slice(0, 10) ?? ''
+    /* intentionally empty */
   }
 
   return (

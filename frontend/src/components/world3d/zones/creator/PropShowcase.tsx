@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Html } from '@react-three/drei'
-import { useToonMaterialProps } from '../../utils/toonMaterials'
+import { getToonMaterialProps } from '../../utils/toonMaterials'
 import { DynamicProp, type PropPart } from './DynamicProp'
 
 export interface ShowcaseProp {
@@ -28,7 +28,7 @@ function Pedestal({
   selected: boolean
   onClick: () => void
 }) {
-  const baseToon = useToonMaterialProps('#1a1a2e')
+  const baseToon = getToonMaterialProps('#1a1a2e')
 
   return (
     <group

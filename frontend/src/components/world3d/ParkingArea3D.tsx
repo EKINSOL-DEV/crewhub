@@ -4,7 +4,7 @@ import { CoffeeMachine } from './props/CoffeeMachine'
 import { WaterCooler } from './props/WaterCooler'
 import { Plant } from './props/Plant'
 import { Lamp } from './props/Lamp'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 
 interface ParkingArea3DProps {
   /** Center position of the parking area */
@@ -21,8 +21,8 @@ interface ParkingArea3DProps {
 export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
   const halfW = width / 2
   const halfD = depth / 2
-  const dividerToon = useToonMaterialProps('#B0A890')
-  const accentToon = useToonMaterialProps('#8B7D6B')
+  const dividerToon = getToonMaterialProps('#B0A890')
+  const accentToon = getToonMaterialProps('#8B7D6B')
 
   return (
     <group position={position}>
@@ -49,7 +49,7 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
           {/* Sign backing */}
           <mesh castShadow>
             <boxGeometry args={[3, 0.7, 0.12]} />
-            <meshToonMaterial {...useToonMaterialProps('#6B4F12')} />
+            <meshToonMaterial {...getToonMaterialProps('#6B4F12')} />
           </mesh>
 
           {/* Front face */}
@@ -78,11 +78,11 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
           {/* Support poles */}
           <mesh position={[-1, -0.55, 0]}>
             <cylinderGeometry args={[0.04, 0.04, 0.4, 8]} />
-            <meshToonMaterial {...useToonMaterialProps('#6B4F12')} />
+            <meshToonMaterial {...getToonMaterialProps('#6B4F12')} />
           </mesh>
           <mesh position={[1, -0.55, 0]}>
             <cylinderGeometry args={[0.04, 0.04, 0.4, 8]} />
-            <meshToonMaterial {...useToonMaterialProps('#6B4F12')} />
+            <meshToonMaterial {...getToonMaterialProps('#6B4F12')} />
           </mesh>
         </group>
       </Float>
@@ -110,17 +110,17 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
         {/* Table top */}
         <mesh position={[0, 0.4, 0]} castShadow>
           <cylinderGeometry args={[0.4, 0.4, 0.04, 12]} />
-          <meshToonMaterial {...useToonMaterialProps('#A5822E')} />
+          <meshToonMaterial {...getToonMaterialProps('#A5822E')} />
         </mesh>
         {/* Table leg */}
         <mesh position={[0, 0.2, 0]}>
           <cylinderGeometry args={[0.05, 0.08, 0.4, 8]} />
-          <meshToonMaterial {...useToonMaterialProps('#777777')} />
+          <meshToonMaterial {...getToonMaterialProps('#777777')} />
         </mesh>
         {/* Table base */}
         <mesh position={[0, 0.02, 0]}>
           <cylinderGeometry args={[0.2, 0.2, 0.04, 8]} />
-          <meshToonMaterial {...useToonMaterialProps('#666666')} />
+          <meshToonMaterial {...getToonMaterialProps('#666666')} />
         </mesh>
       </group>
 

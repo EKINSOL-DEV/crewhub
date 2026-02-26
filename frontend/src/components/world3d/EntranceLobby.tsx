@@ -1,6 +1,6 @@
 import { Html } from '@react-three/drei'
 import { Plant } from './props/Plant'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 
 interface EntranceLobbyProps {
   /** X position of entrance center */
@@ -19,9 +19,9 @@ export function EntranceLobby({
   buildingFrontZ,
   entranceWidth = 5,
 }: EntranceLobbyProps) {
-  const matToon = useToonMaterialProps('#8B5A2B')
-  const matBorderToon = useToonMaterialProps('#6B4226')
-  const pathToon = useToonMaterialProps('#C8B898')
+  const matToon = getToonMaterialProps('#8B5A2B')
+  const matBorderToon = getToonMaterialProps('#6B4226')
+  const pathToon = getToonMaterialProps('#C8B898')
 
   // Front wall is at -Z, so lobby extends further into -Z
   const lobbyZ = buildingFrontZ - 1.5

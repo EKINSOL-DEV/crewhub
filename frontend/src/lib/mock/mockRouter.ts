@@ -207,7 +207,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/threads/:id/messages
-  if (/^\/api\/threads\/[^\/]+\/messages$/.exec(pathname) && method === 'GET') {
+  if (/^\/api\/threads\/[^/]+\/messages$/.exec(pathname) && method === 'GET') {
     const threadId = pathname.split('/')[3]
     const hour = 3_600_000
     const mockMessages = [

@@ -23,6 +23,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
+        React: 'readonly', // new JSX transform — React in scope without import
       },
     },
     plugins: {
@@ -34,13 +35,23 @@ export default [
     rules: {
       // TypeScript rules
       ...tsPlugin.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-empty-object-type': ['error', { allowInterfaces: 'with-single-extends' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
 
       // React rules
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+
+      // Disable React Compiler rules (from eslint-plugin-react-hooks@7, not applicable without compiler)
+      'react-hooks/react-compiler': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/static-components': 'off',
 
       // SonarQube-aligned: cognitive complexity
       'sonarjs/cognitive-complexity': ['warn', 15],
@@ -52,6 +63,8 @@ export default [
       'no-console': 'off',
       'prefer-const': 'error',
       'no-var': 'error',
+      // TypeScript handles undefined references; no-undef is redundant for .ts/.tsx files
+      'no-undef': 'off',
     },
   },
 ]

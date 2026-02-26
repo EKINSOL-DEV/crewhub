@@ -10,7 +10,7 @@ import { useRef, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
-import { useToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
+import { getToonMaterialProps, WARM_COLORS } from '../utils/toonMaterials'
 import { useMeetingContext } from '@/contexts/MeetingContext'
 import type { PropProps } from '../grid/props/PropRegistry'
 
@@ -31,8 +31,8 @@ export function MeetingTable({
   meetingActive = false,
   onTableClick,
 }: MeetingTableProps) {
-  const topToon = useToonMaterialProps(WARM_COLORS.woodLight)
-  const legToon = useToonMaterialProps(WARM_COLORS.wood)
+  const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
+  const legToon = getToonMaterialProps(WARM_COLORS.wood)
   const [hovered, setHovered] = useState(false)
   const glowRef = useRef<THREE.Mesh>(null)
   const activeRingRef = useRef<THREE.Mesh>(null)

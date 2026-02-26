@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
+import { getToonMaterialProps, WARM_COLORS } from './utils/toonMaterials'
 import type { WallStyle } from '@/contexts/RoomsContext'
 
 interface RoomWallsProps {
@@ -304,8 +304,8 @@ export function RoomWalls({
   const wallHeight = wallHeightProp ?? (isHQ ? 2.5 : 1.5)
   const accentColor = color || '#4f46e5'
   const wallColor = WARM_COLORS.stone
-  const wallToon = useToonMaterialProps(wallColor)
-  const accentToon = useToonMaterialProps(accentColor)
+  const wallToon = getToonMaterialProps(wallColor)
+  const accentToon = getToonMaterialProps(accentColor)
 
   // Refs for emissive animation on wall and accent materials
   const wallMatRefs = useRef<(THREE.MeshToonMaterial | null)[]>([])

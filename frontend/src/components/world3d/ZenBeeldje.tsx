@@ -8,7 +8,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import { useToonMaterialProps } from './utils/toonMaterials'
+import { getToonMaterialProps } from './utils/toonMaterials'
 import type { ThreeEvent } from '@react-three/fiber'
 import type { Group } from 'three'
 
@@ -41,8 +41,8 @@ export function ZenBeeldje({
   }, [isHovered])
 
   // Toon materials for the statue
-  const stoneToon = useToonMaterialProps('#9E9684')
-  const stoneBaseToon = useToonMaterialProps('#7A7468')
+  const stoneToon = getToonMaterialProps('#9E9684')
+  const stoneBaseToon = getToonMaterialProps('#7A7468')
   const glowColor = projectColor || '#a78bfa'
 
   // Gentle floating animation (always active, more pronounced when hovered)

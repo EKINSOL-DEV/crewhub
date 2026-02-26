@@ -1,4 +1,4 @@
-import { useToonMaterialProps } from '../utils/toonMaterials'
+import { getToonMaterialProps } from '../utils/toonMaterials'
 
 interface MonitorProps {
   readonly position?: [number, number, number]
@@ -10,8 +10,8 @@ interface MonitorProps {
  * Blue-white emissive screen face for a glowing effect.
  */
 export function Monitor({ position = [0, 0, 0], rotation = [0, 0, 0] }: MonitorProps) {
-  const frameToon = useToonMaterialProps('#333333')
-  const baseToon = useToonMaterialProps('#444444')
+  const frameToon = getToonMaterialProps('#333333')
+  const baseToon = getToonMaterialProps('#444444')
 
   const screenWidth = 0.7
   const screenHeight = 0.45
