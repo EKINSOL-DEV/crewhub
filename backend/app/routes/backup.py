@@ -161,6 +161,83 @@ async def export_database(key: Annotated[APIKeyInfo, Depends(require_scope("admi
 
 
 @router.post("/import", response_model=ImportResponse)
+async def _read_import_payload(file: UploadFile) -> dict[str, Any]:
+    """Read and parse uploaded import JSON."""
+    try:
+        content = await file.read()
+        return json.loads(content)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid JSON: {str(e)}") from e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to read file: {str(e)}") from e
+
+
+def _extract_import_data(import_data: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Validate import structure and return (metadata, data)."""
+    if "metadata" not in import_data or "data" not in import_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid export format: missing 'metadata' or 'data'",
+        )
+    return import_data["metadata"], import_data["data"]
+
+
+def _validate_schema_compatibility(metadata: dict[str, Any]) -> None:
+    """Ensure incoming export schema is compatible with current DB schema."""
+    import_schema = metadata.get("schema_version", 0)
+    if import_schema <= SCHEMA_VERSION:
+        return
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=(
+            f"Import schema version ({import_schema}) is newer than "
+            f"current ({SCHEMA_VERSION}). Please upgrade CrewHub first."
+        ),
+    )
+
+
+async def _replace_table_data(db: aiosqlite.Connection, table: str, rows: list[dict[str, Any]]) -> int:
+    """Replace one table's contents; return imported row count."""
+    await db.execute(f"DELETE FROM {table}")
+    if not rows:
+        return 0
+
+    columns = list(rows[0].keys())
+    placeholders = ", ".join(["?"] * len(columns))
+    col_names = ", ".join(columns)
+
+    imported_rows = 0
+    for row in rows:
+        values = [row.get(col) for col in columns]
+        await db.execute(f"INSERT INTO {table} ({col_names}) VALUES ({placeholders})", values)
+        imported_rows += 1
+    return imported_rows
+
+
+async def _import_tables(data: dict[str, Any]) -> tuple[int, int]:
+    """Import all supported tables; returns (tables_imported, rows_imported)."""
+    tables_imported = 0
+    rows_imported = 0
+    async with get_db() as db:
+        for table in EXPORT_TABLES:
+            if table not in data:
+                continue
+            rows_imported += await _replace_table_data(db, table, data[table])
+            tables_imported += 1
+        await db.commit()
+    return tables_imported, rows_imported
+
+
+def _restore_database_from_backup(backup_path: Path) -> None:
+    """Restore DB file from a safety backup after failed import."""
+    try:
+        shutil.copy2(str(backup_path), str(DB_PATH))
+        logger.info("Database restored from backup after failed import")
+    except Exception as restore_err:
+        logger.error(f"Failed to restore backup: {restore_err}")
+
+
+@router.post("/import", response_model=ImportResponse)
 async def import_database(
     file: Annotated[UploadFile, File(...)], key: Annotated[APIKeyInfo, Depends(require_scope("admin"))]
 ):
@@ -171,104 +248,29 @@ async def import_database(
     Validates schema version compatibility.
     Replaces all data within a transaction.
     """
-    # Read and parse upload
-    try:
-        content = await file.read()
-        import_data = json.loads(content)
-    except json.JSONDecodeError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid JSON: {str(e)}",
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to read file: {str(e)}",
-        )
+    import_data = await _read_import_payload(file)
+    metadata, data = _extract_import_data(import_data)
+    _validate_schema_compatibility(metadata)
 
-    # Validate structure
-    if "metadata" not in import_data or "data" not in import_data:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid export format: missing 'metadata' or 'data'",
-        )
-
-    metadata = import_data["metadata"]
-    data = import_data["data"]
-
-    # Check schema version compatibility
-    import_schema = metadata.get("schema_version", 0)
-    if import_schema > SCHEMA_VERSION:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"Import schema version ({import_schema}) is newer than "
-                f"current ({SCHEMA_VERSION}). Please upgrade CrewHub first."
-            ),
-        )
-
-    # Safety: backup current database first
     try:
         backup_path = _create_file_backup()
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create safety backup: {str(e)}",
-        )
-
-    # Import data
-    tables_imported = 0
-    rows_imported = 0
+        ) from e
 
     try:
-        async with get_db() as db:
-            # Clear and re-populate each table
-            for table in EXPORT_TABLES:
-                if table not in data:
-                    continue
-
-                rows = data[table]
-                if not rows:
-                    await db.execute(f"DELETE FROM {table}")
-                    tables_imported += 1
-                    continue
-
-                # Delete existing data
-                await db.execute(f"DELETE FROM {table}")
-
-                # Insert new data
-                columns = list(rows[0].keys())
-                placeholders = ", ".join(["?"] * len(columns))
-                col_names = ", ".join(columns)
-
-                for row in rows:
-                    values = [row.get(col) for col in columns]
-                    await db.execute(
-                        f"INSERT INTO {table} ({col_names}) VALUES ({placeholders})",
-                        values,
-                    )
-                    rows_imported += 1
-
-                tables_imported += 1
-
-            await db.commit()
-
+        tables_imported, rows_imported = await _import_tables(data)
     except Exception as e:
         logger.error(f"Import failed: {e}")
-        # Restore from backup
-        try:
-            shutil.copy2(str(backup_path), str(DB_PATH))
-            logger.info("Database restored from backup after failed import")
-        except Exception as restore_err:
-            logger.error(f"Failed to restore backup: {restore_err}")
-
+        _restore_database_from_backup(backup_path)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Import failed (database restored from backup): {str(e)}",
-        )
+        ) from e
 
     logger.info(f"Import successful: {tables_imported} tables, {rows_imported} rows")
-
     return ImportResponse(
         success=True,
         tables_imported=tables_imported,

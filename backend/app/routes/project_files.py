@@ -125,45 +125,59 @@ def _get_file_type(path: Path) -> str:
     return "code"
 
 
+def _is_browsable_entry(entry: Path) -> bool:
+    """Return whether a directory entry should be scanned/listed."""
+    if entry.name.startswith(".") and entry.name not in {".env.example", ".gitignore"}:
+        return False
+    return not (entry.is_dir() and entry.name in SKIP_DIRS)
+
+
+def _build_dir_item(entry: Path, rel: Path, children: list) -> dict:
+    """Build a directory node for API responses."""
+    return {
+        "name": entry.name,
+        "path": str(rel),
+        "type": "directory",
+        "children": children,
+        "child_count": len(children),
+    }
+
+
+def _build_file_item(entry: Path, rel: Path) -> dict:
+    """Build a file node for API responses."""
+    try:
+        size = entry.stat().st_size
+    except OSError:
+        size = 0
+    return {
+        "name": entry.name,
+        "path": str(rel),
+        "type": _get_file_type(entry),
+        "extension": entry.suffix.lower(),
+        "size": size,
+    }
+
+
 def _scan_project_dir(dir_path: Path, base: Path, current_depth: int, max_depth: int) -> list:
     """Recursively scan a directory up to max_depth, returning a file/dir tree."""
-    items = []
     try:
         entries = sorted(dir_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
     except PermissionError:
-        return items
+        return []
 
+    items = []
     for entry in entries:
-        if entry.name.startswith(".") and entry.name not in {".env.example", ".gitignore"}:
+        if not _is_browsable_entry(entry):
             continue
-        if entry.is_dir() and entry.name in SKIP_DIRS:
-            continue
+
         rel = entry.relative_to(base)
         if entry.is_dir():
             children = _scan_project_dir(entry, base, current_depth + 1, max_depth) if current_depth < max_depth else []
-            items.append(
-                {
-                    "name": entry.name,
-                    "path": str(rel),
-                    "type": "directory",
-                    "children": children,
-                    "child_count": len(children),
-                }
-            )
-        elif entry.suffix.lower() in ALLOWED_EXTENSIONS:
-            try:
-                size = entry.stat().st_size
-            except OSError:
-                size = 0
-            items.append(
-                {
-                    "name": entry.name,
-                    "path": str(rel),
-                    "type": _get_file_type(entry),
-                    "extension": entry.suffix.lower(),
-                    "size": size,
-                }
-            )
+            items.append(_build_dir_item(entry, rel, children))
+            continue
+
+        if entry.suffix.lower() in ALLOWED_EXTENSIONS:
+            items.append(_build_file_item(entry, rel))
     return items
 
 

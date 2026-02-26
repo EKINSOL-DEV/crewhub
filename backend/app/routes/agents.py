@@ -14,7 +14,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 import app.services.agent_service as agent_svc
-from app.utils.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
