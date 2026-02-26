@@ -390,7 +390,8 @@ export function MobileAgentChat({
         const errors = results.filter((r) => r.error)
         if (errors.length > 0) {
           setPendingFiles((prev) =>
-            prev.map((f) => { // NOSONAR: nested map in setState updater — acceptable async upload pattern
+            prev.map((f) => {
+              // NOSONAR: nested map in setState updater — acceptable async upload pattern
               const result = results.find((r) => r.id === f.id)
               if (result?.error) return { ...f, uploading: false, error: result.error }
               return { ...f, uploading: false }
