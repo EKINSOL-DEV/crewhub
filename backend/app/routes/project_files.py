@@ -4,7 +4,7 @@ import logging
 import mimetypes
 import os
 from pathlib import Path
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -353,7 +353,7 @@ async def discover_project_folders():
     Returns folders found in the configured projects base path
     that could be linked to CrewHub projects.
     """
-    folders: List[dict] = []
+    folders: list[dict] = []
 
     base_path_str = await _get_projects_base_path()
     base = Path(os.path.expanduser(base_path_str))

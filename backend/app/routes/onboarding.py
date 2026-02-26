@@ -160,7 +160,7 @@ def _build_suggested_urls(is_docker: bool, lan_ip: Optional[str], host_docker_re
 # =============================================================================
 
 
-async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenClawResponse:  # NOSONAR
+async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenClawResponse:  # NOSONAR  # noqa: C901
     """
     Test an OpenClaw gateway connection with detailed error classification.
 
@@ -396,7 +396,7 @@ async def get_onboarding_status():
             connections_count = row["cnt"] if row else 0
 
     manager = await get_connection_manager()
-    for conn_id, conn in manager._connections.items():
+    for _conn_id, conn in manager._connections.items():
         if conn.is_connected():
             has_active = True
             break

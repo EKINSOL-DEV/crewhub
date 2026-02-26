@@ -149,7 +149,11 @@ async def get_agent_persona(agent_id: str):
         return PersonaResponse(agent_id=agent_id, **defaults)
 
 
-@router.put("/agents/{agent_id}/persona", response_model=PersonaResponse, responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
+@router.put(
+    "/agents/{agent_id}/persona",
+    response_model=PersonaResponse,
+    responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}},
+)
 async def update_agent_persona(agent_id: str, body: PersonaUpdate):
     """Update the persona configuration for an agent.
 

@@ -98,7 +98,7 @@ async def list_standups(days: Annotated[int, Query(7, ge=1, le=90)]):
     cutoff = int((time.time() - days * 86400) * 1000)
 
     async with get_db() as db:
-        db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
+        db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row, strict=False))
 
         async with db.execute(
             """SELECT s.id, s.title, s.created_by, s.created_at,
@@ -119,7 +119,7 @@ async def list_standups(days: Annotated[int, Query(7, ge=1, le=90)]):
 async def get_standup(standup_id: str):
     """Get a standup with all entries."""
     async with get_db() as db:
-        db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
+        db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row, strict=False))
 
         async with db.execute("SELECT * FROM standups WHERE id = ?", (standup_id,)) as cur:
             standup = await cur.fetchone()

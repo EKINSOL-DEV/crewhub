@@ -170,7 +170,7 @@ async def load_connections_from_db():
 
     try:
         async with aiosqlite.connect(DB_PATH) as db:
-            db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
+            db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row, strict=False))
             async with db.execute("SELECT * FROM connections WHERE enabled = 1") as cursor:
                 rows = await cursor.fetchall()
 

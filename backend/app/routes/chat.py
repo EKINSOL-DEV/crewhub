@@ -102,7 +102,7 @@ class SendMessageBody(BaseModel):
 
 
 @router.get("/api/chat/{session_key}/history")
-async def get_chat_history(  # NOSONAR
+async def get_chat_history(  # NOSONAR  # noqa: C901
     session_key: str,
     limit: Annotated[int, Query(default=30, ge=1, le=100)],
     before: Annotated[Optional[int], Query(default=None)],

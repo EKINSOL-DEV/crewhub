@@ -1,7 +1,7 @@
 """Pydantic models for CrewHub database entities."""
 
 import uuid
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -50,7 +50,7 @@ class ProjectResponse(BaseModel):
     status: str = "active"
     created_at: int
     updated_at: int
-    rooms: List[str] = []
+    rooms: list[str] = []
 
 
 class RoomProjectAssign(BaseModel):
@@ -341,9 +341,9 @@ class BlueprintPoint(BaseModel):
 class BlueprintInteractionPoints(BaseModel):
     """Interaction points grouped by type."""
 
-    work: List[BlueprintPoint] = []
-    coffee: List[BlueprintPoint] = []
-    sleep: List[BlueprintPoint] = []
+    work: list[BlueprintPoint] = []
+    coffee: list[BlueprintPoint] = []
+    sleep: list[BlueprintPoint] = []
 
 
 class BlueprintJson(BaseModel):
@@ -354,9 +354,9 @@ class BlueprintJson(BaseModel):
     gridWidth: int
     gridDepth: int
     cellSize: float = 0.6
-    placements: List[BlueprintPlacement] = []
-    doors: List[BlueprintDoor] = []
-    doorPositions: List[BlueprintDoor] = []
+    placements: list[BlueprintPlacement] = []
+    doors: list[BlueprintDoor] = []
+    doorPositions: list[BlueprintDoor] = []
     walkableCenter: BlueprintPoint
     interactionPoints: Optional[BlueprintInteractionPoints] = None
     metadata: Optional[dict] = None

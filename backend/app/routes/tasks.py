@@ -234,7 +234,7 @@ class RunResponse(BaseModel):
     response_model=RunResponse,
     responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
 )
-async def _build_task_context_prompt(task: dict, agent: dict, body: "RunRequest") -> str:
+async def _build_task_context_prompt(task: dict, agent: dict, body: "RunRequest", task_id) -> str:
     """Build a task prompt with optional CrewHub context envelope prepended."""
     from app.services.context_envelope import build_crewhub_context, format_context_block
 

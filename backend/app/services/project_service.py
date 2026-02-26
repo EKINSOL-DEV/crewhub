@@ -7,7 +7,7 @@ HTTP concerns (exceptions, SSE broadcasts, response formatting).
 import logging
 import re
 import time
-from typing import List, Optional
+from typing import Optional
 
 from app.db.database import get_db
 from app.db.models import ProjectCreate, ProjectResponse, ProjectUpdate, generate_id
@@ -23,7 +23,7 @@ DEFAULT_PROJECTS_BASE_PATH = "~/Projects"
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 
-async def _get_room_ids(db, project_id: str) -> List[str]:
+async def _get_room_ids(db, project_id: str) -> list[str]:
     """Return the list of room IDs assigned to a project."""
     async with db.execute("SELECT id FROM rooms WHERE project_id = ?", (project_id,)) as cursor:
         rows = await cursor.fetchall()
@@ -45,7 +45,7 @@ async def _get_base_path(db) -> str:
 # ── public service functions ──────────────────────────────────────────────────
 
 
-async def list_projects() -> List[ProjectResponse]:
+async def list_projects() -> list[ProjectResponse]:
     """Return all projects ordered by creation date (newest first)."""
     async with get_db() as db:
         async with db.execute("SELECT * FROM projects ORDER BY created_at DESC") as cursor:
@@ -72,7 +72,7 @@ async def get_project(project_id: str) -> Optional[ProjectResponse]:
         return ProjectResponse(**row, rooms=room_ids)
 
 
-async def get_projects_overview() -> List[dict]:
+async def get_projects_overview() -> list[dict]:
     """
     Return all projects enriched with room_count and agent_count.
     Used by the HQ dashboard.

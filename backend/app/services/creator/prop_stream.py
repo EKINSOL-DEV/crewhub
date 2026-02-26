@@ -35,7 +35,7 @@ def _sse_event(event_type: str, data: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
 
 
-async def stream_prop_generation(  # NOSONAR
+async def stream_prop_generation(  # NOSONAR  # noqa: C901
     request,  # starlette.requests.Request — checked only for is_disconnected()
     prompt: str,
     name: str,

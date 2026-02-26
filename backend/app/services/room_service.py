@@ -6,7 +6,6 @@ HTTP concerns (SSE broadcasts, response formatting).
 
 import logging
 import time
-from typing import List
 
 from fastapi import HTTPException
 
@@ -51,7 +50,7 @@ def _row_to_room(row: dict) -> Room:
 # ── Public service functions ──────────────────────────────────────────────────
 
 
-async def list_rooms() -> List[Room]:
+async def list_rooms() -> list[Room]:
     """Return all rooms ordered by sort_order."""
     async with get_db() as db:
         async with db.execute(f"{_ROOMS_SELECT} ORDER BY r.sort_order ASC") as cursor:
@@ -225,7 +224,7 @@ async def set_room_as_hq(room_id: str) -> Room:
     return _row_to_room(row)
 
 
-async def reorder_rooms(room_order: List[str]) -> dict:
+async def reorder_rooms(room_order: list[str]) -> dict:
     """Update sort_order for a list of room IDs."""
     async with get_db() as db:
         now = int(time.time() * 1000)

@@ -1,7 +1,6 @@
 """Rooms API routes."""
 
 import logging
-from typing import List
 
 from fastapi import APIRouter, HTTPException
 
@@ -121,7 +120,7 @@ async def set_hq(room_id: str):
 
 
 @router.put("/reorder", response_model=dict, responses={500: {"description": "Internal server error"}})
-async def reorder_rooms(room_order: List[str]):
+async def reorder_rooms(room_order: list[str]):
     """Reorder rooms by updating sort_order."""
     try:
         result = await room_svc.reorder_rooms(room_order)

@@ -74,5 +74,5 @@ async def get_db():
         await init_database()
 
     async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
+        db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row, strict=False))
         yield db

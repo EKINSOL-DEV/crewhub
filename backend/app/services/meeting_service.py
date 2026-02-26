@@ -488,7 +488,7 @@ async def list_meetings(
     return {"meetings": results, "total": total, "has_more": (offset + limit) < total}
 
 
-async def load_document(  # NOSONAR
+async def load_document(  # NOSONAR  # noqa: C901
     document_path: str,
     project_id: Optional[str],
     meeting_id: str,

@@ -4,7 +4,6 @@ import logging
 import re
 import time
 import uuid
-from typing import List
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -35,7 +34,7 @@ class BulkRuleItem(BaseModel):
 class BulkRulesRequest(BaseModel):
     """Request model for bulk updating all rules."""
 
-    rules: List[BulkRuleItem]
+    rules: list[BulkRuleItem]
 
 
 def _validate_rule_type(rule_type: str) -> None:

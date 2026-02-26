@@ -1,6 +1,6 @@
 """Pydantic models for Tasks and Project History."""
 
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -55,7 +55,7 @@ class TaskResponse(BaseModel):
 class TaskListResponse(BaseModel):
     """Response model for a list of tasks."""
 
-    tasks: List[TaskResponse]
+    tasks: list[TaskResponse]
     total: int
 
 
@@ -80,5 +80,5 @@ class HistoryEventResponse(BaseModel):
 class HistoryListResponse(BaseModel):
     """Response model for a list of history events."""
 
-    events: List[HistoryEventResponse]
+    events: list[HistoryEventResponse]
     total: int

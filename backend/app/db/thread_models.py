@@ -1,6 +1,6 @@
 """Pydantic models for CrewHub Group Chat / Threads."""
 
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -14,7 +14,7 @@ class ThreadCreate(BaseModel):
 
     kind: Literal["direct", "group"] = "group"
     title: Optional[str] = None
-    participant_agent_ids: List[str]  # agent IDs to add
+    participant_agent_ids: list[str]  # agent IDs to add
     settings: Optional[dict] = None
 
 
@@ -28,7 +28,7 @@ class ThreadUpdate(BaseModel):
 class ThreadParticipantAdd(BaseModel):
     """Request to add participants."""
 
-    agent_ids: List[str]
+    agent_ids: list[str]
 
 
 class ThreadMessageSend(BaseModel):
@@ -36,7 +36,7 @@ class ThreadMessageSend(BaseModel):
 
     content: str
     routing_mode: Literal["broadcast", "targeted"] = "broadcast"
-    target_agent_ids: Optional[List[str]] = None
+    target_agent_ids: Optional[list[str]] = None
 
 
 class ThreadResponse(BaseModel):
@@ -52,7 +52,7 @@ class ThreadResponse(BaseModel):
     archived_at: Optional[int] = None
     last_message_at: Optional[int] = None
     participant_count: int
-    participants: List[dict] = []
+    participants: list[dict] = []
     settings: dict = {}
 
 
@@ -81,5 +81,5 @@ class ThreadMessageResponse(BaseModel):
     agent_id: Optional[str] = None
     agent_name: Optional[str] = None
     routing_mode: Optional[str] = None
-    target_agent_ids: Optional[List[str]] = None
+    target_agent_ids: Optional[list[str]] = None
     created_at: int

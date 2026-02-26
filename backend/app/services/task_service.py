@@ -7,7 +7,7 @@ HTTP concerns (exceptions, SSE broadcasts, response formatting).
 import json
 import logging
 import time
-from typing import Optional, Tuple
+from typing import Optional
 
 from app.db.database import get_db
 from app.db.models import generate_id
@@ -230,7 +230,7 @@ async def create_task(task: TaskCreate) -> TaskResponse:
 async def update_task(
     task_id: str,
     task: TaskUpdate,
-) -> Tuple[Optional[TaskResponse], Optional[dict]]:
+) -> tuple[Optional[TaskResponse], Optional[dict]]:
     """
     Apply a partial update to a task.
 

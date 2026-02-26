@@ -48,7 +48,16 @@ async def get_session_history(session_key: str, limit: Annotated[int, Query(defa
     return {"messages": history, "count": len(history)}
 
 
-@router.patch("/{session_key:path}", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}, 502: {"description": "HTTP 502"}, 503: {"description": "Service unavailable"}})
+@router.patch(
+    "/{session_key:path}",
+    responses={
+        400: {"description": "Bad request"},
+        404: {"description": "Not found"},
+        500: {"description": "Internal server error"},
+        502: {"description": "HTTP 502"},
+        503: {"description": "Service unavailable"},
+    },
+)
 async def patch_session(session_key: str, patch: SessionPatch):
     """Update session configuration (e.g., switch model).
 

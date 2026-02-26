@@ -7,6 +7,7 @@ plus import/export functionality for sharing blueprints as JSON files.
 
 import json
 import logging
+import os
 import re
 import time
 from typing import Optional
@@ -556,8 +557,6 @@ class DeletePropRequest(BaseModel):
     x: int
     z: int
 
-
-import os
 
 # =============================================================================
 # Blueprint load/save helpers (reduces duplication in move_prop / delete_prop)

@@ -1,12 +1,12 @@
 """Pydantic models for AI-orchestrated meetings."""
 
-from enum import Enum
+from enum import StrEnum
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
 
-class MeetingState(str, Enum):
+class MeetingState(StrEnum):
     GATHERING = "gathering"
     ROUND_1 = "round_1"
     ROUND_2 = "round_2"

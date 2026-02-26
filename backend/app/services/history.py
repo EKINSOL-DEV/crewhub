@@ -9,7 +9,7 @@ import logging
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 DELETED_MARKER = ".deleted."
 
@@ -65,7 +65,7 @@ def _extract_path_metadata(file_path: Path) -> tuple:
     return agent_id, session_id, status
 
 
-def _extract_message_stats(messages: list) -> Dict[str, Any]:
+def _extract_message_stats(messages: list) -> dict[str, Any]:
     """Extract timestamps, model, label, channel, and last text from messages."""
     started_at = None
     ended_at = None
@@ -117,7 +117,7 @@ def _determine_minion_type(session_id: str, agent_id: str) -> str:
     return "main"
 
 
-def _parse_session_file(file_path: Path) -> Optional[Dict[str, Any]]:
+def _parse_session_file(file_path: Path) -> Optional[dict[str, Any]]:
     """Parse a session JSONL file and extract metadata.
 
     Returns session info with:
@@ -212,7 +212,7 @@ def _collect_session_files(agent_dirs: list, include_deleted: bool) -> list:
 
 
 def _matches_session_filters(
-    session: Dict[str, Any],
+    session: dict[str, Any],
     type_filter: Optional[str],
     date_from: Optional[int],
     date_to: Optional[int],
@@ -243,7 +243,7 @@ def get_archived_sessions(
     date_to: Optional[int] = None,
     search: Optional[str] = None,
     include_deleted: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get archived sessions from filesystem.
 
     Args:
@@ -311,7 +311,7 @@ def _find_session_file(agent_id: str, session_id: str) -> Optional[Path]:
     return None
 
 
-def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
+def get_session_detail(session_key: str) -> Optional[dict[str, Any]]:
     """Get detailed information for a specific archived session.
 
     Args:
@@ -382,7 +382,7 @@ def delete_session(session_key: str) -> bool:
         return False
 
 
-def get_statistics() -> Dict[str, Any]:
+def get_statistics() -> dict[str, Any]:
     """Get statistics about archived sessions.
 
     Returns:
@@ -393,7 +393,7 @@ def get_statistics() -> Dict[str, Any]:
         sessions = sessions_result.get("sessions", [])
 
         # Count by type
-        by_type: Dict[str, int] = {}
+        by_type: dict[str, int] = {}
         total_messages = 0
 
         for session in sessions:
