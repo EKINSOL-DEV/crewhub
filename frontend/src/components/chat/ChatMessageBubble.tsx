@@ -441,11 +441,7 @@ const ChatMessageBubbleInner = memo(
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}
             >
               {videoAttachments.map((attachment) => (
-                <VideoThumbnail
-                  key={attachment.path || `attachme-${attachment.type}`}
-                  attachment={attachment}
-                  maxWidth={300}
-                />
+                <VideoThumbnail key={attachment.path} attachment={attachment} maxWidth={300} />
               ))}
             </div>
           )}
