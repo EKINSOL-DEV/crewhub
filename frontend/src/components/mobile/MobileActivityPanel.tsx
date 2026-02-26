@@ -442,7 +442,7 @@ export function MobileActivityPanel({ onBack }: MobileActivityPanelProps) {
       filtered = filtered.filter((e) => e.type === selectedEventType)
     }
 
-    // TODO: Filter by project (requires project metadata in events)
+    // FUTURE: Filter by project (requires project metadata in events)
 
     return filtered
   }, [allEvents, selectedAgentId, selectedEventType])

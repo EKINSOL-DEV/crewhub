@@ -140,8 +140,9 @@ export function HistoryView() {
         setTotal(0)
         setError(null)
       }
-    } catch (_err) {
+    } catch (err) {
       // API not available - show placeholder
+      console.warn('Session history API not available:', err)
       if (!append) setSessions([])
       setTotal(0)
       setError(null)
