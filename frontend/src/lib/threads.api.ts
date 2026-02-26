@@ -78,7 +78,9 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const threadsApi = {
   list: (kind?: string, archived = false) =>
-    fetchJSON<ThreadsListResponse>(`/threads?${kind ? `kind=${kind}&` : ''}archived=${archived}`),
+    fetchJSON<ThreadsListResponse>(
+      `/threads?${kind ? 'kind=' + kind + '&' : ''}archived=${archived}`
+    ),
 
   get: (threadId: string) => fetchJSON<Thread>(`/threads/${threadId}`),
 
@@ -107,7 +109,7 @@ export const threadsApi = {
 
   getMessages: (threadId: string, limit = 50, before?: number) =>
     fetchJSON<ThreadMessagesResponse>(
-      `/threads/${threadId}/messages?limit=${limit}${before ? `&before=${before}` : ''}`
+      `/threads/${threadId}/messages?limit=${limit}${before ? '&before=' + before : ''}`
     ),
 
   sendMessage: (

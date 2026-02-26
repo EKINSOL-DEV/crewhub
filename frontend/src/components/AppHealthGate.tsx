@@ -20,7 +20,7 @@ type HealthStatus = 'checking' | 'ok' | 'down'
  * is assumed reachable (same origin or configured reverse proxy).
  */
 function isInTauri(): boolean {
-  return typeof window.__TAURI__ !== 'undefined'
+  return window.__TAURI__ !== undefined
 }
 
 async function checkBackendHealth(): Promise<boolean> {

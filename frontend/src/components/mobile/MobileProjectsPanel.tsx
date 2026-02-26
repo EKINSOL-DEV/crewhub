@@ -46,7 +46,7 @@ function ProjectCard({
         width: '100%',
         padding: '16px',
         background: 'rgba(255, 255, 255, 0.02)',
-        border: `1px solid ${project.color ? `${project.color}40` : 'rgba(255, 255, 255, 0.06)'}`,
+        border: `1px solid ${project.color ? project.color + '40' : 'rgba(255, 255, 255, 0.06)'}`,
         borderRadius: 12,
         textAlign: 'left',
         color: '#e2e8f0',

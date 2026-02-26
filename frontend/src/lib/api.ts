@@ -73,7 +73,7 @@ export type MinionSession = CrewSession
 export type MinionMessage = SessionMessage
 export type MinionContentBlock = SessionContentBlock
 
-const _isInTauri = typeof (window as any).__TAURI__ !== 'undefined'
+const _isInTauri = (window as any).__TAURI__ !== undefined
 const _rawConfiguredBackend =
   localStorage.getItem('crewhub_backend_url') ||
   (window as any).__CREWHUB_BACKEND_URL__ ||
@@ -187,7 +187,7 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 export const api = {
   getSessions: (activeMinutes?: number) =>
     fetchJSON<SessionsResponse>(
-      `/sessions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`
+      `/sessions${activeMinutes ? '?active_minutes=' + activeMinutes : ''}`
     ),
 
   getSessionHistory: (sessionKey: string, limit: number = 50) =>
@@ -198,7 +198,7 @@ export const api = {
   // Backwards compatibility aliases
   getMinions: (activeMinutes?: number) =>
     fetchJSON<SessionsResponse>(
-      `/sessions${activeMinutes ? `?active_minutes=${activeMinutes}` : ''}`
+      `/sessions${activeMinutes ? '?active_minutes=' + activeMinutes : ''}`
     ),
 
   getMinionHistory: (sessionKey: string, limit: number = 50) =>

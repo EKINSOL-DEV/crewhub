@@ -24,7 +24,6 @@ import {
   type ActivityEvent,
 } from '@/services/activityService'
 import { useChatContext } from '@/contexts/ChatContext'
-import type { CrewSession } from '@/lib/api'
 
 // ── Constants ─────────────────────────────────────────────────
 
@@ -236,7 +235,6 @@ function EntryItem({ event, onOpen }: EntryItemProps) {
 interface GroupSectionProps {
   readonly name: string
   readonly events: ActivityEvent[]
-  readonly getSession: (key: string) => CrewSession | undefined
   readonly onOpen: (event: ActivityEvent) => void
 }
 
@@ -363,8 +361,6 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
     },
     [sessions, openChat]
   )
-
-  const getSession = useCallback((key: string) => sessions.find((s) => s.key === key), [sessions])
 
   const agentOptions: AgentOption[] = useMemo(
     () => agents.map((r) => ({ id: r.agent.id, name: r.agent.name })),
@@ -539,7 +535,6 @@ export function DesktopActivityFeed({ isOpen, onClose }: DesktopActivityFeedProp
                 key={groupName}
                 name={groupName}
                 events={events}
-                getSession={getSession}
                 onOpen={handleOpenEvent}
               />
             )

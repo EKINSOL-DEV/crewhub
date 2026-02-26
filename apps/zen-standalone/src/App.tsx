@@ -7,11 +7,10 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { RoomsProvider } from '@/contexts/RoomsContext'
+import { RoomsProvider, useRoomsContext } from '@/contexts/RoomsContext'
 import { ZenModeProvider, useZenMode, type ZenProjectFilter } from '@/components/zen/hooks/useZenMode'
 import { ZenMode } from '@/components/zen/ZenMode'
 import { useSessionsStream } from '@/hooks/useSessionsStream'
-import { useRoomsContext } from '@/contexts/RoomsContext'
 import { API_BASE } from '@/lib/api'
 import { ProjectManagerModal } from '@/components/zen/ProjectManagerModal'
 
@@ -208,7 +207,7 @@ function WorkspaceSelector({ onSelect, onEnterAll }: {
 
 function ZenStandaloneInner() {
   const zenMode = useZenMode()
-  const { sessions, connected } = useSessionsStream()
+  const { connected } = useSessionsStream()
   const { rooms, getRoomForSession } = useRoomsContext()
 
   // Compute room name for zen mode

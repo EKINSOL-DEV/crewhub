@@ -46,7 +46,6 @@ interface DialogProps {
   readonly onOpenChange?: (open: boolean) => void
   readonly defaultOpen?: boolean
   readonly children: React.ReactNode
-  readonly modal?: boolean
 }
 
 function Dialog({
@@ -134,7 +133,6 @@ DialogTrigger.displayName = 'DialogTrigger'
 // Dialog Portal - just renders children (portal handled by dialog element)
 interface DialogPortalProps {
   readonly children: React.ReactNode
-  readonly container?: HTMLElement | null
 }
 
 function DialogPortal({ children }: DialogPortalProps) {

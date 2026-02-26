@@ -2,8 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { RoomFloor } from './RoomFloor'
 import { RoomWalls } from './RoomWalls'
 import { RoomNameplate } from './RoomNameplate'
-import type { FloorStyle } from '@/contexts/RoomsContext'
-import type { WallStyle } from '@/contexts/RoomsContext'
+import type { FloorStyle, WallStyle } from '@/contexts/RoomsContext'
 
 export interface ZoneRoomTheme {
   /** Room accent color (walls, nameplate) */

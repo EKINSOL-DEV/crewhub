@@ -75,8 +75,8 @@ export function useZenTheme(): UseZenThemeReturn {
         target.style.setProperty(key, value)
       })
 
-      target.setAttribute('data-zen-theme', currentTheme.id)
-      target.setAttribute('data-zen-theme-type', currentTheme.type)
+      target.dataset.zenTheme = currentTheme.id
+      target.dataset.zenThemeType = currentTheme.type
     },
     [currentTheme]
   )

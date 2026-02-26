@@ -47,7 +47,6 @@ export function TheHelix() {
 
       {/* ═══ SPIRAL FLOOR SEGMENTS ═══ */}
       {Array.from({ length: segments }).map((_, i) => {
-        const startAngle = (i / segments) * totalAngle
         const midAngle = ((i + 0.5) / segments) * totalAngle
         const y = (i / segments) * totalHeight
 
@@ -56,9 +55,6 @@ export function TheHelix() {
         const px = Math.cos(midAngle) * midR
         const pz = Math.sin(midAngle) * midR
         const segW = (outerR - innerR)
-
-        // Slight tilt to follow spiral
-        const tiltAngle = Math.atan2(segHeight, 0) * 0.3
 
         return (
           <group key={`item-${i}`}>

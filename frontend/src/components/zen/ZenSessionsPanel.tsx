@@ -282,11 +282,7 @@ export function ZenSessionsPanel({
     <div className={`zen-sessions-split ${detailSession ? 'zen-sessions-split-open' : ''}`}>
       <div className="zen-sessions-panel">{listContent}</div>
       {detailSession && (
-        <ZenSessionDetailPanel
-          session={detailSession}
-          onClose={() => setDetailSessionKey(null)}
-          onOpenChat={(key, name) => onSelectSession(key, name)}
-        />
+        <ZenSessionDetailPanel session={detailSession} onClose={() => setDetailSessionKey(null)} />
       )}
     </div>
   )

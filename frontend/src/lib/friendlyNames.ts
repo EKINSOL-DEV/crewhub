@@ -40,7 +40,7 @@ const KNOWN_PHONES: Record<string, string> = {
 }
 
 export function generateFriendlyName(sessionKey: string): string {
-  const hash = sessionKey.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0)
+  const hash = sessionKey.split('').reduce((a, b) => (a << 5) - a + (b.codePointAt(0) ?? 0), 0)
   const adj = adjectives[Math.abs(hash) % adjectives.length]
   const noun = nouns[Math.abs(hash >> 8) % nouns.length]
   return `${adj}-${noun}`
@@ -49,7 +49,9 @@ export function generateFriendlyName(sessionKey: string): string {
 export function getMinionName(sessionKey: string, roomId: string): string {
   const names = MINION_NAMES[roomId]
   if (!names || names.length === 0) return MINION_NAMES.headquarters[0] || 'Agent'
-  const hash = Math.abs(sessionKey.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0))
+  const hash = Math.abs(
+    sessionKey.split('').reduce((a, b) => (a << 5) - a + (b.codePointAt(0) ?? 0), 0)
+  )
   return names[hash % names.length]
 }
 

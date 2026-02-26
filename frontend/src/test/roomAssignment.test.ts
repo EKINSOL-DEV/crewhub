@@ -67,7 +67,7 @@ describe('assignRoom', () => {
 
   it('falls back to model room when no keywords match', () => {
     const input: AssignmentInput = { taskTitle: 'something generic', model: 'opus' }
-    const { room, trace } = assignRoom(input)
+    const { room } = assignRoom(input)
     // This might match dev keywords or model, either is fine
     expect(room).toBeTruthy()
   })

@@ -179,8 +179,7 @@ class SSEManager {
       const token = getAuthToken()
       // Detect Tauri environment (Tauri v2 uses __TAURI_INTERNALS__, v1 uses __TAURI__)
       const isInTauri =
-        typeof (window as any).__TAURI_INTERNALS__ !== 'undefined' ||
-        typeof (window as any).__TAURI__ !== 'undefined'
+        (window as any).__TAURI_INTERNALS__ !== undefined || (window as any).__TAURI__ !== undefined
       // Priority: localStorage > Tauri injected var > env var
       const rawConfigured =
         localStorage.getItem('crewhub_backend_url') ||

@@ -4,8 +4,7 @@
  * camera position survives across generation cycles.
  */
 
-import { Suspense } from 'react'
-import React from 'react'
+import React, { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'
 import { DynamicProp, type PropPart } from './DynamicProp'

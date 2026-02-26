@@ -7,8 +7,7 @@
  * - Generation history
  */
 
-import { useState, useCallback, useEffect, useRef, Suspense } from 'react'
-import React from 'react'
+import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react'
 import { ArrowLeft, Wand2, Clock, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'

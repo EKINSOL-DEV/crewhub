@@ -104,8 +104,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.body.classList.add(resolvedMode)
 
     // 4. Data attributes for theme-aware selectors
-    root.setAttribute('data-zen-theme', current.id)
-    root.setAttribute('data-zen-theme-type', current.type)
+    root.dataset.zenTheme = current.id
+    root.dataset.zenThemeType = current.type
 
     if (import.meta.env.DEV) {
       console.debug('[Theme] Applied:', current.name, `(${current.type})`)
