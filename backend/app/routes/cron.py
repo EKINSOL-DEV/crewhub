@@ -74,7 +74,7 @@ async def _get_openclaw():
     return conn
 
 
-@router.get("/jobs")
+@router.get("/jobs", responses={503: {"description": "Service unavailable"}})
 async def list_cron_jobs(all: bool = True):
     """Get all cron jobs."""
     conn = await _get_openclaw()

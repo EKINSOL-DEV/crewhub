@@ -329,7 +329,7 @@ export interface ChatMessageBubbleProps {
 }
 
 const ChatMessageBubbleInner = memo( // NOSONAR
-  function ChatMessageBubble({
+  function ChatMessageBubble({ // NOSONAR
     // NOSONAR: complexity from legitimate message rendering with multiple content type branches
     msg,
     variant = 'float',

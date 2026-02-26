@@ -206,7 +206,7 @@ function makeId(prefix: string, ts: number): string {
   return `${prefix}-${ts}-${Math.random().toString(36).slice(2, 6)}`
 }
 
-function processAssistantBlock(
+function processAssistantBlock( // NOSONAR
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   block: any,
   ts: number,

@@ -101,7 +101,7 @@ class SendMessageBody(BaseModel):
 # ── Routes ──────────────────────────────────────────────────────
 
 
-@router.get("/api/chat/{session_key}/history")
+@router.get("/api/chat/{session_key}/history", responses={403: {"description": "Forbidden"}})
 async def get_chat_history(  # noqa: C901 - preserves legacy/raw history normalization in one pass
     session_key: str,
     limit: Annotated[int, Query(default=30, ge=1, le=100)],
@@ -282,7 +282,7 @@ async def get_chat_history(  # noqa: C901 - preserves legacy/raw history normali
     }
 
 
-@router.post("/api/chat/{session_key}/send", responses={400: {"description": "Bad request"}})
+@router.post("/api/chat/{session_key}/send", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 429: {"description": "Too many requests"}})
 async def send_chat_message(session_key: str, body: SendMessageBody):
     """Send a message to an agent and get a response (non-streaming)."""
     _validate_session_key(session_key)

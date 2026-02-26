@@ -73,7 +73,7 @@ async def list_rules():
 @router.get(
     "/{rule_id}",
     response_model=RoomAssignmentRule,
-    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
+    responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
 )
 async def get_rule(rule_id: str):
     """Get a specific rule by ID."""

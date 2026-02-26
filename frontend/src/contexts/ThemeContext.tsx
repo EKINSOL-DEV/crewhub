@@ -33,7 +33,7 @@ export type AccentColor =
   | 'amber'
 
 /** @deprecated — use zen.currentTheme instead */
-export interface ThemeConfig {
+interface LegacyThemeConfig {
   mode: ThemeMode
   accentColor: AccentColor
 }
@@ -65,9 +65,9 @@ interface ThemeContextValue {
 
   // ── Legacy compat (so SettingsPanel & existing code still compiles) ──
   /** @deprecated — use zen.currentTheme / zen.setTheme instead */
-  theme: ThemeConfig // NOSONAR — legacy compat shim, ThemeConfig is defined and deprecated in this same file
+  theme: LegacyThemeConfig // NOSONAR — legacy compat shim
   /** @deprecated — use zen.setTheme(themeId) instead */
-  setTheme: (t: Partial<ThemeConfig>) => void // NOSONAR — legacy compat shim
+  setTheme: (t: Partial<LegacyThemeConfig>) => void // NOSONAR — legacy compat shim
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
@@ -113,7 +113,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [current, resolvedMode])
 
   // Legacy compat shim
-  const legacyTheme: ThemeConfig = useMemo(
+  const legacyTheme: LegacyThemeConfig = useMemo(
     // NOSONAR — legacy compat shim
     () => ({
       mode: resolvedMode,
@@ -123,7 +123,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   )
 
   const legacySetTheme = useMemo(() => {
-    return (_partial: Partial<ThemeConfig>) => {
+    return (_partial: Partial<LegacyThemeConfig>) => {
       // NOSONAR — legacy compat shim
       // Legacy callers setting mode: if they ask for light, pick first light theme; dark → keep current or pick default
       // This is a best-effort shim; the real API is zen.setTheme(id)

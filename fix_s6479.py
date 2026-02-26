@@ -24,7 +24,7 @@ def fix_array_from_length(content: str) -> str:
     """Convert Array.from({length:N}).map((_, i) =>) to [...Array(N).keys()].map((i) =>)"""
     # Match Array.from({ length: N }).map((anyVar, indexVar) =>
     p = re.compile(
-        r"Array\.from\(\{\s*length:\s*(\d+)\s*\}\)\.map\(\([_a-zA-Z][_a-zA-Z0-9]*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\)\s*=>"
+        r"Array\.from\(\{\s*length:\s*(\d+)\s*\}\)\.map\(\(\w+,\s*(\w+)\)\s*=>"
     )
 
     def repl(m):
@@ -63,7 +63,7 @@ def has_scope_boundary(lines: list, from_line: int, to_line: int, idx_var: str) 
         # Check for a .map( call that uses idx_var as its second parameter
         # This means idx_var is owned by a closer .map(), not the outer one
         inner_map = re.compile(
-            r"\.map\(\(([_a-zA-Z][_a-zA-Z0-9]*),\s*" + re.escape(idx_var) + r"\)\s*=>"
+            r"\.map\(\((\w+),\s*" + re.escape(idx_var) + r"\)\s*=>"
         )
         if inner_map.search(line):
             return True  # idx_var belongs to an inner map
@@ -75,7 +75,7 @@ def has_scope_boundary(lines: list, from_line: int, to_line: int, idx_var: str) 
 
 def _collect_map_contexts(lines: list[str]) -> list[tuple[int, str, str]]:
     map_pattern = re.compile(
-        r"\.map\(\(([a-zA-Z_][a-zA-Z0-9_]*),\s*([a-zA-Z_][a-zA-Z0-9_]*)\)\s*=>"
+        r"\.map\(\((\w+),\s*(\w+)\)\s*=>"
     )
     contexts: list[tuple[int, str, str]] = []
     for lineno, line in enumerate(lines):
@@ -111,7 +111,7 @@ def _replace_index_key_in_line(line: str, item_var: str, idx_var: str) -> str:
         )
 
     new_line = tpl_key_pattern.sub(replace_template_key, line)
-    simple_key_re = re.compile(r"key=\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+    simple_key_re = re.compile(r"key=\{(\w+)\}")
     return simple_key_re.sub(
         lambda m: (
             "key={`${" + item_var + "}`}" if m.group(1) == idx_var else m.group(0)

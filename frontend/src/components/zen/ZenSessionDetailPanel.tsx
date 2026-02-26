@@ -26,7 +26,7 @@ function formatDuration(startTs: number): string {
 
 // ── Content Block Renderer ────────────────────────────────────────
 
-function ContentBlockView({ block }: { block: SessionContentBlock }) {
+function ContentBlockView({ block }: { block: SessionContentBlock }) { // NOSONAR
   // NOSONAR
   // NOSONAR: complexity from session detail with multiple content type branches
   const [expanded, setExpanded] = useState(false)

@@ -88,6 +88,7 @@ async def get_docs_tree():
     "/content",
     responses={
         400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
         404: {"description": "Not found"},
         500: {"description": "Internal server error"},
     },

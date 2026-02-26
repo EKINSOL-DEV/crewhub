@@ -132,7 +132,7 @@ def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> 
 
 
 @router.get(
-    "/{project_id}/documents", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}}
+    "/{project_id}/documents", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}}
 )
 async def list_project_documents(
     project_id: str,

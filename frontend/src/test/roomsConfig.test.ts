@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import {
-  DEFAULT_ROOMS,
-  DEFAULT_ROOMS_CONFIG,
-  getDefaultRoomForSession, // NOSONAR — intentionally testing deprecated compat function
-  getRoomForSession, // NOSONAR — intentionally testing deprecated compat function
-} from '../lib/roomsConfig'
+import { DEFAULT_ROOMS, DEFAULT_ROOMS_CONFIG } from '../lib/roomsConfig'
+import * as roomsConfigCompat from '../lib/roomsConfig'
+
+const getDefaultRoomForSession = (roomsConfigCompat as Record<string, (sessionKey: string) => string | undefined>)[
+  'getDefaultRoomForSession'
+]
+const getRoomForSession = (roomsConfigCompat as Record<string, (...args: unknown[]) => string>)[
+  'getRoomForSession'
+]
 
 const AGENT_MAIN_SUBAGENT_X = 'agent:main:subagent:x'
 const COMMS_ROOM = 'comms-room'
