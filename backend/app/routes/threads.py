@@ -436,6 +436,52 @@ async def get_messages(
     }
 
 
+async def _route_to_agent(conn, thread_id: str, agent_id: str, participants: list, full_message: str) -> Optional[dict]:
+    """Send a message to one agent, save the response, and return the saved message dict (or None on failure)."""
+    try:
+        response_text = await conn.send_chat(message=full_message, agent_id=agent_id, timeout=90.0)
+        if not response_text:
+            return None
+
+        agent_info = next((p for p in participants if p["agent_id"] == agent_id), None)
+        agent_name = agent_info["agent_name"] if agent_info else agent_id
+        msg_id = _gen_id()
+        msg_now = _now_ms()
+
+        async with get_db() as db:
+            await db.execute(
+                "INSERT INTO thread_messages (id, thread_id, role, content, agent_id, agent_name, created_at) VALUES (?, ?, 'assistant', ?, ?, ?, ?)",
+                (msg_id, thread_id, response_text, agent_id, agent_name, msg_now),
+            )
+            await db.execute(
+                "UPDATE threads SET last_message_at = ?, updated_at = ? WHERE id = ?", (msg_now, msg_now, thread_id)
+            )
+            await db.commit()
+
+        return {
+            "id": msg_id,
+            "thread_id": thread_id,
+            "role": "assistant",
+            "content": response_text,
+            "agent_id": agent_id,
+            "agent_name": agent_name,
+            "routing_mode": None,
+            "target_agent_ids": None,
+            "created_at": msg_now,
+        }
+    except Exception as e:
+        logger.error(f"Failed to get response from agent {agent_id}: {e}")
+        err_id = _gen_id()
+        err_now = _now_ms()
+        async with get_db() as db:
+            await db.execute(
+                "INSERT INTO thread_messages (id, thread_id, role, content, agent_id, agent_name, created_at) VALUES (?, ?, 'system', ?, ?, ?, ?)",
+                (err_id, thread_id, "Failed to reach agent", agent_id, agent_id, err_now),
+            )
+            await db.commit()
+        return None
+
+
 @router.post("/{thread_id}/messages", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}})
 async def send_message(thread_id: str, body: ThreadMessageSend):
     """Send a message to a thread, routing to agents."""
@@ -505,67 +551,17 @@ async def send_message(thread_id: str, body: ThreadMessageSend):
 
     responses = []
     if conn:
-        # Build context prefix for agents
         participant_names = [p["agent_name"] for p in participants]
-        context = f"[Group Chat: {thread.get('title') or thread.get('title_auto', 'Group')}]\n"
-        context += f"[Participants: {', '.join(participant_names)}]\n"
-        context += f"[Routing: {body.routing_mode}]\n\n"
-
+        context = (
+            f"[Group Chat: {thread.get('title') or thread.get('title_auto', 'Group')}]\n"
+            f"[Participants: {', '.join(participant_names)}]\n"
+            f"[Routing: {body.routing_mode}]\n\n"
+        )
         for agent_id in target_ids:
-            try:
-                response_text = await conn.send_chat(
-                    message=context + content,
-                    agent_id=agent_id,
-                    timeout=90.0,
-                )
-                if response_text:
-                    # Find agent info
-                    agent_info = next((p for p in participants if p["agent_id"] == agent_id), None)
-                    agent_name = agent_info["agent_name"] if agent_info else agent_id
-
-                    # Save assistant message
-                    msg_id = _gen_id()
-                    msg_now = _now_ms()
-                    async with get_db() as db:
-                        await db.execute(
-                            """INSERT INTO thread_messages (id, thread_id, role, content, agent_id, agent_name, created_at)
-                               VALUES (?, ?, 'assistant', ?, ?, ?, ?)""",
-                            (msg_id, thread_id, response_text, agent_id, agent_name, msg_now),
-                        )
-                        await db.execute(
-                            "UPDATE threads SET last_message_at = ?, updated_at = ? WHERE id = ?",
-                            (msg_now, msg_now, thread_id),
-                        )
-                        await db.commit()
-
-                    resp_msg = {
-                        "id": msg_id,
-                        "thread_id": thread_id,
-                        "role": "assistant",
-                        "content": response_text,
-                        "agent_id": agent_id,
-                        "agent_name": agent_name,
-                        "routing_mode": None,
-                        "target_agent_ids": None,
-                        "created_at": msg_now,
-                    }
-                    responses.append(resp_msg)
-
-                    # Broadcast each response
-                    await broadcast("thread.message.created", {"threadId": thread_id, "message": resp_msg})
-
-            except Exception as e:
-                logger.error(f"Failed to get response from agent {agent_id}: {e}")
-                # Save error as system message
-                err_msg_id = _gen_id()
-                err_now = _now_ms()
-                async with get_db() as db:
-                    await db.execute(
-                        """INSERT INTO thread_messages (id, thread_id, role, content, agent_id, agent_name, created_at)
-                           VALUES (?, ?, 'system', ?, ?, ?, ?)""",
-                        (err_msg_id, thread_id, "Failed to reach agent", agent_id, agent_id, err_now),
-                    )
-                    await db.commit()
+            resp_msg = await _route_to_agent(conn, thread_id, agent_id, participants, context + content)
+            if resp_msg:
+                responses.append(resp_msg)
+                await broadcast("thread.message.created", {"threadId": thread_id, "message": resp_msg})
     else:
         logger.warning("No OpenClaw connection available for thread message routing")
 

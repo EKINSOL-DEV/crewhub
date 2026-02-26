@@ -412,7 +412,7 @@ class ConnectionManager:
 
         return all_sessions
 
-    async def get_session_history(
+    async def get_session_history(  # NOSONAR: complexity from multi-connection fallback search with connection validation, safe to keep
         self,
         session_key: str,
         connection_id: Optional[str] = None,

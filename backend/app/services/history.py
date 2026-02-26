@@ -29,6 +29,94 @@ def _safe_id(value: str) -> str:
     return value
 
 
+def _read_jsonl_messages(file_path: Path) -> list:
+    """Read and parse all messages from a JSONL session file."""
+    messages = []
+    with open(file_path) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    messages.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    return messages
+
+
+def _extract_path_metadata(file_path: Path) -> tuple:
+    """Extract agent_id, session_id, and status from a session file path."""
+    parent_name = file_path.parent.name
+    if parent_name in ("sessions", "archive"):
+        agent_id = file_path.parent.parent.name
+    else:
+        agent_id = parent_name  # legacy: sessions/ folder named after agent
+    session_id = file_path.stem
+
+    if DELETED_MARKER in file_path.name:
+        session_id = session_id.split(DELETED_MARKER)[0]
+        status = "deleted"
+    elif parent_name == "archive":
+        status = "archived"
+    elif file_path.suffix == ".jsonl":
+        status = "archived"
+    else:
+        status = "unknown"
+
+    return agent_id, session_id, status
+
+
+def _extract_message_stats(messages: list) -> Dict[str, Any]:
+    """Extract timestamps, model, label, channel, and last text from messages."""
+    started_at = None
+    ended_at = None
+    model = None
+    label = None
+    last_assistant_text = None
+    channel = None
+
+    for msg in messages:
+        ts = msg.get("ts") or msg.get("timestamp")
+        if ts:
+            if started_at is None or ts < started_at:
+                started_at = ts
+            if ended_at is None or ts > ended_at:
+                ended_at = ts
+
+        if msg.get("role") == "assistant" and not model:
+            model = msg.get("model")
+
+        if msg.get("role") == "assistant":
+            text = msg.get("text") or msg.get("content")
+            if isinstance(text, str) and text:
+                last_assistant_text = text[:200]
+
+        if "label" in msg:
+            label = msg.get("label")
+
+        if "channel" in msg and not channel:
+            channel = msg.get("channel")
+
+    return {
+        "started_at": started_at,
+        "ended_at": ended_at,
+        "model": model,
+        "label": label,
+        "last_assistant_text": last_assistant_text,
+        "channel": channel,
+    }
+
+
+def _determine_minion_type(session_id: str, agent_id: str) -> str:
+    """Determine the session's minion type from its ID and agent."""
+    if "subagent" in session_id.lower():
+        return "subagent"
+    if "cron" in session_id.lower():
+        return "cron"
+    if agent_id != "main":
+        return agent_id
+    return "main"
+
+
 def _parse_session_file(file_path: Path) -> Optional[Dict[str, Any]]:
     """Parse a session JSONL file and extract metadata.
 
@@ -41,91 +129,22 @@ def _parse_session_file(file_path: Path) -> Optional[Dict[str, Any]]:
     - summary (last assistant message or label)
     """
     try:
-        messages = []
-        with open(file_path) as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        messages.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        continue
-
+        messages = _read_jsonl_messages(file_path)
         if not messages:
             return None
 
-        # Extract agent_id from path
-        # parent might be sessions/ or archive/ — agent_id is one level up
-        parent_name = file_path.parent.name
-        if parent_name in ("sessions", "archive"):
-            agent_id = file_path.parent.parent.name
-        else:
-            agent_id = parent_name  # legacy: sessions/ folder named after agent
-        session_id = file_path.stem
-
-        # Handle deleted sessions (filename may have .deleted.timestamp suffix)
-        if DELETED_MARKER in file_path.name:
-            session_id = session_id.split(DELETED_MARKER)[0]
-            status = "deleted"
-        elif parent_name == "archive":
-            # v2026.2.17: sessions moved to archive/ folder by OpenClaw maintenance
-            status = "archived"
-        elif file_path.suffix == ".jsonl":
-            status = "archived"
-        else:
-            status = "unknown"
-
-        # Build session key
+        agent_id, session_id, status = _extract_path_metadata(file_path)
         session_key = f"agent:{agent_id}:{session_id}"
 
-        # Find timestamps from messages
-        started_at = None
-        ended_at = None
-        model = None
-        label = None
-        last_assistant_text = None
-        channel = None
+        stats = _extract_message_stats(messages)
+        label = stats["label"]
+        last_assistant_text = stats["last_assistant_text"]
 
-        for msg in messages:
-            # Get timestamp
-            ts = msg.get("ts") or msg.get("timestamp")
-            if ts:
-                if started_at is None or ts < started_at:
-                    started_at = ts
-                if ended_at is None or ts > ended_at:
-                    ended_at = ts
-
-            # Get model from first assistant turn
-            if msg.get("role") == "assistant" and not model:
-                model = msg.get("model")
-
-            # Get last assistant text for summary
-            if msg.get("role") == "assistant":
-                text = msg.get("text") or msg.get("content")
-                if isinstance(text, str) and text:
-                    last_assistant_text = text[:200]  # Truncate
-
-            # Get label if present
-            if "label" in msg:
-                label = msg.get("label")
-
-            # Get channel
-            if "channel" in msg and not channel:
-                channel = msg.get("channel")
-
-        # Build summary
         summary = label or last_assistant_text or ""
         if len(summary) > 100:
             summary = summary[:100] + "..."
 
-        # Determine minion type from session structure
-        minion_type = "main"
-        if "subagent" in session_id.lower():
-            minion_type = "subagent"
-        elif "cron" in session_id.lower():
-            minion_type = "cron"
-        elif agent_id != "main":
-            minion_type = agent_id
+        minion_type = _determine_minion_type(session_id, agent_id)
 
         return {
             "session_key": session_key,
@@ -133,10 +152,10 @@ def _parse_session_file(file_path: Path) -> Optional[Dict[str, Any]]:
             "agent_id": agent_id,
             "display_name": label or session_id,
             "minion_type": minion_type,
-            "model": model,
-            "channel": channel,
-            "started_at": started_at,
-            "ended_at": ended_at,
+            "model": stats["model"],
+            "channel": stats["channel"],
+            "started_at": stats["started_at"],
+            "ended_at": stats["ended_at"],
             "message_count": len(messages),
             "status": status,
             "summary": summary,
@@ -146,6 +165,73 @@ def _parse_session_file(file_path: Path) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error parsing session file {file_path}: {e}")
         return None
+
+
+def _collect_agent_dirs(agent_id: Optional[str]) -> list:
+    """Collect session and archive directories for the given agent (or all agents)."""
+    agent_dirs = []
+    if agent_id:
+        try:
+            safe_agent = _safe_id(agent_id)
+            agent_path = OPENCLAW_BASE / safe_agent
+            sessions_path = agent_path / "sessions"
+            if sessions_path.exists():
+                agent_dirs.append(sessions_path)
+            archive_path = agent_path / "archive"
+            if archive_path.exists():
+                agent_dirs.append(archive_path)
+        except ValueError:
+            pass
+    else:
+        for agent_path in OPENCLAW_BASE.iterdir():
+            if agent_path.is_dir():
+                sessions_path = agent_path / "sessions"
+                if sessions_path.exists():
+                    agent_dirs.append(sessions_path)
+                archive_path = agent_path / "archive"
+                if archive_path.exists():
+                    agent_dirs.append(archive_path)
+    return agent_dirs
+
+
+def _collect_session_files(agent_dirs: list, include_deleted: bool) -> list:
+    """Parse all valid session files from the given directories."""
+    sessions = []
+    for sessions_dir in agent_dirs:
+        for file_path in sessions_dir.iterdir():
+            if not file_path.is_file():
+                continue
+            if not include_deleted and DELETED_MARKER in file_path.name:
+                continue
+            if not file_path.name.endswith(".jsonl") and DELETED_MARKER not in file_path.name:
+                continue
+            session = _parse_session_file(file_path)
+            if session:
+                sessions.append(session)
+    return sessions
+
+
+def _matches_session_filters(
+    session: Dict[str, Any],
+    type_filter: Optional[str],
+    date_from: Optional[int],
+    date_to: Optional[int],
+    search: Optional[str],
+) -> bool:
+    """Return True if a session matches all active filters."""
+    if type_filter and session.get("minion_type") != type_filter:
+        return False
+    if date_from and (session.get("ended_at") or 0) < date_from:
+        return False
+    if date_to and (session.get("ended_at") or 0) > date_to:
+        return False
+    if search:
+        search_lower = search.lower()
+        display = (session.get("display_name") or "").lower()
+        summary = (session.get("summary") or "").lower()
+        if search_lower not in display and search_lower not in summary:
+            return False
+    return True
 
 
 def get_archived_sessions(
@@ -173,82 +259,16 @@ def get_archived_sessions(
     Returns:
         dict: {sessions: [...], total: count}
     """
-    sessions = []
-
     try:
         if not OPENCLAW_BASE.exists():
             return {"sessions": [], "total": 0, "limit": limit, "offset": offset}
 
-        # Collect all agent directories (sessions/ and archive/ folders)
-        agent_dirs = []
-        if agent_id:
-            try:
-                safe_agent = _safe_id(agent_id)
-                agent_path = OPENCLAW_BASE / safe_agent
-                sessions_path = agent_path / "sessions"
-                if sessions_path.exists():
-                    agent_dirs.append(sessions_path)
-                # v2026.2.17: also scan archive/ folder
-                archive_path = agent_path / "archive"
-                if archive_path.exists():
-                    agent_dirs.append(archive_path)
-            except ValueError:
-                pass
-        else:
-            for agent_path in OPENCLAW_BASE.iterdir():
-                if agent_path.is_dir():
-                    sessions_path = agent_path / "sessions"
-                    if sessions_path.exists():
-                        agent_dirs.append(sessions_path)
-                    # v2026.2.17: also scan archive/ folder
-                    archive_path = agent_path / "archive"
-                    if archive_path.exists():
-                        agent_dirs.append(archive_path)
+        agent_dirs = _collect_agent_dirs(agent_id)
+        sessions = _collect_session_files(agent_dirs, include_deleted)
 
-        # Collect all session files
-        for sessions_dir in agent_dirs:
-            for file_path in sessions_dir.iterdir():
-                if not file_path.is_file():
-                    continue
-
-                # Filter by extension
-                if not include_deleted and DELETED_MARKER in file_path.name:
-                    continue
-
-                if not file_path.name.endswith(".jsonl") and DELETED_MARKER not in file_path.name:
-                    continue
-
-                session = _parse_session_file(file_path)
-                if session:
-                    sessions.append(session)
-
-        # Apply filters
-        filtered = []
-        for session in sessions:
-            # Type filter
-            if type_filter and session.get("minion_type") != type_filter:
-                continue
-
-            # Date filters
-            if date_from and (session.get("ended_at") or 0) < date_from:
-                continue
-            if date_to and (session.get("ended_at") or 0) > date_to:
-                continue
-
-            # Search filter
-            if search:
-                search_lower = search.lower()
-                display = (session.get("display_name") or "").lower()
-                summary = (session.get("summary") or "").lower()
-                if search_lower not in display and search_lower not in summary:
-                    continue
-
-            filtered.append(session)
-
-        # Sort by ended_at descending (most recent first)
+        filtered = [s for s in sessions if _matches_session_filters(s, type_filter, date_from, date_to, search)]
         filtered.sort(key=lambda s: s.get("ended_at") or 0, reverse=True)
 
-        # Pagination
         total = len(filtered)
         paginated = filtered[offset : offset + limit]
 
@@ -264,6 +284,33 @@ def get_archived_sessions(
         return {"sessions": [], "total": 0, "limit": limit, "offset": offset, "error": str(e)}
 
 
+def _find_session_file(agent_id: str, session_id: str) -> Optional[Path]:
+    """Locate the session file on disk, checking sessions/, deleted variants, and archive/."""
+    base = OPENCLAW_BASE / agent_id / "sessions"
+    session_file = (base / f"{session_id}.jsonl").resolve()
+
+    if not str(session_file).startswith(str(base.resolve())):
+        return None  # Path traversal check
+
+    if session_file.exists():
+        return session_file
+
+    # Look for deleted variants in sessions/
+    if base.exists():
+        for f in base.iterdir():
+            if f.name.startswith(f"{session_id}.jsonl.deleted."):
+                return f
+
+    # v2026.2.17: check archive/ folder
+    archive_base = OPENCLAW_BASE / agent_id / "archive"
+    if archive_base.exists():
+        archive_file = (archive_base / f"{session_id}.jsonl").resolve()
+        if str(archive_file).startswith(str(archive_base.resolve())) and archive_file.exists():
+            return archive_file
+
+    return None
+
+
 def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
     """Get detailed information for a specific archived session.
 
@@ -274,7 +321,6 @@ def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
         dict or None: Session details with full message history
     """
     try:
-        # Parse session key
         parts = session_key.split(":")
         if len(parts) < 3:
             return None
@@ -282,48 +328,15 @@ def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
         agent_id = _safe_id(parts[1])
         session_id = _safe_id(parts[2])
 
-        base = OPENCLAW_BASE / agent_id / "sessions"
-        session_file = (base / f"{session_id}.jsonl").resolve()
-
-        # Security check
-        if not str(session_file).startswith(str(base.resolve())):
-            return None
-
-        # Try normal file first, then deleted, then archive folder
-        if not session_file.exists():
-            # Look for deleted files in sessions/
-            for f in base.iterdir():
-                if f.name.startswith(f"{session_id}.jsonl.deleted."):
-                    session_file = f
-                    break
-
-        # v2026.2.17: check archive/ folder if not found in sessions/
-        if not session_file.exists():
-            archive_base = OPENCLAW_BASE / agent_id / "archive"
-            if archive_base.exists():
-                archive_file = (archive_base / f"{session_id}.jsonl").resolve()
-                if str(archive_file).startswith(str(archive_base.resolve())) and archive_file.exists():
-                    session_file = archive_file
-
-        if not session_file.exists():
+        session_file = _find_session_file(agent_id, session_id)
+        if not session_file:
             return None
 
         session = _parse_session_file(session_file)
         if not session:
             return None
 
-        # Add full message history
-        messages = []
-        with open(session_file) as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        messages.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        continue
-
-        session["messages"] = messages
+        session["messages"] = _read_jsonl_messages(session_file)
         return session
 
     except (ValueError, OSError) as e:

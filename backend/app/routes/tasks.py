@@ -240,6 +240,30 @@ class RunResponse(BaseModel):
     response_model=RunResponse,
     responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
 )
+async def _build_task_context_prompt(task: dict, agent: dict, body: "RunRequest") -> str:
+    """Build a task prompt with optional CrewHub context envelope prepended."""
+    from app.services.context_envelope import build_crewhub_context, format_context_block
+
+    ctx_room_id = task.get("room_id") or (agent.get("default_room_id") if agent else None)
+    context_block = ""
+    if ctx_room_id:
+        agent_session_key = agent.get("agent_session_key") if agent else None
+        envelope = await build_crewhub_context(
+            room_id=ctx_room_id,
+            channel="crewhub-ui",
+            session_key=agent_session_key,
+        )
+        if envelope:
+            context_block = format_context_block(envelope) + "\n\n"
+
+    prompt_parts = [f"**Task from Planner:** {task['title']}"]
+    if task.get("description"):
+        prompt_parts.append(f"\n{task['description']}")
+    if body.extra_instructions:
+        prompt_parts.append(f"\n**Additional Instructions:** {body.extra_instructions}")
+    return context_block + "\n".join(prompt_parts)
+
+
 async def run_task_with_agent(task_id: str, body: RunRequest):
     """
     Send a task to an agent's main session (not spawning a subagent).
@@ -251,41 +275,15 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
     5. Returns the session key
     """
     try:
-        # 1. Get the task
         task = await task_service.get_task_row(task_id)
         if not task:
             raise HTTPException(status_code=404, detail=MSG_TASK_NOT_FOUND)
 
-        # 2. Get agent info
         agent = await task_service.get_agent_row(body.agent_id)
         if not agent:
             raise HTTPException(status_code=404, detail="Agent not found")
 
-        # 3. Build prompt (with context envelope)
-        from app.services.context_envelope import build_crewhub_context, format_context_block
-
-        ctx_room_id = task.get("room_id")
-        if not ctx_room_id and agent:
-            ctx_room_id = agent.get("default_room_id")
-
-        context_block = ""
-        if ctx_room_id:
-            agent_session_key = agent.get("agent_session_key") if agent else None
-            envelope = await build_crewhub_context(
-                room_id=ctx_room_id,
-                channel="crewhub-ui",
-                session_key=agent_session_key,
-            )
-            if envelope:
-                context_block = format_context_block(envelope) + "\n\n"
-
-        prompt_parts = [f"**Task from Planner:** {task['title']}"]
-        if task.get("description"):
-            prompt_parts.append(f"\n{task['description']}")
-        if body.extra_instructions:
-            prompt_parts.append(f"\n**Additional Instructions:** {body.extra_instructions}")
-
-        prompt = context_block + "\n".join(prompt_parts)
+        prompt = await _build_task_context_prompt(task, agent, body)
 
         # 4. Send to agent's main session via OpenClaw
         manager = await get_connection_manager()

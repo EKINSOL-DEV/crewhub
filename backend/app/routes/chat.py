@@ -102,7 +102,7 @@ class SendMessageBody(BaseModel):
 
 
 @router.get("/api/chat/{session_key}/history")
-async def get_chat_history(
+async def get_chat_history(  # NOSONAR: complexity from multi-source history assembly (connection layer + filesystem fallback) with message transformation, safe to keep
     session_key: str,
     limit: Annotated[int, Query(default=30, ge=1, le=100)],
     before: Annotated[Optional[int], Query(default=None)],
@@ -347,6 +347,29 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         return {"response": None, "tokens": 0, "success": False, "error": "No response from agent"}
 
 
+async def _prepend_context_if_available(session_key: str, agent_id: str, body: "SendMessageBody", message: str) -> str:
+    """Prepend CrewHub context envelope to message if a room can be resolved."""
+    try:
+        from app.db.database import get_db
+        from app.services.context_envelope import build_crewhub_context, format_context_block
+
+        ctx_room_id = body.room_id
+        if not ctx_room_id:
+            async with get_db() as db:
+                cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
+                row = await cursor.fetchone()
+                if row:
+                    ctx_room_id = row["default_room_id"]
+
+        if ctx_room_id:
+            envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key)
+            if envelope:
+                return format_context_block(envelope) + CREWHUB_MSG_SEP + message
+    except Exception as e:
+        logger.warning(f"Failed to build context envelope for stream: {e}")
+    return message
+
+
 @router.post("/api/chat/{session_key}/stream", responses={400: {"description": "Bad request"}, 503: {"description": "Service unavailable"}})
 async def stream_chat_message(session_key: str, body: SendMessageBody):
     """Send a message to an agent and stream back the response via SSE."""
@@ -365,26 +388,7 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
     message = message.replace("\x00", "")
 
     agent_id = _get_agent_id(session_key)
-
-    # Build context envelope (same as /send)
-    try:
-        from app.db.database import get_db
-        from app.services.context_envelope import build_crewhub_context, format_context_block
-
-        ctx_room_id = body.room_id
-        if not ctx_room_id:
-            async with get_db() as db:
-                cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
-                row = await cursor.fetchone()
-                if row:
-                    ctx_room_id = row["default_room_id"]
-
-        if ctx_room_id:
-            envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key)
-            if envelope:
-                message = format_context_block(envelope) + CREWHUB_MSG_SEP + message
-    except Exception as e:
-        logger.warning(f"Failed to build context envelope for stream: {e}")
+    message = await _prepend_context_if_available(session_key, agent_id, body, message)
 
     manager = await get_connection_manager()
     conn = manager.get_default_openclaw()

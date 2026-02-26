@@ -70,6 +70,55 @@ FLOAT_SNIPPET = """
   })
 """
 
+# ── Code Injection Helpers ──────────────────────────────────────
+
+
+def _insert_code_after_last_import(code: str, new_block: str) -> str:
+    """Insert a block of code after the last import line."""
+    lines = code.split("\n")
+    last_import_idx = 0
+    for i, line in enumerate(lines):
+        if line.strip().startswith("import "):
+            last_import_idx = i
+    lines.insert(last_import_idx + 1, new_block)
+    return "\n".join(lines)
+
+
+def _insert_jsx_before_last_group(code: str, jsx_block: str) -> str:
+    """Insert JSX snippet before the last </group> tag in the code."""
+    last_group = code.rfind("</group>")
+    if last_group != -1:
+        return code[:last_group] + jsx_block + "\n    " + code[last_group:]
+    return code
+
+
+def _add_single_component(code: str, comp_name: str) -> tuple[str, bool]:
+    """Add a single component import and JSX to the code. Returns (updated_code, was_added)."""
+    if comp_name not in COMPONENT_IMPORTS or comp_name not in COMPONENT_JSX:
+        return code, False
+
+    color = "#00ffcc"
+    pos = "0, 0.5, 0"
+    for _, c, cl, p in KEYWORD_COMPONENTS:
+        if c == comp_name:
+            color = cl
+            pos = p
+            break
+
+    imp = COMPONENT_IMPORTS[comp_name]
+    if imp not in code:
+        code = _insert_code_after_last_import(code, imp)
+
+    jsx = COMPONENT_JSX[comp_name].format(color=color, pos=pos)
+    last_group = code.rfind("</group>")
+    if last_group != -1:
+        code = (
+            code[:last_group] + f"\n      {{/* User-added {comp_name} */}}\n{jsx}\n    " + code[last_group:]
+        )
+        return code, True
+    return code, False
+
+
 # ── Main Generator Class ────────────────────────────────────────
 
 
@@ -124,38 +173,21 @@ class MultiPassGenerator:
         jsx_to_add: list[str] = []
 
         for keywords, component, color, pos in KEYWORD_COMPONENTS:
-            if any(kw in lower for kw in keywords):
-                if component not in added:
-                    added.append(component)
-                    imports_to_add.append(COMPONENT_IMPORTS[component])
-                    if component in COMPONENT_JSX:
-                        jsx = COMPONENT_JSX[component].format(color=color, pos=pos)
-                        jsx_to_add.append(jsx)
-                # Max 3 component additions
-                if len(added) >= 3:
-                    break
+            if any(kw in lower for kw in keywords) and component not in added:
+                added.append(component)
+                imports_to_add.append(COMPONENT_IMPORTS[component])
+                if component in COMPONENT_JSX:
+                    jsx_to_add.append(COMPONENT_JSX[component].format(color=color, pos=pos))
+            if len(added) >= 3:
+                break
 
         if not added:
             return code, added
 
-        # Insert imports after existing imports
-        import_block = "\n".join(imports_to_add)
-        # Find last import line
-        lines = code.split("\n")
-        last_import_idx = 0
-        for i, line in enumerate(lines):
-            if line.strip().startswith("import "):
-                last_import_idx = i
-        lines.insert(last_import_idx + 1, import_block)
-        code = "\n".join(lines)
-
-        # Insert JSX before last </group>
+        code = _insert_code_after_last_import(code, "\n".join(imports_to_add))
         if jsx_to_add:
             jsx_block = "\n\n      {/* Auto-added detail components */}\n" + "\n".join(jsx_to_add)
-            # Find last </group> and insert before it
-            last_group = code.rfind("</group>")
-            if last_group != -1:
-                code = code[:last_group] + jsx_block + "\n    " + code[last_group:]
+            code = _insert_jsx_before_last_group(code, jsx_block)
 
         return code, added
 
@@ -283,43 +315,15 @@ class MultiPassGenerator:
         """
         diagnostics: list[str] = []
 
-        # Apply color changes
-        color_changes = changes.get("colorChanges", {})
-        for old_color, new_color in color_changes.items():
+        for old_color, new_color in changes.get("colorChanges", {}).items():
             if old_color in code:
                 code = code.replace(old_color, new_color)
                 diagnostics.append(f"Changed color {old_color} → {new_color}")
 
-        # Add components
-        add_components = changes.get("addComponents", [])
-        for comp_name in add_components:
-            if comp_name in COMPONENT_IMPORTS and comp_name in COMPONENT_JSX:
-                # Find matching entry for default values
-                color = "#00ffcc"
-                pos = "0, 0.5, 0"
-                for _, c, cl, p in KEYWORD_COMPONENTS:
-                    if c == comp_name:
-                        color = cl
-                        pos = p
-                        break
-
-                imp = COMPONENT_IMPORTS[comp_name]
-                if imp not in code:
-                    lines = code.split("\n")
-                    last_import = 0
-                    for i, line in enumerate(lines):
-                        if line.strip().startswith("import "):
-                            last_import = i
-                    lines.insert(last_import + 1, imp)
-                    code = "\n".join(lines)
-
-                jsx = COMPONENT_JSX[comp_name].format(color=color, pos=pos)
-                last_group = code.rfind("</group>")
-                if last_group != -1:
-                    code = (
-                        code[:last_group] + f"\n      {{/* User-added {comp_name} */}}\n{jsx}\n    " + code[last_group:]
-                    )
-                    diagnostics.append(f"Added {comp_name} component")
+        for comp_name in changes.get("addComponents", []):
+            code, was_added = _add_single_component(code, comp_name)
+            if was_added:
+                diagnostics.append(f"Added {comp_name} component")
 
         if not diagnostics:
             diagnostics.append("No changes applied")

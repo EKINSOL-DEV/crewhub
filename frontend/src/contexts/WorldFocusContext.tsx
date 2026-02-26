@@ -100,7 +100,7 @@ export function WorldFocusProvider({ children }: { children: ReactNode }) {
           return next
         })
         // Clear animating after camera transition (~900ms)
-        setTimeout(() => setState((prev) => ({ ...prev, isAnimating: false })), 900)
+        setTimeout(() => setState(clearIsAnimating), 900)
       }, 50)
     },
     []

@@ -8,6 +8,11 @@ interface Toast extends ToastEvent {
 
 let toastId = 0
 
+/** Module-level helper to reduce setState callback nesting depth below 4 levels. */
+function makeRemoveToastById(id: number) {
+  return (prev: Toast[]): Toast[] => prev.filter((t) => t.id !== id)
+}
+
 export function ToastContainer() {
   const [toasts, setToasts] = useState<Toast[]>([])
 

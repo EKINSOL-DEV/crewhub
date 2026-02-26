@@ -33,6 +33,59 @@ MSG_PROJECT_NOT_FOUND = "Project not found"
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+_SKIP_DIRS = {".git", "node_modules", ".DS_Store", "__pycache__", ".venv", "venv"}
+
+
+def _scan_project_md_files(base_dir: Path, resolved: Path) -> list:
+    """Scan a project directory for markdown files (safe, depth-limited)."""
+    md_files: list[str] = []
+    for md_path in sorted(base_dir.rglob("*.md")):
+        try:
+            if not md_path.resolve().is_relative_to(resolved):
+                continue
+        except (OSError, ValueError):
+            continue
+        parts = md_path.relative_to(base_dir).parts
+        if any(p.startswith(".") or p == "node_modules" for p in parts):
+            continue
+        if len(parts) > 4:
+            continue
+        try:
+            if md_path.stat().st_size > 1_000_000:
+                continue
+        except OSError:
+            continue
+        md_files.append(str(md_path.relative_to(base_dir)))
+        if len(md_files) >= 200:
+            break
+    return md_files
+
+
+def _build_project_md_tree(base_dir: Path, current_dir: Path, resolved: Path, depth: int = 0) -> list:
+    """Recursively build a tree of markdown files (depth ≤ 4)."""
+    if depth > 4:
+        return []
+    items = []
+    try:
+        entries = sorted(current_dir.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+    except PermissionError:
+        return []
+    for item in entries:
+        if item.name.startswith(".") or item.name in _SKIP_DIRS:
+            continue
+        if item.is_dir():
+            children = _build_project_md_tree(base_dir, item, resolved, depth + 1)
+            if children:
+                items.append({"name": item.name, "type": "folder", "children": children})
+        elif item.is_file() and item.suffix == ".md":
+            try:
+                if not item.resolve().is_relative_to(resolved) or item.stat().st_size > 1_000_000:
+                    continue
+            except (OSError, ValueError):
+                continue
+            items.append({"name": item.name, "type": "file", "path": str(item.relative_to(base_dir))})
+    return items
+
 
 # ========================================
 # PROJECTS CRUD
@@ -205,66 +258,8 @@ async def list_markdown_files(project_id: str):
             logger.warning(f"Project folder outside allowed roots: {resolved_base}")
             raise HTTPException(403, "Project folder outside allowed roots")
 
-        def _scan_files(base_dir: Path, resolved: Path) -> list[str]:
-            md_files: list[str] = []
-            for md_path in sorted(base_dir.rglob("*.md")):
-                try:
-                    resolved_path = md_path.resolve()
-                    if not resolved_path.is_relative_to(resolved):
-                        continue
-                except (OSError, ValueError):
-                    continue
-                rel = md_path.relative_to(base_dir)
-                parts = rel.parts
-                if any(p.startswith(".") or p == "node_modules" for p in parts):
-                    continue
-                if len(parts) > 4:
-                    continue
-                try:
-                    if md_path.stat().st_size > 1_000_000:
-                        continue
-                except OSError:
-                    continue
-                md_files.append(str(rel))
-                if len(md_files) >= 200:
-                    break
-            return md_files
-
-        SKIP_DIRS = {".git", "node_modules", ".DS_Store", "__pycache__", ".venv", "venv"}
-
-        def _build_tree(base_dir: Path, current_dir: Path, resolved: Path, depth: int = 0) -> list[dict]:
-            if depth > 4:
-                return []
-            items = []
-            try:
-                entries = sorted(
-                    current_dir.iterdir(),
-                    key=lambda p: (not p.is_dir(), p.name.lower()),
-                )
-            except PermissionError:
-                return []
-            for item in entries:
-                if item.name.startswith(".") or item.name in SKIP_DIRS:
-                    continue
-                if item.is_dir():
-                    children = _build_tree(base_dir, item, resolved, depth + 1)
-                    if children:
-                        items.append({"name": item.name, "type": "folder", "children": children})
-                elif item.is_file() and item.suffix == ".md":
-                    try:
-                        resolved_path = item.resolve()
-                        if not resolved_path.is_relative_to(resolved):
-                            continue
-                        if item.stat().st_size > 1_000_000:
-                            continue
-                    except (OSError, ValueError):
-                        continue
-                    rel_path = item.relative_to(base_dir)
-                    items.append({"name": item.name, "type": "file", "path": str(rel_path)})
-            return items
-
-        md_files = await asyncio.to_thread(_scan_files, project_dir, resolved_base)
-        tree = await asyncio.to_thread(_build_tree, project_dir, project_dir, resolved_base)
+        md_files = await asyncio.to_thread(_scan_project_md_files, project_dir, resolved_base)
+        tree = await asyncio.to_thread(_build_project_md_tree, project_dir, project_dir, resolved_base)
 
         return {"files": md_files, "tree": tree, "root": project.name}
 

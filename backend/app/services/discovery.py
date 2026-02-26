@@ -82,15 +82,12 @@ class OpenClawDetector(BaseDetector):
         Path.home() / OPENCLAW_DIR / "config.json",
     ]
 
-    async def detect(self) -> list[DiscoveryCandidate]:
-        candidates: list[DiscoveryCandidate] = []
-
-        # 1. Read config file for port/token
+    def _read_config(self) -> tuple:
+        """Read OpenClaw config files and return (port, token, found, path_used)."""
         config_port = self.DEFAULT_PORT
         config_token: Optional[str] = None
         config_found = False
         config_path_used: Optional[Path] = None
-
         for config_path in self.CONFIG_PATHS:
             try:
                 if config_path.exists():
@@ -99,43 +96,17 @@ class OpenClawDetector(BaseDetector):
                     raw = json.loads(config_path.read_text())
                     gateway = raw.get("gateway", {})
                     config_port = gateway.get("port", self.DEFAULT_PORT)
-                    # Token can be at gateway.auth.token or gateway.token
                     config_token = gateway.get("auth", {}).get("token") or gateway.get("token")
                     if config_token:
-                        break  # Found token, stop searching
+                        break
             except Exception as e:
                 logger.debug(f"Error reading OpenClaw config {config_path}: {e}")
+        return config_port, config_token, config_found, config_path_used
 
-        # 2. Check for running process
-        process_running = await self._check_process()
-
-        # 3. Probe WebSocket
-        url = f"ws://127.0.0.1:{config_port}"
-        probe_result = await self._probe_websocket(url, config_token)
-
-        # Build candidate
-        candidate = DiscoveryCandidate(
-            runtime_type="openclaw",
-            discovery_method="port_probe",
-            target={
-                "url": url,
-                "host": "127.0.0.1",
-                "port": config_port,
-                "transport": "websocket",
-            },
-            auth={
-                "required": bool(config_token),
-                "token_hint": str(config_path_used) if config_token else None,
-                "has_token": bool(config_token),
-            },
-        )
-
-        if config_found:
-            candidate.evidence.append(f"Config file found at {config_path_used}")
-
-        if process_running:
-            candidate.evidence.append("OpenClaw process detected running")
-
+    def _apply_probe_status(
+        self, candidate: "DiscoveryCandidate", probe_result: dict, process_running: bool, config_found: bool, url: str
+    ) -> None:
+        """Apply status, confidence, and evidence to a candidate based on probe results."""
         if probe_result["reachable"]:
             candidate.status = "reachable"
             candidate.confidence = "high"
@@ -162,8 +133,30 @@ class OpenClawDetector(BaseDetector):
             candidate.confidence = "low"
             candidate.evidence.append("No OpenClaw installation detected")
 
-        candidates.append(candidate)
-        return candidates
+    async def detect(self) -> list[DiscoveryCandidate]:
+        config_port, config_token, config_found, config_path_used = self._read_config()
+        process_running = await self._check_process()
+        url = f"ws://127.0.0.1:{config_port}"
+        probe_result = await self._probe_websocket(url, config_token)
+
+        candidate = DiscoveryCandidate(
+            runtime_type="openclaw",
+            discovery_method="port_probe",
+            target={"url": url, "host": "127.0.0.1", "port": config_port, "transport": "websocket"},
+            auth={
+                "required": bool(config_token),
+                "token_hint": str(config_path_used) if config_token else None,
+                "has_token": bool(config_token),
+            },
+        )
+
+        if config_found:
+            candidate.evidence.append(f"Config file found at {config_path_used}")
+        if process_running:
+            candidate.evidence.append("OpenClaw process detected running")
+
+        self._apply_probe_status(candidate, probe_result, process_running, config_found, url)
+        return [candidate]
 
     async def _check_process(self) -> bool:
         """Check if an OpenClaw gateway process is running."""

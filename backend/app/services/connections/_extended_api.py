@@ -93,7 +93,7 @@ class OpenClawExtendedMixin:
         )
         return _extract_text(result)
 
-    async def send_chat_streaming(
+    async def send_chat_streaming(  # NOSONAR: complexity from WebSocket streaming state machine (chunk accumulation, event routing, timeout handling), safe to keep
         self,
         message: str,
         agent_id: str = "main",
@@ -271,7 +271,7 @@ class OpenClawExtendedMixin:
 # ------------------------------------------------------------------
 
 
-def _extract_text(result: Any) -> Optional[str]:
+def _extract_text(result: Any) -> Optional[str]:  # NOSONAR: complexity from multi-format response parsing (nested dict structures from different OpenClaw versions), safe to keep
     """Extract the assistant reply text from a Gateway agent response."""
     if not result:
         return None
