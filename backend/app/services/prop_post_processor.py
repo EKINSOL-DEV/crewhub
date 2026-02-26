@@ -29,14 +29,16 @@ def _fix_toon_materials(code: str, result: PostProcessResult) -> str:
     if toon_count == 0:
         return code
 
-    code = re.sub(r"import\s*\{[^}]*useToonMaterialProps[^}]*\}\s*from\s*['\"][^'\"]*toonMaterials['\"].*?\n", "", code)
+    code = re.sub(
+        r"import\s*\{[^}]*useToonMaterialProps[^}]*\}\s*from\s*['\"][^'\"]*toonMaterials['\"][^\n]*\n", "", code
+    )
     result.corrections.append("Removed toonMaterials import")
 
     color_map: dict[str, str] = {}
     for m in re.finditer(r'const\s+(\w+)\s*=\s*useToonMaterialProps\([\'"]([^"\']+)[\'"]\)', code):
         color_map[m.group(1)] = m.group(2)
 
-    code = re.sub(r"\s*const\s+\w+\s*=\s*useToonMaterialProps\([^)]+\).*?\n", "\n", code)
+    code = re.sub(r"\s*const\s+\w+\s*=\s*useToonMaterialProps\([^)]+\)[^\n]*\n", "\n", code)
 
     for var_name, color in color_map.items():
         pattern = rf"<meshToonMaterial\s+\{{\.\.\.{var_name}\}}\s*/>"

@@ -2,6 +2,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   createContext,
   useContext,
   useRef,
@@ -629,47 +630,76 @@ export function ZenModeProvider({ children }: ZenModeProviderProps) {
     }
   }, [])
 
-  const value: UseZenModeReturn = {
-    // Zen Mode state
-    isActive,
+  const value = useMemo<UseZenModeReturn>(
+    () => ({
+      // Zen Mode state
+      isActive,
 
-    // Tabs state
-    tabs: tabsState.tabs,
-    activeTab,
-    activeTabId: tabsState.activeTabId,
-    tabCount,
-    canAddTab,
-    closedTabs: tabsState.closedTabs,
+      // Tabs state
+      tabs: tabsState.tabs,
+      activeTab,
+      activeTabId: tabsState.activeTabId,
+      tabCount,
+      canAddTab,
+      closedTabs: tabsState.closedTabs,
 
-    // Legacy compatibility
-    selectedAgentId,
-    selectedAgentName,
-    selectedAgentIcon,
-    selectedAgentColor,
-    projectFilter: activeTab?.projectFilter || null,
+      // Legacy compatibility
+      selectedAgentId,
+      selectedAgentName,
+      selectedAgentIcon,
+      selectedAgentColor,
+      projectFilter: activeTab?.projectFilter || null,
 
-    // Tab actions
-    createTab,
-    closeTab,
-    switchTab,
-    updateTabLayout,
-    updateTabLabel,
-    reorderTabs,
-    reopenClosedTab,
+      // Tab actions
+      createTab,
+      closeTab,
+      switchTab,
+      updateTabLayout,
+      updateTabLabel,
+      reorderTabs,
+      reopenClosedTab,
 
-    // Scroll position tracking
-    setScrollPosition,
-    getScrollPosition,
+      // Scroll position tracking
+      setScrollPosition,
+      getScrollPosition,
 
-    // Zen Mode actions
-    toggle,
-    enter,
-    enterWithProject,
-    exit,
-    selectAgent,
-    setProjectFilter,
-    clearProjectFilter,
-  }
+      // Zen Mode actions
+      toggle,
+      enter,
+      enterWithProject,
+      exit,
+      selectAgent,
+      setProjectFilter,
+      clearProjectFilter,
+    }),
+    [
+      isActive,
+      tabsState,
+      activeTab,
+      tabCount,
+      canAddTab,
+      selectedAgentId,
+      selectedAgentName,
+      selectedAgentIcon,
+      selectedAgentColor,
+      createTab,
+      closeTab,
+      switchTab,
+      updateTabLayout,
+      updateTabLabel,
+      reorderTabs,
+      reopenClosedTab,
+      setScrollPosition,
+      getScrollPosition,
+      toggle,
+      enter,
+      enterWithProject,
+      exit,
+      selectAgent,
+      setProjectFilter,
+      clearProjectFilter,
+    ]
+  )
 
   return <ZenModeContext.Provider value={value}>{children}</ZenModeContext.Provider>
 }

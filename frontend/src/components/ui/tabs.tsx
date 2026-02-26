@@ -36,8 +36,13 @@ export function Tabs({
     [onValueChange]
   )
 
+  const tabsContextValue = React.useMemo(
+    () => ({ value, onValueChange: handleChange }),
+    [value, handleChange]
+  )
+
   return (
-    <TabsContext.Provider value={{ value, onValueChange: handleChange }}>
+    <TabsContext.Provider value={tabsContextValue}>
       <div className={className}>{children}</div>
     </TabsContext.Provider>
   )

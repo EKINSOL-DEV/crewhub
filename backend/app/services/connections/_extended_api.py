@@ -33,7 +33,7 @@ class OpenClawExtendedMixin:
         self,
         session_key: str,
         message: str,
-        timeout: float = 90.0,
+        timeout: float = 90.0,  # NOSONAR
     ) -> Optional[str]:
         """Send a chat message to a session and return the response text."""
         agent_id = "main"
@@ -70,7 +70,7 @@ class OpenClawExtendedMixin:
         message: str,
         agent_id: str = "main",
         session_id: Optional[str] = None,
-        timeout: float = 120.0,
+        timeout: float = 120.0,  # NOSONAR
         model: Optional[str] = None,
     ) -> Optional[str]:
         """Send a chat message to an agent and return the assistant text."""
@@ -98,7 +98,7 @@ class OpenClawExtendedMixin:
         message: str,
         agent_id: str = "main",
         session_id: Optional[str] = None,
-        timeout: float = 120.0,
+        timeout: float = 120.0,  # NOSONAR
     ) -> AsyncGenerator[str, None]:
         """Send a chat message and yield text chunks as they arrive via WS events."""
         idempotency_key = str(uuid.uuid4())

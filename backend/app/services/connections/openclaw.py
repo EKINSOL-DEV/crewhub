@@ -166,7 +166,7 @@ class OpenClawConnection(
     # ---
     # Background listener
     # ---
-    async def _listen_loop(
+    async def _listen_loop(  # noqa: C901
         self,
     ) -> None:  # NOSONAR
         """Receive and route messages from the Gateway."""
@@ -270,7 +270,7 @@ class OpenClawConnection(
         self,
         method: str,
         params: Optional[dict[str, Any]] = None,
-        timeout: float = 30.0,
+        timeout: float = 30.0,  # NOSONAR
         *,
         wait_for_final_agent_result: bool = False,
     ) -> Optional[dict[str, Any]]:
