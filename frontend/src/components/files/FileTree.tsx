@@ -133,9 +133,9 @@ function TreeNode({
       </div>
       {isDir &&
         expanded &&
-        node.children?.map((child, i) => (
+        node.children?.map((child) => (
           <TreeNode
-            key={child.path || i}
+            key={child.path}
             node={child}
             depth={depth + 1}
             selectedPath={selectedPath}
@@ -186,9 +186,9 @@ export function FileTree({
 
   return (
     <div style={{ padding: '4px 0' }}>
-      {files.map((node, i) => (
+      {files.map((node) => (
         <TreeNode
-          key={node.path || i}
+          key={node.path}
           node={node}
           depth={0}
           selectedPath={selectedPath}

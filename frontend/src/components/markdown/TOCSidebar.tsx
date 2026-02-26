@@ -92,7 +92,7 @@ export function TOCSidebar({ headings, activeId, onSelect }: TOCSidebarProps) {
           Contents
         </span>
       </div>
-      {headings.map((h, i) => {
+      {headings.map((h) => {
         const isActive = h.id === activeId
         let headingFontWeight: number
         if (isActive) {
@@ -104,7 +104,7 @@ export function TOCSidebar({ headings, activeId, onSelect }: TOCSidebarProps) {
         }
         return (
           <button
-            key={`${h.id}-${i}`}
+            key={h.id}
             onClick={() => onSelect(h.id)}
             style={{
               display: 'block',

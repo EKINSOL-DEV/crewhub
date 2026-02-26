@@ -157,8 +157,8 @@ interface ZenEmptyStateProps {
   readonly title: string
   readonly description?: string
   readonly action?: {
-    label: string
-    onClick: () => void
+    readonly label: string
+    readonly onClick: () => void
   }
 }
 

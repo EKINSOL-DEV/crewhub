@@ -33,10 +33,10 @@ export function ParkingArea3D({ position, width, depth }: ParkingArea3DProps) {
       </mesh>
 
       {/* Small posts along divider */}
-      {Array.from({ length: Math.floor(depth / 4) }, (_, i) => {
-        const z = -halfD + 2 + i * 4
+      {Array.from({ length: Math.floor(depth / 4) }, (_unused, idx) => idx).map((n) => {
+        const z = -halfD + 2 + n * 4
         return (
-          <mesh key={`post-${i}`} position={[-halfW - 0.1, 0.45, z]}>
+          <mesh key={`post-${z}`} position={[-halfW - 0.1, 0.45, z]}>
             <boxGeometry args={[0.15, 0.6, 0.15]} />
             <meshToonMaterial {...accentToon} />
           </mesh>

@@ -17,9 +17,9 @@ interface FullscreenOverlayProps {
   readonly subtitle?: string
   readonly content: string
   readonly metadata?: {
-    size: number
-    modified: string
-    lines: number
+    readonly size: number
+    readonly modified: string
+    readonly lines: number
   }
   readonly editable?: boolean
   readonly onSave?: (content: string) => Promise<void>
@@ -407,7 +407,7 @@ export function FullscreenOverlay({
                       WebkitOverflowScrolling: 'touch',
                     }}
                   >
-                    {headings.map((h, i) => {
+                    {headings.map((h) => {
                       const isActive = h.id === activeId
                       let headingFontWeight: number
                       if (isActive) {
@@ -419,7 +419,7 @@ export function FullscreenOverlay({
                       }
                       return (
                         <button
-                          key={`${h.id}-${i}`}
+                          key={h.id}
                           onClick={() => handleTOCSelect(h.id)}
                           style={{
                             display: 'block',

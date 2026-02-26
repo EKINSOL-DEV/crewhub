@@ -80,8 +80,8 @@ export function FolderTreeNode({
         {isExpanded ? '📂' : '📁'} {node.name}
       </div>
       {isExpanded &&
-        node.children?.map((child, i) => (
-          <div key={child.path || child.name + i} className="pl-4">
+        node.children?.map((child) => (
+          <div key={child.path} className="pl-4">
             <FolderTreeNode
               node={child}
               onSelectFile={onSelectFile}

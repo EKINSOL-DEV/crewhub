@@ -23,10 +23,10 @@ interface PixelAvatarProps {
   readonly status: 'active' | 'thinking' | 'idle' | 'error'
   /** Optional stats to show on hover */
   readonly stats?: {
-    tokens?: number
-    uptime?: number // in milliseconds
-    model?: string
-    sessionKey?: string
+    readonly tokens?: number
+    readonly uptime?: number // in milliseconds
+    readonly model?: string
+    readonly sessionKey?: string
   }
 }
 

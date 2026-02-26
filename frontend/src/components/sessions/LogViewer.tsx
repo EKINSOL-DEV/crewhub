@@ -10,6 +10,15 @@ import { getSessionDisplayName, getMinionType, formatModel, timeAgo } from '@/li
 import { cn } from '@/lib/utils'
 import { EditableSessionName } from './EditableSessionName'
 
+function safeJsonKey(value: unknown): string {
+  if (value == null) return ''
+  try {
+    return JSON.stringify(value) ?? ''
+  } catch {
+    return ''
+  }
+}
+
 interface LogViewerProps {
   readonly session: MinionSession | null
   readonly open: boolean
@@ -333,9 +342,9 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
 
             return (
               <div className="space-y-4">
-                {Array.from(filteredMessages.entries()).map(([idx, msg]) => (
+                {filteredMessages.map((msg) => (
                   <div
-                    key={`msg-${idx}`}
+                    key={`msg-${msg.timestamp ?? ''}-${msg.role}-${safeJsonKey(msg.content)}`}
                     className={cn(
                       'p-3 rounded-lg',
                       (() => {
@@ -355,8 +364,14 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
                       )}
                     </div>
                     <div className="text-sm whitespace-pre-wrap">
-                      {msg.content?.map((block, bidx) => (
-                        <div key={`block-${block.type}-${bidx}`}>
+                      {msg.content?.map((block) => (
+                        <div
+                          key={
+                            block.id ??
+                            block.toolCallId ??
+                            `${block.type}-${block.name ?? ''}-${block.text ?? block.thinking ?? ''}-${safeJsonKey(block.arguments)}`
+                          }
+                        >
                           {block.type === 'text' && block.text && <span>{block.text}</span>}
                           {block.type === 'thinking' && block.thinking && (
                             <div className="text-purple-600 dark:text-purple-400 italic">

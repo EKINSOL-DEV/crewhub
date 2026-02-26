@@ -21,6 +21,15 @@ import { formatRelativeTime, formatShortTimestamp } from '@/lib/formatters'
 const BREAK_WORD = 'break-word'
 const FLEX_START = 'flex-start'
 
+function safeJsonKey(value: unknown): string {
+  if (value == null) return ''
+  try {
+    return JSON.stringify(value) ?? ''
+  } catch {
+    return ''
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Markdown renderer (full-featured, shared for all variants)
 // ─────────────────────────────────────────────────────────────────
@@ -415,12 +424,8 @@ const ChatMessageBubbleInner = memo(
           {/* Image attachments */}
           {imageAttachments.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-              {imageAttachments.map((attachment, i) => (
-                <ImageThumbnail
-                  key={attachment.path || `attachme-${i}`}
-                  attachment={attachment}
-                  maxWidth={200}
-                />
+              {imageAttachments.map((attachment) => (
+                <ImageThumbnail key={attachment.path} attachment={attachment} maxWidth={200} />
               ))}
             </div>
           )}
@@ -431,11 +436,7 @@ const ChatMessageBubbleInner = memo(
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}
             >
               {videoAttachments.map((attachment) => (
-                <VideoThumbnail
-                  key={attachment.path || `attachme-${attachment.type}`}
-                  attachment={attachment}
-                  maxWidth={300}
-                />
+                <VideoThumbnail key={attachment.path} attachment={attachment} maxWidth={300} />
               ))}
             </div>
           )}
@@ -447,7 +448,7 @@ const ChatMessageBubbleInner = memo(
             >
               {audioAttachments.map((attachment) => (
                 <AudioMessage
-                  key={attachment.path || `attachme-${attachment.type || 'a'}`}
+                  key={attachment.path}
                   url={attachment.path}
                   duration={attachment.duration}
                   variant="zen"
@@ -474,8 +475,12 @@ const ChatMessageBubbleInner = memo(
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}
             >
-              {msg.tools.map((tool, i) => (
-                <ToolCallBlock key={`tool-${tool.name}-${i}`} tool={tool} zenMode />
+              {msg.tools.map((tool) => (
+                <ToolCallBlock
+                  key={`tool-${tool.name}-${tool.status}-${safeJsonKey(tool.input)}`}
+                  tool={tool}
+                  zenMode
+                />
               ))}
             </div>
           )}
@@ -557,9 +562,9 @@ const ChatMessageBubbleInner = memo(
         {/* Tool calls */}
         {msg.tools && msg.tools.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: '100%' }}>
-            {msg.tools.map((tool, i) => (
+            {msg.tools.map((tool) => (
               <ToolCallBlock
-                key={`tool-${tool.name}-${i}`}
+                key={`tool-${tool.name}-${tool.status}-${safeJsonKey(tool.input)}`}
                 tool={tool}
                 showDetails={showToolDetails}
               />
@@ -607,7 +612,7 @@ const ChatMessageBubbleInner = memo(
           >
             {imageAttachments.map((attachment) => (
               <ImageThumbnail
-                key={attachment.path || `attachme-${attachment.type}`}
+                key={attachment.path}
                 attachment={attachment}
                 maxWidth={variant === 'mobile' ? 180 : 200}
               />
@@ -628,7 +633,7 @@ const ChatMessageBubbleInner = memo(
           >
             {videoAttachments.map((attachment) => (
               <VideoThumbnail
-                key={attachment.path || `attachme-${attachment.type}`}
+                key={attachment.path}
                 attachment={attachment}
                 maxWidth={variant === 'mobile' ? 260 : 280}
               />
@@ -649,7 +654,7 @@ const ChatMessageBubbleInner = memo(
           >
             {audioAttachments.map((attachment) => (
               <AudioMessage
-                key={attachment.path || `attachme-${attachment.type || 'a'}`}
+                key={attachment.path}
                 url={attachment.path}
                 duration={attachment.duration}
                 variant={variant}

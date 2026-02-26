@@ -68,14 +68,14 @@ export function EntranceLobby({
       </group>
 
       {/* Path leading from entrance outward (into -Z) */}
-      {Array.from({ length: 4 }, (_, i) => (
+      {Array.from({ length: 4 }, (_unused, idx) => idx).map((n) => (
         <mesh
-          key={`path-${i}`}
+          key={`path-${n}`}
           rotation={[-Math.PI / 2, 0, 0]}
-          position={[entranceX, 0.05, lobbyZ - 2 - i * 1.8]}
+          position={[entranceX, 0.05, lobbyZ - 2 - n * 1.8]}
           receiveShadow
         >
-          <boxGeometry args={[entranceWidth * 0.6 - i * 0.3, 1.5, 0.06]} />
+          <boxGeometry args={[entranceWidth * 0.6 - n * 0.3, 1.5, 0.06]} />
           <meshToonMaterial {...pathToon} />
         </mesh>
       ))}

@@ -93,9 +93,9 @@ export function DocumentSelectorModal({
             </div>
           )}
           {!loading &&
-            tree?.map((node, i) => (
+            tree?.map((node) => (
               <FolderTreeNode
-                key={node.path || node.name + i}
+                key={node.path}
                 node={node}
                 onSelectFile={setSelectedPath}
                 selectedPath={selectedPath}
