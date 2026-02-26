@@ -36,24 +36,30 @@ router = APIRouter()
 _SKIP_DIRS = {".git", "node_modules", ".DS_Store", "__pycache__", ".venv", "venv"}
 
 
+def _is_allowed_md_path(base_dir: Path, resolved: Path, md_path: Path) -> bool:
+    try:
+        if not md_path.resolve().is_relative_to(resolved):
+            return False
+    except (OSError, ValueError):
+        return False
+
+    parts = md_path.relative_to(base_dir).parts
+    if any(p.startswith(".") or p == "node_modules" for p in parts):
+        return False
+    if len(parts) > 4:
+        return False
+
+    try:
+        return md_path.stat().st_size <= 1_000_000
+    except OSError:
+        return False
+
+
 def _scan_project_md_files(base_dir: Path, resolved: Path) -> list:
     """Scan a project directory for markdown files (safe, depth-limited)."""
     md_files: list[str] = []
     for md_path in sorted(base_dir.rglob("*.md")):
-        try:
-            if not md_path.resolve().is_relative_to(resolved):
-                continue
-        except (OSError, ValueError):
-            continue
-        parts = md_path.relative_to(base_dir).parts
-        if any(p.startswith(".") or p == "node_modules" for p in parts):
-            continue
-        if len(parts) > 4:
-            continue
-        try:
-            if md_path.stat().st_size > 1_000_000:
-                continue
-        except OSError:
+        if not _is_allowed_md_path(base_dir, resolved, md_path):
             continue
         md_files.append(str(md_path.relative_to(base_dir)))
         if len(md_files) >= 200:
@@ -61,15 +67,27 @@ def _scan_project_md_files(base_dir: Path, resolved: Path) -> list:
     return md_files
 
 
+def _md_file_item(base_dir: Path, resolved: Path, item: Path) -> dict | None:
+    try:
+        if not item.resolve().is_relative_to(resolved):
+            return None
+        if item.stat().st_size > 1_000_000:
+            return None
+    except (OSError, ValueError):
+        return None
+    return {"name": item.name, "type": "file", "path": str(item.relative_to(base_dir))}
+
+
 def _build_project_md_tree(base_dir: Path, current_dir: Path, resolved: Path, depth: int = 0) -> list:
     """Recursively build a tree of markdown files (depth ≤ 4)."""
     if depth > 4:
         return []
-    items = []
     try:
         entries = sorted(current_dir.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
     except PermissionError:
         return []
+
+    items = []
     for item in entries:
         if item.name.startswith(".") or item.name in _SKIP_DIRS:
             continue
@@ -77,13 +95,11 @@ def _build_project_md_tree(base_dir: Path, current_dir: Path, resolved: Path, de
             children = _build_project_md_tree(base_dir, item, resolved, depth + 1)
             if children:
                 items.append({"name": item.name, "type": "folder", "children": children})
-        elif item.is_file() and item.suffix == ".md":
-            try:
-                if not item.resolve().is_relative_to(resolved) or item.stat().st_size > 1_000_000:
-                    continue
-            except (OSError, ValueError):
-                continue
-            items.append({"name": item.name, "type": "file", "path": str(item.relative_to(base_dir))})
+            continue
+        if item.is_file() and item.suffix == ".md":
+            file_item = _md_file_item(base_dir, resolved, item)
+            if file_item:
+                items.append(file_item)
     return items
 
 

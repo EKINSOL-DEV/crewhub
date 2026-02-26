@@ -127,10 +127,26 @@ def _validate_grid_and_center(bp: "BlueprintJson", errors: list) -> None:
         errors.append(f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})")
 
 
-def _validate_placement_item(i: int, p, bp: "BlueprintJson", errors: list, warnings: list, occupied: dict) -> None:
-    """Validate a single placement entry: bounds, span, overlap, propId, interactionType."""
+def _validate_placement_bounds(i: int, p, bp: "BlueprintJson", errors: list) -> bool:
     if p.x < 0 or p.x >= bp.gridWidth or p.z < 0 or p.z >= bp.gridDepth:
         errors.append(f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds")
+        return False
+    return True
+
+
+def _mark_placement_overlap(i: int, p, span_w: int, span_d: int, errors: list, occupied: dict) -> None:
+    for dx in range(span_w):
+        for dz in range(span_d):
+            cell = (p.x + dx, p.z + dz)
+            if cell in occupied:
+                errors.append(f"Placement [{i}] propId='{p.propId}' overlaps with '{occupied[cell]}' at cell {cell}")
+            else:
+                occupied[cell] = p.propId
+
+
+def _validate_placement_item(i: int, p, bp: "BlueprintJson", errors: list, warnings: list, occupied: dict) -> None:
+    """Validate a single placement entry: bounds, span, overlap, propId, interactionType."""
+    if not _validate_placement_bounds(i, p, bp, errors):
         return
 
     span_w = p.span.w if p.span else 1
@@ -141,19 +157,10 @@ def _validate_placement_item(i: int, p, bp: "BlueprintJson", errors: list, warni
         errors.append(f"Placement [{i}] propId='{p.propId}' span exceeds grid depth at z={p.z}, span.d={span_d}")
 
     if p.type != "interaction":
-        for dx in range(span_w):
-            for dz in range(span_d):
-                cell = (p.x + dx, p.z + dz)
-                if cell in occupied:
-                    errors.append(
-                        f"Placement [{i}] propId='{p.propId}' overlaps with '{occupied[cell]}' at cell {cell}"
-                    )
-                else:
-                    occupied[cell] = p.propId
+        _mark_placement_overlap(i, p, span_w, span_d, errors, occupied)
 
     if p.propId not in KNOWN_PROP_IDS:
         warnings.append(f"Unknown propId '{p.propId}' in placement [{i}] (may be from a mod)")
-
     if p.interactionType and p.interactionType not in VALID_INTERACTION_TYPES:
         errors.append(
             f"Placement [{i}] has unknown interactionType '{p.interactionType}'. Valid: {VALID_INTERACTION_TYPES}"

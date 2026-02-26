@@ -155,6 +155,22 @@ async def _get_agent_recent_activity(agent_id: str) -> str:
     return ""
 
 
+def _extract_personality_hints(soul_content: str) -> list[str]:
+    if not soul_content:
+        return []
+    soul_lower = soul_content.lower()
+    hints: list[str] = []
+    if "helpful" in soul_lower or "assist" in soul_lower:
+        hints.append("helpful")
+    if "creative" in soul_lower:
+        hints.append("creative")
+    if "technical" in soul_lower or "code" in soul_lower:
+        hints.append("technical")
+    if "friendly" in soul_lower or "joyful" in soul_lower:
+        hints.append("friendly")
+    return hints
+
+
 def _build_bio_from_context(agent_id: str, agent_name: str, soul_content: str, recent_activity: str) -> str:
     """Build a bio string using soul content and template matching."""
     bio_templates = {
@@ -167,17 +183,7 @@ def _build_bio_from_context(agent_id: str, agent_name: str, soul_content: str, r
     if agent_id in bio_templates:
         bio = bio_templates[agent_id].format(name=agent_name)
     else:
-        personality_hints = []
-        if soul_content:
-            soul_lower = soul_content.lower()
-            if "helpful" in soul_lower or "assist" in soul_lower:
-                personality_hints.append("helpful")
-            if "creative" in soul_lower:
-                personality_hints.append("creative")
-            if "technical" in soul_lower or "code" in soul_lower:
-                personality_hints.append("technical")
-            if "friendly" in soul_lower or "joyful" in soul_lower:
-                personality_hints.append("friendly")
+        personality_hints = _extract_personality_hints(soul_content)
         if personality_hints:
             traits = " and ".join(personality_hints[:2])
             bio = f"{agent_name} is a {traits} crew member ready to help."
