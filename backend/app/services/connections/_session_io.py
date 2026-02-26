@@ -14,6 +14,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
+import aiofiles
+
 if TYPE_CHECKING:
     pass
 
@@ -64,8 +66,8 @@ class OpenClawSessionIOMixin:
                 return []
 
             messages: list[HistoryMessage] = []
-            with open(session_file) as f:
-                for line in f:
+            async with aiofiles.open(session_file) as f:
+                async for line in f:
                     line = line.strip()
                     if not line:
                         continue
@@ -114,8 +116,8 @@ class OpenClawSessionIOMixin:
                 return []
 
             messages: list[dict[str, Any]] = []
-            with open(session_file) as f:
-                for line in f:
+            async with aiofiles.open(session_file) as f:
+                async for line in f:
                     line = line.strip()
                     if line:
                         try:

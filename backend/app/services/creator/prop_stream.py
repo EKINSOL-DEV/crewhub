@@ -16,6 +16,8 @@ from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from pathlib import Path
 
+import aiofiles
+
 from .prop_generator import (
     add_generation_record,
     extract_parts,
@@ -233,8 +235,8 @@ async def stream_prop_generation(
         # Read new transcript lines
         if transcript_path and transcript_path.exists():
             try:
-                with open(transcript_path) as f:
-                    all_lines = f.readlines()
+                async with aiofiles.open(transcript_path) as f:
+                    all_lines = await f.readlines()
                 new_lines = all_lines[lines_read:]
                 lines_read = len(all_lines)
 

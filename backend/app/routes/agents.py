@@ -9,6 +9,7 @@ config are auto-synced so the registry always reflects reality.
 import logging
 from typing import Optional
 
+import aiofiles
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -137,8 +138,8 @@ async def generate_bio(agent_id: str):
     for soul_path in soul_paths:
         if soul_path and soul_path.exists():
             try:
-                with open(soul_path) as f:
-                    soul_content = f.read()[:2000]
+                async with aiofiles.open(soul_path) as f:
+                    soul_content = (await f.read())[:2000]
                 logger.info(f"Read SOUL.md for {agent_id} from {soul_path}")
                 break
             except Exception as e:

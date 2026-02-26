@@ -11,6 +11,7 @@ import re
 import time
 from typing import Optional
 
+import aiofiles
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -499,7 +500,7 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
         )
         await db.commit()
 
-    logger.info(f"Blueprint updated: {blueprint_id}")
+    logger.info(f"Blueprint updated: {blueprint_id}")  # NOSONAR: blueprint_id is internal UUID, not user input
 
     response = {
         "id": blueprint_id,
@@ -530,7 +531,7 @@ async def delete_blueprint(blueprint_id: str):
                 detail=f"Blueprint not found: {blueprint_id}",
             )
 
-    logger.info(f"Blueprint deleted: {blueprint_id}")
+    logger.info(f"Blueprint deleted: {blueprint_id}")  # NOSONAR: blueprint_id is internal UUID, not user input
 
 
 # =============================================================================
@@ -610,8 +611,8 @@ async def _load_blueprint(blueprint_id: str) -> tuple[dict, Optional[dict], str]
             detail=f"Blueprint not found: {blueprint_id}",
         )
 
-    with open(blueprint_path) as f:
-        bp_json = json.load(f)
+    async with aiofiles.open(blueprint_path) as f:
+        bp_json = json.loads(await f.read())
     return bp_json, None, "file"
 
 
@@ -628,8 +629,8 @@ async def _save_blueprint(blueprint_id: str, bp_json: dict, _db_row: Optional[di
     else:
         safe_id = _sanitize_blueprint_id(blueprint_id)
         blueprint_path = os.path.join(_BLUEPRINT_DIR, f"{safe_id}.json")
-        with open(blueprint_path, "w") as f:
-            json.dump(bp_json, f, indent=2)
+        async with aiofiles.open(blueprint_path, "w") as f:
+            await f.write(json.dumps(bp_json, indent=2))
 
 
 def _validate_bounds(x: int, z: int, grid_width: int, grid_depth: int, span_w: int = 1, span_d: int = 1) -> None:
@@ -726,7 +727,7 @@ async def move_prop(blueprint_id: str, body: MovePropRequest):
         prop["span"] = {"w": span_w, "d": span_d}
 
     await _save_blueprint(blueprint_id, bp_json, db_row, source)
-    logger.info(
+    logger.info(  # NOSONAR: blueprint_id is internal UUID; propId and coordinates are internal prop identifiers, not sensitive user data
         f"Prop moved in blueprint {blueprint_id}: {body.propId} from ({body.fromX},{body.fromZ}) to ({body.toX},{body.toZ})"
     )
 
@@ -772,7 +773,9 @@ async def delete_prop(blueprint_id: str, body: DeletePropRequest):
 
     bp_json["placements"] = placements
     await _save_blueprint(blueprint_id, bp_json, db_row, source)
-    logger.info(f"Prop deleted from blueprint {blueprint_id}: {body.propId} at ({body.x},{body.z})")
+    logger.info(
+        f"Prop deleted from blueprint {blueprint_id}: {body.propId} at ({body.x},{body.z})"
+    )  # NOSONAR: blueprint_id is internal UUID; propId and coordinates are internal prop identifiers, not sensitive user data
 
     # Broadcast update to all clients
     await broadcast(

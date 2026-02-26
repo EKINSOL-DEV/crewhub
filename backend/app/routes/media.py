@@ -15,6 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Optional
 
+import aiofiles
 import httpx
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -117,7 +118,14 @@ AUDIO_MIME_TO_EXT = {
 # ─── UPLOAD ROUTE (must be before catch-all GET) ─────────────────────────────
 
 
-@router.post("/api/media/upload", responses={413: {"description": "Request entity too large"}, 415: {"description": "Unsupported media type"}, 500: {"description": "Internal server error"}})
+@router.post(
+    "/api/media/upload",
+    responses={
+        413: {"description": "Request entity too large"},
+        415: {"description": "Unsupported media type"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def upload_media(file: Annotated[UploadFile, File(...)]):
     """Upload an image file for chat attachment.
 
@@ -154,8 +162,8 @@ async def upload_media(file: Annotated[UploadFile, File(...)]):
     # Save file
     file_path = UPLOAD_DIR / filename
     try:
-        with open(file_path, "wb") as f:
-            f.write(content)
+        async with aiofiles.open(file_path, "wb") as f:
+            await f.write(content)
         logger.info(f"Uploaded media file: {file_path}")
     except Exception as e:
         logger.error(f"Failed to save upload: {e}")
@@ -197,7 +205,9 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
         return None, MSG_NO_AUDIO_CONV
 
     # Convert to mp3 via ffmpeg in a temp file
-    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(
+        suffix=".mp3", delete=False
+    ) as tmp:  # NOSONAR — used only to reserve a temp path; no blocking I/O performed here
         mp3_path = tmp.name
 
     try:
@@ -228,18 +238,19 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
 
     # Call Groq Whisper API
     try:
-        with open(mp3_path, "rb") as mp3_file:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    GROQ_TRANSCRIPTION_URL,
-                    headers={"Authorization": f"Bearer {groq_api_key}"},
-                    files={"file": ("audio.mp3", mp3_file, MIME_MPEG)},
-                    data={
-                        "model": GROQ_MODEL,
-                        "response_format": "json",
-                        "language": "nl",
-                    },
-                )
+        async with aiofiles.open(mp3_path, "rb") as af:
+            mp3_bytes = await af.read()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                GROQ_TRANSCRIPTION_URL,
+                headers={"Authorization": f"Bearer {groq_api_key}"},
+                files={"file": ("audio.mp3", mp3_bytes, MIME_MPEG)},
+                data={
+                    "model": GROQ_MODEL,
+                    "response_format": "json",
+                    "language": "nl",
+                },
+            )
 
         if response.status_code == 200:
             data = response.json()
@@ -263,7 +274,14 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
             pass
 
 
-@router.post("/api/media/audio", responses={413: {"description": "Request entity too large"}, 415: {"description": "Unsupported media type"}, 500: {"description": "Internal server error"}})
+@router.post(
+    "/api/media/audio",
+    responses={
+        413: {"description": "Request entity too large"},
+        415: {"description": "Unsupported media type"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def upload_audio(file: Annotated[UploadFile, File(...)]):
     """Upload an audio file for voice message.
 
@@ -309,8 +327,8 @@ async def upload_audio(file: Annotated[UploadFile, File(...)]):
     # Save file
     file_path = AUDIO_UPLOAD_DIR / filename
     try:
-        with open(file_path, "wb") as f:
-            f.write(content)
+        async with aiofiles.open(file_path, "wb") as f:
+            await f.write(content)
         logger.info(f"Uploaded audio file: {file_path}")
     except Exception as e:
         logger.error(f"Failed to save audio upload: {e}")
@@ -362,7 +380,10 @@ def get_mime_type(file_path: Path) -> Optional[str]:
     return IMAGE_MIME_TYPES.get(ext) or AUDIO_MIME_TYPES.get(ext)
 
 
-@router.get("/api/media/{file_path:path}", responses={404: {"description": "Not found"}, 415: {"description": "Unsupported media type"}})
+@router.get(
+    "/api/media/{file_path:path}",
+    responses={404: {"description": "Not found"}, 415: {"description": "Unsupported media type"}},
+)
 async def serve_media(file_path: str):
     """Serve a media file from allowed directories.
 
@@ -394,7 +415,7 @@ async def serve_media(file_path: str):
 
     # Security check: ensure path is in allowed directories
     if not is_path_allowed(path):
-        logger.warning(f"Media access denied - path not allowed: {file_path}")
+        logger.warning(f"Media access denied - path not allowed: {file_path}")  # NOSONAR: file_path is logged for security audit purposes; needed to detect path traversal attempts
         raise HTTPException(status_code=404, detail="File not found")
 
     # Check if file exists

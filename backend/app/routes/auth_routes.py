@@ -11,6 +11,7 @@ import secrets
 import time
 from typing import Annotated, Optional
 
+import aiofiles
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
@@ -146,7 +147,9 @@ async def create_key(
         )
         await db.commit()
 
-    logger.info(f"Created API key '{body.name}' (id={key_id}, scopes={body.scopes}, expires_at={expires_at})")
+    logger.info(
+        "Created API key", extra={"name": body.name, "id": key_id, "scopes": body.scopes, "expires_at": expires_at}
+    )
 
     return CreateKeyResponse(
         id=key_id,
@@ -311,8 +314,8 @@ async def local_bootstrap(request: Request):
 
     key_file = os.path.expanduser("~/.crewhub/api-keys.json")
     try:
-        with open(key_file) as f:
-            data = json.load(f)
+        async with aiofiles.open(key_file) as f:
+            data = json.loads(await f.read())
         admin_key = next(
             (k["key"] for k in data.get("keys", []) if "manage" in k.get("scopes", [])),
             None,
