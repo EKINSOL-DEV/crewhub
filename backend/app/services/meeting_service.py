@@ -497,88 +497,75 @@ async def list_meetings(
     return {"meetings": results, "total": total, "has_more": (offset + limit) < total}
 
 
-async def load_document(  # noqa: C901 - validation + project resolution + warning emissions
+async def _meeting_warn(meeting_id: str, msg: str) -> None:
+    await broadcast("meeting-warning", {"meeting_id": meeting_id, "message": msg, "severity": "warning"})
+
+
+async def _resolve_project_dir(project_id: Optional[str]):
+    import os
+    from pathlib import Path
+
+    if not project_id:
+        return None
+    try:
+        async with get_db() as db:
+            async with db.execute("SELECT folder_path, name FROM projects WHERE id = ?", (project_id,)) as cur:
+                row = await cur.fetchone()
+        if not row:
+            return None
+        if row["folder_path"]:
+            expanded = Path(os.path.expanduser(row["folder_path"]))
+            if expanded.exists():
+                return expanded
+        slug = re.sub(r"[^a-zA-Z0-9]+", "-", row["name"]).strip("-")
+        candidate = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects" / slug
+        return candidate if candidate.exists() else None
+    except Exception as exc:
+        logger.warning(f"Could not resolve project folder: {exc}")
+        return None
+
+
+async def load_document(
     document_path: str,
     project_id: Optional[str],
     meeting_id: str,
     _document_context: Optional[str] = None,
 ) -> Optional[str]:
-    """
-    Load a document from the project folder for meeting context.
-    Returns None and emits an SSE warning if the document cannot be loaded.
-    """
-    import os
+    """Load a document from the project folder for meeting context."""
     from pathlib import Path
 
     if not document_path:
         return None
     if ".." in document_path or document_path.startswith("/"):
         logger.warning(f"Rejected document path (traversal attempt): {document_path}")
-        await broadcast(
-            "meeting-warning",
-            {
-                "meeting_id": meeting_id,
-                "message": f"Invalid document path: {document_path}",
-                "severity": "warning",
-            },
-        )
+        await _meeting_warn(meeting_id, f"Invalid document path: {document_path}")
         return None
 
-    project_dir = None
-    if project_id:
-        try:
-            async with get_db() as db:
-                async with db.execute("SELECT folder_path, name FROM projects WHERE id = ?", (project_id,)) as cur:
-                    row = await cur.fetchone()
-                    if row and row["folder_path"]:
-                        expanded = Path(os.path.expanduser(row["folder_path"]))
-                        if expanded.exists():
-                            project_dir = expanded
-                    if not project_dir and row:
-                        slug = re.sub(r"[^a-zA-Z0-9]+", "-", row["name"]).strip("-")
-                        candidate = Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects" / slug
-                        if candidate.exists():
-                            project_dir = candidate
-        except Exception as exc:
-            logger.warning(f"Could not resolve project folder: {exc}")
-
-    async def _warn(msg: str) -> None:
-        await broadcast(
-            "meeting-warning",
-            {
-                "meeting_id": meeting_id,
-                "message": msg,
-                "severity": "warning",
-            },
-        )
-
+    project_dir = await _resolve_project_dir(project_id)
     if not project_dir:
-        await _warn(f"Project folder not found for document: {document_path}")
+        await _meeting_warn(meeting_id, f"Project folder not found for document: {document_path}")
         return None
 
-    ALLOWED_ROOTS = [
-        Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects",
-        Path.home() / "Projects",
-    ]
+    allowed_roots = [Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects", Path.home() / "Projects"]
     resolved_base = project_dir.resolve()
-    if not any(resolved_base.is_relative_to(r) for r in ALLOWED_ROOTS if r.exists()):
-        await _warn("Project folder outside allowed roots")
+    if not any(resolved_base.is_relative_to(r) for r in allowed_roots if r.exists()):
+        await _meeting_warn(meeting_id, "Project folder outside allowed roots")
         return None
 
     full_path = (project_dir / document_path).resolve()
     if not full_path.is_relative_to(resolved_base):
-        await _warn("Document path escapes project directory")
+        await _meeting_warn(meeting_id, "Document path escapes project directory")
         return None
     if not full_path.exists():
-        await _warn(f"Document not found: {document_path}")
+        await _meeting_warn(meeting_id, f"Document not found: {document_path}")
         return None
     try:
         size = await asyncio.to_thread(lambda: full_path.stat().st_size)
     except OSError:
-        await _warn(f"Could not access document: {document_path}")
+        await _meeting_warn(meeting_id, f"Could not access document: {document_path}")
         return None
     if size > 1_000_000:
-        await _warn(f"Document too large (>{size // 1024}KB): {document_path}")
+        await _meeting_warn(meeting_id, f"Document too large (>{size // 1024}KB): {document_path}")
         return None
     try:
         content = await asyncio.to_thread(full_path.read_text, "utf-8")
@@ -587,5 +574,5 @@ async def load_document(  # noqa: C901 - validation + project resolution + warni
             content = content[:max_chars] + "\n\n[... document truncated for token budget ...]"
         return content
     except Exception:
-        await _warn(f"Failed to read document: {document_path}")
+        await _meeting_warn(meeting_id, f"Failed to read document: {document_path}")
         return None
