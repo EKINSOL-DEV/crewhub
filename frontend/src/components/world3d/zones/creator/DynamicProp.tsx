@@ -138,11 +138,13 @@ function DynamicMesh({ // NOSONAR
           emissive={selected ? '#4466ff' : part.color}
           emissiveIntensity={selected ? 0.8 : 0.5}
         />
-      ) : selected ? (
-        <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
-      ) : (
-        <meshToonMaterial {...toon} />
-      )}
+      ) : (() => {
+        if (selected) {
+          return <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
+        }
+
+        return <meshToonMaterial {...toon} />
+      })()}
     </mesh>
   )
 }

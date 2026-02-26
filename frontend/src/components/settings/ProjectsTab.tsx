@@ -127,17 +127,26 @@ function ProjectsSettingsSection({
           </div>
         )}
 
-        {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
-            Loading projects…
-          </div>
-        ) : sortedProjects.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            No projects yet. Create one from the 3D World view.
-          </div>
-        ) : (
-          <div className="space-y-2">
+        {(() => {
+          if (isLoading) {
+            return (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+                Loading projects…
+              </div>
+            )
+          }
+
+          if (sortedProjects.length === 0) {
+            return (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No projects yet. Create one from the 3D World view.
+              </div>
+            )
+          }
+
+          return (
+            <div className="space-y-2">
             {sortedProjects.map((project) => {
               const isArchived = project.status === 'archived'
               const roomCount = getAssignedRoomCount(project.id)
@@ -273,8 +282,9 @@ function ProjectsSettingsSection({
                 </div>
               )
             })}
-          </div>
-        )}
+            </div>
+          )
+        })()}
       </CollapsibleSection>
 
       {/* Delete confirmation dialog */}

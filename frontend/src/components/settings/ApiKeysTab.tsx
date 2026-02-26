@@ -264,23 +264,33 @@ function KeysManager({ adminKey }: { adminKey: string }) {
           </div>
         )}
 
-        {loading && keys.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
-            Loading keys…
-          </div>
-        ) : keys.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            No API keys yet
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {keys.map((k) => (
-              <KeyRow key={k.id} item={k} onRevoke={() => handleRevoke(k.id, k.name)} />
-            ))}
-          </div>
-        )}
+        {(() => {
+          if (loading && keys.length === 0) {
+            return (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
+                Loading keys…
+              </div>
+            )
+          }
+
+          if (keys.length === 0) {
+            return (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                No API keys yet
+              </div>
+            )
+          }
+
+          return (
+            <div className="space-y-2">
+              {keys.map((k) => (
+                <KeyRow key={k.id} item={k} onRevoke={() => handleRevoke(k.id, k.name)} />
+              ))}
+            </div>
+          )
+        })()}
       </Section>
 
       {/* ── Create Key Modal ── */}
