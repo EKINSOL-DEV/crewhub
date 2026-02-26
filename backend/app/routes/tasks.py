@@ -303,7 +303,7 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
         await task_service.set_task_running(
             task_id=task_id,
             project_id=task["project_id"],
-            previous_status=task["status"],
+            _previous_status=task["status"],
             agent_id=body.agent_id,
             agent_name=agent["name"],
             session_key=session_key,

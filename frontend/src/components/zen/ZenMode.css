@@ -47,11 +47,8 @@
   --zen-radius: 4px;
   --zen-radius-lg: 8px;
   --zen-border-width: 1px;
-}
 
-/* ── Main Container ────────────────────────────────────────────── */
-
-.zen-mode {
+  /* ── Main Container ──────────────────────────────────────────── */
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -343,11 +340,6 @@
   display: flex;
   align-items: center;
   gap: var(--zen-space-xs);
-}
-
-.zen-btn-small {
-  padding: 2px 6px;
-  font-size: 11px;
 }
 
 .zen-btn-active {
@@ -674,18 +666,6 @@
 }
 
 /* ── Empty State ───────────────────────────────────────────────── */
-
-.zen-empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--zen-space-md);
-  color: var(--zen-fg-muted);
-  text-align: center;
-  padding: var(--zen-space-xl);
-}
 
 .zen-empty-icon {
   font-size: 48px;
@@ -1911,23 +1891,7 @@
   text-align: center;
 }
 
-.zen-btn-active {
-  background: var(--zen-bg-active);
-}
-
 /* ── Empty Panel ───────────────────────────────────────────────── */
-
-.zen-empty-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--zen-space-md);
-  padding: var(--zen-space-xl);
-  color: var(--zen-fg-muted);
-  text-align: center;
-}
 
 .zen-empty-actions {
   display: flex;
@@ -2537,21 +2501,6 @@
 
 /* ── Loading Spinner ───────────────────────────────────────────── */
 
-.zen-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--zen-border);
-  border-top-color: var(--zen-accent);
-  border-radius: 50%;
-  animation: zen-spin 0.8s linear infinite;
-}
-
-@keyframes zen-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* ── Error States ──────────────────────────────────────────────── */
 
 .zen-error-inline {
@@ -2597,21 +2546,6 @@
 }
 
 /* ── Tooltip ───────────────────────────────────────────────────── */
-
-.zen-tooltip {
-  position: absolute;
-  z-index: 10001;
-  padding: var(--zen-space-xs) var(--zen-space-sm);
-  background: var(--zen-bg);
-  border: 1px solid var(--zen-border);
-  border-radius: var(--zen-radius);
-  font-size: 11px;
-  color: var(--zen-fg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  white-space: nowrap;
-  pointer-events: none;
-  animation: zen-fade-in 0.1s ease-out;
-}
 
 /* ── Badges ────────────────────────────────────────────────────── */
 
@@ -2720,6 +2654,8 @@
   height: 100%;
   padding: var(--zen-space-xl);
   gap: var(--zen-space-lg);
+  color: var(--zen-fg-muted);
+  text-align: center;
 }
 
 .zen-empty-header {
@@ -4785,6 +4721,7 @@
   justify-content: center;
   height: 100%;
   padding: var(--zen-space-xl);
+  gap: var(--zen-space-md);
   text-align: center;
   color: var(--zen-fg-muted);
 }
@@ -4864,6 +4801,7 @@
 }
 
 .zen-tooltip {
+  position: absolute;
   display: flex;
   align-items: center;
   gap: var(--zen-space-sm);
@@ -4877,6 +4815,7 @@
   white-space: nowrap;
   pointer-events: none;
   z-index: 10001;
+  animation: zen-fade-in 0.1s ease-out;
 }
 
 .zen-tooltip-content {
@@ -4920,11 +4859,6 @@
   min-width: 14px;
   height: 14px;
   font-size: 9px;
-}
-
-.zen-badge-accent {
-  background: var(--zen-accent);
-  color: var(--zen-bg);
 }
 
 /* ── Session Details Panel ─────────────────────────────────────── */

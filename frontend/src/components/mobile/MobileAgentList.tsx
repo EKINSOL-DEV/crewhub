@@ -37,7 +37,7 @@ const AGENT_COLORS = [
 
 function getAgentColor(key: string): string {
   let hash = 0
-  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) | 0
+  for (let i = 0; i < key.length; i++) hash = Math.trunc(hash * 31 + (key.codePointAt(i) ?? 0))
   return AGENT_COLORS[Math.abs(hash) % AGENT_COLORS.length]
 }
 

@@ -34,7 +34,7 @@ type View =
   | { type: 'creator' }
 
 // Fixed crew members only
-const FIXED_AGENT_IDS = ['main', 'dev', 'flowy', 'creator', 'reviewer', 'gamedev', 'webdev']
+const FIXED_AGENT_IDS = new Set(['main', 'dev', 'flowy', 'creator', 'reviewer', 'gamedev', 'webdev'])
 
 export function MobileLayout() {
   // NOSONAR: complexity from React component with multiple hooks and state; extracting sub-hooks would hurt cohesion
@@ -76,7 +76,7 @@ export function MobileLayout() {
   }, [])
 
   // Filter to fixed agents only
-  const fixedAgents = agents.filter((r) => FIXED_AGENT_IDS.includes(r.agent.id))
+  const fixedAgents = agents.filter((r) => FIXED_AGENT_IDS.has(r.agent.id))
 
   // Load threads
   useEffect(() => {

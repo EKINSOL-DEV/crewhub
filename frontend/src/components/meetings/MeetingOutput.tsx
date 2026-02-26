@@ -389,7 +389,7 @@ export function MeetingOutput({
       document.body.appendChild(ta)
       ta.select()
       document.execCommand('copy') // NOSONAR — legacy clipboard fallback for environments without navigator.clipboard
-      document.body.removeChild(ta)
+      ta.remove()
     }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)

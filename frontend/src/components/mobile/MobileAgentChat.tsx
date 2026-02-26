@@ -31,10 +31,10 @@ interface PendingFile {
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
 function isImageFile(file: File): boolean {
-  return ACCEPTED_IMAGE_TYPES.includes(file.type)
+  return ACCEPTED_IMAGE_TYPES.has(file.type)
 }
 
 async function uploadFile(file: File): Promise<{ path: string; url: string }> {
@@ -66,7 +66,7 @@ const AGENT_COLORS = [
 ]
 function getColor(key: string): string {
   let hash = 0
-  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) | 0
+  for (let i = 0; i < key.length; i++) hash = Math.trunc(hash * 31 + (key.codePointAt(i) ?? 0))
   return AGENT_COLORS[Math.abs(hash) % AGENT_COLORS.length]
 }
 

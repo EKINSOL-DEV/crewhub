@@ -178,7 +178,7 @@ class HybridGenerator:
             description=description,
             component_name=component_name,
             template_code=template_code,
-            template_name=template_base,
+            _template_name=template_base,
         )
 
         from .connections import OpenClawConnection, get_connection_manager

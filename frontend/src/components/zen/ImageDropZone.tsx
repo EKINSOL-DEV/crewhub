@@ -30,13 +30,13 @@ interface ImageDropZoneProps {
 }
 
 // Accepted image types
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
 /**
  * Check if a file is an accepted image type
  */
 function isAcceptedImage(file: File): boolean {
-  return ACCEPTED_TYPES.includes(file.type)
+  return ACCEPTED_TYPES.has(file.type)
 }
 
 /**
