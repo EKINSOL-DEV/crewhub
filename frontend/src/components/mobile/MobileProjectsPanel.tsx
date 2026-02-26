@@ -209,7 +209,7 @@ function ProjectDetailModal({
       }}
       onClick={onClose}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
       role="button"
       tabIndex={0}

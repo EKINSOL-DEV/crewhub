@@ -130,7 +130,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
       }}
       onClick={onClose}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
       role="button"
       tabIndex={0}
@@ -289,7 +289,7 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
       }}
       onClick={onClose}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
       role="button"
       tabIndex={0}
