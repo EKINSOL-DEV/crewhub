@@ -47,7 +47,8 @@ const FIXED_AGENT_IDS = new Set([
   'webdev',
 ])
 
-export function MobileLayout() { // NOSONAR
+export function MobileLayout() {
+  // NOSONAR
   // NOSONAR: complexity from React component with multiple hooks and state; extracting sub-hooks would hurt cohesion
   const { sessions: realSessions, loading, connected, refresh } = useSessionsStream(true)
   const { isDemoMode, demoSessions } = useDemoMode()

@@ -145,7 +145,11 @@ export function EditableSessionName({
     <span
       className={`group cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 ${className}`}
       onClick={startEditing}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { startEditing() } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          startEditing()
+        }
+      }}
       title={
         displayName
           ? `Custom name: ${displayName}\nSession: ${sessionKey}`

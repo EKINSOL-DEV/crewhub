@@ -259,7 +259,11 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
           cursor: hasDetails ? 'pointer' : 'default',
         }}
         onClick={() => hasDetails && setExpanded(!expanded)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { hasDetails && setExpanded(!expanded) } }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            if (hasDetails) setExpanded(!expanded)
+          }
+        }}
       >
         🔧 {tool.name} {isSuccess ? '✓' : '✗'}
         {hasDetails && (
@@ -328,8 +332,10 @@ export interface ChatMessageBubbleProps {
   readonly showToolDetails?: boolean
 }
 
-const ChatMessageBubbleInner = memo( // NOSONAR
-  function ChatMessageBubble({ // NOSONAR
+const ChatMessageBubbleInner = memo(
+  // NOSONAR
+  function ChatMessageBubble({
+    // NOSONAR
     // NOSONAR: complexity from legitimate message rendering with multiple content type branches
     msg,
     variant = 'float',
@@ -410,7 +416,11 @@ const ChatMessageBubbleInner = memo( // NOSONAR
           {imageAttachments.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
               {imageAttachments.map((attachment, i) => (
-                <ImageThumbnail key={attachment.path || `attachme-${i}`} attachment={attachment} maxWidth={200} />
+                <ImageThumbnail
+                  key={attachment.path || `attachme-${i}`}
+                  attachment={attachment}
+                  maxWidth={200}
+                />
               ))}
             </div>
           )}
@@ -421,7 +431,11 @@ const ChatMessageBubbleInner = memo( // NOSONAR
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}
             >
               {videoAttachments.map((attachment) => (
-                <VideoThumbnail key={attachment.path || `attachme-${attachment.type}`} attachment={attachment} maxWidth={300} />
+                <VideoThumbnail
+                  key={attachment.path || `attachme-${attachment.type}`}
+                  attachment={attachment}
+                  maxWidth={300}
+                />
               ))}
             </div>
           )}
@@ -544,7 +558,11 @@ const ChatMessageBubbleInner = memo( // NOSONAR
         {msg.tools && msg.tools.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: '100%' }}>
             {msg.tools.map((tool, i) => (
-              <ToolCallBlock key={`tool-${tool.name}-${i}`} tool={tool} showDetails={showToolDetails} />
+              <ToolCallBlock
+                key={`tool-${tool.name}-${i}`}
+                tool={tool}
+                showDetails={showToolDetails}
+              />
             ))}
           </div>
         )}

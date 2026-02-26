@@ -10,7 +10,8 @@ interface BossHudButtonProps {
   /** Get bot config from session key */
   readonly getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
   /** Determine which room a session belongs to */
-  readonly getRoomForSession: ( sessionKey: string,
+  readonly getRoomForSession: (
+    sessionKey: string,
     sessionData?: { label?: string; model?: string; channel?: string }
   ) => string | undefined
   /** Default room ID fallback */
@@ -97,7 +98,6 @@ export function BossHudButton({
     >
       {/* Portrait circle */}
       <div
-
         style={{
           width: 56,
           height: 56,

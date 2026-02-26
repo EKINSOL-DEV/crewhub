@@ -220,7 +220,8 @@ function OutdoorBot({
     nextTypingPauseTimer: 0,
   })
 
-  useFrame(({ clock }, delta) => { // NOSONAR
+  useFrame(({ clock }, delta) => {
+    // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     if (!groupRef.current) return
     const state = stateRef.current

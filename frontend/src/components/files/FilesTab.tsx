@@ -98,7 +98,9 @@ export function FilesTab({ agentId, agentName }: FilesTabProps) {
           </div>
           {(() => {
             if (contentLoading) {
-              return <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
+              return (
+                <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
+              )
             }
 
             if (content) {

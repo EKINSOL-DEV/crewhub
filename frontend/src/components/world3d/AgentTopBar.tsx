@@ -18,7 +18,8 @@ const THOUGHTFUL = 'thoughtful'
 interface AgentTopBarProps {
   readonly sessions: CrewSession[]
   readonly getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
-  readonly getRoomForSession: ( sessionKey: string,
+  readonly getRoomForSession: (
+    sessionKey: string,
     sessionData?: { label?: string; model?: string; channel?: string }
   ) => string | undefined
   readonly defaultRoomId?: string
@@ -334,7 +335,10 @@ function AgentPortraitButton({
 
 // ─── Agent Picker Button ───────────────────────────────────────
 
-function AgentPickerToggle({ isOpen, onClick }: Readonly<{ isOpen: boolean; onClick: () => void }>) {
+function AgentPickerToggle({
+  isOpen,
+  onClick,
+}: Readonly<{ isOpen: boolean; onClick: () => void }>) {
   const [hovered, setHovered] = useState(false)
 
   return (
@@ -413,7 +417,10 @@ interface AgentPickerDropdownProps {
   readonly fixedAgents: DropdownEntry[]
   readonly recentSubagents: DropdownEntry[]
   readonly pinnedKey: string | null
-  readonly onSelect: ( session: CrewSession, roomId: string, name: string,
+  readonly onSelect: (
+    session: CrewSession,
+    roomId: string,
+    name: string,
     config: BotVariantConfig
   ) => void
   readonly onPin: (sessionKey: string) => void
@@ -762,7 +769,8 @@ export function AgentTopBar({
 
   // ─── Dropdown entries ──────────────────────────────────────────
 
-  const { fixedAgents, recentSubagents } = useMemo(() => { // NOSONAR
+  const { fixedAgents, recentSubagents } = useMemo(() => {
+    // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const now = Date.now()
     const RECENT_THRESHOLD_MS = 30 * 60 * 1000 // 30 minutes

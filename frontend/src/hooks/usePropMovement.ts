@@ -178,7 +178,8 @@ export function usePropMovement({
       z: number,
       span: { w: number; d: number } = { w: 1, d: 1 },
       excludeKey?: string
-    ): boolean => { // NOSONAR
+    ): boolean => {
+      // NOSONAR
       // NOSONAR: complexity from prop movement with collision detection and bounds checking
       // Check bounds — cells 0 and gridSize-1 are wall cells (from createEmptyGrid).
       // Props must stay in the interior: cells 1 to gridSize-2.

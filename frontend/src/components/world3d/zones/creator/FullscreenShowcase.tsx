@@ -142,19 +142,21 @@ export function FullscreenShowcase({ onClose }: Readonly<FullscreenShowcaseProps
             propName={selectedProp.name}
             onCopy={handleCopyCode}
           />
-        ) : (() => {
-          if (selectedProp) {
-            return (
-              <DetailView
-                prop={selectedProp}
-                onBack={() => setSelectedProp(null)}
-                onViewCode={() => handleViewCode(selectedProp)}
-              />
-            )
-          }
+        ) : (
+          (() => {
+            if (selectedProp) {
+              return (
+                <DetailView
+                  prop={selectedProp}
+                  onBack={() => setSelectedProp(null)}
+                  onViewCode={() => handleViewCode(selectedProp)}
+                />
+              )
+            }
 
-          return <CategoryGridView categories={showcaseCategories} onSelect={setSelectedProp} />
-        })()}
+            return <CategoryGridView categories={showcaseCategories} onSelect={setSelectedProp} />
+          })()
+        )}
       </div>
 
       <style>{showcaseStyles}</style>
@@ -171,10 +173,10 @@ const PROPS_PER_PAGE = 6
 function CategoryGridView({
   categories,
   onSelect,
-}: {
+}: Readonly<{
   readonly categories: ShowcaseCategory[]
   readonly onSelect: (p: ShowcaseProp) => void
-}) {
+}>) {
   const [activeTab, setActiveTab] = useState(categories[0].id)
   const [currentPage, setCurrentPage] = useState(0)
 
@@ -240,7 +242,10 @@ function CategoryGridView({
 
 // ── Showcase Card ─────────────────────────────────────────────
 
-function ShowcaseCard({ prop, onClick }: { prop: ShowcaseProp; readonly onClick: () => void }) {
+function ShowcaseCard({
+  prop,
+  onClick,
+}: Readonly<{ prop: ShowcaseProp; readonly onClick: () => void }>) {
   const [hovered, setHovered] = useState(false)
   const Comp = prop.component
 
@@ -285,11 +290,11 @@ function DetailView({
   prop,
   onBack: _onBack,
   onViewCode,
-}: {
+}: Readonly<{
   readonly prop: ShowcaseProp
   readonly onBack: () => void
   readonly onViewCode: () => void
-}) {
+}>) {
   const Comp = prop.component
 
   return (
@@ -334,12 +339,12 @@ function CodeViewContent({
   loading,
   propName,
   onCopy,
-}: {
+}: Readonly<{
   readonly code: string
   readonly loading: boolean
   readonly propName: string
   readonly onCopy: () => void
-}) {
+}>) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {

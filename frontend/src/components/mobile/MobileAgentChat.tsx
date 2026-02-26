@@ -225,7 +225,8 @@ interface MobileAgentChatProps {
   readonly onOpenSettings?: () => void
 }
 
-export function MobileAgentChat({ // NOSONAR
+export function MobileAgentChat({
+  // NOSONAR
   // NOSONAR: complexity from React component with multiple state interactions
   sessionKey,
   agentName,

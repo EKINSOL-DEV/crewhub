@@ -231,7 +231,6 @@ function ProjectDetailModal({
         }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-
         aria-modal="true"
       >
         {/* Header */}

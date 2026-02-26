@@ -208,7 +208,6 @@ export function PropBrowser() {
       {/* ── Header (draggable) ── */}
       <div
         onMouseDown={onMouseDown}
-
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -225,7 +224,7 @@ export function PropBrowser() {
           Prop Browser
         </span>
         <button
-          onClick={closeBrowser}  // NOSONAR: mouse/drag interaction
+          onClick={closeBrowser} // NOSONAR: mouse/drag interaction
           style={{
             background: 'none',
             border: 'none',

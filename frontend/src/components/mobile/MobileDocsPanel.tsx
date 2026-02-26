@@ -56,7 +56,8 @@ function countFiles(nodes: DocNode[]): number {
 
 // ── Tree Node (mobile optimized) ──────────────────────────────────
 
-function MobileDocTreeNode({ // NOSONAR
+function MobileDocTreeNode({
+  // NOSONAR
   // NOSONAR
   // NOSONAR: complexity from docs panel with filtering and rendering branches
   node,

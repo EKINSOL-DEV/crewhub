@@ -132,7 +132,11 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
         backdropFilter: 'blur(4px)',
       }}
       onClick={(e) => e.target === e.currentTarget && handleClose()}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.target === e.currentTarget && handleClose() } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (e.target === e.currentTarget) handleClose()
+        }
+      }}
     >
       <div
         style={{

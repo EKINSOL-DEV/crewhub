@@ -183,10 +183,17 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
     <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
       className="zen-command-backdrop"
       onClick={handleBackdropClick}
-
       aria-modal="true"
       aria-label="Command Palette"
-     role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}>
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          ;(e.currentTarget as HTMLElement).click()
+        }
+      }}
+    >
       <div className="zen-command-palette">
         <div className="zen-command-input-wrapper">
           <span className="zen-command-input-icon">⌘</span>
@@ -234,7 +241,6 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
                       className={`zen-command-item ${isSelected ? 'zen-command-item-selected' : ''}`}
                       onClick={() => executeCommand(cmd)}
                       onMouseEnter={() => setSelectedIndex(currentIndex)}
-
                       aria-selected={isSelected}
                     >
                       <span className="zen-command-item-icon">{cmd.icon || '→'}</span>

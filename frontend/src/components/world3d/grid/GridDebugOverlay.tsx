@@ -65,12 +65,12 @@ function CellLayer({
   cellSize,
   opacity,
   color,
-}: {
+}: Readonly<{
   readonly cells: { worldX: number; worldZ: number }[]
   readonly cellSize: number
   readonly opacity: number
   readonly color: THREE.Color
-}) {
+}>) {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const count = cells.length
 
@@ -112,11 +112,11 @@ function GridLines({
   gridWidth,
   gridDepth,
   cellSize,
-}: {
+}: Readonly<{
   readonly gridWidth: number
   readonly gridDepth: number
   readonly cellSize: number
-}) {
+}>) {
   const geometry = useMemo(() => {
     const points: THREE.Vector3[] = []
     const halfW = (gridWidth * cellSize) / 2
@@ -149,11 +149,11 @@ function CoordinateLabels({
   gridWidth,
   gridDepth,
   cellSize,
-}: {
+}: Readonly<{
   readonly gridWidth: number
   readonly gridDepth: number
   readonly cellSize: number
-}) {
+}>) {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2
 
@@ -208,7 +208,7 @@ function CoordinateLabels({
 
 // ─── Prop labels (shown in focus mode) ──────────────────────────
 
-function PropLabels({ cells }: { cells: CellInstance[] }) {
+function PropLabels({ cells }: Readonly<{ cells: CellInstance[] }>) {
   // Only show labels for cells that have a propId and are span parents (no duplicates)
   const labelCells = useMemo(() => {
     const seen = new Set<string>()
@@ -315,7 +315,10 @@ export function GridDebugOverlay({ blueprint }: Omit<GridDebugOverlayProps, 'sho
 
 // Coordinate labels and prop labels live outside the rotated group
 // so Html elements orient correctly.
-export function GridDebugLabels({ blueprint, showLabels = false }: Readonly<GridDebugOverlayProps>) {
+export function GridDebugLabels({
+  blueprint,
+  showLabels = false,
+}: Readonly<GridDebugOverlayProps>) {
   const { gridWidth, gridDepth, cellSize, cells } = blueprint
 
   const propCells = useMemo(() => {

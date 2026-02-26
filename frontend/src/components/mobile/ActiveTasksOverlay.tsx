@@ -27,7 +27,10 @@ function escapeHtml(str: string): string {
 
 // ── Task Logs View ─────────────────────────────────────────────
 
-function TaskLogsView({ session, onBack }: { session: CrewSession; readonly onBack: () => void }) {
+function TaskLogsView({
+  session,
+  onBack,
+}: Readonly<{ session: CrewSession; readonly onBack: () => void }>) {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -274,11 +277,11 @@ function TasksListView({
   sessions,
   onBack,
   onSelectTask,
-}: {
+}: Readonly<{
   readonly sessions: CrewSession[]
   readonly onBack: () => void
   readonly onSelectTask: (session: CrewSession) => void
-}) {
+}>) {
   const activeSessions = sessions.filter((s) => isActive(s))
   const idleSessions = sessions.filter((s) => !isActive(s))
 
@@ -395,7 +398,10 @@ function TasksListView({
   )
 }
 
-function TaskRow({ session, onClick }: { session: CrewSession; readonly onClick: () => void }) {
+function TaskRow({
+  session,
+  onClick,
+}: Readonly<{ session: CrewSession; readonly onClick: () => void }>) {
   const uuid = session.key.split(':subagent:')[1]?.slice(0, 8) || '?'
   const label = session.label || `Subagent ${uuid}`
   const active = isActive(session)
@@ -469,10 +475,10 @@ type OverlayView = { type: 'list' } | { type: 'logs'; session: CrewSession }
 export function ActiveTasksOverlay({
   sessions,
   onClose,
-}: {
+}: Readonly<{
   readonly sessions: CrewSession[]
   readonly onClose: () => void
-}) {
+}>) {
   const [view, setView] = useState<OverlayView>({ type: 'list' })
 
   if (view.type === 'logs') {
@@ -492,7 +498,10 @@ export function ActiveTasksOverlay({
 
 // ── Header Badge Button ────────────────────────────────────────
 
-export function ActiveTasksBadge({ count, onClick }: { count: number; readonly onClick: () => void }) {
+export function ActiveTasksBadge({
+  count,
+  onClick,
+}: Readonly<{ count: number; readonly onClick: () => void }>) {
   if (count === 0) return null
 
   return (

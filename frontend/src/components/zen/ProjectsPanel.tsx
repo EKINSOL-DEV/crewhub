@@ -14,7 +14,9 @@ const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted)'
 interface ProjectsPanelProps {
   readonly projectId?: string | null
   readonly projectName?: string | null
-  readonly onProjectFilterChange?: ( projectId: string | null, projectName: string,
+  readonly onProjectFilterChange?: (
+    projectId: string | null,
+    projectName: string,
     projectColor?: string
   ) => void
 }

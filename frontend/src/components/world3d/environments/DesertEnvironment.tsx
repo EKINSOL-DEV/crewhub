@@ -14,7 +14,10 @@ const DECORATION_MAX_DIST = 80 // cull decorations beyond this radius
 
 // ─── Animated Tumbleweed (max 6, kept individual) ────────────────
 
-function Tumbleweed({ position, phase }: { position: [number, number, number]; readonly phase: number }) {
+function Tumbleweed({
+  position,
+  phase,
+}: Readonly<{ position: [number, number, number]; readonly phase: number }>) {
   const ref = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
     if (!ref.current) return
@@ -40,13 +43,13 @@ function InstancedDecoration({
   children,
   castShadow = true,
   receiveShadow = false,
-}: {
+}: Readonly<{
   readonly matrices: THREE.Matrix4[]
   readonly color: string
   readonly children: React.ReactNode
   readonly castShadow?: boolean
   readonly receiveShadow?: boolean
-}) {
+}>) {
   const ref = useRef<THREE.InstancedMesh>(null)
   const toonProps = getToonMaterialProps(color)
   const count = matrices.length
@@ -83,11 +86,15 @@ interface DesertEnvironmentProps {
   readonly buildingDepth: number
 }
 
-export function DesertEnvironment({ buildingWidth, buildingDepth }: Readonly<DesertEnvironmentProps>) {
+export function DesertEnvironment({
+  buildingWidth,
+  buildingDepth,
+}: Readonly<DesertEnvironmentProps>) {
   const sandToonProps = getToonMaterialProps('#D2B48C')
   const groundRef = useRef<THREE.InstancedMesh>(null)
 
-  const data = useMemo(() => { // NOSONAR
+  const data = useMemo(() => {
+    // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const groundMatrices: THREE.Matrix4[] = []
     const groundColors: THREE.Color[] = []

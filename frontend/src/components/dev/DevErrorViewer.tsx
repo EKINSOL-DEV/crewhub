@@ -116,7 +116,7 @@ export function DevToolbar() {
 
 // ── Error Viewer Modal ─────────────────────────────────────────
 
-function ErrorViewerModal({ onClose }: { onClose: () => void }) {
+function ErrorViewerModal({ onClose }: Readonly<{ onClose: () => void }>) {
   const [errors, setErrors] = useState(getAllErrors)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
@@ -330,7 +330,11 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
                 {/* Error summary row */}
                 <div
                   onClick={() => setExpandedId(expanded ? null : err.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setExpandedId(expanded ? null : err.id) } }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setExpandedId(expanded ? null : err.id)
+                    }
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
@@ -511,7 +515,7 @@ const TYPE_COLORS: Record<string, string> = {
   custom: '#7aa2f7',
 }
 
-function TypeBadge({ type }: { type: string }) {
+function TypeBadge({ type }: Readonly<{ type: string }>) {
   const label = type.replace('unhandled-', '').replace('console.', 'c.')
   return (
     <span

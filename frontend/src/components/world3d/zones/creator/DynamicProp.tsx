@@ -30,7 +30,8 @@ interface DynamicPropProps {
   readonly onDraggingChanged?: (dragging: boolean) => void
 }
 
-function DynamicMesh({ // NOSONAR
+function DynamicMesh({
+  // NOSONAR
   // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   part,
   index,
@@ -138,13 +139,17 @@ function DynamicMesh({ // NOSONAR
           emissive={selected ? '#4466ff' : part.color}
           emissiveIntensity={selected ? 0.8 : 0.5}
         />
-      ) : (() => {
-        if (selected) {
-          return <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
-        }
+      ) : (
+        (() => {
+          if (selected) {
+            return (
+              <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
+            )
+          }
 
-        return <meshToonMaterial {...toon} />
-      })()}
+          return <meshToonMaterial {...toon} />
+        })()
+      )}
     </mesh>
   )
 }
@@ -307,7 +312,9 @@ export function DynamicProp({
       <group ref={groupRef} position={position} scale={scale} onClick={handleBackgroundClick}>
         {parts.map((part, i) => {
           if (editMode && selectedPartIndex === i && onPartTransform) {
-            return <SelectedPartMesh key={JSON.stringify(part)} part={part} meshRef={selectedMeshRef} />
+            return (
+              <SelectedPartMesh key={JSON.stringify(part)} part={part} meshRef={selectedMeshRef} />
+            )
           }
           return (
             <DynamicMesh

@@ -4,7 +4,7 @@ import { useRooms } from '@/hooks/useRooms'
 
 // ─── Section Header ─────────────────────────────────────────────
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({ title }: Readonly<{ title: string }>) {
   return (
     <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mt-2 mb-1 border-b border-gray-700 pb-1">
       {title}
@@ -126,7 +126,7 @@ export function DebugPanel() {
               {debugBots.length}
             </span>
             <button
-              onClick={() => setCollapsed((c) => !c)}  // NOSONAR: mouse/drag interaction
+              onClick={() => setCollapsed((c) => !c)} // NOSONAR: mouse/drag interaction
               className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700/60 transition-colors text-xs"
               title={collapsed ? 'Expand' : 'Minimize'}
             >

@@ -47,15 +47,16 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block ─────────────────────────────────────────────
 
-function ContentBlockView({ // NOSONAR
+function ContentBlockView({
+  // NOSONAR
   // NOSONAR
   // NOSONAR: complexity from fullscreen overlay with multiple content and action type branches
   block,
   filterText,
-}: {
+}: Readonly<{
   readonly block: SessionContentBlock
   readonly filterText?: string
-}) {
+}>) {
   const [expanded, setExpanded] = useState(false)
 
   const highlightText = useCallback(
@@ -129,7 +130,10 @@ function ContentBlockView({ // NOSONAR
 
 // ── Message Bubble ────────────────────────────────────────────
 
-function MessageBubble({ message, filterText }: { message: SessionMessage; readonly filterText?: string }) {
+function MessageBubble({
+  message,
+  filterText,
+}: Readonly<{ message: SessionMessage; readonly filterText?: string }>) {
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
   let messageRole: string

@@ -227,10 +227,17 @@ export function ZenAgentPicker({
     <div // NOSONAR: backdrop div closes modal on click; role='dialog' conveys semantic purpose
       className="zen-picker-backdrop"
       onClick={handleBackdropClick}
-
       aria-modal="true"
       aria-label="Select Agent"
-     role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}>
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          ;(e.currentTarget as HTMLElement).click()
+        }
+      }}
+    >
       <div className="zen-picker-modal">
         <div className="zen-picker-search">
           <span className="zen-picker-search-icon">🔍</span>

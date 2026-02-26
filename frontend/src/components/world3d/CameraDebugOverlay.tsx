@@ -32,7 +32,7 @@ function notifyListeners() {
 }
 
 /** Place this inside Canvas to track camera values */
-export function CameraDebugTracker({ enabled }: { enabled: boolean }) {
+export function CameraDebugTracker({ enabled }: Readonly<{ enabled: boolean }>) {
   const { camera } = useThree()
   const dir = useRef(new THREE.Vector3())
 
@@ -129,6 +129,6 @@ export function CameraDebugHUD({ visible }: Readonly<CameraDebugHUDProps>) {
 }
 
 // Legacy export for compatibility (deprecated)
-export function CameraDebugOverlay({ visible }: { visible: boolean }) {
+export function CameraDebugOverlay({ visible }: Readonly<{ visible: boolean }>) {
   return <CameraDebugTracker enabled={visible} />
 }

@@ -58,7 +58,7 @@ function ToolIcon() {
 
 // ─── Thinker: Three dots (buttons on lower body) ───────────────
 
-function ThreeDotsIcon({ color }: { color: string }) {
+function ThreeDotsIcon({ color }: Readonly<{ color: string }>) {
   const dotColor = new THREE.Color(color).multiplyScalar(1.3)
   const hex = '#' + dotColor.getHexString()
   return (
@@ -83,11 +83,11 @@ function SevenSegmentDigit({
   digit,
   position,
   color,
-}: {
+}: Readonly<{
   readonly digit: string
   readonly position: [number, number, number]
   readonly color: string
-}) {
+}>) {
   // Segment configuration for each digit (top, top-left, top-right, middle, bottom-left, bottom-right, bottom)
   const segments: Record<string, boolean[]> = {
     '0': [true, true, true, false, true, true, true],
@@ -210,7 +210,7 @@ function ChatDotsIcon() {
   )
 }
 
-function AnimatedDot({ x, delay }: { x: number; readonly delay: number }) {
+function AnimatedDot({ x, delay }: Readonly<{ x: number; readonly delay: number }>) {
   const ref = useRef<THREE.Mesh>(null)
 
   useFrame(({ clock }) => {
@@ -234,7 +234,7 @@ function AnimatedDot({ x, delay }: { x: number; readonly delay: number }) {
  * Simple code bracket icon using line segments.
  * Displays "</>" symbol without Troika Text to avoid shader issues.
  */
-function CodeBrackets({ color }: { color: string }) {
+function CodeBrackets({ color }: Readonly<{ color: string }>) {
   const t = 0.008 // line thickness
   const h = 0.04 // bracket height
   const w = 0.015 // bracket width

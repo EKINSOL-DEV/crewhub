@@ -17,7 +17,7 @@ interface MeetingProgressViewProps {
   readonly onViewOutput: () => void
 }
 
-function TurnEntry({ turn }: { turn: MeetingTurn }) {
+function TurnEntry({ turn }: Readonly<{ turn: MeetingTurn }>) {
   let statusIcon: string
   if (turn.status === 'done') {
     statusIcon = '✓'
@@ -76,7 +76,7 @@ function TurnEntry({ turn }: { turn: MeetingTurn }) {
   )
 }
 
-function RoundSection({ round }: { round: MeetingRound }) {
+function RoundSection({ round }: Readonly<{ round: MeetingRound }>) {
   return (
     <div className="mb-4">
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
@@ -89,7 +89,11 @@ function RoundSection({ round }: { round: MeetingRound }) {
   )
 }
 
-export function MeetingProgressView({ meeting, onCancel, onViewOutput }: Readonly<MeetingProgressViewProps>) {
+export function MeetingProgressView({
+  meeting,
+  onCancel,
+  onViewOutput,
+}: Readonly<MeetingProgressViewProps>) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom on new content

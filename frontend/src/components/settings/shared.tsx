@@ -4,7 +4,10 @@ import { ChevronRight } from 'lucide-react'
 
 // ─── Section wrapper ─────────────────────────────────────────────────────────
 
-export function Section({ title, children }: { title: string; readonly children: React.ReactNode }) {
+export function Section({
+  title,
+  children,
+}: Readonly<{ title: string; readonly children: React.ReactNode }>) {
   return (
     <div className="rounded-xl border bg-card/80 p-6 space-y-5 shadow-sm">
       <h2 className="text-base font-semibold tracking-tight">{title}</h2>
@@ -20,12 +23,12 @@ export function CollapsibleSection({
   badge,
   defaultOpen = true,
   children,
-}: {
+}: Readonly<{
   readonly title: string
   readonly badge?: string
   readonly defaultOpen?: boolean
   readonly children: React.ReactNode
-}) {
+}>) {
   const [expanded, setExpanded] = useState(defaultOpen)
   return (
     <div className="rounded-xl border bg-card/80 shadow-sm overflow-hidden">

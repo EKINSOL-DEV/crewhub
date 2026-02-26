@@ -174,7 +174,7 @@ export function useCreatorMode(): CreatorModeContextValue {
 const LS_CREATOR_KEY = 'crewhub-creator-mode'
 const LS_API_KEY = 'crewhub-api-key'
 
-export function CreatorModeProvider({ children }: { children: ReactNode }) {
+export function CreatorModeProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [isCreatorMode, setIsCreatorMode] = useState<boolean>(() => {
     try {
       return localStorage.getItem(LS_CREATOR_KEY) === 'true'

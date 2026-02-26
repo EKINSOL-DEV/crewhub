@@ -17,7 +17,10 @@ interface PlacedPropsRendererProps {
   readonly cellSize?: number
 }
 
-export function PlacedPropsRenderer({ placedProps, cellSize = 1 }: Readonly<PlacedPropsRendererProps>) {
+export function PlacedPropsRenderer({
+  placedProps,
+  cellSize = 1,
+}: Readonly<PlacedPropsRendererProps>) {
   return (
     <>
       {placedProps.map((placed) => (
@@ -27,7 +30,10 @@ export function PlacedPropsRenderer({ placedProps, cellSize = 1 }: Readonly<Plac
   )
 }
 
-function PlacedPropMesh({ placed, cellSize }: { placed: PlacedProp; readonly cellSize: number }) {
+function PlacedPropMesh({
+  placed,
+  cellSize,
+}: Readonly<{ placed: PlacedProp; readonly cellSize: number }>) {
   const entry = useMemo(() => getPropEntry(placed.prop_id), [placed.prop_id])
 
   if (!entry) return null

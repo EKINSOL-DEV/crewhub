@@ -49,7 +49,11 @@ export function RunOrSelfDialog({
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         }}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation() } }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation()
+          }
+        }}
       >
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>

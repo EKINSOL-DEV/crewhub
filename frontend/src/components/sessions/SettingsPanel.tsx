@@ -151,7 +151,11 @@ export function SettingsPanel({
         <div
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           onClick={() => onOpenChange(false)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onOpenChange(false) } }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              onOpenChange(false)
+            }
+          }}
         />
 
         {/* Fullscreen content area */}

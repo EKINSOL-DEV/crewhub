@@ -72,12 +72,12 @@ function ActiveTaskItem({
   opacity,
   isSelected,
   onSelect,
-}: {
+}: Readonly<{
   readonly task: ActiveTask
   readonly opacity: number
   readonly isSelected: boolean
   readonly onSelect: () => void
-}) {
+}>) {
   return (
     <div
       className={`zen-active-task-item zen-fade-in ${isSelected ? 'zen-active-task-item-selected' : ''}`}
@@ -108,7 +108,7 @@ function ActiveTaskItem({
 
 // ── Event Log Item ────────────────────────────────────────────
 
-function EventLogItem({ event }: { event: ActivityEvent }) {
+function EventLogItem({ event }: Readonly<{ event: ActivityEvent }>) {
   const typeColors: Record<string, string> = {
     created: 'var(--zen-success)',
     updated: 'var(--zen-info)',

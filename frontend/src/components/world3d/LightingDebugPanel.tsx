@@ -21,14 +21,14 @@ function Slider({
   max,
   step,
   onChange,
-}: {
+}: Readonly<{
   readonly label: string
   readonly value: number
   readonly min: number
   readonly max: number
   readonly step: number
   readonly onChange: (v: number) => void
-}) {
+}>) {
   let formattedValue: string
   if (step < 0.01) {
     formattedValue = value.toFixed(4)
@@ -64,11 +64,11 @@ function ColorField({
   label,
   value,
   onChange,
-}: {
+}: Readonly<{
   readonly label: string
   readonly value: string
   readonly onChange: (v: string) => void
-}) {
+}>) {
   return (
     <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
       <span className="text-[10px] text-gray-400 w-14 shrink-0 truncate" title={label}>
@@ -91,11 +91,11 @@ function Toggle({
   label,
   checked,
   onChange,
-}: {
+}: Readonly<{
   readonly label: string
   readonly checked: boolean
   readonly onChange: (v: boolean) => void
-}) {
+}>) {
   return (
     <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
       <span className={CLS_TEXT_10PX_TEXT_GRAY_400_W_14_SHRINK_0}>{label}</span>
@@ -113,7 +113,7 @@ function Toggle({
 
 // ─── Section Header ─────────────────────────────────────────────
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({ title }: Readonly<{ title: string }>) {
   return (
     <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mt-2 mb-1 border-b border-gray-700 pb-1">
       {title}
@@ -307,7 +307,7 @@ export function LightingDebugPanel() {
         >
           <span className="text-xs font-semibold text-gray-200">💡 Lighting Editor</span>
           <button
-            onClick={() => setMinimized((m) => !m)}  // NOSONAR: mouse/drag interaction
+            onClick={() => setMinimized((m) => !m)} // NOSONAR: mouse/drag interaction
             className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700/60 transition-colors text-xs"
             title={minimized ? 'Expand' : 'Minimize'}
           >

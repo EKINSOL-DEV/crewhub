@@ -143,7 +143,8 @@ export class ProximityGrid {
    * Query entities within a radius of a point.
    * Returns results sorted by distance (closest first).
    */
-  queryRadius(query: ProximityQuery): QueryResult[] { // NOSONAR
+  queryRadius(query: ProximityQuery): QueryResult[] {
+    // NOSONAR
     // NOSONAR: complexity from legitimate spatial grid query with filtering; splitting would hurt readability
     const { x, z, radius, type, excludeId, limit } = query
     const results: QueryResult[] = []

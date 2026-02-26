@@ -261,7 +261,11 @@ function CompactTaskCard({
   return (
     <div
       onClick={() => onClick?.(task)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onClick?.(task) } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onClick?.(task)
+        }
+      }}
       className={cn(
         'group px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded border-l-2 cursor-pointer',
         'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',

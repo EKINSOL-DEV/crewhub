@@ -54,12 +54,12 @@ function NavBtn({
   disabled,
   title,
   children,
-}: {
+}: Readonly<{
   readonly onClick: () => void
   readonly disabled?: boolean
   readonly title: string
   readonly children: React.ReactNode
-}) {
+}>) {
   return (
     <button
       type="button"
@@ -100,7 +100,10 @@ function NavBtn({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: Readonly<ZenBrowserPanelProps>) {
+export function ZenBrowserPanel({
+  url: controlledUrl = '',
+  onUrlChange,
+}: Readonly<ZenBrowserPanelProps>) {
   // The URL currently displayed in the browser area
   const [loadedUrl, setLoadedUrl] = useState(controlledUrl)
   // The text in the address bar (may differ while user is typing)
@@ -351,7 +354,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: Readon
 
 // ── Empty state ────────────────────────────────────────────────────────────────
 
-function EmptyBrowserState({ onNavigate }: { onNavigate: (url: string) => void }) {
+function EmptyBrowserState({ onNavigate }: Readonly<{ onNavigate: (url: string) => void }>) {
   const suggestions = [
     { label: 'Google', url: 'https://www.google.com', icon: '🔍' },
     { label: 'GitHub', url: 'https://github.com', icon: '🐙' },
@@ -424,10 +427,10 @@ function EmptyBrowserState({ onNavigate }: { onNavigate: (url: string) => void }
 function IframeBlockedMessage({
   url,
   onOpenExternal,
-}: {
+}: Readonly<{
   readonly url: string
   readonly onOpenExternal: () => void
-}) {
+}>) {
   return (
     <div
       style={{

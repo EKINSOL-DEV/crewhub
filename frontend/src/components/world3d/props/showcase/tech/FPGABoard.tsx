@@ -34,12 +34,14 @@ export function FPGABoard() {
           <meshStandardMaterial color={led.color} emissive={led.color} emissiveIntensity={1} />
         </mesh>
       ))}
-      {[-0.13, -0.106, -0.082, -0.058, -0.034, -0.01, 0.014, 0.038, 0.062, 0.086, 0.11, 0.134].map((x) => (
-        <mesh key={x} position={[x, -0.14, -0.11]}>
-          <cylinderGeometry args={[0.003, 0.003, 0.02, 3]} />
-          <meshStandardMaterial color="#ccccdd" flatShading />
-        </mesh>
-      ))}
+      {[-0.13, -0.106, -0.082, -0.058, -0.034, -0.01, 0.014, 0.038, 0.062, 0.086, 0.11, 0.134].map(
+        (x) => (
+          <mesh key={x} position={[x, -0.14, -0.11]}>
+            <cylinderGeometry args={[0.003, 0.003, 0.02, 3]} />
+            <meshStandardMaterial color="#ccccdd" flatShading />
+          </mesh>
+        )
+      )}
     </group>
   )
 }

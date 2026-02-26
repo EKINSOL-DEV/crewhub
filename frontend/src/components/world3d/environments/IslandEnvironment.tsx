@@ -37,7 +37,7 @@ function useIslandGeometry(radius: number) {
 }
 
 /** Island top surface — flat circle for grass */
-function IslandTop({ radius }: { radius: number }) {
+function IslandTop({ radius }: Readonly<{ radius: number }>) {
   const toonProps = getToonMaterialProps('#5E8F45')
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
@@ -48,7 +48,7 @@ function IslandTop({ radius }: { radius: number }) {
 }
 
 /** Grass tufts scattered on the island surface */
-function IslandGrassTufts({ radius }: { radius: number }) {
+function IslandGrassTufts({ radius }: Readonly<{ radius: number }>) {
   const toonProps = getToonMaterialProps('#4A7A35')
   const tufts = useMemo(() => {
     const result: { pos: [number, number, number]; rot: number }[] = []
@@ -167,7 +167,10 @@ function DistantClouds() {
   )
 }
 
-export function IslandEnvironment({ buildingWidth, buildingDepth }: Readonly<IslandEnvironmentProps>) {
+export function IslandEnvironment({
+  buildingWidth,
+  buildingDepth,
+}: Readonly<IslandEnvironmentProps>) {
   // Island radius covers roughly the same area as the building + some margin
   const radius = Math.max(buildingWidth, buildingDepth) / 2 + 6
   const islandGeo = useIslandGeometry(radius)

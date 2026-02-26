@@ -125,12 +125,12 @@ function FileTree({
   onSelect,
   selectedPath,
   depth = 0,
-}: {
+}: Readonly<{
   readonly entries: FileEntry[]
   readonly onSelect: (entry: FileEntry) => void
   readonly selectedPath: string | null
   readonly depth?: number
-}) {
+}>) {
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     // Auto-expand first level
     return new Set(entries.filter((e) => e.type === 'directory').map((e) => e.path))
@@ -412,7 +412,10 @@ const DOC_MD_COMPONENTS = {
 
 // ── Markdown Viewer (react-markdown) ───────────────────────────
 
-function MarkdownViewer({ content, projectId }: { content: string; readonly projectId: string }) {
+function MarkdownViewer({
+  content,
+  projectId,
+}: Readonly<{ content: string; readonly projectId: string }>) {
   return (
     <ProjectIdContext.Provider value={projectId}>
       <div className="md-content">

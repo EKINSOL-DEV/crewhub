@@ -65,10 +65,10 @@ export function RoomProps({ roomName, roomSize }: Readonly<RoomPropsProps>) {
 function Whiteboard({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const frameToon = getToonMaterialProps('#888888')
   const boardToon = getToonMaterialProps('#F5F5F5')
   const trayToon = getToonMaterialProps('#666666')
@@ -98,10 +98,10 @@ function Whiteboard({
 function ServerRack({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const bodyToon = getToonMaterialProps('#2A2A2A')
   const rackToon = getToonMaterialProps('#1A1A1A')
 
@@ -135,7 +135,10 @@ function ServerRack({
 }
 
 /** Blinking LED for server rack */
-function ServerLED({ position, color }: { position: [number, number, number]; readonly color: string }) {
+function ServerLED({
+  position,
+  color,
+}: Readonly<{ position: [number, number, number]; readonly color: string }>) {
   const ref = useRef<THREE.Mesh>(null)
   // Pre-compute stable blink speed to avoid Math.random() in useFrame
   const blinkSpeed = useMemo(() => 2 + Math.random() * 0.5, [])
@@ -162,10 +165,10 @@ function ServerLED({ position, color }: { position: [number, number, number]; re
 function DeskLamp({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const baseToon = getToonMaterialProps('#444444')
   const armToon = getToonMaterialProps('#555555')
   const shadeToon = getToonMaterialProps('#888888')
@@ -193,7 +196,7 @@ function DeskLamp({
 }
 
 /** Cable mess on floor */
-function CableMess({ position }: { position: [number, number, number] }) {
+function CableMess({ position }: Readonly<{ position: [number, number, number] }>) {
   const cableToon = getToonMaterialProps('#222222')
   const cableRedToon = getToonMaterialProps('#993333')
   const cableBlueToon = getToonMaterialProps('#334499')
@@ -241,10 +244,10 @@ function CableMess({ position }: { position: [number, number, number] }) {
 function Easel({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const woodToon = getToonMaterialProps(WARM_COLORS.wood)
   const canvasToon = getToonMaterialProps('#FFFFF0')
 
@@ -300,10 +303,10 @@ function Easel({
 function ColorPalette({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const baseToon = getToonMaterialProps(WARM_COLORS.woodLight)
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#34D399', '#F97316', '#FFFFFF']
 
@@ -333,10 +336,10 @@ function ColorPalette({
 function MoodBoard({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const frameToon = getToonMaterialProps('#555555')
   const boardToon = getToonMaterialProps('#333333')
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#F97316', '#60A5FA']
@@ -370,10 +373,10 @@ function MoodBoard({
 function PresentationScreen({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const frameToon = getToonMaterialProps('#333333')
 
   return (
@@ -396,10 +399,10 @@ function PresentationScreen({
 function BarChart({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const baseToon = getToonMaterialProps('#555555')
   const bars = [
     { h: 0.3, color: '#FF6B6B' },
@@ -431,10 +434,10 @@ function BarChart({
 function Megaphone({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const bodyToon = getToonMaterialProps('#FF8C00')
   const bellToon = getToonMaterialProps('#FFB347')
 
@@ -458,10 +461,10 @@ function Megaphone({
 function StandingDesk({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
   const metalToon = getToonMaterialProps('#666666')
 
@@ -502,10 +505,10 @@ function StandingDesk({
 function RoundTable({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
   const legToon = getToonMaterialProps(WARM_COLORS.wood)
 
@@ -534,10 +537,10 @@ function RoundTable({
 function BeanBag({
   position,
   color = '#6366F1',
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly color?: string
-}) {
+}>) {
   const toon = getToonMaterialProps(color)
 
   return (
@@ -559,10 +562,10 @@ function BeanBag({
 function Bookshelf({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const shelfToon = getToonMaterialProps(WARM_COLORS.wood)
   const bookColors = [
     '#E74C3C',
@@ -612,10 +615,10 @@ function Bookshelf({
 function WallClock({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const frameToon = getToonMaterialProps('#333333')
   const faceToon = getToonMaterialProps('#FFFFF0')
   const handRef1 = useRef<THREE.Mesh>(null)
@@ -676,10 +679,10 @@ function WallClock({
 function SmallScreen({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const frameToon = getToonMaterialProps('#2A2A2A')
 
   return (
@@ -700,10 +703,10 @@ function SmallScreen({
 function ConveyorBelt({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const beltToon = getToonMaterialProps('#444444')
   const frameToon = getToonMaterialProps('#666666')
   const boxColors = ['#FF8C00', '#4ECDC4', '#A78BFA']
@@ -746,10 +749,10 @@ function ConveyorBelt({
 function GearMechanism({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const gearToon = getToonMaterialProps('#777777')
   const gear1Ref = useRef<THREE.Group>(null)
   const gear2Ref = useRef<THREE.Group>(null)
@@ -814,10 +817,10 @@ function GearMechanism({
 function ControlPanel({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const bodyToon = getToonMaterialProps('#3A3A3A')
   const panelToon = getToonMaterialProps('#4A4A4A')
   const buttonColors = ['#44AA44', '#CC3333', '#FFAA00', '#4488CC', '#44AA44', '#CC3333']
@@ -857,10 +860,10 @@ function ControlPanel({
 function SatelliteDish({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const dishToon = getToonMaterialProps('#CCCCCC')
   const armToon = getToonMaterialProps('#888888')
 
@@ -891,7 +894,7 @@ function SatelliteDish({
 }
 
 /** Antenna tower (tall thin cylinder with rings) */
-function AntennaTower({ position }: { position: [number, number, number] }) {
+function AntennaTower({ position }: Readonly<{ position: [number, number, number] }>) {
   const poleToon = getToonMaterialProps('#777777')
   const ringToon = getToonMaterialProps('#999999')
 
@@ -923,10 +926,10 @@ function AntennaTower({ position }: { position: [number, number, number] }) {
 function Headset({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const bandToon = getToonMaterialProps('#333333')
   const earToon = getToonMaterialProps('#444444')
   const cushionToon = getToonMaterialProps('#555555')
@@ -970,7 +973,7 @@ function Headset({
 }
 
 /** Signal wave rings (animated, transparent) */
-function SignalWaves({ position }: { position: [number, number, number] }) {
+function SignalWaves({ position }: Readonly<{ position: [number, number, number] }>) {
   const ring1Ref = useRef<THREE.Mesh>(null)
   const ring2Ref = useRef<THREE.Mesh>(null)
   const ring3Ref = useRef<THREE.Mesh>(null)
@@ -995,7 +998,11 @@ function SignalWaves({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
       {[ring1Ref, ring2Ref, ring3Ref].map((ref) => (
-        <mesh key={ref === ring1Ref ? "ring-1" : ref === ring2Ref ? "ring-2" : "ring-3"} ref={ref} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh
+          key={ref === ring1Ref ? 'ring-1' : ref === ring2Ref ? 'ring-2' : 'ring-3'}
+          ref={ref}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
           <torusGeometry args={[0.3, 0.02, 8, 24]} />
           <meshStandardMaterial
             color="#60A5FA"
@@ -1011,7 +1018,7 @@ function SignalWaves({ position }: { position: [number, number, number] }) {
 }
 
 /** Status lights (colored spheres) */
-function StatusLights({ position }: { position: [number, number, number] }) {
+function StatusLights({ position }: Readonly<{ position: [number, number, number] }>) {
   const lights = [
     { color: '#44CC44', x: -0.15 },
     { color: '#CCCC44', x: 0 },
@@ -1040,10 +1047,10 @@ function StatusLights({ position }: { position: [number, number, number] }) {
 function FilingCabinet({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const bodyToon = getToonMaterialProps('#777777')
   const drawerToon = getToonMaterialProps('#888888')
   const handleToon = getToonMaterialProps('#AAAAAA')
@@ -1074,7 +1081,7 @@ function FilingCabinet({
 }
 
 /** Fire extinguisher */
-function FireExtinguisher({ position }: { position: [number, number, number] }) {
+function FireExtinguisher({ position }: Readonly<{ position: [number, number, number] }>) {
   const bodyToon = getToonMaterialProps('#CC2222')
   const topToon = getToonMaterialProps('#444444')
 
@@ -1113,10 +1120,10 @@ function FireExtinguisher({ position }: { position: [number, number, number] }) 
 function DrawingTablet({
   position,
   rotation,
-}: {
+}: Readonly<{
   readonly position: [number, number, number]
   readonly rotation?: [number, number, number]
-}) {
+}>) {
   const baseToon = getToonMaterialProps('#2A2A2A')
   const penToon = getToonMaterialProps('#555555')
 

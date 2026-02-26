@@ -37,7 +37,10 @@ function formatModel(model?: string): string {
   return parts[parts.length - 1].slice(0, 24)
 }
 
-function InfoRow({ label, children }: { label: string; readonly children: React.ReactNode }) {
+function InfoRow({
+  label,
+  children,
+}: Readonly<{ label: string; readonly children: React.ReactNode }>) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>{label}</span>

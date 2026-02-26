@@ -397,7 +397,11 @@ export function ContextInspector({ roomId, roomName, onClose }: Readonly<Context
 
 // ── Stat Badge ──────────────────────────────────────────────────
 
-function StatBadge({ label, value, color }: { label: string; readonly value: string; readonly color?: string }) {
+function StatBadge({
+  label,
+  value,
+  color,
+}: Readonly<{ label: string; readonly value: string; readonly color?: string }>) {
   return (
     <div
       style={{
@@ -431,11 +435,11 @@ function TreeView({
   data,
   prevData,
   depth = 0,
-}: {
+}: Readonly<{
   readonly data: unknown
   readonly prevData?: unknown
   readonly depth?: number
-}) {
+}>) {
   if (data === null || data === undefined) {
     return <span style={{ color: '#64748b', fontStyle: 'italic' }}>null</span>
   }
@@ -483,11 +487,11 @@ function ObjectView({
   obj,
   prevObj,
   depth,
-}: {
+}: Readonly<{
   readonly obj: Record<string, unknown>
   readonly prevObj?: Record<string, unknown>
   readonly depth: number
-}) {
+}>) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const toggle = (key: string) => {
@@ -570,11 +574,11 @@ function ArrayView({
   items,
   prevItems,
   depth,
-}: {
+}: Readonly<{
   readonly items: unknown[]
   readonly prevItems?: unknown[]
   readonly depth: number
-}) {
+}>) {
   const [collapsed, setCollapsed] = useState(items.length > 5)
 
   if (collapsed) {

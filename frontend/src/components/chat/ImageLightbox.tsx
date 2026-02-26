@@ -88,10 +88,17 @@ export function ImageLightbox({ src, alt = 'Image', onClose }: ImageLightboxProp
     <div // NOSONAR: backdrop div closes lightbox on click; role='dialog' conveys purpose
       style={overlayStyle}
       onClick={onClose}
-
       aria-modal="true"
       aria-label="Image viewer"
-     role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}>
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          ;(e.currentTarget as HTMLElement).click()
+        }
+      }}
+    >
       {/* Close button */}
       <button
         style={closeButtonStyle}
@@ -111,8 +118,14 @@ export function ImageLightbox({ src, alt = 'Image', onClose }: ImageLightboxProp
       </button>
 
       {/* Image container - stop propagation to prevent closing when clicking image */}
-      <div style={imageContainerStyle} onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation() } }}
+      <div
+        style={imageContainerStyle}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation()
+          }
+        }}
       >
         <img src={src} alt={alt} style={imageStyle} loading="eager" />
       </div>

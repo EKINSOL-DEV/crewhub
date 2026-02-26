@@ -47,7 +47,6 @@ export function ParticipantListSheet({
         }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-
         aria-modal="true"
       >
         {/* Handle */}

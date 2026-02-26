@@ -107,7 +107,7 @@ interface MeetingContextValue {
 
 const MeetingContext = createContext<MeetingContextValue | null>(null)
 
-export function MeetingProvider({ children }: { children: ReactNode }) {
+export function MeetingProvider({ children }: Readonly<{ children: ReactNode }>) {
   const realMeeting = useMeeting()
   const { demoMeeting, startDemoMeeting, isDemoMeetingActive, isDemoMeetingComplete } =
     useDemoMeeting()

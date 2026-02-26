@@ -366,11 +366,17 @@ function BackupSection() {
 
             {(() => {
               if (loading && backups.length === 0) {
-                return <div className="text-center py-4 text-sm text-muted-foreground">Loading…</div>
+                return (
+                  <div className="text-center py-4 text-sm text-muted-foreground">Loading…</div>
+                )
               }
 
               if (backups.length === 0) {
-                return <div className="text-center py-4 text-sm text-muted-foreground">No backups yet</div>
+                return (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    No backups yet
+                  </div>
+                )
               }
 
               return (

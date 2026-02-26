@@ -278,7 +278,6 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         <div // NOSONAR: onClick only prevents event bubble, not interactive
           ref={setContentRef}
           id={contentId}
-
           aria-modal="true"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}

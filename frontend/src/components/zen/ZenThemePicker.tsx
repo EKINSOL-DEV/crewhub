@@ -94,10 +94,17 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
       ref={containerRef}
       className="zen-theme-picker-backdrop"
       onClick={handleBackdropClick}
-
       aria-modal="true"
       aria-label="Select Theme"
-     role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}>
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          ;(e.currentTarget as HTMLElement).click()
+        }
+      }}
+    >
       <div className="zen-theme-picker">
         <div className="zen-theme-picker-header">
           <h2 className="zen-theme-picker-title">
@@ -174,7 +181,6 @@ function ThemeOption({ theme, isSelected, isCurrent, onClick }: ThemeOptionProps
       className={`zen-theme-option ${isSelected ? 'zen-theme-option-selected' : ''} ${isCurrent ? 'zen-theme-option-current' : ''}`}
       onClick={onClick}
       aria-selected={isSelected}
-
     >
       <div
         className="zen-theme-preview"

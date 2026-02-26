@@ -62,7 +62,7 @@ function daysUntil(ms: number | null | undefined): number | null {
   return Math.ceil(diff / 86_400_000)
 }
 
-function ScopeBadge({ scope }: { scope: string }) {
+function ScopeBadge({ scope }: Readonly<{ scope: string }>) {
   return (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${SCOPE_COLORS[scope] ?? 'bg-muted text-muted-foreground'}`}
@@ -166,7 +166,7 @@ export function ApiKeysTab() {
 
 // ─── Keys Manager ─────────────────────────────────────────────────────────────
 
-function KeysManager({ adminKey }: { adminKey: string }) {
+function KeysManager({ adminKey }: Readonly<{ adminKey: string }>) {
   const [keys, setKeys] = useState<ApiKeyItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -320,7 +320,7 @@ function KeysManager({ adminKey }: { adminKey: string }) {
 
 // ─── Key Row ──────────────────────────────────────────────────────────────────
 
-function KeyRow({ item, onRevoke }: { item: ApiKeyItem; readonly onRevoke: () => void }) {
+function KeyRow({ item, onRevoke }: Readonly<{ item: ApiKeyItem; readonly onRevoke: () => void }>) {
   const [expanded, setExpanded] = useState(false)
   const days = daysUntil(item.expires_at)
   const isExpiringSoon = days !== null && days > 0 && days <= 14
@@ -436,10 +436,10 @@ const ALL_SCOPES = ['read', 'self', 'manage', 'admin'] as const
 function CreateKeyModal({
   onClose,
   onCreated,
-}: {
+}: Readonly<{
   readonly onClose: () => void
   readonly onCreated: (r: CreateApiKeyResponse) => void
-}) {
+}>) {
   const [name, setName] = useState('')
   const [scopes, setScopes] = useState<Set<string>>(new Set(['read', 'self']))
   const [expiresInDays, setExpiresInDays] = useState<string>('90')
@@ -624,10 +624,10 @@ function CreateKeyModal({
 function KeyRevealModal({
   result,
   onClose,
-}: {
+}: Readonly<{
   readonly result: CreateApiKeyResponse
   readonly onClose: () => void
-}) {
+}>) {
   const [copied, setCopied] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
 

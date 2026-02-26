@@ -147,141 +147,141 @@ function ProjectsSettingsSection({
 
           return (
             <div className="space-y-2">
-            {sortedProjects.map((project) => {
-              const isArchived = project.status === 'archived'
-              const roomCount = getAssignedRoomCount(project.id)
-              const assignedRoomNames = getAssignedRoomNames(project.id)
-              const isEditing = editingId === project.id
+              {sortedProjects.map((project) => {
+                const isArchived = project.status === 'archived'
+                const roomCount = getAssignedRoomCount(project.id)
+                const assignedRoomNames = getAssignedRoomNames(project.id)
+                const isEditing = editingId === project.id
 
-              return (
-                <div
-                  key={project.id}
-                  className={`p-4 rounded-lg border transition-colors ${
-                    isArchived
-                      ? 'bg-muted/30 opacity-60 border-border/50'
-                      : 'bg-background hover:bg-accent/20 border-border'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Color dot + icon */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: project.color || '#6b7280' }}
-                      />
-                      <span className="text-lg">{project.icon || '📋'}</span>
-                    </div>
+                return (
+                  <div
+                    key={project.id}
+                    className={`p-4 rounded-lg border transition-colors ${
+                      isArchived
+                        ? 'bg-muted/30 opacity-60 border-border/50'
+                        : 'bg-background hover:bg-accent/20 border-border'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Color dot + icon */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: project.color || '#6b7280' }}
+                        />
+                        <span className="text-lg">{project.icon || '📋'}</span>
+                      </div>
 
-                    {/* Name + meta */}
-                    <div className="flex-1 min-w-0">
-                      {isEditing ? (
-                        <div className="flex gap-1.5">
-                          <Input
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="h-7 text-sm"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveEdit(project.id)
-                              if (e.key === 'Escape') setEditingId(null)
-                            }}
-                          />
-                          <button
-                            onClick={() => handleSaveEdit(project.id)}
-                            className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600"
-                          >
-                            <Check className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="p-1 hover:bg-muted rounded text-muted-foreground"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm truncate">{project.name}</span>
-                            {isArchived && (
-                              <Badge variant="secondary" className="text-[10px] shrink-0">
-                                Archived
-                              </Badge>
-                            )}
+                      {/* Name + meta */}
+                      <div className="flex-1 min-w-0">
+                        {isEditing ? (
+                          <div className="flex gap-1.5">
+                            <Input
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              className="h-7 text-sm"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit(project.id)
+                                if (e.key === 'Escape') setEditingId(null)
+                              }}
+                            />
+                            <button
+                              onClick={() => handleSaveEdit(project.id)}
+                              className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="p-1 hover:bg-muted rounded text-muted-foreground"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                            <span>
-                              {roomCount} room{roomCount === 1 ? '' : 's'}
-                            </span>
-                            {project.folder_path && (
-                              <span className="truncate font-mono max-w-[200px]">
-                                {project.folder_path}
-                              </span>
-                            )}
-                            <span>Created {formatDate(project.created_at)}</span>
-                          </div>
-                          {roomCount > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1.5">
-                              {assignedRoomNames.map((name, _i) => (
-                                <span
-                                  key={name}
-                                  className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
-                                >
-                                  {name}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    {!isEditing && (
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => handleStartEdit(project)}
-                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
-                          title="Edit name"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-
-                        {isArchived ? (
-                          <button
-                            onClick={() => onUnarchive(project.id)}
-                            className="p-1.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-muted-foreground hover:text-green-600"
-                            title="Unarchive — restore to active"
-                          >
-                            <ArchiveRestore className="h-3.5 w-3.5" />
-                          </button>
                         ) : (
-                          <button
-                            onClick={() => handleArchive(project.id)}
-                            className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded text-muted-foreground hover:text-amber-600"
-                            title={
-                              roomCount > 0 ? 'Remove from all rooms first' : 'Archive project'
-                            }
-                          >
-                            <Archive className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-
-                        {isArchived && (
-                          <button
-                            onClick={() => setDeleteConfirm(project.id)}
-                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
-                            title="Delete project permanently"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          <>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm truncate">{project.name}</span>
+                              {isArchived && (
+                                <Badge variant="secondary" className="text-[10px] shrink-0">
+                                  Archived
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                              <span>
+                                {roomCount} room{roomCount === 1 ? '' : 's'}
+                              </span>
+                              {project.folder_path && (
+                                <span className="truncate font-mono max-w-[200px]">
+                                  {project.folder_path}
+                                </span>
+                              )}
+                              <span>Created {formatDate(project.created_at)}</span>
+                            </div>
+                            {roomCount > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {assignedRoomNames.map((name, _i) => (
+                                  <span
+                                    key={name}
+                                    className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                                  >
+                                    {name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
-                    )}
+
+                      {/* Actions */}
+                      {!isEditing && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => handleStartEdit(project)}
+                            className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                            title="Edit name"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+
+                          {isArchived ? (
+                            <button
+                              onClick={() => onUnarchive(project.id)}
+                              className="p-1.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-muted-foreground hover:text-green-600"
+                              title="Unarchive — restore to active"
+                            >
+                              <ArchiveRestore className="h-3.5 w-3.5" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleArchive(project.id)}
+                              className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded text-muted-foreground hover:text-amber-600"
+                              title={
+                                roomCount > 0 ? 'Remove from all rooms first' : 'Archive project'
+                              }
+                            >
+                              <Archive className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+
+                          {isArchived && (
+                            <button
+                              onClick={() => setDeleteConfirm(project.id)}
+                              className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
+                              title="Delete project permanently"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
             </div>
           )
         })()}

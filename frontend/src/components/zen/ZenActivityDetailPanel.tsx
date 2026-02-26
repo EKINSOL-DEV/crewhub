@@ -51,7 +51,8 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block Renderer ────────────────────────────────────
 
-function ContentBlockView({ block }: { block: SessionContentBlock }) { // NOSONAR
+function ContentBlockView({ block }: Readonly<{ block: SessionContentBlock }>) {
+  // NOSONAR
   // NOSONAR
   // NOSONAR: complexity from activity detail rendering with multiple activity type branches
   const [expanded, setExpanded] = useState(false)
@@ -106,7 +107,7 @@ function ContentBlockView({ block }: { block: SessionContentBlock }) { // NOSONA
 
 // ── Message Bubble ────────────────────────────────────────────
 
-function MessageBubble({ message }: { message: SessionMessage }) {
+function MessageBubble({ message }: Readonly<{ message: SessionMessage }>) {
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
   let messageRole: string
@@ -154,7 +155,10 @@ function MessageBubble({ message }: { message: SessionMessage }) {
 
 // ── Event Timeline Item ───────────────────────────────────────
 
-function TimelineEvent({ event, isOngoing }: { event: ActivityEvent; readonly isOngoing?: boolean }) {
+function TimelineEvent({
+  event,
+  isOngoing,
+}: Readonly<{ event: ActivityEvent; readonly isOngoing?: boolean }>) {
   const typeColors: Record<string, string> = {
     created: 'var(--zen-success)',
     updated: 'var(--zen-info)',

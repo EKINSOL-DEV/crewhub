@@ -42,7 +42,10 @@ function getStatusInfo(status: AgentStatus) {
 
 // ── Static Fallback (for non-3D devices) ───────────────────────
 
-function StaticAgentAvatar({ config, status }: { config: BotVariantConfig; readonly status: AgentStatus }) {
+function StaticAgentAvatar({
+  config,
+  status,
+}: Readonly<{ config: BotVariantConfig; readonly status: AgentStatus }>) {
   const info = getStatusInfo(status)
 
   const eyeStyle: React.CSSProperties = {
@@ -134,10 +137,10 @@ function StaticAgentAvatar({ config, status }: { config: BotVariantConfig; reado
 export function AgentCameraButton({
   onClick,
   isActive,
-}: {
+}: Readonly<{
   readonly onClick: () => void
   readonly isActive?: boolean
-}) {
+}>) {
   return (
     <button
       onClick={onClick}
@@ -170,7 +173,11 @@ interface AgentMiniViewportProps {
   readonly botConfig: BotVariantConfig
 }
 
-export function AgentMiniViewport({ isVisible, agentStatus, botConfig }: Readonly<AgentMiniViewportProps>) {
+export function AgentMiniViewport({
+  isVisible,
+  agentStatus,
+  botConfig,
+}: Readonly<AgentMiniViewportProps>) {
   const [has3D] = useState(() => canRender3D())
   const [size, setSize] = useState<ViewportSize>('small')
   const info = getStatusInfo(agentStatus)

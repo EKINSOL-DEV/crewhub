@@ -734,7 +734,6 @@ export function ZenMode({
     <div
       ref={zenContainerRef}
       className="zen-mode zen-fade-in"
-
       aria-modal="true"
       aria-label="Zen Mode - Focused workspace"
     >

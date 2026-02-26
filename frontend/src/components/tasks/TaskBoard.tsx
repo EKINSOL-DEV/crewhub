@@ -371,7 +371,6 @@ export function TaskBoard({
             }}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
-
             aria-modal="true"
           >
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: '#1f2937' }}>Create New Task</h3>
@@ -422,7 +421,6 @@ export function TaskBoard({
             }}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
-
             aria-modal="true"
           >
             <div

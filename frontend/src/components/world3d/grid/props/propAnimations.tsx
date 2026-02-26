@@ -70,7 +70,10 @@ export function WallClockProp({ position }: PropProps) {
         const angle = (i / 12) * Math.PI * 2
         const r = 0.33
         return (
-          <mesh key={JSON.stringify(_)} position={[Math.sin(angle) * r, Math.cos(angle) * r, 0.035]}>
+          <mesh
+            key={JSON.stringify(_)}
+            position={[Math.sin(angle) * r, Math.cos(angle) * r, 0.035]}
+          >
             <boxGeometry args={[0.02, 0.06, 0.005]} />
             <meshToonMaterial {...frameToon} />
           </mesh>
@@ -118,7 +121,10 @@ export function GearMechanismProp({ position, rotation }: PropProps) {
         {Array.from({ length: 8 }).map((_, i) => {
           const angle = (i / 8) * Math.PI * 2
           return (
-            <mesh key={JSON.stringify(_)} position={[Math.cos(angle) * 0.22, Math.sin(angle) * 0.22, 0]}>
+            <mesh
+              key={JSON.stringify(_)}
+              position={[Math.cos(angle) * 0.22, Math.sin(angle) * 0.22, 0]}
+            >
               <boxGeometry args={[0.06, 0.06, 0.06]} />
               <meshToonMaterial {...gearToon} />
             </mesh>
@@ -137,7 +143,10 @@ export function GearMechanismProp({ position, rotation }: PropProps) {
         {Array.from({ length: 6 }).map((_, i) => {
           const angle = (i / 6) * Math.PI * 2
           return (
-            <mesh key={JSON.stringify(_)} position={[Math.cos(angle) * 0.16, Math.sin(angle) * 0.16, 0]}>
+            <mesh
+              key={JSON.stringify(_)}
+              position={[Math.cos(angle) * 0.16, Math.sin(angle) * 0.16, 0]}
+            >
               <boxGeometry args={[0.05, 0.05, 0.06]} />
               <meshToonMaterial {...gearToon} />
             </mesh>

@@ -37,7 +37,10 @@ const ChatHeader3DScene = lazy(() => import('./ChatHeader3DScene'))
 
 // ── Static fallback avatar ─────────────────────────────────────
 
-function StaticAvatar({ config, icon }: { config: BotVariantConfig; readonly icon: string }) {
+function StaticAvatar({
+  config,
+  icon,
+}: Readonly<{ config: BotVariantConfig; readonly icon: string }>) {
   return (
     <div
       style={{
@@ -60,7 +63,7 @@ function StaticAvatar({ config, icon }: { config: BotVariantConfig; readonly ico
 
 // ── Loading placeholder ────────────────────────────────────────
 
-function LoadingPlaceholder({ color }: { color: string }) {
+function LoadingPlaceholder({ color }: Readonly<{ color: string }>) {
   return (
     <div
       style={{

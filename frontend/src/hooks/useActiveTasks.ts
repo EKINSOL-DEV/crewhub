@@ -85,7 +85,8 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
       return true
     }
 
-    setTasks((prevTasks) => { // NOSONAR
+    setTasks((prevTasks) => {
+      // NOSONAR
       // NOSONAR: complexity from legitimate task state reconciliation algorithm
       const newTasks: ActiveTask[] = []
       const seenIds = new Set<string>()

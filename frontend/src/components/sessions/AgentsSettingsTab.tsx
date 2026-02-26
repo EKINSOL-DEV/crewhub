@@ -100,7 +100,7 @@ async function generateAgentBio(agentId: string): Promise<string> {
 
 // ── Color preview sphere (CSS 3D-ish) ────────────────────────────────
 
-function ColorSphere({ color, size = 48 }: { color: string; readonly size?: number }) {
+function ColorSphere({ color, size = 48 }: Readonly<{ color: string; readonly size?: number }>) {
   return (
     <div
       className="rounded-full shrink-0 shadow-lg"
@@ -120,11 +120,11 @@ function AddAgentModal({
   rooms,
   onClose,
   onCreated,
-}: {
+}: Readonly<{
   readonly rooms: Room[]
   readonly onClose: () => void
   readonly onCreated: () => void
-}) {
+}>) {
   const [name, setName] = useState('')
   const [agentId, setAgentId] = useState('')
   const [icon, setIcon] = useState('🤖')
@@ -424,12 +424,12 @@ function AgentCard({
   rooms,
   onSave,
   onDelete,
-}: {
+}: Readonly<{
   readonly agent: Agent
   readonly rooms: Room[]
   readonly onSave: (id: string, updates: Partial<Agent>) => Promise<void>
   readonly onDelete: (agent: Agent) => void
-}) {
+}>) {
   const [editing, setEditing] = useState(false)
   const [color, setColor] = useState(agent.color || '#6b7280')
   const [bio, setBio] = useState(agent.bio || '')
@@ -766,11 +766,11 @@ function DeleteConfirmDialog({
   agent,
   onConfirm,
   onCancel,
-}: {
+}: Readonly<{
   readonly agent: Agent
   readonly onConfirm: () => void
   readonly onCancel: () => void
-}) {
+}>) {
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {

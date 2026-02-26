@@ -199,7 +199,7 @@ function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
     })
     .filter((e: LogEntry) => e.content || (e.tools && e.tools.length > 0))
 }
- // NOSONAR
+// NOSONAR
 // ── Parse Messages to Activity Entries ────────────────────────
 
 function makeId(prefix: string, ts: number): string {

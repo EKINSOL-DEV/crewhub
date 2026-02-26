@@ -13,7 +13,9 @@ interface ZenTasksPanelProps {
   readonly roomId?: string
   readonly roomFocusName?: string // Name of the focused room's project (for display)
   readonly onTaskClick?: (task: Task) => void
-  readonly onProjectFilterChange?: ( projectId: string | null, projectName: string,
+  readonly onProjectFilterChange?: (
+    projectId: string | null,
+    projectName: string,
     projectColor?: string
   ) => void
 }

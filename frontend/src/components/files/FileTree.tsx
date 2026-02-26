@@ -11,7 +11,7 @@ interface FileTreeProps {
   readonly loading?: boolean
 }
 
-function FileIcon({ type, name }: { type: string; readonly name: string }) {
+function FileIcon({ type, name }: Readonly<{ type: string; readonly name: string }>) {
   if (type === 'directory') return <span style={{ fontSize: 13 }}>📁</span>
   if (name.endsWith('.md')) return <span style={{ fontSize: 13 }}>📝</span>
   if (name.endsWith('.json')) return <span style={{ fontSize: 13 }}>📋</span>
@@ -32,13 +32,13 @@ function TreeNode({
   selectedPath,
   onSelect,
   onExpand,
-}: {
+}: Readonly<{
   readonly node: FileNode
   readonly depth: number
   readonly selectedPath?: string
   readonly onSelect: (file: FileNode) => void
   readonly onExpand?: (file: FileNode) => void
-}) {
+}>) {
   const [expanded, setExpanded] = useState(depth === 0)
   const isSelected = node.path === selectedPath
   const isDir = node.type === 'directory'
@@ -55,7 +55,11 @@ function TreeNode({
     <div>
       <div
         onClick={handleClick}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleClick() } }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            handleClick()
+          }
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -143,7 +147,13 @@ function TreeNode({
   )
 }
 
-export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: Readonly<FileTreeProps>) {
+export function FileTree({
+  files,
+  selectedPath,
+  onSelect,
+  onExpand,
+  loading,
+}: Readonly<FileTreeProps>) {
   if (loading) {
     return (
       <div

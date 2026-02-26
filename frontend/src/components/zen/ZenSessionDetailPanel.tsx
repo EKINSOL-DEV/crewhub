@@ -26,7 +26,8 @@ function formatDuration(startTs: number): string {
 
 // ── Content Block Renderer ────────────────────────────────────────
 
-function ContentBlockView({ block }: { block: SessionContentBlock }) { // NOSONAR
+function ContentBlockView({ block }: Readonly<{ block: SessionContentBlock }>) {
+  // NOSONAR
   // NOSONAR
   // NOSONAR: complexity from session detail with multiple content type branches
   const [expanded, setExpanded] = useState(false)
@@ -81,7 +82,7 @@ function ContentBlockView({ block }: { block: SessionContentBlock }) { // NOSONA
 
 // ── Message Bubble ────────────────────────────────────────────────
 
-function MessageBubble({ message }: { message: SessionMessage }) {
+function MessageBubble({ message }: Readonly<{ message: SessionMessage }>) {
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
   let messageRole: string

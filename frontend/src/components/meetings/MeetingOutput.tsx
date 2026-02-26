@@ -43,12 +43,12 @@ function ActionItemCard({
   meetingId,
   projectId,
   onStatusChange,
-}: {
+}: Readonly<{
   readonly item: ParsedActionItem & { status?: string }
   readonly meetingId: string | null
   readonly projectId?: string
   readonly onStatusChange: (id: string, status: string) => void
-}) {
+}>) {
   const [loading, setLoading] = useState<'planner' | 'execute' | null>(null)
 
   const priorityColor = {
@@ -183,7 +183,7 @@ function ActionItemCard({
 
 // ─── Transcript View ────────────────────────────────────────────
 
-function TranscriptView({ rounds }: { rounds: MeetingRound[] }) {
+function TranscriptView({ rounds }: Readonly<{ rounds: MeetingRound[] }>) {
   if (rounds.length === 0) {
     return (
       <div
@@ -254,12 +254,12 @@ function ActionsView({
   meetingId,
   projectId,
   onStatusChange,
-}: {
+}: Readonly<{
   readonly items: (ParsedActionItem & { status?: string })[]
   readonly meetingId: string | null
   readonly projectId?: string
   readonly onStatusChange: (id: string, status: string) => void
-}) {
+}>) {
   if (items.length === 0) {
     return (
       <div
@@ -305,7 +305,8 @@ function ActionsView({
 
 // ─── Main Component ─────────────────────────────────────────────
 
-export function MeetingOutput({ // NOSONAR
+export function MeetingOutput({
+  // NOSONAR
   // NOSONAR: complexity from legitimate meeting output rendering with multiple content types
   meeting,
   onClose,
@@ -542,18 +543,21 @@ export function MeetingOutput({ // NOSONAR
         >
           {(() => {
             if (!meeting.outputMd) {
-              if (outputError) return (
-                <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                  <div style={{ fontSize: 13, color: 'hsl(var(--destructive))', marginBottom: 12 }}>
-                    ⚠️ {outputError}
+              if (outputError)
+                return (
+                  <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                    <div
+                      style={{ fontSize: 13, color: 'hsl(var(--destructive))', marginBottom: 12 }}
+                    >
+                      ⚠️ {outputError}
+                    </div>
+                    {onRetryFetch && (
+                      <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>
+                        🔄 Retry
+                      </Button>
+                    )}
                   </div>
-                  {onRetryFetch && (
-                    <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>
-                      🔄 Retry
-                    </Button>
-                  )}
-                </div>
-              )
+                )
               return (
                 <div
                   style={{
@@ -567,49 +571,49 @@ export function MeetingOutput({ // NOSONAR
                 </div>
               )
             }
-            if (activeView === 'structured') return (
-              <div style={{ maxWidth: 720, margin: '0 auto' }}>
-                <MarkdownViewer content={markdownWithoutActions} className="text-sm" />
-                {actionItems.length > 0 && (
-                  <div style={{ marginTop: 24 }}>
-                    <h2
-                      style={{
-                        fontSize: 20,
-                        fontWeight: 600,
-                        marginBottom: 12,
-                        color: HSL_FOREGROUND,
-                        borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-                        paddingBottom: 6,
-                      }}
-                    >
-                      ✅ Action Items
-                    </h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {actionItems.map((item) => (
-                        <ActionItemCard
-                          key={item.id}
-                          item={item}
-                          meetingId={meeting.meetingId}
-                          projectId={meeting.project_id}
-                          onStatusChange={handleStatusChange}
-                        />
-                      ))}
+            if (activeView === 'structured')
+              return (
+                <div style={{ maxWidth: 720, margin: '0 auto' }}>
+                  <MarkdownViewer content={markdownWithoutActions} className="text-sm" />
+                  {actionItems.length > 0 && (
+                    <div style={{ marginTop: 24 }}>
+                      <h2
+                        style={{
+                          fontSize: 20,
+                          fontWeight: 600,
+                          marginBottom: 12,
+                          color: HSL_FOREGROUND,
+                          borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                          paddingBottom: 6,
+                        }}
+                      >
+                        ✅ Action Items
+                      </h2>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {actionItems.map((item) => (
+                          <ActionItemCard
+                            key={item.id}
+                            item={item}
+                            meetingId={meeting.meetingId}
+                            projectId={meeting.project_id}
+                            onStatusChange={handleStatusChange}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )
-            if (activeView === 'actions') return (
-              <ActionsView
-                items={actionItems}
-                meetingId={meeting.meetingId}
-                projectId={meeting.project_id}
-                onStatusChange={handleStatusChange}
-              />
-            )
-            if (activeView === 'transcript') return (
-              <TranscriptView rounds={meeting.rounds} />
-            )
+                  )}
+                </div>
+              )
+            if (activeView === 'actions')
+              return (
+                <ActionsView
+                  items={actionItems}
+                  meetingId={meeting.meetingId}
+                  projectId={meeting.project_id}
+                  onStatusChange={handleStatusChange}
+                />
+              )
+            if (activeView === 'transcript') return <TranscriptView rounds={meeting.rounds} />
             return (
               <div style={{ maxWidth: 720, margin: '0 auto' }}>
                 <pre

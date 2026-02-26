@@ -251,7 +251,7 @@ function isInputFocused(): boolean {
 
 const isPublicDemo = import.meta.env.VITE_DEMO_MODE === 'true'
 
-export function DemoProvider({ children }: { children: ReactNode }) {
+export function DemoProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [isDemoMode, setIsDemoMode] = useState(() => {
     // Always on for public demo builds
     if (isPublicDemo) return true
