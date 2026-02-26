@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef, useCallback, useEffect } from 'react'
+import { createContext, useContext, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -81,7 +81,6 @@ export function WallProvider({ children, buildingCenter = [0, 2, 0] as [number, 
   const wallsRef = useRef<Set<THREE.Mesh>>(new Set())
   const raycaster = useRef(new THREE.Raycaster())
   const centerVec = useRef(new THREE.Vector3(...buildingCenter))
-  const currentTransparent = useRef<THREE.Mesh | null>(null)
 
   const register = useCallback((mesh: THREE.Mesh) => {
     wallsRef.current.add(mesh)
@@ -131,8 +130,10 @@ export function WallProvider({ children, buildingCenter = [0, 2, 0] as [number, 
     }
   })
 
+  const wallContextValue = useMemo(() => ({ register, unregister }), [register, unregister])
+
   return (
-    <WallContext.Provider value={{ register, unregister }}>
+    <WallContext.Provider value={wallContextValue}>
       {children}
     </WallContext.Provider>
   )

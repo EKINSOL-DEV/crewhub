@@ -48,8 +48,13 @@ export function Accordion({ type = 'single', defaultValue, className, children }
     [type]
   )
 
+  const accordionContextValue = React.useMemo(
+    () => ({ openItems, toggle, type }),
+    [openItems, toggle, type]
+  )
+
   return (
-    <AccordionContext.Provider value={{ openItems, toggle, type }}>
+    <AccordionContext.Provider value={accordionContextValue}>
       <div className={className}>{children}</div>
     </AccordionContext.Provider>
   )
@@ -70,8 +75,10 @@ export function AccordionItem({ value, className, children }: AccordionItemProps
   const { openItems } = React.useContext(AccordionContext)
   const isOpen = openItems.has(value)
 
+  const itemContextValue = React.useMemo(() => ({ value, isOpen }), [value, isOpen])
+
   return (
-    <AccordionItemContext.Provider value={{ value, isOpen }}>
+    <AccordionItemContext.Provider value={itemContextValue}>
       <div className={cn('border-b', className)}>{children}</div>
     </AccordionItemContext.Provider>
   )

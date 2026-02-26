@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -75,17 +75,13 @@ function Dialog({
     [isControlled, controlledOnOpenChange]
   )
 
+  const contextValue = useMemo(
+    () => ({ open, onOpenChange, triggerRef, contentId, titleId, descriptionId }),
+    [open, onOpenChange, triggerRef, contentId, titleId, descriptionId]
+  )
+
   return (
-    <DialogContext.Provider
-      value={{
-        open,
-        onOpenChange,
-        triggerRef,
-        contentId,
-        titleId,
-        descriptionId,
-      }}
-    >
+    <DialogContext.Provider value={contextValue}>
       {children}
     </DialogContext.Provider>
   )

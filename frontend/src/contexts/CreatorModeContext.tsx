@@ -14,6 +14,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   useRef,
   type ReactNode,
 } from 'react'
@@ -488,31 +489,55 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
   const closeBrowser = useCallback(() => setIsBrowserOpen(false), [])
   const toggleBrowser = useCallback(() => setIsBrowserOpen((p) => !p), [])
 
+  const contextValue = useMemo(
+    () => ({
+      isCreatorMode,
+      toggleCreatorMode,
+      selectedPropId,
+      selectProp,
+      clearSelection,
+      pendingRotation,
+      rotatePending,
+      resetRotation,
+      placedProps,
+      refreshPlacedProps,
+      undoStack,
+      redoStack,
+      pushAction,
+      undo,
+      redo,
+      isBrowserOpen,
+      openBrowser,
+      closeBrowser,
+      toggleBrowser,
+      apiKey,
+    }),
+    [
+      isCreatorMode,
+      toggleCreatorMode,
+      selectedPropId,
+      selectProp,
+      clearSelection,
+      pendingRotation,
+      rotatePending,
+      resetRotation,
+      placedProps,
+      refreshPlacedProps,
+      undoStack,
+      redoStack,
+      pushAction,
+      undo,
+      redo,
+      isBrowserOpen,
+      openBrowser,
+      closeBrowser,
+      toggleBrowser,
+      apiKey,
+    ]
+  )
+
   return (
-    <CreatorModeContext.Provider
-      value={{
-        isCreatorMode,
-        toggleCreatorMode,
-        selectedPropId,
-        selectProp,
-        clearSelection,
-        pendingRotation,
-        rotatePending,
-        resetRotation,
-        placedProps,
-        refreshPlacedProps,
-        undoStack,
-        redoStack,
-        pushAction,
-        undo,
-        redo,
-        isBrowserOpen,
-        openBrowser,
-        closeBrowser,
-        toggleBrowser,
-        apiKey,
-      }}
-    >
+    <CreatorModeContext.Provider value={contextValue}>
       {children}
     </CreatorModeContext.Provider>
   )
