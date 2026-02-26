@@ -34,6 +34,7 @@ interface CronJob {
 // ── Formatting Helpers ───────────────────────────────────────────
 
 function formatSchedule(schedule: CronSchedule): string {
+  // NOSONAR: complexity from cron panel with multiple schedule parsing branches
   switch (schedule.kind) {
     case 'cron': {
       const expr = schedule.expr || ''

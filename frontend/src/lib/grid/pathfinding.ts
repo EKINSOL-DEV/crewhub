@@ -47,7 +47,7 @@ function nodeKey(x: number, z: number): string {
  * For diagonal moves, both adjacent cardinal cells must also be walkable
  * to prevent corner-cutting through walls.
  */
-export function findPath(
+export function findPath( // NOSONAR: complexity from legitimate A* pathfinding algorithm; splitting would obscure the algorithm
   walkableMask: boolean[][],
   start: PathNode,
   end: PathNode

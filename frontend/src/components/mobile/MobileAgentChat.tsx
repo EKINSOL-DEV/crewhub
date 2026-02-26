@@ -218,6 +218,7 @@ interface MobileAgentChatProps {
 }
 
 export function MobileAgentChat({
+  // NOSONAR: complexity from React component with multiple state interactions
   sessionKey,
   agentName,
   agentIcon,

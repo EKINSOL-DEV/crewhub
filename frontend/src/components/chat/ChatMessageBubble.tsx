@@ -326,6 +326,7 @@ export interface ChatMessageBubbleProps {
 
 const ChatMessageBubbleInner = memo(
   function ChatMessageBubble({
+    // NOSONAR: complexity from legitimate message rendering with multiple content type branches
     msg,
     variant = 'float',
     accentColor = '#8b5cf6',

@@ -53,21 +53,46 @@ export interface SessionHistory {
 const historyCache = new Map<string, SessionHistory>()
 const CACHE_TTL = 5000 // 5 seconds
 
+// ── Tool humanization lookup ──────────────────────────────────
+
+type ToolHint = { icon: string; color: string; label?: string }
+
+const TOOL_HINTS: Record<string, ToolHint> = {
+  process: { icon: '⚙️', color: '#6b7280', label: 'Managing process' },
+}
+
+function getFileLabel(
+  action: string,
+  icon: string,
+  color: string,
+  args?: Record<string, unknown>
+): { text: string; icon: string; color: string } {
+  const path = (args?.path ?? args?.file_path) as string | undefined
+  const file = path ? path.split('/').pop() : ''
+  return { text: file ? `${action} ${file}` : `${action} file`, icon, color }
+}
+
+function getQueryLabel(
+  action: string,
+  icon: string,
+  color: string,
+  key: string,
+  fallback: string,
+  args?: Record<string, unknown>
+): { text: string; icon: string; color: string } {
+  const val = args?.[key] as string | undefined
+  return { text: val ? `${action}: ${val.slice(0, 60)}` : fallback, icon, color }
+}
+
 // ── Helper: Humanize Tool Calls ───────────────────────────────
 
 function humanizeToolCall(
   name: string,
   args?: Record<string, unknown>
 ): { text: string; icon: string; color: string } {
-  const argStr = (key: string) => {
-    const val = args?.[key]
-    if (typeof val === 'string') return val
-    return ''
-  }
-
   switch (name) {
     case 'exec': {
-      const cmd = argStr('command')
+      const cmd = args?.command as string | undefined
       if (cmd)
         return {
           text: `Running: ${cmd.slice(0, 80)}${cmd.length > 80 ? '…' : ''}`,
@@ -77,45 +102,24 @@ function humanizeToolCall(
       return { text: 'Executing command', icon: '🔧', color: '#6b7280' }
     }
     case 'Read':
-    case 'read': {
-      const path = argStr('path') || argStr('file_path')
-      const file = path ? path.split('/').pop() : ''
-      return { text: file ? `Reading ${file}` : 'Reading file', icon: '📖', color: '#3b82f6' }
-    }
+    case 'read':
+      return getFileLabel('Reading', '📖', '#3b82f6', args)
     case 'Write':
-    case 'write': {
-      const path = argStr('path') || argStr('file_path')
-      const file = path ? path.split('/').pop() : ''
-      return { text: file ? `Writing ${file}` : 'Writing file', icon: '✍️', color: '#22c55e' }
-    }
+    case 'write':
+      return getFileLabel('Writing', '✍️', '#22c55e', args)
     case 'Edit':
-    case 'edit': {
-      const path = argStr('path') || argStr('file_path')
-      const file = path ? path.split('/').pop() : ''
-      return { text: file ? `Editing ${file}` : 'Editing file', icon: '✏️', color: '#22c55e' }
-    }
+    case 'edit':
+      return getFileLabel('Editing', '✏️', '#22c55e', args)
     case 'sessions_spawn': {
-      const task = argStr('task') || argStr('label') || 'sub-task'
+      const task = (args?.task ?? args?.label ?? 'sub-task') as string
       return { text: `Spawning sub-agent: ${task.slice(0, 60)}`, icon: '🤖', color: '#a855f7' }
     }
-    case 'web_search': {
-      const query = argStr('query')
-      return {
-        text: query ? `Searching: ${query.slice(0, 60)}` : 'Searching the web',
-        icon: '🔍',
-        color: '#f59e0b',
-      }
-    }
-    case 'web_fetch': {
-      const url = argStr('url')
-      return {
-        text: url ? `Fetching: ${url.slice(0, 60)}` : 'Fetching webpage',
-        icon: '🌐',
-        color: '#f59e0b',
-      }
-    }
+    case 'web_search':
+      return getQueryLabel('Searching', '🔍', '#f59e0b', 'query', 'Searching the web', args)
+    case 'web_fetch':
+      return getQueryLabel('Fetching', '🌐', '#f59e0b', 'url', 'Fetching webpage', args)
     case 'message': {
-      const action = argStr('action')
+      const action = args?.action as string | undefined
       return {
         text: action ? `Message: ${action}` : 'Sending message',
         icon: '💬',
@@ -123,18 +127,43 @@ function humanizeToolCall(
       }
     }
     case 'browser': {
-      const action = argStr('action')
+      const action = args?.action as string | undefined
       return { text: action ? `Browser: ${action}` : 'Using browser', icon: '🌐', color: '#8b5cf6' }
     }
-    case 'process': {
-      return { text: 'Managing process', icon: '⚙️', color: '#6b7280' }
-    }
-    default:
+    default: {
+      const hint = TOOL_HINTS[name]
+      if (hint) return { text: hint.label ?? `Using ${name}`, icon: hint.icon, color: hint.color }
       return { text: `Using ${name}`, icon: '🔧', color: '#6b7280' }
+    }
   }
 }
 
 // ── Parse Messages to Log Entries ─────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractContentAndTools(msg: any): {
+  content: string
+  tools: { name: string; status?: string }[]
+} {
+  let content = ''
+  const tools: { name: string; status?: string }[] = []
+
+  if (typeof msg.content === 'string') {
+    content = msg.content
+  } else if (Array.isArray(msg.content)) {
+    content = msg.content
+      .filter((c: any) => c.type === 'text')
+      .map((c: any) => c.text || '')
+      .join('\n')
+    for (const c of msg.content) {
+      if (c.type === 'toolCall' || c.type === 'tool_use') {
+        tools.push({ name: c.name || c.toolName || 'tool' })
+      }
+    }
+  }
+
+  return { content, tools }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
@@ -142,26 +171,8 @@ function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
     .filter((m: any) => m?.message?.role && m.message.role !== 'thinking')
     .map((m: any) => {
       const msg = m.message
-      // Extract text content from content array or string
-      let content = ''
-      if (typeof msg.content === 'string') {
-        content = msg.content
-      } else if (Array.isArray(msg.content)) {
-        content = msg.content
-          .filter((c: any) => c.type === 'text')
-          .map((c: any) => c.text || '')
-          .join('\n')
-      }
-      // Extract tool calls
-      const tools: { name: string; status?: string }[] = []
-      if (Array.isArray(msg.content)) {
-        for (const c of msg.content) {
-          if (c.type === 'toolCall' || c.type === 'tool_use') {
-            tools.push({ name: c.name || c.toolName || 'tool' })
-          }
-        }
-      }
-      // For toolResult role, use toolName
+      const { content, tools } = extractContentAndTools(msg)
+
       if (msg.role === 'toolResult' && msg.toolName) {
         return {
           role: 'tool',
@@ -170,14 +181,8 @@ function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
           tools: [],
         }
       }
-      let role: string
-      if (msg.role === 'assistant') {
-        role = 'assistant'
-      } else if (msg.role === 'user') {
-        role = 'user'
-      } else {
-        role = 'system'
-      }
+
+      const role = msg.role === 'assistant' ? 'assistant' : msg.role === 'user' ? 'user' : 'system'
       return {
         role,
         content: content || (tools.length > 0 ? '' : '[no content]'),
@@ -190,12 +195,78 @@ function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
 
 // ── Parse Messages to Activity Entries ────────────────────────
 
+function makeId(prefix: string, ts: number): string {
+  return `${prefix}-${ts}-${Math.random().toString(36).slice(2, 6)}`
+}
+
+function processAssistantBlock(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  block: any,
+  ts: number,
+  entries: ActivityEvent[]
+): void {
+  if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
+    const args = block.arguments || block.input
+    const { text, icon, color } = humanizeToolCall(block.name, args)
+    entries.push({
+      id: block.id || makeId('tool', ts),
+      timestamp: ts,
+      sessionKey: '',
+      description: text,
+      type: 'tool_call',
+      icon,
+      color,
+    })
+  } else if (block.type === 'text' && block.text) {
+    const preview = block.text.slice(0, 150).replaceAll(/\n/g, ' ')
+    if (preview.trim()) {
+      entries.push({
+        id: makeId('msg', ts),
+        timestamp: ts,
+        sessionKey: '',
+        description: preview + (block.text.length > 150 ? '…' : ''),
+        type: 'message',
+        icon: '💭',
+        color: '#374151',
+      })
+    }
+  } else if (block.type === 'thinking' && block.thinking) {
+    const preview = block.thinking.slice(0, 100).replaceAll(/\n/g, ' ')
+    if (preview.trim()) {
+      entries.push({
+        id: makeId('think', ts),
+        timestamp: ts,
+        sessionKey: '',
+        description: preview + (block.thinking.length > 100 ? '…' : ''),
+        type: 'thinking',
+        icon: '🧠',
+        color: '#9ca3af',
+      })
+    }
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function processToolResultEntry(inner: any, ts: number, entries: ActivityEvent[]): void {
+  const toolName = inner.toolName || ''
+  const isError = inner.isError
+  if (!toolName) return
+  entries.push({
+    id: makeId('result', ts),
+    timestamp: ts,
+    sessionKey: '',
+    description: isError ? `❌ ${toolName} failed` : `✓ ${toolName} done`,
+    type: 'tool_result',
+    icon: isError ? '❌' : '✅',
+    color: isError ? '#ef4444' : '#6b7280',
+  })
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseMessagesToActivityEntries(messages: any[]): ActivityEvent[] {
   const entries: ActivityEvent[] = []
 
   for (const raw of messages) {
-    // OpenClaw wraps messages: { type, id, timestamp, message: { role, content, ... } }
     const inner = raw.message || raw
     const role = inner.role || raw.role
     const content = inner.content || raw.content
@@ -205,62 +276,10 @@ function parseMessagesToActivityEntries(messages: any[]): ActivityEvent[] {
 
     if (role === 'assistant') {
       for (const block of content) {
-        // OpenClaw uses "toolCall", Anthropic uses "tool_use"
-        if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
-          const args = block.arguments || block.input
-          const { text, icon, color } = humanizeToolCall(block.name, args)
-          entries.push({
-            id: block.id || `tool-${ts}-${Math.random().toString(36).slice(2, 6)}`,
-            timestamp: ts,
-            sessionKey: '', // Will be set by caller
-            description: text,
-            type: 'tool_call',
-            icon,
-            color,
-          })
-        } else if (block.type === 'text' && block.text) {
-          const preview = block.text.slice(0, 150).replaceAll(/\n/g, ' ')
-          if (preview.trim()) {
-            entries.push({
-              id: `msg-${ts}-${Math.random().toString(36).slice(2, 6)}`,
-              timestamp: ts,
-              sessionKey: '',
-              description: preview + (block.text.length > 150 ? '…' : ''),
-              type: 'message',
-              icon: '💭',
-              color: '#374151',
-            })
-          }
-        } else if (block.type === 'thinking' && block.thinking) {
-          const preview = block.thinking.slice(0, 100).replaceAll(/\n/g, ' ')
-          if (preview.trim()) {
-            entries.push({
-              id: `think-${ts}-${Math.random().toString(36).slice(2, 6)}`,
-              timestamp: ts,
-              sessionKey: '',
-              description: preview + (block.thinking.length > 100 ? '…' : ''),
-              type: 'thinking',
-              icon: '🧠',
-              color: '#9ca3af',
-            })
-          }
-        }
+        processAssistantBlock(block, ts, entries)
       }
     } else if (role === 'toolResult') {
-      // Show tool results as brief entries
-      const toolName = inner.toolName || ''
-      const isError = inner.isError
-      if (toolName) {
-        entries.push({
-          id: `result-${ts}-${Math.random().toString(36).slice(2, 6)}`,
-          timestamp: ts,
-          sessionKey: '',
-          description: isError ? `❌ ${toolName} failed` : `✓ ${toolName} done`,
-          type: 'tool_result',
-          icon: isError ? '❌' : '✅',
-          color: isError ? '#ef4444' : '#6b7280',
-        })
-      }
+      processToolResultEntry(inner, ts, entries)
     }
   }
 

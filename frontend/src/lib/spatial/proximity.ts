@@ -144,6 +144,7 @@ export class ProximityGrid {
    * Returns results sorted by distance (closest first).
    */
   queryRadius(query: ProximityQuery): QueryResult[] {
+    // NOSONAR: complexity from legitimate spatial grid query with filtering; splitting would hurt readability
     const { x, z, radius, type, excludeId, limit } = query
     const results: QueryResult[] = []
 

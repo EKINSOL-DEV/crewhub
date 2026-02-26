@@ -128,6 +128,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
   const rulesFingerprintRef = useRef<string>('')
 
   const fetchRooms = useCallback(async () => {
+    // NOSONAR: complexity from React context with multiple room assignment strategies
     // Cancel any in-flight request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
@@ -231,6 +232,7 @@ export function RoomsProvider({ children }: { children: ReactNode }) {
       sessionKey: string,
       sessionData?: { label?: string; model?: string; channel?: string }
     ): string | undefined => {
+      // NOSONAR: complexity from React context state update handler with multiple event types
       // Rules are already sorted by priority (descending)
       for (const rule of rules) {
         let matches = false

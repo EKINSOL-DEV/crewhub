@@ -14,6 +14,46 @@ interface RulesResponse {
   rules: RoomAssignmentRule[]
 }
 
+// ── Rule Matching ─────────────────────────────────────────────
+
+function matchesSessionType(ruleValue: string, sessionKey: string, channel?: string): boolean {
+  if (ruleValue === 'cron') return sessionKey.includes(':cron:')
+  if (ruleValue === 'subagent')
+    return sessionKey.includes(':subagent:') || sessionKey.includes(':spawn:')
+  if (ruleValue === 'main') return sessionKey === 'agent:main:main'
+  if (ruleValue === 'slack') return sessionKey.includes('slack')
+  if (ruleValue === 'whatsapp') return sessionKey.includes('whatsapp') || channel === 'whatsapp'
+  if (ruleValue === 'telegram') return sessionKey.includes('telegram') || channel === 'telegram'
+  if (ruleValue === 'discord') return sessionKey.includes('discord') || channel === 'discord'
+  return false
+}
+
+function matchesRule(
+  rule: RoomAssignmentRule,
+  sessionKey: string,
+  sessionData?: { label?: string; model?: string; channel?: string }
+): boolean {
+  switch (rule.rule_type) {
+    case 'session_key_contains':
+      return sessionKey.includes(rule.rule_value)
+    case 'keyword':
+      return !!sessionData?.label?.toLowerCase().includes(rule.rule_value.toLowerCase())
+    case 'model':
+      return !!sessionData?.model?.toLowerCase().includes(rule.rule_value.toLowerCase())
+    case 'label_pattern':
+      try {
+        const regex = new RegExp(rule.rule_value, 'i')
+        return regex.test(sessionData?.label || '') || regex.test(sessionKey)
+      } catch {
+        return false
+      }
+    case 'session_type':
+      return matchesSessionType(rule.rule_value, sessionKey, sessionData?.channel)
+    default:
+      return false
+  }
+}
+
 /**
  * Hook to fetch and manage room assignment rules.
  * Rules are sorted by priority (highest first).
@@ -54,53 +94,8 @@ export function useRoomAssignmentRules() {
     ): string | undefined => {
       // Rules are already sorted by priority (descending)
       for (const rule of rules) {
-        let matches = false
-
-        switch (rule.rule_type) {
-          case 'session_key_contains':
-            matches = sessionKey.includes(rule.rule_value)
-            break
-          case 'keyword':
-            // Check in label
-            if (sessionData?.label) {
-              matches = sessionData.label.toLowerCase().includes(rule.rule_value.toLowerCase())
-            }
-            break
-          case 'model':
-            if (sessionData?.model) {
-              matches = sessionData.model.toLowerCase().includes(rule.rule_value.toLowerCase())
-            }
-            break
-          case 'label_pattern':
-            // Regex pattern match
-            try {
-              const regex = new RegExp(rule.rule_value, 'i')
-              matches = regex.test(sessionData?.label || '') || regex.test(sessionKey)
-            } catch {
-              // Invalid regex, skip
-            }
-            break
-          case 'session_type':
-            // Match session type based on key patterns
-            if (rule.rule_value === 'cron') matches = sessionKey.includes(':cron:')
-            else if (rule.rule_value === 'subagent')
-              matches = sessionKey.includes(':subagent:') || sessionKey.includes(':spawn:')
-            else if (rule.rule_value === 'main') matches = sessionKey === 'agent:main:main'
-            else if (rule.rule_value === 'slack') matches = sessionKey.includes('slack')
-            else if (rule.rule_value === 'whatsapp')
-              matches = sessionKey.includes('whatsapp') || sessionData?.channel === 'whatsapp'
-            else if (rule.rule_value === 'telegram')
-              matches = sessionKey.includes('telegram') || sessionData?.channel === 'telegram'
-            else if (rule.rule_value === 'discord')
-              matches = sessionKey.includes('discord') || sessionData?.channel === 'discord'
-            break
-        }
-
-        if (matches) {
-          return rule.room_id
-        }
+        if (matchesRule(rule, sessionKey, sessionData)) return rule.room_id
       }
-
       return undefined
     },
     [rules]

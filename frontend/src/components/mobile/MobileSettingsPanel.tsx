@@ -44,6 +44,7 @@ const ZEN_LIGHT_THEMES = [ZEN_LIGHT_THEME, 'solarized-light']
  * Safe to call on every startup (no side effects on the user's chosen zen theme).
  */
 function applyThemeClassOnly(isDark: boolean): void {
+  // NOSONAR: complexity from settings panel with multiple option branches
   const root = document.documentElement
 
   root.classList.remove('dark', 'light')

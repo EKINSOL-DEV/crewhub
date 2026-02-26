@@ -269,6 +269,39 @@ export function assignRoom(
   return { room: config.defaultRoom, trace }
 }
 
+const ROOM_PRIORITY: Record<string, number> = {
+  thinking: 8,
+  dev: 7,
+  ops: 6,
+  automation: 5,
+  comms: 4,
+  marketing: 3,
+  creative: 2,
+  headquarters: 1,
+}
+
+function scoreRule(text: string, rule: KeywordRule): { score: number; matches: string[] } {
+  let score = 0
+  const matches: string[] = []
+
+  for (const keyword of rule.keywords) {
+    if (text.includes(keyword.toLowerCase())) {
+      score += rule.weight
+      matches.push(keyword)
+    }
+  }
+
+  if (rule.negativeKeywords) {
+    for (const negKeyword of rule.negativeKeywords) {
+      if (text.includes(negKeyword.toLowerCase())) {
+        score -= rule.weight * 0.5
+      }
+    }
+  }
+
+  return { score, matches }
+}
+
 function scoreKeywords(
   input: AssignmentInput,
   rules: KeywordRule[]
@@ -282,24 +315,7 @@ function scoreKeywords(
   const roomScores: Record<string, { score: number; matches: string[] }> = {}
 
   for (const rule of rules) {
-    let score = 0
-    const matches: string[] = []
-
-    for (const keyword of rule.keywords) {
-      if (text.includes(keyword.toLowerCase())) {
-        score += rule.weight
-        matches.push(keyword)
-      }
-    }
-
-    if (rule.negativeKeywords) {
-      for (const negKeyword of rule.negativeKeywords) {
-        if (text.includes(negKeyword.toLowerCase())) {
-          score -= rule.weight * 0.5
-        }
-      }
-    }
-
+    const { score, matches } = scoreRule(text, rule)
     if (score > 0) {
       if (!roomScores[rule.room]) roomScores[rule.room] = { score: 0, matches: [] }
       roomScores[rule.room].score += score
@@ -311,16 +327,6 @@ function scoreKeywords(
     .map(([room, data]) => ({ room, score: data.score, matches: data.matches }))
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score
-      const roomPriority: Record<string, number> = {
-        thinking: 8,
-        dev: 7,
-        ops: 6,
-        automation: 5,
-        comms: 4,
-        marketing: 3,
-        creative: 2,
-        headquarters: 1,
-      }
-      return (roomPriority[b.room] || 0) - (roomPriority[a.room] || 0)
+      return (ROOM_PRIORITY[b.room] || 0) - (ROOM_PRIORITY[a.room] || 0)
     })
 }

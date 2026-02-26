@@ -155,9 +155,9 @@ export function useZenLayout(): UseZenLayoutReturn {
       setState((prev) => {
         const newRoot = splitPanelInTree(prev.root, panelId, direction, newType)
         const newPanels = getAllPanels(newRoot)
-        const newPanel = newPanels.find(
-          (p) => !getAllPanels(prev.root).some((op) => op.panelId === p.panelId)
-        )
+        // Use a Set for O(1) lookup instead of nested .some() to avoid deep function nesting
+        const existingPanelIds = new Set(getAllPanels(prev.root).map((p) => p.panelId))
+        const newPanel = newPanels.find((p) => !existingPanelIds.has(p.panelId))
         return {
           ...prev,
           root: newRoot,

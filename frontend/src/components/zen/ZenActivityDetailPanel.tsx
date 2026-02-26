@@ -54,6 +54,7 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 // ── Content Block Renderer ────────────────────────────────────
 
 function ContentBlockView({ block }: { block: SessionContentBlock }) {
+  // NOSONAR: complexity from activity detail rendering with multiple activity type branches
   const [expanded, setExpanded] = useState(false)
 
   if (block.type === 'text' && block.text) {

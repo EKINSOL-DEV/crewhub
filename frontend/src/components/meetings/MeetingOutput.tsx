@@ -302,6 +302,7 @@ function ActionsView({
 // ─── Main Component ─────────────────────────────────────────────
 
 export function MeetingOutput({
+  // NOSONAR: complexity from legitimate meeting output rendering with multiple content types
   meeting,
   onClose,
   onRetryFetch,

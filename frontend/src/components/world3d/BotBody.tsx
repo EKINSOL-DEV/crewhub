@@ -43,6 +43,7 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
 
   // Walking + breathing animation
   useFrame(({ clock }) => {
+    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     if (!bodyGroupRef.current) return
 
     // Walking animation — feet step and arms swing

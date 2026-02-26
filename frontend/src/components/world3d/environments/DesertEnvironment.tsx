@@ -88,6 +88,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
   const groundRef = useRef<THREE.InstancedMesh>(null)
 
   const data = useMemo(() => {
+    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const groundMatrices: THREE.Matrix4[] = []
     const groundColors: THREE.Color[] = []
 

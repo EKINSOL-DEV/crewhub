@@ -6,6 +6,16 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { threadsApi, type ThreadMessage } from '@/lib/threads.api'
 import { sseManager } from '@/lib/sseManager'
 
+/**
+ * Deduplicating message appender — module-level to reduce setState nesting depth.
+ */
+function makeAddThreadMessage(msg: ThreadMessage) {
+  return (prev: ThreadMessage[]): ThreadMessage[] => {
+    if (prev.some((m) => m.id === msg.id)) return prev
+    return [...prev, msg]
+  }
+}
+
 export function useThreadChat(threadId: string) {
   const [messages, setMessages] = useState<ThreadMessage[]>([])
   const [isSending, setIsSending] = useState(false)
@@ -22,10 +32,7 @@ export function useThreadChat(threadId: string) {
       if (data?.threadId !== threadId || !data?.message) return
       const msg = data.message as ThreadMessage
       // Deduplicate: skip if we already have this message id
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev
-        return [...prev, msg]
-      })
+      setMessages(makeAddThreadMessage(msg))
     }
 
     const unsub = sseManager.subscribe('thread.message.created', handleThreadMessage)

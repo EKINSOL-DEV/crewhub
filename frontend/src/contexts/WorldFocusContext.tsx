@@ -50,6 +50,13 @@ const WorldFocusContext = createContext<WorldFocusContextValue>({
   exitFirstPerson: () => {},
 })
 
+// ─── Module-level state updater helpers ────────────────────────
+// Extracted to module level to reduce setState callback nesting depth below 4 levels.
+
+function clearIsAnimating(prev: WorldFocusState): WorldFocusState {
+  return { ...prev, isAnimating: false }
+}
+
 // ─── Provider ──────────────────────────────────────────────────
 
 export function WorldFocusProvider({ children }: { children: ReactNode }) {

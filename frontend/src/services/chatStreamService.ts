@@ -12,6 +12,94 @@ export interface StreamCallbacks {
   onError: (error: string) => void
 }
 
+// ── SSE Event Processing ──────────────────────────────────────
+
+interface EventBlock {
+  eventType: string
+  dataLine: string
+}
+
+function parseEventBlock(eventBlock: string): EventBlock {
+  const lines = eventBlock.split('\n')
+  let eventType = 'message'
+  let dataLine = ''
+
+  for (const line of lines) {
+    if (line.startsWith('event: ')) eventType = line.slice(7).trim()
+    else if (line.startsWith('data: ')) dataLine = line.slice(6).trim()
+  }
+
+  return { eventType, dataLine }
+}
+
+interface BatchResult {
+  done: boolean
+  error: string | null
+}
+
+function processEventBatch(eventBlocks: string[], callbacks: StreamCallbacks): BatchResult {
+  let batchDone = false
+  let batchError: string | null = null
+
+  for (const eventBlock of eventBlocks) {
+    const { eventType, dataLine } = parseEventBlock(eventBlock)
+
+    if (eventType === 'delta' && dataLine && !batchDone) {
+      try {
+        const parsed = JSON.parse(dataLine)
+        if (parsed.text) callbacks.onChunk(parsed.text)
+      } catch {
+        // Skip malformed data
+      }
+    } else if (eventType === 'done') {
+      batchDone = true
+      // Don't break — continue to process any remaining events in the batch
+    } else if (eventType === 'error') {
+      try {
+        const parsed = JSON.parse(dataLine)
+        batchError = parsed.error || 'Stream error'
+      } catch {
+        batchError = 'Stream error'
+      }
+      break
+    }
+  }
+
+  return { done: batchDone, error: batchError }
+}
+
+async function readStream(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  callbacks: StreamCallbacks
+): Promise<void> {
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+
+    // Split on SSE event boundary (double newline)
+    const eventBlocks = buffer.split('\n\n')
+    buffer = eventBlocks.pop() ?? ''
+
+    const { done: batchDone, error: batchError } = processEventBatch(eventBlocks, callbacks)
+
+    if (batchError !== null) {
+      callbacks.onError(batchError)
+      return
+    }
+    if (batchDone) {
+      callbacks.onDone()
+      return
+    }
+  }
+
+  callbacks.onDone()
+}
+
 /**
  * Stream a message to an agent session.
  * Returns an AbortController the caller can use to cancel.
@@ -45,84 +133,13 @@ export function streamMessage(
     }
 
     const reader = resp.body!.getReader()
-    const decoder = new TextDecoder()
-
-    // Reset event tracking
-    let buffer = ''
 
     try {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-
-        // Split on SSE event boundary (double newline)
-        const eventBlocks = buffer.split('\n\n')
-        buffer = eventBlocks.pop() ?? ''
-
-        // Use a flag instead of `return` inside the loop so we always
-        // process ALL events in this batch before acting on `done`.
-        // Prevents edge-cases where `done` arrives mid-buffer while
-        // trailing `delta` events are still queued in the same chunk.
-        let batchDone = false
-        let batchError: string | null = null
-
-        for (const eventBlock of eventBlocks) {
-          const lines = eventBlock.split('\n')
-          let eventType = 'message'
-          let dataLine = ''
-
-          for (const line of lines) {
-            if (line.startsWith('event: ')) {
-              eventType = line.slice(7).trim()
-            } else if (line.startsWith('data: ')) {
-              dataLine = line.slice(6).trim()
-            }
-          }
-
-          if (eventType === 'delta' && dataLine) {
-            // Only deliver delta chunks when we haven't seen `done` yet
-            if (!batchDone) {
-              try {
-                const parsed = JSON.parse(dataLine)
-                if (parsed.text) {
-                  callbacks.onChunk(parsed.text)
-                }
-              } catch {
-                // Skip malformed data
-              }
-            }
-          } else if (eventType === 'done') {
-            batchDone = true
-            // Don't break — continue to process any remaining events in the batch
-          } else if (eventType === 'error') {
-            try {
-              const parsed = JSON.parse(dataLine)
-              batchError = parsed.error || 'Stream error'
-            } catch {
-              batchError = 'Stream error'
-            }
-            break
-          }
-        }
-
-        if (batchError !== null) {
-          callbacks.onError(batchError)
-          return
-        }
-        if (batchDone) {
-          callbacks.onDone()
-          return
-        }
-      }
+      await readStream(reader, callbacks)
     } catch (e: unknown) {
       if ((e as Error).name === 'AbortError') return
       callbacks.onError((e as Error).message || 'Stream read error')
-      return
     }
-
-    callbacks.onDone()
   }
 
   run()

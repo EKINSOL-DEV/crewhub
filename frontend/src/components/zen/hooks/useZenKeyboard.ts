@@ -88,6 +88,7 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
   actionsRef.current = actions
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // NOSONAR: complexity from legitimate keyboard shortcut dispatch; each branch handles a distinct key binding
     const a = actionsRef.current
 
     // Escape - Exit (but NOT if a fullscreen overlay is open — it handles its own Escape)

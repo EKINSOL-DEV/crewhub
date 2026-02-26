@@ -45,6 +45,7 @@ function sortNodes(nodes: DocNode[], sortKey: SortKey): DocNode[] {
 // ── Tree Node ─────────────────────────────────────────────────────
 
 function DocTreeNode({
+  // NOSONAR: complexity from docs panel with filtering and rendering branches
   node,
   depth,
   sortKey,

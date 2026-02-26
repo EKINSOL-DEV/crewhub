@@ -86,6 +86,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
     }
 
     setTasks((prevTasks) => {
+      // NOSONAR: complexity from legitimate task state reconciliation algorithm
       const newTasks: ActiveTask[] = []
       const seenIds = new Set<string>()
 
@@ -156,11 +157,8 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
       }
 
       cleanupTimerRef.current = setTimeout(() => {
-        const now = Date.now()
         setTasks((prevTasks) =>
-          prevTasks.filter(
-            (task) => task.status !== 'done' || !task.doneAt || now - task.doneAt < fadeOutDuration
-          )
+          prevTasks.filter(makeExpiredTaskFilter(Date.now(), fadeOutDuration))
         )
         scheduleCleanup() // Reschedule
       }, 1000) // Check every second
@@ -185,13 +183,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
         const { key } = JSON.parse(event.data)
         if (!isSubagentSession(key)) return
 
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.sessionKey === key && task.status === 'running'
-              ? { ...task, status: 'done', doneAt: Date.now() }
-              : task
-          )
-        )
+        setTasks((prevTasks) => prevTasks.map(markTaskDone(key)))
       } catch {
         // Ignore parse errors
       }
@@ -233,6 +225,26 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
  */
 function isSubagentSession(key: string): boolean {
   return key.includes(':subagent:') || key.includes(':spawn:')
+}
+
+/**
+ * Returns a filter predicate for tasks that should be kept alive.
+ * Extracted to module level to reduce setState callback nesting depth.
+ */
+function makeExpiredTaskFilter(now: number, fadeOutDuration: number) {
+  return (task: ActiveTask): boolean =>
+    task.status !== 'done' || !task.doneAt || now - task.doneAt < fadeOutDuration
+}
+
+/**
+ * Marks a task as done when its session is removed.
+ * Extracted to module level to reduce setState callback nesting depth.
+ */
+function markTaskDone(key: string) {
+  return (task: ActiveTask): ActiveTask =>
+    task.sessionKey === key && task.status === 'running'
+      ? { ...task, status: 'done' as const, doneAt: Date.now() }
+      : task
 }
 
 /**

@@ -60,6 +60,69 @@ export type PlacementAction =
   | { type: 'remove'; placedId: string; snapshot: PlacedProp }
   | { type: 'move'; placedId: string; from: Placement; to: Placement }
 
+// ── Module-level prop-state updater factories ─────────────────────────────────
+// Extracted to module level to reduce setState callback nesting depth below 4 levels.
+
+interface PropUpdateData {
+  placed_id: string
+  prop_id: string
+  position: Vec3
+  rotation_y: number
+  scale: number
+  room_id: string | null
+  placed_by: string | null
+  placed_at: number
+}
+
+function makePlacePropUpdater(data: PropUpdateData) {
+  return (prev: PlacedProp[]): PlacedProp[] => {
+    if (prev.some((p) => p.id === data.placed_id)) return prev
+    return [
+      ...prev,
+      {
+        id: data.placed_id,
+        prop_id: data.prop_id,
+        position: data.position,
+        rotation_y: data.rotation_y,
+        scale: data.scale,
+        room_id: data.room_id,
+        placed_by: data.placed_by,
+        placed_at: data.placed_at,
+      },
+    ]
+  }
+}
+
+function makeMovePropUpdater(
+  data: Pick<PropUpdateData, 'placed_id' | 'position' | 'rotation_y' | 'scale' | 'room_id'>
+) {
+  return (prev: PlacedProp[]): PlacedProp[] =>
+    prev.map((p) =>
+      p.id === data.placed_id
+        ? {
+            ...p,
+            position: data.position,
+            rotation_y: data.rotation_y,
+            scale: data.scale,
+            room_id: data.room_id,
+          }
+        : p
+    )
+}
+
+function makeRemovePropUpdater(placedId: string) {
+  return (prev: PlacedProp[]): PlacedProp[] => prev.filter((p) => p.id !== placedId)
+}
+
+function makePatchRedoWithNewId(action: PlacementAction, newPlacedId: string) {
+  return (prev: PlacementAction[]): PlacementAction[] =>
+    prev.map((a) =>
+      a === action && a.type === 'remove'
+        ? { ...a, placedId: newPlacedId, snapshot: { ...a.snapshot, id: newPlacedId } }
+        : a
+    )
+}
+
 export interface CreatorModeContextValue {
   isCreatorMode: boolean
   toggleCreatorMode: () => void
@@ -209,51 +272,14 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
 
     source.addEventListener('prop_update', (e: MessageEvent) => {
       try {
-        const data = JSON.parse(e.data) as {
-          action: 'place' | 'move' | 'remove'
-          placed_id: string
-          prop_id: string
-          position: Vec3
-          rotation_y: number
-          scale: number
-          room_id: string | null
-          placed_by: string | null
-          placed_at: number
-        }
+        const data = JSON.parse(e.data) as { action: 'place' | 'move' | 'remove' } & PropUpdateData
 
         if (data.action === 'place') {
-          setPlacedProps((prev) => {
-            if (prev.some((p) => p.id === data.placed_id)) return prev
-            return [
-              ...prev,
-              {
-                id: data.placed_id,
-                prop_id: data.prop_id,
-                position: data.position,
-                rotation_y: data.rotation_y,
-                scale: data.scale,
-                room_id: data.room_id,
-                placed_by: data.placed_by,
-                placed_at: data.placed_at,
-              },
-            ]
-          })
+          setPlacedProps(makePlacePropUpdater(data))
         } else if (data.action === 'move') {
-          setPlacedProps((prev) =>
-            prev.map((p) =>
-              p.id === data.placed_id
-                ? {
-                    ...p,
-                    position: data.position,
-                    rotation_y: data.rotation_y,
-                    scale: data.scale,
-                    room_id: data.room_id,
-                  }
-                : p
-            )
-          )
+          setPlacedProps(makeMovePropUpdater(data))
         } else if (data.action === 'remove') {
-          setPlacedProps((prev) => prev.filter((p) => p.id !== data.placed_id))
+          setPlacedProps(makeRemovePropUpdater(data.placed_id))
         }
       } catch (err) {
         console.warn('[CreatorMode] Failed to parse prop_update SSE event:', err)
@@ -346,17 +372,7 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
               const freshPlaced = await resp.json()
               const newPlacedId: string = freshPlaced.id
               // Patch the entry we just pushed to redo with the new id
-              setRedoStack((prev) =>
-                prev.map((a) =>
-                  a === action
-                    ? {
-                        ...a,
-                        placedId: newPlacedId,
-                        snapshot: { ...action.snapshot, id: newPlacedId },
-                      }
-                    : a
-                )
-              )
+              setRedoStack(makePatchRedoWithNewId(action, newPlacedId))
             }
           } else if (action.type === 'move') {
             // Undo a move → move back to original position.

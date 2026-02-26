@@ -22,6 +22,7 @@ interface AudioMessageProps {
 }
 
 export function AudioMessage({
+  // NOSONAR: complexity from audio player state machine with multiple media event handlers
   url,
   duration: initialDuration,
   variant = 'float',

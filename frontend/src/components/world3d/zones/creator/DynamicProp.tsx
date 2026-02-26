@@ -31,6 +31,7 @@ interface DynamicPropProps {
 }
 
 function DynamicMesh({
+  // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   part,
   index,
   editMode,

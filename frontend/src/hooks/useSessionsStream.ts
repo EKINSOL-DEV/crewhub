@@ -42,6 +42,49 @@ function isSessionUnchanged(existing: CrewSession, updated: CrewSession): boolea
   return existing.updatedAt === updated.updatedAt && existing.totalTokens === updated.totalTokens
 }
 
+// ── Module-level updater factories ────────────────────────────────────────────
+// Extracting these reduces setState callback nesting depth below 4 levels.
+
+function makeSessionCreatedUpdater(session: CrewSession, fingerprintRef: { current: string }) {
+  return (prev: SessionsStreamState): SessionsStreamState => {
+    if (prev.sessions.some((s) => s.key === session.key)) return prev
+    const newSessions = [...prev.sessions, session]
+    fingerprintRef.current = computeSessionsFingerprint(newSessions)
+    return { ...prev, sessions: newSessions }
+  }
+}
+
+function makeSessionUpdatedUpdater(
+  updatedSession: CrewSession,
+  fingerprintRef: { current: string }
+) {
+  return (prev: SessionsStreamState): SessionsStreamState => {
+    const idx = prev.sessions.findIndex((s) => s.key === updatedSession.key)
+    if (idx === -1) return prev // Session not found, skip
+
+    // Quick check: if data hasn't changed, skip update
+    const existing = prev.sessions[idx]
+    if (isSessionUnchanged(existing, updatedSession)) {
+      return prev
+    }
+
+    // Use splice for O(1) update instead of map for O(n)
+    const newSessions = [...prev.sessions]
+    newSessions[idx] = updatedSession
+    fingerprintRef.current = computeSessionsFingerprint(newSessions)
+    return { ...prev, sessions: newSessions }
+  }
+}
+
+function makeSessionRemovedUpdater(key: string, fingerprintRef: { current: string }) {
+  return (prev: SessionsStreamState): SessionsStreamState => {
+    if (!prev.sessions.some((s) => s.key === key)) return prev // Already gone
+    const newSessions = prev.sessions.filter((s) => s.key !== key)
+    fingerprintRef.current = computeSessionsFingerprint(newSessions)
+    return { ...prev, sessions: newSessions }
+  }
+}
+
 export function useSessionsStream(enabled: boolean = true) {
   const [state, setState] = useState<SessionsStreamState>({
     sessions: [],
@@ -239,13 +282,7 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionCreated = (event: MessageEvent) => {
       try {
         const session: CrewSession = JSON.parse(event.data)
-        setState((prev) => {
-          // Avoid duplicates
-          if (prev.sessions.some((s) => s.key === session.key)) return prev
-          const newSessions = [...prev.sessions, session]
-          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-          return { ...prev, sessions: newSessions }
-        })
+        setState(makeSessionCreatedUpdater(session, sessionsFingerprintRef))
       } catch (error) {
         console.error('Failed to parse session-created event:', error)
       }
@@ -254,22 +291,7 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionUpdated = (event: MessageEvent) => {
       try {
         const updatedSession: CrewSession = JSON.parse(event.data)
-        setState((prev) => {
-          const idx = prev.sessions.findIndex((s) => s.key === updatedSession.key)
-          if (idx === -1) return prev // Session not found, skip
-
-          // Quick check: if data hasn't changed, skip update
-          const existing = prev.sessions[idx]
-          if (isSessionUnchanged(existing, updatedSession)) {
-            return prev
-          }
-
-          // Use splice for O(1) update instead of map for O(n)
-          const newSessions = [...prev.sessions]
-          newSessions[idx] = updatedSession
-          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-          return { ...prev, sessions: newSessions }
-        })
+        setState(makeSessionUpdatedUpdater(updatedSession, sessionsFingerprintRef))
       } catch (error) {
         console.error('Failed to parse session-updated event:', error)
       }
@@ -278,12 +300,7 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionRemoved = (event: MessageEvent) => {
       try {
         const { key } = JSON.parse(event.data)
-        setState((prev) => {
-          if (!prev.sessions.some((s) => s.key === key)) return prev // Already gone
-          const newSessions = prev.sessions.filter((s) => s.key !== key)
-          sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
-          return { ...prev, sessions: newSessions }
-        })
+        setState(makeSessionRemovedUpdater(key, sessionsFingerprintRef))
       } catch (error) {
         console.error('Failed to parse session-removed event:', error)
       }
