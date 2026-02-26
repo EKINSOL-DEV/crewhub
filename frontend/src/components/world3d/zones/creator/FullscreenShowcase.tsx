@@ -142,15 +142,19 @@ export function FullscreenShowcase({ onClose }: Readonly<FullscreenShowcaseProps
             propName={selectedProp.name}
             onCopy={handleCopyCode}
           />
-        ) : selectedProp ? (
-          <DetailView
-            prop={selectedProp}
-            onBack={() => setSelectedProp(null)}
-            onViewCode={() => handleViewCode(selectedProp)}
-          />
-        ) : (
-          <CategoryGridView categories={showcaseCategories} onSelect={setSelectedProp} />
-        )}
+        ) : (() => {
+          if (selectedProp) {
+            return (
+              <DetailView
+                prop={selectedProp}
+                onBack={() => setSelectedProp(null)}
+                onViewCode={() => handleViewCode(selectedProp)}
+              />
+            )
+          }
+
+          return <CategoryGridView categories={showcaseCategories} onSelect={setSelectedProp} />
+        })()}
       </div>
 
       <style>{showcaseStyles}</style>

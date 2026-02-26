@@ -508,7 +508,7 @@ export function RoomWalls({
                   if (isAccent) accentMatRefs.current[refIdx] = el
                   else wallMatRefs.current[refIdx] = el
                 }}
-                {...(isAccent ? accentToon : wallToon)}
+                {...(isAccent ? { ...accentToon } : { ...wallToon })}
                 emissive="#000000"
                 emissiveIntensity={0}
               />

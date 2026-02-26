@@ -182,19 +182,29 @@ export function MeetingProgressView({ meeting, onCancel, onViewOutput }: Readonl
 
       {/* Footer */}
       <div className="px-4 py-3 border-t flex items-center gap-2">
-        {meeting.phase === 'complete' ? (
-          <Button className="w-full" onClick={onViewOutput}>
-            ✅ View Results
-          </Button>
-        ) : isFinished ? (
-          <Button variant="outline" className="w-full" onClick={onViewOutput}>
-            Close
-          </Button>
-        ) : (
-          <Button variant="destructive" className="w-full" onClick={onCancel}>
-            ⏹ Cancel Meeting
-          </Button>
-        )}
+        {(() => {
+          if (meeting.phase === 'complete') {
+            return (
+              <Button className="w-full" onClick={onViewOutput}>
+                ✅ View Results
+              </Button>
+            )
+          }
+
+          if (isFinished) {
+            return (
+              <Button variant="outline" className="w-full" onClick={onViewOutput}>
+                Close
+              </Button>
+            )
+          }
+
+          return (
+            <Button variant="destructive" className="w-full" onClick={onCancel}>
+              ⏹ Cancel Meeting
+            </Button>
+          )
+        })()}
       </div>
     </div>
   )

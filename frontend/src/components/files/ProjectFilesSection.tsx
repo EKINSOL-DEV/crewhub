@@ -64,42 +64,52 @@ export function ProjectFilesSection({
           background: 'var(--zen-bg, hsl(var(--background)))',
         }}
       >
-        {loading ? (
-          <div
-            style={{
-              padding: 12,
-              fontSize: 12,
-              color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
-              textAlign: 'center',
-            }}
-          >
-            Loading files…
-          </div>
-        ) : files.length === 0 ? (
-          <div
-            style={{
-              padding: 12,
-              fontSize: 12,
-              color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
-              textAlign: 'center',
-            }}
-          >
-            No files found
-          </div>
-        ) : (
-          <div style={{ padding: '6px 0' }}>
-            {files.map((file) => (
-              <FileTreeNode
-                key={file.path}
-                node={file}
-                depth={0}
-                selectedPath={selectedPath}
-                onSelect={handleFileClick}
-                accentColor={accentColor}
-              />
-            ))}
-          </div>
-        )}
+        {(() => {
+          if (loading) {
+            return (
+              <div
+                style={{
+                  padding: 12,
+                  fontSize: 12,
+                  color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+                  textAlign: 'center',
+                }}
+              >
+                Loading files…
+              </div>
+            )
+          }
+
+          if (files.length === 0) {
+            return (
+              <div
+                style={{
+                  padding: 12,
+                  fontSize: 12,
+                  color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+                  textAlign: 'center',
+                }}
+              >
+                No files found
+              </div>
+            )
+          }
+
+          return (
+            <div style={{ padding: '6px 0' }}>
+              {files.map((file) => (
+                <FileTreeNode
+                  key={file.path}
+                  node={file}
+                  depth={0}
+                  selectedPath={selectedPath}
+                  onSelect={handleFileClick}
+                  accentColor={accentColor}
+                />
+              ))}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Fullscreen overlay */}

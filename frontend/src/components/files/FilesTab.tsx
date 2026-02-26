@@ -96,11 +96,17 @@ export function FilesTab({ agentId, agentName }: FilesTabProps) {
               ⤢ Fullscreen
             </button>
           </div>
-          {contentLoading ? (
-            <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
-          ) : content ? (
-            <MarkdownViewer content={content} maxHeight="none" />
-          ) : null}
+          {(() => {
+            if (contentLoading) {
+              return <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
+            }
+
+            if (content) {
+              return <MarkdownViewer content={content} maxHeight="none" />
+            }
+
+            return null
+          })()}
         </div>
       )}
 

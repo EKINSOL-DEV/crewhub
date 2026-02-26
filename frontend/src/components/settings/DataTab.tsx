@@ -364,33 +364,39 @@ function BackupSection() {
               </Button>
             </div>
 
-            {loading && backups.length === 0 ? (
-              <div className="text-center py-4 text-sm text-muted-foreground">Loading…</div>
-            ) : backups.length === 0 ? (
-              <div className="text-center py-4 text-sm text-muted-foreground">No backups yet</div>
-            ) : (
-              <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                {backups.map((backup, i) => (
-                  <div
-                    key={`backup-${i}`}
-                    className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 text-sm"
-                  >
-                    <HardDrive className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate text-xs font-medium">{backup.filename}</div>
-                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <span>{formatSize(backup.size)}</span>
-                        <span>·</span>
-                        <span className="flex items-center gap-0.5">
-                          <Clock className="h-2.5 w-2.5" />
-                          {formatDate(backup.created_at)}
-                        </span>
+            {(() => {
+              if (loading && backups.length === 0) {
+                return <div className="text-center py-4 text-sm text-muted-foreground">Loading…</div>
+              }
+
+              if (backups.length === 0) {
+                return <div className="text-center py-4 text-sm text-muted-foreground">No backups yet</div>
+              }
+
+              return (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {backups.map((backup, i) => (
+                    <div
+                      key={`backup-${i}`}
+                      className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 text-sm"
+                    >
+                      <HardDrive className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate text-xs font-medium">{backup.filename}</div>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <span>{formatSize(backup.size)}</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-0.5">
+                            <Clock className="h-2.5 w-2.5" />
+                            {formatDate(backup.created_at)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         </div>
       </CollapsibleSection>
