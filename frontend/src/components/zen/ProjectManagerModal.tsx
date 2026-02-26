@@ -362,8 +362,11 @@ export function ProjectManagerModal({
       )}
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Name *</label>
+        <label htmlFor="zen-project-name" style={labelStyle}>
+          Name *
+        </label>
         <input
+          id="zen-project-name"
           style={inputStyle}
           value={form.name}
           placeholder="Project name..."
@@ -373,8 +376,11 @@ export function ProjectManagerModal({
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Description</label>
+        <label htmlFor="zen-project-description" style={labelStyle}>
+          Description
+        </label>
         <textarea
+          id="zen-project-description"
           style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
           value={form.description}
           placeholder="Optional description..."
@@ -383,7 +389,7 @@ export function ProjectManagerModal({
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Icon</label>
+        <p style={labelStyle}>Icon</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {PROJECT_ICONS.map((icon) => (
             <button
@@ -413,7 +419,7 @@ export function ProjectManagerModal({
       </div>
 
       <div style={{ marginBottom: 20 }}>
-        <label style={labelStyle}>Color</label>
+        <p style={labelStyle}>Color</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {PROJECT_COLORS.map((color) => (
             <button

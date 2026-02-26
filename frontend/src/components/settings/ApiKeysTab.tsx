@@ -514,6 +514,7 @@ function CreateKeyModal({
             {ALL_SCOPES.map((scope) => (
               <label
                 key={scope}
+                aria-label={scope}
                 className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
                   scopes.has(scope)
                     ? 'border-primary bg-primary/5'
