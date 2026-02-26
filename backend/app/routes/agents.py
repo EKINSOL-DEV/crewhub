@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 import app.services.agent_service as agent_svc
+from app.utils.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +149,7 @@ async def _get_agent_recent_activity(agent_id: str) -> str:
             if role in ("user", "assistant") and content:
                 messages.append(f"{role}: {content[:100]}")
         if messages:
-            logger.info(f"Got {len(messages)} recent messages for {agent_id}")
+            logger.info("Got %s recent messages for %s", len(messages), sanitize_log(agent_id))
             return "\n".join(messages[-5:])
     except Exception as e:
         logger.warning(f"Failed to get session history: {e}")
@@ -209,5 +210,5 @@ async def generate_bio(agent_id: str):
     recent_activity = await _get_agent_recent_activity(agent_id)
     bio = _build_bio_from_context(agent_id, agent_name, soul_content, recent_activity)
 
-    logger.info(f"Generated bio for {agent_id}: {bio}")
+    logger.info("Generated bio for %s: %s", sanitize_log(agent_id), sanitize_log(bio))
     return {"bio": bio, "generated": True}

@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 from app.auth import APIKeyInfo, require_scope
 from app.db.database import get_db
 from app.routes.sse import broadcast
+from app.utils.sanitize import sanitize_log
 
 SQL_GET_PLACED_PROP = "SELECT * FROM placed_props WHERE id = ?"
 
@@ -175,7 +176,12 @@ async def place_prop(
 
     await broadcast("prop_update", _to_broadcast_data(placed, "place"))
     logger.info(
-        f"[Creator] Placed prop {body.prop_id} at ({body.position.x},{body.position.y},{body.position.z}) room={body.room_id}"  # NOSONAR
+        "[Creator] Placed prop %s at (%s,%s,%s) room=%s",
+        sanitize_log(body.prop_id),
+        body.position.x,
+        body.position.y,
+        body.position.z,
+        sanitize_log(body.room_id),
     )
 
     return placed
