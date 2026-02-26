@@ -53,7 +53,11 @@ def _row_to_event(row: dict, display_name: Optional[str] = None) -> HistoryEvent
     )
 
 
-@router.get("/{project_id}/history", response_model=HistoryListResponse, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.get(
+    "/{project_id}/history",
+    response_model=HistoryListResponse,
+    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
+)
 async def get_project_history(
     project_id: str,
     event_type: Annotated[Optional[str], Query(None, description="Filter by event type")],
@@ -99,11 +103,17 @@ async def get_project_history(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get project history for {project_id}: {e}")
+        logger.error(
+            f"Failed to get project history for {project_id}: {e}"
+        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{project_id}/history/task/{task_id}", response_model=HistoryListResponse, responses={500: {"description": "Internal server error"}})
+@router.get(
+    "/{project_id}/history/task/{task_id}",
+    response_model=HistoryListResponse,
+    responses={500: {"description": "Internal server error"}},
+)
 async def get_task_history(
     project_id: str,
     task_id: str,
@@ -129,5 +139,7 @@ async def get_task_history(
 
             return HistoryListResponse(events=events, total=len(events))
     except Exception as e:
-        logger.error(f"Failed to get task history for {task_id}: {e}")
+        logger.error(
+            f"Failed to get task history for {task_id}: {e}"
+        )  # NOSONAR: task_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))

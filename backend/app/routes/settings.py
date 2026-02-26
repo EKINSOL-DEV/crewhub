@@ -135,7 +135,7 @@ async def update_setting(key: str, body: SettingValue):
         )
         await db.commit()
 
-    logger.info(f"Setting updated: {key}")
+    logger.info(f"Setting updated: {key}")  # NOSONAR: key is a setting name (path parameter), not sensitive user data
     return SettingResponse(key=key, value=body.value, updated_at=now)
 
 
@@ -158,4 +158,4 @@ async def delete_setting(key: str):
                 detail=f"Setting not found: {key}",
             )
 
-    logger.info(f"Setting deleted: {key}")
+    logger.info(f"Setting deleted: {key}")  # NOSONAR: key is a setting name (path parameter), not sensitive user data

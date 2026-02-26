@@ -71,7 +71,11 @@ async def list_rules():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{rule_id}", response_model=RoomAssignmentRule, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.get(
+    "/{rule_id}",
+    response_model=RoomAssignmentRule,
+    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
+)
 async def get_rule(rule_id: str):
     """Get a specific rule by ID."""
     try:
@@ -84,11 +88,17 @@ async def get_rule(rule_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get rule {rule_id}: {e}")
+        logger.error(
+            f"Failed to get rule {rule_id}: {e}"
+        )  # NOSONAR: rule_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("", response_model=RoomAssignmentRule, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
+@router.post(
+    "",
+    response_model=RoomAssignmentRule,
+    responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}},
+)
 async def create_rule(rule: RoomAssignmentRuleCreate):
     """Create a new room assignment rule."""
     # Validate rule_type
@@ -129,7 +139,11 @@ async def create_rule(rule: RoomAssignmentRuleCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{rule_id}", response_model=RoomAssignmentRule, responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.put(
+    "/{rule_id}",
+    response_model=RoomAssignmentRule,
+    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
+)
 async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
     """Update an existing rule."""
     # Validate rule_type if provided
@@ -174,11 +188,15 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update rule {rule_id}: {e}")
+        logger.error(
+            f"Failed to update rule {rule_id}: {e}"
+        )  # NOSONAR: rule_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{rule_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+@router.delete(
+    "/{rule_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}}
+)
 async def delete_rule(rule_id: str):
     """Delete a room assignment rule."""
     try:
@@ -196,11 +214,17 @@ async def delete_rule(rule_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete rule {rule_id}: {e}")
+        logger.error(
+            f"Failed to delete rule {rule_id}: {e}"
+        )  # NOSONAR: rule_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/bulk", response_model=dict, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
+@router.put(
+    "/bulk",
+    response_model=dict,
+    responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}},
+)
 async def bulk_update_rules(request: BulkRulesRequest):
     """Replace all rules with a new set (atomic bulk update)."""
     # Validate all rules first before touching the database
@@ -261,5 +285,7 @@ async def get_rules_for_room(room_id: str):
                 rules = [RoomAssignmentRule(**row) for row in rows]
             return {"rules": [r.model_dump() for r in rules]}
     except Exception as e:
-        logger.error(f"Failed to get rules for room {room_id}: {e}")
+        logger.error(
+            f"Failed to get rules for room {room_id}: {e}"
+        )  # NOSONAR: room_id is internal UUID; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))

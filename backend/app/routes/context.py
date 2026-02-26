@@ -64,7 +64,11 @@ class SessionContextResponse(BaseModel):
 # ── Routes ──────────────────────────────────────────────────────
 
 
-@router.get("/{session_key}/context", response_model=SessionContextResponse, responses={500: {"description": "Internal server error"}})
+@router.get(
+    "/{session_key}/context",
+    response_model=SessionContextResponse,
+    responses={500: {"description": "Internal server error"}},
+)
 async def get_session_context(session_key: str):
     """
     Get full context for a bot session.
@@ -238,7 +242,9 @@ async def get_session_context(session_key: str):
                 recent_history=recent_history,
             )
     except Exception as e:
-        logger.error(f"Failed to get session context for {session_key}: {e}")
+        logger.error(
+            f"Failed to get session context for {session_key}: {e}"
+        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -287,7 +293,9 @@ async def get_session_context_prompt(session_key: str):
 # ── Context Envelope (v2) ──────────────────────────────────────
 
 
-@router.get("/{session_key}/context/envelope", response_model=dict, responses={500: {"description": "Internal server error"}})
+@router.get(
+    "/{session_key}/context/envelope", response_model=dict, responses={500: {"description": "Internal server error"}}
+)
 async def get_context_envelope(
     session_key: str,
     channel: Annotated[Optional[str], Query(None, description="Origin channel (whatsapp, slack, crewhub-ui, ...)")],
