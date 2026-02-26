@@ -114,7 +114,7 @@ export function getRecentLayouts(): string[] {
 // ── Helper Functions ──────────────────────────────────────────────
 
 function generateLayoutId(): string {
-  return `layout-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  return `layout-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 }
 
 function getLayoutSummary(layout: LayoutNode): LayoutSummary {
@@ -288,8 +288,7 @@ export function ZenSaveLayoutModal({
             >
               {isSaving ? (
                 <>
-                  <span className="zen-spinner" />
-                  Saving...
+                  <span className="zen-spinner" /> Saving...
                 </>
               ) : (
                 <>
@@ -418,15 +417,13 @@ export function ZenLayoutPicker({
             className={`zen-layout-picker-tab ${selectedTab === 'presets' ? 'zen-layout-picker-tab-active' : ''}`}
             onClick={() => setSelectedTab('presets')}
           >
-            <span>📋</span>
-            Presets
+            <span>📋</span> Presets
           </button>
           <button
             className={`zen-layout-picker-tab ${selectedTab === 'saved' ? 'zen-layout-picker-tab-active' : ''}`}
             onClick={() => setSelectedTab('saved')}
           >
-            <span>💾</span>
-            Saved
+            <span>💾</span> Saved
             {savedLayouts.length > 0 && (
               <span className="zen-badge zen-badge-small">{savedLayouts.length}</span>
             )}

@@ -64,8 +64,7 @@ export class ZenErrorBoundary extends Component<ZenErrorBoundaryProps, ZenErrorB
             )}
             <div className="zen-error-boundary-actions">
               <button className="zen-btn zen-btn-primary" onClick={this.handleReset}>
-                <span>🔄</span>
-                Try Again
+                <span>🔄</span> Try Again
               </button>
             </div>
           </div>

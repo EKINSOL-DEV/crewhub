@@ -122,7 +122,7 @@ export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBro
     progressTimer.current = setInterval(() => {
       setLoadProgress((p) => {
         if (p >= 85) {
-          clearInterval(progressTimer.current!)
+          clearInterval(progressTimer.current ?? undefined)
           return p
         }
         return p + Math.random() * 12

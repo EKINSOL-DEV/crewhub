@@ -388,7 +388,7 @@ export function MeetingOutput({
       ta.value = text
       document.body.appendChild(ta)
       ta.select()
-      document.execCommand('copy')
+      document.execCommand('copy') // NOSONAR — legacy clipboard fallback for environments without navigator.clipboard
       document.body.removeChild(ta)
     }
     setCopied(true)
@@ -428,7 +428,7 @@ export function MeetingOutput({
   const baseItems = backendItems || parsed.actionItems
   const actionItems = baseItems.map((ai) => ({
     ...ai,
-    status: itemStatuses[ai.id] || (ai as any).status,
+    status: itemStatuses[ai.id] || (ai as any).status, // NOSONAR — ai may carry legacy status field not in ParsedActionItem type
   }))
 
   return (

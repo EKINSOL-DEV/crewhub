@@ -138,7 +138,7 @@ export function installGlobalErrorCapture() {
       addError({
         type: 'console.error',
         message: msg.slice(0, 2000),
-        stack: args.find((a) => a instanceof Error)?.stack as string | undefined,
+        stack: args.find((a) => a instanceof Error)?.stack,
       })
     }
 

@@ -627,7 +627,7 @@ function HQDashboard({
               <button
                 key={project.id}
                 onClick={() => {
-                  if (clickable) onProjectClick!(primaryRoomId)
+                  if (clickable) onProjectClick(primaryRoomId)
                 }}
                 style={{
                   display: 'flex',

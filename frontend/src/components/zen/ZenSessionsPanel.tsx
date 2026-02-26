@@ -245,7 +245,7 @@ export function ZenSessionsPanel({
               <span />
               <span />
               <span />
-            </span>
+            </span>{' '}
             Reconnecting...
           </div>
         )}

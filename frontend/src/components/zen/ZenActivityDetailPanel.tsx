@@ -448,7 +448,7 @@ export function ZenActivityDetailPanel({
                   <span />
                   <span />
                   <span />
-                </span>
+                </span>{' '}
                 Task is actively running...
               </div>
             )}

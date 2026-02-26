@@ -116,18 +116,15 @@ export function ZenSessionDetails({ sessionKey, onClose, onKill }: SessionDetail
         >
           {isKilling ? (
             <>
-              <span className="zen-spinner" />
-              Terminating...
+              <span className="zen-spinner" /> Terminating...
             </>
           ) : confirmKill ? (
             <>
-              <span>⚠️</span>
-              Click again to confirm
+              <span>⚠️</span> Click again to confirm
             </>
           ) : (
             <>
-              <span>🛑</span>
-              Terminate Session
+              <span>🛑</span> Terminate Session
             </>
           )}
         </button>

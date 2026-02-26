@@ -334,8 +334,7 @@ export function GroupThreadChat({
               fontSize: 12,
             }}
           >
-            <span style={{ animation: 'pulse 1.5s infinite' }}>●</span>
-            Agents are thinking…
+            <span style={{ animation: 'pulse 1.5s infinite' }}>●</span> Agents are thinking…
           </div>
         )}
 

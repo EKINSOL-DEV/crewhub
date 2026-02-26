@@ -71,7 +71,7 @@ export function ContextInspector({ roomId, roomName, onClose }: ContextInspector
       ta.value = text
       document.body.appendChild(ta)
       ta.select()
-      document.execCommand('copy')
+      document.execCommand('copy') // NOSONAR — legacy clipboard fallback for environments without navigator.clipboard
       document.body.removeChild(ta)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -529,9 +529,7 @@ function ObjectView({
               )}
               {isComplex && isCollapsed && (
                 <span style={{ color: '#475569', fontSize: 11 }}>
-                  {Array.isArray(value)
-                    ? `[${value.length}]`
-                    : `{${Object.keys(value as object).length}}`}
+                  {Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value).length}}`}
                 </span>
               )}
               {changed && <span style={{ color: '#fbbf24', fontSize: 10, marginLeft: 4 }}>●</span>}

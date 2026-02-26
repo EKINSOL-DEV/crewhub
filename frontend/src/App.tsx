@@ -632,7 +632,7 @@ function ZenWorkspaceSelector({
             e.currentTarget.style.borderColor = '#3b4261'
           }}
         >
-          🚀 Enter Zen Mode
+          🚀 Enter Zen Mode{' '}
           <span style={{ display: 'block', fontSize: '0.75rem', color: '#565f89', marginTop: 4 }}>
             All sessions • No project filter
           </span>

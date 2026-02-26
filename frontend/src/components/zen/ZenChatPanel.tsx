@@ -197,8 +197,8 @@ function NoAgentState({ onSelectAgent }: NoAgentStateProps) {
       )}
 
       <div className="zen-empty-subtitle" style={{ marginTop: '16px' }}>
-        <kbd className="zen-kbd">Ctrl+N</kbd> New chat
-        <span style={{ margin: '0 8px', opacity: 0.5 }}>•</span>
+        <kbd className="zen-kbd">Ctrl+N</kbd> New chat{' '}
+        <span style={{ margin: '0 8px', opacity: 0.5 }}>•</span>{' '}
         <kbd className="zen-kbd">Ctrl+K</kbd> Commands
       </div>
     </div>

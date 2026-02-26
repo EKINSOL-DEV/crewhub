@@ -138,8 +138,7 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
       <div ref={modalRef} className="zen-keyboard-help" tabIndex={-1}>
         <header className="zen-keyboard-help-header">
           <h2 className="zen-keyboard-help-title">
-            <span className="zen-keyboard-help-icon">⌨️</span>
-            Keyboard Shortcuts
+            <span className="zen-keyboard-help-icon">⌨️</span> Keyboard Shortcuts
           </h2>
           <div className="zen-keyboard-help-hints">
             <span>

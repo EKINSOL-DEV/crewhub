@@ -252,7 +252,7 @@ function KeysManager({ adminKey }: { adminKey: string }) {
               checked={showRevoked}
               onChange={(e) => setShowRevoked(e.target.checked)}
               className="rounded"
-            />
+            />{' '}
             Show revoked
           </label>
         </div>

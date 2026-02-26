@@ -101,14 +101,12 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
       <div className="zen-theme-picker">
         <div className="zen-theme-picker-header">
           <h2 className="zen-theme-picker-title">
-            <span className="zen-theme-picker-icon">🎨</span>
-            Select Theme
+            <span className="zen-theme-picker-icon">🎨</span> Select Theme
           </h2>
           <div className="zen-theme-picker-hints">
-            <span className="zen-kbd">↑↓</span> navigate
-            <span className="zen-theme-picker-sep">•</span>
-            <span className="zen-kbd">Enter</span> select
-            <span className="zen-theme-picker-sep">•</span>
+            <span className="zen-kbd">↑↓</span> navigate{' '}
+            <span className="zen-theme-picker-sep">•</span> <span className="zen-kbd">Enter</span>{' '}
+            select <span className="zen-theme-picker-sep">•</span>{' '}
             <span className="zen-kbd">Esc</span> close
           </div>
         </div>
