@@ -426,7 +426,6 @@ function SelectionIndicator({
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
             onPointerMove={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}  // NOSONAR: mouse/drag interaction
             onDoubleClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}

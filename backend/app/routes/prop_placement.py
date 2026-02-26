@@ -175,14 +175,7 @@ async def place_prop(
     placed = _row_to_response(dict(row))
 
     await broadcast("prop_update", _to_broadcast_data(placed, "place"))
-    logger.info(
-        "[Creator] Placed prop %s at (%s,%s,%s) room=%s",
-        sanitize_log(body.prop_id),
-        body.position.x,
-        body.position.y,
-        body.position.z,
-        sanitize_log(body.room_id),
-    )
+    logger.info("[Creator] Placed prop successfully")
 
     return placed
 

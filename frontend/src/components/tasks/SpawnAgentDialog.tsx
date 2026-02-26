@@ -102,6 +102,15 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
         background: 'rgba(0,0,0,0.5)',
       }}
       onClick={onClose}
+      role="button"
+      tabIndex={0}
+      aria-label="Close dialog"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClose()
+        }
+      }}
     >
       <div
         style={{
