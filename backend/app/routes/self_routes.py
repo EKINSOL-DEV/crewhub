@@ -150,7 +150,7 @@ async def _get_room_id(session_key: str) -> Optional[str]:
     response_model=IdentifyResponse,
     responses={403: {"description": "Forbidden"}, 429: {"description": "Too many requests"}},
 )
-async def identify(  # NOSONAR: complexity from identity verification state machine (bound/unbound keys, agent creation, binding security checks), safe to keep
+async def identify(  # NOSONAR
     body: IdentifyRequest,
     key: Annotated[APIKeyInfo, Depends(require_scope("self"))],
 ):

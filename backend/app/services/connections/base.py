@@ -312,7 +312,7 @@ class AgentConnection(ABC):
         """
         raise NotImplementedError(f"{self.__class__.__name__} does not support killing sessions")
 
-    async def health_check(self) -> bool:  # NOSONAR — interface method, subclasses may use await; callers use await
+    async def health_check(self) -> bool:  # NOSONAR
         """
         Perform a health check on the connection.
 

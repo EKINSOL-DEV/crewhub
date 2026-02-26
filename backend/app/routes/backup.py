@@ -161,7 +161,7 @@ async def export_database(key: Annotated[APIKeyInfo, Depends(require_scope("admi
 
 
 @router.post("/import", response_model=ImportResponse)
-async def import_database(  # NOSONAR: complexity from multi-stage import pipeline (validate → backup → clear → insert → restore on failure), safe to keep
+async def import_database(  # NOSONAR
     file: Annotated[UploadFile, File(...)], key: Annotated[APIKeyInfo, Depends(require_scope("admin"))]
 ):
     """

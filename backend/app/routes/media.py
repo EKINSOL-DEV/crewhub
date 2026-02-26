@@ -21,6 +21,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 MEDIA_DIR = ".crewhub"
+OPENCLAW_DIR = ".openclaw"
 EXT_WEBM = ".webm"
 MIME_WEBM = "audio/webm"
 MIME_MP4 = "audio/mp4"
@@ -39,16 +40,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Upload directory for chat images
-UPLOAD_DIR = Path.home() / ".openclaw" / "media" / "uploads"
+UPLOAD_DIR = Path.home() / OPENCLAW_DIR / "media" / "uploads"
 
 # Upload directory for voice messages
 AUDIO_UPLOAD_DIR = Path.home() / MEDIA_DIR / "media" / "audio"
 
 # Allowed base directories for media files (resolved to absolute paths)
 ALLOWED_MEDIA_DIRS = [
-    Path.home() / ".openclaw" / "media",
-    Path.home() / ".openclaw" / "media" / "inbound",
-    Path.home() / ".openclaw" / "media" / "uploads",
+    Path.home() / OPENCLAW_DIR / "media",
+    Path.home() / OPENCLAW_DIR / "media" / "inbound",
+    Path.home() / OPENCLAW_DIR / "media" / "uploads",
     Path.home() / MEDIA_DIR / "media",
     Path.home() / MEDIA_DIR / "media" / "audio",
     Path("/tmp") / "crewhub-media",  # For testing
@@ -205,9 +206,7 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
         return None, MSG_NO_AUDIO_CONV
 
     # Convert to mp3 via ffmpeg in a temp file
-    with tempfile.NamedTemporaryFile(
-        suffix=".mp3", delete=False
-    ) as tmp:  # NOSONAR — used only to reserve a temp path; no blocking I/O performed here
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:  # NOSONAR
         mp3_path = tmp.name
 
     try:
@@ -411,11 +410,11 @@ async def serve_media(file_path: str):
         path = UPLOAD_DIR / filename
     else:
         # Relative to ~/.openclaw/media
-        path = Path.home() / ".openclaw" / "media" / file_path
+        path = Path.home() / OPENCLAW_DIR / "media" / file_path
 
     # Security check: ensure path is in allowed directories
     if not is_path_allowed(path):
-        logger.warning(f"Media access denied - path not allowed: {file_path}")  # NOSONAR: file_path is logged for security audit purposes; needed to detect path traversal attempts
+        logger.warning(f"Media access denied - path not allowed: {file_path}")  # NOSONAR
         raise HTTPException(status_code=404, detail="File not found")
 
     # Check if file exists

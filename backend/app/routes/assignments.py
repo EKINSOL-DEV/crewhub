@@ -46,9 +46,7 @@ async def get_assignment(session_key: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to get assignment for {session_key}: {e}"
-        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get assignment for {session_key}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -132,9 +130,7 @@ async def delete_assignment(session_key: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to delete assignment {session_key}: {e}"
-        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
+        logger.error(f"Failed to delete assignment {session_key}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -150,9 +146,7 @@ async def get_assignments_for_room(room_id: str):
                 assignments = [SessionRoomAssignment(**row) for row in rows]
             return {"assignments": [a.model_dump() for a in assignments]}
     except Exception as e:
-        logger.error(
-            f"Failed to get assignments for room {room_id}: {e}"
-        )  # NOSONAR: room_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get assignments for room {room_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 

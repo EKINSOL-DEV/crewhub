@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 async def perform_handshake(
     conn: OpenClawConnection,
-) -> bool:  # NOSONAR: complexity from WebSocket handshake protocol (challenge/response steps, error cases, auth modes), safe to keep
+) -> bool:  # NOSONAR
     """
     Perform the OpenClaw v2 device-identity WebSocket handshake.
 
@@ -60,7 +60,7 @@ async def perform_handshake(
             try:
                 await conn._listen_task
             except asyncio.CancelledError:
-                pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
+                pass  # NOSONAR
 
         # ── 1. Device identity ───────────────────────────────────────────
         from .device_identity import CREWHUB_SCOPES, DeviceIdentityManager

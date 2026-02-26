@@ -88,9 +88,7 @@ async def get_rule(rule_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to get rule {rule_id}: {e}"
-        )  # NOSONAR: rule_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get rule {rule_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -188,9 +186,7 @@ async def update_rule(rule_id: str, rule: RoomAssignmentRuleUpdate):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to update rule {rule_id}: {e}"
-        )  # NOSONAR: rule_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to update rule {rule_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -214,9 +210,7 @@ async def delete_rule(rule_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to delete rule {rule_id}: {e}"
-        )  # NOSONAR: rule_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to delete rule {rule_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -285,7 +279,5 @@ async def get_rules_for_room(room_id: str):
                 rules = [RoomAssignmentRule(**row) for row in rows]
             return {"rules": [r.model_dump() for r in rules]}
     except Exception as e:
-        logger.error(
-            f"Failed to get rules for room {room_id}: {e}"
-        )  # NOSONAR: room_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get rules for room {room_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))

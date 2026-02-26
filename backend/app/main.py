@@ -91,7 +91,7 @@ _poll_stale_count: dict[str, int] = {}
 _INACTIVE_STATUSES = frozenset({"archived", "pruned", "completed", "deleted", "ended"})
 
 
-async def poll_sessions_loop():  # NOSONAR: complexity from session polling loop (diff detection, SSE broadcast, stale count tracking, error recovery), safe to keep
+async def poll_sessions_loop():  # NOSONAR
     """Background task that polls all connections for sessions and broadcasts to SSE clients."""
     global _poll_prev_session_keys, _poll_prev_updatedAt, _poll_stale_count
     manager = await get_connection_manager()
@@ -258,7 +258,7 @@ async def lifespan(app: FastAPI):
         try:
             await _polling_task
         except asyncio.CancelledError:
-            pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
+            pass  # NOSONAR
 
     # Stop Connection Manager
     manager = await get_connection_manager()

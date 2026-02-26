@@ -218,9 +218,7 @@ async def get_session_context(session_key: str):
 
             return SessionContextResponse(room=room, project=project, tasks=tasks, recent_history=recent_history)
     except Exception as e:
-        logger.error(
-            f"Failed to get session context for {session_key}: {e}"
-        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get session context for {session_key}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
