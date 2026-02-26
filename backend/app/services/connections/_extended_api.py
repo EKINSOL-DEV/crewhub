@@ -98,39 +98,37 @@ class OpenClawExtendedMixin:
         message: str,
         agent_id: str = "main",
         session_id: Optional[str] = None,
-        timeout: float = 120.0,  # NOSONAR
+        timeout: float = 120.0,
     ) -> AsyncGenerator[str, None]:
         """Send a chat message and yield text chunks as they arrive via WS events."""
         idempotency_key = str(uuid.uuid4())
         chunk_queue: asyncio.Queue = asyncio.Queue()
-        sent_length = 0
-        active_run_id: Optional[str] = None
         stream_id = str(uuid.uuid4())
         expected_session_key = f"agent:{agent_id}:main"
+        state = {"sent_length": 0, "active_run_id": None}
 
         def on_chat_event(payload: dict):
-            nonlocal sent_length, active_run_id
             if payload.get("sessionKey") != expected_session_key:
                 return
             run_id = payload.get("runId")
-            state = payload.get("state")
-            if active_run_id is None and state == "delta":
-                active_run_id = run_id
-            if run_id and active_run_id and run_id != active_run_id:
+            event_state = payload.get("state")
+            if state["active_run_id"] is None and event_state == "delta":
+                state["active_run_id"] = run_id
+            if run_id and state["active_run_id"] and run_id != state["active_run_id"]:
                 return
-            if state == "delta":
+            if event_state == "delta":
                 content = payload.get("message", {}).get("content", [])
                 text = content[0].get("text", "") if content and isinstance(content[0], dict) else ""
-                new_chunk = text[sent_length:]
-                sent_length = len(text)
+                new_chunk = text[state["sent_length"] :]
+                state["sent_length"] = len(text)
                 if new_chunk:
                     chunk_queue.put_nowait(("delta", new_chunk))
-            elif state in ("final", "error", "aborted"):
-                chunk_queue.put_nowait(("done", state))
+                return
+            if event_state in ("final", "error", "aborted"):
+                chunk_queue.put_nowait(("done", event_state))
 
         self.subscribe("chat", on_chat_event)  # type: ignore[attr-defined]
         self._stream_queues[stream_id] = chunk_queue  # type: ignore[attr-defined]
-
         agent_task = asyncio.create_task(
             self.call(  # type: ignore[attr-defined]
                 "agent",
@@ -145,26 +143,23 @@ class OpenClawExtendedMixin:
                 wait_for_final_agent_result=True,
             )
         )
-
         try:
-            start_time = asyncio.get_event_loop().time()
+            start = asyncio.get_event_loop().time()
             while True:
-                elapsed = asyncio.get_event_loop().time() - start_time
-                remaining = timeout - elapsed
+                remaining = timeout - (asyncio.get_event_loop().time() - start)
                 if remaining <= 0:
                     break
                 try:
                     kind, data = await asyncio.wait_for(chunk_queue.get(), timeout=min(30.0, remaining))
-                    if kind == "delta":
-                        yield data
-                    elif kind == "error":
-                        logger.warning(f"Stream interrupted: {data}")
-                        break
-                    else:
-                        break  # "done"
                 except TimeoutError:
                     logger.warning(f"No chunk received in 30s for agent {agent_id}")
                     break
+                if kind == "delta":
+                    yield data
+                    continue
+                if kind == "error":
+                    logger.warning(f"Stream interrupted: {data}")
+                break
         finally:
             if not agent_task.done():
                 agent_task.cancel()

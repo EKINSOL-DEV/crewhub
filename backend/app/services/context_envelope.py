@@ -129,44 +129,43 @@ async def _resolve_self_identity(db: aiosqlite.Connection, session_key: str) -> 
     return identity
 
 
+async def _fetch_room_and_project(
+    db: aiosqlite.Connection, room_id: str
+) -> tuple[dict[str, Any] | None, Optional[str], list[dict[str, Any]]]:
+    async with db.execute("SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)) as cur:
+        room_row = await cur.fetchone()
+    if not room_row:
+        return None, None, []
+
+    room = {"id": room_row["id"], "name": room_row["name"], "type": "hq" if room_row["is_hq"] else "standard"}
+    project_id = room_row["project_id"]
+    projects: list[dict[str, Any]] = []
+    if not project_id:
+        return room, None, projects
+
+    async with db.execute("SELECT id, name, folder_path FROM projects WHERE id = ?", (project_id,)) as cur:
+        proj_row = await cur.fetchone()
+    if proj_row:
+        proj: dict[str, Any] = {"id": proj_row["id"], "name": proj_row["name"]}
+        if proj_row["folder_path"]:
+            proj["repo"] = proj_row["folder_path"]
+        projects.append(proj)
+    return room, project_id, projects
+
+
 async def build_crewhub_context(
     room_id: str,
     channel: Optional[str] = None,
     max_tasks: int = 10,
     session_key: Optional[str] = None,
 ) -> Optional[dict[str, Any]]:
-    """
-    Build a CrewHub context envelope for injection into agent preambles.
-
-    Args:
-        room_id: The room ID to build context for.
-        channel: Origin channel (e.g. 'whatsapp', 'crewhub-ui').
-        max_tasks: Maximum number of tasks to include.
-
-    Returns:
-        Context envelope dict, or None if room not found.
-    """
+    """Build a CrewHub context envelope for injection into agent preambles."""
     try:
         async with get_db() as db:
             privacy = "external" if channel and channel.lower() in EXTERNAL_CHANNELS else "internal"
-
-            async with db.execute("SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)) as cur:
-                room_row = await cur.fetchone()
-            if not room_row:
+            room, project_id, projects = await _fetch_room_and_project(db, room_id)
+            if not room:
                 return None
-
-            room = {"id": room_row["id"], "name": room_row["name"], "type": "hq" if room_row["is_hq"] else "standard"}
-            project_id = room_row["project_id"]
-
-            projects: list[dict] = []
-            if project_id:
-                async with db.execute("SELECT id, name, folder_path FROM projects WHERE id = ?", (project_id,)) as cur:
-                    proj_row = await cur.fetchone()
-                if proj_row:
-                    p: dict[str, Any] = {"id": proj_row["id"], "name": proj_row["name"]}
-                    if proj_row["folder_path"]:
-                        p["repo"] = proj_row["folder_path"]
-                    projects.append(p)
 
             participants = await _fetch_participants(db, room_id) if privacy == "internal" else []
             tasks = await _fetch_tasks(db, project_id, max_tasks) if privacy == "internal" and project_id else []
@@ -180,16 +179,12 @@ async def build_crewhub_context(
                 "privacy": privacy,
                 "context_version": context_version,
             }
-
             if self_identity:
                 envelope["self"] = self_identity
-
-            if privacy == "internal":
-                if participants:
-                    envelope["participants"] = participants
-                if tasks:
-                    envelope["tasks"] = tasks
-
+            if privacy == "internal" and participants:
+                envelope["participants"] = participants
+            if privacy == "internal" and tasks:
+                envelope["tasks"] = tasks
             if self_identity and self_identity.get("agentId"):
                 persona_prompt = await get_persona_prompt(
                     self_identity["agentId"],
@@ -198,12 +193,10 @@ async def build_crewhub_context(
                 )
                 if persona_prompt:
                     envelope["_persona_prompt"] = persona_prompt
-
             envelope["context_hash"] = _compute_hash(envelope)
             return envelope
-
     except Exception as e:
-        logger.error(f"Failed to build context envelope for room {room_id}: {e}")  # NOSONAR
+        logger.error(f"Failed to build context envelope for room {room_id}: {e}")
         return None
 
 

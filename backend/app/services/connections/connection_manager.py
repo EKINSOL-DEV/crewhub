@@ -503,32 +503,22 @@ class ConnectionManager:
                 return conn
         return None
 
+    async def _send_via_conn(self, conn, session_key: str, message: str, timeout: float) -> Optional[str]:
+        if not conn or not conn.is_connected():
+            return None
+        return await conn.send_message(session_key, message, timeout)
+
     async def send_message(
         self,
         session_key: str,
         message: str,
         connection_id: Optional[str] = None,
-        timeout: float = 120.0,  # NOSONAR
+        timeout: float = 120.0,
     ) -> Optional[str]:
-        """
-        Send a message to a session, routing to the correct connection.
-
-        Args:
-            session_key: Target session
-            message: Message text
-            connection_id: Specific connection to use (optional)
-            timeout: Timeout in seconds
-
-        Returns:
-            Response text or None
-        """
+        """Send a message to a session, routing to the correct connection."""
         if connection_id:
-            conn = self._connections.get(connection_id)
-            if conn and conn.is_connected():
-                return await conn.send_message(session_key, message, timeout)
-            return None
+            return await self._send_via_conn(self._connections.get(connection_id), session_key, message, timeout)
 
-        # Try all connected
         for conn in self._connections.values():
             if not conn.is_connected():
                 continue

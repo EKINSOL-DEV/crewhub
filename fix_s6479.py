@@ -73,17 +73,24 @@ def has_scope_boundary(lines: list, from_line: int, to_line: int, idx_var: str) 
     return False
 
 
+def _line_map_contexts(
+    map_pattern: re.Pattern[str], line: str, lineno: int
+) -> list[tuple[int, str, str]]:
+    contexts: list[tuple[int, str, str]] = []
+    for m in map_pattern.finditer(line):
+        item_var = m.group(1)
+        if item_var != "_":
+            contexts.append((lineno, item_var, m.group(2)))
+    return contexts
+
+
 def _collect_map_contexts(lines: list[str]) -> list[tuple[int, str, str]]:
     map_pattern = re.compile(
         r"\.map\(\(([a-zA-Z_][a-zA-Z0-9_]*),\s*([a-zA-Z_][a-zA-Z0-9_]*)\)\s*=>"
     )
     contexts: list[tuple[int, str, str]] = []
     for lineno, line in enumerate(lines):
-        for m in map_pattern.finditer(line):
-            item_var = m.group(1)
-            if item_var == "_":
-                continue
-            contexts.append((lineno, item_var, m.group(2)))
+        contexts.extend(_line_map_contexts(map_pattern, line, lineno))
     return contexts
 
 

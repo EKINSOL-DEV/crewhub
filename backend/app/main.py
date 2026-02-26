@@ -91,67 +91,60 @@ _poll_stale_count: dict[str, int] = {}
 _INACTIVE_STATUSES = frozenset({"archived", "pruned", "completed", "deleted", "ended"})
 
 
+async def _emit_removed_sessions(current_keys: set[str]) -> None:
+    global _poll_prev_session_keys
+    removed_keys = _poll_prev_session_keys - current_keys
+    for removed_key in removed_keys:
+        logger.info(f"[POLL] Session removed from active list: {removed_key}")
+        await broadcast("session-removed", {"key": removed_key})
+        _poll_stale_count.pop(removed_key, None)
+        _poll_prev_updatedAt.pop(removed_key, None)
+    added_keys = current_keys - _poll_prev_session_keys
+    if added_keys:
+        logger.info(f"[POLL] Sessions added to list: {added_keys}")
+    _poll_prev_session_keys = current_keys
+
+
+def _log_non_active_statuses(raw_dicts: list[dict]) -> None:
+    for s in raw_dicts:
+        status = s.get("status", "active")
+        if status not in ("active", "idle", ""):
+            logger.warning(f"[DIAG] Session {s.get('key')} has non-active status: {status!r}")
+
+
+def _track_stale_sessions(active_dicts: list[dict]) -> None:
+    for s in active_dicts:
+        key = s.get("key")
+        if not key:
+            continue
+        updated_at = s.get("updatedAt") or 0
+        prev_updated_at = _poll_prev_updatedAt.get(key, updated_at)
+        if updated_at == prev_updated_at:
+            _poll_stale_count[key] = _poll_stale_count.get(key, 0) + 1
+            if _poll_stale_count[key] == 6:
+                logger.info(f"[DIAG] Session {key} updatedAt stale for ~30s (status={s.get('status', 'active')})")
+        else:
+            _poll_stale_count.pop(key, None)
+        _poll_prev_updatedAt[key] = updated_at
+
+
 async def poll_sessions_loop():
     """Background task that polls all connections for sessions and broadcasts to SSE clients."""
-    global _poll_prev_session_keys, _poll_prev_updatedAt, _poll_stale_count
     manager = await get_connection_manager()
     while True:
         try:
             sessions_data = await manager.get_all_sessions()
             if sessions_data:
                 raw_dicts = [s.to_dict() for s in sessions_data]
-
-                # ── Issue 2 fix: filter archived/pruned sessions ─────────────
-                # OpenClaw v2026.2.17 may include archived sessions in sessions.list
-                # with a non-active status field. Filter them out to prevent ghosts.
                 active_dicts = [s for s in raw_dicts if s.get("status", "active") not in _INACTIVE_STATUSES]
-
                 current_keys = {s["key"] for s in active_dicts if s.get("key")}
-
-                # ── Issue 2 fix: emit session-removed for disappeared sessions ─
-                removed_keys = _poll_prev_session_keys - current_keys
-                for removed_key in removed_keys:
-                    logger.info(f"[POLL] Session removed from active list: {removed_key}")
-                    await broadcast("session-removed", {"key": removed_key})
-                    _poll_stale_count.pop(removed_key, None)
-                    _poll_prev_updatedAt.pop(removed_key, None)
-
-                added_keys = current_keys - _poll_prev_session_keys
-                if added_keys:
-                    logger.info(f"[POLL] Sessions added to list: {added_keys}")
-
-                # ── Diagnostics: detect non-active statuses ──────────────────
-                for s in raw_dicts:
-                    status = s.get("status", "active")
-                    if status not in ("active", "idle", ""):
-                        logger.warning(f"[DIAG] Session {s.get('key')} has non-active status: {status!r}")
-
-                # ── Diagnostics: detect stale updatedAt ─────────────────────
-                for s in active_dicts:
-                    key = s.get("key")
-                    if not key:
-                        continue
-                    updated_at = s.get("updatedAt") or 0
-                    prev_updated_at = _poll_prev_updatedAt.get(key, updated_at)
-                    if updated_at == prev_updated_at:
-                        _poll_stale_count[key] = _poll_stale_count.get(key, 0) + 1
-                        if _poll_stale_count[key] == 6:  # ~30s of stale updatedAt
-                            logger.info(
-                                f"[DIAG] Session {key} updatedAt stale for ~30s (status={s.get('status', 'active')})"
-                            )
-                    else:
-                        _poll_stale_count.pop(key, None)
-                    _poll_prev_updatedAt[key] = updated_at
-
-                _poll_prev_session_keys = current_keys
-
-                await broadcast(
-                    "sessions-refresh",
-                    {"sessions": active_dicts},
-                )
+                await _emit_removed_sessions(current_keys)
+                _log_non_active_statuses(raw_dicts)
+                _track_stale_sessions(active_dicts)
+                await broadcast("sessions-refresh", {"sessions": active_dicts})
         except Exception as e:
             logger.debug(f"Polling error: {e}")
-        await asyncio.sleep(5)  # Poll every 5 seconds
+        await asyncio.sleep(5)
 
 
 async def load_connections_from_db():

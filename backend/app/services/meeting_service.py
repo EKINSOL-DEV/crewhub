@@ -194,12 +194,27 @@ async def db_get_started_at(meeting_id: str) -> int:
             return row["started_at"] if row and row["started_at"] else _now_ms()
 
 
-async def db_save_action_items(meeting_id: str, output_md: str) -> None:
-    """Parse action items from synthesis markdown and persist to DB."""
-    lines = output_md.split("\n")
+def _parse_action_item_line(stripped: str) -> dict[str, Any] | None:
+    m = re.match(r"^- \[[ xX]\]\s*(.*)", stripped)
+    if not m:
+        return None
+    text = m.group(1)
+    assignee = None
+    am = re.match(r"@(\S+?):\s*(.*)", text)
+    if am:
+        assignee, text = am.group(1), am.group(2)
+    priority = "medium"
+    pm = re.search(r"\[priority:\s*(high|medium|low)\]\s*$", text)
+    if pm:
+        priority = pm.group(1)
+        text = text[: pm.start()].strip()
+    return {"id": f"ai_{uuid.uuid4().hex[:8]}", "text": text, "assignee": assignee, "priority": priority}
+
+
+def _parse_action_items(output_md: str) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
     in_section = False
-    items = []
-    for line in lines:
+    for line in output_md.split("\n"):
         stripped = line.strip()
         if re.match(r"^##\s+(Action Items|Next Steps)", stripped, re.IGNORECASE):
             in_section = True
@@ -208,20 +223,14 @@ async def db_save_action_items(meeting_id: str, output_md: str) -> None:
             break
         if not in_section:
             continue
-        m = re.match(r"^- \[[ xX]\]\s*(.*)", stripped)
-        if not m:
-            continue
-        text = m.group(1)
-        assignee = None
-        am = re.match(r"@(\S+?):\s*(.*)", text)
-        if am:
-            assignee, text = am.group(1), am.group(2)
-        priority = "medium"
-        pm = re.search(r"\[priority:\s*(high|medium|low)\]\s*$", text)
-        if pm:
-            priority = pm.group(1)
-            text = text[: pm.start()].strip()
-        items.append({"id": f"ai_{uuid.uuid4().hex[:8]}", "text": text, "assignee": assignee, "priority": priority})
+        if parsed := _parse_action_item_line(stripped):
+            items.append(parsed)
+    return items
+
+
+async def db_save_action_items(meeting_id: str, output_md: str) -> None:
+    """Parse action items from synthesis markdown and persist to DB."""
+    items = _parse_action_items(output_md)
     if not items:
         return
     now = _now_ms()
