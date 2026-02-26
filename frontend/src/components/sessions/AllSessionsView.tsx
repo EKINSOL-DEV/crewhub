@@ -16,6 +16,21 @@ interface AllSessionsViewProps {
 type SortField = 'name' | 'status' | 'model' | 'tokens' | 'lastActive'
 type SortDirection = 'asc' | 'desc'
 
+interface SortIconProps {
+  readonly field: SortField
+  readonly sortField: SortField
+  readonly sortDirection: SortDirection
+}
+
+function SortIcon({ field, sortField, sortDirection }: SortIconProps) {
+  if (sortField !== field) return <ArrowUpDown className="h-4 w-4 opacity-50" />
+  return sortDirection === 'asc' ? (
+    <ArrowUp className="h-4 w-4" />
+  ) : (
+    <ArrowDown className="h-4 w-4" />
+  )
+}
+
 function formatTokens(tokens: number | undefined): string {
   if (!tokens) return '0'
   if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`
@@ -126,15 +141,6 @@ export function AllSessionsView({ sessions }: AllSessionsViewProps) {
     }
   }
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4 opacity-50" />
-    return sortDirection === 'asc' ? (
-      <ArrowUp className="h-4 w-4" />
-    ) : (
-      <ArrowDown className="h-4 w-4" />
-    )
-  }
-
   const handleViewSession = (session: MinionSession) => {
     setSelectedSession(session)
     setLogViewerOpen(true)
@@ -169,31 +175,32 @@ export function AllSessionsView({ sessions }: AllSessionsViewProps) {
               className="flex items-center gap-2 hover:text-foreground transition-colors text-left"
               onClick={() => handleSort('name')}
             >
-              Name <SortIcon field="name" />
+              Name <SortIcon field="name" sortField={sortField} sortDirection={sortDirection} />
             </button>
             <button
               className="flex items-center gap-2 hover:text-foreground transition-colors"
               onClick={() => handleSort('status')}
             >
-              Status <SortIcon field="status" />
+              Status <SortIcon field="status" sortField={sortField} sortDirection={sortDirection} />
             </button>
             <button
               className="flex items-center gap-2 hover:text-foreground transition-colors"
               onClick={() => handleSort('model')}
             >
-              Model <SortIcon field="model" />
+              Model <SortIcon field="model" sortField={sortField} sortDirection={sortDirection} />
             </button>
             <button
               className="flex items-center gap-2 hover:text-foreground transition-colors"
               onClick={() => handleSort('tokens')}
             >
-              Tokens <SortIcon field="tokens" />
+              Tokens <SortIcon field="tokens" sortField={sortField} sortDirection={sortDirection} />
             </button>
             <button
               className="flex items-center gap-2 hover:text-foreground transition-colors"
               onClick={() => handleSort('lastActive')}
             >
-              Last Active <SortIcon field="lastActive" />
+              Last Active{' '}
+              <SortIcon field="lastActive" sortField={sortField} sortDirection={sortDirection} />
             </button>
             <div className="w-10"></div>
           </div>

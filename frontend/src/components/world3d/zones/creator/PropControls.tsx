@@ -225,7 +225,9 @@ export function PropControls({
 
             {/* Model chooser */}
             <div className="fpm-model-row">
-              <label htmlFor="prop-model-select" className="fpm-label">Model:</label>
+              <label htmlFor="prop-model-select" className="fpm-label">
+                Model:
+              </label>
               <select
                 id="prop-model-select"
                 value={selectedModel}

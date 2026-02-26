@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { rehypeHighlightLite } from './rehypeHighlightLite'
@@ -19,6 +18,284 @@ function extractText(node: any): string {
   return ''
 }
 
+// ── Module-level markdown component renderers ──────────────────
+
+function MdH1({ children, ...props }: any) {
+  const text = extractText(children)
+  const id = slugify(text)
+  return (
+    <h1
+      id={id}
+      {...props}
+      style={{
+        fontSize: 24,
+        fontWeight: 700,
+        marginTop: 24,
+        marginBottom: 12,
+        color: 'var(--zen-fg, hsl(var(--foreground)))',
+        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+        paddingBottom: 8,
+      }}
+    >
+      {children}
+    </h1>
+  )
+}
+
+function MdH2({ children, ...props }: any) {
+  const text = extractText(children)
+  const id = slugify(text)
+  return (
+    <h2
+      id={id}
+      {...props}
+      style={{
+        fontSize: 20,
+        fontWeight: 600,
+        marginTop: 20,
+        marginBottom: 10,
+        color: 'var(--zen-fg, hsl(var(--foreground)))',
+        borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
+        paddingBottom: 6,
+      }}
+    >
+      {children}
+    </h2>
+  )
+}
+
+function MdH3({ children, ...props }: any) {
+  const text = extractText(children)
+  const id = slugify(text)
+  return (
+    <h3
+      id={id}
+      {...props}
+      style={{
+        fontSize: 16,
+        fontWeight: 600,
+        marginTop: 16,
+        marginBottom: 8,
+        color: 'var(--zen-fg, hsl(var(--foreground)))',
+      }}
+    >
+      {children}
+    </h3>
+  )
+}
+
+function MdH4({ children, ...props }: any) {
+  const text = extractText(children)
+  const id = slugify(text)
+  return (
+    <h4
+      id={id}
+      {...props}
+      style={{
+        fontSize: 14,
+        fontWeight: 600,
+        marginTop: 14,
+        marginBottom: 6,
+        color: 'var(--zen-fg, hsl(var(--foreground)))',
+      }}
+    >
+      {children}
+    </h4>
+  )
+}
+
+function MdP({ children }: any) {
+  return (
+    <p
+      style={{
+        marginBottom: 12,
+        lineHeight: 1.7,
+        color: 'var(--zen-fg, hsl(var(--foreground)))',
+      }}
+    >
+      {children}
+    </p>
+  )
+}
+
+function MdUl({ children }: any) {
+  return <ul style={{ marginBottom: 12, paddingLeft: 24, listStyleType: 'disc' }}>{children}</ul>
+}
+
+function MdOl({ children }: any) {
+  return <ol style={{ marginBottom: 12, paddingLeft: 24, listStyleType: 'decimal' }}>{children}</ol>
+}
+
+function MdLi({ children }: any) {
+  return (
+    <li
+      style={{
+        marginBottom: 4,
+        lineHeight: 1.6,
+        color: 'var(--zen-fg, hsl(var(--foreground)))',
+      }}
+    >
+      {children}
+    </li>
+  )
+}
+
+function MdA({ href, children }: any) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: 'var(--zen-accent, hsl(var(--primary)))', textDecoration: 'underline' }}
+    >
+      {children}
+    </a>
+  )
+}
+
+function MdBlockquote({ children }: any) {
+  return (
+    <blockquote
+      style={{
+        borderLeft: '3px solid var(--zen-accent, hsl(var(--primary)))',
+        paddingLeft: 16,
+        margin: '12px 0',
+        color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+        fontStyle: 'italic',
+      }}
+    >
+      {children}
+    </blockquote>
+  )
+}
+
+function MdTable({ children }: any) {
+  return (
+    <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+      <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>{children}</table>
+    </div>
+  )
+}
+
+function MdTh({ children }: any) {
+  return (
+    <th
+      style={{
+        border: '1px solid var(--zen-border, hsl(var(--border)))',
+        padding: '8px 12px',
+        textAlign: 'left',
+        fontWeight: 600,
+        background: 'var(--zen-bg-elevated, hsl(var(--secondary)))',
+      }}
+    >
+      {children}
+    </th>
+  )
+}
+
+function MdTd({ children }: any) {
+  return (
+    <td style={{ border: '1px solid var(--zen-border, hsl(var(--border)))', padding: '8px 12px' }}>
+      {children}
+    </td>
+  )
+}
+
+function MdCode({ className, children, ...props }: any) {
+  const isBlock =
+    className?.startsWith('language-') || (typeof children === 'string' && children.includes('\n'))
+  if (isBlock) {
+    return <CodeBlock className={className}>{children}</CodeBlock>
+  }
+  return (
+    <code
+      style={{
+        background: 'var(--zen-bg-elevated, hsl(var(--secondary)))',
+        padding: '2px 6px',
+        borderRadius: 4,
+        fontSize: '0.9em',
+        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+      }}
+      {...props}
+    >
+      {children}
+    </code>
+  )
+}
+
+function MdPre({ children }: any) {
+  return <>{children}</>
+}
+
+function MdHr() {
+  return (
+    <hr
+      style={{
+        border: 'none',
+        borderTop: '1px solid var(--zen-border, hsl(var(--border)))',
+        margin: '24px 0',
+      }}
+    />
+  )
+}
+
+function MdImg({ src, alt }: any) {
+  // Only render remote images
+  if (src?.startsWith('http')) {
+    return (
+      <img
+        src={src}
+        alt={alt || ''}
+        style={{ maxWidth: '100%', borderRadius: 8, margin: '12px 0' }}
+      />
+    )
+  }
+  return (
+    <span
+      style={{
+        color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
+        fontStyle: 'italic',
+      }}
+    >
+      [Image: {alt || src}]
+    </span>
+  )
+}
+
+function MdInput({ type, checked, ...props }: any) {
+  if (type === 'checkbox') {
+    return (
+      <input type="checkbox" checked={checked} disabled style={{ marginRight: 6 }} {...props} />
+    )
+  }
+  return <input {...props} />
+}
+
+// ── Static components map (created once at module level) ───────
+
+const MD_COMPONENTS = {
+  h1: MdH1,
+  h2: MdH2,
+  h3: MdH3,
+  h4: MdH4,
+  p: MdP,
+  ul: MdUl,
+  ol: MdOl,
+  li: MdLi,
+  a: MdA,
+  blockquote: MdBlockquote,
+  table: MdTable,
+  th: MdTh,
+  td: MdTd,
+  code: MdCode,
+  pre: MdPre,
+  hr: MdHr,
+  img: MdImg,
+  input: MdInput,
+}
+
+// ── MarkdownViewer ─────────────────────────────────────────────
+
 interface MarkdownViewerProps {
   readonly content: string
   readonly className?: string
@@ -26,238 +303,6 @@ interface MarkdownViewerProps {
 }
 
 export function MarkdownViewer({ content, className, maxHeight }: MarkdownViewerProps) {
-  const components = useMemo(
-    () => ({
-      h1: ({ children, ...props }: any) => {
-        const text = extractText(children)
-        const id = slugify(text)
-        return (
-          <h1
-            id={id}
-            {...props}
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              marginTop: 24,
-              marginBottom: 12,
-              color: 'var(--zen-fg, hsl(var(--foreground)))',
-              borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
-              paddingBottom: 8,
-            }}
-          >
-            {children}
-          </h1>
-        )
-      },
-      h2: ({ children, ...props }: any) => {
-        const text = extractText(children)
-        const id = slugify(text)
-        return (
-          <h2
-            id={id}
-            {...props}
-            style={{
-              fontSize: 20,
-              fontWeight: 600,
-              marginTop: 20,
-              marginBottom: 10,
-              color: 'var(--zen-fg, hsl(var(--foreground)))',
-              borderBottom: '1px solid var(--zen-border, hsl(var(--border)))',
-              paddingBottom: 6,
-            }}
-          >
-            {children}
-          </h2>
-        )
-      },
-      h3: ({ children, ...props }: any) => {
-        const text = extractText(children)
-        const id = slugify(text)
-        return (
-          <h3
-            id={id}
-            {...props}
-            style={{
-              fontSize: 16,
-              fontWeight: 600,
-              marginTop: 16,
-              marginBottom: 8,
-              color: 'var(--zen-fg, hsl(var(--foreground)))',
-            }}
-          >
-            {children}
-          </h3>
-        )
-      },
-      h4: ({ children, ...props }: any) => {
-        const text = extractText(children)
-        const id = slugify(text)
-        return (
-          <h4
-            id={id}
-            {...props}
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              marginTop: 14,
-              marginBottom: 6,
-              color: 'var(--zen-fg, hsl(var(--foreground)))',
-            }}
-          >
-            {children}
-          </h4>
-        )
-      },
-      p: ({ children }: any) => (
-        <p
-          style={{
-            marginBottom: 12,
-            lineHeight: 1.7,
-            color: 'var(--zen-fg, hsl(var(--foreground)))',
-          }}
-        >
-          {children}
-        </p>
-      ),
-      ul: ({ children }: any) => (
-        <ul style={{ marginBottom: 12, paddingLeft: 24, listStyleType: 'disc' }}>{children}</ul>
-      ),
-      ol: ({ children }: any) => (
-        <ol style={{ marginBottom: 12, paddingLeft: 24, listStyleType: 'decimal' }}>{children}</ol>
-      ),
-      li: ({ children }: any) => (
-        <li
-          style={{
-            marginBottom: 4,
-            lineHeight: 1.6,
-            color: 'var(--zen-fg, hsl(var(--foreground)))',
-          }}
-        >
-          {children}
-        </li>
-      ),
-      a: ({ href, children }: any) => (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: 'var(--zen-accent, hsl(var(--primary)))', textDecoration: 'underline' }}
-        >
-          {children}
-        </a>
-      ),
-      blockquote: ({ children }: any) => (
-        <blockquote
-          style={{
-            borderLeft: '3px solid var(--zen-accent, hsl(var(--primary)))',
-            paddingLeft: 16,
-            margin: '12px 0',
-            color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
-            fontStyle: 'italic',
-          }}
-        >
-          {children}
-        </blockquote>
-      ),
-      table: ({ children }: any) => (
-        <div style={{ overflowX: 'auto', marginBottom: 16 }}>
-          <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
-            {children}
-          </table>
-        </div>
-      ),
-      th: ({ children }: any) => (
-        <th
-          style={{
-            border: '1px solid var(--zen-border, hsl(var(--border)))',
-            padding: '8px 12px',
-            textAlign: 'left',
-            fontWeight: 600,
-            background: 'var(--zen-bg-elevated, hsl(var(--secondary)))',
-          }}
-        >
-          {children}
-        </th>
-      ),
-      td: ({ children }: any) => (
-        <td
-          style={{ border: '1px solid var(--zen-border, hsl(var(--border)))', padding: '8px 12px' }}
-        >
-          {children}
-        </td>
-      ),
-      code: ({ className, children, ...props }: any) => {
-        const isBlock =
-          className?.startsWith('language-') ||
-          (typeof children === 'string' && children.includes('\n'))
-        if (isBlock) {
-          return <CodeBlock className={className}>{children}</CodeBlock>
-        }
-        return (
-          <code
-            style={{
-              background: 'var(--zen-bg-elevated, hsl(var(--secondary)))',
-              padding: '2px 6px',
-              borderRadius: 4,
-              fontSize: '0.9em',
-              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            }}
-            {...props}
-          >
-            {children}
-          </code>
-        )
-      },
-      pre: ({ children }: any) => <>{children}</>,
-      hr: () => (
-        <hr
-          style={{
-            border: 'none',
-            borderTop: '1px solid var(--zen-border, hsl(var(--border)))',
-            margin: '24px 0',
-          }}
-        />
-      ),
-      img: ({ src, alt }: any) => {
-        // Only render remote images
-        if (src?.startsWith('http')) {
-          return (
-            <img
-              src={src}
-              alt={alt || ''}
-              style={{ maxWidth: '100%', borderRadius: 8, margin: '12px 0' }}
-            />
-          )
-        }
-        return (
-          <span
-            style={{
-              color: 'var(--zen-fg-muted, hsl(var(--muted-foreground)))',
-              fontStyle: 'italic',
-            }}
-          >
-            [Image: {alt || src}]
-          </span>
-        )
-      },
-      input: ({ type, checked, ...props }: any) => {
-        if (type === 'checkbox') {
-          return (
-            <input
-              type="checkbox"
-              checked={checked}
-              disabled
-              style={{ marginRight: 6 }}
-              {...props}
-            />
-          )
-        }
-        return <input {...props} />
-      },
-    }),
-    []
-  )
-
   return (
     <div
       className={className}
@@ -274,7 +319,7 @@ export function MarkdownViewer({ content, className, maxHeight }: MarkdownViewer
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlightLite]}
-        components={components}
+        components={MD_COMPONENTS}
       >
         {content}
       </ReactMarkdown>
