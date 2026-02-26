@@ -143,7 +143,7 @@ export const Room3D = memo(function Room3D({
   position = [0, 0, 0],
   size = 12,
   isCreatorMode = false,
-}: Room3DProps) {
+}: Readonly<Room3DProps>) {
   const roomColor = room.color || '#4f46e5'
   const baseBlueprint = useMemo(() => getBlueprintForRoom(room.name), [room.name])
   // Mutable placements state so prop moves persist in the UI

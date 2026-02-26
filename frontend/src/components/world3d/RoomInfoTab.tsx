@@ -64,7 +64,7 @@ export function RoomInfoTab({
   isActivelyRunning,
   displayNames,
   onBotClick,
-}: RoomInfoTabProps) {
+}: Readonly<RoomInfoTabProps>) {
   const botData = sessions
     .map((s) => {
       const isActive = isActivelyRunning(s.key)

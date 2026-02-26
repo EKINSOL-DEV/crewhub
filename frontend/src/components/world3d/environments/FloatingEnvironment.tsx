@@ -217,7 +217,7 @@ function EnergyBeam({ color }: { color: string }) {
 
 // ─── Main Component ──────────────────────────────────────────────
 
-export function FloatingEnvironment({ buildingWidth, buildingDepth }: FloatingEnvironmentProps) {
+export function FloatingEnvironment({ buildingWidth, buildingDepth }: Readonly<FloatingEnvironmentProps>) {
   const radius = Math.max(buildingWidth, buildingDepth) / 2 + 5
   const platformHeight = 0.35 // sleek, thin platform
   const hexGeo = useHexGeometry(radius, platformHeight)

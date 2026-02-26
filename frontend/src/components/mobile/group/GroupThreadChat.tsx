@@ -135,7 +135,7 @@ export function GroupThreadChat({
   onRemoveParticipant,
   onAddParticipants,
   onRename,
-}: GroupThreadChatProps) {
+}: Readonly<GroupThreadChatProps>) {
   const { messages, isSending, error, sendMessage, loadOlderMessages, hasMore, isLoadingHistory } =
     useThreadChat(thread.id)
 

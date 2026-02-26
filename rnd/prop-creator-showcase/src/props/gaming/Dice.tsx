@@ -3,12 +3,12 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 interface DotsProps {
-  face: number;
-  pos: [number, number, number];
-  rot: [number, number, number];
+  readonly face: number;
+  readonly pos: [number, number, number];
+  readonly rot: [number, number, number];
 }
 
-function Dots({ face, pos, rot }: DotsProps) {
+function Dots({ face, pos, rot }: Readonly<DotsProps>) {
   const positions: [number, number, number][] = [
     [0, 0, 0], [-0.04, 0.04, 0], [0.04, -0.04, 0], [-0.04, -0.04, 0], [0.04, 0.04, 0], [0, 0.04, 0]
   ];

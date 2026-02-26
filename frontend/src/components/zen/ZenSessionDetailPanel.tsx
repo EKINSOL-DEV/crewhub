@@ -145,7 +145,7 @@ function MessageBubble({ message }: { message: SessionMessage }) {
 
 // ── Main Component ────────────────────────────────────────────────
 
-export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPanelProps) {
+export function ZenSessionDetailPanel({ session, onClose }: Readonly<ZenSessionDetailPanelProps>) {
   const [messages, setMessages] = useState<SessionMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

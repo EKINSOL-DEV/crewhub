@@ -62,7 +62,7 @@ interface CameraDebugHUDProps {
   readonly visible: boolean
 }
 
-export function CameraDebugHUD({ visible }: CameraDebugHUDProps) {
+export function CameraDebugHUD({ visible }: Readonly<CameraDebugHUDProps>) {
   const [values, setValues] = useState<CameraValues>({ ...cameraValues })
   const frameCount = useRef(0)
 

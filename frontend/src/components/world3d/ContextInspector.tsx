@@ -27,7 +27,7 @@ interface EnvelopeResponse {
   privacy: string
 }
 
-export function ContextInspector({ roomId, roomName, onClose }: ContextInspectorProps) { // NOSONAR
+export function ContextInspector({ roomId, roomName, onClose }: Readonly<ContextInspectorProps>) { // NOSONAR
   // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   const [data, setData] = useState<EnvelopeResponse | null>(null)
   const [loading, setLoading] = useState(true)

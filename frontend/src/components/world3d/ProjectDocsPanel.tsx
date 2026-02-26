@@ -435,7 +435,7 @@ export function ProjectDocsPanel({
   projectName,
   projectColor,
   onClose,
-}: ProjectDocsPanelProps) {
+}: Readonly<ProjectDocsPanelProps>) {
   const [files, setFiles] = useState<FileEntry[]>([])
   const [selectedFile, setSelectedFile] = useState<FileEntry | null>(null)
   const [fileContent, setFileContent] = useState<FileContent | null>(null)

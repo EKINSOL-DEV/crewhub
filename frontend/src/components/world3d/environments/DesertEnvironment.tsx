@@ -83,7 +83,7 @@ interface DesertEnvironmentProps {
   readonly buildingDepth: number
 }
 
-export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnvironmentProps) {
+export function DesertEnvironment({ buildingWidth, buildingDepth }: Readonly<DesertEnvironmentProps>) {
   const sandToonProps = getToonMaterialProps('#D2B48C')
   const groundRef = useRef<THREE.InstancedMesh>(null)
 

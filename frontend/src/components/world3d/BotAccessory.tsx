@@ -18,7 +18,7 @@ interface BotAccessoryProps {
  * - Comms: Antenna with signal waves
  * - Dev: Antenna with gear/cog
  */
-export function BotAccessory({ type, color }: BotAccessoryProps) {
+export function BotAccessory({ type, color }: Readonly<BotAccessoryProps>) {
   switch (type) {
     case 'crown':
       return <Crown />

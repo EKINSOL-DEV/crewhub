@@ -6,7 +6,7 @@ interface UIProps {
   onSelect: (i: number) => void
 }
 
-export function UI({ designs, active, onSelect }: UIProps) {
+export function UI({ designs, active, onSelect }: Readonly<UIProps>) {
   return (
     <>
       {/* Design selector */}

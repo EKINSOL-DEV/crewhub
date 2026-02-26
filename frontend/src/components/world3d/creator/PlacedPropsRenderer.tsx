@@ -17,7 +17,7 @@ interface PlacedPropsRendererProps {
   readonly cellSize?: number
 }
 
-export function PlacedPropsRenderer({ placedProps, cellSize = 1 }: PlacedPropsRendererProps) {
+export function PlacedPropsRenderer({ placedProps, cellSize = 1 }: Readonly<PlacedPropsRendererProps>) {
   return (
     <>
       {placedProps.map((placed) => (

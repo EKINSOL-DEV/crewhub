@@ -33,7 +33,7 @@ interface RoomPropsProps {
   readonly roomSize: number
 }
 
-export function RoomProps({ roomName, roomSize }: RoomPropsProps) {
+export function RoomProps({ roomName, roomSize }: Readonly<RoomPropsProps>) {
   const roomType = getRoomType(roomName)
   const s = roomSize / 12 // scale factor relative to default size 12
 
@@ -1151,7 +1151,7 @@ interface RoomTypeProps {
 const Y = 0.16 // floor surface y offset
 
 /** 1. Headquarters — main office / assistant's room */
-function HeadquartersProps({ s, size }: RoomTypeProps) {
+function HeadquartersProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (
@@ -1179,7 +1179,7 @@ function HeadquartersProps({ s, size }: RoomTypeProps) {
 }
 
 /** 2. Dev Room — developer workspace */
-function DevRoomProps({ s, size }: RoomTypeProps) {
+function DevRoomProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (
@@ -1212,7 +1212,7 @@ function DevRoomProps({ s, size }: RoomTypeProps) {
 }
 
 /** 3. Creative Room — design/content */
-function CreativeRoomProps({ s, size }: RoomTypeProps) {
+function CreativeRoomProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (
@@ -1243,7 +1243,7 @@ function CreativeRoomProps({ s, size }: RoomTypeProps) {
 }
 
 /** 4. Marketing Room — Flowy's room */
-function MarketingRoomProps({ s, size }: RoomTypeProps) {
+function MarketingRoomProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (
@@ -1271,7 +1271,7 @@ function MarketingRoomProps({ s, size }: RoomTypeProps) {
 }
 
 /** 5. Thinking Room — strategy/planning */
-function ThinkingRoomProps({ s, size }: RoomTypeProps) {
+function ThinkingRoomProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (
@@ -1298,7 +1298,7 @@ function ThinkingRoomProps({ s, size }: RoomTypeProps) {
 }
 
 /** 6. Automation Room — cron/scheduled tasks */
-function AutomationRoomProps({ s, size }: RoomTypeProps) {
+function AutomationRoomProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (
@@ -1325,7 +1325,7 @@ function AutomationRoomProps({ s, size }: RoomTypeProps) {
 }
 
 /** 7. Comms Room — communications */
-function CommsRoomProps({ s, size }: RoomTypeProps) {
+function CommsRoomProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (
@@ -1357,7 +1357,7 @@ function CommsRoomProps({ s, size }: RoomTypeProps) {
 }
 
 /** 8. Ops Room — operations/command center */
-function OpsRoomProps({ s, size }: RoomTypeProps) {
+function OpsRoomProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (
@@ -1397,7 +1397,7 @@ function OpsRoomProps({ s, size }: RoomTypeProps) {
 }
 
 /** Default room — generic office fallback */
-function DefaultRoomProps({ s, size }: RoomTypeProps) {
+function DefaultRoomProps({ s, size }: Readonly<RoomTypeProps>) {
   const h = size / 2
 
   return (

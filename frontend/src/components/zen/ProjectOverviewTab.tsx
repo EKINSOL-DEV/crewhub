@@ -18,7 +18,7 @@ export function ProjectOverviewTab({
   projectId,
   projectName: _projectName,
   onSwitchToDocuments,
-}: ProjectOverviewTabProps) {
+}: Readonly<ProjectOverviewTabProps>) {
   const { projects, fetchOverview } = useProjects()
   const { taskCounts, tasks } = useTasks({ projectId })
   const [overview, setOverview] = useState<ProjectOverview | null>(null)
