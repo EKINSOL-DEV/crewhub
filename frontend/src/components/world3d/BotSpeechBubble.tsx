@@ -35,7 +35,7 @@ const _screenWorldPos = new THREE.Vector3()
 function findScreenPositions(scene: THREE.Scene): THREE.Vector3[] {
   const positions: THREE.Vector3[] = []
   scene.traverse((obj) => {
-    if ((obj as any).userData?.isScreenHtml) {
+    if (obj.userData?.isScreenHtml) {
       obj.getWorldPosition(_screenWorldPos)
       positions.push(_screenWorldPos.clone())
     }

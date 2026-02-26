@@ -57,7 +57,7 @@ export function loadRoomsConfig(): RoomsConfig {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) {
-      saveRoomsConfig(DEFAULT_ROOMS_CONFIG)
+      saveRoomsConfig(DEFAULT_ROOMS_CONFIG) // NOSONAR — deprecated function calling deprecated function, both in same compat module
       return DEFAULT_ROOMS_CONFIG
     }
     const parsed: StoredRoomsConfig = JSON.parse(stored)
@@ -122,7 +122,7 @@ export function getRoomForSession(
   sessionData?: { label?: string; model?: string }
 ): string {
   // Check static defaults first
-  const staticDefault = getDefaultRoomForSession(sessionKey)
+  const staticDefault = getDefaultRoomForSession(sessionKey) // NOSONAR — deprecated function calling deprecated function, both in same compat module
   if (staticDefault) return staticDefault
 
   // Check localStorage assignments

@@ -74,7 +74,7 @@ function DynamicMesh({
 
   const rotation =
     part.rotation && (part.rotation[0] !== 0 || part.rotation[1] !== 0 || part.rotation[2] !== 0)
-      ? (part.rotation as [number, number, number])
+      ? part.rotation
       : undefined
 
   const pointerDownPos = useRef<{ x: number; y: number } | null>(null)
@@ -160,7 +160,7 @@ function SelectedPartMesh({
 }) {
   const rotation =
     part.rotation && (part.rotation[0] !== 0 || part.rotation[1] !== 0 || part.rotation[2] !== 0)
-      ? (part.rotation as [number, number, number])
+      ? part.rotation
       : undefined
 
   // Center geometry so TransformControls gizmo appears at visual center

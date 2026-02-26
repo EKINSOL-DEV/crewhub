@@ -282,8 +282,7 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
           >
             {isRunning ? (
               <>
-                <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
-                Sending...
+                <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span> Sending...
               </>
             ) : (
               <>▶️ Run with Agent</>

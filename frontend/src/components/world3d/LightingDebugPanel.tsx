@@ -210,7 +210,7 @@ export function LightingDebugPanel() {
         ta.style.opacity = '0'
         document.body.appendChild(ta)
         ta.select()
-        document.execCommand('copy')
+        document.execCommand('copy') // NOSONAR — legacy clipboard fallback for environments without navigator.clipboard
         document.body.removeChild(ta)
       }
       setCopyLabel('✅ Copied!')

@@ -118,7 +118,7 @@ function FilterControls({
           type="checkbox"
           checked={autoScroll}
           onChange={(e) => onAutoScrollChange(e.target.checked)}
-        />
+        />{' '}
         Auto-scroll
       </label>
     </div>
@@ -363,7 +363,7 @@ export function ZenLogsPanel() {
             <span />
             <span />
             <span />
-          </span>
+          </span>{' '}
           Reconnecting...
         </div>
       )}

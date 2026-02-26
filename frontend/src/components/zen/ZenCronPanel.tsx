@@ -288,7 +288,7 @@ export function ZenCronPanel() {
             type="checkbox"
             checked={showDisabled}
             onChange={(e) => setShowDisabled(e.target.checked)}
-          />
+          />{' '}
           Show disabled
         </label>
       </div>

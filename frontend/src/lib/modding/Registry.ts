@@ -151,7 +151,7 @@ export class Registry<T> {
   /** List all entries. Returns a frozen snapshot (changes only on mutation). */
   list(): readonly RegistryEntry<T>[] {
     if (this.snapshotDirty) {
-      this.snapshot = Object.freeze([...this.entries.values()]) as readonly RegistryEntry<T>[]
+      this.snapshot = Object.freeze([...this.entries.values()])
       this.snapshotDirty = false
     }
     return this.snapshot

@@ -92,7 +92,7 @@ export function PropPreview({
             {canPreview && (
               <Stage adjustCamera={false} environment="city" intensity={0.5}>
                 <DynamicProp
-                  parts={previewParts!}
+                  parts={previewParts}
                   position={[0, 0, 0]}
                   scale={3}
                   editMode={editMode}

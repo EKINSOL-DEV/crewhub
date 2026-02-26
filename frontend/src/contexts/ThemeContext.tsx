@@ -65,9 +65,9 @@ interface ThemeContextValue {
 
   // ── Legacy compat (so SettingsPanel & existing code still compiles) ──
   /** @deprecated — use zen.currentTheme / zen.setTheme instead */
-  theme: ThemeConfig
+  theme: ThemeConfig // NOSONAR — legacy compat shim, ThemeConfig is defined and deprecated in this same file
   /** @deprecated — use zen.setTheme(themeId) instead */
-  setTheme: (t: Partial<ThemeConfig>) => void
+  setTheme: (t: Partial<ThemeConfig>) => void // NOSONAR — legacy compat shim
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
@@ -114,6 +114,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   // Legacy compat shim
   const legacyTheme: ThemeConfig = useMemo(
+    // NOSONAR — legacy compat shim
     () => ({
       mode: resolvedMode,
       accentColor: 'purple', // no longer meaningful
@@ -123,6 +124,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const legacySetTheme = useMemo(() => {
     return (_partial: Partial<ThemeConfig>) => {
+      // NOSONAR — legacy compat shim
       // Legacy callers setting mode: if they ask for light, pick first light theme; dark → keep current or pick default
       // This is a best-effort shim; the real API is zen.setTheme(id)
     }

@@ -524,7 +524,7 @@ export function FullscreenDetailView({
                 type="checkbox"
                 checked={autoScroll}
                 onChange={(e) => setAutoScroll(e.target.checked)}
-              />
+              />{' '}
               Auto-scroll
             </label>
 
