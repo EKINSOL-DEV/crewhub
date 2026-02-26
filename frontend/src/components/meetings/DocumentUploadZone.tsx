@@ -71,7 +71,8 @@ export function DocumentUploadZone({ projectId, onUploadComplete }: DocumentUplo
           <div className="text-sm mb-1">📁 Drag & drop .md file here</div>
           <div className="text-xs text-muted-foreground mb-1">or</div>
           <label className="cursor-pointer text-xs text-primary hover:underline">
-            click to browse<input type="file" accept=".md" onChange={handleFileInput} className="hidden" />
+            click to browse
+            <input type="file" accept=".md" onChange={handleFileInput} className="hidden" />
           </label>
         </>
       )}

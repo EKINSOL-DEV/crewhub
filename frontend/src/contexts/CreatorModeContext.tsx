@@ -536,9 +536,5 @@ export function CreatorModeProvider({ children }: { children: ReactNode }) {
     ]
   )
 
-  return (
-    <CreatorModeContext.Provider value={contextValue}>
-      {children}
-    </CreatorModeContext.Provider>
-  )
+  return <CreatorModeContext.Provider value={contextValue}>{children}</CreatorModeContext.Provider>
 }

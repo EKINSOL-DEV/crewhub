@@ -80,11 +80,7 @@ function Dialog({
     [open, onOpenChange, triggerRef, contentId, titleId, descriptionId]
   )
 
-  return (
-    <DialogContext.Provider value={contextValue}>
-      {children}
-    </DialogContext.Provider>
-  )
+  return <DialogContext.Provider value={contextValue}>{children}</DialogContext.Provider>
 }
 
 // Dialog Trigger
