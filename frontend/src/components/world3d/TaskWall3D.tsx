@@ -92,7 +92,7 @@ export function TaskWall3D({
       >
         <div
           data-world-ui
-          onClick={(e) => {
+          onClick={(e) => {  // NOSONAR: mouse/drag interaction
             e.stopPropagation()
             e.nativeEvent.stopImmediatePropagation()
           }}

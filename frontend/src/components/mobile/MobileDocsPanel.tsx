@@ -99,6 +99,8 @@ function MobileDocTreeNode({
           if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
         }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (isDir) setExpanded((prev) => !prev)
+          else onOpen(node.path) } }}
         style={{
           display: 'flex',
           alignItems: 'center',

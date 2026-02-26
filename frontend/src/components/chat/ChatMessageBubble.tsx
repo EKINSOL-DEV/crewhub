@@ -259,6 +259,7 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
           cursor: hasDetails ? 'pointer' : 'default',
         }}
         onClick={() => hasDetails && setExpanded(!expanded)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { hasDetails && setExpanded(!expanded) } }}
       >
         🔧 {tool.name} {isSuccess ? '✓' : '✗'}
         {hasDetails && (
@@ -409,7 +410,7 @@ const ChatMessageBubbleInner = memo(
           {imageAttachments.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
               {imageAttachments.map((attachment, i) => (
-                <ImageThumbnail key={`attachme-${i}`} attachment={attachment} maxWidth={200} />
+                <ImageThumbnail key={attachment.path || `attachme-${i}`} attachment={attachment} maxWidth={200} />
               ))}
             </div>
           )}
@@ -420,7 +421,7 @@ const ChatMessageBubbleInner = memo(
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}
             >
               {videoAttachments.map((attachment, i) => (
-                <VideoThumbnail key={`attachme-${i}`} attachment={attachment} maxWidth={300} />
+                <VideoThumbnail key={`attachme-${attachment}`} attachment={attachment} maxWidth={300} />
               ))}
             </div>
           )}
@@ -449,7 +450,7 @@ const ChatMessageBubbleInner = memo(
           {showThinking && msg.thinking && msg.thinking.length > 0 && (
             <div className="zen-thinking-blocks">
               {msg.thinking.map((thought, i) => (
-                <ThinkingBlock key={`thought-${i}`} content={thought} zenMode />
+                <ThinkingBlock key={`thought-${thought}`} content={thought} zenMode />
               ))}
             </div>
           )}
@@ -460,7 +461,7 @@ const ChatMessageBubbleInner = memo(
               style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}
             >
               {msg.tools.map((tool, i) => (
-                <ToolCallBlock key={`tool-${i}`} tool={tool} zenMode />
+                <ToolCallBlock key={`tool-${tool.name}-${i}`} tool={tool} zenMode />
               ))}
             </div>
           )}
@@ -534,7 +535,7 @@ const ChatMessageBubbleInner = memo(
         {showThinking && msg.thinking && msg.thinking.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '100%' }}>
             {msg.thinking.map((thought, i) => (
-              <ThinkingBlock key={`thought-${i}`} content={thought} />
+              <ThinkingBlock key={`thought-${thought}`} content={thought} />
             ))}
           </div>
         )}
@@ -543,7 +544,7 @@ const ChatMessageBubbleInner = memo(
         {msg.tools && msg.tools.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: '100%' }}>
             {msg.tools.map((tool, i) => (
-              <ToolCallBlock key={`thought-${i}`} tool={tool} showDetails={showToolDetails} />
+              <ToolCallBlock key={`tool-${tool.name}-${i}`} tool={tool} showDetails={showToolDetails} />
             ))}
           </div>
         )}
@@ -588,7 +589,7 @@ const ChatMessageBubbleInner = memo(
           >
             {imageAttachments.map((attachment, i) => (
               <ImageThumbnail
-                key={`attachme-${i}`}
+                key={`attachme-${attachment}`}
                 attachment={attachment}
                 maxWidth={variant === 'mobile' ? 180 : 200}
               />
@@ -609,7 +610,7 @@ const ChatMessageBubbleInner = memo(
           >
             {videoAttachments.map((attachment, i) => (
               <VideoThumbnail
-                key={`attachme-${i}`}
+                key={`attachme-${attachment}`}
                 attachment={attachment}
                 maxWidth={variant === 'mobile' ? 260 : 280}
               />

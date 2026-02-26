@@ -83,6 +83,7 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
       <div
         ref={backdropRef}
         onClick={onClose}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onClose() } }}
         style={{
           position: 'fixed',
           inset: 0,

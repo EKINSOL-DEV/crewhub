@@ -87,6 +87,7 @@ function TabItem({ tab, isActive, isOnly, onSelect, onClose, onRename }: TabItem
     <div
       className={`zen-tab ${isActive ? 'zen-tab-active' : ''}`}
       onClick={onSelect}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onSelect() } }}
       onDoubleClick={handleDoubleClick}
       role="tab"
       aria-selected={isActive}

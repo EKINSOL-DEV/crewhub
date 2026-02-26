@@ -159,6 +159,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation() } }}
         className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
       >
         {/* Header */}

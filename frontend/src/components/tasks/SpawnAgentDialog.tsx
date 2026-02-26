@@ -113,6 +113,7 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation() } }}
       >
         {/* Header */}
         <div

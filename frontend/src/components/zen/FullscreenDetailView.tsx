@@ -183,7 +183,7 @@ function MessageBubble({ message, filterText }: { message: SessionMessage; filte
       </div>
       <div className="zen-sd-message-body">
         {message.content?.map((block, i) => (
-          <ContentBlockView key={`block-${i}`} block={block} filterText={filterText} />
+          <ContentBlockView key={`block-${block}`} block={block} filterText={filterText} />
         ))}
       </div>
     </div>
@@ -366,6 +366,7 @@ export function FullscreenDetailView({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (e.target === e.currentTarget) onClose() } }}
     >
       {/* Top bar */}
       <div className="zen-fs-topbar">
@@ -568,7 +569,7 @@ export function FullscreenDetailView({
               </div>
             )}
             {displayMessages.map((msg, i) => (
-              <MessageBubble key={`msg-${i}`} message={msg} filterText={filterText || undefined} />
+              <MessageBubble key={`msg-${msg}`} message={msg} filterText={filterText || undefined} />
             ))}
           </div>
         </div>

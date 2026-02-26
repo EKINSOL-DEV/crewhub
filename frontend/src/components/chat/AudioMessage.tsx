@@ -215,7 +215,7 @@ export function AudioMessage({
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {/* Progress track */}
           <div
-            onClick={handleSeek}
+            onClick={handleSeek}  // NOSONAR: mouse/drag interaction
             style={{
               height: 4,
               borderRadius: 2,

@@ -85,6 +85,7 @@ export const TaskCard = memo(function TaskCard({
     <>
       <div
         onClick={handleClick}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleClick() } }}
         style={{
           background: '#ffffff',
           borderRadius: 8,

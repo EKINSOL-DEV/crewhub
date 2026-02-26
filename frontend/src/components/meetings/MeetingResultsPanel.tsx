@@ -185,6 +185,7 @@ export function MeetingResultsPanel() {
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose()
       }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (e.target === e.currentTarget) handleClose() } }}
     >
       {/* Content card — matches FullscreenOverlay layout */}
       <div

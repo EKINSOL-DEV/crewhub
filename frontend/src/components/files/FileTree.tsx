@@ -55,6 +55,7 @@ function TreeNode({
     <div>
       <div
         onClick={handleClick}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleClick() } }}
         style={{
           display: 'flex',
           alignItems: 'center',
