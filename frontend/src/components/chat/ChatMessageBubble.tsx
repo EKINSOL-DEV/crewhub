@@ -328,7 +328,7 @@ export interface ChatMessageBubbleProps {
   readonly showToolDetails?: boolean
 }
 
-const ChatMessageBubbleInner = memo(
+const ChatMessageBubbleInner = memo( // NOSONAR
   function ChatMessageBubble({
     // NOSONAR: complexity from legitimate message rendering with multiple content type branches
     msg,

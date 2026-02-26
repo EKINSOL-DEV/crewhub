@@ -21,7 +21,7 @@ interface AudioMessageProps {
   readonly transcriptError?: string
 }
 
-export function AudioMessage({
+export function AudioMessage({ // NOSONAR
   // NOSONAR: complexity from audio player state machine with multiple media event handlers
   url,
   duration: initialDuration,

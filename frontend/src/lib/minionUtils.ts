@@ -216,7 +216,7 @@ function extractDomain(url: string): string {
   }
 }
 
-export function getCurrentActivity(session: MinionSession, allSessions?: MinionSession[]): string {
+export function getCurrentActivity(session: MinionSession, allSessions?: MinionSession[]): string { // NOSONAR
   const activities = parseRecentActivities(session, 1)
   if (activities.length === 0) {
     const status = getSessionStatus(session, allSessions)

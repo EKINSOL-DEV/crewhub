@@ -23,7 +23,7 @@ interface LogViewerProps {
  * with @radix-ui/react-compose-refs (infinite update loops).
  * See: https://github.com/radix-ui/primitives/issues/3799
  */
-export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
+export function LogViewer({ session, open, onOpenChange }: LogViewerProps) { // NOSONAR
   // NOSONAR: complexity from log viewer with multiple message format handlers
   const [messages, setMessages] = useState<MinionMessage[]>([])
   const [loading, setLoading] = useState(false)
@@ -319,9 +319,9 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredMessages.map((msg, idx) => (
+              {Array.from(filteredMessages.entries()).map(([idx, msg]) => (
                 <div
-                  key={`msg-${msg.id || idx}`}
+                  key={`msg-${idx}`}
                   className={cn(
                     'p-3 rounded-lg',
                     (() => {

@@ -305,7 +305,7 @@ function ActionsView({
 
 // ─── Main Component ─────────────────────────────────────────────
 
-export function MeetingOutput({
+export function MeetingOutput({ // NOSONAR
   // NOSONAR: complexity from legitimate meeting output rendering with multiple content types
   meeting,
   onClose,

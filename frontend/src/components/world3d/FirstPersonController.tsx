@@ -99,7 +99,7 @@ export function FirstPersonController({
   // ─── Collision check ─────────────────────────────────────────
 
   const canMoveTo = useCallback(
-    (worldX: number, worldZ: number): boolean => {
+    (worldX: number, worldZ: number): boolean => { // NOSONAR
       // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
       // Check if inside any room
       for (const room of collisionRooms) {
@@ -257,7 +257,7 @@ export function FirstPersonController({
 
   const _direction = useMemo(() => new THREE.Vector3(), [])
 
-  useFrame((_, delta) => {
+  useFrame((_, delta) => { // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     if (!enabled || !isLocked.current) return
 

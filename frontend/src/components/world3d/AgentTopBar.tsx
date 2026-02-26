@@ -766,7 +766,7 @@ export function AgentTopBar({
 
   // ─── Dropdown entries ──────────────────────────────────────────
 
-  const { fixedAgents, recentSubagents } = useMemo(() => {
+  const { fixedAgents, recentSubagents } = useMemo(() => { // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const now = Date.now()
     const RECENT_THRESHOLD_MS = 30 * 60 * 1000 // 30 minutes

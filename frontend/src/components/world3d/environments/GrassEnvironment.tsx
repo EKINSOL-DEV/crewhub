@@ -66,7 +66,7 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
   const toonProps = getToonMaterialProps('#6B8F52')
   const groundRef = useRef<THREE.InstancedMesh>(null)
 
-  const data = useMemo(() => {
+  const data = useMemo(() => { // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const groundMatrices: THREE.Matrix4[] = []
     const groundColors: THREE.Color[] = []

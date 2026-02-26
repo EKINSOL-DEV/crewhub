@@ -87,7 +87,7 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
   const actionsRef = useRef(actions)
   actionsRef.current = actions
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => { // NOSONAR
     // NOSONAR: complexity from legitimate keyboard shortcut dispatch; each branch handles a distinct key binding
     const a = actionsRef.current
 

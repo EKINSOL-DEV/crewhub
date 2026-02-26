@@ -207,7 +207,7 @@ export function SceneContent({
     return { key: session.key, session, status, config, name, scale, activity, isActive }
   }
 
-  const { roomBots, parkingBots } = useMemo(() => {
+  const { roomBots, parkingBots } = useMemo(() => { // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const roomBots = new Map<string, BotPlacement[]>()
     const parkingBots: BotPlacement[] = []

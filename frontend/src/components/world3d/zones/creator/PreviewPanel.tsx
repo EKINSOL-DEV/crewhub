@@ -143,7 +143,7 @@ interface PreviewPanelProps {
   readonly isSaving?: boolean
 }
 
-export function PreviewPanel({
+export function PreviewPanel({ // NOSONAR
   // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   PropComponent,
   componentName,

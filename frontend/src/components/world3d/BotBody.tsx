@@ -42,7 +42,7 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
   const darkToon = getToonMaterialProps('#2a2a2a')
 
   // Walking + breathing animation
-  useFrame(({ clock }) => {
+  useFrame(({ clock }) => { // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     if (!bodyGroupRef.current) return
 

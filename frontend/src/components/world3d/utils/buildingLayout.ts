@@ -70,7 +70,7 @@ export interface BuildingLayout {
  *   7-9 rooms → 3×3  (HQ at center cell, col=1 row=1)
  *   > 9 rooms → 3×3  (capped at 8 peripheral slots)
  */
-export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
+export function calculateBuildingLayout(rooms: Room[]): BuildingLayout { // NOSONAR
   // NOSONAR: complexity from legitimate spatial layout algorithm
   const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
 

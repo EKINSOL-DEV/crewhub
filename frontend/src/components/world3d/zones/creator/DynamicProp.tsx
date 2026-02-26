@@ -30,7 +30,7 @@ interface DynamicPropProps {
   readonly onDraggingChanged?: (dragging: boolean) => void
 }
 
-function DynamicMesh({
+function DynamicMesh({ // NOSONAR
   // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   part,
   index,

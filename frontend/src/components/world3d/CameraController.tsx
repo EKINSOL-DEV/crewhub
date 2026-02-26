@@ -347,7 +347,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
 
   // ─── Transition on focus change ──────────────────────────────
 
-  useEffect(() => {
+  useEffect(() => { // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const controls = controlsRef.current
     if (!controls) return
@@ -484,7 +484,7 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   // preserving the user's azimuth, polar angle, and distance.
   // This enables free orbital rotation around the focused bot.
 
-  useFrame((_, delta) => {
+  useFrame((_, delta) => { // NOSONAR
     // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const controls = controlsRef.current
     if (!controls) return

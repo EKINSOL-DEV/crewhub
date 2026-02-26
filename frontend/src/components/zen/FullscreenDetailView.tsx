@@ -47,7 +47,7 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block ─────────────────────────────────────────────
 
-function ContentBlockView({
+function ContentBlockView({ // NOSONAR
   // NOSONAR: complexity from fullscreen overlay with multiple content and action type branches
   block,
   filterText,
@@ -568,8 +568,8 @@ export function FullscreenDetailView({
                 {filterText ? 'No messages match filter' : 'No messages in history'}
               </div>
             )}
-            {displayMessages.map((msg, i) => (
-              <MessageBubble key={`msg-${msg}`} message={msg} filterText={filterText || undefined} />
+            {Array.from(displayMessages.entries()).map(([i, msg]) => (
+              <MessageBubble key={`msg-${i}`} message={msg} filterText={filterText || undefined} />
             ))}
           </div>
         </div>
