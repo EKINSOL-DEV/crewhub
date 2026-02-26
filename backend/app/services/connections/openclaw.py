@@ -166,7 +166,9 @@ class OpenClawConnection(
     # ---
     # Background listener
     # ---
-    async def _listen_loop(self) -> None:  # NOSONAR: complexity from WebSocket receive loop with event dispatch, reconnect logic, and connection health monitoring, safe to keep
+    async def _listen_loop(
+        self,
+    ) -> None:  # NOSONAR: complexity from WebSocket receive loop with event dispatch, reconnect logic, and connection health monitoring, safe to keep
         """Receive and route messages from the Gateway."""
         logger.debug(f"Listener loop started for {self.name}")
         try:

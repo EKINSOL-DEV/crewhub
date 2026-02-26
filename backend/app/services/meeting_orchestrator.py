@@ -77,7 +77,9 @@ class MeetingOrchestrator:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    async def run(self):  # NOSONAR: complexity from meeting lifecycle state machine (phases, signals, retries), safe to keep
+    async def run(
+        self,
+    ):  # NOSONAR: complexity from meeting lifecycle state machine (phases, signals, retries), safe to keep
         """Run the full meeting lifecycle."""
         try:
             self.participants = [await resolve_agent_info(p) for p in self.config.participants]

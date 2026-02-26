@@ -126,9 +126,7 @@ def _validate_grid_and_center(bp: "BlueprintJson", errors: list) -> None:
         errors.append(f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})")
 
 
-def _validate_placement_item(
-    i: int, p, bp: "BlueprintJson", errors: list, warnings: list, occupied: dict
-) -> None:
+def _validate_placement_item(i: int, p, bp: "BlueprintJson", errors: list, warnings: list, occupied: dict) -> None:
     """Validate a single placement entry: bounds, span, overlap, propId, interactionType."""
     if p.x < 0 or p.x >= bp.gridWidth or p.z < 0 or p.z >= bp.gridDepth:
         errors.append(f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds")

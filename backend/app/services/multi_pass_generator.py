@@ -112,9 +112,7 @@ def _add_single_component(code: str, comp_name: str) -> tuple[str, bool]:
     jsx = COMPONENT_JSX[comp_name].format(color=color, pos=pos)
     last_group = code.rfind("</group>")
     if last_group != -1:
-        code = (
-            code[:last_group] + f"\n      {{/* User-added {comp_name} */}}\n{jsx}\n    " + code[last_group:]
-        )
+        code = code[:last_group] + f"\n      {{/* User-added {comp_name} */}}\n{jsx}\n    " + code[last_group:]
         return code, True
     return code, False
 

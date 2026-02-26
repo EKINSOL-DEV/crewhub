@@ -108,6 +108,7 @@ async def delete_agent(agent_id: str):
 async def _read_agent_soul(agent_id: str) -> str:
     """Try to read SOUL.md from the agent's workspace directory."""
     from pathlib import Path
+
     soul_paths = [
         Path.home() / ".openclaw" / "agents" / agent_id / "SOUL.md",
         Path.home() / "clawd" / "SOUL.md" if agent_id == "main" else None,
@@ -127,15 +128,14 @@ async def _read_agent_soul(agent_id: str) -> str:
 async def _get_agent_recent_activity(agent_id: str) -> str:
     """Fetch a short recent activity summary from the agent's session history."""
     from app.services.connections import get_connection_manager
+
     try:
         manager = await get_connection_manager()
         conn = manager.get_default_openclaw()
         if not conn:
             return ""
         sessions = await conn.get_sessions_raw()
-        agent_session = next(
-            (s for s in sessions if s.get("key", "").startswith(f"agent:{agent_id}:")), None
-        )
+        agent_session = next((s for s in sessions if s.get("key", "").startswith(f"agent:{agent_id}:")), None)
         if not agent_session:
             return ""
         history = await conn.get_session_history_raw(agent_session.get("key", ""), limit=20)

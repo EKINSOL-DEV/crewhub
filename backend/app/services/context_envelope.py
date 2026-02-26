@@ -117,9 +117,7 @@ async def _resolve_self_identity(db: aiosqlite.Connection, session_key: str) -> 
         pass
 
     for sk in lookup_keys:
-        async with db.execute(
-            "SELECT display_name FROM session_display_names WHERE session_key = ?", (sk,)
-        ) as cur:
+        async with db.execute("SELECT display_name FROM session_display_names WHERE session_key = ?", (sk,)) as cur:
             dn_row = await cur.fetchone()
         if dn_row and dn_row["display_name"]:
             display_name = dn_row["display_name"]
@@ -152,9 +150,7 @@ async def build_crewhub_context(
         async with get_db() as db:
             privacy = "external" if channel and channel.lower() in EXTERNAL_CHANNELS else "internal"
 
-            async with db.execute(
-                "SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)
-            ) as cur:
+            async with db.execute("SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)) as cur:
                 room_row = await cur.fetchone()
             if not room_row:
                 return None
@@ -164,9 +160,7 @@ async def build_crewhub_context(
 
             projects: list[dict] = []
             if project_id:
-                async with db.execute(
-                    "SELECT id, name, folder_path FROM projects WHERE id = ?", (project_id,)
-                ) as cur:
+                async with db.execute("SELECT id, name, folder_path FROM projects WHERE id = ?", (project_id,)) as cur:
                     proj_row = await cur.fetchone()
                 if proj_row:
                     p: dict[str, Any] = {"id": proj_row["id"], "name": proj_row["name"]}
@@ -312,7 +306,9 @@ async def get_persona_prompt(
             if identity_anchor or channel:
                 full_surface_rules = surface_rules
                 if surface_format:
-                    full_surface_rules = f"{surface_rules}\n{surface_format}".strip() if surface_rules else surface_format
+                    full_surface_rules = (
+                        f"{surface_rules}\n{surface_format}".strip() if surface_rules else surface_format
+                    )
 
                 return build_full_persona_prompt(
                     start_behavior=row["start_behavior"],

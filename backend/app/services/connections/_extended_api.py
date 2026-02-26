@@ -271,7 +271,11 @@ class OpenClawExtendedMixin:
 # ------------------------------------------------------------------
 
 
-def _extract_text(result: Any) -> Optional[str]:  # NOSONAR: complexity from multi-format response parsing (nested dict structures from different OpenClaw versions), safe to keep
+def _extract_text(
+    result: Any,
+) -> Optional[
+    str
+]:  # NOSONAR: complexity from multi-format response parsing (nested dict structures from different OpenClaw versions), safe to keep
     """Extract the assistant reply text from a Gateway agent response."""
     if not result:
         return None
