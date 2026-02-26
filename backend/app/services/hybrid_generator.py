@@ -80,7 +80,7 @@ def build_hybrid_prompt(
     description: str,
     component_name: str,
     template_code: Optional[str] = None,
-    _template_name: Optional[str] = None,
+    template_name: Optional[str] = None,
 ) -> str:
     """Build the AI prompt for hybrid generation."""
 
@@ -178,7 +178,7 @@ class HybridGenerator:
             description=description,
             component_name=component_name,
             template_code=template_code,
-            _template_name=template_base,
+            template_name=template_base,
         )
 
         from .connections import OpenClawConnection, get_connection_manager

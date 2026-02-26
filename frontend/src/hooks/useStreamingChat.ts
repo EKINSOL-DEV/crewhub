@@ -239,37 +239,39 @@ export function useStreamingChat(
           streamingIdRef.current = null
           pendingContentRef.current = ''
         },
-        onError: async (err: string) => {
-          // On error, fall back to blocking /send
-          const id = streamingIdRef.current
-          if (id) {
-            setMessages(makeRemoveStreamingMessage(id))
-          }
-          streamingIdRef.current = null
-          pendingContentRef.current = ''
-
-          // Fallback: blocking send (async/await avoids deeply nested .then() callbacks)
-          if (fallbackAbortRef.current) fallbackAbortRef.current.abort()
-          fallbackAbortRef.current = new AbortController()
-          try {
-            const r = await fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/send`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message: trimmed, ...(roomId ? { room_id: roomId } : {}) }),
-              signal: fallbackAbortRef.current.signal,
-            })
-            const data = await r.json()
-            if (data.success && data.response) {
-              setMessages(makeAppendAssistantMessage(data.response))
-            } else {
-              setError(data.error || err || 'Failed to get response')
+        onError: (err: string) => {
+          void (async () => {
+            // On error, fall back to blocking /send
+            const id = streamingIdRef.current
+            if (id) {
+              setMessages(makeRemoveStreamingMessage(id))
             }
-          } catch {
-            setError(err || 'Failed to send message')
-          } finally {
-            setIsSending(false)
-            setStreamingMessageId(null)
-          }
+            streamingIdRef.current = null
+            pendingContentRef.current = ''
+
+            // Fallback: blocking send (async/await avoids deeply nested .then() callbacks)
+            if (fallbackAbortRef.current) fallbackAbortRef.current.abort()
+            fallbackAbortRef.current = new AbortController()
+            try {
+              const r = await fetch(`${API_BASE}/chat/${encodeURIComponent(sessionKey)}/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: trimmed, ...(roomId ? { room_id: roomId } : {}) }),
+                signal: fallbackAbortRef.current.signal,
+              })
+              const data = await r.json()
+              if (data.success && data.response) {
+                setMessages(makeAppendAssistantMessage(data.response))
+              } else {
+                setError(data.error || err || 'Failed to get response')
+              }
+            } catch {
+              setError(err || 'Failed to send message')
+            } finally {
+              setIsSending(false)
+              setStreamingMessageId(null)
+            }
+          })()
         },
       })
     },

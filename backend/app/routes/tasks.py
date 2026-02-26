@@ -229,11 +229,6 @@ class RunResponse(BaseModel):
     agent_id: str
 
 
-@router.post(
-    "/{task_id}/run",
-    response_model=RunResponse,
-    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
-)
 async def _build_task_context_prompt(task: dict, agent: dict, body: "RunRequest", task_id) -> str:
     """Build a task prompt with optional CrewHub context envelope prepended."""
     from app.services.context_envelope import build_crewhub_context, format_context_block
@@ -258,6 +253,11 @@ async def _build_task_context_prompt(task: dict, agent: dict, body: "RunRequest"
     return context_block + "\n".join(prompt_parts)
 
 
+@router.post(
+    "/{task_id}/run",
+    response_model=RunResponse,
+    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
+)
 async def run_task_with_agent(task_id: str, body: RunRequest):
     """
     Send a task to an agent's main session (not spawning a subagent).
@@ -303,7 +303,7 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
         await task_service.set_task_running(
             task_id=task_id,
             project_id=task["project_id"],
-            _previous_status=task["status"],
+            previous_status=task["status"],
             agent_id=body.agent_id,
             agent_name=agent["name"],
             session_key=session_key,

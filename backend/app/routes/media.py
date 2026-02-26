@@ -206,8 +206,8 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
         return None, MSG_NO_AUDIO_CONV
 
     # Convert to mp3 via ffmpeg in a temp file
-    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:  # NOSONAR
-        mp3_path = tmp.name
+    fd, mp3_path = tempfile.mkstemp(suffix=".mp3")
+    os.close(fd)
 
     try:
         result = subprocess.run(

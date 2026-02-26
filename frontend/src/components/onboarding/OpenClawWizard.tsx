@@ -523,7 +523,7 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
                   <div className="ml-2">
                     <span className="text-amber-700 dark:text-amber-400">"bind"</span>:{' '}
                     <span className="text-green-700 dark:text-green-400">"lan"</span>,{' '}
-                    <span className="text-gray-500">// was: "loopback"</span>
+                    <span className="text-gray-500">{'// was: "loopback"'}</span>
                   </div>
                   <div>&#125;</div>
                 </div>
