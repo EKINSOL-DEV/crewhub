@@ -274,7 +274,7 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
         border: BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG,
         cursor: 'pointer',
       }}
-      onClick={() => onChange(!value)}
+      onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> onChange(!value)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onChange(!value)
       }}

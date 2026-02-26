@@ -98,7 +98,7 @@ export function BossHudButton({
     >
       {/* Portrait circle */}
       <div
-        role="presentation"
+
         style={{
           width: 56,
           height: 56,

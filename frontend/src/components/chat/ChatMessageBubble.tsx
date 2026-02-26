@@ -258,7 +258,7 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
           color: '#b45309',
           cursor: hasDetails ? 'pointer' : 'default',
         }}
-        onClick={() => hasDetails && setExpanded(!expanded)}
+        onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> hasDetails && setExpanded(!expanded)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { hasDetails && setExpanded(!expanded) } }}
       >
         🔧 {tool.name} {isSuccess ? '✓' : '✗'}

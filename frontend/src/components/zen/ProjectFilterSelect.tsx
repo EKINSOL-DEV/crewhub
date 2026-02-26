@@ -134,7 +134,7 @@ export function ProjectFilterSelect({
       {/* Dropdown */}
       {isOpen && (
         <div
-          role="listbox"
+
           aria-label="Select project"
           style={{
             position: 'absolute',
@@ -181,7 +181,7 @@ export function ProjectFilterSelect({
           <div style={{ overflow: 'auto', padding: '4px 4px 8px' }}>
             {/* All Projects option */}
             <button
-              role="option"
+
               aria-selected={!currentProjectId}
               onClick={() => handleSelect(null)}
               style={{
@@ -250,7 +250,7 @@ export function ProjectFilterSelect({
                 return (
                   <button
                     key={project.id}
-                    role="option"
+
                     aria-selected={isSelected}
                     onClick={() => handleSelect(project)}
                     style={{

@@ -58,7 +58,7 @@ export function ImageThumbnail({ attachment, maxWidth = 200 }: ImageThumbnailPro
     <>
       <div
         style={containerStyle}
-        onClick={() => setLightboxOpen(true)}
+        onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setLightboxOpen(true)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setLightboxOpen(true) } }}
         title="Click to view full size"
       >

@@ -150,7 +150,7 @@ export function SettingsPanel({
         {/* Backdrop */}
         <div
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          onClick={() => onOpenChange(false)}
+          onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> onOpenChange(false)}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onOpenChange(false) } }}
         />
 

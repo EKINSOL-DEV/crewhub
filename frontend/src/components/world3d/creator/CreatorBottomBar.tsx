@@ -168,7 +168,7 @@ export function CreatorBottomBar() {
               <div
                 key={meta.propId}
                 style={propCardStyle(isSelected)}
-                onClick={() => handlePropClick(meta.propId)}
+                onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> handlePropClick(meta.propId)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') handlePropClick(meta.propId)
                 }}
@@ -252,7 +252,7 @@ export function CreatorBottomBar() {
                   <div
                     key={gen.id}
                     style={propCardStyle(isSelected)}
-                    onClick={() => handlePropClick(propId)}
+                    onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> handlePropClick(propId)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') handlePropClick(propId)
                     }}
@@ -328,7 +328,7 @@ export function CreatorBottomBar() {
         {/* "All" chip */}
         <div
           style={chipStyle(activeCategory === 'All')}
-          onClick={() => handleCategoryClick('All')}
+          onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> handleCategoryClick('All')}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') handleCategoryClick('All')
           }}
@@ -347,7 +347,7 @@ export function CreatorBottomBar() {
             <div
               key={cat}
               style={chipStyle(activeCategory === cat)}
-              onClick={() => handleCategoryClick(cat)}
+              onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> handleCategoryClick(cat)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') handleCategoryClick(cat)
               }}
@@ -362,7 +362,7 @@ export function CreatorBottomBar() {
         {/* "✨ Generated" chip — AI-generated custom props */}
         <div
           style={chipStyle(activeCategory === 'generated')}
-          onClick={() => handleCategoryClick('generated')}
+          onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> handleCategoryClick('generated')}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') handleCategoryClick('generated')
           }}

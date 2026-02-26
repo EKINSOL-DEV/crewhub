@@ -182,7 +182,7 @@ export function FullscreenOverlay({
         animation: 'fadeIn 0.2s ease-out',
         pointerEvents: 'all',
       }}
-      onClick={(e) => {
+      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> {
         if (e.target === e.currentTarget) onClose()
       }}
       onKeyDown={(e) => {
@@ -328,7 +328,7 @@ export function FullscreenOverlay({
               <>
                 {/* Backdrop */}
                 <div
-                  onClick={() => setTocOpen(false)}
+                  onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setTocOpen(false)}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') setTocOpen(false)
                   }}

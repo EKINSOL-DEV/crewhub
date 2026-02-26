@@ -190,7 +190,7 @@ export function CrewBar({ agents, config, onTogglePin, className }: CrewBarProps
               {/* Backdrop to close */}
               <div
                 className="fixed inset-0 z-[59]"
-                onClick={() => setShowOptions(false)}
+                onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setShowOptions(false)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') setShowOptions(false)
                 }}

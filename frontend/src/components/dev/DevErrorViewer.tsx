@@ -329,7 +329,7 @@ function ErrorViewerModal({ onClose }: { onClose: () => void }) {
               >
                 {/* Error summary row */}
                 <div
-                  onClick={() => setExpandedId(expanded ? null : err.id)}
+                  onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setExpandedId(expanded ? null : err.id)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setExpandedId(expanded ? null : err.id) } }}
                   style={{
                     display: 'flex',
