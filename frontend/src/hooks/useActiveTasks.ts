@@ -269,7 +269,7 @@ function extractTaskTitle(session: CrewSession): string {
   // agent:name:subagent:task-id → task-id
   const lastPart = parts[parts.length - 1]
   if (lastPart && lastPart.length > 4) {
-    return lastPart.replaceAll(/-/g, ' ')
+    return lastPart.replaceAll('-', ' ')
   }
 
   return 'Working...'

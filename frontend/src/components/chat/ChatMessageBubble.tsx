@@ -27,10 +27,10 @@ const FLEX_START = 'flex-start'
 
 function escapeHtml(str: string): string {
   return str
-    .replaceAll(/&/g, '&amp;')
-    .replaceAll(/</g, '&lt;')
-    .replaceAll(/>/g, '&gt;')
-    .replaceAll(/"/g, '&quot;')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
 }
 
 /**
@@ -90,7 +90,7 @@ export function renderMarkdown(
   html = html.replaceAll(/~~(.+?)~~/g, '<del>$1</del>')
 
   // Links [text](url)
-  html = html.replace(
+  html = html.replaceAll(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" target="_blank" rel="noopener" class="chat-md-link">$1</a>'
   )
@@ -101,7 +101,7 @@ export function renderMarkdown(
 
   // Ordered lists
   html = html.replaceAll(/^\d+\. (.+)$/gm, '<li class="chat-md-li-ordered">$1</li>')
-  html = html.replace(
+  html = html.replaceAll(
     /(<li class="chat-md-li-ordered">.*<\/li>\n?)+/g,
     '<ol class="chat-md-ol">$&</ol>'
   )
@@ -112,7 +112,7 @@ export function renderMarkdown(
   })
 
   // Line breaks (not inside block elements)
-  html = html.replaceAll(/\n/g, '<br/>')
+  html = html.replaceAll('\n', '<br/>')
 
   // Clean up extra breaks around block elements
   html = html.replaceAll(/<\/(h[234]|blockquote|ul|ol|pre|hr)><br\/>/g, '</$1>')

@@ -20,22 +20,22 @@ function renderMarkdown(text: string): string {
   // Escape HTML first to prevent XSS
   let html = escapeHtml(text)
 
-  html = html.replace(
+  html = html.replaceAll(
     /```(\w*)\n([\s\S]*?)```/g,
     (_m, _lang, code) =>
       `<pre style="background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0"><code>${code.trim()}</code></pre>`
   )
-  html = html.replace(
+  html = html.replaceAll(
     /`([^`]+)`/g,
     '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>'
   )
   html = html.replaceAll(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
   html = html.replaceAll(/\*(.+?)\*/g, '<em>$1</em>')
-  html = html.replaceAll(/\n/g, '<br/>')
+  html = html.replaceAll('\n', '<br/>')
   return html
 }
 function escapeHtml(str: string): string {
-  return str.replaceAll(/&/g, '&amp;').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;')
+  return str.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
 }
 // ── Message Bubble ─────────────────────────────────────────────
 

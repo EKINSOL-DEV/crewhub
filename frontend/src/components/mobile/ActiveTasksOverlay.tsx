@@ -22,7 +22,7 @@ function isActive(session: CrewSession): boolean {
 }
 
 function escapeHtml(str: string): string {
-  return str.replaceAll(/&/g, '&amp;').replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;')
+  return str.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
 }
 
 // ── Task Logs View ─────────────────────────────────────────────
@@ -260,11 +260,11 @@ function simpleFormat(text: string): string {
   if (!text) return ''
   let html = escapeHtml(String(text))
   html = html.replaceAll(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  html = html.replace(
+  html = html.replaceAll(
     /`([^`]+)`/g,
     '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:11px">$1</code>'
   )
-  html = html.replaceAll(/\n/g, '<br/>')
+  html = html.replaceAll('\n', '<br/>')
   return html
 }
 

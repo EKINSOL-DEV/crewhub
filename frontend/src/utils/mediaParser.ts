@@ -210,11 +210,11 @@ function parseMediaPrefixAttachments(
 
 function cleanupMessageText(text: string): string {
   // Remove OpenClaw media instruction hint
-  text = text.replace(/To send an image back,.*?Keep caption in the text body\.\n?/gs, '')
+  text = text.replaceAll(/To send an image back,.*?Keep caption in the text body\.\n?/gs, '')
   // Remove WhatsApp/channel metadata
-  text = text.replace(/\[(WhatsApp|Telegram|Signal|Discord|iMessage|Slack)[^\]]*\]\n?/gi, '')
+  text = text.replaceAll(/\[(WhatsApp|Telegram|Signal|Discord|iMessage|Slack)[^\]]*\]\n?/gi, '')
   // Remove message_id annotations
-  text = text.replace(/\[message_id:\s*[^\]]+\]\n?/gi, '')
+  text = text.replaceAll(/\[message_id:\s*[^\]]+\]\n?/gi, '')
   // Clean up multiple newlines
   text = text.replaceAll(/\n{3,}/g, '\n\n').trim()
   return text

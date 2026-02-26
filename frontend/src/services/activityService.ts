@@ -218,7 +218,7 @@ function processAssistantBlock(
       color,
     })
   } else if (block.type === 'text' && block.text) {
-    const preview = block.text.slice(0, 150).replaceAll(/\n/g, ' ')
+    const preview = block.text.slice(0, 150).replaceAll('\n', ' ')
     if (preview.trim()) {
       entries.push({
         id: makeId('msg', ts),
@@ -231,7 +231,7 @@ function processAssistantBlock(
       })
     }
   } else if (block.type === 'thinking' && block.thinking) {
-    const preview = block.thinking.slice(0, 100).replaceAll(/\n/g, ' ')
+    const preview = block.thinking.slice(0, 100).replaceAll('\n', ' ')
     if (preview.trim()) {
       entries.push({
         id: makeId('think', ts),
