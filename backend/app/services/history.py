@@ -65,6 +65,17 @@ def _extract_path_metadata(file_path: Path) -> tuple:
     return agent_id, session_id, status
 
 
+def _update_time_bounds(msg: dict[str, Any], started_at: Any, ended_at: Any) -> tuple[Any, Any]:
+    ts = msg.get("ts") or msg.get("timestamp")
+    if not ts:
+        return started_at, ended_at
+    if started_at is None or ts < started_at:
+        started_at = ts
+    if ended_at is None or ts > ended_at:
+        ended_at = ts
+    return started_at, ended_at
+
+
 def _extract_message_stats(messages: list) -> dict[str, Any]:
     """Extract timestamps, model, label, channel, and last text from messages."""
     started_at = None
@@ -75,25 +86,18 @@ def _extract_message_stats(messages: list) -> dict[str, Any]:
     channel = None
 
     for msg in messages:
-        ts = msg.get("ts") or msg.get("timestamp")
-        if ts:
-            if started_at is None or ts < started_at:
-                started_at = ts
-            if ended_at is None or ts > ended_at:
-                ended_at = ts
+        started_at, ended_at = _update_time_bounds(msg, started_at, ended_at)
 
-        if msg.get("role") == "assistant" and not model:
+        role = msg.get("role")
+        if role == "assistant" and not model:
             model = msg.get("model")
-
-        if msg.get("role") == "assistant":
+        if role == "assistant":
             text = msg.get("text") or msg.get("content")
             if isinstance(text, str) and text:
                 last_assistant_text = text[:200]
 
-        if "label" in msg:
-            label = msg.get("label")
-
-        if "channel" in msg and not channel:
+        label = msg.get("label", label)
+        if not channel:
             channel = msg.get("channel")
 
     return {
@@ -167,31 +171,37 @@ def _parse_session_file(file_path: Path) -> Optional[dict[str, Any]]:
         return None
 
 
+def _append_existing_agent_dirs(agent_dirs: list[Path], agent_path: Path) -> None:
+    sessions_path = agent_path / "sessions"
+    archive_path = agent_path / "archive"
+    if sessions_path.exists():
+        agent_dirs.append(sessions_path)
+    if archive_path.exists():
+        agent_dirs.append(archive_path)
+
+
 def _collect_agent_dirs(agent_id: Optional[str]) -> list:
     """Collect session and archive directories for the given agent (or all agents)."""
-    agent_dirs = []
+    agent_dirs: list[Path] = []
     if agent_id:
         try:
-            safe_agent = _safe_id(agent_id)
-            agent_path = OPENCLAW_BASE / safe_agent
-            sessions_path = agent_path / "sessions"
-            if sessions_path.exists():
-                agent_dirs.append(sessions_path)
-            archive_path = agent_path / "archive"
-            if archive_path.exists():
-                agent_dirs.append(archive_path)
+            _append_existing_agent_dirs(agent_dirs, OPENCLAW_BASE / _safe_id(agent_id))
         except ValueError:
-            pass
-    else:
-        for agent_path in OPENCLAW_BASE.iterdir():
-            if agent_path.is_dir():
-                sessions_path = agent_path / "sessions"
-                if sessions_path.exists():
-                    agent_dirs.append(sessions_path)
-                archive_path = agent_path / "archive"
-                if archive_path.exists():
-                    agent_dirs.append(archive_path)
+            return agent_dirs
+        return agent_dirs
+
+    for agent_path in OPENCLAW_BASE.iterdir():
+        if agent_path.is_dir():
+            _append_existing_agent_dirs(agent_dirs, agent_path)
     return agent_dirs
+
+
+def _is_session_file_candidate(file_path: Path, include_deleted: bool) -> bool:
+    if not file_path.is_file():
+        return False
+    if not include_deleted and DELETED_MARKER in file_path.name:
+        return False
+    return file_path.name.endswith(".jsonl") or DELETED_MARKER in file_path.name
 
 
 def _collect_session_files(agent_dirs: list, include_deleted: bool) -> list:
@@ -199,11 +209,7 @@ def _collect_session_files(agent_dirs: list, include_deleted: bool) -> list:
     sessions = []
     for sessions_dir in agent_dirs:
         for file_path in sessions_dir.iterdir():
-            if not file_path.is_file():
-                continue
-            if not include_deleted and DELETED_MARKER in file_path.name:
-                continue
-            if not file_path.name.endswith(".jsonl") and DELETED_MARKER not in file_path.name:
+            if not _is_session_file_candidate(file_path, include_deleted):
                 continue
             session = _parse_session_file(file_path)
             if session:
