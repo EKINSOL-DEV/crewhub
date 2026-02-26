@@ -388,7 +388,7 @@ export function ProjectManagerModal({
           {PROJECT_ICONS.map((icon) => (
             <button
               key={icon}
-              onClick={() => setForm((f) => ({ ...f, icon }))}
+              onClick={() => setForm((f) => ({ ...f, icon }))} // NOSONAR: inline handler in JSX map
               style={{
                 width: 36,
                 height: 36,
@@ -418,7 +418,7 @@ export function ProjectManagerModal({
           {PROJECT_COLORS.map((color) => (
             <button
               key={color}
-              onClick={() => setForm((f) => ({ ...f, color }))}
+              onClick={() => setForm((f) => ({ ...f, color }))} // NOSONAR: inline handler in JSX map
               style={{
                 width: 28,
                 height: 28,
