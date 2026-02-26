@@ -106,7 +106,7 @@ function notifyListeners() {
 // ─── Hook ───────────────────────────────────────────────────────
 
 export function useLightingConfig() {
-  const [config, setConfigLocal] = useState<LightingConfig>(sharedConfig)
+  const [config, setConfigLocal] = useState<LightingConfig>(sharedConfig) // NOSONAR
 
   useEffect(() => {
     const handler = (c: LightingConfig) => setConfigLocal({ ...c })
@@ -166,7 +166,7 @@ function notifyVisibility() {
 }
 
 export function useLightingPanelVisibility() {
-  const [visible, setVisibleLocal] = useState(lightingPanelVisible)
+  const [visible, setVisibleLocal] = useState(lightingPanelVisible) // NOSONAR
 
   useEffect(() => {
     const handler = (v: boolean) => setVisibleLocal(v)

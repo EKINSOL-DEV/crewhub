@@ -70,7 +70,7 @@ function applyThemeClassOnly(isDark: boolean): void {
   root.style.setProperty('--mobile-surface2', isDark ? '#293548' : '#f1f5f9')
   root.style.setProperty('--mobile-border', isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)')
   root.style.setProperty('--mobile-text', isDark ? '#e2e8f0' : '#0f172a')
-  root.style.setProperty('--mobile-text-muted', isDark ? '#64748b' : '#64748b')
+  root.style.setProperty('--mobile-text-muted', '#64748b')
   root.style.setProperty('--mobile-text-secondary', isDark ? '#94a3b8' : '#475569')
   root.style.setProperty('--mobile-msg-assistant-bg', isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9')
   root.style.setProperty('--mobile-msg-assistant-text', isDark ? '#e2e8f0' : '#1e293b')
@@ -200,10 +200,10 @@ function Section({ title, children }: SectionProps) {
 }
 
 interface SegmentedProps<T extends string> {
-  value: T
-  options: { value: T; label: string; icon?: React.ReactNode }[]
-  onChange: (v: T) => void
-  accentColor?: string
+  readonly value: T
+  readonly options: { value: T; label: string; icon?: React.ReactNode }[]
+  readonly onChange: (v: T) => void
+  readonly accentColor?: string
 }
 function Segmented<T extends string>({
   value,
@@ -329,7 +329,7 @@ interface MobileSettingsPanelProps {
 
 export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps) {
   // ── State ────
-  const [theme, setThemeState] = useState<AppTheme>(
+  const [theme, setThemeState] = useState<AppTheme>( // NOSONAR
     () => (localStorage.getItem(KEY_CREWHUB_THEME) as AppTheme | null) ?? 'dark'
   )
   const [backendUrl, setBackendUrl] = useState(
@@ -338,7 +338,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
   const [debugMode, setDebugMode] = useState(
     () => localStorage.getItem(KEY_CREWHUB_DEBUG) === 'true'
   )
-  const [fontSize, setFontSizeState] = useState<FontSize>(
+  const [fontSize, setFontSizeState] = useState<FontSize>( // NOSONAR
     () => (localStorage.getItem(KEY_CREWHUB_FONT_SIZE) as FontSize | null) ?? 'normal'
   )
   const [urlSaved, setUrlSaved] = useState(false)

@@ -40,7 +40,7 @@ export function TaskTicker({ sessions, getRoomForSession, defaultRoomId }: TaskT
   })
 
   // Force re-render every second to update fade-out opacity
-  const [, setTick] = useState(0)
+  const [, setTick] = useState(0) // NOSONAR
   useEffect(() => {
     if (!isOpen) return
     const interval = setInterval(() => setTick((t) => t + 1), 500)

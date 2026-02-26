@@ -94,7 +94,7 @@ export const Bot3D = memo(function Bot3D({
   const wasMovingRef = useRef(false)
   const { state: focusState, focusBot } = useWorldFocus()
   const { startDrag: _startDrag, endDrag: _endDrag } = useDragActions()
-  const [_hovered, setHovered] = useState(false)
+  const [_hovered, setHovered] = useState(false) // NOSONAR
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Demo mode: disable drag functionality

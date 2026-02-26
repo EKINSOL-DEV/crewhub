@@ -140,7 +140,7 @@ const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [windows, setWindows] = useState<ChatWindowState[]>(getInitialWindows)
   const focusHandlerRef = useRef<((sessionKey: string) => void) | null>(null)
-  const [, setFocusHandlerVersion] = useState(0)
+  const [, setFocusHandlerVersion] = useState(0) // NOSONAR
 
   const setFocusHandler = useCallback((handler: ((sessionKey: string) => void) | null) => {
     focusHandlerRef.current = handler

@@ -133,7 +133,7 @@ export interface UseDebugBotsReturn {
 
 export function useDebugBots(): UseDebugBotsReturn {
   const [debugBots, setDebugBots] = useState<DebugBot[]>(readBots)
-  const [debugBotsEnabled, setEnabledState] = useState(readEnabled)
+  const [debugBotsEnabled, setEnabledState] = useState(readEnabled) // NOSONAR
 
   // Listen for cross-component changes
   useEffect(() => {

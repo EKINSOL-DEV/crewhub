@@ -275,9 +275,9 @@ function TasksListView({
   onBack,
   onSelectTask,
 }: {
-  sessions: CrewSession[]
-  onBack: () => void
-  onSelectTask: (session: CrewSession) => void
+  readonly sessions: CrewSession[]
+  readonly onBack: () => void
+  readonly onSelectTask: (session: CrewSession) => void
 }) {
   const activeSessions = sessions.filter((s) => isActive(s))
   const idleSessions = sessions.filter((s) => !isActive(s))
@@ -470,8 +470,8 @@ export function ActiveTasksOverlay({
   sessions,
   onClose,
 }: {
-  sessions: CrewSession[]
-  onClose: () => void
+  readonly sessions: CrewSession[]
+  readonly onClose: () => void
 }) {
   const [view, setView] = useState<OverlayView>({ type: 'list' })
 

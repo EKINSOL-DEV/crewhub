@@ -28,7 +28,7 @@ export function DocumentSelectorModal({
   onSelect,
 }: DocumentSelectorModalProps) {
   const [tree, setTree] = useState<TreeNode[] | null>(null)
-  const [, setFlatFiles] = useState<string[]>([])
+  const [, setFlatFiles] = useState<string[]>([]) // NOSONAR
   const [selectedPath, setSelectedPath] = useState<string>()
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)

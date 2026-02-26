@@ -71,7 +71,7 @@ export function useStreamingChat(
   raw: boolean = false,
   roomId?: string
 ): UseStreamingChatReturn {
-  const [messages, setMessagesRaw] = useState<ChatMessageData[]>([])
+  const [messages, setMessagesRaw] = useState<ChatMessageData[]>([]) // NOSONAR
   const setMessages: React.Dispatch<React.SetStateAction<ChatMessageData[]>> = useCallback(
     (action) => {
       setMessagesRaw((prev) => {

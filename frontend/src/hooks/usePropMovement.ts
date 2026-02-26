@@ -100,7 +100,7 @@ export function usePropMovement({
   const [isMoving, setIsMoving] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isOverInvalid, setIsOverInvalid] = useState(false)
-  const [, setPendingClear] = useState(false)
+  const [, setPendingClear] = useState(false) // NOSONAR
   const placementsRef = useRef(placements)
   placementsRef.current = placements // Always keep ref in sync (avoids stale closures)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)

@@ -97,7 +97,7 @@ export function clearDisplayNameCache(sessionKey?: string) {
 }
 
 export function useSessionDisplayName(sessionKey: string) {
-  const [displayName, setDisplayNameState] = useState<string | null>(
+  const [displayName, setDisplayNameState] = useState<string | null>( // NOSONAR
     () => displayNameCache.get(sessionKey) ?? null
   )
   const [loading, setLoading] = useState(!bulkFetchDone)
