@@ -126,7 +126,6 @@ async def generate_bio(agent_id: str):
             raise HTTPException(status_code=404, detail="Agent not found")
 
         agent_name = row["name"]
-        agent_icon = row["icon"] or "🤖"
 
     # 2. Try to read SOUL.md from agent workspace
     soul_content = ""

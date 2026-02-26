@@ -129,6 +129,11 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
         backdropFilter: 'blur(4px)',
       }}
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="button"
+      tabIndex={0}
     >
       <div
         style={{
@@ -143,6 +148,9 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
           overflowY: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -280,6 +288,11 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
         alignItems: 'flex-end',
       }}
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="button"
+      tabIndex={0}
     >
       <div
         style={{
@@ -291,6 +304,9 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
           overflowY: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
       >
         <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 16 }}>
           Filter by Project

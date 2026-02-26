@@ -144,10 +144,10 @@ def main():
             readme_content
         )
         readme_file.write_text(readme_content)
-        print(f"   ✓ Updated README.md")
+        print("   ✓ Updated README.md")
 
     print("\n✅ Sync complete!")
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"   - Backups: {backup_dir}/*-{timestamp}.md")
     print(f"   - Updated: {len(list(overview_dir.glob('*.md')))} files")
 

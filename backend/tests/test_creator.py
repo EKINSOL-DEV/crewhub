@@ -108,7 +108,7 @@ export function CoffeePot({ position = [0,0,0], scale = 1 }) {
     </group>
   )
 }"""
-        code, diagnostics = await self._gen().generate_prop("a hot coffee pot with steam", base_code)
+        code, diagnostics = self._gen().generate_prop("a hot coffee pot with steam", base_code)
         assert "SteamParticles" in code
         assert any("Pass 2" in d for d in diagnostics)
 
@@ -123,7 +123,7 @@ export function Thing({ position = [0,0,0] }) {
     </group>
   )
 }"""
-        code, diagnostics = await self._gen().generate_prop("a generic thing", base_code)
+        _, diagnostics = self._gen().generate_prop("a generic thing", base_code)
         assert "Pass 1" in diagnostics[0]
 
     def test_get_refinement_options(self):

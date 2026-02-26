@@ -39,7 +39,7 @@ async def get_archived_sessions(
     Returns:
         {sessions: [...], total: count, limit: int, offset: int}
     """
-    result = await history.get_archived_sessions(
+    result = history.get_archived_sessions(
         limit=limit,
         offset=offset,
         agent_id=agent_id,
@@ -60,7 +60,7 @@ async def get_history_stats():
     Returns:
         Statistics about stored sessions (counts, types, etc.)
     """
-    stats = await history.get_statistics()
+    stats = history.get_statistics()
     return stats
 
 
@@ -74,7 +74,7 @@ async def get_session_detail(session_key: str):
     Returns:
         Session details with full message history, or 404 if not found
     """
-    session = await history.get_session_detail(session_key)
+    session = history.get_session_detail(session_key)
 
     if not session:
         raise HTTPException(status_code=404, detail="Session not found in history")
@@ -92,7 +92,7 @@ async def delete_session(session_key: str):
     Returns:
         {success: bool, sessionKey: str}
     """
-    success = await history.delete_session(session_key)
+    success = history.delete_session(session_key)
 
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete session")

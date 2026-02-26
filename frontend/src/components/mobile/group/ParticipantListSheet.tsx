@@ -30,6 +30,11 @@ export function ParticipantListSheet({
         justifyContent: 'flex-end',
       }}
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="button"
+      tabIndex={0}
     >
       <div
         style={{
@@ -41,6 +46,9 @@ export function ParticipantListSheet({
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
       >
         {/* Handle */}
         <div

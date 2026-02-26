@@ -172,7 +172,7 @@ class HybridGenerator:
 
         template_code = None
         if template_base and template_base in TEMPLATE_BASES:
-            template_code = await self._load_template(template_base)
+            template_code = self._load_template(template_base)
 
         prompt = build_hybrid_prompt(
             description=description,
@@ -211,7 +211,7 @@ class HybridGenerator:
 
         return raw
 
-    async def _load_template(self, template_id: str) -> Optional[str]:
+    def _load_template(self, template_id: str) -> Optional[str]:
         """Load a showcase prop as template."""
         comp_name = TEMPLATE_BASES.get(template_id)
         if not comp_name:

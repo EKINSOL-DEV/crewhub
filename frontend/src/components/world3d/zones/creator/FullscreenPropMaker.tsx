@@ -532,6 +532,11 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="button"
+      tabIndex={0}
     >
       <PropMakerToolbar
         isGenerating={isGenerating}

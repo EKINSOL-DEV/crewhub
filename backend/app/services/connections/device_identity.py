@@ -471,7 +471,7 @@ class DeviceIdentityManager:
 
     # ── Legacy compat (kept for tests / external callers) ───────────
 
-    async def pair_device(
+    def pair_device(
         self,
         identity: "DeviceIdentity",
         ws_connection,

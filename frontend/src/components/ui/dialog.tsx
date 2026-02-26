@@ -287,6 +287,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           role="dialog"
           aria-modal="true"
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
           className={cn(
             'relative w-full max-w-lg mx-4 my-4',
             'grid gap-4 border bg-background p-6 shadow-lg sm:rounded-lg',

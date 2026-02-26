@@ -169,6 +169,11 @@ export function CreatorBottomBar() {
                 key={meta.propId}
                 style={propCardStyle(isSelected)}
                 onClick={() => handlePropClick(meta.propId)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') handlePropClick(meta.propId)
+                }}
+                role="button"
+                tabIndex={0}
                 title={meta.displayName}
               >
                 {/* Color block with emoji */}
@@ -248,6 +253,11 @@ export function CreatorBottomBar() {
                     key={gen.id}
                     style={propCardStyle(isSelected)}
                     onClick={() => handlePropClick(propId)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') handlePropClick(propId)
+                    }}
+                    role="button"
+                    tabIndex={0}
                     title={gen.prompt || gen.name}
                   >
                     {/* Icon block */}
@@ -316,7 +326,15 @@ export function CreatorBottomBar() {
       {/* Category Bar */}
       <div style={categoryBarStyle}>
         {/* "All" chip */}
-        <div style={chipStyle(activeCategory === 'All')} onClick={() => handleCategoryClick('All')}>
+        <div
+          style={chipStyle(activeCategory === 'All')}
+          onClick={() => handleCategoryClick('All')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleCategoryClick('All')
+          }}
+          role="button"
+          tabIndex={0}
+        >
           All
         </div>
 
@@ -330,6 +348,11 @@ export function CreatorBottomBar() {
               key={cat}
               style={chipStyle(activeCategory === cat)}
               onClick={() => handleCategoryClick(cat)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleCategoryClick(cat)
+              }}
+              role="button"
+              tabIndex={0}
             >
               {CATEGORY_LABELS[cat]}
             </div>
@@ -340,6 +363,11 @@ export function CreatorBottomBar() {
         <div
           style={chipStyle(activeCategory === 'generated')}
           onClick={() => handleCategoryClick('generated')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleCategoryClick('generated')
+          }}
+          role="button"
+          tabIndex={0}
         >
           ✨ Generated
         </div>

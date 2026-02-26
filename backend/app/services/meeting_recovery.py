@@ -1,7 +1,6 @@
 """Recovery logic for meetings stuck in non-terminal states after restart."""
 
 import logging
-import time
 
 from app.db.database import get_db
 from app.db.meeting_models import MeetingState
@@ -18,7 +17,6 @@ TERMINAL_STATES = (
 
 async def recover_stuck_meetings() -> int:
     """Mark non-terminal meetings as error on startup. Returns count recovered."""
-    now_ms = int(time.time() * 1000)
     recovered = 0
 
     async with get_db() as db:

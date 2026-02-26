@@ -76,7 +76,7 @@ FLOAT_SNIPPET = """
 class MultiPassGenerator:
     """Multi-pass prop generation for consistent showcase quality."""
 
-    async def generate_prop(
+    def generate_prop(
         self,
         description: str,
         base_code: str,

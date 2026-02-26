@@ -113,7 +113,7 @@ def _get_lan_ip() -> Optional[str]:
         return None
 
 
-async def _check_host_docker_internal() -> bool:
+def _check_host_docker_internal() -> bool:
     """Check if host.docker.internal resolves."""
     try:
         socket.getaddrinfo("host.docker.internal", 18789, socket.AF_INET)
@@ -198,7 +198,7 @@ async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenC
 
     # Step 2: TCP connection
     try:
-        reader, writer = await asyncio.wait_for(
+        _, writer = await asyncio.wait_for(
             asyncio.open_connection(host, port),
             timeout=5.0,
         )
@@ -417,7 +417,7 @@ async def get_environment_info():
     """
     is_docker = _detect_docker()
     lan_ip = _get_lan_ip()
-    host_docker = await _check_host_docker_internal() if is_docker else False
+    host_docker = _check_host_docker_internal() if is_docker else False
     token_path, token_available = _find_token_file()
     suggested = _build_suggested_urls(is_docker, lan_ip, host_docker)
 

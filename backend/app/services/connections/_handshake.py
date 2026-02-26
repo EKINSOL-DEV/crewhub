@@ -58,7 +58,7 @@ async def perform_handshake(conn: OpenClawConnection) -> bool:
             try:
                 await conn._listen_task
             except asyncio.CancelledError:
-                pass
+                pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
 
         # ── 1. Device identity ───────────────────────────────────────────
         from .device_identity import CREWHUB_SCOPES, DeviceIdentityManager

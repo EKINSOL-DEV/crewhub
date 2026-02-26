@@ -34,6 +34,11 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel()
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onCancel()
+      }}
+      role="button"
+      tabIndex={0}
     >
       <div className="fpm-delete-dialog">
         <div className="fpm-delete-title">
@@ -211,6 +216,11 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
               key={r.id}
               className={`fpm-history-item ${selectedId === r.id ? 'fpm-history-item-active' : ''}`}
               onClick={() => handleSelect(r)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleSelect(r)
+              }}
+              role="button"
+              tabIndex={0}
             >
               <div className="fpm-history-item-name">
                 {historyIcon} {r.name}

@@ -179,6 +179,10 @@ export function FullscreenOverlay({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="presentation"
     >
       {/* Header */}
       <div
@@ -321,6 +325,10 @@ export function FullscreenOverlay({
                 {/* Backdrop */}
                 <div
                   onClick={() => setTocOpen(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setTocOpen(false)
+                  }}
+                  role="presentation"
                   style={{
                     position: 'absolute',
                     inset: 0,

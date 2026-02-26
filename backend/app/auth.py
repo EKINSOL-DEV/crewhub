@@ -315,7 +315,7 @@ def require_scope(scope: str):
             ...
     """
 
-    async def _check(
+    def _check(
         key: Optional[APIKeyInfo] = Depends(get_current_key),
     ) -> APIKeyInfo:
         if key is None:
@@ -425,7 +425,7 @@ async def init_api_keys():
             await _generate_default_keys(db)
         else:
             # Ensure file exists even if keys are in DB (idempotent)
-            await _ensure_key_files(db)
+            _ensure_key_files(db)
 
 
 async def _generate_default_keys(db):
@@ -477,7 +477,7 @@ async def _generate_default_keys(db):
     _write_api_keys_json(admin_raw, self_raw)
 
 
-async def _ensure_key_files(db):
+def _ensure_key_files(db):
     """Ensure key files exist. If not, we can't recover raw keys — log warning."""
     agent_json = DB_DIR / "agent.json"
     api_keys_json = DB_DIR / "api-keys.json"

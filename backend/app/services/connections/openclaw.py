@@ -144,14 +144,14 @@ class OpenClawConnection(
             try:
                 await self._reconnect_task
             except asyncio.CancelledError:
-                pass
+                pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
 
         if self._listen_task and not self._listen_task.done():
             self._listen_task.cancel()
             try:
                 await self._listen_task
             except asyncio.CancelledError:
-                pass
+                pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
 
         if self.ws:
             try:

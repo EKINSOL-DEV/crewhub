@@ -168,7 +168,6 @@ async def load_connections_from_db():
 
     manager = await get_connection_manager()
 
-    loaded_count = 0
     try:
         async with aiosqlite.connect(DB_PATH) as db:
             db.row_factory = lambda cursor, row: dict(zip([col[0] for col in cursor.description], row))
@@ -185,7 +184,6 @@ async def load_connections_from_db():
                     name=row["name"],
                     auto_connect=True,
                 )
-                loaded_count += 1
                 logger.info(f"Loaded connection: {row['id']} ({row['type']})")
             except Exception as e:
                 logger.error(f"Failed to load connection {row['id']}: {e}")
@@ -237,7 +235,7 @@ async def lifespan(app: FastAPI):
 
     # Start Connection Manager health monitoring
     manager = await get_connection_manager()
-    await manager.start(health_interval=30.0)
+    manager.start(health_interval=30.0)
     logger.info("ConnectionManager started")
 
     # Recover stuck meetings from previous restart
@@ -260,7 +258,7 @@ async def lifespan(app: FastAPI):
         try:
             await _polling_task
         except asyncio.CancelledError:
-            pass
+            pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
 
     # Stop Connection Manager
     manager = await get_connection_manager()

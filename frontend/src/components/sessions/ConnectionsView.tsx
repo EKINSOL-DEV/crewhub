@@ -256,6 +256,8 @@ function ConnectionDialog({ open, onOpenChange, connection, onSave }: Connection
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="presentation"
         className="bg-background rounded-lg overflow-hidden"
       >
         {/* Header */}

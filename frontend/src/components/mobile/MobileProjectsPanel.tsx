@@ -208,6 +208,11 @@ function ProjectDetailModal({
         backdropFilter: 'blur(4px)',
       }}
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="button"
+      tabIndex={0}
     >
       <div
         style={{
@@ -222,6 +227,9 @@ function ProjectDetailModal({
           overflowY: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

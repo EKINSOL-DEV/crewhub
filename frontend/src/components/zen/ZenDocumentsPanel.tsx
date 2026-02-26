@@ -45,6 +45,11 @@ function Breadcrumbs({
     >
       <span
         onClick={() => onNavigate(null)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') onNavigate(null)
+        }}
+        role="button"
+        tabIndex={0}
         style={{ cursor: 'pointer', color: 'var(--zen-accent, hsl(var(--primary)))' }}
       >
         📁 Root
@@ -54,6 +59,12 @@ function Breadcrumbs({
           <span style={{ opacity: 0.5 }}>/</span>
           <span
             onClick={() => onNavigate(parts.slice(0, i + 1).join('/') + '/')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ')
+                onNavigate(parts.slice(0, i + 1).join('/') + '/')
+            }}
+            role="button"
+            tabIndex={0}
             style={{
               cursor: 'pointer',
               color: i === parts.length - 1 ? 'hsl(var(--foreground))' : 'hsl(var(--primary))',

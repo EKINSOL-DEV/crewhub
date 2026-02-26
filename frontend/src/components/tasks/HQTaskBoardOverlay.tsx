@@ -232,6 +232,9 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
       ref={dialogRef}
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !editingTask) onOpenChange(false)
+      }}
       className="
         fixed inset-0 z-[60] m-0 h-screen w-screen max-h-none max-w-none
         bg-transparent p-0
@@ -243,6 +246,8 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
       <div
         className="w-[calc(100vw-2rem)] max-w-[1800px] h-[calc(100vh-2rem)] max-h-[1000px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="document"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
@@ -429,10 +434,18 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
           <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
             onClick={() => setEditingTask(null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setEditingTask(null)
+            }}
+            role="button"
+            tabIndex={0}
           >
             <div
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Edit Task</h3>

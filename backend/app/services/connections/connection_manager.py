@@ -275,7 +275,7 @@ class ConnectionManager:
     # Health Monitoring
     # =========================================================================
 
-    async def start(self, health_interval: float = 30.0) -> None:
+    def start(self, health_interval: float = 30.0) -> None:
         """
         Start the connection manager.
 
@@ -303,7 +303,7 @@ class ConnectionManager:
             try:
                 await self._health_task
             except asyncio.CancelledError:
-                pass
+                pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
 
         await self.disconnect_all()
         logger.info("ConnectionManager stopped")
@@ -317,7 +317,7 @@ class ConnectionManager:
                 await asyncio.sleep(self._health_interval)
                 await self._check_health()
             except asyncio.CancelledError:
-                break
+                raise
             except Exception as e:
                 logger.error(f"Health check error: {e}")
 

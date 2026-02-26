@@ -353,6 +353,11 @@ export function TaskBoard({
             zIndex: 65,
           }}
           onClick={() => setShowCreateForm(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setShowCreateForm(false)
+          }}
+          role="button"
+          tabIndex={0}
         >
           <div
             style={{
@@ -365,6 +370,9 @@ export function TaskBoard({
               overflow: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
           >
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: '#1f2937' }}>Create New Task</h3>
             <TaskForm
@@ -396,6 +404,11 @@ export function TaskBoard({
             zIndex: 65,
           }}
           onClick={() => setEditingTask(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setEditingTask(null)
+          }}
+          role="button"
+          tabIndex={0}
         >
           <div
             style={{
@@ -408,6 +421,9 @@ export function TaskBoard({
               overflow: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
           >
             <div
               style={{

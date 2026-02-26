@@ -94,7 +94,7 @@ def _create_backup_path() -> Path:
     return BACKUP_DIR / f"crewhub-{timestamp}.db"
 
 
-async def _create_file_backup() -> Path:
+def _create_file_backup() -> Path:
     """Create a file-level backup of the database."""
     backup_path = _create_backup_path()
     shutil.copy2(str(DB_PATH), str(backup_path))
@@ -209,7 +209,7 @@ async def import_database(
 
     # Safety: backup current database first
     try:
-        backup_path = await _create_file_backup()
+        backup_path = _create_file_backup()
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -316,7 +316,7 @@ async def create_backup(key: Annotated[APIKeyInfo, Depends(require_scope("admin"
         )
 
     try:
-        backup_path = await _create_file_backup()
+        backup_path = _create_file_backup()
         size = backup_path.stat().st_size
 
         return BackupCreateResponse(

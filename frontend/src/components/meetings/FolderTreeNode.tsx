@@ -50,6 +50,13 @@ export function FolderTreeNode({
             : 'hover:bg-muted/50 text-foreground'
         }`}
         onClick={() => node.path && onSelectFile(node.path)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            if (node.path) onSelectFile(node.path)
+          }
+        }}
+        role="button"
+        tabIndex={0}
       >
         📄 {node.name}
       </div>
@@ -64,6 +71,9 @@ export function FolderTreeNode({
       <div
         className="pl-2 py-1 cursor-pointer hover:bg-muted/30 rounded text-sm font-medium transition-colors"
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpanded(!expanded) }}
+        role="button"
+        tabIndex={0}
       >
         {isExpanded ? '📂' : '📁'} {node.name}
       </div>

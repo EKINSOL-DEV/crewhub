@@ -481,6 +481,8 @@ function CreateKeyModal({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      role="presentation"
       className="bg-background border rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
     >
       <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b">
@@ -631,6 +633,8 @@ function KeyRevealModal({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      role="presentation"
       className="bg-background border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
     >
       <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b bg-amber-50/80 dark:bg-amber-900/20">

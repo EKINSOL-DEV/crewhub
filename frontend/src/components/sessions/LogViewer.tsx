@@ -173,6 +173,8 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="presentation"
         className="relative w-[calc(100vw-2rem)] sm:max-w-4xl h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col border bg-background shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95 duration-200"
       >
         {/* Close button */}

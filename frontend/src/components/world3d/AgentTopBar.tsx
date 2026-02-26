@@ -220,6 +220,11 @@ function AgentPortraitButton({
         position: 'relative',
       }}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick()
+      }}
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       title={title}
@@ -339,6 +344,11 @@ function AgentPickerToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () =
         userSelect: 'none',
       }}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick()
+      }}
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       title="Browse agents"
@@ -572,6 +582,12 @@ function DropdownItem({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onSelect(entry.session, entry.roomId, entry.name, entry.config)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ')
+          onSelect(entry.session, entry.roomId, entry.name, entry.config)
+      }}
+      role="button"
+      tabIndex={0}
     >
       {/* Small bot portrait */}
       <div

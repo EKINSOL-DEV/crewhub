@@ -96,6 +96,11 @@ export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="button"
+      tabIndex={0}
     >
       <div className="psc-topbar">
         <div className="psc-topbar-left">
@@ -239,6 +244,11 @@ function ShowcaseCard({ prop, onClick }: { prop: ShowcaseProp; onClick: () => vo
     <div
       className={`psc-card ${hovered ? 'psc-card-hover' : ''}`}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick()
+      }}
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

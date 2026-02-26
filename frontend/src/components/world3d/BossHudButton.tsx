@@ -89,10 +89,16 @@ export function BossHudButton({
         userSelect: 'none',
       }}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') handleClick()
+      }}
+      role="button"
+      tabIndex={0}
       title="Fly to Assistent"
     >
       {/* Portrait circle */}
       <div
+        role="presentation"
         style={{
           width: 56,
           height: 56,

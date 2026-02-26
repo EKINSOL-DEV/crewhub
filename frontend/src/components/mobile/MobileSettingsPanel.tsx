@@ -263,6 +263,11 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
         cursor: 'pointer',
       }}
       onClick={() => onChange(!value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onChange(!value)
+      }}
+      role="button"
+      tabIndex={0}
     >
       <div>
         <div style={{ fontSize: 14, color: 'var(--mobile-text, #e2e8f0)', fontWeight: 500 }}>
@@ -436,6 +441,11 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
       {/* Backdrop */}
       <div
         onClick={handleBackdropClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onClose()
+        }}
+        role="button"
+        tabIndex={0}
         style={{
           position: 'fixed',
           inset: 0,

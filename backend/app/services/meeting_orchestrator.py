@@ -154,7 +154,7 @@ class MeetingOrchestrator:
                 },
             )
             output_md = await self._synthesize()
-            output_path = await self._save_output(output_md)
+            output_path = self._save_output(output_md)
             await db_save_action_items(self.meeting_id, output_md)
             duration = (_now_ms() - (await db_get_started_at(self.meeting_id))) // 1000
             await db_set_state(
@@ -184,6 +184,7 @@ class MeetingOrchestrator:
                     "cancelled_at": _now_ms(),
                 },
             )
+            raise
         except Exception as exc:
             logger.error(f"Meeting {self.meeting_id} failed: {exc}", exc_info=True)
             await db_set_state(self.meeting_id, MeetingState.ERROR, error_message=str(exc))
@@ -372,7 +373,7 @@ class MeetingOrchestrator:
         text = re.sub(r"[\s-]+", "-", text)
         return text[:max_len].rstrip("-")
 
-    async def _save_output(self, output_md: str) -> Optional[str]:
+    def _save_output(self, output_md: str) -> Optional[str]:
         """Save meeting output markdown to disk."""
         data_path = os.environ.get("PROJECT_DATA_PATH") or str(
             Path.home() / "SynologyDrive" / "ekinbot" / "01-Projects"

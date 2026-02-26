@@ -148,7 +148,7 @@ def _parse_session_file(file_path: Path) -> Optional[Dict[str, Any]]:
         return None
 
 
-async def get_archived_sessions(
+def get_archived_sessions(
     limit: int = 50,
     offset: int = 0,
     agent_id: Optional[str] = None,
@@ -264,7 +264,7 @@ async def get_archived_sessions(
         return {"sessions": [], "total": 0, "limit": limit, "offset": offset, "error": str(e)}
 
 
-async def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
+def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
     """Get detailed information for a specific archived session.
 
     Args:
@@ -331,7 +331,7 @@ async def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-async def delete_session(session_key: str) -> bool:
+def delete_session(session_key: str) -> bool:
     """Mark a session as deleted by renaming the file.
 
     Args:
@@ -369,14 +369,14 @@ async def delete_session(session_key: str) -> bool:
         return False
 
 
-async def get_statistics() -> Dict[str, Any]:
+def get_statistics() -> Dict[str, Any]:
     """Get statistics about archived sessions.
 
     Returns:
         dict: Statistics about stored sessions
     """
     try:
-        sessions_result = await get_archived_sessions(limit=10000)
+        sessions_result = get_archived_sessions(limit=10000)
         sessions = sessions_result.get("sessions", [])
 
         # Count by type

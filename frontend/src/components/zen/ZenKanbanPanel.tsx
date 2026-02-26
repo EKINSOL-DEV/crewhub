@@ -116,7 +116,12 @@ function KanbanCard({
 
       {/* Move Menu */}
       {showMoveMenu && (
-        <div className="zen-kanban-move-menu" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="zen-kanban-move-menu"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          role="presentation"
+        >
           <div className="zen-kanban-move-header">Move to:</div>
           {COLUMNS.filter((col) => col.status !== task.status).map((col) => (
             <button
@@ -222,8 +227,20 @@ function TaskDetailModal({ task, onClose, onMove }: TaskDetailModalProps) {
   const currentColumn = COLUMNS.find((c) => c.status === task.status)
 
   return (
-    <div className="zen-modal-backdrop" onClick={onClose}>
-      <div className="zen-modal zen-kanban-detail" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="zen-modal-backdrop"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="presentation"
+    >
+      <div
+        className="zen-modal zen-kanban-detail"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="presentation"
+      >
         <div className="zen-modal-header">
           <h3 className="zen-modal-title">{task.title}</h3>
           <button className="zen-modal-close" onClick={onClose}>

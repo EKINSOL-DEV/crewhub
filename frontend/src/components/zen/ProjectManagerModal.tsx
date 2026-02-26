@@ -502,6 +502,11 @@ export function ProjectManagerModal({
                   transition: 'background 0.1s',
                 }}
                 onClick={() => openDetails(project)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') openDetails(project)
+                }}
+                role="button"
+                tabIndex={0}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.background = 'var(--zen-bg-hover, #24283b)')
                 }
@@ -712,8 +717,17 @@ export function ProjectManagerModal({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="presentation"
     >
-      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+      <div
+        style={modalStyle}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="presentation"
+      >
         {view === 'list' && renderHeader('Manage Projects')}
         {view === 'create' && renderHeader('New Project', true)}
         {view === 'edit' && renderHeader('Edit Project', true)}

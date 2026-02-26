@@ -369,7 +369,7 @@ async def stream_prop_generation(
             # Phase 2: Multi-pass enhancement
             try:
                 mp_gen = MultiPassGenerator()
-                code, mp_diags = await mp_gen.generate_prop(prompt, code)
+                code, mp_diags = mp_gen.generate_prop(prompt, code)
                 for d in mp_diags:
                     diagnostics_collected.append(d)
                     yield _sse_event("correction", {"message": d})

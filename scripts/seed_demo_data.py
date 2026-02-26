@@ -456,7 +456,7 @@ After a meeting completes:
     if created:
         print(f"  ✅ Created/updated {created} demo markdown documents in {DEMO_DOCS_PATH}")
     else:
-        print(f"  ⏭  Demo documents already exist")
+        print("  ⏭  Demo documents already exist")
 
 # ─────────────────────────────────────────────────────────────────────
 # AI Meetings Demo Data
@@ -613,7 +613,7 @@ def seed_meetings(db, project_id):
     )
 
     db.commit()
-    print(f"  ✅ Added 2 demo meetings with turns, participants, and action items")
+    print("  ✅ Added 2 demo meetings with turns, participants, and action items")
 
 # ─────────────────────────────────────────────────────────────────────
 # Agent Room Assignments (for pathfinding demo)
@@ -651,7 +651,7 @@ def seed_agent_room_assignments(db):
     if updated:
         print(f"  ✅ Assigned {updated} agents to rooms for pathfinding demo")
     else:
-        print(f"  ⏭  Agent room assignments already set")
+        print("  ⏭  Agent room assignments already set")
 
 # ─────────────────────────────────────────────────────────────────────
 # Project docs_path
