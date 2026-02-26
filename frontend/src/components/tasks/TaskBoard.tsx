@@ -352,7 +352,7 @@ export function TaskBoard({
             justifyContent: 'center',
             zIndex: 65,
           }}
-          onClick={() => setShowCreateForm(false)}
+          onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setShowCreateForm(false)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setShowCreateForm(false)
           }}
@@ -369,9 +369,9 @@ export function TaskBoard({
               maxHeight: '80vh',
               overflow: 'auto',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
-            role="dialog"
+
             aria-modal="true"
           >
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: '#1f2937' }}>Create New Task</h3>
@@ -403,7 +403,7 @@ export function TaskBoard({
             justifyContent: 'center',
             zIndex: 65,
           }}
-          onClick={() => setEditingTask(null)}
+          onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setEditingTask(null)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setEditingTask(null)
           }}
@@ -420,9 +420,9 @@ export function TaskBoard({
               maxHeight: '80vh',
               overflow: 'auto',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
-            role="dialog"
+
             aria-modal="true"
           >
             <div

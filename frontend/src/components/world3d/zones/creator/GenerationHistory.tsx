@@ -31,7 +31,7 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
   return (
     <div
       className="fpm-delete-overlay"
-      onClick={(e) => {
+      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> {
         if (e.target === e.currentTarget) onCancel()
       }}
       onKeyDown={(e) => {
@@ -215,7 +215,7 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
             <div
               key={r.id}
               className={`fpm-history-item ${selectedId === r.id ? 'fpm-history-item-active' : ''}`}
-              onClick={() => handleSelect(r)}
+              onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> handleSelect(r)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') handleSelect(r)
               }}

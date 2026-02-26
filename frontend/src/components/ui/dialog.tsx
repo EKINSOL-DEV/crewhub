@@ -278,9 +278,9 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         <div // NOSONAR: onClick only prevents event bubble, not interactive
           ref={setContentRef}
           id={contentId}
-          role="dialog"
+
           aria-modal="true"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           className={cn(
             'relative w-full max-w-lg mx-4 my-4',

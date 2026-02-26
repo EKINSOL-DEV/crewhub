@@ -476,7 +476,7 @@ function CreateKeyModal({
 
   return (
     <div
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
       role="presentation"
       className="bg-background border rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
@@ -629,7 +629,7 @@ function KeyRevealModal({
 
   return (
     <div
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
       role="presentation"
       className="bg-background border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"

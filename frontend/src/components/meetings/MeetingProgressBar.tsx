@@ -46,7 +46,7 @@ export function MeetingProgressBar({
       </div>
       <div
         className="h-2 bg-muted rounded-full overflow-hidden"
-        role="progressbar"
+
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}

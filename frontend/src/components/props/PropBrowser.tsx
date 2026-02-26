@@ -208,7 +208,7 @@ export function PropBrowser() {
       {/* ── Header (draggable) ── */}
       <div
         onMouseDown={onMouseDown}
-        role="presentation"
+
         style={{
           display: 'flex',
           alignItems: 'center',

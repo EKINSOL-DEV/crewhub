@@ -325,7 +325,7 @@ export function TaskBoardOverlay({
       {/* Dialog content panel */}
       <div // NOSONAR: onClick only prevents event bubble, not interactive
         className="w-[calc(100vw-3rem)] max-w-[1600px] h-[calc(100vh-3rem)] max-h-[900px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="document"
       >
@@ -505,7 +505,7 @@ export function TaskBoardOverlay({
         {showCreateForm && (
           <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
-            onClick={() => setShowCreateForm(false)}
+            onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setShowCreateForm(false)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setShowCreateForm(false)
             }}
@@ -514,9 +514,9 @@ export function TaskBoardOverlay({
           >
             <div // NOSONAR: onClick only prevents event bubble, not interactive
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
-              role="dialog"
+
               aria-modal="true"
             >
               <h3 className="text-lg font-semibold mb-4">Create New Task</h3>
@@ -537,7 +537,7 @@ export function TaskBoardOverlay({
         {editingTask && (
           <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
-            onClick={() => setEditingTask(null)}
+            onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setEditingTask(null)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setEditingTask(null)
             }}
@@ -546,9 +546,9 @@ export function TaskBoardOverlay({
           >
             <div // NOSONAR: onClick only prevents event bubble, not interactive
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
-              role="dialog"
+
               aria-modal="true"
             >
               <div className="flex items-center justify-between mb-4">

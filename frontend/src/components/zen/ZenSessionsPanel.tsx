@@ -249,7 +249,7 @@ export function ZenSessionsPanel({
             Reconnecting...
           </div>
         )}
-        <div ref={listRef} className="zen-sessions-list" role="listbox" aria-label="Sessions">
+        <div ref={listRef} className="zen-sessions-list" aria-label="Sessions">
           {sortedSessions.map((session, index) => (
             <SessionItem
               key={session.key}
