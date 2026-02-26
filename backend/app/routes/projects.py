@@ -38,20 +38,18 @@ _SKIP_DIRS = {".git", "node_modules", ".DS_Store", "__pycache__", ".venv", "venv
 
 def _is_allowed_md_path(base_dir: Path, resolved: Path, md_path: Path) -> bool:
     try:
-        if not md_path.resolve().is_relative_to(resolved):
+        md_resolved = md_path.resolve()
+        if not md_resolved.is_relative_to(resolved):
             return False
-    except (OSError, ValueError):
-        return False
 
-    parts = md_path.relative_to(base_dir).parts
-    if any(p.startswith(".") or p == "node_modules" for p in parts):
-        return False
-    if len(parts) > 4:
-        return False
+        parts = md_path.relative_to(base_dir).parts
+        if len(parts) > 4:
+            return False
+        if any(p.startswith(".") or p == "node_modules" for p in parts):
+            return False
 
-    try:
         return md_path.stat().st_size <= 1_000_000
-    except OSError:
+    except (OSError, ValueError):
         return False
 
 
@@ -59,9 +57,8 @@ def _scan_project_md_files(base_dir: Path, resolved: Path) -> list:
     """Scan a project directory for markdown files (safe, depth-limited)."""
     md_files: list[str] = []
     for md_path in sorted(base_dir.rglob("*.md")):
-        if not _is_allowed_md_path(base_dir, resolved, md_path):
-            continue
-        md_files.append(str(md_path.relative_to(base_dir)))
+        if _is_allowed_md_path(base_dir, resolved, md_path):
+            md_files.append(str(md_path.relative_to(base_dir)))
         if len(md_files) >= 200:
             break
     return md_files

@@ -128,10 +128,12 @@ def _validate_grid_and_center(bp: "BlueprintJson", errors: list) -> None:
 
 
 def _validate_placement_bounds(i: int, p, bp: "BlueprintJson", errors: list) -> bool:
-    if p.x < 0 or p.x >= bp.gridWidth or p.z < 0 or p.z >= bp.gridDepth:
-        errors.append(f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds")
-        return False
-    return True
+    x_in_bounds = 0 <= p.x < bp.gridWidth
+    z_in_bounds = 0 <= p.z < bp.gridDepth
+    if x_in_bounds and z_in_bounds:
+        return True
+    errors.append(f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds")
+    return False
 
 
 def _mark_placement_overlap(i: int, p, span_w: int, span_d: int, errors: list, occupied: dict) -> None:

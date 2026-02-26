@@ -273,20 +273,31 @@ class OpenClawExtendedMixin:
 
 def _extract_text(
     result: Any,
-) -> Optional[str]:  # NOSONAR
+) -> Optional[str]:
     """Extract the assistant reply text from a Gateway agent response."""
-    if not result:
+    if not isinstance(result, dict):
         return None
-    if isinstance(result, dict):
-        agent_result = result.get("result")
-        if isinstance(agent_result, dict):
-            payloads = agent_result.get("payloads")
-            if isinstance(payloads, list) and payloads:
-                text = payloads[0].get("text")
-                if isinstance(text, str):
-                    return text
-        for key in ("text", "response", "content", "reply"):
-            val = result.get(key)
-            if isinstance(val, str) and val:
-                return val
+
+    text = _extract_payload_text(result)
+    if text is not None:
+        return text
+
+    for key in ("text", "response", "content", "reply"):
+        val = result.get(key)
+        if isinstance(val, str) and val:
+            return val
     return None
+
+
+def _extract_payload_text(result: dict[str, Any]) -> Optional[str]:
+    agent_result = result.get("result")
+    if not isinstance(agent_result, dict):
+        return None
+    payloads = agent_result.get("payloads")
+    if not isinstance(payloads, list) or not payloads:
+        return None
+    first = payloads[0]
+    if not isinstance(first, dict):
+        return None
+    text = first.get("text")
+    return text if isinstance(text, str) else None
