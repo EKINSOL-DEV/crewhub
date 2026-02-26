@@ -630,13 +630,11 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
           className="w-full gap-2"
           variant={testResult?.ok ? 'default' : 'outline'}
         >
-          {testing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : testResult?.ok ? (
-            <CheckCircle2 className="h-4 w-4" />
-          ) : (
-            <Zap className="h-4 w-4" />
-          )}
+          {(() => {
+            if (testing) return <Loader2 className="h-4 w-4 animate-spin" />
+            if (testResult?.ok) return <CheckCircle2 className="h-4 w-4" />
+            return <Zap className="h-4 w-4" />
+          })()}
           {(() => {
             if (testing) return 'Testing…'
             if (testResult?.ok) return 'Connected ✓'

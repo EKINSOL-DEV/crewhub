@@ -165,30 +165,40 @@ function NoConnectionView({
   return (
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center max-w-md">
-        {error ? (
-          <>
-            <WifiOff className="h-12 w-12 mx-auto text-red-400 mb-4" />
-            <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>Connection Error</h2>
-            <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>{error}</p>
-          </>
-        ) : connected ? (
-          <>
-            <div className="text-5xl mb-4">📡</div>
-            <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>No Active Sessions</h2>
-            <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>
-              CrewHub is connected but no agent sessions are running. Configure a gateway connection
-              or start an agent to see the 3D world.
-            </p>
-          </>
-        ) : (
-          <>
-            <WifiOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>No Connection</h2>
-            <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>
-              Unable to reach the CrewHub backend. Make sure the server is running and try again.
-            </p>
-          </>
-        )}
+        {(() => {
+          if (error) {
+            return (
+              <>
+                <WifiOff className="h-12 w-12 mx-auto text-red-400 mb-4" />
+                <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>Connection Error</h2>
+                <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>{error}</p>
+              </>
+            )
+          }
+
+          if (connected) {
+            return (
+              <>
+                <div className="text-5xl mb-4">📡</div>
+                <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>No Active Sessions</h2>
+                <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>
+                  CrewHub is connected but no agent sessions are running. Configure a gateway connection
+                  or start an agent to see the 3D world.
+                </p>
+              </>
+            )
+          }
+
+          return (
+            <>
+              <WifiOff className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>No Connection</h2>
+              <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>
+                Unable to reach the CrewHub backend. Make sure the server is running and try again.
+              </p>
+            </>
+          )
+        })()}
         <div className="flex gap-3 justify-center">
           <Button variant="outline" onClick={onRetry}>
             <RefreshCw className="h-4 w-4 mr-2" />

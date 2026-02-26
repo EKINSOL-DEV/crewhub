@@ -53,7 +53,11 @@ export function CodeTerminal() {
             key={`line-${i}`}
             position={[-0.5, 0.25 - i * 0.15, 0]}
             fontSize={0.07}
-            color={i === 0 ? '#66ff66' : i === 1 ? '#ffcc44' : '#44aaff'}
+            color={(() => {
+              if (i === 0) return '#66ff66'
+              if (i === 1) return '#ffcc44'
+              return '#44aaff'
+            })()}
             anchorX="left"
             font={undefined}
           >

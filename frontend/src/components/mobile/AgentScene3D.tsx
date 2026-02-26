@@ -94,25 +94,35 @@ function BotMouth({ status }: { status: AgentStatus }) {
 
   return (
     <group ref={ref} position={[0, -0.055, 0.175]}>
-      {status === 'sleeping' ? (
-        // Small "o" mouth for sleeping
-        <mesh>
-          <circleGeometry args={[0.015, 12]} />
-          <meshStandardMaterial color="#333" />
-        </mesh>
-      ) : status === 'active' ? (
-        // Straight focused line
-        <mesh>
-          <planeGeometry args={[0.05, 0.008]} />
-          <meshStandardMaterial color="#333" side={THREE.DoubleSide} />
-        </mesh>
-      ) : (
-        // Smile for idle
-        <mesh rotation={[0, 0, Math.PI]}>
-          <torusGeometry args={[0.03, 0.008, 6, 10, Math.PI]} />
-          <meshStandardMaterial color="#333" />
-        </mesh>
-      )}
+      {(() => {
+        if (status === 'sleeping') {
+          return (
+            // Small "o" mouth for sleeping
+            <mesh>
+              <circleGeometry args={[0.015, 12]} />
+              <meshStandardMaterial color="#333" />
+            </mesh>
+          )
+        }
+
+        if (status === 'active') {
+          return (
+            // Straight focused line
+            <mesh>
+              <planeGeometry args={[0.05, 0.008]} />
+              <meshStandardMaterial color="#333" side={THREE.DoubleSide} />
+            </mesh>
+          )
+        }
+
+        return (
+          // Smile for idle
+          <mesh rotation={[0, 0, Math.PI]}>
+            <torusGeometry args={[0.03, 0.008, 6, 10, Math.PI]} />
+            <meshStandardMaterial color="#333" />
+          </mesh>
+        )
+      })()}
     </group>
   )
 }
