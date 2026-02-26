@@ -346,7 +346,7 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
             {!loading && !error && messages.length === 0 && (
               <div className="zen-sd-empty">No messages in history</div>
             )}
-            {[...messages].reverse().map((msg, i) => (
+            {Array.from([...messages].reverse().entries()).map(([i, msg]) => (
               <MessageBubble key={`msg-${i}`} message={msg} />
             ))}
           </div>

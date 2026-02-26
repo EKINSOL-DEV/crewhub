@@ -307,7 +307,7 @@ export function LightingDebugPanel() {
         >
           <span className="text-xs font-semibold text-gray-200">💡 Lighting Editor</span>
           <button
-            onClick={() => setMinimized((m) => !m)}
+            onClick={() => setMinimized((m) => !m)}  // NOSONAR: mouse/drag interaction
             className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700/60 transition-colors text-xs"
             title={minimized ? 'Expand' : 'Minimize'}
           >

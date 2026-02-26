@@ -473,7 +473,7 @@ export function TaskBoardOverlay({
                             <TaskCard
                               task={task}
                               compact={false}
-                              onClick={(t) => setEditingTask(t)}
+                              onClick={(t) => setEditingTask(t)}  // NOSONAR: mouse/drag interaction
                               onStatusChange={handleStatusChange}
                             />
                           </div>

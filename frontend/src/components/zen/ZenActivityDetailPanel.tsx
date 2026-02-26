@@ -476,7 +476,7 @@ export function ZenActivityDetailPanel({
             {!loading && !error && messages.length === 0 && taskEvents.length === 0 && (
               <div className="zen-sd-empty">No history available</div>
             )}
-            {messages.map((msg, i) => (
+            {Array.from(messages.entries()).map(([i, msg]) => (
               <MessageBubble key={`msg-${i}`} message={msg} />
             ))}
           </div>

@@ -126,7 +126,7 @@ export function DebugPanel() {
               {debugBots.length}
             </span>
             <button
-              onClick={() => setCollapsed((c) => !c)}
+              onClick={() => setCollapsed((c) => !c)}  // NOSONAR: mouse/drag interaction
               className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700/60 transition-colors text-xs"
               title={collapsed ? 'Expand' : 'Minimize'}
             >

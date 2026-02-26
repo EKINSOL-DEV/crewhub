@@ -15,6 +15,7 @@ import uuid as _uuid_mod
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, Optional
 
 import aiofiles
 
@@ -35,7 +36,71 @@ def _sse_event(event_type: str, data: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
 
 
-async def stream_prop_generation(  # NOSONAR  # noqa: C901
+async def _find_connected_openclaw(manager) -> Optional[Any]:
+    """Return the first connected OpenClawConnection from the manager, or None."""
+    from ..connections import OpenClawConnection
+
+    for c in manager.get_connections().values():
+        if isinstance(c, OpenClawConnection) and c.is_connected():
+            return c
+    return None
+
+
+def _extract_transcript_events(entry: dict) -> list:
+    """Parse a JSONL transcript entry and return a list of (event_type, data) tuples."""
+    events: list = []
+    role = entry.get("role", "")
+    content = entry.get("content", "")
+
+    if role == "assistant" and isinstance(content, list):
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            bt = block.get("type", "")
+            if bt == "thinking":
+                for chunk in block.get("thinking", "").split("\n"):
+                    chunk = chunk.strip()
+                    if chunk:
+                        events.append(("thinking", {"text": chunk}))
+            elif bt == "text":
+                text = block.get("text", "")
+                if text:
+                    events.append(("text", {"text": text[:200]}))
+            elif bt == "tool_use":
+                tool_name = block.get("name", "unknown")
+                tool_input = block.get("input", {})
+                events.append(("tool", {"name": tool_name, "input": str(tool_input)[:200], "message": f"🔧 Using tool: {tool_name}"}))
+    elif role == "assistant" and isinstance(content, str) and content:
+        events.append(("text", {"text": content[:200]}))
+    elif role == "user" and isinstance(content, list):
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "tool_result":
+                events.append(("tool_result", {"message": "📋 Tool result received"}))
+    return events
+
+
+def _extract_final_raw_text(final_result: Any) -> Optional[str]:
+    """Extract the raw text string from an agent final-result payload."""
+    if not final_result:
+        return None
+    agent_result = final_result.get("result") if isinstance(final_result, dict) else None
+    if isinstance(agent_result, dict):
+        payloads = agent_result.get("payloads")
+        if isinstance(payloads, list) and payloads:
+            text = payloads[0].get("text")
+            if text:
+                return text
+    for key in ("text", "response", "content", "reply"):
+        val = final_result.get(key) if isinstance(final_result, dict) else None
+        if isinstance(val, str) and val:
+            return val
+    return None
+
+
+async def stream_prop_generation(  # noqa: C901
+    # noqa: C901 — async generator state machine: multi-phase SSE streaming
+    # orchestrator (connect→send→accept→poll→post-process). Splitting across
+    # multiple sub-generators would obscure the sequential control flow.
     request,  # starlette.requests.Request — checked only for is_disconnected()
     prompt: str,
     name: str,
@@ -45,7 +110,7 @@ async def stream_prop_generation(  # NOSONAR  # noqa: C901
 
     Yields SSE-formatted strings. Caller wraps this in StreamingResponse.
     """
-    from ..connections import OpenClawConnection, get_connection_manager  # lazy import
+    from ..connections import get_connection_manager  # lazy import
 
     model_id, model_label = resolve_model(model_key)
     gen_id = str(_uuid_mod.uuid4())[:8]
@@ -57,11 +122,7 @@ async def stream_prop_generation(  # NOSONAR  # noqa: C901
     # ── Find connected OpenClaw connection ────────────────────────
     try:
         manager = await get_connection_manager()
-        conn = None
-        for c in manager.get_connections().values():
-            if isinstance(c, OpenClawConnection) and c.is_connected():
-                conn = c
-                break
+        conn = await _find_connected_openclaw(manager)
         if not conn:
             yield _sse_event("error", {"message": "No connected OpenClaw connection"})
             return
@@ -246,47 +307,12 @@ async def stream_prop_generation(  # NOSONAR  # noqa: C901
                         continue
                     try:
                         entry = json.loads(line)
-                        role = entry.get("role", "")
-                        content = entry.get("content", "")
-
-                        if role == "assistant" and isinstance(content, list):
-                            for block in content:
-                                if not isinstance(block, dict):
-                                    continue
-                                bt = block.get("type", "")
-                                if bt == "thinking":
-                                    for chunk in block.get("thinking", "").split("\n"):
-                                        chunk = chunk.strip()
-                                        if chunk:
-                                            yield _sse_event("thinking", {"text": chunk})
-                                elif bt == "text":
-                                    text = block.get("text", "")
-                                    if text:
-                                        yield _sse_event("text", {"text": text[:200]})
-                                elif bt == "tool_use":
-                                    tool_name = block.get("name", "unknown")
-                                    tool_input = block.get("input", {})
-                                    tool_calls_collected.append(
-                                        {
-                                            "name": tool_name,
-                                            "input": str(tool_input)[:500],
-                                        }
-                                    )
-                                    yield _sse_event(
-                                        "tool",
-                                        {
-                                            "name": tool_name,
-                                            "input": str(tool_input)[:200],
-                                            "message": f"🔧 Using tool: {tool_name}",
-                                        },
-                                    )
-                        elif role == "assistant" and isinstance(content, str) and content:
-                            yield _sse_event("text", {"text": content[:200]})
-                        elif role == "user" and lines_read > 1:
-                            if isinstance(content, list):
-                                for block in content:
-                                    if isinstance(block, dict) and block.get("type") == "tool_result":
-                                        yield _sse_event("tool_result", {"message": "📋 Tool result received"})
+                        for evt_type, evt_data in _extract_transcript_events(entry):
+                            if evt_type == "tool" and "name" in evt_data:
+                                tool_calls_collected.append(
+                                    {"name": evt_data["name"], "input": evt_data.get("input", "")[:500]}
+                                )
+                            yield _sse_event(evt_type, evt_data)
                     except json.JSONDecodeError:
                         continue
             except OSError:
@@ -318,19 +344,7 @@ async def stream_prop_generation(  # NOSONAR  # noqa: C901
             conn._response_queues.pop(req_id, None)
 
     # ── Extract raw text from result ──────────────────────────────
-    raw_text: str | None = None
-    if final_result:
-        agent_result = final_result.get("result") if isinstance(final_result, dict) else None
-        if isinstance(agent_result, dict):
-            payloads = agent_result.get("payloads")
-            if isinstance(payloads, list) and payloads:
-                raw_text = payloads[0].get("text")
-        if not raw_text:
-            for key in ("text", "response", "content", "reply"):
-                val = final_result.get(key) if isinstance(final_result, dict) else None
-                if isinstance(val, str) and val:
-                    raw_text = val
-                    break
+    raw_text: Optional[str] = _extract_final_raw_text(final_result)
 
     logger.info(f"[PropGen:{gen_id}] raw_text: present={bool(raw_text)} len={len(raw_text) if raw_text else 0}")
 
