@@ -2,6 +2,28 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
+interface DotsProps {
+  face: number;
+  pos: [number, number, number];
+  rot: [number, number, number];
+}
+
+function Dots({ face, pos, rot }: DotsProps) {
+  const positions: [number, number, number][] = [
+    [0, 0, 0], [-0.04, 0.04, 0], [0.04, -0.04, 0], [-0.04, -0.04, 0], [0.04, 0.04, 0], [0, 0.04, 0]
+  ];
+  return (
+    <group position={pos} rotation={rot}>
+      {Array.from({ length: face }, (_, i) => (
+        <mesh key={`item-${i}`} position={positions[i]}>
+          <sphereGeometry args={[0.015, 4, 4]} />
+          <meshStandardMaterial color="#111111" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 export function Dice() {
   const d1Ref = useRef<THREE.Mesh>(null);
   const d2Ref = useRef<THREE.Mesh>(null);
@@ -11,21 +33,6 @@ export function Dice() {
     if (d1Ref.current) { d1Ref.current.rotation.x += 0.01; d1Ref.current.rotation.z += 0.005; }
     if (d2Ref.current) { d2Ref.current.rotation.y += 0.008; d2Ref.current.rotation.z += 0.012; }
   });
-  const Dots = ({ face, pos, rot }: { face: number; pos: [number,number,number]; rot: [number,number,number] }) => (
-    <group position={pos} rotation={rot}>
-      {Array.from({ length: face }, (_, i) => {
-        const positions: [number,number,number][] = [
-          [0, 0, 0], [-0.04, 0.04, 0], [0.04, -0.04, 0], [-0.04, -0.04, 0], [0.04, 0.04, 0], [0, 0.04, 0]
-        ];
-        return (
-          <mesh key={`item-${i}`} position={positions[i]}>
-            <sphereGeometry args={[0.015, 4, 4]} />
-            <meshStandardMaterial color="#111111" />
-          </mesh>
-        );
-      })}
-    </group>
-  );
   return (
     <group ref={groupRef}>
       {/* Die 1 */}

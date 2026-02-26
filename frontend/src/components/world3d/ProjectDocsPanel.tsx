@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
@@ -211,204 +211,215 @@ function FileTree({
   )
 }
 
+// ── Context for passing projectId to markdown image renderer ───
+
+const ProjectIdContext = createContext<string>('')
+
+// ── Module-level markdown component renderers ──────────────────
+
+function DocImg({ src, alt, ...props }: any) {
+  const projectId = useContext(ProjectIdContext)
+  let resolvedSrc = src || ''
+  if (resolvedSrc && !resolvedSrc.startsWith('http') && !resolvedSrc.startsWith('data:')) {
+    resolvedSrc = `${API_BASE}/projects/${projectId}/files/image?path=${encodeURIComponent(resolvedSrc)}`
+  }
+  return (
+    <img
+      {...props}
+      src={resolvedSrc}
+      alt={alt || ''}
+      style={{ maxWidth: '100%', borderRadius: 8, margin: '8px 0' }}
+      loading="lazy"
+    />
+  )
+}
+
+function DocA({ href, children, ...props }: any) {
+  return (
+    <a
+      {...props}
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: '#4f46e5', textDecoration: 'none' }}
+      onMouseEnter={(e) => {
+        ;(e.target as HTMLElement).style.textDecoration = 'underline'
+      }}
+      onMouseLeave={(e) => {
+        ;(e.target as HTMLElement).style.textDecoration = 'none'
+      }}
+    >
+      {children}
+    </a>
+  )
+}
+
+function DocPre({ children, ...props }: any) {
+  return (
+    <pre
+      {...props}
+      style={{
+        margin: '10px 0',
+        padding: 12,
+        background: 'rgba(0,0,0,0.04)',
+        borderRadius: 8,
+        fontSize: 12,
+        lineHeight: 1.5,
+        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+        overflow: 'auto',
+      }}
+    >
+      {children}
+    </pre>
+  )
+}
+
+function DocCode({ className, children, ...props }: any) {
+  const isInline = !className
+  if (isInline) {
+    return (
+      <code
+        {...props}
+        style={{
+          padding: '1px 6px',
+          background: 'rgba(0,0,0,0.06)',
+          borderRadius: 4,
+          fontSize: '0.9em',
+          fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+        }}
+      >
+        {children}
+      </code>
+    )
+  }
+  // Extract language from className (e.g. "language-python")
+  const lang = className?.replaceAll('language-', '')
+  return (
+    <div style={{ position: 'relative' }}>
+      {lang && (
+        <span
+          style={{
+            position: 'absolute',
+            top: -20,
+            right: 8,
+            fontSize: 10,
+            color: '#9ca3af',
+            fontFamily: 'system-ui, sans-serif',
+          }}
+        >
+          {lang}
+        </span>
+      )}
+      <code {...props} className={className}>
+        {children}
+      </code>
+    </div>
+  )
+}
+
+function DocBlockquote({ children, ...props }: any) {
+  return (
+    <blockquote
+      {...props}
+      style={{
+        borderLeft: '3px solid rgba(79, 70, 229, 0.3)',
+        padding: '4px 12px',
+        margin: '8px 0',
+        color: '#6b7280',
+        background: 'rgba(0,0,0,0.02)',
+        borderRadius: '0 6px 6px 0',
+      }}
+    >
+      {children}
+    </blockquote>
+  )
+}
+
+function DocTable({ children, ...props }: any) {
+  return (
+    <div style={{ overflowX: 'auto', margin: '8px 0' }}>
+      <table {...props} style={{ borderCollapse: 'collapse', width: '100%', fontSize: 12 }}>
+        {children}
+      </table>
+    </div>
+  )
+}
+
+function DocTh({ children, ...props }: any) {
+  return (
+    <th
+      {...props}
+      style={{
+        padding: '6px 10px',
+        border: '1px solid rgba(0,0,0,0.1)',
+        background: 'rgba(0,0,0,0.04)',
+        fontWeight: 600,
+        textAlign: 'left',
+      }}
+    >
+      {children}
+    </th>
+  )
+}
+
+function DocTd({ children, ...props }: any) {
+  return (
+    <td {...props} style={{ padding: '4px 10px', border: '1px solid rgba(0,0,0,0.08)' }}>
+      {children}
+    </td>
+  )
+}
+
+function DocLi({ children, className, ...props }: any) {
+  const isTask = className === 'task-list-item'
+  return (
+    <li
+      {...props}
+      className={className}
+      style={{
+        margin: '2px 0',
+        ...(isTask ? { listStyleType: 'none', marginLeft: -20 } : {}),
+      }}
+    >
+      {children}
+    </li>
+  )
+}
+
+function DocHr() {
+  return (
+    <hr style={{ border: 'none', borderTop: '1px solid rgba(0,0,0,0.08)', margin: '12px 0' }} />
+  )
+}
+
+const DOC_MD_COMPONENTS = {
+  img: DocImg,
+  a: DocA,
+  pre: DocPre,
+  code: DocCode,
+  blockquote: DocBlockquote,
+  table: DocTable,
+  th: DocTh,
+  td: DocTd,
+  li: DocLi,
+  hr: DocHr,
+}
+
 // ── Markdown Viewer (react-markdown) ───────────────────────────
 
 function MarkdownViewer({ content, projectId }: { content: string; projectId: string }) {
   return (
-    <div className="md-content">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-        components={{
-          // Custom image handler: resolve relative paths through the API
-          img: ({ src, alt, ...props }) => {
-            let resolvedSrc = src || ''
-            if (
-              resolvedSrc &&
-              !resolvedSrc.startsWith('http') &&
-              !resolvedSrc.startsWith('data:')
-            ) {
-              resolvedSrc = `${API_BASE}/projects/${projectId}/files/image?path=${encodeURIComponent(resolvedSrc)}`
-            }
-            return (
-              <img
-                {...props}
-                src={resolvedSrc}
-                alt={alt || ''}
-                style={{
-                  maxWidth: '100%',
-                  borderRadius: 8,
-                  margin: '8px 0',
-                }}
-                loading="lazy"
-              />
-            )
-          },
-          // External links open in new tab
-          a: ({ href, children, ...props }) => (
-            <a
-              {...props}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#4f46e5', textDecoration: 'none' }}
-              onMouseEnter={(e) => {
-                ;(e.target as HTMLElement).style.textDecoration = 'underline'
-              }}
-              onMouseLeave={(e) => {
-                ;(e.target as HTMLElement).style.textDecoration = 'none'
-              }}
-            >
-              {children}
-            </a>
-          ),
-          // Code blocks with language label
-          pre: ({ children, ...props }) => (
-            <pre
-              {...props}
-              style={{
-                margin: '10px 0',
-                padding: 12,
-                background: 'rgba(0,0,0,0.04)',
-                borderRadius: 8,
-                fontSize: 12,
-                lineHeight: 1.5,
-                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
-                overflow: 'auto',
-              }}
-            >
-              {children}
-            </pre>
-          ),
-          code: ({ className, children, ...props }) => {
-            const isInline = !className
-            if (isInline) {
-              return (
-                <code
-                  {...props}
-                  style={{
-                    padding: '1px 6px',
-                    background: 'rgba(0,0,0,0.06)',
-                    borderRadius: 4,
-                    fontSize: '0.9em',
-                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
-                  }}
-                >
-                  {children}
-                </code>
-              )
-            }
-            // Extract language from className (e.g. "language-python")
-            const lang = className?.replaceAll('language-', '')
-            return (
-              <div style={{ position: 'relative' }}>
-                {lang && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: -20,
-                      right: 8,
-                      fontSize: 10,
-                      color: '#9ca3af',
-                      fontFamily: 'system-ui, sans-serif',
-                    }}
-                  >
-                    {lang}
-                  </span>
-                )}
-                <code {...props} className={className}>
-                  {children}
-                </code>
-              </div>
-            )
-          },
-          // Styled blockquotes
-          blockquote: ({ children, ...props }) => (
-            <blockquote
-              {...props}
-              style={{
-                borderLeft: '3px solid rgba(79, 70, 229, 0.3)',
-                padding: '4px 12px',
-                margin: '8px 0',
-                color: '#6b7280',
-                background: 'rgba(0,0,0,0.02)',
-                borderRadius: '0 6px 6px 0',
-              }}
-            >
-              {children}
-            </blockquote>
-          ),
-          // Table styling
-          table: ({ children, ...props }) => (
-            <div style={{ overflowX: 'auto', margin: '8px 0' }}>
-              <table
-                {...props}
-                style={{
-                  borderCollapse: 'collapse',
-                  width: '100%',
-                  fontSize: 12,
-                }}
-              >
-                {children}
-              </table>
-            </div>
-          ),
-          th: ({ children, ...props }) => (
-            <th
-              {...props}
-              style={{
-                padding: '6px 10px',
-                border: '1px solid rgba(0,0,0,0.1)',
-                background: 'rgba(0,0,0,0.04)',
-                fontWeight: 600,
-                textAlign: 'left',
-              }}
-            >
-              {children}
-            </th>
-          ),
-          td: ({ children, ...props }) => (
-            <td
-              {...props}
-              style={{
-                padding: '4px 10px',
-                border: '1px solid rgba(0,0,0,0.08)',
-              }}
-            >
-              {children}
-            </td>
-          ),
-          // Task list items
-          li: ({ children, className, ...props }) => {
-            const isTask = className === 'task-list-item'
-            return (
-              <li
-                {...props}
-                className={className}
-                style={{
-                  margin: '2px 0',
-                  ...(isTask ? { listStyleType: 'none', marginLeft: -20 } : {}),
-                }}
-              >
-                {children}
-              </li>
-            )
-          },
-          // Horizontal rules
-          hr: () => (
-            <hr
-              style={{
-                border: 'none',
-                borderTop: '1px solid rgba(0,0,0,0.08)',
-                margin: '12px 0',
-              }}
-            />
-          ),
-        }}
-      >
-        {content}
-      </ReactMarkdown>
-    </div>
+    <ProjectIdContext.Provider value={projectId}>
+      <div className="md-content">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={DOC_MD_COMPONENTS}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    </ProjectIdContext.Provider>
   )
 }
 

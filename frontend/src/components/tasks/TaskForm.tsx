@@ -142,7 +142,9 @@ export function TaskForm({
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Title */}
       <div>
-        <label htmlFor="task-title" style={labelStyle}>Title *</label>
+        <label htmlFor="task-title" style={labelStyle}>
+          Title *
+        </label>
         <input
           id="task-title"
           type="text"
@@ -157,7 +159,9 @@ export function TaskForm({
 
       {/* Description */}
       <div>
-        <label htmlFor="task-description" style={labelStyle}>Description</label>
+        <label htmlFor="task-description" style={labelStyle}>
+          Description
+        </label>
         <textarea
           id="task-description"
           value={description}
@@ -177,7 +181,9 @@ export function TaskForm({
       <div style={{ display: 'flex', gap: 12 }}>
         {/* Status */}
         <div style={{ flex: 1 }}>
-          <label htmlFor="task-status" style={labelStyle}>Status</label>
+          <label htmlFor="task-status" style={labelStyle}>
+            Status
+          </label>
           <select
             id="task-status"
             value={status}
@@ -195,7 +201,9 @@ export function TaskForm({
 
         {/* Priority */}
         <div style={{ flex: 1 }}>
-          <label htmlFor="task-priority" style={labelStyle}>Priority</label>
+          <label htmlFor="task-priority" style={labelStyle}>
+            Priority
+          </label>
           <select
             id="task-priority"
             value={priority}
@@ -214,7 +222,9 @@ export function TaskForm({
 
       {/* Assignee */}
       <div>
-        <label htmlFor="task-assignee" style={labelStyle}>Assign to</label>
+        <label htmlFor="task-assignee" style={labelStyle}>
+          Assign to
+        </label>
         <select
           id="task-assignee"
           value={assignee}
