@@ -158,16 +158,19 @@ async def _get_agent_recent_activity(agent_id: str) -> str:
 def _extract_personality_hints(soul_content: str) -> list[str]:
     if not soul_content:
         return []
+
     soul_lower = soul_content.lower()
+    checks = [
+        ("helpful", ("helpful", "assist")),
+        ("creative", ("creative",)),
+        ("technical", ("technical", "code")),
+        ("friendly", ("friendly", "joyful")),
+    ]
+
     hints: list[str] = []
-    if "helpful" in soul_lower or "assist" in soul_lower:
-        hints.append("helpful")
-    if "creative" in soul_lower:
-        hints.append("creative")
-    if "technical" in soul_lower or "code" in soul_lower:
-        hints.append("technical")
-    if "friendly" in soul_lower or "joyful" in soul_lower:
-        hints.append("friendly")
+    for hint, needles in checks:
+        if any(needle in soul_lower for needle in needles):
+            hints.append(hint)
     return hints
 
 

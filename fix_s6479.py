@@ -24,12 +24,14 @@ def fix_array_from_length(content: str) -> str:
     """Convert Array.from({length:N}).map((_, i) =>) to [...Array(N).keys()].map((i) =>)"""
     # Match Array.from({ length: N }).map((anyVar, indexVar) =>
     p = re.compile(
-        r'Array\.from\(\{\s*length:\s*(\d+)\s*\}\)\.map\(\([_a-zA-Z][_a-zA-Z0-9]*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\)\s*=>'
+        r"Array\.from\(\{\s*length:\s*(\d+)\s*\}\)\.map\(\([_a-zA-Z][_a-zA-Z0-9]*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\)\s*=>"
     )
+
     def repl(m):
         n = m.group(1)
         idx = m.group(2)
-        return f'[...Array({n}).keys()].map(({idx}) =>'
+        return f"[...Array({n}).keys()].map(({idx}) =>"
+
     return p.sub(repl, content)
 
 
@@ -40,9 +42,9 @@ def is_item_object(item_var: str, lines: list, map_line: int, end_line: int) -> 
     """
     # Check the code block from map_line to end_line (max 50 lines)
     check_end = min(end_line, map_line + 50, len(lines))
-    snippet = '\n'.join(lines[map_line:check_end])
+    snippet = "\n".join(lines[map_line:check_end])
     # If item_var appears followed by a dot (property access), it's an object
-    obj_pattern = re.compile(r'\b' + re.escape(item_var) + r'\.[a-zA-Z_]')
+    obj_pattern = re.compile(r"\b" + re.escape(item_var) + r"\.[a-zA-Z_]")
     return bool(obj_pattern.search(snippet))
 
 
@@ -50,7 +52,7 @@ def has_scope_boundary(lines: list, from_line: int, to_line: int, idx_var: str) 
     """
     Detect if there's a new scope between from_line and to_line that would
     make the idx_var context from from_line irrelevant for to_line.
-    
+
     Specifically: if there's an Array.from or another .map((_, idx_var) pattern
     between from_line and to_line, that inner map "owns" the idx_var.
     """
@@ -61,120 +63,115 @@ def has_scope_boundary(lines: list, from_line: int, to_line: int, idx_var: str) 
         # Check for a .map( call that uses idx_var as its second parameter
         # This means idx_var is owned by a closer .map(), not the outer one
         inner_map = re.compile(
-            r'\.map\(\(([_a-zA-Z][_a-zA-Z0-9]*),\s*' + re.escape(idx_var) + r'\)\s*=>'
+            r"\.map\(\(([_a-zA-Z][_a-zA-Z0-9]*),\s*" + re.escape(idx_var) + r"\)\s*=>"
         )
         if inner_map.search(line):
             return True  # idx_var belongs to an inner map
         # Also check for function declarations that create a new scope
-        if re.search(r'\bfunction\s+[A-Za-z]', line) and lineno > from_line + 1:
+        if re.search(r"\bfunction\s+[A-Za-z]", line) and lineno > from_line + 1:
             return True
     return False
 
 
-def fix_primitive_map_index_key(content: str) -> str:
-    """
-    For .map((val, i) => ... key={`prefix-${i}`} ...) patterns:
-    replace the index var in the key with the value var.
-    
-    Only applies when:
-    - val is NOT underscore (i.e., it's a meaningful name)
-    - val is NOT used as an object (no val.property access in the block)
-    """
-    lines = content.split('\n')
-    
-    # Find all .map((itemVar, idxVar) => occurrences with line numbers
+def _collect_map_contexts(lines: list[str]) -> list[tuple[int, str, str]]:
     map_pattern = re.compile(
-        r'\.map\(\(([a-zA-Z_][a-zA-Z0-9_]*),\s*([a-zA-Z_][a-zA-Z0-9_]*)\)\s*=>'
+        r"\.map\(\(([a-zA-Z_][a-zA-Z0-9_]*),\s*([a-zA-Z_][a-zA-Z0-9_]*)\)\s*=>"
     )
-    
-    # Build list of (linenum, item_var, idx_var) for maps where item_var != '_'
-    map_contexts = []
+    contexts: list[tuple[int, str, str]] = []
     for lineno, line in enumerate(lines):
         for m in map_pattern.finditer(line):
             item_var = m.group(1)
-            idx_var = m.group(2)
-            if item_var != '_':  # Only when item is named (not placeholder)
-                map_contexts.append((lineno, item_var, idx_var))
-    
+            if item_var == "_":
+                continue
+            contexts.append((lineno, item_var, m.group(2)))
+    return contexts
+
+
+def _active_map_context(
+    map_contexts: list[tuple[int, str, str]],
+    lineno: int,
+) -> tuple[int, str, str] | None:
+    active = [
+        (ln, iv, idv)
+        for ln, iv, idv in map_contexts
+        if ln <= lineno and lineno - ln <= 60
+    ]
+    return active[-1] if active else None
+
+
+def _replace_index_key_in_line(line: str, item_var: str, idx_var: str) -> str:
+    tpl_key_pattern = re.compile(r"key=\{`([^`]+)`\}")
+
+    def replace_template_key(m):
+        inner = m.group(1)
+        if "${" + idx_var + "}" not in inner:
+            return m.group(0)
+        return (
+            "key={`" + inner.replace("${" + idx_var + "}", "${" + item_var + "}") + "`}"
+        )
+
+    new_line = tpl_key_pattern.sub(replace_template_key, line)
+    simple_key_re = re.compile(r"key=\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+    return simple_key_re.sub(
+        lambda m: (
+            "key={`${" + item_var + "}`}" if m.group(1) == idx_var else m.group(0)
+        ),
+        new_line,
+    )
+
+
+def fix_primitive_map_index_key(content: str) -> str:
+    """Replace index-based React keys in primitive .map callbacks with value-based keys."""
+    lines = content.split("\n")
+    map_contexts = _collect_map_contexts(lines)
     new_lines = list(lines)
-    
+
     for lineno, line in enumerate(lines):
-        if 'key=' not in line:
+        if "key=" not in line:
             continue
-        
-        # Find the most recent map context within 60 lines
-        active = [
-            (ln, iv, idv) for ln, iv, idv in map_contexts
-            if ln <= lineno and lineno - ln <= 60
-        ]
-        if not active:
+
+        context = _active_map_context(map_contexts, lineno)
+        if not context:
             continue
-        
-        map_lineno, item_var, idx_var = active[-1]
-        
-        # Skip if item_var is used as an object (would give [object Object])
+        map_lineno, item_var, idx_var = context
+
         if is_item_object(item_var, lines, map_lineno, lineno + 10):
             continue
-        
-        # Skip if there's an inner scope between map context and this key
-        # that "owns" the idx_var (e.g., an Array.from or nested .map)
         if has_scope_boundary(lines, map_lineno, lineno, idx_var):
             continue
-        
-        # Pattern A: key={`something-${idxVar}something`}
-        # → key={`something-${itemVar}something`}
-        def replace_template_key(m):
-            full = m.group(0)
-            inner = m.group(1)  # content inside backticks
-            # Check if idx_var appears in the inner template
-            if '${' + idx_var + '}' in inner:
-                new_inner = inner.replace('${' + idx_var + '}', '${' + item_var + '}')
-                return 'key={`' + new_inner + '`}'
-            return full
-        
-        tpl_key_pattern = re.compile(r'key=\{`([^`]+)`\}')
-        new_line = tpl_key_pattern.sub(replace_template_key, line)
-        
-        # Pattern B: key={idxVar} (simple, no template)
-        # → key={`${itemVar}`}
-        def replace_simple_key(m):
-            var = m.group(1)
-            if var == idx_var and item_var not in ('_',):
-                # Use item_var as the key (it's a primitive, safe to stringify)
-                return 'key={`${' + item_var + '}`}'
-            return m.group(0)
-        
-        simple_key_re = re.compile(r'key=\{([a-zA-Z_][a-zA-Z0-9_]*)\}')
-        new_line = simple_key_re.sub(replace_simple_key, new_line)
-        
-        if new_line != line:
-            new_lines[lineno] = new_line
-    
-    return '\n'.join(new_lines)
+
+        replaced = _replace_index_key_in_line(line, item_var, idx_var)
+        if replaced != line:
+            new_lines[lineno] = replaced
+
+    return "\n".join(new_lines)
 
 
 def fix_file(filepath: str) -> tuple[bool, list[str]]:
     full_path = REPO / filepath
     if not full_path.exists():
         return False, [f"NOT FOUND: {filepath}"]
-    
-    with open(full_path, 'r', encoding='utf-8') as f:
+
+    with open(full_path, "r", encoding="utf-8") as f:
         original = f.read()
-    
+
     content = original
     content = fix_array_from_length(content)
     content = fix_primitive_map_index_key(content)
-    
+
     if content != original:
-        with open(full_path, 'w', encoding='utf-8') as f:
+        with open(full_path, "w", encoding="utf-8") as f:
             f.write(content)
         # Count changes
-        orig_lines = original.split('\n')
-        new_lines = content.split('\n')
-        changes = [f"  L{i+1}: {ol!r}" for i, (ol, nl) in 
-                   enumerate(zip(orig_lines, new_lines)) if ol != nl]
+        orig_lines = original.split("\n")
+        new_lines = content.split("\n")
+        changes = [
+            f"  L{i + 1}: {ol!r}"
+            for i, (ol, nl) in enumerate(zip(orig_lines, new_lines))
+            if ol != nl
+        ]
         return True, changes
-    
+
     return False, []
 
 
@@ -401,17 +398,18 @@ frontend/src/components/world3d/props/NoticeBoard.tsx
 frontend/src/components/world3d/BuildingWalls.tsx
 frontend/src/components/world3d/props/Desk.tsx
 frontend/src/components/dev/DesignLab3D.tsx
-frontend/src/components/sessions/SessionCard.tsx""".strip().split('\n')
+frontend/src/components/sessions/SessionCard.tsx""".strip().split("\n")
 
 
 if __name__ == "__main__":
     import sys
-    verbose = '-v' in sys.argv
-    
+
+    verbose = "-v" in sys.argv
+
     unique_files = list(dict.fromkeys(ISSUE_FILES))
     changed_files = []
     skipped = []
-    
+
     for filepath in unique_files:
         changed, details = fix_file(filepath)
         if changed:
@@ -424,7 +422,7 @@ if __name__ == "__main__":
             skipped.append(filepath)
             if verbose:
                 print(f"skip: {filepath}")
-    
-    print(f"\n{'='*60}")
+
+    print(f"\n{'=' * 60}")
     print(f"Fixed: {len(changed_files)} files")
     print(f"Skipped: {len(skipped)} files (may need manual review)")

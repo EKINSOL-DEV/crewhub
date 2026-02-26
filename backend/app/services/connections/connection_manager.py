@@ -453,31 +453,13 @@ class ConnectionManager:
         session_key: str,
         connection_id: Optional[str] = None,
     ) -> bool:
-        """
-        Kill a session.
-
-        Args:
-            session_key: Session to terminate
-            connection_id: Optional connection ID
-
-        Returns:
-            True if successful
-        """
-        # If connection specified
+        """Kill a session."""
         if connection_id:
-            conn = self._connections.get(connection_id)
-            if conn and conn.is_connected():
-                try:
-                    return await conn.kill_session(session_key)
-                except NotImplementedError:
-                    return False
-            return False
+            return await self._kill_on_connection(connection_id, session_key)
 
-        # Try all connections
         for conn in self._connections.values():
             if not conn.is_connected():
                 continue
-
             try:
                 if await conn.kill_session(session_key):
                     return True
@@ -487,6 +469,15 @@ class ConnectionManager:
                 logger.debug(f"Kill failed on {conn.connection_id}: {e}")
 
         return False
+
+    async def _kill_on_connection(self, connection_id: str, session_key: str) -> bool:
+        conn = self._connections.get(connection_id)
+        if not conn or not conn.is_connected():
+            return False
+        try:
+            return await conn.kill_session(session_key)
+        except NotImplementedError:
+            return False
 
     # =========================================================================
     # Default connection helper
