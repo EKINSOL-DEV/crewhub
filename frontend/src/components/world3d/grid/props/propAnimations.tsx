@@ -15,8 +15,8 @@ export function ServerLED({
   position,
   color,
 }: {
-  position: [number, number, number]
-  color: string
+  readonly position: [number, number, number]
+  readonly color: string
 }) {
   const ref = useRef<THREE.Mesh>(null)
   const blinkSpeed = useMemo(() => 2 + Math.random() * 0.5, [])

@@ -343,10 +343,10 @@ function TasksSummary({
   agents,
   onOpenFullBoard,
 }: {
-  projectId: string
-  roomId: string
-  agents: Array<{ session_key: string; display_name: string }>
-  onOpenFullBoard?: (
+  readonly projectId: string
+  readonly roomId: string
+  readonly agents: Array<{ session_key: string; display_name: string }>
+  readonly onOpenFullBoard?: (
     projectId: string,
     roomId: string,
     agents: Array<{ session_key: string; display_name: string }>

@@ -55,10 +55,10 @@ function NavBtn({
   title,
   children,
 }: {
-  onClick: () => void
-  disabled?: boolean
-  title: string
-  children: React.ReactNode
+  readonly onClick: () => void
+  readonly disabled?: boolean
+  readonly title: string
+  readonly children: React.ReactNode
 }) {
   return (
     <button
@@ -425,8 +425,8 @@ function IframeBlockedMessage({
   url,
   onOpenExternal,
 }: {
-  url: string
-  onOpenExternal: () => void
+  readonly url: string
+  readonly onOpenExternal: () => void
 }) {
   return (
     <div

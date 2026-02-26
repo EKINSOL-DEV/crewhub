@@ -30,10 +30,10 @@ function LandingScene({
   sceneExtras,
   hideCenterMarker,
 }: {
-  zone: Zone
-  mvpItems: MvpBoardItem[]
-  sceneExtras?: ReactNode
-  hideCenterMarker?: boolean
+  readonly zone: Zone
+  readonly mvpItems: MvpBoardItem[]
+  readonly sceneExtras?: ReactNode
+  readonly hideCenterMarker?: boolean
 }) {
   return (
     <group>

@@ -12,9 +12,9 @@ function BotEye({
   status,
   side,
 }: {
-  position: [number, number, number]
-  status: AgentStatus
-  side: 'left' | 'right'
+  readonly position: [number, number, number]
+  readonly status: AgentStatus
+  readonly side: 'left' | 'right'
 }) {
   const pupilRef = useRef<THREE.Mesh>(null)
   const lidRef = useRef<THREE.Mesh>(null)

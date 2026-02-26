@@ -84,9 +84,9 @@ function SevenSegmentDigit({
   position,
   color,
 }: {
-  digit: string
-  position: [number, number, number]
-  color: string
+  readonly digit: string
+  readonly position: [number, number, number]
+  readonly color: string
 }) {
   // Segment configuration for each digit (top, top-left, top-right, middle, bottom-left, bottom-right, bottom)
   const segments: Record<string, boolean[]> = {

@@ -56,11 +56,11 @@ function DocTreeNode({
   onOpen,
   searchQuery,
 }: {
-  node: DocNode
-  depth: number
-  sortKey: SortKey
-  onOpen: (path: string) => void
-  searchQuery: string
+  readonly node: DocNode
+  readonly depth: number
+  readonly sortKey: SortKey
+  readonly onOpen: (path: string) => void
+  readonly searchQuery: string
 }) {
   const [expanded, setExpanded] = useState(depth === 0)
   const isDir = node.type === 'directory'

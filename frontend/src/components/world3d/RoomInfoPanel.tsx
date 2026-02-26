@@ -512,10 +512,10 @@ function HQDashboard({
   onProjectClick,
   onOpenHQBoard,
 }: {
-  overview: ProjectOverview[]
-  loading: boolean
-  onProjectClick?: (roomId: string) => void
-  onOpenHQBoard?: () => void
+  readonly overview: ProjectOverview[]
+  readonly loading: boolean
+  readonly onProjectClick?: (roomId: string) => void
+  readonly onOpenHQBoard?: () => void
 }) {
   const [standupOpen, setStandupOpen] = useState(false)
   return (

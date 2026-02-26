@@ -145,11 +145,11 @@ function NoConnectionView({
   onRetry,
   onOpenConnections,
 }: {
-  connected: boolean
-  loading: boolean
-  error: string | null
-  onRetry: () => void
-  onOpenConnections: () => void
+  readonly connected: boolean
+  readonly loading: boolean
+  readonly error: string | null
+  readonly onRetry: () => void
+  readonly onOpenConnections: () => void
 }) {
   if (loading) {
     return (
@@ -561,8 +561,8 @@ function ZenWorkspaceSelector({
   onSelect,
   onEnterAll,
 }: {
-  onSelect: (project: ZenProject) => void
-  onEnterAll: () => void
+  readonly onSelect: (project: ZenProject) => void
+  readonly onEnterAll: () => void
 }) {
   const [projects, setProjects] = useState<ZenProject[]>([])
   const [loading, setLoading] = useState(true)

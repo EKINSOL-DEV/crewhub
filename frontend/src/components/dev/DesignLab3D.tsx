@@ -293,9 +293,9 @@ function ChatBubble3D({
   style,
   visible,
 }: {
-  text: string
-  style: BubbleStyle
-  visible: boolean
+  readonly text: string
+  readonly style: BubbleStyle
+  readonly visible: boolean
 }) {
   const groupRef = useRef<THREE.Group>(null)
   const scaleRef = useRef(0)
@@ -386,9 +386,9 @@ function Bot3DCharacter({
   uiState,
   position,
 }: {
-  config: BotConfig
-  uiState: BotUiState
-  position: [number, number, number]
+  readonly config: BotConfig
+  readonly uiState: BotUiState
+  readonly position: [number, number, number]
 }) {
   const groupRef = useRef<THREE.Group>(null)
   const glowRef = useRef<THREE.Mesh>(null)
@@ -567,10 +567,10 @@ function BotScene({
   showGrid,
   showSparkles: _showSparkles,
 }: {
-  botStates: Record<string, BotUiState>
-  showShadows: boolean
-  showGrid: boolean
-  showSparkles: boolean
+  readonly botStates: Record<string, BotUiState>
+  readonly showShadows: boolean
+  readonly showGrid: boolean
+  readonly showSparkles: boolean
 }) {
   const spacing = 2
   const startX = -((BOTS.length - 1) * spacing) / 2

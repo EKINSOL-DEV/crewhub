@@ -135,8 +135,8 @@ export function AgentCameraButton({
   onClick,
   isActive,
 }: {
-  onClick: () => void
-  isActive?: boolean
+  readonly onClick: () => void
+  readonly isActive?: boolean
 }) {
   return (
     <button

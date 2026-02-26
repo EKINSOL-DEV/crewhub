@@ -189,9 +189,9 @@ function TabButton({
   onClick,
   label,
 }: {
-  active: boolean
-  onClick: () => void
-  label: string
+  readonly active: boolean
+  readonly onClick: () => void
+  readonly label: string
 }) {
   return (
     <button

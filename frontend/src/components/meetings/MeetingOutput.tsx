@@ -44,10 +44,10 @@ function ActionItemCard({
   projectId,
   onStatusChange,
 }: {
-  item: ParsedActionItem & { status?: string }
-  meetingId: string | null
-  projectId?: string
-  onStatusChange: (id: string, status: string) => void
+  readonly item: ParsedActionItem & { status?: string }
+  readonly meetingId: string | null
+  readonly projectId?: string
+  readonly onStatusChange: (id: string, status: string) => void
 }) {
   const [loading, setLoading] = useState<'planner' | 'execute' | null>(null)
 
@@ -255,10 +255,10 @@ function ActionsView({
   projectId,
   onStatusChange,
 }: {
-  items: (ParsedActionItem & { status?: string })[]
-  meetingId: string | null
-  projectId?: string
-  onStatusChange: (id: string, status: string) => void
+  readonly items: (ParsedActionItem & { status?: string })[]
+  readonly meetingId: string | null
+  readonly projectId?: string
+  readonly onStatusChange: (id: string, status: string) => void
 }) {
   if (items.length === 0) {
     return (

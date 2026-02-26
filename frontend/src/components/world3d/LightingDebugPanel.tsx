@@ -22,12 +22,12 @@ function Slider({
   step,
   onChange,
 }: {
-  label: string
-  value: number
-  min: number
-  max: number
-  step: number
-  onChange: (v: number) => void
+  readonly label: string
+  readonly value: number
+  readonly min: number
+  readonly max: number
+  readonly step: number
+  readonly onChange: (v: number) => void
 }) {
   let formattedValue: string
   if (step < 0.01) {
@@ -65,9 +65,9 @@ function ColorField({
   value,
   onChange,
 }: {
-  label: string
-  value: string
-  onChange: (v: string) => void
+  readonly label: string
+  readonly value: string
+  readonly onChange: (v: string) => void
 }) {
   return (
     <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>
@@ -92,9 +92,9 @@ function Toggle({
   checked,
   onChange,
 }: {
-  label: string
-  checked: boolean
-  onChange: (v: boolean) => void
+  readonly label: string
+  readonly checked: boolean
+  readonly onChange: (v: boolean) => void
 }) {
   return (
     <div className={CLS_FLEX_ITEMS_CENTER_GAP_2}>

@@ -242,9 +242,9 @@ function CompactTaskCard({
   onClick,
   onStatusChange,
 }: {
-  task: Task
-  onClick?: (task: Task) => void
-  onStatusChange?: (task: Task, newStatus: TaskStatus) => void
+  readonly task: Task
+  readonly onClick?: (task: Task) => void
+  readonly onStatusChange?: (task: Task, newStatus: TaskStatus) => void
 }) {
   const priorityColors: Record<string, string> = {
     urgent: 'border-l-red-500',

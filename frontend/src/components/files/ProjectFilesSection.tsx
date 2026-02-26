@@ -133,11 +133,11 @@ function FileTreeNode({
   onSelect,
   accentColor,
 }: {
-  node: DocFileNode
-  depth: number
-  selectedPath: string | null
-  onSelect: (file: DocFileNode) => void
-  accentColor: string
+  readonly node: DocFileNode
+  readonly depth: number
+  readonly selectedPath: string | null
+  readonly onSelect: (file: DocFileNode) => void
+  readonly accentColor: string
 }) {
   const [open, setOpen] = useState(depth < 1)
   const isDir = node.type === 'directory'

@@ -33,11 +33,11 @@ function TreeNode({
   onSelect,
   onExpand,
 }: {
-  node: FileNode
-  depth: number
-  selectedPath?: string
-  onSelect: (file: FileNode) => void
-  onExpand?: (file: FileNode) => void
+  readonly node: FileNode
+  readonly depth: number
+  readonly selectedPath?: string
+  readonly onSelect: (file: FileNode) => void
+  readonly onExpand?: (file: FileNode) => void
 }) {
   const [expanded, setExpanded] = useState(depth === 0)
   const isSelected = node.path === selectedPath

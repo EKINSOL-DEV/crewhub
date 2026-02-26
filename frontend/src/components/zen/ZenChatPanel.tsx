@@ -31,8 +31,8 @@ function EmptyState({
   agentName,
   agentIcon,
 }: {
-  agentName: string | null
-  agentIcon: string | null
+  readonly agentName: string | null
+  readonly agentIcon: string | null
 }) {
   return (
     <div className="zen-empty-state">

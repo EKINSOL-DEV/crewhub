@@ -100,10 +100,10 @@ function ParkingAreaFloor({
   width,
   depth,
 }: {
-  x: number
-  z: number
-  width: number
-  depth: number
+  readonly x: number
+  readonly z: number
+  readonly width: number
+  readonly depth: number
 }) {
   const floorToon = getToonMaterialProps('#BFB090')
   return (

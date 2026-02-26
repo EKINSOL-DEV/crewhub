@@ -66,10 +66,10 @@ function CellLayer({
   opacity,
   color,
 }: {
-  cells: { worldX: number; worldZ: number }[]
-  cellSize: number
-  opacity: number
-  color: THREE.Color
+  readonly cells: { worldX: number; worldZ: number }[]
+  readonly cellSize: number
+  readonly opacity: number
+  readonly color: THREE.Color
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const count = cells.length
@@ -113,9 +113,9 @@ function GridLines({
   gridDepth,
   cellSize,
 }: {
-  gridWidth: number
-  gridDepth: number
-  cellSize: number
+  readonly gridWidth: number
+  readonly gridDepth: number
+  readonly cellSize: number
 }) {
   const geometry = useMemo(() => {
     const points: THREE.Vector3[] = []
@@ -150,9 +150,9 @@ function CoordinateLabels({
   gridDepth,
   cellSize,
 }: {
-  gridWidth: number
-  gridDepth: number
-  cellSize: number
+  readonly gridWidth: number
+  readonly gridDepth: number
+  readonly cellSize: number
 }) {
   const halfW = (gridWidth * cellSize) / 2
   const halfD = (gridDepth * cellSize) / 2

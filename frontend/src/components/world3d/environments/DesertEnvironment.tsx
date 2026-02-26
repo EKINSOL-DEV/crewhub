@@ -41,11 +41,11 @@ function InstancedDecoration({
   castShadow = true,
   receiveShadow = false,
 }: {
-  matrices: THREE.Matrix4[]
-  color: string
-  children: React.ReactNode
-  castShadow?: boolean
-  receiveShadow?: boolean
+  readonly matrices: THREE.Matrix4[]
+  readonly color: string
+  readonly children: React.ReactNode
+  readonly castShadow?: boolean
+  readonly receiveShadow?: boolean
 }) {
   const ref = useRef<THREE.InstancedMesh>(null)
   const toonProps = getToonMaterialProps(color)

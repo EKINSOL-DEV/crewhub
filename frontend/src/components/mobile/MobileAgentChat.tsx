@@ -86,8 +86,8 @@ function FilePreviewBar({
   files,
   onRemove,
 }: {
-  files: PendingFile[]
-  onRemove: (id: string) => void
+  readonly files: PendingFile[]
+  readonly onRemove: (id: string) => void
 }) {
   if (files.length === 0) return null
   return (

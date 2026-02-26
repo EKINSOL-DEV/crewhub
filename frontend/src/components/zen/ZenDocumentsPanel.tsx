@@ -27,8 +27,8 @@ function Breadcrumbs({
   path,
   onNavigate,
 }: {
-  path: string | null
-  onNavigate: (path: string | null) => void
+  readonly path: string | null
+  readonly onNavigate: (path: string | null) => void
 }) {
   if (!path) return null
   const parts = path.replace(/\/$/, '').split('/')

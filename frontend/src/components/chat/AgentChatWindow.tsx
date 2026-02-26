@@ -607,11 +607,11 @@ function HeaderBtn({
   activeColor,
   children,
 }: {
-  onClick: () => void
-  tooltip: string
-  active?: boolean
-  activeColor?: string
-  children: React.ReactNode
+  readonly onClick: () => void
+  readonly tooltip: string
+  readonly active?: boolean
+  readonly activeColor?: string
+  readonly children: React.ReactNode
 }) {
   const [isHovered, setIsHovered] = useState(false)
 

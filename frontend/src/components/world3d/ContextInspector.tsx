@@ -417,9 +417,9 @@ function TreeView({
   prevData,
   depth = 0,
 }: {
-  data: unknown
-  prevData?: unknown
-  depth?: number
+  readonly data: unknown
+  readonly prevData?: unknown
+  readonly depth?: number
 }) {
   if (data === null || data === undefined) {
     return <span style={{ color: '#64748b', fontStyle: 'italic' }}>null</span>
@@ -469,9 +469,9 @@ function ObjectView({
   prevObj,
   depth,
 }: {
-  obj: Record<string, unknown>
-  prevObj?: Record<string, unknown>
-  depth: number
+  readonly obj: Record<string, unknown>
+  readonly prevObj?: Record<string, unknown>
+  readonly depth: number
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
@@ -556,9 +556,9 @@ function ArrayView({
   prevItems,
   depth,
 }: {
-  items: unknown[]
-  prevItems?: unknown[]
-  depth: number
+  readonly items: unknown[]
+  readonly prevItems?: unknown[]
+  readonly depth: number
 }) {
   const [collapsed, setCollapsed] = useState(items.length > 5)
 

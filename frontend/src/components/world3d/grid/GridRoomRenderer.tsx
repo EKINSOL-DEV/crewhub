@@ -172,8 +172,8 @@ function PropDebugLabel({
   propId,
   position,
 }: {
-  propId: string
-  position: [number, number, number]
+  readonly propId: string
+  readonly position: [number, number, number]
 }) {
   // Position label above the prop (Y + 1.2 units above placement)
   const labelPos: [number, number, number] = [position[0], position[1] + 1.2, position[2]]
@@ -191,8 +191,8 @@ function HoverGlow({
   position,
   span,
 }: {
-  position: [number, number, number]
-  span?: { w: number; d: number }
+  readonly position: [number, number, number]
+  readonly span?: { w: number; d: number }
 }) {
   const ringRef = useRef<THREE.Mesh>(null!)
   const glowRef = useRef<THREE.Mesh>(null!)
@@ -530,9 +530,9 @@ function BobbingWrapper({
   active,
   baseY,
 }: {
-  children: React.ReactNode
-  active: boolean
-  baseY: number
+  readonly children: React.ReactNode
+  readonly active: boolean
+  readonly baseY: number
 }) {
   const groupRef = useRef<THREE.Group>(null!)
 

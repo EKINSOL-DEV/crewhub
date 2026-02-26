@@ -121,9 +121,9 @@ function AddAgentModal({
   onClose,
   onCreated,
 }: {
-  rooms: Room[]
-  onClose: () => void
-  onCreated: () => void
+  readonly rooms: Room[]
+  readonly onClose: () => void
+  readonly onCreated: () => void
 }) {
   const [name, setName] = useState('')
   const [agentId, setAgentId] = useState('')
@@ -425,10 +425,10 @@ function AgentCard({
   onSave,
   onDelete,
 }: {
-  agent: Agent
-  rooms: Room[]
-  onSave: (id: string, updates: Partial<Agent>) => Promise<void>
-  onDelete: (agent: Agent) => void
+  readonly agent: Agent
+  readonly rooms: Room[]
+  readonly onSave: (id: string, updates: Partial<Agent>) => Promise<void>
+  readonly onDelete: (agent: Agent) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [color, setColor] = useState(agent.color || '#6b7280')
@@ -767,9 +767,9 @@ function DeleteConfirmDialog({
   onConfirm,
   onCancel,
 }: {
-  agent: Agent
-  onConfirm: () => void
-  onCancel: () => void
+  readonly agent: Agent
+  readonly onConfirm: () => void
+  readonly onCancel: () => void
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
 

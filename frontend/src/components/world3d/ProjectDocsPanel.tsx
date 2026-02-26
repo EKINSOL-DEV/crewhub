@@ -126,10 +126,10 @@ function FileTree({
   selectedPath,
   depth = 0,
 }: {
-  entries: FileEntry[]
-  onSelect: (entry: FileEntry) => void
-  selectedPath: string | null
-  depth?: number
+  readonly entries: FileEntry[]
+  readonly onSelect: (entry: FileEntry) => void
+  readonly selectedPath: string | null
+  readonly depth?: number
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     // Auto-expand first level

@@ -487,10 +487,10 @@ function CategoryChip({
   active,
   onClick,
 }: {
-  label: string
-  count: number
-  active: boolean
-  onClick: () => void
+  readonly label: string
+  readonly count: number
+  readonly active: boolean
+  readonly onClick: () => void
 }) {
   return (
     <button

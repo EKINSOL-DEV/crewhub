@@ -24,8 +24,8 @@ interface Project {
 }
 
 function WorkspaceSelector({ onSelect, onEnterAll }: {
-  onSelect: (project: Project) => void
-  onEnterAll: () => void
+  readonly onSelect: (project: Project) => void
+  readonly onEnterAll: () => void
 }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)

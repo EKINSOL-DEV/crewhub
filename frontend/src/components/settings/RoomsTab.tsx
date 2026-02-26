@@ -123,11 +123,11 @@ function SortableRuleItem({
   onDelete,
   getRuleTypeLabel,
 }: {
-  rule: RoomAssignmentRule
-  room: Room | undefined
-  onAdjustPriority: (ruleId: string, delta: number) => void
-  onDelete: (ruleId: string) => void
-  getRuleTypeLabel: (type: string) => string
+  readonly rule: RoomAssignmentRule
+  readonly room: Room | undefined
+  readonly onAdjustPriority: (ruleId: string, delta: number) => void
+  readonly onDelete: (ruleId: string) => void
+  readonly getRuleTypeLabel: (type: string) => string
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: rule.id,

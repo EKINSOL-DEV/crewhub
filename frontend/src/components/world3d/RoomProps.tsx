@@ -66,8 +66,8 @@ function Whiteboard({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const frameToon = getToonMaterialProps('#888888')
   const boardToon = getToonMaterialProps('#F5F5F5')
@@ -99,8 +99,8 @@ function ServerRack({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const bodyToon = getToonMaterialProps('#2A2A2A')
   const rackToon = getToonMaterialProps('#1A1A1A')
@@ -163,8 +163,8 @@ function DeskLamp({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const baseToon = getToonMaterialProps('#444444')
   const armToon = getToonMaterialProps('#555555')
@@ -242,8 +242,8 @@ function Easel({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const woodToon = getToonMaterialProps(WARM_COLORS.wood)
   const canvasToon = getToonMaterialProps('#FFFFF0')
@@ -301,8 +301,8 @@ function ColorPalette({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const baseToon = getToonMaterialProps(WARM_COLORS.woodLight)
   const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A78BFA', '#34D399', '#F97316', '#FFFFFF']
@@ -334,8 +334,8 @@ function MoodBoard({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const frameToon = getToonMaterialProps('#555555')
   const boardToon = getToonMaterialProps('#333333')
@@ -371,8 +371,8 @@ function PresentationScreen({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const frameToon = getToonMaterialProps('#333333')
 
@@ -397,8 +397,8 @@ function BarChart({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const baseToon = getToonMaterialProps('#555555')
   const bars = [
@@ -432,8 +432,8 @@ function Megaphone({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const bodyToon = getToonMaterialProps('#FF8C00')
   const bellToon = getToonMaterialProps('#FFB347')
@@ -459,8 +459,8 @@ function StandingDesk({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
   const metalToon = getToonMaterialProps('#666666')
@@ -503,8 +503,8 @@ function RoundTable({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const topToon = getToonMaterialProps(WARM_COLORS.woodLight)
   const legToon = getToonMaterialProps(WARM_COLORS.wood)
@@ -535,8 +535,8 @@ function BeanBag({
   position,
   color = '#6366F1',
 }: {
-  position: [number, number, number]
-  color?: string
+  readonly position: [number, number, number]
+  readonly color?: string
 }) {
   const toon = getToonMaterialProps(color)
 
@@ -560,8 +560,8 @@ function Bookshelf({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const shelfToon = getToonMaterialProps(WARM_COLORS.wood)
   const bookColors = [
@@ -613,8 +613,8 @@ function WallClock({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const frameToon = getToonMaterialProps('#333333')
   const faceToon = getToonMaterialProps('#FFFFF0')
@@ -677,8 +677,8 @@ function SmallScreen({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const frameToon = getToonMaterialProps('#2A2A2A')
 
@@ -701,8 +701,8 @@ function ConveyorBelt({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const beltToon = getToonMaterialProps('#444444')
   const frameToon = getToonMaterialProps('#666666')
@@ -747,8 +747,8 @@ function GearMechanism({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const gearToon = getToonMaterialProps('#777777')
   const gear1Ref = useRef<THREE.Group>(null)
@@ -815,8 +815,8 @@ function ControlPanel({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const bodyToon = getToonMaterialProps('#3A3A3A')
   const panelToon = getToonMaterialProps('#4A4A4A')
@@ -858,8 +858,8 @@ function SatelliteDish({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const dishToon = getToonMaterialProps('#CCCCCC')
   const armToon = getToonMaterialProps('#888888')
@@ -924,8 +924,8 @@ function Headset({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const bandToon = getToonMaterialProps('#333333')
   const earToon = getToonMaterialProps('#444444')
@@ -1041,8 +1041,8 @@ function FilingCabinet({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const bodyToon = getToonMaterialProps('#777777')
   const drawerToon = getToonMaterialProps('#888888')
@@ -1114,8 +1114,8 @@ function DrawingTablet({
   position,
   rotation,
 }: {
-  position: [number, number, number]
-  rotation?: [number, number, number]
+  readonly position: [number, number, number]
+  readonly rotation?: [number, number, number]
 }) {
   const baseToon = getToonMaterialProps('#2A2A2A')
   const penToon = getToonMaterialProps('#555555')

@@ -243,9 +243,9 @@ function ChatHeader3DSceneDebug({
   agentStatus,
   animation,
 }: {
-  botConfig: BotVariantConfig
-  agentStatus: AgentStatus
-  animation: AvatarAnimation
+  readonly botConfig: BotVariantConfig
+  readonly agentStatus: AgentStatus
+  readonly animation: AvatarAnimation
 }) {
   const [pivotY, setPivotY] = useState(HEAD_WORLD_Y)
   const [camZ, setCamZ] = useState(CAM_Z)

@@ -52,8 +52,8 @@ function ContentBlockView({
   block,
   filterText,
 }: {
-  block: SessionContentBlock
-  filterText?: string
+  readonly block: SessionContentBlock
+  readonly filterText?: string
 }) {
   const [expanded, setExpanded] = useState(false)
 

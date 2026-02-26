@@ -93,8 +93,8 @@ function PixelCell({
   value,
   colors,
 }: {
-  value: PixelValue
-  colors: { base: string; dark: string; accent: string }
+  readonly value: PixelValue
+  readonly colors: { base: string; dark: string; accent: string }
 }) {
   const backgroundColor = useMemo(() => {
     switch (value) {

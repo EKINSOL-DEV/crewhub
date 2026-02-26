@@ -427,8 +427,8 @@ function CreateKeyModal({
   onClose,
   onCreated,
 }: {
-  onClose: () => void
-  onCreated: (r: CreateApiKeyResponse) => void
+  readonly onClose: () => void
+  readonly onCreated: (r: CreateApiKeyResponse) => void
 }) {
   const [name, setName] = useState('')
   const [scopes, setScopes] = useState<Set<string>>(new Set(['read', 'self']))
@@ -615,8 +615,8 @@ function KeyRevealModal({
   result,
   onClose,
 }: {
-  result: CreateApiKeyResponse
-  onClose: () => void
+  readonly result: CreateApiKeyResponse
+  readonly onClose: () => void
 }) {
   const [copied, setCopied] = useState(false)
   const [confirmed, setConfirmed] = useState(false)

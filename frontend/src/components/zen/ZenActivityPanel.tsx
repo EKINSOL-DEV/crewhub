@@ -73,10 +73,10 @@ function ActiveTaskItem({
   isSelected,
   onSelect,
 }: {
-  task: ActiveTask
-  opacity: number
-  isSelected: boolean
-  onSelect: () => void
+  readonly task: ActiveTask
+  readonly opacity: number
+  readonly isSelected: boolean
+  readonly onSelect: () => void
 }) {
   return (
     <div

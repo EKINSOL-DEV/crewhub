@@ -21,10 +21,10 @@ export function CollapsibleSection({
   defaultOpen = true,
   children,
 }: {
-  title: string
-  badge?: string
-  defaultOpen?: boolean
-  children: React.ReactNode
+  readonly title: string
+  readonly badge?: string
+  readonly defaultOpen?: boolean
+  readonly children: React.ReactNode
 }) {
   const [expanded, setExpanded] = useState(defaultOpen)
   return (

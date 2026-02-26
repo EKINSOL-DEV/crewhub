@@ -40,10 +40,10 @@ function MeetingHistoryCard({
   onFollowUp,
   onReuseSetup,
 }: {
-  meeting: MeetingHistoryItem
-  onViewResults: () => void
-  onFollowUp: () => void
-  onReuseSetup: () => void
+  readonly meeting: MeetingHistoryItem
+  readonly onViewResults: () => void
+  readonly onFollowUp: () => void
+  readonly onReuseSetup: () => void
 }) {
   const date = new Date(meeting.created_at)
   const dateStr = date.toLocaleDateString('en-US', {

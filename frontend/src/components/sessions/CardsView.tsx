@@ -71,12 +71,12 @@ function RoomGroupHeader({
   expanded,
   onToggle,
 }: {
-  name: string
-  icon: string | null
-  color: string | null
-  count: number
-  expanded: boolean
-  onToggle: () => void
+  readonly name: string
+  readonly icon: string | null
+  readonly color: string | null
+  readonly count: number
+  readonly expanded: boolean
+  readonly onToggle: () => void
 }) {
   return (
     <button

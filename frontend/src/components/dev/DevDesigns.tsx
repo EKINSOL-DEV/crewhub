@@ -99,9 +99,9 @@ function AgentDetailPanel({
   darkBg,
   onClose,
 }: {
-  agent: AgentDesign
-  darkBg: boolean
-  onClose: () => void
+  readonly agent: AgentDesign
+  readonly darkBg: boolean
+  readonly onClose: () => void
 }) {
   const [visible, setVisible] = useState(false)
 

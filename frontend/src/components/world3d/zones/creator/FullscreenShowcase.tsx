@@ -168,8 +168,8 @@ function CategoryGridView({
   categories,
   onSelect,
 }: {
-  categories: ShowcaseCategory[]
-  onSelect: (p: ShowcaseProp) => void
+  readonly categories: ShowcaseCategory[]
+  readonly onSelect: (p: ShowcaseProp) => void
 }) {
   const [activeTab, setActiveTab] = useState(categories[0].id)
   const [currentPage, setCurrentPage] = useState(0)
@@ -282,9 +282,9 @@ function DetailView({
   onBack: _onBack,
   onViewCode,
 }: {
-  prop: ShowcaseProp
-  onBack: () => void
-  onViewCode: () => void
+  readonly prop: ShowcaseProp
+  readonly onBack: () => void
+  readonly onViewCode: () => void
 }) {
   const Comp = prop.component
 
@@ -331,10 +331,10 @@ function CodeViewContent({
   propName,
   onCopy,
 }: {
-  code: string
-  loading: boolean
-  propName: string
-  onCopy: () => void
+  readonly code: string
+  readonly loading: boolean
+  readonly propName: string
+  readonly onCopy: () => void
 }) {
   const [copied, setCopied] = useState(false)
 

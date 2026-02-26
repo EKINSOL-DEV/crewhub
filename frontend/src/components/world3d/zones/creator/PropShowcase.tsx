@@ -23,10 +23,10 @@ function Pedestal({
   selected,
   onClick,
 }: {
-  position: [number, number, number]
-  name: string
-  selected: boolean
-  onClick: () => void
+  readonly position: [number, number, number]
+  readonly name: string
+  readonly selected: boolean
+  readonly onClick: () => void
 }) {
   const baseToon = getToonMaterialProps('#1a1a2e')
 

@@ -115,9 +115,9 @@ function BotFaceSVG({
   expression,
   size = 36,
 }: {
-  color: string
-  expression: string
-  size?: number
+  readonly color: string
+  readonly expression: string
+  readonly size?: number
 }) {
   let pupilDx: number
   if (expression === THOUGHTFUL) {
@@ -565,10 +565,15 @@ function DropdownItem({
   onSelect,
   onPin,
 }: {
-  entry: DropdownEntry
-  isPinned: boolean
-  onSelect: (session: CrewSession, roomId: string, name: string, config: BotVariantConfig) => void
-  onPin: (sessionKey: string) => void
+  readonly entry: DropdownEntry
+  readonly isPinned: boolean
+  readonly onSelect: (
+    session: CrewSession,
+    roomId: string,
+    name: string,
+    config: BotVariantConfig
+  ) => void
+  readonly onPin: (sessionKey: string) => void
 }) {
   const [hovered, setHovered] = useState(false)
 

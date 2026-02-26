@@ -38,11 +38,11 @@ function DynamicMesh({
   selected,
   onSelect,
 }: {
-  part: PropPart
-  index: number
-  editMode?: boolean
-  selected?: boolean
-  onSelect?: (index: number) => void
+  readonly part: PropPart
+  readonly index: number
+  readonly editMode?: boolean
+  readonly selected?: boolean
+  readonly onSelect?: (index: number) => void
 }) {
   const toon = getToonMaterialProps(part.color)
   const meshRef = useRef<THREE.Mesh>(null)
@@ -155,8 +155,8 @@ function SelectedPartMesh({
   part,
   meshRef,
 }: {
-  part: PropPart
-  meshRef: React.RefObject<THREE.Mesh>
+  readonly part: PropPart
+  readonly meshRef: React.RefObject<THREE.Mesh>
 }) {
   const rotation =
     part.rotation && (part.rotation[0] !== 0 || part.rotation[1] !== 0 || part.rotation[2] !== 0)
