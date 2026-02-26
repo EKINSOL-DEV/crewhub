@@ -2,7 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment } from '@react-three/drei'
 import { useState, useRef, useEffect } from 'react'
 import { designs } from './designs'
-import { UI } from './UI'
+import { UI as Ui } from './UI'
 import { WallProvider } from './WallSystem'
 
 export default function App() {
@@ -58,7 +58,7 @@ export default function App() {
         />
         <Environment preset="city" />
       </Canvas>
-      <UI designs={designs} active={activeDesign} onSelect={setActiveDesign} />
+      <Ui designs={designs} active={activeDesign} onSelect={setActiveDesign} />
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Screen } from './components/Screen'
 import { DataStream } from './components/DataStream'
-import { LED } from './components/LED'
+import { LED as Led } from './components/LED'
 
 /**
  * Holographic table effect — transparent cylinder with orbiting data particles.
@@ -76,9 +76,9 @@ export function MonitorBank({
       {/* Right screen */}
       <Screen position={[1, 0, 0]} width={0.6} height={0.4} color="#ffaa00" scanlines flicker />
       {/* Status LEDs below screens */}
-      <LED position={[-0.3, -0.35, 0.02]} color="#00ff00" size={0.015} />
-      <LED position={[0, -0.35, 0.02]} color="#00ff00" size={0.015} />
-      <LED position={[0.3, -0.35, 0.02]} color="#ffaa00" size={0.015} />
+      <Led position={[-0.3, -0.35, 0.02]} color="#00ff00" size={0.015} />
+      <Led position={[0, -0.35, 0.02]} color="#00ff00" size={0.015} />
+      <Led position={[0.3, -0.35, 0.02]} color="#ffaa00" size={0.015} />
     </group>
   )
 }

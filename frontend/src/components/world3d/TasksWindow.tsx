@@ -59,9 +59,9 @@ export function TasksWindow({ projectId, roomId, onClose }: TasksWindowProps) {
 
   // Filter to active tasks (in_progress, review, blocked) and sort by priority
   const activeTasks = useMemo(() => {
-    const activeStatuses: TaskStatus[] = ['in_progress', 'review', 'blocked']
+    const activeStatuses = new Set<TaskStatus>(['in_progress', 'review', 'blocked'])
     return tasks
-      .filter((t) => activeStatuses.includes(t.status))
+      .filter((t) => activeStatuses.has(t.status))
       .sort((a, b) => {
         const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
         if (priorityDiff !== 0) return priorityDiff

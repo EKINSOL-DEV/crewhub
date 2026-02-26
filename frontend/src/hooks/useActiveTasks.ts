@@ -98,8 +98,11 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
         const sessionKey = task.sessionKey
         if (!sessionKey) continue
 
-        if (currentKeys.has(sessionKey) && isSessionStillRunning(sessionKey)) {
-          // Still running (exists and not sleeping)
+        if (
+          (currentKeys.has(sessionKey) && isSessionStillRunning(sessionKey)) ||
+          task.status === 'done'
+        ) {
+          // Still running or already done — keep as-is
           newTasks.push(task)
           seenIds.add(task.id)
         } else if (
@@ -112,10 +115,6 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
             status: 'done',
             doneAt: Date.now(),
           })
-          seenIds.add(task.id)
-        } else if (task.status === 'done') {
-          // Keep done tasks (they fade out via timer)
-          newTasks.push(task)
           seenIds.add(task.id)
         }
       }

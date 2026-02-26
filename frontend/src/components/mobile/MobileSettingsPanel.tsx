@@ -37,7 +37,7 @@ function resolveThemeToDark(theme: AppTheme): boolean {
 }
 
 // Light zen theme IDs (all others are dark)
-const ZEN_LIGHT_THEMES = [ZEN_LIGHT_THEME, 'solarized-light']
+const ZEN_LIGHT_THEMES = new Set([ZEN_LIGHT_THEME, 'solarized-light'])
 
 /**
  * Apply only the dark/light class and mobile CSS vars — does NOT touch zen-theme.
@@ -89,8 +89,8 @@ export function applyTheme(theme: AppTheme): void {
   // Sync zen-theme type when user explicitly toggles mobile dark/light
   // (e.g. switching from dark→light should also switch to a light zen theme)
   const currentZen = localStorage.getItem(ZEN_THEME_KEY)
-  const isLightZen = currentZen ? ZEN_LIGHT_THEMES.includes(currentZen) : false
-  const isDarkZen = currentZen ? !ZEN_LIGHT_THEMES.includes(currentZen) : false
+  const isLightZen = currentZen ? ZEN_LIGHT_THEMES.has(currentZen) : false
+  const isDarkZen = currentZen ? !ZEN_LIGHT_THEMES.has(currentZen) : false
 
   if (isDark && isLightZen) {
     // User switched to dark: replace the light zen theme with the default dark one
@@ -132,7 +132,7 @@ export function initAppSettings(): void {
   const cTheme = (localStorage.getItem('crewhub-theme') as AppTheme | null) ?? 'dark'
 
   const isDark = zenThemeId
-    ? !ZEN_LIGHT_THEMES.includes(zenThemeId) // derive from zen-theme type
+    ? !ZEN_LIGHT_THEMES.has(zenThemeId) // derive from zen-theme type
     : resolveThemeToDark(cTheme) // fall back to crewhub-theme
 
   applyThemeClassOnly(isDark)

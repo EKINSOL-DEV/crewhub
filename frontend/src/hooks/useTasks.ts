@@ -124,11 +124,11 @@ export function useTasks(options: UseTasksOptions = {}) {
       try {
         const data = JSON.parse(event.data) as { project_id?: string; room_id?: string }
         // Refresh if this task belongs to our filtered project/room
-        if (projectId && data.project_id === projectId) {
-          fetchTasks()
-        } else if (roomId && data.room_id === roomId) {
-          fetchTasks()
-        } else if (!projectId && !roomId) {
+        if (
+          (projectId && data.project_id === projectId) ||
+          (roomId && data.room_id === roomId) ||
+          (!projectId && !roomId)
+        ) {
           fetchTasks()
         }
       } catch {
@@ -139,11 +139,11 @@ export function useTasks(options: UseTasksOptions = {}) {
     const handleTaskUpdated = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data) as { project_id?: string; room_id?: string }
-        if (projectId && data.project_id === projectId) {
-          fetchTasks()
-        } else if (roomId && data.room_id === roomId) {
-          fetchTasks()
-        } else if (!projectId && !roomId) {
+        if (
+          (projectId && data.project_id === projectId) ||
+          (roomId && data.room_id === roomId) ||
+          (!projectId && !roomId)
+        ) {
           fetchTasks()
         }
       } catch {
