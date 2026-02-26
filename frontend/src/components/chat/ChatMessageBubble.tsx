@@ -421,7 +421,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}
             >
               {videoAttachments.map((attachment, i) => (
-                <VideoThumbnail key={`attachme-${attachment}`} attachment={attachment} maxWidth={300} />
+                <VideoThumbnail key={attachment.path || `attachme-${attachment.type}`} attachment={attachment} maxWidth={300} />
               ))}
             </div>
           )}
@@ -433,7 +433,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
             >
               {audioAttachments.map((attachment, i) => (
                 <AudioMessage
-                  key={`attachme-${i}`}
+                  key={attachment.path || `attachme-${attachment.type || 'a'}`}
                   url={attachment.path}
                   duration={attachment.duration}
                   variant="zen"
@@ -449,7 +449,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
           {/* Thinking blocks */}
           {showThinking && msg.thinking && msg.thinking.length > 0 && (
             <div className="zen-thinking-blocks">
-              {msg.thinking.map((thought, i) => (
+              {msg.thinking.map((thought) => (
                 <ThinkingBlock key={`thought-${thought}`} content={thought} zenMode />
               ))}
             </div>
@@ -534,7 +534,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
         {/* Thinking blocks */}
         {showThinking && msg.thinking && msg.thinking.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '100%' }}>
-            {msg.thinking.map((thought, i) => (
+            {msg.thinking.map((thought) => (
               <ThinkingBlock key={`thought-${thought}`} content={thought} />
             ))}
           </div>
@@ -589,7 +589,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
           >
             {imageAttachments.map((attachment, i) => (
               <ImageThumbnail
-                key={`attachme-${attachment}`}
+                key={attachment.path || `attachme-${attachment.type}`}
                 attachment={attachment}
                 maxWidth={variant === 'mobile' ? 180 : 200}
               />
@@ -610,7 +610,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
           >
             {videoAttachments.map((attachment, i) => (
               <VideoThumbnail
-                key={`attachme-${attachment}`}
+                key={attachment.path || `attachme-${attachment.type}`}
                 attachment={attachment}
                 maxWidth={variant === 'mobile' ? 260 : 280}
               />
@@ -631,7 +631,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
           >
             {audioAttachments.map((attachment, i) => (
               <AudioMessage
-                key={`attachme-${i}`}
+                key={attachment.path || `attachme-${attachment.type || 'a'}`}
                 url={attachment.path}
                 duration={attachment.duration}
                 variant={variant}

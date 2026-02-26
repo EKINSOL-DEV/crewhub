@@ -196,7 +196,7 @@ class OpenClawConnection(
                             try:
                                 if asyncio.iscoroutinefunction(handler):
                                     _handler_task = asyncio.create_task(handler(payload))
-                                    _handler_task  # noqa: F841 — prevent premature GC
+                                    _handler_task  # noqa: F841, B018 — prevent premature GC
                                 else:
                                     handler(payload)
                             except Exception as exc:
