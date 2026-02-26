@@ -271,7 +271,7 @@ class OpenClawExtendedMixin:
 # ------------------------------------------------------------------
 
 
-def _extract_text(
+def _extract_text(  # NOSONAR
     result: Any,
 ) -> Optional[str]:  # NOSONAR
     """Extract the assistant reply text from a Gateway agent response."""

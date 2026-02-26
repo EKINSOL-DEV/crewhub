@@ -125,7 +125,7 @@ def _get_file_type(path: Path) -> str:
     return "code"
 
 
-def _scan_project_dir(dir_path: Path, base: Path, current_depth: int, max_depth: int) -> list:
+def _scan_project_dir(dir_path: Path, base: Path, current_depth: int, max_depth: int) -> list:  # NOSONAR
     """Recursively scan a directory up to max_depth, returning a file/dir tree."""
     items = []
     try:

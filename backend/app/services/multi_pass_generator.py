@@ -205,16 +205,10 @@ class MultiPassGenerator:
 
         # Ensure flatShading on meshStandardMaterial without it
         # (only for non-emissive, non-transparent materials)
-        flat_count = 0
         pattern = r'<meshStandardMaterial\s+color="([^"]+)"\s*/>'
-
-        def add_flat(m):
-            nonlocal flat_count
-            flat_count += 1
-            return f'<meshStandardMaterial color="{m.group(1)}" flatShading />'
-
-        code = re.sub(pattern, add_flat, code)
+        flat_count = len(re.findall(pattern, code))
         if flat_count:
+            code = re.sub(pattern, lambda m: f'<meshStandardMaterial color="{m.group(1)}" flatShading />', code)
             notes.append(f"Pass 3: Added flatShading to {flat_count} material(s)")
 
         if not notes:

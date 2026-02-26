@@ -91,7 +91,7 @@ function BotMouth({ state }: { state: BotState }) {
   return (
     <group position={[0, 0.22, 0.2]} rotation={[0.2, 0, 0]}>
       <mesh>
-        <torusGeometry args={[0.04, 0.008, 8, 16, state === 'error' ? Math.PI : Math.PI]} />
+        <torusGeometry args={[0.04, 0.008, 8, 16, Math.PI]} />
         <meshStandardMaterial color={color} />
       </mesh>
     </group>
@@ -177,7 +177,7 @@ function ChatIcon({ color }: { color: string }) {
         </RoundedBox>
         {/* Little dots inside */}
         {[-0.035, 0, 0.035].map((x, i) => (
-          <mesh key={`x-${i}`} position={[x, 0, 0.025]}>
+          <mesh key={`x-${x}`} position={[x, 0, 0.025]}>
             <sphereGeometry args={[0.012, 8, 8]} />
             <meshStandardMaterial color="white" />
           </mesh>

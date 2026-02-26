@@ -257,8 +257,8 @@ async def lifespan(app: FastAPI):
         _polling_task.cancel()
         try:
             await _polling_task
-        except asyncio.CancelledError:
-            pass  # NOSONAR
+        except asyncio.CancelledError:  # NOSONAR
+            pass
 
     # Stop Connection Manager
     manager = await get_connection_manager()

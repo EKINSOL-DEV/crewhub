@@ -64,7 +64,7 @@ export const BotInfoPanel = memo(function BotInfoPanel({
   // Close on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent | TouchEvent) => {
-      const target = (e instanceof TouchEvent ? e.target : e.target) as HTMLElement
+      const target = e.target as HTMLElement
       if (panelRef.current && !panelRef.current.contains(target as Node)) {
         // Don't close when clicking on the 3D canvas (camera rotation/pan starts with mousedown)
         // or on 3D world UI overlays (e.g. Focus Board button rendered via drei Html)

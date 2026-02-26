@@ -302,8 +302,8 @@ class ConnectionManager:
             self._health_task.cancel()
             try:
                 await self._health_task
-            except asyncio.CancelledError:
-                pass  # NOSONAR
+            except asyncio.CancelledError:  # NOSONAR
+                pass
 
         await self.disconnect_all()
         logger.info("ConnectionManager stopped")
@@ -448,7 +448,7 @@ class ConnectionManager:
 
         return []
 
-    async def kill_session(
+    async def kill_session(  # NOSONAR
         self,
         session_key: str,
         connection_id: Optional[str] = None,

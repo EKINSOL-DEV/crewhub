@@ -77,7 +77,7 @@ class MeetingOrchestrator:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    async def run(
+    async def run(  # NOSONAR
         self,
     ):  # NOSONAR
         """Run the full meeting lifecycle."""

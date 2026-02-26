@@ -445,13 +445,9 @@ After a meeting completes:
     for filename, content in docs.items():
         filepath = DEMO_DOCS_PATH / filename
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        if not filepath.exists():
-            filepath.write_text(content)
-            created += 1
-        else:
-            # Update existing files with v0.15.0 content
-            filepath.write_text(content)
-            created += 1
+        # Always write to create or update with latest content
+        filepath.write_text(content)
+        created += 1
 
     if created:
         print(f"  ✅ Created/updated {created} demo markdown documents in {DEMO_DOCS_PATH}")

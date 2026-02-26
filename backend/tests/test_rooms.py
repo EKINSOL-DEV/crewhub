@@ -228,7 +228,7 @@ async def test_room_defaults(client):
     )
     response = await client.get("/api/rooms/defaults-test")
     data = response.json()
-    assert data["speed_multiplier"] == 1.0
+    assert data["speed_multiplier"] == pytest.approx(1.0)
     assert data["sort_order"] == 0
     assert data["is_hq"] is False
     assert data["project_id"] is None

@@ -6,9 +6,9 @@ Handles image uploads for chat attachments.
 Handles audio uploads for voice messages with auto-transcription via Groq Whisper.
 """
 
+import asyncio
 import logging
 import os
-import subprocess
 import tempfile
 import uuid
 from datetime import datetime
@@ -210,28 +210,29 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
     os.close(fd)
 
     try:
-        result = subprocess.run(
-            [
-                FFMPEG_PATH,
-                "-y",  # overwrite output
-                "-i",
-                str(audio_path),
-                "-ar",
-                "16000",  # 16kHz sample rate (optimal for Whisper)
-                "-ac",
-                "1",  # mono
-                "-b:a",
-                "64k",  # 64kbps bitrate
-                mp3_path,
-            ],
-            capture_output=True,
-            timeout=30,
+        proc = await asyncio.create_subprocess_exec(
+            FFMPEG_PATH,
+            "-y",  # overwrite output
+            "-i",
+            str(audio_path),
+            "-ar",
+            "16000",  # 16kHz sample rate (optimal for Whisper)
+            "-ac",
+            "1",  # mono
+            "-b:a",
+            "64k",  # 64kbps bitrate
+            mp3_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
-        if result.returncode != 0:
-            logger.warning(f"ffmpeg conversion failed: {result.stderr.decode()[:200]}")
+        try:
+            _, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=30)
+        except asyncio.TimeoutError:
+            proc.kill()
             return None, MSG_NO_AUDIO_CONV
-    except subprocess.TimeoutExpired:
-        return None, MSG_NO_AUDIO_CONV
+        if proc.returncode != 0:
+            logger.warning(f"ffmpeg conversion failed: {stderr_bytes.decode()[:200]}")
+            return None, MSG_NO_AUDIO_CONV
     except FileNotFoundError:
         return None, MSG_NO_AUDIO_CONV
 

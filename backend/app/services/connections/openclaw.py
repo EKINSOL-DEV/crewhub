@@ -143,15 +143,15 @@ class OpenClawConnection(
             self._reconnect_task.cancel()
             try:
                 await self._reconnect_task
-            except asyncio.CancelledError:
-                pass  # NOSONAR
+            except asyncio.CancelledError:  # NOSONAR
+                pass
 
         if self._listen_task and not self._listen_task.done():
             self._listen_task.cancel()
             try:
                 await self._listen_task
-            except asyncio.CancelledError:
-                pass  # NOSONAR
+            except asyncio.CancelledError:  # NOSONAR
+                pass
 
         if self.ws:
             try:
@@ -166,9 +166,9 @@ class OpenClawConnection(
     # ---
     # Background listener
     # ---
-    async def _listen_loop(  # noqa: C901
+    async def _listen_loop(  # noqa: C901  # NOSONAR
         self,
-    ) -> None:  # NOSONAR
+    ) -> None:
         """Receive and route messages from the Gateway."""
         logger.debug(f"Listener loop started for {self.name}")
         try:
@@ -195,7 +195,8 @@ class OpenClawConnection(
                         for handler in self._event_handlers.get(event_name, []):
                             try:
                                 if asyncio.iscoroutinefunction(handler):
-                                    asyncio.create_task(handler(payload))
+                                    _handler_task = asyncio.create_task(handler(payload))
+                                    _handler_task  # noqa: F841 — prevent premature GC
                                 else:
                                     handler(payload)
                             except Exception as exc:

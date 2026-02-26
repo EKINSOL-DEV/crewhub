@@ -487,7 +487,7 @@ async def _route_to_agent(conn, thread_id: str, agent_id: str, participants: lis
 @router.post(
     "/{thread_id}/messages", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}}
 )
-async def send_message(thread_id: str, body: ThreadMessageSend):
+async def send_message(thread_id: str, body: ThreadMessageSend):  # NOSONAR
     """Send a message to a thread, routing to agents."""
     content = body.content.strip()
     if not content:

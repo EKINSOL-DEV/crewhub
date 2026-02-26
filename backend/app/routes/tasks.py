@@ -277,7 +277,7 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
         if not agent:
             raise HTTPException(status_code=404, detail="Agent not found")
 
-        prompt = await _build_task_context_prompt(task, agent, body)
+        prompt = await _build_task_context_prompt(task, agent, body, task_id)
 
         # 4. Send to agent's main session via OpenClaw
         manager = await get_connection_manager()

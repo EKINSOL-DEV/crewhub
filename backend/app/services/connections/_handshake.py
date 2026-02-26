@@ -26,7 +26,7 @@ from .base import ConnectionStatus
 logger = logging.getLogger(__name__)
 
 
-async def perform_handshake(
+async def perform_handshake(  # NOSONAR
     conn: OpenClawConnection,
 ) -> bool:  # NOSONAR
     """
@@ -59,8 +59,8 @@ async def perform_handshake(
             conn._listen_task.cancel()
             try:
                 await conn._listen_task
-            except asyncio.CancelledError:
-                pass  # NOSONAR
+            except asyncio.CancelledError:  # NOSONAR
+                pass
 
         # ── 1. Device identity ───────────────────────────────────────────
         from .device_identity import CREWHUB_SCOPES, DeviceIdentityManager
