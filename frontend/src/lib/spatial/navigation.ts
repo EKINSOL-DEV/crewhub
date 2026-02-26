@@ -301,7 +301,7 @@ export class SpatialNavigator {
     for (let z = 0; z < this.depth; z++) {
       for (let x = 0; x < this.width; x++) {
         const cell = this.grid[z][x]
-        if (cell.propId && cell.propId.toLowerCase().includes(lowerPropId)) {
+        if (cell.propId?.toLowerCase().includes(lowerPropId)) {
           cells.push({ x, z })
         }
       }
@@ -350,7 +350,7 @@ export class SpatialNavigator {
     for (let i = 1; i < path.length; i++) {
       const dx = path[i].x - path[i - 1].x
       const dz = path[i].z - path[i - 1].z
-      distance += Math.sqrt(dx * dx + dz * dz)
+      distance += Math.hypot(dx, dz)
     }
     return distance
   }

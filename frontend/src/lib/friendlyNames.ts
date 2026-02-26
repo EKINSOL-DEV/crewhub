@@ -87,7 +87,7 @@ function isFixedAgentKey(sessionKey: string): boolean {
 function isFixedWhatsAppPayload(payload: string): boolean {
   if (payload.includes('-subagent-') || payload.includes('-spawn-')) return false
   if (payload.includes('+32494330227') || payload.includes('+32469774873')) return true
-  if (payload.match(/^g-agent-\w+-main/)) return true
+  if (/^g-agent-\w+-main/.exec(payload)) return true
   return false
 }
 
@@ -116,7 +116,7 @@ export function isFixedAgent(sessionKey: string): boolean {
     return isFixedWhatsAppPayload(sessionKey.slice('whatsapp:'.length))
   }
 
-  if (sessionKey.match(/^\+\d+$/)) {
+  if (/^\+\d+$/.exec(sessionKey)) {
     return sessionKey === '+32494330227' || sessionKey === '+32469774873'
   }
 
@@ -143,13 +143,13 @@ function parseAgentSessionKey(sessionKey: string): string {
 }
 
 function parseWhatsAppSessionKey(payload: string): string {
-  const gSubMatch = payload.match(/^g-agent-(\w+)-subagent-/)
+  const gSubMatch = /^g-agent-(\w+)-subagent-/.exec(payload)
   if (gSubMatch) return `${capitalizeFirst(gSubMatch[1])} (subagent)`
 
-  const gMainMatch = payload.match(/^g-agent-(\w+)-main/)
+  const gMainMatch = /^g-agent-(\w+)-main/.exec(payload)
   if (gMainMatch) return capitalizeFirst(gMainMatch[1])
 
-  const phoneMatch = payload.match(/\+\d+/)
+  const phoneMatch = /\+\d+/.exec(payload)
   if (phoneMatch) {
     const name = resolvePhoneToName(phoneMatch[0])
     if (name) return name
@@ -173,7 +173,7 @@ export function formatSessionKeyAsName(sessionKey: string, label?: string): stri
     return parseWhatsAppSessionKey(sessionKey.slice('whatsapp:'.length))
   }
 
-  const phoneMatch = sessionKey.match(/\+\d+/)
+  const phoneMatch = /\+\d+/.exec(sessionKey)
   if (phoneMatch) {
     const name = resolvePhoneToName(phoneMatch[0])
     if (name) return name
@@ -182,7 +182,7 @@ export function formatSessionKeyAsName(sessionKey: string, label?: string): stri
 
   const parts = sessionKey.split(':')
   const lastPart = parts[parts.length - 1]
-  if (lastPart.match(/^[a-f0-9-]{36}$/i) && parts.length > 1) {
+  if (/^[a-f0-9-]{36}$/i.exec(lastPart) && parts.length > 1) {
     return parts[parts.length - 2]
   }
 

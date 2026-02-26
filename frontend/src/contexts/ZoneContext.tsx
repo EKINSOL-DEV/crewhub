@@ -22,7 +22,7 @@ const ZoneContext = createContext<ZoneContextValue | null>(null)
 function parseZoneIdFromPath(pathname: string): string | null {
   // MVP URL format: /zone/:zoneId
   // Keep it tolerant and non-invasive for other routes.
-  const m = pathname.match(/^\/zone\/([^/]+)(?:\/.*)?$/)
+  const m = /^\/zone\/([^/]+)(?:\/.*)?$/.exec(pathname)
   return m?.[1] ?? null
 }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { splitSessionsForDisplay } from '../lib/sessionFiltering'
 import type { CrewSession } from '../lib/api'
 

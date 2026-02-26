@@ -30,7 +30,7 @@ export function getIsLongPressPending(): boolean {
   return _isLongPressPending
 }
 
-export type { PropPlacement }
+export type { PropPlacement } // NOSONAR
 
 export interface SelectedProp {
   key: string

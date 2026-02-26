@@ -55,12 +55,12 @@ export function extractCodeBlocks(text: string): string[] {
 function extractComponentName(code: string): string | null {
   // export function ComponentName
   const exportFn = /export\s+(?:default\s+)?function\s+(\w+)/
-  const match = code.match(exportFn)
+  const match = exportFn.exec(code)
   if (match) return match[1]
 
   // export const ComponentName = ...
   const exportConst = /export\s+(?:default\s+)?const\s+(\w+)\s*[=:]/
-  const constMatch = code.match(exportConst)
+  const constMatch = exportConst.exec(code)
   if (constMatch) return constMatch[1]
 
   return null
@@ -133,8 +133,7 @@ export function parsePropCode(code: string): ParsedProp {
   const importValidation = validateImports(code)
   const interfaceValidation = validateInterface(code)
 
-  errors.push(...importValidation.errors)
-  errors.push(...interfaceValidation.errors)
+  errors.push(...importValidation.errors, ...interfaceValidation.errors)
 
   return {
     code,

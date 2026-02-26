@@ -131,7 +131,10 @@ export function CrewWindow({
     ___: unknown,
     pos: { x: number; y: number }
   ) => {
-    const newSize = { width: parseInt(ref.style.width), height: parseInt(ref.style.height) }
+    const newSize = {
+      width: Number.parseInt(ref.style.width),
+      height: Number.parseInt(ref.style.height),
+    }
     setSize(newSize)
     setPosition(pos)
     onStateChange?.(pos, newSize)

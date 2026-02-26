@@ -1,4 +1,3 @@
-import * as THREE from 'three'
 import { Wall } from '../WallSystem'
 import { Workstation, MeetingTable, Sofa, CoffeeTable, Plant, TallPlant, Floor, HangingLight, Pillar, ServerRack, Whiteboard, GlassPanel, Rug } from '../Props'
 

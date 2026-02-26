@@ -93,7 +93,7 @@ describe('VisionSystem', () => {
     for (const cell of cells) {
       const dx = cell.x - 10
       const dz = cell.z - 10
-      const dist = Math.sqrt(dx * dx + dz * dz)
+      const dist = Math.hypot(dx, dz)
       expect(dist).toBeLessThanOrEqual(6) // range + 1 for rounding
     }
   })

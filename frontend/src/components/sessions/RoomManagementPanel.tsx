@@ -46,9 +46,7 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
     if (!dialog) return
     if (showCreateDialog) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [showCreateDialog])
 
   // Sync delete dialog
@@ -57,9 +55,7 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
     if (!dialog) return
     if (deleteConfirm) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [deleteConfirm])
 
   const generateRoomId = (name: string) => {

@@ -48,7 +48,7 @@ class SSEManager {
     this.subscriptions.get(eventType)!.add(handler)
 
     // Register dispatcher on EventSource if already connected
-    if (this.eventSource && this.eventSource.readyState === EventSource.OPEN) {
+    if (this.eventSource?.readyState === EventSource.OPEN) {
       this.ensureEventDispatcher(eventType)
     }
 

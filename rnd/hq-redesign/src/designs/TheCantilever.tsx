@@ -21,7 +21,7 @@ function CrossBrace({ p1, p2, color = '#667788' }: { p1: [number, number, number
   const len = Math.sqrt(dx * dx + dy * dy + dz * dz)
   const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2, mz = (p1[2] + p2[2]) / 2
   const rotZ = -Math.atan2(dx, dy)
-  const rotX = Math.atan2(dz, Math.sqrt(dx * dx + dy * dy))
+  const rotX = Math.atan2(dz, Math.hypot(dx, dy))
   return (
     <mesh position={[mx, my, mz]} rotation={[rotX, 0, rotZ]}>
       <boxGeometry args={[0.08, len, 0.08]} />

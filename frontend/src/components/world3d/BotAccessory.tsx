@@ -157,7 +157,7 @@ function SignalAntenna({ color }: { color: string }) {
     // Pulse the signal waves
     wavesRef.current.children.forEach((child, i) => {
       const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial
-      if (mat && mat.opacity !== undefined) {
+      if (mat?.opacity !== undefined) {
         mat.opacity = 0.3 + Math.sin(t * 3 + i * 1.2) * 0.3
       }
     })

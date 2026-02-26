@@ -199,6 +199,7 @@ function AddAgentModal({
           >
             <div>
               <label
+                htmlFor="agent-icon"
                 style={{
                   display: 'block',
                   fontSize: '0.75em',
@@ -210,6 +211,7 @@ function AddAgentModal({
                 Icon
               </label>
               <Input
+                id="agent-icon"
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
                 className="w-16 text-center text-xl"
@@ -219,6 +221,7 @@ function AddAgentModal({
             </div>
             <div>
               <label
+                htmlFor="agent-color"
                 style={{
                   display: 'block',
                   fontSize: '0.75em',
@@ -231,6 +234,7 @@ function AddAgentModal({
               </label>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input
+                  id="agent-color"
                   type="color"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
@@ -257,6 +261,7 @@ function AddAgentModal({
           {/* Name */}
           <div style={{ marginBottom: '12px' }}>
             <label
+              htmlFor="agent-name"
               style={{
                 display: 'block',
                 fontSize: '0.75em',
@@ -268,6 +273,7 @@ function AddAgentModal({
               Name *
             </label>
             <Input
+              id="agent-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My Agent"
@@ -278,6 +284,7 @@ function AddAgentModal({
           {/* Agent ID / slug */}
           <div style={{ marginBottom: '12px' }}>
             <label
+              htmlFor="agent-id"
               style={{
                 display: 'block',
                 fontSize: '0.75em',
@@ -289,6 +296,7 @@ function AddAgentModal({
               Agent ID (slug) *
             </label>
             <Input
+              id="agent-id"
               value={agentId}
               onChange={(e) => {
                 setAgentId(e.target.value)
@@ -303,6 +311,7 @@ function AddAgentModal({
           {/* Room */}
           <div style={{ marginBottom: '12px' }}>
             <label
+              htmlFor="agent-room"
               style={{
                 display: 'block',
                 fontSize: '0.75em',
@@ -314,6 +323,7 @@ function AddAgentModal({
               Default Room
             </label>
             <select
+              id="agent-room"
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
               style={{
@@ -340,6 +350,7 @@ function AddAgentModal({
           {/* Bio */}
           <div style={{ marginBottom: '20px' }}>
             <label
+              htmlFor="agent-bio"
               style={{
                 display: 'block',
                 fontSize: '0.75em',
@@ -351,6 +362,7 @@ function AddAgentModal({
               Bio (optional)
             </label>
             <textarea
+              id="agent-bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               style={{

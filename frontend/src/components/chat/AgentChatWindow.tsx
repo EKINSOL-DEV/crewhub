@@ -176,8 +176,8 @@ export function AgentChatWindow({
   ) => {
     setIsResizing(false)
     updateSize(sessionKey, {
-      width: parseInt(ref.style.width),
-      height: parseInt(ref.style.height),
+      width: Number.parseInt(ref.style.width),
+      height: Number.parseInt(ref.style.height),
     })
     updatePosition(sessionKey, pos)
   }

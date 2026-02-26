@@ -87,14 +87,13 @@ export function DocumentSelectorModal({
           {loading && (
             <div className="text-sm text-muted-foreground p-4 text-center">Loading files...</div>
           )}
-          {!loading && tree && tree.length === 0 && (
+          {!loading && tree?.length === 0 && (
             <div className="text-sm text-muted-foreground p-4 text-center">
               {warning || 'No markdown files found'}
             </div>
           )}
           {!loading &&
-            tree &&
-            tree.map((node, i) => (
+            tree?.map((node, i) => (
               <FolderTreeNode
                 key={node.path || node.name + i}
                 node={node}

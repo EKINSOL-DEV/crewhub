@@ -169,7 +169,7 @@ export function ProjectPicker({
       })
 
       setIsCreating(false)
-      if (result && result.success && result.project) {
+      if (result?.success && result.project) {
         onSelect(result.project.id)
       } else if (result) {
         setCreateError(

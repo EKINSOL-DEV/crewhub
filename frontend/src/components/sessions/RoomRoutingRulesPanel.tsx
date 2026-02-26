@@ -83,9 +83,7 @@ export function RoomRoutingRulesPanel({
     if (!dialog) return
     if (showCreateDialog) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [showCreateDialog])
 
   // Sync preview dialog
@@ -94,9 +92,7 @@ export function RoomRoutingRulesPanel({
     if (!dialog) return
     if (showPreviewDialog) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [showPreviewDialog])
 
   // Sync delete dialog
@@ -105,9 +101,7 @@ export function RoomRoutingRulesPanel({
     if (!dialog) return
     if (deleteConfirm) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [deleteConfirm])
 
   const handleCreateRule = async () => {
@@ -459,7 +453,9 @@ export function RoomRoutingRulesPanel({
                   max="100"
                   step="5"
                   value={newRule.priority}
-                  onChange={(e) => setNewRule({ ...newRule, priority: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, priority: Number.parseInt(e.target.value) })
+                  }
                   className="flex-1"
                 />
                 <span className="text-sm text-muted-foreground w-12 text-right">

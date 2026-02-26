@@ -176,7 +176,7 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
     // Ctrl+1-9 - Focus panel by index
     if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key >= '1' && e.key <= '9') {
       e.preventDefault()
-      const index = parseInt(e.key) - 1
+      const index = Number.parseInt(e.key) - 1
       a.onFocusPanelByIndex?.(index)
       return
     }

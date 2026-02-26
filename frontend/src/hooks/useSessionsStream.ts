@@ -230,22 +230,20 @@ export function useSessionsStream(enabled: boolean = true) {
           // Don't show "reconnecting" on initial connection attempt
           reconnecting: !isInitial,
         }))
-      } else {
+      } else if (isInitial) {
         // disconnected
-        if (isInitial) {
-          // Initial mount: SSE hasn't started yet. Don't start polling —
-          // we do a single fetch below, and SSE will connect shortly.
-          // This prevents the double-fetch that caused the re-render flash.
-        } else {
-          // Actual disconnection after being connected — fall back to polling
-          setState((prev) => ({
-            ...prev,
-            connected: false,
-            connectionMethod: 'polling',
-            reconnecting: true,
-          }))
-          startPolling()
-        }
+        // Initial mount: SSE hasn't started yet. Don't start polling —
+        // we do a single fetch below, and SSE will connect shortly.
+        // This prevents the double-fetch that caused the re-render flash.
+      } else {
+        // Actual disconnection after being connected — fall back to polling
+        setState((prev) => ({
+          ...prev,
+          connected: false,
+          connectionMethod: 'polling',
+          reconnecting: true,
+        }))
+        startPolling()
       }
     })
 

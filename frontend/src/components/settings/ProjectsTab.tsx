@@ -60,9 +60,7 @@ function ProjectsSettingsSection({
     if (!dialog) return
     if (deleteConfirm) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [deleteConfirm])
 
   const sortedProjects = [...projects].sort((a, b) => {

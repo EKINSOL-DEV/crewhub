@@ -1,4 +1,3 @@
-import * as THREE from 'three'
 import { Wall } from '../WallSystem'
 import { Workstation, MeetingTable, Sofa, CoffeeTable, Plant, TallPlant, Floor, HangingLight, Pillar, ServerRack, Whiteboard, GlassPanel, Rug } from '../Props'
 
@@ -21,7 +20,7 @@ function SkyBridge({ from, to, height, width = 1.5 }: {
   from: [number, number, number], to: [number, number, number], height: number, width?: number
 }) {
   const dx = to[0] - from[0], dz = to[2] - from[2]
-  const len = Math.sqrt(dx * dx + dz * dz)
+  const len = Math.hypot(dx, dz)
   const mx = (from[0] + to[0]) / 2, mz = (from[2] + to[2]) / 2
   const angle = Math.atan2(dz, dx)
 

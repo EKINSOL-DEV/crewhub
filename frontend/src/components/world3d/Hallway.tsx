@@ -41,7 +41,7 @@ export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
 
       const dx = rx - cx
       const dz = rz - cz
-      const length = Math.sqrt(dx * dx + dz * dz)
+      const length = Math.hypot(dx, dz)
       const angle = Math.atan2(dx, dz)
 
       return { key: `path-${i}`, mx, mz, length, angle }
@@ -57,7 +57,7 @@ export function Hallway({ roomPositions, hallwayWidth }: HallwayProps) {
       const mz = (center.position[2] + rp.position[2]) / 2
       const dx = rp.position[0] - center.position[0]
       const dz = rp.position[2] - center.position[2]
-      const len = Math.sqrt(dx * dx + dz * dz) || 1
+      const len = Math.hypot(dx, dz) || 1
       const nx = -dz / len
       const nz = dx / len
       items.push({

@@ -36,14 +36,14 @@ function parseActionItem(line: string, index: number): ParsedActionItem {
   let text = line.replace(/^- \[[ xX]\]\s*/, '')
 
   let assignee: string | undefined
-  const assigneeMatch = text.match(/^@(\S+):\s*/)
+  const assigneeMatch = /^@(\S+):\s*/.exec(text)
   if (assigneeMatch) {
     assignee = assigneeMatch[1]
     text = text.slice(assigneeMatch[0].length)
   }
 
   let priority: 'high' | 'medium' | 'low' = 'medium'
-  const priorityMatch = text.match(/\[priority:\s*(high|medium|low)\]\s*$/)
+  const priorityMatch = /\[priority:\s*(high|medium|low)\]\s*$/.exec(text)
   if (priorityMatch) {
     priority = priorityMatch[1] as 'high' | 'medium' | 'low'
     text = text.slice(0, -priorityMatch[0].length).trim()
@@ -100,7 +100,7 @@ export function parseMeetingOutput(md: string): ParsedMeetingOutput {
       }
     } else if (lower.includes('action item') || lower.includes('next step')) {
       content.split('\n').forEach((line) => {
-        if (line.trim().match(/^- \[[ xX]\]/)) {
+        if (/^- \[[ xX]\]/.exec(line.trim())) {
           result.actionItems.push(parseActionItem(line.trim(), actionItemIndex++))
         }
       })

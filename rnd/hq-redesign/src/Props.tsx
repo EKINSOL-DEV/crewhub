@@ -1,6 +1,4 @@
 import * as THREE from 'three'
-import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
 
 // ═══════════════════════════════════════════════
 // HIGH-QUALITY INTERIOR PROPS
@@ -286,7 +284,7 @@ export function Stairs({ position = [0, 0, 0] as [number, number, number], rotat
       ))}
       {/* Railing */}
       <mesh position={[width / 2 + 0.03, height / 2 + 0.4, steps * stepD / 2]} rotation={[Math.atan2(height, steps * stepD), 0, 0]}>
-        <cylinderGeometry args={[0.02, 0.02, Math.sqrt(height * height + (steps * stepD) ** 2), 6]} />
+        <cylinderGeometry args={[0.02, 0.02, Math.hypot(height, steps * stepD), 6]} />
         <meshStandardMaterial color="#888" metalness={0.9} roughness={0.1} />
       </mesh>
     </group>

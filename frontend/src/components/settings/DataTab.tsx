@@ -167,9 +167,7 @@ function BackupSection() {
     if (!dialog) return
     if (showImportConfirm) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [showImportConfirm])
 
   const loadBackups = useCallback(async () => {

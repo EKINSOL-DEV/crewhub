@@ -203,9 +203,7 @@ function ConnectionDialog({ open, onOpenChange, connection, onSave }: Connection
     if (!dialog) return
     if (open) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [open])
 
   useEffect(() => {

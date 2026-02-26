@@ -228,12 +228,10 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         if (!dialog.open) {
           dialog.showModal()
         }
-      } else {
-        if (dialog.open) {
-          dialog.close()
-          // Return focus to trigger
-          triggerRef.current?.focus()
-        }
+      } else if (dialog.open) {
+        dialog.close()
+        // Return focus to trigger
+        triggerRef.current?.focus()
       }
     }, [open, triggerRef])
 

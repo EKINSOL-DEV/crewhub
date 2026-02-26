@@ -84,7 +84,7 @@ function formatSchedule(schedule: Schedule): string {
       // Common patterns
       if (expr === '* * * * *') return 'Every minute'
       if (minute.startsWith('*/')) {
-        const n = parseInt(minute.slice(2), 10)
+        const n = Number.parseInt(minute.slice(2), 10)
         if (hour === '*') return `Every ${n} min`
       }
       if (minute === '0' && hour === '*') return 'Every hour'
@@ -94,7 +94,7 @@ function formatSchedule(schedule: Schedule): string {
       }
       if (minute !== '*' && hour !== '*' && dayOfWeek !== '*') {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-        const dayName = days[parseInt(dayOfWeek, 10)] ?? dayOfWeek
+        const dayName = days[Number.parseInt(dayOfWeek, 10)] ?? dayOfWeek
         return `${dayName} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
       }
 

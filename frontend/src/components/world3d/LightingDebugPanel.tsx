@@ -422,7 +422,7 @@ export function LightingDebugPanel() {
               <span className="text-[10px] text-gray-400 w-14 shrink-0">Map Size</span>
               <select
                 value={config.shadows.mapSize}
-                onChange={(e) => setShadows({ mapSize: parseInt(e.target.value, 10) })}
+                onChange={(e) => setShadows({ mapSize: Number.parseInt(e.target.value, 10) })}
                 className="flex-1 bg-gray-800 text-gray-200 text-[10px] rounded px-1.5 py-1 border border-gray-600"
               >
                 {SHADOW_MAP_SIZES.map((size) => (

@@ -137,7 +137,7 @@ export function FullscreenOverlay({
     // Block camera-controls' document-level pointermove/pointerup listeners
     const overlayEl = document.querySelector('[data-fullscreen-overlay]') as HTMLElement | null
     const blockIfOutsideOverlay = (e: Event) => {
-      if (overlayEl && overlayEl.contains(e.target as Node)) return
+      if (overlayEl?.contains(e.target as Node)) return
       e.stopPropagation()
     }
     document.addEventListener('pointermove', blockIfOutsideOverlay, { capture: true })
