@@ -48,7 +48,8 @@ function sortNodes(nodes: DocNode[], sortKey: SortKey): DocNode[] {
 
 // ── Tree Node ─────────────────────────────────────────────────────
 
-function DocTreeNode({ // NOSONAR
+function DocTreeNode({
+  // NOSONAR
   // NOSONAR: complexity from docs panel with filtering and rendering branches
   node,
   depth,
@@ -97,8 +98,12 @@ function DocTreeNode({ // NOSONAR
           if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
         }}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (isDir) setExpanded((prev) => !prev)
-          else onOpen(node.path) } }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            if (isDir) setExpanded((prev) => !prev)
+            else onOpen(node.path)
+          }
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -299,34 +304,46 @@ export function ZenDocsPanel() {
 
       {/* Tree */}
       <div style={{ flex: 1, overflow: 'auto', padding: '4px 0' }}>
-        {loading ? (
-          <div
-            style={{
-              padding: 24,
-              textAlign: 'center',
-              fontSize: 12,
-              color: VAR_ZEN_FG_DIM,
-            }}
-          >
-            Loading…
-          </div>
-        ) : error && !fullscreenOpen ? (
-          <div style={{ padding: 16, color: 'var(--zen-error, #ef4444)', fontSize: 13 }}>
-            {error}
-          </div>
-        ) : sorted.length === 0 ? (
-          <div
-            style={{
-              padding: 24,
-              textAlign: 'center',
-              fontSize: 12,
-              color: VAR_ZEN_FG_DIM,
-            }}
-          >
-            No documents found
-          </div>
-        ) : (
-          sorted.map((node) => (
+        {(() => {
+          if (loading) {
+            return (
+              <div
+                style={{
+                  padding: 24,
+                  textAlign: 'center',
+                  fontSize: 12,
+                  color: VAR_ZEN_FG_DIM,
+                }}
+              >
+                Loading…
+              </div>
+            )
+          }
+
+          if (error && !fullscreenOpen) {
+            return (
+              <div style={{ padding: 16, color: 'var(--zen-error, #ef4444)', fontSize: 13 }}>
+                {error}
+              </div>
+            )
+          }
+
+          if (sorted.length === 0) {
+            return (
+              <div
+                style={{
+                  padding: 24,
+                  textAlign: 'center',
+                  fontSize: 12,
+                  color: VAR_ZEN_FG_DIM,
+                }}
+              >
+                No documents found
+              </div>
+            )
+          }
+
+          return sorted.map((node) => (
             <DocTreeNode
               key={node.path}
               node={node}
@@ -336,7 +353,7 @@ export function ZenDocsPanel() {
               searchQuery={searchQuery}
             />
           ))
-        )}
+        })()}
       </div>
 
       {/* Fullscreen overlay */}

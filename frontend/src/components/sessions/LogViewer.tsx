@@ -23,7 +23,8 @@ interface LogViewerProps {
  * with @radix-ui/react-compose-refs (infinite update loops).
  * See: https://github.com/radix-ui/primitives/issues/3799
  */
-export function LogViewer({ session, open, onOpenChange }: LogViewerProps) { // NOSONAR
+export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
+  // NOSONAR
   // NOSONAR: complexity from log viewer with multiple message format handlers
   const [messages, setMessages] = useState<MinionMessage[]>([])
   const [loading, setLoading] = useState(false)
@@ -174,7 +175,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) { // 
       <div
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"  // NOSONAR: decorative/overlay element; presentation role is appropriate here
+        role="presentation" // NOSONAR: decorative/overlay element; presentation role is appropriate here
         className="relative w-[calc(100vw-2rem)] sm:max-w-4xl h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col border bg-background shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95 duration-200"
       >
         {/* Close button */}
@@ -297,82 +298,98 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) { // 
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto px-6 py-4"
         >
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center h-full gap-3">
-              <p className="text-sm text-muted-foreground">{error}</p>
-              <Button size="sm" onClick={() => fetchMessages()}>
-                Retry
-              </Button>
-            </div>
-          ) : filteredMessages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                {searchQuery || roleFilter !== 'all'
-                  ? 'No messages match your filters'
-                  : 'No messages yet'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {Array.from(filteredMessages.entries()).map(([idx, msg]) => (
-                <div
-                  key={`msg-${idx}`}
-                  className={cn(
-                    'p-3 rounded-lg',
-                    (() => {
-                      if (msg.role === 'user') return 'bg-blue-50 dark:bg-blue-950'
-                      if (msg.role === 'system') return 'bg-gray-50 dark:bg-gray-950'
-                      return 'bg-green-50 dark:bg-green-950'
-                    })()
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-                    <span className="font-semibold">{msg.role}</span>
-                    {msg.timestamp && <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>}
-                    {msg.usage && (
-                      <span className="ml-auto">
-                        {msg.usage.totalTokens} tokens · ${msg.usage.cost?.total.toFixed(4)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm whitespace-pre-wrap">
-                    {msg.content?.map((block, bidx) => (
-                      <div key={`block-${block.type}-${bidx}`}>
-                        {block.type === 'text' && block.text && <span>{block.text}</span>}
-                        {block.type === 'thinking' && block.thinking && (
-                          <div className="text-purple-600 dark:text-purple-400 italic">
-                            💭 {block.thinking}
-                          </div>
-                        )}
-                        {(block.type === 'tool_use' || block.type === 'toolCall') && (
-                          <div className="text-amber-600 dark:text-amber-400">🔧 {block.name}</div>
-                        )}
-                        {block.type === 'tool_result' && (
-                          <div className="text-gray-500">✓ Result</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+          {(() => {
+            if (loading) {
+              return (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-              ))}
-              <div className="flex items-center justify-center py-2 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
+              )
+            }
+
+            if (error) {
+              return (
+                <div className="flex flex-col items-center justify-center h-full gap-3">
+                  <p className="text-sm text-muted-foreground">{error}</p>
+                  <Button size="sm" onClick={() => fetchMessages()}>
+                    Retry
+                  </Button>
+                </div>
+              )
+            }
+
+            if (filteredMessages.length === 0) {
+              return (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    {searchQuery || roleFilter !== 'all'
+                      ? 'No messages match your filters'
+                      : 'No messages yet'}
+                  </p>
+                </div>
+              )
+            }
+
+            return (
+              <div className="space-y-4">
+                {Array.from(filteredMessages.entries()).map(([idx, msg]) => (
                   <div
+                    key={`msg-${idx}`}
                     className={cn(
-                      'w-2 h-2 rounded-full',
-                      isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'
+                      'p-3 rounded-lg',
+                      (() => {
+                        if (msg.role === 'user') return 'bg-blue-50 dark:bg-blue-950'
+                        if (msg.role === 'system') return 'bg-gray-50 dark:bg-gray-950'
+                        return 'bg-green-50 dark:bg-green-950'
+                      })()
                     )}
-                  />
-                  <span>Live - auto-refreshing every 3s</span>
+                  >
+                    <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+                      <span className="font-semibold">{msg.role}</span>
+                      {msg.timestamp && <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>}
+                      {msg.usage && (
+                        <span className="ml-auto">
+                          {msg.usage.totalTokens} tokens · ${msg.usage.cost?.total.toFixed(4)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm whitespace-pre-wrap">
+                      {msg.content?.map((block, bidx) => (
+                        <div key={`block-${block.type}-${bidx}`}>
+                          {block.type === 'text' && block.text && <span>{block.text}</span>}
+                          {block.type === 'thinking' && block.thinking && (
+                            <div className="text-purple-600 dark:text-purple-400 italic">
+                              💭 {block.thinking}
+                            </div>
+                          )}
+                          {(block.type === 'tool_use' || block.type === 'toolCall') && (
+                            <div className="text-amber-600 dark:text-amber-400">
+                              🔧 {block.name}
+                            </div>
+                          )}
+                          {block.type === 'tool_result' && (
+                            <div className="text-gray-500">✓ Result</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div className="flex items-center justify-center py-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={cn(
+                        'w-2 h-2 rounded-full',
+                        isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'
+                      )}
+                    />
+                    <span>Live - auto-refreshing every 3s</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* Footer */}

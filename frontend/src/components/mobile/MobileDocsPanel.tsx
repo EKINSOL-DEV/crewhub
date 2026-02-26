@@ -56,7 +56,8 @@ function countFiles(nodes: DocNode[]): number {
 
 // ── Tree Node (mobile optimized) ──────────────────────────────────
 
-function MobileDocTreeNode({ // NOSONAR
+function MobileDocTreeNode({
+  // NOSONAR
   // NOSONAR: complexity from docs panel with filtering and rendering branches
   node,
   depth,
@@ -99,8 +100,12 @@ function MobileDocTreeNode({ // NOSONAR
           if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
         }}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (isDir) setExpanded((prev) => !prev)
-          else onOpen(node.path) } }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            if (isDir) setExpanded((prev) => !prev)
+            else onOpen(node.path)
+          }
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -319,18 +324,28 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
 
       {/* Tree */}
       <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', fontSize: 14, color: '#64748b' }}>
-            Loading…
-          </div>
-        ) : error && !fullscreenOpen ? (
-          <div style={{ padding: 20, color: '#ef4444', fontSize: 14 }}>{error}</div>
-        ) : sorted.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', fontSize: 14, color: '#64748b' }}>
-            No documents found
-          </div>
-        ) : (
-          sorted.map((node) => (
+        {(() => {
+          if (loading) {
+            return (
+              <div style={{ padding: 40, textAlign: 'center', fontSize: 14, color: '#64748b' }}>
+                Loading…
+              </div>
+            )
+          }
+
+          if (error && !fullscreenOpen) {
+            return <div style={{ padding: 20, color: '#ef4444', fontSize: 14 }}>{error}</div>
+          }
+
+          if (sorted.length === 0) {
+            return (
+              <div style={{ padding: 40, textAlign: 'center', fontSize: 14, color: '#64748b' }}>
+                No documents found
+              </div>
+            )
+          }
+
+          return sorted.map((node) => (
             <MobileDocTreeNode
               key={node.path}
               node={node}
@@ -340,7 +355,7 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
               searchQuery={searchQuery}
             />
           ))
-        )}
+        })()}
       </div>
 
       {/* Fullscreen overlay for viewing docs */}
