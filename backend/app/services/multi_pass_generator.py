@@ -80,7 +80,7 @@ class MultiPassGenerator:
         self,
         description: str,
         base_code: str,
-        ai_generate_fn=None,
+        _ai_generate_fn=None,
     ) -> tuple[str, list[str]]:
         """
         Run multi-pass enhancement on generated prop code.

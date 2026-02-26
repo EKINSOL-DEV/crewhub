@@ -477,7 +477,7 @@ async def _generate_default_keys(db):
     _write_api_keys_json(admin_raw, self_raw)
 
 
-def _ensure_key_files(db):
+def _ensure_key_files(_db):
     """Ensure key files exist. If not, we can't recover raw keys — log warning."""
     agent_json = DB_DIR / "agent.json"
     api_keys_json = DB_DIR / "api-keys.json"

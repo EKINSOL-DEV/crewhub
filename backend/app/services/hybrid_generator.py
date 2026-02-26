@@ -80,7 +80,7 @@ def build_hybrid_prompt(
     description: str,
     component_name: str,
     template_code: Optional[str] = None,
-    template_name: Optional[str] = None,
+    _template_name: Optional[str] = None,
 ) -> str:
     """Build the AI prompt for hybrid generation."""
 

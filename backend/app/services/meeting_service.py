@@ -492,7 +492,7 @@ async def load_document(
     document_path: str,
     project_id: Optional[str],
     meeting_id: str,
-    document_context: Optional[str] = None,
+    _document_context: Optional[str] = None,
 ) -> Optional[str]:
     """
     Load a document from the project folder for meeting context.

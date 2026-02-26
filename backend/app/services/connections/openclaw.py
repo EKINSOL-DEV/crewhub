@@ -251,7 +251,7 @@ class OpenClawConnection(
 
         self._reconnect_task = asyncio.create_task(_reconnect())
 
-    def _handle_session_event(self, event_name: str, payload: dict) -> None:
+    def _handle_session_event(self, _event_name: str, payload: dict) -> None:
         try:
             session_data = payload.get("session", payload)
             if isinstance(session_data, dict):

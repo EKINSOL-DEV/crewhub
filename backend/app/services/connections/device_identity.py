@@ -473,9 +473,9 @@ class DeviceIdentityManager:
 
     def pair_device(
         self,
-        identity: "DeviceIdentity",
-        ws_connection,
-        timeout: float = 30.0,
+        _identity: "DeviceIdentity",
+        _ws_connection,
+        _timeout: float = 30.0,
     ) -> bool:
         """
         DEPRECATED: The `devices.pair` WebSocket method does not exist in the

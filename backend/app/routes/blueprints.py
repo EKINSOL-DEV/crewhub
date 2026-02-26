@@ -615,7 +615,7 @@ async def _load_blueprint(blueprint_id: str) -> tuple[dict, Optional[dict], str]
     return bp_json, None, "file"
 
 
-async def _save_blueprint(blueprint_id: str, bp_json: dict, db_row: Optional[dict], source: str) -> None:
+async def _save_blueprint(blueprint_id: str, bp_json: dict, _db_row: Optional[dict], source: str) -> None:
     """Save a blueprint back to its source (db or file)."""
     if source == "db":
         now = int(time.time() * 1000)

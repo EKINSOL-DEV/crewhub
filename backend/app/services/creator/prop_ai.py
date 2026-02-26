@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 async def generate_prop_via_ai(
     prompt: str,
     name: str,
-    model: str,
+    _model: str,
 ) -> tuple[Optional[str], list[dict], str]:
     """Try to generate prop code via the OpenClaw AI connection.
 
