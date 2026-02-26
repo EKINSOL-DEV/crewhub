@@ -125,6 +125,44 @@ def _get_file_type(path: Path) -> str:
     return "code"
 
 
+def _scan_project_dir(dir_path: Path, base: Path, current_depth: int, max_depth: int) -> list:
+    """Recursively scan a directory up to max_depth, returning a file/dir tree."""
+    items = []
+    try:
+        entries = sorted(dir_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+    except PermissionError:
+        return items
+
+    for entry in entries:
+        if entry.name.startswith(".") and entry.name not in {".env.example", ".gitignore"}:
+            continue
+        if entry.is_dir() and entry.name in SKIP_DIRS:
+            continue
+        rel = entry.relative_to(base)
+        if entry.is_dir():
+            children = _scan_project_dir(entry, base, current_depth + 1, max_depth) if current_depth < max_depth else []
+            items.append({
+                "name": entry.name,
+                "path": str(rel),
+                "type": "directory",
+                "children": children,
+                "child_count": len(children),
+            })
+        elif entry.suffix.lower() in ALLOWED_EXTENSIONS:
+            try:
+                size = entry.stat().st_size
+            except OSError:
+                size = 0
+            items.append({
+                "name": entry.name,
+                "path": str(rel),
+                "type": _get_file_type(entry),
+                "extension": entry.suffix.lower(),
+                "size": size,
+            })
+    return items
+
+
 async def _get_project_folder(project_id: str) -> str:
     """Get the folder_path for a project from DB."""
     async with get_db() as db:
@@ -156,51 +194,7 @@ async def list_project_files(
     if not target.is_dir():
         raise HTTPException(status_code=400, detail="Path is not a directory")
 
-    def scan_dir(dir_path: Path, current_depth: int) -> list:
-        items = []
-        try:
-            entries = sorted(dir_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
-        except PermissionError:
-            return items
-
-        for entry in entries:
-            # Skip hidden files and excluded directories
-            if entry.name.startswith(".") and entry.name not in {".env.example", ".gitignore"}:
-                continue
-            if entry.is_dir() and entry.name in SKIP_DIRS:
-                continue
-
-            rel = entry.relative_to(base)
-
-            if entry.is_dir():
-                children = scan_dir(entry, current_depth + 1) if current_depth < depth else []
-                items.append(
-                    {
-                        "name": entry.name,
-                        "path": str(rel),
-                        "type": "directory",
-                        "children": children,
-                        "child_count": len(children),
-                    }
-                )
-            elif entry.suffix.lower() in ALLOWED_EXTENSIONS:
-                try:
-                    size = entry.stat().st_size
-                except OSError:
-                    size = 0
-                items.append(
-                    {
-                        "name": entry.name,
-                        "path": str(rel),
-                        "type": _get_file_type(entry),
-                        "extension": entry.suffix.lower(),
-                        "size": size,
-                    }
-                )
-
-        return items
-
-    files = scan_dir(target, 1)
+    files = _scan_project_dir(target, base, 1, depth)
 
     return {
         "project_id": project_id,
@@ -295,6 +289,24 @@ DEFAULT_PROJECTS_BASE_PATH = "~/Projects"
 discover_router = APIRouter()
 
 
+def _analyze_project_folder(entry: Path) -> dict:
+    """Count relevant files and detect standard markers in a project folder."""
+    file_count = 0
+    has_readme = False
+    has_docs = False
+    try:
+        for child in entry.iterdir():
+            if child.is_file() and child.suffix.lower() in ALLOWED_EXTENSIONS:
+                file_count += 1
+            if child.name.lower() in ("readme.md", "readme.txt"):
+                has_readme = True
+            if child.name.lower() == "docs" and child.is_dir():
+                has_docs = True
+    except PermissionError:
+        pass
+    return {"file_count": file_count, "has_readme": has_readme, "has_docs": has_docs}
+
+
 async def _get_projects_base_path() -> str:
     """Get the configured projects base path from settings, with fallback to default."""
     try:
@@ -328,31 +340,13 @@ async def discover_project_folders():
     try:
         for entry in sorted(resolved_base.iterdir()):
             if entry.is_dir() and not entry.name.startswith("."):
-                # Count files inside
-                file_count = 0
-                has_readme = False
-                has_docs = False
-                try:
-                    for child in entry.iterdir():
-                        if child.is_file() and child.suffix.lower() in ALLOWED_EXTENSIONS:
-                            file_count += 1
-                        if child.name.lower() in ("readme.md", "readme.txt"):
-                            has_readme = True
-                        if child.name.lower() == "docs" and child.is_dir():
-                            has_docs = True
-                except PermissionError:
-                    pass
-
-                folders.append(
-                    {
-                        "name": entry.name,
-                        "path": f"{base_path_str}/{entry.name}",
-                        "resolved_path": str(entry),
-                        "file_count": file_count,
-                        "has_readme": has_readme,
-                        "has_docs": has_docs,
-                    }
-                )
+                info = _analyze_project_folder(entry)
+                folders.append({
+                    "name": entry.name,
+                    "path": f"{base_path_str}/{entry.name}",
+                    "resolved_path": str(entry),
+                    **info,
+                })
     except PermissionError:
         pass
 

@@ -286,6 +286,39 @@ async def create_connection(data: ConnectionCreate):
     return _db_to_response(db_conn, manager)
 
 
+async def _apply_connection_state_change(manager, connection_id: str, db_conn: dict, data) -> None:
+    """Apply enable/disable or config-change side-effects to the connection manager."""
+    if data.enabled is not None:
+        existing_conn = manager.get_connection(connection_id)
+        if data.enabled and not existing_conn:
+            try:
+                await manager.add_connection(
+                    connection_id=db_conn["id"],
+                    connection_type=db_conn["type"],
+                    config=db_conn["config"],
+                    name=db_conn["name"],
+                    auto_connect=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to enable connection: {e}")
+        elif not data.enabled and existing_conn:
+            await manager.remove_connection(connection_id)
+    elif data.config is not None:
+        existing_conn = manager.get_connection(connection_id)
+        if existing_conn and existing_conn.is_connected():
+            await manager.remove_connection(connection_id)
+            try:
+                await manager.add_connection(
+                    connection_id=db_conn["id"],
+                    connection_type=db_conn["type"],
+                    config=db_conn["config"],
+                    name=db_conn["name"],
+                    auto_connect=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to reconnect with new config: {e}")
+
+
 @router.patch("/{connection_id}", response_model=ConnectionResponse)
 async def update_connection(connection_id: str, data: ConnectionUpdate):
     """
@@ -302,43 +335,7 @@ async def update_connection(connection_id: str, data: ConnectionUpdate):
 
     manager = await get_connection_manager()
 
-    # Handle enable/disable
-    if data.enabled is not None:
-        existing_conn = manager.get_connection(connection_id)
-
-        if data.enabled and not existing_conn:
-            # Enable: add to manager
-            try:
-                await manager.add_connection(
-                    connection_id=db_conn["id"],
-                    connection_type=db_conn["type"],
-                    config=db_conn["config"],
-                    name=db_conn["name"],
-                    auto_connect=True,
-                )
-            except Exception as e:
-                logger.error(f"Failed to enable connection: {e}")
-        elif not data.enabled and existing_conn:
-            # Disable: remove from manager
-            await manager.remove_connection(connection_id)
-
-    # Handle config change (requires reconnect)
-    elif data.config is not None:
-        existing_conn = manager.get_connection(connection_id)
-        if existing_conn and existing_conn.is_connected():
-            # Reconnect with new config
-            await manager.remove_connection(connection_id)
-            try:
-                await manager.add_connection(
-                    connection_id=db_conn["id"],
-                    connection_type=db_conn["type"],
-                    config=db_conn["config"],
-                    name=db_conn["name"],
-                    auto_connect=True,
-                )
-            except Exception as e:
-                logger.error(f"Failed to reconnect with new config: {e}")
-
+    await _apply_connection_state_change(manager, connection_id, db_conn, data)
     return _db_to_response(db_conn, manager)
 
 

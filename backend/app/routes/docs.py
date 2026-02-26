@@ -108,6 +108,16 @@ async def get_doc_content(path: Annotated[str, Query(..., description="Relative 
     )
 
 
+def _extract_doc_snippet(content: str, query: str) -> str:
+    """Extract a text snippet around the first match of query in content."""
+    idx = content.lower().find(query)
+    if idx == -1:
+        return ""
+    start = max(0, idx - 80)
+    end = min(len(content), idx + len(query) + 80)
+    return ("..." if start > 0 else "") + content[start:end] + ("..." if end < len(content) else "")
+
+
 @router.get("/search")
 async def search_docs(q: Annotated[str, Query(..., min_length=2, description="Search query")]):
     """Search through docs content and filenames."""
@@ -128,22 +138,12 @@ async def search_docs(q: Annotated[str, Query(..., min_length=2, description="Se
             continue
 
         if name_match or content_match:
-            # Extract a snippet around the match
-            snippet = ""
-            if content_match:
-                idx = content.lower().find(query)
-                start = max(0, idx - 80)
-                end = min(len(content), idx + len(query) + 80)
-                snippet = ("..." if start > 0 else "") + content[start:end] + ("..." if end < len(content) else "")
-
-            results.append(
-                {
-                    "path": rel_path,
-                    "name": md_file.name,
-                    "nameMatch": name_match,
-                    "snippet": snippet,
-                }
-            )
+            results.append({
+                "path": rel_path,
+                "name": md_file.name,
+                "nameMatch": name_match,
+                "snippet": _extract_doc_snippet(content, query) if content_match else "",
+            })
 
         if len(results) >= 30:
             break

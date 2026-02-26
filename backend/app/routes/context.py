@@ -61,6 +61,116 @@ class SessionContextResponse(BaseModel):
     recent_history: list[HistoryEvent] = []
 
 
+# ── Helpers ─────────────────────────────────────────────────────
+
+
+async def _resolve_session_room_id(db, session_key: str) -> Optional[str]:
+    """Resolve a room_id for a session key via assignment table or agent default."""
+    async with db.execute(
+        "SELECT room_id FROM session_room_assignments WHERE session_key = ?", (session_key,)
+    ) as cursor:
+        row = await cursor.fetchone()
+        if row:
+            return row["room_id"]
+
+    async with db.execute(
+        "SELECT default_room_id FROM agents WHERE agent_session_key = ?", (session_key,)
+    ) as cursor:
+        row = await cursor.fetchone()
+        if row and row.get("default_room_id"):
+            return row["default_room_id"]
+
+    return None
+
+
+def _row_to_task_summary(row) -> TaskSummary:
+    return TaskSummary(
+        id=row["id"],
+        title=row["title"],
+        status=row["status"],
+        priority=row["priority"],
+        assigned_session_key=row.get("assigned_session_key"),
+    )
+
+
+async def _fetch_project_context(db, project_id: str, session_key: str) -> tuple:
+    """Fetch project details, tasks, and recent history for a project."""
+    async with db.execute(
+        "SELECT id, name, description, folder_path, status FROM projects WHERE id = ?", (project_id,)
+    ) as cursor:
+        proj_row = await cursor.fetchone()
+
+    project = None
+    if proj_row:
+        project = ProjectContext(
+            id=proj_row["id"],
+            name=proj_row["name"],
+            description=proj_row.get("description"),
+            folder_path=proj_row.get("folder_path"),
+            status=proj_row.get("status", "active"),
+        )
+
+    async with db.execute(
+        """SELECT id, title, status, priority, assigned_session_key FROM tasks
+           WHERE project_id = ? AND assigned_session_key = ?
+           ORDER BY CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END
+           LIMIT 10""",
+        (project_id, session_key),
+    ) as cursor:
+        assigned_rows = await cursor.fetchall()
+
+    async with db.execute(
+        """SELECT id, title, status, priority, assigned_session_key FROM tasks
+           WHERE project_id = ? AND status = 'in_progress' ORDER BY updated_at DESC LIMIT 10""",
+        (project_id,),
+    ) as cursor:
+        in_progress_rows = await cursor.fetchall()
+
+    async with db.execute(
+        """SELECT id, title, status, priority, assigned_session_key FROM tasks
+           WHERE project_id = ? AND status = 'blocked' ORDER BY updated_at DESC LIMIT 5""",
+        (project_id,),
+    ) as cursor:
+        blocked_rows = await cursor.fetchall()
+
+    async with db.execute(
+        "SELECT COUNT(*) as cnt FROM tasks WHERE project_id = ? AND status = 'todo'", (project_id,)
+    ) as cursor:
+        todo_count = (await cursor.fetchone())["cnt"]
+
+    async with db.execute(
+        "SELECT COUNT(*) as cnt FROM tasks WHERE project_id = ? AND status = 'done'", (project_id,)
+    ) as cursor:
+        done_count = (await cursor.fetchone())["cnt"]
+
+    tasks = TasksContext(
+        assigned_to_me=[_row_to_task_summary(r) for r in assigned_rows],
+        in_progress=[_row_to_task_summary(r) for r in in_progress_rows],
+        blocked=[_row_to_task_summary(r) for r in blocked_rows],
+        todo_count=todo_count,
+        done_count=done_count,
+    )
+
+    async with db.execute(
+        """SELECT event_type, payload_json, created_at FROM project_history
+           WHERE project_id = ? ORDER BY created_at DESC LIMIT 10""",
+        (project_id,),
+    ) as cursor:
+        history_rows = await cursor.fetchall()
+
+    recent_history = []
+    for h in history_rows:
+        payload = None
+        if h.get("payload_json"):
+            try:
+                payload = json.loads(h["payload_json"])
+            except json.JSONDecodeError:
+                pass
+        recent_history.append(HistoryEvent(event_type=h["event_type"], payload=payload, created_at=h["created_at"]))
+
+    return project, tasks, recent_history
+
+
 # ── Routes ──────────────────────────────────────────────────────
 
 
@@ -87,32 +197,13 @@ async def get_session_context(session_key: str):
     """
     try:
         async with get_db() as db:
-            # 1. Find room assignment for this session
-            room_id = None
-
-            # Check explicit assignment
-            async with db.execute(
-                "SELECT room_id FROM session_room_assignments WHERE session_key = ?", (session_key,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                if row:
-                    room_id = row["room_id"]
-
-            # If no explicit assignment, check agent default room
-            if not room_id:
-                async with db.execute(
-                    "SELECT default_room_id FROM agents WHERE agent_session_key = ?", (session_key,)
-                ) as cursor:
-                    row = await cursor.fetchone()
-                    if row and row.get("default_room_id"):
-                        room_id = row["default_room_id"]
-
-            # If still no room, return empty context
+            room_id = await _resolve_session_room_id(db, session_key)
             if not room_id:
                 return SessionContextResponse()
 
-            # 2. Get room details
-            async with db.execute("SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)) as cursor:
+            async with db.execute(
+                "SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)
+            ) as cursor:
                 room_row = await cursor.fetchone()
 
             if not room_row:
@@ -125,122 +216,13 @@ async def get_session_context(session_key: str):
                 project_id=room_row.get("project_id"),
             )
 
-            project = None
-            tasks = None
-            recent_history = []
-
-            # 3. Get project details (if assigned)
+            project, tasks, recent_history = None, None, []
             if room_row.get("project_id"):
-                project_id = room_row["project_id"]
-
-                async with db.execute(
-                    "SELECT id, name, description, folder_path, status FROM projects WHERE id = ?", (project_id,)
-                ) as cursor:
-                    proj_row = await cursor.fetchone()
-
-                if proj_row:
-                    project = ProjectContext(
-                        id=proj_row["id"],
-                        name=proj_row["name"],
-                        description=proj_row.get("description"),
-                        folder_path=proj_row.get("folder_path"),
-                        status=proj_row.get("status", "active"),
-                    )
-
-                # 4. Get tasks for this project
-                # Tasks assigned to this session
-                async with db.execute(
-                    """SELECT id, title, status, priority, assigned_session_key
-                       FROM tasks
-                       WHERE project_id = ? AND assigned_session_key = ?
-                       ORDER BY CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END
-                       LIMIT 10""",
-                    (project_id, session_key),
-                ) as cursor:
-                    assigned_rows = await cursor.fetchall()
-
-                # In-progress tasks
-                async with db.execute(
-                    """SELECT id, title, status, priority, assigned_session_key
-                       FROM tasks
-                       WHERE project_id = ? AND status = 'in_progress'
-                       ORDER BY updated_at DESC
-                       LIMIT 10""",
-                    (project_id,),
-                ) as cursor:
-                    in_progress_rows = await cursor.fetchall()
-
-                # Blocked tasks
-                async with db.execute(
-                    """SELECT id, title, status, priority, assigned_session_key
-                       FROM tasks
-                       WHERE project_id = ? AND status = 'blocked'
-                       ORDER BY updated_at DESC
-                       LIMIT 5""",
-                    (project_id,),
-                ) as cursor:
-                    blocked_rows = await cursor.fetchall()
-
-                # Counts
-                async with db.execute(
-                    "SELECT COUNT(*) as cnt FROM tasks WHERE project_id = ? AND status = 'todo'", (project_id,)
-                ) as cursor:
-                    todo_count = (await cursor.fetchone())["cnt"]
-
-                async with db.execute(
-                    "SELECT COUNT(*) as cnt FROM tasks WHERE project_id = ? AND status = 'done'", (project_id,)
-                ) as cursor:
-                    done_count = (await cursor.fetchone())["cnt"]
-
-                def row_to_summary(row):
-                    return TaskSummary(
-                        id=row["id"],
-                        title=row["title"],
-                        status=row["status"],
-                        priority=row["priority"],
-                        assigned_session_key=row.get("assigned_session_key"),
-                    )
-
-                tasks = TasksContext(
-                    assigned_to_me=[row_to_summary(r) for r in assigned_rows],
-                    in_progress=[row_to_summary(r) for r in in_progress_rows],
-                    blocked=[row_to_summary(r) for r in blocked_rows],
-                    todo_count=todo_count,
-                    done_count=done_count,
+                project, tasks, recent_history = await _fetch_project_context(
+                    db, room_row["project_id"], session_key
                 )
 
-                # 5. Get recent history (last 10 events)
-                async with db.execute(
-                    """SELECT event_type, payload_json, created_at
-                       FROM project_history
-                       WHERE project_id = ?
-                       ORDER BY created_at DESC
-                       LIMIT 10""",
-                    (project_id,),
-                ) as cursor:
-                    history_rows = await cursor.fetchall()
-
-                for h in history_rows:
-                    payload = None
-                    if h.get("payload_json"):
-                        try:
-                            payload = json.loads(h["payload_json"])
-                        except json.JSONDecodeError:
-                            pass
-                    recent_history.append(
-                        HistoryEvent(
-                            event_type=h["event_type"],
-                            payload=payload,
-                            created_at=h["created_at"],
-                        )
-                    )
-
-            return SessionContextResponse(
-                room=room,
-                project=project,
-                tasks=tasks,
-                recent_history=recent_history,
-            )
+            return SessionContextResponse(room=room, project=project, tasks=tasks, recent_history=recent_history)
     except Exception as e:
         logger.error(
             f"Failed to get session context for {session_key}: {e}"
@@ -314,28 +296,7 @@ async def get_context_envelope(
     """
     try:
         async with get_db() as db:
-            # Resolve room_id from session key
-            room_id = None
-
-            # Check explicit assignment
-            async with db.execute(
-                "SELECT room_id FROM session_room_assignments WHERE session_key = ?",
-                (session_key,),
-            ) as cursor:
-                row = await cursor.fetchone()
-                if row:
-                    room_id = row["room_id"]
-
-            # Fallback: agent default room
-            if not room_id:
-                async with db.execute(
-                    "SELECT default_room_id FROM agents WHERE agent_session_key = ?",
-                    (session_key,),
-                ) as cursor:
-                    row = await cursor.fetchone()
-                    if row and row.get("default_room_id"):
-                        room_id = row["default_room_id"]
-
+            room_id = await _resolve_session_room_id(db, session_key)
             if not room_id:
                 return {"envelope": None, "block": ""}
 

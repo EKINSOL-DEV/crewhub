@@ -9,6 +9,23 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+def _resolve_trait_instruction(trait: str, parent_a_name: str, parent_b_name: str) -> Optional[str]:
+    """Convert a single crossbreed trait string to a specific instruction line."""
+    t = trait.lower()
+    source = parent_a_name if "a" in t else parent_b_name
+    if "color" in t or "palette" in t:
+        return f"- Take COLOR PALETTE from {source}"
+    if "animation" in t or "movement" in t:
+        return f"- Take ANIMATIONS from {source}"
+    if "structure" in t or "shape" in t:
+        return f"- Take STRUCTURE/SHAPE from {source}"
+    if "material" in t:
+        return f"- Take MATERIALS from {source}"
+    if "detail" in t:
+        return f"- Take DETAILS from {source}"
+    return None
+
+
 def build_crossbreed_prompt(
     parent_a_code: str,
     parent_b_code: str,
@@ -18,20 +35,12 @@ def build_crossbreed_prompt(
     traits: list[str],
 ) -> str:
     """Build AI prompt for genetic crossbreeding."""
-
-    trait_instructions = []
-    for trait in traits:
-        t = trait.lower()
-        if "color" in t or "palette" in t:
-            trait_instructions.append(f"- Take COLOR PALETTE from {parent_a_name if 'a' in t else parent_b_name}")
-        elif "animation" in t or "movement" in t:
-            trait_instructions.append(f"- Take ANIMATIONS from {parent_a_name if 'a' in t else parent_b_name}")
-        elif "structure" in t or "shape" in t:
-            trait_instructions.append(f"- Take STRUCTURE/SHAPE from {parent_a_name if 'a' in t else parent_b_name}")
-        elif "material" in t:
-            trait_instructions.append(f"- Take MATERIALS from {parent_a_name if 'a' in t else parent_b_name}")
-        elif "detail" in t:
-            trait_instructions.append(f"- Take DETAILS from {parent_a_name if 'a' in t else parent_b_name}")
+    trait_instructions = [
+        inst
+        for trait in traits
+        for inst in [_resolve_trait_instruction(trait, parent_a_name, parent_b_name)]
+        if inst is not None
+    ]
 
     if not trait_instructions:
         trait_instructions = [

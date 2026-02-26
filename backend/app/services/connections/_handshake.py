@@ -26,7 +26,7 @@ from .base import ConnectionStatus
 logger = logging.getLogger(__name__)
 
 
-async def perform_handshake(conn: OpenClawConnection) -> bool:
+async def perform_handshake(conn: OpenClawConnection) -> bool:  # NOSONAR: complexity from WebSocket handshake protocol (challenge/response steps, error cases, auth modes), safe to keep
     """
     Perform the OpenClaw v2 device-identity WebSocket handshake.
 

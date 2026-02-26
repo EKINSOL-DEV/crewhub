@@ -112,6 +112,66 @@ VALID_INTERACTION_TYPES = {"work", "coffee", "sleep"}
 # =============================================================================
 
 
+def _validate_grid_and_center(bp: "BlueprintJson", errors: list) -> None:
+    """Check grid dimensions and walkable center bounds."""
+    if bp.gridWidth < MIN_GRID_SIZE or bp.gridWidth > MAX_GRID_SIZE:
+        errors.append(f"gridWidth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridWidth}")
+    if bp.gridDepth < MIN_GRID_SIZE or bp.gridDepth > MAX_GRID_SIZE:
+        errors.append(f"gridDepth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridDepth}")
+    if not bp.doors and not bp.doorPositions:
+        errors.append("Blueprint must have at least one door")
+    if bp.walkableCenter.x < 0 or bp.walkableCenter.x >= bp.gridWidth:
+        errors.append(f"walkableCenter.x ({bp.walkableCenter.x}) out of grid bounds (0-{bp.gridWidth - 1})")
+    if bp.walkableCenter.z < 0 or bp.walkableCenter.z >= bp.gridDepth:
+        errors.append(f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})")
+
+
+def _validate_placement_item(
+    i: int, p, bp: "BlueprintJson", errors: list, warnings: list, occupied: dict
+) -> None:
+    """Validate a single placement entry: bounds, span, overlap, propId, interactionType."""
+    if p.x < 0 or p.x >= bp.gridWidth or p.z < 0 or p.z >= bp.gridDepth:
+        errors.append(f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds")
+        return
+
+    span_w = p.span.w if p.span else 1
+    span_d = p.span.d if p.span else 1
+    if p.x + span_w > bp.gridWidth:
+        errors.append(f"Placement [{i}] propId='{p.propId}' span exceeds grid width at x={p.x}, span.w={span_w}")
+    if p.z + span_d > bp.gridDepth:
+        errors.append(f"Placement [{i}] propId='{p.propId}' span exceeds grid depth at z={p.z}, span.d={span_d}")
+
+    if p.type != "interaction":
+        for dx in range(span_w):
+            for dz in range(span_d):
+                cell = (p.x + dx, p.z + dz)
+                if cell in occupied:
+                    errors.append(
+                        f"Placement [{i}] propId='{p.propId}' overlaps with '{occupied[cell]}' at cell {cell}"
+                    )
+                else:
+                    occupied[cell] = p.propId
+
+    if p.propId not in KNOWN_PROP_IDS:
+        warnings.append(f"Unknown propId '{p.propId}' in placement [{i}] (may be from a mod)")
+
+    if p.interactionType and p.interactionType not in VALID_INTERACTION_TYPES:
+        errors.append(
+            f"Placement [{i}] has unknown interactionType '{p.interactionType}'. Valid: {VALID_INTERACTION_TYPES}"
+        )
+
+
+def _validate_door_positions(door_list: list, label: str, bp: "BlueprintJson", errors: list) -> None:
+    """Validate that doors are placed on wall edges."""
+    for i, door in enumerate(door_list):
+        on_edge = door.x == 0 or door.x == bp.gridWidth - 1 or door.z == 0 or door.z == bp.gridDepth - 1
+        if not on_edge:
+            errors.append(
+                f"{label}[{i}] at ({door.x},{door.z}) must be on a wall edge "
+                f"(x=0, x={bp.gridWidth - 1}, z=0, or z={bp.gridDepth - 1})"
+            )
+
+
 def validate_blueprint(bp: BlueprintJson) -> tuple[list[str], list[str]]:
     """
     Validate a blueprint JSON structure.
@@ -122,75 +182,15 @@ def validate_blueprint(bp: BlueprintJson) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    # Grid dimensions
-    if bp.gridWidth < MIN_GRID_SIZE or bp.gridWidth > MAX_GRID_SIZE:
-        errors.append(f"gridWidth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridWidth}")
-    if bp.gridDepth < MIN_GRID_SIZE or bp.gridDepth > MAX_GRID_SIZE:
-        errors.append(f"gridDepth must be between {MIN_GRID_SIZE} and {MAX_GRID_SIZE}, got {bp.gridDepth}")
+    _validate_grid_and_center(bp, errors)
 
-    # Must have at least one door
-    if not bp.doors and not bp.doorPositions:
-        errors.append("Blueprint must have at least one door")
-
-    # Validate walkable center unconditionally (it's a required field)
-    if bp.walkableCenter.x < 0 or bp.walkableCenter.x >= bp.gridWidth:
-        errors.append(f"walkableCenter.x ({bp.walkableCenter.x}) out of grid bounds (0-{bp.gridWidth - 1})")
-    if bp.walkableCenter.z < 0 or bp.walkableCenter.z >= bp.gridDepth:
-        errors.append(f"walkableCenter.z ({bp.walkableCenter.z}) out of grid bounds (0-{bp.gridDepth - 1})")
-
-    # Validate placements
     occupied: dict[tuple[int, int], str] = {}
     for i, p in enumerate(bp.placements):
-        # Check bounds
-        if p.x < 0 or p.x >= bp.gridWidth or p.z < 0 or p.z >= bp.gridDepth:
-            errors.append(f"Placement [{i}] propId='{p.propId}' at ({p.x},{p.z}) is out of grid bounds")
-            continue
+        _validate_placement_item(i, p, bp, errors, warnings, occupied)
 
-        # Check span bounds
-        span_w = p.span.w if p.span else 1
-        span_d = p.span.d if p.span else 1
-        if p.x + span_w > bp.gridWidth:
-            errors.append(f"Placement [{i}] propId='{p.propId}' span exceeds grid width at x={p.x}, span.w={span_w}")
-        if p.z + span_d > bp.gridDepth:
-            errors.append(f"Placement [{i}] propId='{p.propId}' span exceeds grid depth at z={p.z}, span.d={span_d}")
+    _validate_door_positions(bp.doors, "doors", bp, errors)
+    _validate_door_positions(bp.doorPositions, "doorPositions", bp, errors)
 
-        # Check for overlap (only for non-interaction props)
-        if p.type != "interaction":
-            for dx in range(span_w):
-                for dz in range(span_d):
-                    cell = (p.x + dx, p.z + dz)
-                    if cell in occupied:
-                        errors.append(
-                            f"Placement [{i}] propId='{p.propId}' overlaps with '{occupied[cell]}' at cell {cell}"
-                        )
-                    else:
-                        occupied[cell] = p.propId
-
-        # Warn on unknown propIds (not a hard error — mods can add custom props)
-        if p.propId not in KNOWN_PROP_IDS:
-            warnings.append(f"Unknown propId '{p.propId}' in placement [{i}] (may be from a mod)")
-
-        # Validate interaction type if present
-        if p.interactionType and p.interactionType not in VALID_INTERACTION_TYPES:
-            errors.append(
-                f"Placement [{i}] has unknown interactionType '{p.interactionType}'. Valid: {VALID_INTERACTION_TYPES}"
-            )
-
-    # Helper to validate doors are on wall edges
-    def _validate_doors(door_list: list, label: str):
-        for i, door in enumerate(door_list):
-            on_edge = door.x == 0 or door.x == bp.gridWidth - 1 or door.z == 0 or door.z == bp.gridDepth - 1
-            if not on_edge:
-                errors.append(
-                    f"{label}[{i}] at ({door.x},{door.z}) must be on a wall edge "
-                    f"(x=0, x={bp.gridWidth - 1}, z=0, or z={bp.gridDepth - 1})"
-                )
-
-    # Validate both door fields
-    _validate_doors(bp.doors, "doors")
-    _validate_doors(bp.doorPositions, "doorPositions")
-
-    # Warn if both door fields are present and counts differ
     if bp.doors and bp.doorPositions and len(bp.doors) != len(bp.doorPositions):
         warnings.append(
             f"doors ({len(bp.doors)} entries) and doorPositions ({len(bp.doorPositions)} entries) "

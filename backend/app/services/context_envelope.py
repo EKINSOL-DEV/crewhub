@@ -49,6 +49,88 @@ def _compute_hash(envelope: dict) -> str:
     return hashlib.sha256(_canonical_json(hashable).encode()).hexdigest()[:16]
 
 
+async def _fetch_participants(db: aiosqlite.Connection, room_id: str) -> list:
+    """Fetch agent participants assigned to the given room."""
+    participants: list[dict] = []
+    async with db.execute(
+        """SELECT a.id, a.name, a.agent_session_key, d.display_name
+           FROM agents a
+           LEFT JOIN session_display_names d ON a.agent_session_key = d.session_key
+           WHERE a.default_room_id = ?""",
+        (room_id,),
+    ) as cur:
+        async for row in cur:
+            handle = row["display_name"] or row["name"] or row["id"]
+            participants.append({"role": "agent", "handle": handle})
+    return participants
+
+
+async def _fetch_tasks(db: aiosqlite.Connection, project_id: str, max_tasks: int) -> list:
+    """Fetch active (non-done) tasks for a project with assignee display names."""
+    tasks: list[dict] = []
+    async with db.execute(
+        """SELECT t.id, t.title, t.status, d.display_name
+           FROM tasks t
+           LEFT JOIN session_display_names d ON t.assigned_session_key = d.session_key
+           WHERE t.project_id = ? AND t.status != 'done'
+           ORDER BY CASE t.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
+                   t.updated_at DESC
+           LIMIT ?""",
+        (project_id, max_tasks),
+    ) as cur:
+        async for row in cur:
+            t: dict[str, Any] = {"id": row["id"], "title": row["title"], "status": row["status"]}
+            if row["display_name"]:
+                t["assignee"] = row["display_name"]
+            tasks.append(t)
+    return tasks
+
+
+async def _resolve_self_identity(db: aiosqlite.Connection, session_key: str) -> Optional[dict]:
+    """Resolve the calling agent's display name and identity metadata."""
+    async with db.execute(
+        "SELECT id, name, color, agent_session_key FROM agents WHERE agent_session_key = ?",
+        (session_key,),
+    ) as cur:
+        agent_row = await cur.fetchone()
+
+    if not agent_row and ":" in session_key:
+        parts = session_key.split(":")
+        if len(parts) >= 2:
+            base_key = f"agent:{parts[1]}:main"
+            async with db.execute(
+                "SELECT id, name, color, agent_session_key FROM agents WHERE agent_session_key = ?",
+                (base_key,),
+            ) as cur:
+                agent_row = await cur.fetchone()
+
+    if not agent_row:
+        return None
+
+    display_name = agent_row["name"]
+    lookup_keys = [session_key]
+    try:
+        ask = agent_row["agent_session_key"]
+        if ask and ask != session_key:
+            lookup_keys.append(ask)
+    except (IndexError, KeyError):
+        pass
+
+    for sk in lookup_keys:
+        async with db.execute(
+            "SELECT display_name FROM session_display_names WHERE session_key = ?", (sk,)
+        ) as cur:
+            dn_row = await cur.fetchone()
+        if dn_row and dn_row["display_name"]:
+            display_name = dn_row["display_name"]
+            break
+
+    identity: dict[str, Any] = {"handle": display_name, "agentId": agent_row["id"], "role": "agent"}
+    if agent_row["color"]:
+        identity["color"] = agent_row["color"]
+    return identity
+
+
 async def build_crewhub_context(
     room_id: str,
     channel: Optional[str] = None,
@@ -68,32 +150,22 @@ async def build_crewhub_context(
     """
     try:
         async with get_db() as db:
-            # Determine privacy tier
             privacy = "external" if channel and channel.lower() in EXTERNAL_CHANNELS else "internal"
 
-            # 1. Room
             async with db.execute(
-                "SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?",
-                (room_id,),
+                "SELECT id, name, is_hq, project_id FROM rooms WHERE id = ?", (room_id,)
             ) as cur:
                 room_row = await cur.fetchone()
-
             if not room_row:
                 return None
 
-            room = {
-                "id": room_row["id"],
-                "name": room_row["name"],
-                "type": "hq" if room_row["is_hq"] else "standard",
-            }
-
-            # 2. Projects linked to this room
+            room = {"id": room_row["id"], "name": room_row["name"], "type": "hq" if room_row["is_hq"] else "standard"}
             project_id = room_row["project_id"]
+
             projects: list[dict] = []
             if project_id:
                 async with db.execute(
-                    "SELECT id, name, folder_path FROM projects WHERE id = ?",
-                    (project_id,),
+                    "SELECT id, name, folder_path FROM projects WHERE id = ?", (project_id,)
                 ) as cur:
                     proj_row = await cur.fetchone()
                 if proj_row:
@@ -102,96 +174,11 @@ async def build_crewhub_context(
                         p["repo"] = proj_row["folder_path"]
                     projects.append(p)
 
-            # 3. Participants (agents assigned to this room) — internal only
-            participants: list[dict] = []
-            if privacy == "internal":
-                async with db.execute(
-                    """SELECT a.id, a.name, a.agent_session_key,
-                              d.display_name
-                       FROM agents a
-                       LEFT JOIN session_display_names d ON a.agent_session_key = d.session_key
-                       WHERE a.default_room_id = ?""",
-                    (room_id,),
-                ) as cur:
-                    async for row in cur:
-                        handle = row["display_name"] or row["name"] or row["id"]
-                        participants.append({"role": "agent", "handle": handle})
-
-            # 4. Tasks — internal only
-            tasks: list[dict] = []
-            if privacy == "internal" and project_id:
-                async with db.execute(
-                    """SELECT t.id, t.title, t.status, d.display_name
-                       FROM tasks t
-                       LEFT JOIN session_display_names d ON t.assigned_session_key = d.session_key
-                       WHERE t.project_id = ? AND t.status != 'done'
-                       ORDER BY CASE t.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
-                               t.updated_at DESC
-                       LIMIT ?""",
-                    (project_id, max_tasks),
-                ) as cur:
-                    async for row in cur:
-                        t: dict[str, Any] = {
-                            "id": row["id"],
-                            "title": row["title"],
-                            "status": row["status"],
-                        }
-                        if row["display_name"]:
-                            t["assignee"] = row["display_name"]
-                        tasks.append(t)
-
-            # 5. Self-identity — resolve who the calling agent is
-            self_identity: Optional[dict[str, str]] = None
-            if session_key:
-                # Try matching agent by session_key directly
-                async with db.execute(
-                    "SELECT id, name, color, agent_session_key FROM agents WHERE agent_session_key = ?",
-                    (session_key,),
-                ) as cur:
-                    agent_row = await cur.fetchone()
-                if not agent_row and ":" in session_key:
-                    # For sub-sessions like agent:main:slack:..., try the base key
-                    parts = session_key.split(":")
-                    if len(parts) >= 2:
-                        base_key = f"agent:{parts[1]}:main"
-                        async with db.execute(
-                            "SELECT id, name, color, agent_session_key FROM agents WHERE agent_session_key = ?",
-                            (base_key,),
-                        ) as cur:
-                            agent_row = await cur.fetchone()
-                if agent_row:
-                    # Resolve display name: session_display_names > agents.name > agent_id
-                    display_name = agent_row["name"]
-                    # Try to get display name from session_display_names
-                    # Check both the calling session_key and the agent's base session_key
-                    lookup_keys = [session_key]
-                    try:
-                        ask = agent_row["agent_session_key"]
-                        if ask and ask != session_key:
-                            lookup_keys.append(ask)
-                    except (IndexError, KeyError):
-                        pass
-                    for sk in lookup_keys:
-                        async with db.execute(
-                            "SELECT display_name FROM session_display_names WHERE session_key = ?",
-                            (sk,),
-                        ) as cur:
-                            dn_row = await cur.fetchone()
-                        if dn_row and dn_row["display_name"]:
-                            display_name = dn_row["display_name"]
-                            break
-                    self_identity = {
-                        "handle": display_name,
-                        "agentId": agent_row["id"],
-                        "role": "agent",
-                    }
-                    if agent_row["color"]:
-                        self_identity["color"] = agent_row["color"]
-
-            # 6. Context version — count of mutations (simple: max updated_at across relevant tables)
+            participants = await _fetch_participants(db, room_id) if privacy == "internal" else []
+            tasks = await _fetch_tasks(db, project_id, max_tasks) if privacy == "internal" and project_id else []
+            self_identity = await _resolve_self_identity(db, session_key) if session_key else None
             context_version = await _get_context_version(db, room_id, project_id)
 
-            # Build envelope
             envelope: dict[str, Any] = {
                 "v": SCHEMA_VERSION,
                 "room": room,
@@ -209,7 +196,6 @@ async def build_crewhub_context(
                 if tasks:
                     envelope["tasks"] = tasks
 
-            # Attach persona + identity prompt (not included in hash, stripped before serialization)
             if self_identity and self_identity.get("agentId"):
                 persona_prompt = await get_persona_prompt(
                     self_identity["agentId"],
@@ -219,9 +205,7 @@ async def build_crewhub_context(
                 if persona_prompt:
                     envelope["_persona_prompt"] = persona_prompt
 
-            # Add integrity hash (excludes _persona_prompt since it starts with _)
             envelope["context_hash"] = _compute_hash(envelope)
-
             return envelope
 
     except Exception as e:
@@ -272,6 +256,36 @@ async def _get_context_version(
     return max(candidates) if candidates else 0
 
 
+def _read_identity_fields(row) -> tuple:
+    """Safely read identity_anchor and surface_rules from a persona row (schema may vary)."""
+    identity_anchor = ""
+    surface_rules = ""
+    try:
+        identity_anchor = row["identity_anchor"] or ""
+    except (IndexError, KeyError):
+        pass
+    try:
+        surface_rules = row["surface_rules"] or ""
+    except (IndexError, KeyError):
+        pass
+    return identity_anchor, surface_rules
+
+
+async def _get_surface_format_rules(db: aiosqlite.Connection, agent_id: str, channel: str) -> str:
+    """Get per-surface format rules for an agent if the surface is enabled."""
+    try:
+        async with db.execute(
+            "SELECT format_rules, enabled FROM agent_surfaces WHERE agent_id = ? AND surface = ?",
+            (agent_id, channel.lower()),
+        ) as scur:
+            srow = await scur.fetchone()
+        if srow and srow["enabled"]:
+            return srow["format_rules"] or ""
+    except Exception:
+        pass
+    return ""
+
+
 async def get_persona_prompt(
     agent_id: str,
     channel: Optional[str] = None,
@@ -291,39 +305,14 @@ async def get_persona_prompt(
             if not row:
                 return None
 
-            # Read identity fields safely (may not exist on older schemas)
-            identity_anchor = ""
-            surface_rules = ""
-            try:
-                identity_anchor = row["identity_anchor"] or ""
-            except (IndexError, KeyError):
-                pass
-            try:
-                surface_rules = row["surface_rules"] or ""
-            except (IndexError, KeyError):
-                pass
+            identity_anchor, surface_rules = _read_identity_fields(row)
 
-            # Check for per-surface custom rules
-            surface_format = ""
-            if channel:
-                try:
-                    async with db.execute(
-                        "SELECT format_rules, enabled FROM agent_surfaces WHERE agent_id = ? AND surface = ?",
-                        (agent_id, channel.lower()),
-                    ) as scur:
-                        srow = await scur.fetchone()
-                    if srow and srow["enabled"]:
-                        surface_format = srow["format_rules"] or ""
-                except Exception:
-                    pass
+            surface_format = await _get_surface_format_rules(db, agent_id, channel) if channel else ""
 
-            # Build full prompt with identity if we have identity data
             if identity_anchor or channel:
                 full_surface_rules = surface_rules
                 if surface_format:
-                    full_surface_rules = (
-                        f"{surface_rules}\n{surface_format}".strip() if surface_rules else surface_format
-                    )
+                    full_surface_rules = f"{surface_rules}\n{surface_format}".strip() if surface_rules else surface_format
 
                 return build_full_persona_prompt(
                     start_behavior=row["start_behavior"],
@@ -337,7 +326,6 @@ async def get_persona_prompt(
                     agent_name=agent_name,
                 )
             else:
-                # Legacy behavior: just persona prompt
                 return build_persona_prompt(
                     start_behavior=row["start_behavior"],
                     checkin_frequency=row["checkin_frequency"],
