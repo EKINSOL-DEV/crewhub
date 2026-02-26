@@ -517,7 +517,7 @@ class ConnectionManager:
         session_key: str,
         message: str,
         connection_id: Optional[str] = None,
-        timeout: float = 120.0,
+        timeout: float = 120.0,  # NOSONAR
     ) -> Optional[str]:
         """
         Send a message to a session, routing to the correct connection.
