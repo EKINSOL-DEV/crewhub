@@ -540,8 +540,34 @@ export function MeetingOutput({
             background: 'hsl(var(--background))',
           }}
         >
-          {meeting.outputMd ? (
-            activeView === 'structured' ? (
+          {(() => {
+            if (!meeting.outputMd) {
+              if (outputError) return (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <div style={{ fontSize: 13, color: 'hsl(var(--destructive))', marginBottom: 12 }}>
+                    ⚠️ {outputError}
+                  </div>
+                  {onRetryFetch && (
+                    <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>
+                      🔄 Retry
+                    </Button>
+                  )}
+                </div>
+              )
+              return (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: '40px 0',
+                    color: HSL_MUTED_FOREGROUND,
+                    fontSize: 13,
+                  }}
+                >
+                  {outputLoading ? 'Loading output…' : 'No output available'}
+                </div>
+              )
+            }
+            if (activeView === 'structured') return (
               <div style={{ maxWidth: 720, margin: '0 auto' }}>
                 <MarkdownViewer content={markdownWithoutActions} className="text-sm" />
                 {actionItems.length > 0 && (
@@ -572,17 +598,19 @@ export function MeetingOutput({
                   </div>
                 )}
               </div>
-            ) : activeView === 'actions' ? (
+            )
+            if (activeView === 'actions') return (
               <ActionsView
                 items={actionItems}
                 meetingId={meeting.meetingId}
                 projectId={meeting.project_id}
                 onStatusChange={handleStatusChange}
               />
-            ) : activeView === 'transcript' ? (
+            )
+            if (activeView === 'transcript') return (
               <TranscriptView rounds={meeting.rounds} />
-            ) : (
-              /* Raw markdown */
+            )
+            return (
               <div style={{ maxWidth: 720, margin: '0 auto' }}>
                 <pre
                   style={{
@@ -603,29 +631,7 @@ export function MeetingOutput({
                 </pre>
               </div>
             )
-          ) : outputError ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <div style={{ fontSize: 13, color: 'hsl(var(--destructive))', marginBottom: 12 }}>
-                ⚠️ {outputError}
-              </div>
-              {onRetryFetch && (
-                <Button variant="outline" size="sm" onClick={() => onRetryFetch()}>
-                  🔄 Retry
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '40px 0',
-                color: HSL_MUTED_FOREGROUND,
-                fontSize: 13,
-              }}
-            >
-              {outputLoading ? 'Loading output…' : 'No output available'}
-            </div>
-          )}
+          })()}
         </div>
       </div>
     </div>

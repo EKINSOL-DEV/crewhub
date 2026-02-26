@@ -204,6 +204,68 @@ export function MobileLayout() {
     currentPanel = 'chat'
   }
 
+  // Resolve main view without nested ternaries (S3358)
+  let currentView: React.ReactNode
+  if (view.type === 'chat') {
+    currentView = (
+      <MobileAgentChat
+        sessionKey={view.sessionKey}
+        agentName={view.agentName}
+        agentIcon={view.agentIcon}
+        agentColor={view.agentColor}
+        subagentSessions={getSubagentSessions(view.agentId)}
+        onBack={handleBack}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
+    )
+  } else if (view.type === 'new-group') {
+    currentView = (
+      <AgentMultiSelectSheet
+        agents={fixedAgents}
+        onConfirm={handleCreateGroup}
+        onClose={handleBack}
+      />
+    )
+  } else if (view.type === GROUP_CHAT) {
+    currentView = (
+      <GroupThreadChat
+        thread={view.thread}
+        onBack={handleBack}
+        onRemoveParticipant={(agentId) => handleRemoveParticipant(view.thread.id, agentId)}
+        onAddParticipants={() => {
+          /* Phase 2: group management — add participants flow */
+        }}
+        onRename={() => {
+          /* Phase 2: group management — rename flow */
+        }}
+      />
+    )
+  } else if (view.type === 'docs') {
+    currentView = <MobileDocsPanel onBack={handleBack} />
+  } else if (view.type === 'kanban') {
+    currentView = <MobileKanbanPanel onBack={handleBack} />
+  } else if (view.type === 'activity') {
+    currentView = <MobileActivityPanel onBack={handleBack} />
+  } else if (view.type === 'projects') {
+    currentView = <MobileProjectsPanel onBack={handleBack} />
+  } else if (view.type === 'creator') {
+    currentView = <MobileCreatorView onBack={handleBack} />
+  } else {
+    currentView = (
+      <MobileAgentList
+        agents={fixedAgents}
+        loading={loading}
+        connected={connected}
+        onSelectAgent={handleSelectAgent}
+        onRefresh={refresh}
+        threads={threads}
+        onNewGroup={() => setView({ type: 'new-group' })}
+        onSelectThread={handleSelectThread}
+        onOpenDrawer={() => setDrawerOpen(true)}
+      />
+    )
+  }
+
   return (
     <div
       style={{
@@ -238,57 +300,7 @@ export function MobileLayout() {
       {/* Debug status bar */}
       <MobileDebugBar enabled={debugMode} />
 
-      {view.type === 'chat' ? (
-        <MobileAgentChat
-          sessionKey={view.sessionKey}
-          agentName={view.agentName}
-          agentIcon={view.agentIcon}
-          agentColor={view.agentColor}
-          subagentSessions={getSubagentSessions(view.agentId)}
-          onBack={handleBack}
-          onOpenSettings={() => setSettingsOpen(true)}
-        />
-      ) : view.type === 'new-group' ? (
-        <AgentMultiSelectSheet
-          agents={fixedAgents}
-          onConfirm={handleCreateGroup}
-          onClose={handleBack}
-        />
-      ) : view.type === GROUP_CHAT ? (
-        <GroupThreadChat
-          thread={view.thread}
-          onBack={handleBack}
-          onRemoveParticipant={(agentId) => handleRemoveParticipant(view.thread.id, agentId)}
-          onAddParticipants={() => {
-            /* Phase 2: group management — add participants flow */
-          }}
-          onRename={() => {
-            /* Phase 2: group management — rename flow */
-          }}
-        />
-      ) : view.type === 'docs' ? (
-        <MobileDocsPanel onBack={handleBack} />
-      ) : view.type === 'kanban' ? (
-        <MobileKanbanPanel onBack={handleBack} />
-      ) : view.type === 'activity' ? (
-        <MobileActivityPanel onBack={handleBack} />
-      ) : view.type === 'projects' ? (
-        <MobileProjectsPanel onBack={handleBack} />
-      ) : view.type === 'creator' ? (
-        <MobileCreatorView onBack={handleBack} />
-      ) : (
-        <MobileAgentList
-          agents={fixedAgents}
-          loading={loading}
-          connected={connected}
-          onSelectAgent={handleSelectAgent}
-          onRefresh={refresh}
-          threads={threads}
-          onNewGroup={() => setView({ type: 'new-group' })}
-          onSelectThread={handleSelectThread}
-          onOpenDrawer={() => setDrawerOpen(true)}
-        />
-      )}
+      {currentView}
     </div>
   )
 }
