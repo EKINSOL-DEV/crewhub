@@ -144,14 +144,14 @@ class OpenClawConnection(
             try:
                 await self._reconnect_task
             except asyncio.CancelledError:
-                pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
+                pass  # NOSONAR
 
         if self._listen_task and not self._listen_task.done():
             self._listen_task.cancel()
             try:
                 await self._listen_task
             except asyncio.CancelledError:
-                pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
+                pass  # NOSONAR
 
         if self.ws:
             try:
@@ -168,7 +168,7 @@ class OpenClawConnection(
     # ---
     async def _listen_loop(
         self,
-    ) -> None:  # NOSONAR: complexity from WebSocket receive loop with event dispatch, reconnect logic, and connection health monitoring, safe to keep
+    ) -> None:  # NOSONAR
         """Receive and route messages from the Gateway."""
         logger.debug(f"Listener loop started for {self.name}")
         try:

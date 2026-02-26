@@ -102,7 +102,7 @@ class SendMessageBody(BaseModel):
 
 
 @router.get("/api/chat/{session_key}/history")
-async def get_chat_history(  # NOSONAR: complexity from multi-source history assembly (connection layer + filesystem fallback) with message transformation, safe to keep
+async def get_chat_history(  # NOSONAR
     session_key: str,
     limit: Annotated[int, Query(default=30, ge=1, le=100)],
     before: Annotated[Optional[int], Query(default=None)],

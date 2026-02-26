@@ -46,9 +46,7 @@ async def get_display_name(session_key: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to get display name for {session_key}: {e}"
-        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get display name for {session_key}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -92,9 +90,7 @@ async def set_display_name(session_key: str, data: SessionDisplayNameUpdate):
             )
             return result
     except Exception as e:
-        logger.error(
-            f"Failed to set display name for {session_key}: {e}"
-        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
+        logger.error(f"Failed to set display name for {session_key}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -128,7 +124,5 @@ async def delete_display_name(session_key: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to delete display name {session_key}: {e}"
-        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
+        logger.error(f"Failed to delete display name {session_key}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))

@@ -340,9 +340,7 @@ def get_session_detail(session_key: str) -> Optional[Dict[str, Any]]:
         return session
 
     except (ValueError, OSError) as e:
-        logger.error(
-            f"Error getting session detail {session_key}: {e}"
-        )  # NOSONAR: session_key is internal system identifier; e is system exception, needed for diagnostics
+        logger.error(f"Error getting session detail {session_key}: {e}")  # NOSONAR
         return None
 
 
@@ -374,9 +372,7 @@ def delete_session(session_key: str) -> bool:
         if session_file.exists():
             ts = datetime.now(UTC).isoformat().replace(":", "-")
             session_file.rename(session_file.with_suffix(f".jsonl.deleted.{ts}"))
-            logger.info(
-                f"Deleted session: {session_key}"
-            )  # NOSONAR: session_key is internal system identifier, not user input
+            logger.info(f"Deleted session: {session_key}")  # NOSONAR
             return True
 
         return False

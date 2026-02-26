@@ -498,7 +498,7 @@ async def update_blueprint(blueprint_id: str, body: CustomBlueprintUpdate):
         )
         await db.commit()
 
-    logger.info(f"Blueprint updated: {blueprint_id}")  # NOSONAR: blueprint_id is internal UUID, not user input
+    logger.info(f"Blueprint updated: {blueprint_id}")  # NOSONAR
 
     response = {
         "id": blueprint_id,
@@ -529,7 +529,7 @@ async def delete_blueprint(blueprint_id: str):
                 detail=f"Blueprint not found: {blueprint_id}",
             )
 
-    logger.info(f"Blueprint deleted: {blueprint_id}")  # NOSONAR: blueprint_id is internal UUID, not user input
+    logger.info(f"Blueprint deleted: {blueprint_id}")  # NOSONAR
 
 
 # =============================================================================
@@ -725,7 +725,7 @@ async def move_prop(blueprint_id: str, body: MovePropRequest):
         prop["span"] = {"w": span_w, "d": span_d}
 
     await _save_blueprint(blueprint_id, bp_json, db_row, source)
-    logger.info(  # NOSONAR: blueprint_id is internal UUID; propId and coordinates are internal prop identifiers, not sensitive user data
+    logger.info(  # NOSONAR
         f"Prop moved in blueprint {blueprint_id}: {body.propId} from ({body.fromX},{body.fromZ}) to ({body.toX},{body.toZ})"
     )
 
@@ -771,9 +771,7 @@ async def delete_prop(blueprint_id: str, body: DeletePropRequest):
 
     bp_json["placements"] = placements
     await _save_blueprint(blueprint_id, bp_json, db_row, source)
-    logger.info(
-        f"Prop deleted from blueprint {blueprint_id}: {body.propId} at ({body.x},{body.z})"
-    )  # NOSONAR: blueprint_id is internal UUID; propId and coordinates are internal prop identifiers, not sensitive user data
+    logger.info(f"Prop deleted from blueprint {blueprint_id}: {body.propId} at ({body.x},{body.z})")  # NOSONAR
 
     # Broadcast update to all clients
     await broadcast(

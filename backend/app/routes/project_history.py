@@ -103,9 +103,7 @@ async def get_project_history(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to get project history for {project_id}: {e}"
-        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get project history for {project_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -139,7 +137,5 @@ async def get_task_history(
 
             return HistoryListResponse(events=events, total=len(events))
     except Exception as e:
-        logger.error(
-            f"Failed to get task history for {task_id}: {e}"
-        )  # NOSONAR: task_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get task history for {task_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))

@@ -172,9 +172,7 @@ class ConnectionManager:
             return False
 
         await connection.disconnect()
-        logger.info(
-            f"Removed connection: {connection_id}"
-        )  # NOSONAR: connection_id is an internal system identifier, not user input
+        logger.info(f"Removed connection: {connection_id}")  # NOSONAR
         return True
 
     def get_connection(self, connection_id: str) -> Optional[AgentConnection]:
@@ -305,7 +303,7 @@ class ConnectionManager:
             try:
                 await self._health_task
             except asyncio.CancelledError:
-                pass  # NOSONAR — intentionally consuming CancelledError from task we just cancelled
+                pass  # NOSONAR
 
         await self.disconnect_all()
         logger.info("ConnectionManager stopped")
@@ -412,7 +410,7 @@ class ConnectionManager:
 
         return all_sessions
 
-    async def get_session_history(  # NOSONAR: complexity from multi-connection fallback search with connection validation, safe to keep
+    async def get_session_history(  # NOSONAR
         self,
         session_key: str,
         connection_id: Optional[str] = None,

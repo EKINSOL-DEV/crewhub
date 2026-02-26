@@ -203,9 +203,7 @@ async def build_crewhub_context(
             return envelope
 
     except Exception as e:
-        logger.error(
-            f"Failed to build context envelope for room {room_id}: {e}"
-        )  # NOSONAR: room_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to build context envelope for room {room_id}: {e}")  # NOSONAR
         return None
 
 

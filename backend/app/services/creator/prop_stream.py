@@ -35,7 +35,7 @@ def _sse_event(event_type: str, data: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
 
 
-async def stream_prop_generation(  # NOSONAR: complexity from AI streaming pipeline (multi-pass generation, SSE event routing, retry logic, quality scoring), safe to keep
+async def stream_prop_generation(  # NOSONAR
     request,  # starlette.requests.Request — checked only for is_disconnected()
     prompt: str,
     name: str,

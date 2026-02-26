@@ -115,9 +115,7 @@ async def get_task(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to get task {task_id}: {e}"
-        )  # NOSONAR: task_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get task {task_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -180,9 +178,7 @@ async def update_task(task_id: str, task: TaskUpdate):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to update task {task_id}: {e}"
-        )  # NOSONAR: task_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to update task {task_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -208,9 +204,7 @@ async def delete_task(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to delete task {task_id}: {e}"
-        )  # NOSONAR: task_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to delete task {task_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -335,7 +329,5 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to run task {task_id} with agent: {e}"
-        )  # NOSONAR: task_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to run task {task_id} with agent: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))

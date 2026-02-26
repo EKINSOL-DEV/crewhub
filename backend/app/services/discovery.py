@@ -407,9 +407,7 @@ class DiscoveryService:
         """
         detectors = self._detectors.get(mode, [])
         if not detectors:
-            logger.warning(
-                f"No detectors registered for mode: {mode}"
-            )  # NOSONAR: mode is an internal enum value ('local'/'lan'), not user input
+            logger.warning(f"No detectors registered for mode: {mode}")  # NOSONAR
             return []
 
         # Run all detectors concurrently

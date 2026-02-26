@@ -129,9 +129,7 @@ async def get_project(project_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to get project {project_id}: {e}"
-        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to get project {project_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -177,9 +175,7 @@ async def update_project(project_id: str, project: ProjectUpdate):
             )
         raise HTTPException(status_code=400, detail=err)
     except Exception as e:
-        logger.error(
-            f"Failed to update project {project_id}: {e}"
-        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to update project {project_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -209,9 +205,7 @@ async def delete_project(project_id: str):
             )
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(
-            f"Failed to delete project {project_id}: {e}"
-        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to delete project {project_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -266,9 +260,7 @@ async def list_markdown_files(project_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to list markdown files for project {project_id}: {e}"
-        )  # NOSONAR: project_id is internal UUID; e is system exception, needed for diagnostics
+        logger.error(f"Failed to list markdown files for project {project_id}: {e}")  # NOSONAR
         raise HTTPException(status_code=500, detail=str(e))
 
 

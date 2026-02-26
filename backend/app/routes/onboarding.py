@@ -160,11 +160,7 @@ def _build_suggested_urls(is_docker: bool, lan_ip: Optional[str], host_docker_re
 # =============================================================================
 
 
-async def _test_openclaw_connection(
-    url: str, token: Optional[str]
-) -> (
-    TestOpenClawResponse
-):  # NOSONAR: complexity from multi-stage connection test (DNS → TCP → WS → auth → protocol), safe to keep
+async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenClawResponse:  # NOSONAR
     """
     Test an OpenClaw gateway connection with detailed error classification.
 

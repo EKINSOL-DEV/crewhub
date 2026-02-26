@@ -214,9 +214,7 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
         bak = target.with_suffix(target.suffix + ".bak")
         bak.write_text(target.read_text(errors="replace"))
     except Exception as e:
-        logger.warning(
-            f"Failed to create backup for {file_path}: {e}"
-        )  # NOSONAR: file_path is validated server-side; e is system exception, needed for diagnostics
+        logger.warning(f"Failed to create backup for {file_path}: {e}")  # NOSONAR
 
     # Write file
     try:
