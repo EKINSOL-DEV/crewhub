@@ -11,7 +11,7 @@ import * as THREE from 'three'
 const TOON_LIGHTING_PARS = /* glsl */ `
   // 3-step toon ramp
   float toonStep(float NdotL) {
-    if (NdotL > 0.6) return 1;
+    if (NdotL > 0.6) return 1.0;
     if (NdotL > 0.25) return 0.7;
     return 0.45;
   }
@@ -26,7 +26,7 @@ const FLOOR_VERTEX = /* glsl */ `
   void main() {
     vUv = uv;
     vNormal = normalize(normalMatrix * normal);
-    vec4 worldPos = modelMatrix * vec4(position, 1);
+    vec4 worldPos = modelMatrix * vec4(position, 1.0);
     vWorldPos = worldPos.xyz;
     gl_Position = projectionMatrix * viewMatrix * worldPos;
   }
@@ -66,18 +66,18 @@ const TILES_FRAGMENT = /* glsl */ `
 
     // Checkerboard
     vec2 grid = floor(vUv * uScale);
-    float checker = mod(grid.x + grid.y, 2);
+    float checker = mod(grid.x + grid.y, 2.0);
 
     // Thin grout lines
     vec2 f = fract(vUv * uScale);
-    float grout = 1 - step(0.03, f.x) * step(0.03, f.y) *
+    float grout = 1.0 - step(0.03, f.x) * step(0.03, f.y) *
                   step(f.x, 0.97) * step(f.y, 0.97);
 
     vec3 tileColor = mix(uColor1, uColor2, checker);
     vec3 groutColor = tileColor * 0.7;
     vec3 baseColor = mix(tileColor, groutColor, grout);
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 
@@ -119,19 +119,19 @@ const WOOD_FRAGMENT = /* glsl */ `
     float plankF = fract(vUv.y * uScale);
 
     // Each plank gets a slightly different shade
-    float plankVariation = hash(vec2(plankY, 0)) * 0.15;
+    float plankVariation = hash(vec2(plankY, 0.0)) * 0.15;
     vec3 plankColor = mix(uColor1, uColor2, 0.5 + plankVariation - 0.075);
 
     // Subtle grain lines along X
-    float grain = hash(vec2(floor(vUv.x * uScale * 8), plankY));
+    float grain = hash(vec2(floor(vUv.x * uScale * 8.0), plankY));
     plankColor *= (0.95 + grain * 0.05);
 
     // Gap between planks
-    float gap = 1 - smoothstep(0, 0.04, plankF) * smoothstep(0, 0.04, 1 - plankF);
+    float gap = 1.0 - smoothstep(0.0, 0.04, plankF) * smoothstep(0.0, 0.04, 1.0 - plankF);
     vec3 gapColor = plankColor * 0.55;
     vec3 baseColor = mix(plankColor, gapColor, gap);
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 
@@ -160,11 +160,11 @@ const CONCRETE_FRAGMENT = /* glsl */ `
   float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
-    f = f * f * (3 - 2 * f);
+    f = f * f * (3.0 - 2.0 * f);
     float a = hash(i);
-    float b = hash(i + vec2(1, 0));
-    float c = hash(i + vec2(0, 1));
-    float d = hash(i + vec2(1, 1));
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
   }
 
@@ -173,10 +173,10 @@ const CONCRETE_FRAGMENT = /* glsl */ `
     float toon = toonStep(NdotL);
 
     // Multi-octave noise for concrete variation
-    float n = noise(vUv * 20) * 0.5 + noise(vUv * 40) * 0.3 + noise(vUv * 80) * 0.2;
+    float n = noise(vUv * 20.0) * 0.5 + noise(vUv * 40.0) * 0.3 + noise(vUv * 80.0) * 0.2;
     vec3 baseColor = uBaseColor * (0.9 + n * 0.15);
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 
@@ -205,10 +205,10 @@ const CARPET_FRAGMENT = /* glsl */ `
     float toon = toonStep(NdotL);
 
     // Fine carpet fibre noise
-    float fibre = hash(floor(vUv * 120));
+    float fibre = hash(floor(vUv * 120.0));
     vec3 baseColor = uBaseColor * (0.92 + fibre * 0.08);
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 
@@ -240,12 +240,12 @@ const LAB_FRAGMENT = /* glsl */ `
     vec2 f = fract(vUv * uScale);
 
     // Thin grout lines
-    float grout = 1 - step(0.025, f.x) * step(0.025, f.y) *
+    float grout = 1.0 - step(0.025, f.x) * step(0.025, f.y) *
                   step(f.x, 0.975) * step(f.y, 0.975);
 
     vec3 baseColor = mix(uTileColor, uGroutColor, grout);
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 
@@ -275,21 +275,21 @@ const MARBLE_FRAGMENT = /* glsl */ `
   float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
-    f = f * f * (3 - 2 * f);
+    f = f * f * (3.0 - 2.0 * f);
     float a = hash(i);
-    float b = hash(i + vec2(1, 0));
-    float c = hash(i + vec2(0, 1));
-    float d = hash(i + vec2(1, 1));
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
   }
 
   float fbm(vec2 p) {
-    float v = 0;
+    float v = 0.0;
     float a = 0.5;
-    vec2 shift = vec2(100);
+    vec2 shift = vec2(100.0);
     for (int i = 0; i < 4; i++) {
       v += a * noise(p);
-      p = p * 2 + shift;
+      p = p * 2.0 + shift;
       a *= 0.5;
     }
     return v;
@@ -300,18 +300,18 @@ const MARBLE_FRAGMENT = /* glsl */ `
     float toon = toonStep(NdotL);
 
     // Marble veining: warped noise for organic streaks
-    vec2 uv = vUv * 8;
-    float warp = fbm(uv * 2);
+    vec2 uv = vUv * 8.0;
+    float warp = fbm(uv * 2.0);
     float vein = fbm(uv + warp * 1.5);
     // Sharpen veins into thin streaks
     vein = smoothstep(0.35, 0.55, vein);
 
     vec3 baseColor = mix(uBaseColor, uVeinColor, vein * 0.35);
     // Subtle surface variation
-    float surf = noise(vUv * 30) * 0.03;
+    float surf = noise(vUv * 30.0) * 0.03;
     baseColor += surf;
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 
@@ -347,19 +347,19 @@ const LIGHT_WOOD_FRAGMENT = /* glsl */ `
     float plankF = fract(vUv.y * uScale);
 
     // Each plank gets a slightly different shade
-    float plankVariation = hash(vec2(plankY, 0)) * 0.1;
+    float plankVariation = hash(vec2(plankY, 0.0)) * 0.1;
     vec3 plankColor = mix(uColor1, uColor2, 0.5 + plankVariation - 0.05);
 
     // Subtle grain lines along X
-    float grain = hash(vec2(floor(vUv.x * uScale * 8), plankY));
+    float grain = hash(vec2(floor(vUv.x * uScale * 8.0), plankY));
     plankColor *= (0.97 + grain * 0.03);
 
     // Gap between planks (narrower, lighter gap for light wood)
-    float gap = 1 - smoothstep(0, 0.03, plankF) * smoothstep(0, 0.03, 1 - plankF);
+    float gap = 1.0 - smoothstep(0.0, 0.03, plankF) * smoothstep(0.0, 0.03, 1.0 - plankF);
     vec3 gapColor = plankColor * 0.82;
     vec3 baseColor = mix(plankColor, gapColor, gap);
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 
@@ -390,17 +390,17 @@ const LIGHT_TILES_FRAGMENT = /* glsl */ `
 
     // Checkerboard
     vec2 grid = floor(vUv * uScale);
-    float checker = mod(grid.x + grid.y, 2);
+    float checker = mod(grid.x + grid.y, 2.0);
 
     // Grout lines
     vec2 f = fract(vUv * uScale);
-    float grout = 1 - step(0.025, f.x) * step(0.025, f.y) *
+    float grout = 1.0 - step(0.025, f.x) * step(0.025, f.y) *
                   step(f.x, 0.975) * step(f.y, 0.975);
 
     vec3 tileColor = mix(uColor1, uColor2, checker);
     vec3 baseColor = mix(tileColor, uGroutColor, grout);
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 
@@ -430,11 +430,11 @@ const SAND_FRAGMENT = /* glsl */ `
   float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
-    f = f * f * (3 - 2 * f);
+    f = f * f * (3.0 - 2.0 * f);
     float a = hash(i);
-    float b = hash(i + vec2(1, 0));
-    float c = hash(i + vec2(0, 1));
-    float d = hash(i + vec2(1, 1));
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
   }
 
@@ -443,10 +443,10 @@ const SAND_FRAGMENT = /* glsl */ `
     float toon = toonStep(NdotL);
 
     // Soft multi-scale noise for natural sand look
-    float n = noise(vUv * 15) * 0.4 + noise(vUv * 35) * 0.35 + noise(vUv * 70) * 0.25;
+    float n = noise(vUv * 15.0) * 0.4 + noise(vUv * 35.0) * 0.35 + noise(vUv * 70.0) * 0.25;
     vec3 baseColor = uBaseColor * (0.95 + n * 0.08);
 
-    gl_FragColor = vec4(baseColor * toon, 1);
+    gl_FragColor = vec4(baseColor * toon, 1.0);
   }
 `
 

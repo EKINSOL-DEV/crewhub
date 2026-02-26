@@ -3,38 +3,48 @@
  * These are all tightly coupled through labelRotationIndex so they live together.
  */
 
+// ─── Session key constants ─────────────────────────────────────
+const KEY_MAIN = 'agent:main:main'
+const KEY_DEV = 'agent:dev:main'
+const KEY_GAMEDEV = 'agent:gamedev:main'
+const KEY_FLOWY = 'agent:flowy:main'
+const KEY_REVIEWER = 'agent:reviewer:main'
+const MODEL_OPUS = 'claude-opus-4-20250514'
+const MODEL_SONNET = 'claude-sonnet-4-20250514'
+const CH_INTERNAL = 'internal'
+
 // ─── Rotating session labels for liveliness ────────────────────
 
 export const SESSION_LABELS: Record<string, string[]> = {
-  'agent:main:main': [
+  [KEY_MAIN]: [
     'Reviewing pull request #127',
     'Coordinating deployment plan',
     'Checking inbox for urgent emails',
     'Planning sprint tasks for the week',
     'Responding to WhatsApp messages',
   ],
-  'agent:dev:main': [
+  [KEY_DEV]: [
     'Building REST API endpoints',
     'Refactoring database layer',
     'Writing integration tests',
     'Debugging Docker build pipeline',
     'Implementing WebSocket handlers',
   ],
-  'agent:gamedev:main': [
+  [KEY_GAMEDEV]: [
     'Optimizing 3D render pipeline',
     'Adding room transition animations',
     'Implementing dynamic lighting',
     'Tweaking bot idle animations',
     'Building particle effects system',
   ],
-  'agent:flowy:main': [
+  [KEY_FLOWY]: [
     'Writing blog post draft',
     'Editing marketing landing page',
     'Creating social media content',
     'Drafting release notes for v0.8',
     'Reviewing SEO keyword strategy',
   ],
-  'agent:reviewer:main': [
+  [KEY_REVIEWER]: [
     'Reviewing PR #132 — auth middleware',
     'Analysing test coverage gaps',
     'Checking dependency vulnerabilities',
@@ -62,59 +72,59 @@ export function createMockSessions() {
   return [
     // Main agent sessions
     {
-      key: 'agent:main:main',
+      key: KEY_MAIN,
       kind: 'agent',
       channel: 'whatsapp',
       displayName: 'Assistent',
-      label: getRotatingLabel('agent:main:main') || 'Reviewing pull request #127',
+      label: getRotatingLabel(KEY_MAIN) || 'Reviewing pull request #127',
       updatedAt: now - 5000 + Math.floor(Math.random() * 3000),
       sessionId: 'demo-main',
-      model: 'claude-sonnet-4-20250514',
+      model: MODEL_SONNET,
       totalTokens: 48200 + Math.floor(Math.random() * 1000),
       contextTokens: 12400,
     },
     {
-      key: 'agent:dev:main',
+      key: KEY_DEV,
       kind: 'agent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: 'Dev',
-      label: getRotatingLabel('agent:dev:main') || 'Building REST API endpoints',
+      label: getRotatingLabel(KEY_DEV) || 'Building REST API endpoints',
       updatedAt: now - 3000 + Math.floor(Math.random() * 2000),
       sessionId: 'demo-dev',
-      model: 'claude-opus-4-20250514',
+      model: MODEL_OPUS,
       totalTokens: 127500 + Math.floor(Math.random() * 2000),
       contextTokens: 34200,
     },
     {
-      key: 'agent:gamedev:main',
+      key: KEY_GAMEDEV,
       kind: 'agent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: 'Game Dev',
-      label: getRotatingLabel('agent:gamedev:main') || 'Optimizing 3D render pipeline',
+      label: getRotatingLabel(KEY_GAMEDEV) || 'Optimizing 3D render pipeline',
       updatedAt: now - 8000 + Math.floor(Math.random() * 4000),
       sessionId: 'demo-gamedev',
-      model: 'claude-opus-4-20250514',
+      model: MODEL_OPUS,
       totalTokens: 89300 + Math.floor(Math.random() * 1500),
       contextTokens: 22100,
     },
     {
-      key: 'agent:flowy:main',
+      key: KEY_FLOWY,
       kind: 'agent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: 'Flowy',
-      label: getRotatingLabel('agent:flowy:main') || 'Writing blog post draft',
+      label: getRotatingLabel(KEY_FLOWY) || 'Writing blog post draft',
       updatedAt: now - 12000 + Math.floor(Math.random() * 5000),
       sessionId: 'demo-flowy',
-      model: 'claude-sonnet-4-20250514',
+      model: MODEL_SONNET,
       totalTokens: 34600 + Math.floor(Math.random() * 800),
       contextTokens: 8900,
     },
     {
-      key: 'agent:reviewer:main',
+      key: KEY_REVIEWER,
       kind: 'agent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: 'Reviewer',
-      label: getRotatingLabel('agent:reviewer:main') || 'Waiting for code review',
+      label: getRotatingLabel(KEY_REVIEWER) || 'Waiting for code review',
       updatedAt: now - 90000 + Math.floor(Math.random() * 10000),
       sessionId: 'demo-reviewer',
       model: 'gpt-5.2',
@@ -125,60 +135,60 @@ export function createMockSessions() {
     {
       key: 'agent:dev:subagent:fix-auth-middleware',
       kind: 'subagent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: undefined,
       label: 'fix-auth-middleware',
       updatedAt: now - 4000 + Math.floor(Math.random() * 2000),
       sessionId: 'demo-sub-auth',
-      model: 'claude-opus-4-20250514',
+      model: MODEL_OPUS,
       totalTokens: 41200 + Math.floor(Math.random() * 600),
       contextTokens: 11300,
     },
     {
       key: 'agent:dev:subagent:design-landing-page',
       kind: 'subagent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: undefined,
       label: 'design-landing-page',
       updatedAt: now - 7000 + Math.floor(Math.random() * 3000),
       sessionId: 'demo-sub-landing',
-      model: 'claude-sonnet-4-20250514',
+      model: MODEL_SONNET,
       totalTokens: 28400 + Math.floor(Math.random() * 500),
       contextTokens: 7600,
     },
     {
       key: 'agent:dev:subagent:database-migration-v3',
       kind: 'subagent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: undefined,
       label: 'database-migration-v3',
       updatedAt: now - 120000,
       sessionId: 'demo-sub-migration',
-      model: 'claude-opus-4-20250514',
+      model: MODEL_OPUS,
       totalTokens: 19800,
       contextTokens: 5100,
     },
     {
       key: 'agent:dev:subagent:unit-test-coverage',
       kind: 'subagent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: undefined,
       label: 'unit-test-coverage',
       updatedAt: now - 2000 + Math.floor(Math.random() * 1000),
       sessionId: 'demo-sub-tests',
-      model: 'claude-opus-4-20250514',
+      model: MODEL_OPUS,
       totalTokens: 55700 + Math.floor(Math.random() * 800),
       contextTokens: 14800,
     },
     {
       key: 'agent:flowy:subagent:social-media-campaign',
       kind: 'subagent',
-      channel: 'internal',
+      channel: CH_INTERNAL,
       displayName: undefined,
       label: 'social-media-campaign',
       updatedAt: now - 6000 + Math.floor(Math.random() * 3000),
       sessionId: 'demo-sub-social',
-      model: 'claude-sonnet-4-20250514',
+      model: MODEL_SONNET,
       totalTokens: 22100 + Math.floor(Math.random() * 400),
       contextTokens: 6200,
     },
@@ -196,8 +206,8 @@ export function createMockArchivedSessions() {
       agent_id: 'agent-dev',
       display_name: 'deploy-v0.6',
       minion_type: 'subagent',
-      model: 'claude-opus-4-20250514',
-      channel: 'internal',
+      model: MODEL_OPUS,
+      channel: CH_INTERNAL,
       started_at: new Date(now - 86400000 * 2).toISOString(),
       ended_at: new Date(now - 86400000 * 2 + 3600000).toISOString(),
       message_count: 47,
@@ -211,8 +221,8 @@ export function createMockArchivedSessions() {
       agent_id: 'agent-dev',
       display_name: 'refactor-sse',
       minion_type: 'subagent',
-      model: 'claude-opus-4-20250514',
-      channel: 'internal',
+      model: MODEL_OPUS,
+      channel: CH_INTERNAL,
       started_at: new Date(now - 86400000 * 3).toISOString(),
       ended_at: new Date(now - 86400000 * 3 + 5400000).toISOString(),
       message_count: 82,
@@ -226,8 +236,8 @@ export function createMockArchivedSessions() {
       agent_id: 'agent-gamedev',
       display_name: 'room-lighting',
       minion_type: 'subagent',
-      model: 'claude-opus-4-20250514',
-      channel: 'internal',
+      model: MODEL_OPUS,
+      channel: CH_INTERNAL,
       started_at: new Date(now - 86400000 * 4).toISOString(),
       ended_at: new Date(now - 86400000 * 4 + 7200000).toISOString(),
       message_count: 63,
@@ -241,8 +251,8 @@ export function createMockArchivedSessions() {
       agent_id: 'agent-flowy',
       display_name: 'blog-post-launch',
       minion_type: 'subagent',
-      model: 'claude-sonnet-4-20250514',
-      channel: 'internal',
+      model: MODEL_SONNET,
+      channel: CH_INTERNAL,
       started_at: new Date(now - 86400000 * 5).toISOString(),
       ended_at: new Date(now - 86400000 * 5 + 1800000).toISOString(),
       message_count: 24,
@@ -256,8 +266,8 @@ export function createMockArchivedSessions() {
       agent_id: 'agent-dev',
       display_name: 'broken-tests',
       minion_type: 'subagent',
-      model: 'claude-opus-4-20250514',
-      channel: 'internal',
+      model: MODEL_OPUS,
+      channel: CH_INTERNAL,
       started_at: new Date(now - 86400000 * 1).toISOString(),
       ended_at: new Date(now - 86400000 * 1 + 900000).toISOString(),
       message_count: 18,
@@ -307,7 +317,7 @@ export function createMockSessionHistory(sessionKey: string) {
   const now = Date.now()
 
   // Dev main agent - coding/debugging session
-  if (sessionKey === 'agent:dev:main') {
+  if (sessionKey === KEY_DEV) {
     return [
       {
         role: 'user',
@@ -374,7 +384,7 @@ export function createMockSessionHistory(sessionKey: string) {
   }
 
   // Reviewer agent - code review session
-  if (sessionKey === 'agent:reviewer:main') {
+  if (sessionKey === KEY_REVIEWER) {
     return [
       {
         role: 'system',
@@ -412,7 +422,7 @@ export function createMockSessionHistory(sessionKey: string) {
   }
 
   // Flowy agent - marketing/content session
-  if (sessionKey === 'agent:flowy:main') {
+  if (sessionKey === KEY_FLOWY) {
     return [
       {
         role: 'user',
@@ -460,7 +470,7 @@ export function createMockSessionHistory(sessionKey: string) {
   }
 
   // Main/Assistent agent - coordination session
-  if (sessionKey === 'agent:main:main') {
+  if (sessionKey === KEY_MAIN) {
     return [
       {
         role: 'user',
@@ -505,7 +515,7 @@ export function createMockSessionHistory(sessionKey: string) {
   }
 
   // Game Dev agent - 3D/shader work
-  if (sessionKey === 'agent:gamedev:main') {
+  if (sessionKey === KEY_GAMEDEV) {
     return [
       {
         role: 'user',
