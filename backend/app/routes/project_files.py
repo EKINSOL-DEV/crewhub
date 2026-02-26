@@ -215,6 +215,27 @@ async def list_project_files(
     }
 
 
+def _resolve_safe_target(base: Path, rel_path: str, not_found: str) -> Path:
+    """Resolve a safe path under base, rejecting path traversal."""
+    target = (base / rel_path).resolve()
+    if not _is_safe_path(base, target):
+        raise HTTPException(status_code=403, detail=MSG_PATH_TRAVERSAL)
+    if not target.exists():
+        raise HTTPException(status_code=404, detail=not_found)
+    return target
+
+
+def _read_text_with_fallback(target: Path) -> str:
+    """Read text with UTF-8 then latin-1 fallback."""
+    try:
+        return target.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        try:
+            return target.read_text(encoding="latin-1")
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail="Could not decode file content") from exc
+
+
 @router.get(
     "/{project_id}/files/content",
     responses={
@@ -231,37 +252,21 @@ async def read_project_file(
     """Read the content of a file from the project folder."""
     folder_path = await _get_project_folder(project_id)
     base = _resolve_project_folder(folder_path)
+    target = _resolve_safe_target(base, path, "File not found")
 
-    target = (base / path).resolve()
-    if not _is_safe_path(base, target):
-        raise HTTPException(status_code=403, detail=MSG_PATH_TRAVERSAL)
-    if not target.exists():
-        raise HTTPException(status_code=404, detail="File not found")
     if not target.is_file():
         raise HTTPException(status_code=400, detail="Path is not a file")
     if target.suffix.lower() not in ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=403, detail=f"File type not allowed: {target.suffix}")
 
-    # Check file size
     size = target.stat().st_size
     if size > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail=f"File too large ({size} bytes, max {MAX_FILE_SIZE})")
 
     file_type = _get_file_type(target)
-
-    # For images, return as file response
     if file_type == "image":
         mime = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
         return FileResponse(str(target), media_type=mime)
-
-    # For text files, read and return content
-    try:
-        content = target.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
-        try:
-            content = target.read_text(encoding="latin-1")
-        except Exception:
-            raise HTTPException(status_code=422, detail="Could not decode file content")
 
     return {
         "project_id": project_id,
@@ -270,7 +275,7 @@ async def read_project_file(
         "type": file_type,
         "extension": target.suffix.lower(),
         "size": size,
-        "content": content,
+        "content": _read_text_with_fallback(target),
     }
 
 
@@ -289,15 +294,10 @@ async def get_project_image(
     """Serve an image file from the project folder."""
     folder_path = await _get_project_folder(project_id)
     base = _resolve_project_folder(folder_path)
+    target = _resolve_safe_target(base, path, "Image not found")
 
-    target = (base / path).resolve()
-    if not _is_safe_path(base, target):
-        raise HTTPException(status_code=403, detail=MSG_PATH_TRAVERSAL)
-    if not target.exists():
-        raise HTTPException(status_code=404, detail="Image not found")
     if not target.is_file():
         raise HTTPException(status_code=400, detail="Path is not a file")
-
     if _get_file_type(target) != "image":
         raise HTTPException(status_code=400, detail="Not an image file")
 

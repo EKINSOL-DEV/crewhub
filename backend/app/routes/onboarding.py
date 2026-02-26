@@ -160,32 +160,29 @@ def _build_suggested_urls(is_docker: bool, lan_ip: Optional[str], host_docker_re
 # =============================================================================
 
 
-async def _test_openclaw_connection(  # noqa: C901 - sequential DNS/TCP/WS/auth classification flow
-    url: str, token: Optional[str]
-) -> TestOpenClawResponse:
-    """
-    Test an OpenClaw gateway connection with detailed error classification.
-
-    Categories: dns, tcp, ws, auth, protocol, timeout
-    """
+def _parse_ws_url(url: str) -> tuple[Optional[tuple[str, int]], Optional[TestOpenClawResponse]]:
+    """Parse and validate a WebSocket URL."""
     import urllib.parse
 
-    # Parse URL
     try:
         parsed = urllib.parse.urlparse(url)
         host = parsed.hostname or "localhost"
         port = parsed.port or 18789
+        return (host, port), None
     except Exception:
-        return TestOpenClawResponse(
+        return None, TestOpenClawResponse(
             ok=False,
             category="dns",
             message="Invalid URL format.",
             hints=["Use format: ws://hostname:18789", "Example: ws://127.0.0.1:18789"],
         )
 
-    # Step 1: DNS resolution
+
+def _check_dns(host: str, port: int) -> Optional[TestOpenClawResponse]:
+    """Validate DNS resolution for host/port."""
     try:
         socket.getaddrinfo(host, port, socket.AF_INET)
+        return None
     except socket.gaierror:
         hints = [f'Host "{host}" could not be resolved.']
         if host in ("localhost", "127.0.0.1") and _detect_docker():
@@ -198,14 +195,14 @@ async def _test_openclaw_connection(  # noqa: C901 - sequential DNS/TCP/WS/auth 
             hints=hints,
         )
 
-    # Step 2: TCP connection
+
+async def _check_tcp(host: str, port: int) -> Optional[TestOpenClawResponse]:
+    """Validate TCP connectivity to host/port."""
     try:
-        _, writer = await asyncio.wait_for(
-            asyncio.open_connection(host, port),
-            timeout=5.0,
-        )
+        _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=5.0)
         writer.close()
         await writer.wait_closed()
+        return None
     except TimeoutError:
         return TestOpenClawResponse(
             ok=False,
@@ -229,108 +226,132 @@ async def _test_openclaw_connection(  # noqa: C901 - sequential DNS/TCP/WS/auth 
             ],
         )
 
-    # Step 3: WebSocket + protocol handshake
-    try:
-        import uuid
 
+def _protocol_error_response(challenge: dict) -> TestOpenClawResponse:
+    return TestOpenClawResponse(
+        ok=False,
+        category="protocol",
+        message="Unexpected server response (not an OpenClaw gateway).",
+        hints=[
+            "Check that the URL points to an OpenClaw gateway.",
+            f"Received event: {challenge.get('event', 'unknown')}",
+        ],
+    )
+
+
+def _build_connect_request(token: Optional[str]) -> dict:
+    import uuid
+
+    return {
+        "type": "req",
+        "id": f"test-{uuid.uuid4()}",
+        "method": "connect",
+        "params": {
+            "minProtocol": 3,
+            "maxProtocol": 3,
+            "client": {
+                "id": "cli",
+                "version": "1.0.0",
+                "platform": "python",
+                "mode": "cli",
+            },
+            "role": "operator",
+            "scopes": ["operator.read"],
+            "auth": {"token": token} if token else {},
+            "locale": "en-US",
+            "userAgent": "crewhub-onboarding/1.0.0",
+        },
+    }
+
+
+def _auth_or_protocol_failure(error: object, token: Optional[str]) -> TestOpenClawResponse:
+    error_msg = error.get("message", str(error)) if isinstance(error, dict) else str(error)
+    if "auth" not in error_msg.lower() and "token" not in error_msg.lower():
+        return TestOpenClawResponse(
+            ok=False,
+            category="protocol",
+            message=f"Gateway rejected connection: {error_msg}",
+            hints=["Check gateway logs for details."],
+        )
+
+    token_path, _ = _find_token_file()
+    hints = ["Check your API token is correct."]
+    if token_path:
+        hints.append(f"Token can be found in: {token_path}")
+        hints.append("Look for gateway.auth.token in the JSON file.")
+    elif not token:
+        hints.append("No token was provided. The gateway requires authentication.")
+    return TestOpenClawResponse(
+        ok=False,
+        category="auth",
+        message="Authentication failed.",
+        hints=hints,
+    )
+
+
+async def _query_sessions(ws) -> Optional[int]:
+    import uuid
+
+    try:
+        session_req = {
+            "type": "req",
+            "id": f"sessions-{uuid.uuid4()}",
+            "method": "sessions.list",
+            "params": {},
+        }
+        await ws.send(json.dumps(session_req))
+        sess_raw = await asyncio.wait_for(ws.recv(), timeout=3.0)
+        sess_data = json.loads(sess_raw)
+        if sess_data.get("ok"):
+            return len(sess_data.get("payload", {}).get("sessions", []))
+    except Exception:
+        pass
+    return None
+
+
+async def _test_openclaw_connection(url: str, token: Optional[str]) -> TestOpenClawResponse:
+    """
+    Test an OpenClaw gateway connection with detailed error classification.
+
+    Categories: dns, tcp, ws, auth, protocol, timeout
+    """
+    parsed, parse_error = _parse_ws_url(url)
+    if parse_error:
+        return parse_error
+    host, port = parsed
+
+    dns_error = _check_dns(host, port)
+    if dns_error:
+        return dns_error
+
+    tcp_error = await _check_tcp(host, port)
+    if tcp_error:
+        return tcp_error
+
+    try:
         import websockets
 
-        ws = await asyncio.wait_for(
-            websockets.connect(url, ping_interval=None),
-            timeout=5.0,
-        )
+        ws = await asyncio.wait_for(websockets.connect(url, ping_interval=None), timeout=5.0)
         try:
-            # Read challenge
             challenge_raw = await asyncio.wait_for(ws.recv(), timeout=5.0)
             challenge = json.loads(challenge_raw)
 
             if challenge.get("event") != "connect.challenge":
-                return TestOpenClawResponse(
-                    ok=False,
-                    category="protocol",
-                    message="Unexpected server response (not an OpenClaw gateway).",
-                    hints=[
-                        "Check that the URL points to an OpenClaw gateway.",
-                        f"Received event: {challenge.get('event', 'unknown')}",
-                    ],
-                )
+                return _protocol_error_response(challenge)
 
-            # Send connect request
-            connect_req = {
-                "type": "req",
-                "id": f"test-{uuid.uuid4()}",
-                "method": "connect",
-                "params": {
-                    "minProtocol": 3,
-                    "maxProtocol": 3,
-                    "client": {
-                        "id": "cli",
-                        "version": "1.0.0",
-                        "platform": "python",
-                        "mode": "cli",
-                    },
-                    "role": "operator",
-                    "scopes": ["operator.read"],
-                    "auth": {"token": token} if token else {},
-                    "locale": "en-US",
-                    "userAgent": "crewhub-onboarding/1.0.0",
-                },
-            }
-            await ws.send(json.dumps(connect_req))
-
+            await ws.send(json.dumps(_build_connect_request(token)))
             response_raw = await asyncio.wait_for(ws.recv(), timeout=5.0)
             response = json.loads(response_raw)
 
-            if response.get("ok"):
-                # Success! Try to get session count
-                sessions = None
-                try:
-                    session_req = {
-                        "type": "req",
-                        "id": f"sessions-{uuid.uuid4()}",
-                        "method": "sessions.list",
-                        "params": {},
-                    }
-                    await ws.send(json.dumps(session_req))
-                    sess_raw = await asyncio.wait_for(ws.recv(), timeout=3.0)
-                    sess_data = json.loads(sess_raw)
-                    if sess_data.get("ok"):
-                        sessions = len(sess_data.get("payload", {}).get("sessions", []))
-                except Exception:
-                    pass
+            if not response.get("ok"):
+                return _auth_or_protocol_failure(response.get("error", {}), token)
 
-                return TestOpenClawResponse(
-                    ok=True,
-                    message="Connected successfully!"
-                    + (f" ({sessions} active sessions)" if sessions is not None else ""),
-                    sessions=sessions,
-                )
-            else:
-                error = response.get("error", {})
-                error_msg = error.get("message", str(error)) if isinstance(error, dict) else str(error)
-
-                if "auth" in error_msg.lower() or "token" in error_msg.lower():
-                    token_path, _ = _find_token_file()
-                    hints = ["Check your API token is correct."]
-                    if token_path:
-                        hints.append(f"Token can be found in: {token_path}")
-                        hints.append("Look for gateway.auth.token in the JSON file.")
-                    elif not token:
-                        hints.append("No token was provided. The gateway requires authentication.")
-                    return TestOpenClawResponse(
-                        ok=False,
-                        category="auth",
-                        message="Authentication failed.",
-                        hints=hints,
-                    )
-                else:
-                    return TestOpenClawResponse(
-                        ok=False,
-                        category="protocol",
-                        message=f"Gateway rejected connection: {error_msg}",
-                        hints=["Check gateway logs for details."],
-                    )
-
+            sessions = await _query_sessions(ws)
+            return TestOpenClawResponse(
+                ok=True,
+                message="Connected successfully!" + (f" ({sessions} active sessions)" if sessions is not None else ""),
+                sessions=sessions,
+            )
         finally:
             await ws.close()
 

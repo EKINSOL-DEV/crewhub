@@ -87,6 +87,38 @@ def _build_project_md_tree(base_dir: Path, current_dir: Path, resolved: Path, de
     return items
 
 
+def _resolve_existing_project_dir(folder_path: str) -> Path | None:
+    """Resolve configured folder path if it exists."""
+    if not folder_path:
+        return None
+    expanded = Path(os.path.expanduser(folder_path))
+    return expanded if expanded.exists() else None
+
+
+def _resolve_slug_project_dir(project_name: str) -> Path | None:
+    """Resolve project folder using slug fallback."""
+    name_slug = re.sub(r"[^a-zA-Z0-9]+", "-", project_name).strip("-")
+    candidate = SYNOLOGY_PROJECTS_BASE / name_slug
+    return candidate if candidate.exists() else None
+
+
+def _validate_project_root(project_dir: Path) -> Path:
+    """Ensure project folder is inside allowed roots."""
+    resolved_base = project_dir.resolve()
+    if any(resolved_base.is_relative_to(root) for root in ALLOWED_PROJECT_ROOTS if root.exists()):
+        return resolved_base
+    logger.warning(f"Project folder outside allowed roots: {resolved_base}")
+    raise HTTPException(403, "Project folder outside allowed roots")
+
+
+async def _resolve_project_markdown_root(project) -> Path | None:
+    """Resolve a project directory with configured path first, then slug fallback."""
+    configured = _resolve_existing_project_dir(project.folder_path or "")
+    if configured:
+        return configured
+    return _resolve_slug_project_dir(project.name)
+
+
 # ========================================
 # PROJECTS CRUD
 # ========================================
@@ -230,31 +262,13 @@ async def list_markdown_files(project_id: str):
         if not project:
             raise HTTPException(status_code=404, detail=MSG_PROJECT_NOT_FOUND)
 
-        folder_path = project.folder_path or ""
-        project_dir = None
-
-        if folder_path:
-            expanded = Path(os.path.expanduser(folder_path))
-            if expanded.exists():
-                project_dir = expanded
-
+        project_dir = await _resolve_project_markdown_root(project)
         if not project_dir:
-            name_slug = re.sub(r"[^a-zA-Z0-9]+", "-", project.name).strip("-")
-            candidate = SYNOLOGY_PROJECTS_BASE / name_slug
-            if candidate.exists():
-                project_dir = candidate
-
-        if not project_dir or not project_dir.exists():
             return {"files": [], "warning": "Project folder not found"}
 
-        resolved_base = project_dir.resolve()
-        if not any(resolved_base.is_relative_to(root) for root in ALLOWED_PROJECT_ROOTS if root.exists()):
-            logger.warning(f"Project folder outside allowed roots: {resolved_base}")
-            raise HTTPException(403, "Project folder outside allowed roots")
-
+        resolved_base = _validate_project_root(project_dir)
         md_files = await asyncio.to_thread(_scan_project_md_files, project_dir, resolved_base)
         tree = await asyncio.to_thread(_build_project_md_tree, project_dir, project_dir, resolved_base)
-
         return {"files": md_files, "tree": tree, "root": project.name}
 
     except HTTPException:
