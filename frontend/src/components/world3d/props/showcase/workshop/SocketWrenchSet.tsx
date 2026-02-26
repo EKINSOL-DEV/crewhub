@@ -15,7 +15,7 @@ export function SocketWrenchSet() {
       </mesh>
       {Array.from({ length: 8 }).map((_, i) => (
         <mesh
-          key={`item-${i}`}
+          key={`item-${i % 4}-${Math.floor(i / 4)}`}
           position={[-0.12 + (i % 4) * 0.08, -0.18, -0.04 + Math.floor(i / 4) * 0.08]}
         >
           <cylinderGeometry args={[0.015 + i * 0.002, 0.015 + i * 0.002, 0.02, 6]} />

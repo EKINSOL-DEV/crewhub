@@ -23,7 +23,7 @@ export function DeskPhone() {
       </mesh>
       {Array.from({ length: 12 }).map((_, i) => (
         <mesh
-          key={`item-${i}`}
+          key={`item-${i % 3}-${Math.floor(i / 3)}`}
           position={[-0.04 + (i % 3) * 0.04, -0.175, -0.04 + Math.floor(i / 3) * 0.03]}
         >
           <boxGeometry args={[0.025, 0.005, 0.02]} />

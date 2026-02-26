@@ -51,7 +51,8 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block Renderer ────────────────────────────────────
 
-function ContentBlockView({ block }: { block: SessionContentBlock }) { // NOSONAR
+function ContentBlockView({ block }: { block: SessionContentBlock }) {
+  // NOSONAR
   // NOSONAR: complexity from activity detail rendering with multiple activity type branches
   const [expanded, setExpanded] = useState(false)
 
@@ -143,8 +144,8 @@ function MessageBubble({ message }: { message: SessionMessage }) {
         </div>
       </div>
       <div className="zen-sd-message-body">
-        {message.content?.map((block, i) => (
-          <ContentBlockView key={`block-${i}`} block={block} />
+        {message.content?.map((block) => (
+          <ContentBlockView key={`${block.type}-${JSON.stringify(block)}`} block={block} />
         ))}
       </div>
     </div>
@@ -476,8 +477,11 @@ export function ZenActivityDetailPanel({
             {!loading && !error && messages.length === 0 && taskEvents.length === 0 && (
               <div className="zen-sd-empty">No history available</div>
             )}
-            {Array.from(messages.entries()).map(([i, msg]) => (
-              <MessageBubble key={`msg-${i}`} message={msg} />
+            {messages.map((msg) => (
+              <MessageBubble
+                key={`${msg.timestamp || ''}-${msg.role || ''}-${msg.model || ''}-${JSON.stringify(msg.content || [])}`}
+                message={msg}
+              />
             ))}
           </div>
         )}

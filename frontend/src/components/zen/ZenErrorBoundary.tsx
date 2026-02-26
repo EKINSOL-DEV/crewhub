@@ -96,7 +96,7 @@ export function ZenSkeletonText({ lines = 3, short = false }: { lines?: number; 
         }
         return (
           <div
-            key={`item-${i}`}
+            key={`item-${skeletonWidth}-${i === lines - 1 ? 'last' : 'mid'}`}
             className={`zen-skeleton zen-skeleton-text ${
               short || i === lines - 1 ? 'zen-skeleton-text-short' : ''
             }`}

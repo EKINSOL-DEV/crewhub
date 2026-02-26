@@ -47,7 +47,8 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block ─────────────────────────────────────────────
 
-function ContentBlockView({ // NOSONAR
+function ContentBlockView({
+  // NOSONAR
   // NOSONAR: complexity from fullscreen overlay with multiple content and action type branches
   block,
   filterText,
@@ -366,7 +367,11 @@ export function FullscreenDetailView({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (e.target === e.currentTarget) onClose() } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (e.target === e.currentTarget) onClose()
+        }
+      }}
     >
       {/* Top bar */}
       <div className="zen-fs-topbar">
@@ -568,8 +573,12 @@ export function FullscreenDetailView({
                 {filterText ? 'No messages match filter' : 'No messages in history'}
               </div>
             )}
-            {Array.from(displayMessages.entries()).map(([i, msg]) => (
-              <MessageBubble key={`msg-${i}`} message={msg} filterText={filterText || undefined} />
+            {displayMessages.map((msg) => (
+              <MessageBubble
+                key={`${msg.timestamp || ''}-${msg.role || ''}-${msg.model || ''}-${JSON.stringify(msg.content || [])}`}
+                message={msg}
+                filterText={filterText || undefined}
+              />
             ))}
           </div>
         </div>

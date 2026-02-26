@@ -453,8 +453,8 @@ export function PropControls({
                 </div>
                 {qualityScore.suggestions?.length > 0 && (
                   <div className="fpm-quality-suggestions">
-                    {qualityScore.suggestions.map((s: string, i: number) => (
-                      <div key={`item-${i}`} className="fpm-quality-suggestion">
+                    {qualityScore.suggestions.map((s: string) => (
+                      <div key={`item-${s}`} className="fpm-quality-suggestion">
                         💡 {s}
                       </div>
                     ))}
@@ -557,9 +557,9 @@ export function PropControls({
                 <div className="fpm-style-palette">
                   {availableStyles
                     .find((s) => s.id === selectedStyle)
-                    ?.palette.map((c, i) => (
+                    ?.palette.map((c) => (
                       <div
-                        key={`c-${i}`}
+                        key={`c-${c}`}
                         className="fpm-style-swatch"
                         style={{ background: c }}
                         title={c}

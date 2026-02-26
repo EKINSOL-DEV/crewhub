@@ -33,9 +33,9 @@ export function Whiteboard() {
         <meshStandardMaterial color="#f0f0f0" />
       </mesh>
       {/* Sticky notes */}
-      {STICKY_NOTES.map((note, i) => (
+      {STICKY_NOTES.map((note) => (
         <group
-          key={`note-${i}`}
+          key={`note-${note.text}-${note.x}-${note.y}`}
           position={[note.x, note.y, 0.04]}
           rotation={[0, 0, (Math.random() - 0.5) * 0.15]}
         >

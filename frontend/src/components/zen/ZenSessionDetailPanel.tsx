@@ -26,7 +26,8 @@ function formatDuration(startTs: number): string {
 
 // ── Content Block Renderer ────────────────────────────────────────
 
-function ContentBlockView({ block }: { block: SessionContentBlock }) { // NOSONAR
+function ContentBlockView({ block }: { block: SessionContentBlock }) {
+  // NOSONAR
   // NOSONAR: complexity from session detail with multiple content type branches
   const [expanded, setExpanded] = useState(false)
 
@@ -134,8 +135,8 @@ function MessageBubble({ message }: { message: SessionMessage }) {
         )}
       </div>
       <div className="zen-sd-message-body">
-        {message.content?.map((block, i) => (
-          <ContentBlockView key={`block-${i}`} block={block} />
+        {message.content?.map((block) => (
+          <ContentBlockView key={`${block.type}-${JSON.stringify(block)}`} block={block} />
         ))}
       </div>
     </div>
@@ -346,8 +347,11 @@ export function ZenSessionDetailPanel({ session, onClose }: ZenSessionDetailPane
             {!loading && !error && messages.length === 0 && (
               <div className="zen-sd-empty">No messages in history</div>
             )}
-            {Array.from([...messages].reverse().entries()).map(([i, msg]) => (
-              <MessageBubble key={`msg-${i}`} message={msg} />
+            {[...messages].reverse().map((msg) => (
+              <MessageBubble
+                key={`${msg.timestamp || ''}-${msg.role || ''}-${msg.model || ''}-${JSON.stringify(msg.content || [])}`}
+                message={msg}
+              />
             ))}
           </div>
         )}

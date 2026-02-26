@@ -15,7 +15,7 @@ export function GamingKeyboard() {
       </mesh>
       {Array.from({ length: 30 }).map((_, i) => (
         <mesh
-          key={`item-${i}`}
+          key={`item-${i % 10}-${Math.floor(i / 10)}`}
           position={[-0.22 + (i % 10) * 0.05, -0.2, -0.06 + Math.floor(i / 10) * 0.05]}
         >
           <boxGeometry args={[0.035, 0.015, 0.035]} />
