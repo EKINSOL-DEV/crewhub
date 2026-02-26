@@ -158,7 +158,7 @@ interface WallMeshProps {
 export function Wall({
   color = '#8899aa', opacity = 0.92, emissive = 0, emissiveColor = '#000000',
   position, rotation, scale, children
-}: WallMeshProps) {
+}: Readonly<WallMeshProps>) {
   const meshRef = useRef<THREE.Mesh>(null!)
   const { register, unregister } = useWallSystem()
 

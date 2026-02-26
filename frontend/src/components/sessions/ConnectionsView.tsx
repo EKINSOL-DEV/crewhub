@@ -191,7 +191,7 @@ function makeConnectionStatusUpdater(data: Partial<Connection> & { id: string })
     prev.map((c) => (c.id === data.id ? { ...c, ...data } : c))
 }
 
-function ConnectionDialog({ open, onOpenChange, connection, onSave }: ConnectionDialogProps) {
+function ConnectionDialog({ open, onOpenChange, connection, onSave }: Readonly<ConnectionDialogProps>) {
   const isEdit = !!connection
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState<ConnectionFormData>({

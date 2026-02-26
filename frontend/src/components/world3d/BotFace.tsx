@@ -15,7 +15,7 @@ interface BotFaceProps {
  * Eyes: Big white circles with dark pupils (like the 2D reference).
  * Mouth: Different shape per expression type.
  */
-export function BotFace({ status, expression }: BotFaceProps) {
+export function BotFace({ status, expression }: Readonly<BotFaceProps>) {
   const leftEyeRef = useRef<THREE.Group>(null)
   const rightEyeRef = useRef<THREE.Group>(null)
 

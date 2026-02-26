@@ -199,7 +199,7 @@ export function FullscreenDetailView({
   session,
   events: _events,
   onClose,
-}: FullscreenDetailViewProps) {
+}: Readonly<FullscreenDetailViewProps>) {
   const [messages, setMessages] = useState<SessionMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

@@ -18,7 +18,7 @@ interface ZenErrorBoundaryState {
 }
 
 export class ZenErrorBoundary extends Component<ZenErrorBoundaryProps, ZenErrorBoundaryState> {
-  constructor(props: ZenErrorBoundaryProps) {
+  constructor(props: Readonly<ZenErrorBoundaryProps>) {
     super(props)
     this.state = {
       hasError: false,
@@ -159,7 +159,7 @@ interface ZenEmptyStateProps {
   }
 }
 
-export function ZenEmptyState({ icon, title, description, action }: ZenEmptyStateProps) {
+export function ZenEmptyState({ icon, title, description, action }: Readonly<ZenEmptyStateProps>) {
   return (
     <div className="zen-empty-state">
       <div className="zen-empty-state-icon">{icon}</div>
@@ -180,7 +180,7 @@ interface ZenLoadingStateProps {
   readonly message?: string
 }
 
-export function ZenLoadingState({ message = 'Loading...' }: ZenLoadingStateProps) {
+export function ZenLoadingState({ message = 'Loading...' }: Readonly<ZenLoadingStateProps>) {
   return (
     <div className="zen-loading-state">
       <div className="zen-spinner zen-spinner-large" />
@@ -201,7 +201,7 @@ export function ZenConnectionStatus({
   connected,
   reconnecting,
   lastConnected,
-}: ZenConnectionStatusProps) {
+}: Readonly<ZenConnectionStatusProps>) {
   if (connected && !reconnecting) {
     return null
   }

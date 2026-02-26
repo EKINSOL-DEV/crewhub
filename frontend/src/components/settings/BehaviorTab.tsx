@@ -60,7 +60,7 @@ function ConfigField({
   min = 0,
   max,
   step,
-}: ConfigFieldProps) {
+}: Readonly<ConfigFieldProps>) {
   const overridden = isOverridden(configKey)
   const defaultVal = SESSION_CONFIG_DEFAULTS[configKey]
 
@@ -321,7 +321,7 @@ function ThresholdsTimingSection({ config }: { config: Record<string, number> })
 
 // ─── BehaviorTab ──────────────────────────────────────────────────────────────
 
-export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
+export function BehaviorTab({ settings, onSettingsChange }: Readonly<BehaviorTabProps>) {
   const sessionConfig = useSessionConfig()
   const overrideCount = getOverrideCount()
   const { toast } = useToast()

@@ -185,7 +185,7 @@ export function ZenActivityDetailPanel({
   session,
   events,
   onClose,
-}: ZenActivityDetailPanelProps) {
+}: Readonly<ZenActivityDetailPanelProps>) {
   const [messages, setMessages] = useState<SessionMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

@@ -107,7 +107,7 @@ export function ChatHeader3DAvatar({
   animation = 'idle',
   icon,
   style,
-}: ChatHeader3DAvatarProps) {
+}: Readonly<ChatHeader3DAvatarProps>) {
   const [has3D] = useState(() => canRender3D())
 
   const containerStyle: CSSProperties = {

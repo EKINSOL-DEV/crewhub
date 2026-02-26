@@ -34,7 +34,7 @@ export function PlacementGhost({
   rotation,
   onPositionChange,
   cellSize = 1,
-}: PlacementGhostProps) {
+}: Readonly<PlacementGhostProps>) {
   const { camera, raycaster, gl } = useThree()
   const groupRef = useRef<THREE.Group>(null)
   const mouseRef = useRef(new THREE.Vector2())

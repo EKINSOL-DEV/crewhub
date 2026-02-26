@@ -100,7 +100,7 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
   onOpenTaskBoard,
   onOpenHQBoard,
   onOpenContext,
-}: RoomInfoPanelProps) {
+}: Readonly<RoomInfoPanelProps>) {
   const panelRef = useRef<HTMLDivElement>(null)
   const roomColor = room.color || '#4f46e5'
 

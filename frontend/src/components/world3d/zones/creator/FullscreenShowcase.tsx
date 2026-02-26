@@ -41,7 +41,7 @@ interface FullscreenShowcaseProps {
   readonly onClose: () => void
 }
 
-export function FullscreenShowcase({ onClose }: FullscreenShowcaseProps) {
+export function FullscreenShowcase({ onClose }: Readonly<FullscreenShowcaseProps>) {
   const [selectedProp, setSelectedProp] = useState<ShowcaseProp | null>(null)
   const [showCode, setShowCode] = useState(false)
   const [codeContent, setCodeContent] = useState('')

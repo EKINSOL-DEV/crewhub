@@ -61,7 +61,7 @@ function getStatusColor(status: AgentStatus): string {
 
 function getRoomId(
   session: CrewSession,
-  getRoomForSession: AgentTopBarProps['getRoomForSession'],
+  getRoomForSession: Readonly<AgentTopBarProps>['getRoomForSession'],
   defaultRoomId?: string
 ): string {
   return (
@@ -210,7 +210,7 @@ function AgentPortraitButton({
   title,
   onUnpin,
   showUnpin,
-}: AgentPortraitButtonProps) {
+}: Readonly<AgentPortraitButtonProps>) {
   const [hovered, setHovered] = useState(false)
 
   return (
@@ -431,7 +431,7 @@ function AgentPickerDropdown({
   onSelect,
   onPin,
   onClose,
-}: AgentPickerDropdownProps) {
+}: Readonly<AgentPickerDropdownProps>) {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close on click outside
@@ -699,7 +699,7 @@ export function AgentTopBar({
   displayNames,
   rooms,
   agentRuntimes,
-}: AgentTopBarProps) {
+}: Readonly<AgentTopBarProps>) {
   const { state, focusBot } = useWorldFocus()
   const { openChat } = useChatContext()
   const [pickerOpen, setPickerOpen] = useState(false)

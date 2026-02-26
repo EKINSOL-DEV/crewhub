@@ -100,7 +100,7 @@ function NavBtn({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: ZenBrowserPanelProps) {
+export function ZenBrowserPanel({ url: controlledUrl = '', onUrlChange }: Readonly<ZenBrowserPanelProps>) {
   // The URL currently displayed in the browser area
   const [loadedUrl, setLoadedUrl] = useState(controlledUrl)
   // The text in the address bar (may differ while user is typing)

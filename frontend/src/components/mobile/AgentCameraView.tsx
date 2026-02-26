@@ -170,7 +170,7 @@ interface AgentMiniViewportProps {
   readonly botConfig: BotVariantConfig
 }
 
-export function AgentMiniViewport({ isVisible, agentStatus, botConfig }: AgentMiniViewportProps) {
+export function AgentMiniViewport({ isVisible, agentStatus, botConfig }: Readonly<AgentMiniViewportProps>) {
   const [has3D] = useState(() => canRender3D())
   const [size, setSize] = useState<ViewportSize>('small')
   const info = getStatusInfo(agentStatus)
@@ -284,7 +284,7 @@ interface AgentCameraViewProps {
   readonly botConfig: BotVariantConfig
 }
 
-export function AgentCameraOverlay(props: AgentCameraViewProps) {
+export function AgentCameraOverlay(props: Readonly<AgentCameraViewProps>) {
   return (
     <AgentMiniViewport
       isVisible={props.isOpen}

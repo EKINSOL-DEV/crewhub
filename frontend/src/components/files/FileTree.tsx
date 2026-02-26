@@ -143,7 +143,7 @@ function TreeNode({
   )
 }
 
-export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: FileTreeProps) {
+export function FileTree({ files, selectedPath, onSelect, onExpand, loading }: Readonly<FileTreeProps>) {
   if (loading) {
     return (
       <div

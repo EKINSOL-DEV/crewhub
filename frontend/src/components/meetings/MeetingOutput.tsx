@@ -315,7 +315,7 @@ export function MeetingOutput({ // NOSONAR
   mode = 'dialog',
   onOpenInSidebar,
   onStartFollowUp,
-}: MeetingOutputProps) {
+}: Readonly<MeetingOutputProps>) {
   const [copied, setCopied] = useState(false)
   const [activeView, setActiveView] = useState<MeetingView>('structured')
   const [itemStatuses, setItemStatuses] = useState<Record<string, string>>({})

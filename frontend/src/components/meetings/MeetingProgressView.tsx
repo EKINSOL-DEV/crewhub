@@ -89,7 +89,7 @@ function RoundSection({ round }: { round: MeetingRound }) {
   )
 }
 
-export function MeetingProgressView({ meeting, onCancel, onViewOutput }: MeetingProgressViewProps) {
+export function MeetingProgressView({ meeting, onCancel, onViewOutput }: Readonly<MeetingProgressViewProps>) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom on new content

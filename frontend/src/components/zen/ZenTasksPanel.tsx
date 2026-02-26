@@ -37,7 +37,7 @@ interface TaskItemProps {
   readonly isSelected?: boolean
 }
 
-function TaskItem({ task, onStatusChange, onClick, isSelected }: TaskItemProps) {
+function TaskItem({ task, onStatusChange, onClick, isSelected }: Readonly<TaskItemProps>) {
   const status = STATUS_CONFIG[task.status]
   const priority = PRIORITY_CONFIG[task.priority]
 
@@ -115,7 +115,7 @@ interface StatusTabsProps {
   readonly onChange: (status: TaskStatus | 'all') => void
 }
 
-function StatusTabs({ activeStatus, counts, onChange }: StatusTabsProps) {
+function StatusTabs({ activeStatus, counts, onChange }: Readonly<StatusTabsProps>) {
   const tabs: (TaskStatus | 'all')[] = ['all', 'todo', 'in_progress', 'review', 'done', 'blocked']
 
   return (
@@ -178,7 +178,7 @@ interface TaskDetailPaneProps {
   readonly onMove: (newStatus: TaskStatus) => void
 }
 
-function TaskDetailPane({ task, onClose, onMove }: TaskDetailPaneProps) {
+function TaskDetailPane({ task, onClose, onMove }: Readonly<TaskDetailPaneProps>) {
   const status = STATUS_CONFIG[task.status]
   const priority = PRIORITY_CONFIG[task.priority]
 
@@ -247,7 +247,7 @@ export function ZenTasksPanel({
   roomFocusName,
   onTaskClick,
   onProjectFilterChange,
-}: ZenTasksPanelProps) {
+}: Readonly<ZenTasksPanelProps>) {
   const { tasks, isLoading, error, updateTask, taskCounts, refresh } = useTasks({
     projectId,
     roomId,

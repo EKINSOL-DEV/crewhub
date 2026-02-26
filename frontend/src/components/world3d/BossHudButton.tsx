@@ -34,7 +34,7 @@ export function BossHudButton({
   getRoomForSession,
   defaultRoomId,
   isActivelyRunning,
-}: BossHudButtonProps) {
+}: Readonly<BossHudButtonProps>) {
   const { state, focusBot } = useWorldFocus()
   const { openChat } = useChatContext()
 

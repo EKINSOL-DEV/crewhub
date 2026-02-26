@@ -315,7 +315,7 @@ export function GridDebugOverlay({ blueprint }: Omit<GridDebugOverlayProps, 'sho
 
 // Coordinate labels and prop labels live outside the rotated group
 // so Html elements orient correctly.
-export function GridDebugLabels({ blueprint, showLabels = false }: GridDebugOverlayProps) {
+export function GridDebugLabels({ blueprint, showLabels = false }: Readonly<GridDebugOverlayProps>) {
   const { gridWidth, gridDepth, cellSize, cells } = blueprint
 
   const propCells = useMemo(() => {

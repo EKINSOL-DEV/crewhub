@@ -27,7 +27,7 @@ export function ProjectsPanel({
   projectId,
   projectName,
   onProjectFilterChange,
-}: ProjectsPanelProps) {
+}: Readonly<ProjectsPanelProps>) {
   const [activeView, setActiveView] = useState<ViewTab>('overview')
   const { projects } = useProjects()
 

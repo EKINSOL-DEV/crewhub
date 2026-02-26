@@ -54,7 +54,7 @@ export function InfoTab({
   agentId,
   displayName,
   onBioUpdated,
-}: InfoTabProps) {
+}: Readonly<InfoTabProps>) {
   const [bioDialogOpen, setBioDialogOpen] = useState(false)
 
   return (

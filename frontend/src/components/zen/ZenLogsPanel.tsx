@@ -45,7 +45,7 @@ interface LogEntryItemProps {
   readonly entry: LogEntry
 }
 
-function LogEntryItem({ entry }: LogEntryItemProps) {
+function LogEntryItem({ entry }: Readonly<LogEntryItemProps>) {
   const config = LEVEL_CONFIG[entry.level]
 
   return (
@@ -78,7 +78,7 @@ function FilterControls({
   onSearchChange,
   autoScroll,
   onAutoScrollChange,
-}: FilterControlsProps) {
+}: Readonly<FilterControlsProps>) {
   return (
     <div className="zen-logs-filters">
       <input

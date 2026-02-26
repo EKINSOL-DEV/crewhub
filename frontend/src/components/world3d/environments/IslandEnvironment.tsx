@@ -167,7 +167,7 @@ function DistantClouds() {
   )
 }
 
-export function IslandEnvironment({ buildingWidth, buildingDepth }: IslandEnvironmentProps) {
+export function IslandEnvironment({ buildingWidth, buildingDepth }: Readonly<IslandEnvironmentProps>) {
   // Island radius covers roughly the same area as the building + some margin
   const radius = Math.max(buildingWidth, buildingDepth) / 2 + 6
   const islandGeo = useIslandGeometry(radius)
