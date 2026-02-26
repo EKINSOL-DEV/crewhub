@@ -185,7 +185,11 @@ export function MeetingResultsPanel() {
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose()
       }}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (e.target === e.currentTarget) handleClose() } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (e.target === e.currentTarget) handleClose()
+        }
+      }}
     >
       {/* Content card — matches FullscreenOverlay layout */}
       <div
@@ -196,69 +200,83 @@ export function MeetingResultsPanel() {
           flexDirection: 'column',
         }}
       >
-        {loading ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: 1,
-              color: 'hsl(var(--muted-foreground))',
-              fontSize: 14,
-            }}
-          >
-            Loading meeting results…
-          </div>
-        ) : error ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: 1,
-              gap: 12,
-            }}
-          >
-            <span style={{ color: 'hsl(var(--destructive))', fontSize: 14 }}>
-              Failed to load meeting: {error}
-            </span>
-            <button
-              onClick={handleClose}
+        {(() => {
+          if (loading) {
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
+                  color: 'hsl(var(--muted-foreground))',
+                  fontSize: 14,
+                }}
+              >
+                Loading meeting results…
+              </div>
+            )
+          }
+
+          if (error) {
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flex: 1,
+                  gap: 12,
+                }}
+              >
+                <span style={{ color: 'hsl(var(--destructive))', fontSize: 14 }}>
+                  Failed to load meeting: {error}
+                </span>
+                <button
+                  onClick={handleClose}
+                  style={{
+                    background: 'hsl(var(--secondary))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 6,
+                    padding: '6px 16px',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'hsl(var(--foreground))',
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            )
+          }
+
+          if (loadedMeeting) {
+            return (
+              <MeetingOutput
+                meeting={loadedMeeting}
+                onClose={handleClose}
+                mode="fullscreen"
+                onStartFollowUp={handleFollowUp}
+              />
+            )
+          }
+
+          return (
+            <div
               style={{
-                background: 'hsl(var(--secondary))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: 6,
-                padding: '6px 16px',
-                fontSize: 13,
-                cursor: 'pointer',
-                color: 'hsl(var(--foreground))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: 1,
+                color: 'hsl(var(--muted-foreground))',
+                fontSize: 14,
               }}
             >
-              Close
-            </button>
-          </div>
-        ) : loadedMeeting ? (
-          <MeetingOutput
-            meeting={loadedMeeting}
-            onClose={handleClose}
-            mode="fullscreen"
-            onStartFollowUp={handleFollowUp}
-          />
-        ) : (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: 1,
-              color: 'hsl(var(--muted-foreground))',
-              fontSize: 14,
-            }}
-          >
-            Meeting not found
-          </div>
-        )}
+              Meeting not found
+            </div>
+          )
+        })()}
       </div>
 
       <style>{`

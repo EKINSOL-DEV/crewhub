@@ -185,111 +185,123 @@ export function RoomManagementPanel({ open, onOpenChange }: RoomManagementPanelP
             <div className="space-y-2">
               <Label className="text-sm font-semibold">Rooms ({rooms.length})</Label>
 
-              {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading rooms...</div>
-              ) : sortedRooms.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No rooms yet. Create one!
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {sortedRooms.map((room, index) => (
-                    <div
-                      key={room.id}
-                      className="flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <button
-                          onClick={() => moveRoom(room.id, 'up')}
-                          disabled={index === 0}
-                          className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
-                        >
-                          <GripVertical className="h-3 w-3 rotate-90" />
-                        </button>
-                        <button
-                          onClick={() => moveRoom(room.id, 'down')}
-                          disabled={index === sortedRooms.length - 1}
-                          className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
-                        >
-                          <GripVertical className="h-3 w-3 -rotate-90" />
-                        </button>
-                      </div>
+              {(() => {
+                if (isLoading) {
+                  return (
+                    <div className="text-center py-8 text-muted-foreground">Loading rooms...</div>
+                  )
+                }
 
+                if (sortedRooms.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No rooms yet. Create one!
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="space-y-2">
+                    {sortedRooms.map((room, index) => (
                       <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                        style={{
-                          backgroundColor: `${room.color}20`,
-                          border: `2px solid ${room.color}`,
-                        }}
+                        key={room.id}
+                        className="flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                       >
-                        {room.icon}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        {editingRoom?.id === room.id ? (
-                          <div className="flex gap-2">
-                            <Input
-                              value={editingRoom.name}
-                              onChange={(e) =>
-                                setEditingRoom({ ...editingRoom, name: e.target.value })
-                              }
-                              className="h-8"
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => handleUpdateRoom(editingRoom)}
-                              className="p-1.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600"
-                            >
-                              <Check className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => setEditingRoom(null)}
-                              className="p-1.5 hover:bg-muted rounded text-muted-foreground"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="font-medium truncate flex items-center gap-1.5">
-                              {room.name}
-                              {room.is_hq && (
-                                <span
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white"
-                                  style={{ backgroundColor: 'var(--zen-accent, #6366f1)' }}
-                                  title="Protected system room — cannot be deleted"
-                                >
-                                  🏢 HQ
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate">{room.id}</div>
-                          </>
-                        )}
-                      </div>
-
-                      {editingRoom?.id !== room.id && (
-                        <div className="flex gap-1">
+                        <div className="flex flex-col gap-0.5">
                           <button
-                            onClick={() => openEditDialog(room)}
-                            className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                            onClick={() => moveRoom(room.id, 'up')}
+                            disabled={index === 0}
+                            className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                           >
-                            <Edit2 className="h-4 w-4" />
+                            <GripVertical className="h-3 w-3 rotate-90" />
                           </button>
-                          {!room.is_hq && (
-                            <button
-                              onClick={() => setDeleteConfirm(room.id)}
-                              className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                          <button
+                            onClick={() => moveRoom(room.id, 'down')}
+                            disabled={index === sortedRooms.length - 1}
+                            className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
+                          >
+                            <GripVertical className="h-3 w-3 -rotate-90" />
+                          </button>
+                        </div>
+
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                          style={{
+                            backgroundColor: `${room.color}20`,
+                            border: `2px solid ${room.color}`,
+                          }}
+                        >
+                          {room.icon}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          {editingRoom?.id === room.id ? (
+                            <div className="flex gap-2">
+                              <Input
+                                value={editingRoom.name}
+                                onChange={(e) =>
+                                  setEditingRoom({ ...editingRoom, name: e.target.value })
+                                }
+                                className="h-8"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => handleUpdateRoom(editingRoom)}
+                                className="p-1.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600"
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => setEditingRoom(null)}
+                                className="p-1.5 hover:bg-muted rounded text-muted-foreground"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium truncate flex items-center gap-1.5">
+                                {room.name}
+                                {room.is_hq && (
+                                  <span
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white"
+                                    style={{ backgroundColor: 'var(--zen-accent, #6366f1)' }}
+                                    title="Protected system room — cannot be deleted"
+                                  >
+                                    🏢 HQ
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {room.id}
+                              </div>
+                            </>
                           )}
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+
+                        {editingRoom?.id !== room.id && (
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => openEditDialog(room)}
+                              className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            {!room.is_hq && (
+                              <button
+                                onClick={() => setDeleteConfirm(room.id)}
+                                className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </SheetContent>

@@ -544,104 +544,116 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
             Create New Room
           </Button>
 
-          {roomsLoading ? (
-            <div className="text-center py-6 text-muted-foreground text-sm">Loading rooms…</div>
-          ) : sortedRooms.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground text-sm">
-              No rooms yet. Create one to get started!
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {sortedRooms.map((room, index) => (
-                <div
-                  key={room.id}
-                  className="flex items-center gap-2 p-3 rounded-lg border bg-background hover:bg-accent/30 transition-colors"
-                >
-                  {/* Reorder buttons */}
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      onClick={() => moveRoom(room.id, 'up')}
-                      disabled={index === 0}
-                      className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
-                    >
-                      <ChevronUp className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => moveRoom(room.id, 'down')}
-                      disabled={index === sortedRooms.length - 1}
-                      className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
-                    >
-                      <ChevronDown className="h-3 w-3" />
-                    </button>
-                  </div>
+          {(() => {
+            if (roomsLoading) {
+              return (
+                <div className="text-center py-6 text-muted-foreground text-sm">Loading rooms…</div>
+              )
+            }
 
-                  {/* Room icon */}
+            if (sortedRooms.length === 0) {
+              return (
+                <div className="text-center py-6 text-muted-foreground text-sm">
+                  No rooms yet. Create one to get started!
+                </div>
+              )
+            }
+
+            return (
+              <div className="space-y-2">
+                {sortedRooms.map((room, index) => (
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{
-                      backgroundColor: `${room.color}20`,
-                      border: `2px solid ${room.color}`,
-                    }}
+                    key={room.id}
+                    className="flex items-center gap-2 p-3 rounded-lg border bg-background hover:bg-accent/30 transition-colors"
                   >
-                    {room.icon}
-                  </div>
-
-                  {/* Name / edit */}
-                  <div className="flex-1 min-w-0">
-                    {editingRoom?.id === room.id ? (
-                      <div className="flex gap-1.5">
-                        <Input
-                          value={editingRoom.name}
-                          onChange={(e) => setEditingRoom({ ...editingRoom, name: e.target.value })}
-                          className="h-8 text-sm"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleUpdateRoom(editingRoom)
-                            if (e.key === 'Escape') setEditingRoom(null)
-                          }}
-                        />
-                        <button
-                          onClick={() => handleUpdateRoom(editingRoom)}
-                          className="p-1.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600"
-                        >
-                          <Check className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => setEditingRoom(null)}
-                          className="p-1.5 hover:bg-muted rounded text-muted-foreground"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="font-medium text-sm truncate">{room.name}</div>
-                        <div className="text-xs text-muted-foreground truncate">{room.id}</div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  {editingRoom?.id !== room.id && (
-                    <div className="flex gap-1 shrink-0">
+                    {/* Reorder buttons */}
+                    <div className="flex flex-col gap-0.5">
                       <button
-                        onClick={() => setEditingRoom({ ...room })}
-                        className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                        onClick={() => moveRoom(room.id, 'up')}
+                        disabled={index === 0}
+                        className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                       >
-                        <Edit2 className="h-3.5 w-3.5" />
+                        <ChevronUp className="h-3 w-3" />
                       </button>
                       <button
-                        onClick={() => setDeleteRoomConfirm(room.id)}
-                        className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
+                        onClick={() => moveRoom(room.id, 'down')}
+                        disabled={index === sortedRooms.length - 1}
+                        className="p-0.5 hover:bg-muted rounded disabled:opacity-30"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <ChevronDown className="h-3 w-3" />
                       </button>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+
+                    {/* Room icon */}
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+                      style={{
+                        backgroundColor: `${room.color}20`,
+                        border: `2px solid ${room.color}`,
+                      }}
+                    >
+                      {room.icon}
+                    </div>
+
+                    {/* Name / edit */}
+                    <div className="flex-1 min-w-0">
+                      {editingRoom?.id === room.id ? (
+                        <div className="flex gap-1.5">
+                          <Input
+                            value={editingRoom.name}
+                            onChange={(e) =>
+                              setEditingRoom({ ...editingRoom, name: e.target.value })
+                            }
+                            className="h-8 text-sm"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleUpdateRoom(editingRoom)
+                              if (e.key === 'Escape') setEditingRoom(null)
+                            }}
+                          />
+                          <button
+                            onClick={() => handleUpdateRoom(editingRoom)}
+                            className="p-1.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded text-green-600"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setEditingRoom(null)}
+                            className="p-1.5 hover:bg-muted rounded text-muted-foreground"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="font-medium text-sm truncate">{room.name}</div>
+                          <div className="text-xs text-muted-foreground truncate">{room.id}</div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    {editingRoom?.id !== room.id && (
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => setEditingRoom({ ...room })}
+                          className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteRoomConfirm(room.id)}
+                          className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
         </CollapsibleSection>
 
         <CollapsibleSection title="🔀 Routing Rules" badge={`${rules.length} rules`}>
@@ -677,37 +689,47 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
             </p>
           </div>
 
-          {rulesLoading ? (
-            <div className="text-center py-6 text-muted-foreground text-sm">Loading rules…</div>
-          ) : sortedRules.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground text-sm">
-              No rules yet. Sessions will use default routing.
-            </div>
-          ) : (
-            <DndContext
-              sensors={dndSensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sortedRules.map((r) => r.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-2">
-                  {sortedRules.map((rule) => (
-                    <SortableRuleItem
-                      key={rule.id}
-                      rule={rule}
-                      room={rooms.find((r) => r.id === rule.room_id)}
-                      onAdjustPriority={adjustPriority}
-                      onDelete={(id) => setDeleteRuleConfirm(id)}
-                      getRuleTypeLabel={getRuleTypeLabel}
-                    />
-                  ))}
+          {(() => {
+            if (rulesLoading) {
+              return (
+                <div className="text-center py-6 text-muted-foreground text-sm">Loading rules…</div>
+              )
+            }
+
+            if (sortedRules.length === 0) {
+              return (
+                <div className="text-center py-6 text-muted-foreground text-sm">
+                  No rules yet. Sessions will use default routing.
                 </div>
-              </SortableContext>
-            </DndContext>
-          )}
+              )
+            }
+
+            return (
+              <DndContext
+                sensors={dndSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedRules.map((r) => r.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {sortedRules.map((rule) => (
+                      <SortableRuleItem
+                        key={rule.id}
+                        rule={rule}
+                        room={rooms.find((r) => r.id === rule.room_id)}
+                        onAdjustPriority={adjustPriority}
+                        onDelete={(id) => setDeleteRuleConfirm(id)}
+                        getRuleTypeLabel={getRuleTypeLabel}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )
+          })()}
         </CollapsibleSection>
       </div>
 

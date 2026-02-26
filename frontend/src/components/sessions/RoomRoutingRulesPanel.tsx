@@ -260,81 +260,91 @@ export function RoomRoutingRulesPanel({
             <div className="space-y-2">
               <Label className="text-sm font-semibold">Active Rules ({rules.length})</Label>
 
-              {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading rules...</div>
-              ) : sortedRules.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No rules configured. Sessions will use default routing.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {sortedRules.map((rule) => {
-                    const room = rooms.find((r) => r.id === rule.room_id)
-                    return (
-                      <div
-                        key={rule.id}
-                        className="p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex flex-col items-center gap-1">
-                            <button
-                              onClick={() => adjustPriority(rule.id, 10)}
-                              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
-                              title="Increase priority"
-                            >
-                              <ChevronUp className="h-4 w-4" />
-                            </button>
-                            <Badge variant="secondary" className="text-xs font-mono">
-                              {rule.priority}
-                            </Badge>
-                            <button
-                              onClick={() => adjustPriority(rule.id, -10)}
-                              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
-                              title="Decrease priority"
-                            >
-                              <ChevronDown className="h-4 w-4" />
-                            </button>
-                          </div>
+              {(() => {
+                if (isLoading) {
+                  return (
+                    <div className="text-center py-8 text-muted-foreground">Loading rules...</div>
+                  )
+                }
 
-                          <div className="flex-1 min-w-0 space-y-1.5">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant="outline" className="text-xs">
-                                {getRuleTypeLabel(rule.rule_type)}
+                if (sortedRules.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No rules configured. Sessions will use default routing.
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="space-y-2">
+                    {sortedRules.map((rule) => {
+                      const room = rooms.find((r) => r.id === rule.room_id)
+                      return (
+                        <div
+                          key={rule.id}
+                          className="p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex flex-col items-center gap-1">
+                              <button
+                                onClick={() => adjustPriority(rule.id, 10)}
+                                className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                                title="Increase priority"
+                              >
+                                <ChevronUp className="h-4 w-4" />
+                              </button>
+                              <Badge variant="secondary" className="text-xs font-mono">
+                                {rule.priority}
                               </Badge>
-                              <code className="text-sm bg-muted px-2 py-0.5 rounded font-mono">
-                                {rule.rule_value}
-                              </code>
+                              <button
+                                onClick={() => adjustPriority(rule.id, -10)}
+                                className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                                title="Decrease priority"
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </button>
                             </div>
 
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>→</span>
-                              {room && (
-                                <span
-                                  className="px-2 py-0.5 rounded text-xs font-medium"
-                                  style={{
-                                    backgroundColor: `${room.color || '#4f46e5'}20`,
-                                    color: room.color || '#4f46e5',
-                                    border: `1px solid ${room.color || '#4f46e5'}40`,
-                                  }}
-                                >
-                                  {room.icon} {room.name}
-                                </span>
-                              )}
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-xs">
+                                  {getRuleTypeLabel(rule.rule_type)}
+                                </Badge>
+                                <code className="text-sm bg-muted px-2 py-0.5 rounded font-mono">
+                                  {rule.rule_value}
+                                </code>
+                              </div>
+
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <span>→</span>
+                                {room && (
+                                  <span
+                                    className="px-2 py-0.5 rounded text-xs font-medium"
+                                    style={{
+                                      backgroundColor: `${room.color || '#4f46e5'}20`,
+                                      color: room.color || '#4f46e5',
+                                      border: `1px solid ${room.color || '#4f46e5'}40`,
+                                    }}
+                                  >
+                                    {room.icon} {room.name}
+                                  </span>
+                                )}
+                              </div>
                             </div>
+
+                            <button
+                              onClick={() => setDeleteConfirm(rule.id)}
+                              className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
-
-                          <button
-                            onClick={() => setDeleteConfirm(rule.id)}
-                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-muted-foreground hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </SheetContent>
