@@ -39,7 +39,7 @@ export interface AnimState {
 
 // RoomInteractionPoints & WalkableCenter extracted to ./roomInteractionPoints.ts
 import type { RoomInteractionPoints, WalkableCenter } from './roomInteractionPoints'
-export type { RoomInteractionPoints, WalkableCenter }
+export type { RoomInteractionPoints, WalkableCenter } // NOSONAR
 
 // ─── Animation State Machine Hook ───────────────────────────────
 

@@ -126,7 +126,7 @@ function processTextBlock(
   timestamp: number,
   activities: ActivityEvent[]
 ): void {
-  if (!(block.type === 'text' && block.text && block.text.trim())) return
+  if (!(block.type === 'text' && block.text?.trim())) return
   const text = block.text.trim()
   if (text === 'NO_REPLY' || text === 'HEARTBEAT_OK') return
   // Skip routed announce messages from sub-subagents injected into parent session
@@ -341,7 +341,7 @@ function getActiveSubagentLabel(
   return child.label || generateFriendlyName(child.key)
 }
 
-export { getTaskEmoji, generateFriendlyName }
+export { getTaskEmoji, generateFriendlyName } // NOSONAR
 
 export function formatModel(model: string): string {
   return model

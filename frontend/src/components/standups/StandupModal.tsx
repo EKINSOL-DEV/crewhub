@@ -175,8 +175,9 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
         {/* Step 1: Agent Selection */}
         {step === 'select' && (
           <>
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Title</label>
+            <label htmlFor="standup-title" style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Title</label>
             <input
+              id="standup-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               style={{
@@ -190,7 +191,7 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
               }}
             />
 
-            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Participants</label>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Participants</p>
             <div
               style={{
                 display: 'flex',
@@ -308,8 +309,9 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Yesterday</label>
+                <label htmlFor="standup-yesterday" style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Yesterday</label>
                 <textarea
+                  id="standup-yesterday"
                   value={yesterday}
                   onChange={(e) => setYesterday(e.target.value)}
                   placeholder="What did you work on yesterday?"
@@ -327,8 +329,9 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                 />
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Today</label>
+                <label htmlFor="standup-today" style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Today</label>
                 <textarea
+                  id="standup-today"
                   value={today}
                   onChange={(e) => setToday(e.target.value)}
                   placeholder="What will you work on today?"
@@ -346,8 +349,9 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
                 />
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#ef4444' }}>Blockers</label>
+                <label htmlFor="standup-blockers" style={{ fontSize: 12, fontWeight: 600, color: '#ef4444' }}>Blockers</label>
                 <textarea
+                  id="standup-blockers"
                   value={blockers}
                   onChange={(e) => setBlockers(e.target.value)}
                   placeholder="Any blockers? (leave empty if none)"

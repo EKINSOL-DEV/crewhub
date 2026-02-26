@@ -99,9 +99,9 @@ export const tokyoNight: ZenTheme = {
 function hexToHSL(hex: string): string {
   // Remove # prefix
   hex = hex.replace(/^#/, '')
-  const r = parseInt(hex.substring(0, 2), 16) / 255
-  const g = parseInt(hex.substring(2, 4), 16) / 255
-  const b = parseInt(hex.substring(4, 6), 16) / 255
+  const r = Number.parseInt(hex.substring(0, 2), 16) / 255
+  const g = Number.parseInt(hex.substring(2, 4), 16) / 255
+  const b = Number.parseInt(hex.substring(4, 6), 16) / 255
 
   const max = Math.max(r, g, b)
   const min = Math.min(r, g, b)
@@ -133,9 +133,9 @@ function hexToHSL(hex: string): string {
  */
 function lightenHex(hex: string, percent: number): string {
   hex = hex.replace(/^#/, '')
-  let r = parseInt(hex.substring(0, 2), 16)
-  let g = parseInt(hex.substring(2, 4), 16)
-  let b = parseInt(hex.substring(4, 6), 16)
+  let r = Number.parseInt(hex.substring(0, 2), 16)
+  let g = Number.parseInt(hex.substring(2, 4), 16)
+  let b = Number.parseInt(hex.substring(4, 6), 16)
   r = Math.min(255, Math.round(r + (255 - r) * (percent / 100)))
   g = Math.min(255, Math.round(g + (255 - g) * (percent / 100)))
   b = Math.min(255, Math.round(b + (255 - b) * (percent / 100)))
@@ -147,9 +147,9 @@ function lightenHex(hex: string, percent: number): string {
  */
 function darkenHex(hex: string, percent: number): string {
   hex = hex.replace(/^#/, '')
-  let r = parseInt(hex.substring(0, 2), 16)
-  let g = parseInt(hex.substring(2, 4), 16)
-  let b = parseInt(hex.substring(4, 6), 16)
+  let r = Number.parseInt(hex.substring(0, 2), 16)
+  let g = Number.parseInt(hex.substring(2, 4), 16)
+  let b = Number.parseInt(hex.substring(4, 6), 16)
   r = Math.max(0, Math.round(r * (1 - percent / 100)))
   g = Math.max(0, Math.round(g * (1 - percent / 100)))
   b = Math.max(0, Math.round(b * (1 - percent / 100)))

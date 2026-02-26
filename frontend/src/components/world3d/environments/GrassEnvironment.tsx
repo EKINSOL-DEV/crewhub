@@ -107,7 +107,7 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
         groundColors.push(new THREE.Color(0.38 + s * 0.06, 0.5 + s * 0.05, 0.32 + s * 0.04))
 
         // ── Distance + building-zone gating ─────────
-        const dist = Math.sqrt(wx * wx + wz * wz)
+        const dist = Math.hypot(wx, wz)
         if (dist > DECORATION_MAX_DIST) continue
         const inBuilding =
           Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2

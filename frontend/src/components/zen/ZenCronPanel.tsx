@@ -45,7 +45,7 @@ function formatSchedule(schedule: CronSchedule): string {
 
       if (expr === '* * * * *') return 'Every min'
       if (minute.startsWith('*/')) {
-        const n = parseInt(minute.slice(2), 10)
+        const n = Number.parseInt(minute.slice(2), 10)
         if (hour === '*') return `Every ${n}m`
       }
       if (minute === '0' && hour === '*') return 'Hourly'

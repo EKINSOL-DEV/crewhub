@@ -75,7 +75,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/settings/:key
-  if (pathname.match(/^\/api\/settings\/[\w-]+$/) && method === 'GET') {
+  if (/^\/api\/settings\/[\w-]+$/.exec(pathname) && method === 'GET') {
     const key = decodeURIComponent(pathname.split('/').pop()!)
     const settings = lsGet('settings', MOCK_SETTINGS)
     const value = settings[key] || null
@@ -110,7 +110,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/tasks/:id
-  if (pathname.match(/^\/api\/tasks\/[\w-]+$/) && method === 'GET') {
+  if (/^\/api\/tasks\/[\w-]+$/.exec(pathname) && method === 'GET') {
     const taskId = decodeURIComponent(pathname.split('/').pop()!)
     const tasks = lsGet('tasks', MOCK_TASKS)
     const task = tasks.find((t: MockTask) => t.id === taskId)
@@ -207,7 +207,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/threads/:id/messages
-  if (pathname.match(/^\/api\/threads\/[^/]+\/messages$/) && method === 'GET') {
+  if (/^\/api\/threads\/[^\/]+\/messages$/.exec(pathname) && method === 'GET') {
     const threadId = pathname.split('/')[3]
     const hour = 3_600_000
     const mockMessages = [
@@ -380,7 +380,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/session-display-names/:key
-  if (pathname.match(/^\/api\/session-display-names\//) && method === 'GET') {
+  if (/^\/api\/session-display-names\//.exec(pathname) && method === 'GET') {
     const key = decodeURIComponent(pathname.replace('/api/session-display-names/', ''))
     const entry = MOCK_DISPLAY_NAMES.find((d) => d.session_key === key)
     console.log(`[MockAPI] GET /api/session-display-names/${key} → 200`)
@@ -424,7 +424,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/projects/:id/files
-  if (pathname.match(/^\/api\/projects\/[\w-]+\/files$/) && method === 'GET') {
+  if (/^\/api\/projects\/[\w-]+\/files$/.exec(pathname) && method === 'GET') {
     console.log('[MockAPI] GET /api/projects/:id/files → 200')
     return jsonResponse({
       files: [
@@ -456,7 +456,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/projects/:id/files/content
-  if (pathname.match(/^\/api\/projects\/[\w-]+\/files\/content/) && method === 'GET') {
+  if (/^\/api\/projects\/[\w-]+\/files\/content/.exec(pathname) && method === 'GET') {
     console.log('[MockAPI] GET /api/projects/:id/files/content → 200')
     return jsonResponse({
       path: 'README.md',
@@ -470,9 +470,9 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/sessions/:key/history
-  if (pathname.match(/^\/api\/sessions\/.*\/history/) && method === 'GET') {
+  if (/^\/api\/sessions\/.*\/history/.exec(pathname) && method === 'GET') {
     // Extract session key from URL: /api/sessions/{encoded-key}/history
-    const match = pathname.match(/^\/api\/sessions\/(.+)\/history/)
+    const match = /^\/api\/sessions\/(.+)\/history/.exec(pathname)
     const sessionKey = match ? decodeURIComponent(match[1]) : ''
     const messages = createMockSessionHistory(sessionKey)
     console.log(
@@ -482,7 +482,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // GET /api/chat/:key/history
-  if (pathname.match(/^\/api\/chat\/.*\/history/) && method === 'GET') {
+  if (/^\/api\/chat\/.*\/history/.exec(pathname) && method === 'GET') {
     console.log('[MockAPI] GET /api/chat/:key/history → 200')
     return jsonResponse({
       messages: MOCK_CHAT_HISTORY,
@@ -500,7 +500,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   // === MUTATIONS — persist some to localStorage, rest are no-op ===
 
   // PUT /api/settings/:key
-  if (pathname.match(/^\/api\/settings\/[\w-]+$/) && method === 'PUT') {
+  if (/^\/api\/settings\/[\w-]+$/.exec(pathname) && method === 'PUT') {
     try {
       const key = decodeURIComponent(pathname.split('/').pop()!)
       // We need to read body — but in mock fetch, body is already consumed
@@ -527,7 +527,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // DELETE /api/session-room-assignments/:key
-  if (pathname.match(/^\/api\/session-room-assignments\//) && method === 'DELETE') {
+  if (/^\/api\/session-room-assignments\//.exec(pathname) && method === 'DELETE') {
     console.log('[MockAPI] DELETE /api/session-room-assignments → 200')
     return okResponse()
   }
@@ -539,13 +539,13 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // PUT /api/rooms/:id
-  if (pathname.match(/^\/api\/rooms\/[\w-]+$/) && method === 'PUT') {
+  if (/^\/api\/rooms\/[\w-]+$/.exec(pathname) && method === 'PUT') {
     console.log('[MockAPI] PUT /api/rooms/:id → 200')
     return okResponse()
   }
 
   // DELETE /api/rooms/:id
-  if (pathname.match(/^\/api\/rooms\/[\w-]+$/) && method === 'DELETE') {
+  if (/^\/api\/rooms\/[\w-]+$/.exec(pathname) && method === 'DELETE') {
     console.log('[MockAPI] DELETE /api/rooms/:id → 200')
     return okResponse()
   }
@@ -558,7 +558,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
 
   // POST/PUT/DELETE /api/projects
   if (
-    pathname.match(/^\/api\/projects/) &&
+    /^\/api\/projects/.exec(pathname) &&
     (method === 'POST' || method === 'PUT' || method === 'DELETE')
   ) {
     console.log(`[MockAPI] ${method} ${pathname} → 200`)
@@ -599,7 +599,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // PATCH /api/tasks/:id
-  if (pathname.match(/^\/api\/tasks\/[\w-]+$/) && method === 'PATCH') {
+  if (/^\/api\/tasks\/[\w-]+$/.exec(pathname) && method === 'PATCH') {
     const taskId = decodeURIComponent(pathname.split('/').pop()!)
     const tasks = lsGet('tasks', MOCK_TASKS)
     const task = tasks.find((t: MockTask) => t.id === taskId)
@@ -608,21 +608,21 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // DELETE /api/tasks/:id
-  if (pathname.match(/^\/api\/tasks\/[\w-]+$/) && method === 'DELETE') {
+  if (/^\/api\/tasks\/[\w-]+$/.exec(pathname) && method === 'DELETE') {
     console.log(`[MockAPI] DELETE /api/tasks/:id → 200`)
     return okResponse()
   }
 
   // PUT /api/agents/:id
-  if (pathname.match(/^\/api\/agents\/[\w-]+$/) && method === 'PUT') {
+  if (/^\/api\/agents\/[\w-]+$/.exec(pathname) && method === 'PUT') {
     console.log('[MockAPI] PUT /api/agents/:id → 200')
     return okResponse()
   }
 
   // POST/PATCH/DELETE /api/connections
-  if (pathname.match(/^\/api\/connections/) && method !== 'GET') {
+  if (/^\/api\/connections/.exec(pathname) && method !== 'GET') {
     console.log(`[MockAPI] ${method} ${pathname} → 200`)
-    if (pathname.match(/\/connect$/)) {
+    if (/\/connect$/.exec(pathname)) {
       return jsonResponse({ connected: true })
     }
     return okResponse()
@@ -630,7 +630,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
 
   // POST/DELETE /api/session-display-names
   if (
-    pathname.match(/^\/api\/session-display-names\//) &&
+    /^\/api\/session-display-names\//.exec(pathname) &&
     (method === 'POST' || method === 'DELETE')
   ) {
     console.log(`[MockAPI] ${method} ${pathname} → 200`)
@@ -638,7 +638,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // POST/PUT/DELETE /api/room-assignment-rules
-  if (pathname.match(/^\/api\/room-assignment-rules/) && method !== 'GET') {
+  if (/^\/api\/room-assignment-rules/.exec(pathname) && method !== 'GET') {
     console.log(`[MockAPI] ${method} ${pathname} → 200`)
     return okResponse()
   }
@@ -656,7 +656,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // POST /api/chat/:key/send
-  if (pathname.match(/^\/api\/chat\/.*\/send$/) && method === 'POST') {
+  if (/^\/api\/chat\/.*\/send$/.exec(pathname) && method === 'POST') {
     console.log('[MockAPI] POST /api/chat/:key/send → 200')
     return jsonResponse({
       success: true,
@@ -667,7 +667,7 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   }
 
   // POST /api/backup/*
-  if (pathname.match(/^\/api\/backup/) && method === 'POST') {
+  if (/^\/api\/backup/.exec(pathname) && method === 'POST') {
     console.log(`[MockAPI] ${method} ${pathname} → 200`)
     return okResponse()
   }

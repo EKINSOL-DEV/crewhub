@@ -240,19 +240,17 @@ function AppContent() {
 
         if (zenMode.isActive) {
           zenMode.exit()
-        } else {
+        } else if (lastActiveWindow) {
           // If there's an active chat window, use its agent
-          if (lastActiveWindow) {
-            zenMode.enter(
-              lastActiveWindow.sessionKey,
-              lastActiveWindow.agentName,
-              lastActiveWindow.agentIcon ?? undefined,
-              lastActiveWindow.agentColor ?? undefined
-            )
-          } else {
-            // Enter without a selected agent
-            zenMode.enter()
-          }
+          zenMode.enter(
+            lastActiveWindow.sessionKey,
+            lastActiveWindow.agentName,
+            lastActiveWindow.agentIcon ?? undefined,
+            lastActiveWindow.agentColor ?? undefined
+          )
+        } else {
+          // Enter without a selected agent
+          zenMode.enter()
         }
       }
     }

@@ -152,7 +152,7 @@ export function DesertEnvironment({ buildingWidth, buildingDepth }: DesertEnviro
         groundColors.push(new THREE.Color(0.75 + s * 0.12, 0.62 + s * 0.1, 0.42 + s * 0.08))
 
         // ── Distance + building-zone gating ─────────
-        const dist = Math.sqrt(wx * wx + wz * wz)
+        const dist = Math.hypot(wx, wz)
         if (dist > DECORATION_MAX_DIST) continue
         const inBuilding =
           Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2

@@ -75,9 +75,8 @@ function MobileDocTreeNode({
     const q = searchQuery.toLowerCase()
     if (isDir) {
       if (!node.children?.some((c) => matchesSearch(c, q))) return null
-    } else {
-      if (!node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q)) return null
-    }
+    } else if (!node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q))
+      return null
   }
 
   const isExpanded = searchQuery.length >= 2 ? true : expanded

@@ -331,86 +331,96 @@ export function RoomWalls({
     const capPositions: Array<{ key: string; position: [number, number, number] }> = []
 
     // Back wall (full width, at +Z)
-    segs.push({
-      key: 'back-wall',
-      position: [0, floorTop + wallHeight / 2, halfSize - wallThickness / 2],
-      size: [size, wallHeight, wallThickness],
-    })
-    segs.push({
-      key: 'back-accent',
-      position: [0, floorTop + wallHeight + accentHeight / 2, halfSize - wallThickness / 2],
-      size: [size, accentHeight, wallThickness + 0.02],
-      isAccent: true,
-    })
+    segs.push(
+      {
+        key: 'back-wall',
+        position: [0, floorTop + wallHeight / 2, halfSize - wallThickness / 2],
+        size: [size, wallHeight, wallThickness],
+      },
+      {
+        key: 'back-accent',
+        position: [0, floorTop + wallHeight + accentHeight / 2, halfSize - wallThickness / 2],
+        size: [size, accentHeight, wallThickness + 0.02],
+        isAccent: true,
+      }
+    )
 
     // Left wall (full depth, at -X)
-    segs.push({
-      key: 'left-wall',
-      position: [-halfSize + wallThickness / 2, floorTop + wallHeight / 2, 0],
-      size: [wallThickness, wallHeight, size],
-    })
-    segs.push({
-      key: 'left-accent',
-      position: [-halfSize + wallThickness / 2, floorTop + wallHeight + accentHeight / 2, 0],
-      size: [wallThickness + 0.02, accentHeight, size],
-      isAccent: true,
-    })
+    segs.push(
+      {
+        key: 'left-wall',
+        position: [-halfSize + wallThickness / 2, floorTop + wallHeight / 2, 0],
+        size: [wallThickness, wallHeight, size],
+      },
+      {
+        key: 'left-accent',
+        position: [-halfSize + wallThickness / 2, floorTop + wallHeight + accentHeight / 2, 0],
+        size: [wallThickness + 0.02, accentHeight, size],
+        isAccent: true,
+      }
+    )
 
     // Right wall (full depth, at +X)
-    segs.push({
-      key: 'right-wall',
-      position: [halfSize - wallThickness / 2, floorTop + wallHeight / 2, 0],
-      size: [wallThickness, wallHeight, size],
-    })
-    segs.push({
-      key: 'right-accent',
-      position: [halfSize - wallThickness / 2, floorTop + wallHeight + accentHeight / 2, 0],
-      size: [wallThickness + 0.02, accentHeight, size],
-      isAccent: true,
-    })
+    segs.push(
+      {
+        key: 'right-wall',
+        position: [halfSize - wallThickness / 2, floorTop + wallHeight / 2, 0],
+        size: [wallThickness, wallHeight, size],
+      },
+      {
+        key: 'right-accent',
+        position: [halfSize - wallThickness / 2, floorTop + wallHeight + accentHeight / 2, 0],
+        size: [wallThickness + 0.02, accentHeight, size],
+        isAccent: true,
+      }
+    )
 
     // Front wall (at -Z) — TWO segments with a gap in the middle
     const sideWidth = (size - gapWidth) / 2
     // Front-left segment
-    segs.push({
-      key: 'front-left-wall',
-      position: [
-        -halfSize + sideWidth / 2,
-        floorTop + wallHeight / 2,
-        -halfSize + wallThickness / 2,
-      ],
-      size: [sideWidth, wallHeight, wallThickness],
-    })
-    segs.push({
-      key: 'front-left-accent',
-      position: [
-        -halfSize + sideWidth / 2,
-        floorTop + wallHeight + accentHeight / 2,
-        -halfSize + wallThickness / 2,
-      ],
-      size: [sideWidth, accentHeight, wallThickness + 0.02],
-      isAccent: true,
-    })
+    segs.push(
+      {
+        key: 'front-left-wall',
+        position: [
+          -halfSize + sideWidth / 2,
+          floorTop + wallHeight / 2,
+          -halfSize + wallThickness / 2,
+        ],
+        size: [sideWidth, wallHeight, wallThickness],
+      },
+      {
+        key: 'front-left-accent',
+        position: [
+          -halfSize + sideWidth / 2,
+          floorTop + wallHeight + accentHeight / 2,
+          -halfSize + wallThickness / 2,
+        ],
+        size: [sideWidth, accentHeight, wallThickness + 0.02],
+        isAccent: true,
+      }
+    )
     // Front-right segment
-    segs.push({
-      key: 'front-right-wall',
-      position: [
-        halfSize - sideWidth / 2,
-        floorTop + wallHeight / 2,
-        -halfSize + wallThickness / 2,
-      ],
-      size: [sideWidth, wallHeight, wallThickness],
-    })
-    segs.push({
-      key: 'front-right-accent',
-      position: [
-        halfSize - sideWidth / 2,
-        floorTop + wallHeight + accentHeight / 2,
-        -halfSize + wallThickness / 2,
-      ],
-      size: [sideWidth, accentHeight, wallThickness + 0.02],
-      isAccent: true,
-    })
+    segs.push(
+      {
+        key: 'front-right-wall',
+        position: [
+          halfSize - sideWidth / 2,
+          floorTop + wallHeight / 2,
+          -halfSize + wallThickness / 2,
+        ],
+        size: [sideWidth, wallHeight, wallThickness],
+      },
+      {
+        key: 'front-right-accent',
+        position: [
+          halfSize - sideWidth / 2,
+          floorTop + wallHeight + accentHeight / 2,
+          -halfSize + wallThickness / 2,
+        ],
+        size: [sideWidth, accentHeight, wallThickness + 0.02],
+        isAccent: true,
+      }
+    )
 
     // Rounded cap cylinders along wall tops (corners + ends of gap)
     const capY = floorTop + wallHeight + accentHeight

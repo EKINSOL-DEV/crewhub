@@ -130,7 +130,7 @@ function doesPathCrossRoom(
 ): boolean {
   const dx = x2 - x1
   const dz = z2 - z1
-  const dist = Math.sqrt(dx * dx + dz * dz)
+  const dist = Math.hypot(dx, dz)
   if (dist < 0.1) return false
   const steps = Math.ceil(dist / 1.5) // sample every ~1.5 units
   for (let i = 1; i < steps; i++) {
@@ -228,7 +228,7 @@ function OutdoorBot({
 
     const dx = state.targetX - state.currentX
     const dz = state.targetZ - state.currentZ
-    const dist = Math.sqrt(dx * dx + dz * dz)
+    const dist = Math.hypot(dx, dz)
 
     if (dist < 0.5) {
       // Arrived at target — wait, then pick a new target

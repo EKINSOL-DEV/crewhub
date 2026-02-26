@@ -286,9 +286,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
     if (!dialog) return
     if (showCreateRoomDialog) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [showCreateRoomDialog])
 
   useEffect(() => {
@@ -296,9 +294,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
     if (!dialog) return
     if (deleteRoomConfirm) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [deleteRoomConfirm])
 
   useEffect(() => {
@@ -306,9 +302,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
     if (!dialog) return
     if (showCreateRuleDialog) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [showCreateRuleDialog])
 
   useEffect(() => {
@@ -316,9 +310,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
     if (!dialog) return
     if (deleteRuleConfirm) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [deleteRuleConfirm])
 
   useEffect(() => {
@@ -326,9 +318,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
     if (!dialog) return
     if (showTestRulesDialog) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [showTestRulesDialog])
 
   // ─── Helpers ───
@@ -963,7 +953,9 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
                   max="100"
                   step="5"
                   value={newRule.priority}
-                  onChange={(e) => setNewRule({ ...newRule, priority: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, priority: Number.parseInt(e.target.value) })
+                  }
                   className="flex-1 accent-primary"
                 />
                 <span className="text-sm text-muted-foreground w-12 text-right font-mono">

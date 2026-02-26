@@ -3,7 +3,7 @@
  * Exports all themes and utility functions for theme management
  */
 
-import { tokyoNight, type ZenTheme, themeToCSSVariables, themeToTailwindVars } from './tokyo-night'
+import { tokyoNight, type ZenTheme } from './tokyo-night'
 import { dracula } from './dracula'
 import { nord } from './nord'
 import { solarizedDark } from './solarized-dark'
@@ -15,8 +15,8 @@ import { githubLight } from './github-light'
 
 // ── Re-export Types ───────────────────────────────────────────────
 
-export type { ZenTheme }
-export { themeToCSSVariables, themeToTailwindVars }
+export type { ZenTheme } // NOSONAR
+export { themeToCSSVariables, themeToTailwindVars } from './tokyo-night'
 
 // ── All Themes ────────────────────────────────────────────────────
 
@@ -67,15 +67,15 @@ export function getDefaultTheme(): ZenTheme {
 // ── Individual Theme Exports ──────────────────────────────────────
 
 export {
-  tokyoNight,
-  dracula,
-  nord,
-  solarizedDark,
-  solarizedLight,
-  gruvboxDark,
-  oneDark,
-  catppuccinMocha,
-  githubLight,
+  tokyoNight, // NOSONAR - used locally in themes array
+  dracula, // NOSONAR
+  nord, // NOSONAR
+  solarizedDark, // NOSONAR
+  solarizedLight, // NOSONAR
+  gruvboxDark, // NOSONAR
+  oneDark, // NOSONAR
+  catppuccinMocha, // NOSONAR
+  githubLight, // NOSONAR
 }
 
 // ── Theme Metadata ────────────────────────────────────────────────

@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
   },
   server: {
     host: '0.0.0.0',
-    port: parseInt(process.env.VITE_DEV_PORT || '5180'),
+    port: Number.parseInt(process.env.VITE_DEV_PORT || '5180'),
     allowedHosts: ['ekinbot.local', 'localhost', 'ekinbot.tailaa4a2e.ts.net'],
     headers: {
       'Access-Control-Allow-Origin': '*',

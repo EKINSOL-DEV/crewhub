@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { Wall } from '../WallSystem'
-import { Workstation, Plant, TallPlant, Floor, MeetingTable, Sofa, CoffeeTable, HangingLight, Pillar, ServerRack, Whiteboard, GlassPanel } from '../Props'
+import { Workstation, Plant, TallPlant, Floor, MeetingTable, Sofa, CoffeeTable, HangingLight, GlassPanel } from '../Props'
 
 /**
  * THE HELIX - Inspired by Zaha Hadid / BIG's spiraling buildings

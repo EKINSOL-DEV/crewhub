@@ -99,7 +99,7 @@ function extractToc(content: string): TocEntry[] {
       continue
     }
     if (inCodeBlock) continue
-    const match = line.match(/^(#{1,4})\s+(.+)$/)
+    const match = /^(#{1,4})\s+(.+)$/.exec(line)
     if (match) {
       const level = match[1].length
       const text = match[2].trim()

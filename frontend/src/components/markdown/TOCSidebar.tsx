@@ -16,7 +16,7 @@ export function extractHeadings(content: string): TOCHeading[] {
   const headings: TOCHeading[] = []
   const lines = content.split('\n')
   for (const line of lines) {
-    const match = line.match(/^(#{1,4})\s+(.+)$/)
+    const match = /^(#{1,4})\s+(.+)$/.exec(line)
     if (match) {
       const level = match[1].length
       const text = match[2].replaceAll(/[*_`~]/g, '').trim()

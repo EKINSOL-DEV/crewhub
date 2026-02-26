@@ -404,7 +404,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
           </Label>
           <Select
             value={settings.refreshInterval.toString()}
-            onValueChange={(value) => updateSetting('refreshInterval', parseInt(value))}
+            onValueChange={(value) => updateSetting('refreshInterval', Number.parseInt(value))}
             disabled={!settings.autoRefresh}
           >
             <SelectTrigger id="refresh-interval">
@@ -427,7 +427,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
           </Label>
           <Select
             value={String(settings.parkingIdleThreshold ?? 120)}
-            onValueChange={(value) => updateSetting('parkingIdleThreshold', parseInt(value))}
+            onValueChange={(value) => updateSetting('parkingIdleThreshold', Number.parseInt(value))}
           >
             <SelectTrigger id="parking-idle-threshold">
               <SelectValue />

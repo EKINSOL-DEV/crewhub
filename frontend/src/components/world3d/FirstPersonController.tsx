@@ -295,6 +295,7 @@ export function FirstPersonController({
     } else {
       // Wall sliding: try X only, then Z only
       if (canMoveTo(newX, camera.position.z)) {
+        // NOSONAR
         camera.position.x = newX
       } else if (canMoveTo(camera.position.x, newZ)) {
         camera.position.z = newZ

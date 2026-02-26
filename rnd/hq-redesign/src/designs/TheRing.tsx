@@ -1,5 +1,3 @@
-import { useMemo } from 'react'
-import * as THREE from 'three'
 import { Wall } from '../WallSystem'
 import { Workstation, Plant, TallPlant, Floor, MeetingTable, Sofa, CoffeeTable, HangingLight, Pillar, GlassPanel } from '../Props'
 

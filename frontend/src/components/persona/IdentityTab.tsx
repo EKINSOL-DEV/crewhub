@@ -185,9 +185,9 @@ export function IdentityTab() {
 
       {/* Agent selector */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Agent</label>
+        <p className="text-sm font-medium">Agent</p>
         <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-          <SelectTrigger className="w-full max-w-xs">
+          <SelectTrigger className="w-full max-w-xs" aria-label="Agent">
             <SelectValue placeholder="Select an agent" />
           </SelectTrigger>
           <SelectContent>

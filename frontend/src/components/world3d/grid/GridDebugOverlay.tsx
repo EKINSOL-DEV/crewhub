@@ -125,14 +125,12 @@ function GridLines({
     // Vertical lines (along Z)
     for (let x = 0; x <= gridWidth; x++) {
       const wx = x * cellSize - halfW
-      points.push(new THREE.Vector3(wx, 0.13, -halfD))
-      points.push(new THREE.Vector3(wx, 0.13, halfD))
+      points.push(new THREE.Vector3(wx, 0.13, -halfD), new THREE.Vector3(wx, 0.13, halfD))
     }
     // Horizontal lines (along X)
     for (let z = 0; z <= gridDepth; z++) {
       const wz = z * cellSize - halfD
-      points.push(new THREE.Vector3(-halfW, 0.13, wz))
-      points.push(new THREE.Vector3(halfW, 0.13, wz))
+      points.push(new THREE.Vector3(-halfW, 0.13, wz), new THREE.Vector3(halfW, 0.13, wz))
     }
 
     return new THREE.BufferGeometry().setFromPoints(points)

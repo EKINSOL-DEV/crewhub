@@ -679,7 +679,7 @@ export function GridRoomRenderer({
       if (!hasDragStarted.current && pointerStartPos.current) {
         const dx = e.nativeEvent.clientX - pointerStartPos.current.x
         const dy = e.nativeEvent.clientY - pointerStartPos.current.y
-        const distance = Math.sqrt(dx * dx + dy * dy)
+        const distance = Math.hypot(dx, dy)
         if (distance >= DRAG_THRESHOLD) {
           hasDragStarted.current = true
           startDrag(e)
@@ -794,7 +794,7 @@ export function GridRoomRenderer({
       if (isMoving && !hasDragStarted.current && pointerStartPos.current) {
         const dx = e.nativeEvent.clientX - pointerStartPos.current.x
         const dy = e.nativeEvent.clientY - pointerStartPos.current.y
-        const distance = Math.sqrt(dx * dx + dy * dy)
+        const distance = Math.hypot(dx, dy)
         if (distance >= DRAG_THRESHOLD) {
           hasDragStarted.current = true
           startDrag(e)
@@ -832,7 +832,7 @@ export function GridRoomRenderer({
       if (hasDragStarted.current || !pointerStartPos.current) return
       const dx = e.clientX - pointerStartPos.current.x
       const dy = e.clientY - pointerStartPos.current.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
+      const distance = Math.hypot(dx, dy)
       if (distance >= DRAG_THRESHOLD) {
         hasDragStarted.current = true
         document.body.style.cursor = 'grabbing'

@@ -107,9 +107,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
     if (!dialog) return
     if (open) {
       if (!dialog.open) dialog.showModal()
-    } else {
-      if (dialog.open) dialog.close()
-    }
+    } else if (dialog.open) dialog.close()
   }, [open])
 
   // Reset form when room changes or dialog opens

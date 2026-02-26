@@ -199,9 +199,7 @@ function KeysManager({ adminKey }: { adminKey: string }) {
     if (!d) return
     if (showCreateModal) {
       if (!d.open) d.showModal()
-    } else {
-      if (d.open) d.close()
-    }
+    } else if (d.open) d.close()
   }, [showCreateModal])
 
   useEffect(() => {
@@ -209,9 +207,7 @@ function KeysManager({ adminKey }: { adminKey: string }) {
     if (!d) return
     if (newKeyResult) {
       if (!d.open) d.showModal()
-    } else {
-      if (d.open) d.close()
-    }
+    } else if (d.open) d.close()
   }, [newKeyResult])
 
   const handleKeyCreated = (result: CreateApiKeyResponse) => {
@@ -463,7 +459,7 @@ function CreateKeyModal({
     setCreating(true)
     setError(null)
     try {
-      const days = parseInt(expiresInDays)
+      const days = Number.parseInt(expiresInDays)
       const result = await apiKeyApi.create({
         name: name.trim(),
         scopes: Array.from(scopes),

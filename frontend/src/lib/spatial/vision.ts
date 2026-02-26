@@ -87,7 +87,7 @@ export class VisionSystem {
   ): VisionResult {
     const dx = to.x - from.x
     const dz = to.z - from.z
-    const distance = Math.sqrt(dx * dx + dz * dz)
+    const distance = Math.hypot(dx, dz)
 
     // Range check
     if (distance > this.config.range) {
@@ -197,7 +197,7 @@ export class VisionSystem {
             propId: gridCell.propId,
             x: cell.x,
             z: cell.z,
-            distance: Math.sqrt(dx * dx + dz * dz),
+            distance: Math.hypot(dx, dz),
           })
         }
       }

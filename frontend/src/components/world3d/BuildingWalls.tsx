@@ -38,26 +38,24 @@ export function BuildingWalls({
   const segments = useMemo(() => {
     const segs: WallSegment[] = []
 
-    // Back wall (full width, at +Z)
-    segs.push({
-      key: 'back',
-      position: [0, wallHeight / 2, halfD - wallThickness / 2],
-      size: [width, wallHeight, wallThickness],
-    })
-
-    // Left wall (full depth, at -X)
-    segs.push({
-      key: 'left',
-      position: [-halfW + wallThickness / 2, wallHeight / 2, 0],
-      size: [wallThickness, wallHeight, depth],
-    })
-
-    // Right wall (full depth, at +X)
-    segs.push({
-      key: 'right',
-      position: [halfW - wallThickness / 2, wallHeight / 2, 0],
-      size: [wallThickness, wallHeight, depth],
-    })
+    // Back, Left, Right walls
+    segs.push(
+      {
+        key: 'back',
+        position: [0, wallHeight / 2, halfD - wallThickness / 2],
+        size: [width, wallHeight, wallThickness],
+      },
+      {
+        key: 'left',
+        position: [-halfW + wallThickness / 2, wallHeight / 2, 0],
+        size: [wallThickness, wallHeight, depth],
+      },
+      {
+        key: 'right',
+        position: [halfW - wallThickness / 2, wallHeight / 2, 0],
+        size: [wallThickness, wallHeight, depth],
+      }
+    )
 
     // Front wall (at -Z) — two segments with entrance gap
     const entranceCenter = entranceOffset

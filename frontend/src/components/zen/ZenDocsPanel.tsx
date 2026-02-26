@@ -67,10 +67,8 @@ function DocTreeNode({
     if (isDir) {
       const hasMatch = node.children?.some((c) => matchesSearch(c, q))
       if (!hasMatch) return null
-    } else {
-      if (!node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q)) {
-        return null
-      }
+    } else if (!node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q)) {
+      return null
     }
   }
 

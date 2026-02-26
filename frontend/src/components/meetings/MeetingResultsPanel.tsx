@@ -145,7 +145,7 @@ export function MeetingResultsPanel() {
 
     const blockIfOutsideOverlay = (e: Event) => {
       const overlayEl = document.querySelector('[data-fullscreen-overlay]')
-      if (overlayEl && overlayEl.contains(e.target as Node)) return
+      if (overlayEl?.contains(e.target as Node)) return
       e.stopPropagation()
     }
     document.addEventListener('pointermove', blockIfOutsideOverlay, { capture: true })

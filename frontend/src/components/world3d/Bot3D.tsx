@@ -368,7 +368,7 @@ export const Bot3D = memo(function Bot3D({
 
       const dx = currentTarget.x - state.currentX
       const dz = currentTarget.z - state.currentZ
-      const dist = Math.sqrt(dx * dx + dz * dz)
+      const dist = Math.hypot(dx, dz)
 
       // Threshold: use tighter threshold for intermediate waypoints
       const arrivalThreshold = isLastWaypoint ? 0.3 : 0.5
@@ -411,7 +411,7 @@ export const Bot3D = memo(function Bot3D({
       // Walk animation
       const frameDx2 = state.currentX - frameStartX
       const frameDz2 = state.currentZ - frameStartZ
-      const isMoving2 = Math.sqrt(frameDx2 * frameDx2 + frameDz2 * frameDz2) > 0.001
+      const isMoving2 = Math.hypot(frameDx2, frameDz2) > 0.001
       wasMovingRef.current = isMoving2
       if (isMoving2) walkPhaseRef.current += delta * 8
       else {
@@ -436,7 +436,7 @@ export const Bot3D = memo(function Bot3D({
       if (anim.targetX !== null && anim.targetZ !== null) {
         const faceDx = anim.targetX - state.currentX
         const faceDz = anim.targetZ - state.currentZ
-        const faceDist = Math.sqrt(faceDx * faceDx + faceDz * faceDz)
+        const faceDist = Math.hypot(faceDx, faceDz)
         if (faceDist > 0.01) {
           groupRef.current.rotation.y = Math.atan2(faceDx, faceDz)
         }
@@ -505,7 +505,7 @@ export const Bot3D = memo(function Bot3D({
       const wc = walkableCenter
       const dx = state.targetX - state.currentX
       const dz = state.targetZ - state.currentZ
-      const dist = Math.sqrt(dx * dx + dz * dz)
+      const dist = Math.hypot(dx, dz)
 
       if (dist < 0.4) {
         if (hasAnimTarget && !anim.arrived) {
@@ -562,7 +562,7 @@ export const Bot3D = memo(function Bot3D({
       // ─── Walking toward animation target (coffee/sleep) ──
       const dx = state.targetX - state.currentX
       const dz = state.targetZ - state.currentZ
-      const dist = Math.sqrt(dx * dx + dz * dz)
+      const dist = Math.hypot(dx, dz)
 
       if (dist < 0.4) {
         anim.arrived = true
@@ -609,7 +609,7 @@ export const Bot3D = memo(function Bot3D({
             const easedSpeed = speed * Math.min(1, dist / 0.5)
             const step = Math.min(easedSpeed * delta, dist)
             // Normalize diagonal movement vectors [Fix 5]
-            const dirMag = Math.sqrt(bestDir.x * bestDir.x + bestDir.z * bestDir.z)
+            const dirMag = Math.hypot(bestDir.x, bestDir.z)
             state.currentX += (bestDir.x / dirMag) * step
             state.currentZ += (bestDir.z / dirMag) * step
           }
@@ -628,109 +628,107 @@ export const Bot3D = memo(function Bot3D({
           groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
         }
       }
-    } else {
+    } else if (anim.typingPause) {
       // ─── Random walk with obstacle avoidance ───────────────
       // Typing pause — active bot pauses briefly as if typing on laptop
-      if (anim.typingPause) {
-        // Stay in place, don't modify currentX/currentZ
-        // Still rotate toward current direction while paused
+      // Stay in place, don't modify currentX/currentZ
+      // Still rotate toward current direction while paused
+      if (state.stepsRemaining > 0) {
+        const targetRotY = Math.atan2(state.dirX, state.dirZ)
+        const currentRotY = groupRef.current.rotation.y
+        let angleDiff = targetRotY - currentRotY
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+        if (Math.abs(angleDiff) < 0.01) {
+          groupRef.current.rotation.y = targetRotY
+        } else {
+          groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
+        }
+      }
+    } else {
+      const cellSize = gridData.blueprint.cellSize
+
+      // Wait phase
+      if (state.waitTimer > 0) {
+        state.waitTimer -= delta
+        // Still rotate toward current direction while waiting
         if (state.stepsRemaining > 0) {
           const targetRotY = Math.atan2(state.dirX, state.dirZ)
           const currentRotY = groupRef.current.rotation.y
           let angleDiff = targetRotY - currentRotY
           while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
           while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+          // Rotation dead-zone snap [Fix 6]
           if (Math.abs(angleDiff) < 0.01) {
             groupRef.current.rotation.y = targetRotY
           } else {
             groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
           }
         }
+      } else if (state.stepsRemaining <= 0) {
+        // Pick a new random direction and number of steps
+        const dir = pickWalkableDir()
+        if (dir) {
+          state.dirX = dir.x
+          state.dirZ = dir.z
+          state.stepsRemaining =
+            SESSION_CONFIG.wanderMinSteps +
+            Math.floor(
+              Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1)
+            )
+          state.cellProgress = 0
+          state.waitTimer = 1 + Math.random() * 2 // pause 1-3s before walking
+        } else {
+          state.waitTimer = 1 // boxed in, wait and retry
+        }
       } else {
-        const cellSize = gridData.blueprint.cellSize
+        // Walking phase — move forward one cell at a time
+        const nextWorldX = state.currentX + state.dirX * cellSize
+        const nextWorldZ = state.currentZ + state.dirZ * cellSize
 
-        // Wait phase
-        if (state.waitTimer > 0) {
-          state.waitTimer -= delta
-          // Still rotate toward current direction while waiting
-          if (state.stepsRemaining > 0) {
-            const targetRotY = Math.atan2(state.dirX, state.dirZ)
-            const currentRotY = groupRef.current.rotation.y
-            let angleDiff = targetRotY - currentRotY
-            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-            // Rotation dead-zone snap [Fix 6]
-            if (Math.abs(angleDiff) < 0.01) {
-              groupRef.current.rotation.y = targetRotY
-            } else {
-              groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
-            }
-          }
-        } else if (state.stepsRemaining <= 0) {
-          // Pick a new random direction and number of steps
+        if (!isWalkableAt(nextWorldX, nextWorldZ)) {
+          // Obstacle ahead — pick a new walkable direction
           const dir = pickWalkableDir()
           if (dir) {
             state.dirX = dir.x
             state.dirZ = dir.z
             state.stepsRemaining =
-              SESSION_CONFIG.wanderMinSteps +
+              Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) +
               Math.floor(
-                Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1)
+                Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps)
               )
             state.cellProgress = 0
-            state.waitTimer = 1 + Math.random() * 2 // pause 1-3s before walking
-          } else {
-            state.waitTimer = 1 // boxed in, wait and retry
           }
+          state.waitTimer = 0.5 // brief pause after redirect
         } else {
-          // Walking phase — move forward one cell at a time
-          const nextWorldX = state.currentX + state.dirX * cellSize
-          const nextWorldZ = state.currentZ + state.dirZ * cellSize
+          // Move toward next cell center
+          const step = speed * delta
+          state.cellProgress += step / cellSize
 
-          if (!isWalkableAt(nextWorldX, nextWorldZ)) {
-            // Obstacle ahead — pick a new walkable direction
-            const dir = pickWalkableDir()
-            if (dir) {
-              state.dirX = dir.x
-              state.dirZ = dir.z
-              state.stepsRemaining =
-                Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) +
-                Math.floor(
-                  Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps)
-                )
-              state.cellProgress = 0
-            }
-            state.waitTimer = 0.5 // brief pause after redirect
+          // Normalize diagonal movement vectors [Fix 5]
+          const dirMag = Math.hypot(state.dirX, state.dirZ)
+          if (dirMag > 0) {
+            state.currentX += (state.dirX / dirMag) * step
+            state.currentZ += (state.dirZ / dirMag) * step
+          }
+
+          // When we've traversed one cell width, count it
+          if (state.cellProgress >= 1) {
+            state.stepsRemaining--
+            state.cellProgress = 0
+          }
+
+          // Smooth rotation toward movement direction
+          const targetRotY = Math.atan2(state.dirX, state.dirZ)
+          const currentRotY = groupRef.current.rotation.y
+          let angleDiff = targetRotY - currentRotY
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+          // Rotation dead-zone snap [Fix 6]
+          if (Math.abs(angleDiff) < 0.01) {
+            groupRef.current.rotation.y = targetRotY
           } else {
-            // Move toward next cell center
-            const step = speed * delta
-            state.cellProgress += step / cellSize
-
-            // Normalize diagonal movement vectors [Fix 5]
-            const dirMag = Math.sqrt(state.dirX * state.dirX + state.dirZ * state.dirZ)
-            if (dirMag > 0) {
-              state.currentX += (state.dirX / dirMag) * step
-              state.currentZ += (state.dirZ / dirMag) * step
-            }
-
-            // When we've traversed one cell width, count it
-            if (state.cellProgress >= 1) {
-              state.stepsRemaining--
-              state.cellProgress = 0
-            }
-
-            // Smooth rotation toward movement direction
-            const targetRotY = Math.atan2(state.dirX, state.dirZ)
-            const currentRotY = groupRef.current.rotation.y
-            let angleDiff = targetRotY - currentRotY
-            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-            // Rotation dead-zone snap [Fix 6]
-            if (Math.abs(angleDiff) < 0.01) {
-              groupRef.current.rotation.y = targetRotY
-            } else {
-              groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
-            }
+            groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
           }
         }
       }
@@ -745,7 +743,7 @@ export const Bot3D = memo(function Bot3D({
     // ─── Detect movement for walk animation ──────────────────────
     const frameDx = state.currentX - frameStartX
     const frameDz = state.currentZ - frameStartZ
-    const frameDist = Math.sqrt(frameDx * frameDx + frameDz * frameDz)
+    const frameDist = Math.hypot(frameDx, frameDz)
     const isMovingNow = frameDist > 0.001
     wasMovingRef.current = isMovingNow
 
