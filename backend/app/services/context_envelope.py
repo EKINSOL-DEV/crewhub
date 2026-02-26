@@ -129,7 +129,7 @@ async def _resolve_self_identity(db: aiosqlite.Connection, session_key: str) -> 
     return identity
 
 
-async def build_crewhub_context(  # NOSONAR
+async def build_crewhub_context(
     room_id: str,
     channel: Optional[str] = None,
     max_tasks: int = 10,

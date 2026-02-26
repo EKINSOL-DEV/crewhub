@@ -156,7 +156,7 @@ async def _get_agent_recent_activity(agent_id: str) -> str:
     return ""
 
 
-def _build_bio_from_context(agent_id: str, agent_name: str, soul_content: str, recent_activity: str) -> str:  # NOSONAR
+def _build_bio_from_context(agent_id: str, agent_name: str, soul_content: str, recent_activity: str) -> str:
     """Build a bio string using soul content and template matching."""
     bio_templates = {
         "main": "{name} is the orchestrator, managing tasks and coordinating the crew.",

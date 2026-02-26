@@ -286,7 +286,7 @@ async def create_connection(data: ConnectionCreate):
     return _db_to_response(db_conn, manager)
 
 
-async def _apply_connection_state_change(manager, connection_id: str, db_conn: dict, data) -> None:  # NOSONAR
+async def _apply_connection_state_change(manager, connection_id: str, db_conn: dict, data) -> None:
     """Apply enable/disable or config-change side-effects to the connection manager."""
     if data.enabled is not None:
         existing_conn = manager.get_connection(connection_id)
@@ -565,8 +565,7 @@ async def trigger_device_pairing(connection_id: str):
             await conn.disconnect()
             import asyncio as _asyncio
 
-            _connect_task = _asyncio.create_task(conn.connect())
-            _connect_task  # noqa: F841 — prevent premature GC
+            _ = _asyncio.create_task(conn.connect())
 
         return {
             "connection_id": connection_id,

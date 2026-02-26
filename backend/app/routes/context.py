@@ -223,7 +223,7 @@ async def get_session_context(session_key: str):
 
 
 @router.get("/{session_key}/context/prompt", response_model=dict)
-async def get_session_context_prompt(session_key: str):  # NOSONAR
+async def get_session_context_prompt(session_key: str):
     """
     Get a formatted system prompt snippet for context injection.
 

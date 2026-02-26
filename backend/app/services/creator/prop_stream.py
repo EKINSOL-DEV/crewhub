@@ -69,7 +69,12 @@ def _extract_transcript_events(entry: dict) -> list:
             elif bt == "tool_use":
                 tool_name = block.get("name", "unknown")
                 tool_input = block.get("input", {})
-                events.append(("tool", {"name": tool_name, "input": str(tool_input)[:200], "message": f"🔧 Using tool: {tool_name}"}))
+                events.append(
+                    (
+                        "tool",
+                        {"name": tool_name, "input": str(tool_input)[:200], "message": f"🔧 Using tool: {tool_name}"},
+                    )
+                )
     elif role == "assistant" and isinstance(content, str) and content:
         events.append(("text", {"text": content[:200]}))
     elif role == "user" and isinstance(content, list):

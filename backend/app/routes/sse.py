@@ -42,7 +42,7 @@ async def _sse_generator(queue: asyncio.Queue, request: Request):
         logger.debug(f"SSE client disconnected. Active clients: {len(_sse_clients)}")
 
 
-async def broadcast(event_type: str, data: dict):  # NOSONAR
+async def broadcast(event_type: str, data: dict):
     """Push an event to all connected SSE clients.
 
     Stale clients (full queue = not consuming) are removed immediately so

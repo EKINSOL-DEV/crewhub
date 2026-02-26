@@ -93,7 +93,7 @@ class OpenClawExtendedMixin:
         )
         return _extract_text(result)
 
-    async def send_chat_streaming(  # NOSONAR
+    async def send_chat_streaming(
         self,
         message: str,
         agent_id: str = "main",
@@ -271,7 +271,7 @@ class OpenClawExtendedMixin:
 # ------------------------------------------------------------------
 
 
-def _extract_text(  # NOSONAR
+def _extract_text(
     result: Any,
 ) -> Optional[str]:  # NOSONAR
     """Extract the assistant reply text from a Gateway agent response."""

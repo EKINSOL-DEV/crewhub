@@ -26,7 +26,7 @@ from .base import ConnectionStatus
 logger = logging.getLogger(__name__)
 
 
-async def perform_handshake(  # NOSONAR
+async def perform_handshake(
     conn: OpenClawConnection,
 ) -> bool:  # NOSONAR
     """

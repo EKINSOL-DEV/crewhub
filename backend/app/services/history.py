@@ -65,7 +65,7 @@ def _extract_path_metadata(file_path: Path) -> tuple:
     return agent_id, session_id, status
 
 
-def _extract_message_stats(messages: list) -> dict[str, Any]:  # NOSONAR
+def _extract_message_stats(messages: list) -> dict[str, Any]:
     """Extract timestamps, model, label, channel, and last text from messages."""
     started_at = None
     ended_at = None
@@ -167,7 +167,7 @@ def _parse_session_file(file_path: Path) -> Optional[dict[str, Any]]:
         return None
 
 
-def _collect_agent_dirs(agent_id: Optional[str]) -> list:  # NOSONAR
+def _collect_agent_dirs(agent_id: Optional[str]) -> list:
     """Collect session and archive directories for the given agent (or all agents)."""
     agent_dirs = []
     if agent_id:
@@ -194,7 +194,7 @@ def _collect_agent_dirs(agent_id: Optional[str]) -> list:  # NOSONAR
     return agent_dirs
 
 
-def _collect_session_files(agent_dirs: list, include_deleted: bool) -> list:  # NOSONAR
+def _collect_session_files(agent_dirs: list, include_deleted: bool) -> list:
     """Parse all valid session files from the given directories."""
     sessions = []
     for sessions_dir in agent_dirs:

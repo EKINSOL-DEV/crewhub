@@ -75,7 +75,7 @@ class GatewayClient:
         conn = await self._get_conn()
         return await conn.kill_session(session_key) if conn else False
 
-    async def send_chat(self, message: str, agent_id: str = "main", session_id=None, timeout: float = 120.0):  # NOSONAR
+    async def send_chat(self, message: str, agent_id: str = "main", session_id=None, timeout: float = 120.0):
         conn = await self._get_conn()
         return await conn.send_chat(message, agent_id, session_id, timeout) if conn else None
 
@@ -111,7 +111,7 @@ class GatewayClient:
         conn = await self._get_conn()
         return await conn.run_cron_job(job_id, force) if conn else False
 
-    async def call(self, method, params=None, timeout=30.0, **kwargs):  # NOSONAR
+    async def call(self, method, params=None, timeout=30.0, **kwargs):
         conn = await self._get_conn()
         return await conn.call(method, params, timeout, **kwargs) if conn else None
 

@@ -36,7 +36,7 @@ router = APIRouter()
 _SKIP_DIRS = {".git", "node_modules", ".DS_Store", "__pycache__", ".venv", "venv"}
 
 
-def _scan_project_md_files(base_dir: Path, resolved: Path) -> list:  # NOSONAR
+def _scan_project_md_files(base_dir: Path, resolved: Path) -> list:
     """Scan a project directory for markdown files (safe, depth-limited)."""
     md_files: list[str] = []
     for md_path in sorted(base_dir.rglob("*.md")):
@@ -61,7 +61,7 @@ def _scan_project_md_files(base_dir: Path, resolved: Path) -> list:  # NOSONAR
     return md_files
 
 
-def _build_project_md_tree(base_dir: Path, current_dir: Path, resolved: Path, depth: int = 0) -> list:  # NOSONAR
+def _build_project_md_tree(base_dir: Path, current_dir: Path, resolved: Path, depth: int = 0) -> list:
     """Recursively build a tree of markdown files (depth ≤ 4)."""
     if depth > 4:
         return []

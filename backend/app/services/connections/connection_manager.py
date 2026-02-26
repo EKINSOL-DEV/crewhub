@@ -410,7 +410,7 @@ class ConnectionManager:
 
         return all_sessions
 
-    async def get_session_history(  # NOSONAR
+    async def get_session_history(
         self,
         session_key: str,
         connection_id: Optional[str] = None,
@@ -448,7 +448,7 @@ class ConnectionManager:
 
         return []
 
-    async def kill_session(  # NOSONAR
+    async def kill_session(
         self,
         session_key: str,
         connection_id: Optional[str] = None,

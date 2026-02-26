@@ -227,7 +227,7 @@ async def _transcribe_audio(audio_path: Path) -> tuple[Optional[str], Optional[s
         )
         try:
             _, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=30)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             return None, MSG_NO_AUDIO_CONV
         if proc.returncode != 0:

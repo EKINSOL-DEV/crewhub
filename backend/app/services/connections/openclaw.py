@@ -166,7 +166,7 @@ class OpenClawConnection(
     # ---
     # Background listener
     # ---
-    async def _listen_loop(  # noqa: C901  # NOSONAR
+    async def _listen_loop(  # noqa: C901 - protocol event loop with reconnection/dispatch branches
         self,
     ) -> None:
         """Receive and route messages from the Gateway."""
