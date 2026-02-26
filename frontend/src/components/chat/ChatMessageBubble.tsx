@@ -420,7 +420,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}
             >
-              {videoAttachments.map((attachment, i) => (
+              {videoAttachments.map((attachment) => (
                 <VideoThumbnail key={attachment.path || `attachme-${attachment.type}`} attachment={attachment} maxWidth={300} />
               ))}
             </div>
@@ -431,7 +431,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}
             >
-              {audioAttachments.map((attachment, i) => (
+              {audioAttachments.map((attachment) => (
                 <AudioMessage
                   key={attachment.path || `attachme-${attachment.type || 'a'}`}
                   url={attachment.path}
@@ -587,7 +587,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
               ...mediaMargin,
             }}
           >
-            {imageAttachments.map((attachment, i) => (
+            {imageAttachments.map((attachment) => (
               <ImageThumbnail
                 key={attachment.path || `attachme-${attachment.type}`}
                 attachment={attachment}
@@ -608,7 +608,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
               ...mediaMargin,
             }}
           >
-            {videoAttachments.map((attachment, i) => (
+            {videoAttachments.map((attachment) => (
               <VideoThumbnail
                 key={attachment.path || `attachme-${attachment.type}`}
                 attachment={attachment}
@@ -629,7 +629,7 @@ const ChatMessageBubbleInner = memo( // NOSONAR
               ...mediaMargin,
             }}
           >
-            {audioAttachments.map((attachment, i) => (
+            {audioAttachments.map((attachment) => (
               <AudioMessage
                 key={attachment.path || `attachme-${attachment.type || 'a'}`}
                 url={attachment.path}

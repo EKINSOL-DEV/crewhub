@@ -176,7 +176,7 @@ function ChatIcon({ color }: { color: string }) {
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
         </RoundedBox>
         {/* Little dots inside */}
-        {[-0.035, 0, 0.035].map((x, i) => (
+        {[-0.035, 0, 0.035].map((x) => (
           <mesh key={`x-${x}`} position={[x, 0, 0.025]}>
             <sphereGeometry args={[0.012, 8, 8]} />
             <meshStandardMaterial color="white" />
