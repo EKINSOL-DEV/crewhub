@@ -275,6 +275,7 @@ export function ProjectPicker({
           {/* Name */}
           <div>
             <label
+              htmlFor="picker-project-name"
               style={{
                 fontSize: 11,
                 fontWeight: 600,
@@ -286,6 +287,7 @@ export function ProjectPicker({
               Project Name *
             </label>
             <input
+              id="picker-project-name"
               type="text"
               placeholder="e.g. Website Redesign"
               value={newName}
@@ -316,7 +318,7 @@ export function ProjectPicker({
 
           {/* Icon selector */}
           <div>
-            <label
+            <p
               style={{
                 fontSize: 11,
                 fontWeight: 600,
@@ -326,7 +328,7 @@ export function ProjectPicker({
               }}
             >
               Icon
-            </label>
+            </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {ICON_PRESETS.map((icon) => (
                 <button
@@ -353,7 +355,7 @@ export function ProjectPicker({
 
           {/* Color selector */}
           <div>
-            <label
+            <p
               style={{
                 fontSize: 11,
                 fontWeight: 600,
@@ -363,7 +365,7 @@ export function ProjectPicker({
               }}
             >
               Color
-            </label>
+            </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {COLOR_PRESETS.map((color) => (
                 <button
@@ -387,6 +389,7 @@ export function ProjectPicker({
           {/* Folder Path */}
           <div>
             <label
+              htmlFor="picker-folder-path"
               style={{
                 fontSize: 11,
                 fontWeight: 600,
@@ -398,6 +401,7 @@ export function ProjectPicker({
               Project Folder
             </label>
             <input
+              id="picker-folder-path"
               type="text"
               placeholder={autoFolderPath || `${projectsBasePath}/MyProject`}
               value={newFolderPath}

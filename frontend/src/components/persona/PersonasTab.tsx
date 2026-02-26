@@ -158,9 +158,9 @@ export function PersonasTab() {
     <div className="space-y-6 max-w-2xl">
       {/* Agent selector */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Agent</label>
+        <p className="text-sm font-medium">Agent</p>
         <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-          <SelectTrigger className="w-full max-w-xs">
+          <SelectTrigger className="w-full max-w-xs" aria-label="Agent">
             <SelectValue placeholder="Select an agent" />
           </SelectTrigger>
           <SelectContent>
@@ -213,8 +213,11 @@ export function PersonasTab() {
 
           {/* Custom instructions — always visible, 2000 char limit */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Custom instructions</label>
+            <label htmlFor="personas-custom-instructions" className="text-sm font-medium">
+              Custom instructions
+            </label>
             <textarea
+              id="personas-custom-instructions"
               value={customInstructions}
               onChange={(e) => {
                 setCustomInstructions(e.target.value.slice(0, 2000))
