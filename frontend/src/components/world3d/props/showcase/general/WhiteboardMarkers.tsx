@@ -23,7 +23,7 @@ export function WhiteboardMarkers() {
         <meshStandardMaterial color="#aaaabb" flatShading />
       </mesh>
       {['#ff2244', '#2244ff', '#22cc44', '#111111'].map((c, i) => (
-        <mesh key={`c-${i}`} position={[-0.12 + i * 0.08, -0.19, 0.06]} rotation={[0, 0, 0.1]}>
+        <mesh key={c} position={[-0.12 + i * 0.08, -0.19, 0.06]} rotation={[0, 0, 0.1]}>
           <cylinderGeometry args={[0.012, 0.012, 0.1, 6]} />
           <meshStandardMaterial color={c} flatShading />
         </mesh>

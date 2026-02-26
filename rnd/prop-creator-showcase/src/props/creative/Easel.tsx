@@ -9,7 +9,7 @@ export function Easel() {
     <group ref={groupRef}>
       {/* Front legs */}
       {[-0.25, 0.25].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.1, 0.1]} rotation={[0.1, 0, 0]}>
+        <mesh key={x} position={[x, -0.1, 0.1]} rotation={[0.1, 0, 0]}>
           <boxGeometry args={[0.04, 1.4, 0.04]} />
           <meshStandardMaterial color="#aa7744" flatShading />
         </mesh>

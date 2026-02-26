@@ -29,7 +29,7 @@ export function HeadsetStand() {
       </mesh>
       {/* Ear cups */}
       {[-0.2, 0.2].map((x, i) => (
-        <group key={`x-${i}`}>
+        <group key={x}>
           <mesh position={[x, 0.28, 0]}>
             <cylinderGeometry args={[0.1, 0.1, 0.06, 8]} />
             <meshStandardMaterial color="#1a1a2e" flatShading />

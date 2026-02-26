@@ -27,7 +27,7 @@ export function SpaceHeater() {
         </mesh>
       ))}
       {[-0.1, 0.1].map((x,i) => (
-        <mesh key={`item-${i}`} position={[x, -0.27, 0]}>
+        <mesh key={_} position={[x, -0.27, 0]}>
           <boxGeometry args={[0.04, 0.02, 0.14]} />
           <meshStandardMaterial color="#444455" flatShading />
         </mesh>

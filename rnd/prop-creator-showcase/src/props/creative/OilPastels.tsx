@@ -13,7 +13,7 @@ export function OilPastels() {
         <meshStandardMaterial color="#ddcc88" flatShading />
       </mesh>
       {['#ff2244','#ff8833','#ffee44','#44cc44','#4488ff','#8844ff','#ff44aa','#ffffff','#884422','#222222'].map((c,i) => (
-        <mesh key={`c-${i}`} position={[-0.12+i*0.027, -0.16, 0]}><cylinderGeometry args={[0.008, 0.008, 0.06, 4]} /><meshStandardMaterial color={c} flatShading /></mesh>
+        <mesh key={c} position={[-0.12+i*0.027, -0.16, 0]}><cylinderGeometry args={[0.008, 0.008, 0.06, 4]} /><meshStandardMaterial color={c} flatShading /></mesh>
       ))}
 
     </group>

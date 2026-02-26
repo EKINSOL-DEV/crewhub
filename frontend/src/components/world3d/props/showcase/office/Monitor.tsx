@@ -21,7 +21,7 @@ export function Monitor() {
       </mesh>
       {/* Code lines on screen */}
       {[0.15, 0.05, -0.05, -0.15].map((y, i) => (
-        <mesh key={`y-${i}`} position={[-0.15 + i * 0.05, 0.15 + y, 0.035]}>
+        <mesh key={y} position={[-0.15 + i * 0.05, 0.15 + y, 0.035]}>
           <boxGeometry args={[0.3 + (i % 3) * 0.1, 0.025, 0.001]} />
           <meshStandardMaterial
             color={['#66ff66', '#ffcc44', '#66aaff', '#ff6688'][i]}

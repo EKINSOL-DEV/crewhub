@@ -22,7 +22,7 @@ export function Multimeter() {
       </mesh>
       <mesh ref={dialRef} position={[0, -0.04, 0.022]}><cylinderGeometry args={[0.03, 0.03, 0.005, 12]} /><meshStandardMaterial color="#333344" flatShading /></mesh>
       {[-0.04, 0, 0.04].map((x,i) => (
-        <mesh key={`x-${i}`} position={[x, -0.15, 0.022]}><cylinderGeometry args={[0.01, 0.01, 0.005, 6]} /><meshStandardMaterial color={['#ff4444','#222222','#222222'][i]} flatShading /></mesh>
+        <mesh key={x} position={[x, -0.15, 0.022]}><cylinderGeometry args={[0.01, 0.01, 0.005, 6]} /><meshStandardMaterial color={['#ff4444','#222222','#222222'][i]} flatShading /></mesh>
       ))}
 
     </group>

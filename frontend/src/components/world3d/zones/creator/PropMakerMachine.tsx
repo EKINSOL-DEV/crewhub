@@ -137,7 +137,7 @@ export function PropMakerMachine({
             <meshToonMaterial {...trimToon} />
           </mesh>
           {[0.2, 0.35, 0.5].map((y, i) => (
-            <mesh key={`y-${i}`} position={[side * 0.061, y, 0]}>
+            <mesh key={y} position={[side * 0.061, y, 0]}>
               <sphereGeometry args={[0.02, 8, 8]} />
               <meshStandardMaterial
                 color={['#00ffcc', '#e94560', '#ffd700'][i]}

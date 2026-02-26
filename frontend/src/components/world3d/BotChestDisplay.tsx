@@ -63,8 +63,8 @@ function ThreeDotsIcon({ color }: { color: string }) {
   const hex = '#' + dotColor.getHexString()
   return (
     <group position={[0, -0.12, 0]}>
-      {[-0.04, 0, 0.04].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, 0, 0]}>
+      {[-0.04, 0, 0.04].map((x, _i) => (
+        <mesh key={x} position={[x, 0, 0]}>
           <circleGeometry args={[0.018, 10]} />
           <meshStandardMaterial color={hex} />
         </mesh>
@@ -204,7 +204,7 @@ function ChatDotsIcon() {
   return (
     <group>
       {[-0.035, 0, 0.035].map((x, i) => (
-        <AnimatedDot key={`x-${i}`} x={x} delay={i * 0.4} />
+        <AnimatedDot key={x} x={x} delay={i * 0.4} />
       ))}
     </group>
   )

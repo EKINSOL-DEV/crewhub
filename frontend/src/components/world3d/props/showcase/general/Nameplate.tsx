@@ -21,8 +21,8 @@ export function Nameplate() {
         <boxGeometry args={[0.38, 0.02, 0.06]} />
         <meshStandardMaterial color="#aa7722" flatShading />
       </mesh>
-      {[-0.16, 0.16].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.2, 0.025]}>
+      {[-0.16, 0.16].map((x) => (
+        <mesh key={x} position={[x, -0.2, 0.025]}>
           <boxGeometry args={[0.01, 0.08, 0.005]} />
           <meshStandardMaterial color="#ddbb44" flatShading />
         </mesh>

@@ -98,7 +98,7 @@ export function ThinkingPanel({
         )}
         {thinkingLines.map((line, i) => (
           <div
-            key={`line-${i}`}
+            key={line.type}
             className={`fpm-thinking-line ${line.type === 'thinking' ? 'fpm-thinking-indent' : ''}`}
             style={{ color: getLineColor(line, i === thinkingLines.length - 1) }}
           >

@@ -168,7 +168,7 @@ export function ContextInspector({ roomId, roomName, onClose }: Readonly<Context
         >
           {([KEY_CREWHUB_UI, 'external'] as PrivacyTier[]).map((tier) => (
             <button
-              key={tier}
+              key={String(tier)}
               onClick={() => setChannel(tier)}
               style={{
                 padding: '4px 10px',
@@ -207,7 +207,7 @@ export function ContextInspector({ roomId, roomName, onClose }: Readonly<Context
             }
             return (
               <button
-                key={mode}
+                key={String(mode)}
                 onClick={() => setViewMode(mode)}
                 style={{
                   padding: '4px 10px',
@@ -597,7 +597,7 @@ function ArrayView({
         ▼
       </button>
       {items.map((item, i) => (
-        <div key={`item-${i}`} style={{ marginBottom: 2 }}>
+        <div key={String(item)} style={{ marginBottom: 2 }}>
           <span style={{ color: '#475569', fontSize: 11, marginRight: 6 }}>{i}:</span>
           <TreeView data={item} prevData={prevItems?.[i]} depth={depth + 1} />
         </div>

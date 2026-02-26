@@ -35,8 +35,8 @@ export function Poster() {
         <meshStandardMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={0.8} />
       </mesh>
       {/* Stars */}
-      {[-0.15, -0.05, 0.05, 0.15].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.2, 0.02]}>
+      {[-0.15, -0.05, 0.05, 0.15].map((x) => (
+        <mesh key={x} position={[x, -0.2, 0.02]}>
           <sphereGeometry args={[0.015, 4, 4]} />
           <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={1} />
         </mesh>

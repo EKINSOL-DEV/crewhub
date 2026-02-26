@@ -15,15 +15,15 @@ export function Figurine() {
         <meshStandardMaterial color="#222233" flatShading />
       </mesh>
       {/* Feet */}
-      {[-0.06, 0.06].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.48, 0.02]}>
+      {[-0.06, 0.06].map((x) => (
+        <mesh key={x} position={[x, -0.48, 0.02]}>
           <boxGeometry args={[0.06, 0.08, 0.1]} />
           <meshStandardMaterial color="#4444aa" flatShading />
         </mesh>
       ))}
       {/* Legs */}
-      {[-0.05, 0.05].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.35, 0]}>
+      {[-0.05, 0.05].map((x) => (
+        <mesh key={x} position={[x, -0.35, 0]}>
           <boxGeometry args={[0.06, 0.2, 0.06]} />
           <meshStandardMaterial color="#4444aa" flatShading />
         </mesh>
@@ -34,8 +34,8 @@ export function Figurine() {
         <meshStandardMaterial color="#ff4444" flatShading />
       </mesh>
       {/* Arms */}
-      {[-0.15, 0.15].map((x, i) => (
-        <mesh key={`x-${i}`} position={[x, -0.1, 0]} rotation={[0, 0, x > 0 ? -0.3 : 0.3]}>
+      {[-0.15, 0.15].map((x) => (
+        <mesh key={x} position={[x, -0.1, 0]} rotation={[0, 0, x > 0 ? -0.3 : 0.3]}>
           <boxGeometry args={[0.05, 0.25, 0.05]} />
           <meshStandardMaterial color="#ffcc88" flatShading />
         </mesh>

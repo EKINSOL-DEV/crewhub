@@ -107,8 +107,8 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
             {recentActivities.length === 0 ? (
               <div className="text-xs text-muted-foreground">No recent activity</div>
             ) : (
-              recentActivities.map((a, i) => (
-                <div key={`a-${i}`} className="text-xs text-muted-foreground truncate">
+              recentActivities.map((a, _i) => (
+                <div key={a.text} className="text-xs text-muted-foreground truncate">
                   <span className="mr-1">{a.icon}</span>
                   {a.text}
                 </div>
