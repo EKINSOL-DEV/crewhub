@@ -208,7 +208,7 @@ export function GroupThreadChat({
           flexShrink: 0,
           cursor: 'pointer',
         }}
-        onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setShowParticipants(true)}
+        onClick={() => setShowParticipants(true)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setShowParticipants(true) } }}
       >
         <button

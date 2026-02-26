@@ -352,7 +352,7 @@ export function TaskBoard({
             justifyContent: 'center',
             zIndex: 65,
           }}
-          onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setShowCreateForm(false)}
+          onClick={() => setShowCreateForm(false)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setShowCreateForm(false)
           }}
@@ -369,7 +369,7 @@ export function TaskBoard({
               maxHeight: '80vh',
               overflow: 'auto',
             }}
-            onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
 
             aria-modal="true"
@@ -403,7 +403,7 @@ export function TaskBoard({
             justifyContent: 'center',
             zIndex: 65,
           }}
-          onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setEditingTask(null)}
+          onClick={() => setEditingTask(null)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setEditingTask(null)
           }}
@@ -420,7 +420,7 @@ export function TaskBoard({
               maxHeight: '80vh',
               overflow: 'auto',
             }}
-            onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
 
             aria-modal="true"

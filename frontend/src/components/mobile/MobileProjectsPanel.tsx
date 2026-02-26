@@ -229,7 +229,7 @@ function ProjectDetailModal({
           gap: 20,
           overflowY: 'auto',
         }}
-        onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
 
         aria-modal="true"

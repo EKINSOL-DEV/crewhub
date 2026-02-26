@@ -264,7 +264,7 @@ function ConnectionDialog({ open, onOpenChange, connection, onSave }: Readonly<C
       className="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg border shadow-lg w-full max-w-[500px] p-0 z-[85]"
     >
       <div
-        onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="presentation"  // NOSONAR: decorative/overlay element; presentation role is appropriate here
         className="bg-background rounded-lg overflow-hidden"

@@ -131,7 +131,7 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
         background: 'rgba(0,0,0,0.5)',
         backdropFilter: 'blur(4px)',
       }}
-      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.target === e.currentTarget && handleClose()}
+      onClick={(e) => e.target === e.currentTarget && handleClose()}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.target === e.currentTarget && handleClose() } }}
     >
       <div

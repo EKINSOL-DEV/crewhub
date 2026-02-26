@@ -49,7 +49,7 @@ export function FolderTreeNode({
             ? 'bg-primary/10 text-primary font-medium'
             : 'hover:bg-muted/50 text-foreground'
         }`}
-        onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> node.path && onSelectFile(node.path)}
+        onClick={() => node.path && onSelectFile(node.path)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             if (node.path) onSelectFile(node.path)
@@ -70,7 +70,7 @@ export function FolderTreeNode({
     <div>
       <div
         className="pl-2 py-1 cursor-pointer hover:bg-muted/30 rounded text-sm font-medium transition-colors"
-        onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> setExpanded(!expanded)}
+        onClick={() => setExpanded(!expanded)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') setExpanded(!expanded)
         }}

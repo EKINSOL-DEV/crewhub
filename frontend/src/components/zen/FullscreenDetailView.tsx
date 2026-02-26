@@ -364,7 +364,7 @@ export function FullscreenDetailView({
     <div
       className="zen-fs-overlay"
       data-fullscreen-overlay
-      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> {
+      onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
       onKeyDown={(e) => {

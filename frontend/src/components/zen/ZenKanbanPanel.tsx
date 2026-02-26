@@ -118,7 +118,7 @@ function KanbanCard({
       {showMoveMenu && (
         <div
           className="zen-kanban-move-menu"
-          onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           role="presentation"
         >
@@ -237,7 +237,7 @@ function TaskDetailModal({ task, onClose, onMove }: TaskDetailModalProps) {
     >
       <div
         className="zen-modal zen-kanban-detail"
-        onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="presentation"
       >

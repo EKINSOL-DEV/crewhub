@@ -191,7 +191,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
       <div className="zen-rooms-list">
         <div
           className={`zen-room-item zen-room-item-all ${selectedRoomId ? '' : 'zen-room-item-selected'}`}
-          onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> handleSelect(null)}
+          onClick={() => handleSelect(null)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()

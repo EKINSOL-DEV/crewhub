@@ -47,7 +47,7 @@ function Breadcrumbs({
       }}
     >
       <span
-        onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> onNavigate(null)}
+        onClick={() => onNavigate(null)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') onNavigate(null)
         }}
@@ -61,7 +61,7 @@ function Breadcrumbs({
         <span key={`part-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ opacity: 0.5 }}>/</span>
           <span
-            onClick={() = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> onNavigate(parts.slice(0, i + 1).join('/') + '/')}
+            onClick={() => onNavigate(parts.slice(0, i + 1).join('/') + '/')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ')
                 onNavigate(parts.slice(0, i + 1).join('/') + '/')

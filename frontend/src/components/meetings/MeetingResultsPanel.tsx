@@ -182,7 +182,7 @@ export function MeetingResultsPanel() {
         animation: 'fadeIn 0.2s ease-out',
         pointerEvents: 'all',
       }}
-      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> {
+      onClick={(e) => {
         if (e.target === e.currentTarget) handleClose()
       }}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { if (e.target === e.currentTarget) handleClose() } }}

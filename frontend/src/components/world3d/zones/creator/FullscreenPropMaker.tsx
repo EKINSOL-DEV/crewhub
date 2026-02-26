@@ -533,7 +533,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   const overlay = (
     <div
       className="fpm-overlay"
-      onClick={(e) = role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click() } }}> {
+      onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
       onKeyDown={(e) => {
