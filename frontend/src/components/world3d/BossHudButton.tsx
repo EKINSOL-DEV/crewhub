@@ -10,8 +10,7 @@ interface BossHudButtonProps {
   /** Get bot config from session key */
   readonly getBotConfig: (sessionKey: string, label?: string) => BotVariantConfig
   /** Determine which room a session belongs to */
-  readonly getRoomForSession: (
-    sessionKey: string,
+  readonly getRoomForSession: ( sessionKey: string,
     sessionData?: { label?: string; model?: string; channel?: string }
   ) => string | undefined
   /** Default room ID fallback */
@@ -183,7 +182,7 @@ export function BossHudButton({
 
 // ─── SVG Bot Face ──────────────────────────────────────────────
 
-function BotFaceSVG({ color, expression }: { color: string; expression: string }) {
+function BotFaceSVG({ color, expression }: Readonly<{ color: string; expression: string }>) {
   // Determine pupil and mouth based on expression
   let pupilDx: number
   if (expression === 'thoughtful') {

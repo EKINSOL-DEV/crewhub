@@ -14,9 +14,7 @@ const VAR_ZEN_FG_MUTED = 'var(--zen-fg-muted)'
 interface ProjectsPanelProps {
   readonly projectId?: string | null
   readonly projectName?: string | null
-  readonly onProjectFilterChange?: (
-    projectId: string | null,
-    projectName: string,
+  readonly onProjectFilterChange?: ( projectId: string | null, projectName: string,
     projectColor?: string
   ) => void
 }
@@ -216,7 +214,7 @@ function TabButton({
   )
 }
 
-function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
+function ProjectCard({ project, onClick }: Readonly<{ project: Project; onClick: () => void }>) {
   return (
     <button
       onClick={onClick}

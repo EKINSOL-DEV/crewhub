@@ -13,9 +13,7 @@ interface ZenTasksPanelProps {
   readonly roomId?: string
   readonly roomFocusName?: string // Name of the focused room's project (for display)
   readonly onTaskClick?: (task: Task) => void
-  readonly onProjectFilterChange?: (
-    projectId: string | null,
-    projectName: string,
+  readonly onProjectFilterChange?: ( projectId: string | null, projectName: string,
     projectColor?: string
   ) => void
 }
@@ -143,7 +141,7 @@ function StatusTabs({ activeStatus, counts, onChange }: Readonly<StatusTabsProps
 
 // ── Empty State ──────────────────────────────────────────────────
 
-function EmptyState({ filterActive }: { filterActive: boolean }) {
+function EmptyState({ filterActive }: Readonly<{ filterActive: boolean }>) {
   return (
     <div className="zen-tasks-empty">
       <div className="zen-empty-icon">✅</div>
