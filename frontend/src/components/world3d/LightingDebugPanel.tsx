@@ -49,7 +49,7 @@ function Slider({
         max={max}
         step={step}
         value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
+        onChange={(e) => onChange(Number.parseFloat(e.target.value))}
         className="flex-1 h-1 accent-blue-400"
         style={{ minWidth: 60 }}
       />

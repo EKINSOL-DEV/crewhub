@@ -125,8 +125,8 @@ function ConfigField({
           type="number"
           value={displayValue}
           onChange={(e) => {
-            const num = parseFloat(e.target.value)
-            if (!isNaN(num) && num >= min) {
+            const num = Number.parseFloat(e.target.value)
+            if (!Number.isNaN(num) && num >= min) {
               updateConfig(configKey, fromDisplay(num))
             }
           }}
@@ -450,7 +450,7 @@ export function BehaviorTab({ settings, onSettingsChange }: BehaviorTabProps) {
               max="2.0"
               step="0.25"
               value={settings.playgroundSpeed}
-              onChange={(e) => updateSetting('playgroundSpeed', parseFloat(e.target.value))}
+              onChange={(e) => updateSetting('playgroundSpeed', Number.parseFloat(e.target.value))}
               className="flex-1 accent-primary"
             />
             <span className="text-sm text-muted-foreground w-12 text-right font-mono">

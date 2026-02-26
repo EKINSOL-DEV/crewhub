@@ -32,7 +32,7 @@ export function setStoredEnvironment(env: EnvironmentType): void {
     // localStorage unavailable
   }
   // Dispatch custom event so other components can react
-  window.dispatchEvent(new CustomEvent(KEY_CREWHUB_ENVIRONMENT_CHANGE, { detail: env }))
+  globalThis.dispatchEvent(new CustomEvent(KEY_CREWHUB_ENVIRONMENT_CHANGE, { detail: env }))
 }
 
 // ─── Hook for environment state ──────────────────────────────────
@@ -51,8 +51,8 @@ export function useEnvironment(): [EnvironmentType, (env: EnvironmentType) => vo
       const detail = (e as CustomEvent<EnvironmentType>).detail
       setEnvironment(detail)
     }
-    window.addEventListener(KEY_CREWHUB_ENVIRONMENT_CHANGE, handler)
-    return () => window.removeEventListener(KEY_CREWHUB_ENVIRONMENT_CHANGE, handler)
+    globalThis.addEventListener(KEY_CREWHUB_ENVIRONMENT_CHANGE, handler)
+    return () => globalThis.removeEventListener(KEY_CREWHUB_ENVIRONMENT_CHANGE, handler)
   }, [])
 
   return [environment, handleChange]
