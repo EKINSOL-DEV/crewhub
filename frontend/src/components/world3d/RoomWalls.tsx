@@ -180,8 +180,8 @@ const GLASS_FRAGMENT = /* glsl */ `
     vec3 col = mix(uBaseColor, uTintColor, 0.15 + fresnel * 0.2);
 
     // Subtle horizontal bands to suggest glass panels
-    float panelLine = smoothstep(0.48, 0.5, fract(vUv.y * 4)) *
-                      (1 - smoothstep(0.5, 0.52, fract(vUv.y * 4)));
+    float panelLine = smoothstep(0.48, 0.5, fract(vUv.y * 4.0)) *
+                      (1.0 - smoothstep(0.5, 0.52, fract(vUv.y * 4.0)));
     col = mix(col, col * 0.88, panelLine);
 
     gl_FragColor = vec4(col * toon, 1.0);
