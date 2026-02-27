@@ -20,13 +20,19 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 CardHeader.displayName = 'CardHeader'
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn('text-lg font-semibold leading-none tracking-tight', className)}
-      {...props}
-    />
-  )
+  ({ className, children, ...props }, ref) => {
+    const hasAccessibleContent = React.Children.count(children) > 0
+    return (
+      <h3
+        ref={ref}
+        aria-label={hasAccessibleContent ? props['aria-label'] : 'Card title'}
+        className={cn('text-lg font-semibold leading-none tracking-tight', className)}
+        {...props}
+      >
+        {hasAccessibleContent ? children : <span className="sr-only">Card title</span>}
+      </h3>
+    )
+  }
 )
 CardTitle.displayName = 'CardTitle'
 

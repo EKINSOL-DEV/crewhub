@@ -180,23 +180,16 @@ export function MobileLayout() {
     if (nextView) setView(nextView)
   }, [])
 
-  const currentPanel: MobilePanel =
+  const isPanelView =
     view.type === 'docs' ||
     view.type === 'kanban' ||
     view.type === 'activity' ||
     view.type === 'projects' ||
     view.type === 'creator'
-      ? view.type
-      : 'chat'
 
-  const panelView =
-    view.type === 'docs' ||
-    view.type === 'kanban' ||
-    view.type === 'activity' ||
-    view.type === 'projects' ||
-    view.type === 'creator'
-      ? view.type
-      : null
+  const currentPanel: MobilePanel = isPanelView ? view.type : 'chat'
+
+  const panelView = isPanelView ? view.type : null
 
   const panelComponents: Record<
     'docs' | 'kanban' | 'activity' | 'projects' | 'creator',
@@ -209,38 +202,52 @@ export function MobileLayout() {
     creator: <MobileCreatorView onBack={handleBack} />,
   }
 
-  const currentView: React.ReactNode =
-    view.type === 'chat' ? (
-      <MobileAgentChat
-        sessionKey={view.sessionKey}
-        agentName={view.agentName}
-        agentIcon={view.agentIcon}
-        agentColor={view.agentColor}
-        subagentSessions={getSubagentSessions(view.agentId)}
-        onBack={handleBack}
-        onOpenSettings={() => setSettingsOpen(true)}
-      />
-    ) : view.type === 'new-group' ? (
-      <AgentMultiSelectSheet
-        agents={fixedAgents}
-        onConfirm={handleCreateGroup}
-        onClose={handleBack}
-      />
-    ) : view.type === GROUP_CHAT ? (
-      <GroupThreadChat
-        thread={view.thread}
-        onBack={handleBack}
-        onRemoveParticipant={(agentId) => handleRemoveParticipant(view.thread.id, agentId)}
-        onAddParticipants={() => {
-          /* Phase 2: group management — add participants flow */
-        }}
-        onRename={() => {
-          /* Phase 2: group management — rename flow */
-        }}
-      />
-    ) : panelView ? (
-      panelComponents[panelView]
-    ) : (
+  const currentView: React.ReactNode = (() => {
+    if (view.type === 'chat') {
+      return (
+        <MobileAgentChat
+          sessionKey={view.sessionKey}
+          agentName={view.agentName}
+          agentIcon={view.agentIcon}
+          agentColor={view.agentColor}
+          subagentSessions={getSubagentSessions(view.agentId)}
+          onBack={handleBack}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      )
+    }
+
+    if (view.type === 'new-group') {
+      return (
+        <AgentMultiSelectSheet
+          agents={fixedAgents}
+          onConfirm={handleCreateGroup}
+          onClose={handleBack}
+        />
+      )
+    }
+
+    if (view.type === GROUP_CHAT) {
+      return (
+        <GroupThreadChat
+          thread={view.thread}
+          onBack={handleBack}
+          onRemoveParticipant={(agentId) => handleRemoveParticipant(view.thread.id, agentId)}
+          onAddParticipants={() => {
+            /* Phase 2: group management — add participants flow */
+          }}
+          onRename={() => {
+            /* Phase 2: group management — rename flow */
+          }}
+        />
+      )
+    }
+
+    if (panelView) {
+      return panelComponents[panelView]
+    }
+
+    return (
       <MobileAgentList
         agents={fixedAgents}
         loading={loading}
@@ -253,6 +260,7 @@ export function MobileLayout() {
         onOpenDrawer={() => setDrawerOpen(true)}
       />
     )
+  })()
 
   return (
     <div

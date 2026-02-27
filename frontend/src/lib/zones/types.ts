@@ -2,7 +2,7 @@
 
 // NOTE: CrewHub environments are registered by string ids (e.g. "builtin:grass").
 // For Multi-Zone MVP we keep this flexible.
-export type EnvironmentType = string
+/* Environment type is plain string ids (e.g. "builtin:grass") */
 export type ZoneLayoutType = 'campus' | 'hub-spoke' | 'arena' | 'classroom'
 
 /** Feature flags for zone capabilities (stubs ok for MVP) */
