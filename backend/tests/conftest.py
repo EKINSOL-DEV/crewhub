@@ -1,5 +1,7 @@
 """Pytest configuration and fixtures for CrewHub backend tests."""
 
+import builtins
+import datetime as _dt
 import os
 import tempfile
 from pathlib import Path
@@ -7,6 +9,20 @@ from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+
+if not hasattr(_dt, "UTC"):
+    _dt.UTC = _dt.UTC
+
+# Python 3.9 compatibility: emulate zip(..., strict=False)
+_orig_zip = builtins.zip
+
+
+def _compat_zip(*args, **kwargs):
+    kwargs.pop("strict", None)
+    return _orig_zip(*args, **kwargs)
+
+
+builtins.zip = _compat_zip
 
 # Use a temporary database for tests
 _test_db_dir = tempfile.mkdtemp(prefix="crewhub_test_")
