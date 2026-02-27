@@ -149,6 +149,7 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Standup"
+
     >
       <div
         style={{

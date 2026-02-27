@@ -330,7 +330,6 @@ export function CreatorBottomBar() {
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') handleCategoryClick('All')
           }}
-          role="button"
           tabIndex={0}
         >
           All

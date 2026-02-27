@@ -46,35 +46,34 @@ function Breadcrumbs({
         flexWrap: 'wrap',
       }}
     >
-      <span
+      <button
+        type="button"
         onClick={() => onNavigate(null)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') onNavigate(null)
         }}
-        role="button"
-        tabIndex={0}
-        style={{ cursor: 'pointer', color: 'var(--zen-accent, hsl(var(--primary)))' }}
+        style={{ all: 'unset', cursor: 'pointer', color: 'var(--zen-accent, hsl(var(--primary)))' }}
       >
         📁 Root
-      </span>
+      </button>
       {parts.map((part, i) => (
         <span key={JSON.stringify(part)} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ opacity: 0.5 }}>/</span>
-          <span
+          <button
+            type="button"
             onClick={() => onNavigate(parts.slice(0, i + 1).join('/') + '/')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ')
                 onNavigate(parts.slice(0, i + 1).join('/') + '/')
             }}
-            role="button"
-            tabIndex={0}
             style={{
+              all: 'unset',
               cursor: 'pointer',
               color: i === parts.length - 1 ? 'hsl(var(--foreground))' : 'hsl(var(--primary))',
             }}
           >
             {part}
-          </span>
+          </button>
         </span>
       ))}
     </div>

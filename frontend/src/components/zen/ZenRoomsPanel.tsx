@@ -197,7 +197,6 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
               handleSelect(null)
             }
           }}
-          role="button"
           tabIndex={0}
         >
           <div className="zen-room-icon" style={{ background: 'var(--zen-bg-hover)' }}>
