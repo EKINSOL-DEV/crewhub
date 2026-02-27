@@ -101,17 +101,6 @@ export function WorldLighting() {
         intensity={config.sun.intensity}
         color={config.sun.color}
         castShadow={shadowEnabled}
-        shadow-mapSize-width={config.shadows.mapSize}
-        shadow-mapSize-height={config.shadows.mapSize}
-        shadow-camera-near={config.shadows.camera.near}
-        shadow-camera-far={config.shadows.camera.far}
-        shadow-camera-left={-config.shadows.camera.size}
-        shadow-camera-right={config.shadows.camera.size}
-        shadow-camera-top={config.shadows.camera.size}
-        shadow-camera-bottom={-config.shadows.camera.size}
-        shadow-bias={config.shadows.bias}
-        shadow-normalBias={config.shadows.normalBias}
-        shadow-radius={config.shadows.radius}
       />
 
       {/* Fill light — opposite side, softer */}

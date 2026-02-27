@@ -142,10 +142,9 @@ export function EditableSessionName({
   }
 
   return (
-    <span
-      role="button"
-      tabIndex={0}
-      className={`group cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 ${className}`}
+    <button
+      type="button"
+      className={`group cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 bg-transparent border-0 p-0 font-inherit text-inherit ${className}`}
       onClick={startEditing}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -167,6 +166,6 @@ export function EditableSessionName({
         />
       )}
       {displayName && <span className="ml-1 text-xs opacity-50">(custom)</span>}
-    </span>
+    </button>
   )
 }

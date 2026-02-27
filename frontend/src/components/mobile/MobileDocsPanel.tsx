@@ -94,9 +94,8 @@ function MobileDocTreeNode({
 
   return (
     <>
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         onClick={() => {
           if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
@@ -117,9 +116,13 @@ function MobileDocTreeNode({
           fontSize: 14,
           color: '#e2e8f0',
           userSelect: 'none',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
           minHeight: 44, // touch target
           WebkitTapHighlightColor: 'transparent',
+          background: 'transparent',
+          border: 'none',
+          borderBottom: '1px solid rgba(255,255,255,0.04)',
+          width: '100%',
+          textAlign: 'left',
         }}
       >
         {isDir ? (
@@ -143,7 +146,7 @@ function MobileDocTreeNode({
             {formatDate(node.lastModified)}
           </span>
         )}
-      </div>
+      </button>
 
       {isDir &&
         isExpanded &&

@@ -40,7 +40,7 @@ export function PresetCard({ presetKey: _presetKey, preset, selected, onClick }:
       )}
 
       {/* Icon */}
-      <span className="text-3xl mb-2" role="img" aria-hidden="true">
+      <span className="text-3xl mb-2" aria-hidden="true">
         {preset.icon}
       </span>
 

@@ -54,7 +54,7 @@ function TurnEntry({ turn }: Readonly<{ turn: MeetingTurn }>) {
   return (
     <div className="py-2 border-b border-border/40 last:border-0">
       <div className="flex items-start gap-2">
-        <span className={`text-sm mt-0.5 ${statusColor}`} aria-label={statusLabel} role="img">
+        <span className={`text-sm mt-0.5 ${statusColor}`} aria-label={statusLabel}>
           {statusIcon}
         </span>
         <div className="flex-1 min-w-0">

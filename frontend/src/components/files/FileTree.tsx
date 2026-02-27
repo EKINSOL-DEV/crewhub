@@ -53,9 +53,8 @@ function TreeNode({
 
   return (
     <>
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         onClick={handleClick}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -80,6 +79,9 @@ function TreeNode({
           borderRadius: 4,
           transition: 'background 0.1s',
           userSelect: 'none',
+          border: 'none',
+          width: '100%',
+          textAlign: 'left',
         }}
         onMouseEnter={(e) => {
           if (!isSelected)
@@ -134,7 +136,7 @@ function TreeNode({
             ⤢
           </button>
         )}
-      </div>
+      </button>
       {isDir &&
         expanded &&
         node.children?.map((child) => (

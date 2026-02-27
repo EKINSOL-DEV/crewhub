@@ -86,9 +86,8 @@ function DocTreeNode({
 
   return (
     <>
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         onClick={() => {
           if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
@@ -112,6 +111,10 @@ function DocTreeNode({
           userSelect: 'none',
           borderRadius: 4,
           transition: 'background 0.1s',
+          background: 'transparent',
+          border: 'none',
+          width: '100%',
+          textAlign: 'left',
         }}
         onMouseEnter={(e) =>
           (e.currentTarget.style.background = 'var(--zen-bg-hover, hsl(var(--accent)))')
@@ -157,7 +160,7 @@ function DocTreeNode({
             {formatDate(node.lastModified)}
           </span>
         )}
-      </div>
+      </button>
 
       {/* Children */}
       {isDir &&

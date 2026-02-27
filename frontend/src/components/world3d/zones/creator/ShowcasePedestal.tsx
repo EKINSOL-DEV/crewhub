@@ -139,7 +139,6 @@ export function ShowcasePedestal({ position = [0, 0, 0] }: ShowcasePedestalProps
       {/* Spotlight from above */}
       <spotLight
         position={[0, 3, 0]}
-        target-position={[0, 0, 0]}
         color="#ffd700"
         intensity={hovered ? 2 : 0.5}
         angle={0.4}

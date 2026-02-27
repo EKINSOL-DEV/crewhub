@@ -192,9 +192,9 @@ export function FullscreenOverlay({
           onClose()
         }
       }}
-      role="button"
-      tabIndex={0}
-      aria-label="Close fullscreen overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Fullscreen overlay"
     >
       {/* Header */}
       <div
@@ -333,23 +333,23 @@ export function FullscreenOverlay({
             {isMobile && hasTOC && tocOpen && (
               <>
                 {/* Backdrop */}
-                <div
+                <button
+                  type="button"
                   onClick={() => setTocOpen(false)}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') setTocOpen(false)
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      setTocOpen(false)
-                    }
                   }}
-                  role="button"
-                  tabIndex={0}
                   aria-label="Close table of contents"
                   style={{
                     position: 'absolute',
                     inset: 0,
                     zIndex: 10,
                     background: 'rgba(0,0,0,0.5)',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'default',
+                    display: 'block',
+                    width: '100%',
                   }}
                 />
                 {/* TOC Panel */}

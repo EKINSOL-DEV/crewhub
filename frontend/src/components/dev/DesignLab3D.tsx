@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, Suspense, useCallback } from 'react'
+import { useState, useRef, useMemo, Suspense, useCallback, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Text, RoundedBox, Float, Sparkles, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -257,14 +257,7 @@ function SleepingZs() {
             if (el) zRefs.current[i] = el
           }}
         >
-          <Text
-            fontSize={0.12}
-            color="#9ca3af"
-            anchorX="center"
-            anchorY="middle"
-            material-transparent
-            material-opacity={1}
-          >
+          <Text fontSize={0.12} color="#9ca3af" anchorX="center" anchorY="middle">
             Z
           </Text>
         </group>
@@ -577,21 +570,30 @@ function BotScene({
 }>) {
   const spacing = 2
   const startX = -((BOTS.length - 1) * spacing) / 2
+  const sceneDirLightRef = useRef<THREE.DirectionalLight>(null)
+
+  useEffect(() => {
+    const light = sceneDirLightRef.current
+    if (!light) return
+    light.shadow.mapSize.set(2048, 2048)
+    const cam = light.shadow.camera as THREE.OrthographicCamera
+    cam.far = 30
+    cam.left = -10
+    cam.right = 10
+    cam.top = 10
+    cam.bottom = -10
+    cam.updateProjectionMatrix()
+  }, [])
 
   return (
     <>
       {/* Lighting */}
       <ambientLight intensity={0.5} />
       <directionalLight
+        ref={sceneDirLightRef}
         position={[8, 15, 8]}
         intensity={1.2}
         castShadow={showShadows}
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-far={30}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
       />
       <pointLight position={[-6, 8, -6]} intensity={0.4} color="#4f46e5" />
       <pointLight position={[6, 6, 6]} intensity={0.3} color="#f97316" />
