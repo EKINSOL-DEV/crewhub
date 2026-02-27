@@ -232,7 +232,8 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
         )}
         {/* Full-screen drag overlay (captures drops on outdoor/parking areas) */}
         {drag.isDragging && (
-          <div
+          <section
+            aria-label="Drag and drop parking overlay"
             style={{
               position: 'fixed',
               inset: 0,
@@ -250,14 +251,6 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
               // → treat as "drop on outdoor/parking" = unassign
               dropOnParking()
             }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-              }
-            }}
-            role="region"
-            tabIndex={0}
-            aria-label="Drag and drop parking overlay"
           />
         )}
       </DragActionsContext.Provider>

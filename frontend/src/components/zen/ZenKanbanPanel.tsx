@@ -181,18 +181,11 @@ function KanbanColumn({
   }
 
   return (
-    <div
+    <section
       className={`zen-kanban-column ${isDragOver ? 'zen-kanban-column-dragover' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-        }
-      }}
-      role="region"
-      tabIndex={0}
       aria-label={`${config.label} column`}
     >
       <div className="zen-kanban-column-header" style={{ borderColor: config.color }}>
@@ -219,7 +212,7 @@ function KanbanColumn({
           </div>
         )}
       </div>
-    </div>
+    </section>
   )
 }
 
