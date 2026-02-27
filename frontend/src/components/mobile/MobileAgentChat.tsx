@@ -361,14 +361,18 @@ export function MobileAgentChat({
     [addFiles]
   )
 
+  // Keep a ref to current pendingFiles so unmount cleanup can revoke URLs
+  const pendingFilesRef = useRef<PendingFile[]>(pendingFiles)
+  pendingFilesRef.current = pendingFiles
+
   // Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
-      pendingFiles.forEach((f) => {
+      pendingFilesRef.current.forEach((f) => {
         if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
       })
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
