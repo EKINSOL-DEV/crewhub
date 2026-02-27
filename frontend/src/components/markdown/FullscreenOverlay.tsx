@@ -187,8 +187,14 @@ export function FullscreenOverlay({
       }}
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+          e.preventDefault()
+          onClose()
+        }
       }}
-      role="none"
+      role="button"
+      tabIndex={0}
+      aria-label="Close fullscreen overlay"
     >
       {/* Header */}
       <div
@@ -331,8 +337,14 @@ export function FullscreenOverlay({
                   onClick={() => setTocOpen(false)}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') setTocOpen(false)
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setTocOpen(false)
+                    }
                   }}
-                  role="none"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Close table of contents"
                   style={{
                     position: 'absolute',
                     inset: 0,
