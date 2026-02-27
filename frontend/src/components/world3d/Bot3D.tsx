@@ -12,7 +12,7 @@ import { BotActivityBubble } from './BotActivityBubble'
 import { BotLaptop } from './BotLaptop'
 import { SleepingZs, useBotAnimation } from './BotAnimations'
 import { BotSpeechBubble } from './BotSpeechBubble'
-import { meetingGatheringState, calculateMeetingPath } from '@/lib/meetingStore'
+import { meetingGatheringState } from '@/lib/meetingStore'
 import { tickAnimState } from './botAnimTick'
 import { getRoomInteractionPoints, getWalkableCenter } from './roomInteractionPoints'
 import { getBlueprintForRoom, getWalkableMask, worldToGrid } from '@/lib/grid'
@@ -22,17 +22,15 @@ import type { BotVariantConfig } from './utils/botVariants'
 import type { CrewSession } from '@/lib/api'
 import type { RoomBounds } from './World3DView'
 
-// ─── Cardinal + diagonal directions for random walk ──
-const DIRECTIONS = [
-  { x: 0, z: -1 }, // N
-  { x: 1, z: -1 }, // NE
-  { x: 1, z: 0 }, // E
-  { x: 1, z: 1 }, // SE
-  { x: 0, z: 1 }, // S
-  { x: -1, z: 1 }, // SW
-  { x: -1, z: 0 }, // W
-  { x: -1, z: -1 }, // NW
-]
+import {
+  smoothRotateY,
+  calculateBounceY,
+  applyOpacity,
+  handleMeetingMovement,
+  handleNoGridWander,
+  handleAnimTargetWalk,
+  handleRandomGridWalk,
+} from './botMovement'
 
 import { BOT_FIXED_Y, botPositionRegistry } from './botConstants'
 import type { BotStatus } from './botConstants'
@@ -267,30 +265,7 @@ export const Bot3D = memo(function Bot3D({
     const frameStartZ = state.currentZ
 
     // ─── Y position: base + animation offset + bounce ─────────
-    // Uses wasMovingRef from previous frame (one-frame delay is visually imperceptible)
-    const isMovingForBounce = wasMovingRef.current
-    let bounceY = 0
-    switch (anim.phase) {
-      case 'getting-coffee':
-      case 'sleeping-walking':
-        bounceY = isMovingForBounce ? Math.sin(t * 4) * 0.03 : 0
-        break
-      case 'idle-wandering':
-        // Active bots with laptop get a slightly different bounce
-        if (anim.isActiveWalking && !anim.typingPause) {
-          bounceY = isMovingForBounce ? Math.sin(t * 3.5) * 0.025 : 0
-        } else {
-          bounceY = isMovingForBounce ? Math.sin(t * 3) * 0.02 : 0
-        }
-        break
-      case 'sleeping':
-        // No position bounce — breathing handled via scale below
-        bounceY = 0
-        break
-      case 'offline':
-        bounceY = 0
-        break
-    }
+    const bounceY = calculateBounceY(anim.phase, wasMovingRef.current, anim.isActiveWalking, anim.typingPause, t)
     groupRef.current.position.y = BOT_FIXED_Y + anim.yOffset + bounceY
 
     // Breathing effect via scale (sleeping: very slow gentle breathing)
@@ -304,29 +279,7 @@ export const Bot3D = memo(function Bot3D({
 
     // ─── Apply opacity (only on change, with cloned materials) ─
     if (anim.opacity !== lastAppliedOpacity.current) {
-      groupRef.current.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          const mesh = child as THREE.Mesh
-          // Clone materials on first opacity change to avoid shared-material side effects
-          if (!materialsClonable.current) {
-            if (Array.isArray(mesh.material)) {
-              mesh.material = (mesh.material as THREE.Material[]).map((m) => m.clone())
-            } else {
-              mesh.material = (mesh.material as THREE.Material).clone()
-            }
-          }
-          const mats = Array.isArray(mesh.material)
-            ? (mesh.material as THREE.Material[])
-            : [mesh.material as THREE.Material]
-          for (const mat of mats) {
-            if ('opacity' in mat) {
-              mat.transparent = anim.opacity < 1
-              mat.opacity = anim.opacity
-            }
-          }
-        }
-      })
-      materialsClonable.current = true
+      applyOpacity(groupRef.current, anim.opacity, materialsClonable)
       lastAppliedOpacity.current = anim.opacity
     }
 
@@ -341,91 +294,19 @@ export const Bot3D = memo(function Bot3D({
     }
 
     // ─── Meeting gathering override (with waypoint pathfinding) ──
-    const meetingPos = session?.key ? meetingGatheringState.positions.get(session.key) : null
-    if (meetingPos && meetingGatheringState.active) {
-      // Compute waypoints once when meeting gathering starts
-      if (!state.meetingPathComputed) {
-        const botRoomId = session?.key
-          ? meetingGatheringState.agentRooms.get(session.key)
-          : undefined
-        state.meetingWaypoints = calculateMeetingPath(
-          state.currentX,
-          state.currentZ,
-          meetingPos.x,
-          meetingPos.z,
-          botRoomId,
-          meetingGatheringState
-        )
-        state.meetingWaypointIndex = 0
-        state.meetingPathComputed = true
-      }
-
-      // Get current waypoint target
-      const waypoints = state.meetingWaypoints
-      const wpIdx = state.meetingWaypointIndex
-      const isLastWaypoint = wpIdx >= waypoints.length - 1
-      const currentTarget =
-        wpIdx < waypoints.length ? waypoints[wpIdx] : { x: meetingPos.x, z: meetingPos.z }
-
-      const dx = currentTarget.x - state.currentX
-      const dz = currentTarget.z - state.currentZ
-      const dist = Math.hypot(dx, dz)
-
-      // Threshold: use tighter threshold for intermediate waypoints
-      const arrivalThreshold = isLastWaypoint ? 0.3 : 0.5
-
-      if (dist > arrivalThreshold) {
-        // Walk toward current waypoint
-        const gatherSpeed = 1.8 // Slightly faster for long paths
-        const step = Math.min(gatherSpeed * delta, dist)
-        state.currentX += (dx / dist) * step
-        state.currentZ += (dz / dist) * step
-
-        // Face direction of travel
-        const targetRotY = Math.atan2(dx, dz)
-        const currentRotY = groupRef.current.rotation.y
-        let angleDiff = targetRotY - currentRotY
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        groupRef.current.rotation.y = currentRotY + angleDiff * 0.2
-      } else if (isLastWaypoint) {
-        // Arrived at final gathering position — face center of table
-        groupRef.current.rotation.y = meetingPos.angle
-        state.currentX = meetingPos.x
-        state.currentZ = meetingPos.z
-      } else {
-        // Reached intermediate waypoint — advance to next
-        state.meetingWaypointIndex++
-      }
-
-      groupRef.current.position.x = state.currentX
-      groupRef.current.position.z = state.currentZ
-
-      if (session?.key) {
-        botPositionRegistry.set(session.key, {
-          x: state.currentX,
-          y: groupRef.current.position.y,
-          z: state.currentZ,
-        })
-      }
-
-      // Walk animation
-      const frameDx2 = state.currentX - frameStartX
-      const frameDz2 = state.currentZ - frameStartZ
-      const isMoving2 = Math.hypot(frameDx2, frameDz2) > 0.001
-      wasMovingRef.current = isMoving2
-      if (isMoving2) walkPhaseRef.current += delta * 8
-      else {
-        walkPhaseRef.current *= 0.85
-        if (Math.abs(walkPhaseRef.current) < 0.01) walkPhaseRef.current = 0
-      }
-
+    if (
+      handleMeetingMovement(
+        groupRef.current,
+        state,
+        session?.key,
+        delta,
+        frameStartX,
+        frameStartZ,
+        wasMovingRef,
+        walkPhaseRef
+      )
+    ) {
       return // Skip normal wandering
-    } else if (!meetingGatheringState.active && state.meetingPathComputed) {
-      // Meeting ended — reset path state
-      state.meetingPathComputed = false
-      state.meetingWaypoints = []
-      state.meetingWaypointIndex = 0
     }
 
     // Frozen states (sleeping in corner, coffee break, offline)
@@ -459,35 +340,6 @@ export const Bot3D = memo(function Bot3D({
     const roomCenterX = (roomBounds.minX + roomBounds.maxX) / 2
     const roomCenterZ = (roomBounds.minZ + roomBounds.maxZ) / 2
 
-    // Helper: check if a world position is walkable on the grid (doors blocked for bots)
-    const isWalkableAt = (wx: number, wz: number): boolean => {
-      if (!gridData) return true // No grid = open area, always walkable
-      // Hard room bounds check first — reject anything outside room bounds
-      if (
-        wx < roomBounds.minX ||
-        wx > roomBounds.maxX ||
-        wz < roomBounds.minZ ||
-        wz > roomBounds.maxZ
-      ) {
-        return false
-      }
-      const { cellSize, gridWidth, gridDepth } = gridData.blueprint
-      const g = worldToGrid(wx - roomCenterX, wz - roomCenterZ, cellSize, gridWidth, gridDepth)
-      return !!gridData.botWalkableMask[g.z]?.[g.x]
-    }
-
-    // Helper: pick a random walkable direction from current position
-    const pickWalkableDir = (): { x: number; z: number } | null => {
-      const cellSize = gridData ? gridData.blueprint.cellSize : 1
-      const shuffled = [...DIRECTIONS].sort(() => Math.random() - 0.5)
-      for (const d of shuffled) {
-        if (isWalkableAt(state.currentX + d.x * cellSize, state.currentZ + d.z * cellSize)) {
-          return d
-        }
-      }
-      return null // Completely boxed in (shouldn't happen)
-    }
-
     if (anim.resetWanderTarget) {
       state.stepsRemaining = 0
       state.waitTimer = 0.5
@@ -502,237 +354,52 @@ export const Bot3D = memo(function Bot3D({
     }
 
     if (!gridData) {
-      // ─── No grid (parking bots) — direct circular wander ────
-      const wc = walkableCenter
-      const dx = state.targetX - state.currentX
-      const dz = state.targetZ - state.currentZ
-      const dist = Math.hypot(dx, dz)
-
-      if (dist < 0.4) {
-        if (hasAnimTarget && !anim.arrived) {
-          anim.arrived = true
-          if (anim.freezeWhenArrived) {
-            groupRef.current.position.x = state.currentX
-            groupRef.current.position.z = state.currentZ
-            if (session?.key) {
-              botPositionRegistry.set(session.key, {
-                x: state.currentX,
-                y: groupRef.current.position.y,
-                z: state.currentZ,
-              })
-            }
-            return
-          }
-        }
-        state.waitTimer -= delta
-        if (state.waitTimer <= 0 && !hasAnimTarget) {
-          if (wc) {
-            const angle = Math.random() * Math.PI * 2
-            const r = Math.sqrt(Math.random()) * wc.radius
-            state.targetX = wc.x + Math.cos(angle) * r
-            state.targetZ = wc.z + Math.sin(angle) * r
-          } else {
-            state.targetX = roomCenterX + (Math.random() - 0.5) * 2
-            state.targetZ = roomCenterZ + (Math.random() - 0.5) * 2
-          }
-          state.waitTimer =
-            SESSION_CONFIG.wanderMinWaitS +
-            Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
-        }
-      } else {
-        // Skip movement if in typing pause
-        if (!anim.typingPause) {
-          const easedSpeed = speed * Math.min(1, dist / 0.5)
-          const step = Math.min(easedSpeed * delta, dist)
-          state.currentX += (dx / dist) * step
-          state.currentZ += (dz / dist) * step
-        }
-        const targetRotY = Math.atan2(dx, dz)
-        const currentRotY = groupRef.current.rotation.y
-        let angleDiff = targetRotY - currentRotY
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        // Rotation dead-zone snap [Fix 6]
-        if (Math.abs(angleDiff) < 0.01) {
-          groupRef.current.rotation.y = targetRotY
-        } else {
-          groupRef.current.rotation.y = currentRotY + angleDiff * 0.2
-        }
-      }
+      // No grid (parking bots) — direct circular wander
+      const freeze = handleNoGridWander(
+        groupRef.current,
+        state,
+        anim,
+        hasAnimTarget,
+        walkableCenter,
+        roomCenterX,
+        roomCenterZ,
+        speed,
+        delta,
+        session?.key
+      )
+      if (freeze) return
     } else if (hasAnimTarget && !anim.arrived) {
-      // ─── Walking toward animation target (coffee/sleep) ──
-      const dx = state.targetX - state.currentX
-      const dz = state.targetZ - state.currentZ
-      const dist = Math.hypot(dx, dz)
-
-      if (dist < 0.4) {
-        anim.arrived = true
-        if (anim.freezeWhenArrived) {
-          groupRef.current.position.x = state.currentX
-          groupRef.current.position.z = state.currentZ
-          if (session?.key) {
-            botPositionRegistry.set(session.key, {
-              x: state.currentX,
-              y: groupRef.current.position.y,
-              z: state.currentZ,
-            })
-          }
-          return
-        }
-      } else {
-        if (dist < 0.8) {
-          // Close to target — direct linear movement (no grid snapping) [Fix 3]
-          const easedSpeed = speed * Math.min(1, dist / 0.5)
-          const step = Math.min(easedSpeed * delta, dist)
-          state.currentX += (dx / dist) * step
-          state.currentZ += (dz / dist) * step
-        } else {
-          // Far from target — grid-snapped direction picking
-          const cellSize = gridData.blueprint.cellSize
-          const ndx = dx / dist
-          const ndz = dz / dist
-
-          // Score each direction by dot product with target direction, pick best walkable
-          let bestDir: { x: number; z: number } | null = null
-          let bestScore = -Infinity
-          for (const d of DIRECTIONS) {
-            const nextX = state.currentX + d.x * cellSize
-            const nextZ = state.currentZ + d.z * cellSize
-            if (!isWalkableAt(nextX, nextZ)) continue
-            const score = d.x * ndx + d.z * ndz // dot product
-            if (score > bestScore) {
-              bestScore = score
-              bestDir = d
-            }
-          }
-
-          if (bestDir) {
-            const easedSpeed = speed * Math.min(1, dist / 0.5)
-            const step = Math.min(easedSpeed * delta, dist)
-            // Normalize diagonal movement vectors [Fix 5]
-            const dirMag = Math.hypot(bestDir.x, bestDir.z)
-            state.currentX += (bestDir.x / dirMag) * step
-            state.currentZ += (bestDir.z / dirMag) * step
-          }
-        }
-
-        // Smooth rotation toward target
-        const targetRotY = Math.atan2(dx, dz)
-        const currentRotY = groupRef.current.rotation.y
-        let angleDiff = targetRotY - currentRotY
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        // Rotation dead-zone snap [Fix 6]
-        if (Math.abs(angleDiff) < 0.01) {
-          groupRef.current.rotation.y = targetRotY
-        } else {
-          groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
-        }
-      }
+      // Walking toward animation target (coffee/sleep)
+      handleAnimTargetWalk(
+        groupRef.current,
+        state,
+        anim,
+        gridData,
+        roomBounds,
+        roomCenterX,
+        roomCenterZ,
+        speed,
+        delta,
+        session?.key
+      )
+      if (anim.arrived && anim.freezeWhenArrived) return
     } else if (anim.typingPause) {
-      // ─── Random walk with obstacle avoidance ───────────────
-      // Typing pause — active bot pauses briefly as if typing on laptop
-      // Stay in place, don't modify currentX/currentZ
-      // Still rotate toward current direction while paused
+      // Typing pause: stay in place, keep rotating toward direction
       if (state.stepsRemaining > 0) {
-        const targetRotY = Math.atan2(state.dirX, state.dirZ)
-        const currentRotY = groupRef.current.rotation.y
-        let angleDiff = targetRotY - currentRotY
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-        if (Math.abs(angleDiff) < 0.01) {
-          groupRef.current.rotation.y = targetRotY
-        } else {
-          groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
-        }
+        smoothRotateY(groupRef.current, Math.atan2(state.dirX, state.dirZ), 0.15)
       }
     } else {
-      const cellSize = gridData.blueprint.cellSize
-
-      // Wait phase
-      if (state.waitTimer > 0) {
-        state.waitTimer -= delta
-        // Still rotate toward current direction while waiting
-        if (state.stepsRemaining > 0) {
-          const targetRotY = Math.atan2(state.dirX, state.dirZ)
-          const currentRotY = groupRef.current.rotation.y
-          let angleDiff = targetRotY - currentRotY
-          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-          // Rotation dead-zone snap [Fix 6]
-          if (Math.abs(angleDiff) < 0.01) {
-            groupRef.current.rotation.y = targetRotY
-          } else {
-            groupRef.current.rotation.y = currentRotY + angleDiff * 0.15
-          }
-        }
-      } else if (state.stepsRemaining <= 0) {
-        // Pick a new random direction and number of steps
-        const dir = pickWalkableDir()
-        if (dir) {
-          state.dirX = dir.x
-          state.dirZ = dir.z
-          state.stepsRemaining =
-            SESSION_CONFIG.wanderMinSteps +
-            Math.floor(
-              Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1)
-            )
-          state.cellProgress = 0
-          state.waitTimer = 1 + Math.random() * 2 // pause 1-3s before walking
-        } else {
-          state.waitTimer = 1 // boxed in, wait and retry
-        }
-      } else {
-        // Walking phase — move forward one cell at a time
-        const nextWorldX = state.currentX + state.dirX * cellSize
-        const nextWorldZ = state.currentZ + state.dirZ * cellSize
-
-        if (!isWalkableAt(nextWorldX, nextWorldZ)) {
-          // Obstacle ahead — pick a new walkable direction
-          const dir = pickWalkableDir()
-          if (dir) {
-            state.dirX = dir.x
-            state.dirZ = dir.z
-            state.stepsRemaining =
-              Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) +
-              Math.floor(
-                Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps)
-              )
-            state.cellProgress = 0
-          }
-          state.waitTimer = 0.5 // brief pause after redirect
-        } else {
-          // Move toward next cell center
-          const step = speed * delta
-          state.cellProgress += step / cellSize
-
-          // Normalize diagonal movement vectors [Fix 5]
-          const dirMag = Math.hypot(state.dirX, state.dirZ)
-          if (dirMag > 0) {
-            state.currentX += (state.dirX / dirMag) * step
-            state.currentZ += (state.dirZ / dirMag) * step
-          }
-
-          // When we've traversed one cell width, count it
-          if (state.cellProgress >= 1) {
-            state.stepsRemaining--
-            state.cellProgress = 0
-          }
-
-          // Smooth rotation toward movement direction
-          const targetRotY = Math.atan2(state.dirX, state.dirZ)
-          const currentRotY = groupRef.current.rotation.y
-          let angleDiff = targetRotY - currentRotY
-          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-          // Rotation dead-zone snap [Fix 6]
-          if (Math.abs(angleDiff) < 0.01) {
-            groupRef.current.rotation.y = targetRotY
-          } else {
-            groupRef.current.rotation.y = currentRotY + angleDiff * 0.18
-          }
-        }
-      }
+      // Random walk with obstacle avoidance
+      handleRandomGridWalk(
+        groupRef.current,
+        state,
+        gridData,
+        roomBounds,
+        roomCenterX,
+        roomCenterZ,
+        speed,
+        delta
+      )
     }
 
     // ─── Hard clamp to room bounds (safety net) ─────────────────
