@@ -18,6 +18,32 @@ const getAuthToken = (): string => localStorage.getItem('openclaw_token') || ''
 
 const MAX_BACKOFF_MS = 30_000
 
+function resolveBackendUrl(): string | null {
+  const isInTauri =
+    (window as any).__TAURI_INTERNALS__ !== undefined || (window as any).__TAURI__ !== undefined
+  const rawConfigured =
+    localStorage.getItem('crewhub_backend_url') ||
+    (window as any).__CREWHUB_BACKEND_URL__ ||
+    import.meta.env.VITE_API_URL
+  const isLocalUrl = rawConfigured?.includes('localhost') || rawConfigured?.includes('127.0.0.1')
+  const configuredUrl = !isInTauri && isLocalUrl ? null : rawConfigured
+
+  const isTauriDev = isInTauri && import.meta.env.DEV
+  if (isTauriDev && configuredUrl && !isLocalUrl) return 'http://localhost:8091'
+  return configuredUrl ?? null
+}
+
+function buildSSEUrl(token: string | null): string {
+  const effectiveUrl = resolveBackendUrl()
+  const tokenParam = token ? `?token=${encodeURIComponent(token)}` : ''
+
+  if (effectiveUrl) {
+    const backendHost = effectiveUrl.replace(/^https?:\/\//, '')
+    return `http://${backendHost}/api/events${tokenParam}`
+  }
+  return `/api/events${tokenParam}`
+}
+
 class SSEManager {
   private eventSource: EventSource | null = null
   private readonly subscriptions: Map<string, Set<EventHandler>> = new Map()
@@ -177,39 +203,7 @@ class SSEManager {
 
     try {
       const token = getAuthToken()
-      // Detect Tauri environment (Tauri v2 uses __TAURI_INTERNALS__, v1 uses __TAURI__)
-      const isInTauri =
-        (window as any).__TAURI_INTERNALS__ !== undefined || (window as any).__TAURI__ !== undefined
-      // Priority: localStorage > Tauri injected var > env var
-      const rawConfigured =
-        localStorage.getItem('crewhub_backend_url') ||
-        (window as any).__CREWHUB_BACKEND_URL__ ||
-        import.meta.env.VITE_API_URL
-      // In browser mode, ignore localhost-based URLs — they only make sense in Tauri.
-      // A localhost URL from Safari on iPhone will never reach the Mac mini backend.
-      const isLocalUrl =
-        rawConfigured?.includes('localhost') || rawConfigured?.includes('127.0.0.1')
-      const configuredUrl = !isInTauri && isLocalUrl ? null : rawConfigured
-
-      // In Tauri dev mode, a remote/Tailscale URL stored in settings may redirect
-      // HTTP → HTTPS at the network level (before FastAPI), causing CORS errors in
-      // WKWebView. Fall back to localhost so the dev backend is hit directly.
-      const isTauriDev = isInTauri && import.meta.env.DEV
-      const effectiveUrl =
-        isTauriDev && configuredUrl && !isLocalUrl ? 'http://localhost:8091' : configuredUrl
-
-      let sseUrl: string
-      if (effectiveUrl) {
-        // Tauri or explicit non-localhost backend URL — connect directly (absolute URL)
-        const backendHost = effectiveUrl.replace(/^https?:\/\//, '')
-        sseUrl = token
-          ? `http://${backendHost}/api/events?token=${encodeURIComponent(token)}`
-          : `http://${backendHost}/api/events`
-      } else {
-        // Browser mode — use relative URL so Vite proxy forwards to backend
-        // This works regardless of hostname (localhost, ekinbot.local, etc.)
-        sseUrl = token ? `/api/events?token=${encodeURIComponent(token)}` : '/api/events'
-      }
+      const sseUrl = buildSSEUrl(token)
       const eventSource = new EventSource(sseUrl)
       this.eventSource = eventSource
 

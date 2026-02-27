@@ -4,7 +4,7 @@
  * Left 30%: Info section, Right 70%: History with sort/filter/auto-scroll controls.
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { api } from '@/lib/api'
 import type { SessionMessage, SessionContentBlock, CrewSession } from '@/lib/api'
@@ -47,66 +47,68 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block ─────────────────────────────────────────────
 
+function ExpandableBlock({ label, className, children }: Readonly<{
+  label: string
+  className: string
+  children: React.ReactNode
+}>) {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <div className={className}>
+      <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
+        {label} {expanded ? '▾' : '▸'}
+      </button>
+      {expanded && children}
+    </div>
+  )
+}
+
+function highlightMatch(text: string, filterText?: string): React.ReactNode {
+  if (!filterText) return text
+  const idx = text.toLowerCase().indexOf(filterText.toLowerCase())
+  if (idx === -1) return text
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark
+        style={{
+          background: 'var(--zen-warning, #f0c040)',
+          color: '#000',
+          borderRadius: 2,
+          padding: '0 1px',
+        }}
+      >
+        {text.slice(idx, idx + filterText.length)}
+      </mark>
+      {text.slice(idx + filterText.length)}
+    </>
+  )
+}
+
 function ContentBlockView({
-  // NOSONAR
-  // NOSONAR
-  // NOSONAR: complexity from fullscreen overlay with multiple content and action type branches
   block,
   filterText,
 }: Readonly<{
   readonly block: SessionContentBlock
   readonly filterText?: string
 }>) {
-  const [expanded, setExpanded] = useState(false)
-
-  const highlightText = useCallback(
-    (text: string) => {
-      if (!filterText) return text
-      const idx = text.toLowerCase().indexOf(filterText.toLowerCase())
-      if (idx === -1) return text
-      return (
-        <>
-          {text.slice(0, idx)}
-          <mark
-            style={{
-              background: 'var(--zen-warning, #f0c040)',
-              color: '#000',
-              borderRadius: 2,
-              padding: '0 1px',
-            }}
-          >
-            {text.slice(idx, idx + filterText.length)}
-          </mark>
-          {text.slice(idx + filterText.length)}
-        </>
-      )
-    },
-    [filterText]
-  )
-
   if (block.type === 'text' && block.text) {
-    return <div className="zen-sd-text">{highlightText(block.text)}</div>
+    return <div className="zen-sd-text">{highlightMatch(block.text, filterText)}</div>
   }
   if (block.type === 'thinking' && block.thinking) {
     return (
-      <div className="zen-sd-thinking">
-        <button className="zen-sd-thinking-toggle" onClick={() => setExpanded(!expanded)}>
-          💭 Thinking {expanded ? '▾' : '▸'}
-        </button>
-        {expanded && <pre className="zen-sd-thinking-content">{block.thinking}</pre>}
-      </div>
+      <ExpandableBlock label="💭 Thinking" className="zen-sd-thinking">
+        <pre className="zen-sd-thinking-content">{block.thinking}</pre>
+      </ExpandableBlock>
     )
   }
   if (block.type === 'tool_use') {
     return (
-      <div className="zen-sd-tool-call">
-        <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
-          🔧 {block.name || 'Tool'} {expanded ? '▾' : '▸'}
-        </button>
-        {expanded && block.arguments && (
+      <ExpandableBlock label={`🔧 ${block.name || 'Tool'}`} className="zen-sd-tool-call">
+        {block.arguments && (
           <pre className="zen-sd-tool-args">{JSON.stringify(block.arguments, null, 2)}</pre>
         )}
-      </div>
+      </ExpandableBlock>
     )
   }
   if (block.type === 'tool_result') {
@@ -117,12 +119,12 @@ function ContentBlockView({
         .join('\n') || ''
     if (!text) return null
     return (
-      <div className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}>
-        <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
-          {block.isError ? '❌' : '✅'} Result {expanded ? '▾' : '▸'}
-        </button>
-        {expanded && <pre className="zen-sd-tool-result-content">{text}</pre>}
-      </div>
+      <ExpandableBlock
+        label={`${block.isError ? '❌' : '✅'} Result`}
+        className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}
+      >
+        <pre className="zen-sd-tool-result-content">{text}</pre>
+      </ExpandableBlock>
     )
   }
   return null

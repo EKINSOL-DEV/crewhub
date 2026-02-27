@@ -216,31 +216,31 @@ function extractDomain(url: string): string {
   }
 }
 
+function getIdleActivityText(session: MinionSession, allSessions?: MinionSession[]): string {
+  const status = getSessionStatus(session, allSessions)
+  if (status === 'active') {
+    return Date.now() - session.updatedAt < 30000 ? 'Working...' : 'Ready and listening'
+  }
+  if (status === SUPERVISING) {
+    const label = getActiveSubagentLabel(session, allSessions || [])
+    return label ? `Supervising: ${label}` : 'Supervising subagent'
+  }
+  if (status === 'idle') return 'Waiting for tasks'
+  return 'Sleeping 💤'
+}
+
+function getRecentActivityText(latest: { type: string; text: string; timestamp: number }): string {
+  const elapsed = Date.now() - latest.timestamp
+  if (elapsed >= 10000) return latest.text
+  if (latest.type === 'tool_call') return `Working on ${latest.text}...`
+  if (latest.type === 'thinking') return 'Thinking...'
+  return 'Active now'
+}
+
 export function getCurrentActivity(session: MinionSession, allSessions?: MinionSession[]): string {
-  // NOSONAR
   const activities = parseRecentActivities(session, 1)
-  if (activities.length === 0) {
-    const status = getSessionStatus(session, allSessions)
-    const timeSinceUpdate = Date.now() - session.updatedAt
-    if (status === 'active') {
-      if (timeSinceUpdate < 30000) return 'Working...'
-      return 'Ready and listening'
-    }
-    if (status === SUPERVISING) {
-      const subagentLabel = getActiveSubagentLabel(session, allSessions || [])
-      return subagentLabel ? `Supervising: ${subagentLabel}` : 'Supervising subagent'
-    }
-    if (status === 'idle') return 'Waiting for tasks'
-    return 'Sleeping 💤'
-  }
-  const latest = activities[0]
-  const timeAgo = Date.now() - latest.timestamp
-  if (timeAgo < 10000) {
-    if (latest.type === 'tool_call') return `Working on ${latest.text}...`
-    if (latest.type === 'thinking') return 'Thinking...'
-    return 'Active now'
-  }
-  return latest.text
+  if (activities.length === 0) return getIdleActivityText(session, allSessions)
+  return getRecentActivityText(activities[0])
 }
 
 export function getTokenMeterLevel(tokens: number): number {
@@ -399,33 +399,30 @@ function isWithinAnnouncementRoutingGrace(
   return Date.now() - parentMainSession.updatedAt < GRACE_MS
 }
 
+function isFixedAgent(key: string): boolean {
+  return /^agent:[a-zA-Z0-9_-]+:main$/.test(key)
+}
+
+function hasTerminalStatus(status: string | undefined): boolean {
+  return !!status && !['active', 'idle', ''].includes(status)
+}
+
 export function shouldBeInParkingLane(
   session: MinionSession,
   isActivelyRunning?: boolean,
   idleThresholdSeconds: number = DEFAULT_PARKING_IDLE_THRESHOLD,
   allSessions?: MinionSession[]
 ): boolean {
-  // Fixed agents (agent:*:main) always stay in their room
-  if (/^agent:[a-zA-Z0-9_-]+:main$/.test(session.key)) return false
+  if (isFixedAgent(session.key)) return false
+  if (hasTerminalStatus(session.status)) return true
 
-  // Issue 2 safeguard: sessions with non-active status from OpenClaw
-  // should be parked immediately. Backend should filter these, but this is defensive.
-  const rawStatus = session.status
-  if (rawStatus && !['active', 'idle', ''].includes(rawStatus)) {
-    return true // archived/pruned/completed → park immediately
-  }
-
-  const idleSeconds = getIdleTimeSeconds(session)
   const status = getSessionStatus(session, allSessions)
-  // Supervising sessions should NOT be parked — they're actively delegating work
   if (status === SUPERVISING) return false
   if (status === 'sleeping') return true
   if (isActivelyRunning) return false
-
-  // Issue 1 fix (v2026.2.17 — nested announce routing compensation)
   if (allSessions && isWithinAnnouncementRoutingGrace(session, allSessions)) return false
 
-  return idleSeconds > idleThresholdSeconds
+  return getIdleTimeSeconds(session) > idleThresholdSeconds
 }
 
 // Backwards compatibility alias

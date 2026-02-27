@@ -356,6 +356,29 @@ export interface ChatMessageBubbleProps {
   readonly showToolDetails?: boolean
 }
 
+function getCodeStyles(variant: string): {
+  codeBlockStyle: string | undefined
+  inlineCodeStyle: string | undefined
+} {
+  if (variant === 'mobile') {
+    return {
+      codeBlockStyle:
+        'background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0',
+      inlineCodeStyle:
+        'background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px',
+    }
+  }
+  if (variant === 'zen') {
+    return { codeBlockStyle: undefined, inlineCodeStyle: undefined }
+  }
+  return {
+    codeBlockStyle:
+      'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0',
+    inlineCodeStyle:
+      'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px',
+  }
+}
+
 const ChatMessageBubbleInner = memo(
   // NOSONAR
   function ChatMessageBubble({
@@ -377,30 +400,9 @@ const ChatMessageBubbleInner = memo(
     const audioAttachments = attachments.filter((a) => a.type === 'audio')
     const cleanText = stripOpenClawTags(text)
 
-    // Memoize markdown rendering to avoid re-running regex on unchanged content
     const renderedHtml = useMemo(() => {
       if (!cleanText) return ''
-      const isDark = variant === 'mobile'
-      let codeBlockStyle: string | undefined
-      if (isDark) {
-        codeBlockStyle =
-          'background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
-      } else if (variant === 'zen') {
-        codeBlockStyle = undefined
-      } else {
-        codeBlockStyle =
-          'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0'
-      }
-      let inlineCodeStyle: string | undefined
-      if (isDark) {
-        inlineCodeStyle =
-          'background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-size:12px'
-      } else if (variant === 'zen') {
-        inlineCodeStyle = undefined
-      } else {
-        inlineCodeStyle =
-          'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px'
-      }
+      const { codeBlockStyle, inlineCodeStyle } = getCodeStyles(variant)
       return renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle)
     }, [cleanText, variant])
 

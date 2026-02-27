@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { CameraControls } from '@react-three/drei'
 import { useWorldFocus, type FocusLevel } from '@/contexts/WorldFocusContext'
@@ -162,6 +162,114 @@ function isInputFocused(): boolean {
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return true
   if ((el as HTMLElement).isContentEditable) return true
   return false
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleFirstPersonToggle(controls: any, level: FocusLevel, prevLevelRef: React.MutableRefObject<FocusLevel | null>): boolean {
+  if (level === 'firstperson') {
+    controls.enabled = false
+    controls.__originalUpdate = controls.update
+    controls.update = () => false
+    prevLevelRef.current = level
+    return true
+  }
+
+  if ((prevLevelRef.current as string) === 'firstperson') {
+    const orig = controls.__originalUpdate
+    if (orig) {
+      controls.update = orig
+      delete controls.__originalUpdate
+    }
+    const cam = controls.camera
+    const lookDir = new THREE.Vector3()
+    cam.getWorldDirection(lookDir)
+    const target = lookDir.multiplyScalar(5).add(cam.position.clone())
+    controls.setLookAt(cam.position.x, cam.position.y, cam.position.z, target.x, target.y, target.z, false)
+    controls.enabled = true
+  }
+
+  return false
+}
+
+function tickWASD(
+  controls: CameraControlsImpl,
+  delta: number,
+  wasdVelocity: React.MutableRefObject<THREE.Vector3>,
+  wasdRotVelocity: React.MutableRefObject<number>
+): void {
+  const targetVel = new THREE.Vector3()
+  const speed = _wasdKeys.fast ? WASD_SPEED * WASD_FAST_MULT : WASD_SPEED
+
+  if (_wasdKeys.forward) targetVel.z -= speed
+  if (_wasdKeys.backward) targetVel.z += speed
+  if (_wasdKeys.left) targetVel.x -= speed
+  if (_wasdKeys.right) targetVel.x += speed
+
+  wasdVelocity.current.lerp(targetVel, WASD_SMOOTHING)
+  if (wasdVelocity.current.lengthSq() < 0.001) wasdVelocity.current.set(0, 0, 0)
+
+  if (wasdVelocity.current.lengthSq() > 0) {
+    const dt = Math.min(delta, 0.05)
+    controls.truck(wasdVelocity.current.x * dt, 0, false)
+    controls.forward(-wasdVelocity.current.z * dt, false)
+  }
+
+  let targetRot = 0
+  if (_wasdKeys.rotateLeft) targetRot += WASD_ROTATE_SPEED
+  if (_wasdKeys.rotateRight) targetRot -= WASD_ROTATE_SPEED
+  wasdRotVelocity.current += (targetRot - wasdRotVelocity.current) * WASD_SMOOTHING
+  if (Math.abs(wasdRotVelocity.current) < 0.001) wasdRotVelocity.current = 0
+  if (wasdRotVelocity.current !== 0) {
+    const dt = Math.min(delta, 0.05)
+    controls.rotate(wasdRotVelocity.current * dt, 0, false)
+  }
+}
+
+function applyCameraLevel(
+  controls: CameraControlsImpl,
+  state: { level: FocusLevel; focusedRoomId: string | null; focusedBotKey: string | null },
+  roomPositions: CameraControllerProps['roomPositions'],
+  enableTransition: boolean,
+  isFollowing: React.MutableRefObject<boolean>,
+  followTarget: React.MutableRefObject<THREE.Vector3>,
+  controlsRef: React.RefObject<CameraControlsImpl | null>
+): void {
+  if (state.level === 'overview') {
+    isFollowing.current = false
+    const c = OVERVIEW_CAMERA
+    controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
+    return
+  }
+
+  if ((state.level === 'room' || state.level === 'board') && state.focusedRoomId) {
+    isFollowing.current = false
+    const roomEntry = roomPositions.find((rp) => rp.roomId === state.focusedRoomId)
+    if (roomEntry) {
+      const camFn = state.level === 'room' ? getRoomCamera : getBoardCamera
+      const c = camFn(roomEntry.position, roomEntry.size)
+      controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
+    }
+    return
+  }
+
+  if (state.level === 'bot' && state.focusedBotKey) {
+    const botPos = botPositionRegistry.get(state.focusedBotKey)
+    if (botPos) {
+      const currentAzimuth = controls.azimuthAngle
+      const distance = 7
+      const camX = botPos.x + Math.sin(currentAzimuth) * distance
+      const camZ = botPos.z + Math.cos(currentAzimuth) * distance
+      controls.setLookAt(camX, BOT_CAM_OFFSET.y, camZ, botPos.x, 0.5, botPos.z, true)
+      followTarget.current.set(botPos.x, 0.5, botPos.z)
+    }
+    setTimeout(() => {
+      if (controlsRef.current) {
+        const target = controlsRef.current.getTarget(new THREE.Vector3())
+        followTarget.current.copy(target)
+      }
+      isFollowing.current = true
+    }, 850)
+  }
 }
 
 export function CameraController({ roomPositions }: CameraControllerProps) {
@@ -348,135 +456,26 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   // ─── Transition on focus change ──────────────────────────────
 
   useEffect(() => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const controls = controlsRef.current
     if (!controls) return
 
-    // Disable orbital controls in first person mode
-    // IMPORTANT: CameraControls.update() unconditionally sets camera.position
-    // and camera.lookAt every frame, even when enabled=false. We must patch
-    // update() to a no-op to prevent it from overriding PointerLockControls.
-    if (state.level === 'firstperson') {
-      controls.enabled = false
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(controls as any).__originalUpdate = controls.update
-      controls.update = () => false
-      prevLevelRef.current = state.level
-      return
-    }
+    if (handleFirstPersonToggle(controls, state.level, prevLevelRef)) return
 
-    // Re-enable when exiting first person
-    if ((prevLevelRef.current as string) === 'firstperson') {
-      // Restore the original update method
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const orig = (controls as any).__originalUpdate
-      if (orig) {
-        controls.update = orig
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (controls as any).__originalUpdate
-      }
-      // Sync CameraControls internal state from actual camera position
-      // (camera was moved by FirstPersonController). This ensures the
-      // exit-transition animates FROM the FP position, not the old orbital pos.
-      const cam = controls.camera
-      const lookDir = new THREE.Vector3()
-      cam.getWorldDirection(lookDir)
-      const target = lookDir.multiplyScalar(5).add(cam.position.clone())
-      controls.setLookAt(
-        cam.position.x,
-        cam.position.y,
-        cam.position.z,
-        target.x,
-        target.y,
-        target.z,
-        false // instant — update both current and end
-      )
-      controls.enabled = true
-    }
-
-    // Skip if nothing changed
     if (
       state.level === prevLevelRef.current &&
       state.focusedRoomId === prevRoomIdRef.current &&
       state.focusedBotKey === prevBotKeyRef.current
-    ) {
-      return
-    }
+    ) return
 
-    // On initial mount, skip transition animation — jump to position instantly
     const enableTransition = !isInitialMount.current
-    if (isInitialMount.current) {
-      isInitialMount.current = false
-    }
+    if (isInitialMount.current) isInitialMount.current = false
 
     prevLevelRef.current = state.level
     prevRoomIdRef.current = state.focusedRoomId
     prevBotKeyRef.current = state.focusedBotKey
 
-    // Apply constraints + interaction config for the new level
     applyConstraints(controls, state.level)
-
-    if (state.level === 'overview') {
-      isFollowing.current = false
-      const c = OVERVIEW_CAMERA
-      controls.setLookAt(c.posX, c.posY, c.posZ, c.targetX, c.targetY, c.targetZ, enableTransition)
-    } else if (state.level === 'room' && state.focusedRoomId) {
-      isFollowing.current = false
-      const roomEntry = roomPositions.find((rp) => rp.roomId === state.focusedRoomId)
-      if (roomEntry) {
-        const c = getRoomCamera(roomEntry.position, roomEntry.size)
-        controls.setLookAt(
-          c.posX,
-          c.posY,
-          c.posZ,
-          c.targetX,
-          c.targetY,
-          c.targetZ,
-          enableTransition
-        )
-      }
-    } else if (state.level === 'board' && state.focusedRoomId) {
-      isFollowing.current = false
-      const roomEntry = roomPositions.find((rp) => rp.roomId === state.focusedRoomId)
-      if (roomEntry) {
-        const c = getBoardCamera(roomEntry.position, roomEntry.size)
-        controls.setLookAt(
-          c.posX,
-          c.posY,
-          c.posZ,
-          c.targetX,
-          c.targetY,
-          c.targetZ,
-          enableTransition
-        )
-      }
-    } else if (state.level === 'bot' && state.focusedBotKey) {
-      // Fly-to the bot's orbital position, preserving current camera azimuth
-      const botPos = botPositionRegistry.get(state.focusedBotKey)
-      if (botPos) {
-        // Get current azimuth to preserve viewing angle
-        const currentAzimuth = controls.azimuthAngle
-        const distance = 7 // orbital distance from bot
-        const height = BOT_CAM_OFFSET.y
-
-        // Calculate camera position using current azimuth (no 180° flip)
-        const camX = botPos.x + Math.sin(currentAzimuth) * distance
-        const camZ = botPos.z + Math.cos(currentAzimuth) * distance
-
-        controls.setLookAt(camX, height, camZ, botPos.x, 0.5, botPos.z, true)
-        followTarget.current.set(botPos.x, 0.5, botPos.z)
-      }
-      // After fly-to transition completes, enable orbital following
-      setTimeout(() => {
-        if (controlsRef.current) {
-          // Sync follow target from actual camera target to avoid pop
-          const target = controlsRef.current.getTarget(new THREE.Vector3())
-          followTarget.current.copy(target)
-        }
-        isFollowing.current = true
-      }, 850)
-    }
+    applyCameraLevel(controls, state, roomPositions, enableTransition, isFollowing, followTarget, controlsRef)
   }, [state.level, state.focusedRoomId, state.focusedBotKey, roomPositions])
 
   // ─── Orbital bot follow (useFrame) ───────────────────────────
@@ -486,47 +485,11 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
   // This enables free orbital rotation around the focused bot.
 
   useFrame((_, delta) => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const controls = controlsRef.current
     if (!controls) return
 
-    // ─── WASD movement (overview + room) ──────────────────────
     if (wasdEnabled) {
-      // Build desired velocity from key state
-      const targetVel = new THREE.Vector3()
-      const speed = _wasdKeys.fast ? WASD_SPEED * WASD_FAST_MULT : WASD_SPEED
-
-      if (_wasdKeys.forward) targetVel.z -= speed
-      if (_wasdKeys.backward) targetVel.z += speed
-      if (_wasdKeys.left) targetVel.x -= speed
-      if (_wasdKeys.right) targetVel.x += speed
-
-      // Smooth velocity (lerp toward target)
-      wasdVelocity.current.lerp(targetVel, WASD_SMOOTHING)
-
-      // Zero out tiny residual velocity
-      if (wasdVelocity.current.lengthSq() < 0.001) {
-        wasdVelocity.current.set(0, 0, 0)
-      }
-
-      // Apply truck (strafe left/right) and forward (in/out) relative to camera orientation
-      if (wasdVelocity.current.lengthSq() > 0) {
-        const dt = Math.min(delta, 0.05) // cap to avoid jumps on tab refocus
-        controls.truck(wasdVelocity.current.x * dt, 0, false)
-        controls.forward(-wasdVelocity.current.z * dt, false)
-      }
-
-      // Q/E rotation
-      let targetRot = 0
-      if (_wasdKeys.rotateLeft) targetRot += WASD_ROTATE_SPEED
-      if (_wasdKeys.rotateRight) targetRot -= WASD_ROTATE_SPEED
-      wasdRotVelocity.current += (targetRot - wasdRotVelocity.current) * WASD_SMOOTHING
-      if (Math.abs(wasdRotVelocity.current) < 0.001) wasdRotVelocity.current = 0
-      if (wasdRotVelocity.current !== 0) {
-        const dt = Math.min(delta, 0.05)
-        controls.rotate(wasdRotVelocity.current * dt, 0, false)
-      }
+      tickWASD(controls, delta, wasdVelocity, wasdRotVelocity)
     }
 
     // ─── Bot orbital follow ───────────────────────────────────

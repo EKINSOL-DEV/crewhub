@@ -62,6 +62,35 @@ interface GrassEnvironmentProps {
   readonly buildingDepth: number
 }
 
+function generateGrassTuft(
+  s: number, wx: number, wz: number,
+  bladeOffsets: number[], bladeQuats: THREE.Quaternion[], unitScale: THREE.Vector3,
+  mat4: THREE.Matrix4, tmpVec: THREE.Vector3, grassBlades: THREE.Matrix4[]
+): void {
+  if (s <= 0.75) return
+  const px = wx + s * 1.5 - 0.75
+  const pz = wz + (1 - s) * 1.5 - 0.75
+  for (let b = 0; b < 3; b++) {
+    mat4.compose(tmpVec.set(px + bladeOffsets[b], -0.1 + 0.15, pz), bladeQuats[b], unitScale)
+    grassBlades.push(mat4.clone())
+  }
+}
+
+function generateRock(
+  s: number, wx: number, wz: number,
+  identityQuat: THREE.Quaternion, mat4: THREE.Matrix4, tmpVec: THREE.Vector3,
+  rocks: THREE.Matrix4[]
+): void {
+  if (s <= 0.88) return
+  const sc = 0.5 + s * 0.8
+  mat4.compose(
+    tmpVec.set(wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75),
+    identityQuat,
+    new THREE.Vector3(sc, sc, sc)
+  )
+  rocks.push(mat4.clone())
+}
+
 export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironmentProps) {
   const toonProps = getToonMaterialProps('#6B8F52')
   const groundRef = useRef<THREE.InstancedMesh>(null)
@@ -107,34 +136,14 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
         groundMatrices.push(mat4.clone())
         groundColors.push(new THREE.Color(0.38 + s * 0.06, 0.5 + s * 0.05, 0.32 + s * 0.04))
 
-        // ── Distance + building-zone gating ─────────
         const dist = Math.hypot(wx, wz)
         if (dist > DECORATION_MAX_DIST) continue
         const inBuilding =
           Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2
         if (inBuilding) continue
 
-        // ── Grass tufts (3 blades per tuft) ─────────
-        if (s > 0.75) {
-          const px = wx + s * 1.5 - 0.75
-          const py = -0.1
-          const pz = wz + (1 - s) * 1.5 - 0.75
-          for (let b = 0; b < 3; b++) {
-            mat4.compose(tmpVec.set(px + bladeOffsets[b], py + 0.15, pz), bladeQuats[b], unitScale)
-            grassBlades.push(mat4.clone())
-          }
-        }
-
-        // ── Small rocks ─────────────────────────────
-        if (s > 0.88) {
-          const sc = 0.5 + s * 0.8
-          mat4.compose(
-            tmpVec.set(wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75),
-            identityQuat,
-            new THREE.Vector3(sc, sc, sc)
-          )
-          rocks.push(mat4.clone())
-        }
+        generateGrassTuft(s, wx, wz, bladeOffsets, bladeQuats, unitScale, mat4, tmpVec, grassBlades)
+        generateRock(s, wx, wz, identityQuat, mat4, tmpVec, rocks)
       }
     }
 

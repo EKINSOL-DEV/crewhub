@@ -208,88 +208,45 @@ export function SceneContent({
   }
 
   const { roomBots, parkingBots } = useMemo(() => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     const roomBots = new Map<string, BotPlacement[]>()
     const parkingBots: BotPlacement[] = []
-
-    for (const room of rooms) {
-      roomBots.set(room.id, [])
-    }
+    for (const room of rooms) roomBots.set(room.id, [])
 
     const placedKeys = new Set<string>()
     const visibleKeys = new Set(visibleSessions.map((s) => s.key))
+    const fallbackRoom = rooms[0]?.id || 'headquarters'
+
+    const placeBot = (session: CrewSession, roomId: string, placement: BotPlacement) => {
+      const target = roomBots.has(roomId) ? roomId : fallbackRoom
+      roomBots.get(target)?.push(placement) ?? roomBots.get(fallbackRoom)?.push(placement)
+      placedKeys.add(session.key)
+    }
+
+    const resolveRoom = (session: CrewSession, defaultRoom?: string | null): string =>
+      getRoomForSession(session.key, {
+        label: session.label,
+        model: session.model,
+        channel: session.lastChannel || session.channel,
+      }) || defaultRoom || fallbackRoom
 
     for (const runtime of agentRuntimes) {
       if (runtime.session && visibleKeys.has(runtime.session.key)) {
-        const roomId =
-          getRoomForSession(runtime.session.key, {
-            label: runtime.session.label,
-            model: runtime.session.model,
-            channel: runtime.session.lastChannel || runtime.session.channel,
-          }) ||
-          runtime.agent.default_room_id ||
-          rooms[0]?.id ||
-          'headquarters'
-        const placement = buildBotPlacement(runtime.session, runtime)
-        if (roomBots.has(roomId)) {
-          roomBots.get(roomId)!.push(placement)
-        } else {
-          const fallback = rooms[0]?.id || 'headquarters'
-          if (roomBots.has(fallback)) roomBots.get(fallback)!.push(placement)
-        }
-        placedKeys.add(runtime.session.key)
+        placeBot(runtime.session, resolveRoom(runtime.session, runtime.agent.default_room_id), buildBotPlacement(runtime.session, runtime))
       }
-
       for (const child of runtime.childSessions) {
-        if (placedKeys.has(child.key) || !visibleKeys.has(child.key)) continue
-        const roomId =
-          getRoomForSession(child.key, {
-            label: child.label,
-            model: child.model,
-            channel: child.lastChannel || child.channel,
-          }) ||
-          runtime.agent.default_room_id ||
-          rooms[0]?.id ||
-          'headquarters'
-
-        const placement = buildBotPlacement(child)
-        if (roomBots.has(roomId)) {
-          roomBots.get(roomId)!.push(placement)
-        } else {
-          const fallback = rooms[0]?.id || 'headquarters'
-          if (roomBots.has(fallback)) roomBots.get(fallback)!.push(placement)
+        if (!placedKeys.has(child.key) && visibleKeys.has(child.key)) {
+          placeBot(child, resolveRoom(child, runtime.agent.default_room_id), buildBotPlacement(child))
         }
-        placedKeys.add(child.key)
       }
     }
 
     for (const session of visibleSessions) {
       if (placedKeys.has(session.key)) continue
-      const debugRoom = debugRoomMap?.get(session.key)
-      const roomId =
-        debugRoom ||
-        getRoomForSession(session.key, {
-          label: session.label,
-          model: session.model,
-          channel: session.lastChannel || session.channel,
-        }) ||
-        rooms[0]?.id ||
-        'headquarters'
-
-      const placement = buildBotPlacement(session)
-      if (roomBots.has(roomId)) {
-        roomBots.get(roomId)!.push(placement)
-      } else {
-        const fallback = rooms[0]?.id || 'headquarters'
-        if (roomBots.has(fallback)) roomBots.get(fallback)!.push(placement)
-      }
-      placedKeys.add(session.key)
+      const roomId = debugRoomMap?.get(session.key) || resolveRoom(session)
+      placeBot(session, roomId, buildBotPlacement(session))
     }
 
-    for (const session of parkingSessions) {
-      parkingBots.push(buildBotPlacement(session))
-    }
+    for (const session of parkingSessions) parkingBots.push(buildBotPlacement(session))
 
     return { roomBots, parkingBots }
     // eslint-disable-next-line react-hooks/exhaustive-deps

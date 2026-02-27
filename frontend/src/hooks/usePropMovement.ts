@@ -86,6 +86,31 @@ interface UsePropMovementReturn {
   deleteProp: () => Promise<void>
 }
 
+function isWithinBounds(
+  x: number, z: number,
+  span: { w: number; d: number },
+  gridWidth: number, gridDepth: number
+): boolean {
+  return x >= 1 && z >= 1 && x + span.w <= gridWidth - 1 && z + span.d <= gridDepth - 1
+}
+
+function hasOverlap(
+  x: number, z: number,
+  span: { w: number; d: number },
+  placements: PropPlacement[],
+  excludeKey?: string
+): boolean {
+  for (const p of placements) {
+    if (excludeKey && `${p.propId}-${p.x}-${p.z}` === excludeKey) continue
+    if (p.type === 'interaction') continue
+    const pSpan = p.span || { w: 1, d: 1 }
+    if (x < p.x + pSpan.w && x + span.w > p.x && z < p.z + pSpan.d && z + span.d > p.z) {
+      return true
+    }
+  }
+  return false
+}
+
 export function usePropMovement({
   blueprintId,
   gridWidth,
@@ -179,35 +204,8 @@ export function usePropMovement({
       span: { w: number; d: number } = { w: 1, d: 1 },
       excludeKey?: string
     ): boolean => {
-      // NOSONAR
-      // NOSONAR: complexity from prop movement with collision detection and bounds checking
-      // Check bounds — cells 0 and gridSize-1 are wall cells (from createEmptyGrid).
-      // Props must stay in the interior: cells 1 to gridSize-2.
-      if (x < 1 || z < 1) return false
-      if (x + span.w > gridWidth - 1) return false
-      if (z + span.d > gridDepth - 1) return false
-
-      // Check for overlaps with other props (excluding interaction-type props)
-      for (const p of placements) {
-        // Use unique key (propId-x-z) to exclude the prop being moved
-        if (excludeKey) {
-          const pKey = `${p.propId}-${p.x}-${p.z}`
-          if (pKey === excludeKey) continue
-        }
-        if (p.type === 'interaction') continue // Interaction markers can overlap
-
-        const pSpan = p.span || { w: 1, d: 1 }
-
-        // Check for overlap
-        const overlapsX = x < p.x + pSpan.w && x + span.w > p.x
-        const overlapsZ = z < p.z + pSpan.d && z + span.d > p.z
-
-        if (overlapsX && overlapsZ) {
-          return false
-        }
-      }
-
-      return true
+      if (!isWithinBounds(x, z, span, gridWidth, gridDepth)) return false
+      return !hasOverlap(x, z, span, placements, excludeKey)
     },
     [gridWidth, gridDepth, placements]
   )

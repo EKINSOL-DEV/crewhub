@@ -86,60 +86,11 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
     }
 
     setTasks((prevTasks) => {
-      // NOSONAR
-      // NOSONAR: complexity from legitimate task state reconciliation algorithm
       const newTasks: ActiveTask[] = []
       const seenIds = new Set<string>()
 
-      // 1. Keep existing running tasks that are still active
-      // 2. Mark tasks as done if their session disappeared OR became sleeping
-      for (const task of prevTasks) {
-        if (task.source !== 'session') continue
-
-        const sessionKey = task.sessionKey
-        if (!sessionKey) continue
-
-        if (
-          (currentKeys.has(sessionKey) && isSessionStillRunning(sessionKey)) ||
-          task.status === 'done'
-        ) {
-          // Still running or already done — keep as-is
-          newTasks.push(task)
-          seenIds.add(task.id)
-        } else if (
-          task.status === 'running' &&
-          (previousKeys.has(sessionKey) || currentKeys.has(sessionKey))
-        ) {
-          // Session disappeared OR became sleeping → mark as done
-          newTasks.push({
-            ...task,
-            status: 'done',
-            doneAt: Date.now(),
-          })
-          seenIds.add(task.id)
-        }
-      }
-
-      // 3. Add new sessions that weren't tracked before (only if actively running)
-      for (const session of sessions) {
-        if (!isSubagentSession(session.key)) continue
-        const taskId = `session:${session.key}`
-        if (seenIds.has(taskId)) continue
-
-        // Don't add sessions that aren't actively running
-        if (!isSessionStillRunning(session.key)) continue
-
-        newTasks.push({
-          id: taskId,
-          title: extractTaskTitle(session),
-          sessionKey: session.key,
-          agentName: extractAgentName(session.key),
-          agentIcon: extractAgentIcon(session.key),
-          status: 'running',
-          doneAt: null,
-          source: 'session',
-        })
-      }
+      reconcileExistingTasks(prevTasks, newTasks, seenIds, currentKeys, previousKeys, isSessionStillRunning)
+      addNewSessionTasks(sessions, newTasks, seenIds, isSessionStillRunning)
 
       previousSessionKeysRef.current = currentKeys
       return newTasks
@@ -223,6 +174,55 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
 /**
  * Check if a session key represents a subagent/spawned session
  */
+function reconcileExistingTasks(
+  prevTasks: ActiveTask[],
+  newTasks: ActiveTask[],
+  seenIds: Set<string>,
+  currentKeys: Set<string>,
+  previousKeys: Set<string>,
+  isSessionStillRunning: (key: string) => boolean
+): void {
+  for (const task of prevTasks) {
+    if (task.source !== 'session' || !task.sessionKey) continue
+
+    const key = task.sessionKey
+    const stillActive = (currentKeys.has(key) && isSessionStillRunning(key)) || task.status === 'done'
+
+    if (stillActive) {
+      newTasks.push(task)
+      seenIds.add(task.id)
+    } else if (task.status === 'running' && (previousKeys.has(key) || currentKeys.has(key))) {
+      newTasks.push({ ...task, status: 'done', doneAt: Date.now() })
+      seenIds.add(task.id)
+    }
+  }
+}
+
+function addNewSessionTasks(
+  sessions: CrewSession[],
+  newTasks: ActiveTask[],
+  seenIds: Set<string>,
+  isSessionStillRunning: (key: string) => boolean
+): void {
+  for (const session of sessions) {
+    if (!isSubagentSession(session.key)) continue
+    const taskId = `session:${session.key}`
+    if (seenIds.has(taskId)) continue
+    if (!isSessionStillRunning(session.key)) continue
+
+    newTasks.push({
+      id: taskId,
+      title: extractTaskTitle(session),
+      sessionKey: session.key,
+      agentName: extractAgentName(session.key),
+      agentIcon: extractAgentIcon(session.key),
+      status: 'running',
+      doneAt: null,
+      source: 'session',
+    })
+  }
+}
+
 function isSubagentSession(key: string): boolean {
   return key.includes(':subagent:') || key.includes(':spawn:')
 }

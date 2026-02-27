@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { api, type CrewSession } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
 
@@ -83,6 +83,50 @@ function makeSessionRemovedUpdater(key: string, fingerprintRef: { current: strin
     fingerprintRef.current = computeSessionsFingerprint(newSessions)
     return { ...prev, sessions: newSessions }
   }
+}
+
+function handleSSEStateChange(
+  connectionState: 'disconnected' | 'connecting' | 'connected',
+  isInitial: boolean,
+  deps: {
+    stopPolling: () => void
+    startPolling: () => void
+    fetchSessions: () => Promise<boolean>
+    wasEverConnectedRef: React.MutableRefObject<boolean>
+    setState: React.Dispatch<React.SetStateAction<SessionsStreamState>>
+  }
+): void {
+  const { stopPolling, startPolling, fetchSessions, wasEverConnectedRef, setState } = deps
+
+  if (connectionState === 'connected') {
+    stopPolling()
+    const isReconnect = wasEverConnectedRef.current
+    wasEverConnectedRef.current = true
+    setState((prev) => ({
+      ...prev,
+      connected: true,
+      connectionMethod: 'sse',
+      reconnecting: false,
+      error: null,
+    }))
+    if (isReconnect) fetchSessions()
+    return
+  }
+
+  if (connectionState === 'connecting') {
+    setState((prev) => ({ ...prev, reconnecting: !isInitial }))
+    return
+  }
+
+  // disconnected
+  if (isInitial) return // Initial mount — SSE will connect shortly
+  setState((prev) => ({
+    ...prev,
+    connected: false,
+    connectionMethod: 'polling',
+    reconnecting: true,
+  }))
+  startPolling()
 }
 
 export function useSessionsStream(enabled: boolean = true) {
@@ -207,44 +251,13 @@ export function useSessionsStream(enabled: boolean = true) {
       const isInitial = isInitialCallback
       isInitialCallback = false
 
-      if (connectionState === 'connected') {
-        stopPolling()
-        const isReconnect = wasEverConnectedRef.current
-        wasEverConnectedRef.current = true
-        setState((prev) => ({
-          ...prev,
-          connected: true,
-          connectionMethod: 'sse',
-          reconnecting: false,
-          error: null,
-        }))
-        // On reconnect: re-fetch because we might have missed SSE events while disconnected.
-        // On initial connect: skip fetch — the initial fetch (below) already has/is getting data.
-        // The fingerprint check in fetchSessions provides a safety net either way.
-        if (isReconnect) {
-          fetchSessions()
-        }
-      } else if (connectionState === 'connecting') {
-        setState((prev) => ({
-          ...prev,
-          // Don't show "reconnecting" on initial connection attempt
-          reconnecting: !isInitial,
-        }))
-      } else if (isInitial) {
-        // disconnected
-        // Initial mount: SSE hasn't started yet. Don't start polling —
-        // we do a single fetch below, and SSE will connect shortly.
-        // This prevents the double-fetch that caused the re-render flash.
-      } else {
-        // Actual disconnection after being connected — fall back to polling
-        setState((prev) => ({
-          ...prev,
-          connected: false,
-          connectionMethod: 'polling',
-          reconnecting: true,
-        }))
-        startPolling()
-      }
+      handleSSEStateChange(connectionState, isInitial, {
+        stopPolling,
+        startPolling,
+        fetchSessions,
+        wasEverConnectedRef,
+        setState,
+      })
     })
 
     // Always do one initial fetch, regardless of SSE state.

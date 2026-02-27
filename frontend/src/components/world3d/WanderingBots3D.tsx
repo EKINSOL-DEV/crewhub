@@ -174,6 +174,73 @@ interface OutdoorBotProps {
   readonly onBotClick?: (session: CrewSession) => void
 }
 
+function tickIdleWander(
+  state: WanderState,
+  delta: number,
+  buildingWidth: number,
+  buildingDepth: number,
+  roomObstacles?: RoomObstacle[]
+): void {
+  state.waitTimer -= delta
+  if (state.waitTimer > 0) return
+
+  const [nx, nz] = getRandomCampusPosition(buildingWidth, buildingDepth, roomObstacles)
+  const rawX = state.currentX + (nx - state.currentX) * 0.4
+  const rawZ = state.currentZ + (nz - state.currentZ) * 0.4
+  const [cx, cz] = clampToCampus(rawX, rawZ, buildingWidth, buildingDepth)
+
+  if (roomObstacles && (isInsideAnyRoom(cx, cz, roomObstacles) ||
+      doesPathCrossRoom(state.currentX, state.currentZ, cx, cz, roomObstacles))) {
+    state.waitTimer = 0.1
+  } else {
+    state.targetX = cx
+    state.targetZ = cz
+    state.waitTimer = PAUSE_MIN_S + Math.random() * (PAUSE_MAX_S - PAUSE_MIN_S)
+  }
+}
+
+function tickWalking(
+  state: WanderState,
+  dx: number, dz: number, dist: number,
+  delta: number,
+  roomObstacles?: RoomObstacle[]
+): void {
+  const step = Math.min(OUTDOOR_WALK_SPEED * delta, dist)
+  const nextX = state.currentX + (dx / dist) * step
+  const nextZ = state.currentZ + (dz / dist) * step
+
+  if (roomObstacles && isInsideAnyRoom(nextX, nextZ, roomObstacles)) {
+    state.targetX = state.currentX
+    state.targetZ = state.currentZ
+    state.waitTimer = 0
+  } else {
+    state.currentX = nextX
+    state.currentZ = nextZ
+  }
+
+  const targetRotY = Math.atan2(dx, dz)
+  let angleDiff = targetRotY - state.rotY
+  while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+  while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+  state.rotY += angleDiff * 0.12
+}
+
+function ensureSafePosition(
+  state: WanderState,
+  buildingWidth: number, buildingDepth: number,
+  roomObstacles?: RoomObstacle[]
+): void {
+  const [cx, cz] = clampToCampus(state.currentX, state.currentZ, buildingWidth, buildingDepth)
+  state.currentX = cx
+  state.currentZ = cz
+
+  if (roomObstacles && isInsideAnyRoom(state.currentX, state.currentZ, roomObstacles)) {
+    const [safeX, safeZ] = pushOutsideRooms(state.currentX, state.currentZ, roomObstacles)
+    state.currentX = safeX
+    state.currentZ = safeZ
+  }
+}
+
 function OutdoorBot({
   session,
   config,
@@ -221,8 +288,6 @@ function OutdoorBot({
   })
 
   useFrame(({ clock }, delta) => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     if (!groupRef.current) return
     const state = stateRef.current
     const t = clock.getElapsedTime()
@@ -232,80 +297,15 @@ function OutdoorBot({
     const dist = Math.hypot(dx, dz)
 
     if (dist < 0.5) {
-      // Arrived at target — wait, then pick a new target
-      state.waitTimer -= delta
-      if (state.waitTimer <= 0) {
-        const [nx, nz] = getRandomCampusPosition(buildingWidth, buildingDepth, roomObstacles)
-        // Bias toward staying somewhat close to current position
-        const rawX = state.currentX + (nx - state.currentX) * 0.4
-        const rawZ = state.currentZ + (nz - state.currentZ) * 0.4
-        const [cx, cz] = clampToCampus(rawX, rawZ, buildingWidth, buildingDepth)
-
-        // Reject target if inside a room or path crosses through a room
-        if (
-          roomObstacles &&
-          (isInsideAnyRoom(cx, cz, roomObstacles) ||
-            doesPathCrossRoom(state.currentX, state.currentZ, cx, cz, roomObstacles))
-        ) {
-          state.waitTimer = 0.1 // retry quickly next frame
-        } else {
-          state.targetX = cx
-          state.targetZ = cz
-          state.waitTimer = PAUSE_MIN_S + Math.random() * (PAUSE_MAX_S - PAUSE_MIN_S)
-        }
-      }
-
-      // Idle breathing
+      tickIdleWander(state, delta, buildingWidth, buildingDepth, roomObstacles)
       walkPhaseRef.current *= 0.9
       if (Math.abs(walkPhaseRef.current) < 0.01) walkPhaseRef.current = 0
     } else {
-      // Walk toward target
-      const speed = OUTDOOR_WALK_SPEED
-      const step = Math.min(speed * delta, dist)
-      const nextX = state.currentX + (dx / dist) * step
-      const nextZ = state.currentZ + (dz / dist) * step
-
-      // Check if next step would enter a room
-      if (roomObstacles && isInsideAnyRoom(nextX, nextZ, roomObstacles)) {
-        // Stop and pick a new target immediately
-        state.targetX = state.currentX
-        state.targetZ = state.currentZ
-        state.waitTimer = 0
-      } else {
-        state.currentX = nextX
-        state.currentZ = nextZ
-      }
-
-      // Smooth rotation
-      const targetRotY = Math.atan2(dx, dz)
-      let angleDiff = targetRotY - state.rotY
-      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
-      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-      state.rotY += angleDiff * 0.12
-
-      // Walk animation phase
+      tickWalking(state, dx, dz, dist, delta, roomObstacles)
       walkPhaseRef.current += delta * 6
     }
 
-    // Clamp to campus bounds (safety net)
-    const [clampedX, clampedZ] = clampToCampus(
-      state.currentX,
-      state.currentZ,
-      buildingWidth,
-      buildingDepth
-    )
-    state.currentX = clampedX
-    state.currentZ = clampedZ
-
-    // Safety net: if somehow inside a room, push outside
-    if (roomObstacles && isInsideAnyRoom(state.currentX, state.currentZ, roomObstacles)) {
-      const [safeX, safeZ] = pushOutsideRooms(state.currentX, state.currentZ, roomObstacles)
-      state.currentX = safeX
-      state.currentZ = safeZ
-      state.targetX = safeX
-      state.targetZ = safeZ
-      state.waitTimer = 0
-    }
+    ensureSafePosition(state, buildingWidth, buildingDepth, roomObstacles)
 
     // Apply position
     groupRef.current.position.x = state.currentX

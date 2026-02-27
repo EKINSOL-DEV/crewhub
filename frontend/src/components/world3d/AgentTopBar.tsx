@@ -404,6 +404,86 @@ function AgentPickerToggle({
 
 // ─── Agent Picker Dropdown ─────────────────────────────────────
 
+interface EntryHelpers {
+  getBotConfig: (key: string, label?: string) => BotVariantConfig
+  isActivelyRunning: (key: string) => boolean
+  getRoomForSession: AgentTopBarProps['getRoomForSession']
+  defaultRoomId?: string
+  rooms: Array<{ id: string; name: string }>
+  displayNames: Map<string, string | null>
+}
+
+function makeEntry(
+  session: CrewSession,
+  helpers: EntryHelpers,
+  statusOverride?: AgentStatus
+): DropdownEntry {
+  const config = helpers.getBotConfig(session.key, session.label)
+  const name = statusOverride === 'offline'
+    ? (session.label || session.key)
+    : getSessionDisplayName(session, helpers.displayNames.get(session.key) ?? undefined)
+  const status = statusOverride ?? getAgentStatus(session, helpers.isActivelyRunning(session.key))
+  const roomId = getRoomId(session, helpers.getRoomForSession, helpers.defaultRoomId)
+  const roomName = getRoomName(roomId, helpers.rooms)
+  return { session, config, name, status, roomName, roomId }
+}
+
+function buildFixedAgentEntries(
+  agentRuntimes: AgentTopBarProps['agentRuntimes'],
+  sessions: CrewSession[],
+  helpers: EntryHelpers
+): DropdownEntry[] {
+  const entries: DropdownEntry[] = []
+
+  if (agentRuntimes && agentRuntimes.length > 0) {
+    for (const { agent, session } of agentRuntimes) {
+      const agentKey = agent.agent_session_key || `agent:${agent.name.toLowerCase()}:main`
+      if (agentKey === BOSS_SESSION_KEY) continue
+
+      if (session) {
+        entries.push(makeEntry(session, helpers))
+      } else {
+        const syntheticSession: CrewSession = {
+          key: agentKey, sessionId: agentKey, kind: 'agent',
+          channel: 'whatsapp', updatedAt: 0, label: agent.name,
+        }
+        const roomId = agent.default_room_id || helpers.defaultRoomId || HEADQUARTERS
+        const roomName = getRoomName(roomId, helpers.rooms)
+        const config = helpers.getBotConfig(agentKey, agent.name)
+        entries.push({ session: syntheticSession, config, name: agent.name, status: 'offline', roomName, roomId })
+      }
+    }
+  } else {
+    for (const session of sessions) {
+      if (session.key === BOSS_SESSION_KEY || session.key.startsWith('debug:')) continue
+      const parts = session.key.split(':')
+      if (parts.length === 3 && parts[0] === 'agent' && parts[2] === 'main') {
+        entries.push(makeEntry(session, helpers))
+      }
+    }
+  }
+
+  return entries
+}
+
+function buildRecentSubagentEntries(
+  sessions: CrewSession[],
+  helpers: EntryHelpers
+): DropdownEntry[] {
+  const RECENT_MS = 30 * 60 * 1000
+  const now = Date.now()
+  const entries: DropdownEntry[] = []
+
+  for (const session of sessions) {
+    if (session.key === BOSS_SESSION_KEY || session.key.startsWith('debug:')) continue
+    if (isSubagent(session.key) && now - session.updatedAt < RECENT_MS) {
+      entries.push(makeEntry(session, helpers))
+    }
+  }
+
+  return entries
+}
+
 interface DropdownEntry {
   session: CrewSession
   config: BotVariantConfig
@@ -770,100 +850,12 @@ export function AgentTopBar({
   // ─── Dropdown entries ──────────────────────────────────────────
 
   const { fixedAgents, recentSubagents } = useMemo(() => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
-    const now = Date.now()
-    const RECENT_THRESHOLD_MS = 30 * 60 * 1000 // 30 minutes
-
-    const fixedAgents: DropdownEntry[] = []
-    const recentSubagents: DropdownEntry[] = []
-
-    if (agentRuntimes && agentRuntimes.length > 0) {
-      // ─── Registry-based: all agents from /api/agents, merged with session data ──
-      for (const runtime of agentRuntimes) {
-        const { agent, session } = runtime
-        // Resolve the canonical session key for this agent
-        const agentKey = agent.agent_session_key || `agent:${agent.name.toLowerCase()}:main`
-        // Skip boss — always shown separately
-        if (agentKey === BOSS_SESSION_KEY) continue
-
-        let entry: DropdownEntry
-
-        if (session) {
-          // Agent has an active session — use full session data
-          const config = getBotConfig(session.key, session.label)
-          const name = getSessionDisplayName(session, displayNames.get(session.key))
-          const isActive = isActivelyRunning(session.key)
-          const status = getAgentStatus(session, isActive)
-          const roomId = getRoomId(session, getRoomForSession, defaultRoomId)
-          const roomName = getRoomName(roomId, rooms)
-          entry = { session, config, name, status, roomName, roomId }
-        } else {
-          // Agent exists in DB but has no active session — show as offline
-          const syntheticSession: CrewSession = {
-            key: agentKey,
-            sessionId: agentKey,
-            kind: 'agent',
-            channel: 'whatsapp',
-            updatedAt: 0,
-            label: agent.name,
-          }
-          const config = getBotConfig(agentKey, agent.name)
-          const name = agent.name
-          const status: AgentStatus = 'offline'
-          const roomId = agent.default_room_id || defaultRoomId || HEADQUARTERS
-          const roomName = getRoomName(roomId, rooms)
-          entry = { session: syntheticSession, config, name, status, roomName, roomId }
-        }
-
-        fixedAgents.push(entry)
-      }
-    } else {
-      // ─── Fallback: build fixed agents from active sessions only ──────────────
-      for (const session of sessions) {
-        // Skip boss — it's always in the bar
-        if (session.key === BOSS_SESSION_KEY) continue
-        // Skip debug sessions
-        if (session.key.startsWith('debug:')) continue
-
-        const config = getBotConfig(session.key, session.label)
-        const name = getSessionDisplayName(session, displayNames.get(session.key))
-        const isActive = isActivelyRunning(session.key)
-        const status = getAgentStatus(session, isActive)
-        const roomId = getRoomId(session, getRoomForSession, defaultRoomId)
-        const roomName = getRoomName(roomId, rooms)
-
-        const entry: DropdownEntry = { session, config, name, status, roomName, roomId }
-
-        // Fixed agents: agent:*:main (not subagents)
-        const parts = session.key.split(':')
-        if (parts.length === 3 && parts[0] === 'agent' && parts[2] === 'main') {
-          fixedAgents.push(entry)
-        }
-      }
-    }
-
-    // Recently active subagents (always from session list, not registry)
-    for (const session of sessions) {
-      if (session.key === BOSS_SESSION_KEY) continue
-      if (session.key.startsWith('debug:')) continue
-      if (isSubagent(session.key) && now - session.updatedAt < RECENT_THRESHOLD_MS) {
-        const config = getBotConfig(session.key, session.label)
-        const name = getSessionDisplayName(session, displayNames.get(session.key))
-        const isActive = isActivelyRunning(session.key)
-        const status = getAgentStatus(session, isActive)
-        const roomId = getRoomId(session, getRoomForSession, defaultRoomId)
-        const roomName = getRoomName(roomId, rooms)
-        recentSubagents.push({ session, config, name, status, roomName, roomId })
-      }
-    }
-
-    // Sort fixed agents alphabetically
-    fixedAgents.sort((a, b) => a.name.localeCompare(b.name))
-    // Sort recent subagents by most recent first
-    recentSubagents.sort((a, b) => b.session.updatedAt - a.session.updatedAt)
-
-    return { fixedAgents, recentSubagents }
+    const helpers = { getBotConfig, isActivelyRunning, getRoomForSession, defaultRoomId, rooms, displayNames }
+    const fixed = buildFixedAgentEntries(agentRuntimes, sessions, helpers)
+    const recent = buildRecentSubagentEntries(sessions, helpers)
+    fixed.sort((a, b) => a.name.localeCompare(b.name))
+    recent.sort((a, b) => b.session.updatedAt - a.session.updatedAt)
+    return { fixedAgents: fixed, recentSubagents: recent }
   }, [
     sessions,
     agentRuntimes,

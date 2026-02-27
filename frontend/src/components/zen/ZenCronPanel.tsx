@@ -33,32 +33,23 @@ interface CronJob {
 
 // ── Formatting Helpers ───────────────────────────────────────────
 
+function formatCronExpr(expr: string): string {
+  const parts = expr.split(' ')
+  if (parts.length !== 5) return expr
+  const [minute, hour, _dom, _month, dayOfWeek] = parts
+  if (expr === '* * * * *') return 'Every min'
+  if (minute.startsWith('*/') && hour === '*') return `Every ${Number.parseInt(minute.slice(2), 10)}m`
+  if (minute === '0' && hour === '*') return 'Hourly'
+  if (minute !== '*' && hour !== '*' && dayOfWeek === '*') return `${hour}:${minute.padStart(2, '0')}`
+  return expr
+}
+
 function formatSchedule(schedule: CronSchedule): string {
-  // NOSONAR
-  // NOSONAR: complexity from cron panel with multiple schedule parsing branches
   switch (schedule.kind) {
-    case 'cron': {
-      const expr = schedule.expr || ''
-      const parts = expr.split(' ')
-      if (parts.length !== 5) return expr
-
-      const [minute, hour, _dom, _month, dayOfWeek] = parts
-
-      if (expr === '* * * * *') return 'Every min'
-      if (minute.startsWith('*/')) {
-        const n = Number.parseInt(minute.slice(2), 10)
-        if (hour === '*') return `Every ${n}m`
-      }
-      if (minute === '0' && hour === '*') return 'Hourly'
-      if (minute !== '*' && hour !== '*' && dayOfWeek === '*') {
-        return `${hour}:${minute.padStart(2, '0')}`
-      }
-      return expr
-    }
-    case 'at': {
-      const date = new Date(schedule.atMs || 0)
-      return date.toLocaleDateString()
-    }
+    case 'cron':
+      return formatCronExpr(schedule.expr || '')
+    case 'at':
+      return new Date(schedule.atMs || 0).toLocaleDateString()
     case 'every': {
       const ms = schedule.everyMs || 0
       if (ms < 60_000) return `${Math.round(ms / 1000)}s`

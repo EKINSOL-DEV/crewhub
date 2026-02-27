@@ -116,6 +116,45 @@ interface RoomsContextValue {
 
 const RoomsContext = createContext<RoomsContextValue | null>(null)
 
+function matchSessionType(value: string, sessionKey: string, channel?: string): boolean {
+  switch (value) {
+    case 'cron': return sessionKey.includes(':cron:')
+    case 'subagent': return sessionKey.includes(':subagent:') || sessionKey.includes(':spawn:')
+    case 'main': return sessionKey === 'agent:main:main'
+    case 'slack': return sessionKey.includes('slack')
+    case 'whatsapp': return sessionKey.includes('whatsapp') || channel === 'whatsapp'
+    case 'telegram': return sessionKey.includes('telegram') || channel === 'telegram'
+    case 'discord': return sessionKey.includes('discord') || channel === 'discord'
+    default: return false
+  }
+}
+
+function doesRuleMatch(
+  rule: RoomAssignmentRule,
+  sessionKey: string,
+  sessionData?: { label?: string; model?: string; channel?: string }
+): boolean {
+  switch (rule.rule_type) {
+    case 'session_key_contains':
+      return sessionKey.includes(rule.rule_value)
+    case 'keyword':
+      return !!sessionData?.label?.toLowerCase().includes(rule.rule_value.toLowerCase())
+    case 'model':
+      return !!sessionData?.model?.toLowerCase().includes(rule.rule_value.toLowerCase())
+    case 'label_pattern':
+      try {
+        const regex = new RegExp(rule.rule_value, 'i')
+        return regex.test(sessionData?.label || '') || regex.test(sessionKey)
+      } catch {
+        return false
+      }
+    case 'session_type':
+      return matchSessionType(rule.rule_value, sessionKey, sessionData?.channel)
+    default:
+      return false
+  }
+}
+
 export function RoomsProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [rooms, setRooms] = useState<Room[]>([])
   const [sessionAssignments, setSessionAssignments] = useState<Map<string, string>>(new Map())
@@ -130,10 +169,45 @@ export function RoomsProvider({ children }: Readonly<{ children: ReactNode }>) {
   const assignmentsFingerprintRef = useRef<string>('')
   const rulesFingerprintRef = useRef<string>('')
 
+  const processRoomsResponse = useCallback(async (roomsResponse: Response) => {
+    const roomsData: RoomsResponse = await roomsResponse.json()
+    const newRooms = roomsData.rooms || []
+    const fp = JSON.stringify(newRooms.map((r) => `${r.id}:${r.updated_at}:${r.sort_order}`))
+    if (fp !== roomsFingerprintRef.current) {
+      roomsFingerprintRef.current = fp
+      setRooms(newRooms)
+    }
+  }, [])
+
+  const processAssignmentsResponse = useCallback(async (response: Response) => {
+    if (!response.ok) return
+    const data: AssignmentsResponse = await response.json()
+    const assignments = data.assignments || []
+    const fp = JSON.stringify(
+      assignments.map((a) => `${a.session_key}:${a.room_id}`).sort((a, b) => a.localeCompare(b))
+    )
+    if (fp !== assignmentsFingerprintRef.current) {
+      assignmentsFingerprintRef.current = fp
+      const assignmentsMap = new Map<string, string>()
+      for (const assignment of assignments) {
+        assignmentsMap.set(assignment.session_key, assignment.room_id)
+      }
+      setSessionAssignments(assignmentsMap)
+    }
+  }, [])
+
+  const processRulesResponse = useCallback(async (response: Response) => {
+    if (!response.ok) return
+    const data: RulesResponse = await response.json()
+    const newRules = data.rules || []
+    const fp = JSON.stringify(newRules.map((r) => `${r.id}:${r.priority}:${r.rule_value}`))
+    if (fp !== rulesFingerprintRef.current) {
+      rulesFingerprintRef.current = fp
+      setRules(newRules)
+    }
+  }, [])
+
   const fetchRooms = useCallback(async () => {
-    // NOSONAR
-    // NOSONAR: complexity from React context with multiple room assignment strategies
-    // Cancel any in-flight request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
@@ -149,58 +223,20 @@ export function RoomsProvider({ children }: Readonly<{ children: ReactNode }>) {
 
       if (!roomsResponse.ok) throw new Error('Failed to fetch rooms')
 
-      const roomsData: RoomsResponse = await roomsResponse.json()
-      const newRooms = roomsData.rooms || []
-      // Deduplicate: only update state if rooms actually changed
-      const roomsFingerprint = JSON.stringify(
-        newRooms.map((r) => `${r.id}:${r.updated_at}:${r.sort_order}`)
-      )
-      if (roomsFingerprint !== roomsFingerprintRef.current) {
-        roomsFingerprintRef.current = roomsFingerprint
-        setRooms(newRooms)
-      }
-
-      if (assignmentsResponse.ok) {
-        const assignmentsData: AssignmentsResponse = await assignmentsResponse.json()
-        const assignments = assignmentsData.assignments || []
-        // Deduplicate assignments
-        const assignmentsFingerprint = JSON.stringify(
-          assignments.map((a) => `${a.session_key}:${a.room_id}`).sort((a, b) => a.localeCompare(b))
-        )
-        if (assignmentsFingerprint !== assignmentsFingerprintRef.current) {
-          assignmentsFingerprintRef.current = assignmentsFingerprint
-          const assignmentsMap = new Map<string, string>()
-          for (const assignment of assignments) {
-            assignmentsMap.set(assignment.session_key, assignment.room_id)
-          }
-          setSessionAssignments(assignmentsMap)
-        }
-      }
-
-      if (rulesResponse.ok) {
-        const rulesData: RulesResponse = await rulesResponse.json()
-        const newRules = rulesData.rules || []
-        // Deduplicate rules
-        const rulesFingerprint = JSON.stringify(
-          newRules.map((r) => `${r.id}:${r.priority}:${r.rule_value}`)
-        )
-        if (rulesFingerprint !== rulesFingerprintRef.current) {
-          rulesFingerprintRef.current = rulesFingerprint
-          setRules(newRules)
-        }
-      }
+      await processRoomsResponse(roomsResponse)
+      await processAssignmentsResponse(assignmentsResponse)
+      await processRulesResponse(rulesResponse)
 
       setError(null)
       hasFetchedRef.current = true
     } catch (err) {
-      // Ignore abort errors
       if (err instanceof Error && err.name === 'AbortError') return
       console.error('[RoomsContext] Failed to fetch rooms:', err)
       setError(err instanceof Error ? err.message : UNKNOWN_ERROR)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [processRoomsResponse, processAssignmentsResponse, processRulesResponse])
 
   // Initial fetch - only once
   useEffect(() => {
@@ -236,54 +272,11 @@ export function RoomsProvider({ children }: Readonly<{ children: ReactNode }>) {
       sessionKey: string,
       sessionData?: { label?: string; model?: string; channel?: string }
     ): string | undefined => {
-      // NOSONAR
-      // NOSONAR: complexity from React context state update handler with multiple event types
-      // Rules are already sorted by priority (descending)
       for (const rule of rules) {
-        let matches = false
-
-        switch (rule.rule_type) {
-          case 'session_key_contains':
-            matches = sessionKey.includes(rule.rule_value)
-            break
-          case 'keyword':
-            if (sessionData?.label) {
-              matches = sessionData.label.toLowerCase().includes(rule.rule_value.toLowerCase())
-            }
-            break
-          case 'model':
-            if (sessionData?.model) {
-              matches = sessionData.model.toLowerCase().includes(rule.rule_value.toLowerCase())
-            }
-            break
-          case 'label_pattern':
-            try {
-              const regex = new RegExp(rule.rule_value, 'i')
-              matches = regex.test(sessionData?.label || '') || regex.test(sessionKey)
-            } catch {
-              // Invalid regex, skip
-            }
-            break
-          case 'session_type':
-            if (rule.rule_value === 'cron') matches = sessionKey.includes(':cron:')
-            else if (rule.rule_value === 'subagent')
-              matches = sessionKey.includes(':subagent:') || sessionKey.includes(':spawn:')
-            else if (rule.rule_value === 'main') matches = sessionKey === 'agent:main:main'
-            else if (rule.rule_value === 'slack') matches = sessionKey.includes('slack')
-            else if (rule.rule_value === 'whatsapp')
-              matches = sessionKey.includes('whatsapp') || sessionData?.channel === 'whatsapp'
-            else if (rule.rule_value === 'telegram')
-              matches = sessionKey.includes('telegram') || sessionData?.channel === 'telegram'
-            else if (rule.rule_value === 'discord')
-              matches = sessionKey.includes('discord') || sessionData?.channel === 'discord'
-            break
-        }
-
-        if (matches) {
+        if (doesRuleMatch(rule, sessionKey, sessionData)) {
           return rule.room_id
         }
       }
-
       return undefined
     },
     [rules]

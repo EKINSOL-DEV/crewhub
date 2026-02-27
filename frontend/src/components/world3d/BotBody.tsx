@@ -31,6 +31,48 @@ function darkenColor(hex: string, factor: number = 0.6): string {
  *   Arms:       center y=0.00,  capsule on each side
  *   Feet:       center y=-0.30, small dark boxes
  */
+function animateWalk(
+  walkPhase: number,
+  leftFoot: React.RefObject<THREE.Mesh | null>,
+  rightFoot: React.RefObject<THREE.Mesh | null>,
+  leftArm: React.RefObject<THREE.Mesh | null>,
+  rightArm: React.RefObject<THREE.Mesh | null>
+): void {
+  if (walkPhase > 0) {
+    const sin = Math.sin(walkPhase)
+    const sinOpp = Math.sin(walkPhase + Math.PI)
+    if (leftFoot.current) {
+      leftFoot.current.position.z = 0.03 + sin * 0.06
+      leftFoot.current.position.y = -0.3 + Math.max(0, sin) * 0.04
+    }
+    if (rightFoot.current) {
+      rightFoot.current.position.z = 0.03 + sinOpp * 0.06
+      rightFoot.current.position.y = -0.3 + Math.max(0, sinOpp) * 0.04
+    }
+    if (leftArm.current) leftArm.current.rotation.x = sinOpp * 0.35
+    if (rightArm.current) rightArm.current.rotation.x = sin * 0.35
+  } else {
+    if (leftFoot.current) leftFoot.current.position.set(-0.09, -0.3, 0.03)
+    if (rightFoot.current) rightFoot.current.position.set(0.09, -0.3, 0.03)
+    if (leftArm.current) leftArm.current.rotation.x = 0
+    if (rightArm.current) rightArm.current.rotation.x = 0
+  }
+}
+
+function animateBreathing(
+  status: string,
+  elapsed: number,
+  bodyGroup: React.RefObject<THREE.Group | null>
+): void {
+  if (!bodyGroup.current) return
+  if (status === 'sleeping') {
+    const breathe = 1 + Math.sin(elapsed * 1.2) * 0.015
+    bodyGroup.current.scale.set(breathe, 1, breathe)
+  } else {
+    bodyGroup.current.scale.set(1, 1, 1)
+  }
+}
+
 export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
   const bodyGroupRef = useRef<THREE.Group>(null)
   const leftFootRef = useRef<THREE.Mesh>(null)
@@ -41,59 +83,11 @@ export function BotBody({ color, status, walkPhaseRef }: BotBodyProps) {
   const darkBodyToon = getToonMaterialProps(darkenColor(color, 0.65))
   const darkToon = getToonMaterialProps('#2a2a2a')
 
-  // Walking + breathing animation
   useFrame(({ clock }) => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     if (!bodyGroupRef.current) return
 
-    // Walking animation — feet step and arms swing
-    const walkPhase = walkPhaseRef?.current ?? 0
-    if (walkPhase > 0) {
-      const sin = Math.sin(walkPhase)
-      const sinOpp = Math.sin(walkPhase + Math.PI)
-
-      // Feet: alternate forward/backward with lift
-      if (leftFootRef.current) {
-        leftFootRef.current.position.z = 0.03 + sin * 0.06
-        leftFootRef.current.position.y = -0.3 + Math.max(0, sin) * 0.04
-      }
-      if (rightFootRef.current) {
-        rightFootRef.current.position.z = 0.03 + sinOpp * 0.06
-        rightFootRef.current.position.y = -0.3 + Math.max(0, sinOpp) * 0.04
-      }
-
-      // Arms: counter-swing
-      if (leftArmRef.current) {
-        leftArmRef.current.rotation.x = sinOpp * 0.35
-      }
-      if (rightArmRef.current) {
-        rightArmRef.current.rotation.x = sin * 0.35
-      }
-    } else {
-      // Reset to rest positions
-      if (leftFootRef.current) {
-        leftFootRef.current.position.set(-0.09, -0.3, 0.03)
-      }
-      if (rightFootRef.current) {
-        rightFootRef.current.position.set(0.09, -0.3, 0.03)
-      }
-      if (leftArmRef.current) {
-        leftArmRef.current.rotation.x = 0
-      }
-      if (rightArmRef.current) {
-        rightArmRef.current.rotation.x = 0
-      }
-    }
-
-    // Breathing animation for sleeping
-    if (status === 'sleeping') {
-      const t = clock.getElapsedTime()
-      const breathe = 1 + Math.sin(t * 1.2) * 0.015
-      bodyGroupRef.current.scale.set(breathe, 1, breathe)
-    } else {
-      bodyGroupRef.current.scale.set(1, 1, 1)
-    }
+    animateWalk(walkPhaseRef?.current ?? 0, leftFootRef, rightFootRef, leftArmRef, rightArmRef)
+    animateBreathing(status, clock.getElapsedTime(), bodyGroupRef)
   })
 
   return (

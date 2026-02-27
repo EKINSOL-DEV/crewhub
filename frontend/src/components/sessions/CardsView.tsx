@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Search, SlidersHorizontal, ChevronRight, Layers } from 'lucide-react'
 import { getSessionStatus, type SessionStatus } from '@/lib/minionUtils'
 import { useRooms } from '@/hooks/useRooms'
+import type { Room } from '@/contexts/RoomsContext'
 import { cn } from '@/lib/utils'
 
 const CLS_BG_MUTED_50_TEXT_MUTED_FOREGROUND_BORDER =
@@ -106,6 +107,61 @@ function RoomGroupHeader({
   )
 }
 
+interface SessionGroup {
+  groupId: string
+  name: string
+  icon: string | null
+  color: string | null
+  sessions: CrewSession[]
+}
+
+function groupSessionsByRoom(
+  sessions: CrewSession[],
+  rooms: Room[],
+  getRoomForSession: (key: string, data?: { label?: string; model?: string; channel?: string }) => string | undefined
+): SessionGroup[] {
+  type RoomInfo = { id: string; name: string; icon: string | null; color: string | null; sort_order: number }
+  const groups = new Map<string, { room: RoomInfo | null; sessions: CrewSession[] }>()
+
+  for (const room of [...rooms].sort((a, b) => a.sort_order - b.sort_order)) {
+    groups.set(room.id, { room, sessions: [] })
+  }
+
+  for (const session of sessions) {
+    const roomId = getRoomForSession(session.key, {
+      label: session.label,
+      model: session.model,
+      channel: session.lastChannel || session.channel,
+    })
+
+    if (roomId && groups.has(roomId)) {
+      groups.get(roomId)!.sessions.push(session)
+    } else {
+      if (!groups.has(UNASSIGNED)) groups.set(UNASSIGNED, { room: null, sessions: [] })
+      groups.get(UNASSIGNED)!.sessions.push(session)
+    }
+  }
+
+  const result: SessionGroup[] = []
+  for (const [groupId, { room, sessions: groupSessions }] of groups) {
+    if (groupSessions.length === 0 || groupId === UNASSIGNED) continue
+    result.push({
+      groupId,
+      name: room?.name || groupId,
+      icon: room?.icon || null,
+      color: room?.color || null,
+      sessions: groupSessions,
+    })
+  }
+
+  const unassigned = groups.get(UNASSIGNED)
+  if (unassigned && unassigned.sessions.length > 0) {
+    result.push({ groupId: UNASSIGNED, name: 'Unassigned', icon: '📦', color: '#6b7280', sessions: unassigned.sessions })
+  }
+
+  return result
+}
+
 export function CardsView({ sessions }: CardsViewProps) {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('recent')
@@ -190,84 +246,9 @@ export function CardsView({ sessions }: CardsViewProps) {
     return result
   }, [sessions, search, sortBy, activeFilters])
 
-  // Group sessions by room when groupByRoom is enabled
   const groupedSessions = useMemo(() => {
-    // NOSONAR
-    // NOSONAR: complexity from React render with multiple view state branches
     if (!groupByRoom) return null
-
-    const groups = new Map<
-      string,
-      {
-        room: {
-          id: string
-          name: string
-          icon: string | null
-          color: string | null
-          sort_order: number
-        } | null
-        sessions: CrewSession[]
-      }
-    >()
-
-    // Create a group for each known room in sort order
-    const sortedRooms = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
-    for (const room of sortedRooms) {
-      groups.set(room.id, { room, sessions: [] })
-    }
-
-    // Place sessions into their room groups
-    for (const session of filteredAndSortedSessions) {
-      const roomId = getRoomForSession(session.key, {
-        label: session.label,
-        model: session.model,
-        channel: session.lastChannel || session.channel,
-      })
-
-      if (roomId && groups.has(roomId)) {
-        groups.get(roomId)!.sessions.push(session)
-      } else {
-        // Unassigned group
-        if (!groups.has(UNASSIGNED)) {
-          groups.set(UNASSIGNED, { room: null, sessions: [] })
-        }
-        groups.get(UNASSIGNED)!.sessions.push(session)
-      }
-    }
-
-    // Convert to array, filter out empty groups, put unassigned last
-    const result: {
-      groupId: string
-      name: string
-      icon: string | null
-      color: string | null
-      sessions: CrewSession[]
-    }[] = []
-    for (const [groupId, { room, sessions: groupSessions }] of groups) {
-      if (groupSessions.length === 0) continue
-      if (groupId === UNASSIGNED) continue // Add last
-      result.push({
-        groupId,
-        name: room?.name || groupId,
-        icon: room?.icon || null,
-        color: room?.color || null,
-        sessions: groupSessions,
-      })
-    }
-
-    // Add unassigned at the end
-    const unassigned = groups.get(UNASSIGNED)
-    if (unassigned && unassigned.sessions.length > 0) {
-      result.push({
-        groupId: UNASSIGNED,
-        name: 'Unassigned',
-        icon: '📦',
-        color: '#6b7280',
-        sessions: unassigned.sessions,
-      })
-    }
-
-    return result
+    return groupSessionsByRoom(filteredAndSortedSessions, rooms, getRoomForSession)
   }, [groupByRoom, filteredAndSortedSessions, rooms, getRoomForSession])
 
   const handleViewLogs = (session: CrewSession) => {
