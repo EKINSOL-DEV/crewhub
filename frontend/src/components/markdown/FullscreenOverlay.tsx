@@ -192,7 +192,6 @@ export function FullscreenOverlay({
           onClose()
         }
       }}
-      role="dialog"
       aria-modal="true"
       aria-label="Fullscreen overlay"
     >

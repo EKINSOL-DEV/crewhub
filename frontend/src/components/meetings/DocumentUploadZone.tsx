@@ -53,7 +53,7 @@ export function DocumentUploadZone({ projectId, onUploadComplete }: DocumentUplo
   }
 
   return (
-    <div
+    <section
       className={`border-2 border-dashed rounded-md p-4 text-center transition-colors ${
         dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
       }`}
@@ -63,7 +63,6 @@ export function DocumentUploadZone({ projectId, onUploadComplete }: DocumentUplo
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
-      role="region"
       aria-label="Document upload zone"
     >
       {uploading ? (
@@ -79,6 +78,6 @@ export function DocumentUploadZone({ projectId, onUploadComplete }: DocumentUplo
         </>
       )}
       {error && <div className="text-xs text-destructive mt-2">{error}</div>}
-    </div>
+    </section>
   )
 }

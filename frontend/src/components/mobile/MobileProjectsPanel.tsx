@@ -230,8 +230,6 @@ function ProjectDetailModal({
           gap: 20,
           overflowY: 'auto',
         }}
-        role="dialog"
-        aria-modal="true"
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

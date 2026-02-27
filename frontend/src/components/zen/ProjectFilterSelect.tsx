@@ -122,8 +122,7 @@ export function ProjectFilterSelect({
       return (
         <button
           key={project.id}
-          role="option"
-          aria-selected={isSelected}
+          aria-pressed={isSelected}
           onClick={() => handleSelect(project)}
           style={{
             display: 'flex',
@@ -271,8 +270,7 @@ export function ProjectFilterSelect({
           <div style={{ overflow: 'auto', padding: '4px 4px 8px' }}>
             {/* All Projects option */}
             <button
-              role="option"
-              aria-selected={!currentProjectId}
+              aria-pressed={!currentProjectId}
               onClick={() => handleSelect(null)}
               style={{
                 display: 'flex',

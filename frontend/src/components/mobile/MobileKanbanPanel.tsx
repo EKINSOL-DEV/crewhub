@@ -153,8 +153,6 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
           gap: 16,
           overflowY: 'auto',
         }}
-        role="dialog"
-        aria-modal="true"
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -308,8 +306,6 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
           padding: '20px',
           overflowY: 'auto',
         }}
-        role="dialog"
-        aria-modal="true"
       >
         <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 16 }}>
           Filter by Project

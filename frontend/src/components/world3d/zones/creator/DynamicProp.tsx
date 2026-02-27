@@ -41,17 +41,17 @@ function PartGeometry({
 }) {
   switch (type) {
     case 'box':
-      return <boxGeometry ref={onRef} args={args} />
+      return <boxGeometry ref={onRef} {...({ args } as any)} />
     case 'cylinder':
-      return <cylinderGeometry ref={onRef} args={args} />
+      return <cylinderGeometry ref={onRef} {...({ args } as any)} />
     case 'sphere':
-      return <sphereGeometry ref={onRef} args={args} />
+      return <sphereGeometry ref={onRef} {...({ args } as any)} />
     case 'cone':
-      return <coneGeometry ref={onRef} args={args} />
+      return <coneGeometry ref={onRef} {...({ args } as any)} />
     case 'torus':
-      return <torusGeometry ref={onRef} args={args} />
+      return <torusGeometry ref={onRef} {...({ args } as any)} />
     default:
-      return <boxGeometry ref={onRef} args={[0.3, 0.3, 0.3]} />
+      return <boxGeometry ref={onRef} {...({ args: [0.3, 0.3, 0.3] } as any)} />
   }
 }
 
@@ -149,7 +149,10 @@ function DynamicMesh({
         (() => {
           if (selected) {
             return (
-              <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
+              <meshStandardMaterial
+                color={part.color}
+                {...({ emissive: '#4466ff', emissiveIntensity: 0.4 } as any)}
+              />
             )
           }
 

@@ -151,8 +151,6 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
         background: 'rgba(0,0,0,0.5)',
         backdropFilter: 'blur(4px)',
       }}
-      role="dialog"
-      aria-modal="true"
       aria-label="Standup"
     >
       <div

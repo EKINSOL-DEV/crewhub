@@ -241,10 +241,7 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
       "
     >
       {/* Dialog content panel */}
-      <div
-        className="w-[calc(100vw-2rem)] max-w-[1800px] h-[calc(100vh-2rem)] max-h-[1000px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
-        role="document"
-      >
+      <div className="w-[calc(100vw-2rem)] max-w-[1800px] h-[calc(100vh-2rem)] max-h-[1000px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
           <div className="flex items-center gap-3">
