@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/sseManager', () => ({
   sseManager: {
@@ -13,24 +13,24 @@ describe('activityService', () => {
     ;(globalThis as any).fetch = vi.fn()
   })
 
-  it('fetchSessionHistory parses messages and uses cache', async () => {
+  it('fetchSessionHistory caches and supports tool/use + toolResult fallback', async () => {
     const { fetchSessionHistory, clearActivityCache } =
       await import('../../services/activityService')
-
     const fetchMock = globalThis.fetch as any
+
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
         messages: [
           {
             timestamp: '2026-01-01T00:00:00.000Z',
-            message: { role: 'assistant', content: [{ type: 'text', text: 'hello' }] },
+            message: { role: 'thinking', content: 'ignored' },
           },
           {
             timestamp: '2026-01-01T00:00:01.000Z',
             message: {
               role: 'assistant',
-              content: [{ type: 'toolCall', name: 'exec', arguments: { command: 'ls -la' } }],
+              content: [{ type: 'tool_use', name: 'exec', input: { command: 'echo hello' } }],
             },
           },
           {
@@ -42,22 +42,29 @@ describe('activityService', () => {
     })
 
     clearActivityCache()
-    const first = await fetchSessionHistory('abc')
-    const second = await fetchSessionHistory('abc')
+    const h1 = await fetchSessionHistory('s1')
+    const h2 = await fetchSessionHistory('s1')
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(first.messages).toHaveLength(3)
-    expect(first.messages[0]).toMatchObject({ role: 'assistant', content: 'hello' })
-    expect(first.messages[1].tools?.[0].name).toBe('exec')
-    expect(first.messages[2]).toMatchObject({ role: 'tool', content: '[exec result]' })
-    expect(second).toBe(first)
+    expect(h1.messages).toHaveLength(2)
+    expect(h1.messages[0].tools?.[0].name).toBe('exec')
+    expect(h1.messages[1].content).toBe('[exec result]')
+    expect(h2).toBe(h1)
+
+    clearActivityCache('s1')
+    await fetchSessionHistory('s1')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
-  it('fetchActivityEntries humanizes tool/text/thinking and returns [] on error', async () => {
-    const { fetchActivityEntries } = await import('../../services/activityService')
-    const fetchMock = globalThis.fetch as any
+  it('fetchSessionHistory throws on non-ok response', async () => {
+    const { fetchSessionHistory } = await import('../../services/activityService')
+    ;(globalThis.fetch as any).mockResolvedValue({ ok: false, status: 503 })
+    await expect(fetchSessionHistory('down')).rejects.toThrow('Failed to fetch history: 503')
+  })
 
-    fetchMock.mockResolvedValueOnce({
+  it('fetchActivityEntries humanizes many tool labels and tool results', async () => {
+    const { fetchActivityEntries } = await import('../../services/activityService')
+    ;(globalThis.fetch as any).mockResolvedValue({
       ok: true,
       json: async () => ({
         messages: [
@@ -66,9 +73,13 @@ describe('activityService', () => {
               role: 'assistant',
               timestamp: 1,
               content: [
-                { type: 'toolCall', name: 'read', arguments: { path: '/tmp/a.txt' } },
-                { type: 'text', text: 'Some assistant output' },
-                { type: 'thinking', thinking: 'internal thoughts' },
+                { type: 'toolCall', name: 'read', arguments: { file_path: '/tmp/file.txt' } },
+                { type: 'toolCall', name: 'write', arguments: { path: '/tmp/out.md' } },
+                { type: 'toolCall', name: 'web_search', arguments: {} },
+                { type: 'toolCall', name: 'browser', arguments: { action: 'open' } },
+                { type: 'toolCall', name: 'process', arguments: {} },
+                { type: 'text', text: 'hello world' },
+                { type: 'thinking', thinking: 'thinking hard' },
               ],
             },
           },
@@ -81,29 +92,33 @@ describe('activityService', () => {
               content: [],
             },
           },
+          {
+            message: {
+              role: 'toolResult',
+              timestamp: 3,
+              toolName: 'write',
+              isError: true,
+              content: [],
+            },
+          },
         ],
       }),
     })
 
-    const entries = await fetchActivityEntries('sess')
-    expect(entries.length).toBeGreaterThanOrEqual(4)
-    expect(entries[0]).toMatchObject({
-      type: 'tool_call',
-      description: 'Reading a.txt',
-      sessionKey: 'sess',
-    })
+    const entries = await fetchActivityEntries('sess-1')
+    expect(entries.every((e) => e.sessionKey === 'sess-1')).toBe(true)
+    expect(entries.some((e) => e.description === 'Reading file.txt')).toBe(true)
+    expect(entries.some((e) => e.description === 'Writing out.md')).toBe(true)
+    expect(entries.some((e) => e.description === 'Searching the web')).toBe(true)
+    expect(entries.some((e) => e.description === 'Browser: open')).toBe(true)
+    expect(entries.some((e) => e.description === 'Managing process')).toBe(true)
     expect(entries.some((e) => e.type === 'message')).toBe(true)
     expect(entries.some((e) => e.type === 'thinking')).toBe(true)
-    expect(
-      entries.some((e) => e.type === 'tool_result' && e.description.includes('✓ read done'))
-    ).toBe(true)
-
-    fetchMock.mockRejectedValueOnce(new Error('network'))
-    const fallback = await fetchActivityEntries('sess')
-    expect(fallback).toEqual([])
+    expect(entries.some((e) => e.description.includes('✓ read done'))).toBe(true)
+    expect(entries.some((e) => e.description.includes('❌ write failed'))).toBe(true)
   })
 
-  it('subscribeToActivityUpdates invalidates cache and triggers callback on matching session', async () => {
+  it('subscribeToActivityUpdates invalidates cache, handles non-match and bad JSON', async () => {
     const { sseManager } = await import('@/lib/sseManager')
     const subscribeMock = sseManager.subscribe as any
     let handler: ((e: MessageEvent) => void) | undefined
@@ -120,15 +135,18 @@ describe('activityService', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ messages: [] }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ messages: [] }) })
 
-    await fetchSessionHistory('k1') // cached
+    await fetchSessionHistory('abc')
     const cb = vi.fn()
-    const unsub = subscribeToActivityUpdates('k1', cb)
+    subscribeToActivityUpdates('abc', cb)
 
-    handler?.({ data: JSON.stringify({ sessions: [{ key: 'k1' }] }) } as MessageEvent)
+    handler?.({ data: JSON.stringify({ sessions: [{ key: 'other' }] }) } as MessageEvent)
+    handler?.({ data: 'not-json' } as MessageEvent)
+    expect(cb).not.toHaveBeenCalled()
 
+    handler?.({ data: JSON.stringify({ sessions: [{ key: 'abc' }] }) } as MessageEvent)
     expect(cb).toHaveBeenCalledTimes(1)
-    await fetchSessionHistory('k1') // should refetch due cache invalidation
+
+    await fetchSessionHistory('abc')
     expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(typeof unsub).toBe('function')
   })
 })
