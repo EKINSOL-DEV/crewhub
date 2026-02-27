@@ -39,10 +39,7 @@ async def _reset_existing_connection(conn: OpenClawConnection) -> None:
         conn.ws = None
     if conn._listen_task and not conn._listen_task.done():
         conn._listen_task.cancel()
-        try:
-            await conn._listen_task
-        except asyncio.CancelledError:
-            raise
+        await conn._listen_task
 
 
 def _choose_auth(identity, conn: OpenClawConnection) -> tuple[bool, str]:

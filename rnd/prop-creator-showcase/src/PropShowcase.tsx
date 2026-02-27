@@ -512,7 +512,8 @@ function PropCard({ name, Component, color, index }: {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: 'relative',
         width: '100%',
@@ -526,13 +527,14 @@ function PropCard({ name, Component, color, index }: {
         boxShadow: hovered ? `0 0 30px ${color}33` : 'none',
         overflow: 'hidden',
         cursor: 'grab',
+        padding: 0,
+        outline: 'none',
+        textAlign: 'inherit',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
-      role="button"
-      tabIndex={0}
       aria-label={`Preview ${name}`}
     >
       <Canvas>
@@ -577,7 +579,7 @@ function PropCard({ name, Component, color, index }: {
       >
         #{String(index + 1).padStart(2, '0')}
       </div>
-    </div>
+    </button>
   );
 }
 
