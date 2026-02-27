@@ -208,6 +208,11 @@ export function PropBrowser() {
       {/* ── Header (draggable) ── */}
       <div
         onMouseDown={onMouseDown}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') e.preventDefault()
+        }}
+        tabIndex={0}
+        role="button"
         style={{
           display: 'flex',
           alignItems: 'center',

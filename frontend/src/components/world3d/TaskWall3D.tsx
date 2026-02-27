@@ -97,6 +97,15 @@ export function TaskWall3D({
             e.stopPropagation()
             e.nativeEvent.stopImmediatePropagation()
           }}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              e.stopPropagation()
+              e.nativeEvent.stopImmediatePropagation()
+            }
+          }}
+          tabIndex={0}
+          role="button"
           onPointerMove={(e) => e.stopPropagation()}
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}

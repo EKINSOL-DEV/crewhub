@@ -198,6 +198,8 @@ export function ImageDropZone({ children, onImagesChange, images, disabled }: Im
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      role="region"
+      aria-label="Image drop zone"
     >
       {children}
 

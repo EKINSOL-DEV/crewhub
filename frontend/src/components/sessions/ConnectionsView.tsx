@@ -271,7 +271,7 @@ function ConnectionDialog({
       <div
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation" // NOSONAR: decorative/overlay element; presentation role is appropriate here
+        role="none" // NOSONAR: decorative/overlay element; presentation role is appropriate here
         className="bg-background rounded-lg overflow-hidden"
       >
         {/* Header */}

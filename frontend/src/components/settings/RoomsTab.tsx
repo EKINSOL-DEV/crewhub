@@ -743,7 +743,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
           className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
         >
           <div className="px-6 pt-6 pb-4">
@@ -843,7 +843,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
           className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
         >
           <div className="px-6 pt-6 pb-4">
@@ -877,7 +877,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
           className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
         >
           <div className="px-6 pt-6 pb-4">
@@ -1008,7 +1008,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
           className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
         >
           <div className="px-6 pt-6 pb-4">
@@ -1041,7 +1041,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
           className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
         >
           <div className="px-6 pt-6 pb-4">

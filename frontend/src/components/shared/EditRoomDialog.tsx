@@ -159,6 +159,8 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        tabIndex={0}
+        role="button"
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.stopPropagation()

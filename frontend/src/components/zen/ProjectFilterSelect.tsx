@@ -84,7 +84,13 @@ export function ProjectFilterSelect({
   const currentProject = currentProjectId ? projects.find((p) => p.id === currentProjectId) : null
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative' }} onKeyDown={handleKeyDown}>
+    <div
+      ref={dropdownRef}
+      style={{ position: 'relative' }}
+      onKeyDown={handleKeyDown}
+      role="group"
+      tabIndex={-1}
+    >
       {/* Trigger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}

@@ -119,6 +119,8 @@ export function ZenTooltip({
         onMouseLeave={hideTooltip}
         onFocus={showTooltip}
         onBlur={hideTooltip}
+        role="button"
+        tabIndex={0}
       >
         {children}
       </div>

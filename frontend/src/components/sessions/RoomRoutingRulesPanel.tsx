@@ -360,7 +360,7 @@ export function RoomRoutingRulesPanel({
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
           className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
         >
           {/* Header */}
@@ -498,7 +498,7 @@ export function RoomRoutingRulesPanel({
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
           className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
         >
           {/* Header */}
@@ -553,7 +553,7 @@ export function RoomRoutingRulesPanel({
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
           className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
         >
           {/* Header */}

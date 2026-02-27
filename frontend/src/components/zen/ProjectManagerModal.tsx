@@ -725,13 +725,13 @@ export function ProjectManagerModal({
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
       }}
-      role="presentation"
+      role="none"
     >
       <div
         style={modalStyle}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"
+        role="none"
       >
         {view === 'list' && renderHeader('Manage Projects')}
         {view === 'create' && renderHeader('New Project', true)}

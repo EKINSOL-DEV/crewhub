@@ -120,7 +120,7 @@ function KanbanCard({
           className="zen-kanban-move-menu"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          role="presentation"
+          role="none"
         >
           <div className="zen-kanban-move-header">Move to:</div>
           {COLUMNS.filter((col) => col.status !== task.status).map((col) => (
@@ -185,6 +185,8 @@ function KanbanColumn({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      role="group"
+      aria-label={`${config.label} column`}
     >
       <div className="zen-kanban-column-header" style={{ borderColor: config.color }}>
         <span className="zen-kanban-column-icon">{config.icon}</span>
@@ -233,13 +235,13 @@ function TaskDetailModal({ task, onClose, onMove }: TaskDetailModalProps) {
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
       }}
-      role="presentation"
+      role="none"
     >
       <div
         className="zen-modal zen-kanban-detail"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"
+        role="none"
       >
         <div className="zen-modal-header">
           <h3 className="zen-modal-title">{task.title}</h3>

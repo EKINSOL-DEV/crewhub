@@ -429,6 +429,14 @@ function SelectionIndicator({
             onDoubleClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+              }
+            }}
+            tabIndex={0}
+            role="button"
             onMouseUp={(e) => e.stopPropagation()}
           >
             <div style={HUD_CONTAINER_STYLE}>

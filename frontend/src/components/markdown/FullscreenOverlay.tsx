@@ -188,7 +188,7 @@ export function FullscreenOverlay({
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
       }}
-      role="presentation"
+      role="none"
     >
       {/* Header */}
       <div
@@ -332,7 +332,7 @@ export function FullscreenOverlay({
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') setTocOpen(false)
                   }}
-                  role="presentation"
+                  role="none"
                   style={{
                     position: 'absolute',
                     inset: 0,

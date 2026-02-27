@@ -209,6 +209,8 @@ export function GroupThreadChat({
           cursor: 'pointer',
         }}
         onClick={() => setShowParticipants(true)}
+        tabIndex={0}
+        role="button"
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             setShowParticipants(true)

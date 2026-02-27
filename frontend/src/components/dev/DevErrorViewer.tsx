@@ -330,6 +330,8 @@ function ErrorViewerModal({ onClose }: Readonly<{ onClose: () => void }>) {
                 {/* Error summary row */}
                 <div
                   onClick={() => setExpandedId(expanded ? null : err.id)}
+                  tabIndex={0}
+                  role="button"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       setExpandedId(expanded ? null : err.id)

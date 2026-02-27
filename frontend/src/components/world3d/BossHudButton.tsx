@@ -98,6 +98,8 @@ export function BossHudButton({
     >
       {/* Portrait circle */}
       <div
+        role="img"
+        aria-label={bossConfig.label}
         style={{
           width: 56,
           height: 56,

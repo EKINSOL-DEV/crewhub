@@ -99,6 +99,8 @@ function DocTreeNode({
           if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
         }}
+        tabIndex={0}
+        role="button"
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             if (isDir) setExpanded((prev) => !prev)
