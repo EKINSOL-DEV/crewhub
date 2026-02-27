@@ -42,6 +42,43 @@ function escapeHtml(str: string): string {
     .replaceAll('"', '&quot;')
 }
 
+function sanitizeHref(url: string): string {
+  const trimmed = url.trim()
+  // Remove control chars that can be used to obfuscate protocols
+  const cleaned = Array.from(trimmed)
+    .filter((ch) => {
+      const code = ch.charCodeAt(0)
+      return code >= 32 && code !== 127
+    })
+    .join('')
+  const check = cleaned.replaceAll(/\s+/g, '').toLowerCase()
+
+  // Block dangerous schemes
+  if (
+    check.startsWith('javascript:') ||
+    check.startsWith('data:') ||
+    check.startsWith('vbscript:')
+  ) {
+    return '#'
+  }
+
+  // Allow http(s), mailto and safe relative/anchor URLs
+  if (
+    check.startsWith('http://') ||
+    check.startsWith('https://') ||
+    check.startsWith('mailto:') ||
+    check.startsWith('/') ||
+    check.startsWith('./') ||
+    check.startsWith('../') ||
+    check.startsWith('#')
+  ) {
+    return cleaned
+  }
+
+  // Unknown scheme (e.g. file:, chrome:, etc) — block by default
+  return '#'
+}
+
 /**
  * Render markdown to HTML.
  * Supports: code blocks, inline code, headers, blockquotes, bold,
@@ -98,11 +135,11 @@ export function renderMarkdown(
   // Strikethrough
   html = html.replaceAll(/~~(.+?)~~/g, '<del>$1</del>')
 
-  // Links [text](url)
-  html = html.replaceAll(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener" class="chat-md-link">$1</a>'
-  )
+  // Links [text](url) — sanitized to prevent javascript:/data: XSS
+  html = html.replaceAll(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, url) => {
+    const safeHref = sanitizeHref(url)
+    return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="chat-md-link">${label}</a>`
+  })
 
   // Unordered lists
   html = html.replaceAll(/^- (.+)$/gm, '<li class="chat-md-li">$1</li>')
@@ -480,8 +517,8 @@ const ChatMessageBubbleInner = memo(
           {/* Thinking blocks */}
           {showThinking && msg.thinking && msg.thinking.length > 0 && (
             <div className="zen-thinking-blocks">
-              {msg.thinking.map((thought) => (
-                <ThinkingBlock key={`thought-${thought}`} content={thought} zenMode />
+              {msg.thinking.map((thought, i) => (
+                <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} zenMode />
               ))}
             </div>
           )}
@@ -569,8 +606,8 @@ const ChatMessageBubbleInner = memo(
         {/* Thinking blocks */}
         {showThinking && msg.thinking && msg.thinking.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '100%' }}>
-            {msg.thinking.map((thought) => (
-              <ThinkingBlock key={`thought-${thought}`} content={thought} />
+            {msg.thinking.map((thought, i) => (
+              <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} />
             ))}
           </div>
         )}

@@ -352,6 +352,13 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
 
   const handleEnumerateMics = async () => {
     setMicEnumerating(true)
+
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.enumerateDevices) {
+      setMicDevices([])
+      setMicEnumerating(false)
+      return
+    }
+
     try {
       // Request permission first so labels are populated
       await navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => {

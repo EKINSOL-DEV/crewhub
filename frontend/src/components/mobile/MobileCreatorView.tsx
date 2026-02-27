@@ -21,6 +21,18 @@ const TRANSPARENT = 'transparent'
 const VAR_MOBILE_SURFACE = 'var(--mobile-surface, #1e293b)'
 const VAR_MOBILE_TEXT_MUTED = 'var(--mobile-text-muted, #94a3b8)'
 
+function toKebabCase(input: string): string {
+  return input
+    .trim()
+    .replaceAll(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replaceAll(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+    .replaceAll(/[\s_]+/g, '-')
+    .replaceAll(/[^a-zA-Z0-9-]/g, '-')
+    .replaceAll(/-+/g, '-')
+    .replaceAll(/^-|-$/g, '')
+    .toLowerCase()
+}
+
 // ── Types ─────────────────────────────────────────────────────────
 
 interface GenerationRecord {
@@ -345,38 +357,62 @@ function PropGeneratorTab() {
 
     const addLine = (line: ThinkingLine) => setThinkingLines((prev) => [...prev, line])
 
+    const parseEventData = (evt: Event): any | null => {
+      if (!(evt instanceof MessageEvent)) return null
+      if (typeof evt.data !== 'string') return null
+      try {
+        return JSON.parse(evt.data)
+      } catch {
+        return null
+      }
+    }
+
     try {
       const url = `/api/creator/generate-prop-stream?prompt=${encodeURIComponent(text)}&model=sonnet-4-5`
       const es = new EventSource(url)
       eventSourceRef.current = es
 
-      es.addEventListener('status', (e) =>
-        addLine({ text: JSON.parse(e.data).message, type: 'status' })
-      )
-      es.addEventListener('model', (e) => {
-        const d = JSON.parse(e.data)
-        addLine({ text: `🎯 Model: ${d.modelLabel}`, type: 'model' })
+      es.addEventListener('status', (e) => {
+        const d = parseEventData(e)
+        if (d?.message) addLine({ text: d.message, type: 'status' })
       })
-      es.addEventListener('thinking', (e) =>
-        addLine({ text: `💭 ${JSON.parse(e.data).text}`, type: 'thinking' })
-      )
-      es.addEventListener('text', (e) =>
-        addLine({ text: `📝 ${JSON.parse(e.data).text}`, type: 'text' })
-      )
-      es.addEventListener('tool', (e) =>
-        addLine({ text: JSON.parse(e.data).message, type: 'tool' })
-      )
-      es.addEventListener(TOOL_RESULT, (e) =>
-        addLine({ text: JSON.parse(e.data).message, type: TOOL_RESULT })
-      )
-      es.addEventListener(CORRECTION, (e) =>
-        addLine({ text: JSON.parse(e.data).message, type: CORRECTION })
-      )
+      es.addEventListener('model', (e) => {
+        const d = parseEventData(e)
+        if (d?.modelLabel) addLine({ text: `🎯 Model: ${d.modelLabel}`, type: 'model' })
+      })
+      es.addEventListener('thinking', (e) => {
+        const d = parseEventData(e)
+        if (d?.text) addLine({ text: `💭 ${d.text}`, type: 'thinking' })
+      })
+      es.addEventListener('text', (e) => {
+        const d = parseEventData(e)
+        if (d?.text) addLine({ text: `📝 ${d.text}`, type: 'text' })
+      })
+      es.addEventListener('tool', (e) => {
+        const d = parseEventData(e)
+        if (d?.message) addLine({ text: d.message, type: 'tool' })
+      })
+      es.addEventListener(TOOL_RESULT, (e) => {
+        const d = parseEventData(e)
+        if (d?.message) addLine({ text: d.message, type: TOOL_RESULT })
+      })
+      es.addEventListener(CORRECTION, (e) => {
+        const d = parseEventData(e)
+        if (d?.message) addLine({ text: d.message, type: CORRECTION })
+      })
 
       es.addEventListener('complete', (e) => {
-        const data = JSON.parse(e.data)
+        const data = parseEventData(e)
         es.close()
         eventSourceRef.current = null
+
+        if (!data) {
+          addLine({ text: '❌ Invalid server response', type: 'error' })
+          setError('Invalid server response')
+          setIsGenerating(false)
+          return
+        }
+
         addLine({ text: '✅ Prop generated successfully!', type: 'complete' })
         if (data.parts?.length) {
           setResult({ name: data.name, parts: data.parts as PropPart[], code: data.code || '' })
@@ -388,17 +424,16 @@ function PropGeneratorTab() {
       })
 
       es.addEventListener('error', (e) => {
-        if (e instanceof MessageEvent) {
-          try {
-            const data = JSON.parse(e.data)
-            addLine({ text: `❌ ${data.message}`, type: 'error' })
-            setError(data.message)
-          } catch {
-            setError('Connection error')
-          }
+        const data = parseEventData(e)
+        const msg = data?.message
+
+        if (msg) {
+          addLine({ text: `❌ ${msg}`, type: 'error' })
+          setError(msg)
         } else {
           setError('Connection to server lost')
         }
+
         es.close()
         eventSourceRef.current = null
         setIsGenerating(false)
@@ -413,14 +448,14 @@ function PropGeneratorTab() {
     if (!result || isSaving || isSaved) return
     setIsSaving(true)
     setError(null)
-    const kebabName = result.name.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+    const propId = toKebabCase(result.name) || 'prop'
     try {
       const res = await fetch('/api/creator/save-prop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: result.name,
-          propId: kebabName,
+          propId,
           code: result.code,
           parts: result.parts,
           mountType: 'floor',
@@ -709,7 +744,7 @@ function PropGeneratorTab() {
             >
               {thinkingLines.map((line, i) => (
                 <div
-                  key={`line-${line.type}-${line.text}`}
+                  key={`line-${i}`}
                   style={{
                     color: getLineColor(line, i === thinkingLines.length - 1),
                     paddingLeft: line.type === 'thinking' ? 12 : 0,
