@@ -322,15 +322,19 @@ DialogFooter.displayName = 'DialogFooter'
 interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
 
 const DialogTitle = React.forwardRef<HTMLHeadingElement, DialogTitleProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, children, ...props }, ref) => {
     const { titleId } = useDialogContext()
+    const hasAccessibleContent = React.Children.count(children) > 0
     return (
       <h2
         ref={ref}
         id={titleId}
+        aria-label={hasAccessibleContent ? props['aria-label'] : 'Dialog title'}
         className={cn('text-lg font-semibold leading-none tracking-tight', className)}
         {...props}
-      />
+      >
+        {hasAccessibleContent ? children : <span className="sr-only">Dialog title</span>}
+      </h2>
     )
   }
 )

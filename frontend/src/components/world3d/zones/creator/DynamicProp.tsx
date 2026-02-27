@@ -136,14 +136,21 @@ function DynamicMesh({
       return (
         <meshStandardMaterial
           color={selected ? '#88aaff' : part.color}
-          emissive={selected ? '#4466ff' : part.color}
-          emissiveIntensity={selected ? 0.8 : 0.5}
+          {...({
+            emissive: selected ? '#4466ff' : part.color,
+            emissiveIntensity: selected ? 0.8 : 0.5,
+          } as any)}
         />
       )
     }
 
     if (selected) {
-      return <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
+      return (
+        <meshStandardMaterial
+          color={part.color}
+          {...({ emissive: '#4466ff', emissiveIntensity: 0.4 } as any)}
+        />
+      )
     }
 
     return <meshToonMaterial {...toon} />
@@ -193,9 +200,15 @@ function SelectedPartMesh({
     <mesh ref={meshRef} castShadow position={part.position} rotation={rotation}>
       <PartGeometry type={part.type} args={part.args as any} onRef={centerGeometry} />
       {part.emissive ? (
-        <meshStandardMaterial color="#88aaff" emissive="#4466ff" emissiveIntensity={0.8} />
+        <meshStandardMaterial
+          color="#88aaff"
+          {...({ emissive: '#4466ff', emissiveIntensity: 0.8 } as any)}
+        />
       ) : (
-        <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
+        <meshStandardMaterial
+          color={part.color}
+          {...({ emissive: '#4466ff', emissiveIntensity: 0.4 } as any)}
+        />
       )}
     </mesh>
   )
