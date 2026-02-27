@@ -85,21 +85,19 @@ function getDateStyle(variant: TreeVariant): CSSProperties {
   return { fontSize: 11, color: '#475569', whiteSpace: 'nowrap', flexShrink: 0 }
 }
 
-function getNodeLabel(node: DocNode, isDirectory: boolean): string {
-  return isDirectory ? node.name : node.name.replace(/\.md$/, '')
+function getDirectoryLabel(node: DocNode): string {
+  return node.name
 }
 
-function handleNodeAction(
-  isDirectory: boolean,
-  nodePath: string,
-  onToggle: () => void,
-  onOpen: (path: string) => void
-): void {
-  if (isDirectory) {
-    onToggle()
-    return
-  }
+function getFileLabel(node: DocNode): string {
+  return node.name.replace(/\.md$/, '')
+}
 
+function handleDirectoryAction(onToggle: () => void): void {
+  onToggle()
+}
+
+function handleFileAction(nodePath: string, onOpen: (path: string) => void): void {
   onOpen(nodePath)
 }
 
@@ -123,14 +121,25 @@ export function DocumentTreeNode({
   const buttonStyles = getButtonStyles(variant, depth)
   const arrowStyle = getArrowStyle(variant)
   const dateStyle = getDateStyle(variant)
-  const arrow = isDirectory ? (isExpanded ? '▼' : '▶') : null
+  let arrow: string | null = null
+  if (isDirectory) {
+    arrow = isExpanded ? '▼' : '▶'
+  }
+
   const spacerWidth = variant === 'zen' ? 12 : 16
   const iconFontSize = variant === 'zen' ? 13 : 16
-  const nodeLabel = getNodeLabel(node, isDirectory)
+  const nodeLabel = isDirectory ? getDirectoryLabel(node) : getFileLabel(node)
   const hoverBackground = 'var(--zen-bg-hover, hsl(var(--accent)))'
 
   const toggleExpanded = () => setExpanded((prev) => !prev)
-  const onNodeSelect = () => handleNodeAction(isDirectory, node.path, toggleExpanded, onOpen)
+  const onNodeSelect = () => {
+    if (isDirectory) {
+      handleDirectoryAction(toggleExpanded)
+      return
+    }
+
+    handleFileAction(node.path, onOpen)
+  }
 
   const onNodeKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
