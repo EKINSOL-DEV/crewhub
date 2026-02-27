@@ -203,8 +203,8 @@ async def _get_project_folder(project_id: str) -> str:
 )
 async def list_project_files(
     project_id: str,
-    path: Annotated[str, Query("", description="Relative path within project folder")],
-    depth: Annotated[int, Query(2, ge=1, le=5, description="Max directory depth to scan")],
+    path: Annotated[str, Query(description="Relative path within project folder")] = "",
+    depth: Annotated[int, Query(ge=1, le=5, description="Max directory depth to scan")] = 2,
 ):
     """List files in a project folder. Returns a tree structure."""
     folder_path = await _get_project_folder(project_id)

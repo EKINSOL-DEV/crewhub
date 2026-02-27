@@ -64,8 +64,8 @@ async def _get_project_docs_path(project_id: str) -> tuple[Path, str]:
 )
 async def list_project_documents(
     project_id: str,
-    path: Annotated[Optional[str], Query(None, description="Subdirectory to list")],
-    depth: Annotated[int, Query(3, ge=1, le=5, description="Max folder depth")],
+    path: Annotated[Optional[str], Query(description="Subdirectory to list")] = None,
+    depth: Annotated[int, Query(ge=1, le=5, description="Max folder depth")] = 3,
 ):
     """List documents in a project's data directory."""
     docs_dir, project_name = await _get_project_docs_path(project_id)

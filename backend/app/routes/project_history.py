@@ -60,9 +60,9 @@ def _row_to_event(row: dict, display_name: Optional[str] = None) -> HistoryEvent
 )
 async def get_project_history(
     project_id: str,
-    event_type: Annotated[Optional[str], Query(None, description="Filter by event type")],
-    limit: Annotated[int, Query(100, ge=1, le=500)],
-    offset: Annotated[int, Query(0, ge=0)],
+    event_type: Annotated[Optional[str], Query(description="Filter by event type")] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """Get project activity history."""
     try:
@@ -115,7 +115,7 @@ async def get_project_history(
 async def get_task_history(
     project_id: str,
     task_id: str,
-    limit: Annotated[int, Query(50, ge=1, le=200)],
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ):
     """Get history for a specific task."""
     try:

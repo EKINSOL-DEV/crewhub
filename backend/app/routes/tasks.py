@@ -40,9 +40,9 @@ async def _not_found(label: str) -> None:
 )
 async def get_room_tasks(
     room_id: str,
-    status: Annotated[Optional[str], Query(None, description=MSG_FILTER_STATUS)],
-    limit: Annotated[int, Query(100, ge=1, le=500)],
-    offset: Annotated[int, Query(0, ge=0)],
+    status: Annotated[Optional[str], Query(description=MSG_FILTER_STATUS)] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """Get all tasks for a specific room."""
     try:
@@ -59,9 +59,9 @@ async def get_room_tasks(
 )
 async def get_project_tasks(
     project_id: str,
-    status: Annotated[Optional[str], Query(None, description=MSG_FILTER_STATUS)],
-    limit: Annotated[int, Query(100, ge=1, le=500)],
-    offset: Annotated[int, Query(0, ge=0)],
+    status: Annotated[Optional[str], Query(description=MSG_FILTER_STATUS)] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """Get all tasks for a specific project."""
     try:
@@ -78,12 +78,12 @@ async def get_project_tasks(
 
 @router.get("", response_model=TaskListResponse, responses={500: {"description": "Internal server error"}})
 async def list_tasks(
-    project_id: Annotated[Optional[str], Query(None, description="Filter by project")],
-    room_id: Annotated[Optional[str], Query(None, description="Filter by room")],
-    status: Annotated[Optional[str], Query(None, description=MSG_FILTER_STATUS)],
-    assigned_session_key: Annotated[Optional[str], Query(None, description="Filter by assignee")],
-    limit: Annotated[int, Query(100, ge=1, le=500)],
-    offset: Annotated[int, Query(0, ge=0)],
+    project_id: Annotated[Optional[str], Query(description="Filter by project")] = None,
+    room_id: Annotated[Optional[str], Query(description="Filter by room")] = None,
+    status: Annotated[Optional[str], Query(description=MSG_FILTER_STATUS)] = None,
+    assigned_session_key: Annotated[Optional[str], Query(description="Filter by assignee")] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """Get all tasks with optional filters."""
     try:

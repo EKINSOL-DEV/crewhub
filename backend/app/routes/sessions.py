@@ -29,7 +29,7 @@ async def list_sessions():
 
 
 @router.get("/{session_key:path}/history", responses={503: {"description": "Service unavailable"}})
-async def get_session_history(session_key: str, limit: Annotated[int, Query(default=50, ge=1, le=500)]):
+async def get_session_history(session_key: str, limit: Annotated[int, Query(ge=1, le=500)] = 50):
     """Get message history for a specific session.
 
     Returns raw JSONL entries for backward compatibility.

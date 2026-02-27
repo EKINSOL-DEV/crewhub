@@ -93,7 +93,7 @@ async def submit_entry(standup_id: str, body: StandupEntryCreate):
 
 
 @router.get("")
-async def list_standups(days: Annotated[int, Query(7, ge=1, le=90)]):
+async def list_standups(days: Annotated[int, Query(ge=1, le=90)] = 7):
     """List recent standups."""
     cutoff = int((time.time() - days * 86400) * 1000)
 

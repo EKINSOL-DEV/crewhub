@@ -273,8 +273,8 @@ async def get_session_context_prompt(session_key: str):
 )
 async def get_context_envelope(
     session_key: str,
-    channel: Annotated[Optional[str], Query(None, description="Origin channel (whatsapp, slack, crewhub-ui, ...)")],
-    spawned_from: Annotated[Optional[str], Query(None, description="Parent session key")],
+    channel: Annotated[Optional[str], Query(description="Origin channel (whatsapp, slack, crewhub-ui, ...)")] = None,
+    spawned_from: Annotated[Optional[str], Query(description="Parent session key")] = None,
 ):
     """
     Get a CrewHub context envelope for a session.
@@ -315,8 +315,8 @@ async def get_context_envelope(
 @router.get("/rooms/{room_id}/context-envelope", response_model=dict, responses={404: {"description": "Not found"}})
 async def get_room_context_envelope(
     room_id: str,
-    channel: Annotated[Optional[str], Query(None)],
-    session_key: Annotated[Optional[str], Query(None)],
+    channel: Annotated[Optional[str], Query()] = None,
+    session_key: Annotated[Optional[str], Query()] = None,
 ):
     """Get context envelope directly by room_id (for spawn flows)."""
     envelope = await build_crewhub_context(

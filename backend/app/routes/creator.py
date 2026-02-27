@@ -78,7 +78,7 @@ async def list_models():
 async def generate_prop_stream(
     request: Request,
     prompt: Annotated[str, Query(..., min_length=1)],
-    model: Annotated[str, Query(DEFAULT_MODEL)],
+    model: Annotated[str, Query()] = DEFAULT_MODEL,
 ):
     """SSE endpoint for streaming prop generation."""
     name, _filename = prompt_to_filename(prompt.strip())
@@ -120,7 +120,7 @@ async def generate_prop(req: GeneratePropRequest):
 
 
 @router.get("/generation-history")
-async def get_generation_history(limit: Annotated[int, Query(50, ge=1, le=100)]):
+async def get_generation_history(limit: Annotated[int, Query(ge=1, le=100)] = 50):
     return {"records": load_generation_history()[:limit]}
 
 
@@ -157,7 +157,7 @@ async def get_generation_record(gen_id: str):
         500: {"description": "Internal server error"},
     },
 )
-async def delete_generation_record(gen_id: str, cascade: Annotated[bool, Query(False)]):
+async def delete_generation_record(gen_id: str, cascade: Annotated[bool, Query()] = False):
     """Delete a generation history record, optionally cascading to blueprint placements."""
     history = load_generation_history()
     record_idx = next((i for i, r in enumerate(history) if r.get("id") == gen_id), None)
@@ -298,7 +298,7 @@ async def refine_prop(req: PropRefinementRequest):
 
 
 @router.get("/props/refinement-options")
-async def get_refinement_options(prompt: Annotated[str, Query("", min_length=0)]):
+async def get_refinement_options(prompt: Annotated[str, Query(min_length=0)] = ""):
     from ..services.multi_pass_generator import MultiPassGenerator
 
     return MultiPassGenerator().get_refinement_options(prompt)

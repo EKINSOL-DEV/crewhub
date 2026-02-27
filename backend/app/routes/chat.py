@@ -234,9 +234,9 @@ def _build_history_message(idx: int, entry: dict, raw: bool) -> dict | None:  # 
 @router.get("/api/chat/{session_key}/history", responses={403: {"description": "Forbidden"}})
 async def get_chat_history(
     session_key: str,
-    limit: Annotated[int, Query(default=30, ge=1, le=100)],
-    before: Annotated[Optional[int], Query(default=None)],
-    raw: Annotated[bool, Query(default=False)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 30,
+    before: Annotated[Optional[int], Query()] = None,
+    raw: Annotated[bool, Query()] = False,
 ):
     """Get chat history for a session with pagination."""
     _validate_session_key(session_key)

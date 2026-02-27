@@ -174,9 +174,9 @@ async def create_thread(body: ThreadCreate):
 
 @router.get("")
 async def list_threads(
-    kind: Annotated[Optional[str], Query(default=None)],
-    archived: Annotated[bool, Query(default=False)],
-    limit: Annotated[int, Query(default=50, ge=1, le=200)],
+    kind: Annotated[Optional[str], Query()] = None,
+    archived: Annotated[bool, Query()] = False,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ):
     """List threads, optionally filtered by kind."""
     async with get_db() as db:
@@ -377,8 +377,8 @@ async def remove_participant(thread_id: str, agent_id: str):
 @router.get("/{thread_id}/messages", responses={404: {"description": "Not found"}})
 async def get_messages(
     thread_id: str,
-    limit: Annotated[int, Query(default=50, ge=1, le=200)],
-    before: Annotated[Optional[int], Query(default=None)],
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    before: Annotated[Optional[int], Query()] = None,
 ):
     """Get messages for a thread with pagination."""
     async with get_db() as db:

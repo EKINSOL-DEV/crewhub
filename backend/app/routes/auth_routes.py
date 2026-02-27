@@ -164,8 +164,8 @@ async def create_key(
 
 @router.get("/keys", response_model=dict)
 async def list_keys(
-    include_revoked: Annotated[bool, Query(False, description="Include revoked keys")],
     key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
+    include_revoked: Annotated[bool, Query(description="Include revoked keys")] = False,
 ):
     """List all API keys (masked). Admin only."""
     now = int(time.time() * 1000)
@@ -240,9 +240,9 @@ async def get_self_key(
 @router.get("/keys/{key_id}/audit", responses={404: {"description": "Not found"}})
 async def get_key_audit_log(
     key_id: str,
-    limit: Annotated[int, Query(100, ge=1, le=1000)],
-    offset: Annotated[int, Query(0, ge=0)],
     key: Annotated[APIKeyInfo, Depends(require_scope("admin"))],
+    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """Get audit log for a specific API key. Admin only."""
     async with get_db() as db:

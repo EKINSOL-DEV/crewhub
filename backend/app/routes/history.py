@@ -15,14 +15,14 @@ router = APIRouter()
 
 @router.get("")
 async def get_archived_sessions(
-    limit: Annotated[int, Query(default=50, ge=1, le=500)],
-    offset: Annotated[int, Query(default=0, ge=0)],
-    agent_id: Annotated[Optional[str], Query(default=None, alias="agent")],
-    type: Annotated[Optional[str], Query(default=None, alias="type")],
-    date_from: Annotated[Optional[int], Query(default=None)],
-    date_to: Annotated[Optional[int], Query(default=None)],
-    search: Annotated[Optional[str], Query(default=None)],
-    include_deleted: Annotated[bool, Query(default=False)],
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    agent_id: Annotated[Optional[str], Query(alias="agent")] = None,
+    type: Annotated[Optional[str], Query(alias="type")] = None,
+    date_from: Annotated[Optional[int], Query()] = None,
+    date_to: Annotated[Optional[int], Query()] = None,
+    search: Annotated[Optional[str], Query()] = None,
+    include_deleted: Annotated[bool, Query()] = False,
 ):
     """Get archived session history with filters.
 

@@ -61,8 +61,8 @@ async def _get_agent_workspace(agent_id: str) -> Path:
 )
 async def list_agent_files(
     agent_id: str,
-    path: Annotated[Optional[str], Query(None, description="Subdirectory to list")],
-    depth: Annotated[int, Query(2, ge=1, le=5, description="Max folder depth")],
+    path: Annotated[Optional[str], Query(description="Subdirectory to list")] = None,
+    depth: Annotated[int, Query(ge=1, le=5, description="Max folder depth")] = 2,
 ):
     """List files in an agent's workspace."""
     workspace = await _get_agent_workspace(agent_id)
