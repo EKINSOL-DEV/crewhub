@@ -4,7 +4,7 @@
  * Matches Sessions detail panel pattern with Info and History tabs.
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { api, type SessionMessage, type SessionContentBlock, type CrewSession } from '@/lib/api'
 import type { ActiveTask } from '@/hooks/useActiveTasks'
 import { FullscreenDetailView } from './FullscreenDetailView'
@@ -51,57 +51,52 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block Renderer ────────────────────────────────────
 
-function ContentBlockView({ block }: Readonly<{ block: SessionContentBlock }>) {
-  // NOSONAR
-  // NOSONAR
-  // NOSONAR: complexity from activity detail rendering with multiple activity type branches
+function ExpandableBlock({ label, className, children }: Readonly<{
+  label: string
+  className: string
+  children: React.ReactNode
+}>) {
   const [expanded, setExpanded] = useState(false)
+  return (
+    <div className={className}>
+      <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
+        {label} {expanded ? '▾' : '▸'}
+      </button>
+      {expanded && children}
+    </div>
+  )
+}
 
+function ContentBlockView({ block }: Readonly<{ block: SessionContentBlock }>) {
   if (block.type === 'text' && block.text) {
     return <div className="zen-sd-text">{block.text}</div>
   }
-
   if (block.type === 'thinking' && block.thinking) {
     return (
-      <div className="zen-sd-thinking">
-        <button className="zen-sd-thinking-toggle" onClick={() => setExpanded(!expanded)}>
-          💭 Thinking {expanded ? '▾' : '▸'}
-        </button>
-        {expanded && <pre className="zen-sd-thinking-content">{block.thinking}</pre>}
-      </div>
+      <ExpandableBlock label="💭 Thinking" className="zen-sd-thinking">
+        <pre className="zen-sd-thinking-content">{block.thinking}</pre>
+      </ExpandableBlock>
     )
   }
-
   if (block.type === 'tool_use') {
     return (
-      <div className="zen-sd-tool-call">
-        <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
-          🔧 {block.name || 'Tool'} {expanded ? '▾' : '▸'}
-        </button>
-        {expanded && block.arguments && (
-          <pre className="zen-sd-tool-args">{JSON.stringify(block.arguments, null, 2)}</pre>
-        )}
-      </div>
+      <ExpandableBlock label={`🔧 ${block.name || 'Tool'}`} className="zen-sd-tool-call">
+        {block.arguments && <pre className="zen-sd-tool-args">{JSON.stringify(block.arguments, null, 2)}</pre>}
+      </ExpandableBlock>
     )
   }
-
   if (block.type === 'tool_result') {
-    const text =
-      block.content
-        ?.map((c) => c.text)
-        .filter(Boolean)
-        .join('\n') || ''
+    const text = block.content?.map((c) => c.text).filter(Boolean).join('\n') || ''
     if (!text) return null
     return (
-      <div className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}>
-        <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
-          {block.isError ? '❌' : '✅'} Result {expanded ? '▾' : '▸'}
-        </button>
-        {expanded && <pre className="zen-sd-tool-result-content">{text}</pre>}
-      </div>
+      <ExpandableBlock
+        label={`${block.isError ? '❌' : '✅'} Result`}
+        className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}
+      >
+        <pre className="zen-sd-tool-result-content">{text}</pre>
+      </ExpandableBlock>
     )
   }
-
   return null
 }
 

@@ -56,10 +56,21 @@ function countFiles(nodes: DocNode[]): number {
 
 // ── Tree Node (mobile optimized) ──────────────────────────────────
 
+function isFilteredOut(node: DocNode, searchQuery: string): boolean {
+  if (searchQuery.length < 2) return false
+  const q = searchQuery.toLowerCase()
+  if (node.type === 'directory') {
+    return !node.children?.some((c) => matchesSearch(c, q))
+  }
+  return !node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q)
+}
+
+function getNodeIcon(isDir: boolean, isExpanded: boolean): string {
+  if (!isDir) return '📄'
+  return isExpanded ? '📂' : '📁'
+}
+
 function MobileDocTreeNode({
-  // NOSONAR
-  // NOSONAR
-  // NOSONAR: complexity from docs panel with filtering and rendering branches
   node,
   depth,
   sortKey,
@@ -75,24 +86,11 @@ function MobileDocTreeNode({
   const [expanded, setExpanded] = useState(depth === 0)
   const isDir = node.type === 'directory'
 
-  if (searchQuery.length >= 2) {
-    const q = searchQuery.toLowerCase()
-    if (isDir) {
-      if (!node.children?.some((c) => matchesSearch(c, q))) return null
-    } else if (!node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q))
-      return null
-  }
+  if (isFilteredOut(node, searchQuery)) return null
 
   const isExpanded = searchQuery.length >= 2 ? true : expanded
   const sorted = isDir && node.children ? sortNodes(node.children, sortKey) : []
-  let folderIcon: string
-  if (!isDir) {
-    folderIcon = '📄'
-  } else if (isExpanded) {
-    folderIcon = '📂'
-  } else {
-    folderIcon = '📁'
-  }
+  const folderIcon = getNodeIcon(isDir, isExpanded)
 
   return (
     <div>
