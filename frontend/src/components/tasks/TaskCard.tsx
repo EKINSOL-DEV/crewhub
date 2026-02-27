@@ -350,16 +350,6 @@ export const TaskCard = memo(function TaskCard({
           transition: 'box-shadow 0.15s, transform 0.15s',
           position: 'relative',
         }}
-        onMouseEnter={(e) => {
-          if (onClick) {
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'
-            e.currentTarget.style.transform = 'translateY(-1px)'
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'
-          e.currentTarget.style.transform = 'translateY(0)'
-        }}
       >
         {onClick && (
           <button
