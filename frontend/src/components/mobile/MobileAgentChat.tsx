@@ -38,6 +38,14 @@ interface PendingFile {
   uploadedPath: string | null
 }
 
+function mapUploadResult(results: { id: string; error: string | null }[]) {
+  return (f: PendingFile): PendingFile => {
+    const result = results.find((r) => r.id === f.id)
+    if (result?.error) return { ...f, uploading: false, error: result.error }
+    return { ...f, uploading: false }
+  }
+}
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
@@ -401,14 +409,7 @@ export function MobileAgentChat({
 
         const errors = results.filter((r) => r.error)
         if (errors.length > 0) {
-          setPendingFiles((prev) =>
-            prev.map((f) => {
-              // NOSONAR: nested map in setState updater — acceptable async upload pattern
-              const result = results.find((r) => r.id === f.id)
-              if (result?.error) return { ...f, uploading: false, error: result.error }
-              return { ...f, uploading: false }
-            })
-          )
+          setPendingFiles((prev) => prev.map(mapUploadResult(results)))
           setIsUploading(false)
           return // Don't send if uploads failed
         }

@@ -245,7 +245,9 @@ def _append_task_prompt(lines: list[str], tasks) -> None:
     lines.append(f"- Todo: {tasks.todo_count}, Done: {tasks.done_count}")
 
 
-@router.get("/{session_key}/context/prompt", response_model=dict)
+@router.get(
+    "/{session_key}/context/prompt", response_model=dict, responses={500: {"description": "Internal server error"}}
+)
 async def get_session_context_prompt(session_key: str):
     """Get a formatted system prompt snippet for context injection."""
     context = await get_session_context(session_key)

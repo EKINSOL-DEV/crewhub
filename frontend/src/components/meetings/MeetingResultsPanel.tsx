@@ -13,6 +13,18 @@ import { useMeetingContext } from '@/contexts/MeetingContext'
 import { API_BASE } from '@/lib/api'
 import type { MeetingState } from '@/hooks/useMeeting'
 
+function mapApiTurn(roundNum: number, totalTurns: number) {
+  return (t: any, i: number) => ({
+    round: roundNum,
+    agentId: t.agent_id,
+    agentName: t.agent_name,
+    response: t.response,
+    turnIndex: i,
+    totalTurns,
+    status: 'done' as const,
+  })
+}
+
 export function MeetingResultsPanel() {
   const { sidebarMeetingId, closeSidebar, meeting, openFollowUp } = useMeetingContext()
   const [loadedMeeting, setLoadedMeeting] = useState<MeetingState | null>(null)
@@ -66,17 +78,7 @@ export function MeetingResultsPanel() {
             data.rounds?.map((r: any) => ({
               roundNum: r.round_num,
               topic: r.topic,
-              // NOSONAR: nested map inside rounds.map in data transform — acceptable pattern
-              turns:
-                r.turns?.map((t: any, i: number) => ({
-                  round: r.round_num,
-                  agentId: t.agent_id,
-                  agentName: t.agent_name,
-                  response: t.response,
-                  turnIndex: i,
-                  totalTurns: r.turns.length,
-                  status: 'done' as const,
-                })) || [],
+              turns: r.turns?.map(mapApiTurn(r.round_num, r.turns.length)) || [],
               status: 'complete' as const,
             })) || [],
           outputMd: data.output_md,

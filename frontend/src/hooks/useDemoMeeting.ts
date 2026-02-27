@@ -157,6 +157,18 @@ const INITIAL_STATE: MeetingState = {
 
 // ─── Hook ───────────────────────────────────────────────────────
 
+function makeDemoTurnWaiting(roundNum: number, totalTurns: number) {
+  return (t: FakeTurn, ti: number) => ({
+    round: roundNum,
+    agentId: t.agentId,
+    agentName: t.agentName,
+    response: null,
+    turnIndex: ti,
+    totalTurns,
+    status: 'waiting' as const,
+  })
+}
+
 export function useDemoMeeting() {
   const [state, setState] = useState<MeetingState>(INITIAL_STATE)
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -205,16 +217,7 @@ export function useDemoMeeting() {
             newRounds[ri] = {
               roundNum,
               topic: round.topic,
-              turns: round.turns.map((t, ti) => ({
-                // NOSONAR: nested map in setState in setTimeout — demo playback pattern
-                round: roundNum,
-                agentId: t.agentId,
-                agentName: t.agentName,
-                response: null,
-                turnIndex: ti,
-                totalTurns: round.turns.length,
-                status: 'waiting' as const,
-              })),
+              turns: round.turns.map(makeDemoTurnWaiting(roundNum, round.turns.length)),
               status: 'in_progress',
             }
             // Mark previous rounds as complete

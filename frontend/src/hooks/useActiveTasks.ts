@@ -115,9 +115,7 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
       }
 
       cleanupTimerRef.current = setTimeout(() => {
-        setTasks((prevTasks) =>
-          prevTasks.filter(makeExpiredTaskFilter(Date.now(), fadeOutDuration))
-        )
+        setTasks(makeTaskExpiryUpdater(fadeOutDuration))
         scheduleCleanup() // Reschedule
       }, 1000) // Check every second
     }
@@ -242,6 +240,15 @@ function isSubagentSession(key: string): boolean {
 function makeExpiredTaskFilter(now: number, fadeOutDuration: number) {
   return (task: ActiveTask): boolean =>
     task.status !== 'done' || !task.doneAt || now - task.doneAt < fadeOutDuration
+}
+
+/**
+ * Returns a setState updater that filters out expired tasks.
+ * Extracted to module level to reduce setState callback nesting depth (S2004).
+ */
+function makeTaskExpiryUpdater(fadeOutDuration: number) {
+  return (prevTasks: ActiveTask[]) =>
+    prevTasks.filter(makeExpiredTaskFilter(Date.now(), fadeOutDuration))
 }
 
 /**

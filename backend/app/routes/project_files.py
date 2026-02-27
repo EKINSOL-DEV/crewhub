@@ -257,6 +257,7 @@ def _read_text_with_fallback(target: Path) -> str:
         403: {"description": "Forbidden"},
         404: {"description": "Not found"},
         413: {"description": "Request entity too large"},
+        422: {"description": "Unprocessable entity"},
     },
 )
 async def read_project_file(
