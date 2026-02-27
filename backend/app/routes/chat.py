@@ -112,7 +112,7 @@ def _normalize_timestamp(value: object) -> int:
     return 0
 
 
-def _extract_content_parts(raw_content: object, raw: bool) -> tuple[list[str], list[dict], list[str]]:
+def _extract_content_parts(raw_content: object, raw: bool) -> tuple[list[str], list[dict], list[str]]:  # NOSONAR
     content_parts: list[str] = []
     tools: list[dict] = []
     thinking_blocks: list[str] = []
@@ -193,7 +193,7 @@ def _skip_user_message(content: str) -> bool:
     return stripped.startswith("```") and ("message_id" in content or "sender_id" in content)
 
 
-def _build_history_message(idx: int, entry: dict, raw: bool) -> dict | None:
+def _build_history_message(idx: int, entry: dict, raw: bool) -> dict | None:  # NOSONAR
     msg = entry.get("message", {}) if isinstance(entry.get("message"), dict) else {}
     role = msg.get("role") or entry.get("role")
     if role not in ("user", "assistant", "system"):

@@ -329,7 +329,7 @@ export function CardsView({ sessions }: CardsViewProps) {
                       <SessionCard
                         key={session.key}
                         session={session}
-                        onViewLogs={() => handleViewLogs(session)}
+                        onViewLogs={handleViewLogs}
                       />
                     ))}
                   </div>
@@ -344,11 +344,7 @@ export function CardsView({ sessions }: CardsViewProps) {
       // Flat view (no grouping)
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredAndSortedSessions.map((session) => (
-          <SessionCard
-            key={session.key}
-            session={session}
-            onViewLogs={() => handleViewLogs(session)}
-          />
+          <SessionCard key={session.key} session={session} onViewLogs={handleViewLogs} />
         ))}
       </div>
     )

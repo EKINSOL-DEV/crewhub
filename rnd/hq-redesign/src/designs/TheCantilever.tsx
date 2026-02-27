@@ -1,5 +1,5 @@
 import { Wall } from '../WallSystem'
-import { Workstation, MeetingTable, ServerRack, Whiteboard, Plant, TallPlant, Floor, Sofa, CoffeeTable, HangingLight, Pillar, Stairs } from '../Props'
+import { Workstation, MeetingTable, ServerRack, Whiteboard, Plant, TallPlant, Floor, Sofa, CoffeeTable, HangingLight, Pillar } from '../Props'
 
 /**
  * THE CANTILEVER - Inspired by OMA / Rem Koolhaas / CCTV HQ Beijing
@@ -18,7 +18,7 @@ import { Workstation, MeetingTable, ServerRack, Whiteboard, Plant, TallPlant, Fl
 
 function CrossBrace({ p1, p2, color = '#667788' }: Readonly<{ p1: [number, number, number], p2: [number, number, number], color?: string }>) {
   const dx = p2[0] - p1[0], dy = p2[1] - p1[1], dz = p2[2] - p1[2]
-  const len = Math.sqrt(dx * dx + dy * dy + dz * dz)
+  const len = Math.hypot(dx, dy, dz)
   const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2, mz = (p1[2] + p2[2]) / 2
   const rotZ = -Math.atan2(dx, dy)
   const rotX = Math.atan2(dz, Math.hypot(dx, dy))

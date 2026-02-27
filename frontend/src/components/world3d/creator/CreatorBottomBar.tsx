@@ -328,9 +328,6 @@ export function CreatorBottomBar() {
           type="button"
           style={chipStyle(activeCategory === 'All')}
           onClick={() => handleCategoryClick('All')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') handleCategoryClick('All')
-          }}
         >
           All
         </button>

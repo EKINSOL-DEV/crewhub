@@ -147,7 +147,7 @@ export function useSessionDisplayName(sessionKey: string) {
 }
 
 export function useSessionDisplayNames(sessionKeys: string[]) {
-  const keysString = sessionKeys.sort((a, b) => a.localeCompare(b)).join(',')
+  const keysString = [...sessionKeys].sort((a, b) => a.localeCompare(b)).join(',')
   const [displayNames, setDisplayNames] = useState<Map<string, string | null>>(() => {
     const map = new Map<string, string | null>()
     sessionKeys.forEach((key) => {

@@ -32,13 +32,13 @@ export type AccentColor =
   | 'rose'
   | 'amber'
 
-/** @deprecated — use zen.currentTheme instead */
+/** Legacy: use zen.currentTheme instead */
 interface LegacyThemeConfig {
   mode: ThemeMode
   accentColor: AccentColor
 }
 
-/** @deprecated — accent colors are now derived from the active theme */
+/** Legacy: accent colors are now derived from the active theme */
 export const accentColors: Record<
   AccentColor,
   { name: string; hue: number; primary: string; preview: string }
@@ -64,9 +64,9 @@ interface ThemeContextValue {
   resolvedMode: 'light' | 'dark'
 
   // ── Legacy compat (so SettingsPanel & existing code still compiles) ──
-  /** @deprecated — use zen.currentTheme / zen.setTheme instead */
+  /** Legacy: use zen.currentTheme / zen.setTheme instead */
   theme: LegacyThemeConfig // NOSONAR — legacy compat shim
-  /** @deprecated — use zen.setTheme(themeId) instead */
+  /** Legacy: use zen.setTheme(themeId) instead */
   setTheme: (t: Partial<LegacyThemeConfig>) => void // NOSONAR — legacy compat shim
 }
 

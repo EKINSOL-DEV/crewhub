@@ -123,9 +123,7 @@ export function MarkdownEditor({
         key: 'Escape',
         run: () => {
           // NOSONAR - CodeMirror keymap run must return boolean
-          if (isDirty()) {
-            if (!confirm('You have unsaved changes. Discard?')) return true
-          }
+          if (isDirty() && !confirm('You have unsaved changes. Discard?')) return false
           onCancel()
           return true
         },

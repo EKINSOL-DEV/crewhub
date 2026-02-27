@@ -78,6 +78,7 @@ export function VideoThumbnail({ attachment, maxWidth = 300 }: VideoThumbnailPro
         style={videoStyle}
         onError={() => setVideoError(true)}
       >
+        <track kind="captions" label="Captions" srcLang="en" />
         Your browser does not support video playback.
       </video>
     </div>

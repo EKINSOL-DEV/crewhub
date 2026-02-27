@@ -12,9 +12,10 @@
         try {
           var zen = localStorage.getItem('zen-theme');
           var lightThemes = ['github-light', 'solarized-light'];
-          var isDark = zen ? lightThemes.indexOf(zen) === -1 : true;
+          var isDark = zen ? !lightThemes.includes(zen) : true;
           document.documentElement.classList.add(isDark ? 'dark' : 'light');
         } catch (e) {
+          console.warn('Theme preload failed, defaulting to dark mode', e);
           document.documentElement.classList.add('dark');
         }
       })();

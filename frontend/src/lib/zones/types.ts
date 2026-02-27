@@ -23,7 +23,7 @@ export interface Zone {
   /** Emoji icon */
   icon: string
   /** Environment style */
-  environment: EnvironmentType
+  environment: string
   /** Primary accent colour */
   colorPrimary: string
   /** Layout strategy */

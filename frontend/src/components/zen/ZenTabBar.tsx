@@ -221,7 +221,7 @@ export function ZenTabBar({
   const isOnly = tabs.length === 1
 
   return (
-    <div className="zen-tab-bar" role="tablist" onKeyDown={handleKeyDown}>
+    <div className="zen-tab-bar" role="tablist" tabIndex={0} onKeyDown={handleKeyDown}>
       {/* Scroll left button */}
       {showScrollButtons && (
         <button

@@ -192,12 +192,6 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
           type="button"
           className={`zen-room-item zen-room-item-all ${selectedRoomId ? '' : 'zen-room-item-selected'}`}
           onClick={() => handleSelect(null)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              handleSelect(null)
-            }
-          }}
         >
           <div className="zen-room-icon" style={{ background: 'var(--zen-bg-hover)' }}>
             🌐

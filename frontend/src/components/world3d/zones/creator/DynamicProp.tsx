@@ -34,11 +34,11 @@ function PartGeometry({
   type,
   args,
   onRef,
-}: {
+}: Readonly<{
   type: string
   args: any
   onRef: (geo: THREE.BufferGeometry | null) => void
-}) {
+}>) {
   switch (type) {
     case 'box':
       return <boxGeometry ref={onRef} {...({ args } as any)} />
@@ -271,7 +271,6 @@ export function DynamicProp({
         setTimeout(() => {
           isDraggingRef.current = false
         }, 50)
-        return // Don't set isDraggingRef to false synchronously
       }
     }
     controls.addEventListener('dragging-changed', cb)

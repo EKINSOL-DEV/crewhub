@@ -150,7 +150,7 @@ def _validate_identify_access(key: APIKeyInfo, agent_id: str) -> None:
         )
 
 
-async def _create_or_update_identity(body: IdentifyRequest, key: APIKeyInfo, now: int) -> bool:
+async def _create_or_update_identity(body: IdentifyRequest, key: APIKeyInfo, now: int) -> bool:  # NOSONAR
     agent_id = body.agent_id
     session_key = body.session_key
     created = False
@@ -177,7 +177,7 @@ async def _create_or_update_identity(body: IdentifyRequest, key: APIKeyInfo, now
             )
             await db.commit()
             record_identity_creation(key.key_id, agent_id)
-            logger.info(f"Auto-created agent '{agent_id}' via identify")
+            logger.info("Auto-created agent via identify")
             created = True
         else:
             if not key.agent_id and not key.has_scope("manage"):

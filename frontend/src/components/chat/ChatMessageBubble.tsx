@@ -47,7 +47,7 @@ function sanitizeHref(url: string): string {
   // Remove control chars that can be used to obfuscate protocols
   const cleaned = Array.from(trimmed)
     .filter((ch) => {
-      const code = ch.charCodeAt(0)
+      const code = ch.codePointAt(0) ?? 0
       return code >= 32 && code !== 127
     })
     .join('')

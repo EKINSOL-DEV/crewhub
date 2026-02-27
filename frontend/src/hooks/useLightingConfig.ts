@@ -72,10 +72,10 @@ function loadConfig(): LightingConfig {
       // Deep-merge shadows to handle old configs missing the shadows field or partial shadows
       const shadows: ShadowConfig = {
         ...DEFAULT_SHADOWS,
-        ...(parsed.shadows ?? {}),
+        ...(parsed.shadows || undefined),
         camera: {
           ...DEFAULT_SHADOWS.camera,
-          ...(parsed.shadows?.camera ?? {}),
+          ...(parsed.shadows?.camera || undefined),
         },
       }
       return { ...DEFAULT_LIGHTING, ...parsed, shadows }
@@ -83,7 +83,7 @@ function loadConfig(): LightingConfig {
   } catch {
     /* ignore */
   }
-  return { ...DEFAULT_LIGHTING }
+  return DEFAULT_LIGHTING
 }
 
 function saveConfig(config: LightingConfig) {

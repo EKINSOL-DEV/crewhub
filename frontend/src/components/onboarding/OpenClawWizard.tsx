@@ -760,9 +760,9 @@ export function OpenClawWizard({ onComplete, onSkip }: OpenClawWizardProps) {
         <button
           onClick={() => setCreateBot(false)}
           className={`w-full p-3 rounded-xl border transition-all text-left flex items-center gap-3 ${
-            !createBot
-              ? 'border-primary bg-primary/5'
-              : 'border-border/50 bg-muted/30 hover:bg-accent/30'
+            createBot
+              ? 'border-border/50 bg-muted/30 hover:bg-accent/30'
+              : 'border-primary bg-primary/5'
           }`}
         >
           <span className="text-sm text-muted-foreground">

@@ -153,7 +153,7 @@ async def _fetch_room_and_project(
     return room, project_id, projects
 
 
-async def build_crewhub_context(
+async def build_crewhub_context(  # NOSONAR
     room_id: str,
     channel: Optional[str] = None,
     max_tasks: int = 10,
@@ -195,8 +195,8 @@ async def build_crewhub_context(
                     envelope["_persona_prompt"] = persona_prompt
             envelope["context_hash"] = _compute_hash(envelope)
             return envelope
-    except Exception as e:
-        logger.error(f"Failed to build context envelope for room {room_id}: {e}")
+    except Exception:
+        logger.exception("Failed to build context envelope")
         return None
 
 

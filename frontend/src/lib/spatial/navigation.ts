@@ -221,7 +221,7 @@ export class SpatialNavigator {
         if (nx < 0 || nx >= this.width || nz < 0 || nz >= this.depth) continue
         if (!this.walkableMask[nz][nx]) continue
 
-        const dist = Math.sqrt((nx - from.x) ** 2 + (nz - from.z) ** 2)
+        const dist = Math.hypot(nx - from.x, nz - from.z)
         if (dist < bestDist) {
           bestDist = dist
           bestTarget = { x: nx, z: nz }

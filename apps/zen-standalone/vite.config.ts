@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'path'
+import path from 'node:path'
 
 // Zen Standalone shares source code with the main CrewHub frontend
 // via path aliases. This ensures DRY - no code duplication.

@@ -227,7 +227,7 @@ function clampToRoomBounds(
   gridX: number,
   gridZ: number,
   grid: RoomGridInfo,
-  span: { w: number; d: number } = { w: 1, d: 1 }
+  span?: { w: number; d: number }
 ): [number, number] {
   const halfW = (grid.gridWidth * grid.cellSize) / 2
   const halfD = (grid.gridDepth * grid.cellSize) / 2
@@ -238,15 +238,17 @@ function clampToRoomBounds(
   let x = worldX
   let z = worldZ
 
+  const resolvedSpan = span ?? { w: 1, d: 1 }
+
   // Prop visual half-footprint (centered on span center)
-  const halfFootprintW = (span.w * grid.cellSize) / 2
-  const halfFootprintD = (span.d * grid.cellSize) / 2
+  const halfFootprintW = (resolvedSpan.w * grid.cellSize) / 2
+  const halfFootprintD = (resolvedSpan.d * grid.cellSize) / 2
 
   // Distance in grid cells from each wall edge (cells 0 and gridSize-1 are wall cells)
   const distWest = gridX
-  const distEast = grid.gridWidth - 1 - (gridX + span.w - 1)
+  const distEast = grid.gridWidth - 1 - (gridX + resolvedSpan.w - 1)
   const distNorth = gridZ
-  const distSouth = grid.gridDepth - 1 - (gridZ + span.d - 1)
+  const distSouth = grid.gridDepth - 1 - (gridZ + resolvedSpan.d - 1)
 
   // Wall inner face positions
   const westFace = -halfW + WALL_THICKNESS

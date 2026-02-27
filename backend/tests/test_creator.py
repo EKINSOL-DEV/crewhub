@@ -205,7 +205,7 @@ class TestHybridGenerator:
     def test_build_hybrid_prompt_with_template(self):
         from app.services.hybrid_generator import build_hybrid_prompt
 
-        prompt = build_hybrid_prompt("a robot", "Robot", template_code="// template code", template_name="test")
+        prompt = build_hybrid_prompt("a robot", "Robot", template_code="// template code")
         assert "template code" in prompt
         assert "Robot" in prompt
 

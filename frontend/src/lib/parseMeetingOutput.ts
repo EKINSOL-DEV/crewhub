@@ -3,11 +3,13 @@
  * Handles the synthesis prompt format from MeetingOrchestrator.
  */
 
+export type ActionItemPriority = 'high' | 'medium' | 'low'
+
 export interface ParsedActionItem {
   id: string
   text: string
   assignee?: string
-  priority: 'high' | 'medium' | 'low'
+  priority: ActionItemPriority
   checked: boolean
 }
 
@@ -42,10 +44,10 @@ function parseActionItem(line: string, index: number): ParsedActionItem {
     text = text.slice(assigneeMatch[0].length)
   }
 
-  let priority: 'high' | 'medium' | 'low' = 'medium'
+  let priority: ActionItemPriority = 'medium'
   const priorityMatch = /\[priority:\s*(high|medium|low)\]\s*$/.exec(text)
   if (priorityMatch) {
-    priority = priorityMatch[1] as 'high' | 'medium' | 'low'
+    priority = priorityMatch[1] as ActionItemPriority
     text = text.slice(0, -priorityMatch[0].length).trim()
   }
 

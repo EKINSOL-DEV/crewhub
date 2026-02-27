@@ -26,7 +26,6 @@ export function TheHelix() {
   const innerR = 2
   const totalHeight = 10
   const segAngle = totalAngle / segments
-  const segHeight = totalHeight / segments
 
   return (
     <group>
@@ -57,7 +56,7 @@ export function TheHelix() {
         const segW = (outerR - innerR)
 
         return (
-          <group key={JSON.stringify(_)}>
+          <group key={`segment-${midAngle.toFixed(4)}`}>
             {/* Floor segment */}
             <mesh
               position={[px, y + 0.02, pz]}
