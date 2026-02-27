@@ -3,9 +3,12 @@ import {
   useRef,
   useEffect,
   useCallback,
+  type ComponentProps,
+  type RefObject,
   type KeyboardEvent,
   type ClipboardEvent,
 } from 'react'
+import type React from 'react'
 import { ArrowLeft, ArrowUp, Paperclip, X, Settings as SettingsIcon, Mic } from 'lucide-react'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
@@ -407,6 +410,470 @@ function FilePreviewBar({
   )
 }
 
+// ── Sub-components ─────────────────────────────────────────────
+
+interface ChatHeaderProps {
+  readonly onBack: () => void
+  readonly botConfig: ReturnType<typeof getBotConfigFromSession>
+  readonly agentStatus: AgentStatus
+  readonly avatarAnimation: AvatarAnimation
+  readonly icon: string
+  readonly agentName: string
+  readonly isSending: boolean
+  readonly accentColor: string
+  readonly subagentSessions: CrewSession[]
+  readonly onOpenSettings?: () => void
+  readonly onShowTasks: () => void
+}
+
+function ChatHeader({
+  onBack,
+  botConfig,
+  agentStatus,
+  avatarAnimation,
+  icon,
+  agentName,
+  isSending,
+  accentColor,
+  subagentSessions,
+  onOpenSettings,
+  onShowTasks,
+}: ChatHeaderProps) {
+  return (
+    <header
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '8px 12px 8px 8px',
+        borderBottom: BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER,
+        flexShrink: 0,
+      }}
+    >
+      <button
+        onClick={onBack}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          border: 'none',
+          background: 'transparent',
+          color: VAR_MOBILE_TEXT_SECONDARY,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <ArrowLeft size={20} />
+      </button>
+      <ChatHeader3DAvatar
+        config={botConfig}
+        agentStatus={agentStatus}
+        animation={avatarAnimation}
+        icon={icon}
+      />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: 'var(--mobile-text)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {agentName}
+        </div>
+        <div style={{ fontSize: 11, color: isSending ? accentColor : VAR_MOBILE_TEXT_MUTED }}>
+          {isSending ? 'Thinking…' : 'Online'}
+        </div>
+      </div>
+      <ActiveTasksBadge count={subagentSessions.length} onClick={onShowTasks} />
+      {onOpenSettings && (
+        <button
+          onClick={onOpenSettings}
+          title="Settings"
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            border: 'none',
+            background: 'transparent',
+            color: VAR_MOBILE_TEXT_SECONDARY,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <SettingsIcon size={17} />
+        </button>
+      )}
+    </header>
+  )
+}
+
+type ChatMsg = ComponentProps<typeof ChatMessageBubble>['msg']
+
+interface ChatMessagesListProps {
+  readonly scrollContainerRef: RefObject<HTMLDivElement | null>
+  readonly messagesEndRef: RefObject<HTMLDivElement | null>
+  readonly onScroll: () => void
+  readonly hasMore: boolean
+  readonly isLoadingHistory: boolean
+  readonly onLoadOlder: () => void
+  readonly messages: readonly ChatMsg[]
+  readonly isSending: boolean
+  readonly error: string | null
+  readonly agentName: string
+  readonly accentColor: string
+}
+
+function ChatMessagesList({
+  scrollContainerRef,
+  messagesEndRef,
+  onScroll,
+  hasMore,
+  isLoadingHistory,
+  onLoadOlder,
+  messages,
+  isSending,
+  error,
+  agentName,
+  accentColor,
+}: ChatMessagesListProps) {
+  return (
+    <div
+      ref={scrollContainerRef}
+      onScroll={onScroll}
+      style={{
+        flex: 1,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        padding: '12px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+    >
+      {hasMore && (
+        <button
+          onClick={onLoadOlder}
+          disabled={isLoadingHistory}
+          style={{
+            alignSelf: 'center',
+            padding: '6px 14px',
+            borderRadius: 10,
+            border: 'none',
+            background: 'var(--mobile-msg-assistant-bg)',
+            color: VAR_MOBILE_TEXT_MUTED,
+            cursor: isLoadingHistory ? 'wait' : 'pointer',
+            fontSize: 12,
+            fontWeight: 500,
+          }}
+        >
+          {isLoadingHistory ? 'Loading…' : '↑ Load older'}
+        </button>
+      )}
+      {!isLoadingHistory && messages.length === 0 && (
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: VAR_MOBILE_TEXT_MUTED,
+            fontSize: 14,
+            padding: '40px 0',
+            gap: 8,
+          }}
+        >
+          <span style={{ fontSize: 40 }}>💬</span>
+          <span>Say hello to {agentName}!</span>
+        </div>
+      )}
+      {messages.map((msg) => (
+        <ChatMessageBubble key={msg.id} msg={msg} variant="mobile" accentColor={accentColor} />
+      ))}
+      {isSending && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 0',
+            color: VAR_MOBILE_TEXT_MUTED,
+            fontSize: 12,
+          }}
+        >
+          <span style={{ animation: 'pulse 1.5s infinite' }}>●</span>
+          {agentName} is thinking…
+        </div>
+      )}
+      {error && (
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: 10,
+            background: 'rgba(239, 68, 68, 0.15)',
+            color: '#fca5a5',
+            fontSize: 12,
+            alignSelf: 'center',
+          }}
+        >
+          {error}
+        </div>
+      )}
+      <div ref={messagesEndRef} />
+    </div>
+  )
+}
+
+interface ChatInputAreaProps {
+  readonly inputRef: RefObject<HTMLTextAreaElement | null>
+  readonly isRecording: boolean
+  readonly recDuration: number
+  readonly recError: string | null | undefined
+  readonly onTouchStart: (e: React.TouchEvent) => void
+  readonly onTouchMove: (e: React.TouchEvent) => void
+  readonly pendingFiles: readonly PendingFile[]
+  readonly isSending: boolean
+  readonly isUploading: boolean
+  readonly onFileSelect: () => void
+  readonly inputValue: string
+  readonly onInputChange: (value: string) => void
+  readonly onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
+  readonly onPaste: (e: ClipboardEvent<HTMLTextAreaElement>) => void
+  readonly agentName: string
+  readonly onStopAndSend: () => void
+  readonly onCancelRecording: () => void
+  readonly micSupported: boolean
+  readonly micPreparing: boolean
+  readonly onStartRecording: () => void
+  readonly hasPendingFiles: boolean
+  readonly onSend: () => void
+  readonly accentColor: string
+}
+
+function ChatInputArea({
+  inputRef,
+  isRecording,
+  recDuration,
+  recError,
+  onTouchStart,
+  onTouchMove,
+  pendingFiles,
+  isSending,
+  isUploading,
+  onFileSelect,
+  inputValue,
+  onInputChange,
+  onKeyDown,
+  onPaste,
+  agentName,
+  onStopAndSend,
+  onCancelRecording,
+  micSupported,
+  micPreparing,
+  onStartRecording,
+  hasPendingFiles,
+  onSend,
+  accentColor,
+}: ChatInputAreaProps) {
+  const isSendDisabled = isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)
+  const sendBtnBg = isSendDisabled ? 'var(--mobile-msg-assistant-bg)' : accentColor
+  const sendBtnColor = isSendDisabled ? VAR_MOBILE_TEXT_MUTED : '#fff'
+  const sendBtnCursor = isSendDisabled ? 'default' : 'pointer'
+
+  return (
+    <div
+      style={{
+        padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
+        borderTop: pendingFiles.length > 0 ? 'none' : BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        background: 'var(--mobile-bg, #0f172a)',
+      }}
+    >
+      {isRecording && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '4px 4px 0',
+            fontSize: 13,
+            color: '#ef4444',
+            fontFamily: 'monospace',
+          }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+        >
+          <span style={{ animation: 'mob-rec-blink 0.6s step-end infinite' }}>●</span>
+          {formatDuration(recDuration)}
+          <span style={{ flex: 1 }} />
+          <span style={{ fontSize: 11, color: VAR_MOBILE_TEXT_MUTED, opacity: 0.7 }}>
+            ← swipe to cancel
+          </span>
+        </div>
+      )}
+      {recError && <div style={{ fontSize: 11, color: '#ef4444', paddingLeft: 4 }}>{recError}</div>}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+        {!isRecording && (
+          <button
+            onClick={onFileSelect}
+            disabled={isSending || isUploading}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              border: 'none',
+              background: pendingFiles.length > 0 ? accentColor + '20' : VAR_MOBILE_ATTACH_BTN_BG,
+              color: pendingFiles.length > 0 ? accentColor : VAR_MOBILE_TEXT_SECONDARY,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              transition: CLS_BACKGROUND_015S,
+            }}
+          >
+            <Paperclip size={20} />
+          </button>
+        )}
+        <textarea
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          onPaste={onPaste}
+          placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
+          disabled={isSending || isUploading || isRecording}
+          rows={1}
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: 14,
+            border: BORDER_1PX_SOLID_VAR_MOBILE_INPUT_BOR,
+            background: 'var(--mobile-input-bg)',
+            color: 'var(--mobile-text)',
+            fontSize: 16,
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            resize: 'none',
+            outline: 'none',
+            maxHeight: 100,
+            lineHeight: 1.4,
+          }}
+          onInput={(e) => {
+            const el = e.currentTarget
+            el.style.height = 'auto'
+            el.style.height = Math.min(el.scrollHeight, 100) + 'px'
+          }}
+        />
+        {isRecording ? (
+          <>
+            <button
+              onClick={onStopAndSend}
+              title="Stop & send voice message"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                border: 'none',
+                background: '#22c55e',
+                color: '#fff',
+                cursor: 'pointer',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: CLS_BACKGROUND_015S,
+              }}
+            >
+              <ArrowUp size={20} />
+            </button>
+            <button
+              onClick={onCancelRecording}
+              title="Cancel recording"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                border: 'none',
+                background: VAR_MOBILE_ATTACH_BTN_BG,
+                color: VAR_MOBILE_TEXT_SECONDARY,
+                cursor: 'pointer',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: CLS_BACKGROUND_015S,
+              }}
+            >
+              <X size={18} />
+            </button>
+          </>
+        ) : (
+          <>
+            {micSupported && (
+              <button
+                onClick={onStartRecording}
+                disabled={micPreparing || isSending || isUploading}
+                title="Voice message"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  border: 'none',
+                  background: VAR_MOBILE_ATTACH_BTN_BG,
+                  color: VAR_MOBILE_TEXT_SECONDARY,
+                  cursor: micPreparing || isSending || isUploading ? 'default' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {micPreparing ? '⏳' : <Mic size={20} />}
+              </button>
+            )}
+            {(inputValue.trim() || hasPendingFiles) && (
+              <button
+                onClick={onSend}
+                disabled={isSendDisabled}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  border: 'none',
+                  background: sendBtnBg,
+                  color: sendBtnColor,
+                  cursor: sendBtnCursor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                  flexShrink: 0,
+                  transition: CLS_BACKGROUND_015S,
+                }}
+              >
+                {isUploading ? '⏳' : '➤'}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main Component ─────────────────────────────────────────────
 
 interface MobileAgentChatProps {
@@ -420,7 +887,6 @@ interface MobileAgentChatProps {
 }
 
 export function MobileAgentChat({
-  // NOSONAR
   sessionKey,
   agentName,
   agentIcon,
@@ -469,7 +935,6 @@ export function MobileAgentChat({
     )
   }, [messages.length])
 
-  // Auto-scroll during streaming (fires on every content delta)
   useEffect(() => {
     syncScrollOnStreaming(streamingMessageId, prevStreamingIdRef, messagesEndRef, isNearBottomRef)
   }, [messages, streamingMessageId])
@@ -477,8 +942,6 @@ export function MobileAgentChat({
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 200)
   }, [])
-
-  // ── File handling ──
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const newFiles = Array.from(files).map(createPendingFile)
@@ -511,11 +974,8 @@ export function MobileAgentChat({
     [addFiles]
   )
 
-  // Keep a ref to current pendingFiles so unmount cleanup can revoke URLs
   const pendingFilesRef = useRef<PendingFile[]>(pendingFiles)
   pendingFilesRef.current = pendingFiles
-
-  // Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
       pendingFilesRef.current.forEach((f) => {
@@ -528,20 +988,16 @@ export function MobileAgentChat({
     const text = inputValue.trim()
     const filesToUpload = pendingFiles.filter((f) => !f.error)
     if ((!text && filesToUpload.length === 0) || isSending || isUploading) return
-
     setInputValue('')
     if (inputRef.current) inputRef.current.style.height = 'auto'
-
     const { aborted, mediaPaths } = await uploadFilesForSend(
       filesToUpload,
       setIsUploading,
       setPendingFiles
     )
     if (aborted) return
-
     revokePendingPreviewUrls(pendingFiles)
     setPendingFiles([])
-
     const fullMessage = buildMessagePayload(text, mediaPaths)
     if (fullMessage) sendMessage(fullMessage)
   }, [inputValue, pendingFiles, isSending, isUploading, sendMessage])
@@ -550,7 +1006,6 @@ export function MobileAgentChat({
     submitOnEnter(e, handleSend)
   }
 
-  // ── Voice recording ────────────────────────────────────────────
   const handleAudioReady = useCallback(
     (url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
       sendMessage(buildVoiceAttachmentMessage(url, duration, transcript, transcriptError))
@@ -569,7 +1024,6 @@ export function MobileAgentChat({
     cancelRecording,
   } = useVoiceRecorder(handleAudioReady)
 
-  // Swipe-to-cancel (mobile): touch move left >= 80px cancels
   const touchStartXRef = useRef<number | null>(null)
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
@@ -584,195 +1038,43 @@ export function MobileAgentChat({
     [isRecording, cancelRecording]
   )
 
-  // Derive bot config, status, and animation for 3D avatar
   const botConfig = getBotConfigFromSession(sessionKey, agentName, agentColor)
   const agentStatus: AgentStatus = isSending ? 'active' : 'idle'
   const avatarAnimation: AvatarAnimation = agentStatus === 'active' ? 'thinking' : 'idle'
-
   const hasPendingFiles = pendingFiles.some((f) => !f.error)
 
   return (
     <>
-      {/* Header */}
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '8px 12px 8px 8px',
-          borderBottom: BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER,
-          flexShrink: 0,
-        }}
-      >
-        <button
-          onClick={onBack}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            border: 'none',
-            background: 'transparent',
-            color: VAR_MOBILE_TEXT_SECONDARY,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <ArrowLeft size={20} />
-        </button>
-
-        {/* 3D character preview */}
-        <ChatHeader3DAvatar
-          config={botConfig}
-          agentStatus={agentStatus}
-          animation={avatarAnimation}
-          icon={icon}
-        />
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 600,
-              color: 'var(--mobile-text)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {agentName}
-          </div>
-          <div style={{ fontSize: 11, color: isSending ? accentColor : VAR_MOBILE_TEXT_MUTED }}>
-            {isSending ? 'Thinking…' : 'Online'}
-          </div>
-        </div>
-
-        <ActiveTasksBadge count={subagentSessions.length} onClick={() => setShowTasks(true)} />
-        {onOpenSettings && (
-          <button
-            onClick={onOpenSettings}
-            title="Settings"
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
-              border: 'none',
-              background: 'transparent',
-              color: VAR_MOBILE_TEXT_SECONDARY,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <SettingsIcon size={17} />
-          </button>
-        )}
-      </header>
-
-      {/* Active Tasks Overlay */}
+      <ChatHeader
+        onBack={onBack}
+        botConfig={botConfig}
+        agentStatus={agentStatus}
+        avatarAnimation={avatarAnimation}
+        icon={icon}
+        agentName={agentName}
+        isSending={isSending}
+        accentColor={accentColor}
+        subagentSessions={subagentSessions}
+        onOpenSettings={onOpenSettings}
+        onShowTasks={() => setShowTasks(true)}
+      />
       {showTasks && (
         <ActiveTasksOverlay sessions={subagentSessions} onClose={() => setShowTasks(false)} />
       )}
-
-      {/* Messages */}
-      <div
-        ref={scrollContainerRef}
+      <ChatMessagesList
+        scrollContainerRef={scrollContainerRef}
+        messagesEndRef={messagesEndRef}
         onScroll={handleScroll}
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          padding: '12px 14px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-        }}
-      >
-        {hasMore && (
-          <button
-            onClick={loadOlderMessages}
-            disabled={isLoadingHistory}
-            style={{
-              alignSelf: 'center',
-              padding: '6px 14px',
-              borderRadius: 10,
-              border: 'none',
-              background: 'var(--mobile-msg-assistant-bg)',
-              color: VAR_MOBILE_TEXT_MUTED,
-              cursor: isLoadingHistory ? 'wait' : 'pointer',
-              fontSize: 12,
-              fontWeight: 500,
-            }}
-          >
-            {isLoadingHistory ? 'Loading…' : '↑ Load older'}
-          </button>
-        )}
-
-        {!isLoadingHistory && messages.length === 0 && (
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: VAR_MOBILE_TEXT_MUTED,
-              fontSize: 14,
-              padding: '40px 0',
-              gap: 8,
-            }}
-          >
-            <span style={{ fontSize: 40 }}>💬</span>
-            <span>Say hello to {agentName}!</span>
-          </div>
-        )}
-
-        {messages.map((msg) => (
-          <ChatMessageBubble key={msg.id} msg={msg} variant="mobile" accentColor={accentColor} />
-        ))}
-
-        {isSending && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '4px 0',
-              color: VAR_MOBILE_TEXT_MUTED,
-              fontSize: 12,
-            }}
-          >
-            <span style={{ animation: 'pulse 1.5s infinite' }}>●</span>
-            {agentName} is thinking…
-          </div>
-        )}
-
-        {error && (
-          <div
-            style={{
-              padding: '8px 12px',
-              borderRadius: 10,
-              background: 'rgba(239, 68, 68, 0.15)',
-              color: '#fca5a5',
-              fontSize: 12,
-              alignSelf: 'center',
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* File Preview Bar */}
+        hasMore={hasMore}
+        isLoadingHistory={isLoadingHistory}
+        onLoadOlder={loadOlderMessages}
+        messages={messages}
+        isSending={isSending}
+        error={error}
+        agentName={agentName}
+        accentColor={accentColor}
+      />
       <FilePreviewBar files={pendingFiles} onRemove={removeFile} />
-
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -781,211 +1083,31 @@ export function MobileAgentChat({
         onChange={handleFileInputChange}
         style={{ display: 'none' }}
       />
-
-      {/* Input */}
-      <div
-        style={{
-          padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
-          borderTop: pendingFiles.length > 0 ? 'none' : BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          background: 'var(--mobile-bg, #0f172a)',
-        }}
-      >
-        {/* Recording indicator bar (WhatsApp-style) */}
-        {isRecording && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '4px 4px 0',
-              fontSize: 13,
-              color: '#ef4444',
-              fontFamily: 'monospace',
-            }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-          >
-            <span style={{ animation: 'mob-rec-blink 0.6s step-end infinite' }}>●</span>
-            {formatDuration(recDuration)}
-            <span style={{ flex: 1 }} />
-            <span style={{ fontSize: 11, color: VAR_MOBILE_TEXT_MUTED, opacity: 0.7 }}>
-              ← swipe to cancel
-            </span>
-          </div>
-        )}
-        {recError && (
-          <div style={{ fontSize: 11, color: '#ef4444', paddingLeft: 4 }}>{recError}</div>
-        )}
-
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-          {/* Attach button — hide while recording */}
-          {!isRecording && (
-            <button
-              onClick={handleFileSelect}
-              disabled={isSending || isUploading}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                border: 'none',
-                background: pendingFiles.length > 0 ? accentColor + '20' : VAR_MOBILE_ATTACH_BTN_BG,
-                color: pendingFiles.length > 0 ? accentColor : VAR_MOBILE_TEXT_SECONDARY,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                transition: CLS_BACKGROUND_015S,
-              }}
-            >
-              <Paperclip size={20} />
-            </button>
-          )}
-
-          <textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            placeholder={isRecording ? 'Recording…' : `Message ${agentName}…`}
-            disabled={isSending || isUploading || isRecording}
-            rows={1}
-            style={{
-              flex: 1,
-              padding: '10px 14px',
-              borderRadius: 14,
-              border: BORDER_1PX_SOLID_VAR_MOBILE_INPUT_BOR,
-              background: 'var(--mobile-input-bg)',
-              color: 'var(--mobile-text)',
-              fontSize: 16,
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-              resize: 'none',
-              outline: 'none',
-              maxHeight: 100,
-              lineHeight: 1.4,
-            }}
-            onInput={(e) => {
-              const el = e.currentTarget
-              el.style.height = 'auto'
-              el.style.height = Math.min(el.scrollHeight, 100) + 'px'
-            }}
-          />
-
-          {/* While recording: green send ↑ + ✕ cancel */}
-          {isRecording && (
-            <>
-              <button
-                onClick={stopAndSend}
-                title="Stop & send voice message"
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  border: 'none',
-                  background: '#22c55e',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: CLS_BACKGROUND_015S,
-                }}
-              >
-                <ArrowUp size={20} />
-              </button>
-              <button
-                onClick={cancelRecording}
-                title="Cancel recording"
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  border: 'none',
-                  background: VAR_MOBILE_ATTACH_BTN_BG,
-                  color: VAR_MOBILE_TEXT_SECONDARY,
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: CLS_BACKGROUND_015S,
-                }}
-              >
-                <X size={18} />
-              </button>
-            </>
-          )}
-
-          {/* While not recording: mic + send */}
-          {!isRecording && (
-            <>
-              {micSupported && (
-                <button
-                  onClick={startRecording}
-                  disabled={micPreparing || isSending || isUploading}
-                  title="Voice message"
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    border: 'none',
-                    background: VAR_MOBILE_ATTACH_BTN_BG,
-                    color: VAR_MOBILE_TEXT_SECONDARY,
-                    cursor: micPreparing || isSending || isUploading ? 'default' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    transition: 'background 0.15s, color 0.15s',
-                  }}
-                >
-                  {micPreparing ? '⏳' : <Mic size={20} />}
-                </button>
-              )}
-
-              {/* Send button — only show when there's text or files */}
-              {(inputValue.trim() || hasPendingFiles) && (
-                <button
-                  onClick={handleSend}
-                  disabled={isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)}
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    border: 'none',
-                    background:
-                      isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)
-                        ? 'var(--mobile-msg-assistant-bg)'
-                        : accentColor,
-                    color:
-                      isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)
-                        ? VAR_MOBILE_TEXT_MUTED
-                        : '#fff',
-                    cursor:
-                      isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)
-                        ? 'default'
-                        : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 18,
-                    flexShrink: 0,
-                    transition: CLS_BACKGROUND_015S,
-                  }}
-                >
-                  {isUploading ? '⏳' : '➤'}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
+      <ChatInputArea
+        inputRef={inputRef}
+        isRecording={isRecording}
+        recDuration={recDuration}
+        recError={recError}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        pendingFiles={pendingFiles}
+        isSending={isSending}
+        isUploading={isUploading}
+        onFileSelect={handleFileSelect}
+        inputValue={inputValue}
+        onInputChange={setInputValue}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
+        agentName={agentName}
+        onStopAndSend={stopAndSend}
+        onCancelRecording={cancelRecording}
+        micSupported={micSupported}
+        micPreparing={micPreparing}
+        onStartRecording={startRecording}
+        hasPendingFiles={hasPendingFiles}
+        onSend={handleSend}
+        accentColor={accentColor}
+      />
       <style>{`
         @keyframes mob-rec-blink {
           0%, 100% { opacity: 1; }
