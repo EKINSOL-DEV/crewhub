@@ -185,315 +185,336 @@ export function FullscreenOverlay({
         border: 'none',
         padding: 0,
         margin: 0,
-      }}
-      onClick={(e) => {
-        // NOSONAR: backdrop click closes fullscreen modal
-        if (e.target === e.currentTarget) onClose()
+        overflow: 'hidden',
       }}
       aria-label="Fullscreen overlay"
     >
-      {/* Header */}
+      <button
+        type="button"
+        aria-label="Close fullscreen overlay"
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          border: 'none',
+          background: 'transparent',
+          padding: 0,
+          margin: 0,
+          cursor: 'default',
+        }}
+      />
       <div
         style={{
+          position: 'relative',
+          zIndex: 1,
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 8,
-          padding: isMobile ? '8px 12px' : '12px 20px',
-          paddingTop: isMobile ? 'max(8px, env(safe-area-inset-top, 8px))' : '12px',
-          borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-          background: HSL_CARD,
-          flexShrink: 0,
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
         }}
       >
-        {/* Left: TOC button (mobile) + title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-          {isMobile && hasTOC && (
-            <button
-              onClick={() => setTocOpen(true)}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 10,
-                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-                background: HSL_SECONDARY,
-                color: HSL_FOREGROUND,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-                flexShrink: 0,
-              }}
-              title="Table of Contents"
-            >
-              ☰
-            </button>
-          )}
-          <div style={{ minWidth: 0 }}>
-            <h2
-              style={{
-                fontSize: isMobile ? 14 : 16,
-                fontWeight: 600,
-                color: HSL_FOREGROUND,
-                margin: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              📄 {title}
-            </h2>
-            {subtitle && !isMobile && (
-              <span style={{ fontSize: 12, color: HSL_MUTED_FOREGROUND }}>{subtitle}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Right: edit + close */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {editable && !editing && (
-            <button
-              onClick={() => setEditing(true)}
-              style={{
-                background: 'hsl(var(--primary))',
-                border: 'none',
-                borderRadius: 6,
-                padding: '6px 14px',
-                fontSize: 12,
-                cursor: 'pointer',
-                color: 'hsl(var(--primary-foreground))',
-                fontWeight: 500,
-                minHeight: 44,
-              }}
-            >
-              ✏️ Edit
-            </button>
-          )}
-          {editing && dirty && (
-            <span style={{ fontSize: 11, color: HSL_MUTED_FOREGROUND }}>● Unsaved</span>
-          )}
-          <button
-            onClick={() => {
-              if (editing && dirty && !confirm('You have unsaved changes. Discard?')) return
-              onClose()
-            }}
-            title="Close (Esc)"
-            style={{
-              background: HSL_SECONDARY,
-              border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-              borderRadius: 10,
-              width: 44,
-              height: 44,
-              fontSize: 20,
-              cursor: 'pointer',
-              color: HSL_FOREGROUND,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-
-      {/* Body: TOC + Content or Editor */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {editing && onSave ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <MarkdownEditor
-              initialContent={currentContent}
-              onSave={async (newContent) => {
-                await onSave(newContent)
-                setCurrentContent(newContent)
-                setDirty(false)
-              }}
-              onCancel={() => {
-                if (dirty && !confirm('You have unsaved changes. Discard?')) return
-                setEditing(false)
-                setDirty(false)
-              }}
-              onDirtyChange={setDirty}
-            />
-          </div>
-        ) : (
-          <>
-            {/* Desktop: inline TOC sidebar */}
-            {!isMobile && hasTOC && (
-              <TOCSidebar headings={headings} activeId={activeId} onSelect={handleTOCSelect} />
-            )}
-
-            {/* Mobile: TOC slide-in overlay */}
-            {isMobile && hasTOC && tocOpen && (
-              <>
-                {/* Backdrop */}
-                <button
-                  type="button"
-                  onClick={() => setTocOpen(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') setTocOpen(false)
-                  }}
-                  aria-label="Close table of contents"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 10,
-                    background: 'rgba(0,0,0,0.5)',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'default',
-                    display: 'block',
-                    width: '100%',
-                  }}
-                />
-                {/* TOC Panel */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    width: 'min(300px, 80vw)',
-                    zIndex: 11,
-                    background: HSL_CARD,
-                    boxShadow: '4px 0 20px rgba(0,0,0,0.4)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    animation: 'slideInLeft 0.2s ease-out',
-                  }}
-                >
-                  {/* TOC Header */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 16px',
-                      paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
-                      borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        color: HSL_MUTED_FOREGROUND,
-                      }}
-                    >
-                      📑 Contents
-                    </span>
-                    <button
-                      onClick={() => setTocOpen(false)}
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
-                        border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-                        background: HSL_SECONDARY,
-                        color: HSL_FOREGROUND,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 16,
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  {/* TOC Items */}
-                  <div
-                    style={{
-                      flex: 1,
-                      overflow: 'auto',
-                      padding: '8px 0',
-                      WebkitOverflowScrolling: 'touch',
-                    }}
-                  >
-                    {headings.map((h) => {
-                      const isActive = h.id === activeId
-                      let headingFontWeight: number
-                      if (isActive) {
-                        headingFontWeight = 600
-                      } else if (h.level === 1) {
-                        headingFontWeight = 500
-                      } else {
-                        headingFontWeight = 400
-                      }
-                      return (
-                        <button
-                          key={h.id}
-                          onClick={() => handleTOCSelect(h.id)}
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            textAlign: 'left',
-                            padding: `10px 16px 10px ${16 + (h.level - 1) * 14}px`,
-                            fontSize: h.level === 1 ? 14 : 13,
-                            fontWeight: headingFontWeight,
-                            color: isActive ? 'hsl(var(--primary))' : HSL_MUTED_FOREGROUND,
-                            background: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent',
-                            border: 'none',
-                            borderLeft: isActive
-                              ? '3px solid hsl(var(--primary))'
-                              : '3px solid transparent',
-                            cursor: 'pointer',
-                            minHeight: 44,
-                            fontFamily: 'system-ui, sans-serif',
-                          }}
-                        >
-                          {h.text}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div
-              ref={contentScrollRef}
-              style={{
-                flex: 1,
-                overflow: 'auto',
-                padding: isMobile ? '16px' : '24px 32px',
-                background: 'hsl(var(--background))',
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
-              <div style={{ maxWidth: 720, margin: '0 auto' }}>
-                <MarkdownViewer content={currentContent} />
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Footer */}
-      {metadata && !isMobile && (
+        {/* Header */}
         <div
           style={{
             display: 'flex',
-            gap: 16,
-            padding: '8px 20px',
-            borderTop: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            padding: isMobile ? '8px 12px' : '12px 20px',
+            paddingTop: isMobile ? 'max(8px, env(safe-area-inset-top, 8px))' : '12px',
+            borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
             background: HSL_CARD,
-            fontSize: 11,
-            color: HSL_MUTED_FOREGROUND,
             flexShrink: 0,
           }}
         >
-          <span>{formatBytes(metadata.size)}</span>
-          <span>{metadata.lines} lines</span>
-          <span>Modified: {formatDate(metadata.modified)}</span>
-        </div>
-      )}
+          {/* Left: TOC button (mobile) + title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            {isMobile && hasTOC && (
+              <button
+                onClick={() => setTocOpen(true)}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                  background: HSL_SECONDARY,
+                  color: HSL_FOREGROUND,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                  flexShrink: 0,
+                }}
+                title="Table of Contents"
+              >
+                ☰
+              </button>
+            )}
+            <div style={{ minWidth: 0 }}>
+              <h2
+                style={{
+                  fontSize: isMobile ? 14 : 16,
+                  fontWeight: 600,
+                  color: HSL_FOREGROUND,
+                  margin: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                📄 {title}
+              </h2>
+              {subtitle && !isMobile && (
+                <span style={{ fontSize: 12, color: HSL_MUTED_FOREGROUND }}>{subtitle}</span>
+              )}
+            </div>
+          </div>
 
+          {/* Right: edit + close */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {editable && !editing && (
+              <button
+                onClick={() => setEditing(true)}
+                style={{
+                  background: 'hsl(var(--primary))',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '6px 14px',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  color: 'hsl(var(--primary-foreground))',
+                  fontWeight: 500,
+                  minHeight: 44,
+                }}
+              >
+                ✏️ Edit
+              </button>
+            )}
+            {editing && dirty && (
+              <span style={{ fontSize: 11, color: HSL_MUTED_FOREGROUND }}>● Unsaved</span>
+            )}
+            <button
+              onClick={() => {
+                if (editing && dirty && !confirm('You have unsaved changes. Discard?')) return
+                onClose()
+              }}
+              title="Close (Esc)"
+              style={{
+                background: HSL_SECONDARY,
+                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                borderRadius: 10,
+                width: 44,
+                height: 44,
+                fontSize: 20,
+                cursor: 'pointer',
+                color: HSL_FOREGROUND,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Body: TOC + Content or Editor */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+          {editing && onSave ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <MarkdownEditor
+                initialContent={currentContent}
+                onSave={async (newContent) => {
+                  await onSave(newContent)
+                  setCurrentContent(newContent)
+                  setDirty(false)
+                }}
+                onCancel={() => {
+                  if (dirty && !confirm('You have unsaved changes. Discard?')) return
+                  setEditing(false)
+                  setDirty(false)
+                }}
+                onDirtyChange={setDirty}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Desktop: inline TOC sidebar */}
+              {!isMobile && hasTOC && (
+                <TOCSidebar headings={headings} activeId={activeId} onSelect={handleTOCSelect} />
+              )}
+
+              {/* Mobile: TOC slide-in overlay */}
+              {isMobile && hasTOC && tocOpen && (
+                <>
+                  {/* Backdrop */}
+                  <button
+                    type="button"
+                    onClick={() => setTocOpen(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setTocOpen(false)
+                    }}
+                    aria-label="Close table of contents"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 10,
+                      background: 'rgba(0,0,0,0.5)',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'default',
+                      display: 'block',
+                      width: '100%',
+                    }}
+                  />
+                  {/* TOC Panel */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      bottom: 0,
+                      width: 'min(300px, 80vw)',
+                      zIndex: 11,
+                      background: HSL_CARD,
+                      boxShadow: '4px 0 20px rgba(0,0,0,0.4)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      animation: 'slideInLeft 0.2s ease-out',
+                    }}
+                  >
+                    {/* TOC Header */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 16px',
+                        paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
+                        borderBottom: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          color: HSL_MUTED_FOREGROUND,
+                        }}
+                      >
+                        📑 Contents
+                      </span>
+                      <button
+                        onClick={() => setTocOpen(false)}
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 8,
+                          border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                          background: HSL_SECONDARY,
+                          color: HSL_FOREGROUND,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 16,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    {/* TOC Items */}
+                    <div
+                      style={{
+                        flex: 1,
+                        overflow: 'auto',
+                        padding: '8px 0',
+                        WebkitOverflowScrolling: 'touch',
+                      }}
+                    >
+                      {headings.map((h) => {
+                        const isActive = h.id === activeId
+                        let headingFontWeight: number
+                        if (isActive) {
+                          headingFontWeight = 600
+                        } else if (h.level === 1) {
+                          headingFontWeight = 500
+                        } else {
+                          headingFontWeight = 400
+                        }
+                        return (
+                          <button
+                            key={h.id}
+                            onClick={() => handleTOCSelect(h.id)}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              textAlign: 'left',
+                              padding: `10px 16px 10px ${16 + (h.level - 1) * 14}px`,
+                              fontSize: h.level === 1 ? 14 : 13,
+                              fontWeight: headingFontWeight,
+                              color: isActive ? 'hsl(var(--primary))' : HSL_MUTED_FOREGROUND,
+                              background: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent',
+                              border: 'none',
+                              borderLeft: isActive
+                                ? '3px solid hsl(var(--primary))'
+                                : '3px solid transparent',
+                              cursor: 'pointer',
+                              minHeight: 44,
+                              fontFamily: 'system-ui, sans-serif',
+                            }}
+                          >
+                            {h.text}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div
+                ref={contentScrollRef}
+                style={{
+                  flex: 1,
+                  overflow: 'auto',
+                  padding: isMobile ? '16px' : '24px 32px',
+                  background: 'hsl(var(--background))',
+                  WebkitOverflowScrolling: 'touch',
+                }}
+              >
+                <div style={{ maxWidth: 720, margin: '0 auto' }}>
+                  <MarkdownViewer content={currentContent} />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        {metadata && !isMobile && (
+          <div
+            style={{
+              display: 'flex',
+              gap: 16,
+              padding: '8px 20px',
+              borderTop: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+              background: HSL_CARD,
+              fontSize: 11,
+              color: HSL_MUTED_FOREGROUND,
+              flexShrink: 0,
+            }}
+          >
+            <span>{formatBytes(metadata.size)}</span>
+            <span>{metadata.lines} lines</span>
+            <span>Modified: {formatDate(metadata.modified)}</span>
+          </div>
+        )}
+      </div>
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
