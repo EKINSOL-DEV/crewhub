@@ -26,7 +26,11 @@ function formatDuration(startTs: number): string {
 
 // ── Content Block Renderer ────────────────────────────────────────
 
-function ExpandableBlock({ label, className, children }: Readonly<{
+function ExpandableBlock({
+  label,
+  className,
+  children,
+}: Readonly<{
   label: string
   className: string
   children: React.ReactNode

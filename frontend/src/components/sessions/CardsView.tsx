@@ -118,9 +118,18 @@ interface SessionGroup {
 function groupSessionsByRoom(
   sessions: CrewSession[],
   rooms: Room[],
-  getRoomForSession: (key: string, data?: { label?: string; model?: string; channel?: string }) => string | undefined
+  getRoomForSession: (
+    key: string,
+    data?: { label?: string; model?: string; channel?: string }
+  ) => string | undefined
 ): SessionGroup[] {
-  type RoomInfo = { id: string; name: string; icon: string | null; color: string | null; sort_order: number }
+  type RoomInfo = {
+    id: string
+    name: string
+    icon: string | null
+    color: string | null
+    sort_order: number
+  }
   const groups = new Map<string, { room: RoomInfo | null; sessions: CrewSession[] }>()
 
   for (const room of [...rooms].sort((a, b) => a.sort_order - b.sort_order)) {
@@ -156,7 +165,13 @@ function groupSessionsByRoom(
 
   const unassigned = groups.get(UNASSIGNED)
   if (unassigned && unassigned.sessions.length > 0) {
-    result.push({ groupId: UNASSIGNED, name: 'Unassigned', icon: '📦', color: '#6b7280', sessions: unassigned.sessions })
+    result.push({
+      groupId: UNASSIGNED,
+      name: 'Unassigned',
+      icon: '📦',
+      color: '#6b7280',
+      sessions: unassigned.sessions,
+    })
   }
 
   return result

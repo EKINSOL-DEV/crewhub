@@ -265,7 +265,13 @@ export const Bot3D = memo(function Bot3D({
     const frameStartZ = state.currentZ
 
     // ─── Y position: base + animation offset + bounce ─────────
-    const bounceY = calculateBounceY(anim.phase, wasMovingRef.current, anim.isActiveWalking, anim.typingPause, t)
+    const bounceY = calculateBounceY(
+      anim.phase,
+      wasMovingRef.current,
+      anim.isActiveWalking,
+      anim.typingPause,
+      t
+    )
     groupRef.current.position.y = BOT_FIXED_Y + anim.yOffset + bounceY
 
     // Breathing effect via scale (sleeping: very slow gentle breathing)

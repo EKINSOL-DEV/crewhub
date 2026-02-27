@@ -51,7 +51,11 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block Renderer ────────────────────────────────────
 
-function ExpandableBlock({ label, className, children }: Readonly<{
+function ExpandableBlock({
+  label,
+  className,
+  children,
+}: Readonly<{
   label: string
   className: string
   children: React.ReactNode
@@ -81,12 +85,18 @@ function ContentBlockView({ block }: Readonly<{ block: SessionContentBlock }>) {
   if (block.type === 'tool_use') {
     return (
       <ExpandableBlock label={`🔧 ${block.name || 'Tool'}`} className="zen-sd-tool-call">
-        {block.arguments && <pre className="zen-sd-tool-args">{JSON.stringify(block.arguments, null, 2)}</pre>}
+        {block.arguments && (
+          <pre className="zen-sd-tool-args">{JSON.stringify(block.arguments, null, 2)}</pre>
+        )}
       </ExpandableBlock>
     )
   }
   if (block.type === 'tool_result') {
-    const text = block.content?.map((c) => c.text).filter(Boolean).join('\n') || ''
+    const text =
+      block.content
+        ?.map((c) => c.text)
+        .filter(Boolean)
+        .join('\n') || ''
     if (!text) return null
     return (
       <ExpandableBlock

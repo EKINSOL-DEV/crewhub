@@ -118,14 +118,22 @@ const RoomsContext = createContext<RoomsContextValue | null>(null)
 
 function matchSessionType(value: string, sessionKey: string, channel?: string): boolean {
   switch (value) {
-    case 'cron': return sessionKey.includes(':cron:')
-    case 'subagent': return sessionKey.includes(':subagent:') || sessionKey.includes(':spawn:')
-    case 'main': return sessionKey === 'agent:main:main'
-    case 'slack': return sessionKey.includes('slack')
-    case 'whatsapp': return sessionKey.includes('whatsapp') || channel === 'whatsapp'
-    case 'telegram': return sessionKey.includes('telegram') || channel === 'telegram'
-    case 'discord': return sessionKey.includes('discord') || channel === 'discord'
-    default: return false
+    case 'cron':
+      return sessionKey.includes(':cron:')
+    case 'subagent':
+      return sessionKey.includes(':subagent:') || sessionKey.includes(':spawn:')
+    case 'main':
+      return sessionKey === 'agent:main:main'
+    case 'slack':
+      return sessionKey.includes('slack')
+    case 'whatsapp':
+      return sessionKey.includes('whatsapp') || channel === 'whatsapp'
+    case 'telegram':
+      return sessionKey.includes('telegram') || channel === 'telegram'
+    case 'discord':
+      return sessionKey.includes('discord') || channel === 'discord'
+    default:
+      return false
   }
 }
 

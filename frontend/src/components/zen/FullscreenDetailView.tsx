@@ -47,7 +47,11 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
 
 // ── Content Block ─────────────────────────────────────────────
 
-function ExpandableBlock({ label, className, children }: Readonly<{
+function ExpandableBlock({
+  label,
+  className,
+  children,
+}: Readonly<{
   label: string
   className: string
   children: React.ReactNode

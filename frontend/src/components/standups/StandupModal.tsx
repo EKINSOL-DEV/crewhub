@@ -61,8 +61,6 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
     }
   }, [open])
 
-  if (!open) return null
-
   const selectedAgents = agents.filter((a) => selected.has(a.id))
   const agent = selectedAgents[currentAgent]
 
@@ -122,18 +120,25 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
   // Close on click-outside or Escape (a11y: avoid handlers on non-interactive elements)
   const backdropRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
-    const onClick = (e: MouseEvent) => { if (e.target === backdropRef.current) handleClose() }
+    if (!open) return
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose()
+    }
+    const onClick = (e: MouseEvent) => {
+      if (e.target === backdropRef.current) handleClose()
+    }
     document.addEventListener('keydown', onKey)
     document.addEventListener('mousedown', onClick)
     return () => {
       document.removeEventListener('keydown', onKey)
       document.removeEventListener('mousedown', onClick)
     }
-  }, [handleClose])
+  }, [open, handleClose])
+
+  if (!open) return null
 
   return (
-
     <div
       ref={backdropRef}
       style={{
@@ -149,7 +154,6 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Standup"
-
     >
       <div
         style={{

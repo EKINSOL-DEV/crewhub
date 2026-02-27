@@ -112,7 +112,6 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [onClose])
 
-
   // Click outside to close (a11y: avoid handlers on non-interactive elements)
   const backdropRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -129,13 +128,11 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
   }, [])
 
   return (
-
     <div
       ref={backdropRef}
       className="zen-keyboard-help-backdrop"
       aria-modal="true"
       aria-label="Keyboard Shortcuts"
-
     >
       <div ref={modalRef} className="zen-keyboard-help" tabIndex={-1}>
         <header className="zen-keyboard-help-header">

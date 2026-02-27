@@ -417,9 +417,10 @@ function makeEntry(
   statusOverride?: AgentStatus
 ): DropdownEntry {
   const config = helpers.getBotConfig(session.key, session.label)
-  const name = statusOverride === 'offline'
-    ? (session.label || session.key)
-    : getSessionDisplayName(session, helpers.displayNames.get(session.key) ?? undefined)
+  const name =
+    statusOverride === 'offline'
+      ? session.label || session.key
+      : getSessionDisplayName(session, helpers.displayNames.get(session.key) ?? undefined)
   const status = statusOverride ?? getAgentStatus(session, helpers.isActivelyRunning(session.key))
   const roomId = getRoomId(session, helpers.getRoomForSession, helpers.defaultRoomId)
   const roomName = getRoomName(roomId, helpers.rooms)
@@ -442,13 +443,24 @@ function buildFixedAgentEntries(
         entries.push(makeEntry(session, helpers))
       } else {
         const syntheticSession: CrewSession = {
-          key: agentKey, sessionId: agentKey, kind: 'agent',
-          channel: 'whatsapp', updatedAt: 0, label: agent.name,
+          key: agentKey,
+          sessionId: agentKey,
+          kind: 'agent',
+          channel: 'whatsapp',
+          updatedAt: 0,
+          label: agent.name,
         }
         const roomId = agent.default_room_id || helpers.defaultRoomId || HEADQUARTERS
         const roomName = getRoomName(roomId, helpers.rooms)
         const config = helpers.getBotConfig(agentKey, agent.name)
-        entries.push({ session: syntheticSession, config, name: agent.name, status: 'offline', roomName, roomId })
+        entries.push({
+          session: syntheticSession,
+          config,
+          name: agent.name,
+          status: 'offline',
+          roomName,
+          roomId,
+        })
       }
     }
   } else {
@@ -847,7 +859,14 @@ export function AgentTopBar({
   // ─── Dropdown entries ──────────────────────────────────────────
 
   const { fixedAgents, recentSubagents } = useMemo(() => {
-    const helpers = { getBotConfig, isActivelyRunning, getRoomForSession, defaultRoomId, rooms, displayNames }
+    const helpers = {
+      getBotConfig,
+      isActivelyRunning,
+      getRoomForSession,
+      defaultRoomId,
+      rooms,
+      displayNames,
+    }
     const fixed = buildFixedAgentEntries(agentRuntimes, sessions, helpers)
     const recent = buildRecentSubagentEntries(sessions, helpers)
     fixed.sort((a, b) => a.name.localeCompare(b.name))

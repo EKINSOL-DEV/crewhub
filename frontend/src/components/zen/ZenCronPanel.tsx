@@ -38,9 +38,11 @@ function formatCronExpr(expr: string): string {
   if (parts.length !== 5) return expr
   const [minute, hour, _dom, _month, dayOfWeek] = parts
   if (expr === '* * * * *') return 'Every min'
-  if (minute.startsWith('*/') && hour === '*') return `Every ${Number.parseInt(minute.slice(2), 10)}m`
+  if (minute.startsWith('*/') && hour === '*')
+    return `Every ${Number.parseInt(minute.slice(2), 10)}m`
   if (minute === '0' && hour === '*') return 'Hourly'
-  if (minute !== '*' && hour !== '*' && dayOfWeek === '*') return `${hour}:${minute.padStart(2, '0')}`
+  if (minute !== '*' && hour !== '*' && dayOfWeek === '*')
+    return `${hour}:${minute.padStart(2, '0')}`
   return expr
 }
 

@@ -83,19 +83,20 @@ export const TaskCard = memo(function TaskCard({
 
   return (
     <>
-
       <div
-        {...(onClick ? {
-          role: 'button' as const,
-          tabIndex: 0,
-          onClick: handleClick,
-          onKeyDown: (e: React.KeyboardEvent) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              handleClick()
+        {...(onClick
+          ? {
+              role: 'button' as const,
+              tabIndex: 0,
+              onClick: handleClick,
+              onKeyDown: (e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleClick()
+                }
+              },
             }
-          },
-        } : {})}
+          : {})}
         style={{
           background: '#ffffff',
           borderRadius: 8,

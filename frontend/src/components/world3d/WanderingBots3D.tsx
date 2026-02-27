@@ -189,8 +189,11 @@ function tickIdleWander(
   const rawZ = state.currentZ + (nz - state.currentZ) * 0.4
   const [cx, cz] = clampToCampus(rawX, rawZ, buildingWidth, buildingDepth)
 
-  if (roomObstacles && (isInsideAnyRoom(cx, cz, roomObstacles) ||
-      doesPathCrossRoom(state.currentX, state.currentZ, cx, cz, roomObstacles))) {
+  if (
+    roomObstacles &&
+    (isInsideAnyRoom(cx, cz, roomObstacles) ||
+      doesPathCrossRoom(state.currentX, state.currentZ, cx, cz, roomObstacles))
+  ) {
     state.waitTimer = 0.1
   } else {
     state.targetX = cx
@@ -201,7 +204,9 @@ function tickIdleWander(
 
 function tickWalking(
   state: WanderState,
-  dx: number, dz: number, dist: number,
+  dx: number,
+  dz: number,
+  dist: number,
   delta: number,
   roomObstacles?: RoomObstacle[]
 ): void {
@@ -227,7 +232,8 @@ function tickWalking(
 
 function ensureSafePosition(
   state: WanderState,
-  buildingWidth: number, buildingDepth: number,
+  buildingWidth: number,
+  buildingDepth: number,
   roomObstacles?: RoomObstacle[]
 ): void {
   const [cx, cz] = clampToCampus(state.currentX, state.currentZ, buildingWidth, buildingDepth)

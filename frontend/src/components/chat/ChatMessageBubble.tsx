@@ -258,7 +258,6 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
         maxWidth: '100%',
       }}
     >
-
       {hasDetails ? (
         <button
           type="button"
@@ -375,8 +374,7 @@ function getCodeStyles(variant: string): {
   return {
     codeBlockStyle:
       'background:rgba(0,0,0,0.06);padding:8px 10px;border-radius:6px;overflow-x:auto;font-size:12px;margin:4px 0',
-    inlineCodeStyle:
-      'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px',
+    inlineCodeStyle: 'background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:12px',
   }
 }
 

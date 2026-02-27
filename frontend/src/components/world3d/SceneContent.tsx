@@ -218,7 +218,9 @@ export function SceneContent({
 
     const placeBot = (session: CrewSession, roomId: string, placement: BotPlacement) => {
       const target = roomBots.has(roomId) ? roomId : fallbackRoom
-      roomBots.get(target)?.push(placement) ?? roomBots.get(fallbackRoom)?.push(placement)
+      const targetList = roomBots.get(target)
+      if (targetList) targetList.push(placement)
+      else roomBots.get(fallbackRoom)?.push(placement)
       placedKeys.add(session.key)
     }
 
@@ -227,15 +229,25 @@ export function SceneContent({
         label: session.label,
         model: session.model,
         channel: session.lastChannel || session.channel,
-      }) || defaultRoom || fallbackRoom
+      }) ||
+      defaultRoom ||
+      fallbackRoom
 
     for (const runtime of agentRuntimes) {
       if (runtime.session && visibleKeys.has(runtime.session.key)) {
-        placeBot(runtime.session, resolveRoom(runtime.session, runtime.agent.default_room_id), buildBotPlacement(runtime.session, runtime))
+        placeBot(
+          runtime.session,
+          resolveRoom(runtime.session, runtime.agent.default_room_id),
+          buildBotPlacement(runtime.session, runtime)
+        )
       }
       for (const child of runtime.childSessions) {
         if (!placedKeys.has(child.key) && visibleKeys.has(child.key)) {
-          placeBot(child, resolveRoom(child, runtime.agent.default_room_id), buildBotPlacement(child))
+          placeBot(
+            child,
+            resolveRoom(child, runtime.agent.default_room_id),
+            buildBotPlacement(child)
+          )
         }
       }
     }

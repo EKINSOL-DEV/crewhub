@@ -87,15 +87,18 @@ interface UsePropMovementReturn {
 }
 
 function isWithinBounds(
-  x: number, z: number,
+  x: number,
+  z: number,
   span: { w: number; d: number },
-  gridWidth: number, gridDepth: number
+  gridWidth: number,
+  gridDepth: number
 ): boolean {
   return x >= 1 && z >= 1 && x + span.w <= gridWidth - 1 && z + span.d <= gridDepth - 1
 }
 
 function hasOverlap(
-  x: number, z: number,
+  x: number,
+  z: number,
   span: { w: number; d: number },
   placements: PropPlacement[],
   excludeKey?: string

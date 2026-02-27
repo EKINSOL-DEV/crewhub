@@ -164,8 +164,11 @@ function isInputFocused(): boolean {
   return false
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handleFirstPersonToggle(controls: any, level: FocusLevel, prevLevelRef: React.MutableRefObject<FocusLevel | null>): boolean {
+function handleFirstPersonToggle(
+  controls: any,
+  level: FocusLevel,
+  prevLevelRef: React.MutableRefObject<FocusLevel | null>
+): boolean {
   if (level === 'firstperson') {
     controls.enabled = false
     controls.__originalUpdate = controls.update
@@ -184,7 +187,15 @@ function handleFirstPersonToggle(controls: any, level: FocusLevel, prevLevelRef:
     const lookDir = new THREE.Vector3()
     cam.getWorldDirection(lookDir)
     const target = lookDir.multiplyScalar(5).add(cam.position.clone())
-    controls.setLookAt(cam.position.x, cam.position.y, cam.position.z, target.x, target.y, target.z, false)
+    controls.setLookAt(
+      cam.position.x,
+      cam.position.y,
+      cam.position.z,
+      target.x,
+      target.y,
+      target.z,
+      false
+    )
     controls.enabled = true
   }
 
@@ -465,7 +476,8 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
       state.level === prevLevelRef.current &&
       state.focusedRoomId === prevRoomIdRef.current &&
       state.focusedBotKey === prevBotKeyRef.current
-    ) return
+    )
+      return
 
     const enableTransition = !isInitialMount.current
     if (isInitialMount.current) isInitialMount.current = false
@@ -475,7 +487,15 @@ export function CameraController({ roomPositions }: CameraControllerProps) {
     prevBotKeyRef.current = state.focusedBotKey
 
     applyConstraints(controls, state.level)
-    applyCameraLevel(controls, state, roomPositions, enableTransition, isFollowing, followTarget, controlsRef)
+    applyCameraLevel(
+      controls,
+      state,
+      roomPositions,
+      enableTransition,
+      isFollowing,
+      followTarget,
+      controlsRef
+    )
   }, [state.level, state.focusedRoomId, state.focusedBotKey, roomPositions])
 
   // ─── Orbital bot follow (useFrame) ───────────────────────────

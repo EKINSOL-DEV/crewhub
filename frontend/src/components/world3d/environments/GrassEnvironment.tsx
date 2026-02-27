@@ -63,9 +63,15 @@ interface GrassEnvironmentProps {
 }
 
 function generateGrassTuft(
-  s: number, wx: number, wz: number,
-  bladeOffsets: number[], bladeQuats: THREE.Quaternion[], unitScale: THREE.Vector3,
-  mat4: THREE.Matrix4, tmpVec: THREE.Vector3, grassBlades: THREE.Matrix4[]
+  s: number,
+  wx: number,
+  wz: number,
+  bladeOffsets: number[],
+  bladeQuats: THREE.Quaternion[],
+  unitScale: THREE.Vector3,
+  mat4: THREE.Matrix4,
+  tmpVec: THREE.Vector3,
+  grassBlades: THREE.Matrix4[]
 ): void {
   if (s <= 0.75) return
   const px = wx + s * 1.5 - 0.75
@@ -77,8 +83,12 @@ function generateGrassTuft(
 }
 
 function generateRock(
-  s: number, wx: number, wz: number,
-  identityQuat: THREE.Quaternion, mat4: THREE.Matrix4, tmpVec: THREE.Vector3,
+  s: number,
+  wx: number,
+  wz: number,
+  identityQuat: THREE.Quaternion,
+  mat4: THREE.Matrix4,
+  tmpVec: THREE.Vector3,
   rocks: THREE.Matrix4[]
 ): void {
   if (s <= 0.88) return

@@ -192,12 +192,15 @@ export function ZenSaveLayoutModal({
     }
   }, [name, description, layout, existingLayout, onSave, onClose])
 
-
   // Close on click-outside or Escape (a11y: avoid handlers on non-interactive elements)
   const saveBackdropRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    const handleClick = (e: MouseEvent) => { if (e.target === saveBackdropRef.current) onClose() }
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    const handleClick = (e: MouseEvent) => {
+      if (e.target === saveBackdropRef.current) onClose()
+    }
     document.addEventListener('keydown', handleKey)
     document.addEventListener('mousedown', handleClick)
     return () => {
@@ -212,7 +215,6 @@ export function ZenSaveLayoutModal({
       className="zen-save-layout-backdrop"
       aria-modal="true"
       aria-label="Save Layout"
-
     >
       <div className="zen-save-layout-modal">
         <header className="zen-save-layout-header">
@@ -388,12 +390,15 @@ export function ZenLayoutPicker({
     [confirmDelete, onDeleteSaved]
   )
 
-
   // Close on click-outside or Escape (a11y: avoid handlers on non-interactive elements)
   const pickerBackdropRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    const handleClick = (e: MouseEvent) => { if (e.target === pickerBackdropRef.current) onClose() }
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    const handleClick = (e: MouseEvent) => {
+      if (e.target === pickerBackdropRef.current) onClose()
+    }
     document.addEventListener('keydown', handleKey)
     document.addEventListener('mousedown', handleClick)
     return () => {
@@ -408,7 +413,6 @@ export function ZenLayoutPicker({
       className="zen-layout-picker-backdrop"
       aria-modal="true"
       aria-label="Choose Layout"
-
     >
       <div className="zen-layout-picker-modal">
         <header className="zen-layout-picker-header">

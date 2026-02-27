@@ -30,18 +30,28 @@ interface DynamicPropProps {
   readonly onDraggingChanged?: (dragging: boolean) => void
 }
 
-function PartGeometry({ type, args, onRef }: {
+function PartGeometry({
+  type,
+  args,
+  onRef,
+}: {
   type: string
   args: any
   onRef: (geo: THREE.BufferGeometry | null) => void
 }) {
   switch (type) {
-    case 'box': return <boxGeometry ref={onRef} args={args} />
-    case 'cylinder': return <cylinderGeometry ref={onRef} args={args} />
-    case 'sphere': return <sphereGeometry ref={onRef} args={args} />
-    case 'cone': return <coneGeometry ref={onRef} args={args} />
-    case 'torus': return <torusGeometry ref={onRef} args={args} />
-    default: return <boxGeometry ref={onRef} args={[0.3, 0.3, 0.3]} />
+    case 'box':
+      return <boxGeometry ref={onRef} args={args} />
+    case 'cylinder':
+      return <cylinderGeometry ref={onRef} args={args} />
+    case 'sphere':
+      return <sphereGeometry ref={onRef} args={args} />
+    case 'cone':
+      return <coneGeometry ref={onRef} args={args} />
+    case 'torus':
+      return <torusGeometry ref={onRef} args={args} />
+    default:
+      return <boxGeometry ref={onRef} args={[0.3, 0.3, 0.3]} />
   }
 }
 

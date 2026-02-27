@@ -124,9 +124,7 @@ export function handleMeetingMovement(
 
   // Compute waypoints once when meeting gathering starts
   if (!state.meetingPathComputed) {
-    const botRoomId = sessionKey
-      ? meetingGatheringState.agentRooms.get(sessionKey)
-      : undefined
+    const botRoomId = sessionKey ? meetingGatheringState.agentRooms.get(sessionKey) : undefined
     state.meetingWaypoints = calculateMeetingPath(
       state.currentX,
       state.currentZ,
@@ -187,12 +185,20 @@ export function isWalkableAt(
   wx: number,
   wz: number,
   roomBounds: { minX: number; maxX: number; minZ: number; maxZ: number },
-  gridData: { blueprint: { cellSize: number; gridWidth: number; gridDepth: number }; botWalkableMask: boolean[][] } | null,
+  gridData: {
+    blueprint: { cellSize: number; gridWidth: number; gridDepth: number }
+    botWalkableMask: boolean[][]
+  } | null,
   roomCenterX: number,
   roomCenterZ: number
 ): boolean {
   if (!gridData) return true
-  if (wx < roomBounds.minX || wx > roomBounds.maxX || wz < roomBounds.minZ || wz > roomBounds.maxZ) {
+  if (
+    wx < roomBounds.minX ||
+    wx > roomBounds.maxX ||
+    wz < roomBounds.minZ ||
+    wz > roomBounds.maxZ
+  ) {
     return false
   }
   const { cellSize, gridWidth, gridDepth } = gridData.blueprint
@@ -205,14 +211,26 @@ export function pickWalkableDir(
   currentX: number,
   currentZ: number,
   roomBounds: { minX: number; maxX: number; minZ: number; maxZ: number },
-  gridData: { blueprint: { cellSize: number; gridWidth: number; gridDepth: number }; botWalkableMask: boolean[][] } | null,
+  gridData: {
+    blueprint: { cellSize: number; gridWidth: number; gridDepth: number }
+    botWalkableMask: boolean[][]
+  } | null,
   roomCenterX: number,
   roomCenterZ: number
 ): { x: number; z: number } | null {
   const cellSize = gridData ? gridData.blueprint.cellSize : 1
   const shuffled = [...DIRECTIONS].sort(() => Math.random() - 0.5)
   for (const d of shuffled) {
-    if (isWalkableAt(currentX + d.x * cellSize, currentZ + d.z * cellSize, roomBounds, gridData, roomCenterX, roomCenterZ)) {
+    if (
+      isWalkableAt(
+        currentX + d.x * cellSize,
+        currentZ + d.z * cellSize,
+        roomBounds,
+        gridData,
+        roomCenterX,
+        roomCenterZ
+      )
+    ) {
       return d
     }
   }
@@ -296,7 +314,10 @@ export function handleAnimTargetWalk(
     arrived: boolean
     freezeWhenArrived: boolean
   },
-  gridData: { blueprint: { cellSize: number; gridWidth: number; gridDepth: number }; botWalkableMask: boolean[][] },
+  gridData: {
+    blueprint: { cellSize: number; gridWidth: number; gridDepth: number }
+    botWalkableMask: boolean[][]
+  },
   roomBounds: { minX: number; maxX: number; minZ: number; maxZ: number },
   roomCenterX: number,
   roomCenterZ: number,
@@ -367,7 +388,10 @@ export function handleRandomGridWalk(
     waitTimer: number
     cellProgress: number
   },
-  gridData: { blueprint: { cellSize: number; gridWidth: number; gridDepth: number }; botWalkableMask: boolean[][] },
+  gridData: {
+    blueprint: { cellSize: number; gridWidth: number; gridDepth: number }
+    botWalkableMask: boolean[][]
+  },
   roomBounds: { minX: number; maxX: number; minZ: number; maxZ: number },
   roomCenterX: number,
   roomCenterZ: number,
@@ -385,13 +409,22 @@ export function handleRandomGridWalk(
   }
 
   if (state.stepsRemaining <= 0) {
-    const dir = pickWalkableDir(state.currentX, state.currentZ, roomBounds, gridData, roomCenterX, roomCenterZ)
+    const dir = pickWalkableDir(
+      state.currentX,
+      state.currentZ,
+      roomBounds,
+      gridData,
+      roomCenterX,
+      roomCenterZ
+    )
     if (dir) {
       state.dirX = dir.x
       state.dirZ = dir.z
       state.stepsRemaining =
         SESSION_CONFIG.wanderMinSteps +
-        Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1))
+        Math.floor(
+          Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1)
+        )
       state.cellProgress = 0
       state.waitTimer = 1 + Math.random() * 2
     } else {
@@ -405,7 +438,14 @@ export function handleRandomGridWalk(
   const nextWorldZ = state.currentZ + state.dirZ * cellSize
 
   if (!isWalkableAt(nextWorldX, nextWorldZ, roomBounds, gridData, roomCenterX, roomCenterZ)) {
-    const dir = pickWalkableDir(state.currentX, state.currentZ, roomBounds, gridData, roomCenterX, roomCenterZ)
+    const dir = pickWalkableDir(
+      state.currentX,
+      state.currentZ,
+      roomBounds,
+      gridData,
+      roomCenterX,
+      roomCenterZ
+    )
     if (dir) {
       state.dirX = dir.x
       state.dirZ = dir.z

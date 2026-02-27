@@ -89,7 +89,14 @@ export function useActiveTasks(options: UseActiveTasksOptions) {
       const newTasks: ActiveTask[] = []
       const seenIds = new Set<string>()
 
-      reconcileExistingTasks(prevTasks, newTasks, seenIds, currentKeys, previousKeys, isSessionStillRunning)
+      reconcileExistingTasks(
+        prevTasks,
+        newTasks,
+        seenIds,
+        currentKeys,
+        previousKeys,
+        isSessionStillRunning
+      )
       addNewSessionTasks(sessions, newTasks, seenIds, isSessionStillRunning)
 
       previousSessionKeysRef.current = currentKeys
@@ -186,7 +193,8 @@ function reconcileExistingTasks(
     if (task.source !== 'session' || !task.sessionKey) continue
 
     const key = task.sessionKey
-    const stillActive = (currentKeys.has(key) && isSessionStillRunning(key)) || task.status === 'done'
+    const stillActive =
+      (currentKeys.has(key) && isSessionStillRunning(key)) || task.status === 'done'
 
     if (stillActive) {
       newTasks.push(task)

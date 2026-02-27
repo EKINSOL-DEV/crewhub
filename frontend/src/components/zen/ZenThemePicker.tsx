@@ -72,8 +72,12 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
 
   // Click outside to close + Escape (a11y: avoid handlers on non-interactive elements)
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    const handleClick = (e: MouseEvent) => { if (e.target === containerRef.current) onClose() }
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    const handleClick = (e: MouseEvent) => {
+      if (e.target === containerRef.current) onClose()
+    }
     document.addEventListener('keydown', handleKey)
     document.addEventListener('mousedown', handleClick)
     return () => {
@@ -92,13 +96,11 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
   )
 
   return (
-
     <div
       ref={containerRef}
       className="zen-theme-picker-backdrop"
       aria-modal="true"
       aria-label="Select Theme"
-
     >
       <div className="zen-theme-picker">
         <div className="zen-theme-picker-header">
