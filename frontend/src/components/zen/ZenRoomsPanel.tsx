@@ -187,8 +187,9 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
       </div>
 
       {/* All rooms option */}
-      <button type="button" className="zen-rooms-list">
-        <div
+      <div className="zen-rooms-list">
+        <button
+          type="button"
           className={`zen-room-item zen-room-item-all ${selectedRoomId ? '' : 'zen-room-item-selected'}`}
           onClick={() => handleSelect(null)}
           onKeyDown={(e) => {
@@ -197,7 +198,6 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
               handleSelect(null)
             }
           }}
-          tabIndex={0}
         >
           <div className="zen-room-icon" style={{ background: 'var(--zen-bg-hover)' }}>
             🌐
@@ -206,7 +206,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
             <div className="zen-room-name">All Rooms</div>
           </div>
           <div className="zen-room-badge">{sessionAssignments.size}</div>
-        </div>
+        </button>
 
         {/* Room list */}
         {sortedRooms.map((room) => (
@@ -218,7 +218,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
             onSelect={() => handleSelect(room)}
           />
         ))}
-      </button>
+      </div>
 
       {/* Footer with count */}
       <div className="zen-rooms-footer">

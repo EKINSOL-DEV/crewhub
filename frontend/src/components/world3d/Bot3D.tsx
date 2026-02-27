@@ -230,6 +230,7 @@ export const Bot3D = memo(function Bot3D({
 
   // Single consolidated useFrame: animation ticks + transforms + movement
   useFrame(({ clock }, delta) => {
+    // NOSONAR: consolidated frame loop for animation + movement
     // NOSONAR: 3D rendering pipeline
     if (!groupRef.current) return
     const t = clock.getElapsedTime()

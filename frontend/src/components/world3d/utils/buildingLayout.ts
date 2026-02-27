@@ -62,6 +62,60 @@ export interface BuildingLayout {
   gridOriginZ: number
 }
 
+interface GridLayoutConfig {
+  cols: number
+  rows: number
+  hqCol: number
+  hqRow: number
+  gridCells: [number, number][]
+}
+
+function getGridLayoutConfig(totalRooms: number): GridLayoutConfig {
+  if (totalRooms <= 1) {
+    return { cols: 1, rows: 1, hqCol: 0, hqRow: 0, gridCells: [] }
+  }
+
+  if (totalRooms <= 4) {
+    return {
+      cols: 2,
+      rows: 2,
+      hqCol: 0,
+      hqRow: 0,
+      gridCells: [
+        [1, 0],
+        [0, 1],
+        [1, 1],
+      ],
+    }
+  }
+
+  if (totalRooms <= 6) {
+    return {
+      cols: 3,
+      rows: 2,
+      hqCol: 1,
+      hqRow: 0,
+      gridCells: [
+        [0, 0],
+        [2, 0],
+        [0, 1],
+        [1, 1],
+        [2, 1],
+      ],
+    }
+  }
+
+  const gridCells: [number, number][] = []
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      if (r === 1 && c === 1) continue
+      gridCells.push([c, r])
+    }
+  }
+
+  return { cols: 3, rows: 3, hqCol: 1, hqRow: 1, gridCells }
+}
+
 /**
  * Adaptive grid layout — size chosen based on total room count:
  *   ≤ 1 room  → 1×1  (HQ only)
@@ -71,7 +125,6 @@ export interface BuildingLayout {
  *   > 9 rooms → 3×3  (capped at 8 peripheral slots)
  */
 export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
-  // NOSONAR: spatial layout algorithm
   const sorted = [...rooms].sort((a, b) => a.sort_order - b.sort_order)
 
   const hqRoom = sorted.find((r) => r.is_hq)
@@ -83,54 +136,7 @@ export function calculateBuildingLayout(rooms: Room[]): BuildingLayout {
   const cellPitch = HQ_SIZE + HALLWAY_WIDTH // 16 + 4 = 20
 
   const totalRooms = rooms.length
-
-  let cols: number
-  let rows: number
-  let hqCol: number
-  let hqRow: number
-  let gridCells: [number, number][]
-
-  if (totalRooms <= 1) {
-    cols = 1
-    rows = 1
-    hqCol = 0
-    hqRow = 0
-    gridCells = []
-  } else if (totalRooms <= 4) {
-    cols = 2
-    rows = 2
-    hqCol = 0
-    hqRow = 0
-    gridCells = [
-      [1, 0],
-      [0, 1],
-      [1, 1],
-    ]
-  } else if (totalRooms <= 6) {
-    cols = 3
-    rows = 2
-    hqCol = 1
-    hqRow = 0
-    gridCells = [
-      [0, 0],
-      [2, 0],
-      [0, 1],
-      [1, 1],
-      [2, 1],
-    ]
-  } else {
-    cols = 3
-    rows = 3
-    hqCol = 1
-    hqRow = 1
-    gridCells = []
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (r === 1 && c === 1) continue
-        gridCells.push([c, r])
-      }
-    }
-  }
+  const { cols, rows, hqCol, hqRow, gridCells } = getGridLayoutConfig(totalRooms)
 
   const gridOffsetX = (-(cols - 1) * cellPitch) / 2
   const gridOffsetZ = (-(rows - 1) * cellPitch) / 2

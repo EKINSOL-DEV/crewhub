@@ -234,6 +234,7 @@ interface MobileAgentChatProps {
 }
 
 export function MobileAgentChat({
+  // NOSONAR: UI container with many conditional render branches
   // NOSONAR: React component with multiple state interactions
   sessionKey,
   agentName,

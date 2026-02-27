@@ -18,6 +18,22 @@ const AUDIO_WEBM = 'audio/webm'
 const MAX_DURATION_MS = 5 * 60 * 1000 // 5 minutes
 const MIC_DEVICE_KEY = 'crewhub-mic-device-id'
 
+function getBestAudioMimeType(): string {
+  if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus'
+  if (MediaRecorder.isTypeSupported(AUDIO_WEBM)) return AUDIO_WEBM
+  if (MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4'
+  return ''
+}
+
+function getMicrophoneErrorMessage(err: unknown): string {
+  if (!(err instanceof Error)) return 'Could not access microphone'
+  if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+    return 'Microphone permission denied'
+  }
+  if (err.name === 'NotFoundError') return 'No microphone found'
+  return err.message || 'Could not access microphone'
+}
+
 export interface PendingAudio {
   url: string
   duration: number
@@ -210,17 +226,7 @@ export function useVoiceRecorder(
       streamRef.current = stream
 
       // Pick best supported MIME type
-      let mimeType: string
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        mimeType = 'audio/webm;codecs=opus'
-      } else if (MediaRecorder.isTypeSupported(AUDIO_WEBM)) {
-        mimeType = AUDIO_WEBM
-      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-        mimeType = 'audio/mp4'
-      } else {
-        mimeType = ''
-      }
-
+      const mimeType = getBestAudioMimeType()
       mimeTypeRef.current = mimeType || AUDIO_WEBM
 
       const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
@@ -265,17 +271,7 @@ export function useVoiceRecorder(
     } catch (err: unknown) {
       setIsPreparing(false)
       cleanup()
-      if (err instanceof Error) {
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setError('Microphone permission denied')
-        } else if (err.name === 'NotFoundError') {
-          setError('No microphone found')
-        } else {
-          setError(err.message || 'Could not access microphone')
-        }
-      } else {
-        setError('Could not access microphone')
-      }
+      setError(getMicrophoneErrorMessage(err))
     }
   }, [isSupported, cleanup, uploadAudio, stopRecording])
 

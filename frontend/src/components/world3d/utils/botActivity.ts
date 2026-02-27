@@ -100,27 +100,34 @@ export function humanizeLabel(label: string): string {
 /**
  * Extract a short task summary from the last few messages.
  */
-export function extractTaskSummary(messages: CrewSession['messages']): string | null {
-  // NOSONAR: message parsing branches
-  if (!messages || messages.length === 0) return null
-
+function getRecentActivityFlags(messages: CrewSession['messages'] = []) {
   const recent = messages.slice(-5)
   let lastToolCall: string | null = null
   let isThinking = false
 
   for (let i = recent.length - 1; i >= 0; i--) {
-    const msg = recent[i]
-    if (!Array.isArray(msg.content)) continue
-    for (const block of msg.content) {
-      if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name && !lastToolCall) {
+    const content = recent[i]?.content
+    if (!Array.isArray(content)) continue
+
+    for (const block of content) {
+      if (!lastToolCall && (block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
         lastToolCall = block.name
       }
-      if (block.type === 'thinking' && !isThinking) {
+      if (!isThinking && block.type === 'thinking') {
         isThinking = true
       }
     }
+
+    if (lastToolCall && isThinking) break
   }
 
+  return { lastToolCall, isThinking }
+}
+
+export function extractTaskSummary(messages: CrewSession['messages']): string | null {
+  if (!messages || messages.length === 0) return null
+
+  const { lastToolCall, isThinking } = getRecentActivityFlags(messages)
   if (isThinking && !lastToolCall) return '💭 Thinking…'
   if (lastToolCall) return `🔧 ${lastToolCall}`
   return null

@@ -83,179 +83,133 @@ export interface UseZenKeyboardOptions {
  * RESIZE
  *   Ctrl+Shift+Arrow Resize focused panel
  */
+function isInputTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null
+  if (!el) return false
+  return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable
+}
+
+function consumeShortcut(e: KeyboardEvent): void {
+  e.preventDefault()
+  e.stopPropagation()
+}
+
+function handleResizeShortcut(e: KeyboardEvent, actions: ZenKeyboardActions): boolean {
+  if (!(e.ctrlKey && e.shiftKey && e.key.startsWith('Arrow'))) return false
+
+  consumeShortcut(e)
+  const resizeMap: Record<string, (() => void) | undefined> = {
+    ArrowLeft: actions.onResizeLeft,
+    ArrowRight: actions.onResizeRight,
+    ArrowUp: actions.onResizeUp,
+    ArrowDown: actions.onResizeDown,
+  }
+  resizeMap[e.key]?.()
+  return true
+}
+
+interface ShortcutRule {
+  match: (e: KeyboardEvent, isInput: boolean) => boolean
+  run: (actions: ZenKeyboardActions, e: KeyboardEvent) => void
+}
+
+const SHORTCUT_RULES: ShortcutRule[] = [
+  {
+    match: (e) => e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k',
+    run: (a) => a.onOpenCommandPalette?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 't',
+    run: (a) => a.onNewTab?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 'w',
+    run: (a) => a.onCloseTab?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.altKey && e.key === 'Tab',
+    run: (a, e) => {
+      if (e.shiftKey) a.onPrevTab?.()
+      else a.onNextTab?.()
+    },
+  },
+  {
+    match: (e) => e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 'r',
+    run: (a) => a.onReopenClosedTab?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'y',
+    run: (a) => a.onOpenThemePicker?.(),
+  },
+  {
+    match: (e, isInput) => e.key === 'Tab' && !isInput && !e.ctrlKey && !e.altKey,
+    run: (a, e) => {
+      if (e.shiftKey) a.onFocusPrev?.()
+      else a.onFocusNext?.()
+    },
+  },
+  {
+    match: (e) => e.ctrlKey && !e.shiftKey && !e.altKey && e.key >= '1' && e.key <= '9',
+    run: (a, e) => a.onFocusPanelByIndex?.(Number.parseInt(e.key) - 1),
+  },
+  {
+    match: (e) => e.ctrlKey && !e.shiftKey && e.key === '\\',
+    run: (a) => a.onSplitVertical?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.shiftKey && e.key === '\\',
+    run: (a) => a.onSplitHorizontal?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'w',
+    run: (a) => a.onClosePanel?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm',
+    run: (a) => a.onToggleMaximize?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l',
+    run: (a) => a.onCycleLayouts?.(),
+  },
+  {
+    match: (e) => e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's',
+    run: (a) => a.onSaveLayout?.(),
+  },
+  {
+    match: (e, isInput) => (e.ctrlKey && e.key === '/') || (!isInput && e.key === '?'),
+    run: (a) => a.onOpenKeyboardHelp?.(),
+  },
+  {
+    match: (e, isInput) => e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'n' && !isInput,
+    run: (a) => a.onNewChat?.(),
+  },
+]
+
 export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOptions) {
   const actionsRef = useRef(actions)
   actionsRef.current = actions
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // NOSONAR: keyboard shortcut dispatch
     const a = actionsRef.current
 
-    // Escape - Exit (but NOT if a fullscreen overlay is open — it handles its own Escape)
     if (e.key === 'Escape') {
       if (document.querySelector('[data-fullscreen-overlay]')) return
-      e.preventDefault()
-      e.stopPropagation()
+      consumeShortcut(e)
       a.onExit?.()
       return
     }
 
-    // Don't capture shortcuts when typing in an input
-    const target = e.target as HTMLElement
-    const isInput =
-      target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+    const isInput = isInputTarget(e.target)
 
-    // Ctrl+K - Command Palette (works even in inputs)
-    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') {
-      e.preventDefault()
-      e.stopPropagation()
-      a.onOpenCommandPalette?.()
+    for (const rule of SHORTCUT_RULES) {
+      if (!rule.match(e, isInput)) continue
+      consumeShortcut(e)
+      rule.run(a, e)
       return
     }
 
-    // ── Tab Shortcuts ──────────────────────────────────────────────
-
-    // Ctrl+Alt+T - New tab
-    if (e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 't') {
-      e.preventDefault()
-      e.stopPropagation()
-      a.onNewTab?.()
-      return
-    }
-
-    // Ctrl+Alt+W - Close tab
-    if (e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 'w') {
-      e.preventDefault()
-      e.stopPropagation()
-      a.onCloseTab?.()
-      return
-    }
-
-    // Ctrl+Alt+Tab / Ctrl+Alt+Shift+Tab - Navigate tabs
-    // Note: Ctrl+Tab is reserved by browser, so we use Ctrl+Alt+Tab
-    if (e.ctrlKey && e.altKey && e.key === 'Tab') {
-      e.preventDefault()
-      e.stopPropagation()
-      if (e.shiftKey) {
-        a.onPrevTab?.()
-      } else {
-        a.onNextTab?.()
-      }
-      return
-    }
-
-    // Ctrl+Alt+R - Reopen closed tab (Ctrl+Shift+T conflicts with browser)
-    if (e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === 'r') {
-      e.preventDefault()
-      e.stopPropagation()
-      a.onReopenClosedTab?.()
-      return
-    }
-
-    // ── Theme Picker ───────────────────────────────────────────────
-
-    // Ctrl+Shift+Y - Theme Picker (moved from Ctrl+Shift+T to accommodate reopen tab)
-    if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'y') {
-      e.preventDefault()
-      e.stopPropagation()
-      a.onOpenThemePicker?.()
-      return
-    }
-
-    // Tab / Shift+Tab - Focus navigation (unless in input with Tab)
-    if (e.key === 'Tab' && !isInput && !e.ctrlKey && !e.altKey) {
-      e.preventDefault()
-      if (e.shiftKey) {
-        a.onFocusPrev?.()
-      } else {
-        a.onFocusNext?.()
-      }
-      return
-    }
-
-    // Ctrl+1-9 - Focus panel by index
-    if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key >= '1' && e.key <= '9') {
-      e.preventDefault()
-      const index = Number.parseInt(e.key) - 1
-      a.onFocusPanelByIndex?.(index)
-      return
-    }
-
-    // Ctrl+\ - Split vertical
-    if (e.ctrlKey && !e.shiftKey && e.key === '\\') {
-      e.preventDefault()
-      a.onSplitVertical?.()
-      return
-    }
-
-    // Ctrl+Shift+\ - Split horizontal
-    if (e.ctrlKey && e.shiftKey && e.key === '\\') {
-      e.preventDefault()
-      a.onSplitHorizontal?.()
-      return
-    }
-
-    // Ctrl+Shift+W - Close panel (NOT Ctrl+W!)
-    if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'w') {
-      e.preventDefault()
-      a.onClosePanel?.()
-      return
-    }
-
-    // Ctrl+Shift+M - Toggle maximize
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
-      e.preventDefault()
-      a.onToggleMaximize?.()
-      return
-    }
-
-    // Ctrl+Shift+L - Cycle layouts
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l') {
-      e.preventDefault()
-      a.onCycleLayouts?.()
-      return
-    }
-
-    // Ctrl+Shift+S - Save layout
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
-      e.preventDefault()
-      a.onSaveLayout?.()
-      return
-    }
-
-    // Ctrl+/ or ? - Keyboard help
-    if ((e.ctrlKey && e.key === '/') || (!isInput && e.key === '?')) {
-      e.preventDefault()
-      a.onOpenKeyboardHelp?.()
-      return
-    }
-
-    // Ctrl+N - New chat
-    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'n' && !isInput) {
-      e.preventDefault()
-      a.onNewChat?.()
-      return
-    }
-
-    // Ctrl+Shift+Arrow - Resize
-    if (e.ctrlKey && e.shiftKey && e.key.startsWith('Arrow')) {
-      e.preventDefault()
-      switch (e.key) {
-        case 'ArrowLeft':
-          a.onResizeLeft?.()
-          break
-        case 'ArrowRight':
-          a.onResizeRight?.()
-          break
-        case 'ArrowUp':
-          a.onResizeUp?.()
-          break
-        case 'ArrowDown':
-          a.onResizeDown?.()
-          break
-      }
-      return
-    }
+    handleResizeShortcut(e, a)
   }, [])
 
   useEffect(() => {

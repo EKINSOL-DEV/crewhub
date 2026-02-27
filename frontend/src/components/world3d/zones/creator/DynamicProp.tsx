@@ -98,21 +98,56 @@ function DynamicMesh({
     [editMode]
   )
 
+  const hasSelectionHandler = editMode && !!onSelect
+
+  const didMoveWhilePressing = useCallback((e: any) => {
+    if (!pointerDownPos.current) return false
+    const dx = (e.clientX ?? e.point?.x ?? 0) - pointerDownPos.current.x
+    const dy = (e.clientY ?? e.point?.y ?? 0) - pointerDownPos.current.y
+    return Math.abs(dx) + Math.abs(dy) > 5
+  }, [])
+
   const handleClick = useCallback(
     (e: any) => {
-      if (editMode && onSelect) {
-        // Only select if pointer didn't move much (not a drag)
-        if (pointerDownPos.current) {
-          const dx = (e.clientX ?? e.point?.x ?? 0) - pointerDownPos.current.x
-          const dy = (e.clientY ?? e.point?.y ?? 0) - pointerDownPos.current.y
-          if (Math.abs(dx) + Math.abs(dy) > 5) return // Was a drag, don't select
-        }
-        e.stopPropagation()
-        onSelect(index)
-      }
+      if (!hasSelectionHandler) return
+      if (didMoveWhilePressing(e)) return
+      e.stopPropagation()
+      onSelect?.(index)
     },
-    [editMode, onSelect, index]
+    [hasSelectionHandler, didMoveWhilePressing, onSelect, index]
   )
+
+  const handlePointerOver = useCallback(
+    (e: any) => {
+      if (!editMode) return
+      e.stopPropagation()
+      document.body.style.cursor = 'pointer'
+    },
+    [editMode]
+  )
+
+  const handlePointerOut = useCallback(() => {
+    if (!editMode) return
+    document.body.style.cursor = 'auto'
+  }, [editMode])
+
+  const renderMaterial = () => {
+    if (part.emissive) {
+      return (
+        <meshStandardMaterial
+          color={selected ? '#88aaff' : part.color}
+          emissive={selected ? '#4466ff' : part.color}
+          emissiveIntensity={selected ? 0.8 : 0.5}
+        />
+      )
+    }
+
+    if (selected) {
+      return <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
+    }
+
+    return <meshToonMaterial {...toon} />
+  }
 
   return (
     <mesh
@@ -122,40 +157,11 @@ function DynamicMesh({
       castShadow
       onPointerDown={handlePointerDown}
       onClick={handleClick}
-      onPointerOver={
-        editMode
-          ? (e: any) => {
-              e.stopPropagation()
-              document.body.style.cursor = 'pointer'
-            }
-          : undefined
-      }
-      onPointerOut={
-        editMode
-          ? () => {
-              document.body.style.cursor = 'auto'
-            }
-          : undefined
-      }
+      onPointerOver={editMode ? handlePointerOver : undefined}
+      onPointerOut={editMode ? handlePointerOut : undefined}
     >
       <PartGeometry type={part.type} args={part.args as any} onRef={centerGeometry} />
-      {part.emissive ? (
-        <meshStandardMaterial
-          color={selected ? '#88aaff' : part.color}
-          emissive={selected ? '#4466ff' : part.color}
-          emissiveIntensity={selected ? 0.8 : 0.5}
-        />
-      ) : (
-        (() => {
-          if (selected) {
-            return (
-              <meshStandardMaterial color={part.color} emissive="#4466ff" emissiveIntensity={0.4} />
-            )
-          }
-
-          return <meshToonMaterial {...toon} />
-        })()
-      )}
+      {renderMaterial()}
     </mesh>
   )
 }

@@ -21,7 +21,67 @@ interface AudioMessageProps {
   readonly transcriptError?: string
 }
 
+interface AudioPalette {
+  containerBg: string
+  textColor: string
+  trackBg: string
+  btnBg: string
+  transcriptColor: string
+  transcriptBorder: string
+}
+
+const NON_USER_AUDIO_PALETTES: Record<'zen' | 'float' | 'mobile', AudioPalette> = {
+  mobile: {
+    containerBg: 'rgba(255,255,255,0.08)',
+    textColor: '#e2e8f0',
+    trackBg: 'rgba(255,255,255,0.15)',
+    btnBg: 'rgba(255,255,255,0.1)',
+    transcriptColor: 'rgba(226,232,240,0.65)',
+    transcriptBorder: 'rgba(0,0,0,0.08)',
+  },
+  zen: {
+    containerBg: 'rgba(255,255,255,0.06)',
+    textColor: 'var(--zen-fg, #e2e8f0)',
+    trackBg: 'rgba(255,255,255,0.1)',
+    btnBg: 'rgba(255,255,255,0.08)',
+    transcriptColor: 'rgba(226,232,240,0.6)',
+    transcriptBorder: 'rgba(0,0,0,0.08)',
+  },
+  float: {
+    containerBg: 'rgba(0,0,0,0.06)',
+    textColor: '#374151',
+    trackBg: 'rgba(0,0,0,0.12)',
+    btnBg: '',
+    transcriptColor: 'rgba(55,65,81,0.65)',
+    transcriptBorder: 'rgba(0,0,0,0.08)',
+  },
+}
+
+function getAudioPalette(
+  variant: 'zen' | 'float' | 'mobile',
+  isUser: boolean,
+  accentColor: string
+): AudioPalette {
+  if (isUser) {
+    return {
+      containerBg: 'transparent',
+      textColor: 'rgba(255,255,255,0.9)',
+      trackBg: 'rgba(255,255,255,0.3)',
+      btnBg: 'rgba(255,255,255,0.25)',
+      transcriptColor: 'rgba(255,255,255,0.75)',
+      transcriptBorder: 'rgba(255,255,255,0.15)',
+    }
+  }
+
+  const base = NON_USER_AUDIO_PALETTES[variant]
+  return {
+    ...base,
+    btnBg: variant === 'float' ? `${accentColor}20` : base.btnBg,
+  }
+}
+
 export function AudioMessage({
+  // NOSONAR: compact player orchestrates media + UI states
   // NOSONAR: audio player state machine
   url,
   duration: initialDuration,
@@ -96,55 +156,8 @@ export function AudioMessage({
   const progress = totalDuration > 0 ? Math.min(1, currentTime / totalDuration) : 0
 
   // ── Style variables based on variant ──────────────────────────
-  const isDark = variant === 'mobile'
-  const isZen = variant === 'zen'
-
-  let containerBg: string
-  if (isUser) {
-    containerBg = 'transparent'
-  } else if (isDark) {
-    containerBg = 'rgba(255,255,255,0.08)'
-  } else if (isZen) {
-    containerBg = 'rgba(255,255,255,0.06)'
-  } else {
-    containerBg = 'rgba(0,0,0,0.06)'
-  }
-
-  let textColor: string
-  if (isUser) {
-    textColor = 'rgba(255,255,255,0.9)'
-  } else if (isDark) {
-    textColor = '#e2e8f0'
-  } else if (isZen) {
-    textColor = 'var(--zen-fg, #e2e8f0)'
-  } else {
-    textColor = '#374151'
-  }
-
-  let trackBg: string
-  if (isUser) {
-    trackBg = 'rgba(255,255,255,0.3)'
-  } else if (isDark) {
-    trackBg = 'rgba(255,255,255,0.15)'
-  } else if (isZen) {
-    trackBg = 'rgba(255,255,255,0.1)'
-  } else {
-    trackBg = 'rgba(0,0,0,0.12)'
-  }
-
+  const palette = getAudioPalette(variant, isUser, accentColor)
   const fillColor = isUser ? '#fff' : accentColor
-
-  let btnBg: string
-  if (isUser) {
-    btnBg = 'rgba(255,255,255,0.25)'
-  } else if (isDark) {
-    btnBg = 'rgba(255,255,255,0.1)'
-  } else if (isZen) {
-    btnBg = 'rgba(255,255,255,0.08)'
-  } else {
-    btnBg = `${accentColor}20`
-  }
-
   const btnColor = isUser ? '#fff' : accentColor
 
   // ── Formatted times ────────────────────────────────────────────
@@ -157,18 +170,6 @@ export function AudioMessage({
 
   const displayTime = isPlaying || currentTime > 0 ? fmt(currentTime) : fmt(totalDuration)
 
-  // Transcript text color
-  let transcriptColor: string
-  if (isUser) {
-    transcriptColor = 'rgba(255,255,255,0.75)'
-  } else if (isDark) {
-    transcriptColor = 'rgba(226,232,240,0.65)'
-  } else if (isZen) {
-    transcriptColor = 'rgba(226,232,240,0.6)'
-  } else {
-    transcriptColor = 'rgba(55,65,81,0.65)'
-  }
-
   return (
     <div
       style={{
@@ -177,7 +178,7 @@ export function AudioMessage({
         gap: 6,
         padding: '8px 10px',
         borderRadius: 12,
-        background: containerBg,
+        background: palette.containerBg,
         minWidth: 180,
         maxWidth: 280,
         userSelect: 'none',
@@ -196,7 +197,7 @@ export function AudioMessage({
             height: 32,
             borderRadius: '50%',
             border: 'none',
-            background: btnBg,
+            background: palette.btnBg,
             color: btnColor,
             cursor: 'pointer',
             display: 'flex',
@@ -237,7 +238,7 @@ export function AudioMessage({
             style={{
               height: 4,
               borderRadius: 2,
-              background: trackBg,
+              background: palette.trackBg,
               cursor: isLoaded ? 'pointer' : 'default',
               position: 'relative',
               overflow: 'hidden',
@@ -261,7 +262,7 @@ export function AudioMessage({
           <div
             style={{
               fontSize: 10,
-              color: textColor,
+              color: palette.textColor,
               opacity: 0.7,
               fontVariantNumeric: 'tabular-nums',
               lineHeight: 1,
@@ -292,10 +293,10 @@ export function AudioMessage({
           style={{
             fontSize: 11,
             fontStyle: 'italic',
-            color: transcriptColor,
+            color: palette.transcriptColor,
             lineHeight: 1.4,
             paddingTop: 2,
-            borderTop: `1px solid ${isUser ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'}`,
+            borderTop: `1px solid ${palette.transcriptBorder}`,
           }}
         >
           {transcript}
@@ -307,7 +308,7 @@ export function AudioMessage({
         <div
           style={{
             fontSize: 10,
-            color: transcriptColor,
+            color: palette.transcriptColor,
             opacity: 0.65,
             display: 'flex',
             alignItems: 'center',

@@ -47,6 +47,108 @@ interface PropInstance {
   span?: { w: number; d: number }
 }
 
+interface SelectedPropState {
+  key: string
+  gridX: number
+  gridZ: number
+  rotation: number
+  span?: { w: number; d: number }
+}
+
+interface EffectivePropPlacement {
+  isSelected: boolean
+  isBeingMoved: boolean
+  effectiveGridX: number
+  effectiveGridZ: number
+  effectiveRotation: number
+  effectiveSpan: { w: number; d: number }
+  worldX: number
+  worldZ: number
+}
+
+function getEffectivePropPlacement(
+  instance: PropInstance,
+  selectedProp: SelectedPropState | null,
+  isMoving: boolean,
+  grid: RoomGridInfo
+): EffectivePropPlacement {
+  const isSelected = selectedProp?.key === instance.key
+  const isBeingMoved = isSelected && isMoving && !!selectedProp
+
+  if (isBeingMoved && selectedProp) {
+    const [newRelX, , newRelZ] = gridToWorld(
+      selectedProp.gridX,
+      selectedProp.gridZ,
+      grid.cellSize,
+      grid.gridWidth,
+      grid.gridDepth
+    )
+    const effectiveSpan = selectedProp.span ?? { w: 1, d: 1 }
+    return {
+      isSelected,
+      isBeingMoved,
+      effectiveGridX: selectedProp.gridX,
+      effectiveGridZ: selectedProp.gridZ,
+      effectiveRotation: selectedProp.rotation,
+      effectiveSpan,
+      worldX: newRelX + ((effectiveSpan.w - 1) * grid.cellSize) / 2,
+      worldZ: newRelZ + ((effectiveSpan.d - 1) * grid.cellSize) / 2,
+    }
+  }
+
+  return {
+    isSelected,
+    isBeingMoved,
+    effectiveGridX: instance.gridX,
+    effectiveGridZ: instance.gridZ,
+    effectiveRotation: instance.rotation,
+    effectiveSpan: instance.span ?? { w: 1, d: 1 },
+    worldX: instance.position[0],
+    worldZ: instance.position[2],
+  }
+}
+
+function resolvePropWorldPlacement(
+  mountType: string | undefined,
+  placement: EffectivePropPlacement,
+  grid: RoomGridInfo
+): { worldX: number; worldZ: number; finalRotation: number } {
+  let worldX = placement.worldX
+  let worldZ = placement.worldZ
+  let finalRotation = placement.effectiveRotation
+
+  if (mountType === 'wall') {
+    const wallPlacement = getWallPlacement(
+      worldX,
+      worldZ,
+      placement.effectiveGridX,
+      placement.effectiveGridZ,
+      grid.gridWidth,
+      grid.gridDepth,
+      grid.cellSize
+    )
+    if (wallPlacement) {
+      worldX = wallPlacement.x
+      worldZ = wallPlacement.z
+      if (placement.effectiveRotation === 0) {
+        finalRotation = wallPlacement.wallRotation
+      }
+    }
+    return { worldX, worldZ, finalRotation }
+  }
+
+  const [clampedX, clampedZ] = clampToRoomBounds(
+    worldX,
+    worldZ,
+    placement.effectiveGridX,
+    placement.effectiveGridZ,
+    grid,
+    placement.effectiveSpan
+  )
+
+  return { worldX: clampedX, worldZ: clampedZ, finalRotation }
+}
+
 // ─── Wall positioning helpers ───────────────────────────────────
 
 /** Determine which wall is nearest and return snapped position + rotation.
@@ -906,83 +1008,26 @@ export function GridRoomRenderer({
         </mesh>
       )}
 
-      {propInstances.map(({ key, propId, gridX, gridZ, position, rotation, span }) => {
-        // NOSONAR: 3D rendering pipeline
+      {propInstances.map((instance) => {
+        const { key, propId, span } = instance
         const entry = getPropEntry(propId)
         if (!entry) return null
 
         const Component = entry.component
+        const gridInfo = { gridWidth, gridDepth, cellSize }
+        const placement = getEffectivePropPlacement(
+          instance,
+          (selectedProp as SelectedPropState | null) ?? null,
+          isMoving,
+          gridInfo
+        )
+        const { worldX, worldZ, finalRotation } = resolvePropWorldPlacement(
+          entry.mountType,
+          placement,
+          gridInfo
+        )
 
-        // Check if this prop is currently selected and being moved
-        const isSelected = selectedProp?.key === key
-        const isBeingMoved = isSelected && isMoving
-
-        // Use the selected position if this prop is being moved
-        const effectiveGridX = isBeingMoved ? selectedProp!.gridX : gridX
-        const effectiveGridZ = isBeingMoved ? selectedProp!.gridZ : gridZ
-        const effectiveRotation = isBeingMoved ? selectedProp!.rotation : rotation
-
-        // Recalculate world position if being moved (including span centering)
-        let worldX: number
-        let worldZ: number
-        if (isBeingMoved) {
-          const [newRelX, , newRelZ] = gridToWorld(
-            effectiveGridX,
-            effectiveGridZ,
-            cellSize,
-            gridWidth,
-            gridDepth
-          )
-          const effectiveSpanW = selectedProp!.span?.w ?? 1
-          const effectiveSpanD = selectedProp!.span?.d ?? 1
-          worldX = newRelX + ((effectiveSpanW - 1) * cellSize) / 2
-          worldZ = newRelZ + ((effectiveSpanD - 1) * cellSize) / 2
-        } else {
-          worldX = position[0] // already includes span centering from propInstances
-          worldZ = position[2]
-        }
-
-        let finalRotation = effectiveRotation
-
-        // Y position from prop metadata (room-local space; parent group handles world Y)
         const yPos = entry.yOffset
-
-        if (entry.mountType === 'wall') {
-          // Wall-mounted props: snap toward nearest wall + auto-rotate
-          const wallPlacement = getWallPlacement(
-            worldX,
-            worldZ,
-            effectiveGridX,
-            effectiveGridZ,
-            gridWidth,
-            gridDepth,
-            cellSize
-          )
-          if (wallPlacement) {
-            worldX = wallPlacement.x
-            worldZ = wallPlacement.z
-            // Only override rotation if cell didn't specify one explicitly
-            if (effectiveRotation === 0) {
-              finalRotation = wallPlacement.wallRotation
-            }
-          }
-        } else {
-          // Floor props: clamp to room bounds to prevent wall clipping
-          const effectiveSpan = isBeingMoved
-            ? selectedProp!.span || { w: 1, d: 1 }
-            : span || { w: 1, d: 1 }
-          const [clampedX, clampedZ] = clampToRoomBounds(
-            worldX,
-            worldZ,
-            effectiveGridX,
-            effectiveGridZ,
-            { gridWidth, gridDepth, cellSize },
-            effectiveSpan
-          )
-          worldX = clampedX
-          worldZ = clampedZ
-        }
-
         const worldPos: [number, number, number] = [worldX, yPos, worldZ]
         const isHovered = hoveredPropKey === key
 
@@ -997,14 +1042,14 @@ export function GridRoomRenderer({
             userData={{
               propKey: key,
               propId,
-              gridX: effectiveGridX,
-              gridZ: effectiveGridZ,
-              rotation: effectiveRotation,
+              gridX: placement.effectiveGridX,
+              gridZ: placement.effectiveGridZ,
+              rotation: placement.effectiveRotation,
               span,
               ...(gridDebugEnabled ? { debugPropKey: key } : {}),
             }}
           >
-            <BobbingWrapper active={isBeingMoved} baseY={yPos}>
+            <BobbingWrapper active={placement.isBeingMoved} baseY={yPos}>
               <Component
                 position={[worldPos[0], 0, worldPos[2]]}
                 rotation={finalRotation}
@@ -1013,7 +1058,7 @@ export function GridRoomRenderer({
               />
             </BobbingWrapper>
             {/* Selection indicator when prop is being moved */}
-            {isSelected && (
+            {placement.isSelected && (
               <SelectionIndicator
                 position={worldPos}
                 isMoving={isMoving}
@@ -1026,7 +1071,7 @@ export function GridRoomRenderer({
               />
             )}
             {/* Hover glow when not selected */}
-            {isHovered && !isSelected && <HoverGlow position={worldPos} span={span} />}
+            {isHovered && !placement.isSelected && <HoverGlow position={worldPos} span={span} />}
             {gridDebugEnabled && isHovered && (
               <PropDebugLabel propId={propId} position={worldPos} />
             )}

@@ -95,6 +95,7 @@ export function DesertEnvironment({
   const sunLightRef = useRef<THREE.DirectionalLight>(null)
 
   const data = useMemo(() => {
+    // NOSONAR: deterministic decoration generation pipeline
     // NOSONAR: 3D rendering pipeline
     const groundMatrices: THREE.Matrix4[] = []
     const groundColors: THREE.Color[] = []
