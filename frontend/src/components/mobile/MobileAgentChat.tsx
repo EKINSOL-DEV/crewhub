@@ -420,7 +420,7 @@ interface MobileAgentChatProps {
 }
 
 export function MobileAgentChat({
-  // NOSONAR: mobile chat container with broad UI branching
+  // NOSONAR
   sessionKey,
   agentName,
   agentIcon,
@@ -429,7 +429,6 @@ export function MobileAgentChat({
   onBack,
   onOpenSettings,
 }: MobileAgentChatProps) {
-  // NOSONAR
   const accentColor = agentColor || getColor(sessionKey)
   const icon = agentIcon || agentName.charAt(0).toUpperCase()
 
