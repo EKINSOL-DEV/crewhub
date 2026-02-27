@@ -189,8 +189,7 @@ export function useVoiceRecorder(
 
   // ── Start recording ─────────────────────────────────────────────
   const startRecording = useCallback(async () => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate media recording state machine
+    // NOSONAR: media recording state machine
     if (!isSupported) {
       setError('Voice recording not supported in this browser')
       return

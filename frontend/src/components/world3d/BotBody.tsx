@@ -31,7 +31,7 @@ function darkenColor(hex: string, factor: number = 0.6): string {
  *   Arms:       center y=0.00,  capsule on each side
  *   Feet:       center y=-0.30, small dark boxes
  */
-function animateWalk(
+function animateWalk( // NOSONAR: walk animation with multiple limb ref conditions
   walkPhase: number,
   leftFoot: React.RefObject<THREE.Mesh | null>,
   rightFoot: React.RefObject<THREE.Mesh | null>,

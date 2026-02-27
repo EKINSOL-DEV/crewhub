@@ -427,7 +427,7 @@ function makeEntry(
   return { session, config, name, status, roomName, roomId }
 }
 
-function buildFixedAgentEntries(
+function buildFixedAgentEntries( // NOSONAR: agent entry builder with multiple status/runtime branches
   agentRuntimes: AgentTopBarProps['agentRuntimes'],
   sessions: CrewSession[],
   helpers: EntryHelpers

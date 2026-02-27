@@ -95,8 +95,7 @@ export function DesertEnvironment({
   const sunLightRef = useRef<THREE.DirectionalLight>(null)
 
   const data = useMemo(() => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
+    // NOSONAR: 3D rendering pipeline
     const groundMatrices: THREE.Matrix4[] = []
     const groundColors: THREE.Color[] = []
 

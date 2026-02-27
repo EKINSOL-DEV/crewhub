@@ -56,6 +56,7 @@ function PartGeometry({
 }
 
 function DynamicMesh({
+  // NOSONAR: 3D mesh component with edit mode interactions
   part,
   index,
   editMode,

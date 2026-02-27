@@ -101,8 +101,7 @@ export function humanizeLabel(label: string): string {
  * Extract a short task summary from the last few messages.
  */
 export function extractTaskSummary(messages: CrewSession['messages']): string | null {
-  // NOSONAR
-  // NOSONAR: complexity from legitimate message parsing branches
+  // NOSONAR: message parsing branches
   if (!messages || messages.length === 0) return null
 
   const recent = messages.slice(-5)

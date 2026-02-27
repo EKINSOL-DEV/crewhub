@@ -230,8 +230,7 @@ export const Bot3D = memo(function Bot3D({
 
   // Single consolidated useFrame: animation ticks + transforms + movement
   useFrame(({ clock }, delta) => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
+    // NOSONAR: 3D rendering pipeline
     if (!groupRef.current) return
     const t = clock.getElapsedTime()
     const anim = animRef.current

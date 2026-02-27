@@ -72,8 +72,7 @@ function getDisplayStatus(job: CronJob): DisplayStatus {
 // --- Formatting helpers ---
 
 function formatSchedule(schedule: Schedule): string {
-  // NOSONAR
-  // NOSONAR: complexity from cron schedule rendering with multiple format branches
+  // NOSONAR: cron schedule formatting with multiple format branches
   switch (schedule.kind) {
     case 'cron': {
       const expr = schedule.expr

@@ -96,7 +96,7 @@ export function updatePositionRegistry(
 }
 
 /** Handle meeting gathering waypoint movement. Returns true if meeting movement was applied. */
-export function handleMeetingMovement(
+export function handleMeetingMovement( // NOSONAR: meeting waypoint movement with path computation
   group: THREE.Group,
   state: {
     currentX: number
@@ -238,7 +238,7 @@ export function pickWalkableDir(
 }
 
 /** Handle no-grid circular wandering (parking bots). Returns true if handled. */
-export function handleNoGridWander(
+export function handleNoGridWander( // NOSONAR: circular wandering with wait/move state machine
   group: THREE.Group,
   state: {
     currentX: number

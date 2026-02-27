@@ -903,8 +903,7 @@ export function GridRoomRenderer({
       )}
 
       {propInstances.map(({ key, propId, gridX, gridZ, position, rotation, span }) => {
-        // NOSONAR
-        // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
+        // NOSONAR: 3D rendering pipeline
         const entry = getPropEntry(propId)
         if (!entry) return null
 

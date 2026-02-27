@@ -416,10 +416,8 @@ function getCodeStyles(variant: string): {
 }
 
 const ChatMessageBubbleInner = memo(
-  // NOSONAR
   function ChatMessageBubble({
-    // NOSONAR
-    // NOSONAR: complexity from legitimate message rendering with multiple content type branches
+    // NOSONAR: message rendering with multiple content type branches
     msg,
     variant = 'float',
     accentColor = '#8b5cf6',
