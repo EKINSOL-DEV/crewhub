@@ -13,6 +13,7 @@ import logging
 import re
 import uuid as _uuid_mod
 from collections.abc import AsyncGenerator
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -130,10 +131,310 @@ def _prepare_template_fallback(
     return code, parts, record
 
 
-async def stream_prop_generation(  # noqa: C901, NOSONAR
-    # noqa: C901 — async generator state machine: multi-phase SSE streaming
-    # orchestrator (connect→send→accept→poll→post-process). Splitting across
-    # multiple sub-generators would obscure the sequential control flow.
+@dataclass
+class _AcceptanceOutcome:
+    session_id: str | None = None
+    error_message: str | None = None
+    timeout: bool = False
+
+
+@dataclass
+class _PollOutcome:
+    final_result: Any = None
+    disconnected: bool = False
+    error_message: str | None = None
+    poll_count: int = 0
+    queue_messages_seen: int = 0
+
+
+def _build_full_prompt(template: str, prompt: str, name: str) -> str:
+    return (
+        f"{template}\n\n"
+        f"Generate a prop for: {prompt}\n"
+        f"Component name: `{name}`. Output ONLY the code followed by the PARTS_DATA block."
+    )
+
+
+def _create_agent_request(full_prompt: str, agent_id: str) -> tuple[str, dict]:
+    req_id = str(_uuid_mod.uuid4())
+    ws_request = {
+        "type": "req",
+        "id": req_id,
+        "method": "agent",
+        "params": {
+            "message": full_prompt,
+            "agentId": agent_id,
+            "deliver": False,
+            "idempotencyKey": str(_uuid_mod.uuid4()),
+        },
+    }
+    return req_id, ws_request
+
+
+def _extract_session_id(payload: dict) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+    session = payload.get("session")
+    if isinstance(session, dict) and session.get("sessionId"):
+        return session.get("sessionId")
+    return payload.get("sessionId")
+
+
+async def _wait_for_accepted_response(q: asyncio.Queue, gen_id: str) -> _AcceptanceOutcome:
+    try:
+        accepted = await asyncio.wait_for(q.get(), timeout=15.0)
+    except TimeoutError:
+        logger.warning(f"[PropGen:{gen_id}] Timeout waiting for accepted response (15s)")
+        return _AcceptanceOutcome(timeout=True, error_message="Agent acceptance timeout")
+
+    logger.info(f"[PropGen:{gen_id}] Accepted: ok={accepted.get('ok')}")
+    if accepted.get("ok"):
+        payload = accepted.get("payload", {})
+        return _AcceptanceOutcome(session_id=_extract_session_id(payload))
+
+    error_info = accepted.get("error", {})
+    err_msg = error_info.get("message", str(error_info)) if isinstance(error_info, dict) else str(error_info)
+    logger.error(f"[PropGen:{gen_id}] Agent rejected: {err_msg}")
+    return _AcceptanceOutcome(error_message=f"Agent error: {err_msg}")
+
+
+def _error_record(
+    gen_id: str,
+    prompt: str,
+    name: str,
+    model_key: str,
+    model_label: str,
+    full_prompt: str,
+    tool_calls_collected: list[dict],
+    err_msg: str,
+) -> dict:
+    return {
+        "id": gen_id,
+        "prompt": prompt,
+        "name": name,
+        "model": model_key,
+        "modelLabel": model_label,
+        "method": "error",
+        "fullPrompt": full_prompt,
+        "toolCalls": tool_calls_collected,
+        "corrections": [],
+        "diagnostics": [],
+        "parts": [],
+        "code": "",
+        "createdAt": datetime.now(UTC).isoformat(),
+        "error": err_msg,
+    }
+
+
+def _build_transcript_path(agent_id: str, session_id: str | None, gen_id: str) -> Path | None:
+    if not session_id:
+        logger.warning(f"[PropGen:{gen_id}] No session_id — cannot poll transcript")
+        return None
+    base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
+    transcript_path = base / f"{session_id}.jsonl"
+    logger.info(f"[PropGen:{gen_id}] Transcript: {transcript_path} exists={transcript_path.exists()}")
+    return transcript_path
+
+
+def _normalize_ai_raw_text(raw_text: str) -> str:
+    cleaned = raw_text.strip()
+    cleaned = re.sub(r"^```\w*\n", "", cleaned)
+    cleaned = re.sub(r"\n```\s*$", "", cleaned)
+    return cleaned
+
+
+def _is_mesh_component_code(code: str) -> bool:
+    return "export function" in code and ("<mesh" in code or "mesh" in code.lower())
+
+
+def _post_processor_diagnostics(pp_result: Any) -> list[str]:
+    diagnostics: list[str] = []
+    if pp_result.corrections:
+        diagnostics.append(f"✅ Post-processor applied {len(pp_result.corrections)} fixes")
+        diagnostics.extend(f"  → {fix}" for fix in pp_result.corrections)
+    else:
+        diagnostics.append("✅ Post-processing: no corrections needed")
+    diagnostics.extend(f"⚠️ {warn}" for warn in pp_result.warnings)
+    diagnostics.append(f"📊 Quality score: {pp_result.quality_score}/100")
+    return diagnostics
+
+
+def _ai_success_record(
+    gen_id: str,
+    prompt: str,
+    name: str,
+    model_key: str,
+    model_label: str,
+    full_prompt: str,
+    tool_calls_collected: list[dict],
+    corrections_collected: list[str],
+    diagnostics_collected: list[str],
+    parts: list[dict],
+    code: str,
+    quality_score: int,
+    validation: dict,
+) -> dict:
+    return {
+        "id": gen_id,
+        "prompt": prompt,
+        "name": name,
+        "model": model_key,
+        "modelLabel": model_label,
+        "method": "ai",
+        "fullPrompt": full_prompt,
+        "toolCalls": tool_calls_collected,
+        "corrections": corrections_collected,
+        "diagnostics": diagnostics_collected,
+        "parts": parts,
+        "code": code,
+        "createdAt": datetime.now(UTC).isoformat(),
+        "error": None,
+        "qualityScore": quality_score,
+        "validation": validation,
+    }
+
+
+async def _emit_new_transcript_events(
+    transcript_path: Path | None,
+    lines_read: int,
+    tool_calls_collected: list[dict],
+) -> tuple[int, list[str]]:
+    if not transcript_path or not transcript_path.exists():
+        return lines_read, []
+
+    try:
+        async with aiofiles.open(transcript_path) as f:
+            all_lines = await f.readlines()
+    except OSError:
+        return lines_read, []
+
+    events: list[str] = []
+    new_lines = all_lines[lines_read:]
+    updated_lines_read = len(all_lines)
+
+    for raw_line in new_lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        for evt_type, evt_data in _extract_transcript_events(entry):
+            if evt_type == "tool" and "name" in evt_data:
+                tool_calls_collected.append({"name": evt_data["name"], "input": evt_data.get("input", "")[:500]})
+            events.append(_sse_event(evt_type, evt_data))
+
+    return updated_lines_read, events
+
+
+def _poll_queue_message(
+    q: asyncio.Queue, gen_id: str, poll_count: int, queue_messages_seen: int
+) -> tuple[dict | None, int]:
+    try:
+        final_msg = q.get_nowait()
+    except asyncio.QueueEmpty:
+        return None, queue_messages_seen
+
+    queue_messages_seen += 1
+    logger.info(f"[PropGen:{gen_id}] Queue msg #{queue_messages_seen} at poll {poll_count}: ok={final_msg.get('ok')}")
+
+    if final_msg.get("ok"):
+        payload = final_msg.get("payload")
+        if isinstance(payload, dict) and payload.get("status") == "accepted":
+            return {"kind": "accepted"}, queue_messages_seen
+        return {"kind": "final", "payload": payload}, queue_messages_seen
+
+    if final_msg.get("error"):
+        err_msg = str(final_msg.get("error", {}).get("message", "Agent error"))
+        logger.error(f"[PropGen:{gen_id}] Agent error: {err_msg}")
+        return {"kind": "error", "message": err_msg}, queue_messages_seen
+
+    logger.warning(f"[PropGen:{gen_id}] Unknown queue msg: {json.dumps(final_msg)[:300]}")
+    return {"kind": "unknown"}, queue_messages_seen
+
+
+async def _poll_for_final_result(
+    request,
+    conn,
+    req_id: str,
+    q: asyncio.Queue,
+    transcript_path: Path | None,
+    tool_calls_collected: list[dict],
+    gen_id: str,
+) -> tuple[_PollOutcome, list[str]]:
+    lines_read = 0
+    poll_count = 0
+    max_polls = 600
+    queue_messages_seen = 0
+    final_result = None
+    streamed_events: list[str] = []
+
+    while poll_count < max_polls:
+        if await request.is_disconnected():
+            conn._response_queues.pop(req_id, None)
+            return _PollOutcome(
+                disconnected=True, poll_count=poll_count, queue_messages_seen=queue_messages_seen
+            ), streamed_events
+
+        queue_result, queue_messages_seen = _poll_queue_message(q, gen_id, poll_count, queue_messages_seen)
+        if queue_result:
+            kind = queue_result.get("kind")
+            if kind == "final":
+                final_result = queue_result.get("payload")
+            elif kind == "error":
+                conn._response_queues.pop(req_id, None)
+                return (
+                    _PollOutcome(
+                        error_message=queue_result.get("message", "Agent error"),
+                        poll_count=poll_count,
+                        queue_messages_seen=queue_messages_seen,
+                    ),
+                    streamed_events,
+                )
+
+        if final_result is not None:
+            break
+
+        lines_read, events = await _emit_new_transcript_events(transcript_path, lines_read, tool_calls_collected)
+        streamed_events.extend(events)
+
+        await asyncio.sleep(0.2)
+        poll_count += 1
+
+    conn._response_queues.pop(req_id, None)
+    logger.info(
+        f"[PropGen:{gen_id}] Poll loop ended: polls={poll_count} "
+        f"queue_msgs={queue_messages_seen} has_result={final_result is not None}"
+    )
+    return (
+        _PollOutcome(
+            final_result=final_result,
+            poll_count=poll_count,
+            queue_messages_seen=queue_messages_seen,
+        ),
+        streamed_events,
+    )
+
+
+async def _late_wait_for_result(conn, req_id: str, q: asyncio.Queue, gen_id: str) -> Any:
+    logger.info(f"[PropGen:{gen_id}] No result yet, waiting 30s more...")
+    try:
+        conn._response_queues[req_id] = q
+        final_msg = await asyncio.wait_for(q.get(), timeout=30.0)
+        return final_msg.get("payload") if final_msg.get("ok") else None
+    except TimeoutError:
+        logger.warning(f"[PropGen:{gen_id}] Final 30s wait also timed out")
+        return None
+    except Exception as e:
+        logger.error(f"[PropGen:{gen_id}] Final wait error: {e}")
+        return None
+    finally:
+        conn._response_queues.pop(req_id, None)
+
+
+async def stream_prop_generation(  # noqa: C901  # NOSONAR
     request,  # starlette.requests.Request — checked only for is_disconnected()
     prompt: str,
     name: str,
@@ -147,12 +448,10 @@ async def stream_prop_generation(  # noqa: C901, NOSONAR
 
     model_id, model_label = resolve_model(model_key)
     gen_id = str(_uuid_mod.uuid4())[:8]
-
     tool_calls_collected: list[dict] = []
     corrections_collected: list[str] = []
     diagnostics_collected: list[str] = []
 
-    # ── Find connected OpenClaw connection ────────────────────────
     try:
         manager = await get_connection_manager()
         conn = _find_connected_openclaw(manager)
@@ -163,42 +462,22 @@ async def stream_prop_generation(  # noqa: C901, NOSONAR
         yield _sse_event("error", {"message": str(e)})
         return
 
-    # ── Build prompt ──────────────────────────────────────────────
     template = load_prompt_template()
     if not template:
         yield _sse_event("error", {"message": "Prompt template not found"})
         return
 
-    full_prompt = (
-        f"{template}\n\n"
-        f"Generate a prop for: {prompt}\n"
-        f"Component name: `{name}`. Output ONLY the code followed by the PARTS_DATA block."
-    )
-
+    full_prompt = _build_full_prompt(template, prompt, name)
     yield _sse_event("status", {"message": f'🔍 Analyzing prompt: "{prompt}"...', "phase": "start"})
     yield _sse_event("model", {"model": model_key, "modelLabel": model_label, "modelId": model_id})
     yield _sse_event("full_prompt", {"prompt": full_prompt})
 
-    # ── Send agent request ────────────────────────────────────────
     agent_id = "dev"
-    req_id = str(_uuid_mod.uuid4())
-    ws_request = {
-        "type": "req",
-        "id": req_id,
-        "method": "agent",
-        "params": {
-            "message": full_prompt,
-            "agentId": agent_id,
-            "deliver": False,
-            "idempotencyKey": str(_uuid_mod.uuid4()),
-        },
-    }
-
+    req_id, ws_request = _create_agent_request(full_prompt, agent_id)
     q: asyncio.Queue = asyncio.Queue()
     conn._response_queues[req_id] = q
 
     logger.info(f"[PropGen:{gen_id}] Sending agent request req_id={req_id} agent={agent_id} model={model_id}")
-
     try:
         await conn.ws.send(json.dumps(ws_request))
     except Exception as e:
@@ -207,37 +486,8 @@ async def stream_prop_generation(  # noqa: C901, NOSONAR
         yield _sse_event("error", {"message": f"Failed to send request: {e}"})
         return
 
-    # ── Wait for accepted response ────────────────────────────────
-    session_id = None
-    try:
-        accepted = await asyncio.wait_for(q.get(), timeout=15.0)
-        logger.info(f"[PropGen:{gen_id}] Accepted: ok={accepted.get('ok')}")
-        if accepted.get("ok"):
-            payload = accepted.get("payload", {})
-            if isinstance(payload, dict):
-                session_id = payload.get("sessionId") or (
-                    payload.get("session", {}).get("sessionId") if isinstance(payload.get("session"), dict) else None
-                )
-        else:
-            error_info = accepted.get("error", {})
-            err_msg = error_info.get("message", str(error_info)) if isinstance(error_info, dict) else str(error_info)
-            logger.error(f"[PropGen:{gen_id}] Agent rejected: {err_msg}")
-            conn._response_queues.pop(req_id, None)
-            code, parts, record = _prepare_template_fallback(
-                gen_id,
-                prompt,
-                name,
-                model_key,
-                model_label,
-                full_prompt,
-                f"Agent error: {err_msg}",
-            )
-            add_generation_record(record)
-            yield _sse_event("error", {"message": f"Agent error: {err_msg}"})
-            yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
-            return
-    except TimeoutError:
-        logger.warning(f"[PropGen:{gen_id}] Timeout waiting for accepted response (15s)")
+    acceptance = await _wait_for_accepted_response(q, gen_id)
+    if acceptance.error_message:
         conn._response_queues.pop(req_id, None)
         code, parts, record = _prepare_template_fallback(
             gen_id,
@@ -246,218 +496,112 @@ async def stream_prop_generation(  # noqa: C901, NOSONAR
             model_key,
             model_label,
             full_prompt,
-            "Agent acceptance timeout",
-            extra_diags=["Timeout waiting for agent acceptance"],
+            acceptance.error_message,
         )
         add_generation_record(record)
-        yield _sse_event("error", {"message": "Agent did not respond in time"})
+        yield _sse_event("error", {"message": acceptance.error_message})
         yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
         return
 
-    yield _sse_event(
-        "status",
-        {
-            "message": f"🧠 AI agent ({model_label}) started thinking...",
-            "phase": "thinking",
-        },
+    yield _sse_event("status", {"message": f"🧠 AI agent ({model_label}) started thinking...", "phase": "thinking"})
+
+    transcript_path = _build_transcript_path(agent_id, acceptance.session_id, gen_id)
+    poll_outcome, transcript_events = await _poll_for_final_result(
+        request,
+        conn,
+        req_id,
+        q,
+        transcript_path,
+        tool_calls_collected,
+        gen_id,
     )
+    for event in transcript_events:
+        yield event
 
-    # ── Poll transcript ───────────────────────────────────────────
-    transcript_path: Path | None = None
-    if session_id:
-        base = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
-        transcript_path = base / f"{session_id}.jsonl"
-        logger.info(f"[PropGen:{gen_id}] Transcript: {transcript_path} exists={transcript_path.exists()}")
-    else:
-        logger.warning(f"[PropGen:{gen_id}] No session_id — cannot poll transcript")
+    if poll_outcome.disconnected:
+        return
 
-    lines_read = 0
-    final_result = None
-    poll_count = 0
-    max_polls = 600
-    queue_messages_seen = 0
-
-    while poll_count < max_polls:
-        if await request.is_disconnected():
-            conn._response_queues.pop(req_id, None)
-            return
-
-        try:
-            final_msg = q.get_nowait()
-            queue_messages_seen += 1
-            logger.info(
-                f"[PropGen:{gen_id}] Queue msg #{queue_messages_seen} at poll {poll_count}: ok={final_msg.get('ok')}"
+    if poll_outcome.error_message:
+        err_msg = poll_outcome.error_message
+        yield _sse_event("error", {"message": err_msg})
+        add_generation_record(
+            _error_record(
+                gen_id,
+                prompt,
+                name,
+                model_key,
+                model_label,
+                full_prompt,
+                tool_calls_collected,
+                err_msg,
             )
-            if final_msg.get("ok"):
-                payload = final_msg.get("payload")
-                if isinstance(payload, dict) and payload.get("status") == "accepted":
-                    continue  # skip duplicate accepted
-                final_result = payload
-            elif final_msg.get("error"):
-                err_msg = str(final_msg.get("error", {}).get("message", "Agent error"))
-                logger.error(f"[PropGen:{gen_id}] Agent error: {err_msg}")
-                yield _sse_event("error", {"message": err_msg})
-                add_generation_record(
-                    {
-                        "id": gen_id,
-                        "prompt": prompt,
-                        "name": name,
-                        "model": model_key,
-                        "modelLabel": model_label,
-                        "method": "error",
-                        "fullPrompt": full_prompt,
-                        "toolCalls": tool_calls_collected,
-                        "corrections": [],
-                        "diagnostics": [],
-                        "parts": [],
-                        "code": "",
-                        "createdAt": datetime.now(UTC).isoformat(),
-                        "error": err_msg,
-                    }
-                )
-                conn._response_queues.pop(req_id, None)
-                return
-            else:
-                logger.warning(f"[PropGen:{gen_id}] Unknown queue msg: {json.dumps(final_msg)[:300]}")
-                continue
-            break
-        except asyncio.QueueEmpty:
-            pass
+        )
+        return
 
-        # Read new transcript lines
-        if transcript_path and transcript_path.exists():
-            try:
-                async with aiofiles.open(transcript_path) as f:
-                    all_lines = await f.readlines()
-                new_lines = all_lines[lines_read:]
-                lines_read = len(all_lines)
-
-                for line in new_lines:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        entry = json.loads(line)
-                        for evt_type, evt_data in _extract_transcript_events(entry):
-                            if evt_type == "tool" and "name" in evt_data:
-                                tool_calls_collected.append(
-                                    {"name": evt_data["name"], "input": evt_data.get("input", "")[:500]}
-                                )
-                            yield _sse_event(evt_type, evt_data)
-                    except json.JSONDecodeError:
-                        continue
-            except OSError:
-                pass
-
-        await asyncio.sleep(0.2)
-        poll_count += 1
-
-    conn._response_queues.pop(req_id, None)
-    logger.info(
-        f"[PropGen:{gen_id}] Poll loop ended: polls={poll_count} "
-        f"queue_msgs={queue_messages_seen} has_result={final_result is not None}"
-    )
-
-    # ── Late wait for final response ──────────────────────────────
+    final_result = poll_outcome.final_result
     if final_result is None:
-        logger.info(f"[PropGen:{gen_id}] No result yet, waiting 30s more...")
-        try:
-            conn._response_queues[req_id] = q
-            final_msg = await asyncio.wait_for(q.get(), timeout=30.0)
-            if final_msg.get("ok"):
-                final_result = final_msg.get("payload")
-            conn._response_queues.pop(req_id, None)
-        except TimeoutError:
-            logger.warning(f"[PropGen:{gen_id}] Final 30s wait also timed out")
-            conn._response_queues.pop(req_id, None)
-        except Exception as e:
-            logger.error(f"[PropGen:{gen_id}] Final wait error: {e}")
-            conn._response_queues.pop(req_id, None)
+        final_result = await _late_wait_for_result(conn, req_id, q, gen_id)
 
-    # ── Extract raw text from result ──────────────────────────────
-    raw_text: Optional[str] = _extract_final_raw_text(final_result)
-
+    raw_text = _extract_final_raw_text(final_result)
     logger.info(f"[PropGen:{gen_id}] raw_text: present={bool(raw_text)} len={len(raw_text) if raw_text else 0}")
 
-    # ── Process valid AI output ───────────────────────────────────
     if raw_text:
-        raw_text = raw_text.strip()
-        raw_text = re.sub(r"^```\w*\n", "", raw_text)
-        raw_text = re.sub(r"\n```\s*$", "", raw_text)
+        cleaned_text = _normalize_ai_raw_text(raw_text)
+        ai_parts = parse_ai_parts(cleaned_text)
+        code = strip_parts_block(cleaned_text)
 
-        ai_parts = parse_ai_parts(raw_text)
-        code = strip_parts_block(raw_text)
-
-        if "export function" in code and ("<mesh" in code or "mesh" in code.lower()):
+        if _is_mesh_component_code(code):
             from ..multi_pass_generator import MultiPassGenerator
             from ..prop_post_processor import enhance_generated_prop, validate_prop_quality
 
-            # Phase 1: Post-processor
             pp_result = enhance_generated_prop(code)
             code = pp_result.code
             corrections_collected = pp_result.corrections
-            diagnostics_collected = []
-
-            if pp_result.corrections:
-                diagnostics_collected.append(f"✅ Post-processor applied {len(pp_result.corrections)} fixes")
-                for fix in pp_result.corrections:
-                    diagnostics_collected.append(f"  → {fix}")
-            else:
-                diagnostics_collected.append("✅ Post-processing: no corrections needed")
-
-            for warn in pp_result.warnings:
-                diagnostics_collected.append(f"⚠️ {warn}")
-
-            diagnostics_collected.append(f"📊 Quality score: {pp_result.quality_score}/100")
-
+            diagnostics_collected = _post_processor_diagnostics(pp_result)
             for diag in diagnostics_collected:
                 yield _sse_event("correction", {"message": diag})
 
-            # Phase 2: Multi-pass enhancement
+            mp_gen: MultiPassGenerator | None = None
             try:
                 mp_gen = MultiPassGenerator()
                 code, mp_diags = mp_gen.generate_prop(prompt, code)
-                for d in mp_diags:
-                    diagnostics_collected.append(d)
-                    yield _sse_event("correction", {"message": d})
+                for diag in mp_diags:
+                    diagnostics_collected.append(diag)
+                    yield _sse_event("correction", {"message": diag})
             except Exception as mp_err:
                 logger.warning(f"[PropGen:{gen_id}] Multi-pass error (non-fatal): {mp_err}")
                 diagnostics_collected.append("⚠️ Multi-pass enhancement skipped")
 
-            # Re-parse parts from potentially modified code
             ai_parts_new = parse_ai_parts(code)
             if ai_parts_new:
                 ai_parts = ai_parts_new
             parts = ai_parts if ai_parts else extract_parts(prompt)
-
-            # Validate final quality
             validation = validate_prop_quality(code)
 
             add_generation_record(
-                {
-                    "id": gen_id,
-                    "prompt": prompt,
-                    "name": name,
-                    "model": model_key,
-                    "modelLabel": model_label,
-                    "method": "ai",
-                    "fullPrompt": full_prompt,
-                    "toolCalls": tool_calls_collected,
-                    "corrections": corrections_collected,
-                    "diagnostics": diagnostics_collected,
-                    "parts": parts,
-                    "code": code,
-                    "createdAt": datetime.now(UTC).isoformat(),
-                    "error": None,
-                    "qualityScore": pp_result.quality_score,
-                    "validation": validation,
-                }
+                _ai_success_record(
+                    gen_id,
+                    prompt,
+                    name,
+                    model_key,
+                    model_label,
+                    full_prompt,
+                    tool_calls_collected,
+                    corrections_collected,
+                    diagnostics_collected,
+                    parts,
+                    code,
+                    pp_result.quality_score,
+                    validation,
+                )
             )
 
-            try:
-                refinement_options = mp_gen.get_refinement_options(prompt)
-            except Exception:
-                refinement_options = {}
+            refinement_options = {}
+            if mp_gen is not None:
+                try:
+                    refinement_options = mp_gen.get_refinement_options(prompt)
+                except Exception:
+                    refinement_options = {}
 
             yield _sse_event(
                 "complete",
@@ -477,7 +621,6 @@ async def stream_prop_generation(  # noqa: C901, NOSONAR
             )
             return
 
-        # AI output invalid → template fallback
         logger.warning(f"AI output invalid for {name}, using template fallback")
         code, parts, record = _prepare_template_fallback(
             gen_id,
@@ -494,7 +637,6 @@ async def stream_prop_generation(  # noqa: C901, NOSONAR
         yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
         return
 
-    # No AI result at all → template fallback
     logger.warning(f"No AI result for {name}, using template fallback")
     code, parts, record = _prepare_template_fallback(
         gen_id,

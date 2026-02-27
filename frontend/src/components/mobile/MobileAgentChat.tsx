@@ -115,6 +115,142 @@ function buildMessagePayload(text: string, mediaPaths: string[]) {
   return parts.join('\n')
 }
 
+function updateNearBottomFlag(
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>,
+  isNearBottomRef: React.MutableRefObject<boolean>
+) {
+  const container = scrollContainerRef.current
+  if (!container) return
+  isNearBottomRef.current =
+    container.scrollHeight - container.scrollTop - container.clientHeight < 80
+}
+
+function syncScrollOnMessageGrowth(
+  messageCount: number,
+  prevMessageCountRef: React.MutableRefObject<number>,
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>,
+  messagesEndRef: React.RefObject<HTMLDivElement | null>,
+  isNearBottomRef: React.MutableRefObject<boolean>
+) {
+  if (messageCount > prevMessageCountRef.current) {
+    if (prevMessageCountRef.current === 0) {
+      const container = scrollContainerRef.current
+      if (container) container.scrollTop = container.scrollHeight
+    } else if (isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  prevMessageCountRef.current = messageCount
+}
+
+function syncScrollOnStreaming(
+  streamingMessageId: string | null,
+  prevStreamingIdRef: React.MutableRefObject<string | null>,
+  messagesEndRef: React.RefObject<HTMLDivElement | null>,
+  isNearBottomRef: React.MutableRefObject<boolean>
+) {
+  const wasStreaming = prevStreamingIdRef.current !== null
+  const isStreaming = streamingMessageId !== null
+
+  if (isStreaming && isNearBottomRef.current) {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  } else if (wasStreaming && !isStreaming) {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    isNearBottomRef.current = true
+  }
+
+  prevStreamingIdRef.current = streamingMessageId
+}
+
+function applySelectedFiles(
+  e: React.ChangeEvent<HTMLInputElement>,
+  addFiles: (files: FileList) => void
+) {
+  if (!e.target.files || e.target.files.length === 0) return
+  addFiles(e.target.files)
+  e.target.value = ''
+}
+
+function applyPastedImages(
+  e: ClipboardEvent<HTMLTextAreaElement>,
+  addFiles: (files: File[]) => void
+) {
+  const imageFiles = getPastedImages(e.clipboardData?.items)
+  if (imageFiles.length === 0) return
+  e.preventDefault()
+  addFiles(imageFiles)
+}
+
+function submitOnEnter(e: KeyboardEvent<HTMLTextAreaElement>, onSend: () => void) {
+  if (e.key !== 'Enter' || e.shiftKey) return
+  e.preventDefault()
+  onSend()
+}
+
+async function uploadFilesForSend(
+  filesToUpload: PendingFile[],
+  setIsUploading: React.Dispatch<React.SetStateAction<boolean>>,
+  setPendingFiles: React.Dispatch<React.SetStateAction<PendingFile[]>>
+): Promise<{ aborted: boolean; mediaPaths: string[] }> {
+  if (filesToUpload.length === 0) return { aborted: false, mediaPaths: [] }
+
+  setIsUploading(true)
+  setPendingFiles((prev) => prev.map((f) => (f.error ? f : { ...f, uploading: true })))
+
+  try {
+    const { results, errors, mediaPaths } = await uploadPendingFiles(filesToUpload)
+    if (errors.length > 0) {
+      setPendingFiles((prev) => prev.map(mapUploadResult(results)))
+      return { aborted: true, mediaPaths: [] }
+    }
+    return { aborted: false, mediaPaths }
+  } catch {
+    return { aborted: true, mediaPaths: [] }
+  } finally {
+    setIsUploading(false)
+  }
+}
+
+function revokePendingPreviewUrls(pendingFiles: PendingFile[]) {
+  pendingFiles.forEach((file) => {
+    if (file.previewUrl) URL.revokeObjectURL(file.previewUrl)
+  })
+}
+
+function buildVoiceAttachmentMessage(
+  url: string,
+  duration: number,
+  transcript: string | null,
+  transcriptError: string | null
+): string {
+  const message = `[audio attached: ${url} (audio/webm) ${duration}s]`
+  if (transcript) return `${message}\nTranscript: "${transcript}"`
+  if (transcriptError) return `${message}\n[Voice transcription unavailable: ${transcriptError}]`
+  return message
+}
+
+function updateTouchStartX(
+  e: React.TouchEvent,
+  isRecording: boolean,
+  touchStartXRef: React.MutableRefObject<number | null>
+) {
+  if (isRecording) touchStartXRef.current = e.touches[0].clientX
+}
+
+function handleRecordingSwipeCancel(
+  e: React.TouchEvent,
+  isRecording: boolean,
+  touchStartXRef: React.MutableRefObject<number | null>,
+  cancelRecording: () => void
+) {
+  if (!isRecording || touchStartXRef.current === null) return
+  const deltaX = touchStartXRef.current - e.touches[0].clientX
+  if (deltaX <= 80) return
+  touchStartXRef.current = null
+  cancelRecording()
+}
+
 // (renderMarkdown, escapeHtml, formatTimestamp, ChatBubble moved to ChatMessageBubble.tsx)
 
 // Deterministic color
@@ -293,6 +429,7 @@ export function MobileAgentChat({
   onBack,
   onOpenSettings,
 }: MobileAgentChatProps) {
+  // NOSONAR
   const accentColor = agentColor || getColor(sessionKey)
   const icon = agentIcon || agentName.charAt(0).toUpperCase()
 
@@ -320,38 +457,22 @@ export function MobileAgentChat({
   const prevStreamingIdRef = useRef<string | null>(null)
 
   const handleScroll = useCallback(() => {
-    const c = scrollContainerRef.current
-    if (!c) return
-    isNearBottomRef.current = c.scrollHeight - c.scrollTop - c.clientHeight < 80
+    updateNearBottomFlag(scrollContainerRef, isNearBottomRef)
   }, [])
 
   useEffect(() => {
-    if (messages.length > prevMessageCount.current) {
-      if (prevMessageCount.current === 0) {
-        const c = scrollContainerRef.current
-        if (c) c.scrollTop = c.scrollHeight
-      } else if (isNearBottomRef.current) {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-      }
-    }
-    prevMessageCount.current = messages.length
+    syncScrollOnMessageGrowth(
+      messages.length,
+      prevMessageCount,
+      scrollContainerRef,
+      messagesEndRef,
+      isNearBottomRef
+    )
   }, [messages.length])
 
   // Auto-scroll during streaming (fires on every content delta)
   useEffect(() => {
-    const wasStreaming = prevStreamingIdRef.current !== null
-    const isStreaming = streamingMessageId !== null
-
-    if (isStreaming && isNearBottomRef.current) {
-      // During streaming: follow new tokens if user hasn't scrolled up
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    } else if (wasStreaming && !isStreaming) {
-      // Streaming just ended: final scroll to bottom and reset scroll-up guard
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-      isNearBottomRef.current = true
-    }
-
-    prevStreamingIdRef.current = streamingMessageId
+    syncScrollOnStreaming(streamingMessageId, prevStreamingIdRef, messagesEndRef, isNearBottomRef)
   }, [messages, streamingMessageId])
 
   useEffect(() => {
@@ -379,20 +500,14 @@ export function MobileAgentChat({
 
   const handleFileInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files.length > 0) {
-        addFiles(e.target.files)
-        e.target.value = '' // reset so same file can be selected again
-      }
+      applySelectedFiles(e, addFiles)
     },
     [addFiles]
   )
 
   const handlePaste = useCallback(
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
-      const imageFiles = getPastedImages(e.clipboardData?.items)
-      if (imageFiles.length === 0) return
-      e.preventDefault()
-      addFiles(imageFiles)
+      applyPastedImages(e, addFiles)
     },
     [addFiles]
   )
@@ -413,38 +528,19 @@ export function MobileAgentChat({
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
     const filesToUpload = pendingFiles.filter((f) => !f.error)
-    const hasNothingToSend = !text && filesToUpload.length === 0
-    if (hasNothingToSend || isSending || isUploading) return
+    if ((!text && filesToUpload.length === 0) || isSending || isUploading) return
 
     setInputValue('')
     if (inputRef.current) inputRef.current.style.height = 'auto'
 
-    let mediaPaths: string[] = []
-    if (filesToUpload.length > 0) {
-      setIsUploading(true)
-      setPendingFiles((prev) => prev.map((f) => (f.error ? f : { ...f, uploading: true })))
+    const { aborted, mediaPaths } = await uploadFilesForSend(
+      filesToUpload,
+      setIsUploading,
+      setPendingFiles
+    )
+    if (aborted) return
 
-      try {
-        const {
-          results,
-          errors,
-          mediaPaths: uploadedPaths,
-        } = await uploadPendingFiles(filesToUpload)
-        if (errors.length > 0) {
-          setPendingFiles((prev) => prev.map(mapUploadResult(results)))
-          return
-        }
-        mediaPaths = uploadedPaths
-      } catch {
-        return
-      } finally {
-        setIsUploading(false)
-      }
-    }
-
-    pendingFiles.forEach((f) => {
-      if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
-    })
+    revokePendingPreviewUrls(pendingFiles)
     setPendingFiles([])
 
     const fullMessage = buildMessagePayload(text, mediaPaths)
@@ -452,22 +548,13 @@ export function MobileAgentChat({
   }, [inputValue, pendingFiles, isSending, isUploading, sendMessage])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+    submitOnEnter(e, handleSend)
   }
 
   // ── Voice recording ────────────────────────────────────────────
   const handleAudioReady = useCallback(
     (url: string, duration: number, transcript: string | null, transcriptError: string | null) => {
-      let msg = `[audio attached: ${url} (audio/webm) ${duration}s]`
-      if (transcript) {
-        msg += `\nTranscript: "${transcript}"`
-      } else if (transcriptError) {
-        msg += `\n[Voice transcription unavailable: ${transcriptError}]`
-      }
-      sendMessage(msg)
+      sendMessage(buildVoiceAttachmentMessage(url, duration, transcript, transcriptError))
     },
     [sendMessage]
   )
@@ -487,18 +574,13 @@ export function MobileAgentChat({
   const touchStartXRef = useRef<number | null>(null)
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
-      if (isRecording) touchStartXRef.current = e.touches[0].clientX
+      updateTouchStartX(e, isRecording, touchStartXRef)
     },
     [isRecording]
   )
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (!isRecording || touchStartXRef.current === null) return
-      const dx = touchStartXRef.current - e.touches[0].clientX
-      if (dx > 80) {
-        touchStartXRef.current = null
-        cancelRecording()
-      }
+      handleRecordingSwipeCancel(e, isRecording, touchStartXRef, cancelRecording)
     },
     [isRecording, cancelRecording]
   )
