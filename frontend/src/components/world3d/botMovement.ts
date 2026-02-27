@@ -301,6 +301,14 @@ export function handleNoGridWander( // NOSONAR: circular wandering with wait/mov
   return false
 }
 
+export interface AnimWalkOptions {
+  roomCenterX: number
+  roomCenterZ: number
+  speed: number
+  delta: number
+  sessionKey: string | undefined
+}
+
 /** Handle walking toward animation target (coffee/sleep) with grid-snapped pathfinding */
 export function handleAnimTargetWalk(
   group: THREE.Group,
@@ -319,11 +327,7 @@ export function handleAnimTargetWalk(
     botWalkableMask: boolean[][]
   },
   roomBounds: { minX: number; maxX: number; minZ: number; maxZ: number },
-  roomCenterX: number,
-  roomCenterZ: number,
-  speed: number,
-  delta: number,
-  sessionKey: string | undefined
+  opts: AnimWalkOptions
 ): void {
   const dx = state.targetX - state.currentX
   const dz = state.targetZ - state.currentZ
@@ -334,15 +338,15 @@ export function handleAnimTargetWalk(
     if (anim.freezeWhenArrived) {
       group.position.x = state.currentX
       group.position.z = state.currentZ
-      updatePositionRegistry(sessionKey, state.currentX, group.position.y, state.currentZ)
+      updatePositionRegistry(opts.sessionKey, state.currentX, group.position.y, state.currentZ)
     }
     return
   }
 
   if (dist < 0.8) {
     // Close to target — direct linear movement
-    const easedSpeed = speed * Math.min(1, dist / 0.5)
-    const step = Math.min(easedSpeed * delta, dist)
+    const easedSpeed = opts.speed * Math.min(1, dist / 0.5)
+    const step = Math.min(easedSpeed * opts.delta, dist)
     state.currentX += (dx / dist) * step
     state.currentZ += (dz / dist) * step
   } else {
@@ -356,7 +360,8 @@ export function handleAnimTargetWalk(
     for (const d of DIRECTIONS) {
       const nextX = state.currentX + d.x * cellSize
       const nextZ = state.currentZ + d.z * cellSize
-      if (!isWalkableAt(nextX, nextZ, roomBounds, gridData, roomCenterX, roomCenterZ)) continue
+      if (!isWalkableAt(nextX, nextZ, roomBounds, gridData, opts.roomCenterX, opts.roomCenterZ))
+        continue
       const score = d.x * ndx + d.z * ndz
       if (score > bestScore) {
         bestScore = score
@@ -365,8 +370,8 @@ export function handleAnimTargetWalk(
     }
 
     if (bestDir) {
-      const easedSpeed = speed * Math.min(1, dist / 0.5)
-      const step = Math.min(easedSpeed * delta, dist)
+      const easedSpeed = opts.speed * Math.min(1, dist / 0.5)
+      const step = Math.min(easedSpeed * opts.delta, dist)
       const dirMag = Math.hypot(bestDir.x, bestDir.z)
       state.currentX += (bestDir.x / dirMag) * step
       state.currentZ += (bestDir.z / dirMag) * step
@@ -374,6 +379,13 @@ export function handleAnimTargetWalk(
   }
 
   smoothRotateY(group, Math.atan2(dx, dz), 0.18)
+}
+
+export interface GridWalkOptions {
+  roomCenterX: number
+  roomCenterZ: number
+  speed: number
+  delta: number
 }
 
 /** Handle random grid walk with obstacle avoidance */
@@ -393,15 +405,12 @@ export function handleRandomGridWalk(
     botWalkableMask: boolean[][]
   },
   roomBounds: { minX: number; maxX: number; minZ: number; maxZ: number },
-  roomCenterX: number,
-  roomCenterZ: number,
-  speed: number,
-  delta: number
+  opts: GridWalkOptions
 ): void {
   const cellSize = gridData.blueprint.cellSize
 
   if (state.waitTimer > 0) {
-    state.waitTimer -= delta
+    state.waitTimer -= opts.delta
     if (state.stepsRemaining > 0) {
       smoothRotateY(group, Math.atan2(state.dirX, state.dirZ), 0.15)
     }
@@ -414,8 +423,8 @@ export function handleRandomGridWalk(
       state.currentZ,
       roomBounds,
       gridData,
-      roomCenterX,
-      roomCenterZ
+      opts.roomCenterX,
+      opts.roomCenterZ
     )
     if (dir) {
       state.dirX = dir.x
@@ -437,14 +446,16 @@ export function handleRandomGridWalk(
   const nextWorldX = state.currentX + state.dirX * cellSize
   const nextWorldZ = state.currentZ + state.dirZ * cellSize
 
-  if (!isWalkableAt(nextWorldX, nextWorldZ, roomBounds, gridData, roomCenterX, roomCenterZ)) {
+  if (
+    !isWalkableAt(nextWorldX, nextWorldZ, roomBounds, gridData, opts.roomCenterX, opts.roomCenterZ)
+  ) {
     const dir = pickWalkableDir(
       state.currentX,
       state.currentZ,
       roomBounds,
       gridData,
-      roomCenterX,
-      roomCenterZ
+      opts.roomCenterX,
+      opts.roomCenterZ
     )
     if (dir) {
       state.dirX = dir.x
@@ -462,8 +473,8 @@ export function handleRandomGridWalk(
 
   // Move toward next cell
   const dirMag = Math.hypot(state.dirX, state.dirZ)
-  const easedSpeed = speed * 1.2
-  state.cellProgress += (easedSpeed * delta) / cellSize
+  const easedSpeed = opts.speed * 1.2
+  state.cellProgress += (easedSpeed * opts.delta) / cellSize
   if (state.cellProgress >= 1) {
     state.currentX = state.currentX + state.dirX * cellSize
     state.currentZ = state.currentZ + state.dirZ * cellSize
@@ -475,8 +486,8 @@ export function handleRandomGridWalk(
         Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
     }
   } else {
-    state.currentX += (state.dirX / dirMag) * easedSpeed * delta
-    state.currentZ += (state.dirZ / dirMag) * easedSpeed * delta
+    state.currentX += (state.dirX / dirMag) * easedSpeed * opts.delta
+    state.currentZ += (state.dirZ / dirMag) * easedSpeed * opts.delta
   }
 
   smoothRotateY(group, Math.atan2(state.dirX, state.dirZ), 0.15)

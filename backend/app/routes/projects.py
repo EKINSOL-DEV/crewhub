@@ -122,7 +122,7 @@ def _validate_project_root(project_dir: Path) -> Path:
     raise HTTPException(403, "Project folder outside allowed roots")
 
 
-async def _resolve_project_markdown_root(project) -> Path | None:
+def _resolve_project_markdown_root(project) -> Path | None:
     """Resolve a project directory with configured path first, then slug fallback."""
     configured = _resolve_existing_project_dir(project.folder_path or "")
     if configured:
@@ -284,7 +284,7 @@ async def list_markdown_files(project_id: str):
         if not project:
             raise HTTPException(status_code=404, detail=MSG_PROJECT_NOT_FOUND)
 
-        project_dir = await _resolve_project_markdown_root(project)
+        project_dir = _resolve_project_markdown_root(project)
         if not project_dir:
             return {"files": [], "warning": "Project folder not found"}
 

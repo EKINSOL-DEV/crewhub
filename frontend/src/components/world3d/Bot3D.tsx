@@ -375,18 +375,13 @@ export const Bot3D = memo(function Bot3D({
       if (freeze) return
     } else if (hasAnimTarget && !anim.arrived) {
       // Walking toward animation target (coffee/sleep)
-      handleAnimTargetWalk(
-        groupRef.current,
-        state,
-        anim,
-        gridData,
-        roomBounds,
+      handleAnimTargetWalk(groupRef.current, state, anim, gridData, roomBounds, {
         roomCenterX,
         roomCenterZ,
         speed,
         delta,
-        session?.key
-      )
+        sessionKey: session?.key,
+      })
       if (anim.arrived && anim.freezeWhenArrived) return
     } else if (anim.typingPause) {
       // Typing pause: stay in place, keep rotating toward direction
@@ -395,16 +390,12 @@ export const Bot3D = memo(function Bot3D({
       }
     } else {
       // Random walk with obstacle avoidance
-      handleRandomGridWalk(
-        groupRef.current,
-        state,
-        gridData,
-        roomBounds,
+      handleRandomGridWalk(groupRef.current, state, gridData, roomBounds, {
         roomCenterX,
         roomCenterZ,
         speed,
-        delta
-      )
+        delta,
+      })
     }
 
     // ─── Hard clamp to room bounds (safety net) ─────────────────

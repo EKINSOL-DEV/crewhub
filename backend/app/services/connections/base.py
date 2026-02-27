@@ -4,6 +4,7 @@ Abstract base class for agent connections.
 Defines the interface that all connection types must implement.
 """
 
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -323,6 +324,7 @@ class AgentConnection(ABC):
             Default implementation checks if status is CONNECTED.
             Override for more sophisticated health checks.
         """
+        await asyncio.sleep(0)  # yield to event loop; subclasses do real async work
         return self.is_connected()
 
     # =========================================================================

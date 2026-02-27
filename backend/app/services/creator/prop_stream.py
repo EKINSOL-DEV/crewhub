@@ -36,7 +36,7 @@ def _sse_event(event_type: str, data: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
 
 
-async def _find_connected_openclaw(manager) -> Optional[Any]:
+def _find_connected_openclaw(manager) -> Optional[Any]:
     """Return the first connected OpenClawConnection from the manager, or None."""
     from ..connections import OpenClawConnection
 
@@ -125,7 +125,7 @@ async def stream_prop_generation(  # noqa: C901
     # ── Find connected OpenClaw connection ────────────────────────
     try:
         manager = await get_connection_manager()
-        conn = await _find_connected_openclaw(manager)
+        conn = _find_connected_openclaw(manager)
         if not conn:
             yield _sse_event("error", {"message": "No connected OpenClaw connection"})
             return

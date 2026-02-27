@@ -48,6 +48,7 @@ async def broadcast(event_type: str, data: dict):
     Stale clients (full queue = not consuming) are removed immediately so
     they don't accumulate and cause repeated drop warnings.
     """
+    await asyncio.sleep(0)  # yield to event loop so callers can await this
     event = {"type": event_type, "data": data}
     dead_clients: list[asyncio.Queue] = []
 

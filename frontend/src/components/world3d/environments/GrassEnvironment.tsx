@@ -62,23 +62,35 @@ interface GrassEnvironmentProps {
   readonly buildingDepth: number
 }
 
+interface GrassTuftSetup {
+  bladeOffsets: number[]
+  bladeQuats: THREE.Quaternion[]
+  unitScale: THREE.Vector3
+}
+
+interface GrassTuftCtx {
+  mat4: THREE.Matrix4
+  tmpVec: THREE.Vector3
+  grassBlades: THREE.Matrix4[]
+}
+
 function generateGrassTuft(
   s: number,
   wx: number,
   wz: number,
-  bladeOffsets: number[],
-  bladeQuats: THREE.Quaternion[],
-  unitScale: THREE.Vector3,
-  mat4: THREE.Matrix4,
-  tmpVec: THREE.Vector3,
-  grassBlades: THREE.Matrix4[]
+  setup: GrassTuftSetup,
+  ctx: GrassTuftCtx
 ): void {
   if (s <= 0.75) return
   const px = wx + s * 1.5 - 0.75
   const pz = wz + (1 - s) * 1.5 - 0.75
   for (let b = 0; b < 3; b++) {
-    mat4.compose(tmpVec.set(px + bladeOffsets[b], -0.1 + 0.15, pz), bladeQuats[b], unitScale)
-    grassBlades.push(mat4.clone())
+    ctx.mat4.compose(
+      ctx.tmpVec.set(px + setup.bladeOffsets[b], -0.1 + 0.15, pz),
+      setup.bladeQuats[b],
+      setup.unitScale
+    )
+    ctx.grassBlades.push(ctx.mat4.clone())
   }
 }
 
@@ -152,7 +164,13 @@ export function GrassEnvironment({ buildingWidth, buildingDepth }: GrassEnvironm
           Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2
         if (inBuilding) continue
 
-        generateGrassTuft(s, wx, wz, bladeOffsets, bladeQuats, unitScale, mat4, tmpVec, grassBlades)
+        generateGrassTuft(
+          s,
+          wx,
+          wz,
+          { bladeOffsets, bladeQuats, unitScale },
+          { mat4, tmpVec, grassBlades }
+        )
         generateRock(s, wx, wz, identityQuat, mat4, tmpVec, rocks)
       }
     }

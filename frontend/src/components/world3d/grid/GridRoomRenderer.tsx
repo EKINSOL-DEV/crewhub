@@ -106,6 +106,12 @@ function getWallPlacement(
   return { x: eastFace - WALL_GAP, z: worldZ, wallRotation: 90 }
 }
 
+interface RoomGridInfo {
+  gridWidth: number
+  gridDepth: number
+  cellSize: number
+}
+
 /** Snap floor-prop positions toward the nearest wall when within 1 cell of it.
  *  Positions the prop so its visual EDGE sits flush against the wall inner face,
  *  not its CENTER (which would cause clipping).
@@ -118,13 +124,11 @@ function clampToRoomBounds(
   worldZ: number,
   gridX: number,
   gridZ: number,
-  gridWidth: number,
-  gridDepth: number,
-  cellSize: number,
+  grid: RoomGridInfo,
   span: { w: number; d: number } = { w: 1, d: 1 }
 ): [number, number] {
-  const halfW = (gridWidth * cellSize) / 2
-  const halfD = (gridDepth * cellSize) / 2
+  const halfW = (grid.gridWidth * grid.cellSize) / 2
+  const halfD = (grid.gridDepth * grid.cellSize) / 2
   // Wall inner face matches RoomWalls.tsx wallThickness (0.3)
   const WALL_THICKNESS = 0.3
   const WALL_GAP = 0.02 // tiny gap to prevent z-fighting
@@ -133,14 +137,14 @@ function clampToRoomBounds(
   let z = worldZ
 
   // Prop visual half-footprint (centered on span center)
-  const halfFootprintW = (span.w * cellSize) / 2
-  const halfFootprintD = (span.d * cellSize) / 2
+  const halfFootprintW = (span.w * grid.cellSize) / 2
+  const halfFootprintD = (span.d * grid.cellSize) / 2
 
   // Distance in grid cells from each wall edge (cells 0 and gridSize-1 are wall cells)
   const distWest = gridX
-  const distEast = gridWidth - 1 - (gridX + span.w - 1)
+  const distEast = grid.gridWidth - 1 - (gridX + span.w - 1)
   const distNorth = gridZ
-  const distSouth = gridDepth - 1 - (gridZ + span.d - 1)
+  const distSouth = grid.gridDepth - 1 - (gridZ + span.d - 1)
 
   // Wall inner face positions
   const westFace = -halfW + WALL_THICKNESS
@@ -972,9 +976,7 @@ export function GridRoomRenderer({
             worldZ,
             effectiveGridX,
             effectiveGridZ,
-            gridWidth,
-            gridDepth,
-            cellSize,
+            { gridWidth, gridDepth, cellSize },
             effectiveSpan
           )
           worldX = clampedX
