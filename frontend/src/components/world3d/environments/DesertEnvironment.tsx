@@ -92,6 +92,7 @@ export function DesertEnvironment({
 }: Readonly<DesertEnvironmentProps>) {
   const sandToonProps = getToonMaterialProps('#D2B48C')
   const groundRef = useRef<THREE.InstancedMesh>(null)
+  const sunLightRef = useRef<THREE.DirectionalLight>(null)
 
   const data = useMemo(() => {
     // NOSONAR
@@ -311,21 +312,30 @@ export function DesertEnvironment({
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
   }, [data])
 
+  // Configure shadow properties via ref to avoid unknown JSX dash-props (Sonar S6747)
+  useEffect(() => {
+    const light = sunLightRef.current
+    if (!light) return
+
+    light.shadow.mapSize.set(1024, 1024)
+    light.shadow.camera.near = 0.1
+    light.shadow.camera.far = 80
+    light.shadow.camera.left = -40
+    light.shadow.camera.right = 40
+    light.shadow.camera.top = 40
+    light.shadow.camera.bottom = -40
+    light.shadow.camera.updateProjectionMatrix()
+  }, [])
+
   return (
     <group>
       {/* Warm desert lighting */}
       <directionalLight
+        ref={sunLightRef}
         position={[15, 20, 10]}
         intensity={1.8}
         color="#FFD4A0"
         castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-far={80}
-        shadow-camera-left={-40}
-        shadow-camera-right={40}
-        shadow-camera-top={40}
-        shadow-camera-bottom={-40}
       />
       <ambientLight intensity={0.5} color="#FFE8CC" />
       <hemisphereLight color="#87CEEB" groundColor="#D2A06D" intensity={0.4} />

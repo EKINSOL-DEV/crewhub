@@ -23,6 +23,20 @@ interface GridRoomRendererProps {
 // Minimum movement threshold to start drag (in pixels, to avoid accidental drags)
 const DRAG_THRESHOLD = 5
 
+function pointerDistanceFromStart(
+  start: { x: number; y: number } | null,
+  e: { nativeEvent: { clientX: number; clientY: number } }
+): number {
+  if (!start) return 0
+  const dx = e.nativeEvent.clientX - start.x
+  const dy = e.nativeEvent.clientY - start.y
+  return Math.hypot(dx, dy)
+}
+
+function setBodyCursor(cursor: string): void {
+  document.body.style.cursor = cursor
+}
+
 interface PropInstance {
   key: string
   propId: string
@@ -639,9 +653,9 @@ export function GridRoomRenderer({
         setHoveredPropKey(obj.userData.propKey)
         // Show grab cursor when hovering a movable prop (or pointer if already moving)
         if (isMoving) {
-          document.body.style.cursor = isDragging ? 'grabbing' : 'grab'
+          setBodyCursor(isDragging ? 'grabbing' : 'grab')
         } else {
-          document.body.style.cursor = 'grab'
+          setBodyCursor('grab')
         }
       } else if (obj?.userData?.debugPropKey) {
         setHoveredPropKey(obj.userData.debugPropKey)
@@ -683,13 +697,11 @@ export function GridRoomRenderer({
 
       // Check drag threshold before starting drag
       if (!hasDragStarted.current && pointerStartPos.current) {
-        const dx = e.nativeEvent.clientX - pointerStartPos.current.x
-        const dy = e.nativeEvent.clientY - pointerStartPos.current.y
-        const distance = Math.hypot(dx, dy)
+        const distance = pointerDistanceFromStart(pointerStartPos.current, e)
         if (distance >= DRAG_THRESHOLD) {
           hasDragStarted.current = true
           startDrag(e)
-          document.body.style.cursor = 'grabbing'
+          setBodyCursor('grabbing')
         }
       }
 
@@ -697,13 +709,13 @@ export function GridRoomRenderer({
       // start it now that we have a ThreeEvent with camera data
       if (hasDragStarted.current && !isDragging) {
         startDrag(e)
-        document.body.style.cursor = 'grabbing'
+        setBodyCursor('grabbing')
       }
 
       // If dragging, update position and cursor
       if (isDragging) {
         handleDragMove(e)
-        document.body.style.cursor = isOverInvalid ? 'not-allowed' : 'grabbing'
+        setBodyCursor(isOverInvalid ? 'not-allowed' : 'grabbing')
       }
     },
     [isMoving, isDragging, isOverInvalid, startDrag, handleDragMove]
@@ -720,7 +732,7 @@ export function GridRoomRenderer({
       // End drag if we were dragging
       if (isDragging) {
         endDrag()
-        document.body.style.cursor = isMoving ? 'grab' : 'auto'
+        setBodyCursor(isMoving ? 'grab' : 'auto')
       }
       pointerStartPos.current = null
       hasDragStarted.current = false
@@ -736,7 +748,7 @@ export function GridRoomRenderer({
       // The long-press timer will be cancelled by pointerUp if the user releases early.
       // Only reset cursor if not in a moving/dragging state.
       if (!isMoving && !isDragging) {
-        document.body.style.cursor = 'auto'
+        setBodyCursor('auto')
       }
       // Always clear hover for this specific prop (allows clean transitions between props)
       const obj = e.eventObject
@@ -793,7 +805,7 @@ export function GridRoomRenderer({
     (e: ThreeEvent<PointerEvent>) => {
       if (isDragging) {
         handleDragMove(e)
-        document.body.style.cursor = isOverInvalid ? 'not-allowed' : 'grabbing'
+        setBodyCursor(isOverInvalid ? 'not-allowed' : 'grabbing')
         return
       }
       // Pre-drag: detect threshold even when pointer left the prop mesh
@@ -804,7 +816,7 @@ export function GridRoomRenderer({
         if (distance >= DRAG_THRESHOLD) {
           hasDragStarted.current = true
           startDrag(e)
-          document.body.style.cursor = 'grabbing'
+          setBodyCursor('grabbing')
         }
       }
     },
@@ -841,7 +853,7 @@ export function GridRoomRenderer({
       const distance = Math.hypot(dx, dy)
       if (distance >= DRAG_THRESHOLD) {
         hasDragStarted.current = true
-        document.body.style.cursor = 'grabbing'
+        setBodyCursor('grabbing')
         // The actual R3F startDrag will be called when a pointer event
         // reaches an R3F object (prop mesh or any other 3D element).
         // For now, mark the drag as pending.
@@ -864,11 +876,11 @@ export function GridRoomRenderer({
   // Reset cursor when movement ends + cleanup on unmount
   useEffect(() => {
     if (!isMoving) {
-      document.body.style.cursor = 'auto'
+      setBodyCursor('auto')
     }
     return () => {
       // Always clean up cursor on unmount to prevent stuck cursors
-      document.body.style.cursor = 'auto'
+      setBodyCursor('auto')
     }
   }, [isMoving])
 
